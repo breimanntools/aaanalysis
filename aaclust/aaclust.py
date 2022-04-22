@@ -16,6 +16,7 @@ def cluster_center(X):
     """Compute cluster center (i.e., arithmetical mean over all data points/observations of a cluster)"""
     return X.mean(axis=0)[np.newaxis, :]
 
+
 def get_cluster_centers(X, labels=None):
     """Obtain cluster centers and their labels"""
     center_labels = list(OrderedDict.fromkeys(labels))
@@ -31,6 +32,7 @@ def _cluster_medoid(X):
     # Get index for scale with highest correlation with cluster center
     ind_max = np.corrcoef(center_X)[0, 1:].argmax()
     return ind_max
+
 
 def get_cluster_medoids(X, labels=None):
     """Obtain cluster medoids and their labels"""
@@ -54,11 +56,13 @@ def _min_cor_center(X):
     min_cor = np.corrcoef(center_X)[0, ].min()
     return min_cor
 
+
 def _min_cor_all(X):
     """Get minimum for pair-wise correlation of all columns in given matrix."""
     # Get minimum correlations minimum/ maximum distance for pair-wise comparisons
     min_cor = np.corrcoef(X).min()
     return min_cor
+
 
 def get_min_cor(X, labels=None, on_center=True):
     """Compute minimum pair-wise correlation or correlation with cluster center for each cluster label
@@ -119,6 +123,7 @@ def estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6
     n_clusters = nclust_mincor[1][0] if len(nclust_mincor) > 1 else nclust_mincor[0][0]  # Otherwise, only existing one
     return n_clusters
 
+
 # 2. Step (Optimization of n clusters)
 def optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_th=0.5, on_center=True):
     """Optimization of number of clusters. Recursive clustering (via while loop) such that
@@ -148,12 +153,14 @@ def optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_t
             min_cor = f(n_clusters)
     return n_clusters
 
+
 # 3. Step (Merging)
 def _get_min_cor_cluster(X, labels=None, label_cluster=None, on_center=True):
     """Get min_cor for single cluster"""
     mask = [l == label_cluster for l in labels]
     min_cor = get_min_cor(X[mask], on_center=on_center)
     return min_cor
+
 
 def _get_quality_measure(X, metric=None, labels=None, label_cluster=None, on_center=True):
     """Get quality measure single cluster given by feature matrix X, labels, and label of cluster"""
@@ -302,7 +309,6 @@ class AAclust:
         if names is not None:
             names_medoid = [names[i] for i in medoid_ind]
             return names_medoid
-
 
     def cluster_naming(self, names=None, labels=None, name_unclassified="Unclassified"):
         """Change cluster labels by scale names"""
