@@ -7,7 +7,7 @@ from collections import OrderedDict
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster import KMeans
 
-import aaclust._utils as ut
+import aaanalysis as ut
 
 
 # I Helper Functions
