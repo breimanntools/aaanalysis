@@ -102,7 +102,7 @@ def _score_ranking(df=None, cols_scores=None):
 
 
 # II Main Functions
-# Benchmark aaclust classification
+# Benchmark aaanalysis classification
 def benchmark_aaclust_clustering():
     """Initial benchmarking to compare AAclust against clustering models without k as parameter"""
     df_cat = pd.read_excel(ut.FOLDER_DATA + "scale_classification.xlsx")

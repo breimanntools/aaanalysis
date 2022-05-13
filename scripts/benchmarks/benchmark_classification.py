@@ -28,6 +28,11 @@ LIST_MODELS = ["rf", "log_reg", "svm"]
 DICT_MODELS = {x: DICT_MODELS[x] for x in LIST_MODELS}
 ROUND = 3
 
+# TODO adjust benchmarking datasets (see TODO in benchmarks) AIM: 10 proper benchmarking sets
+# TODO use smaller datasets for AA tasks: use LDR validation, RBP129 for RNA binding
+# TODO add datasets: TAIL, 7DisPro for Accessible surface prediction
+# TODO split location into two with most positive class 'Nucleus', 'Cytoplasm', Plasma-Membrane (replace soluble with)
+
 # I Helper Functions
 def _feat_matrix(list_seq, dict_scale_vals=None):
     """"""
@@ -65,18 +70,18 @@ def _get_list_seq(df_seq=None):
 # Get scales
 def _get_random_scales(df_scales=None, list_n=None, n_max=100, rounds=5):
     """"""
+    n_all_scales = len(list(df_scales))
+    if max(list_n) >= n_all_scales:
+        raise ValueError(f"Max n ({max(list_n)}) in 'list_n' should not be higher than number of scales ({n_all_scales}")
     dict_scales = {}
     for n in list_n:
         name = f"RANDOM{n}"
-        if n > len(list(df_scales)):
-            dict_scales[name] = list(df_scales)
+        if n > n_max:
+            dict_scales[name] = list(df_scales.sample(n=n, axis=1))
         else:
-            if n > n_max:
-                dict_scales[name] = list(df_scales.sample(n=n, axis=1))
-            else:
-                for i in range(rounds):
-                    name_ = name + f"_ROUND{i+1}"
-                    dict_scales[name_] = list(df_scales.sample(n=n, axis=1))
+            for i in range(rounds):
+                name_ = name + f"_ROUND{i+1}"
+                dict_scales[name_] = list(df_scales.sample(n=n, axis=1))
     return dict_scales
 
 
@@ -115,7 +120,7 @@ def _get_aaclust_scales(df_scales=None, list_n=None):
     return dict_scales
 
 
-def _get_goldstandard_scales():
+def _get_goldstandard_scales(df_scales=None):
     """"""
     # Meiler et al., 2001 (Tang et al. 2020),
     # Steric parameter, Hydrophobicity, Volume, Polarizability,
@@ -130,7 +135,8 @@ def _get_goldstandard_scales():
     top12_scales = ["CHOP780202", "LEVM780103", "CHOP780201", "CHAM830101",
                     "GRAR740102", "KYTJ820101", "EISD840101", "CHOC760103",
                     "DAYM780201", "BHAR880101", "FASG760101", "ZIMJ680102"]
-    dict_scales = {"STANDARD7": top7_scales, "STANDARD12": top12_scales}
+    top_all = list(df_scales)
+    dict_scales = {"STANDARD7": top7_scales, "STANDARD12": top12_scales, f"STANDARD{len(top_all)}": top_all}
     return dict_scales
 
 
@@ -158,7 +164,7 @@ def _evaluation(df=None, dict_scale_vals=None, dict_models=None):
     list_results = []
     for model_name in dict_models:
         model = dict_models[model_name]
-        cv = cross_val_score(model, X, y, scoring="accuracy", cv=3, n_jobs=8)
+        cv = cross_val_score(model, X, y, scoring="accuracy", cv=5, n_jobs=8)
         list_results.append(round(np.mean(cv), ROUND))
     list_results.append(len(dict_scale_vals))
     return list_results
@@ -174,10 +180,10 @@ def _score_ranking(df=None, cols_scores=None):
 # II Main Functions
 def get_scale_sets(df_scales=None):
     """"""
-    dict_scale_names = _get_goldstandard_scales()
+    dict_scale_names = _get_goldstandard_scales(df_scales=df_scales.copy())
     dict_scale_names.update(_get_random_scales(df_scales=df_scales.copy(),
-                                               list_n=[1, 3, 5, 7, 10, 20, 30, 50, 100, 553],
-                                               rounds=3))
+                                               list_n=[1, 3, 5, 7, 10, 20, 30, 50, 100],
+                                               rounds=5))
     dict_scale_names.update(_get_aaclust_scales(df_scales=df_scales,
                                                 list_n=[5, 7, 10, 12, 15, 20, 50, 75, 100]))
     dict_scale_names.update(_get_pca_scales(df_scales=df_scales))
@@ -195,8 +201,7 @@ def get_scales(df_scales=None):
 def load_data(name=None, show_datasets=False):
     """"""
     LIST_DATA = ["AMYLO_SEQ", "CAPSID_SEQ", "DISULFIDE_SEQ", "SOLUBLE_SEQ",
-                 "LOCATION_SEQ_MULTI",
-                 "LDR_AA", "RNABIND_AA"]
+                 "LOCATION_SEQ_MULTI", "LDR_AA", "RNABIND_AA"]
     if show_datasets:
         print(LIST_DATA)
     if name not in LIST_DATA:
@@ -252,7 +257,7 @@ def get_ranking(results=None, dict_scale_sets=None, merge_rounds=True):
 
 
 # III Test/Caller Functions
-# Benchmark aaclust classification
+# Benchmark aaanalysis classification
 def benchmark_seq_classification():
     """"""
     # Get scales
