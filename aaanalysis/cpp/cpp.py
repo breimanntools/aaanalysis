@@ -12,7 +12,7 @@ from aaanalysis.cpp.feature import SequenceFeature
 from aaanalysis.cpp._feature_stat import SequenceFeatureStatistics
 from aaanalysis.cpp._feature_pos import SequenceFeaturePositions
 from aaanalysis.cpp._cpp import CPPPlots, cpp_statistics
-
+import aaanalysis as aa
 
 # I Helper Functions
 # TODO separate interface from backend
@@ -319,9 +319,9 @@ class CPP:
         # Load default scales if not specified
         sf = SequenceFeature()
         if df_cat is None:
-            df_cat = sf.load_categories(complete=True)
+            df_cat = aa.load_scales(name=ut.STR_SCALE_CAT)
         if df_scales is None:
-            df_scales = sf.load_scales(complete=True)
+            df_scales = aa.load_scales()
         if split_kws is None:
             split_kws = sf.get_split_kws()
         ut.check_bool(name="verbose", val=verbose)

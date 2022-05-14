@@ -15,6 +15,7 @@ from aaanalysis.cpp._feature_pos import SequenceFeaturePositions
 from aaanalysis.cpp._split import Split, SplitRange
 from aaanalysis.cpp._part import Parts
 import aaanalysis.cpp._utils as ut
+import aaanalysis as aa
 
 
 # I Helper Functions
@@ -186,154 +187,6 @@ class SequenceFeature:
         'tmd_jmd', 'jmd_n_tmd_n', 'tmd_c_jmd_c', 'ext_n_tmd_n', 'tmd_c_ext_c']
     """
 
-    # Load data methods
-    @staticmethod
-    def load_categories(complete=False, clust_th=0.5, on_center=False, merge=False, unclassified=False, n_scales=None):
-        """Load DataFrame with default categories for physicochemical amino acid scales.
-
-        Parameters
-        ----------
-        complete: bool, default=False
-            Returned DataFrame contains all scales (if True) or via clustering reduced subset otherwise.
-        clust_th: {0.3, 0.5, 0.7, 0.9}, float, default=0.7
-            Threshold for clustering of physicochemical amino acid scales
-            used in AAclust (minimum correlation with cluster center or all scales in clusters).
-        on_center: bool, default=False
-            Whether clustering should be performed on correlation with cluster centers (if True) or on
-            minimum of all scales in clusters.
-        on_categories: bool, default=False
-            Whether clustering should be performed for each scale category separately (if True) or on all scales.
-        merge: bool, default=False
-            Whether clustering should be performed with cluster merging (if True) or not.
-        unclassified: bool, default=True
-            Whether returned DataFrame contains scales from 'Others' category and unclassified subcategories (if True).
-
-        Returns
-        -------
-        df_cat: pd.DataFrame
-            DataFrame with default categories for physicochemical amino acid scales.
-
-        Notes
-        -----
-        The scales were classified in the following eight categories:
-            a)
-
-        References
-        ----------
-
-        """
-        check_clustered(complete=complete, clust_th=clust_th)
-        ut.check_non_negative_number(name="n_scales", val=n_scales, min_val=2, max_val=50, accept_none=True)
-        ut.check_bool(name="merge", val=merge)
-        ut.check_bool(name="on_center", val=on_center)
-        ut.check_bool(name="unclassified", val=on_center)
-        df_cat = pd.read_excel(ut.FOLDER_DATA + ut.FILE_CAT)
-        if not complete:
-            # Clustering parameters
-            col = "AAclust"
-            if n_scales is None:
-                col += f"{int(clust_th*100)}"        # Correlation threshold (n_scales up)
-                col += "c" if on_center else "m"     # Clustering on cluster center or minimum (n scales down)
-                col += "+m" if merge else ""         # Merge clusters (n_scales down)
-            else:
-                col += f"{n_scales}n"
-            col += "+u" if unclassified else ""  # Include unclassified scales or not (n scales up)
-            # Load mask
-            df_aaclust = pd.read_excel(ut.FOLDER_DATA+ ut.FILE_AACLUST)
-            mask = list(df_aaclust[col].astype(bool))
-            df_cat = df_cat[mask].copy().reset_index(drop=True)
-        return df_cat.copy()
-
-    def load_scales(self, complete=False, clust_th=0.5, on_center=False, merge=False, unclassified=False, n_scales=None):
-        """Load DataFrame with default amino acid scales.
-
-        Parameters
-        ----------
-        complete: bool, default False
-            If True, pd.DataFrame with all scales will be returned.
-            Otherwise, returned pd.DataFrame depends on 'clustered' parameter.
-        clust_th: {0.3, 0.5, 0.7, 0.9}, float, default=0.7
-            Threshold for clustering of physicochemical amino acid scales
-            used in AAclust (minimum correlation with cluster center or all scales in clusters).
-        on_center: bool, default=False
-            Whether clustering should be performed on correlation with cluster centers (if True) or on
-            minimum of all scales in clusters.
-        on_categories: bool, default=False
-            Whether clustering should be performed for each scale category separately (if True) or on all scales.
-        merge: bool, default=False
-            Whether clustering should be performed with cluster merging (if True) or not.
-        unclassified: bool, default=True
-            Whether returned DataFrame contains scales from 'Others' category and unclassified subcategories (if True).
-
-        Returns
-        -------
-        df_scales: pd.DataFrame
-            DataFrame with default amino acid scales.
-
-        Notes
-        -----
-        The scales were mainly obtained from AAindex. Further scales for ASA (),
-            and hydrophobicity () were included.
-
-        References
-        ----------
-            TODO add all scales papers, AAclust, AAindex
-        """
-        check_clustered(complete=complete, clust_th=clust_th)
-        ut.check_non_negative_number(name="n_scales", val=n_scales, min_val=2, max_val=50, accept_none=True)
-        ut.check_bool(name="merge", val=merge)
-        ut.check_bool(name="on_center", val=on_center)
-        ut.check_bool(name="unclassified", val=on_center)
-        df_scales = pd.read_excel(ut.FOLDER_DATA + ut.FILE_SCALES, index_col=0)
-        df_cat = self.load_categories(complete=complete,
-                                      clust_th=clust_th,
-                                      on_center=on_center,
-                                      merge=merge,
-                                      unclassified=unclassified,
-                                      n_scales=n_scales)
-        list_scales = list(df_cat[ut.COL_SCALE_ID])
-        df_scales = df_scales[list_scales]  # Filter scales
-        return df_scales.copy()
-
-
-    @staticmethod
-    def load_sequences(online=False, n_in_class=50, return_labels=False):
-        """Load DataFrame with sequence examples.
-
-        Parameters
-        ---------
-        online : bool, default=False
-            Whether to load DataFrame from online repository or locally.
-        n_in_class : int, default=50
-            Number of samples per class.
-        return_labels : bool, default=True
-            Whether to return class labels.
-
-        Returns
-        -------
-        df_seq : pd.DataFrame
-            DataFrame with sequence information comprising either sequence ('sequence', 'tmd_start', 'tmd_stop')
-            or sequence part ('jmd_n', 'tmd', 'jmd_c') columns.
-        labels : list of bool
-            Class labels for sequence samples.
-
-        Notes
-        -----
-        Examples are substrates and non-substrates of Alzheimer's Disease associated gamma-secretase.
-        """
-        ut.check_non_negative_number(name="n_in_class", val=n_in_class, accept_none=True)
-        # TODO check if path accessible, through error otherwise
-        path = ut.URL_DATA if online else ut.FOLDER_DATA
-        df_test = pd.read_excel(path + ut.FILE_TEST).head(n=n_in_class)
-        df_ref1 = pd.read_excel(path + ut.FILE_REF_NONSUB)
-        df_ref2 = pd.read_excel(path + ut.FILE_REF_OTHERS)
-        df_ref = pd.concat([df_ref1, df_ref2]).head(n=n_in_class)
-        df_seq = pd.concat([df_test, df_ref]).reset_index(drop=True)
-        labels = [1 if x == "SUBEXP" else 0 for x in df_seq["class"]]
-        if return_labels:
-            return df_seq, labels
-        return df_seq.copy()
-
     # Basic data structures for features
     @staticmethod
     def get_df_parts(df_seq=None, list_parts=None, jmd_n_len=None, jmd_c_len=None, ext_len=4, all_parts=False):
@@ -371,14 +224,14 @@ class SequenceFeature:
 
         >>> import aaanalysis as aa
         >>> sf = aa.SequenceFeature()
-        >>> df_seq = sf.load_sequences()
+        >>> df_seq = aa.load_dataset(name='GSEC_SUB_SEQ')
         >>> df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=["tmd_e", "tmd_jmd"])
 
         Get sequence parts based on sequence column in df_seq and jmd_n_len and jmd_c_len with default parts:
 
         >>> import aaanalysis as aa
         >>> sf = aa.SequenceFeature()
-        >>> df_seq = sf.load_sequences()
+        >>> df_seq = aa.load_dataset(name='GSEC_SUB_SEQ')
         >>> df_parts = sf.get_df_parts(df_seq=df_seq, jmd_n_len=10, jmd_c_len=10)
         """
         check_jmd_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
@@ -491,7 +344,7 @@ class SequenceFeature:
         ut.check_split_kws(split_kws=split_kws)
         ut.check_df_scales(df_scales=df_scales, accept_none=True)
         if df_scales is None:
-            df_scales = self.load_scales()
+            df_scales = aa.load_scales()
         if split_kws is None:
             split_kws = self.get_split_kws()
         scales = list(df_scales)
@@ -506,7 +359,8 @@ class SequenceFeature:
                              for sc in scales])
         return features
 
-    def feat_names(self, features=None, df_cat=None, tmd_len=20, jmd_c_len=10, jmd_n_len=10, ext_len=0, start=1):
+    @staticmethod
+    def feat_names(features=None, df_cat=None, tmd_len=20, jmd_c_len=10, jmd_n_len=10, ext_len=0, start=1):
         """Convert feature ids (PART-SPLIT-SCALE) into feature name (scale name [positions]).
 
         Parameters
@@ -543,7 +397,7 @@ class SequenceFeature:
         features = ut.check_features(features=features)
         ut.check_df_cat(df_cat=df_cat)
         if df_cat is None:
-            df_cat = self.load_categories()
+            df_cat = aa.load_scales(name=ut.STR_SCALE_CAT)
         # Get feature names
         sfp = SequenceFeaturePositions()
         dict_part_pos = sfp.get_dict_part_pos(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
@@ -612,7 +466,8 @@ class SequenceFeature:
                                        accept_gaps=accept_gaps)
         return feature_value
 
-    def feat_matrix(self, df_parts=None, features=None, df_scales=None,
+    @staticmethod
+    def feat_matrix(df_parts=None, features=None, df_scales=None,
                     accept_gaps=False, verbose=False, return_labels=False):
         """Create feature matrix for given feature names and sequence parts.
 
@@ -637,7 +492,7 @@ class SequenceFeature:
             Feature values of samples.
         """
         if df_scales is None:
-            df_scales = self.load_scales(complete=True)
+            df_scales = aa.load_scales()
         ut.check_df_scales(df_scales=df_scales)
         ut.check_df_parts(df_parts=df_parts)
         features = ut.check_features(features=features, parts=df_parts, df_scales=df_scales)

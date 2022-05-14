@@ -16,7 +16,6 @@ def tutorial_for_aaclust_and_cpp():
     # Load scale data
     df_scales = aa.load_scales()
     df_cat = aa.load_scales(name="scale_categories")
-    print(df_cat)
 
     # Select scales using AAclust
     aac = aa.AAclust(model=AgglomerativeClustering, model_kwargs=dict(linkage="ward"))
@@ -35,15 +34,12 @@ def tutorial_for_aaclust_and_cpp():
     split_kws = sf.get_split_kws(n_split_max=30, split_types=["Segment", "PeriodicPattern"])
     args = dict(df_scales=df_scales, df_parts=df_parts, accept_gaps=True)
     cpp = aa.CPP(df_cat=df_cat, **args, split_kws=split_kws)
-
     df_feat = cpp.run(labels=y, tmd_len=200)
     X = sf.feat_matrix(**args, features=df_feat["feature"])
-    print(df_feat)
-    print(X)
+
     # ML
     rf = RandomForestClassifier()
     cv = cross_val_score(rf, X, y, scoring="accuracy", cv=5, n_jobs=8)
-    print(cv)
 
 
 if __name__ == '__main__':

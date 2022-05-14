@@ -34,8 +34,10 @@ def check_non_negative_number(name=None, val=None, min_val=0, max_val=None, acce
 # II Main Functions
 def load_dataset(name="INFO", n=None, non_canonical_aa_as_gaps=True, min_len=None, max_len=None):
     """Load one of following protein sequence benchmarking datasets:
-        ['DISULFIDE_SEQ', 'LOCATION_SEQ_MULTI', 'CAPSID_SEQ', 'SOLUBLE_SEQ', 'AMYLO_SEQ', 'LDR_AA', 'RNABIND_AA']
+        ['AMYLO_SEQ', 'CAPSID_SEQ', 'DISULFIDE_SEQ', 'GSEC_SUB_SEQ'
+         'LOCATION_SEQ_MULTI', 'SOLUBLE_SEQ',  'LDR_AA', 'RNABIND_AA']
     Load general information about datasets by 'name'='INFO
+
     :arg name: name of dataset
     :arg n: number of proteins per class (if None, whole dataset will be returned)
     :arg non_canonical_aa_as_gaps: boolean whether non canonical amino acid should be replaced by gap symbol
@@ -46,7 +48,7 @@ def load_dataset(name="INFO", n=None, non_canonical_aa_as_gaps=True, min_len=Non
     check_non_negative_number(name="n", val=n, accept_none=True)
     check_non_negative_number(name="min_len", val=min_len, accept_none=True)
     if name == "INFO":
-        return pd.read_excel(ut.FOLDER_DATA + "benchmarking_datasets_AAclust.xlsx")
+        return pd.read_excel(ut.FOLDER_DATA + "INFO_benchmarks.xlsx")
     folder_in = ut.FOLDER_DATA + "benchmarks" + ut.SEP
     list_datasets = [x.split(".")[0] for x in os.listdir(folder_in) if "." in x]
     if name not in list_datasets:
@@ -95,14 +97,14 @@ def load_scales(name="scales", unclassified_in=False, just_aaindex=False, missin
     :return df: dataframe for selected dataset
     """
 
-    list_datasets = ["scales", "scales_raw", "scale_categories"]
+    list_datasets = [ut.STR_SCALES, ut.STR_SCALES_RAW, ut.STR_SCALE_CAT]
     if name not in list_datasets:
         raise ValueError(f"'name' ({name}) is not valid. Choose one of following: {list_datasets}")
-    df_cat = pd.read_excel(ut.FOLDER_DATA + "scale_categories.xlsx")
+    df_cat = pd.read_excel(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.xlsx")
     df_cat = _filter_scales(df_cat=df_cat, unclassified_in=unclassified_in, just_aaindex=just_aaindex)
-    if name == "scale_categories":
+    if name == ut.STR_SCALE_CAT:
         return df_cat
-    elif missing_values_in and name == "scales_raw":
+    elif missing_values_in and name == ut.STR_SCALES_RAW:
         return pd.read_excel(ut.FOLDER_DATA + name + ".xlsx", sheet_name="raw")
     df = pd.read_excel(ut.FOLDER_DATA + name + ".xlsx", index_col=0)
     # Filter scales

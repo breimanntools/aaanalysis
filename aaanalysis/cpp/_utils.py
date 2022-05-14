@@ -10,32 +10,10 @@ import matplotlib.pyplot as plt
 import warnings
 
 
-def _folder_path(super_folder, folder_name):
-    """Modification of separator (OS depending)"""
-    path = os.path.join(super_folder, folder_name + SEP)
-    return path
-
-
 # Settings
-# Folder
-SEP = "\\" if platform.system() == "Windows" else "/"
-FOLDER_PROJECT = os.path.dirname(os.path.abspath(__file__)).split('cpp')[0].replace('/', SEP)
-FOLDER_CPP = _folder_path(FOLDER_PROJECT, 'cpp')
-FOLDER_DATA = _folder_path(FOLDER_CPP, 'data')
-URL_DATA = "https://raw.githubusercontent.com/stephanbreimann/CPP/master/cpp_tools/data/"
-
-# Default data for protein analysis
-FILE_SCALES = "scales.xlsx"
-FILE_CAT = "scale_categories.xlsx"
-FILE_AACLUST = "AAclust.xlsx"
-FILE_FEAT = "features.xlsx"
-
-# Test data
-FILE_TEST = "sequence_subexpert_tmhmm.xlsx"
-FILE_REF_NONSUB = "sequence_nonsub_tmhmm.xlsx"
-FILE_REF_OTHERS = "sequence_others_tmhmm.xlsx"
 
 # Default Split names
+STR_SCALE_CAT = "scale_categories"
 STR_SEGMENT = "Segment"
 STR_PATTERN = "Pattern"
 STR_PERIODIC_PATTERN = "PeriodicPattern"
@@ -237,7 +215,6 @@ def check_ylim(df=None, ylim=None, val_col=None, retrieve_plot=False, scaling_fa
     return ylim
 
 
-# Sequence check function
 # Sequence check function
 def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     """Get features from df"""
