@@ -25,8 +25,8 @@ def tutorial_for_aaclust_and_cpp():
     df_cat = df_cat[df_cat["scale_id"].isin(scales)]
     df_scales = df_scales[scales]
     # Load training data
-    df_info = aa.load_data()
-    df = aa.load_data(name="DISULFIDE_SEQ", min_len=200)
+    df_info = aa.load_dataset()
+    df = aa.load_dataset(name="DISULFIDE_SEQ", min_len=200)
 
     # Feature Engineering
     y = list(df["label"])

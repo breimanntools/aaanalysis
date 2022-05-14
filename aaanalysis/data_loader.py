@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import re
 
-import scripts._utils as ut
+import aaanalysis._utils as ut
 
 
 # I Helper Functions
@@ -32,7 +32,7 @@ def check_non_negative_number(name=None, val=None, min_val=0, max_val=None, acce
 
 
 # II Main Functions
-def load_data(name="INFO", n=None, non_canonical_aa_as_gaps=True, min_len=None, max_len=None):
+def load_dataset(name="INFO", n=None, non_canonical_aa_as_gaps=True, min_len=None, max_len=None):
     """Load one of following protein sequence benchmarking datasets:
         ['DISULFIDE_SEQ', 'LOCATION_SEQ_MULTI', 'CAPSID_SEQ', 'SOLUBLE_SEQ', 'AMYLO_SEQ', 'LDR_AA', 'RNABIND_AA']
     Load general information about datasets by 'name'='INFO
