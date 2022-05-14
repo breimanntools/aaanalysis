@@ -7,7 +7,7 @@ from collections import OrderedDict
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster import KMeans
 
-import aaanalysis as ut
+import aaanalysis.aaclust._utils as ut
 
 
 # I Helper Functions
@@ -251,7 +251,7 @@ def get_names_cluster(list_names=None, name_medoid=None, name_unclassified="Uncl
 
 
 class AAclust:
-    """"""
+    """k-free wrapper for clustering algorithm to create redundancy reduced sets of numerical scales"""
     def __init__(self, model=None, model_kwargs=None, name_unclassified="unclassified", verbose=False):
         # Model parameters
         if model is None:
@@ -260,10 +260,10 @@ class AAclust:
         if model_kwargs is None:
             model_kwargs = dict()
         model_kwargs = ut.check_model(model=self.model, model_kwargs=model_kwargs)
-        self.model_kwargs = model_kwargs
+        self._model_kwargs = model_kwargs
         # AAclust clustering settings
-        self.name_unclassified = name_unclassified
-        self.verbose = verbose
+        self._name_unclassified = name_unclassified
+        self._verbose = verbose
         # Output parameters (will be set during model fitting)
         self.n_clusters = None  # Number of by AAclust obtained clusters
         self.labels_ = None     # Cluster labels in order of samples in feature matrix
@@ -280,10 +280,10 @@ class AAclust:
         ut.check_min_th(min_th=min_th)
         merge_metric = ut.check_merge_metric(merge_metric=merge_metric)
         X, names = ut.check_feat_matrix(X=X, names=names)
-        args = dict(model=self.model, model_kwargs=self.model_kwargs, min_th=min_th, on_center=on_center)
+        args = dict(model=self.model, model_kwargs=self._model_kwargs, min_th=min_th, on_center=on_center)
         # Clustering using given clustering models
         if n_clusters is not None:
-            labels = self.model(n_clusters=n_clusters, **self.model_kwargs).fit(X).labels_.tolist()
+            labels = self.model(n_clusters=n_clusters, **self._model_kwargs).fit(X).labels_.tolist()
         # Clustering using AAclust algorithm
         else:
             # Estimation of lower bound of number of clusters via testing range between 10% and 90% of all scales
@@ -291,7 +291,7 @@ class AAclust:
             # Optimization of number of clusters by recursive clustering
             n_clusters = optimize_n_clusters(X, n_clusters=n_clusters_lb, **args)
             # Cluster merging: assign scales from small clusters to other cluster with highest minimum correlation
-            labels = self.model(n_clusters=n_clusters, **self.model_kwargs).fit(X).labels_.tolist()
+            labels = self.model(n_clusters=n_clusters, **self._model_kwargs).fit(X).labels_.tolist()
             if merge:
                 labels = merge_clusters(X, labels=labels, min_th=min_th, on_center=on_center, metric=merge_metric)
         # Obtain cluster centers and medoids
@@ -302,9 +302,9 @@ class AAclust:
         self.labels_ = np.array(labels)
         self.centers_ = centers
         self.center_labels_ = center_labels
-        self.medoids_ = medoids
+        self.medoids_ = medoids # Representative scales
         self.medoid_labels_ = medoid_labels
-        self.medoid_ind_ = medoid_ind
+        self.medoid_ind_ = medoid_ind   # Index of medoids
         # Return labels of medoid if y is given
         if names is not None:
             names_medoid = [names[i] for i in medoid_ind]
@@ -338,12 +338,14 @@ class AAclust:
         cluster_names = [dict_cluster_names[label] for label in labels]
         return cluster_names
 
+    # TODO check if necessary
     @staticmethod
     def get_cluster_centers(X, labels=None):
         """"""
         centers, center_labels = get_cluster_centers(X, labels=labels)
         return centers, center_labels
 
+    # TODO check if necessary
     @staticmethod
     def get_cluster_medoids(X, labels=None):
         """"""

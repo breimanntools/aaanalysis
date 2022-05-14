@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import inspect
 
-import aaanalysis.cpp as ut
+import aaanalysis.cpp._utils as ut
 from aaanalysis.cpp.feature import SequenceFeature
 from aaanalysis.cpp._feature_stat import SequenceFeatureStatistics
 from aaanalysis.cpp._feature_pos import SequenceFeaturePositions
@@ -61,7 +61,6 @@ def check_ref_group(ref_group=0, labels=None):
 def check_sample_in_df_seq(sample_name=None, df_seq=None):
     """Check if sample name in df_seq"""
     list_names = list(df_seq[ut.COL_NAME])
-    print(list_names)
     if sample_name not in list_names:
         error = f"'sample_name' ('{sample_name}') not in '{ut.COL_NAME}' of 'df_seq'." \
                 f"\nValid names are: {list_names}"
@@ -332,6 +331,7 @@ class CPP:
         ut.check_split_kws(split_kws=split_kws)
         check_len_ext_and_jmd(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len)
         self.verbose = verbose
+        self.accept_gaps = accept_gaps
         # Feature components: Scales + Part + Split
         self.df_cat = df_cat
         self.df_scales = df_scales
@@ -574,7 +574,7 @@ class CPP:
         return df_top_feat
 
     # Main method
-    def run(self, labels=None, parametric=False, n_filter=100, tmd_len=20, start=1, accept_gaps=False, check_cat=True,
+    def run(self, labels=None, parametric=False, n_filter=100, tmd_len=20, start=1, check_cat=True,
             n_pre_filter=None, pct_pre_filter=5, max_std_test=0.2, max_overlap=0.49, max_cor=0.5):
         """Perform CPP pipeline by creation and two-step filtering of features. CPP aims to identify a collection of
         non-redundant features that are most discriminant between a test and a reference group of sequences.
@@ -637,7 +637,6 @@ class CPP:
         ut.check_non_negative_number(name="pct_pre_filter", val=pct_pre_filter, min_val=5, max_val=100)
         ut.check_non_negative_number(name="max_std_test", val=max_std_test, min_val=0.0, max_val=1.0, just_int=False)
         ut.check_non_negative_number(name="max_overlap", val=max_overlap, min_val=0.0, max_val=1.0, just_int=False)
-        ut.check_bool(name="accept_gaps", val=accept_gaps)
         ut.check_bool(name="verbose", val=self.verbose)
         # Settings and creation of objects
         args = dict(split_kws=self.split_kws, df_scales=self.df_scales)
@@ -651,7 +650,7 @@ class CPP:
         abs_mean_dif, std_test, features = sfs.pre_filtering_info(**args,
                                                                   df_parts=self.df_parts,
                                                                   y=labels,
-                                                                  accept_gaps=accept_gaps,
+                                                                  accept_gaps=self.accept_gaps,
                                                                   verbose=self.verbose)
         if n_pre_filter is None:
             n_pre_filter = int(len(features) * (pct_pre_filter / 100))
@@ -665,7 +664,7 @@ class CPP:
                                  n=n_pre_filter,
                                  max_std_test=max_std_test)
         # Filtering using CPP algorithm
-        df = self.add_stat(df_feat=df, labels=labels, parametric=parametric, accept_gaps=accept_gaps)
+        df = self.add_stat(df_feat=df, labels=labels, parametric=parametric, accept_gaps=self.accept_gaps)
         if self.verbose:
             print(f"3. CPP filtering algorithm")
         df = self.add_positions(df_feat=df, tmd_len=tmd_len, start=start)
@@ -807,11 +806,11 @@ class CPP:
             :context: close-figs
 
             >>> import matplotlib.pyplot as plt
-            >>> from cpp import SequenceFeature, CPP
-            >>> sf = SequenceFeature()
+            >>> import aaanalysis as aa
+            >>> sf = aa.SequenceFeature()
             >>> df_seq, labels = sf.load_sequences(return_labels=True)
             >>> df_parts = sf.get_df_parts(df_seq=df_seq)
-            >>> cpp = CPP(df_parts=df_parts)
+            >>> cpp = aa.CPP(df_parts=df_parts)
             >>> df_feat = cpp.run(labels=labels)
             >>> cpp.plot_heatmap(df_feat=df_feat)
             >>> plt.tight_layout()

@@ -14,7 +14,7 @@ from collections import OrderedDict
 from aaanalysis.cpp._feature_pos import SequenceFeaturePositions
 from aaanalysis.cpp._split import Split, SplitRange
 from aaanalysis.cpp._part import Parts
-import aaanalysis.cpp as ut
+import aaanalysis.cpp._utils as ut
 
 
 # I Helper Functions
@@ -295,32 +295,6 @@ class SequenceFeature:
         df_scales = df_scales[list_scales]  # Filter scales
         return df_scales.copy()
 
-    @staticmethod
-    def load_colors():
-        """Load default color dictionary
-
-        Returns
-        -------
-        dict_color: dict
-            Default color dictionary mapping categories to colors.
-
-        Notes
-        -----
-        Default color dictionary comprises following eight pairs of category and color:
-
-            1. ASA/Volume: tab:blue
-            2. Composition: tab:orange
-            3. Conformation: tab:green
-            4. Energy: tab:red
-            5. Others: tab:gray
-            6. Polarity: gold
-            7. Shape: tab:cyan
-            8. Structure-Activity: tab:brown
-
-        """
-        dict_color = ut.DICT_COLOR
-        return dict_color.copy()
-
 
     @staticmethod
     def load_sequences(online=False, n_in_class=50, return_labels=False):
@@ -395,15 +369,15 @@ class SequenceFeature:
         --------
         Get sequence parts based on parts columns in df_seq with with 'tmd_e', and 'tmd_jmd' as parts:
 
-        >>> from cpp import SequenceFeature
-        >>> sf = SequenceFeature()
+        >>> import aaanalysis as aa
+        >>> sf = aa.SequenceFeature()
         >>> df_seq = sf.load_sequences()
         >>> df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=["tmd_e", "tmd_jmd"])
 
         Get sequence parts based on sequence column in df_seq and jmd_n_len and jmd_c_len with default parts:
 
-        >>> from cpp import SequenceFeature
-        >>> sf = SequenceFeature()
+        >>> import aaanalysis as aa
+        >>> sf = aa.SequenceFeature()
         >>> df_seq = sf.load_sequences()
         >>> df_parts = sf.get_df_parts(df_seq=df_seq, jmd_n_len=10, jmd_c_len=10)
         """
@@ -466,14 +440,14 @@ class SequenceFeature:
         --------
         Get default arguments for all splits types (Segment, Pattern, PeriodicPattern):
 
-        >>> from cpp import SequenceFeature
-        >>> sf = SequenceFeature()
+        >>> import aaanalysis as aa
+        >>> sf = aa.SequenceFeature()
         >>> split_kws = sf.get_split_kws()
 
         Get default argumetns for Segment split:
 
-        >>> from cpp import SequenceFeature
-        >>> sf = SequenceFeature()
+        >>> import aaanalysis as aa
+        >>> sf = aa.SequenceFeature()
         >>> split_kws = sf.get_split_kws(split_types="Segment")
         """
         split_types = check_split_types(split_types=split_types)

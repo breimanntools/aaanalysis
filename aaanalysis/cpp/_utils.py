@@ -26,7 +26,7 @@ URL_DATA = "https://raw.githubusercontent.com/stephanbreimann/CPP/master/cpp_too
 
 # Default data for protein analysis
 FILE_SCALES = "scales.xlsx"
-FILE_CAT = "scale_classification.xlsx"
+FILE_CAT = "scale_categories.xlsx"
 FILE_AACLUST = "AAclust.xlsx"
 FILE_FEAT = "features.xlsx"
 
