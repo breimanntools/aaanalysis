@@ -330,24 +330,22 @@ class CPP:
         df_cat, df_scales = ut.check_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
         ut.check_split_kws(split_kws=split_kws)
         check_len_ext_and_jmd(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len)
-        self.verbose = verbose
-        self.accept_gaps = accept_gaps
+        self._verbose = verbose
+        self._accept_gaps = accept_gaps
         # Feature components: Scales + Part + Split
-        self.df_cat = df_cat
-        self.df_scales = df_scales
-        self.df_parts = df_parts
+        self._df_cat = df_cat
+        self._df_scales = df_scales
+        self._df_parts = df_parts
         self.split_kws = split_kws
-        # Default color dictionary
-        self.dict_color = ut.DICT_COLOR
         # Set consistent length of JMD_N, JMD_C, TMD flanking amino acids (TMD-E)
-        self.jmd_n_len = jmd_n_len
-        self.jmd_c_len = jmd_c_len
-        self.ext_len = ext_len
+        self._jmd_n_len = jmd_n_len
+        self._jmd_c_len = jmd_c_len
+        self._ext_len = ext_len
 
 
 
     # Adder methods for CPP analysis (used in run method)
-    def add_scale_info(self, df_feat=None):
+    def _add_scale_info(self, df_feat=None):
         """Add scale information to DataFrame. Scale information are–from general to specific–scale categories,
         sub categories, and scale names.
 
@@ -365,7 +363,7 @@ class CPP:
         df_feat = ut.check_df_feat(df_feat=df_feat)
 
         # Add scale categories
-        df_cat = self.df_cat.copy()
+        df_cat = self._df_cat.copy()
         i = df_feat.columns.get_loc(ut.COL_FEATURE)
         for col in [ut.COL_SCALE_DES, ut.COL_SCALE_NAME, ut.COL_SUBCAT, ut.COL_CAT]:
             if col in list(df_feat):
@@ -375,7 +373,7 @@ class CPP:
             df_feat.insert(i + 1, col, vals)
         return df_feat
 
-    def add_stat(self, df_feat=None, labels=None, parametric=False, accept_gaps=False):
+    def _add_stat(self, df_feat=None, labels=None, parametric=False, accept_gaps=False):
         """Add summary statistics for each feature to DataFrame.
 
         Parameters
@@ -404,21 +402,21 @@ class CPP:
         """
         # Check input
         df_feat = ut.check_df_feat(df_feat=df_feat)
-        ut.check_labels(labels=labels, df=self.df_parts, name_df="df_parts")
+        ut.check_labels(labels=labels, df=self._df_parts, name_df="df_parts")
         ut.check_bool(name="parametric", val=parametric)
 
         # Add feature statistics
         features = list(df_feat[ut.COL_FEATURE])
         sf = SequenceFeature()
         sfs = SequenceFeatureStatistics()
-        X = sf.feat_matrix(df_parts=self.df_parts,
+        X = sf.feat_matrix(df_parts=self._df_parts,
                            features=features,
-                           df_scales=self.df_scales,
+                           df_scales=self._df_scales,
                            accept_gaps=accept_gaps)
         df_feat = sfs.add_stat(df=df_feat, X=X, y=labels, parametric=parametric)
         return df_feat
 
-    def add_positions(self, df_feat=None, tmd_len=20, start=1):
+    def _add_positions(self, df_feat=None, tmd_len=20, start=1):
         """Add sequence positions to DataFrame.
 
         Parameters
@@ -445,8 +443,8 @@ class CPP:
         # Add positions of features
         sfp = SequenceFeaturePositions()
         dict_part_pos = sfp.get_dict_part_pos(tmd_len=tmd_len,
-                                              jmd_n_len=self.jmd_n_len, jmd_c_len=self.jmd_c_len,
-                                              ext_len=self.ext_len, start=start)
+                                              jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                                              ext_len=self._ext_len, start=start)
         df_feat["positions"] = sfp.get_positions(dict_part_pos=dict_part_pos, features=list(df_feat[ut.COL_FEATURE]))
         return df_feat
 
@@ -527,8 +525,8 @@ class CPP:
         # Add sample difference to reference group
         sf = SequenceFeature()
         X = sf.feat_matrix(features=list(df_feat["feature"]),
-                           df_parts=self.df_parts,
-                           df_scales=self.df_scales,
+                           df_parts=self._df_parts,
+                           df_scales=self._df_scales,
                            accept_gaps=accept_gaps)
         mask = [True if x == ref_group else False for x in labels]
         i = list(df_seq[ut.COL_NAME]).index(sample_name)
@@ -547,7 +545,7 @@ class CPP:
 
     def _filtering(self, df=None, max_overlap=0.49, max_cor=0.5, n_filter=100, check_cat=True):
         """CPP filtering algorithm based on redundancy reduction in descending order of absolute AUC."""
-        dict_c, dict_p, df_cor = _filtering_info(df=df, df_scales=self.df_scales, check_cat=check_cat)
+        dict_c, dict_p, df_cor = _filtering_info(df=df, df_scales=self._df_scales, check_cat=check_cat)
         df = df.sort_values(by=[ut.COL_ABS_AUC, ut.COL_ABS_MEAN_DIF], ascending=False).copy().reset_index(drop=True)
         list_feat = list(df[ut.COL_FEATURE])
         list_top_feat = [list_feat.pop(0)]  # List with best feature
@@ -631,30 +629,30 @@ class CPP:
             11. positions: Feature positions for default settings
         """
         # Check input
-        ut.check_labels(labels=labels, df=self.df_parts, name_df="df_parts")
+        ut.check_labels(labels=labels, df=self._df_parts, name_df="df_parts")
         ut.check_non_negative_number(name="n_filter", val=n_filter, min_val=1)
         ut.check_non_negative_number(name="n_pre_filter", val=n_pre_filter, min_val=1, accept_none=True)
         ut.check_non_negative_number(name="pct_pre_filter", val=pct_pre_filter, min_val=5, max_val=100)
         ut.check_non_negative_number(name="max_std_test", val=max_std_test, min_val=0.0, max_val=1.0, just_int=False)
         ut.check_non_negative_number(name="max_overlap", val=max_overlap, min_val=0.0, max_val=1.0, just_int=False)
-        ut.check_bool(name="verbose", val=self.verbose)
+        ut.check_bool(name="verbose", val=self._verbose)
         # Settings and creation of objects
-        args = dict(split_kws=self.split_kws, df_scales=self.df_scales)
-        if self.verbose:
+        args = dict(split_kws=self.split_kws, df_scales=self._df_scales)
+        if self._verbose:
             sf = SequenceFeature()
-            n_feat = len(sf.features(**args, list_parts=list(self.df_parts)))
-            print(f"1. CPP creates {n_feat} features for {len(self.df_parts)} samples")
+            n_feat = len(sf.features(**args, list_parts=list(self._df_parts)))
+            print(f"1. CPP creates {n_feat} features for {len(self._df_parts)} samples")
             ut.print_start_progress()
         # Pre-filtering: Select best n % of feature (filter_pct) based on ranking value
         sfs = SequenceFeatureStatistics()
         abs_mean_dif, std_test, features = sfs.pre_filtering_info(**args,
-                                                                  df_parts=self.df_parts,
+                                                                  df_parts=self._df_parts,
                                                                   y=labels,
-                                                                  accept_gaps=self.accept_gaps,
-                                                                  verbose=self.verbose)
+                                                                  accept_gaps=self._accept_gaps,
+                                                                  verbose=self._verbose)
         if n_pre_filter is None:
             n_pre_filter = int(len(features) * (pct_pre_filter / 100))
-        if self.verbose:
+        if self._verbose:
             ut.print_finished_progress()
             print(f"2. CPP pre-filters {n_pre_filter} features ({pct_pre_filter}%) with highest '{ut.COL_ABS_MEAN_DIF}'"
                   f" and 'max_std_test' <= {max_std_test}")
@@ -664,14 +662,14 @@ class CPP:
                                  n=n_pre_filter,
                                  max_std_test=max_std_test)
         # Filtering using CPP algorithm
-        df = self.add_stat(df_feat=df, labels=labels, parametric=parametric, accept_gaps=self.accept_gaps)
-        if self.verbose:
+        df = self._add_stat(df_feat=df, labels=labels, parametric=parametric, accept_gaps=self._accept_gaps)
+        if self._verbose:
             print(f"3. CPP filtering algorithm")
-        df = self.add_positions(df_feat=df, tmd_len=tmd_len, start=start)
-        df = self.add_scale_info(df_feat=df)
+        df = self._add_positions(df_feat=df, tmd_len=tmd_len, start=start)
+        df = self._add_scale_info(df_feat=df)
         df = self._filtering(df=df, n_filter=n_filter, check_cat=check_cat, max_overlap=max_overlap, max_cor=max_cor)
         df.reset_index(drop=True, inplace=True)
-        if self.verbose:
+        if self._verbose:
             print(f"4. CPP returns df with {len(df)} unique features including general information and statistics")
         return df
 
@@ -808,7 +806,8 @@ class CPP:
             >>> import matplotlib.pyplot as plt
             >>> import aaanalysis as aa
             >>> sf = aa.SequenceFeature()
-            >>> df_seq, labels = sf.load_sequences(return_labels=True)
+            >>> df_seq = aa.load_dataset(name='GSEC_SUB_SEQ')
+            >>> labels = list(df_seq["label"])
             >>> df_parts = sf.get_df_parts(df_seq=df_seq)
             >>> cpp = aa.CPP(df_parts=df_parts)
             >>> df_feat = cpp.run(labels=labels)
@@ -819,7 +818,7 @@ class CPP:
         # Group arguments
         args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
         args_size = check_args_size(seq_size=seq_size, tmd_fontsize=tmd_fontsize, jmd_fontsize=jmd_fontsize)
-        args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self.jmd_n_len, jmd_c_len=self.jmd_c_len, **args_seq)
+        args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len, **args_seq)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
@@ -836,15 +835,15 @@ class CPP:
         ut.check_dict(name="cbar_kws", val=cbar_kws, accept_none=True)
         ut.check_col_in_df(df=df_feat, name_df="df_feat", col=val_col, type_check="numerical")
         ut.check_y_categorical(df=df_feat, y=y)
-        df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self.df_cat)
+        df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat)
         check_value_type(val_type=val_type, count_in=False)
         check_vmin_vmax(vmin=vmin, vmax=vmax)
         check_figsize(figsize=figsize)
-        dict_color = check_dict_color(dict_color=dict_color, df_cat=self.df_cat)
+        dict_color = check_dict_color(dict_color=dict_color, df_cat=self._df_cat)
 
         # Get df positions
-        df_feat = self.add_positions(df_feat=df_feat, tmd_len=args_len["tmd_len"], start=start)
-        df_pos = _get_df_pos(df_feat=df_feat, df_cat=self.df_cat, y=y, val_col=val_col,
+        df_feat = self._add_positions(df_feat=df_feat, tmd_len=args_len["tmd_len"], start=start)
+        df_pos = _get_df_pos(df_feat=df_feat, df_cat=self._df_cat, y=y, val_col=val_col,
                              value_type=val_type, normalize=normalize, start=start, **args_len)
         # Plotting
         cpp_plot = CPPPlots(**args_len, start=start)
@@ -856,8 +855,8 @@ class CPP:
                                   x_shift=0.5, ytick_size=ytick_size, **args_xtick, **kwargs)
 
             if not grid_on:
-                ax.axvline(x=self.jmd_n_len, ls="--" , color="black")
-                ax.axvline(x=self.jmd_n_len + tmd_len, ls="--", color="black")
+                ax.axvline(x=self._jmd_n_len, ls="--", color="black")
+                ax.axvline(x=self._jmd_n_len + tmd_len, ls="--", color="black")
         except AttributeError as e:
             error_message = check_parameters(func=self.plot_heatmap, name_called_func="sns.heatmap", e=e)
             raise AttributeError(error_message)
@@ -882,7 +881,7 @@ class CPP:
             cpp_plot.add_xticks(ax=ax2, xticks_position="top", x_shift=0.5, **args_xtick)
         # Add scale classification
         if add_legend_cat:
-            ax = cpp_plot.add_legend_cat(ax=ax, df_pos=df_pos, df_cat=self.df_cat, y=y,
+            ax = cpp_plot.add_legend_cat(ax=ax, df_pos=df_pos, df_cat=self._df_cat, y=y,
                                          dict_color=dict_color, legend_kws=legend_kws, legend_y_adjust=legend_y_adjust)
 
         # Set current axis to main axis object depending on tmd sequence given or not
@@ -906,7 +905,7 @@ class CPP:
         # Group arguments
         args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,)
         args_size = check_args_size(seq_size=seq_size, tmd_fontsize=tmd_fontsize, jmd_fontsize=jmd_fontsize)
-        args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self.jmd_n_len, jmd_c_len=self.jmd_c_len, **args_seq)
+        args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len, **args_seq)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
@@ -932,8 +931,8 @@ class CPP:
         check_grid_axis(grid_axis=grid_axis)
 
         # Get df positions
-        df_feat = self.add_positions(df_feat=df_feat, tmd_len=args_len["tmd_len"], start=start)
-        df_pos = _get_df_pos(df_feat=df_feat, df_cat=self.df_cat, y=y, val_col=val_col, value_type="count", **args_len)
+        df_feat = self._add_positions(df_feat=df_feat, tmd_len=args_len["tmd_len"], start=start)
+        df_pos = _get_df_pos(df_feat=df_feat, df_cat=self._df_cat, y=y, val_col=val_col, value_type="count", **args_len)
 
         # Plotting
         cpp_plot = CPPPlots(**args_len, start=start)
@@ -1002,7 +1001,7 @@ class CPP:
         # Group arguments
         args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,)
         args_size = check_args_size(seq_size=seq_size, tmd_fontsize=tmd_fontsize, jmd_fontsize=jmd_fontsize)
-        args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self.jmd_n_len, jmd_c_len=self.jmd_c_len, **args_seq)
+        args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len, **args_seq)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
@@ -1028,13 +1027,13 @@ class CPP:
         check_value_type(val_type=val_type, count_in=True)
         check_args_ytick(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
         check_figsize(figsize=figsize)
-        dict_color = check_dict_color(dict_color=dict_color, df_cat=self.df_cat)
+        dict_color = check_dict_color(dict_color=dict_color, df_cat=self._df_cat)
         check_args_ytick(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
         check_grid_axis(grid_axis=grid_axis)
 
         # Get df positions
-        df_feat = self.add_positions(df_feat=df_feat, tmd_len=args_len["tmd_len"], start=start)
-        df_pos = _get_df_pos(df_feat=df_feat, df_cat=self.df_cat, y=y, val_col=val_col,
+        df_feat = self._add_positions(df_feat=df_feat, tmd_len=args_len["tmd_len"], start=start)
+        df_pos = _get_df_pos(df_feat=df_feat, df_cat=self._df_cat, y=y, val_col=val_col,
                              value_type=val_type, normalize=normalize, start=start, **args_len)
         # Plotting
         cpp_plot = CPPPlots(**args_len, start=start)
@@ -1148,11 +1147,11 @@ class CPP:
         ut.check_col_in_df(df=df_feat, name_df="df_feat", col=pval_col, type_check="numerical")
         ut.check_ylim(df=df_feat, ylim=ylim_v, val_col=val_col)
         ut.check_ylim(df=df_feat, ylim=ylim_p, val_col=pval_col)
-        dict_color = check_dict_color(dict_color=dict_color, df_cat=self.df_cat)
+        dict_color = check_dict_color(dict_color=dict_color, df_cat=self._df_cat)
         check_ylabel_fontweight(ylabel_fontweight=ylabel_fontweight)
         # Plotting
         plt.figure(figsize=figsize)
-        ax = cpp_statistics(df=df_feat, df_cat=self.df_cat, dict_color=dict_color,
+        ax = cpp_statistics(df=df_feat, df_cat=self._df_cat, dict_color=dict_color,
                             col_p=pval_col, neg_log_p=neg_log_p, ylim_p=ylim_p, color_p=color_p, ylabel_p=ylabel_p,
                             min_p=min_p,
                             col_v=val_col, percent_v=percent_v, ylim_v=ylim_v, color_v=color_v, ylabel_v=ylabel_v,
