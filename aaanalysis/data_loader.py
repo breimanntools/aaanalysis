@@ -104,8 +104,11 @@ def load_scales(name="scales", unclassified_in=False, just_aaindex=False, missin
     df_cat = _filter_scales(df_cat=df_cat, unclassified_in=unclassified_in, just_aaindex=just_aaindex)
     if name == ut.STR_SCALE_CAT:
         return df_cat
-    elif missing_values_in and name == ut.STR_SCALES_RAW:
-        return pd.read_excel(ut.FOLDER_DATA + name + ".xlsx", sheet_name="raw")
+    elif missing_values_in:
+        if name == ut.STR_SCALES_RAW:
+            return pd.read_excel(ut.FOLDER_DATA + name + ".xlsx", sheet_name="raw", index_col=0)
+        else:
+            raise ValueError(f"'missing_values_in' works just if '{ut.STR_SCALES_RAW}' is selected for 'name' ({name})")
     df = pd.read_excel(ut.FOLDER_DATA + name + ".xlsx", index_col=0)
     # Filter scales
     df = df[[x for x in list(df) if x in list(df_cat["scale_id"])]]
