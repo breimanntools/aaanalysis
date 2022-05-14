@@ -13,11 +13,10 @@ from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.model_selection import cross_val_score
 from sklearn.decomposition import PCA
-from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score
 from sklearn.cluster import AgglomerativeClustering, KMeans
 
 import scripts._utils as ut
-from aaclust import AAclust
+import aaanalysis as aa
 
 # Settings
 pd.set_option('expand_frame_repr', False)  # Single line print for pd.Dataframe
@@ -97,7 +96,7 @@ def _get_aaclust_scales(df_scales=None, list_n=None):
             n += 1
             #if not n > n_max:
             model, model_kwargs, model_name = model_
-            aac = AAclust(model=model, model_kwargs=model_kwargs)
+            aac = aa.AAclust(model=model, model_kwargs=model_kwargs)
             args = dict(on_center=on_center, min_th=0.3, merge=True, merge_metric="euclidean")
             # TODO check if consistent with sklarn
             aac.fit(np.array(df_scales).T,  **args)
@@ -113,7 +112,7 @@ def _get_aaclust_scales(df_scales=None, list_n=None):
         else:
             model = AgglomerativeClustering
             model_kwargs = dict(linkage="average")
-        aac = AAclust(model=model, model_kwargs=model_kwargs)
+        aac = aa.AAclust(model=model, model_kwargs=model_kwargs)
         aac.fit(np.array(df_scales).T, n_clusters=n)
         scales = [list(df_scales)[i] for i in aac.medoid_ind_]
         dict_scales[name] = scales

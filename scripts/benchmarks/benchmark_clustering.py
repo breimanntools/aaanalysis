@@ -9,10 +9,10 @@ from collections import OrderedDict
 from scipy.spatial import distance
 
 from sklearn.cluster import DBSCAN, AffinityPropagation, OPTICS, Birch, \
-    KMeans,AgglomerativeClustering, MiniBatchKMeans, SpectralClustering
+    KMeans, AgglomerativeClustering, MiniBatchKMeans, SpectralClustering
 from sklearn.metrics import silhouette_score, calinski_harabasz_score
 
-from aaclust import AAclust
+import aaanalysis as aa
 import scripts._utils as ut
 
 
@@ -105,7 +105,7 @@ def _score_ranking(df=None, cols_scores=None):
 # Benchmark aaanalysis classification
 def benchmark_aaclust_clustering():
     """Initial benchmarking to compare AAclust against clustering models without k as parameter"""
-    df_cat = pd.read_excel(ut.FOLDER_DATA + "scale_classification.xlsx")
+    df_cat = pd.read_excel(ut.FOLDER_DATA + "scale_categories.xlsx")
     df_scales = pd.read_excel(ut.FOLDER_DATA + "scales.xlsx", index_col=0)
     X, scales = get_feat_matrix(df_cat=df_cat.copy(),
                                 df_scales=df_scales.copy())
@@ -135,7 +135,7 @@ def benchmark_aaclust_clustering():
                    (SpectralClustering, dict(), "Spectral")]
 
     for model, params, name in list_models:
-        aac = AAclust(model=model, model_kwargs=params)
+        aac = aa.AAclust(model=model, model_kwargs=params)
         for on_center in [True, False]:
             for merge in ["correlation", "euclidean", False]:
                 merge_metric = merge if merge else None
