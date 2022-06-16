@@ -338,9 +338,9 @@ class CPP:
         self.df_parts = df_parts
         self.split_kws = split_kws
         # Set consistent length of JMD_N, JMD_C, TMD flanking amino acids (TMD-E)
-        self._jmd_n_len = jmd_n_len
-        self._jmd_c_len = jmd_c_len
-        self._ext_len = ext_len
+        self.jmd_n_len = jmd_n_len
+        self.jmd_c_len = jmd_c_len
+        self.ext_len = ext_len
 
 
 
@@ -416,7 +416,7 @@ class CPP:
         df_feat = sfs.add_stat(df=df_feat, X=X, y=labels, parametric=parametric)
         return df_feat
 
-    def _add_positions(self, df_feat=None, tmd_len=20, start=1):
+    def add_positions(self, df_feat=None, tmd_len=20, start=1):
         """Add sequence positions to DataFrame.
 
         Parameters
@@ -443,8 +443,8 @@ class CPP:
         # Add positions of features
         sfp = SequenceFeaturePositions()
         dict_part_pos = sfp.get_dict_part_pos(tmd_len=tmd_len,
-                                              jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
-                                              ext_len=self._ext_len, start=start)
+                                              jmd_n_len=self.jmd_n_len, jmd_c_len=self.jmd_c_len,
+                                              ext_len=self.ext_len, start=start)
         df_feat["positions"] = sfp.get_positions(dict_part_pos=dict_part_pos, features=list(df_feat[ut.COL_FEATURE]))
         return df_feat
 
@@ -665,7 +665,7 @@ class CPP:
         df = self._add_stat(df_feat=df, labels=labels, parametric=parametric, accept_gaps=self._accept_gaps)
         if self._verbose:
             print(f"3. CPP filtering algorithm")
-        df = self._add_positions(df_feat=df, tmd_len=tmd_len, start=start)
+        df = self.add_positions(df_feat=df, tmd_len=tmd_len, start=start)
         df = self._add_scale_info(df_feat=df)
         df = self._filtering(df=df, n_filter=n_filter, check_cat=check_cat, max_overlap=max_overlap, max_cor=max_cor)
         df.reset_index(drop=True, inplace=True)
@@ -677,13 +677,13 @@ class CPP:
     def plot_heatmap(self, df_feat=None, y="subcategory", val_col="mean_dif", val_type="mean", normalize=False,
                      figsize=(10, 7), title=None, title_kws=None,
                      vmin=None, vmax=None, grid_on=True,
-                     cmap="RdBu_r", cmap_n_colors=None, dict_color=None, cbar_kws=None,
+                     cmap="RdBu_r", cmap_n_colors=None, dict_color=None, cbar_kws=None, facecolor_dark=True,
                      add_jmd_tmd=True, tmd_len=20, start=1,
                      jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None,
                      tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
                      seq_size=None, tmd_fontsize=None, jmd_fontsize=None,
-                     xticks_top=False, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, ytick_size=None,
-                     add_legend_cat=True, legend_kws=None, legend_y_adjust=-0.05,
+                     xticks_top=False, xticks_pos=True,  xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, ytick_size=None,
+                     add_legend_cat=True, legend_kws=None, legend_y_adjust=-0.05, legend_x_adjust=0.0,
                      **kwargs):
         """Plot heatmap of selected value column for scale information (y-axis) against sequence position (x-axis).
 
@@ -818,7 +818,7 @@ class CPP:
         # Group arguments
         args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
         args_size = check_args_size(seq_size=seq_size, tmd_fontsize=tmd_fontsize, jmd_fontsize=jmd_fontsize)
-        args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len, **args_seq)
+        args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self.jmd_n_len, jmd_c_len=self.jmd_c_len, **args_seq)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
@@ -842,7 +842,7 @@ class CPP:
         dict_color = check_dict_color(dict_color=dict_color, df_cat=self.df_cat)
 
         # Get df positions
-        df_feat = self._add_positions(df_feat=df_feat, tmd_len=args_len["tmd_len"], start=start)
+        df_feat = self.add_positions(df_feat=df_feat, tmd_len=args_len["tmd_len"], start=start)
         df_pos = _get_df_pos(df_feat=df_feat, df_cat=self.df_cat, y=y, val_col=val_col,
                              value_type=val_type, normalize=normalize, start=start, **args_len)
         # Plotting
@@ -852,11 +852,12 @@ class CPP:
             subplots = "ax" in kwargs
             ax = cpp_plot.heatmap(df_pos=df_pos, vmin=vmin, vmax=vmax, grid_on=grid_on,
                                   cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws,
-                                  x_shift=0.5, ytick_size=ytick_size, **args_xtick, **kwargs)
+                                  x_shift=0.5, ytick_size=ytick_size, facecolor_dark=facecolor_dark,
+                                  **args_xtick, **kwargs)
 
             if not grid_on:
-                ax.axvline(x=self._jmd_n_len, ls="--", color="black")
-                ax.axvline(x=self._jmd_n_len + tmd_len, ls="--", color="black")
+                ax.axvline(x=self.jmd_n_len, ls="--" , color="black")
+                ax.axvline(x=self.jmd_n_len + tmd_len, ls="--", color="black")
         except AttributeError as e:
             error_message = check_parameters(func=self.plot_heatmap, name_called_func="sns.heatmap", e=e)
             raise AttributeError(error_message)
@@ -867,7 +868,8 @@ class CPP:
         # Add tmd_jmd sequence if sequence is given
         if isinstance(tmd_seq, str):
             cpp_plot.add_tmd_jmd_seq(ax=ax, **args_seq, **args_size, **args_part_color, **args_seq_color,
-                                     xticks_top=xticks_top, x_shift=0.5, xtick_size=xtick_size)
+                                     xticks_top=xticks_top, xticks_pos=xticks_pos,
+                                     x_shift=0.5, xtick_size=xtick_size)
         # Add tmd_jmd bar
         elif add_jmd_tmd:
             args_part_size = {x: args_size[x] for x in args_size if x != "seq_size"}
@@ -882,7 +884,8 @@ class CPP:
         # Add scale classification
         if add_legend_cat:
             ax = cpp_plot.add_legend_cat(ax=ax, df_pos=df_pos, df_cat=self.df_cat, y=y,
-                                         dict_color=dict_color, legend_kws=legend_kws, legend_y_adjust=legend_y_adjust)
+                                         dict_color=dict_color, legend_kws=legend_kws,
+                                         legend_y_adjust=legend_y_adjust, legend_x_adjust=legend_x_adjust)
 
         # Set current axis to main axis object depending on tmd sequence given or not
         n = 2 if isinstance(tmd_seq, str) else 0
@@ -905,7 +908,7 @@ class CPP:
         # Group arguments
         args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,)
         args_size = check_args_size(seq_size=seq_size, tmd_fontsize=tmd_fontsize, jmd_fontsize=jmd_fontsize)
-        args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len, **args_seq)
+        args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self.jmd_n_len, jmd_c_len=self.jmd_c_len, **args_seq)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
@@ -931,7 +934,7 @@ class CPP:
         check_grid_axis(grid_axis=grid_axis)
 
         # Get df positions
-        df_feat = self._add_positions(df_feat=df_feat, tmd_len=args_len["tmd_len"], start=start)
+        df_feat = self.add_positions(df_feat=df_feat, tmd_len=args_len["tmd_len"], start=start)
         df_pos = _get_df_pos(df_feat=df_feat, df_cat=self.df_cat, y=y, val_col=val_col, value_type="count", **args_len)
 
         # Plotting
@@ -990,7 +993,7 @@ class CPP:
                      jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None,
                      tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
                      seq_size=None, tmd_fontsize=None, jmd_fontsize=None,
-                     xticks_top=True, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
+                     xticks_top=True, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, xticks_pos=True,
                      ytick_size=None, ytick_width=2.0, ytick_length=5.0, ylim=None,
                      highlight_tmd_area=True, highlight_alpha=0.15,
                      grid=False, grid_axis="both",
@@ -1001,7 +1004,7 @@ class CPP:
         # Group arguments
         args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,)
         args_size = check_args_size(seq_size=seq_size, tmd_fontsize=tmd_fontsize, jmd_fontsize=jmd_fontsize)
-        args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len, **args_seq)
+        args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self.jmd_n_len, jmd_c_len=self.jmd_c_len, **args_seq)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
@@ -1032,7 +1035,7 @@ class CPP:
         check_grid_axis(grid_axis=grid_axis)
 
         # Get df positions
-        df_feat = self._add_positions(df_feat=df_feat, tmd_len=args_len["tmd_len"], start=start)
+        df_feat = self.add_positions(df_feat=df_feat, tmd_len=args_len["tmd_len"], start=start)
         df_pos = _get_df_pos(df_feat=df_feat, df_cat=self.df_cat, y=y, val_col=val_col,
                              value_type=val_type, normalize=normalize, start=start, **args_len)
         # Plotting
@@ -1053,7 +1056,7 @@ class CPP:
         # Add tmd_jmd sequence if sequence is given
         if type(tmd_seq) == str:
             cpp_plot.add_tmd_jmd_seq(ax=ax, **args_seq, **args_size, **args_part_color, **args_seq_color,
-                                     xticks_top=False, heatmap=False, x_shift=0, xtick_size=xtick_size)
+                                     xticks_top=False, xticks_pos=xticks_pos, heatmap=False, x_shift=0, xtick_size=xtick_size)
         # Add tmd_jmd bar
         elif add_jmd_tmd:
             args_part_size = {x: args_size[x] for x in args_size if x != "seq_size"}
@@ -1160,4 +1163,3 @@ class CPP:
                             legend_kws=legend_kws, legend_y_adjust=legend_y_adjust,
                             highlight_cat=highlight_cat, highlight_alpha=highlight_alpha, **kwargs)
         return ax
-

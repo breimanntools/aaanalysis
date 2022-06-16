@@ -111,8 +111,8 @@ def _get_y(ax=None, bar_height=None, height_factor=1.0, reversed_weight=0):
     reversed_y = reversed_weight if ylim[0] > ylim[1] else 1
     y = ylim[0] - (bar_height * height_factor) * reversed_y
     return y
-    
-    
+
+
 def add_part_bar(ax=None, start=1.0, len_part=40.0, color="blue", add_white_bar=True):
     """Get colored bar for tmd and jmd showing sequence parts"""
     bar_height = _get_bar_height(ax=ax)
@@ -203,13 +203,15 @@ def _get_legend_handles_labels(dict_color=None, list_cat=None):
 
 
 # Heatmap settings functions
-def get_cmap_heatmap(df_pos=None, cmap=None, n_colors=None, higher_color=None, lower_color=None):
+def get_cmap_heatmap(df_pos=None, cmap=None, n_colors=None, higher_color=None, lower_color=None, facecolor_dark=True):
     """Get sequential or diverging cmap for heatmap"""
+    n_colors = 50 if n_colors is None else n_colors
     if cmap == "SHAP":
-        n_colors = 100 if n_colors is None else n_colors
-        cmap_low = sns.light_palette(lower_color, input="hex",reverse=True, n_colors=int(n_colors/2)+1)
-        cmap_high = sns.light_palette(higher_color, input="hex", n_colors=int(n_colors/2)+1)
-        cmap = cmap_low[0:-1] + [cmap_low[-1]] + cmap_high[1:]
+        n = 5
+        cmap_low = sns.light_palette(lower_color, input="hex", reverse=True, n_colors=int(n_colors/2)+n)
+        cmap_high = sns.light_palette(higher_color, input="hex", n_colors=int(n_colors/2)+n)
+        c_middle = [(0,0,0)] if facecolor_dark else [cmap_low[-1]]
+        cmap = cmap_low[0:-n] + c_middle + cmap_high[n:]
         return cmap
     if cmap is None:
         # Use diverging colormap if positive and negative
@@ -218,8 +220,14 @@ def get_cmap_heatmap(df_pos=None, cmap=None, n_colors=None, higher_color=None, l
         # Use sequential colormap if values just positive
         else:
             cmap = "flare"
-    if n_colors is not None:
+    if df_pos.min().min() >= 0:
         cmap = sns.color_palette(cmap, n_colors=n_colors)
+    else:
+        n = 5
+        cmap = sns.color_palette(cmap, n_colors=n_colors+n*2)
+        cmap_low, cmap_high = cmap[0:int((n_colors+n*2)/2)], cmap[int((n_colors+n*2)/2):]
+        c_middle = [(0,0,0)] if facecolor_dark else [cmap_low[-1]]
+        cmap = cmap_low[0:-n] + c_middle + cmap_high[n:]
     return cmap
 
 
@@ -259,7 +267,7 @@ def set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws_=None):
     cbar.ax.yaxis.label.set_size(dict_cbar["labelsize"])
     cbar_ticks = cbar.get_ticks()
     cbar.set_ticks(cbar_ticks)
-    str_zero = "[0]" # r"$0^{*}$"
+    str_zero = "[0]"
     cbar.set_ticklabels([f"{x}" if float(x) != 0 else str_zero for x in cbar_ticks])
 
 
@@ -432,7 +440,7 @@ class CPPPlots:
     def set_figsize(figsize=None):
         """"""
         width, height = plt.gcf().get_size_inches()
-        # Set cpp default figsize if matplotlib default figsize is set
+        # Set cpp_tools default figsize if matplotlib default figsize is set
         if width == 6.4 and height == 4.8:
             plt.figure(figsize=figsize)
 
@@ -497,8 +505,9 @@ class CPPPlots:
                                      color=tmd_color, zorder=0.1, clip_on=True, alpha=alpha)
         ax.add_patch(rect)
 
-    def add_tmd_jmd_seq(self, ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, xticks_top=True, heatmap=True,
-                        tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
+    def add_tmd_jmd_seq(self, ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, xticks_top=True, xticks_pos=True,
+                        heatmap=True, tmd_color="mediumspringgreen", jmd_color="blue",
+                        tmd_seq_color="black", jmd_seq_color="white",
                         x_shift=0, xtick_size=11, seq_size=11, tmd_fontsize=11, jmd_fontsize=11):
         """"""
         add_part_seq(ax=ax, jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
@@ -508,7 +517,7 @@ class CPPPlots:
         # Set second axis (with ticks and part annotations)
         jmd_n_end, tmd_end, jmd_c_end = self._get_ends(x_shift=-1)
         jmd_n_middle, tmd_middle, jmd_c_middle = self._get_middles(x_shift=-0.5)
-        if xticks_top:
+        if xticks_top or not xticks_pos:
             xticks = [jmd_n_middle, tmd_middle, jmd_c_middle]
             xtick_labels = ["JMD-N", "TMD", "JMD-C"]
         else:
@@ -581,16 +590,20 @@ class CPPPlots:
 
     # Main plotting methods
     def heatmap(self, df_pos=None, ax=None, cmap=None, cmap_n_colors=None, cbar_kws=None, grid_on=False,
-                x_shift=0.0, xtick_size=11.0, xtick_width=2.0, xtick_length=None, ytick_size=None, **kwargs):
+                x_shift=0.0, xtick_size=11.0, xtick_width=2.0, xtick_length=None, ytick_size=None,
+                facecolor_dark=True, **kwargs):
         """Show summary static values of feature categories/sub_categories per position as heat map"""
+        facecolor = "black" if facecolor_dark else "white"
         # Default arguments for heatmap
         cmap = get_cmap_heatmap(df_pos=df_pos, cmap=cmap, n_colors=cmap_n_colors,
                                 higher_color=ut.COLOR_SHAP_HIGHER,
-                                lower_color=ut.COLOR_SHAP_LOWER)
+                                lower_color=ut.COLOR_SHAP_LOWER,
+                                facecolor_dark=facecolor_dark)
         center = get_center_heatmap(df_pos=df_pos)
         dict_cbar, cbar_kws_ = get_cbar_args_heatmap(cbar_kws=cbar_kws, df_pos=df_pos)
         linewidths = 0.01 if grid_on else 0
-        kws_plot = dict(ax=ax, cmap=cmap, cbar_kws=cbar_kws_, center=center, linewidths=linewidths, linecolor="black")
+        kws_plot = dict(ax=ax, cmap=cmap, cbar_kws=cbar_kws_, center=center,
+                        linewidths=linewidths, linecolor="gray")
         kws_plot.update(**kwargs)  # Update and add new arguments
         # Plot with 0 set to NaN
         ax = sns.heatmap(df_pos.replace(0, np.NaN), yticklabels=True, xticklabels=True,  **kws_plot)
@@ -604,7 +617,7 @@ class CPPPlots:
         # Set frame
         for _, spine in ax.spines.items():
             spine.set_visible(True)
-        ax.set_facecolor("white")
+        ax.set_facecolor(facecolor)
         return ax
 
     def barplot(self, df_pos=None, ax=None, bar_color="steelblue", edge_color="none", bar_width=0.8,
@@ -630,7 +643,7 @@ class CPPPlots:
 
     def profile(self, df_pos=None, ax=None, dict_color=None, edge_color="none", bar_width=0.8,
                 xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, ylim=None,
-                add_legend=True, legend_kws=None, shap_plot=False, **kwargs):
+                add_legend=True, legend_kws=None, shap_plot=False, shap_legend=False, **kwargs):
         """Show count of feature categories/sub_categories per position for positive and
         negative features, i.e., feature with positive resp. negative mean_dif. The profile
         is a bar chart with positive and negative counts"""
@@ -652,7 +665,8 @@ class CPPPlots:
                     fs = legend_kws["fontsize"]
                 else:
                     fs = 13
-                draw_shap_legend(x=plt.xlim()[0]+4, y=ylim[0]+1.5,  offset_text=1, fontsize=fs)
+                if shap_legend:
+                    draw_shap_legend(x=plt.xlim()[0]+4, y=ylim[0]+1.5,  offset_text=1, fontsize=fs)
         else:
             handles, labels = _get_legend_handles_labels(dict_color=dict_color, list_cat=list(df_pos.index))
             df_bar = df_pos.T[labels]

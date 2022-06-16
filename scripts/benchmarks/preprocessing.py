@@ -52,7 +52,6 @@ def pre_processing_data():
     COLUMNS = ["entry", "sequence", "label"]
     FOLDER_OUT = ut.FOLDER_DATA + "benchmarks" + ut.SEP
     FOLDER_IN = FOLDER_OUT + "material" + ut.SEP
-
     # Amyloidogenic
     """
     file = "AMYLO_SEQ"
