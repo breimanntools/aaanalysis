@@ -17,7 +17,7 @@ The webserver is available under ...
 Clone the repository 
 
 ```
-git clone https://github.com/stephanbreimann/AAanalysis
+git clone https://github.com/breimannlab/aaanalysis
 ```
 
 Set up a virtual environment and install dependencies using the requirements.txt file
@@ -26,6 +26,7 @@ Set up a virtual environment and install dependencies using the requirements.txt
 pip install -r requirements.txt
 ```
 
+TODO
 Run dash app to explore the amino acid scales and their relations on the level categories,
 subcategories, scales, and amino acids
 
