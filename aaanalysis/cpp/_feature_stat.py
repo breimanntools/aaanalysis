@@ -94,7 +94,7 @@ def splitting(df_parts=None, split_kws=None):
 
 
 def _pre_filtering_info(list_scales, dict_all_scales, labels_ps, splittings, accept_gaps, mask_0, mask_1, verbose):
-    """Compute ranking value defined as abs(mean_dif) - std(test), where mean_dif is the difference
+    """Compute abs(mean_dif) and std(test) to rank features, where mean_dif is the difference
     between the means of the test and the reference protein groups for a feature"""
     feat_names = np.empty((len(list_scales) * len(labels_ps)), dtype=object)
     abs_mean_dif = np.empty((len(list_scales) * len(labels_ps)))
@@ -142,7 +142,7 @@ class SequenceFeatureStatistics:
 
     @staticmethod
     def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None, y=None,
-                           accept_gaps=False, verbose=True):
+                           accept_gaps=False, verbose=True, n_processes=None):
         """Get n best features in descending order based on the abs(mean(group1) - mean(group0),
         where group 1 is the target group
 
@@ -160,6 +160,8 @@ class SequenceFeatureStatistics:
             Whether to accept missing values by enabling omitting for computations (if True).
         verbose: bool, default=True
             Whether to print progress information about the algorithm (if True).
+        n_processes: integer default=None
+            Number of CPUs used for multiprocessing. If None, number will be optimized automatically
 
         Returns
         -------
@@ -176,16 +178,20 @@ class SequenceFeatureStatistics:
         splittings, labels_ps = splitting(split_kws=split_kws, df_parts=df_parts)
         list_scales = list(df_scales)
         dict_all_scales = {col: dict(zip(df_scales.index.to_list(), df_scales[col])) for col in list_scales}
-        # Multiprocessing for filtering of features
-        n_processes = min([os.cpu_count(), len(list_scales)])
-        scale_chunks = np.array_split(list_scales, n_processes)
-        args = zip(scale_chunks, repeat(dict_all_scales), repeat(labels_ps), repeat(splittings),
-                   repeat(accept_gaps), repeat(mask_0), repeat(mask_1), repeat(verbose))
-        with mp.get_context("spawn").Pool(processes=n_processes) as pool:
-            result = pool.starmap(_pre_filtering_info, args)
-        abs_mean_dif = np.concatenate([x[0] for x in result])
-        std_test = np.concatenate([x[1] for x in result])
-        feat_names = np.concatenate([x[2] for x in result])
+        if n_processes is None or n_processes != 1:
+            # Multiprocessing for filtering of features
+            n_processes = min([os.cpu_count(), len(list_scales)])
+            scale_chunks = np.array_split(list_scales, n_processes)
+            args = zip(scale_chunks, repeat(dict_all_scales), repeat(labels_ps), repeat(splittings),
+                       repeat(accept_gaps), repeat(mask_0), repeat(mask_1), repeat(verbose))
+            with mp.get_context("spawn").Pool(processes=n_processes) as pool:
+                result = pool.starmap(_pre_filtering_info, args)
+            abs_mean_dif = np.concatenate([x[0] for x in result])
+            std_test = np.concatenate([x[1] for x in result])
+            feat_names = np.concatenate([x[2] for x in result])
+        else:
+            args = [list_scales, dict_all_scales, labels_ps, splittings, accept_gaps, mask_0, mask_1, verbose]
+            abs_mean_dif, std_test, feat_names = _pre_filtering_info(*args)
         return abs_mean_dif, std_test, feat_names
 
     # Summary and test statistics for feature matrix based on classification by labels

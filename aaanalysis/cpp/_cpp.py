@@ -205,7 +205,7 @@ def _get_legend_handles_labels(dict_color=None, list_cat=None):
 # Heatmap settings functions
 def get_cmap_heatmap(df_pos=None, cmap=None, n_colors=None, higher_color=None, lower_color=None, facecolor_dark=True):
     """Get sequential or diverging cmap for heatmap"""
-    n_colors = 50 if n_colors is None else n_colors
+    n_colors = 100 if n_colors is None else n_colors
     if cmap == "SHAP":
         n = 5
         cmap_low = sns.light_palette(lower_color, input="hex", reverse=True, n_colors=int(n_colors/2)+n)
@@ -257,7 +257,7 @@ def get_cbar_args_heatmap(cbar_kws=None, df_pos=None):
         cbar_kws_.update(**cbar_kws)
     return dict_cbar, cbar_kws_
 
-def set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws_=None):
+def set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws_=None, vmin=None, vmax=None):
     """"""
     # Set colorbar labelsize and ticksize
     cbar = ax.collections[0].colorbar
@@ -265,7 +265,7 @@ def set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws_=None):
     if "label" in cbar_kws_:
         cbar.set_label(label=cbar_kws_["label"], weight="bold", size=dict_cbar["labelsize"])
     cbar.ax.yaxis.label.set_size(dict_cbar["labelsize"])
-    cbar_ticks = cbar.get_ticks()
+    cbar_ticks = [x for x in cbar.get_ticks() if vmin <= x <= vmax]
     cbar.set_ticks(cbar_ticks)
     str_zero = "[0]"
     cbar.set_ticklabels([f"{x}" if float(x) != 0 else str_zero for x in cbar_ticks])
@@ -613,7 +613,7 @@ class CPPPlots:
         # Adjust y ticks
         ax.tick_params(axis='y', which='both', length=0, labelsize=ytick_size)
         # Set colorbar labelsize and ticksize
-        set_cbar_heatmap(ax=ax, dict_cbar=dict_cbar, cbar_kws_=cbar_kws_)
+        set_cbar_heatmap(ax=ax, dict_cbar=dict_cbar, cbar_kws_=cbar_kws_, vmin=kwargs["vmin"], vmax=kwargs["vmax"])
         # Set frame
         for _, spine in ax.spines.items():
             spine.set_visible(True)

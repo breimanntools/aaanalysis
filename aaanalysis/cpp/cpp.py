@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import inspect
+import warnings
 
 import aaanalysis.cpp._utils as ut
 from aaanalysis.cpp.feature import SequenceFeature
@@ -573,7 +574,7 @@ class CPP:
 
     # Main method
     def run(self, labels=None, parametric=False, n_filter=100, tmd_len=20, start=1, check_cat=True,
-            n_pre_filter=None, pct_pre_filter=5, max_std_test=0.2, max_overlap=0.49, max_cor=0.5):
+            n_pre_filter=None, pct_pre_filter=5, max_std_test=0.2, max_overlap=0.49, max_cor=0.5, n_processes=None):
         """Perform CPP pipeline by creation and two-step filtering of features. CPP aims to identify a collection of
         non-redundant features that are most discriminant between a test and a reference group of sequences.
 
@@ -587,7 +588,6 @@ class CPP:
             Number of features to be filtered/selected by CPP algorithm.
         n_pre_filter: int, optional
             Number of feature to be pre-filtered by CPP algorithm. If None, a percentage of all features is used.
-
         tmd_len : int, >0
             Length of TMD used for positions.
         start : int, >=0
@@ -601,10 +601,10 @@ class CPP:
             The maximum positional overlap of features used as threshold for filtering.
         max_cor: float [0-1], default=0.5
             The maximum pearson correlation of features used as threshold for filtering.
-
         accept_gaps: bool, default=False
             Whether to accept missing values by enabling omitting for computations (if True).
-
+        n_processes: integer default=None
+            Number of CPUs used for multiprocessing. If None, number will be optimized automatically
 
         Returns
         -------
@@ -627,6 +627,7 @@ class CPP:
             9. p_val: Non-parametric (mann_whitney) or parametric (ttest_indep) statistic
             10. p_val_fdr_bh: Benjamini-Hochberg FDR corrected p-values
             11. positions: Feature positions for default settings
+            :param n_processes:
         """
         # Check input
         ut.check_labels(labels=labels, df=self.df_parts, name_df="df_parts")
@@ -643,13 +644,14 @@ class CPP:
             n_feat = len(sf.features(**args, list_parts=list(self.df_parts)))
             print(f"1. CPP creates {n_feat} features for {len(self.df_parts)} samples")
             ut.print_start_progress()
-        # Pre-filtering: Select best n % of feature (filter_pct) based on ranking value
+        # Pre-filtering: Select best n % of feature (filter_pct) based std(test set) and mean_dif
         sfs = SequenceFeatureStatistics()
         abs_mean_dif, std_test, features = sfs.pre_filtering_info(**args,
                                                                   df_parts=self.df_parts,
                                                                   y=labels,
                                                                   accept_gaps=self._accept_gaps,
-                                                                  verbose=self._verbose)
+                                                                  verbose=self._verbose,
+                                                                  n_processes=n_processes)
         if n_pre_filter is None:
             n_pre_filter = int(len(features) * (pct_pre_filter / 100))
         if self._verbose:
