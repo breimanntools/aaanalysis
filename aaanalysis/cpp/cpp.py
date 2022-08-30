@@ -544,7 +544,7 @@ class CPP:
         df = df.sort_values(by=ut.COL_ABS_MEAN_DIF, ascending=False).head(n)
         return df
 
-    def _filtering(self, df=None, max_overlap=0.49, max_cor=0.5, n_filter=100, check_cat=True):
+    def _filtering(self, df=None, max_overlap=0.5, max_cor=0.5, n_filter=100, check_cat=True):
         """CPP filtering algorithm based on redundancy reduction in descending order of absolute AUC."""
         dict_c, dict_p, df_cor = _filtering_info(df=df, df_scales=self.df_scales, check_cat=check_cat)
         df = df.sort_values(by=[ut.COL_ABS_AUC, ut.COL_ABS_MEAN_DIF], ascending=False).copy().reset_index(drop=True)
@@ -561,7 +561,7 @@ class CPP:
                     # Remove if feat positions high overlap or subset
                     pos, top_pos = dict_p[feat], dict_p[top_feat]
                     overlap = len(top_pos.intersection(pos))/len(top_pos.union(pos))
-                    if overlap > max_overlap or pos.issubset(top_pos):
+                    if overlap >= max_overlap or pos.issubset(top_pos):
                         # Remove if high pearson correlation
                         scale, top_scale = feat.split("-")[2], top_feat.split("-")[2]
                         cor = df_cor[top_scale][scale]
@@ -574,7 +574,7 @@ class CPP:
 
     # Main method
     def run(self, labels=None, parametric=False, n_filter=100, tmd_len=20, start=1, check_cat=True,
-            n_pre_filter=None, pct_pre_filter=5, max_std_test=0.2, max_overlap=0.49, max_cor=0.5, n_processes=None):
+            n_pre_filter=None, pct_pre_filter=5, max_std_test=0.2, max_overlap=0.5, max_cor=0.5, n_processes=None):
         """Perform CPP pipeline by creation and two-step filtering of features. CPP aims to identify a collection of
         non-redundant features that are most discriminant between a test and a reference group of sequences.
 
@@ -597,7 +597,7 @@ class CPP:
             Percentage of all features that should remain after the pre-filtering step.
         max_std_test: float [0-1], default=0.2
             The maximum standard deviation within the test group used as threshold for pre-filtering.
-        max_overlap: float [0-1], default=0.49
+        max_overlap: float [0-1], default=0.5
             The maximum positional overlap of features used as threshold for filtering.
         max_cor: float [0-1], default=0.5
             The maximum pearson correlation of features used as threshold for filtering.
