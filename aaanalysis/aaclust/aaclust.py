@@ -111,15 +111,16 @@ def estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6
     # Create range between 10% and 90% of all scales (10% steps) as long as minimum correlation is lower than threshold
     n_samples, n_features = X.shape
     nclust_mincor = [(1, f(1))]
-    for i in range(1, 10, 1):
-        n_clusters = max(1, int(n_samples*i/10))    # n cluster in 10% steps
+    step_number = 40
+    for i in range(1, step_number, 1):
+        n_clusters = max(1, int(n_samples*i/step_number))    # n cluster in 2.5% steps
         min_cor = f(n_clusters)
         if min_cor < min_th:   # Save only lower bounds
             nclust_mincor.append((n_clusters, min_cor))
         else:
             break
     # Select second highest lower bound (highest lower bound is faster but might surpass true bound)
-    nclust_mincor.sort(key=lambda x: x[1], reverse=True)
+    nclust_mincor.sort(key=lambda x: x[0], reverse=True)
     n_clusters = nclust_mincor[1][0] if len(nclust_mincor) > 1 else nclust_mincor[0][0]  # Otherwise, only existing one
     return n_clusters
 
@@ -274,7 +275,7 @@ class AAclust:
         self.medoid_ind_ = None
 
     # Clustering method
-    def fit(self, X, names=None, min_th=0.5, n_clusters=None, on_center=True, merge=True, merge_metric="correlation"):
+    def fit(self, X, names=None, on_center=True, min_th=0,  merge_metric="euclidean", n_clusters=None):
         """Get hierarchy of cluster categories based on list of minimum correlation thresholds."""
         # Check input
         ut.check_min_th(min_th=min_th)
@@ -287,13 +288,26 @@ class AAclust:
         # Clustering using AAclust algorithm
         else:
             # Estimation of lower bound of number of clusters via testing range between 10% and 90% of all scales
+            if self._verbose:
+                print("1. Estimation of lower bound of k (number of clusters)", end="")
             n_clusters_lb = estimate_lower_bound_n_clusters(X, **args)
+            if self._verbose:
+                print(f": k={n_clusters_lb}")
             # Optimization of number of clusters by recursive clustering
+            if self._verbose:
+                objective_fct = "min_cor_center" if on_center else "min_cor_all"
+                print(f"2. Optimization of k by recursive clustering ({objective_fct}, min_th={min_th})", end="")
             n_clusters = optimize_n_clusters(X, n_clusters=n_clusters_lb, **args)
-            # Cluster merging: assign scales from small clusters to other cluster with highest minimum correlation
+            if self._verbose:
+                print(f": k={n_clusters}")
             labels = self.model(n_clusters=n_clusters, **self._model_kwargs).fit(X).labels_.tolist()
-            if merge:
+            # Cluster merging: assign scales from small clusters to other cluster with highest minimum correlation
+            if merge_metric is not None:
+                if self._verbose:
+                    print("3. Cluster merging (optional)", end="")
                 labels = merge_clusters(X, labels=labels, min_th=min_th, on_center=on_center, metric=merge_metric)
+                if self._verbose:
+                    print(f": k={len(set(labels))}")
         # Obtain cluster centers and medoids
         medoids, medoid_labels, medoid_ind = get_cluster_medoids(X, labels=labels)
         centers, center_labels = get_cluster_centers(X, labels=labels)

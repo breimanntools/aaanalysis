@@ -13,7 +13,7 @@ import warnings
 # Settings
 
 # Default Split names
-STR_SCALE_CAT = "scale_categories"
+STR_SCALE_CAT = "scale_classification"
 STR_SEGMENT = "Segment"
 STR_PATTERN = "Pattern"
 STR_PERIODIC_PATTERN = "PeriodicPattern"

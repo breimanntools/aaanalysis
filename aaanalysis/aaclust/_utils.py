@@ -29,7 +29,7 @@ def check_feat_matrix(X=None, names=None):
 
 def check_model(model=None, model_kwargs=None, except_None=True):
     """"""
-    if except_None is True:
+    if except_None:
         return model_kwargs
     list_model_args = list(inspect.signature(model).parameters.keys())
     if "n_clusters" not in list_model_args:
@@ -52,9 +52,7 @@ def check_min_th(min_th=None, min_val=0, max_val=0.9):
 
 def check_merge_metric(merge_metric=None):
     """"""
-    if merge_metric is None:
-        merge_metric = METRIC_CORRELATION
-    if merge_metric not in LIST_METRICS:
-        error = f"'merge_metric' should be on of following: {LIST_METRICS}"
+    if merge_metric is not None and merge_metric not in LIST_METRICS:
+        error = f"'merge_metric' should be None or one of following: {LIST_METRICS}"
         raise ValueError(error)
     return merge_metric

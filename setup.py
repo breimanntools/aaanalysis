@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-
-from setuptools import setup
-
 if __name__ == "__main__":
-
     from setuptools import setup
 
     import sys
@@ -19,6 +15,6 @@ if __name__ == "__main__":
         # Include sub-packages!
         packages=['aaanalysis', 'aaanalysis.aaclust', 'aaanalysis.cpp'],
         include_package_data=True,
-        package_data={"": ["data/*.xlsx"]}
+        package_data={"": ["data/*.xlsx", "data/benchmarks/*.tsv", "data/benchmarks/*.xlsx"]}
     )
 

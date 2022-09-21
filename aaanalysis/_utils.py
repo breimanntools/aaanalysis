@@ -26,4 +26,4 @@ URL_DATA = "https://github.com/breimannlab/aaanalysis/tree/master/aaanalysis/dat
 # Default data for protein analysis
 STR_SCALES = "scales"
 STR_SCALES_RAW = "scales_raw"
-STR_SCALE_CAT = "scale_categories"
+STR_SCALE_CAT = "scale_classification"

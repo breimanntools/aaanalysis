@@ -11,7 +11,8 @@ import aaanalysis._utils as ut
 
 # I Helper Functions
 STR_AA_GAP = "-"
-LIST_CANONICAL_AA = 'N', 'A', 'I', 'V', 'K', 'Q', 'R', 'M', 'H', 'F', 'E', 'D', 'C', 'G', 'L', 'T', 'S', 'Y', 'W', 'P'
+LIST_CANONICAL_AA = ['N', 'A', 'I', 'V', 'K', 'Q', 'R', 'M', 'H', 'F', 'E', 'D', 'C', 'G', 'L', 'T', 'S', 'Y', 'W', 'P']
+
 
 def check_non_negative_number(name=None, val=None, min_val=0, max_val=None, accept_none=False, just_int=True):
     """Check if value of given name variable is non-negative integer"""
@@ -32,12 +33,9 @@ def check_non_negative_number(name=None, val=None, min_val=0, max_val=None, acce
 
 
 # II Main Functions
-def load_dataset(name="INFO", n=None, non_canonical_aa_as_gaps=True, min_len=None, max_len=None):
+def load_dataset(name="INFO", n=None, non_canonical_aa_as_gaps=False, min_len=None, max_len=None):
     """Load one of following protein sequence benchmarking datasets:
-        ['AMYLO_SEQ', 'CAPSID_SEQ', 'DISULFIDE_SEQ', 'GSEC_SUB_SEQ'
-         'LOCATION_SEQ_MULTI', 'SOLUBLE_SEQ',  'LDR_AA', 'RNABIND_AA']
     Load general information about datasets by 'name'='INFO
-
     :arg name: name of dataset
     :arg n: number of proteins per class (if None, whole dataset will be returned)
     :arg non_canonical_aa_as_gaps: boolean whether non canonical amino acid should be replaced by gap symbol
@@ -47,12 +45,14 @@ def load_dataset(name="INFO", n=None, non_canonical_aa_as_gaps=True, min_len=Non
     """
     check_non_negative_number(name="n", val=n, accept_none=True)
     check_non_negative_number(name="min_len", val=min_len, accept_none=True)
-    if name == "INFO":
-        return pd.read_excel(ut.FOLDER_DATA + "INFO_benchmarks.xlsx")
     folder_in = ut.FOLDER_DATA + "benchmarks" + ut.SEP
+    if name == "INFO":
+        return pd.read_excel(folder_in + "INFO_benchmarks.xlsx")
     list_datasets = [x.split(".")[0] for x in os.listdir(folder_in) if "." in x]
     if name not in list_datasets:
-        raise ValueError(f"'name' ({name}) is not valid. Choose one of following: {list_datasets}")
+        list_aa = [x for x in list_datasets if 'AA' in x]
+        list_seq = [x for x in list_datasets if 'SEQ' in x]
+        raise ValueError(f"'name' ({name}) is not valid.\n Amino acid datasets: {list_aa}\n Sequence datasets: {list_seq}")
     df = pd.read_csv(folder_in + name + ".tsv", sep="\t")
     # Filter data
     if min_len is not None:
@@ -73,6 +73,7 @@ def load_dataset(name="INFO", n=None, non_canonical_aa_as_gaps=True, min_len=Non
         df["sequence"] = [re.sub(f'[{"".join(list_non_canonical_aa)}]', STR_AA_GAP, x) for x in df["sequence"]]
     return df
 
+
 # Load scales
 def _filter_scales(df_cat=None, unclassified_in=False, just_aaindex=False):
     """Filter scales for unclassified and aaindex scales"""
@@ -86,6 +87,7 @@ def _filter_scales(df_cat=None, unclassified_in=False, just_aaindex=False):
         list_ids_to_exclude.extend(list_ids_not_in_aaindex)
     df_cat = df_cat[~df_cat["scale_id"].isin(list_ids_to_exclude)]
     return df_cat
+
 
 def load_scales(name="scales", unclassified_in=False, just_aaindex=False, missing_values_in=False):
     """Load amino acid scales or scale classification.
