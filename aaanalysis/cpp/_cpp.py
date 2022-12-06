@@ -127,6 +127,7 @@ def add_part_bar(ax=None, start=1.0, len_part=40.0, color="blue", add_white_bar=
         ax.add_patch(bar)
     """
 
+
 def add_part_text(ax=None, start=1.0, len_part=10.0, fontsize=11, text=None):
     """Get text for tmd and jmd marking sequence parts"""
     bar_height = _get_bar_height(ax=ax)
@@ -138,6 +139,7 @@ def add_part_text(ax=None, start=1.0, len_part=10.0, fontsize=11, text=None):
             fontsize=fontsize,
             #fontweight='bold',
             color='black')
+
 
 def add_part_seq(ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, x_shift=0.0, seq_size=11,
                  tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white"):
@@ -207,10 +209,10 @@ def get_cmap_heatmap(df_pos=None, cmap=None, n_colors=None, higher_color=None, l
     """Get sequential or diverging cmap for heatmap"""
     n_colors = 100 if n_colors is None else n_colors
     if cmap == "SHAP":
-        n = 5
+        n = 20
         cmap_low = sns.light_palette(lower_color, input="hex", reverse=True, n_colors=int(n_colors/2)+n)
         cmap_high = sns.light_palette(higher_color, input="hex", n_colors=int(n_colors/2)+n)
-        c_middle = [(0,0,0)] if facecolor_dark else [cmap_low[-1]]
+        c_middle = [(0, 0, 0)] if facecolor_dark else [cmap_low[-1]]
         cmap = cmap_low[0:-n] + c_middle + cmap_high[n:]
         return cmap
     if cmap is None:
@@ -226,7 +228,7 @@ def get_cmap_heatmap(df_pos=None, cmap=None, n_colors=None, higher_color=None, l
         n = 5
         cmap = sns.color_palette(cmap, n_colors=n_colors+n*2)
         cmap_low, cmap_high = cmap[0:int((n_colors+n*2)/2)], cmap[int((n_colors+n*2)/2):]
-        c_middle = [(0,0,0)] if facecolor_dark else [cmap_low[-1]]
+        c_middle = [(0, 0, 0)] if facecolor_dark else [cmap_low[-1]]
         cmap = cmap_low[0:-n] + c_middle + cmap_high[n:]
     return cmap
 
@@ -257,6 +259,7 @@ def get_cbar_args_heatmap(cbar_kws=None, df_pos=None):
         cbar_kws_.update(**cbar_kws)
     return dict_cbar, cbar_kws_
 
+
 def set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws_=None, vmin=None, vmax=None):
     """"""
     # Set colorbar labelsize and ticksize
@@ -268,7 +271,8 @@ def set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws_=None, vmin=None, vmax=No
     cbar_ticks = [x for x in cbar.get_ticks() if vmin <= x <= vmax]
     cbar.set_ticks(cbar_ticks)
     str_zero = "[0]"
-    cbar.set_ticklabels([f"{x}" if float(x) != 0 else str_zero for x in cbar_ticks])
+    f = lambda x: int(x) if int(x) == float(x) else round(x, 1)
+    cbar.set_ticklabels([f"{f(x)}%" if float(x) != 0 else str_zero for x in cbar_ticks])
 
 
 def get_center_heatmap(df_pos=None):
@@ -288,7 +292,7 @@ def _get_ytick_pad_heatmap(ax=None):
     return pad
 
 
-def _get_kws_legend_under_plot(list_cat=None, fontsize_scale=1.0, items_per_col=3, y_adjust=-0.05, x_adjust=0):
+def _get_kws_legend_under_plot(list_cat=None, items_per_col=3, x_adjust=-0.3, y_adjust=-0.03):
     """"""
     width, height = plt.gcf().get_size_inches()
     ncol = len(set(list_cat))
@@ -296,12 +300,10 @@ def _get_kws_legend_under_plot(list_cat=None, fontsize_scale=1.0, items_per_col=
     bbox_x = -0.2 + x_adjust
     if ncol > 4:
         ncol = int(np.ceil(ncol/items_per_col))
-    legend_fontsize = (width + width/4 - 1)*fontsize_scale
-    title_fontsize = (width + width/4 - 1)*fontsize_scale
     kws_legend = dict(ncol=ncol, loc=2, frameon=False, bbox_to_anchor=(bbox_x, bbox_y),
                       columnspacing=0.3, labelspacing=0.05, handletextpad=0.15,
-                      facecolor="white", fontsize=legend_fontsize, shadow=False,
-                      title="scale category", title_fontsize=title_fontsize)
+                      facecolor="white",  shadow=False,
+                      title="scale category")
     return kws_legend
 
 
@@ -309,13 +311,10 @@ def _update_kws_legend_under_plot(kws_legend=None, legend_kws=None):
     """"""
     # Set title_fontsize to fontsize if given
     if legend_kws is not None:
-        if "fontsize" in legend_kws and "title_fontsize" not in legend_kws:
-            legend_kws["title_fontsize"] = legend_kws["fontsize"]
+        if "title_fontproperties" not in legend_kws:
+            if "fontsize" in legend_kws and "title_fontsize" not in legend_kws:
+                legend_kws["title_fontproperties"] = dict(weight="bold", size=legend_kws["fontsize"])
         kws_legend.update(**legend_kws)
-    # Set title bold
-    if "title" in kws_legend:
-        f = lambda x: " ".join([f"$\\bf{i}$" for i in x.split()])
-        kws_legend["title"] = f(kws_legend['title'])
     return kws_legend
 
 
@@ -532,8 +531,7 @@ class CPPPlots:
                                   xtick_size=xtick_size)
 
     @staticmethod
-    def add_legend_cat(ax=None, df_pos=None, df_cat=None, y=None, dict_color=None, legend_kws=None,
-                       legend_y_adjust=-0.05, legend_x_adjust=0):
+    def add_legend_cat(ax=None, df_pos=None, df_cat=None, y=None, dict_color=None, legend_kws=None):
         """"""
         # Get list of categories and their counts
         dict_cat = {}
@@ -559,8 +557,7 @@ class CPPPlots:
         ax.tick_params(axis="y", pad=pad)
         # Set legend
         # TODO check adjust and legend positioning
-        kws_legend = _get_kws_legend_under_plot(list_cat=list_cat, y_adjust=legend_y_adjust,
-                                                x_adjust=legend_x_adjust)
+        kws_legend = _get_kws_legend_under_plot(list_cat=list_cat)
         kws_legend = _update_kws_legend_under_plot(kws_legend=kws_legend, legend_kws=legend_kws)
         handles, labels = _get_legend_handles_labels(dict_color=dict_color, list_cat=sorted(set(list_cat)))
         legend = ax.legend(handles=handles, labels=labels, **kws_legend)
@@ -591,7 +588,7 @@ class CPPPlots:
     # Main plotting methods
     def heatmap(self, df_pos=None, ax=None, cmap=None, cmap_n_colors=None, cbar_kws=None, grid_on=False,
                 x_shift=0.0, xtick_size=11.0, xtick_width=2.0, xtick_length=None, ytick_size=None,
-                facecolor_dark=True, **kwargs):
+                facecolor_dark=True, linecolor="black", **kwargs):
         """Show summary static values of feature categories/sub_categories per position as heat map"""
         facecolor = "black" if facecolor_dark else "white"
         # Default arguments for heatmap
@@ -603,7 +600,7 @@ class CPPPlots:
         dict_cbar, cbar_kws_ = get_cbar_args_heatmap(cbar_kws=cbar_kws, df_pos=df_pos)
         linewidths = 0.01 if grid_on else 0
         kws_plot = dict(ax=ax, cmap=cmap, cbar_kws=cbar_kws_, center=center,
-                        linewidths=linewidths, linecolor="gray")
+                        linewidths=linewidths, linecolor=linecolor)
         kws_plot.update(**kwargs)  # Update and add new arguments
         # Plot with 0 set to NaN
         ax = sns.heatmap(df_pos.replace(0, np.NaN), yticklabels=True, xticklabels=True,  **kws_plot)
@@ -642,7 +639,7 @@ class CPPPlots:
         return ax
 
     def profile(self, df_pos=None, ax=None, dict_color=None, edge_color="none", bar_width=0.8,
-                xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, ylim=None,
+                xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, ylim=None, color="steelblue",
                 add_legend=True, legend_kws=None, shap_plot=False, shap_legend=False, **kwargs):
         """Show count of feature categories/sub_categories per position for positive and
         negative features, i.e., feature with positive resp. negative mean_dif. The profile
@@ -671,7 +668,7 @@ class CPPPlots:
             handles, labels = _get_legend_handles_labels(dict_color=dict_color, list_cat=list(df_pos.index))
             df_bar = df_pos.T[labels]
             df = pd.concat([df_bar[df_bar < 0].sum(axis=1), df_bar[df_bar > 0].sum(axis=1)]).to_frame(name="y")
-            color = dict_color if add_legend else "steelblue"
+            color = dict_color if add_legend else color
             ax = df_bar.plot(ax=ax, color=color, **plot_args)
             ylim = ut.check_ylim(df=df, val_col="y", ylim=ylim)
             plt.ylim(ylim)
@@ -777,14 +774,13 @@ def _add_legend_line(df=None, ax=None, df_cat=None, dict_color=None, highlight_c
     return list_cat
 
 
-def _add_legend_cat(ax=None, list_cat=None, legend_kws=None, dict_color=None, fontsize_scale=1.0,
-                    legend_y_adjust=-0.05):
+def _add_legend_cat(ax=None, list_cat=None, legend_kws=None, dict_color=None):
     """Add category legend under plot"""
 
-    kws_legend = _get_kws_legend_under_plot(list_cat=list_cat, fontsize_scale=fontsize_scale, y_adjust=legend_y_adjust)
+    kws_legend = _get_kws_legend_under_plot(list_cat=list_cat)
     if len(set(list_cat)) > 4:
         bbox = kws_legend["bbox_to_anchor"]
-        kws_legend["bbox_to_anchor"] = (bbox[0], bbox[1]*fontsize_scale)
+        kws_legend["bbox_to_anchor"] = (bbox[0], bbox[1])
     if legend_kws is not None:
         kws_legend.update(**legend_kws)
     handles, labels = _get_legend_handles_labels(dict_color=dict_color, list_cat=sorted(set(list_cat)))
@@ -795,7 +791,7 @@ def cpp_statistics(df=None, dict_color=None, df_cat=None,
                    col_p=None, neg_log_p=True, ylim_p=None, color_p="black", ylabel_p=None, min_p=0.0001,
                    col_v="mean_dif", percent_v=True, ylim_v=None, color_v="silver", ylabel_v=None,
                    ylabel_fontsize=12, ylabel_fontweight="medium",
-                   add_cat=True, add_legend_cat=True, legend_kws=None, legend_y_adjust=-0.05,
+                   add_cat=True, add_legend_cat=True, legend_kws=None,
                    highlight_cat=True, highlight_alpha=0.1,
                    x_shift=0.5, **kwargs):
     """Get plot for CPP statistics"""
@@ -832,6 +828,6 @@ def cpp_statistics(df=None, dict_color=None, df_cat=None,
         # Add legend for categories
         if add_legend_cat:
             _add_legend_cat(ax=ax, list_cat=list_cat, legend_kws=legend_kws,
-                            dict_color=dict_color, fontsize_scale=1.25, legend_y_adjust=legend_y_adjust)
+                            dict_color=dict_color)
     plt.sca(plt.gcf().axes[1])
     return ax

@@ -6,22 +6,41 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import AgglomerativeClustering, KMeans
 
-from aaclust.aaclust_ import get_min_cor, estimate_lower_bound_n_clusters, \
-    optimize_n_clusters, merge_clusters, AAclust, amerge_clusters
-import scripts._utils as ut
+import aaanalysis as aa
+from aaanalysis.aaclust.aaclust import get_min_cor, estimate_lower_bound_n_clusters, \
+    optimize_n_clusters, merge_clusters, AAclust
+
+import tests._utils as ut
 
 # Settings
 pd.set_option('expand_frame_repr', False)  # Single line print for pd.Dataframe
 
+# TODO change to proper test (CPP)
+
 
 # I Helper Functions
+def get_feat_matrix(df_cat=None, df_scales=None, unclassified_in=True, return_col=ut.COL_SCALE_ID, cat=None):
+    """"""
+    if cat is not None:
+        df_cat = df_cat[df_cat[ut.COL_CAT] == cat]
+    if unclassified_in:
+        scales = df_cat[return_col].to_list()
+    else:
+        mask = (~df_cat[ut.COL_SUBCAT].str.contains("Unclassified")) & (df_cat[ut.COL_CAT] != "Others")
+        df_cat = df_cat[mask]
+        scales = df_cat[ut.COL_SCALE_ID].to_list()
+    X = np.array(df_scales[scales]).T
+    labels = list(df_cat[return_col])
+    return X, labels
+
+
 def get_data():
     """"""
-    df_cat = pd.read_excel(ut.FOLDER_DATA + "scale_classification.xlsx")
-    df_scales = pd.read_excel(ut.FOLDER_DATA + "scales.xlsx", index_col=0)
-    X, scales = ut.get_feat_matrix(df_cat=df_cat.copy(),
-                                   df_scales=df_scales.copy(),
-                                   unclassified_in=True)
+    df_cat = aa.load_scales(name="scale_classification")
+    df_scales = aa.load_scales(name="scales")
+    X, scales = get_feat_matrix(df_cat=df_cat.copy(),
+                                df_scales=df_scales.copy(),
+                                unclassified_in=True)
     return X
 
 
@@ -43,9 +62,6 @@ def test_steps():
     labels = model(n_clusters=k, **model_kwargs).fit(X).labels_.tolist()
     print(len(set(labels)))
     labels_ = merge_clusters(X, labels=labels, min_th=0.3, on_center=False)
-    print(len(set(labels_)))
-    print(get_min_cor(X, labels=labels_, on_center=False))
-    labels_ = amerge_clusters(X, labels=labels, min_th=0.3, on_center=False)
     print(len(set(labels_)))
     print(get_min_cor(X, labels=labels_, on_center=False))
 

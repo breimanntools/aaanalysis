@@ -22,6 +22,7 @@ import aaanalysis as aa
 # TODO add importance plot for heatmap
 # TODO add ranking
 
+
 # Check CPP parameters
 def check_len_ext_and_jmd(jmd_n_len=None, jmd_c_len=None, ext_len=None):
     """Check if lengths are matching"""
@@ -80,12 +81,10 @@ def check_value_type(val_type=None, count_in=True):
 
 def check_normalize(normalize=True):
     """Check normalize parameter"""
-    if not (type(normalize) == bool or normalize == "positions"):
+    if not (type(normalize) == bool or normalize in ["positions", "positions_only"]):
         raise ValueError(f"'normalize' ('{normalize}') should be bool or, if normalized for positions, 'positions'.")
-    normalize_for_positions = False
-    if normalize == "positions":
-        normalize = True
-        normalize_for_positions = True
+    normalize_for_positions = False if type(normalize) is bool else "positions" in normalize
+    normalize = normalize if type(normalize) is bool else "positions" == normalize
     return normalize, normalize_for_positions
 
 
@@ -112,9 +111,9 @@ def check_args_len(tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, tmd_len=None, j
 
 def check_args_size(seq_size=None, tmd_fontsize=None, jmd_fontsize=None):
     """Check if sequence size parameters match"""
-    ut.check_non_negative_number(name="seq_size", val=seq_size, min_val=1, accept_none=True, just_int=False)
-    ut.check_non_negative_number(name="tmd_fontsize", val=tmd_fontsize, min_val=1, accept_none=True, just_int=False)
-    ut.check_non_negative_number(name="jmd_fontsize", val=jmd_fontsize, min_val=1, accept_none=True, just_int=False)
+    ut.check_non_negative_number(name="seq_size", val=seq_size, min_val=0, accept_none=True, just_int=False)
+    ut.check_non_negative_number(name="tmd_fontsize", val=tmd_fontsize, min_val=0, accept_none=True, just_int=False)
+    ut.check_non_negative_number(name="jmd_fontsize", val=jmd_fontsize, min_val=0, accept_none=True, just_int=False)
     args_size = dict(seq_size=seq_size, tmd_fontsize=tmd_fontsize, jmd_fontsize=jmd_fontsize)
     return args_size
 
@@ -261,6 +260,24 @@ def _get_df_pos(df_feat=None, df_cat=None, y="subcategory", val_col="mean_dif",
     return df_pos
 
 
+def _add_importance_map(ax=None, df_feat=None, df_cat=None, start=None, args_len=None, y=None):
+    """"""
+    _df_pos = _get_df_pos(df_feat=df_feat, df_cat=df_cat, y=y, val_col=ut.COL_FEAT_IMPORTANCE,
+                          value_type="sum", normalize="positions_only", start=start, **args_len)
+    _df = pd.melt(_df_pos.reset_index(), id_vars="index")
+    _df.columns = [ut.COL_SUBCAT, "position", ut.COL_FEAT_IMPORTANCE]
+    _list_sub_cat = _df[ut.COL_SUBCAT].unique()
+    for i, sub_cat in enumerate(_list_sub_cat):
+        _dff = _df[_df[ut.COL_SUBCAT] == sub_cat]
+        for pos, val in enumerate(_dff[ut.COL_FEAT_IMPORTANCE]):
+            _symbol = "■"  # "•"
+            color = "black"
+            size = 12 if val >= 1 else (8 if val >= 0.5 else 4)
+            _args_symbol = dict(ha="center", va="center", color=color, size=size)
+            if val >= 0.2:
+                ax.text(pos + 0.5, i + 0.5, _symbol, **_args_symbol)
+
+
 def _set_size_to_optimized_value(seq_size=None, tmd_fontsize=None, jmd_fontsize=None, opt_size=None):
     """Set sizes to given value if None"""
     if seq_size is None:
@@ -273,7 +290,7 @@ def _set_size_to_optimized_value(seq_size=None, tmd_fontsize=None, jmd_fontsize=
     return args_size
 
 # TODO simplify checks & interface (end-to-end check with tests & docu)
-#   TODO plot_functions test & refactor (end-to-end)
+# TODO plot_functions test & refactor (end-to-end)
 
 
 # II Main Functions
@@ -342,8 +359,6 @@ class CPP:
         self.jmd_n_len = jmd_n_len
         self.jmd_c_len = jmd_c_len
         self.ext_len = ext_len
-
-
 
     # Adder methods for CPP analysis (used in run method)
     def _add_scale_info(self, df_feat=None):
@@ -685,8 +700,8 @@ class CPP:
                      tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
                      seq_size=None, tmd_fontsize=None, jmd_fontsize=None,
                      xticks_top=False, xticks_pos=True,  xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, ytick_size=None,
-                     add_legend_cat=True, legend_kws=None, legend_y_adjust=-0.05, legend_x_adjust=0.0,
-                     **kwargs):
+                     add_legend_cat=True, legend_kws=None,
+                     add_importance_map=False, **kwargs):
         """Plot heatmap of selected value column for scale information (y-axis) against sequence position (x-axis).
 
         This is a wrapper function of :func:`seaborn.heatmap` to show differences between two sets of sequences on
@@ -702,7 +717,7 @@ class CPP:
             Name of column in feature DataFrame with numerical values to show.
         val_type : {'mean', 'sum', 'std'}, str, default='mean'
             How to aggregate numerical values given in 'val_col'.
-        normalize : {True, False, 'positions'} bool or str, default=False
+        normalize : {True, False, 'positions', 'positions_only'} bool or str, default=False
             Whether to use normalization for numerical values of 'val_col':
 
             - If False, value is set at all positions of a feature without posterior normalization over all features.
@@ -852,14 +867,18 @@ class CPP:
         cpp_plot.set_figsize(figsize=figsize)   # figsize is not used as argument in seaborn (but in pandas)
         try:
             subplots = "ax" in kwargs
+            linecolor = "white" if facecolor_dark else "black"
+            if "linecolor" in kwargs:
+                linecolor = kwargs["linecolor"]
+            else:
+                kwargs["linecolor"] = linecolor
             ax = cpp_plot.heatmap(df_pos=df_pos, vmin=vmin, vmax=vmax, grid_on=grid_on,
                                   cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws,
                                   x_shift=0.5, ytick_size=ytick_size, facecolor_dark=facecolor_dark,
                                   **args_xtick, **kwargs)
+            ax.axvline(self.jmd_n_len, color=linecolor, linestyle="-", linewidth=1.5)
+            ax.axvline(x=self.jmd_n_len + args_len["tmd_len"], color=linecolor, linestyle="-", linewidth=1.5)
 
-            if not grid_on:
-                ax.axvline(x=self.jmd_n_len, ls="--" , color="black")
-                ax.axvline(x=self.jmd_n_len + tmd_len, ls="--", color="black")
         except AttributeError as e:
             error_message = check_parameters(func=self.plot_heatmap, name_called_func="sns.heatmap", e=e)
             raise AttributeError(error_message)
@@ -867,6 +886,10 @@ class CPP:
         # Autosize tmd sequence & annotation
         opt_size = cpp_plot.optimized_size(ax=ax, df_pos=df_pos)
         args_size = _set_size_to_optimized_value(**args_size, opt_size=opt_size)
+        # Add importance map
+        if add_importance_map:
+            _add_importance_map(ax=ax, df_feat=df_feat, df_cat=self.df_cat,
+                                start=start, args_len=args_len, y=y)
         # Add tmd_jmd sequence if sequence is given
         if isinstance(tmd_seq, str):
             cpp_plot.add_tmd_jmd_seq(ax=ax, **args_seq, **args_size, **args_part_color, **args_seq_color,
@@ -886,8 +909,7 @@ class CPP:
         # Add scale classification
         if add_legend_cat:
             ax = cpp_plot.add_legend_cat(ax=ax, df_pos=df_pos, df_cat=self.df_cat, y=y,
-                                         dict_color=dict_color, legend_kws=legend_kws,
-                                         legend_y_adjust=legend_y_adjust, legend_x_adjust=legend_x_adjust)
+                                         dict_color=dict_color, legend_kws=legend_kws)
 
         # Set current axis to main axis object depending on tmd sequence given or not
         n = 2 if isinstance(tmd_seq, str) else 0
