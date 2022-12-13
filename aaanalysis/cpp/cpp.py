@@ -344,7 +344,7 @@ class CPP:
             split_kws = sf.get_split_kws()
         ut.check_bool(name="verbose", val=verbose)
         ut.check_df_parts(df_parts=df_parts, verbose=verbose)
-        ut.check_df_scales(df_scales=df_scales, df_parts=df_parts, accept_gaps=accept_gaps)
+        df_parts = ut.check_df_scales(df_scales=df_scales, df_parts=df_parts, accept_gaps=accept_gaps)
         df_cat, df_scales = ut.check_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
         ut.check_split_kws(split_kws=split_kws)
         check_len_ext_and_jmd(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len)

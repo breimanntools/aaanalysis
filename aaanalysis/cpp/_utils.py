@@ -61,7 +61,7 @@ COLOR_SHAP_LOWER = '#1E88E5'    # (30, 136, 229)
 # Default column names for cpp analysis
 LIST_ALL_PARTS = ["tmd", "tmd_e", "tmd_n", "tmd_c", "jmd_n", "jmd_c", "ext_c", "ext_n",
                   "tmd_jmd", "jmd_n_tmd_n", "tmd_c_jmd_c", "ext_n_tmd_n", "tmd_c_ext_c"]
-LIST_PARTS = ["tmd", "tmd_e", "jmd_n_tmd_n", "tmd_c_jmd_c"]
+LIST_PARTS = ["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
 
 SPLIT_DESCRIPTION = "\n a) {}(i-th,n_split)" \
                     "\n b) {}(N/C,p1,p2,...,pn)" \
@@ -283,7 +283,7 @@ def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
 
 # Scale check functions
 def check_df_scales(df_scales=None, df_parts=None, accept_none=False, accept_gaps=False):
-    """Check if df_scales is a valid input"""
+    """Check if df_scales is a valid input and matching to df_parts"""
     check_bool(name="accept_gaps", val=accept_gaps)
     if accept_none and df_scales is None:
         return  # Skip check
@@ -316,12 +316,16 @@ def check_df_scales(df_scales=None, df_parts=None, accept_none=False, accept_gap
         if accept_gaps:
             char_scales.append(STR_AA_GAP)
         missing_char = [x for x in char_parts if x not in char_scales]
-        if len(missing_char) > 0:
+        if accept_gaps:
+            for col in list(df_parts):
+                for mc in missing_char:
+                    df_parts[col] = df_parts[col].str.replace(mc, STR_AA_GAP)
+        elif len(missing_char) > 0:
             error = f"Not all characters in sequences from 'df_parts' are covered!"\
-                    f"\n  Following characters are missing in 'df_scales': {missing_char}."
-            if STR_AA_GAP in missing_char:
-                error += "\n  Consider enabling 'accept_gaps'."
+                    f"\n  Following characters are missing in 'df_scales': {missing_char}." \
+                    f"\n    Consider enabling 'accept_gaps'"
             raise ValueError(error)
+    return df_parts
 
 
 def check_df_cat(df_cat=None, df_scales=None, accept_none=True, verbose=True):
