@@ -9,7 +9,7 @@ METRIC_CORRELATION = "correlation"
 LIST_METRICS = [METRIC_CORRELATION, "manhattan",  "euclidean", "cosine"]
 
 
-# Check methods
+# Check functions
 def check_feat_matrix(X=None, names=None):
     """Check if X and y match (y can be labels or names). Otherwise, transpose X or give error."""
     # TODO type check

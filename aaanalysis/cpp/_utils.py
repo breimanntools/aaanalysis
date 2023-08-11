@@ -9,6 +9,7 @@ import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import warnings
 
+from aaanalysis._utils import *
 
 # Settings
 
@@ -73,24 +74,6 @@ SPLIT_DESCRIPTION = "\n a) {}(i-th,n_split)" \
 
 # II Main Functions
 # General check functions
-def check_non_negative_number(name=None, val=None, min_val=0, max_val=None, accept_none=False, just_int=True):
-    """Check if value of given name variable is non-negative integer"""
-    check_types = [int] if just_int else [float, int]
-    str_check = "non-negative int" if just_int else "non-negative float or int"
-    add_str = f"n>{min_val}" if max_val is None else f"{min_val}<=n<={max_val}"
-    if accept_none:
-        add_str += " or None"
-    error = f"'{name}' ({val}) should be {str_check} n, where " + add_str
-    if accept_none and val is None:
-        return None
-    if type(val) not in check_types:
-        raise ValueError(error)
-    if val < min_val:
-        raise ValueError(error)
-    if max_val is not None and val > max_val:
-        raise ValueError(error)
-
-
 def check_float(name=None, val=None, accept_none=False, just_float=True):
     """Check if value is float"""
     if accept_none and val is None:

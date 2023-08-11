@@ -12,7 +12,7 @@ import aaanalysis.cpp._utils as ut
 from aaanalysis.cpp.feature import SequenceFeature
 from aaanalysis.cpp._feature_stat import SequenceFeatureStatistics
 from aaanalysis.cpp._feature_pos import SequenceFeaturePositions
-from aaanalysis.cpp._cpp import CPPPlots, cpp_statistics
+from aaanalysis.cpp._cpp import CPPPlots, get_optimal_fontsize
 import aaanalysis as aa
 
 # I Helper Functions
@@ -109,12 +109,11 @@ def check_args_len(tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, tmd_len=None, j
     return args_len
 
 
-def check_args_size(seq_size=None, tmd_fontsize=None, jmd_fontsize=None):
+def check_args_size(seq_size=None, tmd_jmd_fontsize=None):
     """Check if sequence size parameters match"""
     ut.check_non_negative_number(name="seq_size", val=seq_size, min_val=0, accept_none=True, just_int=False)
-    ut.check_non_negative_number(name="tmd_fontsize", val=tmd_fontsize, min_val=0, accept_none=True, just_int=False)
-    ut.check_non_negative_number(name="jmd_fontsize", val=jmd_fontsize, min_val=0, accept_none=True, just_int=False)
-    args_size = dict(seq_size=seq_size, tmd_fontsize=tmd_fontsize, jmd_fontsize=jmd_fontsize)
+    ut.check_non_negative_number(name="tmd_jmd_fontsize", val=tmd_jmd_fontsize, min_val=0, accept_none=True, just_int=False)
+    args_size = dict(seq_size=seq_size, tmd_jmd_fontsize=tmd_jmd_fontsize)
     return args_size
 
 
@@ -278,15 +277,11 @@ def _add_importance_map(ax=None, df_feat=None, df_cat=None, start=None, args_len
                 ax.text(pos + 0.5, i + 0.5, _symbol, **_args_symbol)
 
 
-def _set_size_to_optimized_value(seq_size=None, tmd_fontsize=None, jmd_fontsize=None, opt_size=None):
+def _set_size_to_optimized_value(seq_size=None, tmd_jmd_fontsize=None, opt_size=None):
     """Set sizes to given value if None"""
-    if seq_size is None:
-        seq_size = opt_size
-    if tmd_fontsize is None:
-        tmd_fontsize = opt_size
-    if jmd_fontsize is None:
-        jmd_fontsize = opt_size
-    args_size = dict(seq_size=seq_size, tmd_fontsize=tmd_fontsize, jmd_fontsize=jmd_fontsize)
+    if tmd_jmd_fontsize is None:
+        tmd_jmd_fontsize = opt_size
+    args_size = dict(seq_size=seq_size, tmd_jmd_fontsize=tmd_jmd_fontsize)
     return args_size
 
 # TODO simplify checks & interface (end-to-end check with tests & docu)
@@ -359,6 +354,8 @@ class CPP:
         self.jmd_n_len = jmd_n_len
         self.jmd_c_len = jmd_c_len
         self.ext_len = ext_len
+        # Axes dict for plotting
+        self.ax_seq = None
 
     # Adder methods for CPP analysis (used in run method)
     def _add_scale_info(self, df_feat=None):
@@ -691,19 +688,115 @@ class CPP:
         return df
 
     # Plotting methods
-    def plot_heatmap(self, df_feat=None, y="subcategory", val_col="mean_dif", val_type="mean", normalize=False,
-                     figsize=(10, 7), title=None, title_kws=None,
-                     vmin=None, vmax=None, grid_on=True,
-                     cmap="RdBu_r", cmap_n_colors=None, dict_color=None, cbar_kws=None, facecolor_dark=True,
+    def plot_profile(self, df_feat=None, y="category", val_col="mean_dif", val_type="count", normalize=False,
+                     figsize=(7, 5), title=None, title_kws=None,
+                     dict_color=None, edge_color="none", bar_width=0.75,
                      add_jmd_tmd=True, tmd_len=20, start=1,
                      jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None,
                      tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
-                     seq_size=None, tmd_fontsize=None, jmd_fontsize=None,
-                     xticks_top=False, xticks_pos=True,  xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, ytick_size=None,
+                     seq_size=None, tmd_jmd_fontsize=None,
+                     xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, xticks_pos=False,
+                     ytick_size=None, ytick_width=2.0, ytick_length=5.0, ylim=None,
+                     highlight_tmd_area=True, highlight_alpha=0.15,
+                     grid=False, grid_axis="both",
                      add_legend_cat=True, legend_kws=None,
-                     add_importance_map=False, **kwargs):
-        """Plot heatmap of selected value column for scale information (y-axis) against sequence position (x-axis).
+                     shap_plot=False,
+                     **kwargs):
+        """"""
+        # Group arguments
+        args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,)
+        args_size = check_args_size(seq_size=seq_size, tmd_jmd_fontsize=tmd_jmd_fontsize)
+        args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self.jmd_n_len, jmd_c_len=self.jmd_c_len, **args_seq)
+        args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
+        args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
+        args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
 
+        # Checking input
+        # Args checked by Matplotlib: title, legend_kws
+        # Args checked by internal plotting functions: ylim
+        ut.check_non_negative_number(name="bar_width", val=bar_width, min_val=0, just_int=False)
+        ut.check_non_negative_number(name="start", val=start, min_val=0)
+        ut.check_non_negative_number(name="tmd_area_alpha", val=highlight_alpha, min_val=0, max_val=1, just_int=False)
+        ut.check_bool(name="add_jmd_tmd", val=add_jmd_tmd)
+        ut.check_bool(name="highlight_tmd_area", val=highlight_tmd_area)
+        ut.check_bool(name="grid", val=grid)
+        ut.check_bool(name="shap_plot", val=shap_plot)
+        ut.check_bool(name="add_legend_cat", val=add_legend_cat)
+        ut.check_color(name="edge_color", val=edge_color, accept_none=True)
+        ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
+
+        ut.check_col_in_df(df=df_feat, name_df="df_feat", col=val_col, type_check="numerical")
+        ut.check_y_categorical(df=df_feat, y=y)
+        df_feat = ut.check_df_feat(df_feat=df_feat)
+        check_value_type(val_type=val_type, count_in=True)
+        check_args_ytick(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
+        check_figsize(figsize=figsize)
+        dict_color = check_dict_color(dict_color=dict_color, df_cat=self.df_cat)
+        check_grid_axis(grid_axis=grid_axis)
+        # Get df positions
+        df_feat = self.add_positions(df_feat=df_feat, tmd_len=args_len["tmd_len"], start=start)
+        df_pos = _get_df_pos(df_feat=df_feat, df_cat=self.df_cat, y=y, val_col=val_col,
+                             value_type=val_type, normalize=normalize, start=start, **args_len)
+        # Plotting
+        cpp_plot = CPPPlots(**args_len, start=start)
+        try:
+            ax = cpp_plot.profile(df_pos=df_pos, figsize=figsize, ylim=ylim,
+                                  dict_color=dict_color, edge_color=edge_color, bar_width=bar_width,
+                                  add_legend=add_legend_cat, legend_kws=legend_kws, shap_plot=shap_plot,
+                                  **args_xtick, **kwargs)
+        except AttributeError as e:
+            error_message = check_parameters(func=self.plot_profile, name_called_func="pd.DataFrame.plot", e=e)
+            raise AttributeError(error_message)
+        cpp_plot.set_title(title=title, title_kws=title_kws)
+
+        # Autosize tmd sequence & annotation
+        opt_size = cpp_plot.optimize_label_size(ax=ax, df_pos=df_pos, label_term=False)
+        # Set default ylabel
+        ylabel = "Feature impact" if shap_plot else f"Feature count (-/+ {val_col})"
+        ax.set_ylabel(ylabel, size=opt_size)
+        # Adjust y ticks
+        ytick_size = opt_size if ytick_size is None else ytick_size
+        plt.yticks(size=ytick_size)
+        plt.tick_params(axis="y", color="black", width=ytick_width, length=ytick_length, bottom=False)
+        sns.despine(top=True, right=True)
+        # Add grid
+        if grid:
+            ax.set_axisbelow(True)  # Grid behind datasets
+            ax.grid(which="major", axis=grid_axis, linestyle="-")
+        # Add tmd area
+        if highlight_tmd_area:
+            cpp_plot.highlight_tmd_area(ax=ax, x_shift=-0.5, tmd_color=tmd_color, alpha=highlight_alpha)
+        # Add tmd_jmd sequence if sequence is given
+        if type(tmd_seq) == str:
+            ax = cpp_plot.add_tmd_jmd_seq(ax=ax, **args_seq, **args_size, **args_part_color, **args_seq_color,
+                                          xticks_pos=xticks_pos, heatmap=False, x_shift=0,
+                                          xtick_size=xtick_size)  # Add tmd_jmd bar
+            self.ax_seq = ax
+        elif add_jmd_tmd:
+            size = opt_size if tmd_jmd_fontsize is None else tmd_jmd_fontsize
+            cpp_plot.add_tmd_jmd_bar(ax=ax, x_shift=-0.5, **args_part_color, add_white_bar=False)
+            cpp_plot.add_tmd_jmd_xticks(ax=ax, x_shift=0, **args_xtick)
+            cpp_plot.add_tmd_jmd_text(ax=ax, x_shift=-0.5, tmd_jmd_fontsize=size)
+
+        # Set current axis to main axis object depending on tmd sequence given or not
+        plt.yticks(size=ytick_size)
+        plt.tick_params(axis="y", color="black", width=ytick_width, length=ytick_length, bottom=False)
+        plt.sca(plt.gcf().axes[0])
+        ax = plt.gca()
+        return ax
+
+    def plot_heatmap(self, df_feat=None, y="subcategory", val_col="mean_dif", val_type="mean", normalize=False,
+                     figsize=(8, 5), title=None, title_kws=None,
+                     vmin=None, vmax=None, grid_on=True,
+                     cmap="RdBu_r", cmap_n_colors=None, dict_color=None, cbar_kws=None, facecolor_dark=False,
+                     add_jmd_tmd=True, tmd_len=20, start=1,
+                     jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None,
+                     tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
+                     seq_size=None, tmd_jmd_fontsize=None,
+                     xticks_pos=False, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, ytick_size=None,
+                     add_legend_cat=True, legend_kws=None,
+                     add_importance_map=False, cbar_pct=False, **kwargs):
+        """Plot heatmap of selected value column for scale information (y-axis) against sequence position (x-axis).
         This is a wrapper function of :func:`seaborn.heatmap` to show differences between two sets of sequences on
         positional level (e.g., on level of amino acids for protein sequences).
 
@@ -772,13 +865,8 @@ class CPP:
             Color of JMD-N and JMD-C sequence.
         seq_size : float, optional
             Font size of all sequence parts in points. If None, optimized automatically.
-        tmd_fontsize : float, optional
-            Font size of 'TMD' label in points. If None, optimized automatically.
-        jmd_fontsize : float, optional
-            Font size of 'JMD-N' and 'JMD-C' labels in points. If None, optimized automatically.
-
-        xticks_top : bool, default=True
-            Whether to show x ticks depicting positions on top of plot.
+        tmd_jmd_fontsize : float, optional
+            Font size of 'TMD', 'JMD-N' and 'JMD-C'  label in points. If None, optimized automatically.
         xtick_size : float, default=11.0
             Size of x ticks in points. Passed as 'size' argument to :meth:`matplotlib.axes.Axes.set_xticklabels`.
         xtick_width : float, default=2.0
@@ -834,7 +922,7 @@ class CPP:
         """
         # Group arguments
         args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
-        args_size = check_args_size(seq_size=seq_size, tmd_fontsize=tmd_fontsize, jmd_fontsize=jmd_fontsize)
+        args_size = check_args_size(seq_size=seq_size, tmd_jmd_fontsize=tmd_jmd_fontsize)
         args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self.jmd_n_len, jmd_c_len=self.jmd_c_len, **args_seq)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
@@ -846,7 +934,6 @@ class CPP:
         ut.check_non_negative_number(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
         ut.check_non_negative_number(name="cmap_n_colors", val=cmap_n_colors, min_val=1, accept_none=True)
         ut.check_bool(name="add_jmd_tmd", val=add_jmd_tmd)
-        ut.check_bool(name="xticks_top", val=xticks_top)
         ut.check_bool(name="add_legend_cat", val=add_legend_cat)
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
         ut.check_dict(name="cbar_kws", val=cbar_kws, accept_none=True)
@@ -866,8 +953,7 @@ class CPP:
         cpp_plot = CPPPlots(**args_len, start=start)
         cpp_plot.set_figsize(figsize=figsize)   # figsize is not used as argument in seaborn (but in pandas)
         try:
-            subplots = "ax" in kwargs
-            linecolor = "white" if facecolor_dark else "black"
+            linecolor = "gray" if facecolor_dark else "black"
             if "linecolor" in kwargs:
                 linecolor = kwargs["linecolor"]
             else:
@@ -875,7 +961,7 @@ class CPP:
             ax = cpp_plot.heatmap(df_pos=df_pos, vmin=vmin, vmax=vmax, grid_on=grid_on,
                                   cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws,
                                   x_shift=0.5, ytick_size=ytick_size, facecolor_dark=facecolor_dark,
-                                  **args_xtick, **kwargs)
+                                  cbar_pct=cbar_pct, **args_xtick, **kwargs)
             ax.axvline(self.jmd_n_len, color=linecolor, linestyle="-", linewidth=1.5)
             ax.axvline(x=self.jmd_n_len + args_len["tmd_len"], color=linecolor, linestyle="-", linewidth=1.5)
 
@@ -884,306 +970,42 @@ class CPP:
             raise AttributeError(error_message)
         cpp_plot.set_title(title=title, title_kws=title_kws)
         # Autosize tmd sequence & annotation
-        opt_size = cpp_plot.optimized_size(ax=ax, df_pos=df_pos)
-        args_size = _set_size_to_optimized_value(**args_size, opt_size=opt_size)
+        opt_size = cpp_plot.optimize_label_size(ax=ax, df_pos=df_pos)
         # Add importance map
         if add_importance_map:
             _add_importance_map(ax=ax, df_feat=df_feat, df_cat=self.df_cat,
                                 start=start, args_len=args_len, y=y)
-        # Add tmd_jmd sequence if sequence is given
-        if isinstance(tmd_seq, str):
-            cpp_plot.add_tmd_jmd_seq(ax=ax, **args_seq, **args_size, **args_part_color, **args_seq_color,
-                                     xticks_top=xticks_top, xticks_pos=xticks_pos,
-                                     x_shift=0.5, xtick_size=xtick_size)
-        # Add tmd_jmd bar
-        elif add_jmd_tmd:
-            args_part_size = {x: args_size[x] for x in args_size if x != "seq_size"}
-            cpp_plot.add_tmd_jmd_bar(ax=ax, **args_part_color)
-            cpp_plot.add_tmd_jmd_xticks(ax=ax, x_shift=0.5, **args_xtick)
-            cpp_plot.add_tmd_jmd_text(ax=ax, x_shift=0, **args_part_size)
-        # Add default x ticks on top of plot
-        if xticks_top:
-            ax2 = ax.twiny()
-            ax2.set_xlim(ax.get_xlim())
-            cpp_plot.add_xticks(ax=ax2, xticks_position="top", x_shift=0.5, **args_xtick)
         # Add scale classification
         if add_legend_cat:
-            ax = cpp_plot.add_legend_cat(ax=ax, df_pos=df_pos, df_cat=self.df_cat, y=y,
-                                         dict_color=dict_color, legend_kws=legend_kws)
-
-        # Set current axis to main axis object depending on tmd sequence given or not
-        n = 2 if isinstance(tmd_seq, str) else 0
-        plt.sca(plt.gcf().axes[n])
-        return ax
-
-    def plot_bargraph(self, df_feat=None, y="subcategory", val_col="mean_dif",
-                      figsize=(7, 5), title=None, title_kws=None,
-                      bar_color="steelblue", edge_color="none", bar_width=0.75,
-                      add_jmd_tmd=True, tmd_len=20, start=1,
-                      jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None,
-                      tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
-                      seq_size=None, tmd_fontsize=None, jmd_fontsize=None,
-                      xticks_top=True, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
-                      ytick_size=None, ytick_width=2.0, ytick_length=5.0, ylim=None,
-                      highlight_tmd_area=True, highlight_alpha=0.25,
-                      grid=False, grid_axis="both",
-                      **kwargs):
-        """"""
-        # Group arguments
-        args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,)
-        args_size = check_args_size(seq_size=seq_size, tmd_fontsize=tmd_fontsize, jmd_fontsize=jmd_fontsize)
-        args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self.jmd_n_len, jmd_c_len=self.jmd_c_len, **args_seq)
-        args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
-        args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
-        args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
-
-        # Checking input
-        # Args checked by Matplotlib: title
-        # Args checked by internal plotting functions: ylim
-        ut.check_non_negative_number(name="bar_width", val=bar_width, min_val=0, just_int=False)
-        ut.check_non_negative_number(name="start", val=start, min_val=0)
-        ut.check_non_negative_number(name="tmd_area_alpha", val=highlight_alpha, min_val=0, max_val=1, just_int=False)
-        ut.check_bool(name="add_jmd_tmd", val=add_jmd_tmd)
-        ut.check_bool(name="xticks_top", val=xticks_top)
-        ut.check_bool(name="highlight_tmd_area", val=highlight_tmd_area)
-        ut.check_bool(name="grid", val=grid)
-        ut.check_color(name="bar_color", val=bar_color)
-        ut.check_color(name="edge_color", val=edge_color, accept_none=True)
-
-        ut.check_col_in_df(df=df_feat, name_df="df_feat", col=val_col, type_check="numerical")
-        ut.check_y_categorical(df=df_feat, y=y)
-        df_feat = ut.check_df_feat(df_feat=df_feat)
-        check_figsize(figsize=figsize)
-        check_args_ytick(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
-        check_grid_axis(grid_axis=grid_axis)
-
-        # Get df positions
-        df_feat = self.add_positions(df_feat=df_feat, tmd_len=args_len["tmd_len"], start=start)
-        df_pos = _get_df_pos(df_feat=df_feat, df_cat=self.df_cat, y=y, val_col=val_col, value_type="count", **args_len)
-
-        # Plotting
-        cpp_plot = CPPPlots(**args_len, start=start)
-        try:
-            ax = cpp_plot.barplot(df_pos=df_pos, ylim=ylim, figsize=figsize,
-                                  bar_color=bar_color, edge_color=edge_color, bar_width=bar_width,
-                                  x_shift=0, **args_xtick, **kwargs)
-        except AttributeError as e:
-            error_message = check_parameters(func=self.plot_bargraph, name_called_func="pd.DataFrame.plot", e=e)
-            raise AttributeError(error_message)
-        cpp_plot.set_title(title=title, title_kws=title_kws)
-        # Autosize tmd sequence & annotation
-        opt_size = cpp_plot.optimized_size(ax=ax, df_pos=df_pos, label_term=False)
-        args_size = _set_size_to_optimized_value(**args_size, opt_size=opt_size)
+            ax = cpp_plot.add_legend_cat(ax=ax, df_pos=df_pos, df_cat=self.df_cat, y=y, dict_color=dict_color,
+                                         legend_kws=legend_kws)
         # Add tmd_jmd sequence if sequence is given
-        if type(tmd_seq) == str:
-            cpp_plot.add_tmd_jmd_seq(ax=ax, **args_seq, **args_size, **args_part_color, **args_seq_color,
-                                     xticks_top=False, heatmap=False, x_shift=0, xtick_size=xtick_size)
+        if isinstance(tmd_seq, str):
+            ax = cpp_plot.add_tmd_jmd_seq(ax=ax, **args_seq, **args_size, **args_part_color, **args_seq_color,
+                                          xticks_pos=xticks_pos,
+                                          x_shift=0.5, xtick_size=xtick_size)
+            self.ax_seq = ax
         # Add tmd_jmd bar
         elif add_jmd_tmd:
-            args_part_size = {x: args_size[x] for x in args_size if x != "seq_size"}
-            cpp_plot.add_tmd_jmd_bar(ax=ax, x_shift=-0.5, **args_part_color, add_white_bar=False)
-            cpp_plot.add_tmd_jmd_xticks(ax=ax, x_shift=0, **args_xtick)
-            cpp_plot.add_tmd_jmd_text(ax=ax, x_shift=-0.5, **args_part_size)
-        # Adjust y ticks
-        plt.yticks(size=ytick_size)
-        plt.tick_params(axis="y", color="black", width=ytick_width, length=ytick_length, bottom=False)
-        # Add default x ticks on top of plot
-        if xticks_top:
-            ax3 = ax.twiny()
-            ax3.set_xlim(ax.get_xlim())
-            cpp_plot.add_xticks(ax=ax3, xticks_position="top", x_shift=0, **args_xtick)
-        else:
-            sns.despine(top=True, right=True)
+            size = opt_size if tmd_jmd_fontsize is None else tmd_jmd_fontsize
+            cpp_plot.add_tmd_jmd_bar(ax=ax, **args_part_color)
+            cpp_plot.add_tmd_jmd_xticks(ax=ax, x_shift=0.5, **args_xtick)
+            cpp_plot.add_tmd_jmd_text(ax=ax, x_shift=0, tmd_jmd_fontsize=size)
         # Set current axis to main axis object depending on tmd sequence given or not
-        n = 1 if type(tmd_seq) == str else 0
-        plt.sca(plt.gcf().axes[n])
-        # Add grid
-        if grid:
-            ax.set_axisbelow(True)  # Grid behind datasets
-            ax.grid(which="major", axis=grid_axis, linestyle="-")
-        # Add tmd area
-        if highlight_tmd_area:
-            cpp_plot.highlight_tmd_area(ax=ax, x_shift=-0.5, tmd_color=tmd_color, alpha=highlight_alpha)
-        # Set default ylabel
+        plt.sca(plt.gcf().axes[0])
         ax = plt.gca()
-        ylabel = f"Feature count"
-        plt.ylabel(ylabel, size=args_size["seq_size"], weight="bold")
         return ax
 
-    def plot_profile(self, df_feat=None, y="category", val_col="mean_dif", val_type="count", normalize=False,
-                     figsize=(7, 5), title=None, title_kws=None,
-                     dict_color=None, edge_color="none", bar_width=0.75,
-                     add_jmd_tmd=True, tmd_len=20, start=1,
-                     jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None,
-                     tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
-                     seq_size=None, tmd_fontsize=None, jmd_fontsize=None,
-                     xticks_top=True, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, xticks_pos=True,
-                     ytick_size=None, ytick_width=2.0, ytick_length=5.0, ylim=None,
-                     highlight_tmd_area=True, highlight_alpha=0.15,
-                     grid=False, grid_axis="both",
-                     add_legend_cat=True, legend_kws=None,
-                     shap_plot=False,
-                     **kwargs):
+    def update_seq_size(self):
         """"""
-        # Group arguments
-        args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,)
-        args_size = check_args_size(seq_size=seq_size, tmd_fontsize=tmd_fontsize, jmd_fontsize=jmd_fontsize)
-        args_len = check_args_len(tmd_len=tmd_len, jmd_n_len=self.jmd_n_len, jmd_c_len=self.jmd_c_len, **args_seq)
-        args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
-        args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
-        args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
-
-        # Checking input
-        # Args checked by Matplotlib: title, legend_kws
-        # Args checked by internal plotting functions: ylim
-        ut.check_non_negative_number(name="bar_width", val=bar_width, min_val=0, just_int=False)
-        ut.check_non_negative_number(name="start", val=start, min_val=0)
-        ut.check_non_negative_number(name="tmd_area_alpha", val=highlight_alpha, min_val=0, max_val=1, just_int=False)
-        ut.check_bool(name="add_jmd_tmd", val=add_jmd_tmd)
-        ut.check_bool(name="xticks_top", val=xticks_top)
-        ut.check_bool(name="highlight_tmd_area", val=highlight_tmd_area)
-        ut.check_bool(name="grid", val=grid)
-        ut.check_bool(name="shap_plot", val=shap_plot)
-        ut.check_bool(name="add_legend_cat", val=add_legend_cat)
-        ut.check_color(name="edge_color", val=edge_color, accept_none=True)
-        ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
-
-        ut.check_col_in_df(df=df_feat, name_df="df_feat", col=val_col, type_check="numerical")
-        ut.check_y_categorical(df=df_feat, y=y)
-        df_feat = ut.check_df_feat(df_feat=df_feat)
-        check_value_type(val_type=val_type, count_in=True)
-        check_args_ytick(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
-        check_figsize(figsize=figsize)
-        dict_color = check_dict_color(dict_color=dict_color, df_cat=self.df_cat)
-        check_args_ytick(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
-        check_grid_axis(grid_axis=grid_axis)
-
-        # Get df positions
-        df_feat = self.add_positions(df_feat=df_feat, tmd_len=args_len["tmd_len"], start=start)
-        df_pos = _get_df_pos(df_feat=df_feat, df_cat=self.df_cat, y=y, val_col=val_col,
-                             value_type=val_type, normalize=normalize, start=start, **args_len)
-        # Plotting
-        cpp_plot = CPPPlots(**args_len, start=start)
-        try:
-            ax = cpp_plot.profile(df_pos=df_pos, figsize=figsize, ylim=ylim,
-                                  dict_color=dict_color, edge_color=edge_color, bar_width=bar_width,
-                                  add_legend=add_legend_cat, legend_kws=legend_kws, shap_plot=shap_plot,
-                                  **args_xtick, **kwargs)
-        except AttributeError as e:
-            error_message = check_parameters(func=self.plot_profile, name_called_func="pd.DataFrame.plot", e=e)
-            raise AttributeError(error_message)
-        cpp_plot.set_title(title=title, title_kws=title_kws)
-
-        # Autosize tmd sequence & annotation
-        opt_size = cpp_plot.optimized_size(ax=ax, df_pos=df_pos, label_term=False)
-        args_size = _set_size_to_optimized_value(**args_size, opt_size=opt_size)
-        # Add tmd_jmd sequence if sequence is given
-        if type(tmd_seq) == str:
-            cpp_plot.add_tmd_jmd_seq(ax=ax, **args_seq, **args_size, **args_part_color, **args_seq_color,
-                                     xticks_top=False, xticks_pos=xticks_pos, heatmap=False, x_shift=0, xtick_size=xtick_size)
-        # Add tmd_jmd bar
-        elif add_jmd_tmd:
-            args_part_size = {x: args_size[x] for x in args_size if x != "seq_size"}
-            cpp_plot.add_tmd_jmd_bar(ax=ax, x_shift=-0.5, **args_part_color, add_white_bar=False)
-            cpp_plot.add_tmd_jmd_xticks(ax=ax, x_shift=0, **args_xtick)
-            cpp_plot.add_tmd_jmd_text(ax=ax, x_shift=-0.5, **args_part_size)
-        # Adjust y ticks
-        plt.yticks(size=ytick_size)
-        plt.tick_params(axis="y", color="black", width=ytick_width, length=ytick_length, bottom=False)
-        # Add default x ticks on top of plot
-        if xticks_top:
-            ax3 = ax.twiny()
-            ax3.set_axisbelow(True)
-            ax3.set_xlim(ax.get_xlim())
-            cpp_plot.add_xticks(ax=ax3, xticks_position="top", x_shift=0, **args_xtick)
-        else:
-            sns.despine(top=True, right=True)
-        # Set current axis to main axis object depending on tmd sequence given or not
-        n = 1 if type(tmd_seq) == str else 0
-        plt.sca(plt.gcf().axes[n])
-        # Add grid
-        if grid:
-            ax.set_axisbelow(True)  # Grid behind datasets
-            ax.grid(which="major", axis=grid_axis, linestyle="-")
-        # Add tmd area
-        if highlight_tmd_area:
-            cpp_plot.highlight_tmd_area(ax=ax, x_shift=-0.5, tmd_color=tmd_color, alpha=highlight_alpha)
-        # Set default ylabel
-        ax = plt.gca()
-        ylabel = "Feature impact" if shap_plot else f"Feature count (-/+ {val_col})"
-        plt.ylabel(ylabel, size=args_size["seq_size"], weight="bold")
-        return ax
-
-    def plot_stat(self, df_feat=None, figsize=(7, 5),
-                  val_col="abs_mean_dif", percent_v=True, ylim_v=None,
-                  color_v="silver", ylabel_v=None,
-                  pval_col="p_val_mann_whitney", neg_log_p=True, ylim_p=None,
-                  color_p="black", ylabel_p=None, min_p=0.001,
-                  ylabel_fontsize=12, ylabel_fontweight="medium",
-                  add_cat=True, add_legend_cat=True, legend_kws=None, legend_y_adjust=-0.05, dict_color=None,
-                  highlight_cat=False, highlight_alpha=0.075, **kwargs):
-        """
-        Show p-value and effect size (e.g., mean differences) over all features in descending order.
-
-        Parameters
-        ----------
-        df_feat:
-        val_col:
-        pval_col:
-        percent_v:
-        neg_log_p:
-        ylim_v:
-        ylim_p:
-        color_v:
-        color_p:
-        ylabel_v:
-        ylabel_p:
-        min_p:
-        ylabel_fontsize:
-        ylabel_fontweight: {0-1000, 'light', 'medium', 'bold'}
-        add_cat:
-        add_legend_cat:
-        legend_kws:
-        dict_color:
-        highlight_cat:
-        highlight_alpha:
-
-        Returns
-        -------
-
-        """
-        # TODO check (test) ylabel_v/p, ylabel_weight
-        # Checking input
-        # Args checked by Matplotlib: title, legend_kws
-        ut.check_non_negative_number(name="highlight_alpha", val=highlight_alpha, min_val=0, max_val=1, just_int=False)
-        ut.check_non_negative_number(name="ylabel_fontsize", val=ylabel_fontsize, min_val=1, accept_none=True, just_int=False)
-        ut.check_non_negative_number(name="min_p,", val=min_p, min_val=0, max_val=1, just_int=False)
-        ut.check_bool(name="highlight_cat", val=highlight_cat)
-        ut.check_bool(name="percent_v", val=percent_v)
-        ut.check_bool(name="add_cat", val=add_cat)
-        ut.check_bool(name="add_legend_cat", val=add_legend_cat)
-        ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
-        ut.check_color(name="color_v", val=color_v)
-        ut.check_color(name="color_p", val=color_p)
-        ut.check_str(name="ylabel_v", val=ylabel_v, accept_none=True)
-        ut.check_str(name="ylabel_p", val=ylabel_p, accept_none=True)
-
-        check_figsize(figsize=figsize)
-        df_feat = ut.check_df_feat(df_feat=df_feat)
-        ut.check_col_in_df(df=df_feat, name_df="df_feat", col=val_col, type_check="numerical")
-        ut.check_col_in_df(df=df_feat, name_df="df_feat", col=pval_col, type_check="numerical")
-        ut.check_ylim(df=df_feat, ylim=ylim_v, val_col=val_col)
-        ut.check_ylim(df=df_feat, ylim=ylim_p, val_col=pval_col)
-        dict_color = check_dict_color(dict_color=dict_color, df_cat=self.df_cat)
-        check_ylabel_fontweight(ylabel_fontweight=ylabel_fontweight)
-        # Plotting
-        plt.figure(figsize=figsize)
-        ax = cpp_statistics(df=df_feat, df_cat=self.df_cat, dict_color=dict_color,
-                            col_p=pval_col, neg_log_p=neg_log_p, ylim_p=ylim_p, color_p=color_p, ylabel_p=ylabel_p,
-                            min_p=min_p,
-                            col_v=val_col, percent_v=percent_v, ylim_v=ylim_v, color_v=color_v, ylabel_v=ylabel_v,
-                            ylabel_fontsize=ylabel_fontsize, ylabel_fontweight=ylabel_fontweight,
-                            add_cat=add_cat, add_legend_cat=add_legend_cat,
-                            legend_kws=legend_kws, legend_y_adjust=legend_y_adjust,
-                            highlight_cat=highlight_cat, highlight_alpha=highlight_alpha, **kwargs)
-        return ax
+        # TODO legend changes slightly if sequnece length altered (e.g. PTPRM_MOUSE vs A4_HUMAN)
+        # TODO look for more extreme example and text
+        f = lambda l: l.get_window_extent(ax.figure.canvas.get_renderer())
+        ax = self.ax_seq
+        labels = ax.xaxis.get_ticklabels(which="both")
+        tick_positions = [f(l).x0 for l in labels]
+        sorted_tick_positions, sorted_labels = zip(*sorted(zip(tick_positions, labels), key=lambda t: t[0]))
+        # Adjust font size to prevent overlap
+        seq_size = get_optimal_fontsize(ax, sorted_labels)
+        for l in sorted_labels:
+            l.set_fontsize(seq_size)
