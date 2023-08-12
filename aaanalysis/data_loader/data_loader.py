@@ -75,7 +75,7 @@ def _filter_scales(df_cat=None, unclassified_in=False, just_aaindex=False):
 
 # Extend for AAclustTop60
 def load_scales(name="scales", just_aaindex=False, unclassified_in=True):
-    """Load amino acid scales or scale classification.
+    """Load amino acid scales or scale classification. # TODO how to document this properly?
     :arg name: name of dataset to load {'scales', 'scales_raw', 'scale_classification',
         'scales_pc', 'top60', 'top60_eval'}
     :arg unclassified_in: boolean weather unclassified scales should be included ('Others' category counts as unclassified)
