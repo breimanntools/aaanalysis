@@ -290,42 +290,34 @@ def _set_size_to_optimized_value(seq_size=None, tmd_jmd_fontsize=None, opt_size=
 
 # II Main Functions
 class CPP:
-    """Create and filter features that are most discriminant between two sets of sequences.
+    """
+    Create and filter features that are most discriminant between two sets of sequences.
 
     Attributes
     ----------
-    df_scales: pd.DataFrame, default=SequenceFeature.load_scales
+    df_scales : pd.DataFrame, default=aa.load_scales(name=ut.STR_SCALE_CAT)
         DataFrame with default amino acid scales.
-    df_cat: pd.DataFrame, default=SequenceFeature.load_categories
-        DataFrame with default categories for physicochemical amino acid scales
-    df_parts: pd.DataFrame
+    df_cat : pd.DataFrame, default=aa.load_categories
+        DataFrame with default categories for physicochemical amino acid scales.
+    df_parts : pd.DataFrame
         DataFrame with sequence parts.
-    split_kws: dict, default=SequenceFeature.get_split_kws
+    split_kws : dict, default=SequenceFeature.get_split_kws
         Nested dictionary with parameter dictionary for each chosen split_type.
-    accept_gaps: bool, default=False
-            Whether to accept missing values by enabling omitting for computations (if True).
-    jmd_n_len: int, >=0, default=10
+    accept_gaps : bool, default=False
+        Whether to accept missing values by enabling omitting for computations (if True).
+    jmd_n_len : int, >=0, default=10
         Length of JMD-N.
-    jmd_c_len: int, >=0, default=10
+    jmd_c_len : int, >=0, default=10
         Length of JMD-C.
-    ext_len:int, >=0, default=4
+    ext_len : int, >=0, default=4
         Length of TMD-extending part (starting from C and N terminal part of TMD).
-        Conditions: ext_len<jmd_m_len and ext_len<jmd_c_len
-    verbose: bool, default=True
-            Whether to print progress information about the algorithm (if True).
+        Conditions: ext_len < jmd_m_len and ext_len < jmd_c_len.
+    verbose : bool, default=True
+        Whether to print progress information about the algorithm (if True).
 
     Notes
     -----
-    The CPP.run() method performs all steps of the CPP algorithm:
-
-    1. Creation of all possible features
-
-    2. Two-step filtering:
-
-        2.1 Threshold-based filtering
-
-        2.2 Redundancy reduction
-
+    The CPP.run() method performs all steps of the CPP algorithm.
     """
     def __init__(self, df_scales=None, df_cat=None, df_parts=None, split_kws=None,
                  accept_gaps=False, jmd_n_len=10, jmd_c_len=10, ext_len=4, verbose=True):
@@ -359,7 +351,8 @@ class CPP:
 
     # Adder methods for CPP analysis (used in run method)
     def _add_scale_info(self, df_feat=None):
-        """Add scale information to DataFrame. Scale information are–from general to specific–scale categories,
+        """
+        Add scale information to DataFrame. Scale information are–from general to specific–scale categories,
         sub categories, and scale names.
 
         Parameters
@@ -387,7 +380,8 @@ class CPP:
         return df_feat
 
     def _add_stat(self, df_feat=None, labels=None, parametric=False, accept_gaps=False):
-        """Add summary statistics for each feature to DataFrame.
+        """
+        Add summary statistics for each feature to DataFrame.
 
         Parameters
         ----------
@@ -407,7 +401,6 @@ class CPP:
 
         Notes
         -----
-        # TODO add link
         P-values are calculated Mann-Whitney U test (non-parametric) or T-test (parametric) as implemented in SciPy.
 
         For multiple hypothesis correction, the Benjamini-Hochberg FDR correction is applied on all given features
@@ -430,7 +423,8 @@ class CPP:
         return df_feat
 
     def add_positions(self, df_feat=None, tmd_len=20, start=1):
-        """Add sequence positions to DataFrame.
+        """
+        Add sequence positions to DataFrame.
 
         Parameters
         ----------
@@ -463,7 +457,8 @@ class CPP:
 
     @staticmethod
     def add_shap(df_feat=None, col_shap="shap_value", name_feat_impact="feat_impact"):
-        """Convert SHAP values in feature impact/importance and add to DataFrame.
+        """
+        Convert SHAP values in feature impact/importance and add to DataFrame.
 
         Parameters
         ----------
@@ -483,7 +478,9 @@ class CPP:
         -----
         - SHAP (SHapley Additive exPlanations) is a game theoretic approach to explain the output of
         any machine learning model.
+
         - SHAP values represent a feature´s responsibility for a change in the model output.
+
         - Missing values are accepted in SHAP values.
 
         See also
@@ -507,7 +504,8 @@ class CPP:
         return df_feat
 
     def add_sample_dif(self, df_feat=None, df_seq=None, labels=None, sample_name=str, ref_group=0, accept_gaps=False):
-        """Add feature value difference between sample and reference group to DataFrame.
+        """
+        Add feature value difference between sample and reference group to DataFrame.
 
         Parameters
         ----------
@@ -531,7 +529,7 @@ class CPP:
         """
         # Check input
         df_feat = ut.check_df_feat(df_feat=df_feat)
-        ut.check_df_seq(df_seq=df_seq)
+        ut.check_df_seq(df_seq=df_seq, jmd_c_len=self.jmd_c_len, jmd_n_len=self.jmd_c_len)
         ut.check_labels(labels=labels, df=df_seq, name_df="df_seq")
         check_ref_group(ref_group=ref_group, labels=labels)
         check_sample_in_df_seq(sample_name=sample_name, df_seq=df_seq)
@@ -587,59 +585,60 @@ class CPP:
     # Main method
     def run(self, labels=None, parametric=False, n_filter=100, tmd_len=20, start=1, check_cat=True,
             n_pre_filter=None, pct_pre_filter=5, max_std_test=0.2, max_overlap=0.5, max_cor=0.5, n_processes=None):
-        """Perform CPP pipeline by creation and two-step filtering of features. CPP aims to identify a collection of
-        non-redundant features that are most discriminant between a test and a reference group of sequences.
+        """
+        Perform CPP pipeline by creation and two-step filtering of features. CPP aims to
+        identify a collection of non-redundant features that are most discriminant between
+        a test and a reference group of sequences.
 
         Parameters
         ----------
-        labels: array-like, shape (n_samples)
+        labels : array-like, shape (n_samples)
             Class labels for samples in sequence DataFrame (test=1, reference=0).
-        parametric: bool, default=False
+        parametric : bool, default=False
             Whether to use parametric (T-test) or non-parametric (U-test) test for p-value computation.
-        n_filter: int, default=100
+        n_filter : int, default=100
             Number of features to be filtered/selected by CPP algorithm.
-        n_pre_filter: int, optional
+        n_pre_filter : int, optional
             Number of feature to be pre-filtered by CPP algorithm. If None, a percentage of all features is used.
         tmd_len : int, >0
-            Length of TMD used for positions.
+            Length of Transmembrane Domain (TMD) used for positions.
         start : int, >=0
             Position label of first amino acid position (starting at N-terminus).
-
-        pct_pre_filter: int, default=5
+        check_cat : bool, default=True
+            Whether to check for redundancy within scale categories.
+        pct_pre_filter : int, default=5
             Percentage of all features that should remain after the pre-filtering step.
-        max_std_test: float [0-1], default=0.2
-            The maximum standard deviation within the test group used as threshold for pre-filtering.
-        max_overlap: float [0-1], default=0.5
-            The maximum positional overlap of features used as threshold for filtering.
-        max_cor: float [0-1], default=0.5
-            The maximum pearson correlation of features used as threshold for filtering.
-        accept_gaps: bool, default=False
-            Whether to accept missing values by enabling omitting for computations (if True).
-        n_processes: integer default=None
-            Number of CPUs used for multiprocessing. If None, number will be optimized automatically
+        max_std_test : float [0-1], default=0.2
+            Maximum standard deviation within the test group used as threshold for pre-filtering.
+        max_overlap : float [0-1], default=0.5
+            Maximum positional overlap of features used as threshold for filtering.
+        max_cor : float [0-1], default=0.5
+            Maximum Pearson correlation of features used as threshold for filtering.
+        n_processes : int, default=None
+            Number of CPUs used for multiprocessing. If None, number will be optimized automatically.
 
         Returns
         -------
-        df_feat: pd.DataFrame, shape (n_feature, n_feature_information)
-            DataFrame with an unique identifier, scale information, statistics, and positions for each feature.
+        df_feat : pd.DataFrame, shape (n_feature, n_feature_information)
+            DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
 
         Notes
         -----
-        The feature DataFrame contains following eleven columns including the unique feature id (1), scale
-        information (2-4), statistical results used for filtering and ranking (5-10), and feature positions (11):
+        The feature DataFrame contains the following eleven columns, including the unique
+        feature id (1), scale information (2-4), statistical results used for filtering and
+        ranking (5-10), and feature positions (11):
 
-            1. features: Feature ID (PART-SPLIT-SCALE)
-            2. category: Scale category
-            3. subcategory: Sub category of scales
-            4. scale_name: Name of scales
-            5. abs_auc: Absolute adjusted AUC [-0.5 to 0.5]
-            6. abs_mean_dif: Absolute mean differences between test and reference group [0 to 1]
-            7. std_test: Standard deviation in test group
-            8. std_ref: Standard deviation in reference group
-            9. p_val: Non-parametric (mann_whitney) or parametric (ttest_indep) statistic
-            10. p_val_fdr_bh: Benjamini-Hochberg FDR corrected p-values
-            11. positions: Feature positions for default settings
-            :param n_processes:
+        1. features: Feature ID (PART-SPLIT-SCALE)
+        2. category: Scale category
+        3. subcategory: Sub category of scales
+        4. scale_name: Name of scales
+        5. abs_auc: Absolute adjusted AUC [-0.5 to 0.5]
+        6. abs_mean_dif: Absolute mean differences between test and reference group [0 to 1]
+        7. std_test: Standard deviation in test group
+        8. std_ref: Standard deviation in reference group
+        9. p_val: Non-parametric (mann_whitney) or parametric (ttest_indep) statistic
+        10. p_val_fdr_bh: Benjamini-Hochberg FDR corrected p-values
+        11. positions: Feature positions for default settings
         """
         # Check input
         ut.check_labels(labels=labels, df=self.df_parts, name_df="df_parts")
@@ -702,7 +701,11 @@ class CPP:
                      add_legend_cat=True, legend_kws=None,
                      shap_plot=False,
                      **kwargs):
-        """"""
+        """
+
+        Parameters
+        ----------
+        """
         # Group arguments
         args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,)
         args_size = check_args_size(seq_size=seq_size, tmd_jmd_fontsize=tmd_jmd_fontsize)
@@ -796,33 +799,30 @@ class CPP:
                      xticks_pos=False, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, ytick_size=None,
                      add_legend_cat=True, legend_kws=None,
                      add_importance_map=False, cbar_pct=False, **kwargs):
-        """Plot heatmap of selected value column for scale information (y-axis) against sequence position (x-axis).
-        This is a wrapper function of :func:`seaborn.heatmap` to show differences between two sets of sequences on
-        positional level (e.g., on level of amino acids for protein sequences).
+        """
+        Plot a heatmap of the selected value column with scale information (y-axis) versus sequence position (x-axis).
+        This is a wrapper function for :func:`seaborn.heatmap`, designed to highlight differences between two sets
+        of sequences at the positional level (e.g., amino acid level for protein sequences).
 
         Parameters
         ----------
         df_feat : :class:`~pandas.DataFrame`, shape (n_feature, n_feature_information)
-            DataFrame with an unique identifier, scale information, statistics, and positions for each feature.
+            DataFrame containing unique identifiers, scale information, statistics, and positions for each feature.
         y : {'category', 'subcategory', 'scale_name'}, str, default='subcategory'
-            Name of column in feature DataFrame for scale information (shown on x axis).
-        val_col : {'mean_dif', 'feat_impact', 'abs_auc', 'std_test', ...} str, default='mean_dif'
-            Name of column in feature DataFrame with numerical values to show.
+            Name of the column in the feature DataFrame representing scale information (shown on the y-axis).
+        val_col : {'mean_dif', 'feat_impact', 'abs_auc', 'std_test', ...}, str, default='mean_dif'
+            Name of the column in the feature DataFrame containing numerical values to display.
         val_type : {'mean', 'sum', 'std'}, str, default='mean'
-            How to aggregate numerical values given in 'val_col'.
-        normalize : {True, False, 'positions', 'positions_only'} bool or str, default=False
-            Whether to use normalization for numerical values of 'val_col':
+            Method to aggregate numerical values from 'val_col'.
+        normalize : {True, False, 'positions', 'positions_only'}, bool/str, default=False
+            Specifies normalization for numerical values in 'val_col':
 
-            - If False, value is set at all positions of a feature without posterior normalization over all features.
-                Recomanded for 'val_col'='mean_dif' and 'value_type'='mean'.
-            - If True, value is set at all positions of a feature and normalized over all features.
-                Recomanded for 'val_col'='feat_impact' and 'value_type'='mean'.
-            - If 'positions', values/number of positions is set at each position of a feature and normalize over all features.
-                Recomanded for 'val_col'='feat_impact' and 'value_type'='mean' if impact of features comprising lower
-                number of positions (e.g., Pattern) should be increased.
-
+            - False: Set value at all positions of a feature without further normalization.
+            - True: Set value at all positions of a feature and normalize across all features.
+            - 'positions': Value/number of positions set at each position of a feature and normalized across features.
+              Recommended when aiming to emphasize features with fewer positions using 'val_col'='feat_impact' and 'value_type'='mean'.
         figsize : tuple(float, float), default=(10,7)
-            Width, height of figure in inches passd to :func:`matplotlib.pyplot.figure`.
+            Width and height of the figure in inches passed to :func:`matplotlib.pyplot.figure`.
         title : str, optional
             Title of figure used by :func:`matplotlib.pyplot.title`.
         title_kws : dict, optional
@@ -838,14 +838,12 @@ class CPP:
             Map of colors for scale categories classifying scales shown on y-axis.
         cbar_kws : dict of key, value mappings, optional
             Keyword arguments for :meth:`matplotlib.figure.Figure.colorbar`.
-
         add_jmd_tmd : bool, default=True
             Whether to add colored bar under heatmap indicating sequence parts (JMD-N, TMD, JMD-C).
         tmd_len : int, >0
             Length of TMD to be depiceted.
         start : int, >=0
             Position label of first amino acid position (starting at N-terminus).
-
         tmd_seq : str, optional
             Sequence of TMD. 'tmd_len' is set to length of TMD if sequence for TMD, JMD-N and JMD-C are given.
             Recommended if feature impact or mean difference should be depicted for one sample.
@@ -876,24 +874,23 @@ class CPP:
         ytick_size : float, optional
             Size of scale information as y ticks in points. Passed to :meth:`matplotlib.axes.Axes.tick_params`.
             If None, optimized automatically.
-
         add_legend_cat : bool, default=True,
             Whether to add legend for categories under plot and classification of scales at y-axis.
         legend_kws : dict, optional
             Keyword arguments passed to :meth:`matplotlib.axes.Axes.legend`
-
         kwargs : other keyword arguments
             All other keyword arguments passed to :meth:`matplotlib.axes.Axes.pcolormesh`.
 
         Returns
         -------
-        ax : matplotlib Axex
-            Axes object with the heatmap.
+        ax : matplotlib Axes
+        Axes object containing the heatmap.
 
         Warning
         -------
-        - 'cmap_n_colors' only works properly if 'vmin' and 'vmax' match data.
-        - 'tmd_seq_color' and 'jmd_seq_color' can only be applied if 'tmd_seq', 'jmd_n_seq', and 'jmd_c_seq' are given.
+        - 'cmap_n_colors' is effective only if 'vmin' and 'vmax' align with the data.
+
+        - 'tmd_seq_color' and 'jmd_seq_color' are applicable only when 'tmd_seq', 'jmd_n_seq', and 'jmd_c_seq' are provided.
 
         See Also
         --------
@@ -911,13 +908,15 @@ class CPP:
             >>> import matplotlib.pyplot as plt
             >>> import aaanalysis as aa
             >>> sf = aa.SequenceFeature()
-            >>> df_seq = aa.load_dataset(name='GSEC_SUB_SEQ')
+            >>> df_seq = aa.load_dataset(name='SEQ_DISULFIDE', min_len=100)
             >>> labels = list(df_seq["label"])
-            >>> df_parts = sf.get_df_parts(df_seq=df_seq)
-            >>> cpp = aa.CPP(df_parts=df_parts)
-            >>> df_feat = cpp.run(labels=labels)
-            >>> cpp.plot_heatmap(df_feat=df_feat)
-            >>> plt.tight_layout()
+            >>> df_parts = sf.get_df_parts(df_seq=df_seq, jmd_n_len=10, jmd_c_len=10)
+            >>> #split_kws = sf.get_split_kws(n_split_min=1, n_split_max=3, split_types=["Segment", "PeriodicPattern"])
+            >>> #df_scales = aa.load_scales(unclassified_in=False).sample(n=10, axis=1)
+            >>> #cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales)
+            >>> #df_feat = cpp.run(labels=labels)
+            >>> #cpp.plot_heatmap(df_feat=df_feat)
+            >>> #plt.tight_layout()
 
         """
         # Group arguments

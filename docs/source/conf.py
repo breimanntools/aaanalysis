@@ -1,3 +1,7 @@
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../../'))
+
 # Configuration file for the Sphinx documentation builder.
 
 # -- Project information -----------------------------------------------------
@@ -9,6 +13,8 @@ release = '2023'
 # -- General configuration ---------------------------------------------------
 extensions = [
     'sphinx.ext.autodoc',       # Generate documentation from docstrings
+    'matplotlib.sphinxext.plot_directive',
+    'sphinx.ext.viewcode',
     'sphinx.ext.viewcode',      # Add a link to the source code for classes and functions
     'sphinx_rtd_theme'          # Use the theme provided by Read the Docs
 ]
