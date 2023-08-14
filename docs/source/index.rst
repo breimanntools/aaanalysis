@@ -29,7 +29,6 @@ Contents
 
 .. toctree::
    :maxdepth: 3
-   :caption: Contents:
 
    Tutorial <tutorials>
    API <api>
