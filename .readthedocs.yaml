@@ -17,8 +17,9 @@ sphinx:
 
 python:
   install:
-    - method: poetry
+    - method: pip
       path: .
+      requirements: requirements.txt
 
 submodules:
   include:

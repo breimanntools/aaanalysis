@@ -63,8 +63,8 @@ pytest-mpl = "^0.13"
 
 # If you have URLs like SHAP did
 [tool.poetry.urls]
-"Repository" = "http://github.com/yourusername/aaanalysis"
-"Documentation" = "https://yourdocumentationlink.com"
+"Repository" = "http://github.com/breimanntools/aaanalysis"
+"Documentation" = "hhttps://aaanalysis.readthedocs.io"
 
 # If you use a tool for linting or formatting, you can add its configurations here.
 # For example, if you use `black` for formatting:
