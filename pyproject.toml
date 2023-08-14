@@ -8,8 +8,21 @@ version = "0.1.0"
 description = "Python toolkit for high-performance for interpretable protein prediction"
 authors = ["Stephan Breimann <stephanbreimann@gmail.de>"]
 license = "MIT"
-readme = "README.md"
+readme = "README.rst"
 include = ["data/*.xlsx", "data/benchmarks/*.tsv", "data/benchmarks/*.xlsx"]
+# Add classifiers to provide more details about the package.
+# Assuming your platform and OS compatibilities
+classifiers = [
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License"
+]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
@@ -23,22 +36,7 @@ pytest-mpl = "^0.13"
 
 # Optional dependencies
 [tool.poetry.extras]
-plots = ["matplotlib"]
-
-# Add classifiers to provide more details about the package.
-# Assuming your platform and OS compatibilities
-[tool.poetry]
-classifiers = [
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Intended Audience :: Science/Research",
-    "Topic :: Scientific/Engineering",
-    "Topic :: Scientific/Engineering :: Bio-Informatics",
-    "Development Status :: 3 - Alpha",
-    "License :: OSI Approved :: MIT License"
-]
+plots = ["matplotlib", "seaborn"]
 
 # If you have URLs like SHAP did
 [tool.poetry.urls]
