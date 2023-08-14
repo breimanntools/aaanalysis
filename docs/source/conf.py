@@ -27,3 +27,4 @@ master_doc = 'index'          # This is the main document, usually named "index.
 # -- Options for HTML output -------------------------------------------------
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+html_css_files = ['style.css']
