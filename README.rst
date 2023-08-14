@@ -23,12 +23,13 @@ or via GitHub repository:
 .. code-block:: bash
 
    git clone https://github.com/breimanntools/aaanalysis
+   cd aaanalysis
 
-Set up a virtual environment and install dependencies using the `requirements.txt` file:
+Set up a virtual environment and install dependencies using poetry:
 
 .. code-block:: bash
 
-   pip install -r requirements.txt
+   poetry install
 
 Contents
 --------
