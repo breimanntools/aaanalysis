@@ -5,7 +5,7 @@
 # Required
 version: 2
 
-# Set the OS, Python version and other tools you might need
+# Set the OS, Python version, and other tools you might need
 build:
   os: ubuntu-20.04
   tools:
@@ -17,8 +17,8 @@ sphinx:
 
 python:
   install:
-  - method: pip
-    path: .
+    - method: poetry
+      path: .
 
 submodules:
   include:
