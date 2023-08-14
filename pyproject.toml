@@ -6,7 +6,7 @@ build-backend = "poetry.core.masonry.api"
 name = "aaanalysis"
 version = "0.1.0"
 description = "Python toolkit for high-performance for interpretable protein prediction"
-authors = [{name = "Stephan Breimann", email = "stephanbreimann@gmail.de"}]
+authors = ["Stephan Breimann <stephanbreimann@gmail.de>"]
 license = "MIT"
 readme = "README.md"
 include = ["data/*.xlsx", "data/benchmarks/*.tsv", "data/benchmarks/*.xlsx"]
@@ -27,8 +27,7 @@ plots = ["matplotlib"]
 
 # Add classifiers to provide more details about the package.
 # Assuming your platform and OS compatibilities
-[tool.poetry.classifiers]
-# Classifiers for your project
+[tool.poetry]
 classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.9",

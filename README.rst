@@ -1,7 +1,7 @@
 Welcome to the AAanalysis documentation
 =======================================
 
-**AAanalysis** (Amino Acid analysis) is a Python framework to enable interpretable protein prediction,
+**AAanalysis** (Amino Acid analysis) is a Python framework for interpretable protein prediction,
 providing the following algorithms:
 
 - **AAclust**: k-optimized clustering wrapper framework to select redundancy-reduced sets of numerical scales (e.g., amino acid scales)
