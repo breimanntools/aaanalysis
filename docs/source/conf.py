@@ -16,7 +16,8 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'sphinx.ext.viewcode',
     'sphinx.ext.viewcode',      # Add a link to the source code for classes and functions
-    'sphinx_rtd_theme'          # Use the theme provided by Read the Docs
+    'sphinx_rtd_theme',         # Use the theme provided by Read the Docs
+    #'numpydoc',                 # Style from scanpy
 ]
 
 templates_path = ['_templates']

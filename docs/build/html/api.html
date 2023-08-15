@@ -460,9 +460,9 @@ of sequences at the positional level (e.g., amino acid level for protein sequenc
 </dd>
 <dt>val_type<span class="classifier">{‘mean’, ‘sum’, ‘std’}, str, default=’mean’</span></dt><dd><p>Method to aggregate numerical values from ‘val_col’.</p>
 </dd>
-<dt>normalize<span class="classifier">{True, False, ‘positions’, ‘positions_only’}, bool/str, default=False</span></dt><dd><p>Specifies normalization for numerical values in ‘val_col’:</p>
+<dt>normalize<span class="classifier">{True, False, ‘positions’, ‘positions_only’}, bool/str, default=False</span></dt><dd><p>Specifies normalization for numerical values in ‘val_col’:
+- False: Set value at all positions of a feature without further normalization.</p>
 <ul class="simple">
-<li><p>False: Set value at all positions of a feature without further normalization.</p></li>
 <li><p>True: Set value at all positions of a feature and normalize across all features.</p></li>
 <li><p>‘positions’: Value/number of positions set at each position of a feature and normalized across features.
 Recommended when aiming to emphasize features with fewer positions using ‘val_col’=’feat_impact’ and ‘value_type’=’mean’.</p></li>
@@ -549,7 +549,7 @@ Axes object containing the heatmap.</p>
 <div class="section" id="examples">
 <h4>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">¶</a></h4>
 <p>Plot CPP feature heatmap:</p>
-<p>(<a class="reference external" href=".//api-1.py">Source code</a>)</p>
+<p>(<a class="reference download internal" download="" href="_downloads/64cdcd56f94f8e667ded0c5f5893839b/api-1.py"><code class="xref download docutils literal notranslate"><span class="pre">Source</span> <span class="pre">code</span></code></a>)</p>
 </div>
 </dd></dl>
 

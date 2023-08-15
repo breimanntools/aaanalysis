@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
 
   
   
@@ -88,10 +89,10 @@
               
             
             
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../aaclust.html">AAclust Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../cpp.html">CPP Module</a></li>
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
 </ul>
 
             
@@ -449,7 +450,7 @@
 
 
 <span class="c1"># II Main Functions</span>
-<div class="viewcode-block" id="CPP"><a class="viewcode-back" href="../../../cpp.html#aaanalysis.cpp.CPP">[docs]</a><span class="k">class</span> <span class="nc">CPP</span><span class="p">:</span>
+<div class="viewcode-block" id="CPP"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.CPP">[docs]</a><span class="k">class</span> <span class="nc">CPP</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create and filter features that are most discriminant between two sets of sequences.</span>
 
@@ -582,7 +583,7 @@
         <span class="n">df_feat</span> <span class="o">=</span> <span class="n">sfs</span><span class="o">.</span><span class="n">add_stat</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df_feat</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">parametric</span><span class="o">=</span><span class="n">parametric</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">df_feat</span>
 
-<div class="viewcode-block" id="CPP.add_positions"><a class="viewcode-back" href="../../../cpp.html#aaanalysis.cpp.CPP.add_positions">[docs]</a>    <span class="k">def</span> <span class="nf">add_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_feat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tmd_len</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<div class="viewcode-block" id="CPP.add_positions"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.CPP.add_positions">[docs]</a>    <span class="k">def</span> <span class="nf">add_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_feat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tmd_len</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add sequence positions to DataFrame.</span>
 
@@ -615,7 +616,7 @@
         <span class="n">df_feat</span><span class="p">[</span><span class="s2">&quot;positions&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sfp</span><span class="o">.</span><span class="n">get_positions</span><span class="p">(</span><span class="n">dict_part_pos</span><span class="o">=</span><span class="n">dict_part_pos</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">df_feat</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_FEATURE</span><span class="p">]))</span>
         <span class="k">return</span> <span class="n">df_feat</span></div>
 
-<div class="viewcode-block" id="CPP.add_shap"><a class="viewcode-back" href="../../../cpp.html#aaanalysis.cpp.CPP.add_shap">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="CPP.add_shap"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.CPP.add_shap">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">add_shap</span><span class="p">(</span><span class="n">df_feat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">col_shap</span><span class="o">=</span><span class="s2">&quot;shap_value&quot;</span><span class="p">,</span> <span class="n">name_feat_impact</span><span class="o">=</span><span class="s2">&quot;feat_impact&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convert SHAP values in feature impact/importance and add to DataFrame.</span>
@@ -663,7 +664,7 @@
         <span class="n">df_feat</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">shap_loc</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name_feat_impact</span><span class="p">,</span> <span class="n">feat_impact</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">df_feat</span></div>
 
-<div class="viewcode-block" id="CPP.add_sample_dif"><a class="viewcode-back" href="../../../cpp.html#aaanalysis.cpp.CPP.add_sample_dif">[docs]</a>    <span class="k">def</span> <span class="nf">add_sample_dif</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_feat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">df_seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sample_name</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">ref_group</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">accept_gaps</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="CPP.add_sample_dif"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.CPP.add_sample_dif">[docs]</a>    <span class="k">def</span> <span class="nf">add_sample_dif</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_feat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">df_seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sample_name</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">ref_group</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">accept_gaps</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add feature value difference between sample and reference group to DataFrame.</span>
 
@@ -743,7 +744,7 @@
         <span class="k">return</span> <span class="n">df_top_feat</span>
 
     <span class="c1"># Main method</span>
-<div class="viewcode-block" id="CPP.run"><a class="viewcode-back" href="../../../cpp.html#aaanalysis.cpp.CPP.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parametric</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_filter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">tmd_len</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">check_cat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<div class="viewcode-block" id="CPP.run"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.CPP.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parametric</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_filter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">tmd_len</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">check_cat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">n_pre_filter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pct_pre_filter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">max_std_test</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">max_overlap</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">max_cor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">n_processes</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform CPP pipeline by creation and two-step filtering of features. CPP aims to</span>
@@ -847,7 +848,7 @@
         <span class="k">return</span> <span class="n">df</span></div>
 
     <span class="c1"># Plotting methods</span>
-<div class="viewcode-block" id="CPP.plot_profile"><a class="viewcode-back" href="../../../cpp.html#aaanalysis.cpp.CPP.plot_profile">[docs]</a>    <span class="k">def</span> <span class="nf">plot_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_feat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;category&quot;</span><span class="p">,</span> <span class="n">val_col</span><span class="o">=</span><span class="s2">&quot;mean_dif&quot;</span><span class="p">,</span> <span class="n">val_type</span><span class="o">=</span><span class="s2">&quot;count&quot;</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<div class="viewcode-block" id="CPP.plot_profile"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.CPP.plot_profile">[docs]</a>    <span class="k">def</span> <span class="nf">plot_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_feat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;category&quot;</span><span class="p">,</span> <span class="n">val_col</span><span class="o">=</span><span class="s2">&quot;mean_dif&quot;</span><span class="p">,</span> <span class="n">val_type</span><span class="o">=</span><span class="s2">&quot;count&quot;</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                      <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title_kws</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                      <span class="n">dict_color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">edge_color</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">bar_width</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span>
                      <span class="n">add_jmd_tmd</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tmd_len</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -948,7 +949,7 @@
         <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">ax</span></div>
 
-<div class="viewcode-block" id="CPP.plot_heatmap"><a class="viewcode-back" href="../../../cpp.html#aaanalysis.cpp.CPP.plot_heatmap">[docs]</a>    <span class="k">def</span> <span class="nf">plot_heatmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_feat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;subcategory&quot;</span><span class="p">,</span> <span class="n">val_col</span><span class="o">=</span><span class="s2">&quot;mean_dif&quot;</span><span class="p">,</span> <span class="n">val_type</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<div class="viewcode-block" id="CPP.plot_heatmap"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.CPP.plot_heatmap">[docs]</a>    <span class="k">def</span> <span class="nf">plot_heatmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df_feat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;subcategory&quot;</span><span class="p">,</span> <span class="n">val_col</span><span class="o">=</span><span class="s2">&quot;mean_dif&quot;</span><span class="p">,</span> <span class="n">val_type</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                      <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title_kws</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                      <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">grid_on</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                      <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;RdBu_r&quot;</span><span class="p">,</span> <span class="n">cmap_n_colors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dict_color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cbar_kws</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">facecolor_dark</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -976,11 +977,13 @@
 <span class="sd">            Method to aggregate numerical values from &#39;val_col&#39;.</span>
 <span class="sd">        normalize : {True, False, &#39;positions&#39;, &#39;positions_only&#39;}, bool/str, default=False</span>
 <span class="sd">            Specifies normalization for numerical values in &#39;val_col&#39;:</span>
-
 <span class="sd">            - False: Set value at all positions of a feature without further normalization.</span>
+
 <span class="sd">            - True: Set value at all positions of a feature and normalize across all features.</span>
+
 <span class="sd">            - &#39;positions&#39;: Value/number of positions set at each position of a feature and normalized across features.</span>
 <span class="sd">              Recommended when aiming to emphasize features with fewer positions using &#39;val_col&#39;=&#39;feat_impact&#39; and &#39;value_type&#39;=&#39;mean&#39;.</span>
+
 <span class="sd">        figsize : tuple(float, float), default=(10,7)</span>
 <span class="sd">            Width and height of the figure in inches passed to :func:`matplotlib.pyplot.figure`.</span>
 <span class="sd">        title : str, optional</span>

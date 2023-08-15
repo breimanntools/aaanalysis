@@ -816,11 +816,13 @@ class CPP:
             Method to aggregate numerical values from 'val_col'.
         normalize : {True, False, 'positions', 'positions_only'}, bool/str, default=False
             Specifies normalization for numerical values in 'val_col':
-
             - False: Set value at all positions of a feature without further normalization.
+
             - True: Set value at all positions of a feature and normalize across all features.
+
             - 'positions': Value/number of positions set at each position of a feature and normalized across features.
               Recommended when aiming to emphasize features with fewer positions using 'val_col'='feat_impact' and 'value_type'='mean'.
+
         figsize : tuple(float, float), default=(10,7)
             Width and height of the figure in inches passed to :func:`matplotlib.pyplot.figure`.
         title : str, optional

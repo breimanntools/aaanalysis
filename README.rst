@@ -12,7 +12,7 @@ Moreover, AAanalysis provides functions for loading protein benchmark datasets (
 amino acid scale sets (**load_scales**), and their in-depth two-level classification (**AAontology**).
 
 Install
--------
+=======
 
 AAanalysis can be installed from `PyPi <https://pypi.org/project/aaanalysis>`_:
 
@@ -33,18 +33,18 @@ Set up a virtual environment and install dependencies using poetry:
 
    poetry install
 
-Citation
---------
+Citations
+=========
 
 If you use 'AAanalysis' in your research, please cite the appropriate publication:
 
-**AAontology**:
-   ´[Breimann23b]_´ Breimann et al. (2023),
-   *AAontology: An ontology of amino acid scales for interpretable machine learning*,
-   `bioRxiv <https://www.biorxiv.org/content/10.1101/2023.08.03.551768v1>`__.
-
 **AAclust**:
    [Citation details and link if available]
+
+**AAontology**:
+   Breimann, Kamp, Steiner, Frishman (2023),
+   **AAontology: An ontology of amino acid scales for interpretable machine learning**,
+   `bioRxiv <https://www.biorxiv.org/content/10.1101/2023.08.03.551768v1>`__.
 
 **CPP**:
    [Citation details and link if available]
