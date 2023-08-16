@@ -55,6 +55,9 @@ threadpoolctl = "^3.1.0"
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"
 pytest-mpl = "^0.13"
+sphinx = "^4.0"
+sphinx_rtd_theme = "^0.5.2"
+myst_nb = "^0.17.2"
 
 # Optional dependencies
 #[tool.poetry.extras]

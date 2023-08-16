@@ -4,7 +4,6 @@ import importlib.util
 import inspect
 from typing import Any
 from datetime import datetime
-from packaging.version import parse as parse_version
 path_source = os.path.join(os.path.dirname(__file__))
 # Root path
 sys.path.insert(0, os.path.abspath('../../'))
@@ -90,6 +89,10 @@ _module_path = os.path.dirname(importlib.util.find_spec("aaanalysis").origin)  #
 
 
 def linkcode_resolve(domain, info):
+    """
+    Determine the URL corresponding to Python object. This will link
+    directly to the correct version of the file on GitHub.
+    """
     if domain != 'py':
         return None
 
@@ -112,7 +115,7 @@ def linkcode_resolve(domain, info):
         # Convert module path to GitHub format
         relative_path = path.replace(_module_path, '').strip('/')
         url_path = f"{repository_url}/tree/master/aaanalysis/{relative_path}#L{lineno}-L{lineno + len(src) - 1}"
-    except Exception:
+        return url_path
+    except Exception as e:
+        print(f"Error generating linkcode for {module_name}: {e}")
         return None
-
-    return url_path

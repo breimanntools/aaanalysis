@@ -1,5 +1,4 @@
 # Reuqires Python >= 3.9
-sphinx_rtd_theme>=0.5.2
 cycler>=0.11.0
 et-xmlfile>=1.1.0
 fonttools>=4.37.1
@@ -21,5 +20,3 @@ seaborn>=0.11.2
 six>=1.16.0
 statsmodels>=0.13.2
 threadpoolctl>=3.1.0
-pytest>=6.2    # This is a dev dependency
-pytest-mpl>=0.13    # This is also a dev dependency
