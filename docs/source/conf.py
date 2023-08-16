@@ -39,7 +39,7 @@ extensions = [
     #'numpydoc',
     'sphinx_rtd_theme',
     'myst_nb',
-    'sphinx_copybutton',
+    #'sphinx_copybutton',
     'sphinx.ext.intersphinx',
     'sphinx.ext.doctest',
     'sphinx.ext.coverage',
