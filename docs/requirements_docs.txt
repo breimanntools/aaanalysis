@@ -1,6 +1,9 @@
 sphinx>=4.0
-sphinx_rtd_theme>=0.5.2
+#sphinx_rtd_theme>=0.5.2
+sphinx_book_theme>=1.0.1
 sphinx_design>=0.5
+sphinx_copybutton>=0.5.2
+sphinxext-opengraph>=0.8.2
 myst_nb>=0.17.2
 pytest>=6.2    # This is a dev dependency
 pytest-mpl>=0.13    # This is also a dev dependency

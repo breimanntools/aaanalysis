@@ -56,9 +56,12 @@ threadpoolctl = "^3.1.0"
 pytest = "^6.2"
 pytest-mpl = "^0.13"
 sphinx = "^4.0"
-sphinx_rtd_theme = "^0.5.2"
+#sphinx_rtd_theme = "^0.5.2"
+sphinx_book_theme = "^1.0.1"
 myst_nb = "^0.17.2"
 sphinx_design = "^0.5"
+sphinx_copybutton = "^0.5.2"
+sphinxext-opengraph = "^0.8.2"
 
 # Optional dependencies
 #[tool.poetry.extras]
@@ -67,8 +70,8 @@ sphinx_design = "^0.5"
 
 # If you have URLs like SHAP did
 [tool.poetry.urls]
-"Repository" = "http://github.com/breimanntools/aaanalysis"
-"Documentation" = "hhttps://aaanalysis.readthedocs.io"
+"Repository" = "https://github.com/breimanntools/aaanalysis"
+"Documentation" = "https://aaanalysis.readthedocs.io"
 
 # If you use a tool for linting or formatting, you can add its configurations here.
 # For example, if you use `black` for formatting:

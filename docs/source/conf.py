@@ -39,7 +39,7 @@ extensions = [
     #'numpydoc',
     'sphinx_rtd_theme',
     'myst_nb',
-    #'sphinx_copybutton',
+    'sphinx_copybutton',
     'sphinx.ext.intersphinx',
     'sphinx.ext.doctest',
     'sphinx.ext.coverage',
@@ -71,10 +71,12 @@ intersphinx_mapping = {
 }
 
 # -- Options for HTML output -------------------------------------------------
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_book_theme" #'sphinx_rtd_theme'
 html_theme_options = {
-    #"repository_url": repository_url,
-    #"use_repository_button": True,
+    "repository_url": repository_url,
+    "use_repository_button": True,
+    "use_issues_button": True,
+    "use_edit_page_button": True,
 }
 html_static_path = [os.path.join(path_source, '_static')]
 html_css_files = [os.path.join(path_source, '_static/css/style.css'),
