@@ -51,21 +51,20 @@ def load_dataset(name="INFO", n=None, non_canonical_aa="remove", min_len=None, m
 
     Parameters
     ----------
-    name : str
-        Name of the dataset ('Dataset' column). Default is "INFO".
-    n : int or None
-        Number of proteins per class. If None, the whole dataset will be returned. Default is None.
-    non_canonical_aa : str
-        Options for modifying non-canonical amino acids. Can be one of the following:
+    name : str, default="INFO"
+        Name of the dataset ('Dataset' column).
+    n : int, optional, default=None
+        Number of proteins per class. If None, the whole dataset will be returned.
+    non_canonical_aa: {'remove', 'keep', 'gap'}, default='remove'
+        Options for modifying non-canonical amino acids:
 
-        - `remove`: Sequences containing non-canonical amino acids are removed.
-        - `keep`: Sequences containing non-canonical amino acids are not removed.
-        - `gap`: Sequences are kept and modified by replacing non-canonical amino acids with the gap symbol ('X').
-            Default is 'remove'.
-    min_len : int or None
-        Minimum length of sequences used for filtering. Default is None.
-    max_len : int or None
-        Maximum length of sequences used for filtering. Default is None.
+        - 'remove': Sequences containing non-canonical amino acids are removed.
+        - 'keep': Sequences containing non-canonical amino acids are not removed.
+        - 'gap': Sequences are kept and modified by replacing non-canonical amino acids by gap symbol ('X').
+    min_len : int, optional, default=None
+        Minimum length of sequences used for filtering.
+    max_len : int, optional, default=None
+        Maximum length of sequences used for filtering.
 
     Returns
     -------

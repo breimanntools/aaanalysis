@@ -11,16 +11,14 @@
   
 
   
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static//css/style.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+  <link rel="stylesheet" href="/css/style.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
-  <link rel="stylesheet" href="/home/stephanbreimann/Programming/Pycharm_Projekte/1Packages/aaanalysis/docs/source/_static/css/style.css" type="text/css" />
-  <link rel="stylesheet" href="/home/stephanbreimann/Programming/Pycharm_Projekte/1Packages/aaanalysis/docs/source/_static/css/override.css" type="text/css" />
 
   
   
@@ -38,9 +36,6 @@
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
         <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/underscore.js"></script>
-        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../_static/doctools.js"></script>
         <script src="../../../_static/sphinx_highlight.js"></script>
         <script src="../../../_static/clipboard.min.js"></script>
@@ -61,7 +56,7 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+        <div class="wy-side-nav-search"  style="background: #343131" >
           
 
           
@@ -73,6 +68,10 @@
 
           
             
+            
+              <div class="version">
+                latest
+              </div>
             
           
 
@@ -864,9 +863,94 @@
                      <span class="n">shap_plot</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                      <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Plot feature profile for given features from &#39;df_feat&#39;.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
+<span class="sd">        df_feat : class:`pandas.DataFrame`, optional, default=None</span>
+<span class="sd">            Dataframe containing the features to be plotted. If None, default features from the instance will be used.</span>
+<span class="sd">        y : str, default=&#39;category&#39;</span>
+<span class="sd">            Column name in df_feat which contains the categories for grouping.</span>
+<span class="sd">        val_col : str, default=&#39;mean_dif&#39;</span>
+<span class="sd">            Column name in df_feat which contains the values to be plotted.</span>
+<span class="sd">        val_type : str, default=&#39;count&#39;</span>
+<span class="sd">            Type of value. Available options are specified by the `check_value_type` function.</span>
+<span class="sd">        normalize : bool, default=False</span>
+<span class="sd">            If True, the feature values will be normalized.</span>
+<span class="sd">        figsize : tuple, default=(7, 5)</span>
+<span class="sd">            Size of the plot.</span>
+<span class="sd">        title : str, optional</span>
+<span class="sd">            Title of the plot.</span>
+<span class="sd">        title_kws : dict, optional</span>
+<span class="sd">            Keyword arguments to customize the title appearance.</span>
+<span class="sd">        dict_color : dict, optional</span>
+<span class="sd">            Dictionary mapping categories to colors.</span>
+<span class="sd">        edge_color : str, default=&#39;none&#39;</span>
+<span class="sd">            Color of the edges of the bars.</span>
+<span class="sd">        bar_width : float, default=0.75</span>
+<span class="sd">            Width of the bars.</span>
+<span class="sd">        add_jmd_tmd : bool, default=True</span>
+<span class="sd">            If True, adds JMD and TMD lines/annotations to the plot.</span>
+<span class="sd">        tmd_len : int, default=20</span>
+<span class="sd">            Length of the TMD.</span>
+<span class="sd">        start : int, default=1</span>
+<span class="sd">            Start position.</span>
+<span class="sd">        jmd_n_seq : str, optional</span>
+<span class="sd">            JMD N-terminal sequence.</span>
+<span class="sd">        tmd_seq : str, optional</span>
+<span class="sd">            TMD sequence.</span>
+<span class="sd">        jmd_c_seq : str, optional</span>
+<span class="sd">            JMD C-terminal sequence.</span>
+<span class="sd">        tmd_color : str, default=&#39;mediumspringgreen&#39;</span>
+<span class="sd">            Color for TMD.</span>
+<span class="sd">        jmd_color : str, default=&#39;blue&#39;</span>
+<span class="sd">            Color for JMD.</span>
+<span class="sd">        tmd_seq_color : str, default=&#39;black&#39;</span>
+<span class="sd">            Color for TMD sequence.</span>
+<span class="sd">        jmd_seq_color : str, default=&#39;white&#39;</span>
+<span class="sd">            Color for JMD sequence.</span>
+<span class="sd">        seq_size : float, optional</span>
+<span class="sd">            Font size for sequence annotations.</span>
+<span class="sd">        tmd_jmd_fontsize : float, optional</span>
+<span class="sd">            Font size for TMD and JMD annotations.</span>
+<span class="sd">        xtick_size : float, default=11.0</span>
+<span class="sd">            Size for x-tick labels.</span>
+<span class="sd">        xtick_width : float, default=2.0</span>
+<span class="sd">            Width of the x-ticks.</span>
+<span class="sd">        xtick_length : float, default=5.0</span>
+<span class="sd">            Length of the x-ticks.</span>
+<span class="sd">        xticks_pos : bool, default=False</span>
+<span class="sd">            If True, x-tick positions are adjusted based on given sequences.</span>
+<span class="sd">        ytick_size : float, optional</span>
+<span class="sd">            Size for y-tick labels.</span>
+<span class="sd">        ytick_width : float, default=2.0</span>
+<span class="sd">            Width of the y-ticks.</span>
+<span class="sd">        ytick_length : float, default=5.0</span>
+<span class="sd">            Length of the y-ticks.</span>
+<span class="sd">        ylim : tuple, optional</span>
+<span class="sd">            Y-axis limits.</span>
+<span class="sd">        highlight_tmd_area : bool, default=True</span>
+<span class="sd">            If True, highlights the TMD area on the plot.</span>
+<span class="sd">        highlight_alpha : float, default=0.15</span>
+<span class="sd">            Alpha value for TMD area highlighting.</span>
+<span class="sd">        grid : bool, default=False</span>
+<span class="sd">            If True, a grid is added to the plot.</span>
+<span class="sd">        grid_axis : str, default=&#39;both&#39;</span>
+<span class="sd">            Axis on which the grid is drawn. Options: &#39;both&#39;, &#39;x&#39;, &#39;y&#39;.</span>
+<span class="sd">        add_legend_cat : bool, default=True</span>
+<span class="sd">            If True, a legend is added for categories.</span>
+<span class="sd">        legend_kws : dict, optional</span>
+<span class="sd">            Keyword arguments for the legend.</span>
+<span class="sd">        shap_plot : bool, default=False</span>
+<span class="sd">            If True, SHAP (SHapley Additive exPlanations) plot is generated.</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Other keyword arguments passed to internal functions or plotting libraries.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ax : matplotlib.axes.Axes</span>
+<span class="sd">            The axes object containing the plot.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Group arguments</span>
         <span class="n">args_seq</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">jmd_n_seq</span><span class="o">=</span><span class="n">jmd_n_seq</span><span class="p">,</span> <span class="n">tmd_seq</span><span class="o">=</span><span class="n">tmd_seq</span><span class="p">,</span> <span class="n">jmd_c_seq</span><span class="o">=</span><span class="n">jmd_c_seq</span><span class="p">,)</span>
@@ -962,7 +1046,8 @@
                      <span class="n">add_legend_cat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">legend_kws</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                      <span class="n">add_importance_map</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cbar_pct</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Plot a heatmap of the selected value column with scale information (y-axis) versus sequence position (x-axis).</span>
+<span class="sd">        Plot a featuremap of the selected value column with scale information (y-axis) versus sequence position (x-axis).</span>
+
 <span class="sd">        This is a wrapper function for :func:`seaborn.heatmap`, designed to highlight differences between two sets</span>
 <span class="sd">        of sequences at the positional level (e.g., amino acid level for protein sequences).</span>
 
@@ -1050,8 +1135,8 @@
 <span class="sd">        ax : matplotlib Axes</span>
 <span class="sd">        Axes object containing the heatmap.</span>
 
-<span class="sd">        Warning</span>
-<span class="sd">        -------</span>
+<span class="sd">        Warnings</span>
+<span class="sd">        --------</span>
 <span class="sd">        - &#39;cmap_n_colors&#39; is effective only if &#39;vmin&#39; and &#39;vmax&#39; align with the data.</span>
 
 <span class="sd">        - &#39;tmd_seq_color&#39; and &#39;jmd_seq_color&#39; are applicable only when &#39;tmd_seq&#39;, &#39;jmd_n_seq&#39;, and &#39;jmd_c_seq&#39; are provided.</span>

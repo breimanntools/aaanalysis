@@ -1,14 +1,7 @@
-API Reference
-=============
+API
+===
 
-This page contains the API reference for public objects and functions in AAanalysis.
-For a more in-depth tutorial on how to use these objects and functions,
-please refer to the :ref:`tutorial notebooks <tutorials>`.
-
-Getting Started
----------------
-
-To use AAanalysis, you can import it as:
+Import AAanalysis as:
 
 .. code-block:: python
 

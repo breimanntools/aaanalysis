@@ -11,16 +11,14 @@
   
 
   
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static//css/style.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+  <link rel="stylesheet" href="/css/style.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
-  <link rel="stylesheet" href="/home/stephanbreimann/Programming/Pycharm_Projekte/1Packages/aaanalysis/docs/source/_static/css/style.css" type="text/css" />
-  <link rel="stylesheet" href="/home/stephanbreimann/Programming/Pycharm_Projekte/1Packages/aaanalysis/docs/source/_static/css/override.css" type="text/css" />
 
   
   
@@ -38,9 +36,6 @@
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
         <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/underscore.js"></script>
-        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../_static/doctools.js"></script>
         <script src="../../../_static/sphinx_highlight.js"></script>
         <script src="../../../_static/clipboard.min.js"></script>
@@ -61,7 +56,7 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+        <div class="wy-side-nav-search"  style="background: #343131" >
           
 
           
@@ -73,6 +68,10 @@
 
           
             
+            
+              <div class="version">
+                latest
+              </div>
             
           
 
@@ -381,10 +380,9 @@
 <span class="sd">        df_parts: :class:`pandas.DataFrame`</span>
 <span class="sd">            DataFrame with sequence parts.</span>
 
-<span class="sd">        See Also</span>
-<span class="sd">        --------</span>
-<span class="sd">        cpp.SequenceFeature</span>
-<span class="sd">            A list of valid sequence parts is given in the &#39;Notes&#39; section.</span>
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        List of valid sequence parts can be found in :class: ´aaanalysis.SequenceFeature´.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
@@ -556,10 +554,10 @@
 
 <span class="sd">        Notes</span>
 <span class="sd">        -----</span>
-<span class="sd">        Positions are given depending on the three split types</span>
-<span class="sd">            a) Segment: [first...last]</span>
-<span class="sd">            b) Pattern: [all positions]</span>
-<span class="sd">            c) PeriodicPattern: [first..step1/step2..last]</span>
+<span class="sd">        Positions are given depending on the three split types:</span>
+<span class="sd">            - Segment: [first...last]</span>
+<span class="sd">            - Pattern: [all positions]</span>
+<span class="sd">            - PeriodicPattern: [first..step1/step2..last]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Check input (length checked in SequenceFeaturePositions)</span>
         <span class="n">features</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_features</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">)</span>
@@ -610,15 +608,15 @@
 <span class="sd">        A split name should has the form of PART-SPLIT-SCALE, where following structures</span>
 <span class="sd">        are given for the three split types:</span>
 
-<span class="sd">        a) Segment(i-th,n_split)</span>
+<span class="sd">        - Segment(i-th,n_split)</span>
 <span class="sd">            with i-th&lt;=n_split and</span>
 <span class="sd">            where &#39;i-th&#39; and &#39;n_split&#39; indicate the i-th Segment resp. the number of Segments.</span>
 
-<span class="sd">        b) Pattern(N/C,p1,p2,...,pn)</span>
+<span class="sd">        - Pattern(N/C,p1,p2,...,pn)</span>
 <span class="sd">            with p1&lt;p2&lt;...&lt;pn indicating amino acid positions and</span>
 <span class="sd">            &#39;N/C&#39; whether the splits starts from the N resp. C-terminal sequence end.</span>
 
-<span class="sd">        c) PeriodicPattern(N/C,i+step1/step2,start)</span>
+<span class="sd">        - PeriodicPattern(N/C,i+step1/step2,start)</span>
 <span class="sd">            where &#39;step1/step2&#39; indicates the step size of each odd resp. even step and</span>
 <span class="sd">            &#39;start&#39; gives the first position starting from the N- or C-terminal sequence end.</span>
 

@@ -11,16 +11,14 @@
   
 
   
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static//css/style.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+  <link rel="stylesheet" href="/css/style.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
-  <link rel="stylesheet" href="/home/stephanbreimann/Programming/Pycharm_Projekte/1Packages/aaanalysis/docs/source/_static/css/style.css" type="text/css" />
-  <link rel="stylesheet" href="/home/stephanbreimann/Programming/Pycharm_Projekte/1Packages/aaanalysis/docs/source/_static/css/override.css" type="text/css" />
 
   
   
@@ -38,9 +36,6 @@
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
         <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-        <script src="../../../_static/jquery.js"></script>
-        <script src="../../../_static/underscore.js"></script>
-        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../_static/doctools.js"></script>
         <script src="../../../_static/sphinx_highlight.js"></script>
         <script src="../../../_static/clipboard.min.js"></script>
@@ -61,7 +56,7 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+        <div class="wy-side-nav-search"  style="background: #343131" >
           
 
           
@@ -73,6 +68,10 @@
 
           
             
+            
+              <div class="version">
+                latest
+              </div>
             
           
 
@@ -219,21 +218,20 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    name : str</span>
-<span class="sd">        Name of the dataset (&#39;Dataset&#39; column). Default is &quot;INFO&quot;.</span>
-<span class="sd">    n : int or None</span>
-<span class="sd">        Number of proteins per class. If None, the whole dataset will be returned. Default is None.</span>
-<span class="sd">    non_canonical_aa : str</span>
-<span class="sd">        Options for modifying non-canonical amino acids. Can be one of the following:</span>
+<span class="sd">    name : str, default=&quot;INFO&quot;</span>
+<span class="sd">        Name of the dataset (&#39;Dataset&#39; column).</span>
+<span class="sd">    n : int, optional, default=None</span>
+<span class="sd">        Number of proteins per class. If None, the whole dataset will be returned.</span>
+<span class="sd">    non_canonical_aa: {&#39;remove&#39;, &#39;keep&#39;, &#39;gap&#39;}, default=&#39;remove&#39;</span>
+<span class="sd">        Options for modifying non-canonical amino acids:</span>
 
-<span class="sd">        - `remove`: Sequences containing non-canonical amino acids are removed.</span>
-<span class="sd">        - `keep`: Sequences containing non-canonical amino acids are not removed.</span>
-<span class="sd">        - `gap`: Sequences are kept and modified by replacing non-canonical amino acids with the gap symbol (&#39;X&#39;).</span>
-<span class="sd">            Default is &#39;remove&#39;.</span>
-<span class="sd">    min_len : int or None</span>
-<span class="sd">        Minimum length of sequences used for filtering. Default is None.</span>
-<span class="sd">    max_len : int or None</span>
-<span class="sd">        Maximum length of sequences used for filtering. Default is None.</span>
+<span class="sd">        - &#39;remove&#39;: Sequences containing non-canonical amino acids are removed.</span>
+<span class="sd">        - &#39;keep&#39;: Sequences containing non-canonical amino acids are not removed.</span>
+<span class="sd">        - &#39;gap&#39;: Sequences are kept and modified by replacing non-canonical amino acids by gap symbol (&#39;X&#39;).</span>
+<span class="sd">    min_len : int, optional, default=None</span>
+<span class="sd">        Minimum length of sequences used for filtering.</span>
+<span class="sd">    max_len : int, optional, default=None</span>
+<span class="sd">        Maximum length of sequences used for filtering.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>

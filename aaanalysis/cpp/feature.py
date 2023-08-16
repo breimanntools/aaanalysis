@@ -213,10 +213,9 @@ class SequenceFeature:
         df_parts: :class:`pandas.DataFrame`
             DataFrame with sequence parts.
 
-        See Also
-        --------
-        cpp.SequenceFeature
-            A list of valid sequence parts is given in the 'Notes' section.
+        Notes
+        -----
+        List of valid sequence parts can be found in :class: ´aaanalysis.SequenceFeature´.
 
         Examples
         --------
@@ -388,10 +387,10 @@ class SequenceFeature:
 
         Notes
         -----
-        Positions are given depending on the three split types
-            a) Segment: [first...last]
-            b) Pattern: [all positions]
-            c) PeriodicPattern: [first..step1/step2..last]
+        Positions are given depending on the three split types:
+            - Segment: [first...last]
+            - Pattern: [all positions]
+            - PeriodicPattern: [first..step1/step2..last]
         """
         # Check input (length checked in SequenceFeaturePositions)
         features = ut.check_features(features=features)
@@ -442,15 +441,15 @@ class SequenceFeature:
         A split name should has the form of PART-SPLIT-SCALE, where following structures
         are given for the three split types:
 
-        a) Segment(i-th,n_split)
+        - Segment(i-th,n_split)
             with i-th<=n_split and
             where 'i-th' and 'n_split' indicate the i-th Segment resp. the number of Segments.
 
-        b) Pattern(N/C,p1,p2,...,pn)
+        - Pattern(N/C,p1,p2,...,pn)
             with p1<p2<...<pn indicating amino acid positions and
             'N/C' whether the splits starts from the N resp. C-terminal sequence end.
 
-        c) PeriodicPattern(N/C,i+step1/step2,start)
+        - PeriodicPattern(N/C,i+step1/step2,start)
             where 'step1/step2' indicates the step size of each odd resp. even step and
             'start' gives the first position starting from the N- or C-terminal sequence end.
 

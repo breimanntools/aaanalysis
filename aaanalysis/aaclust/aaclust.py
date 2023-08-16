@@ -401,14 +401,10 @@ class AAclust:
 
         Notes
         -----
-        The 'fit' method sets the following attributes:
-        - :attr:`n_clusters`
-        - :attr:`labels_`
-        - :attr:`centers_`
-        - :attr:`center_labels_`
-        - :attr:`medoids_`
-        - :attr:`medoid_labels_`
-        - :attr:`medoid_ind_`
+        The 'fit' method sets the following attributes: :attr: `aaanalysis.AAclust.n_clusters",
+        :attr: `aaanalysis.AAclust.labels_`, :attr: `aaanalysis.AAclust.centers_`,
+        :attr: `aaanalysis.AAclust.center_labels_`, :attr: `aaanalysis.AAclust.medoids_`.
+        :attr: `aaanalysis.AAclust.medoid_labels_`, :attr: `aaanalysis.AAclust.medoid_ind_`.
 
         For further information, refer to the AAclust paper : TODO: add link to AAclust paper
         """

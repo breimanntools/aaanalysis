@@ -696,9 +696,94 @@ class CPP:
                      shap_plot=False,
                      **kwargs):
         """
+        Plot feature profile for given features from 'df_feat'.
 
         Parameters
         ----------
+        df_feat : class:`pandas.DataFrame`, optional, default=None
+            Dataframe containing the features to be plotted. If None, default features from the instance will be used.
+        y : str, default='category'
+            Column name in df_feat which contains the categories for grouping.
+        val_col : str, default='mean_dif'
+            Column name in df_feat which contains the values to be plotted.
+        val_type : str, default='count'
+            Type of value. Available options are specified by the `check_value_type` function.
+        normalize : bool, default=False
+            If True, the feature values will be normalized.
+        figsize : tuple, default=(7, 5)
+            Size of the plot.
+        title : str, optional
+            Title of the plot.
+        title_kws : dict, optional
+            Keyword arguments to customize the title appearance.
+        dict_color : dict, optional
+            Dictionary mapping categories to colors.
+        edge_color : str, default='none'
+            Color of the edges of the bars.
+        bar_width : float, default=0.75
+            Width of the bars.
+        add_jmd_tmd : bool, default=True
+            If True, adds JMD and TMD lines/annotations to the plot.
+        tmd_len : int, default=20
+            Length of the TMD.
+        start : int, default=1
+            Start position.
+        jmd_n_seq : str, optional
+            JMD N-terminal sequence.
+        tmd_seq : str, optional
+            TMD sequence.
+        jmd_c_seq : str, optional
+            JMD C-terminal sequence.
+        tmd_color : str, default='mediumspringgreen'
+            Color for TMD.
+        jmd_color : str, default='blue'
+            Color for JMD.
+        tmd_seq_color : str, default='black'
+            Color for TMD sequence.
+        jmd_seq_color : str, default='white'
+            Color for JMD sequence.
+        seq_size : float, optional
+            Font size for sequence annotations.
+        tmd_jmd_fontsize : float, optional
+            Font size for TMD and JMD annotations.
+        xtick_size : float, default=11.0
+            Size for x-tick labels.
+        xtick_width : float, default=2.0
+            Width of the x-ticks.
+        xtick_length : float, default=5.0
+            Length of the x-ticks.
+        xticks_pos : bool, default=False
+            If True, x-tick positions are adjusted based on given sequences.
+        ytick_size : float, optional
+            Size for y-tick labels.
+        ytick_width : float, default=2.0
+            Width of the y-ticks.
+        ytick_length : float, default=5.0
+            Length of the y-ticks.
+        ylim : tuple, optional
+            Y-axis limits.
+        highlight_tmd_area : bool, default=True
+            If True, highlights the TMD area on the plot.
+        highlight_alpha : float, default=0.15
+            Alpha value for TMD area highlighting.
+        grid : bool, default=False
+            If True, a grid is added to the plot.
+        grid_axis : str, default='both'
+            Axis on which the grid is drawn. Options: 'both', 'x', 'y'.
+        add_legend_cat : bool, default=True
+            If True, a legend is added for categories.
+        legend_kws : dict, optional
+            Keyword arguments for the legend.
+        shap_plot : bool, default=False
+            If True, SHAP (SHapley Additive exPlanations) plot is generated.
+        **kwargs : dict
+            Other keyword arguments passed to internal functions or plotting libraries.
+
+        Returns
+        -------
+        ax : matplotlib.axes.Axes
+            The axes object containing the plot.
+
         """
         # Group arguments
         args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,)
@@ -794,7 +879,8 @@ class CPP:
                      add_legend_cat=True, legend_kws=None,
                      add_importance_map=False, cbar_pct=False, **kwargs):
         """
-        Plot a heatmap of the selected value column with scale information (y-axis) versus sequence position (x-axis).
+        Plot a featuremap of the selected value column with scale information (y-axis) versus sequence position (x-axis).
+
         This is a wrapper function for :func:`seaborn.heatmap`, designed to highlight differences between two sets
         of sequences at the positional level (e.g., amino acid level for protein sequences).
 
@@ -882,8 +968,8 @@ class CPP:
         ax : matplotlib Axes
         Axes object containing the heatmap.
 
-        Warning
-        -------
+        Warnings
+        --------
         - 'cmap_n_colors' is effective only if 'vmin' and 'vmax' align with the data.
 
         - 'tmd_seq_color' and 'jmd_seq_color' are applicable only when 'tmd_seq', 'jmd_n_seq', and 'jmd_c_seq' are provided.
