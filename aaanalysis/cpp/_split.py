@@ -210,7 +210,7 @@ class SplitRange:
         Output matches with SequenceFeature.labels_segment.
 
         Parameters
-        ---------
+        ----------
         seq: seq: sequence (e.g., amino acids sequence for protein)
         n_split_min: integer indicating minimum Segment size
         n_split_max: integer indicating maximum Segment size

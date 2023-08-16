@@ -98,15 +98,31 @@ def get_max_dist(X, on_center=True, metric="euclidean"):
 # AAclust algorithm steps (estimate lower bound for n_clusters -> optimization of n_clusters -> merge clusters)
 # 1. Step (Estimation of n clusters)
 def estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6, on_center=True):
-    """Estimation of lower bound of n_clusters (k) via testing range between 10% and 90%
-        of all observations in in 10% steps.
-    :arg X: feature matrix
-    :arg model: k-based clustering model
-    :arg model_kwargs: keyword arguments of model
-    :arg min_th: minimum threshold of within-cluster Pearson correlation
-    :arg on_center: whether minimum correlation is computed for all observations within a cluster
-        or for the cluster center
-    :returns n_clusters: estimated number of clusters (k)"""
+    """
+    Estimate the lower bound of the number of clusters (k).
+
+    This function estimates the lower bound of the number of clusters by testing a range
+    between 10% and 90% of all observations, incrementing in 10% steps.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
+    model : callable, optional
+        k-based clustering model to use.
+    model_kwargs : dict, optional
+        Dictionary of keyword arguments to pass to the clustering model.
+    min_th : float, optional, default = 0.6
+        Minimum threshold of within-cluster Pearson correlation required for a valid clustering.
+    on_center : bool, optional, default = True
+        Whether the minimum correlation is computed for all observations within a cluster
+        or just for the cluster center.
+
+    Returns
+    -------
+    n_clusters : int
+        Estimated lower bound for the number of clusters (k).
+    """
     f = lambda c: get_min_cor(X, labels=model(n_clusters=c, **model_kwargs).fit(X).labels_, on_center=on_center)
     # Create range between 10% and 90% of all scales (10% steps) as long as minimum correlation is lower than threshold
     n_samples, n_features = X.shape
@@ -127,18 +143,35 @@ def estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6
 
 # 2. Step (Optimization of n clusters)
 def optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_th=0.5, on_center=True):
-    """Optimization of number of clusters. Recursive clustering (via while loop) such that
-    minimal within-cluster correlation is fulfilled for all clusters. This clustering algorithm
-    is an efficiency optimized version of a step wise algorithm, where each round the n_clusters
-     is increased until a stop condition is reached.
-    :arg X: feature matrix
-    :arg model: k-based clustering model
-    :arg model_kwargs: keyword arguments of model
-    :arg n_clusters: estimated number of clusters (k)
-    :arg min_th: minimum threshold of within-cluster Pearson correlation
-    :arg on_center: whether minimum correlation is computed for all observations within a cluster
-        or for the cluster center
-    :returns n_clusters: optimized number of clusters (k)"""
+    """
+    Optimize the number of clusters using a recursive algorithm.
+
+    This function performs clustering in a recursive manner (through a while loop) to ensure
+    that the minimum within-cluster correlation is achieved for all clusters. It is an efficiency
+    optimized version of a step-wise algorithm where the `n_clusters` is incrementally increased
+    until a stop condition is met.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
+    model : callable, optional
+        k-based clustering model to use.
+    model_kwargs : dict, optional
+        Dictionary of keyword arguments to pass to the clustering model.
+    n_clusters : int, optional
+        Estimated number of clusters (k).
+    min_th : float, optional, default = 0.5
+        Minimum threshold of within-cluster Pearson correlation required for a valid clustering.
+    on_center : bool, optional, default = True
+        Whether the minimum correlation is computed for all observations within a cluster
+        or just for the cluster center.
+
+    Returns
+    -------
+    n_clusters : int
+        Optimized number of clusters (k) after the recursive clustering.
+    """
     n_samples, n_features = X.shape
     f = lambda c: get_min_cor(X, labels=model(n_clusters=c, **model_kwargs).fit(X).labels_, on_center=on_center)
     min_cor = f(n_clusters)
@@ -182,18 +215,36 @@ def _get_best_cluster(dict_clust_qm=None, metric=None):
 
 
 def merge_clusters(X, n_max=5, labels=None, min_th=0.5, on_center=True, metric="correlation"):
-    """Merge small clusters (defined by n_max) into other clusters by optimizing quality measure
-    (either Pearson correlation or distance metric such as Euclidean distance) given by metric.
-    Merging is performed only if result of new assignment fulfills given minimum within-cluster Pearson
-    correlation threshold (min_th).
-    :arg X: feature matrix
-    :arg n_max: maximum cluster size for small clusters
-    :arg labels: initial cluster labels for observations
-    :arg min_th: minimum threshold of within-cluster Pearson correlation
-    :arg on_center: whether minimum correlation is computed for all observations within a cluster
-        or for the cluster center
-    :arg metric: quality measure on which merging should be optimized (either maximum correlation or minimum distance)
-    :returns labels: cluster labels for observations after merging"""
+    """
+    Merge small clusters into other clusters optimizing a given quality measure.
+
+    This function merges clusters with sizes less than or equal to `n_max` into other clusters
+    based on a specified quality measure (Pearson correlation or a distance metric).
+    Merging is conducted only if the new assignment meets a minimum within-cluster Pearson
+    correlation threshold defined by `min_th`.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
+    n_max : int, optional, default = 5
+        Maximum cluster size for small clusters to be considered for merging.
+    labels : array-like, shape (n_samples,), optional
+        Initial cluster labels for observations.
+    min_th : float, optional, default = 0.5
+        Minimum threshold of within-cluster Pearson correlation required for merging.
+    on_center : bool, optional, default = True
+        Whether the minimum correlation is computed for all observations within a cluster
+        or just for the cluster center.
+    metric : str, optional, default = 'correlation'
+        Quality measure used to optimize merging. Can be 'correlation' for maximum correlation
+        or any valid distance metric like 'euclidean' for minimum distance.
+
+    Returns
+    -------
+    labels : array-like, shape (n_samples,)
+        Cluster labels for observations after merging.
+    """
     unique_labels = list(OrderedDict.fromkeys(labels))
     for n in range(1, n_max):
         s_clusters = [x for x in unique_labels if labels.count(x) == n]   # Smallest clusters
@@ -219,7 +270,8 @@ def merge_clusters(X, n_max=5, labels=None, min_th=0.5, on_center=True, metric="
 
 # AAclust naming
 def get_names_cluster(list_names=None, name_medoid=None, name_unclassified="Unclassified"):
-    """Get list of cluster names sorted based on following criteria (descending order):
+    """
+    Get list of cluster names sorted based on following criteria (descending order):
         a) Frequency of term (most frequent term is preferred)
         b) Term is the name or a sub-name of the given medoid
         c) Length of term (shorter terms are preferred)
@@ -252,7 +304,43 @@ def get_names_cluster(list_names=None, name_medoid=None, name_unclassified="Uncl
 
 
 class AAclust:
-    """k-free wrapper for clustering algorithm to create redundancy reduced sets of numerical scales"""
+    """
+    AAclust: A k-optimized clustering framework for selecting redundancy-reduced set of numerical scales.
+
+    AAclust is designed primarily for amino acid scales but is versatile enough for any set of numerical indices.
+    It takes clustering models that require a pre-defined number of clusters (k) from
+    `scikit-learn <https://scikit-learn.org/stable/modules/clustering.html>`. By leveraging Pearson correlation as
+    similarity measure, AAclust optimizes the value of k. It then selects one representative sample (termed as 'medoid')
+    for each cluster, which is the closest to the cluster's center, yielding a redundancy-reduced sample set.
+
+    Parameters
+    ----------
+    model : callable, optional, default =  :class:`sklearn.cluster.KMeans`
+        The employed clustering model requiring pre-defined number of clusters 'k', given as 'n_clusters' parameter.
+    model_kwargs : dict, optional, default = {}
+        A dictionary of keyword arguments to pass to the selected clustering model.
+    name_unclassified : str, optional, default = 'unclassified'
+        A label assigned to clusters that couldn't be distinctly classified.
+    verbose : bool, optional, default = False
+        A flag to enable or disable verbose outputs.
+
+    Attributes
+    ----------
+    n_clusters : int, default = None
+        Number of clusters obtained by AAclust.
+    labels_ : array-like, default = None
+        Cluster labels in the order of samples in the feature matrix.
+    centers_ : array-like, default = None
+        Average scale values corresponding to each cluster.
+    center_labels_ : array-like, default = None
+        Cluster labels for each cluster center.
+    medoids_ : array-like, default = None
+        Representative samples (one for each cluster center).
+    medoid_labels_ : array-like, default = None
+        Cluster labels for each medoid.
+    medoid_ind_ : array-like, default = None
+        Indices of the chosen medoids within the original dataset.
+    """
     def __init__(self, model=None, model_kwargs=None, name_unclassified="unclassified", verbose=False):
         # Model parameters
         if model is None:
@@ -276,7 +364,54 @@ class AAclust:
 
     # Clustering method
     def fit(self, X, names=None, on_center=True, min_th=0,  merge_metric="euclidean", n_clusters=None):
-        """Get hierarchy of cluster categories based on list of minimum correlation thresholds."""
+        """
+        Fit the AAclust model on the data, optimizing cluster formation using Pearson correlation.
+
+        AAclust determines the optimal number of clusters, k, without pre-specification. It partitions data (X) into
+        clusters by maximizing the within-cluster Pearson correlation beyond the 'min_th' threshold. The quality of
+        clustering is either based on the minimum Pearson correlation of all members ('min_cor all') or between
+        the cluster center and its members ('min_cor center'), governed by `on_center`.
+
+        The clustering undergoes three stages:
+        1. Estimate the lower bound of k.
+        2. Refine k using the chosen quality metric.
+        3. Optionally merge smaller clusters, as directed by `merge_metric`.
+
+        Finally, a representative scale (medoid) 'closest to each cluster center is chosen for redundancy reduction.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Feature matrix with rows as samples and columns as features.
+        names : list of str, optional
+            Sample names. If provided, returns names of the medoids.
+        on_center : bool, default = True
+            If True, the correlation threshold is applied to the cluster center. Otherwise, it's applied to all cluster members.
+        min_th : float, default = 0
+            Pearson correlation threshold for clustering (between 0 and 1).
+        merge_metric : str or None, default = "euclidean"
+            Metric used for optional cluster merging. Can be "euclidean", "pearson", or None (no merging).
+        n_clusters : int, optional
+            Pre-defined number of clusters. If provided, AAclust uses this instead of optimizing k.
+
+        Returns
+        -------
+        names_medoid : list of str, if `names` is provided
+            Names of the medoids.
+
+        Notes
+        -----
+        The 'fit' method sets the following attributes:
+        - :attr:`n_clusters`
+        - :attr:`labels_`
+        - :attr:`centers_`
+        - :attr:`center_labels_`
+        - :attr:`medoids_`
+        - :attr:`medoid_labels_`
+        - :attr:`medoid_ind_`
+
+        For further information, refer to the AAclust paper : TODO: add link to AAclust paper
+        """
         # Check input
         ut.check_min_th(min_th=min_th)
         merge_metric = ut.check_merge_metric(merge_metric=merge_metric)
@@ -316,7 +451,7 @@ class AAclust:
         self.labels_ = np.array(labels)
         self.centers_ = centers
         self.center_labels_ = center_labels
-        self.medoids_ = medoids # Representative scales
+        self.medoids_ = medoids     # Representative scales
         self.medoid_labels_ = medoid_labels
         self.medoid_ind_ = medoid_ind   # Index of medoids
         # Return labels of medoid if y is given
@@ -325,7 +460,26 @@ class AAclust:
             return names_medoid
 
     def cluster_naming(self, names=None, labels=None, name_unclassified="Unclassified"):
-        """Change cluster labels by scale names"""
+        """
+        Assigns names to clusters based on scale names and their frequency.
+
+        This method renames clusters based on the names of the scales in each cluster, with priority given to the
+        most frequent scales. If the name is already used or does not exist, it defaults to 'name_unclassified'.
+
+        Parameters
+        ----------
+        names : list, optional
+            List of scale names corresponding to each sample.
+        labels : list, optional
+            Cluster labels. If not provided, uses the labels from the fitted model.
+        name_unclassified : str, default = "Unclassified"
+            Name assigned to clusters that cannot be classified with the given names.
+
+        Returns
+        -------
+        cluster_names : list
+            A list of renamed clusters based on scale names.
+        """
         if type(names) is not list:
             raise ValueError("'names' must be list")
         if labels is None:
@@ -352,24 +506,82 @@ class AAclust:
         cluster_names = [dict_cluster_names[label] for label in labels]
         return cluster_names
 
-    # TODO check if necessary
     @staticmethod
     def get_cluster_centers(X, labels=None):
-        """"""
+        """
+        Computes the center of each cluster based on the given labels.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Feature matrix with rows as samples and columns as features.
+        labels : list or array-like, optional
+            Cluster labels for each sample in X.
+
+        Returns
+        -------
+        centers : array-like
+            The computed center for each cluster.
+        center_labels : array-like
+            The labels associated with each computed center.
+        """
         centers, center_labels = get_cluster_centers(X, labels=labels)
         return centers, center_labels
 
-    # TODO check if necessary
     @staticmethod
     def get_cluster_medoids(X, labels=None):
-        """"""
+        """
+        Computes the medoid of each cluster based on the given labels.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Feature matrix with rows as samples and columns as features.
+        labels : list or array-like, optional
+            Cluster labels for each sample in X.
+
+        Returns
+        -------
+        medoids : array-like
+            The medoid for each cluster.
+        medoid_labels : array-like
+            The labels corresponding to each medoid.
+        medoid_ind : array-like
+            Indexes of medoids within the original data.
+        """
         medoids, medoid_labels, medoid_ind = get_cluster_medoids(X, labels=labels)
         return medoids, medoid_labels, medoid_ind
 
     @staticmethod
     def correlation(X_test, X_ref, labels_test=None, labels_ref=None, n=3, positive=True,
                     on_center=False, except_unclassified=True):
-        """Compute cluster centers from reference list and correlation of test array with centers"""
+        """
+        Computes the correlation of test data with reference cluster centers.
+
+        Parameters
+        ----------
+        X_test : array-like
+            Test feature matrix.
+        X_ref : array-like
+            Reference feature matrix.
+        labels_test : list or array-like, optional
+            Cluster labels for the test data.
+        labels_ref : list or array-like, optional
+            Cluster labels for the reference data.
+        n : int, default = 3
+            Number of top centers to consider based on correlation strength.
+        positive : bool, default = True
+            If True, considers positive correlations. Else, negative correlations.
+        on_center : bool, default = False
+            If True, correlation is computed with cluster centers. Otherwise, with all cluster members.
+        except_unclassified : bool, default = True
+            If True, excludes 'unclassified' clusters from the reference list.
+
+        Returns
+        -------
+        list_top_center_name_corr : list of str
+            Names and correlations of centers having strongest (positive/negative) correlation with test data samples.
+        """
         # Check input
         X_test, labels_test = ut.check_feat_matrix(X=X_test, names=labels_test)
         X_ref, labels_ref = ut.check_feat_matrix(X=X_ref, names=labels_ref)

@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>aaanalysis.data_loader.data_loader &mdash; AAanalysis 2023 documentation</title>
+  <title>aaanalysis.data_loader.data_loader &mdash; AAanalysis</title>
   
 
   
@@ -16,6 +16,10 @@
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
+  <link rel="stylesheet" href="/home/stephanbreimann/Programming/Pycharm_Projekte/1Packages/aaanalysis/docs/source/_static/css/style.css" type="text/css" />
+  <link rel="stylesheet" href="/home/stephanbreimann/Programming/Pycharm_Projekte/1Packages/aaanalysis/docs/source/_static/css/override.css" type="text/css" />
 
   
   
@@ -38,6 +42,7 @@
         <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../_static/doctools.js"></script>
         <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/design-tabs.js"></script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
@@ -88,10 +93,10 @@
               
             
             
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../aaclust.html">AAclust Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../cpp.html">CPP Module</a></li>
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
 </ul>
 
             
@@ -197,32 +202,45 @@
     <span class="k">return</span> <span class="n">df</span>
 
 
-<div class="viewcode-block" id="load_dataset"><a class="viewcode-back" href="../../../dataloader.html#aaanalysis.data_loader.load_dataset">[docs]</a><span class="k">def</span> <span class="nf">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">non_canonical_aa</span><span class="o">=</span><span class="s2">&quot;remove&quot;</span><span class="p">,</span> <span class="n">min_len</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="load_dataset"><a class="viewcode-back" href="../../../api.html#aaanalysis.data_loader.load_dataset">[docs]</a><span class="k">def</span> <span class="nf">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">non_canonical_aa</span><span class="o">=</span><span class="s2">&quot;remove&quot;</span><span class="p">,</span> <span class="n">min_len</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Load one of the following protein sequence benchmarking datasets.</span>
+<span class="sd">    Load protein benchmarking datasets or their general overview by setting &#39;name&#39; to &#39;INFO&#39;.</span>
 
-<span class="sd">    Load general information about datasets by setting &#39;name&#39; to &#39;INFO&#39;.</span>
+<span class="sd">    Three types of benchmark datasets are provided:</span>
+<span class="sd">        - Residue prediction: 6 datasets used to predict residue (amino acid) specific properties</span>
+<span class="sd">            (&#39;AA_CASPASE3&#39;, &#39;AA_FURIN&#39;, &#39;AA_LDR&#39;, &#39;AA_MMP2&#39;, &#39;AA_RNABIND&#39;, &#39;AA_SA&#39;)</span>
+<span class="sd">        - Domain prediction: 1 dataset used to predict domain specific properties</span>
+<span class="sd">            (DOM_SUBGSEC)</span>
+<span class="sd">        - Sequence prediction: 6 datasets used to predict sequence specific properties</span>
+<span class="sd">            (&#39;SEQ_AMYLO&#39;, &#39;SEQ_CAPSID&#39;, &#39;SEQ_DISULFIDE&#39;, &#39;SEQ_LOCATION&#39;, &#39;SEQ_SOLUBLE&#39;, &#39;SEQ_TAIL&#39;)</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    name : str</span>
-<span class="sd">        Name of the dataset (&#39;Dataset&#39; column).</span>
-<span class="sd">    n : int, optional</span>
-<span class="sd">        Number of proteins per class. If None, the whole dataset will be returned.</span>
-<span class="sd">    non_canonical_aa: {&#39;remove&#39;, &#39;keep&#39;, &#39;gap&#39;}, str, default=&#39;remove&#39;</span>
-<span class="sd">        Options for modifying non-canonical amino acids:</span>
-<span class="sd">        - &#39;remove&#39;: Sequences containing non-canonical amino acids are removed</span>
-<span class="sd">        - &#39;keep&#39;: Sequences containing non-canonical amino acids are not removed</span>
-<span class="sd">        - &#39;gap&#39;: Sequences are kept and modified by replacing non-canonical amino acids by gap symbol (&#39;X&#39;)</span>
-<span class="sd">    min_len : int, optional</span>
-<span class="sd">        Minimum length of sequences used for filtering.</span>
-<span class="sd">    max_len : int, optional</span>
-<span class="sd">        Maximum length of sequences used for filtering.</span>
+<span class="sd">        Name of the dataset (&#39;Dataset&#39; column). Default is &quot;INFO&quot;.</span>
+<span class="sd">    n : int or None</span>
+<span class="sd">        Number of proteins per class. If None, the whole dataset will be returned. Default is None.</span>
+<span class="sd">    non_canonical_aa : str</span>
+<span class="sd">        Options for modifying non-canonical amino acids. Can be one of the following:</span>
+
+<span class="sd">        - `remove`: Sequences containing non-canonical amino acids are removed.</span>
+<span class="sd">        - `keep`: Sequences containing non-canonical amino acids are not removed.</span>
+<span class="sd">        - `gap`: Sequences are kept and modified by replacing non-canonical amino acids with the gap symbol (&#39;X&#39;).</span>
+<span class="sd">            Default is &#39;remove&#39;.</span>
+<span class="sd">    min_len : int or None</span>
+<span class="sd">        Minimum length of sequences used for filtering. Default is None.</span>
+<span class="sd">    max_len : int or None</span>
+<span class="sd">        Maximum length of sequences used for filtering. Default is None.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    df : DataFrame</span>
+<span class="sd">    df : :class:`pandas.DataFrame`</span>
 <span class="sd">        Dataframe with the selected dataset.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    For further information on the benchmark datasets, refer to the AAclust paper : TODO: add link to AAclust paper</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">ut</span><span class="o">.</span><span class="n">check_non_negative_number</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">accept_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">ut</span><span class="o">.</span><span class="n">check_non_negative_number</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;min_len&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">min_len</span><span class="p">,</span> <span class="n">accept_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -266,13 +284,13 @@
 
 
 <span class="c1"># Extend for AAclustTop60</span>
-<div class="viewcode-block" id="load_scales"><a class="viewcode-back" href="../../../dataloader.html#aaanalysis.data_loader.load_scales">[docs]</a><span class="k">def</span> <span class="nf">load_scales</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;scales&quot;</span><span class="p">,</span> <span class="n">just_aaindex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">unclassified_in</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="load_scales"><a class="viewcode-back" href="../../../api.html#aaanalysis.data_loader.load_scales">[docs]</a><span class="k">def</span> <span class="nf">load_scales</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;scales&quot;</span><span class="p">,</span> <span class="n">just_aaindex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">unclassified_in</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Load amino acid scales or scale classification.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    name : str, default=&#39;scales&#39;</span>
+<span class="sd">    name : str, default = &#39;scales&#39;</span>
 <span class="sd">        Name of the dataset to load. Options are &#39;scales&#39;, &#39;scales_raw&#39;, &#39;scale_classification&#39;,</span>
 <span class="sd">        &#39;scales_pc&#39;, &#39;top60&#39;, and &#39;top60_eval&#39;.</span>
 <span class="sd">    unclassified_in : bool, optional</span>
@@ -284,7 +302,7 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    df : DataFrame</span>
+<span class="sd">    df : :class:`pandas.DataFrame`</span>
 <span class="sd">        Dataframe for the selected dataset.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">LIST_DATASETS</span><span class="p">:</span>
@@ -313,15 +331,7 @@
         &#169; Copyright 2023, Stephan Breimann.
 
     </p>
-  </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  </div> 
 
 </footer>
         </div>

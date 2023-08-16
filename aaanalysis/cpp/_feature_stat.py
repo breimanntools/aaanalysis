@@ -71,7 +71,7 @@ def splitting(df_parts=None, split_kws=None):
 
     Parameters
     ----------
-    df_parts: pd.DataFrame
+    df_parts: :class:`pandas.DataFrame`
             DataFrame with sequence parts.
     split_kws: dict with kwargs for splitting
 
@@ -148,19 +148,19 @@ class SequenceFeatureStatistics:
 
         Parameters
         ----------
-        df_parts: pd.DataFrame
+        df_parts: :class:`pandas.DataFrame`
             DataFrame with sequence parts.
-        split_kws: dict, default=SequenceFeature.get_split_kws
+        split_kws: dict, default = SequenceFeature.get_split_kws
             Nested dictionary with parameter dictionary for each chosen split_type.
-        df_scales: pd.DataFrame, default=SequenceFeature.load_scales
+        df_scales: :class:`pandas.DataFrame`, default = SequenceFeature.load_scales
             DataFrame with default amino acid scales.
         y: array-like, shape (n_samples)
             Class labels for samples in df_parts.
-        accept_gaps: bool, default=False
+        accept_gaps: bool, default = False
             Whether to accept missing values by enabling omitting for computations (if True).
-        verbose: bool, default=True
+        verbose: bool, default = True
             Whether to print progress information about the algorithm (if True).
-        n_processes: integer default=None
+        n_processes: integer default = None
             Number of CPUs used for multiprocessing. If None, number will be optimized automatically
 
         Returns
@@ -226,7 +226,7 @@ class SequenceFeatureStatistics:
             Feature values of samples.
         y: array-like, shape (n_samples)
             Class labels for samples in X.
-        group: integer, default=1
+        group: integer, default = 1
             Class/Group label.
 
         Returns
@@ -277,9 +277,9 @@ class SequenceFeatureStatistics:
             Feature values of samples.
         y: array-like, shape (n_samples)
             Class labels for samples in X.
-        parametric: bool, default=True
+        parametric: bool, default = True
             Whether to use ttest (parametric) or Mann-Whitney test (non-parametric) for p-value computation.
-        p_cor: string, default=None
+        p_cor: string, default = None
             Name of method to be used for p-value adjustment (e.g., bh_fdr for Benjamini-Hochberg method).
 
         Returns
@@ -311,17 +311,17 @@ class SequenceFeatureStatistics:
 
         Parameters
         ----------
-        df: pd.DataFrame
+        df: :class:`pandas.DataFrame`
             Feature DataFrame to add statistics.
         X: array-like or sparse matrix, shape (n_samples, n_features)
             Feature values of samples.
         y: array-like, shape (n_samples)
             Class labels for samples in X.
-        parametric: bool, default=False
+        parametric: bool, default = False
             Whether to use parametric (T-test) or non-parametric (U-test) test for p-value computation.
         Returns
         -------
-        df: pd.DataFrame
+        df: :class:`pandas.DataFrame`
             Feature DataFrame including statistics for comparing two given groups.
         """
         df = df.copy()

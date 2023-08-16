@@ -39,30 +39,43 @@ def _adjust_non_canonical_aa(df=None, non_canonical_aa="remove"):
 
 def load_dataset(name="INFO", n=None, non_canonical_aa="remove", min_len=None, max_len=None):
     """
-    Load one of the following protein sequence benchmarking datasets.
+    Load protein benchmarking datasets or their general overview by setting 'name' to 'INFO'.
 
-    Load general information about datasets by setting 'name' to 'INFO'.
+    Three types of benchmark datasets are provided:
+        - Residue prediction: 6 datasets used to predict residue (amino acid) specific properties
+            ('AA_CASPASE3', 'AA_FURIN', 'AA_LDR', 'AA_MMP2', 'AA_RNABIND', 'AA_SA')
+        - Domain prediction: 1 dataset used to predict domain specific properties
+            (DOM_SUBGSEC)
+        - Sequence prediction: 6 datasets used to predict sequence specific properties
+            ('SEQ_AMYLO', 'SEQ_CAPSID', 'SEQ_DISULFIDE', 'SEQ_LOCATION', 'SEQ_SOLUBLE', 'SEQ_TAIL')
 
     Parameters
     ----------
     name : str
-        Name of the dataset ('Dataset' column).
-    n : int, optional
-        Number of proteins per class. If None, the whole dataset will be returned.
-    non_canonical_aa: {'remove', 'keep', 'gap'}, str, default='remove'
-        Options for modifying non-canonical amino acids:
-        - 'remove': Sequences containing non-canonical amino acids are removed
-        - 'keep': Sequences containing non-canonical amino acids are not removed
-        - 'gap': Sequences are kept and modified by replacing non-canonical amino acids by gap symbol ('X')
-    min_len : int, optional
-        Minimum length of sequences used for filtering.
-    max_len : int, optional
-        Maximum length of sequences used for filtering.
+        Name of the dataset ('Dataset' column). Default is "INFO".
+    n : int or None
+        Number of proteins per class. If None, the whole dataset will be returned. Default is None.
+    non_canonical_aa : str
+        Options for modifying non-canonical amino acids. Can be one of the following:
+
+        - `remove`: Sequences containing non-canonical amino acids are removed.
+        - `keep`: Sequences containing non-canonical amino acids are not removed.
+        - `gap`: Sequences are kept and modified by replacing non-canonical amino acids with the gap symbol ('X').
+            Default is 'remove'.
+    min_len : int or None
+        Minimum length of sequences used for filtering. Default is None.
+    max_len : int or None
+        Maximum length of sequences used for filtering. Default is None.
 
     Returns
     -------
-    df : DataFrame
+    df : :class:`pandas.DataFrame`
         Dataframe with the selected dataset.
+
+    Notes
+    -----
+    For further information on the benchmark datasets, refer to the AAclust paper : TODO: add link to AAclust paper
+
     """
     ut.check_non_negative_number(name="n", val=n, accept_none=True)
     ut.check_non_negative_number(name="min_len", val=min_len, accept_none=True)
@@ -112,7 +125,7 @@ def load_scales(name="scales", just_aaindex=False, unclassified_in=True):
 
     Parameters
     ----------
-    name : str, default='scales'
+    name : str, default = 'scales'
         Name of the dataset to load. Options are 'scales', 'scales_raw', 'scale_classification',
         'scales_pc', 'top60', and 'top60_eval'.
     unclassified_in : bool, optional
@@ -124,7 +137,7 @@ def load_scales(name="scales", just_aaindex=False, unclassified_in=True):
 
     Returns
     -------
-    df : DataFrame
+    df : :class:`pandas.DataFrame`
         Dataframe for the selected dataset.
     """
     if name not in LIST_DATASETS:

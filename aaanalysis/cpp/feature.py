@@ -194,23 +194,23 @@ class SequenceFeature:
 
         Parameters
         ----------
-        df_seq: pd.DataFrame
+        df_seq: :class:`pandas.DataFrame`
             DataFrame with sequence information comprising either sequence ('sequence', 'tmd_start', 'tmd_stop')
             or sequence part ('jmd_n', 'tmd', 'jmd_c') columns.
         list_parts: list of string, len>=1
             Names of sequence parts which should be created (e.g., 'tmd').
-        jmd_n_len: int, default=None, optional
+        jmd_n_len: int, default = None, optional
             Length of JMD-N in number of amino acids. If None, 'jmd_n' column must be given in df_seq.
-        jmd_c_len: int, default=None, optional
+        jmd_c_len: int, default = None, optional
             Length of JMD-N in number of amino acids. If None, 'jmd_c' column must be given in df_seq.
-        ext_len: int, default=4
+        ext_len: int, default = 4
             Lenght of N- resp. C-terminal extra part of TMD.
-        all_parts: bool, default=False
+        all_parts: bool, default = False
             Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.
 
         Returns
         -------
-        df_parts: pd.DataFrame
+        df_parts: :class:`pandas.DataFrame`
             DataFrame with sequence parts.
 
         See Also
@@ -263,21 +263,21 @@ class SequenceFeature:
 
         Parameters
         ----------
-        n_split_min: int, default=1
+        n_split_min: int, default = 1
             Number greater 0 to specify the greatest Segment (e.g., 1/1 TMD alias whole TMD sequence).
-        n_split_max: int, default=15,
+        n_split_max: int, default = 15,
             Number greater n_split_min to specfiy the smallest Segment (e.g., 1/15 TMD).
-        steps_pattern: list of integers, default=[3, 4, 6, 7, 8]
+        steps_pattern: list of integers, default = [3, 4, 6, 7, 8]
             Possible steps sizes for Pattern.
-        n_min: int, default=2
+        n_min: int, default = 2
             Minimum number of steps for Pattern.
-        n_max: int, default=4
+        n_max: int, default = 4
             Maximum number of steps for Pattern.
-        len_max: int, default=10
+        len_max: int, default = 10
             Maximum length in amino acid position for Pattern by varying start position.
-        steps_periodicpattern: list of integers, default=[3, 4]
+        steps_periodicpattern: list of integers, default = [3, 4]
             Step sizes for PeriodicPattern.
-        split_types: list of strings, default=["Segment", "Pattern" "PeriodicPattern"]
+        split_types: list of strings, default = ["Segment", "Pattern" "PeriodicPattern"]
             Split types for which paramter dictionary should be generated.
 
         Returns
@@ -325,13 +325,13 @@ class SequenceFeature:
 
         Parameters
         ----------
-        list_parts: list of strings (n>=1 parts), default=["tmd_e", "jmd_n_tmd_n", "tmd_c_jmd_c"]
+        list_parts: list of strings (n>=1 parts), default = ["tmd_e", "jmd_n_tmd_n", "tmd_c_jmd_c"]
             Names of sequence parts which should be created (e.g., 'tmd').
-        split_kws: dict, default=SequenceFeature.get_split_kws
+        split_kws: dict, default = SequenceFeature.get_split_kws
             Nested dictionary with parameter dictionary for each chosen split_type.
-        df_scales: pd.DataFrame, default=SequenceFeature.load_scales
+        df_scales: :class:`pandas.DataFrame`, default = SequenceFeature.load_scales
             DataFrame with default amino acid scales.
-        all_parts: bool, default=False
+        all_parts: bool, default = False
             Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.
 
         Returns
@@ -367,7 +367,7 @@ class SequenceFeature:
         ----------
         features: str, list of strings, pd.Series
             Ids of features for which feature names should be created.
-        df_cat: pd.DataFrame, default=SequenceFeature.load_categories
+        df_cat: :class:`pandas.DataFrame`, default = SequenceFeature.load_categories
             DataFrame with default categories for physicochemical amino acid scales
         tmd_len: int, >0
             Length of TMD.
@@ -423,13 +423,13 @@ class SequenceFeature:
 
         Parameters
         ----------
-        df_parts: pd.DataFrame
+        df_parts: :class:`pandas.DataFrame`
             DataFrame with sequence parts.
         split: str
             Name of Split following given convention.
         dict_scale: dict
             Dictionary mapping a numerical value to each letter of given sequences
-        accept_gaps: bool, default=False
+        accept_gaps: bool, default = False
             Whether to accept missing values by enabling omitting for computations (if True).
 
         Returns
@@ -473,17 +473,17 @@ class SequenceFeature:
 
         Parameters
         ----------
-        df_parts: pd.DataFrame
+        df_parts: :class:`pandas.DataFrame`
             DataFrame with sequence parts.
         features: str, list of strings, pd.Series
             Ids of features for which matrix of feature values should be created.
-        df_scales: pd.DataFrame, optional
+        df_scales: :class:`pandas.DataFrame`, optional
             DataFrame with default amino acid scales.
-        accept_gaps: bool, default=False
+        accept_gaps: bool, default = False
             Whether to accept missing values by enabling omitting for computations (if True).
-        verbose: bool, default=True
+        verbose: bool, default = True
             Whether to print size of to be created feature matrix (if True) or not otherwise.
-        return_labels: bool, default=False
+        return_labels: bool, default = False
             Whether to return sample labels in addition to feature matrix.
 
         Returns

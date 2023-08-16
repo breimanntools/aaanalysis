@@ -293,26 +293,26 @@ class CPP:
     """
     Create and filter features that are most discriminant between two sets of sequences.
 
-    Attributes
+    Parameters
     ----------
-    df_scales : pd.DataFrame, default=aa.load_scales(name=ut.STR_SCALE_CAT)
+    df_scales : :class:`pandas.DataFrame`, default = aa.load_scales(name=ut.STR_SCALE_CAT)
         DataFrame with default amino acid scales.
-    df_cat : pd.DataFrame, default=aa.load_categories
+    df_cat : :class:`pandas.DataFrame`, default = aa.load_categories
         DataFrame with default categories for physicochemical amino acid scales.
-    df_parts : pd.DataFrame
+    df_parts : :class:`pandas.DataFrame`
         DataFrame with sequence parts.
-    split_kws : dict, default=SequenceFeature.get_split_kws
+    split_kws : dict, default = SequenceFeature.get_split_kws
         Nested dictionary with parameter dictionary for each chosen split_type.
-    accept_gaps : bool, default=False
+    accept_gaps : bool, default = False
         Whether to accept missing values by enabling omitting for computations (if True).
-    jmd_n_len : int, >=0, default=10
+    jmd_n_len : int, >=0, default = 10
         Length of JMD-N.
-    jmd_c_len : int, >=0, default=10
+    jmd_c_len : int, >=0, default = 10
         Length of JMD-C.
-    ext_len : int, >=0, default=4
+    ext_len : int, >=0, default = 4
         Length of TMD-extending part (starting from C and N terminal part of TMD).
         Conditions: ext_len < jmd_m_len and ext_len < jmd_c_len.
-    verbose : bool, default=True
+    verbose : bool, default = True
         Whether to print progress information about the algorithm (if True).
 
     Notes
@@ -357,12 +357,12 @@ class CPP:
 
         Parameters
         ----------
-        df_feat: pd.DataFrame
+        df_feat: :class:`pandas.DataFrame`
             Feature DataFrame to add scale categories.
 
         Returns
         -------
-        df_feat: pd.DataFrame
+        df_feat: :class:`pandas.DataFrame`
             Feature DataFrame including scale categories.
         """
         # Check input
@@ -385,18 +385,18 @@ class CPP:
 
         Parameters
         ----------
-        df_feat: pd.DataFrame
+        df_feat: :class:`pandas.DataFrame`
             Feature DataFrame to add statistics.
         labels: array-like, shape (n_samples)
             Class labels for samples in df_parts attribute.
-        parametric: bool, default=False
+        parametric: bool, default = False
             Whether to use parametric (T-test) or non-parametric (U-test) test for p-value computation.
-        accept_gaps: bool, default=False
+        accept_gaps: bool, default = False
             Whether to accept missing values by enabling omitting for computations (if True).
 
         Returns
         -------
-        df_feat: pd.DataFrame
+        df_feat: :class:`pandas.DataFrame`
             Feature DataFrame including statistics for comparing two given groups.
 
         Notes
@@ -428,7 +428,7 @@ class CPP:
 
         Parameters
         ----------
-        df_feat: pd.DataFrame
+        df_feat: :class:`pandas.DataFrame`
             Feature DataFrame to add feature positions.
         tmd_len: int, >0
             Length of TMD.
@@ -437,7 +437,7 @@ class CPP:
 
         Returns
         -------
-        df_feat: pd.DataFrame
+        df_feat: :class:`pandas.DataFrame`
             Feature DataFrame including feature positions.
 
         Notes
@@ -458,36 +458,30 @@ class CPP:
     @staticmethod
     def add_shap(df_feat=None, col_shap="shap_value", name_feat_impact="feat_impact"):
         """
-        Convert SHAP values in feature impact/importance and add to DataFrame.
+        Convert SHAP values into feature impact/importance and add to DataFrame.
 
         Parameters
         ----------
-        df_feat: pd.DataFrame
-            Feature DataFrame to add feature impact.
-        col_shap: str, default='shap_value'
-            Column name of (`SHAP <https://shap.readthedocs.io/en/latest/index.html>`__) values in feature DataFrame
-        name_feat_impact: str, default='feat_impact'
-            Column name of feature impact or feature importance that should be added to feature DataFrame.
+        df_feat: :class:`pandas.DataFrame`
+            Feature DataFrame to which the feature impact will be added.
+        col_shap: str, default = 'shap_value'
+            Column name of `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ values in the feature DataFrame.
+        name_feat_impact: str, default = 'feat_impact'
+            Column name of feature impact or feature importance that will be added to the feature DataFrame.
 
         Returns
         -------
-        df_feat: pd.DataFrame
+        df_feat: :class:`pandas.DataFrame`
             Feature DataFrame including feature impact.
 
         Notes
         -----
-        - SHAP (SHapley Additive exPlanations) is a game theoretic approach to explain the output of
-        any machine learning model.
-
-        - SHAP values represent a feature´s responsibility for a change in the model output.
-
+        - SHAP (SHapley Additive exPlanations) is a game theoretic approach to explain the output of any machine learning model.
+        - SHAP values represent a feature's responsibility for a change in the model output.
         - Missing values are accepted in SHAP values.
 
-        See also
-        --------
-        (`SHAP <https://shap.readthedocs.io/en/latest/index.html>`__)
-
         """
+
         # Check input
         df_feat = df_feat.copy()
         ut.check_str(name="name_feat_impact", val=name_feat_impact)
@@ -509,22 +503,22 @@ class CPP:
 
         Parameters
         ----------
-        df_feat: pd.DataFrame
+        df_feat: :class:`pandas.DataFrame`
             Feature DataFrame to add sample difference.
-        df_seq: pd.DataFrame
+        df_seq: :class:`pandas.DataFrame`
             DataFrame with sequences and sample names, in which the given sample name is included.
         labels: array-like, shape (n_samples)
             Class labels for samples in sequence DataFrame.
         sample_name: str
             Name of sample for which the feature value difference to a given reference group should be computed.
-        ref_group: int, default=0
+        ref_group: int, default = 0
             Class label of reference group.
-        accept_gaps: bool, default=False
+        accept_gaps: bool, default = False
             Whether to accept missing values by enabling omitting for computations (if True).
 
         Returns
         -------
-        df_feat: pd.DataFrame
+        df_feat: :class:`pandas.DataFrame`
             Feature DataFrame including feature value difference.
         """
         # Check input
@@ -594,9 +588,9 @@ class CPP:
         ----------
         labels : array-like, shape (n_samples)
             Class labels for samples in sequence DataFrame (test=1, reference=0).
-        parametric : bool, default=False
+        parametric : bool, default = False
             Whether to use parametric (T-test) or non-parametric (U-test) test for p-value computation.
-        n_filter : int, default=100
+        n_filter : int, default = 100
             Number of features to be filtered/selected by CPP algorithm.
         n_pre_filter : int, optional
             Number of feature to be pre-filtered by CPP algorithm. If None, a percentage of all features is used.
@@ -604,22 +598,22 @@ class CPP:
             Length of Transmembrane Domain (TMD) used for positions.
         start : int, >=0
             Position label of first amino acid position (starting at N-terminus).
-        check_cat : bool, default=True
+        check_cat : bool, default = True
             Whether to check for redundancy within scale categories.
-        pct_pre_filter : int, default=5
+        pct_pre_filter : int, default = 5
             Percentage of all features that should remain after the pre-filtering step.
-        max_std_test : float [0-1], default=0.2
+        max_std_test : float [0-1], default = 0.2
             Maximum standard deviation within the test group used as threshold for pre-filtering.
-        max_overlap : float [0-1], default=0.5
+        max_overlap : float [0-1], default = 0.5
             Maximum positional overlap of features used as threshold for filtering.
-        max_cor : float [0-1], default=0.5
+        max_cor : float [0-1], default = 0.5
             Maximum Pearson correlation of features used as threshold for filtering.
-        n_processes : int, default=None
+        n_processes : int, default = None
             Number of CPUs used for multiprocessing. If None, number will be optimized automatically.
 
         Returns
         -------
-        df_feat : pd.DataFrame, shape (n_feature, n_feature_information)
+        df_feat : :class:`pandas.DataFrame`, shape (n_feature, n_feature_information)
             DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
 
         Notes
@@ -808,13 +802,13 @@ class CPP:
         ----------
         df_feat : :class:`~pandas.DataFrame`, shape (n_feature, n_feature_information)
             DataFrame containing unique identifiers, scale information, statistics, and positions for each feature.
-        y : {'category', 'subcategory', 'scale_name'}, str, default='subcategory'
+        y : {'category', 'subcategory', 'scale_name'}, str, default = 'subcategory'
             Name of the column in the feature DataFrame representing scale information (shown on the y-axis).
-        val_col : {'mean_dif', 'feat_impact', 'abs_auc', 'std_test', ...}, str, default='mean_dif'
+        val_col : {'mean_dif', 'feat_impact', 'abs_auc', 'std_test', ...}, str, default = 'mean_dif'
             Name of the column in the feature DataFrame containing numerical values to display.
-        val_type : {'mean', 'sum', 'std'}, str, default='mean'
+        val_type : {'mean', 'sum', 'std'}, str, default = 'mean'
             Method to aggregate numerical values from 'val_col'.
-        normalize : {True, False, 'positions', 'positions_only'}, bool/str, default=False
+        normalize : {True, False, 'positions', 'positions_only'}, bool/str, default = False
             Specifies normalization for numerical values in 'val_col':
             - False: Set value at all positions of a feature without further normalization.
 
@@ -823,7 +817,7 @@ class CPP:
             - 'positions': Value/number of positions set at each position of a feature and normalized across features.
               Recommended when aiming to emphasize features with fewer positions using 'val_col'='feat_impact' and 'value_type'='mean'.
 
-        figsize : tuple(float, float), default=(10,7)
+        figsize : tuple(float, float), default = (10,7)
             Width and height of the figure in inches passed to :func:`matplotlib.pyplot.figure`.
         title : str, optional
             Title of figure used by :func:`matplotlib.pyplot.title`.
@@ -831,16 +825,16 @@ class CPP:
             Keyword arguments passed to :func:`matplotlib.pyplot.title`.
         vmin, vmax : float, optional
             Values to anchor the colormap, otherwise, inferred from data and other keyword arguments.
-        cmap : matplotlib colormap name or object, or list of colors, default='seismic'
+        cmap : matplotlib colormap name or object, or list of colors, default = 'seismic'
             Name of color map assigning data values to color space. If 'SHAP', colors from
-            (`SHAP <https://shap.readthedocs.io/en/latest/index.html>`__) will be used (recommended for feature impact).
+            `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ will be used (recommended for feature impact).
         cmap_n_colors : int, optional
             Number of discrete steps in diverging or sequential color map.
         dict_color : dict, optional
             Map of colors for scale categories classifying scales shown on y-axis.
         cbar_kws : dict of key, value mappings, optional
             Keyword arguments for :meth:`matplotlib.figure.Figure.colorbar`.
-        add_jmd_tmd : bool, default=True
+        add_jmd_tmd : bool, default = True
             Whether to add colored bar under heatmap indicating sequence parts (JMD-N, TMD, JMD-C).
         tmd_len : int, >0
             Length of TMD to be depiceted.
@@ -855,28 +849,28 @@ class CPP:
         jmd_c_seq : str, optional
             Sequence of JMD_C. 'jmd_c_len' is set to length of JMD_C if sequence for TMD, JMD-N and JMD-C are given.
             Recommended if feature impact or mean difference should be depicted for one sample.
-        tmd_color : str, default='mediumspringgreen'
+        tmd_color : str, default = 'mediumspringgreen'
             Color of TMD bar.
-        jmd_color : str, default='blue'
+        jmd_color : str, default = 'blue'
             Color of JMD-N and JMD-C bar.
-        tmd_seq_color : str, default='black'
+        tmd_seq_color : str, default = 'black'
             Color of TMD sequence.
-        jmd_seq_color : str, defaault='white'
+        jmd_seq_color : str, default = 'white'
             Color of JMD-N and JMD-C sequence.
         seq_size : float, optional
             Font size of all sequence parts in points. If None, optimized automatically.
         tmd_jmd_fontsize : float, optional
             Font size of 'TMD', 'JMD-N' and 'JMD-C'  label in points. If None, optimized automatically.
-        xtick_size : float, default=11.0
+        xtick_size : float, default = 11.0
             Size of x ticks in points. Passed as 'size' argument to :meth:`matplotlib.axes.Axes.set_xticklabels`.
-        xtick_width : float, default=2.0
+        xtick_width : float, default = 2.0
             Widht of x ticks in points. Passed as 'width' argument to :meth:`matplotlib.axes.Axes.tick_params`.
-        xtick_length : float, default=5.0,
+        xtick_length : float, default = 5.0,
             Length of x ticks in points. Passed as 'length' argument to :meth:`matplotlib.axes.Axes.tick_params`.
         ytick_size : float, optional
             Size of scale information as y ticks in points. Passed to :meth:`matplotlib.axes.Axes.tick_params`.
             If None, optimized automatically.
-        add_legend_cat : bool, default=True,
+        add_legend_cat : bool, default = True,
             Whether to add legend for categories under plot and classification of scales at y-axis.
         legend_kws : dict, optional
             Keyword arguments passed to :meth:`matplotlib.axes.Axes.legend`
@@ -896,8 +890,9 @@ class CPP:
 
         See Also
         --------
-        :func:`seaborn.heatmap`
-        `SHAP <https://shap.readthedocs.io/en/latest/index.html>`__
+        seaborn.heatmap
+            Plotting heatmap using seaborn.
+            See `Seaborn documentation <https://seaborn.pydata.org/generated/seaborn.heatmap.html>`_ for more details.
 
         Examples
         --------

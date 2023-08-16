@@ -268,7 +268,7 @@ def get_cbar_ticks_heatmap(df_pos=None):
 
 # TODO refactor cbar (easier handling for combination
 def get_cbar_args_heatmap(cbar_kws=None, df_pos=None):
-    """Parameters to set manually"""
+    """Parameter to set manually"""
     # Get cbar ticks
     cbar_ticks = get_cbar_ticks_heatmap(df_pos=df_pos)
     width, height = plt.gcf().get_size_inches()

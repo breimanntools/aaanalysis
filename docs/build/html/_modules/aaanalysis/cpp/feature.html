@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>aaanalysis.cpp.feature &mdash; AAanalysis 2023 documentation</title>
+  <title>aaanalysis.cpp.feature &mdash; AAanalysis</title>
   
 
   
@@ -15,6 +15,11 @@
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
+  <link rel="stylesheet" href="/home/stephanbreimann/Programming/Pycharm_Projekte/1Packages/aaanalysis/docs/source/_static/css/style.css" type="text/css" />
+  <link rel="stylesheet" href="/home/stephanbreimann/Programming/Pycharm_Projekte/1Packages/aaanalysis/docs/source/_static/css/override.css" type="text/css" />
 
   
   
@@ -37,6 +42,7 @@
         <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../_static/doctools.js"></script>
         <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/design-tabs.js"></script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
@@ -87,10 +93,10 @@
               
             
             
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../aaclust.html">AAclust Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../cpp.html">CPP Module</a></li>
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
 </ul>
 
             
@@ -318,7 +324,7 @@
     
     
 <span class="c1"># II Main Functions</span>
-<div class="viewcode-block" id="SequenceFeature"><a class="viewcode-back" href="../../../cpp.html#aaanalysis.cpp.SequenceFeature">[docs]</a><span class="k">class</span> <span class="nc">SequenceFeature</span><span class="p">:</span>
+<div class="viewcode-block" id="SequenceFeature"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.SequenceFeature">[docs]</a><span class="k">class</span> <span class="nc">SequenceFeature</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Retrieve and create sequence feature components (Part, Split, and Scale).</span>
 
 <span class="sd">    Notes</span>
@@ -347,29 +353,29 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># Basic data structures for features</span>
-<div class="viewcode-block" id="SequenceFeature.get_df_parts"><a class="viewcode-back" href="../../../cpp.html#aaanalysis.cpp.SequenceFeature.get_df_parts">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SequenceFeature.get_df_parts"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.SequenceFeature.get_df_parts">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">get_df_parts</span><span class="p">(</span><span class="n">df_seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">list_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jmd_n_len</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ext_len</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">all_parts</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create DataFrane with sequence parts.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        df_seq: pd.DataFrame</span>
+<span class="sd">        df_seq: :class:`pandas.DataFrame`</span>
 <span class="sd">            DataFrame with sequence information comprising either sequence (&#39;sequence&#39;, &#39;tmd_start&#39;, &#39;tmd_stop&#39;)</span>
 <span class="sd">            or sequence part (&#39;jmd_n&#39;, &#39;tmd&#39;, &#39;jmd_c&#39;) columns.</span>
 <span class="sd">        list_parts: list of string, len&gt;=1</span>
 <span class="sd">            Names of sequence parts which should be created (e.g., &#39;tmd&#39;).</span>
-<span class="sd">        jmd_n_len: int, default=None, optional</span>
+<span class="sd">        jmd_n_len: int, default = None, optional</span>
 <span class="sd">            Length of JMD-N in number of amino acids. If None, &#39;jmd_n&#39; column must be given in df_seq.</span>
-<span class="sd">        jmd_c_len: int, default=None, optional</span>
+<span class="sd">        jmd_c_len: int, default = None, optional</span>
 <span class="sd">            Length of JMD-N in number of amino acids. If None, &#39;jmd_c&#39; column must be given in df_seq.</span>
-<span class="sd">        ext_len: int, default=4</span>
+<span class="sd">        ext_len: int, default = 4</span>
 <span class="sd">            Lenght of N- resp. C-terminal extra part of TMD.</span>
-<span class="sd">        all_parts: bool, default=False</span>
+<span class="sd">        all_parts: bool, default = False</span>
 <span class="sd">            Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        df_parts: pd.DataFrame</span>
+<span class="sd">        df_parts: :class:`pandas.DataFrame`</span>
 <span class="sd">            DataFrame with sequence parts.</span>
 
 <span class="sd">        See Also</span>
@@ -415,28 +421,28 @@
         <span class="n">df_parts</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">dict_parts</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">df_parts</span></div>
 
-<div class="viewcode-block" id="SequenceFeature.get_split_kws"><a class="viewcode-back" href="../../../cpp.html#aaanalysis.cpp.SequenceFeature.get_split_kws">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SequenceFeature.get_split_kws"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.SequenceFeature.get_split_kws">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">get_split_kws</span><span class="p">(</span><span class="n">n_split_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_split_max</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">steps_pattern</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_min</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_max</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">len_max</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
                       <span class="n">steps_periodicpattern</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split_types</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create dictionary with kwargs for three split types: Segment, Pattern, PeriodicPattern</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        n_split_min: int, default=1</span>
+<span class="sd">        n_split_min: int, default = 1</span>
 <span class="sd">            Number greater 0 to specify the greatest Segment (e.g., 1/1 TMD alias whole TMD sequence).</span>
-<span class="sd">        n_split_max: int, default=15,</span>
+<span class="sd">        n_split_max: int, default = 15,</span>
 <span class="sd">            Number greater n_split_min to specfiy the smallest Segment (e.g., 1/15 TMD).</span>
-<span class="sd">        steps_pattern: list of integers, default=[3, 4, 6, 7, 8]</span>
+<span class="sd">        steps_pattern: list of integers, default = [3, 4, 6, 7, 8]</span>
 <span class="sd">            Possible steps sizes for Pattern.</span>
-<span class="sd">        n_min: int, default=2</span>
+<span class="sd">        n_min: int, default = 2</span>
 <span class="sd">            Minimum number of steps for Pattern.</span>
-<span class="sd">        n_max: int, default=4</span>
+<span class="sd">        n_max: int, default = 4</span>
 <span class="sd">            Maximum number of steps for Pattern.</span>
-<span class="sd">        len_max: int, default=10</span>
+<span class="sd">        len_max: int, default = 10</span>
 <span class="sd">            Maximum length in amino acid position for Pattern by varying start position.</span>
-<span class="sd">        steps_periodicpattern: list of integers, default=[3, 4]</span>
+<span class="sd">        steps_periodicpattern: list of integers, default = [3, 4]</span>
 <span class="sd">            Step sizes for PeriodicPattern.</span>
-<span class="sd">        split_types: list of strings, default=[&quot;Segment&quot;, &quot;Pattern&quot; &quot;PeriodicPattern&quot;]</span>
+<span class="sd">        split_types: list of strings, default = [&quot;Segment&quot;, &quot;Pattern&quot; &quot;PeriodicPattern&quot;]</span>
 <span class="sd">            Split types for which paramter dictionary should be generated.</span>
 
 <span class="sd">        Returns</span>
@@ -479,18 +485,18 @@
         <span class="n">ut</span><span class="o">.</span><span class="n">check_split_kws</span><span class="p">(</span><span class="n">split_kws</span><span class="o">=</span><span class="n">split_kws</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">split_kws</span></div>
 
-<div class="viewcode-block" id="SequenceFeature.features"><a class="viewcode-back" href="../../../cpp.html#aaanalysis.cpp.SequenceFeature.features">[docs]</a>    <span class="k">def</span> <span class="nf">features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split_kws</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">df_scales</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">all_parts</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="SequenceFeature.features"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.SequenceFeature.features">[docs]</a>    <span class="k">def</span> <span class="nf">features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split_kws</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">df_scales</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">all_parts</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create list of feature ids for given Parts, Splits, and Scales</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        list_parts: list of strings (n&gt;=1 parts), default=[&quot;tmd_e&quot;, &quot;jmd_n_tmd_n&quot;, &quot;tmd_c_jmd_c&quot;]</span>
+<span class="sd">        list_parts: list of strings (n&gt;=1 parts), default = [&quot;tmd_e&quot;, &quot;jmd_n_tmd_n&quot;, &quot;tmd_c_jmd_c&quot;]</span>
 <span class="sd">            Names of sequence parts which should be created (e.g., &#39;tmd&#39;).</span>
-<span class="sd">        split_kws: dict, default=SequenceFeature.get_split_kws</span>
+<span class="sd">        split_kws: dict, default = SequenceFeature.get_split_kws</span>
 <span class="sd">            Nested dictionary with parameter dictionary for each chosen split_type.</span>
-<span class="sd">        df_scales: pd.DataFrame, default=SequenceFeature.load_scales</span>
+<span class="sd">        df_scales: :class:`pandas.DataFrame`, default = SequenceFeature.load_scales</span>
 <span class="sd">            DataFrame with default amino acid scales.</span>
-<span class="sd">        all_parts: bool, default=False</span>
+<span class="sd">        all_parts: bool, default = False</span>
 <span class="sd">            Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.</span>
 
 <span class="sd">        Returns</span>
@@ -518,7 +524,7 @@
                              <span class="k">for</span> <span class="n">sc</span> <span class="ow">in</span> <span class="n">scales</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">features</span></div>
 
-<div class="viewcode-block" id="SequenceFeature.feat_names"><a class="viewcode-back" href="../../../cpp.html#aaanalysis.cpp.SequenceFeature.feat_names">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SequenceFeature.feat_names"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.SequenceFeature.feat_names">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">feat_names</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">df_cat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tmd_len</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">jmd_n_len</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">ext_len</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert feature ids (PART-SPLIT-SCALE) into feature name (scale name [positions]).</span>
 
@@ -526,7 +532,7 @@
 <span class="sd">        ----------</span>
 <span class="sd">        features: str, list of strings, pd.Series</span>
 <span class="sd">            Ids of features for which feature names should be created.</span>
-<span class="sd">        df_cat: pd.DataFrame, default=SequenceFeature.load_categories</span>
+<span class="sd">        df_cat: :class:`pandas.DataFrame`, default = SequenceFeature.load_categories</span>
 <span class="sd">            DataFrame with default categories for physicochemical amino acid scales</span>
 <span class="sd">        tmd_len: int, &gt;0</span>
 <span class="sd">            Length of TMD.</span>
@@ -576,19 +582,19 @@
         <span class="k">return</span> <span class="n">feat_names</span></div>
 
     <span class="c1"># Feature: Part + Split + Scale</span>
-<div class="viewcode-block" id="SequenceFeature.feat_value"><a class="viewcode-back" href="../../../cpp.html#aaanalysis.cpp.SequenceFeature.feat_value">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SequenceFeature.feat_value"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.SequenceFeature.feat_value">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">feat_value</span><span class="p">(</span><span class="n">df_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dict_scale</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">accept_gaps</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create feature values for all sequence parts by combining Part, Split, and Scale.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        df_parts: pd.DataFrame</span>
+<span class="sd">        df_parts: :class:`pandas.DataFrame`</span>
 <span class="sd">            DataFrame with sequence parts.</span>
 <span class="sd">        split: str</span>
 <span class="sd">            Name of Split following given convention.</span>
 <span class="sd">        dict_scale: dict</span>
 <span class="sd">            Dictionary mapping a numerical value to each letter of given sequences</span>
-<span class="sd">        accept_gaps: bool, default=False</span>
+<span class="sd">        accept_gaps: bool, default = False</span>
 <span class="sd">            Whether to accept missing values by enabling omitting for computations (if True).</span>
 
 <span class="sd">        Returns</span>
@@ -625,24 +631,24 @@
                                        <span class="n">accept_gaps</span><span class="o">=</span><span class="n">accept_gaps</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">feature_value</span></div>
 
-<div class="viewcode-block" id="SequenceFeature.feat_matrix"><a class="viewcode-back" href="../../../cpp.html#aaanalysis.cpp.SequenceFeature.feat_matrix">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SequenceFeature.feat_matrix"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.SequenceFeature.feat_matrix">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">feat_matrix</span><span class="p">(</span><span class="n">df_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">df_scales</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                     <span class="n">accept_gaps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_labels</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create feature matrix for given feature names and sequence parts.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        df_parts: pd.DataFrame</span>
+<span class="sd">        df_parts: :class:`pandas.DataFrame`</span>
 <span class="sd">            DataFrame with sequence parts.</span>
 <span class="sd">        features: str, list of strings, pd.Series</span>
 <span class="sd">            Ids of features for which matrix of feature values should be created.</span>
-<span class="sd">        df_scales: pd.DataFrame, optional</span>
+<span class="sd">        df_scales: :class:`pandas.DataFrame`, optional</span>
 <span class="sd">            DataFrame with default amino acid scales.</span>
-<span class="sd">        accept_gaps: bool, default=False</span>
+<span class="sd">        accept_gaps: bool, default = False</span>
 <span class="sd">            Whether to accept missing values by enabling omitting for computations (if True).</span>
-<span class="sd">        verbose: bool, default=True</span>
+<span class="sd">        verbose: bool, default = True</span>
 <span class="sd">            Whether to print size of to be created feature matrix (if True) or not otherwise.</span>
-<span class="sd">        return_labels: bool, default=False</span>
+<span class="sd">        return_labels: bool, default = False</span>
 <span class="sd">            Whether to return sample labels in addition to feature matrix.</span>
 
 <span class="sd">        Returns</span>
@@ -697,15 +703,7 @@
         &#169; Copyright 2023, Stephan Breimann.
 
     </p>
-  </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  </div> 
 
 </footer>
         </div>

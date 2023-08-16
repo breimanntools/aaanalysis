@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>aaanalysis.cpp.cpp &mdash; AAanalysis 2023 documentation</title>
+  <title>aaanalysis.cpp.cpp &mdash; AAanalysis</title>
   
 
   
@@ -16,7 +16,10 @@
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/style.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
+  <link rel="stylesheet" href="/home/stephanbreimann/Programming/Pycharm_Projekte/1Packages/aaanalysis/docs/source/_static/css/style.css" type="text/css" />
+  <link rel="stylesheet" href="/home/stephanbreimann/Programming/Pycharm_Projekte/1Packages/aaanalysis/docs/source/_static/css/override.css" type="text/css" />
 
   
   
@@ -39,6 +42,7 @@
         <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../_static/doctools.js"></script>
         <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/design-tabs.js"></script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
@@ -454,26 +458,26 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create and filter features that are most discriminant between two sets of sequences.</span>
 
-<span class="sd">    Attributes</span>
+<span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    df_scales : pd.DataFrame, default=aa.load_scales(name=ut.STR_SCALE_CAT)</span>
+<span class="sd">    df_scales : :class:`pandas.DataFrame`, default = aa.load_scales(name=ut.STR_SCALE_CAT)</span>
 <span class="sd">        DataFrame with default amino acid scales.</span>
-<span class="sd">    df_cat : pd.DataFrame, default=aa.load_categories</span>
+<span class="sd">    df_cat : :class:`pandas.DataFrame`, default = aa.load_categories</span>
 <span class="sd">        DataFrame with default categories for physicochemical amino acid scales.</span>
-<span class="sd">    df_parts : pd.DataFrame</span>
+<span class="sd">    df_parts : :class:`pandas.DataFrame`</span>
 <span class="sd">        DataFrame with sequence parts.</span>
-<span class="sd">    split_kws : dict, default=SequenceFeature.get_split_kws</span>
+<span class="sd">    split_kws : dict, default = SequenceFeature.get_split_kws</span>
 <span class="sd">        Nested dictionary with parameter dictionary for each chosen split_type.</span>
-<span class="sd">    accept_gaps : bool, default=False</span>
+<span class="sd">    accept_gaps : bool, default = False</span>
 <span class="sd">        Whether to accept missing values by enabling omitting for computations (if True).</span>
-<span class="sd">    jmd_n_len : int, &gt;=0, default=10</span>
+<span class="sd">    jmd_n_len : int, &gt;=0, default = 10</span>
 <span class="sd">        Length of JMD-N.</span>
-<span class="sd">    jmd_c_len : int, &gt;=0, default=10</span>
+<span class="sd">    jmd_c_len : int, &gt;=0, default = 10</span>
 <span class="sd">        Length of JMD-C.</span>
-<span class="sd">    ext_len : int, &gt;=0, default=4</span>
+<span class="sd">    ext_len : int, &gt;=0, default = 4</span>
 <span class="sd">        Length of TMD-extending part (starting from C and N terminal part of TMD).</span>
 <span class="sd">        Conditions: ext_len &lt; jmd_m_len and ext_len &lt; jmd_c_len.</span>
-<span class="sd">    verbose : bool, default=True</span>
+<span class="sd">    verbose : bool, default = True</span>
 <span class="sd">        Whether to print progress information about the algorithm (if True).</span>
 
 <span class="sd">    Notes</span>
@@ -518,12 +522,12 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        df_feat: pd.DataFrame</span>
+<span class="sd">        df_feat: :class:`pandas.DataFrame`</span>
 <span class="sd">            Feature DataFrame to add scale categories.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        df_feat: pd.DataFrame</span>
+<span class="sd">        df_feat: :class:`pandas.DataFrame`</span>
 <span class="sd">            Feature DataFrame including scale categories.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Check input</span>
@@ -546,18 +550,18 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        df_feat: pd.DataFrame</span>
+<span class="sd">        df_feat: :class:`pandas.DataFrame`</span>
 <span class="sd">            Feature DataFrame to add statistics.</span>
 <span class="sd">        labels: array-like, shape (n_samples)</span>
 <span class="sd">            Class labels for samples in df_parts attribute.</span>
-<span class="sd">        parametric: bool, default=False</span>
+<span class="sd">        parametric: bool, default = False</span>
 <span class="sd">            Whether to use parametric (T-test) or non-parametric (U-test) test for p-value computation.</span>
-<span class="sd">        accept_gaps: bool, default=False</span>
+<span class="sd">        accept_gaps: bool, default = False</span>
 <span class="sd">            Whether to accept missing values by enabling omitting for computations (if True).</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        df_feat: pd.DataFrame</span>
+<span class="sd">        df_feat: :class:`pandas.DataFrame`</span>
 <span class="sd">            Feature DataFrame including statistics for comparing two given groups.</span>
 
 <span class="sd">        Notes</span>
@@ -589,7 +593,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        df_feat: pd.DataFrame</span>
+<span class="sd">        df_feat: :class:`pandas.DataFrame`</span>
 <span class="sd">            Feature DataFrame to add feature positions.</span>
 <span class="sd">        tmd_len: int, &gt;0</span>
 <span class="sd">            Length of TMD.</span>
@@ -598,7 +602,7 @@
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        df_feat: pd.DataFrame</span>
+<span class="sd">        df_feat: :class:`pandas.DataFrame`</span>
 <span class="sd">            Feature DataFrame including feature positions.</span>
 
 <span class="sd">        Notes</span>
@@ -619,36 +623,30 @@
 <div class="viewcode-block" id="CPP.add_shap"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.CPP.add_shap">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">add_shap</span><span class="p">(</span><span class="n">df_feat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">col_shap</span><span class="o">=</span><span class="s2">&quot;shap_value&quot;</span><span class="p">,</span> <span class="n">name_feat_impact</span><span class="o">=</span><span class="s2">&quot;feat_impact&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Convert SHAP values in feature impact/importance and add to DataFrame.</span>
+<span class="sd">        Convert SHAP values into feature impact/importance and add to DataFrame.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        df_feat: pd.DataFrame</span>
-<span class="sd">            Feature DataFrame to add feature impact.</span>
-<span class="sd">        col_shap: str, default=&#39;shap_value&#39;</span>
-<span class="sd">            Column name of (`SHAP &lt;https://shap.readthedocs.io/en/latest/index.html&gt;`__) values in feature DataFrame</span>
-<span class="sd">        name_feat_impact: str, default=&#39;feat_impact&#39;</span>
-<span class="sd">            Column name of feature impact or feature importance that should be added to feature DataFrame.</span>
+<span class="sd">        df_feat: :class:`pandas.DataFrame`</span>
+<span class="sd">            Feature DataFrame to which the feature impact will be added.</span>
+<span class="sd">        col_shap: str, default = &#39;shap_value&#39;</span>
+<span class="sd">            Column name of `SHAP &lt;https://shap.readthedocs.io/en/latest/index.html&gt;`_ values in the feature DataFrame.</span>
+<span class="sd">        name_feat_impact: str, default = &#39;feat_impact&#39;</span>
+<span class="sd">            Column name of feature impact or feature importance that will be added to the feature DataFrame.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        df_feat: pd.DataFrame</span>
+<span class="sd">        df_feat: :class:`pandas.DataFrame`</span>
 <span class="sd">            Feature DataFrame including feature impact.</span>
 
 <span class="sd">        Notes</span>
 <span class="sd">        -----</span>
-<span class="sd">        - SHAP (SHapley Additive exPlanations) is a game theoretic approach to explain the output of</span>
-<span class="sd">        any machine learning model.</span>
-
-<span class="sd">        - SHAP values represent a feature´s responsibility for a change in the model output.</span>
-
+<span class="sd">        - SHAP (SHapley Additive exPlanations) is a game theoretic approach to explain the output of any machine learning model.</span>
+<span class="sd">        - SHAP values represent a feature&#39;s responsibility for a change in the model output.</span>
 <span class="sd">        - Missing values are accepted in SHAP values.</span>
 
-<span class="sd">        See also</span>
-<span class="sd">        --------</span>
-<span class="sd">        (`SHAP &lt;https://shap.readthedocs.io/en/latest/index.html&gt;`__)</span>
-
 <span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="c1"># Check input</span>
         <span class="n">df_feat</span> <span class="o">=</span> <span class="n">df_feat</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">ut</span><span class="o">.</span><span class="n">check_str</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;name_feat_impact&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">name_feat_impact</span><span class="p">)</span>
@@ -670,22 +668,22 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        df_feat: pd.DataFrame</span>
+<span class="sd">        df_feat: :class:`pandas.DataFrame`</span>
 <span class="sd">            Feature DataFrame to add sample difference.</span>
-<span class="sd">        df_seq: pd.DataFrame</span>
+<span class="sd">        df_seq: :class:`pandas.DataFrame`</span>
 <span class="sd">            DataFrame with sequences and sample names, in which the given sample name is included.</span>
 <span class="sd">        labels: array-like, shape (n_samples)</span>
 <span class="sd">            Class labels for samples in sequence DataFrame.</span>
 <span class="sd">        sample_name: str</span>
 <span class="sd">            Name of sample for which the feature value difference to a given reference group should be computed.</span>
-<span class="sd">        ref_group: int, default=0</span>
+<span class="sd">        ref_group: int, default = 0</span>
 <span class="sd">            Class label of reference group.</span>
-<span class="sd">        accept_gaps: bool, default=False</span>
+<span class="sd">        accept_gaps: bool, default = False</span>
 <span class="sd">            Whether to accept missing values by enabling omitting for computations (if True).</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        df_feat: pd.DataFrame</span>
+<span class="sd">        df_feat: :class:`pandas.DataFrame`</span>
 <span class="sd">            Feature DataFrame including feature value difference.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Check input</span>
@@ -755,9 +753,9 @@
 <span class="sd">        ----------</span>
 <span class="sd">        labels : array-like, shape (n_samples)</span>
 <span class="sd">            Class labels for samples in sequence DataFrame (test=1, reference=0).</span>
-<span class="sd">        parametric : bool, default=False</span>
+<span class="sd">        parametric : bool, default = False</span>
 <span class="sd">            Whether to use parametric (T-test) or non-parametric (U-test) test for p-value computation.</span>
-<span class="sd">        n_filter : int, default=100</span>
+<span class="sd">        n_filter : int, default = 100</span>
 <span class="sd">            Number of features to be filtered/selected by CPP algorithm.</span>
 <span class="sd">        n_pre_filter : int, optional</span>
 <span class="sd">            Number of feature to be pre-filtered by CPP algorithm. If None, a percentage of all features is used.</span>
@@ -765,22 +763,22 @@
 <span class="sd">            Length of Transmembrane Domain (TMD) used for positions.</span>
 <span class="sd">        start : int, &gt;=0</span>
 <span class="sd">            Position label of first amino acid position (starting at N-terminus).</span>
-<span class="sd">        check_cat : bool, default=True</span>
+<span class="sd">        check_cat : bool, default = True</span>
 <span class="sd">            Whether to check for redundancy within scale categories.</span>
-<span class="sd">        pct_pre_filter : int, default=5</span>
+<span class="sd">        pct_pre_filter : int, default = 5</span>
 <span class="sd">            Percentage of all features that should remain after the pre-filtering step.</span>
-<span class="sd">        max_std_test : float [0-1], default=0.2</span>
+<span class="sd">        max_std_test : float [0-1], default = 0.2</span>
 <span class="sd">            Maximum standard deviation within the test group used as threshold for pre-filtering.</span>
-<span class="sd">        max_overlap : float [0-1], default=0.5</span>
+<span class="sd">        max_overlap : float [0-1], default = 0.5</span>
 <span class="sd">            Maximum positional overlap of features used as threshold for filtering.</span>
-<span class="sd">        max_cor : float [0-1], default=0.5</span>
+<span class="sd">        max_cor : float [0-1], default = 0.5</span>
 <span class="sd">            Maximum Pearson correlation of features used as threshold for filtering.</span>
-<span class="sd">        n_processes : int, default=None</span>
+<span class="sd">        n_processes : int, default = None</span>
 <span class="sd">            Number of CPUs used for multiprocessing. If None, number will be optimized automatically.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        df_feat : pd.DataFrame, shape (n_feature, n_feature_information)</span>
+<span class="sd">        df_feat : :class:`pandas.DataFrame`, shape (n_feature, n_feature_information)</span>
 <span class="sd">            DataFrame with a unique identifier, scale information, statistics, and positions for each feature.</span>
 
 <span class="sd">        Notes</span>
@@ -969,13 +967,13 @@
 <span class="sd">        ----------</span>
 <span class="sd">        df_feat : :class:`~pandas.DataFrame`, shape (n_feature, n_feature_information)</span>
 <span class="sd">            DataFrame containing unique identifiers, scale information, statistics, and positions for each feature.</span>
-<span class="sd">        y : {&#39;category&#39;, &#39;subcategory&#39;, &#39;scale_name&#39;}, str, default=&#39;subcategory&#39;</span>
+<span class="sd">        y : {&#39;category&#39;, &#39;subcategory&#39;, &#39;scale_name&#39;}, str, default = &#39;subcategory&#39;</span>
 <span class="sd">            Name of the column in the feature DataFrame representing scale information (shown on the y-axis).</span>
-<span class="sd">        val_col : {&#39;mean_dif&#39;, &#39;feat_impact&#39;, &#39;abs_auc&#39;, &#39;std_test&#39;, ...}, str, default=&#39;mean_dif&#39;</span>
+<span class="sd">        val_col : {&#39;mean_dif&#39;, &#39;feat_impact&#39;, &#39;abs_auc&#39;, &#39;std_test&#39;, ...}, str, default = &#39;mean_dif&#39;</span>
 <span class="sd">            Name of the column in the feature DataFrame containing numerical values to display.</span>
-<span class="sd">        val_type : {&#39;mean&#39;, &#39;sum&#39;, &#39;std&#39;}, str, default=&#39;mean&#39;</span>
+<span class="sd">        val_type : {&#39;mean&#39;, &#39;sum&#39;, &#39;std&#39;}, str, default = &#39;mean&#39;</span>
 <span class="sd">            Method to aggregate numerical values from &#39;val_col&#39;.</span>
-<span class="sd">        normalize : {True, False, &#39;positions&#39;, &#39;positions_only&#39;}, bool/str, default=False</span>
+<span class="sd">        normalize : {True, False, &#39;positions&#39;, &#39;positions_only&#39;}, bool/str, default = False</span>
 <span class="sd">            Specifies normalization for numerical values in &#39;val_col&#39;:</span>
 <span class="sd">            - False: Set value at all positions of a feature without further normalization.</span>
 
@@ -984,7 +982,7 @@
 <span class="sd">            - &#39;positions&#39;: Value/number of positions set at each position of a feature and normalized across features.</span>
 <span class="sd">              Recommended when aiming to emphasize features with fewer positions using &#39;val_col&#39;=&#39;feat_impact&#39; and &#39;value_type&#39;=&#39;mean&#39;.</span>
 
-<span class="sd">        figsize : tuple(float, float), default=(10,7)</span>
+<span class="sd">        figsize : tuple(float, float), default = (10,7)</span>
 <span class="sd">            Width and height of the figure in inches passed to :func:`matplotlib.pyplot.figure`.</span>
 <span class="sd">        title : str, optional</span>
 <span class="sd">            Title of figure used by :func:`matplotlib.pyplot.title`.</span>
@@ -992,16 +990,16 @@
 <span class="sd">            Keyword arguments passed to :func:`matplotlib.pyplot.title`.</span>
 <span class="sd">        vmin, vmax : float, optional</span>
 <span class="sd">            Values to anchor the colormap, otherwise, inferred from data and other keyword arguments.</span>
-<span class="sd">        cmap : matplotlib colormap name or object, or list of colors, default=&#39;seismic&#39;</span>
+<span class="sd">        cmap : matplotlib colormap name or object, or list of colors, default = &#39;seismic&#39;</span>
 <span class="sd">            Name of color map assigning data values to color space. If &#39;SHAP&#39;, colors from</span>
-<span class="sd">            (`SHAP &lt;https://shap.readthedocs.io/en/latest/index.html&gt;`__) will be used (recommended for feature impact).</span>
+<span class="sd">            `SHAP &lt;https://shap.readthedocs.io/en/latest/index.html&gt;`_ will be used (recommended for feature impact).</span>
 <span class="sd">        cmap_n_colors : int, optional</span>
 <span class="sd">            Number of discrete steps in diverging or sequential color map.</span>
 <span class="sd">        dict_color : dict, optional</span>
 <span class="sd">            Map of colors for scale categories classifying scales shown on y-axis.</span>
 <span class="sd">        cbar_kws : dict of key, value mappings, optional</span>
 <span class="sd">            Keyword arguments for :meth:`matplotlib.figure.Figure.colorbar`.</span>
-<span class="sd">        add_jmd_tmd : bool, default=True</span>
+<span class="sd">        add_jmd_tmd : bool, default = True</span>
 <span class="sd">            Whether to add colored bar under heatmap indicating sequence parts (JMD-N, TMD, JMD-C).</span>
 <span class="sd">        tmd_len : int, &gt;0</span>
 <span class="sd">            Length of TMD to be depiceted.</span>
@@ -1016,28 +1014,28 @@
 <span class="sd">        jmd_c_seq : str, optional</span>
 <span class="sd">            Sequence of JMD_C. &#39;jmd_c_len&#39; is set to length of JMD_C if sequence for TMD, JMD-N and JMD-C are given.</span>
 <span class="sd">            Recommended if feature impact or mean difference should be depicted for one sample.</span>
-<span class="sd">        tmd_color : str, default=&#39;mediumspringgreen&#39;</span>
+<span class="sd">        tmd_color : str, default = &#39;mediumspringgreen&#39;</span>
 <span class="sd">            Color of TMD bar.</span>
-<span class="sd">        jmd_color : str, default=&#39;blue&#39;</span>
+<span class="sd">        jmd_color : str, default = &#39;blue&#39;</span>
 <span class="sd">            Color of JMD-N and JMD-C bar.</span>
-<span class="sd">        tmd_seq_color : str, default=&#39;black&#39;</span>
+<span class="sd">        tmd_seq_color : str, default = &#39;black&#39;</span>
 <span class="sd">            Color of TMD sequence.</span>
-<span class="sd">        jmd_seq_color : str, defaault=&#39;white&#39;</span>
+<span class="sd">        jmd_seq_color : str, default = &#39;white&#39;</span>
 <span class="sd">            Color of JMD-N and JMD-C sequence.</span>
 <span class="sd">        seq_size : float, optional</span>
 <span class="sd">            Font size of all sequence parts in points. If None, optimized automatically.</span>
 <span class="sd">        tmd_jmd_fontsize : float, optional</span>
 <span class="sd">            Font size of &#39;TMD&#39;, &#39;JMD-N&#39; and &#39;JMD-C&#39;  label in points. If None, optimized automatically.</span>
-<span class="sd">        xtick_size : float, default=11.0</span>
+<span class="sd">        xtick_size : float, default = 11.0</span>
 <span class="sd">            Size of x ticks in points. Passed as &#39;size&#39; argument to :meth:`matplotlib.axes.Axes.set_xticklabels`.</span>
-<span class="sd">        xtick_width : float, default=2.0</span>
+<span class="sd">        xtick_width : float, default = 2.0</span>
 <span class="sd">            Widht of x ticks in points. Passed as &#39;width&#39; argument to :meth:`matplotlib.axes.Axes.tick_params`.</span>
-<span class="sd">        xtick_length : float, default=5.0,</span>
+<span class="sd">        xtick_length : float, default = 5.0,</span>
 <span class="sd">            Length of x ticks in points. Passed as &#39;length&#39; argument to :meth:`matplotlib.axes.Axes.tick_params`.</span>
 <span class="sd">        ytick_size : float, optional</span>
 <span class="sd">            Size of scale information as y ticks in points. Passed to :meth:`matplotlib.axes.Axes.tick_params`.</span>
 <span class="sd">            If None, optimized automatically.</span>
-<span class="sd">        add_legend_cat : bool, default=True,</span>
+<span class="sd">        add_legend_cat : bool, default = True,</span>
 <span class="sd">            Whether to add legend for categories under plot and classification of scales at y-axis.</span>
 <span class="sd">        legend_kws : dict, optional</span>
 <span class="sd">            Keyword arguments passed to :meth:`matplotlib.axes.Axes.legend`</span>
@@ -1057,8 +1055,9 @@
 
 <span class="sd">        See Also</span>
 <span class="sd">        --------</span>
-<span class="sd">        :func:`seaborn.heatmap`</span>
-<span class="sd">        `SHAP &lt;https://shap.readthedocs.io/en/latest/index.html&gt;`__</span>
+<span class="sd">        seaborn.heatmap</span>
+<span class="sd">            Plotting heatmap using seaborn.</span>
+<span class="sd">            See `Seaborn documentation &lt;https://seaborn.pydata.org/generated/seaborn.heatmap.html&gt;`_ for more details.</span>
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
@@ -1185,15 +1184,7 @@
         &#169; Copyright 2023, Stephan Breimann.
 
     </p>
-  </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  </div> 
 
 </footer>
         </div>
