@@ -99,8 +99,7 @@ html_theme_options = {
     "titles_only": False,
 }
 html_static_path = [os.path.join(path_source, '_static')]
-html_style = f'{SEP}css{SEP}style.css'
-style = html_static_path[0] + html_style
+html_style = f'css{SEP}style.css'
 html_show_sphinx = False
 """
 # If other style sheets should be included
