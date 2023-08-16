@@ -32,12 +32,14 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
+    #'sphinx_autodoc_typehints',  # needs to be after napoleon
     'sphinx.ext.autosummary',
     'sphinx.ext.linkcode',
     'sphinx.ext.extlinks',
-    #'sphinx_autodoc_typehints', # needs to be after napoleon
     #'numpydoc',
     'sphinx_rtd_theme',
+    #'sphinx_book_theme',
+    #'pydata_sphinx_theme',
     'myst_nb',
     'sphinx_copybutton',
     'sphinx.ext.intersphinx',
@@ -71,12 +73,12 @@ intersphinx_mapping = {
 }
 
 # -- Options for HTML output -------------------------------------------------
-html_theme = "sphinx_book_theme" #'sphinx_rtd_theme'
+html_theme = 'sphinx_rtd_theme' #"sphinx_book_theme" #'sphinx_rtd_theme'
 html_theme_options = {
-    "repository_url": repository_url,
-    "use_repository_button": True,
-    "use_issues_button": True,
-    "use_edit_page_button": True,
+    #"repository_url": repository_url,
+    #"use_repository_button": True,
+    #"use_issues_button": True,
+    #"use_edit_page_button": True,
 }
 html_static_path = [os.path.join(path_source, '_static')]
 html_css_files = [os.path.join(path_source, '_static/css/style.css'),
@@ -105,8 +107,9 @@ def linkcode_resolve(domain, info):
     try:
         obj: Any = sys.modules[module_name]
         for part in info["fullname"].split("."):
+            if not hasattr(obj, part):
+                return None
             obj = getattr(obj, part)
-        obj = inspect.unwrap(obj)
 
         if isinstance(obj, property):
             obj = inspect.unwrap(obj.fget)  # type: ignore

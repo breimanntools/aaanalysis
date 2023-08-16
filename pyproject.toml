@@ -55,9 +55,10 @@ threadpoolctl = "^3.1.0"
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"
 pytest-mpl = "^0.13"
-sphinx = "^4.0"
-#sphinx_rtd_theme = "^0.5.2"
-sphinx_book_theme = "^1.0.1"
+sphinx = "^5.0"
+sphinx_rtd_theme = "^0.5.2"
+#sphinx_book_theme = "^1.0.1"
+#pydata_sphinx_theme = "^0.13.3"
 myst_nb = "^0.17.2"
 sphinx_design = "^0.5"
 sphinx_copybutton = "^0.5.2"
@@ -67,8 +68,7 @@ sphinxext-opengraph = "^0.8.2"
 #[tool.poetry.extras]
 #plots = ["matplotlib", "seaborn"]
 
-
-# If you have URLs like SHAP did
+# Project URLs
 [tool.poetry.urls]
 "Repository" = "https://github.com/breimanntools/aaanalysis"
 "Documentation" = "https://aaanalysis.readthedocs.io"
