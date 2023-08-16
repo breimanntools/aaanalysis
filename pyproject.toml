@@ -58,6 +58,7 @@ pytest-mpl = "^0.13"
 sphinx = "^4.0"
 sphinx_rtd_theme = "^0.5.2"
 myst_nb = "^0.17.2"
+sphinx_design = "^0.5"
 
 # Optional dependencies
 #[tool.poetry.extras]
