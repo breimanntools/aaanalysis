@@ -5,32 +5,33 @@
 <head>
   <meta charset="utf-8" />
   <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<meta property="og:title" content="API" />
+<meta property="og:title" content="API Reference" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="api.html" />
 <meta property="og:site_name" content="AAanalysis" />
-<meta property="og:description" content="Import AAanalysis as: Load data: The data_loader module provides utilities for loading protein benchmark datasets, amino acid scale sets, and more. AAclust: The AAclust is a k-optimized clustering ..." />
+<meta property="og:description" content="This page contains the API reference for public objects and functions in AAanalysis. For more examples and practical usage, refer to our example notebooks. For convenience, it is common to import t..." />
 <meta property="og:image:width" content="1146" />
 <meta property="og:image:height" content="600" />
-<meta property="og:image" content="/_images/social_previews/summary_api_460d3b69.png" />
-<meta property="og:image:alt" content="Import AAanalysis as: Load data: The data_loader module provides utilities for loading protein benchmark datasets, amino acid scale sets, and more. AAclust:..." />
-<meta name="description" content="Import AAanalysis as: Load data: The data_loader module provides utilities for loading protein benchmark datasets, amino acid scale sets, and more. AAclust: The AAclust is a k-optimized clustering ..." />
+<meta property="og:image" content="/_images/social_previews/summary_api_38782457.png" />
+<meta property="og:image:alt" content="This page contains the API reference for public objects and functions in AAanalysis. For more examples and practical usage, refer to our example notebooks. F..." />
+<meta name="description" content="This page contains the API reference for public objects and functions in AAanalysis. For more examples and practical usage, refer to our example notebooks. For convenience, it is common to import t..." />
 <meta name="twitter:card" content="summary_large_image" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>API &mdash; AAanalysis</title>
+  <title>API Reference &mdash; AAanalysis</title>
   
 
   
-  <link rel="stylesheet" href="_static/css/style.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/css/style.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
   <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
   <link rel="stylesheet" href="_static/plot_directive.css" type="text/css" />
   <link rel="stylesheet" href="_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/style.css" type="text/css" />
 
   
   
@@ -53,13 +54,14 @@
         <script src="_static/clipboard.min.js"></script>
         <script src="_static/copybutton.js"></script>
         <script src="_static/design-tabs.js"></script>
+        <script src="_static/toggle_menu.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="References" href="references.html" />
+    <link rel="next" title="aaanalysis.load_dataset" href="generated/aaanalysis.load_dataset.html" />
     <link rel="prev" title="Tutorials" href="tutorials.html" /> 
 </head>
 
@@ -109,25 +111,35 @@
               
             
             
-              <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorial</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#load-data">Load data</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#aaanalysis.data_loader.load_dataset"><code class="docutils literal notranslate"><span class="pre">load_dataset()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#aaanalysis.data_loader.load_scales"><code class="docutils literal notranslate"><span class="pre">load_scales()</span></code></a></li>
+              <p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#data-loading">Data Loading</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.load_dataset.html">aaanalysis.load_dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.load_scales.html">aaanalysis.load_scales</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#aaclust">AAclust</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#aaanalysis.aaclust.AAclust"><code class="docutils literal notranslate"><span class="pre">AAclust</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.AAclust.html">aaanalysis.AAclust</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#cpp-module">CPP Module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#aaanalysis.cpp.CPP"><code class="docutils literal notranslate"><span class="pre">CPP</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#aaanalysis.cpp.SequenceFeature"><code class="docutils literal notranslate"><span class="pre">SequenceFeature</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#aaanalysis.cpp.SplitRange"><code class="docutils literal notranslate"><span class="pre">SplitRange</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.CPP.html">aaanalysis.CPP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.SequenceFeature.html">aaanalysis.SequenceFeature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.SplitRange.html">aaanalysis.SplitRange</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#dpulearn">dPUlearn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dpulearn">dPUlearn</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.dPULearn.html">aaanalysis.dPULearn</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#plot-utilities">Plot Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_settings.html">aaanalysis.plot_settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_set_legend.html">aaanalysis.plot_set_legend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_gcfs.html">aaanalysis.plot_gcfs</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
@@ -179,7 +191,7 @@
     
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>API</li>
+      <li>API Reference</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -198,1102 +210,80 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="api">
-<h1>API<a class="headerlink" href="#api" title="Permalink to this heading">¶</a></h1>
-<p>Import AAanalysis as:</p>
+  <section id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this heading">¶</a></h1>
+<p>This page contains the API reference for public objects and functions in AAanalysis. For more examples
+and practical usage, refer to our <a class="reference external" href="https://shap.readthedocs.io/en/latest/api_examples.html#api-examples" title="(in SHAP vlatest)"><span class="xref std std-ref">example notebooks</span></a>.
+For convenience, it is common to import the module as follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
 </pre></div>
 </div>
-<section id="load-data">
-<h2>Load data<a class="headerlink" href="#load-data" title="Permalink to this heading">¶</a></h2>
-<p>The <cite>data_loader</cite> module provides utilities for loading protein benchmark datasets, amino acid scale sets, and more.</p>
-<span class="target" id="module-aaanalysis.data_loader"></span><dl class="py function">
-<dt class="sig sig-object py" id="aaanalysis.data_loader.load_dataset">
-<span class="sig-prename descclassname"><span class="pre">aaanalysis.data_loader.</span></span><span class="sig-name descname"><span class="pre">load_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'INFO'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_canonical_aa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'remove'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/data_loader/data_loader.html#load_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data_loader/data_loader.py#L40-L102"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.data_loader.load_dataset" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load protein benchmarking datasets or their general overview by setting ‘name’ to ‘INFO’.</p>
-<dl class="simple">
-<dt>Three types of benchmark datasets are provided:</dt><dd><ul class="simple">
-<li><dl class="simple">
-<dt>Residue prediction: 6 datasets used to predict residue (amino acid) specific properties</dt><dd><p>(‘AA_CASPASE3’, ‘AA_FURIN’, ‘AA_LDR’, ‘AA_MMP2’, ‘AA_RNABIND’, ‘AA_SA’)</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Domain prediction: 1 dataset used to predict domain specific properties</dt><dd><p>(DOM_SUBGSEC)</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Sequence prediction: 6 datasets used to predict sequence specific properties</dt><dd><p>(‘SEQ_AMYLO’, ‘SEQ_CAPSID’, ‘SEQ_DISULFIDE’, ‘SEQ_LOCATION’, ‘SEQ_SOLUBLE’, ‘SEQ_TAIL’)</p>
-</dd>
-</dl>
-</li>
-</ul>
-</dd>
-</dl>
-<dl class="field-list">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>name</strong><span class="classifier">str, default=”INFO”</span></dt><dd><p>Name of the dataset (‘Dataset’ column).</p>
-</dd>
-<dt><strong>n</strong><span class="classifier">int, optional, default=None</span></dt><dd><p>Number of proteins per class. If None, the whole dataset will be returned.</p>
-</dd>
-<dt><strong>non_canonical_aa: {‘remove’, ‘keep’, ‘gap’}, default=’remove’</strong></dt><dd><p>Options for modifying non-canonical amino acids:</p>
-<ul class="simple">
-<li><p>‘remove’: Sequences containing non-canonical amino acids are removed.</p></li>
-<li><p>‘keep’: Sequences containing non-canonical amino acids are not removed.</p></li>
-<li><p>‘gap’: Sequences are kept and modified by replacing non-canonical amino acids by gap symbol (‘X’).</p></li>
-</ul>
-</dd>
-<dt><strong>min_len</strong><span class="classifier">int, optional, default=None</span></dt><dd><p>Minimum length of sequences used for filtering.</p>
-</dd>
-<dt><strong>max_len</strong><span class="classifier">int, optional, default=None</span></dt><dd><p>Maximum length of sequences used for filtering.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl>
-<dt><strong>df</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.0.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></span></dt><dd><p>Dataframe with the selected dataset.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>For further information on the benchmark datasets, refer to the AAclust paper : TODO: add link to AAclust paper</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="aaanalysis.data_loader.load_scales">
-<span class="sig-prename descclassname"><span class="pre">aaanalysis.data_loader.</span></span><span class="sig-name descname"><span class="pre">load_scales</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'scales'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">just_aaindex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unclassified_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/data_loader/data_loader.html#load_scales"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data_loader/data_loader.py#L121-L153"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.data_loader.load_scales" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load amino acid scales or scale classification.</p>
-<dl class="field-list">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>name</strong><span class="classifier">str, default = ‘scales’</span></dt><dd><p>Name of the dataset to load. Options are ‘scales’, ‘scales_raw’, ‘scale_classification’,
-‘scales_pc’, ‘top60’, and ‘top60_eval’.</p>
-</dd>
-<dt><strong>unclassified_in</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether unclassified scales should be included. The ‘Others’ category counts as unclassified.
-Only relevant if <cite>name</cite> is ‘scales’, ‘scales_raw’, or ‘scale_classification’.</p>
-</dd>
-<dt><strong>just_aaindex</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether only scales provided from AAindex should be given.
-Only relevant if <cite>name</cite> is ‘scales’, ‘scales_raw’, or ‘scale_classification’.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl>
-<dt><strong>df</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.0.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></span></dt><dd><p>Dataframe for the selected dataset.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
+<p>Then you can access all methods and objects via the <cite>aa</cite> alias, such as <cite>aa.load_dataset</cite>.</p>
+<section id="data-loading">
+<span id="data-api"></span><h2>Data Loading<a class="headerlink" href="#data-loading" title="Permalink to this heading">¶</a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.load_dataset.html#aaanalysis.load_dataset" title="aaanalysis.load_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.load_dataset</span></code></a>([name, n, ...])</p></td>
+<td><p>Load protein benchmarking datasets or their general overview by setting 'name' to 'INFO'.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.load_scales.html#aaanalysis.load_scales" title="aaanalysis.load_scales"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.load_scales</span></code></a>([name, just_aaindex, ...])</p></td>
+<td><p>Load amino acid scales or scale classification.</p></td>
+</tr>
+</tbody>
+</table>
 </section>
 <section id="aaclust">
-<h2>AAclust<a class="headerlink" href="#aaclust" title="Permalink to this heading">¶</a></h2>
-<p>The <cite>AAclust</cite> is a k-optimized clustering wrapper framework designed for redundancy reduction of numerical scales.</p>
-<span class="target" id="module-aaanalysis.aaclust"></span><dl class="py class">
-<dt class="sig sig-object py" id="aaanalysis.aaclust.AAclust">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.aaclust.</span></span><span class="sig-name descname"><span class="pre">AAclust</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_unclassified</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'unclassified'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/aaclust/aaclust.html#AAclust"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L306-L614"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.aaclust.AAclust" title="Permalink to this definition">¶</a></dt>
-<dd><p>AAclust: A k-optimized clustering framework for selecting redundancy-reduced set of numerical scales.</p>
-<p>AAclust is designed primarily for amino acid scales but is versatile enough for any set of numerical indices.
-It takes clustering models that require a pre-defined number of clusters (k) from
-<cite>scikit-learn &lt;https://scikit-learn.org/stable/modules/clustering.html&gt;</cite>. By leveraging Pearson correlation as
-similarity measure, AAclust optimizes the value of k. It then selects one representative sample (termed as ‘medoid’)
-for each cluster, which is the closest to the cluster’s center, yielding a redundancy-reduced sample set.</p>
-<dl class="field-list">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl>
-<dt><strong>model</strong><span class="classifier">callable, optional, default =  <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html#sklearn.cluster.KMeans" title="(in scikit-learn v1.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.cluster.KMeans</span></code></a></span></dt><dd><p>The employed clustering model requiring pre-defined number of clusters ‘k’, given as ‘n_clusters’ parameter.</p>
-</dd>
-<dt><strong>model_kwargs</strong><span class="classifier">dict, optional, default = {}</span></dt><dd><p>A dictionary of keyword arguments to pass to the selected clustering model.</p>
-</dd>
-<dt><strong>name_unclassified</strong><span class="classifier">str, optional, default = ‘unclassified’</span></dt><dd><p>A label assigned to clusters that couldn’t be distinctly classified.</p>
-</dd>
-<dt><strong>verbose</strong><span class="classifier">bool, optional, default = False</span></dt><dd><p>A flag to enable or disable verbose outputs.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Attributes<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>n_clusters</strong><span class="classifier">int, default = None</span></dt><dd><p>Number of clusters obtained by AAclust.</p>
-</dd>
-<dt><strong>labels_</strong><span class="classifier">array-like, default = None</span></dt><dd><p>Cluster labels in the order of samples in the feature matrix.</p>
-</dd>
-<dt><strong>centers_</strong><span class="classifier">array-like, default = None</span></dt><dd><p>Average scale values corresponding to each cluster.</p>
-</dd>
-<dt><strong>center_labels_</strong><span class="classifier">array-like, default = None</span></dt><dd><p>Cluster labels for each cluster center.</p>
-</dd>
-<dt><strong>medoids_</strong><span class="classifier">array-like, default = None</span></dt><dd><p>Representative samples (one for each cluster center).</p>
-</dd>
-<dt><strong>medoid_labels_</strong><span class="classifier">array-like, default = None</span></dt><dd><p>Cluster labels for each medoid.</p>
-</dd>
-<dt><strong>medoid_ind_</strong><span class="classifier">array-like, default = None</span></dt><dd><p>Indices of the chosen medoids within the original dataset.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.aaclust.AAclust.cluster_naming">
-<span class="sig-name descname"><span class="pre">cluster_naming</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_unclassified</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Unclassified'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/aaclust/aaclust.html#AAclust.cluster_naming"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L458-L503"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.aaclust.AAclust.cluster_naming" title="Permalink to this definition">¶</a></dt>
-<dd><p>Assigns names to clusters based on scale names and their frequency.</p>
-<p>This method renames clusters based on the names of the scales in each cluster, with priority given to the
-most frequent scales. If the name is already used or does not exist, it defaults to ‘name_unclassified’.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>names</strong><span class="classifier">list, optional</span></dt><dd><p>List of scale names corresponding to each sample.</p>
-</dd>
-<dt><strong>labels</strong><span class="classifier">list, optional</span></dt><dd><p>Cluster labels. If not provided, uses the labels from the fitted model.</p>
-</dd>
-<dt><strong>name_unclassified</strong><span class="classifier">str, default = “Unclassified”</span></dt><dd><p>Name assigned to clusters that cannot be classified with the given names.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>cluster_names</strong><span class="classifier">list</span></dt><dd><p>A list of renamed clusters based on scale names.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.aaclust.AAclust.correlation">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">correlation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_test</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels_ref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_center</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">except_unclassified</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/aaclust/aaclust.html#AAclust.correlation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L551-L614"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.aaclust.AAclust.correlation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes the correlation of test data with reference cluster centers.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>X_test</strong><span class="classifier">array-like</span></dt><dd><p>Test feature matrix.</p>
-</dd>
-<dt><strong>X_ref</strong><span class="classifier">array-like</span></dt><dd><p>Reference feature matrix.</p>
-</dd>
-<dt><strong>labels_test</strong><span class="classifier">list or array-like, optional</span></dt><dd><p>Cluster labels for the test data.</p>
-</dd>
-<dt><strong>labels_ref</strong><span class="classifier">list or array-like, optional</span></dt><dd><p>Cluster labels for the reference data.</p>
-</dd>
-<dt><strong>n</strong><span class="classifier">int, default = 3</span></dt><dd><p>Number of top centers to consider based on correlation strength.</p>
-</dd>
-<dt><strong>positive</strong><span class="classifier">bool, default = True</span></dt><dd><p>If True, considers positive correlations. Else, negative correlations.</p>
-</dd>
-<dt><strong>on_center</strong><span class="classifier">bool, default = False</span></dt><dd><p>If True, correlation is computed with cluster centers. Otherwise, with all cluster members.</p>
-</dd>
-<dt><strong>except_unclassified</strong><span class="classifier">bool, default = True</span></dt><dd><p>If True, excludes ‘unclassified’ clusters from the reference list.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>list_top_center_name_corr</strong><span class="classifier">list of str</span></dt><dd><p>Names and correlations of centers having strongest (positive/negative) correlation with test data samples.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.aaclust.AAclust.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_center</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_th</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'euclidean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_clusters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/aaclust/aaclust.html#AAclust.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L366-L456"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.aaclust.AAclust.fit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fit the AAclust model on the data, optimizing cluster formation using Pearson correlation.</p>
-<p>AAclust determines the optimal number of clusters, k, without pre-specification. It partitions data (X) into
-clusters by maximizing the within-cluster Pearson correlation beyond the ‘min_th’ threshold. The quality of
-clustering is either based on the minimum Pearson correlation of all members (‘min_cor all’) or between
-the cluster center and its members (‘min_cor center’), governed by <cite>on_center</cite>.</p>
-<p>The clustering undergoes three stages:
-1. Estimate the lower bound of k.
-2. Refine k using the chosen quality metric.
-3. Optionally merge smaller clusters, as directed by <cite>merge_metric</cite>.</p>
-<p>Finally, a representative scale (medoid) ‘closest to each cluster center is chosen for redundancy reduction.</p>
-<dl class="field-list">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>X</strong><span class="classifier">array-like of shape (n_samples, n_features)</span></dt><dd><p>Feature matrix with rows as samples and columns as features.</p>
-</dd>
-<dt><strong>names</strong><span class="classifier">list of str, optional</span></dt><dd><p>Sample names. If provided, returns names of the medoids.</p>
-</dd>
-<dt><strong>on_center</strong><span class="classifier">bool, default = True</span></dt><dd><p>If True, the correlation threshold is applied to the cluster center. Otherwise, it’s applied to all cluster members.</p>
-</dd>
-<dt><strong>min_th</strong><span class="classifier">float, default = 0</span></dt><dd><p>Pearson correlation threshold for clustering (between 0 and 1).</p>
-</dd>
-<dt><strong>merge_metric</strong><span class="classifier">str or None, default = “euclidean”</span></dt><dd><p>Metric used for optional cluster merging. Can be “euclidean”, “pearson”, or None (no merging).</p>
-</dd>
-<dt><strong>n_clusters</strong><span class="classifier">int, optional</span></dt><dd><p>Pre-defined number of clusters. If provided, AAclust uses this instead of optimizing k.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl>
-<dt><strong>names_medoid</strong><span class="classifier">list of str, if <cite>names</cite> is provided</span></dt><dd><p>Names of the medoids.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>The ‘fit’ method sets the following attributes: :attr: <cite>aaanalysis.AAclust.n_clusters”,
-:attr: `aaanalysis.AAclust.labels_</cite>, :attr: <cite>aaanalysis.AAclust.centers_</cite>,
-:attr: <cite>aaanalysis.AAclust.center_labels_</cite>, :attr: <cite>aaanalysis.AAclust.medoids_</cite>.
-:attr: <cite>aaanalysis.AAclust.medoid_labels_</cite>, :attr: <cite>aaanalysis.AAclust.medoid_ind_</cite>.</p>
-<p>For further information, refer to the AAclust paper : TODO: add link to AAclust paper</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.aaclust.AAclust.get_cluster_centers">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_cluster_centers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/aaclust/aaclust.html#AAclust.get_cluster_centers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L505-L525"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.aaclust.AAclust.get_cluster_centers" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes the center of each cluster based on the given labels.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>X</strong><span class="classifier">array-like of shape (n_samples, n_features)</span></dt><dd><p>Feature matrix with rows as samples and columns as features.</p>
-</dd>
-<dt><strong>labels</strong><span class="classifier">list or array-like, optional</span></dt><dd><p>Cluster labels for each sample in X.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>centers</strong><span class="classifier">array-like</span></dt><dd><p>The computed center for each cluster.</p>
-</dd>
-<dt><strong>center_labels</strong><span class="classifier">array-like</span></dt><dd><p>The labels associated with each computed center.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.aaclust.AAclust.get_cluster_medoids">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_cluster_medoids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/aaclust/aaclust.html#AAclust.get_cluster_medoids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L527-L549"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.aaclust.AAclust.get_cluster_medoids" title="Permalink to this definition">¶</a></dt>
-<dd><p>Computes the medoid of each cluster based on the given labels.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>X</strong><span class="classifier">array-like of shape (n_samples, n_features)</span></dt><dd><p>Feature matrix with rows as samples and columns as features.</p>
-</dd>
-<dt><strong>labels</strong><span class="classifier">list or array-like, optional</span></dt><dd><p>Cluster labels for each sample in X.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>medoids</strong><span class="classifier">array-like</span></dt><dd><p>The medoid for each cluster.</p>
-</dd>
-<dt><strong>medoid_labels</strong><span class="classifier">array-like</span></dt><dd><p>The labels corresponding to each medoid.</p>
-</dd>
-<dt><strong>medoid_ind</strong><span class="classifier">array-like</span></dt><dd><p>Indexes of medoids within the original data.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
+<span id="aaclust-api"></span><h2>AAclust<a class="headerlink" href="#aaclust" title="Permalink to this heading">¶</a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.AAclust.html#aaanalysis.AAclust" title="aaanalysis.AAclust"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.AAclust</span></code></a>([model, model_kwargs, ...])</p></td>
+<td><p>AAclust: A k-optimized clustering framework for selecting redundancy-reduced set of numerical scales.</p></td>
+</tr>
+</tbody>
+</table>
 </section>
 <section id="cpp-module">
-<h2>CPP Module<a class="headerlink" href="#cpp-module" title="Permalink to this heading">¶</a></h2>
-<p>The <cite>CPP</cite> (Comparative Physicochemical Profiling) module focuses on feature engineering by comparing two sets
-of protein sequences to identify distinct features.</p>
-<span class="target" id="module-aaanalysis.cpp"></span><dl class="py class">
-<dt class="sig sig-object py" id="aaanalysis.cpp.CPP">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.cpp.</span></span><span class="sig-name descname"><span class="pre">CPP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_scales</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/cpp.html#CPP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L292-L1093"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.CPP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create and filter features that are most discriminant between two sets of sequences.</p>
-<dl class="field-list">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl>
-<dt><strong>df_scales</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.0.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, default = aa.load_scales(name=ut.STR_SCALE_CAT)</span></dt><dd><p>DataFrame with default amino acid scales.</p>
-</dd>
-<dt><strong>df_cat</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.0.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, default = aa.load_categories</span></dt><dd><p>DataFrame with default categories for physicochemical amino acid scales.</p>
-</dd>
-<dt><strong>df_parts</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.0.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></span></dt><dd><p>DataFrame with sequence parts.</p>
-</dd>
-<dt><strong>split_kws</strong><span class="classifier">dict, default = SequenceFeature.get_split_kws</span></dt><dd><p>Nested dictionary with parameter dictionary for each chosen split_type.</p>
-</dd>
-<dt><strong>accept_gaps</strong><span class="classifier">bool, default = False</span></dt><dd><p>Whether to accept missing values by enabling omitting for computations (if True).</p>
-</dd>
-<dt><strong>jmd_n_len</strong><span class="classifier">int, &gt;=0, default = 10</span></dt><dd><p>Length of JMD-N.</p>
-</dd>
-<dt><strong>jmd_c_len</strong><span class="classifier">int, &gt;=0, default = 10</span></dt><dd><p>Length of JMD-C.</p>
-</dd>
-<dt><strong>ext_len</strong><span class="classifier">int, &gt;=0, default = 4</span></dt><dd><p>Length of TMD-extending part (starting from C and N terminal part of TMD).
-Conditions: ext_len &lt; jmd_m_len and ext_len &lt; jmd_c_len.</p>
-</dd>
-<dt><strong>verbose</strong><span class="classifier">bool, default = True</span></dt><dd><p>Whether to print progress information about the algorithm (if True).</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>The CPP.run() method performs all steps of the CPP algorithm.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.CPP.add_positions">
-<span class="sig-name descname"><span class="pre">add_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_feat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/cpp.html#CPP.add_positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L425-L456"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.CPP.add_positions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add sequence positions to DataFrame.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>df_feat: :class:`pandas.DataFrame`</strong></dt><dd><p>Feature DataFrame to add feature positions.</p>
-</dd>
-<dt><strong>tmd_len: int, &gt;0</strong></dt><dd><p>Length of TMD.</p>
-</dd>
-<dt><strong>start: int, &gt;=0</strong></dt><dd><p>Position label of first amino acid position (starting at N-terminus).</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>df_feat: <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.0.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></dt><dd><p>Feature DataFrame including feature positions.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>The length parameters define the total number of positions (jmd_n_len + tmd_len + jmd_c_len).</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.CPP.add_sample_dif">
-<span class="sig-name descname"><span class="pre">add_sample_dif</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_feat=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_seq=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_name=&lt;class</span> <span class="pre">'str'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_group=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/cpp.html#CPP.add_sample_dif"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L500-L539"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.CPP.add_sample_dif" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add feature value difference between sample and reference group to DataFrame.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>df_feat: :class:`pandas.DataFrame`</strong></dt><dd><p>Feature DataFrame to add sample difference.</p>
-</dd>
-<dt><strong>df_seq: :class:`pandas.DataFrame`</strong></dt><dd><p>DataFrame with sequences and sample names, in which the given sample name is included.</p>
-</dd>
-<dt><strong>labels: array-like, shape (n_samples)</strong></dt><dd><p>Class labels for samples in sequence DataFrame.</p>
-</dd>
-<dt><strong>sample_name: str</strong></dt><dd><p>Name of sample for which the feature value difference to a given reference group should be computed.</p>
-</dd>
-<dt><strong>ref_group: int, default = 0</strong></dt><dd><p>Class label of reference group.</p>
-</dd>
-<dt><strong>accept_gaps: bool, default = False</strong></dt><dd><p>Whether to accept missing values by enabling omitting for computations (if True).</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>df_feat: <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.0.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></dt><dd><p>Feature DataFrame including feature value difference.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.CPP.add_shap">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_shap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_feat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">col_shap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'shap_value'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_feat_impact</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'feat_impact'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/cpp.html#CPP.add_shap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L458-L498"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.CPP.add_shap" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert SHAP values into feature impact/importance and add to DataFrame.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>df_feat: :class:`pandas.DataFrame`</strong></dt><dd><p>Feature DataFrame to which the feature impact will be added.</p>
-</dd>
-<dt><strong>col_shap: str, default = ‘shap_value’</strong></dt><dd><p>Column name of <a class="reference external" href="https://shap.readthedocs.io/en/latest/index.html">SHAP</a> values in the feature DataFrame.</p>
-</dd>
-<dt><strong>name_feat_impact: str, default = ‘feat_impact’</strong></dt><dd><p>Column name of feature impact or feature importance that will be added to the feature DataFrame.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>df_feat: <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.0.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></dt><dd><p>Feature DataFrame including feature impact.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<ul class="simple">
-<li><p>SHAP (SHapley Additive exPlanations) is a game theoretic approach to explain the output of any machine learning model.</p></li>
-<li><p>SHAP values represent a feature’s responsibility for a change in the model output.</p></li>
-<li><p>Missing values are accepted in SHAP values.</p></li>
-</ul>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.CPP.plot_heatmap">
-<span class="sig-name descname"><span class="pre">plot_heatmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_feat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'subcategory'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean_dif'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(8,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_on</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RdBu_r'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap_n_colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dict_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cbar_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">facecolor_dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_jmd_tmd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mediumspringgreen'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'blue'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_seq_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_seq_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'white'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_jmd_fontsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xticks_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtick_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtick_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtick_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ytick_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_legend_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_importance_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cbar_pct</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/cpp.html#CPP.plot_heatmap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L870-L1079"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.CPP.plot_heatmap" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot a featuremap of the selected value column with scale information (y-axis) versus sequence position (x-axis).</p>
-<p>This is a wrapper function for <a class="reference external" href="https://seaborn.pydata.org/generated/seaborn.heatmap.html#seaborn.heatmap" title="(in seaborn v0.12.2)"><code class="xref py py-func docutils literal notranslate"><span class="pre">seaborn.heatmap()</span></code></a>, designed to highlight differences between two sets
-of sequences at the positional level (e.g., amino acid level for protein sequences).</p>
-<dl class="field-list">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl>
-<dt><strong>df_feat</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.0.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a>, shape (n_feature, n_feature_information)</span></dt><dd><p>DataFrame containing unique identifiers, scale information, statistics, and positions for each feature.</p>
-</dd>
-<dt><strong>y</strong><span class="classifier">{‘category’, ‘subcategory’, ‘scale_name’}, str, default = ‘subcategory’</span></dt><dd><p>Name of the column in the feature DataFrame representing scale information (shown on the y-axis).</p>
-</dd>
-<dt><strong>val_col</strong><span class="classifier">{‘mean_dif’, ‘feat_impact’, ‘abs_auc’, ‘std_test’, …}, str, default = ‘mean_dif’</span></dt><dd><p>Name of the column in the feature DataFrame containing numerical values to display.</p>
-</dd>
-<dt><strong>val_type</strong><span class="classifier">{‘mean’, ‘sum’, ‘std’}, str, default = ‘mean’</span></dt><dd><p>Method to aggregate numerical values from ‘val_col’.</p>
-</dd>
-<dt><strong>normalize</strong><span class="classifier">{True, False, ‘positions’, ‘positions_only’}, bool/str, default = False</span></dt><dd><p>Specifies normalization for numerical values in ‘val_col’:
-- False: Set value at all positions of a feature without further normalization.</p>
-<ul class="simple">
-<li><p>True: Set value at all positions of a feature and normalize across all features.</p></li>
-<li><p>‘positions’: Value/number of positions set at each position of a feature and normalized across features.
-Recommended when aiming to emphasize features with fewer positions using ‘val_col’=’feat_impact’ and ‘value_type’=’mean’.</p></li>
-</ul>
-</dd>
-<dt><strong>figsize</strong><span class="classifier">tuple(float, float), default = (10,7)</span></dt><dd><p>Width and height of the figure in inches passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="(in Matplotlib v3.7.2)"><code class="xref py py-func docutils literal notranslate"><span class="pre">matplotlib.pyplot.figure()</span></code></a>.</p>
-</dd>
-<dt><strong>title</strong><span class="classifier">str, optional</span></dt><dd><p>Title of figure used by <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.title.html#matplotlib.pyplot.title" title="(in Matplotlib v3.7.2)"><code class="xref py py-func docutils literal notranslate"><span class="pre">matplotlib.pyplot.title()</span></code></a>.</p>
-</dd>
-<dt><strong>title_kws</strong><span class="classifier">dict, optional</span></dt><dd><p>Keyword arguments passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.title.html#matplotlib.pyplot.title" title="(in Matplotlib v3.7.2)"><code class="xref py py-func docutils literal notranslate"><span class="pre">matplotlib.pyplot.title()</span></code></a>.</p>
-</dd>
-<dt><strong>vmin, vmax</strong><span class="classifier">float, optional</span></dt><dd><p>Values to anchor the colormap, otherwise, inferred from data and other keyword arguments.</p>
-</dd>
-<dt><strong>cmap</strong><span class="classifier">matplotlib colormap name or object, or list of colors, default = ‘seismic’</span></dt><dd><p>Name of color map assigning data values to color space. If ‘SHAP’, colors from
-<a class="reference external" href="https://shap.readthedocs.io/en/latest/index.html">SHAP</a> will be used (recommended for feature impact).</p>
-</dd>
-<dt><strong>cmap_n_colors</strong><span class="classifier">int, optional</span></dt><dd><p>Number of discrete steps in diverging or sequential color map.</p>
-</dd>
-<dt><strong>dict_color</strong><span class="classifier">dict, optional</span></dt><dd><p>Map of colors for scale categories classifying scales shown on y-axis.</p>
-</dd>
-<dt><strong>cbar_kws</strong><span class="classifier">dict of key, value mappings, optional</span></dt><dd><p>Keyword arguments for <a class="reference external" href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.colorbar" title="(in Matplotlib v3.7.2)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.figure.Figure.colorbar()</span></code></a>.</p>
-</dd>
-<dt><strong>add_jmd_tmd</strong><span class="classifier">bool, default = True</span></dt><dd><p>Whether to add colored bar under heatmap indicating sequence parts (JMD-N, TMD, JMD-C).</p>
-</dd>
-<dt><strong>tmd_len</strong><span class="classifier">int, &gt;0</span></dt><dd><p>Length of TMD to be depiceted.</p>
-</dd>
-<dt><strong>start</strong><span class="classifier">int, &gt;=0</span></dt><dd><p>Position label of first amino acid position (starting at N-terminus).</p>
-</dd>
-<dt><strong>tmd_seq</strong><span class="classifier">str, optional</span></dt><dd><p>Sequence of TMD. ‘tmd_len’ is set to length of TMD if sequence for TMD, JMD-N and JMD-C are given.
-Recommended if feature impact or mean difference should be depicted for one sample.</p>
-</dd>
-<dt><strong>jmd_n_seq</strong><span class="classifier">str, optional</span></dt><dd><p>Sequence of JMD_N. ‘jmd_n_len’ is set to length of JMD_N if sequence for TMD, JMD-N and JMD-C are given.
-Recommended if feature impact or mean difference should be depicted for one sample.</p>
-</dd>
-<dt><strong>jmd_c_seq</strong><span class="classifier">str, optional</span></dt><dd><p>Sequence of JMD_C. ‘jmd_c_len’ is set to length of JMD_C if sequence for TMD, JMD-N and JMD-C are given.
-Recommended if feature impact or mean difference should be depicted for one sample.</p>
-</dd>
-<dt><strong>tmd_color</strong><span class="classifier">str, default = ‘mediumspringgreen’</span></dt><dd><p>Color of TMD bar.</p>
-</dd>
-<dt><strong>jmd_color</strong><span class="classifier">str, default = ‘blue’</span></dt><dd><p>Color of JMD-N and JMD-C bar.</p>
-</dd>
-<dt><strong>tmd_seq_color</strong><span class="classifier">str, default = ‘black’</span></dt><dd><p>Color of TMD sequence.</p>
-</dd>
-<dt><strong>jmd_seq_color</strong><span class="classifier">str, default = ‘white’</span></dt><dd><p>Color of JMD-N and JMD-C sequence.</p>
-</dd>
-<dt><strong>seq_size</strong><span class="classifier">float, optional</span></dt><dd><p>Font size of all sequence parts in points. If None, optimized automatically.</p>
-</dd>
-<dt><strong>tmd_jmd_fontsize</strong><span class="classifier">float, optional</span></dt><dd><p>Font size of ‘TMD’, ‘JMD-N’ and ‘JMD-C’  label in points. If None, optimized automatically.</p>
-</dd>
-<dt><strong>xtick_size</strong><span class="classifier">float, default = 11.0</span></dt><dd><p>Size of x ticks in points. Passed as ‘size’ argument to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.set_xticklabels.html#matplotlib.axes.Axes.set_xticklabels" title="(in Matplotlib v3.7.2)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.set_xticklabels()</span></code></a>.</p>
-</dd>
-<dt><strong>xtick_width</strong><span class="classifier">float, default = 2.0</span></dt><dd><p>Widht of x ticks in points. Passed as ‘width’ argument to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.tick_params.html#matplotlib.axes.Axes.tick_params" title="(in Matplotlib v3.7.2)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.tick_params()</span></code></a>.</p>
-</dd>
-<dt><strong>xtick_length</strong><span class="classifier">float, default = 5.0,</span></dt><dd><p>Length of x ticks in points. Passed as ‘length’ argument to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.tick_params.html#matplotlib.axes.Axes.tick_params" title="(in Matplotlib v3.7.2)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.tick_params()</span></code></a>.</p>
-</dd>
-<dt><strong>ytick_size</strong><span class="classifier">float, optional</span></dt><dd><p>Size of scale information as y ticks in points. Passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.tick_params.html#matplotlib.axes.Axes.tick_params" title="(in Matplotlib v3.7.2)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.tick_params()</span></code></a>.
-If None, optimized automatically.</p>
-</dd>
-<dt><strong>add_legend_cat</strong><span class="classifier">bool, default = True,</span></dt><dd><p>Whether to add legend for categories under plot and classification of scales at y-axis.</p>
-</dd>
-<dt><strong>legend_kws</strong><span class="classifier">dict, optional</span></dt><dd><p>Keyword arguments passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html#matplotlib.axes.Axes.legend" title="(in Matplotlib v3.7.2)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.legend()</span></code></a></p>
-</dd>
-<dt><strong>kwargs</strong><span class="classifier">other keyword arguments</span></dt><dd><p>All other keyword arguments passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.pcolormesh.html#matplotlib.axes.Axes.pcolormesh" title="(in Matplotlib v3.7.2)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.pcolormesh()</span></code></a>.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>ax</strong><span class="classifier">matplotlib Axes</span></dt><dd></dd>
-<dt>Axes object containing the heatmap.</dt><dd></dd>
-</dl>
-</dd>
-</dl>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<ul class="simple">
-<li><p>‘cmap_n_colors’ is effective only if ‘vmin’ and ‘vmax’ align with the data.</p></li>
-<li><p>‘tmd_seq_color’ and ‘jmd_seq_color’ are applicable only when ‘tmd_seq’, ‘jmd_n_seq’, and ‘jmd_c_seq’ are provided.</p></li>
-</ul>
-</div>
-<div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<dl class="simple">
-<dt><a class="reference external" href="https://seaborn.pydata.org/generated/seaborn.heatmap.html#seaborn.heatmap" title="(in seaborn v0.12.2)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">seaborn.heatmap</span></code></a></dt><dd><p>Plotting heatmap using seaborn. See <a class="reference external" href="https://seaborn.pydata.org/generated/seaborn.heatmap.html">Seaborn documentation</a> for more details.</p>
-</dd>
-</dl>
-</div>
-<p class="rubric">Examples</p>
-<p>Plot CPP feature heatmap:</p>
-<p>(<a class="reference download internal" download="" href="_downloads/64cdcd56f94f8e667ded0c5f5893839b/api-1.py"><code class="xref download docutils literal notranslate"><span class="pre">Source</span> <span class="pre">code</span></code></a>)</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.CPP.plot_profile">
-<span class="sig-name descname"><span class="pre">plot_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_feat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'category'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean_dif'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'count'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(7,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dict_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.75</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_jmd_tmd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mediumspringgreen'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'blue'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_seq_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_seq_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'white'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_jmd_fontsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtick_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtick_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtick_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xticks_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ytick_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ytick_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ytick_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_tmd_area</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'both'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_legend_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shap_plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/cpp.html#CPP.plot_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L684-L868"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.CPP.plot_profile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot feature profile for given features from ‘df_feat’.</p>
-<dl class="field-list">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl>
-<dt><strong>df_feat</strong><span class="classifier">class:<cite>pandas.DataFrame</cite>, optional, default=None</span></dt><dd><p>Dataframe containing the features to be plotted. If None, default features from the instance will be used.</p>
-</dd>
-<dt><strong>y</strong><span class="classifier">str, default=’category’</span></dt><dd><p>Column name in df_feat which contains the categories for grouping.</p>
-</dd>
-<dt><strong>val_col</strong><span class="classifier">str, default=’mean_dif’</span></dt><dd><p>Column name in df_feat which contains the values to be plotted.</p>
-</dd>
-<dt><strong>val_type</strong><span class="classifier">str, default=’count’</span></dt><dd><p>Type of value. Available options are specified by the <cite>check_value_type</cite> function.</p>
-</dd>
-<dt><strong>normalize</strong><span class="classifier">bool, default=False</span></dt><dd><p>If True, the feature values will be normalized.</p>
-</dd>
-<dt><strong>figsize</strong><span class="classifier">tuple, default=(7, 5)</span></dt><dd><p>Size of the plot.</p>
-</dd>
-<dt><strong>title</strong><span class="classifier">str, optional</span></dt><dd><p>Title of the plot.</p>
-</dd>
-<dt><strong>title_kws</strong><span class="classifier">dict, optional</span></dt><dd><p>Keyword arguments to customize the title appearance.</p>
-</dd>
-<dt><strong>dict_color</strong><span class="classifier">dict, optional</span></dt><dd><p>Dictionary mapping categories to colors.</p>
-</dd>
-<dt><strong>edge_color</strong><span class="classifier">str, default=’none’</span></dt><dd><p>Color of the edges of the bars.</p>
-</dd>
-<dt><strong>bar_width</strong><span class="classifier">float, default=0.75</span></dt><dd><p>Width of the bars.</p>
-</dd>
-<dt><strong>add_jmd_tmd</strong><span class="classifier">bool, default=True</span></dt><dd><p>If True, adds JMD and TMD lines/annotations to the plot.</p>
-</dd>
-<dt><strong>tmd_len</strong><span class="classifier">int, default=20</span></dt><dd><p>Length of the TMD.</p>
-</dd>
-<dt><strong>start</strong><span class="classifier">int, default=1</span></dt><dd><p>Start position.</p>
-</dd>
-<dt><strong>jmd_n_seq</strong><span class="classifier">str, optional</span></dt><dd><p>JMD N-terminal sequence.</p>
-</dd>
-<dt><strong>tmd_seq</strong><span class="classifier">str, optional</span></dt><dd><p>TMD sequence.</p>
-</dd>
-<dt><strong>jmd_c_seq</strong><span class="classifier">str, optional</span></dt><dd><p>JMD C-terminal sequence.</p>
-</dd>
-<dt><strong>tmd_color</strong><span class="classifier">str, default=’mediumspringgreen’</span></dt><dd><p>Color for TMD.</p>
-</dd>
-<dt><strong>jmd_color</strong><span class="classifier">str, default=’blue’</span></dt><dd><p>Color for JMD.</p>
-</dd>
-<dt><strong>tmd_seq_color</strong><span class="classifier">str, default=’black’</span></dt><dd><p>Color for TMD sequence.</p>
-</dd>
-<dt><strong>jmd_seq_color</strong><span class="classifier">str, default=’white’</span></dt><dd><p>Color for JMD sequence.</p>
-</dd>
-<dt><strong>seq_size</strong><span class="classifier">float, optional</span></dt><dd><p>Font size for sequence annotations.</p>
-</dd>
-<dt><strong>tmd_jmd_fontsize</strong><span class="classifier">float, optional</span></dt><dd><p>Font size for TMD and JMD annotations.</p>
-</dd>
-<dt><strong>xtick_size</strong><span class="classifier">float, default=11.0</span></dt><dd><p>Size for x-tick labels.</p>
-</dd>
-<dt><strong>xtick_width</strong><span class="classifier">float, default=2.0</span></dt><dd><p>Width of the x-ticks.</p>
-</dd>
-<dt><strong>xtick_length</strong><span class="classifier">float, default=5.0</span></dt><dd><p>Length of the x-ticks.</p>
-</dd>
-<dt><strong>xticks_pos</strong><span class="classifier">bool, default=False</span></dt><dd><p>If True, x-tick positions are adjusted based on given sequences.</p>
-</dd>
-<dt><strong>ytick_size</strong><span class="classifier">float, optional</span></dt><dd><p>Size for y-tick labels.</p>
-</dd>
-<dt><strong>ytick_width</strong><span class="classifier">float, default=2.0</span></dt><dd><p>Width of the y-ticks.</p>
-</dd>
-<dt><strong>ytick_length</strong><span class="classifier">float, default=5.0</span></dt><dd><p>Length of the y-ticks.</p>
-</dd>
-<dt><strong>ylim</strong><span class="classifier">tuple, optional</span></dt><dd><p>Y-axis limits.</p>
-</dd>
-<dt><strong>highlight_tmd_area</strong><span class="classifier">bool, default=True</span></dt><dd><p>If True, highlights the TMD area on the plot.</p>
-</dd>
-<dt><strong>highlight_alpha</strong><span class="classifier">float, default=0.15</span></dt><dd><p>Alpha value for TMD area highlighting.</p>
-</dd>
-<dt><strong>grid</strong><span class="classifier">bool, default=False</span></dt><dd><p>If True, a grid is added to the plot.</p>
-</dd>
-<dt><strong>grid_axis</strong><span class="classifier">str, default=’both’</span></dt><dd><p>Axis on which the grid is drawn. Options: ‘both’, ‘x’, ‘y’.</p>
-</dd>
-<dt><strong>add_legend_cat</strong><span class="classifier">bool, default=True</span></dt><dd><p>If True, a legend is added for categories.</p>
-</dd>
-<dt><strong>legend_kws</strong><span class="classifier">dict, optional</span></dt><dd><p>Keyword arguments for the legend.</p>
-</dd>
-<dt><strong>shap_plot</strong><span class="classifier">bool, default=False</span></dt><dd><p>If True, SHAP (SHapley Additive exPlanations) plot is generated.</p>
-</dd>
-<dt><strong>**kwargs</strong><span class="classifier">dict</span></dt><dd><p>Other keyword arguments passed to internal functions or plotting libraries.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes</span></dt><dd><p>The axes object containing the plot.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.CPP.run">
-<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parametric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_pre_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pct_pre_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_std_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_overlap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_cor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_processes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/cpp.html#CPP.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L580-L681"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.CPP.run" title="Permalink to this definition">¶</a></dt>
-<dd><p>Perform CPP pipeline by creation and two-step filtering of features. CPP aims to
-identify a collection of non-redundant features that are most discriminant between
-a test and a reference group of sequences.</p>
-<dl class="field-list">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>labels</strong><span class="classifier">array-like, shape (n_samples)</span></dt><dd><p>Class labels for samples in sequence DataFrame (test=1, reference=0).</p>
-</dd>
-<dt><strong>parametric</strong><span class="classifier">bool, default = False</span></dt><dd><p>Whether to use parametric (T-test) or non-parametric (U-test) test for p-value computation.</p>
-</dd>
-<dt><strong>n_filter</strong><span class="classifier">int, default = 100</span></dt><dd><p>Number of features to be filtered/selected by CPP algorithm.</p>
-</dd>
-<dt><strong>n_pre_filter</strong><span class="classifier">int, optional</span></dt><dd><p>Number of feature to be pre-filtered by CPP algorithm. If None, a percentage of all features is used.</p>
-</dd>
-<dt><strong>tmd_len</strong><span class="classifier">int, &gt;0</span></dt><dd><p>Length of Transmembrane Domain (TMD) used for positions.</p>
-</dd>
-<dt><strong>start</strong><span class="classifier">int, &gt;=0</span></dt><dd><p>Position label of first amino acid position (starting at N-terminus).</p>
-</dd>
-<dt><strong>check_cat</strong><span class="classifier">bool, default = True</span></dt><dd><p>Whether to check for redundancy within scale categories.</p>
-</dd>
-<dt><strong>pct_pre_filter</strong><span class="classifier">int, default = 5</span></dt><dd><p>Percentage of all features that should remain after the pre-filtering step.</p>
-</dd>
-<dt><strong>max_std_test</strong><span class="classifier">float [0-1], default = 0.2</span></dt><dd><p>Maximum standard deviation within the test group used as threshold for pre-filtering.</p>
-</dd>
-<dt><strong>max_overlap</strong><span class="classifier">float [0-1], default = 0.5</span></dt><dd><p>Maximum positional overlap of features used as threshold for filtering.</p>
-</dd>
-<dt><strong>max_cor</strong><span class="classifier">float [0-1], default = 0.5</span></dt><dd><p>Maximum Pearson correlation of features used as threshold for filtering.</p>
-</dd>
-<dt><strong>n_processes</strong><span class="classifier">int, default = None</span></dt><dd><p>Number of CPUs used for multiprocessing. If None, number will be optimized automatically.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl>
-<dt><strong>df_feat</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.0.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, shape (n_feature, n_feature_information)</span></dt><dd><p>DataFrame with a unique identifier, scale information, statistics, and positions for each feature.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>The feature DataFrame contains the following eleven columns, including the unique
-feature id (1), scale information (2-4), statistical results used for filtering and
-ranking (5-10), and feature positions (11):</p>
-<ol class="arabic simple">
-<li><p>features: Feature ID (PART-SPLIT-SCALE)</p></li>
-<li><p>category: Scale category</p></li>
-<li><p>subcategory: Sub category of scales</p></li>
-<li><p>scale_name: Name of scales</p></li>
-<li><p>abs_auc: Absolute adjusted AUC [-0.5 to 0.5]</p></li>
-<li><p>abs_mean_dif: Absolute mean differences between test and reference group [0 to 1]</p></li>
-<li><p>std_test: Standard deviation in test group</p></li>
-<li><p>std_ref: Standard deviation in reference group</p></li>
-<li><p>p_val: Non-parametric (mann_whitney) or parametric (ttest_indep) statistic</p></li>
-<li><p>p_val_fdr_bh: Benjamini-Hochberg FDR corrected p-values</p></li>
-<li><p>positions: Feature positions for default settings</p></li>
-</ol>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="aaanalysis.cpp.SequenceFeature">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.cpp.</span></span><span class="sig-name descname"><span class="pre">SequenceFeature</span></span><a class="reference internal" href="_modules/aaanalysis/cpp/feature.html#SequenceFeature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L162-L525"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.SequenceFeature" title="Permalink to this definition">¶</a></dt>
-<dd><p>Retrieve and create sequence feature components (Part, Split, and Scale).</p>
-<p class="rubric">Notes</p>
-<dl class="simple">
-<dt>Part: Feature Component</dt><dd><p>A continuous subset of a sequence like a protein domain (e.g, transmembrane domain of membrane proteins).</p>
-</dd>
-<dt>Split: Feature Component</dt><dd><p>Principle to obtain a distinct subset of amino acids from a sequence part like a segment or a pattern.</p>
-</dd>
-<dt>Scale: Feature Component</dt><dd><p>A physicochemical scale assigning  each amino acid a numerical value between 0 and 1.</p>
-</dd>
-<dt>Feature: Part + Split + Scale</dt><dd><p>Physicochemical property (expressed as numerical scale) present at distinct amino acid
-positions within a protein sequence. The positions are obtained by splitting sequence parts
-into segments or patterns.</p>
-</dd>
-<dt>Feature value: Realization of a Feature</dt><dd><p>For a given sequence, a feature value is the average of a physicochemical scale over
-all amino acids obtained by splitting a sequence part.</p>
-</dd>
-<dt>List of valid sequence parts:</dt><dd><p>[‘tmd’, ‘tmd_e’, ‘tmd_n’, ‘tmd_c’, ‘jmd_n’, ‘jmd_c’, ‘ext_c’, ‘ext_n’,
-‘tmd_jmd’, ‘jmd_n_tmd_n’, ‘tmd_c_jmd_c’, ‘ext_n_tmd_n’, ‘tmd_c_ext_c’]</p>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.SequenceFeature.feat_matrix">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">feat_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_scales</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/feature.html#SequenceFeature.feat_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L468-L525"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.SequenceFeature.feat_matrix" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create feature matrix for given feature names and sequence parts.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>df_parts: :class:`pandas.DataFrame`</strong></dt><dd><p>DataFrame with sequence parts.</p>
-</dd>
-<dt><strong>features: str, list of strings, pd.Series</strong></dt><dd><p>Ids of features for which matrix of feature values should be created.</p>
-</dd>
-<dt><strong>df_scales: :class:`pandas.DataFrame`, optional</strong></dt><dd><p>DataFrame with default amino acid scales.</p>
-</dd>
-<dt><strong>accept_gaps: bool, default = False</strong></dt><dd><p>Whether to accept missing values by enabling omitting for computations (if True).</p>
-</dd>
-<dt><strong>verbose: bool, default = True</strong></dt><dd><p>Whether to print size of to be created feature matrix (if True) or not otherwise.</p>
-</dd>
-<dt><strong>return_labels: bool, default = False</strong></dt><dd><p>Whether to return sample labels in addition to feature matrix.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>feat_matrix: array-like or sparse matrix, shape (n_samples, n_features)</dt><dd><p>Feature values of samples.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.SequenceFeature.feat_names">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">feat_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/feature.html#SequenceFeature.feat_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L361-L416"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.SequenceFeature.feat_names" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert feature ids (PART-SPLIT-SCALE) into feature name (scale name [positions]).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>features: str, list of strings, pd.Series</strong></dt><dd><p>Ids of features for which feature names should be created.</p>
-</dd>
-<dt><strong>df_cat: :class:`pandas.DataFrame`, default = SequenceFeature.load_categories</strong></dt><dd><p>DataFrame with default categories for physicochemical amino acid scales</p>
-</dd>
-<dt><strong>tmd_len: int, &gt;0</strong></dt><dd><p>Length of TMD.</p>
-</dd>
-<dt><strong>jmd_n_len: int, &gt;0</strong></dt><dd><p>Length of JMD-N.</p>
-</dd>
-<dt><strong>jmd_c_len: int, &gt;0</strong></dt><dd><p>Length of JMD-C.</p>
-</dd>
-<dt><strong>ext_len:int, &gt;0</strong></dt><dd><p>Length of TMD-extending part (starting from C and N terminal part of TMD).
-Conditions: ext_len&lt;jmd_m_len and ext_len&lt;jmd_c_len</p>
-</dd>
-<dt><strong>start: int, &gt;=0</strong></dt><dd><p>Position label of first amino acid position (starting at N-terminus).</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>feat_names: list of strings</dt><dd><p>Names of features.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<dl class="simple">
-<dt>Positions are given depending on the three split types:</dt><dd><ul class="simple">
-<li><p>Segment: [first…last]</p></li>
-<li><p>Pattern: [all positions]</p></li>
-<li><p>PeriodicPattern: [first..step1/step2..last]</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.SequenceFeature.feat_value">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">feat_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dict_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/feature.html#SequenceFeature.feat_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L419-L466"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.SequenceFeature.feat_value" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create feature values for all sequence parts by combining Part, Split, and Scale.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>df_parts: :class:`pandas.DataFrame`</strong></dt><dd><p>DataFrame with sequence parts.</p>
-</dd>
-<dt><strong>split: str</strong></dt><dd><p>Name of Split following given convention.</p>
-</dd>
-<dt><strong>dict_scale: dict</strong></dt><dd><p>Dictionary mapping a numerical value to each letter of given sequences</p>
-</dd>
-<dt><strong>accept_gaps: bool, default = False</strong></dt><dd><p>Whether to accept missing values by enabling omitting for computations (if True).</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>feature_value: array-like, shape (n_samples, n_parts)</dt><dd><p>Average scale values over sequence parts.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>A split name should has the form of PART-SPLIT-SCALE, where following structures
-are given for the three split types:</p>
-<ul class="simple">
-<li><dl class="simple">
-<dt>Segment(i-th,n_split)</dt><dd><p>with i-th&lt;=n_split and
-where ‘i-th’ and ‘n_split’ indicate the i-th Segment resp. the number of Segments.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Pattern(N/C,p1,p2,…,pn)</dt><dd><p>with p1&lt;p2&lt;…&lt;pn indicating amino acid positions and
-‘N/C’ whether the splits starts from the N resp. C-terminal sequence end.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>PeriodicPattern(N/C,i+step1/step2,start)</dt><dd><p>where ‘step1/step2’ indicates the step size of each odd resp. even step and
-‘start’ gives the first position starting from the N- or C-terminal sequence end.</p>
-</dd>
-</dl>
-</li>
-</ul>
-<p>All numbers should be non-negative integers. Examples for each split type
-are as follows: ‘Segment(5,7)’, ‘Pattern(C,1,2)’, ‘PeriodicPattern(N,i+2/3,1)’.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.SequenceFeature.features">
-<span class="sig-name descname"><span class="pre">features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_scales</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/feature.html#SequenceFeature.features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L322-L359"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.SequenceFeature.features" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create list of feature ids for given Parts, Splits, and Scales</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>list_parts: list of strings (n&gt;=1 parts), default = [“tmd_e”, “jmd_n_tmd_n”, “tmd_c_jmd_c”]</strong></dt><dd><p>Names of sequence parts which should be created (e.g., ‘tmd’).</p>
-</dd>
-<dt><strong>split_kws: dict, default = SequenceFeature.get_split_kws</strong></dt><dd><p>Nested dictionary with parameter dictionary for each chosen split_type.</p>
-</dd>
-<dt><strong>df_scales: :class:`pandas.DataFrame`, default = SequenceFeature.load_scales</strong></dt><dd><p>DataFrame with default amino acid scales.</p>
-</dd>
-<dt><strong>all_parts: bool, default = False</strong></dt><dd><p>Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>features: list of strings</dt><dd><p>Ids of all possible features for combination of Parts, Splits, and Scales with form: PART-SPLIT-SCALE</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.SequenceFeature.get_df_parts">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_df_parts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/feature.html#SequenceFeature.get_df_parts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L191-L256"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.SequenceFeature.get_df_parts" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create DataFrane with sequence parts.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>df_seq: :class:`pandas.DataFrame`</strong></dt><dd><p>DataFrame with sequence information comprising either sequence (‘sequence’, ‘tmd_start’, ‘tmd_stop’)
-or sequence part (‘jmd_n’, ‘tmd’, ‘jmd_c’) columns.</p>
-</dd>
-<dt><strong>list_parts: list of string, len&gt;=1</strong></dt><dd><p>Names of sequence parts which should be created (e.g., ‘tmd’).</p>
-</dd>
-<dt><strong>jmd_n_len: int, default = None, optional</strong></dt><dd><p>Length of JMD-N in number of amino acids. If None, ‘jmd_n’ column must be given in df_seq.</p>
-</dd>
-<dt><strong>jmd_c_len: int, default = None, optional</strong></dt><dd><p>Length of JMD-N in number of amino acids. If None, ‘jmd_c’ column must be given in df_seq.</p>
-</dd>
-<dt><strong>ext_len: int, default = 4</strong></dt><dd><p>Lenght of N- resp. C-terminal extra part of TMD.</p>
-</dd>
-<dt><strong>all_parts: bool, default = False</strong></dt><dd><p>Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>df_parts: <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.0.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></dt><dd><p>DataFrame with sequence parts.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>List of valid sequence parts can be found in :class: ´aaanalysis.SequenceFeature´.</p>
-<p class="rubric">Examples</p>
-<p>Get sequence parts based on parts columns in df_seq with with ‘tmd_e’, and ‘tmd_jmd’ as parts:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">sf</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">SequenceFeature</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;GSEC_SUB_SEQ&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">df_parts</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">get_df_parts</span><span class="p">(</span><span class="n">df_seq</span><span class="o">=</span><span class="n">df_seq</span><span class="p">,</span> <span class="n">list_parts</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tmd_e&quot;</span><span class="p">,</span> <span class="s2">&quot;tmd_jmd&quot;</span><span class="p">])</span>
-</pre></div>
-</div>
-<p>Get sequence parts based on sequence column in df_seq and jmd_n_len and jmd_c_len with default parts:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">sf</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">SequenceFeature</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;GSEC_SUB_SEQ&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">df_parts</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">get_df_parts</span><span class="p">(</span><span class="n">df_seq</span><span class="o">=</span><span class="n">df_seq</span><span class="p">,</span> <span class="n">jmd_n_len</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.SequenceFeature.get_split_kws">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_split_kws</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_split_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_split_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps_pattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">len_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps_periodicpattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/feature.html#SequenceFeature.get_split_kws"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L258-L320"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.SequenceFeature.get_split_kws" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create dictionary with kwargs for three split types: Segment, Pattern, PeriodicPattern</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>n_split_min: int, default = 1</strong></dt><dd><p>Number greater 0 to specify the greatest Segment (e.g., 1/1 TMD alias whole TMD sequence).</p>
-</dd>
-<dt><strong>n_split_max: int, default = 15,</strong></dt><dd><p>Number greater n_split_min to specfiy the smallest Segment (e.g., 1/15 TMD).</p>
-</dd>
-<dt><strong>steps_pattern: list of integers, default = [3, 4, 6, 7, 8]</strong></dt><dd><p>Possible steps sizes for Pattern.</p>
-</dd>
-<dt><strong>n_min: int, default = 2</strong></dt><dd><p>Minimum number of steps for Pattern.</p>
-</dd>
-<dt><strong>n_max: int, default = 4</strong></dt><dd><p>Maximum number of steps for Pattern.</p>
-</dd>
-<dt><strong>len_max: int, default = 10</strong></dt><dd><p>Maximum length in amino acid position for Pattern by varying start position.</p>
-</dd>
-<dt><strong>steps_periodicpattern: list of integers, default = [3, 4]</strong></dt><dd><p>Step sizes for PeriodicPattern.</p>
-</dd>
-<dt><strong>split_types: list of strings, default = [“Segment”, “Pattern” “PeriodicPattern”]</strong></dt><dd><p>Split types for which paramter dictionary should be generated.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>split_kws: dict</dt><dd><p>Nested dictionary with parameters for chosen split_types:</p>
-<ol class="loweralpha simple">
-<li><p>Segment: {n_split_min:1, n_split_max=15}</p></li>
-<li><p>Pattern: {steps=[3, 4], n_min=2, n_max=4, len_max=15}</p></li>
-<li><p>PeriodicPattern: {steps=[3, 4]}</p></li>
-</ol>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Examples</p>
-<p>Get default arguments for all splits types (Segment, Pattern, PeriodicPattern):</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">sf</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">SequenceFeature</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">split_kws</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">get_split_kws</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>Get default argumetns for Segment split:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">sf</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">SequenceFeature</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">split_kws</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">get_split_kws</span><span class="p">(</span><span class="n">split_types</span><span class="o">=</span><span class="s2">&quot;Segment&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="aaanalysis.cpp.SplitRange">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.cpp.</span></span><span class="sig-name descname"><span class="pre">SplitRange</span></span><a class="reference internal" href="_modules/aaanalysis/cpp/_split.html#SplitRange"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/_split.py#L203-L351"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.SplitRange" title="Permalink to this definition">¶</a></dt>
-<dd><p>Class for creating range of splits for testing sets of multiple features in CPP</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.SplitRange.labels_pattern">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">labels_pattern</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">len_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/_split.html#SplitRange.labels_pattern"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/_split.py#L281-L304"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.SplitRange.labels_pattern" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get labels for range of Pattern splits.
-Output matches with SequenceFeature.pattern.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>steps: list of integer indicating possible step sizes</strong></dt><dd></dd>
-<dt><strong>n_min: integer indicating minimum of elements in Pattern split</strong></dt><dd></dd>
-<dt><strong>n_min: integer indicating maximum of elements in Pattern split</strong></dt><dd></dd>
-<dt><strong>len_max: maximum of sequence length for splitting</strong></dt><dd></dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>labels: list of labels of Pattern splits</dt><dd></dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.SplitRange.labels_periodicpattern">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">labels_periodicpattern</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/_split.html#SplitRange.labels_periodicpattern"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/_split.py#L331-L351"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.SplitRange.labels_periodicpattern" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get labels of all possible PeriodicPattern splits.
-Output matches with SequenceFeature.periodicpattern.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>steps: list of integer indicating possible step sizes</strong></dt><dd></dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>labels: list of labels of Pattern splits</dt><dd></dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.SplitRange.labels_segment">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">labels_segment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_split_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_split_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/_split.html#SplitRange.labels_segment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/_split.py#L231-L250"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.SplitRange.labels_segment" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get labels for range of Segment splits.
-Output matches with SequenceFeature.segment.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>n_split_min: integer indicating minimum Segment size</strong></dt><dd></dd>
-<dt><strong>n_split_max: integer indicating maximum Segment size</strong></dt><dd></dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>labels: list of labels of Segment splits</dt><dd></dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.SplitRange.pattern">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pattern</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">len_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/_split.html#SplitRange.pattern"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/_split.py#L253-L279"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.SplitRange.pattern" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get range of all possible Pattern splits for given sequence.
-Output matches with SequenceFeature.labels_pattern.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>seq: sequence (e.g., amino acids sequence for protein)</strong></dt><dd></dd>
-<dt><strong>steps: list of integer indicating possible step sizes</strong></dt><dd></dd>
-<dt><strong>n_min: integer indicating minimum of elements in Pattern split</strong></dt><dd></dd>
-<dt><strong>n_min: integer indicating maximum of elements in Pattern split</strong></dt><dd></dd>
-<dt><strong>len_max: maximum of sequence length for splitting</strong></dt><dd></dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>seq_splits: list of sequence Pattern splits</dt><dd></dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.SplitRange.periodicpattern">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">periodicpattern</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/_split.html#SplitRange.periodicpattern"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/_split.py#L307-L329"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.SplitRange.periodicpattern" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get range of all possible PeriodicPattern splits for given sequence.
-Output matches with SequenceFeature.labels_periodicpattern.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>seq: sequence (e.g., amino acids sequence for protein)</strong></dt><dd></dd>
-<dt><strong>steps: list of integer indicating possible step sizes</strong></dt><dd></dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>seq_splits: list of sequence PeriodicPattern splits</dt><dd></dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.cpp.SplitRange.segment">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">segment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_split_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_split_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/aaanalysis/cpp/_split.html#SplitRange.segment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/_split.py#L207-L229"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.cpp.SplitRange.segment" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get range of all possible Segment splits for given sequences.
-Output matches with SequenceFeature.labels_segment.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>seq: seq: sequence (e.g., amino acids sequence for protein)</strong></dt><dd></dd>
-<dt><strong>n_split_min: integer indicating minimum Segment size</strong></dt><dd></dd>
-<dt><strong>n_split_max: integer indicating maximum Segment size</strong></dt><dd></dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>seq_splits: list of sequence Segment splits</dt><dd></dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
+<span id="cpp-api"></span><h2>CPP Module<a class="headerlink" href="#cpp-module" title="Permalink to this heading">¶</a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.CPP.html#aaanalysis.CPP" title="aaanalysis.CPP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.CPP</span></code></a>([df_scales, df_cat, ...])</p></td>
+<td><p>Create and filter features that are most discriminant between two sets of sequences.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature" title="aaanalysis.SequenceFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.SequenceFeature</span></code></a>()</p></td>
+<td><p>Retrieve and create sequence feature components (Part, Split, and Scale).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange" title="aaanalysis.SplitRange"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.SplitRange</span></code></a>()</p></td>
+<td><p>Class for creating range of splits for testing sets of multiple features in CPP</p></td>
+</tr>
+</tbody>
+</table>
 </section>
 <section id="dpulearn">
-<h2>dPUlearn<a class="headerlink" href="#dpulearn" title="Permalink to this heading">¶</a></h2>
-<p>The <cite>dPUlearn</cite> offers a deterministic Positive-Unlabeled (PU) Learning algorithm, especially beneficial for training on unbalanced and small datasets.</p>
-<span class="target" id="module-aaanalysis.dpulearn"></span></section>
+<span id="dpulearn-api"></span><h2>dPUlearn<a class="headerlink" href="#dpulearn" title="Permalink to this heading">¶</a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.dPULearn.html#aaanalysis.dPULearn" title="aaanalysis.dPULearn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.dPULearn</span></code></a>([verbose, n_components, ...])</p></td>
+<td><p>Deterministic Positive-Unlabeled (dPULearn) model.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="plot-utilities">
+<span id="plot-api"></span><h2>Plot Utilities<a class="headerlink" href="#plot-utilities" title="Permalink to this heading">¶</a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_settings.html#aaanalysis.plot_settings" title="aaanalysis.plot_settings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_settings</span></code></a>([fig_format, ...])</p></td>
+<td><p>Configure general settings for plot visualization with various customization options.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.plot_set_legend.html#aaanalysis.plot_set_legend" title="aaanalysis.plot_set_legend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_set_legend</span></code></a>([ax, handles, ...])</p></td>
+<td><p>Set a customizable legend for a plot.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_gcfs.html#aaanalysis.plot_gcfs" title="aaanalysis.plot_gcfs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_gcfs</span></code></a>()</p></td>
+<td><p>Get current font size, which is set by ut.plot_settings function</p></td>
+</tr>
+</tbody>
+</table>
+</section>
 </section>
 
 
@@ -1302,7 +292,7 @@ Output matches with SequenceFeature.labels_segment.</p>
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="references.html" class="btn btn-neutral float-right" title="References" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="generated/aaanalysis.load_dataset.html" class="btn btn-neutral float-right" title="aaanalysis.load_dataset" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
         <a href="tutorials.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 

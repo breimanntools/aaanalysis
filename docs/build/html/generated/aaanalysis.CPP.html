@@ -1,0 +1,664 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+<meta property="og:title" content="aaanalysis.CPP" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="generated/aaanalysis.CPP.html" />
+<meta property="og:site_name" content="AAanalysis" />
+<meta property="og:image:width" content="1146" />
+<meta property="og:image:height" content="600" />
+<meta property="og:image" content="/_images/social_previews/summary_generated_aaanalysis.CPP_6a66faaa.png" />
+<meta property="og:image:alt" content="" />
+<meta name="twitter:card" content="summary_large_image" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>aaanalysis.CPP &mdash; AAanalysis</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/style.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
+        <script src="../_static/design-tabs.js"></script>
+        <script src="../_static/toggle_menu.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="aaanalysis.SequenceFeature" href="aaanalysis.SequenceFeature.html" />
+    <link rel="prev" title="aaanalysis.AAclust" href="aaanalysis.AAclust.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> AAanalysis
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                latest
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../api.html#data-loading">Data Loading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#aaclust">AAclust</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#cpp-module">CPP Module</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">aaanalysis.CPP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="aaanalysis.SequenceFeature.html">aaanalysis.SequenceFeature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="aaanalysis.SplitRange.html">aaanalysis.SplitRange</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#dpulearn">dPUlearn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#plot-utilities">Plot Utilities</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../references.html">References</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">AAanalysis</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../api.html">API Reference</a> &raquo;</li>
+        
+      <li>aaanalysis.CPP</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/generated/aaanalysis.CPP.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="aaanalysis-cpp">
+<h1>aaanalysis.CPP<a class="headerlink" href="#aaanalysis-cpp" title="Permalink to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="aaanalysis.CPP">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">CPP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_scales</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/cpp.html#CPP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L293-L1094"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.CPP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create and filter features that are most discriminant between two sets of sequences.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>df_scales</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, default = aa.load_scales(name=ut.STR_SCALE_CAT)</span></dt><dd><p>DataFrame with default amino acid scales.</p>
+</dd>
+<dt><strong>df_cat</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, default = aa.load_categories</span></dt><dd><p>DataFrame with default categories for physicochemical amino acid scales.</p>
+</dd>
+<dt><strong>df_parts</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></span></dt><dd><p>DataFrame with sequence parts.</p>
+</dd>
+<dt><strong>split_kws</strong><span class="classifier">dict, default = SequenceFeature.get_split_kws</span></dt><dd><p>Nested dictionary with parameter dictionary for each chosen split_type.</p>
+</dd>
+<dt><strong>accept_gaps</strong><span class="classifier">bool, default = False</span></dt><dd><p>Whether to accept missing values by enabling omitting for computations (if True).</p>
+</dd>
+<dt><strong>jmd_n_len</strong><span class="classifier">int, &gt;=0, default = 10</span></dt><dd><p>Length of JMD-N.</p>
+</dd>
+<dt><strong>jmd_c_len</strong><span class="classifier">int, &gt;=0, default = 10</span></dt><dd><p>Length of JMD-C.</p>
+</dd>
+<dt><strong>ext_len</strong><span class="classifier">int, &gt;=0, default = 4</span></dt><dd><p>Length of TMD-extending part (starting from C and N terminal part of TMD).
+Conditions: ext_len &lt; jmd_m_len and ext_len &lt; jmd_c_len.</p>
+</dd>
+<dt><strong>verbose</strong><span class="classifier">bool, default = True</span></dt><dd><p>Whether to print progress information about the algorithm (if True).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The CPP.run() method performs all steps of the CPP algorithm.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.CPP.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_scales</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/cpp.html#CPP.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L323-L351"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.CPP.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.CPP.__init__" title="aaanalysis.CPP.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([df_scales, df_cat, df_parts, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.CPP.add_positions" title="aaanalysis.CPP.add_positions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_positions</span></code></a>([df_feat, tmd_len, start])</p></td>
+<td><p>Add sequence positions to DataFrame.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.CPP.add_sample_dif" title="aaanalysis.CPP.add_sample_dif"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_sample_dif</span></code></a>([df_feat, df_seq, labels, ...])</p></td>
+<td><p>Add feature value difference between sample and reference group to DataFrame.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.CPP.add_shap" title="aaanalysis.CPP.add_shap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_shap</span></code></a>([df_feat, col_shap, name_feat_impact])</p></td>
+<td><p>Convert SHAP values into feature impact/importance and add to DataFrame.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.CPP.plot_heatmap" title="aaanalysis.CPP.plot_heatmap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_heatmap</span></code></a>([df_feat, y, val_col, ...])</p></td>
+<td><p>Plot a featuremap of the selected value column with scale information (y-axis) versus sequence position (x-axis).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.CPP.plot_profile" title="aaanalysis.CPP.plot_profile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_profile</span></code></a>([df_feat, y, val_col, ...])</p></td>
+<td><p>Plot feature profile for given features from 'df_feat'.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.CPP.run" title="aaanalysis.CPP.run"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run</span></code></a>([labels, parametric, n_filter, tmd_len, ...])</p></td>
+<td><p>Perform CPP pipeline by creation and two-step filtering of features.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_seq_size</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.CPP.add_positions">
+<span class="sig-name descname"><span class="pre">add_positions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_feat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/cpp.html#CPP.add_positions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L426-L457"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.CPP.add_positions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add sequence positions to DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df_feat: :class:`pandas.DataFrame`</strong></dt><dd><p>Feature DataFrame to add feature positions.</p>
+</dd>
+<dt><strong>tmd_len: int, &gt;0</strong></dt><dd><p>Length of TMD.</p>
+</dd>
+<dt><strong>start: int, &gt;=0</strong></dt><dd><p>Position label of first amino acid position (starting at N-terminus).</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>df_feat: <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></dt><dd><p>Feature DataFrame including feature positions.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The length parameters define the total number of positions (jmd_n_len + tmd_len + jmd_c_len).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.CPP.add_sample_dif">
+<span class="sig-name descname"><span class="pre">add_sample_dif</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_feat=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_seq=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_name=&lt;class</span> <span class="pre">'str'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_group=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/cpp.html#CPP.add_sample_dif"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L501-L540"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.CPP.add_sample_dif" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add feature value difference between sample and reference group to DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df_feat: :class:`pandas.DataFrame`</strong></dt><dd><p>Feature DataFrame to add sample difference.</p>
+</dd>
+<dt><strong>df_seq: :class:`pandas.DataFrame`</strong></dt><dd><p>DataFrame with sequences and sample names, in which the given sample name is included.</p>
+</dd>
+<dt><strong>labels: array-like, shape (n_samples)</strong></dt><dd><p>Class labels for samples in sequence DataFrame.</p>
+</dd>
+<dt><strong>sample_name: str</strong></dt><dd><p>Name of sample for which the feature value difference to a given reference group should be computed.</p>
+</dd>
+<dt><strong>ref_group: int, default = 0</strong></dt><dd><p>Class label of reference group.</p>
+</dd>
+<dt><strong>accept_gaps: bool, default = False</strong></dt><dd><p>Whether to accept missing values by enabling omitting for computations (if True).</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>df_feat: <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></dt><dd><p>Feature DataFrame including feature value difference.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.CPP.add_shap">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_shap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_feat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">col_shap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'shap_value'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_feat_impact</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'feat_impact'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/cpp.html#CPP.add_shap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L459-L499"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.CPP.add_shap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert SHAP values into feature impact/importance and add to DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>df_feat: :class:`pandas.DataFrame`</strong></dt><dd><p>Feature DataFrame to which the feature impact will be added.</p>
+</dd>
+<dt><strong>col_shap: str, default = ‘shap_value’</strong></dt><dd><p>Column name of <a class="reference external" href="https://shap.readthedocs.io/en/latest/index.html">SHAP</a> values in the feature DataFrame.</p>
+</dd>
+<dt><strong>name_feat_impact: str, default = ‘feat_impact’</strong></dt><dd><p>Column name of feature impact or feature importance that will be added to the feature DataFrame.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>df_feat: <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></dt><dd><p>Feature DataFrame including feature impact.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>SHAP (SHapley Additive exPlanations) is a game theoretic approach to explain the output of any machine learning model.</p></li>
+<li><p>SHAP values represent a feature’s responsibility for a change in the model output.</p></li>
+<li><p>Missing values are accepted in SHAP values.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.CPP.plot_heatmap">
+<span class="sig-name descname"><span class="pre">plot_heatmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_feat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'subcategory'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean_dif'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(8,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_on</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RdBu_r'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap_n_colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dict_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cbar_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">facecolor_dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_jmd_tmd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mediumspringgreen'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'blue'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_seq_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_seq_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'white'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_jmd_fontsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xticks_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtick_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtick_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtick_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ytick_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_legend_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_importance_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cbar_pct</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/cpp.html#CPP.plot_heatmap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L871-L1080"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.CPP.plot_heatmap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a featuremap of the selected value column with scale information (y-axis) versus sequence position (x-axis).</p>
+<p>This is a wrapper function for <a class="reference external" href="https://seaborn.pydata.org/generated/seaborn.heatmap.html#seaborn.heatmap" title="(in seaborn v0.12.2)"><code class="xref py py-func docutils literal notranslate"><span class="pre">seaborn.heatmap()</span></code></a>, designed to highlight differences between two sets
+of sequences at the positional level (e.g., amino acid level for protein sequences).</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>df_feat</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a>, shape (n_feature, n_feature_information)</span></dt><dd><p>DataFrame containing unique identifiers, scale information, statistics, and positions for each feature.</p>
+</dd>
+<dt><strong>y</strong><span class="classifier">{‘category’, ‘subcategory’, ‘scale_name’}, str, default = ‘subcategory’</span></dt><dd><p>Name of the column in the feature DataFrame representing scale information (shown on the y-axis).</p>
+</dd>
+<dt><strong>val_col</strong><span class="classifier">{‘mean_dif’, ‘feat_impact’, ‘abs_auc’, ‘std_test’, …}, str, default = ‘mean_dif’</span></dt><dd><p>Name of the column in the feature DataFrame containing numerical values to display.</p>
+</dd>
+<dt><strong>val_type</strong><span class="classifier">{‘mean’, ‘sum’, ‘std’}, str, default = ‘mean’</span></dt><dd><p>Method to aggregate numerical values from ‘val_col’.</p>
+</dd>
+<dt><strong>normalize</strong><span class="classifier">{True, False, ‘positions’, ‘positions_only’}, bool/str, default = False</span></dt><dd><p>Specifies normalization for numerical values in ‘val_col’:
+- False: Set value at all positions of a feature without further normalization.</p>
+<ul class="simple">
+<li><p>True: Set value at all positions of a feature and normalize across all features.</p></li>
+<li><p>‘positions’: Value/number of positions set at each position of a feature and normalized across features.
+Recommended when aiming to emphasize features with fewer positions using ‘val_col’=’feat_impact’ and ‘value_type’=’mean’.</p></li>
+</ul>
+</dd>
+<dt><strong>figsize</strong><span class="classifier">tuple(float, float), default = (10,7)</span></dt><dd><p>Width and height of the figure in inches passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="(in Matplotlib v3.7.2)"><code class="xref py py-func docutils literal notranslate"><span class="pre">matplotlib.pyplot.figure()</span></code></a>.</p>
+</dd>
+<dt><strong>title</strong><span class="classifier">str, optional</span></dt><dd><p>Title of figure used by <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.title.html#matplotlib.pyplot.title" title="(in Matplotlib v3.7.2)"><code class="xref py py-func docutils literal notranslate"><span class="pre">matplotlib.pyplot.title()</span></code></a>.</p>
+</dd>
+<dt><strong>title_kws</strong><span class="classifier">dict, optional</span></dt><dd><p>Keyword arguments passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.title.html#matplotlib.pyplot.title" title="(in Matplotlib v3.7.2)"><code class="xref py py-func docutils literal notranslate"><span class="pre">matplotlib.pyplot.title()</span></code></a>.</p>
+</dd>
+<dt><strong>vmin, vmax</strong><span class="classifier">float, optional</span></dt><dd><p>Values to anchor the colormap, otherwise, inferred from data and other keyword arguments.</p>
+</dd>
+<dt><strong>cmap</strong><span class="classifier">matplotlib colormap name or object, or list of colors, default = ‘seismic’</span></dt><dd><p>Name of color map assigning data values to color space. If ‘SHAP’, colors from
+<a class="reference external" href="https://shap.readthedocs.io/en/latest/index.html">SHAP</a> will be used (recommended for feature impact).</p>
+</dd>
+<dt><strong>cmap_n_colors</strong><span class="classifier">int, optional</span></dt><dd><p>Number of discrete steps in diverging or sequential color map.</p>
+</dd>
+<dt><strong>dict_color</strong><span class="classifier">dict, optional</span></dt><dd><p>Map of colors for scale categories classifying scales shown on y-axis.</p>
+</dd>
+<dt><strong>cbar_kws</strong><span class="classifier">dict of key, value mappings, optional</span></dt><dd><p>Keyword arguments for <a class="reference external" href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.colorbar" title="(in Matplotlib v3.7.2)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.figure.Figure.colorbar()</span></code></a>.</p>
+</dd>
+<dt><strong>add_jmd_tmd</strong><span class="classifier">bool, default = True</span></dt><dd><p>Whether to add colored bar under heatmap indicating sequence parts (JMD-N, TMD, JMD-C).</p>
+</dd>
+<dt><strong>tmd_len</strong><span class="classifier">int, &gt;0</span></dt><dd><p>Length of TMD to be depiceted.</p>
+</dd>
+<dt><strong>start</strong><span class="classifier">int, &gt;=0</span></dt><dd><p>Position label of first amino acid position (starting at N-terminus).</p>
+</dd>
+<dt><strong>tmd_seq</strong><span class="classifier">str, optional</span></dt><dd><p>Sequence of TMD. ‘tmd_len’ is set to length of TMD if sequence for TMD, JMD-N and JMD-C are given.
+Recommended if feature impact or mean difference should be depicted for one sample.</p>
+</dd>
+<dt><strong>jmd_n_seq</strong><span class="classifier">str, optional</span></dt><dd><p>Sequence of JMD_N. ‘jmd_n_len’ is set to length of JMD_N if sequence for TMD, JMD-N and JMD-C are given.
+Recommended if feature impact or mean difference should be depicted for one sample.</p>
+</dd>
+<dt><strong>jmd_c_seq</strong><span class="classifier">str, optional</span></dt><dd><p>Sequence of JMD_C. ‘jmd_c_len’ is set to length of JMD_C if sequence for TMD, JMD-N and JMD-C are given.
+Recommended if feature impact or mean difference should be depicted for one sample.</p>
+</dd>
+<dt><strong>tmd_color</strong><span class="classifier">str, default = ‘mediumspringgreen’</span></dt><dd><p>Color of TMD bar.</p>
+</dd>
+<dt><strong>jmd_color</strong><span class="classifier">str, default = ‘blue’</span></dt><dd><p>Color of JMD-N and JMD-C bar.</p>
+</dd>
+<dt><strong>tmd_seq_color</strong><span class="classifier">str, default = ‘black’</span></dt><dd><p>Color of TMD sequence.</p>
+</dd>
+<dt><strong>jmd_seq_color</strong><span class="classifier">str, default = ‘white’</span></dt><dd><p>Color of JMD-N and JMD-C sequence.</p>
+</dd>
+<dt><strong>seq_size</strong><span class="classifier">float, optional</span></dt><dd><p>Font size of all sequence parts in points. If None, optimized automatically.</p>
+</dd>
+<dt><strong>tmd_jmd_fontsize</strong><span class="classifier">float, optional</span></dt><dd><p>Font size of ‘TMD’, ‘JMD-N’ and ‘JMD-C’  label in points. If None, optimized automatically.</p>
+</dd>
+<dt><strong>xtick_size</strong><span class="classifier">float, default = 11.0</span></dt><dd><p>Size of x ticks in points. Passed as ‘size’ argument to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.set_xticklabels.html#matplotlib.axes.Axes.set_xticklabels" title="(in Matplotlib v3.7.2)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.set_xticklabels()</span></code></a>.</p>
+</dd>
+<dt><strong>xtick_width</strong><span class="classifier">float, default = 2.0</span></dt><dd><p>Widht of x ticks in points. Passed as ‘width’ argument to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.tick_params.html#matplotlib.axes.Axes.tick_params" title="(in Matplotlib v3.7.2)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.tick_params()</span></code></a>.</p>
+</dd>
+<dt><strong>xtick_length</strong><span class="classifier">float, default = 5.0,</span></dt><dd><p>Length of x ticks in points. Passed as ‘length’ argument to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.tick_params.html#matplotlib.axes.Axes.tick_params" title="(in Matplotlib v3.7.2)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.tick_params()</span></code></a>.</p>
+</dd>
+<dt><strong>ytick_size</strong><span class="classifier">float, optional</span></dt><dd><p>Size of scale information as y ticks in points. Passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.tick_params.html#matplotlib.axes.Axes.tick_params" title="(in Matplotlib v3.7.2)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.tick_params()</span></code></a>.
+If None, optimized automatically.</p>
+</dd>
+<dt><strong>add_legend_cat</strong><span class="classifier">bool, default = True,</span></dt><dd><p>Whether to add legend for categories under plot and classification of scales at y-axis.</p>
+</dd>
+<dt><strong>legend_kws</strong><span class="classifier">dict, optional</span></dt><dd><p>Keyword arguments passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html#matplotlib.axes.Axes.legend" title="(in Matplotlib v3.7.2)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.legend()</span></code></a></p>
+</dd>
+<dt><strong>kwargs</strong><span class="classifier">other keyword arguments</span></dt><dd><p>All other keyword arguments passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.pcolormesh.html#matplotlib.axes.Axes.pcolormesh" title="(in Matplotlib v3.7.2)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.pcolormesh()</span></code></a>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>ax</strong><span class="classifier">matplotlib Axes</span></dt><dd></dd>
+<dt>Axes object containing the heatmap.</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<ul class="simple">
+<li><p>‘cmap_n_colors’ is effective only if ‘vmin’ and ‘vmax’ align with the data.</p></li>
+<li><p>‘tmd_seq_color’ and ‘jmd_seq_color’ are applicable only when ‘tmd_seq’, ‘jmd_n_seq’, and ‘jmd_c_seq’ are provided.</p></li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference external" href="https://seaborn.pydata.org/generated/seaborn.heatmap.html#seaborn.heatmap" title="(in seaborn v0.12.2)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">seaborn.heatmap</span></code></a></dt><dd><p>Plotting heatmap using seaborn. See <a class="reference external" href="https://seaborn.pydata.org/generated/seaborn.heatmap.html">Seaborn documentation</a> for more details.</p>
+</dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<p>Plot CPP feature heatmap:</p>
+<p>(<a class="reference download internal" download="" href="../_downloads/a1e0721bda366e81dd2b5d60fcd98bc8/aaanalysis-CPP-1.py"><code class="xref download docutils literal notranslate"><span class="pre">Source</span> <span class="pre">code</span></code></a>)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.CPP.plot_profile">
+<span class="sig-name descname"><span class="pre">plot_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_feat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'category'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mean_dif'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'count'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(7,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dict_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.75</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_jmd_tmd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mediumspringgreen'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'blue'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_seq_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'black'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_seq_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'white'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_jmd_fontsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtick_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtick_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtick_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xticks_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ytick_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ytick_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ytick_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_tmd_area</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highlight_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'both'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_legend_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shap_plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/cpp.html#CPP.plot_profile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L685-L869"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.CPP.plot_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot feature profile for given features from ‘df_feat’.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>df_feat</strong><span class="classifier">class:<cite>pandas.DataFrame</cite>, optional, default=None</span></dt><dd><p>Dataframe containing the features to be plotted. If None, default features from the instance will be used.</p>
+</dd>
+<dt><strong>y</strong><span class="classifier">str, default=’category’</span></dt><dd><p>Column name in df_feat which contains the categories for grouping.</p>
+</dd>
+<dt><strong>val_col</strong><span class="classifier">str, default=’mean_dif’</span></dt><dd><p>Column name in df_feat which contains the values to be plotted.</p>
+</dd>
+<dt><strong>val_type</strong><span class="classifier">str, default=’count’</span></dt><dd><p>Type of value. Available options are specified by the <cite>check_value_type</cite> function.</p>
+</dd>
+<dt><strong>normalize</strong><span class="classifier">bool, default=False</span></dt><dd><p>If True, the feature values will be normalized.</p>
+</dd>
+<dt><strong>figsize</strong><span class="classifier">tuple, default=(7, 5)</span></dt><dd><p>Size of the plot.</p>
+</dd>
+<dt><strong>title</strong><span class="classifier">str, optional</span></dt><dd><p>Title of the plot.</p>
+</dd>
+<dt><strong>title_kws</strong><span class="classifier">dict, optional</span></dt><dd><p>Keyword arguments to customize the title appearance.</p>
+</dd>
+<dt><strong>dict_color</strong><span class="classifier">dict, optional</span></dt><dd><p>Dictionary mapping categories to colors.</p>
+</dd>
+<dt><strong>edge_color</strong><span class="classifier">str, default=’none’</span></dt><dd><p>Color of the edges of the bars.</p>
+</dd>
+<dt><strong>bar_width</strong><span class="classifier">float, default=0.75</span></dt><dd><p>Width of the bars.</p>
+</dd>
+<dt><strong>add_jmd_tmd</strong><span class="classifier">bool, default=True</span></dt><dd><p>If True, adds JMD and TMD lines/annotations to the plot.</p>
+</dd>
+<dt><strong>tmd_len</strong><span class="classifier">int, default=20</span></dt><dd><p>Length of the TMD.</p>
+</dd>
+<dt><strong>start</strong><span class="classifier">int, default=1</span></dt><dd><p>Start position.</p>
+</dd>
+<dt><strong>jmd_n_seq</strong><span class="classifier">str, optional</span></dt><dd><p>JMD N-terminal sequence.</p>
+</dd>
+<dt><strong>tmd_seq</strong><span class="classifier">str, optional</span></dt><dd><p>TMD sequence.</p>
+</dd>
+<dt><strong>jmd_c_seq</strong><span class="classifier">str, optional</span></dt><dd><p>JMD C-terminal sequence.</p>
+</dd>
+<dt><strong>tmd_color</strong><span class="classifier">str, default=’mediumspringgreen’</span></dt><dd><p>Color for TMD.</p>
+</dd>
+<dt><strong>jmd_color</strong><span class="classifier">str, default=’blue’</span></dt><dd><p>Color for JMD.</p>
+</dd>
+<dt><strong>tmd_seq_color</strong><span class="classifier">str, default=’black’</span></dt><dd><p>Color for TMD sequence.</p>
+</dd>
+<dt><strong>jmd_seq_color</strong><span class="classifier">str, default=’white’</span></dt><dd><p>Color for JMD sequence.</p>
+</dd>
+<dt><strong>seq_size</strong><span class="classifier">float, optional</span></dt><dd><p>Font size for sequence annotations.</p>
+</dd>
+<dt><strong>tmd_jmd_fontsize</strong><span class="classifier">float, optional</span></dt><dd><p>Font size for TMD and JMD annotations.</p>
+</dd>
+<dt><strong>xtick_size</strong><span class="classifier">float, default=11.0</span></dt><dd><p>Size for x-tick labels.</p>
+</dd>
+<dt><strong>xtick_width</strong><span class="classifier">float, default=2.0</span></dt><dd><p>Width of the x-ticks.</p>
+</dd>
+<dt><strong>xtick_length</strong><span class="classifier">float, default=5.0</span></dt><dd><p>Length of the x-ticks.</p>
+</dd>
+<dt><strong>xticks_pos</strong><span class="classifier">bool, default=False</span></dt><dd><p>If True, x-tick positions are adjusted based on given sequences.</p>
+</dd>
+<dt><strong>ytick_size</strong><span class="classifier">float, optional</span></dt><dd><p>Size for y-tick labels.</p>
+</dd>
+<dt><strong>ytick_width</strong><span class="classifier">float, default=2.0</span></dt><dd><p>Width of the y-ticks.</p>
+</dd>
+<dt><strong>ytick_length</strong><span class="classifier">float, default=5.0</span></dt><dd><p>Length of the y-ticks.</p>
+</dd>
+<dt><strong>ylim</strong><span class="classifier">tuple, optional</span></dt><dd><p>Y-axis limits.</p>
+</dd>
+<dt><strong>highlight_tmd_area</strong><span class="classifier">bool, default=True</span></dt><dd><p>If True, highlights the TMD area on the plot.</p>
+</dd>
+<dt><strong>highlight_alpha</strong><span class="classifier">float, default=0.15</span></dt><dd><p>Alpha value for TMD area highlighting.</p>
+</dd>
+<dt><strong>grid</strong><span class="classifier">bool, default=False</span></dt><dd><p>If True, a grid is added to the plot.</p>
+</dd>
+<dt><strong>grid_axis</strong><span class="classifier">str, default=’both’</span></dt><dd><p>Axis on which the grid is drawn. Options: ‘both’, ‘x’, ‘y’.</p>
+</dd>
+<dt><strong>add_legend_cat</strong><span class="classifier">bool, default=True</span></dt><dd><p>If True, a legend is added for categories.</p>
+</dd>
+<dt><strong>legend_kws</strong><span class="classifier">dict, optional</span></dt><dd><p>Keyword arguments for the legend.</p>
+</dd>
+<dt><strong>shap_plot</strong><span class="classifier">bool, default=False</span></dt><dd><p>If True, SHAP (SHapley Additive exPlanations) plot is generated.</p>
+</dd>
+<dt><strong>**kwargs</strong><span class="classifier">dict</span></dt><dd><p>Other keyword arguments passed to internal functions or plotting libraries.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes</span></dt><dd><p>The axes object containing the plot.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.CPP.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parametric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_pre_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pct_pre_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_std_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_overlap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_cor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_processes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/cpp.html#CPP.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L581-L682"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.CPP.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform CPP pipeline by creation and two-step filtering of features. CPP aims to
+identify a collection of non-redundant features that are most discriminant between
+a test and a reference group of sequences.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>labels</strong><span class="classifier">array-like, shape (n_samples)</span></dt><dd><p>Class labels for samples in sequence DataFrame (test=1, reference=0).</p>
+</dd>
+<dt><strong>parametric</strong><span class="classifier">bool, default = False</span></dt><dd><p>Whether to use parametric (T-test) or non-parametric (U-test) test for p-value computation.</p>
+</dd>
+<dt><strong>n_filter</strong><span class="classifier">int, default = 100</span></dt><dd><p>Number of features to be filtered/selected by CPP algorithm.</p>
+</dd>
+<dt><strong>n_pre_filter</strong><span class="classifier">int, optional</span></dt><dd><p>Number of feature to be pre-filtered by CPP algorithm. If None, a percentage of all features is used.</p>
+</dd>
+<dt><strong>tmd_len</strong><span class="classifier">int, &gt;0</span></dt><dd><p>Length of Transmembrane Domain (TMD) used for positions.</p>
+</dd>
+<dt><strong>start</strong><span class="classifier">int, &gt;=0</span></dt><dd><p>Position label of first amino acid position (starting at N-terminus).</p>
+</dd>
+<dt><strong>check_cat</strong><span class="classifier">bool, default = True</span></dt><dd><p>Whether to check for redundancy within scale categories.</p>
+</dd>
+<dt><strong>pct_pre_filter</strong><span class="classifier">int, default = 5</span></dt><dd><p>Percentage of all features that should remain after the pre-filtering step.</p>
+</dd>
+<dt><strong>max_std_test</strong><span class="classifier">float [0-1], default = 0.2</span></dt><dd><p>Maximum standard deviation within the test group used as threshold for pre-filtering.</p>
+</dd>
+<dt><strong>max_overlap</strong><span class="classifier">float [0-1], default = 0.5</span></dt><dd><p>Maximum positional overlap of features used as threshold for filtering.</p>
+</dd>
+<dt><strong>max_cor</strong><span class="classifier">float [0-1], default = 0.5</span></dt><dd><p>Maximum Pearson correlation of features used as threshold for filtering.</p>
+</dd>
+<dt><strong>n_processes</strong><span class="classifier">int, default = None</span></dt><dd><p>Number of CPUs used for multiprocessing. If None, number will be optimized automatically.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl>
+<dt><strong>df_feat</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, shape (n_feature, n_feature_information)</span></dt><dd><p>DataFrame with a unique identifier, scale information, statistics, and positions for each feature.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The feature DataFrame contains the following eleven columns, including the unique
+feature id (1), scale information (2-4), statistical results used for filtering and
+ranking (5-10), and feature positions (11):</p>
+<ol class="arabic simple">
+<li><p>features: Feature ID (PART-SPLIT-SCALE)</p></li>
+<li><p>category: Scale category</p></li>
+<li><p>subcategory: Sub category of scales</p></li>
+<li><p>scale_name: Name of scales</p></li>
+<li><p>abs_auc: Absolute adjusted AUC [-0.5 to 0.5]</p></li>
+<li><p>abs_mean_dif: Absolute mean differences between test and reference group [0 to 1]</p></li>
+<li><p>std_test: Standard deviation in test group</p></li>
+<li><p>std_ref: Standard deviation in reference group</p></li>
+<li><p>p_val: Non-parametric (mann_whitney) or parametric (ttest_indep) statistic</p></li>
+<li><p>p_val_fdr_bh: Benjamini-Hochberg FDR corrected p-values</p></li>
+<li><p>positions: Feature positions for default settings</p></li>
+</ol>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="aaanalysis.SequenceFeature.html" class="btn btn-neutral float-right" title="aaanalysis.SequenceFeature" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="aaanalysis.AAclust.html" class="btn btn-neutral float-left" title="aaanalysis.AAclust" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2023, Stephan Breimann.
+
+    </p>
+  </div> 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

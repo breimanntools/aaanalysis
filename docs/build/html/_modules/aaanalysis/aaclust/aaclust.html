@@ -11,14 +11,15 @@
   
 
   
-  <link rel="stylesheet" href="../../../_static/css/style.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/css/style.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/style.css" type="text/css" />
 
   
   
@@ -41,6 +42,7 @@
         <script src="../../../_static/clipboard.min.js"></script>
         <script src="../../../_static/copybutton.js"></script>
         <script src="../../../_static/design-tabs.js"></script>
+        <script src="../../../_static/toggle_menu.js"></script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
@@ -95,9 +97,10 @@
               
             
             
-              <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../tutorials.html">Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a></li>
+              <p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
 </ul>
 
@@ -174,7 +177,8 @@
 <span class="kn">from</span> <span class="nn">sklearn.metrics.pairwise</span> <span class="kn">import</span> <span class="n">pairwise_distances</span>
 <span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
 
-<span class="kn">import</span> <span class="nn">aaanalysis.aaclust._utils</span> <span class="k">as</span> <span class="nn">ut</span>
+<span class="kn">import</span> <span class="nn">aaanalysis.aaclust._utils</span> <span class="k">as</span> <span class="nn">_ut</span>
+<span class="kn">import</span> <span class="nn">aaanalysis._utils</span> <span class="k">as</span> <span class="nn">ut</span>
 
 
 <span class="c1"># I Helper Functions</span>
@@ -366,7 +370,7 @@
 <span class="k">def</span> <span class="nf">_get_quality_measure</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label_cluster</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get quality measure single cluster given by feature matrix X, labels, and label of cluster&quot;&quot;&quot;</span>
     <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span> <span class="o">==</span> <span class="n">label_cluster</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="n">ut</span><span class="o">.</span><span class="n">METRIC_CORRELATION</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="n">_ut</span><span class="o">.</span><span class="n">METRIC_CORRELATION</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">get_min_cor</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">on_center</span><span class="o">=</span><span class="n">on_center</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">get_max_dist</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">on_center</span><span class="o">=</span><span class="n">on_center</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
@@ -375,7 +379,7 @@
 <span class="k">def</span> <span class="nf">_get_best_cluster</span><span class="p">(</span><span class="n">dict_clust_qm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get cluster with best quality measure: either highest minimum Pearson correlation</span>
 <span class="sd">    or lowest distance measure&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="n">ut</span><span class="o">.</span><span class="n">METRIC_CORRELATION</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="n">_ut</span><span class="o">.</span><span class="n">METRIC_CORRELATION</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">dict_clust_qm</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">dict_clust_qm</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">dict_clust_qm</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">dict_clust_qm</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
@@ -470,7 +474,7 @@
     <span class="k">return</span> <span class="n">names_cluster</span>
 
 
-<div class="viewcode-block" id="AAclust"><a class="viewcode-back" href="../../../api.html#aaanalysis.aaclust.AAclust">[docs]</a><span class="k">class</span> <span class="nc">AAclust</span><span class="p">:</span>
+<div class="viewcode-block" id="AAclust"><a class="viewcode-back" href="../../../generated/aaanalysis.AAclust.html#aaanalysis.AAclust">[docs]</a><span class="k">class</span> <span class="nc">AAclust</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    AAclust: A k-optimized clustering framework for selecting redundancy-reduced set of numerical scales.</span>
 
@@ -486,8 +490,7 @@
 <span class="sd">        The employed clustering model requiring pre-defined number of clusters &#39;k&#39;, given as &#39;n_clusters&#39; parameter.</span>
 <span class="sd">    model_kwargs : dict, optional, default = {}</span>
 <span class="sd">        A dictionary of keyword arguments to pass to the selected clustering model.</span>
-<span class="sd">    name_unclassified : str, optional, default = &#39;unclassified&#39;</span>
-<span class="sd">        A label assigned to clusters that couldn&#39;t be distinctly classified.</span>
+
 <span class="sd">    verbose : bool, optional, default = False</span>
 <span class="sd">        A flag to enable or disable verbose outputs.</span>
 
@@ -508,17 +511,16 @@
 <span class="sd">    medoid_ind_ : array-like, default = None</span>
 <span class="sd">        Indices of the chosen medoids within the original dataset.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name_unclassified</span><span class="o">=</span><span class="s2">&quot;unclassified&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="AAclust.__init__"><a class="viewcode-back" href="../../../generated/aaanalysis.AAclust.html#aaanalysis.AAclust.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="c1"># Model parameters</span>
         <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">model</span> <span class="o">=</span> <span class="n">KMeans</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
         <span class="k">if</span> <span class="n">model_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">model_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="n">model_kwargs</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_model</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="n">model_kwargs</span><span class="p">)</span>
+        <span class="n">model_kwargs</span> <span class="o">=</span> <span class="n">_ut</span><span class="o">.</span><span class="n">check_model</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="n">model_kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="n">model_kwargs</span>
         <span class="c1"># AAclust clustering settings</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_name_unclassified</span> <span class="o">=</span> <span class="n">name_unclassified</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span> <span class="o">=</span> <span class="n">verbose</span>
         <span class="c1"># Output parameters (will be set during model fitting)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_clusters</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Number of by AAclust obtained clusters</span>
@@ -527,10 +529,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">center_labels_</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">medoids_</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">medoid_labels_</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">medoid_ind_</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">medoid_ind_</span> <span class="o">=</span> <span class="kc">None</span></div>
 
     <span class="c1"># Clustering method</span>
-<div class="viewcode-block" id="AAclust.fit"><a class="viewcode-back" href="../../../api.html#aaanalysis.aaclust.AAclust.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">min_th</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="n">merge_metric</span><span class="o">=</span><span class="s2">&quot;euclidean&quot;</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="AAclust.fit"><a class="viewcode-back" href="../../../generated/aaanalysis.AAclust.html#aaanalysis.AAclust.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">min_th</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="n">merge_metric</span><span class="o">=</span><span class="s2">&quot;euclidean&quot;</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fit the AAclust model on the data, optimizing cluster formation using Pearson correlation.</span>
 
@@ -548,8 +550,8 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        X : array-like of shape (n_samples, n_features)</span>
-<span class="sd">            Feature matrix with rows as samples and columns as features.</span>
+<span class="sd">        X : array-like, shape (n_samples, n_features)</span>
+<span class="sd">            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.</span>
 <span class="sd">        names : list of str, optional</span>
 <span class="sd">            Sample names. If provided, returns names of the medoids.</span>
 <span class="sd">        on_center : bool, default = True</span>
@@ -576,8 +578,8 @@
 <span class="sd">        For further information, refer to the AAclust paper : TODO: add link to AAclust paper</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Check input</span>
-        <span class="n">ut</span><span class="o">.</span><span class="n">check_min_th</span><span class="p">(</span><span class="n">min_th</span><span class="o">=</span><span class="n">min_th</span><span class="p">)</span>
-        <span class="n">merge_metric</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_merge_metric</span><span class="p">(</span><span class="n">merge_metric</span><span class="o">=</span><span class="n">merge_metric</span><span class="p">)</span>
+        <span class="n">_ut</span><span class="o">.</span><span class="n">check_min_th</span><span class="p">(</span><span class="n">min_th</span><span class="o">=</span><span class="n">min_th</span><span class="p">)</span>
+        <span class="n">merge_metric</span> <span class="o">=</span> <span class="n">_ut</span><span class="o">.</span><span class="n">check_merge_metric</span><span class="p">(</span><span class="n">merge_metric</span><span class="o">=</span><span class="n">merge_metric</span><span class="p">)</span>
         <span class="n">X</span><span class="p">,</span> <span class="n">names</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_feat_matrix</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">)</span>
         <span class="n">args</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="p">,</span> <span class="n">min_th</span><span class="o">=</span><span class="n">min_th</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="n">on_center</span><span class="p">)</span>
         <span class="c1"># Clustering using given clustering models</span>
@@ -622,7 +624,7 @@
             <span class="n">names_medoid</span> <span class="o">=</span> <span class="p">[</span><span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">medoid_ind</span><span class="p">]</span>
             <span class="k">return</span> <span class="n">names_medoid</span></div>
 
-<div class="viewcode-block" id="AAclust.cluster_naming"><a class="viewcode-back" href="../../../api.html#aaanalysis.aaclust.AAclust.cluster_naming">[docs]</a>    <span class="k">def</span> <span class="nf">cluster_naming</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name_unclassified</span><span class="o">=</span><span class="s2">&quot;Unclassified&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="AAclust.cluster_naming"><a class="viewcode-back" href="../../../generated/aaanalysis.AAclust.html#aaanalysis.AAclust.cluster_naming">[docs]</a>    <span class="k">def</span> <span class="nf">cluster_naming</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name_unclassified</span><span class="o">=</span><span class="s2">&quot;Unclassified&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Assigns names to clusters based on scale names and their frequency.</span>
 
@@ -637,7 +639,6 @@
 <span class="sd">            Cluster labels. If not provided, uses the labels from the fitted model.</span>
 <span class="sd">        name_unclassified : str, default = &quot;Unclassified&quot;</span>
 <span class="sd">            Name assigned to clusters that cannot be classified with the given names.</span>
-
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        cluster_names : list</span>
@@ -669,15 +670,15 @@
         <span class="n">cluster_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">dict_cluster_names</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">cluster_names</span></div>
 
-<div class="viewcode-block" id="AAclust.get_cluster_centers"><a class="viewcode-back" href="../../../api.html#aaanalysis.aaclust.AAclust.get_cluster_centers">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="AAclust.get_cluster_centers"><a class="viewcode-back" href="../../../generated/aaanalysis.AAclust.html#aaanalysis.AAclust.get_cluster_centers">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">get_cluster_centers</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the center of each cluster based on the given labels.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        X : array-like of shape (n_samples, n_features)</span>
-<span class="sd">            Feature matrix with rows as samples and columns as features.</span>
+<span class="sd">        X : array-like, shape (n_samples, n_features)</span>
+<span class="sd">            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.</span>
 <span class="sd">        labels : list or array-like, optional</span>
 <span class="sd">            Cluster labels for each sample in X.</span>
 
@@ -691,15 +692,15 @@
         <span class="n">centers</span><span class="p">,</span> <span class="n">center_labels</span> <span class="o">=</span> <span class="n">get_cluster_centers</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">centers</span><span class="p">,</span> <span class="n">center_labels</span></div>
 
-<div class="viewcode-block" id="AAclust.get_cluster_medoids"><a class="viewcode-back" href="../../../api.html#aaanalysis.aaclust.AAclust.get_cluster_medoids">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="AAclust.get_cluster_medoids"><a class="viewcode-back" href="../../../generated/aaanalysis.AAclust.html#aaanalysis.AAclust.get_cluster_medoids">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">get_cluster_medoids</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the medoid of each cluster based on the given labels.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        X : array-like of shape (n_samples, n_features)</span>
-<span class="sd">            Feature matrix with rows as samples and columns as features.</span>
+<span class="sd">         X : array-like, shape (n_samples, n_features)</span>
+<span class="sd">            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.</span>
 <span class="sd">        labels : list or array-like, optional</span>
 <span class="sd">            Cluster labels for each sample in X.</span>
 
@@ -715,7 +716,7 @@
         <span class="n">medoids</span><span class="p">,</span> <span class="n">medoid_labels</span><span class="p">,</span> <span class="n">medoid_ind</span> <span class="o">=</span> <span class="n">get_cluster_medoids</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">medoids</span><span class="p">,</span> <span class="n">medoid_labels</span><span class="p">,</span> <span class="n">medoid_ind</span></div>
 
-<div class="viewcode-block" id="AAclust.correlation"><a class="viewcode-back" href="../../../api.html#aaanalysis.aaclust.AAclust.correlation">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="AAclust.correlation"><a class="viewcode-back" href="../../../generated/aaanalysis.AAclust.html#aaanalysis.AAclust.correlation">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">correlation</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">X_ref</span><span class="p">,</span> <span class="n">labels_test</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels_ref</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">positive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                     <span class="n">on_center</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">except_unclassified</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>

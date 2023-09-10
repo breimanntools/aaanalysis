@@ -11,14 +11,15 @@
   
 
   
-  <link rel="stylesheet" href="../../../_static/css/style.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/css/style.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
   <link rel="stylesheet" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/style.css" type="text/css" />
 
   
   
@@ -41,6 +42,7 @@
         <script src="../../../_static/clipboard.min.js"></script>
         <script src="../../../_static/copybutton.js"></script>
         <script src="../../../_static/design-tabs.js"></script>
+        <script src="../../../_static/toggle_menu.js"></script>
     
     <script type="text/javascript" src="../../../_static/js/theme.js"></script>
 
@@ -95,9 +97,10 @@
               
             
             
-              <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../tutorials.html">Tutorial</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a></li>
+              <p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
 </ul>
 
@@ -367,11 +370,11 @@
         <span class="k">return</span> <span class="n">seq_periodicpattern</span>
 
 
-<div class="viewcode-block" id="SplitRange"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.SplitRange">[docs]</a><span class="k">class</span> <span class="nc">SplitRange</span><span class="p">:</span>
+<div class="viewcode-block" id="SplitRange"><a class="viewcode-back" href="../../../generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange">[docs]</a><span class="k">class</span> <span class="nc">SplitRange</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for creating range of splits for testing sets of multiple features in CPP&quot;&quot;&quot;</span>
 
     <span class="c1"># Segment methods</span>
-<div class="viewcode-block" id="SplitRange.segment"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.SplitRange.segment">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SplitRange.segment"><a class="viewcode-back" href="../../../generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange.segment">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">segment</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_split_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_split_max</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get range of all possible Segment splits for given sequences.</span>
 <span class="sd">        Output matches with SequenceFeature.labels_segment.</span>
@@ -395,7 +398,7 @@
                 <span class="n">seq_splits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">seq_segment</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">seq_splits</span></div>
 
-<div class="viewcode-block" id="SplitRange.labels_segment"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.SplitRange.labels_segment">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SplitRange.labels_segment"><a class="viewcode-back" href="../../../generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange.labels_segment">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">labels_segment</span><span class="p">(</span><span class="n">n_split_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_split_max</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get labels for range of Segment splits.</span>
 <span class="sd">        Output matches with SequenceFeature.segment.</span>
@@ -417,7 +420,7 @@
         <span class="k">return</span> <span class="n">labels</span></div>
 
     <span class="c1"># Pattern methods</span>
-<div class="viewcode-block" id="SplitRange.pattern"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.SplitRange.pattern">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SplitRange.pattern"><a class="viewcode-back" href="../../../generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange.pattern">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">pattern</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_min</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_max</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">len_max</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get range of all possible Pattern splits for given sequence.</span>
 <span class="sd">        Output matches with SequenceFeature.labels_pattern.</span>
@@ -445,7 +448,7 @@
                 <span class="n">seq_splits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">seq_pattern</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">seq_splits</span></div>
 
-<div class="viewcode-block" id="SplitRange.labels_pattern"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.SplitRange.labels_pattern">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SplitRange.labels_pattern"><a class="viewcode-back" href="../../../generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange.labels_pattern">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">labels_pattern</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_min</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_max</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">len_max</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get labels for range of Pattern splits.</span>
 <span class="sd">        Output matches with SequenceFeature.pattern.</span>
@@ -471,7 +474,7 @@
         <span class="k">return</span> <span class="n">labels</span></div>
 
     <span class="c1"># Periodic pattern methods</span>
-<div class="viewcode-block" id="SplitRange.periodicpattern"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.SplitRange.periodicpattern">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SplitRange.periodicpattern"><a class="viewcode-back" href="../../../generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange.periodicpattern">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">periodicpattern</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get range of all possible PeriodicPattern splits for given sequence.</span>
 <span class="sd">        Output matches with SequenceFeature.labels_periodicpattern.</span>
@@ -495,7 +498,7 @@
                     <span class="n">seq_splits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">seq_periodicpattern</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">seq_splits</span></div>
 
-<div class="viewcode-block" id="SplitRange.labels_periodicpattern"><a class="viewcode-back" href="../../../api.html#aaanalysis.cpp.SplitRange.labels_periodicpattern">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="SplitRange.labels_periodicpattern"><a class="viewcode-back" href="../../../generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange.labels_periodicpattern">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">labels_periodicpattern</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get labels of all possible PeriodicPattern splits.</span>
 <span class="sd">        Output matches with SequenceFeature.periodicpattern.</span>

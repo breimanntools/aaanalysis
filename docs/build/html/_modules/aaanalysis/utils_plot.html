@@ -1,0 +1,494 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>aaanalysis.utils_plot &mdash; AAanalysis</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/plot_directive.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/style.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+        <script src="../../_static/design-tabs.js"></script>
+        <script src="../../_static/toggle_menu.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> AAanalysis
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                latest
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">AAanalysis</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>aaanalysis.utils_plot</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for aaanalysis.utils_plot</h1><div class="highlight"><pre>
+<span></span><span class="ch">#! /usr/bin/python3</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Default plotting functions</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">aaanalysis._utils</span> <span class="k">as</span> <span class="nn">ut</span>
+
+
+<span class="c1"># Helper functions</span>
+<span class="k">def</span> <span class="nf">check_fig_format</span><span class="p">(</span><span class="n">fig_format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">list_fig_formats</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;eps&#39;</span><span class="p">,</span> <span class="s1">&#39;jpg&#39;</span><span class="p">,</span> <span class="s1">&#39;jpeg&#39;</span><span class="p">,</span> <span class="s1">&#39;pdf&#39;</span><span class="p">,</span> <span class="s1">&#39;pgf&#39;</span><span class="p">,</span> <span class="s1">&#39;png&#39;</span><span class="p">,</span> <span class="s1">&#39;ps&#39;</span><span class="p">,</span>
+                        <span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="s1">&#39;rgba&#39;</span><span class="p">,</span> <span class="s1">&#39;svg&#39;</span><span class="p">,</span> <span class="s1">&#39;svgz&#39;</span><span class="p">,</span> <span class="s1">&#39;tif&#39;</span><span class="p">,</span> <span class="s1">&#39;tiff&#39;</span><span class="p">,</span> <span class="s1">&#39;webp&#39;</span><span class="p">]</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">check_str</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;fig_format&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">fig_format</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fig_format</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">list_fig_formats</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;fig_format&#39; should be one of following: </span><span class="si">{</span><span class="n">list_fig_formats</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">check_grid_axis</span><span class="p">(</span><span class="n">grid_axis</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">):</span>
+    <span class="n">list_grid_axis</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;both&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">grid_axis</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">list_grid_axis</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;grid_axis&#39; (</span><span class="si">{</span><span class="n">grid_axis</span><span class="si">}</span><span class="s2">) should be one of following: </span><span class="si">{</span><span class="n">list_grid_axis</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">check_cats</span><span class="p">(</span><span class="n">list_cat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dict_color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">check_dict</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;dict_color&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">dict_color</span><span class="p">,</span> <span class="n">accept_none</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">list_cat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">list_cat</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Length of &#39;list_cat&#39; (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">list_cat</span><span class="p">)</span><span class="si">}</span><span class="s2">) and &#39;labels&#39; (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span><span class="si">}</span><span class="s2">) must match&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">dict_color</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Length of &#39;dict_color&#39; (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dict_color</span><span class="p">)</span><span class="si">}</span><span class="s2">) and &#39;labels&#39; (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span><span class="si">}</span><span class="s2">) must match&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">list_cat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">list_cat</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dict_color</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;list_cat&#39; and &#39;dict_color&#39; should not be None&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">list_cat</span>
+
+
+<span class="c1"># Default plotting functions</span>
+<div class="viewcode-block" id="plot_settings"><a class="viewcode-back" href="../../generated/aaanalysis.plot_settings.html#aaanalysis.plot_settings">[docs]</a><span class="k">def</span> <span class="nf">plot_settings</span><span class="p">(</span><span class="n">fig_format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">grid_axis</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">font_scale</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+                  <span class="n">change_size</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">weight_bold</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">adjust_elements</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                  <span class="n">short_ticks</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">no_ticks</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                  <span class="n">no_ticks_y</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">short_ticks_y</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">no_ticks_x</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">short_ticks_x</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configure general settings for plot visualization with various customization options.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fig_format : str, default=&#39;pdf&#39;</span>
+<span class="sd">        Specifies the file format for saving the plot.</span>
+<span class="sd">    verbose : bool, default=False</span>
+<span class="sd">        If True, enables verbose output.</span>
+<span class="sd">    grid : bool, default=False</span>
+<span class="sd">        If True, makes the grid visible.</span>
+<span class="sd">    grid_axis : str, default=&#39;y&#39;</span>
+<span class="sd">        Choose the axis (&#39;y&#39;, &#39;x&#39;, &#39;both&#39;) to apply the grid to.</span>
+<span class="sd">    font_scale : float, default=0.7</span>
+<span class="sd">        Sets the scale for font sizes in the plot.</span>
+<span class="sd">    change_size : bool, default=True</span>
+<span class="sd">        If True, adjusts the size of plot elements.</span>
+<span class="sd">    weight_bold : bool, default=True</span>
+<span class="sd">        If True, text elements appear in bold.</span>
+<span class="sd">    adjust_elements : bool, default=True</span>
+<span class="sd">        If True, makes additional visual and layout adjustments to the plot.</span>
+<span class="sd">    short_ticks : bool, default=False</span>
+<span class="sd">        If True, uses short tick marks.</span>
+<span class="sd">    no_ticks : bool, default=False</span>
+<span class="sd">        If True, removes all tick marks.</span>
+<span class="sd">    no_ticks_y : bool, default=False</span>
+<span class="sd">        If True, removes tick marks on the y-axis.</span>
+<span class="sd">    short_ticks_y : bool, default=False</span>
+<span class="sd">        If True, uses short tick marks on the y-axis.</span>
+<span class="sd">    no_ticks_x : bool, default=False</span>
+<span class="sd">        If True, removes tick marks on the x-axis.</span>
+<span class="sd">    short_ticks_x : bool, default=False</span>
+<span class="sd">        If True, uses short tick marks on the x-axis.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This function modifies the global settings of Matplotlib and Seaborn libraries.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import aaanalysis as aa</span>
+<span class="sd">    &gt;&gt;&gt; aa.plot_settings(fig_format=&quot;pdf&quot;, font_scale=1.0, weight_bold=False)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Check input</span>
+    <span class="n">check_fig_format</span><span class="p">(</span><span class="n">fig_format</span><span class="o">=</span><span class="n">fig_format</span><span class="p">)</span>
+    <span class="n">check_grid_axis</span><span class="p">(</span><span class="n">grid_axis</span><span class="o">=</span><span class="n">grid_axis</span><span class="p">)</span>
+    <span class="n">args_bool</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;verbose&quot;</span><span class="p">:</span> <span class="n">verbose</span><span class="p">,</span> <span class="s2">&quot;grid&quot;</span><span class="p">:</span> <span class="n">grid</span><span class="p">,</span> <span class="s2">&quot;change_size&quot;</span><span class="p">:</span> <span class="n">change_size</span><span class="p">,</span> <span class="s2">&quot;weight_bold&quot;</span><span class="p">:</span> <span class="n">weight_bold</span><span class="p">,</span>
+                 <span class="s2">&quot;adjust_elements&quot;</span><span class="p">:</span> <span class="n">adjust_elements</span><span class="p">,</span>
+                 <span class="s2">&quot;short_ticks&quot;</span><span class="p">:</span> <span class="n">short_ticks</span><span class="p">,</span> <span class="s2">&quot;no_ticks&quot;</span><span class="p">:</span> <span class="n">no_ticks</span><span class="p">,</span> <span class="s2">&quot;no_ticks_y&quot;</span><span class="p">:</span> <span class="n">no_ticks_y</span><span class="p">,</span>
+                 <span class="s2">&quot;short_ticks_y&quot;</span><span class="p">:</span> <span class="n">short_ticks_y</span><span class="p">,</span> <span class="s2">&quot;no_ticks_x&quot;</span><span class="p">:</span> <span class="n">no_ticks_x</span><span class="p">,</span> <span class="s2">&quot;short_ticks_x&quot;</span><span class="p">:</span> <span class="n">short_ticks_x</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">args_bool</span><span class="p">:</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_bool</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">args_bool</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">check_non_negative_number</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;font_scale&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">font_scale</span><span class="p">,</span> <span class="n">min_val</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">just_int</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># Set embedded fonts in PDF</span>
+    <span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">mpl</span><span class="o">.</span><span class="n">rcParamsDefault</span><span class="p">)</span>
+    <span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;pdf.fonttype&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">42</span>
+    <span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;pdf.fonttype&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">42</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">keys</span><span class="p">)</span>    <span class="c1"># Print all plot settings that can be modified in general</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">change_size</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;font.family&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;sans-serif&quot;</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;font.sans-serif&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Arial&quot;</span>
+        <span class="n">font</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;family&#39;</span><span class="p">:</span> <span class="s1">&#39;Arial&#39;</span><span class="p">}</span>
+        <span class="n">mpl</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s1">&#39;font&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">font</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s2">&quot;talk&quot;</span><span class="p">,</span> <span class="n">font_scale</span><span class="o">=</span><span class="n">font_scale</span><span class="p">)</span>  <span class="c1"># Font settings https://matplotlib.org/3.1.1/tutorials/text/text_props.html</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;font.family&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;sans-serif&quot;</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;font.sans-serif&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Arial&quot;</span>
+    <span class="k">if</span> <span class="n">weight_bold</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.labelweight&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;bold&quot;</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.titleweight&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;bold&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.linewidth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;xtick.major.width&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.8</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;xtick.minor.width&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.6</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;ytick.major.width&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.8</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;ytick.minor.width&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.6</span>
+    <span class="k">if</span> <span class="n">short_ticks</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;xtick.major.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">3.5</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;xtick.minor.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;ytick.major.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">3.5</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;ytick.minor.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">if</span> <span class="n">short_ticks_x</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;xtick.major.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">3.5</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;xtick.minor.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">if</span> <span class="n">short_ticks_y</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;ytick.major.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">3.5</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;ytick.minor.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="k">if</span> <span class="n">no_ticks</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;xtick.major.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;xtick.minor.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;ytick.major.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;ytick.minor.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">no_ticks_x</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;xtick.major.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;xtick.minor.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">no_ticks_y</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;ytick.major.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;ytick.minor.size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.labelsize&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">17</span> <span class="c1">#13.5</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.titlesize&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">16.5</span> <span class="c1">#15</span>
+    <span class="k">if</span> <span class="n">fig_format</span> <span class="o">==</span> <span class="s2">&quot;pdf&quot;</span><span class="p">:</span>
+        <span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;pdf.fonttype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">42</span>
+    <span class="k">elif</span> <span class="s2">&quot;svg&quot;</span> <span class="ow">in</span> <span class="n">fig_format</span><span class="p">:</span>
+        <span class="n">mpl</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;svg.fonttype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;none&#39;</span>
+    <span class="n">font</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;family&#39;</span><span class="p">:</span> <span class="s1">&#39;Arial&#39;</span><span class="p">,</span> <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="s2">&quot;bold&quot;</span><span class="p">}</span> <span class="k">if</span> <span class="n">weight_bold</span> <span class="k">else</span> <span class="p">{</span><span class="s2">&quot;family&quot;</span><span class="p">:</span> <span class="s2">&quot;Arial&quot;</span><span class="p">}</span>
+    <span class="n">mpl</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s1">&#39;font&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">font</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">adjust_elements</span><span class="p">:</span>
+        <span class="c1"># Error bars</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;errorbar.capsize&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>   <span class="c1"># https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.errorbar.html</span>
+        <span class="c1"># Grid</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.grid.axis&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">grid_axis</span>  <span class="c1"># &#39;y&#39;, &#39;x&#39;, &#39;both&#39;</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;axes.grid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">grid</span>
+        <span class="c1"># Legend</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;legend.frameon&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;legend.fontsize&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;medium&quot;</span> <span class="c1">#&quot;x-small&quot;</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">&quot;legend.loc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;upper right&#39;</span>  <span class="c1"># https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.legend.html</span></div>
+
+
+<div class="viewcode-block" id="plot_gcfs"><a class="viewcode-back" href="../../generated/aaanalysis.plot_gcfs.html#aaanalysis.plot_gcfs">[docs]</a><span class="k">def</span> <span class="nf">plot_gcfs</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get current font size, which is set by ut.plot_settings function&quot;&quot;&quot;</span>
+    <span class="c1"># Get the current plotting context</span>
+    <span class="n">current_context</span> <span class="o">=</span> <span class="n">sns</span><span class="o">.</span><span class="n">plotting_context</span><span class="p">()</span>
+    <span class="n">font_size</span> <span class="o">=</span> <span class="n">current_context</span><span class="p">[</span><span class="s1">&#39;font.size&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">font_size</span></div>
+
+
+<div class="viewcode-block" id="plot_set_legend"><a class="viewcode-back" href="../../generated/aaanalysis.plot_set_legend.html#aaanalysis.plot_set_legend">[docs]</a><span class="k">def</span> <span class="nf">plot_set_legend</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">handles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dict_color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">list_cat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=-</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                    <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">return_handles</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s2">&quot;upper left&quot;</span><span class="p">,</span>
+                    <span class="n">labelspacing</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">columnspacing</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fontsize_legend</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title_align_left</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">fontsize_weight</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set a customizable legend for a plot.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ax : matplotlib.axes.Axes, default=None</span>
+<span class="sd">        The axes to attach the legend to.</span>
+<span class="sd">    handles : list, default=None</span>
+<span class="sd">        Handles for legend items.</span>
+<span class="sd">    dict_color : dict, default=None</span>
+<span class="sd">        A dictionary mapping categories to colors.</span>
+<span class="sd">    list_cat : list, default=None</span>
+<span class="sd">        List of categories to include in the legend.</span>
+<span class="sd">    labels : list, default=None</span>
+<span class="sd">        Labels for legend items.</span>
+<span class="sd">    y : float, default=-0.2</span>
+<span class="sd">        The y-coordinate for the legend&#39;s anchor point.</span>
+<span class="sd">    x : float, default=0.5</span>
+<span class="sd">        The x-coordinate for the legend&#39;s anchor point.</span>
+<span class="sd">    ncol : int, default=3</span>
+<span class="sd">        Number of columns in the legend.</span>
+<span class="sd">    fontsize : int, default=11</span>
+<span class="sd">        Font size for the legend text.</span>
+<span class="sd">    weight : str, default=&#39;normal&#39;</span>
+<span class="sd">        Weight of the font.</span>
+<span class="sd">    lw : float, default=0</span>
+<span class="sd">        Line width for legend items.</span>
+<span class="sd">    edgecolor : color, default=None</span>
+<span class="sd">        Edge color for legend items.</span>
+<span class="sd">    return_handles : bool, default=False</span>
+<span class="sd">        Whether to return handles and labels.</span>
+<span class="sd">    loc : str, default=&#39;upper left&#39;</span>
+<span class="sd">        Location for the legend.</span>
+<span class="sd">    labelspacing : float, default=0.2</span>
+<span class="sd">        Vertical spacing between legend items.</span>
+<span class="sd">    columnspacing : int, default=1</span>
+<span class="sd">        Horizontal spacing between legend columns.</span>
+<span class="sd">    title : str, default=None</span>
+<span class="sd">        Title for the legend.</span>
+<span class="sd">    fontsize_legend : int, default=None</span>
+<span class="sd">        Font size for the legend title.</span>
+<span class="sd">    title_align_left : bool, default=True</span>
+<span class="sd">        Whether to align the title to the left.</span>
+<span class="sd">    fontsize_weight : str, default=&#39;normal&#39;</span>
+<span class="sd">        Font weight for the legend title.</span>
+<span class="sd">    shape : str, default=None</span>
+<span class="sd">        Marker shape for legend items.</span>
+<span class="sd">    **kwargs : dict</span>
+<span class="sd">        Additional arguments passed directly to ax.legend() for finer control.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ax : matplotlib.axes.Axes</span>
+<span class="sd">        The axes with the legend applied.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    matplotlib.pyplot.legend : For additional details on how the &#39;loc&#39; parameter can be customized.</span>
+<span class="sd">    matplotlib.lines.Line2D : For additional details on the different types of marker shapes (&#39;shape&#39; parameter).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import aaanalysis as aa</span>
+<span class="sd">    &gt;&gt;&gt; aa.plot_set_legend(ax=ax, dict_color={&#39;Cat1&#39;: &#39;red&#39;, &#39;Cat2&#39;: &#39;blue&#39;}, shape=&#39;o&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Check input</span>
+    <span class="k">if</span> <span class="n">ax</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gca</span><span class="p">()</span>
+    <span class="n">list_cat</span> <span class="o">=</span> <span class="n">check_cats</span><span class="p">(</span><span class="n">list_cat</span><span class="o">=</span><span class="n">list_cat</span><span class="p">,</span> <span class="n">dict_color</span><span class="o">=</span><span class="n">dict_color</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+    <span class="n">args_float</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">y</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="s2">&quot;lw&quot;</span><span class="p">:</span> <span class="n">lw</span><span class="p">,</span> <span class="s2">&quot;labelspacing&quot;</span><span class="p">:</span> <span class="n">labelspacing</span><span class="p">,</span>
+                  <span class="s2">&quot;columnspacing&quot;</span><span class="p">:</span> <span class="n">columnspacing</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">args_float</span><span class="p">:</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_float</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">args_float</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">check_non_negative_number</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;ncol&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">ncol</span><span class="p">,</span> <span class="n">min_val</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">just_int</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">accept_none</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">check_non_negative_number</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;ncol&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">ncol</span><span class="p">,</span> <span class="n">min_val</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">just_int</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">accept_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">check_bool</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;return_handles&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">return_handles</span><span class="p">)</span>
+    <span class="n">ut</span><span class="o">.</span><span class="n">check_bool</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;title_align_left&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">title_align_left</span><span class="p">)</span>
+    <span class="c1"># TODO check other args</span>
+    <span class="c1"># Prepare the legend handles</span>
+    <span class="n">dict_leg</span> <span class="o">=</span> <span class="p">{</span><span class="n">cat</span><span class="p">:</span> <span class="n">dict_color</span><span class="p">[</span><span class="n">cat</span><span class="p">]</span> <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">list_cat</span><span class="p">}</span>
+    <span class="c1"># Generate function for legend markers based on provided shape</span>
+    <span class="k">if</span> <span class="n">shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">edgecolor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">l</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">mpl</span><span class="o">.</span><span class="n">patches</span><span class="o">.</span><span class="n">Patch</span><span class="p">(</span><span class="n">facecolor</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="n">lw</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="n">l</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">l</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">mpl</span><span class="o">.</span><span class="n">patches</span><span class="o">.</span><span class="n">Patch</span><span class="p">(</span><span class="n">facecolor</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="n">lw</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="n">edgecolor</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">l</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">Line2D</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">markerfacecolor</span><span class="o">=</span><span class="n">l</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">c</span><span class="p">)</span>
+    <span class="c1"># Create handles if not provided</span>
+    <span class="n">handles</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">dict_leg</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span> <span class="k">if</span> <span class="n">handles</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">handles</span>
+    <span class="c1"># Return handles and labels if required</span>
+    <span class="k">if</span> <span class="n">return_handles</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">handles</span><span class="p">,</span> <span class="n">labels</span>
+    <span class="c1"># Prepare labels and args</span>
+    <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dict_leg</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">prop</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="n">weight</span><span class="p">,</span> <span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="n">fontsize</span><span class="p">},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fontsize_legend</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">args</span><span class="p">[</span><span class="s2">&quot;title_fontproperties&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="n">fontsize_weight</span><span class="p">,</span> <span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="n">fontsize_legend</span><span class="p">}</span>
+    <span class="c1"># Create the legend</span>
+    <span class="n">legend</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="o">=</span><span class="n">handles</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">ncol</span><span class="o">=</span><span class="n">ncol</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">loc</span><span class="p">,</span>
+                       <span class="n">labelspacing</span><span class="o">=</span><span class="n">labelspacing</span><span class="p">,</span> <span class="n">columnspacing</span><span class="o">=</span><span class="n">columnspacing</span><span class="p">,</span> <span class="n">borderpad</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">)</span>
+    <span class="c1"># Align the title if required</span>
+    <span class="k">if</span> <span class="n">title_align_left</span><span class="p">:</span>
+        <span class="n">legend</span><span class="o">.</span><span class="n">_legend_box</span><span class="o">.</span><span class="n">align</span> <span class="o">=</span> <span class="s2">&quot;left&quot;</span>
+    <span class="k">return</span> <span class="n">ax</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2023, Stephan Breimann.
+
+    </p>
+  </div> 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

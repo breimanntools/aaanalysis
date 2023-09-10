@@ -3,28 +3,29 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to the AAanalysis documentation
-=======================================
+Welcome to the AAanalysis documentation!
+========================================
 
 .. include:: overview.rst
 
 Install
 =======
-**AAanalysis** can be installed from AAanalysis can be installed from `PyPi <https://pypi.org/project/aaanalysis>`_:
+**AAanalysis** can be installed from `PyPi <https://pypi.org/project/aaanalysis>`_:
 
 .. code-block:: bash
 
-   pip install -u aaanalysis
+   pip install -U aaanalysis  (Note: Changed '-u' to '-U' for upgrading packages)
 
 Contents
 ========
 
 .. toctree::
    :maxdepth: 2
+   :caption: Table of Contents
 
-   Tutorial <tutorials>
-   API <api>
-   References <references>
+   tutorials.rst
+   api.rst
+   references.rst
 
 Indices and tables
 ==================

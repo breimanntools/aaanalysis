@@ -1,37 +1,66 @@
-API
-===
+.. currentmodule:: aaanalysis
 
-Import AAanalysis as:
+==============
+API Reference
+==============
+
+This page contains the API reference for public objects and functions in AAanalysis. For more examples
+and practical usage, refer to our :ref:`example notebooks <api_examples>`.
+For convenience, it is common to import the module as follows:
 
 .. code-block:: python
 
-   import aaanalysis as aa
+    import aaanalysis as aa
 
-Load data
----------
-The `data_loader` module provides utilities for loading protein benchmark datasets, amino acid scale sets, and more.
+Then you can access all methods and objects via the `aa` alias, such as `aa.load_dataset`.
 
-.. automodule:: aaanalysis.data_loader
-   :members:
+.. _data_api:
+
+Data Loading
+------------
+.. autosummary::
+    :toctree: generated/
+
+    aaanalysis.load_dataset
+    aaanalysis.load_scales
+
+.. _aaclust_api:
 
 AAclust
 -------
-The `AAclust` is a k-optimized clustering wrapper framework designed for redundancy reduction of numerical scales.
+.. autosummary::
+    :toctree: generated/
 
-.. automodule:: aaanalysis.aaclust
-   :members:
+    aaanalysis.AAclust
+
+.. _cpp_api:
 
 CPP Module
 ----------
-The `CPP` (Comparative Physicochemical Profiling) module focuses on feature engineering by comparing two sets
-of protein sequences to identify distinct features.
+.. autosummary::
+    :toctree: generated/
 
-.. automodule:: aaanalysis.cpp
-   :members:
+    aaanalysis.CPP
+    aaanalysis.SequenceFeature
+    aaanalysis.SplitRange
+
+.. _dpulearn_api:
 
 dPUlearn
 --------
-The `dPUlearn` offers a deterministic Positive-Unlabeled (PU) Learning algorithm, especially beneficial for training on unbalanced and small datasets.
+.. autosummary::
+    :toctree: generated/
 
-.. automodule:: aaanalysis.dpulearn
-   :members:
+    aaanalysis.dPULearn
+
+.. _plot_api:
+
+Plot Utilities
+--------------
+.. autosummary::
+    :toctree: generated/
+
+    aaanalysis.plot_settings
+    aaanalysis.plot_set_legend
+    aaanalysis.plot_gcfs
+

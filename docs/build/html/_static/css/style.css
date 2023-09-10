@@ -14,10 +14,6 @@
    max-width: 40%;
 }
 
-.wy-side-nav-search>div.version {
-   color: #d9d9d9;
-}
-
 .wy-nav-top {
    background: #343131;
 }
@@ -54,4 +50,31 @@ html.writer-html4 .rst-content dl:not(.docutils)>dt, html.writer-html5 .rst-cont
 
 .wy-menu-vertical a {
    color: #d9d9d9;
+}
+
+/* Style for toggle buttons in general */
+.toggle-btn {
+  opacity: 0;  /* Initially hidden */
+  width: 10px;  /* Fixed width */
+  height: 10px;  /* Fixed height */
+  line-height: 10px;  /* Center vertically */
+  border: 1px solid #333;  /* Darker Edges */
+  text-align: left;  /* Center horizontally */
+  margin-right: 6px;
+  font-size: 12px;  /* Smaller "+" or "-" sign */
+  cursor: pointer;
+  transition: opacity 0.0s ease; /* for smooth transition */
+  display: inline-block;  /* Required for setting dimensions */
+}
+
+/* Make level 1 toggle buttons visible on hover or focus */
+.toctree-l1 > a:hover .toggle-l1,
+.toctree-l1 > a:focus .toggle-l1 {
+  opacity: 1;
+}
+
+/* Make level 2 toggle buttons visible when parent level 1 item is hovered or focused */
+.toctree-l1 > a:hover .toggle-l2,
+.toctree-l1 > a:focus .toggle-l2 {
+  opacity: 1;
 }

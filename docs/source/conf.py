@@ -5,6 +5,7 @@ import inspect
 from typing import Any
 from datetime import datetime
 import platform
+from types import WrapperDescriptorType
 
 # -- Path and Platform setup --------------------------------------------------
 SEP = "\\" if platform.system() == "Windows" else "/"
@@ -12,6 +13,7 @@ path_source = os.path.join(os.path.dirname(__file__))
 
 # Root path
 sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath('../../aaanalysis'))
 
 # -- Project information -----------------------------------------------------
 project = 'AAanalysis'
@@ -76,7 +78,7 @@ intersphinx_mapping = {
     'numpy': ('https://numpy.org/doc/stable/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
     'matplotlib': ('https://matplotlib.org/stable/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
     'scikit-learn': ('https://scikit-learn.org/stable/', None),
     'seaborn': ('https://seaborn.pydata.org/', None),
     'statsmodels': ('https://www.statsmodels.org/stable/', None),
@@ -99,11 +101,10 @@ html_theme_options = {
     "titles_only": False,
 }
 html_static_path = [os.path.join(path_source, '_static')]
-html_style = f'css{SEP}style.css'
+html_css_files = ['css/style.css']
+html_js_files = ['toggle_menu.js']
 html_show_sphinx = False
 """
-# If other style sheets should be included
-html_css_files = ['css/another_style.css', 'css/yet_another_style.css',]
 html_logo = "path_to_your_logo.png"
 html_favicon = "path_to_your_favicon.ico"
 htmlhelp_basename = "YOUR_PROJECT_NAMEdoc"
@@ -145,6 +146,9 @@ def linkcode_resolve(domain, info):
 
         if isinstance(obj, property):
             obj = inspect.unwrap(obj.fget)  # type: ignore
+        if isinstance(obj, WrapperDescriptorType):
+            # Skip wrapper descriptors
+            return None
 
         path = inspect.getsourcefile(obj)  # type: ignore
         src, lineno = inspect.getsourcelines(obj)
@@ -156,3 +160,4 @@ def linkcode_resolve(domain, info):
     except Exception as e:
         print(f"Error generating linkcode for {module_name}: {e}")
         return None
+
