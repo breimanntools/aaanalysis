@@ -1,32 +1,20 @@
 """
-This is a script for ...
+Config with folder structure
 """
-import time
-import pandas as pd
-import numpy as np
-
-import scripts._utils as ut
-
-# Settings
-pd.set_option('expand_frame_repr', False)  # Single line print for pd.Dataframe
+import os
+import platform
+from pathlib import Path
 
 
-# I Helper Functions
+# Helper Function
+def _folder_path(super_folder, folder_name):
+    """Modification of separator (OS depending)"""
+    path = os.path.join(super_folder, folder_name + SEP)
+    return path
 
 
-# II Main Functions
-
-
-# III Test/Caller Functions
-
-
-# IV Main
-def main():
-    t0 = time.time()
-
-    t1 = time.time()
-    print("Time:", t1 - t0)
-
-
-if __name__ == "__main__":
-    main()
+# Folder
+SEP = "\\" if platform.system() == "Windows" else "/"
+FOLDER_PROJECT = str(Path(__file__).parent).replace('/', SEP) + SEP
+FOLDER_DATA = _folder_path(FOLDER_PROJECT, 'data')
+FOLDER_RESULTS = _folder_path(FOLDER_PROJECT, 'results')

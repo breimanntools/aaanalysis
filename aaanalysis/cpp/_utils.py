@@ -2,14 +2,11 @@
 This is a script with utility functions and settings for CPP project.
 """
 import numpy as np
-import platform
-import os
 import pandas as pd
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
-import warnings
 
-from aaanalysis._utils import *
+import aaanalysis._utils as ut
 
 # Settings
 
@@ -74,59 +71,6 @@ SPLIT_DESCRIPTION = "\n a) {}(i-th,n_split)" \
 
 # II Main Functions
 # General check functions
-def check_float(name=None, val=None, accept_none=False, just_float=True):
-    """Check if value is float"""
-    if accept_none and val is None:
-        return None
-    if type(val) not in [float, int]:
-        error = f"'{name}' ({val}) should be float"
-        if not just_float:
-            error += " or int."
-        else:
-            error += "."
-        raise ValueError(error)
-
-
-def check_str(name=None, val=None, accept_none=False):
-    """"""
-    if accept_none and val is None:
-        return None
-    if not isinstance(val, str):
-        raise ValueError(f"'{name}' ('{val}') should be string.")
-
-
-def check_bool(name=None, val=None):
-    """"""
-    if type(val) != bool:
-        raise ValueError(f"'{name}' ({val}) should be bool.")
-
-
-def check_dict(name=None, val=None, accept_none=False):
-    """"""
-    error = f"'{name}' ('{val}') should be a dictionary"
-    if accept_none:
-        error += " or None."
-    else:
-        error += "."
-    if accept_none and val is None:
-        return None
-    if not isinstance(val, dict):
-        raise ValueError(error)
-
-
-def check_tuple(name=None, val=None, n=None):
-    """"""
-    error = f"'{name}' ('{val}') should be a tuple"
-    if n is not None:
-        error += f" with {n} elements."
-    else:
-        error += "."
-    if not isinstance(val, tuple):
-        raise ValueError(error)
-    if n is not None and len(val) != n:
-        raise ValueError(error)
-
-
 def check_color(name=None, val=None, accept_none=False):
     """Check if color valid for matplotlib"""
     base_colors = list(mcolors.BASE_COLORS.keys())
@@ -182,9 +126,9 @@ def check_labels(labels=None, df=None, name_df=None):
 def check_ylim(df=None, ylim=None, val_col=None, retrieve_plot=False, scaling_factor=1.1):
     """"""
     if ylim is not None:
-        check_tuple(name="ylim", val=ylim, n=2)
-        check_float(name="ylim:min", val=ylim[0], just_float=False)
-        check_float(name="ylim:max", val=ylim[1], just_float=False)
+        ut.check_tuple(name="ylim", val=ylim, n=2)
+        ut.check_float(name="ylim:min", val=ylim[0], just_float=False)
+        ut.check_float(name="ylim:max", val=ylim[1], just_float=False)
         max_val = round(max(df[val_col]), 3)
         max_y = ylim[1]
         if max_val >= max_y:
@@ -234,8 +178,8 @@ def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     if seq_in_df and not parts_in_df:
         if seq_info_in_df:
             for entry, start, stop in zip(df_seq[COL_ENTRY], df_seq[COL_TMD_START], df_seq[COL_TMD_STOP]):
-                check_non_negative_number(name=f"tmd_start [{entry}]", val=start)
-                check_non_negative_number(name=f"tmd_start [{entry}]", val=stop,)
+                ut.check_non_negative_number(name=f"tmd_start [{entry}]", val=start)
+                ut.check_non_negative_number(name=f"tmd_start [{entry}]", val=stop,)
             tmd_start = [int(x) for x in df_seq[COL_TMD_START]]
             tmd_stop = [int(x) for x in df_seq[COL_TMD_STOP]]
         else:
@@ -267,7 +211,7 @@ def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
 # Scale check functions
 def check_df_scales(df_scales=None, df_parts=None, accept_none=False, accept_gaps=False):
     """Check if df_scales is a valid input and matching to df_parts"""
-    check_bool(name="accept_gaps", val=accept_gaps)
+    ut.check_bool(name="accept_gaps", val=accept_gaps)
     if accept_none and df_scales is None:
         return  # Skip check
     if not isinstance(df_scales, pd.DataFrame):
@@ -459,7 +403,7 @@ def check_split(split=None):
             i_th, n_split = [int(x) for x in split.split("(")[1].replace(")", "").split(",")]
             # Check if values non-negative integers
             for name, val in zip(["i_th", "n_split"], [i_th, n_split]):
-                check_non_negative_number(name=name, val=val)
+                ut.check_non_negative_number(name=name, val=val)
             # Check if i-th and n_split are valid
             if i_th > n_split:
                 raise ValueError
@@ -472,7 +416,7 @@ def check_split(split=None):
             start = int(start[0])
             # Check if values non-negative integers
             for name, val in zip(["start", "step1", "step2"], [start, step1, step2]):
-                check_non_negative_number(name=name, val=val)
+                ut.check_non_negative_number(name=name, val=val)
             # Check if terminus valid
             terminus = split.split("i+")[0].split("(")[1].replace(",", "")
             if terminus not in ["N", "C"]:
@@ -487,7 +431,7 @@ def check_split(split=None):
             list_pos = [int(x) for x in list_pos]
             for val in list_pos:
                 name = "pos" + str(val)
-                check_non_negative_number(name=name, val=val)
+                ut.check_non_negative_number(name=name, val=val)
             # Check if terminus valid
             if terminus not in ["N", "C"]:
                 raise ValueError
@@ -610,17 +554,17 @@ def get_vf_scale(dict_scale=None, accept_gaps=False):
 def print_start_progress():
     """Print start progress"""
     progress_bar = " " * 25
-    print(f"\r   |{progress_bar}| 0.00%", end="")
+    ut.print_red(f"\r   |{progress_bar}| 0.00%", end="")
 
 
 def print_progress(i=0, n=0):
     """Print progress"""
     progress = min(np.round(i/n * 100, 2), 100)
     progress_bar = "#" * int(progress/4) + " " * (25-int(progress/4))
-    print(f"\r   |{progress_bar}| {progress:.2f}%", end="")
+    ut.print_red(f"\r   |{progress_bar}| {progress:.2f}%", end="")
 
 
 def print_finished_progress():
     """Print finished progress bar"""
     progress_bar = "#" * 25
-    print(f"\r   |{progress_bar}| 100.00%")
+    ut.print_red(f"\r   |{progress_bar}| 100.00%")

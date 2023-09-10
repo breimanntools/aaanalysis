@@ -7,7 +7,7 @@ import pytest
 from hypothesis import given, settings
 import hypothesis.strategies as some
 
-from cpp_tools import SequenceFeature
+from aaanalysis import SequenceFeature
 
 
 # I Unit Tests

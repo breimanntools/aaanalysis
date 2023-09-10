@@ -14,9 +14,7 @@ import hypothesis.strategies as some
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-from cpp_tools import CPP, SequenceFeature
-from cpp_tools.cpp import _get_df_pos
-import cpp_tools._utils as ut
+from aaanalysis import CPP, SequenceFeature
 
 
 @pytest.fixture(params=["a", 3, dict(), list(), pd.DataFrame(), -0])

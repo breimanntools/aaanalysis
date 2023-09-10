@@ -7,7 +7,8 @@ from collections import OrderedDict
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster import KMeans
 
-import aaanalysis.aaclust._utils as ut
+import aaanalysis.aaclust._utils as _ut
+import aaanalysis._utils as ut
 
 
 # I Helper Functions
@@ -199,7 +200,7 @@ def _get_min_cor_cluster(X, labels=None, label_cluster=None, on_center=True):
 def _get_quality_measure(X, metric=None, labels=None, label_cluster=None, on_center=True):
     """Get quality measure single cluster given by feature matrix X, labels, and label of cluster"""
     mask = [l == label_cluster for l in labels]
-    if metric == ut.METRIC_CORRELATION:
+    if metric == _ut.METRIC_CORRELATION:
         return get_min_cor(X[mask], on_center=on_center)
     else:
         return get_max_dist(X[mask], on_center=on_center, metric=metric)
@@ -208,7 +209,7 @@ def _get_quality_measure(X, metric=None, labels=None, label_cluster=None, on_cen
 def _get_best_cluster(dict_clust_qm=None, metric=None):
     """Get cluster with best quality measure: either highest minimum Pearson correlation
     or lowest distance measure"""
-    if metric == ut.METRIC_CORRELATION:
+    if metric == _ut.METRIC_CORRELATION:
         return max(dict_clust_qm, key=dict_clust_qm.get)
     else:
         return min(dict_clust_qm, key=dict_clust_qm.get)
@@ -319,8 +320,7 @@ class AAclust:
         The employed clustering model requiring pre-defined number of clusters 'k', given as 'n_clusters' parameter.
     model_kwargs : dict, optional, default = {}
         A dictionary of keyword arguments to pass to the selected clustering model.
-    name_unclassified : str, optional, default = 'unclassified'
-        A label assigned to clusters that couldn't be distinctly classified.
+
     verbose : bool, optional, default = False
         A flag to enable or disable verbose outputs.
 
@@ -341,17 +341,16 @@ class AAclust:
     medoid_ind_ : array-like, default = None
         Indices of the chosen medoids within the original dataset.
     """
-    def __init__(self, model=None, model_kwargs=None, name_unclassified="unclassified", verbose=False):
+    def __init__(self, model=None, model_kwargs=None, verbose=False):
         # Model parameters
         if model is None:
             model = KMeans
         self.model = model
         if model_kwargs is None:
             model_kwargs = dict()
-        model_kwargs = ut.check_model(model=self.model, model_kwargs=model_kwargs)
+        model_kwargs = _ut.check_model(model=self.model, model_kwargs=model_kwargs)
         self._model_kwargs = model_kwargs
         # AAclust clustering settings
-        self._name_unclassified = name_unclassified
         self._verbose = verbose
         # Output parameters (will be set during model fitting)
         self.n_clusters = None  # Number of by AAclust obtained clusters
@@ -381,8 +380,8 @@ class AAclust:
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Feature matrix with rows as samples and columns as features.
+        X : array-like, shape (n_samples, n_features)
+            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
         names : list of str, optional
             Sample names. If provided, returns names of the medoids.
         on_center : bool, default = True
@@ -409,8 +408,8 @@ class AAclust:
         For further information, refer to the AAclust paper : TODO: add link to AAclust paper
         """
         # Check input
-        ut.check_min_th(min_th=min_th)
-        merge_metric = ut.check_merge_metric(merge_metric=merge_metric)
+        _ut.check_min_th(min_th=min_th)
+        merge_metric = _ut.check_merge_metric(merge_metric=merge_metric)
         X, names = ut.check_feat_matrix(X=X, names=names)
         args = dict(model=self.model, model_kwargs=self._model_kwargs, min_th=min_th, on_center=on_center)
         # Clustering using given clustering models
@@ -470,7 +469,6 @@ class AAclust:
             Cluster labels. If not provided, uses the labels from the fitted model.
         name_unclassified : str, default = "Unclassified"
             Name assigned to clusters that cannot be classified with the given names.
-
         Returns
         -------
         cluster_names : list
@@ -509,8 +507,8 @@ class AAclust:
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Feature matrix with rows as samples and columns as features.
+        X : array-like, shape (n_samples, n_features)
+            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
         labels : list or array-like, optional
             Cluster labels for each sample in X.
 
@@ -531,8 +529,8 @@ class AAclust:
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Feature matrix with rows as samples and columns as features.
+         X : array-like, shape (n_samples, n_features)
+            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
         labels : list or array-like, optional
             Cluster labels for each sample in X.
 

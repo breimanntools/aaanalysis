@@ -44,7 +44,7 @@ def load_dataset(name="INFO", n=None, non_canonical_aa="remove", min_len=None, m
     Three types of benchmark datasets are provided:
         - Residue prediction: 6 datasets used to predict residue (amino acid) specific properties
             ('AA_CASPASE3', 'AA_FURIN', 'AA_LDR', 'AA_MMP2', 'AA_RNABIND', 'AA_SA')
-        - Domain prediction: 1 dataset used to predict domain specific properties
+        - Domain prediction: 1 dataset used to predict domain specific properties (containing unlabeled data)
             (DOM_SUBGSEC)
         - Sequence prediction: 6 datasets used to predict sequence specific properties
             ('SEQ_AMYLO', 'SEQ_CAPSID', 'SEQ_DISULFIDE', 'SEQ_LOCATION', 'SEQ_SOLUBLE', 'SEQ_TAIL')
@@ -69,7 +69,7 @@ def load_dataset(name="INFO", n=None, non_canonical_aa="remove", min_len=None, m
     Returns
     -------
     df : :class:`pandas.DataFrame`
-        Dataframe with the selected dataset.
+        Dataframe with the selected sequence dataset.
 
     Notes
     -----
@@ -137,7 +137,7 @@ def load_scales(name="scales", just_aaindex=False, unclassified_in=True):
     Returns
     -------
     df : :class:`pandas.DataFrame`
-        Dataframe for the selected dataset.
+        Dataframe for the selected scale dataset.
     """
     if name not in LIST_DATASETS:
         raise ValueError(f"'name' ({name}) is not valid. Choose one of following: {LIST_DATASETS}")

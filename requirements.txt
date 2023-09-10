@@ -1,4 +1,4 @@
-# Reuqires Python >= 3.9
+# Reuqires Python >= 3.5
 cycler>=0.11.0
 et-xmlfile>=1.1.0
 fonttools>=4.37.1
