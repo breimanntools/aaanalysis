@@ -16,10 +16,10 @@ Feature engineering
 -------------------
 `View CPP notebook <#path_to_notebook_for_feature_engineering>`_
 
-Identification of negatives via PU learning
--------------------------------------------
+Identification of negatives
+---------------------------
 `View dPULearn notebook <#path_to_notebook_for_PU_learning>`_
 
-Protein prediction via machine learning
----------------------------------------
+Protein prediction
+------------------
 `View the protein prediction notebook <#path_to_notebook_for_protein_prediction>`_
