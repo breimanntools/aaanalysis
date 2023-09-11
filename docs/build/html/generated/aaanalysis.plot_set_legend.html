@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<meta property="og:title" content="aaanalysis.plot_set_legend" />
+  <meta property="og:title" content="aaanalysis.plot_set_legend" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="generated/aaanalysis.plot_set_legend.html" />
 <meta property="og:site_name" content="AAanalysis" />
@@ -33,6 +32,8 @@
 
   
   
+    <link rel="shortcut icon" href="../_static/logo_small.png"/>
+  
 
   
   
@@ -47,6 +48,9 @@
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script src="../_static/sphinx_highlight.js"></script>
         <script src="../_static/clipboard.min.js"></script>
@@ -73,9 +77,12 @@
           
 
           
-            <a href="../index.html" class="icon icon-home"> AAanalysis
+            <a href="../index.html">
           
 
+          
+            
+            <img src="../_static/logo_big_trans.png" class="logo" alt="Logo"/>
           
           </a>
 
@@ -202,14 +209,14 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="aaanalysis-plot-set-legend">
+  <div class="section" id="aaanalysis-plot-set-legend">
 <h1>aaanalysis.plot_set_legend<a class="headerlink" href="#aaanalysis-plot-set-legend" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="aaanalysis.plot_set_legend">
 <span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">plot_set_legend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dict_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fontsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'normal'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edgecolor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_handles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'upper</span> <span class="pre">left'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labelspacing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columnspacing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fontsize_legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title_align_left</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fontsize_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'normal'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/utils_plot.html#plot_set_legend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/utils_plot.py#L177-L286"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.plot_set_legend" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set a customizable legend for a plot.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes, default=None</span></dt><dd><p>The axes to attach the legend to.</p>
 </dd>
@@ -257,7 +264,7 @@
 </dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt><strong>ax</strong><span class="classifier">matplotlib.axes.Axes</span></dt><dd><p>The axes with the legend applied.</p>
 </dd>
@@ -280,7 +287,7 @@
 </div>
 </dd></dl>
 
-</section>
+</div>
 
 
            </div>

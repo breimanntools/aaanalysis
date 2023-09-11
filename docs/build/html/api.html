@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<meta property="og:title" content="API Reference" />
+  <meta property="og:title" content="API Reference" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="api.html" />
 <meta property="og:site_name" content="AAanalysis" />
@@ -35,6 +34,8 @@
 
   
   
+    <link rel="shortcut icon" href="_static/logo_small.png"/>
+  
 
   
   
@@ -49,6 +50,9 @@
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script src="_static/sphinx_highlight.js"></script>
         <script src="_static/clipboard.min.js"></script>
@@ -75,9 +79,12 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> AAanalysis
+            <a href="index.html">
           
 
+          
+            
+            <img src="_static/logo_big_trans.png" class="logo" alt="Logo"/>
           
           </a>
 
@@ -217,7 +224,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="api-reference">
+  <div class="section" id="api-reference">
 <h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this heading">¶</a></h1>
 <p>This page contains the API reference for public objects and functions in AAanalysis. For more examples
 and practical usage, refer to our <a class="reference external" href="https://shap.readthedocs.io/en/latest/api_examples.html#api-examples" title="(in SHAP vlatest)"><span class="xref std std-ref">example notebooks</span></a>.
@@ -226,9 +233,13 @@ For convenience, it is common to import the module as follows:</p>
 </pre></div>
 </div>
 <p>Then you can access all methods and objects via the <cite>aa</cite> alias, such as <cite>aa.load_dataset</cite>.</p>
-<section id="data-loading">
+<div class="section" id="data-loading">
 <span id="data-api"></span><h2>Data Loading<a class="headerlink" href="#data-loading" title="Permalink to this heading">¶</a></h2>
 <table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.load_dataset.html#aaanalysis.load_dataset" title="aaanalysis.load_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.load_dataset</span></code></a>([name, n, ...])</p></td>
 <td><p>Load protein benchmarking datasets or their general overview by setting 'name' to 'INFO'.</p></td>
@@ -238,20 +249,28 @@ For convenience, it is common to import the module as follows:</p>
 </tr>
 </tbody>
 </table>
-</section>
-<section id="aaclust">
+</div>
+<div class="section" id="aaclust">
 <span id="aaclust-api"></span><h2>AAclust<a class="headerlink" href="#aaclust" title="Permalink to this heading">¶</a></h2>
 <table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.AAclust.html#aaanalysis.AAclust" title="aaanalysis.AAclust"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.AAclust</span></code></a>([model, model_kwargs, ...])</p></td>
 <td><p>AAclust: A k-optimized clustering framework for selecting redundancy-reduced set of numerical scales.</p></td>
 </tr>
 </tbody>
 </table>
-</section>
-<section id="cpp-module">
+</div>
+<div class="section" id="cpp-module">
 <span id="cpp-api"></span><h2>CPP Module<a class="headerlink" href="#cpp-module" title="Permalink to this heading">¶</a></h2>
 <table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.CPP.html#aaanalysis.CPP" title="aaanalysis.CPP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.CPP</span></code></a>([df_scales, df_cat, ...])</p></td>
 <td><p>Create and filter features that are most discriminant between two sets of sequences.</p></td>
@@ -264,20 +283,28 @@ For convenience, it is common to import the module as follows:</p>
 </tr>
 </tbody>
 </table>
-</section>
-<section id="dpulearn">
+</div>
+<div class="section" id="dpulearn">
 <span id="dpulearn-api"></span><h2>dPUlearn<a class="headerlink" href="#dpulearn" title="Permalink to this heading">¶</a></h2>
 <table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.dPULearn.html#aaanalysis.dPULearn" title="aaanalysis.dPULearn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.dPULearn</span></code></a>([verbose, n_components, ...])</p></td>
 <td><p>Deterministic Positive-Unlabeled (dPULearn) model.</p></td>
 </tr>
 </tbody>
 </table>
-</section>
-<section id="plot-utilities">
+</div>
+<div class="section" id="plot-utilities">
 <span id="plot-api"></span><h2>Plot Utilities<a class="headerlink" href="#plot-utilities" title="Permalink to this heading">¶</a></h2>
 <table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_settings.html#aaanalysis.plot_settings" title="aaanalysis.plot_settings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_settings</span></code></a>([fig_format, ...])</p></td>
 <td><p>Configure general settings for plot visualization with various customization options.</p></td>
@@ -290,8 +317,8 @@ For convenience, it is common to import the module as follows:</p>
 </tr>
 </tbody>
 </table>
-</section>
-</section>
+</div>
+</div>
 
 
            </div>

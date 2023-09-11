@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<meta property="og:title" content="aaanalysis.AAclust" />
+  <meta property="og:title" content="aaanalysis.AAclust" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="generated/aaanalysis.AAclust.html" />
 <meta property="og:site_name" content="AAanalysis" />
@@ -33,6 +32,8 @@
 
   
   
+    <link rel="shortcut icon" href="../_static/logo_small.png"/>
+  
 
   
   
@@ -47,6 +48,9 @@
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script src="../_static/sphinx_highlight.js"></script>
         <script src="../_static/clipboard.min.js"></script>
@@ -73,9 +77,12 @@
           
 
           
-            <a href="../index.html" class="icon icon-home"> AAanalysis
+            <a href="../index.html">
           
 
+          
+            
+            <img src="../_static/logo_big_trans.png" class="logo" alt="Logo"/>
           
           </a>
 
@@ -200,7 +207,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="aaanalysis-aaclust">
+  <div class="section" id="aaanalysis-aaclust">
 <h1>aaanalysis.AAclust<a class="headerlink" href="#aaanalysis-aaclust" title="Permalink to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="aaanalysis.AAclust">
@@ -212,7 +219,7 @@ It takes clustering models that require a pre-defined number of clusters (k) fro
 similarity measure, AAclust optimizes the value of k. It then selects one representative sample (termed as ‘medoid’)
 for each cluster, which is the closest to the cluster’s center, yielding a redundancy-reduced sample set.</p>
 <dl class="field-list">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl>
 <dt><strong>model</strong><span class="classifier">callable, optional, default =  <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html#sklearn.cluster.KMeans" title="(in scikit-learn v1.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.cluster.KMeans</span></code></a></span></dt><dd><p>The employed clustering model requiring pre-defined number of clusters ‘k’, given as ‘n_clusters’ parameter.</p>
 </dd>
@@ -222,7 +229,7 @@ for each cluster, which is the closest to the cluster’s center, yielding a red
 </dd>
 </dl>
 </dd>
-<dt class="field-even">Attributes<span class="colon">:</span></dt>
+<dt class="field-even">Attributes</dt>
 <dd class="field-even"><dl class="simple">
 <dt><strong>n_clusters</strong><span class="classifier">int, default = None</span></dt><dd><p>Number of clusters obtained by AAclust.</p>
 </dd>
@@ -248,6 +255,10 @@ for each cluster, which is the closest to the cluster’s center, yielding a red
 
 <p class="rubric">Methods</p>
 <table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.AAclust.__init__" title="aaanalysis.AAclust.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([model, model_kwargs, verbose])</p></td>
 <td><p></p></td>
@@ -276,7 +287,7 @@ for each cluster, which is the closest to the cluster’s center, yielding a red
 <p>This method renames clusters based on the names of the scales in each cluster, with priority given to the
 most frequent scales. If the name is already used or does not exist, it defaults to ‘name_unclassified’.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>names</strong><span class="classifier">list, optional</span></dt><dd><p>List of scale names corresponding to each sample.</p>
 </dd>
@@ -298,7 +309,7 @@ most frequent scales. If the name is already used or does not exist, it defaults
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">correlation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_test</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels_ref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_center</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">except_unclassified</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/aaclust/aaclust.html#AAclust.correlation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L549-L612"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust.correlation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the correlation of test data with reference cluster centers.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>X_test</strong><span class="classifier">array-like</span></dt><dd><p>Test feature matrix.</p>
 </dd>
@@ -318,7 +329,7 @@ most frequent scales. If the name is already used or does not exist, it defaults
 </dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt><strong>list_top_center_name_corr</strong><span class="classifier">list of str</span></dt><dd><p>Names and correlations of centers having strongest (positive/negative) correlation with test data samples.</p>
 </dd>
@@ -341,7 +352,7 @@ the cluster center and its members (‘min_cor center’), governed by <cite>on_
 3. Optionally merge smaller clusters, as directed by <cite>merge_metric</cite>.</p>
 <p>Finally, a representative scale (medoid) ‘closest to each cluster center is chosen for redundancy reduction.</p>
 <dl class="field-list">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>X</strong><span class="classifier">array-like, shape (n_samples, n_features)</span></dt><dd><p>Feature matrix where <cite>n_samples</cite> is the number of samples and <cite>n_features</cite> is the number of features.</p>
 </dd>
@@ -357,7 +368,7 @@ the cluster center and its members (‘min_cor center’), governed by <cite>on_
 </dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl>
 <dt><strong>names_medoid</strong><span class="classifier">list of str, if <cite>names</cite> is provided</span></dt><dd><p>Names of the medoids.</p>
 </dd>
@@ -377,7 +388,7 @@ the cluster center and its members (‘min_cor center’), governed by <cite>on_
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_cluster_centers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/aaclust/aaclust.html#AAclust.get_cluster_centers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L503-L523"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust.get_cluster_centers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the center of each cluster based on the given labels.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>X</strong><span class="classifier">array-like, shape (n_samples, n_features)</span></dt><dd><p>Feature matrix where <cite>n_samples</cite> is the number of samples and <cite>n_features</cite> is the number of features.</p>
 </dd>
@@ -385,7 +396,7 @@ the cluster center and its members (‘min_cor center’), governed by <cite>on_
 </dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt><strong>centers</strong><span class="classifier">array-like</span></dt><dd><p>The computed center for each cluster.</p>
 </dd>
@@ -401,7 +412,7 @@ the cluster center and its members (‘min_cor center’), governed by <cite>on_
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_cluster_medoids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/aaclust/aaclust.html#AAclust.get_cluster_medoids"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L525-L547"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust.get_cluster_medoids" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the medoid of each cluster based on the given labels.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>X</strong><span class="classifier">array-like, shape (n_samples, n_features)</span></dt><dd><p>Feature matrix where <cite>n_samples</cite> is the number of samples and <cite>n_features</cite> is the number of features.</p>
 </dd>
@@ -409,7 +420,7 @@ the cluster center and its members (‘min_cor center’), governed by <cite>on_
 </dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt><strong>medoids</strong><span class="classifier">array-like</span></dt><dd><p>The medoid for each cluster.</p>
 </dd>
@@ -424,7 +435,7 @@ the cluster center and its members (‘min_cor center’), governed by <cite>on_
 
 </dd></dl>
 
-</section>
+</div>
 
 
            </div>

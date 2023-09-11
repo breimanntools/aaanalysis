@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<meta property="og:title" content="aaanalysis.SplitRange" />
+  <meta property="og:title" content="aaanalysis.SplitRange" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="generated/aaanalysis.SplitRange.html" />
 <meta property="og:site_name" content="AAanalysis" />
@@ -33,6 +32,8 @@
 
   
   
+    <link rel="shortcut icon" href="../_static/logo_small.png"/>
+  
 
   
   
@@ -47,6 +48,9 @@
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script src="../_static/sphinx_highlight.js"></script>
         <script src="../_static/clipboard.min.js"></script>
@@ -73,9 +77,12 @@
           
 
           
-            <a href="../index.html" class="icon icon-home"> AAanalysis
+            <a href="../index.html">
           
 
+          
+            
+            <img src="../_static/logo_big_trans.png" class="logo" alt="Logo"/>
           
           </a>
 
@@ -202,7 +209,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="aaanalysis-splitrange">
+  <div class="section" id="aaanalysis-splitrange">
 <h1>aaanalysis.SplitRange<a class="headerlink" href="#aaanalysis-splitrange" title="Permalink to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="aaanalysis.SplitRange">
@@ -215,6 +222,10 @@
 
 <p class="rubric">Methods</p>
 <table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.SplitRange.__init__" title="aaanalysis.SplitRange.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args, **kwargs)</p></td>
 <td><p></p></td>
@@ -245,7 +256,7 @@
 <dd><p>Get labels for range of Pattern splits.
 Output matches with SequenceFeature.pattern.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>steps: list of integer indicating possible step sizes</strong></dt><dd></dd>
 <dt><strong>n_min: integer indicating minimum of elements in Pattern split</strong></dt><dd></dd>
@@ -253,7 +264,7 @@ Output matches with SequenceFeature.pattern.</p>
 <dt><strong>len_max: maximum of sequence length for splitting</strong></dt><dd></dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt>labels: list of labels of Pattern splits</dt><dd></dd>
 </dl>
@@ -267,12 +278,12 @@ Output matches with SequenceFeature.pattern.</p>
 <dd><p>Get labels of all possible PeriodicPattern splits.
 Output matches with SequenceFeature.periodicpattern.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>steps: list of integer indicating possible step sizes</strong></dt><dd></dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt>labels: list of labels of Pattern splits</dt><dd></dd>
 </dl>
@@ -286,13 +297,13 @@ Output matches with SequenceFeature.periodicpattern.</p>
 <dd><p>Get labels for range of Segment splits.
 Output matches with SequenceFeature.segment.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>n_split_min: integer indicating minimum Segment size</strong></dt><dd></dd>
 <dt><strong>n_split_max: integer indicating maximum Segment size</strong></dt><dd></dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt>labels: list of labels of Segment splits</dt><dd></dd>
 </dl>
@@ -306,7 +317,7 @@ Output matches with SequenceFeature.segment.</p>
 <dd><p>Get range of all possible Pattern splits for given sequence.
 Output matches with SequenceFeature.labels_pattern.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>seq: sequence (e.g., amino acids sequence for protein)</strong></dt><dd></dd>
 <dt><strong>steps: list of integer indicating possible step sizes</strong></dt><dd></dd>
@@ -315,7 +326,7 @@ Output matches with SequenceFeature.labels_pattern.</p>
 <dt><strong>len_max: maximum of sequence length for splitting</strong></dt><dd></dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt>seq_splits: list of sequence Pattern splits</dt><dd></dd>
 </dl>
@@ -329,13 +340,13 @@ Output matches with SequenceFeature.labels_pattern.</p>
 <dd><p>Get range of all possible PeriodicPattern splits for given sequence.
 Output matches with SequenceFeature.labels_periodicpattern.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>seq: sequence (e.g., amino acids sequence for protein)</strong></dt><dd></dd>
 <dt><strong>steps: list of integer indicating possible step sizes</strong></dt><dd></dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt>seq_splits: list of sequence PeriodicPattern splits</dt><dd></dd>
 </dl>
@@ -349,14 +360,14 @@ Output matches with SequenceFeature.labels_periodicpattern.</p>
 <dd><p>Get range of all possible Segment splits for given sequences.
 Output matches with SequenceFeature.labels_segment.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>seq: seq: sequence (e.g., amino acids sequence for protein)</strong></dt><dd></dd>
 <dt><strong>n_split_min: integer indicating minimum Segment size</strong></dt><dd></dd>
 <dt><strong>n_split_max: integer indicating maximum Segment size</strong></dt><dd></dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt>seq_splits: list of sequence Segment splits</dt><dd></dd>
 </dl>
@@ -366,7 +377,7 @@ Output matches with SequenceFeature.labels_segment.</p>
 
 </dd></dl>
 
-</section>
+</div>
 
 
            </div>

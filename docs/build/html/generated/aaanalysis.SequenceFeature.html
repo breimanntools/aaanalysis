@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
-<meta property="og:title" content="aaanalysis.SequenceFeature" />
+  <meta property="og:title" content="aaanalysis.SequenceFeature" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="generated/aaanalysis.SequenceFeature.html" />
 <meta property="og:site_name" content="AAanalysis" />
@@ -33,6 +32,8 @@
 
   
   
+    <link rel="shortcut icon" href="../_static/logo_small.png"/>
+  
 
   
   
@@ -47,6 +48,9 @@
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script src="../_static/sphinx_highlight.js"></script>
         <script src="../_static/clipboard.min.js"></script>
@@ -73,9 +77,12 @@
           
 
           
-            <a href="../index.html" class="icon icon-home"> AAanalysis
+            <a href="../index.html">
           
 
+          
+            
+            <img src="../_static/logo_big_trans.png" class="logo" alt="Logo"/>
           
           </a>
 
@@ -202,7 +209,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="aaanalysis-sequencefeature">
+  <div class="section" id="aaanalysis-sequencefeature">
 <h1>aaanalysis.SequenceFeature<a class="headerlink" href="#aaanalysis-sequencefeature" title="Permalink to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="aaanalysis.SequenceFeature">
@@ -234,6 +241,10 @@ all amino acids obtained by splitting a sequence part.</p>
 
 <p class="rubric">Methods</p>
 <table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.SequenceFeature.__init__" title="aaanalysis.SequenceFeature.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args, **kwargs)</p></td>
 <td><p></p></td>
@@ -263,7 +274,7 @@ all amino acids obtained by splitting a sequence part.</p>
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">feat_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_scales</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.feat_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L469-L529"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.feat_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create feature matrix for given feature names and sequence parts.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>df_parts: :class:`pandas.DataFrame`</strong></dt><dd><p>DataFrame with sequence parts.</p>
 </dd>
@@ -281,7 +292,7 @@ all amino acids obtained by splitting a sequence part.</p>
 </dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt>feat_matrix: array-like or sparse matrix, shape (n_samples, n_features)</dt><dd><p>Feature values of samples.</p>
 </dd>
@@ -295,7 +306,7 @@ all amino acids obtained by splitting a sequence part.</p>
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">feat_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.feat_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L362-L417"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.feat_names" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert feature ids (PART-SPLIT-SCALE) into feature name (scale name [positions]).</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>features: str, list of strings, pd.Series</strong></dt><dd><p>Ids of features for which feature names should be created.</p>
 </dd>
@@ -314,7 +325,7 @@ Conditions: ext_len&lt;jmd_m_len and ext_len&lt;jmd_c_len</p>
 </dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt>feat_names: list of strings</dt><dd><p>Names of features.</p>
 </dd>
@@ -337,7 +348,7 @@ Conditions: ext_len&lt;jmd_m_len and ext_len&lt;jmd_c_len</p>
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">feat_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dict_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.feat_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L420-L467"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.feat_value" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create feature values for all sequence parts by combining Part, Split, and Scale.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>df_parts: :class:`pandas.DataFrame`</strong></dt><dd><p>DataFrame with sequence parts.</p>
 </dd>
@@ -349,7 +360,7 @@ Conditions: ext_len&lt;jmd_m_len and ext_len&lt;jmd_c_len</p>
 </dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt>feature_value: array-like, shape (n_samples, n_parts)</dt><dd><p>Average scale values over sequence parts.</p>
 </dd>
@@ -388,7 +399,7 @@ are as follows: ‘Segment(5,7)’, ‘Pattern(C,1,2)’, ‘PeriodicPattern(N,i
 <span class="sig-name descname"><span class="pre">features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_scales</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L323-L360"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.features" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create list of feature ids for given Parts, Splits, and Scales</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>list_parts: list of strings (n&gt;=1 parts), default = [“tmd_e”, “jmd_n_tmd_n”, “tmd_c_jmd_c”]</strong></dt><dd><p>Names of sequence parts which should be created (e.g., ‘tmd’).</p>
 </dd>
@@ -400,7 +411,7 @@ are as follows: ‘Segment(5,7)’, ‘Pattern(C,1,2)’, ‘PeriodicPattern(N,i
 </dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt>features: list of strings</dt><dd><p>Ids of all possible features for combination of Parts, Splits, and Scales with form: PART-SPLIT-SCALE</p>
 </dd>
@@ -414,7 +425,7 @@ are as follows: ‘Segment(5,7)’, ‘Pattern(C,1,2)’, ‘PeriodicPattern(N,i
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_df_parts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.get_df_parts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L192-L257"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.get_df_parts" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create DataFrane with sequence parts.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>df_seq: :class:`pandas.DataFrame`</strong></dt><dd><p>DataFrame with sequence information comprising either sequence (‘sequence’, ‘tmd_start’, ‘tmd_stop’)
 or sequence part (‘jmd_n’, ‘tmd’, ‘jmd_c’) columns.</p>
@@ -431,7 +442,7 @@ or sequence part (‘jmd_n’, ‘tmd’, ‘jmd_c’) columns.</p>
 </dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt>df_parts: <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></dt><dd><p>DataFrame with sequence parts.</p>
 </dd>
@@ -462,7 +473,7 @@ or sequence part (‘jmd_n’, ‘tmd’, ‘jmd_c’) columns.</p>
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_split_kws</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_split_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_split_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps_pattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">len_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps_periodicpattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.get_split_kws"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L259-L321"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.get_split_kws" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create dictionary with kwargs for three split types: Segment, Pattern, PeriodicPattern</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>n_split_min: int, default = 1</strong></dt><dd><p>Number greater 0 to specify the greatest Segment (e.g., 1/1 TMD alias whole TMD sequence).</p>
 </dd>
@@ -482,7 +493,7 @@ or sequence part (‘jmd_n’, ‘tmd’, ‘jmd_c’) columns.</p>
 </dd>
 </dl>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
 <dt>split_kws: dict</dt><dd><p>Nested dictionary with parameters for chosen split_types:</p>
 <ol class="loweralpha simple">
@@ -511,7 +522,7 @@ or sequence part (‘jmd_n’, ‘tmd’, ‘jmd_c’) columns.</p>
 
 </dd></dl>
 
-</section>
+</div>
 
 
            </div>

@@ -14,7 +14,6 @@ include = ["data/*.xlsx", "data/benchmarks/*.tsv", "data/benchmarks/*.xlsx"]
 # Assuming your platform and OS compatibilities
 classifiers = [
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -28,7 +27,7 @@ classifiers = [
 
 # Requierements
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.8"
 cycler = "^0.11.0"
 et-xmlfile = "^1.1.0"
 fonttools = "^4.37.1"
@@ -52,7 +51,6 @@ statsmodels = "^0.13.2"
 threadpoolctl = "^3.1.0"
 
 #... (keep the other dependencies as they are)
-
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"
 pytest-mpl = "^0.13"
@@ -61,7 +59,7 @@ sphinx_rtd_theme = "^0.5.2"
 #sphinx_book_theme = "^1.0.1"
 #pydata_sphinx_theme = "^0.13.3"
 myst_nb = "^0.17.2"
-sphinx_design = "^0.5"
+sphinx-design = { version = "^0.5", python = ">=3.8" }
 sphinx_copybutton = "^0.5.2"
 sphinxext-opengraph = "^0.8.2"
 numpydoc = "1.5.0"
