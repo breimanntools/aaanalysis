@@ -1,6 +1,6 @@
 .. _citations:
 
-If you use 'AAanalysis' in your work, please cite the respective publication:
+If you use 'AAanalysis' in your work, please cite the respective publication as follows:
 
 **AAclust**:
    [Citation details and link if available]

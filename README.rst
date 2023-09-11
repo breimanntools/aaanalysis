@@ -70,10 +70,23 @@ Set up a virtual environment and install dependencies using poetry:
 
    poetry install
 
+Contributing and Feedback
+=========================
+We welcome bug reports, feature requests, and code contributions.
+
+- **Issues**: Found a bug or have a feature idea? Please open an issue on our GitHub Repository.
+
+- **Code**: Want to contribute code? Submit a Pull Request.
+
+- **Docs**: See an error or room for improvement? Contributions to documentation are welcome.
+
+For questions or suggestions, email stephanbreimann@gmail.com.
+
+
 Citations
 =========
 
-If you use 'AAanalysis' in your research, please cite the appropriate publication:
+If you use 'AAanalysis' in your work, please cite the respective publication as follows:
 
 **AAclust**:
    [Citation details and link if available]
