@@ -1,0 +1,820 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>aaanalysis.aaclust.aaclust &mdash; AAanalysis</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/style.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+        <script src="../../../_static/design-tabs.js"></script>
+        <script src="../../../_static/toggle_menu.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> AAanalysis
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                latest
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">AAanalysis</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>aaanalysis.aaclust.aaclust</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for aaanalysis.aaclust.aaclust</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This is a script for the AAclust clustering wrapper method.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics.pairwise</span> <span class="kn">import</span> <span class="n">pairwise_distances</span>
+<span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
+
+<span class="kn">import</span> <span class="nn">aaanalysis.aaclust._utils</span> <span class="k">as</span> <span class="nn">_ut</span>
+<span class="kn">import</span> <span class="nn">aaanalysis._utils</span> <span class="k">as</span> <span class="nn">ut</span>
+
+
+<span class="c1"># I Helper Functions</span>
+<span class="c1"># Obtain centroids and medoids</span>
+<span class="k">def</span> <span class="nf">cluster_center</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute cluster center (i.e., arithmetical mean over all data points/observations of a cluster)&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:]</span>
+
+
+<span class="k">def</span> <span class="nf">get_cluster_centers</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Obtain cluster centers and their labels&quot;&quot;&quot;</span>
+    <span class="n">center_labels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">OrderedDict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span>
+    <span class="n">list_masks</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">True</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">label</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">center_labels</span><span class="p">]</span>
+    <span class="n">centers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">cluster_center</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span> <span class="k">for</span> <span class="n">mask</span> <span class="ow">in</span> <span class="n">list_masks</span><span class="p">])</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">centers</span><span class="p">,</span> <span class="n">center_labels</span>
+
+
+<span class="k">def</span> <span class="nf">_cluster_medoid</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Obtain cluster medoids (i.e., scale closest to cluster center used as representative scale for a cluster)&quot;&quot;&quot;</span>
+    <span class="c1"># Create new array with cluster center and given</span>
+    <span class="n">center_X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">cluster_center</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">X</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># Get index for scale with highest correlation with cluster center</span>
+    <span class="n">ind_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">center_X</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">ind_max</span>
+
+
+<span class="k">def</span> <span class="nf">get_cluster_medoids</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Obtain cluster medoids and their labels&quot;&quot;&quot;</span>
+    <span class="n">unique_labels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">OrderedDict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span>
+    <span class="n">list_masks</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">True</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">label</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">unique_labels</span><span class="p">]</span>
+    <span class="n">list_ind_max</span> <span class="o">=</span> <span class="p">[</span><span class="n">_cluster_medoid</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span> <span class="k">for</span> <span class="n">mask</span> <span class="ow">in</span> <span class="n">list_masks</span><span class="p">]</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)))</span>
+    <span class="n">medoid_ind</span> <span class="o">=</span> <span class="p">[</span><span class="n">indices</span><span class="p">[</span><span class="n">m</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">list_masks</span><span class="p">,</span> <span class="n">list_ind_max</span><span class="p">)]</span>
+    <span class="n">medoid_labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">medoid_ind</span><span class="p">]</span>
+    <span class="n">medoids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">medoid_ind</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">medoids</span><span class="p">,</span> <span class="n">medoid_labels</span><span class="p">,</span> <span class="n">medoid_ind</span>
+
+
+<span class="c1"># Compute minimum correlation on center or all scales</span>
+<span class="k">def</span> <span class="nf">_min_cor_center</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get minimum for correlation of all columns with cluster center, defined as the mean values</span>
+<span class="sd">    for each amino acid over all scales.&quot;&quot;&quot;</span>
+    <span class="c1"># Create new matrix including cluster center</span>
+    <span class="n">center_X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">cluster_center</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">X</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># Get minimum correlation with mean values</span>
+    <span class="n">min_cor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">center_X</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">min_cor</span>
+
+
+<span class="k">def</span> <span class="nf">_min_cor_all</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get minimum for pair-wise correlation of all columns in given matrix.&quot;&quot;&quot;</span>
+    <span class="c1"># Get minimum correlations minimum/ maximum distance for pair-wise comparisons</span>
+    <span class="n">min_cor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">min_cor</span>
+
+
+<span class="k">def</span> <span class="nf">get_min_cor</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute minimum pair-wise correlation or correlation with cluster center for each cluster label</span>
+<span class="sd">    and return minimum of obtained cluster minimums.&quot;&quot;&quot;</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">_min_cor_center</span> <span class="k">if</span> <span class="n">on_center</span> <span class="k">else</span> <span class="n">_min_cor_all</span>
+    <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="c1"># Minimum correlations for each cluster (with center or all scales)</span>
+    <span class="n">unique_labels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">OrderedDict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span>
+    <span class="n">list_masks</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">True</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">label</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">unique_labels</span><span class="p">]</span>
+    <span class="n">list_min_cor</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span> <span class="k">for</span> <span class="n">mask</span> <span class="ow">in</span> <span class="n">list_masks</span><span class="p">]</span>
+    <span class="c1"># Minimum for all clusters</span>
+    <span class="n">min_cor</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">list_min_cor</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">min_cor</span>
+
+
+<span class="c1"># Get maximum distance on center or all scales</span>
+<span class="k">def</span> <span class="nf">get_max_dist</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;euclidean&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="c1"># Maximum distance for cluster</span>
+    <span class="k">if</span> <span class="n">on_center</span><span class="p">:</span>
+        <span class="c1"># Create new matrix including cluster center</span>
+        <span class="n">center_X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">cluster_center</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">X</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># Get maximum distance with mean values</span>
+        <span class="n">max_dist</span> <span class="o">=</span> <span class="n">pairwise_distances</span><span class="p">(</span><span class="n">center_X</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Get maximum distance for pair-wise comparisons</span>
+        <span class="n">max_dist</span> <span class="o">=</span> <span class="n">pairwise_distances</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">max_dist</span>
+
+
+<span class="c1"># II Main Functions</span>
+<span class="c1"># AAclust algorithm steps (estimate lower bound for n_clusters -&gt; optimization of n_clusters -&gt; merge clusters)</span>
+<span class="c1"># 1. Step (Estimation of n clusters)</span>
+<span class="k">def</span> <span class="nf">estimate_lower_bound_n_clusters</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_th</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Estimate the lower bound of the number of clusters (k).</span>
+
+<span class="sd">    This function estimates the lower bound of the number of clusters by testing a range</span>
+<span class="sd">    between 10% and 90% of all observations, incrementing in 10% steps.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X : array-like, shape (n_samples, n_features)</span>
+<span class="sd">        Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.</span>
+<span class="sd">    model : callable, optional</span>
+<span class="sd">        k-based clustering model to use.</span>
+<span class="sd">    model_kwargs : dict, optional</span>
+<span class="sd">        Dictionary of keyword arguments to pass to the clustering model.</span>
+<span class="sd">    min_th : float, optional, default = 0.6</span>
+<span class="sd">        Minimum threshold of within-cluster Pearson correlation required for a valid clustering.</span>
+<span class="sd">    on_center : bool, optional, default = True</span>
+<span class="sd">        Whether the minimum correlation is computed for all observations within a cluster</span>
+<span class="sd">        or just for the cluster center.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    n_clusters : int</span>
+<span class="sd">        Estimated lower bound for the number of clusters (k).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">get_min_cor</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">model</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">model_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">labels_</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="n">on_center</span><span class="p">)</span>
+    <span class="c1"># Create range between 10% and 90% of all scales (10% steps) as long as minimum correlation is lower than threshold</span>
+    <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_features</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">nclust_mincor</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="n">f</span><span class="p">(</span><span class="mi">1</span><span class="p">))]</span>
+    <span class="n">step_number</span> <span class="o">=</span> <span class="mi">40</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">step_number</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">n_clusters</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_samples</span><span class="o">*</span><span class="n">i</span><span class="o">/</span><span class="n">step_number</span><span class="p">))</span>    <span class="c1"># n cluster in 2.5% steps</span>
+        <span class="n">min_cor</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">n_clusters</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">min_cor</span> <span class="o">&lt;</span> <span class="n">min_th</span><span class="p">:</span>   <span class="c1"># Save only lower bounds</span>
+            <span class="n">nclust_mincor</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">n_clusters</span><span class="p">,</span> <span class="n">min_cor</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">break</span>
+    <span class="c1"># Select second highest lower bound (highest lower bound is faster but might surpass true bound)</span>
+    <span class="n">nclust_mincor</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">n_clusters</span> <span class="o">=</span> <span class="n">nclust_mincor</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">nclust_mincor</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">nclust_mincor</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Otherwise, only existing one</span>
+    <span class="k">return</span> <span class="n">n_clusters</span>
+
+
+<span class="c1"># 2. Step (Optimization of n clusters)</span>
+<span class="k">def</span> <span class="nf">optimize_n_clusters</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_th</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Optimize the number of clusters using a recursive algorithm.</span>
+
+<span class="sd">    This function performs clustering in a recursive manner (through a while loop) to ensure</span>
+<span class="sd">    that the minimum within-cluster correlation is achieved for all clusters. It is an efficiency</span>
+<span class="sd">    optimized version of a step-wise algorithm where the `n_clusters` is incrementally increased</span>
+<span class="sd">    until a stop condition is met.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X : array-like, shape (n_samples, n_features)</span>
+<span class="sd">        Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.</span>
+<span class="sd">    model : callable, optional</span>
+<span class="sd">        k-based clustering model to use.</span>
+<span class="sd">    model_kwargs : dict, optional</span>
+<span class="sd">        Dictionary of keyword arguments to pass to the clustering model.</span>
+<span class="sd">    n_clusters : int, optional</span>
+<span class="sd">        Estimated number of clusters (k).</span>
+<span class="sd">    min_th : float, optional, default = 0.5</span>
+<span class="sd">        Minimum threshold of within-cluster Pearson correlation required for a valid clustering.</span>
+<span class="sd">    on_center : bool, optional, default = True</span>
+<span class="sd">        Whether the minimum correlation is computed for all observations within a cluster</span>
+<span class="sd">        or just for the cluster center.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    n_clusters : int</span>
+<span class="sd">        Optimized number of clusters (k) after the recursive clustering.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_features</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">get_min_cor</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">model</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">model_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">labels_</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="n">on_center</span><span class="p">)</span>
+    <span class="n">min_cor</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">n_clusters</span><span class="p">)</span>
+    <span class="c1"># Recursive optimization of n_clusters via step wise increase starting from lower bound</span>
+    <span class="n">step</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_samples</span><span class="o">/</span><span class="mi">10</span><span class="p">),</span> <span class="mi">5</span><span class="p">))</span>    <span class="c1"># Step size between 1 and 5</span>
+    <span class="k">while</span> <span class="n">min_cor</span> <span class="o">&lt;</span> <span class="n">min_th</span> <span class="ow">and</span> <span class="n">n_clusters</span> <span class="o">&lt;</span> <span class="n">n_samples</span><span class="p">:</span>    <span class="c1"># Stop condition of clustering</span>
+        <span class="n">n_clusters</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">+</span><span class="n">step</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">)</span> <span class="c1"># Maximum of of n_samples is allowed</span>
+        <span class="n">min_cor</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">n_clusters</span><span class="p">)</span>
+        <span class="c1"># Exceeding of threshold -&gt; Conservative adjustment of clustering parameters to meet true optimum</span>
+        <span class="k">if</span> <span class="n">min_cor</span> <span class="o">&gt;=</span> <span class="n">min_th</span> <span class="ow">and</span> <span class="n">step</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">n_clusters</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_clusters</span> <span class="o">-</span> <span class="n">step</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">min_cor</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">n_clusters</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">n_clusters</span>
+
+
+<span class="c1"># 3. Step (Merging)</span>
+<span class="k">def</span> <span class="nf">_get_min_cor_cluster</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label_cluster</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get min_cor for single cluster&quot;&quot;&quot;</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span> <span class="o">==</span> <span class="n">label_cluster</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span>
+    <span class="n">min_cor</span> <span class="o">=</span> <span class="n">get_min_cor</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">on_center</span><span class="o">=</span><span class="n">on_center</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">min_cor</span>
+
+
+<span class="k">def</span> <span class="nf">_get_quality_measure</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label_cluster</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get quality measure single cluster given by feature matrix X, labels, and label of cluster&quot;&quot;&quot;</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span> <span class="o">==</span> <span class="n">label_cluster</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="n">_ut</span><span class="o">.</span><span class="n">METRIC_CORRELATION</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">get_min_cor</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">on_center</span><span class="o">=</span><span class="n">on_center</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">get_max_dist</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">on_center</span><span class="o">=</span><span class="n">on_center</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_best_cluster</span><span class="p">(</span><span class="n">dict_clust_qm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get cluster with best quality measure: either highest minimum Pearson correlation</span>
+<span class="sd">    or lowest distance measure&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="n">_ut</span><span class="o">.</span><span class="n">METRIC_CORRELATION</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">dict_clust_qm</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">dict_clust_qm</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">dict_clust_qm</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">dict_clust_qm</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">merge_clusters</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">n_max</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_th</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;correlation&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Merge small clusters into other clusters optimizing a given quality measure.</span>
+
+<span class="sd">    This function merges clusters with sizes less than or equal to `n_max` into other clusters</span>
+<span class="sd">    based on a specified quality measure (Pearson correlation or a distance metric).</span>
+<span class="sd">    Merging is conducted only if the new assignment meets a minimum within-cluster Pearson</span>
+<span class="sd">    correlation threshold defined by `min_th`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    X : array-like, shape (n_samples, n_features)</span>
+<span class="sd">        Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.</span>
+<span class="sd">    n_max : int, optional, default = 5</span>
+<span class="sd">        Maximum cluster size for small clusters to be considered for merging.</span>
+<span class="sd">    labels : array-like, shape (n_samples,), optional</span>
+<span class="sd">        Initial cluster labels for observations.</span>
+<span class="sd">    min_th : float, optional, default = 0.5</span>
+<span class="sd">        Minimum threshold of within-cluster Pearson correlation required for merging.</span>
+<span class="sd">    on_center : bool, optional, default = True</span>
+<span class="sd">        Whether the minimum correlation is computed for all observations within a cluster</span>
+<span class="sd">        or just for the cluster center.</span>
+<span class="sd">    metric : str, optional, default = &#39;correlation&#39;</span>
+<span class="sd">        Quality measure used to optimize merging. Can be &#39;correlation&#39; for maximum correlation</span>
+<span class="sd">        or any valid distance metric like &#39;euclidean&#39; for minimum distance.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    labels : array-like, shape (n_samples,)</span>
+<span class="sd">        Cluster labels for observations after merging.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">unique_labels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">OrderedDict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_max</span><span class="p">):</span>
+        <span class="n">s_clusters</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">unique_labels</span> <span class="k">if</span> <span class="n">labels</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="n">n</span><span class="p">]</span>   <span class="c1"># Smallest clusters</span>
+        <span class="n">b_clusters</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">unique_labels</span> <span class="k">if</span> <span class="n">labels</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">n</span><span class="p">]</span>    <span class="c1"># Bigger clusters (all others)</span>
+        <span class="c1"># Assign scales from smaller clusters to cluster by optimizing for quality measure</span>
+        <span class="k">for</span> <span class="n">s_clust</span> <span class="ow">in</span> <span class="n">s_clusters</span><span class="p">:</span>
+            <span class="n">dict_clust_qm</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Cluster to quality measure</span>
+            <span class="k">for</span> <span class="n">b_clust</span> <span class="ow">in</span> <span class="n">b_clusters</span><span class="p">:</span>
+                <span class="n">labels_</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">if</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">s_clust</span> <span class="k">else</span> <span class="n">b_clust</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="n">labels_</span><span class="p">,</span> <span class="n">label_cluster</span><span class="o">=</span><span class="n">b_clust</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="n">on_center</span><span class="p">)</span>
+                <span class="n">min_cor</span> <span class="o">=</span> <span class="n">_get_min_cor_cluster</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">min_cor</span> <span class="o">&gt;=</span> <span class="n">min_th</span><span class="p">:</span>
+                    <span class="n">dict_clust_qm</span><span class="p">[</span><span class="n">b_clust</span><span class="p">]</span> <span class="o">=</span> <span class="n">_get_quality_measure</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dict_clust_qm</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">b_clust_best</span> <span class="o">=</span> <span class="n">_get_best_cluster</span><span class="p">(</span><span class="n">dict_clust_qm</span><span class="o">=</span><span class="n">dict_clust_qm</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
+                <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">if</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">s_clust</span> <span class="k">else</span> <span class="n">b_clust_best</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span>
+    <span class="c1"># Update labels (cluster labels are given in descending order of cluster size)</span>
+    <span class="n">sorted_labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">index</span>  <span class="c1"># sorted in descending order of size</span>
+    <span class="n">dict_update</span> <span class="o">=</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sorted_labels</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">labels</span><span class="p">))))}</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">dict_update</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">labels</span>
+
+
+<span class="c1"># AAclust naming</span>
+<span class="k">def</span> <span class="nf">get_names_cluster</span><span class="p">(</span><span class="n">list_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name_medoid</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name_unclassified</span><span class="o">=</span><span class="s2">&quot;Unclassified&quot;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get list of cluster names sorted based on following criteria (descending order):</span>
+<span class="sd">        a) Frequency of term (most frequent term is preferred)</span>
+<span class="sd">        b) Term is the name or a sub-name of the given medoid</span>
+<span class="sd">        c) Length of term (shorter terms are preferred)</span>
+<span class="sd">    If cluster consists of only one term, the name will be &#39;unclassified (&#39;category name&#39;)&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">remove_2nd_info</span><span class="p">(</span><span class="n">name_</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove information given behind comma&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="n">name_</span><span class="p">:</span>
+            <span class="n">name_</span> <span class="o">=</span> <span class="n">name_</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">&quot;(&quot;</span> <span class="ow">in</span> <span class="n">name_</span><span class="p">:</span>
+                <span class="n">name_</span> <span class="o">+=</span> <span class="s2">&quot;)&quot;</span>  <span class="c1"># Close parenthesis if interpreted by deletion</span>
+        <span class="k">return</span> <span class="n">name_</span>
+    <span class="c1"># Filter categories (Remove unclassified scales and secondary infos)</span>
+    <span class="n">list_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">remove_2nd_info</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">list_names</span> <span class="k">if</span> <span class="s2">&quot;Unclassified&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span>
+    <span class="c1"># Create list of shorter names not containing information given in parenthesis</span>
+    <span class="n">list_short_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; (&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">list_names</span> <span class="k">if</span> <span class="s2">&quot; (&quot;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">list_names</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">list_names</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">list_short_names</span><span class="p">)</span>
+        <span class="c1"># Obtain information to check criteria for sorting scale names</span>
+        <span class="n">df_counts</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">list_names</span><span class="p">)</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>   <span class="c1"># Compute frequencies of names</span>
+        <span class="n">df_counts</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;count&quot;</span><span class="p">]</span>
+        <span class="n">df_counts</span><span class="p">[</span><span class="s2">&quot;medoid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">name_medoid</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df_counts</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]]</span>  <span class="c1"># Name in medoid</span>
+        <span class="n">df_counts</span><span class="p">[</span><span class="s2">&quot;length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df_counts</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]]</span>      <span class="c1"># Length of name</span>
+        <span class="c1"># Sort names based on given criteria</span>
+        <span class="n">df_counts</span> <span class="o">=</span> <span class="n">df_counts</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;count&quot;</span><span class="p">,</span> <span class="s2">&quot;medoid&quot;</span><span class="p">,</span> <span class="s2">&quot;length&quot;</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">])</span>
+        <span class="n">names_cluster</span> <span class="o">=</span> <span class="n">df_counts</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">names_cluster</span> <span class="o">=</span> <span class="p">[</span><span class="n">name_unclassified</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">names_cluster</span>
+
+
+<div class="viewcode-block" id="AAclust"><a class="viewcode-back" href="../../../generated/aaanalysis.AAclust.html#aaanalysis.AAclust">[docs]</a><span class="k">class</span> <span class="nc">AAclust</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    AAclust: A k-optimized clustering framework for selecting redundancy-reduced set of numerical scales.</span>
+
+<span class="sd">    AAclust is designed primarily for amino acid scales but is versatile enough for any set of numerical indices.</span>
+<span class="sd">    It takes clustering models that require a pre-defined number of clusters (k) from</span>
+<span class="sd">    `scikit-learn &lt;https://scikit-learn.org/stable/modules/clustering.html&gt;`. By leveraging Pearson correlation as</span>
+<span class="sd">    similarity measure, AAclust optimizes the value of k. It then selects one representative sample (termed as &#39;medoid&#39;)</span>
+<span class="sd">    for each cluster, which is the closest to the cluster&#39;s center, yielding a redundancy-reduced sample set.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model : callable, optional, default =  :class:`sklearn.cluster.KMeans`</span>
+<span class="sd">        The employed clustering model requiring pre-defined number of clusters &#39;k&#39;, given as &#39;n_clusters&#39; parameter.</span>
+<span class="sd">    model_kwargs : dict, optional, default = {}</span>
+<span class="sd">        A dictionary of keyword arguments to pass to the selected clustering model.</span>
+
+<span class="sd">    verbose : bool, optional, default = False</span>
+<span class="sd">        A flag to enable or disable verbose outputs.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n_clusters : int, default = None</span>
+<span class="sd">        Number of clusters obtained by AAclust.</span>
+<span class="sd">    labels_ : array-like, default = None</span>
+<span class="sd">        Cluster labels in the order of samples in the feature matrix.</span>
+<span class="sd">    centers_ : array-like, default = None</span>
+<span class="sd">        Average scale values corresponding to each cluster.</span>
+<span class="sd">    center_labels_ : array-like, default = None</span>
+<span class="sd">        Cluster labels for each cluster center.</span>
+<span class="sd">    medoids_ : array-like, default = None</span>
+<span class="sd">        Representative samples (one for each cluster center).</span>
+<span class="sd">    medoid_labels_ : array-like, default = None</span>
+<span class="sd">        Cluster labels for each medoid.</span>
+<span class="sd">    medoid_ind_ : array-like, default = None</span>
+<span class="sd">        Indices of the chosen medoids within the original dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="AAclust.__init__"><a class="viewcode-back" href="../../../generated/aaanalysis.AAclust.html#aaanalysis.AAclust.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># Model parameters</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">KMeans</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="k">if</span> <span class="n">model_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">model_kwargs</span> <span class="o">=</span> <span class="n">_ut</span><span class="o">.</span><span class="n">check_model</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="n">model_kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="n">model_kwargs</span>
+        <span class="c1"># AAclust clustering settings</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+        <span class="c1"># Output parameters (will be set during model fitting)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_clusters</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Number of by AAclust obtained clusters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">labels_</span> <span class="o">=</span> <span class="kc">None</span>     <span class="c1"># Cluster labels in order of samples in feature matrix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">centers_</span> <span class="o">=</span> <span class="kc">None</span>    <span class="c1"># Mean scales for each cluster</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">center_labels_</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">medoids_</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">medoid_labels_</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">medoid_ind_</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+    <span class="c1"># Clustering method</span>
+<div class="viewcode-block" id="AAclust.fit"><a class="viewcode-back" href="../../../generated/aaanalysis.AAclust.html#aaanalysis.AAclust.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">min_th</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="n">merge_metric</span><span class="o">=</span><span class="s2">&quot;euclidean&quot;</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit the AAclust model on the data, optimizing cluster formation using Pearson correlation.</span>
+
+<span class="sd">        AAclust determines the optimal number of clusters, k, without pre-specification. It partitions data (X) into</span>
+<span class="sd">        clusters by maximizing the within-cluster Pearson correlation beyond the &#39;min_th&#39; threshold. The quality of</span>
+<span class="sd">        clustering is either based on the minimum Pearson correlation of all members (&#39;min_cor all&#39;) or between</span>
+<span class="sd">        the cluster center and its members (&#39;min_cor center&#39;), governed by `on_center`.</span>
+
+<span class="sd">        The clustering undergoes three stages:</span>
+<span class="sd">        1. Estimate the lower bound of k.</span>
+<span class="sd">        2. Refine k using the chosen quality metric.</span>
+<span class="sd">        3. Optionally merge smaller clusters, as directed by `merge_metric`.</span>
+
+<span class="sd">        Finally, a representative scale (medoid) &#39;closest to each cluster center is chosen for redundancy reduction.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : array-like, shape (n_samples, n_features)</span>
+<span class="sd">            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.</span>
+<span class="sd">        names : list of str, optional</span>
+<span class="sd">            Sample names. If provided, returns names of the medoids.</span>
+<span class="sd">        on_center : bool, default = True</span>
+<span class="sd">            If True, the correlation threshold is applied to the cluster center. Otherwise, it&#39;s applied to all cluster members.</span>
+<span class="sd">        min_th : float, default = 0</span>
+<span class="sd">            Pearson correlation threshold for clustering (between 0 and 1).</span>
+<span class="sd">        merge_metric : str or None, default = &quot;euclidean&quot;</span>
+<span class="sd">            Metric used for optional cluster merging. Can be &quot;euclidean&quot;, &quot;pearson&quot;, or None (no merging).</span>
+<span class="sd">        n_clusters : int, optional</span>
+<span class="sd">            Pre-defined number of clusters. If provided, AAclust uses this instead of optimizing k.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        names_medoid : list of str, if `names` is provided</span>
+<span class="sd">            Names of the medoids.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The &#39;fit&#39; method sets the following attributes: :attr: `aaanalysis.AAclust.n_clusters&quot;,</span>
+<span class="sd">        :attr: `aaanalysis.AAclust.labels_`, :attr: `aaanalysis.AAclust.centers_`,</span>
+<span class="sd">        :attr: `aaanalysis.AAclust.center_labels_`, :attr: `aaanalysis.AAclust.medoids_`.</span>
+<span class="sd">        :attr: `aaanalysis.AAclust.medoid_labels_`, :attr: `aaanalysis.AAclust.medoid_ind_`.</span>
+
+<span class="sd">        For further information, refer to the AAclust paper : TODO: add link to AAclust paper</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check input</span>
+        <span class="n">_ut</span><span class="o">.</span><span class="n">check_min_th</span><span class="p">(</span><span class="n">min_th</span><span class="o">=</span><span class="n">min_th</span><span class="p">)</span>
+        <span class="n">merge_metric</span> <span class="o">=</span> <span class="n">_ut</span><span class="o">.</span><span class="n">check_merge_metric</span><span class="p">(</span><span class="n">merge_metric</span><span class="o">=</span><span class="n">merge_metric</span><span class="p">)</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">names</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_feat_matrix</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="p">,</span> <span class="n">min_th</span><span class="o">=</span><span class="n">min_th</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="n">on_center</span><span class="p">)</span>
+        <span class="c1"># Clustering using given clustering models</span>
+        <span class="k">if</span> <span class="n">n_clusters</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">n_clusters</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">labels_</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="c1"># Clustering using AAclust algorithm</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Estimation of lower bound of number of clusters via testing range between 10% and 90% of all scales</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;1. Estimation of lower bound of k (number of clusters)&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">n_clusters_lb</span> <span class="o">=</span> <span class="n">estimate_lower_bound_n_clusters</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;: k=</span><span class="si">{</span><span class="n">n_clusters_lb</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># Optimization of number of clusters by recursive clustering</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
+                <span class="n">objective_fct</span> <span class="o">=</span> <span class="s2">&quot;min_cor_center&quot;</span> <span class="k">if</span> <span class="n">on_center</span> <span class="k">else</span> <span class="s2">&quot;min_cor_all&quot;</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;2. Optimization of k by recursive clustering (</span><span class="si">{</span><span class="n">objective_fct</span><span class="si">}</span><span class="s2">, min_th=</span><span class="si">{</span><span class="n">min_th</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">n_clusters</span> <span class="o">=</span> <span class="n">optimize_n_clusters</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="n">n_clusters_lb</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;: k=</span><span class="si">{</span><span class="n">n_clusters</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">n_clusters</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">labels_</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="c1"># Cluster merging: assign scales from small clusters to other cluster with highest minimum correlation</span>
+            <span class="k">if</span> <span class="n">merge_metric</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;3. Cluster merging (optional)&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+                <span class="n">labels</span> <span class="o">=</span> <span class="n">merge_clusters</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">min_th</span><span class="o">=</span><span class="n">min_th</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="n">on_center</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">merge_metric</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;: k=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># Obtain cluster centers and medoids</span>
+        <span class="n">medoids</span><span class="p">,</span> <span class="n">medoid_labels</span><span class="p">,</span> <span class="n">medoid_ind</span> <span class="o">=</span> <span class="n">get_cluster_medoids</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+        <span class="n">centers</span><span class="p">,</span> <span class="n">center_labels</span> <span class="o">=</span> <span class="n">get_cluster_centers</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+        <span class="c1"># Save results</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_clusters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">labels_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">centers_</span> <span class="o">=</span> <span class="n">centers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">center_labels_</span> <span class="o">=</span> <span class="n">center_labels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">medoids_</span> <span class="o">=</span> <span class="n">medoids</span>     <span class="c1"># Representative scales</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">medoid_labels_</span> <span class="o">=</span> <span class="n">medoid_labels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">medoid_ind_</span> <span class="o">=</span> <span class="n">medoid_ind</span>   <span class="c1"># Index of medoids</span>
+        <span class="c1"># Return labels of medoid if y is given</span>
+        <span class="k">if</span> <span class="n">names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">names_medoid</span> <span class="o">=</span> <span class="p">[</span><span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">medoid_ind</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">names_medoid</span></div>
+
+<div class="viewcode-block" id="AAclust.cluster_naming"><a class="viewcode-back" href="../../../generated/aaanalysis.AAclust.html#aaanalysis.AAclust.cluster_naming">[docs]</a>    <span class="k">def</span> <span class="nf">cluster_naming</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name_unclassified</span><span class="o">=</span><span class="s2">&quot;Unclassified&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Assigns names to clusters based on scale names and their frequency.</span>
+
+<span class="sd">        This method renames clusters based on the names of the scales in each cluster, with priority given to the</span>
+<span class="sd">        most frequent scales. If the name is already used or does not exist, it defaults to &#39;name_unclassified&#39;.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        names : list, optional</span>
+<span class="sd">            List of scale names corresponding to each sample.</span>
+<span class="sd">        labels : list, optional</span>
+<span class="sd">            Cluster labels. If not provided, uses the labels from the fitted model.</span>
+<span class="sd">        name_unclassified : str, default = &quot;Unclassified&quot;</span>
+<span class="sd">            Name assigned to clusters that cannot be classified with the given names.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        cluster_names : list</span>
+<span class="sd">            A list of renamed clusters based on scale names.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;names&#39; must be list&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels_</span>
+        <span class="n">dict_medoids</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">medoid_labels_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">medoid_ind_</span><span class="p">))</span>
+        <span class="c1"># Get cluster labels sorted in descending order of frequency</span>
+        <span class="n">labels_sorted</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">index</span>
+        <span class="c1"># Assign names to cluster</span>
+        <span class="n">dict_cluster_names</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">clust</span> <span class="ow">in</span> <span class="n">labels_sorted</span><span class="p">:</span>
+            <span class="n">name_medoid</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="n">dict_medoids</span><span class="p">[</span><span class="n">clust</span><span class="p">]]</span>
+            <span class="n">list_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">))</span> <span class="k">if</span> <span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">clust</span><span class="p">]</span>
+            <span class="n">names_cluster</span> <span class="o">=</span> <span class="n">get_names_cluster</span><span class="p">(</span><span class="n">list_names</span><span class="o">=</span><span class="n">list_names</span><span class="p">,</span>
+                                              <span class="n">name_medoid</span><span class="o">=</span><span class="n">name_medoid</span><span class="p">,</span>
+                                              <span class="n">name_unclassified</span><span class="o">=</span><span class="n">name_unclassified</span><span class="p">)</span>
+            <span class="n">assigned</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names_cluster</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dict_cluster_names</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="ow">or</span> <span class="n">name</span> <span class="o">==</span> <span class="n">name_unclassified</span><span class="p">:</span>
+                    <span class="n">dict_cluster_names</span><span class="p">[</span><span class="n">clust</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+                    <span class="n">assigned</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">assigned</span><span class="p">:</span>
+                <span class="n">dict_cluster_names</span><span class="p">[</span><span class="n">clust</span><span class="p">]</span> <span class="o">=</span> <span class="n">name_unclassified</span>
+        <span class="n">cluster_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">dict_cluster_names</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">cluster_names</span></div>
+
+<div class="viewcode-block" id="AAclust.get_cluster_centers"><a class="viewcode-back" href="../../../generated/aaanalysis.AAclust.html#aaanalysis.AAclust.get_cluster_centers">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_cluster_centers</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes the center of each cluster based on the given labels.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : array-like, shape (n_samples, n_features)</span>
+<span class="sd">            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.</span>
+<span class="sd">        labels : list or array-like, optional</span>
+<span class="sd">            Cluster labels for each sample in X.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        centers : array-like</span>
+<span class="sd">            The computed center for each cluster.</span>
+<span class="sd">        center_labels : array-like</span>
+<span class="sd">            The labels associated with each computed center.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">centers</span><span class="p">,</span> <span class="n">center_labels</span> <span class="o">=</span> <span class="n">get_cluster_centers</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">centers</span><span class="p">,</span> <span class="n">center_labels</span></div>
+
+<div class="viewcode-block" id="AAclust.get_cluster_medoids"><a class="viewcode-back" href="../../../generated/aaanalysis.AAclust.html#aaanalysis.AAclust.get_cluster_medoids">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_cluster_medoids</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes the medoid of each cluster based on the given labels.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">         X : array-like, shape (n_samples, n_features)</span>
+<span class="sd">            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.</span>
+<span class="sd">        labels : list or array-like, optional</span>
+<span class="sd">            Cluster labels for each sample in X.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        medoids : array-like</span>
+<span class="sd">            The medoid for each cluster.</span>
+<span class="sd">        medoid_labels : array-like</span>
+<span class="sd">            The labels corresponding to each medoid.</span>
+<span class="sd">        medoid_ind : array-like</span>
+<span class="sd">            Indexes of medoids within the original data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">medoids</span><span class="p">,</span> <span class="n">medoid_labels</span><span class="p">,</span> <span class="n">medoid_ind</span> <span class="o">=</span> <span class="n">get_cluster_medoids</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">medoids</span><span class="p">,</span> <span class="n">medoid_labels</span><span class="p">,</span> <span class="n">medoid_ind</span></div>
+
+<div class="viewcode-block" id="AAclust.correlation"><a class="viewcode-back" href="../../../generated/aaanalysis.AAclust.html#aaanalysis.AAclust.correlation">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">correlation</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">X_ref</span><span class="p">,</span> <span class="n">labels_test</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels_ref</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">positive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">on_center</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">except_unclassified</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes the correlation of test data with reference cluster centers.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X_test : array-like</span>
+<span class="sd">            Test feature matrix.</span>
+<span class="sd">        X_ref : array-like</span>
+<span class="sd">            Reference feature matrix.</span>
+<span class="sd">        labels_test : list or array-like, optional</span>
+<span class="sd">            Cluster labels for the test data.</span>
+<span class="sd">        labels_ref : list or array-like, optional</span>
+<span class="sd">            Cluster labels for the reference data.</span>
+<span class="sd">        n : int, default = 3</span>
+<span class="sd">            Number of top centers to consider based on correlation strength.</span>
+<span class="sd">        positive : bool, default = True</span>
+<span class="sd">            If True, considers positive correlations. Else, negative correlations.</span>
+<span class="sd">        on_center : bool, default = False</span>
+<span class="sd">            If True, correlation is computed with cluster centers. Otherwise, with all cluster members.</span>
+<span class="sd">        except_unclassified : bool, default = True</span>
+<span class="sd">            If True, excludes &#39;unclassified&#39; clusters from the reference list.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list_top_center_name_corr : list of str</span>
+<span class="sd">            Names and correlations of centers having strongest (positive/negative) correlation with test data samples.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check input</span>
+        <span class="n">X_test</span><span class="p">,</span> <span class="n">labels_test</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_feat_matrix</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X_test</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">labels_test</span><span class="p">)</span>
+        <span class="n">X_ref</span><span class="p">,</span> <span class="n">labels_ref</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_feat_matrix</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X_ref</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">labels_ref</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">except_unclassified</span><span class="p">:</span>
+            <span class="n">names_ref</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">labels_ref</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">names_ref</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">labels_ref</span><span class="p">))</span> <span class="k">if</span> <span class="s2">&quot;unclassified&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+        <span class="n">masks_ref</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">True</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">label</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">labels_ref</span><span class="p">]</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">names_ref</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">on_center</span><span class="p">:</span>
+            <span class="c1"># Get centers for all clusters in reference data</span>
+            <span class="n">centers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">cluster_center</span><span class="p">(</span><span class="n">X_ref</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span> <span class="k">for</span> <span class="n">mask</span> <span class="ow">in</span> <span class="n">masks_ref</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="c1"># Compute correlation of test data with centers</span>
+            <span class="n">Xtest_centers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">X_test</span><span class="p">,</span> <span class="n">centers</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">n_test</span> <span class="o">=</span> <span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">X_corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">Xtest_centers</span><span class="p">)[:</span><span class="n">n_test</span><span class="p">,</span> <span class="n">n_test</span><span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">masks_test</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">True</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">j</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels_test</span><span class="p">))]</span>
+                          <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">labels_test</span><span class="p">)]</span>
+            <span class="c1"># Compute minimum correlation of test data with each group of reference data</span>
+            <span class="n">X_corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">_min_cor_all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">X_test</span><span class="p">[</span><span class="n">mask_test</span><span class="p">],</span> <span class="n">X_ref</span><span class="p">[</span><span class="n">mask_ref</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+                                <span class="k">for</span> <span class="n">mask_ref</span> <span class="ow">in</span> <span class="n">masks_ref</span> <span class="p">]</span> <span class="k">for</span> <span class="n">mask_test</span> <span class="ow">in</span> <span class="n">masks_test</span><span class="p">])</span>
+        <span class="c1"># Get index for n centers with highest/lowest correlation for each scale</span>
+        <span class="k">if</span> <span class="n">positive</span><span class="p">:</span>
+            <span class="n">list_top_center_ind</span> <span class="o">=</span> <span class="n">X_corr</span><span class="o">.</span><span class="n">argsort</span><span class="p">()[:,</span> <span class="o">-</span><span class="n">n</span><span class="p">:][:,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">list_top_center_ind</span> <span class="o">=</span> <span class="n">X_corr</span><span class="o">.</span><span class="n">argsort</span><span class="p">()[:,</span> <span class="p">:</span><span class="n">n</span><span class="p">]</span>
+        <span class="c1"># Get name and correlation for centers correlating strongest (positive/negative) with test data samples</span>
+        <span class="n">list_top_center_name_corr</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">list_top_center_ind</span><span class="p">):</span>
+            <span class="n">top_corr</span> <span class="o">=</span> <span class="n">X_corr</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:][</span><span class="n">ind</span><span class="p">]</span>
+            <span class="n">top_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">names_ref</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ind</span><span class="p">]</span>
+            <span class="n">str_corr</span> <span class="o">=</span> <span class="s2">&quot;;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">corr</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">top_names</span><span class="p">,</span> <span class="n">top_corr</span><span class="p">)])</span>
+            <span class="n">list_top_center_name_corr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">str_corr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">list_top_center_name_corr</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2023, Stephan Breimann.
+
+    </p>
+  </div> 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

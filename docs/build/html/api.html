@@ -1,0 +1,329 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+<meta property="og:title" content="API Reference" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="api.html" />
+<meta property="og:site_name" content="AAanalysis" />
+<meta property="og:description" content="This page contains the API reference for public objects and functions in AAanalysis. For more examples and practical usage, refer to our example notebooks. For convenience, it is common to import t..." />
+<meta property="og:image:width" content="1146" />
+<meta property="og:image:height" content="600" />
+<meta property="og:image" content="/_images/social_previews/summary_api_38782457.png" />
+<meta property="og:image:alt" content="This page contains the API reference for public objects and functions in AAanalysis. For more examples and practical usage, refer to our example notebooks. F..." />
+<meta name="description" content="This page contains the API reference for public objects and functions in AAanalysis. For more examples and practical usage, refer to our example notebooks. For convenience, it is common to import t..." />
+<meta name="twitter:card" content="summary_large_image" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>API Reference &mdash; AAanalysis</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+  <link rel="stylesheet" href="_static/plot_directive.css" type="text/css" />
+  <link rel="stylesheet" href="_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/style.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+        <script src="_static/design-tabs.js"></script>
+        <script src="_static/toggle_menu.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="aaanalysis.load_dataset" href="generated/aaanalysis.load_dataset.html" />
+    <link rel="prev" title="Tutorials" href="tutorials.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> AAanalysis
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                latest
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#data-loading">Data Loading</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.load_dataset.html">aaanalysis.load_dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.load_scales.html">aaanalysis.load_scales</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#aaclust">AAclust</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.AAclust.html">aaanalysis.AAclust</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#cpp-module">CPP Module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.CPP.html">aaanalysis.CPP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.SequenceFeature.html">aaanalysis.SequenceFeature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.SplitRange.html">aaanalysis.SplitRange</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#dpulearn">dPUlearn</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.dPULearn.html">aaanalysis.dPULearn</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#plot-utilities">Plot Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_settings.html">aaanalysis.plot_settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_set_legend.html">aaanalysis.plot_set_legend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_gcfs.html">aaanalysis.plot_gcfs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">AAanalysis</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>API Reference</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this heading">¶</a></h1>
+<p>This page contains the API reference for public objects and functions in AAanalysis. For more examples
+and practical usage, refer to our <a class="reference external" href="https://shap.readthedocs.io/en/latest/api_examples.html#api-examples" title="(in SHAP vlatest)"><span class="xref std std-ref">example notebooks</span></a>.
+For convenience, it is common to import the module as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
+</pre></div>
+</div>
+<p>Then you can access all methods and objects via the <cite>aa</cite> alias, such as <cite>aa.load_dataset</cite>.</p>
+<section id="data-loading">
+<span id="data-api"></span><h2>Data Loading<a class="headerlink" href="#data-loading" title="Permalink to this heading">¶</a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.load_dataset.html#aaanalysis.load_dataset" title="aaanalysis.load_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.load_dataset</span></code></a>([name, n, ...])</p></td>
+<td><p>Load protein benchmarking datasets or their general overview by setting 'name' to 'INFO'.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.load_scales.html#aaanalysis.load_scales" title="aaanalysis.load_scales"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.load_scales</span></code></a>([name, just_aaindex, ...])</p></td>
+<td><p>Load amino acid scales or scale classification.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="aaclust">
+<span id="aaclust-api"></span><h2>AAclust<a class="headerlink" href="#aaclust" title="Permalink to this heading">¶</a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.AAclust.html#aaanalysis.AAclust" title="aaanalysis.AAclust"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.AAclust</span></code></a>([model, model_kwargs, ...])</p></td>
+<td><p>AAclust: A k-optimized clustering framework for selecting redundancy-reduced set of numerical scales.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="cpp-module">
+<span id="cpp-api"></span><h2>CPP Module<a class="headerlink" href="#cpp-module" title="Permalink to this heading">¶</a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.CPP.html#aaanalysis.CPP" title="aaanalysis.CPP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.CPP</span></code></a>([df_scales, df_cat, ...])</p></td>
+<td><p>Create and filter features that are most discriminant between two sets of sequences.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature" title="aaanalysis.SequenceFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.SequenceFeature</span></code></a>()</p></td>
+<td><p>Retrieve and create sequence feature components (Part, Split, and Scale).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange" title="aaanalysis.SplitRange"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.SplitRange</span></code></a>()</p></td>
+<td><p>Class for creating range of splits for testing sets of multiple features in CPP</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="dpulearn">
+<span id="dpulearn-api"></span><h2>dPUlearn<a class="headerlink" href="#dpulearn" title="Permalink to this heading">¶</a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.dPULearn.html#aaanalysis.dPULearn" title="aaanalysis.dPULearn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.dPULearn</span></code></a>([verbose, n_components, ...])</p></td>
+<td><p>Deterministic Positive-Unlabeled (dPULearn) model.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="plot-utilities">
+<span id="plot-api"></span><h2>Plot Utilities<a class="headerlink" href="#plot-utilities" title="Permalink to this heading">¶</a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_settings.html#aaanalysis.plot_settings" title="aaanalysis.plot_settings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_settings</span></code></a>([fig_format, ...])</p></td>
+<td><p>Configure general settings for plot visualization with various customization options.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.plot_set_legend.html#aaanalysis.plot_set_legend" title="aaanalysis.plot_set_legend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_set_legend</span></code></a>([ax, handles, ...])</p></td>
+<td><p>Set a customizable legend for a plot.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_gcfs.html#aaanalysis.plot_gcfs" title="aaanalysis.plot_gcfs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_gcfs</span></code></a>()</p></td>
+<td><p>Get current font size, which is set by ut.plot_settings function</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="generated/aaanalysis.load_dataset.html" class="btn btn-neutral float-right" title="aaanalysis.load_dataset" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="tutorials.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2023, Stephan Breimann.
+
+    </p>
+  </div> 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

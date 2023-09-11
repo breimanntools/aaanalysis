@@ -1,0 +1,560 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>aaanalysis.cpp._split &mdash; AAanalysis</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/plot_directive.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/style.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+        <script src="../../../_static/design-tabs.js"></script>
+        <script src="../../../_static/toggle_menu.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> AAanalysis
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                latest
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">AAanalysis</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>aaanalysis.cpp._split</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for aaanalysis.cpp._split</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Script with Split objects used to fragment sequence parts into distinct segments or patterns.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+
+<span class="kn">import</span> <span class="nn">aaanalysis.cpp._utils</span> <span class="k">as</span> <span class="nn">ut</span>
+
+
+<span class="c1"># I Helper Functions</span>
+<span class="c1"># Check functions</span>
+<span class="k">def</span> <span class="nf">check_seq</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if seq is not None&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">seq</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;seq&#39; should not be None&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">check_steps</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check steps and set to default if None&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">steps</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">steps</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">steps</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">list</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">steps</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;steps&#39; must be a list with more than 2 elements&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">steps</span>
+
+
+<span class="k">def</span> <span class="nf">check_segment</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">i_th</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_split</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check arguments for segment split method&quot;&quot;&quot;</span>
+    <span class="n">check_seq</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="n">seq</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">i_th</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">int</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">n_split</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;i_th&#39; and &#39;n_split&#39; must be int&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n_split</span><span class="p">:</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&#39;n_split&#39; (&#39;</span><span class="si">{</span><span class="n">n_split</span><span class="si">}</span><span class="s2">&#39;) should not be higher than length of sequence (&#39;</span><span class="si">{</span><span class="n">seq</span><span class="si">}</span><span class="s2">&#39;,len=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">check_pattern</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">terminus</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">list_pos</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check arguments for pattern split method&quot;&quot;&quot;</span>
+    <span class="n">check_seq</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="n">seq</span><span class="p">)</span>
+    <span class="c1"># Check terminus</span>
+    <span class="k">if</span> <span class="n">terminus</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;terminus&#39; must be either &#39;N&#39; or &#39;C&#39;&quot;</span><span class="p">)</span>
+    <span class="c1"># Check if minimum one position is specified</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">list_pos</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;list_pos&#39; must have type list&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">list_pos</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;list_pos&#39; must contain at least one element&quot;</span><span class="p">)</span>
+    <span class="c1"># Check if arguments are in order</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">list_pos</span><span class="p">)</span> <span class="o">==</span> <span class="n">list_pos</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Pattern position should be given in ascending order&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">list_pos</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Maximum pattern position should not exceed sequence length&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">check_periodicpattern</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">terminus</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check arguments for periodicpattern split method&quot;&quot;&quot;</span>
+    <span class="n">check_seq</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="n">seq</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">terminus</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;terminus&#39; must be either &#39;N&#39; or &#39;C&#39;&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">step1</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">int</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">step2</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">int</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">start</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;step1&#39;, &#39;step2&#39;, and &#39;start&#39; must be type int&quot;</span><span class="p">)</span>
+
+
+<span class="c1"># Pattern helper functions</span>
+<span class="k">def</span> <span class="nf">get_pattern_pos</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">len_max</span><span class="o">=</span><span class="mi">12</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get all possible positions from steps with number of repeats and maximum length using</span>
+<span class="sd">    itertools: https://docs.python.org/3/library/itertools.html&quot;&quot;&quot;</span>
+    <span class="n">list_steps</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="n">repeat</span><span class="p">)</span>    <span class="c1"># Cartesian product of all step combinations</span>
+    <span class="n">list_pos</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">list_steps</span><span class="p">]</span>       <span class="c1"># Positions from steps</span>
+    <span class="c1"># Get all possible pattern positions</span>
+    <span class="n">list_pattern_pos</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">list_pos</span><span class="p">:</span>
+        <span class="n">max_p</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">min_p</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">max_p</span> <span class="o">&lt;=</span> <span class="n">len_max</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_p</span><span class="o">-</span><span class="n">len_max</span><span class="p">,</span> <span class="n">min_p</span><span class="p">):</span>
+                <span class="n">pattern_pos</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">p</span> <span class="o">-</span> <span class="n">i</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">pattern_pos</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">list_pattern_pos</span><span class="p">:</span>
+                    <span class="n">list_pattern_pos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pattern_pos</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">list_pattern_pos</span>
+
+
+<span class="k">def</span> <span class="nf">get_list_pattern_pos</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_min</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_max</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">len_max</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get list of pattern positions using get_pattern_pos&quot;&quot;&quot;</span>
+    <span class="n">list_pattern_pos</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_min</span><span class="p">,</span> <span class="n">n_max</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">list_pattern_pos</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">get_pattern_pos</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">len_max</span><span class="o">=</span><span class="n">len_max</span><span class="p">))</span>
+    <span class="n">list_pattern_pos</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">list_pattern_pos</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">list_pattern_pos</span>
+
+
+<span class="c1"># II Main Functions</span>
+<span class="k">class</span> <span class="nc">Split</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for splitting parts into Segments, Patterns, and PeriodicPatterns.</span>
+<span class="sd">    Counting of amino acid positions for splits start at 1 and N-terminal of the</span>
+<span class="sd">    protein sequence&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_str</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type_str</span> <span class="o">=</span> <span class="n">type_str</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">segment</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">i_th</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_split</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get i-th segment of sequence that is split into n contiguous segments.</span>
+<span class="sd">        For starting at the C-terminus, the sequence will be reversed.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        seq: sequence (e.g., amino acids sequence for protein)</span>
+<span class="sd">        i_th: integer indicating the selected segment</span>
+<span class="sd">        n_split: integer indicating the number of segments to split the given sequence in</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        seq_segment: Segment split for given sequence</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Segments are denoted as &#39;Segment(i-th,n_split)&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">check_segment</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="n">seq</span><span class="p">,</span> <span class="n">i_th</span><span class="o">=</span><span class="n">i_th</span><span class="p">,</span> <span class="n">n_split</span><span class="o">=</span><span class="n">n_split</span><span class="p">)</span>
+        <span class="n">len_segment</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_split</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">len_segment</span> <span class="o">*</span> <span class="p">(</span><span class="n">i_th</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>   <span class="c1"># Start at 0 for i_th = 1</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">len_segment</span> <span class="o">*</span> <span class="n">i_th</span><span class="p">)</span>
+        <span class="n">seq_segment</span> <span class="o">=</span> <span class="n">seq</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">seq_segment</span>
+
+    <span class="k">def</span> <span class="nf">pattern</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">terminus</span><span class="o">=</span><span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="n">list_pos</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get sequence pattern consisting of n positions given in list_pos.By default, a pattern starts at</span>
+<span class="sd">        the N-terminus. For starting at the C-terminus, the sequence will be reversed.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        seq: sequence (e.g., amino acids sequence for protein)</span>
+<span class="sd">        terminus: &#39;N&#39; or &#39;C&#39; indicating the start side of split</span>
+<span class="sd">        list_pos: list with integers indicating the positions the Pattern split should consist of</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        seq_pattern: Pattern split for given sequence</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Patterns are denoted as &#39;Pattern(N/C,p1,p2,...,pn)&#39;,</span>
+<span class="sd">            where N or C specifies whether the pattern starts at the N- or C-terminus of the sequence</span>
+<span class="sd">            and pn denotes the n-th position from list_pos.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">list_pos</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">list_pos</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">check_pattern</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="n">seq</span><span class="p">,</span> <span class="n">terminus</span><span class="o">=</span><span class="n">terminus</span><span class="p">,</span> <span class="n">list_pos</span><span class="o">=</span><span class="n">list_pos</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">terminus</span> <span class="o">==</span> <span class="s2">&quot;C&quot;</span><span class="p">:</span>
+            <span class="n">seq</span> <span class="o">=</span> <span class="n">seq</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_str</span><span class="p">:</span>
+            <span class="n">seq_pattern</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">seq</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">list_pos</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">seq_pattern</span> <span class="o">=</span> <span class="p">[</span><span class="n">seq</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">list_pos</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">seq_pattern</span>
+
+    <span class="k">def</span> <span class="nf">periodicpattern</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">terminus</span><span class="o">=</span><span class="s2">&quot;N&quot;</span><span class="p">,</span> <span class="n">step1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a periodic sequence pattern consisting of elements with an alternating step size given by step1, step2</span>
+<span class="sd">        and starting at the given start position. For starting at the C-terminus, the sequence will be reversed.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        seq: sequence (e.g., amino acids sequence for protein)</span>
+<span class="sd">        terminus: &#39;N&#39; or &#39;C&#39; indicating the start side of split</span>
+<span class="sd">        step1: integer indicating odd step sizes</span>
+<span class="sd">        step2: integer indicating even step sizes</span>
+<span class="sd">        start: integer indicating start position (starting from 1)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        seq_periodicpattern: PeriodicPattern split for given sequence</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        PeriodicPatterns are denoted as &#39;Periodic_Pattern(N/C,i+step1/step2,start)&#39;,</span>
+<span class="sd">            where N or C specifies whether the pattern starts at the N- or C-terminus of the sequence,</span>
+<span class="sd">            i+step1/step2 defines the alternating g step sizes, and start gives the start position beginning at 0.</span>
+
+<span class="sd">        Giving an example for proteins, for step1=3, step2=4, start=1, the periodic pattern consists of</span>
+<span class="sd">            alternating 3rd and 4th amino acids within the whole sequence starting at the position one.</span>
+<span class="sd">            By default, a pattern starts at the N-terminus. For starting at the C-terminus, the sequence must</span>
+<span class="sd">            be reversed. For IMP substrates, the periodic pattern is representing a face of the</span>
+<span class="sd">            helical transmembrane domain given for step1, step2 in {3, 4} and start &gt;= step1.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">check_periodicpattern</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="n">seq</span><span class="p">,</span> <span class="n">terminus</span><span class="o">=</span><span class="n">terminus</span><span class="p">,</span> <span class="n">step1</span><span class="o">=</span><span class="n">step1</span><span class="p">,</span> <span class="n">step2</span><span class="o">=</span><span class="n">step2</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">terminus</span> <span class="o">==</span> <span class="s2">&quot;C&quot;</span><span class="p">:</span>
+            <span class="n">seq</span> <span class="o">=</span> <span class="n">seq</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">start</span>
+        <span class="n">list_pos</span> <span class="o">=</span> <span class="p">[</span><span class="n">pos</span><span class="p">]</span>
+        <span class="k">while</span> <span class="n">pos</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">list_pos</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">pos</span> <span class="o">+=</span> <span class="n">step1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pos</span> <span class="o">+=</span> <span class="n">step2</span>
+            <span class="k">if</span> <span class="n">pos</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
+                <span class="n">list_pos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_str</span><span class="p">:</span>
+            <span class="n">seq_periodicpattern</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">seq</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">list_pos</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">seq_periodicpattern</span> <span class="o">=</span> <span class="p">[</span><span class="n">seq</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">list_pos</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">seq_periodicpattern</span>
+
+
+<div class="viewcode-block" id="SplitRange"><a class="viewcode-back" href="../../../generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange">[docs]</a><span class="k">class</span> <span class="nc">SplitRange</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for creating range of splits for testing sets of multiple features in CPP&quot;&quot;&quot;</span>
+
+    <span class="c1"># Segment methods</span>
+<div class="viewcode-block" id="SplitRange.segment"><a class="viewcode-back" href="../../../generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange.segment">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">segment</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_split_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_split_max</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get range of all possible Segment splits for given sequences.</span>
+<span class="sd">        Output matches with SequenceFeature.labels_segment.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        seq: seq: sequence (e.g., amino acids sequence for protein)</span>
+<span class="sd">        n_split_min: integer indicating minimum Segment size</span>
+<span class="sd">        n_split_max: integer indicating maximum Segment size</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        seq_splits: list of sequence Segment splits</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sp</span> <span class="o">=</span> <span class="n">Split</span><span class="p">()</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">segment</span>  <span class="c1"># Unbound function for higher performance</span>
+        <span class="n">seq_splits</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">n_split</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_split_min</span><span class="p">,</span> <span class="n">n_split_max</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i_th</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_split</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">seq_segment</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="n">seq</span><span class="p">,</span> <span class="n">n_split</span><span class="o">=</span><span class="n">n_split</span><span class="p">,</span> <span class="n">i_th</span><span class="o">=</span><span class="n">i_th</span><span class="p">)</span>
+                <span class="n">seq_splits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">seq_segment</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">seq_splits</span></div>
+
+<div class="viewcode-block" id="SplitRange.labels_segment"><a class="viewcode-back" href="../../../generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange.labels_segment">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">labels_segment</span><span class="p">(</span><span class="n">n_split_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_split_max</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get labels for range of Segment splits.</span>
+<span class="sd">        Output matches with SequenceFeature.segment.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n_split_min: integer indicating minimum Segment size</span>
+<span class="sd">        n_split_max: integer indicating maximum Segment size</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        labels: list of labels of Segment splits</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">n_split</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_split_min</span><span class="p">,</span> <span class="n">n_split_max</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i_th</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_split</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">(</span><span class="si">{}</span><span class="s2">,</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">STR_SEGMENT</span><span class="p">,</span> <span class="n">i_th</span><span class="p">,</span> <span class="n">n_split</span><span class="p">)</span>
+                <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">labels</span></div>
+
+    <span class="c1"># Pattern methods</span>
+<div class="viewcode-block" id="SplitRange.pattern"><a class="viewcode-back" href="../../../generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange.pattern">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">pattern</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_min</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_max</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">len_max</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get range of all possible Pattern splits for given sequence.</span>
+<span class="sd">        Output matches with SequenceFeature.labels_pattern.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        seq: sequence (e.g., amino acids sequence for protein)</span>
+<span class="sd">        steps: list of integer indicating possible step sizes</span>
+<span class="sd">        n_min: integer indicating minimum of elements in Pattern split</span>
+<span class="sd">        n_min: integer indicating maximum of elements in Pattern split</span>
+<span class="sd">        len_max: maximum of sequence length for splitting</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        seq_splits: list of sequence Pattern splits</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">steps</span> <span class="o">=</span> <span class="n">check_steps</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">)</span>
+        <span class="n">list_pattern_pos</span> <span class="o">=</span> <span class="n">get_list_pattern_pos</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span> <span class="n">n_min</span><span class="o">=</span><span class="n">n_min</span><span class="p">,</span> <span class="n">n_max</span><span class="o">=</span><span class="n">n_max</span><span class="p">,</span> <span class="n">len_max</span><span class="o">=</span><span class="n">len_max</span><span class="p">)</span>
+        <span class="n">sp</span> <span class="o">=</span> <span class="n">Split</span><span class="p">()</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">pattern</span>  <span class="c1"># Unbound function for higher performance</span>
+        <span class="n">seq_splits</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">terminus</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">pattern_pos</span> <span class="ow">in</span> <span class="n">list_pattern_pos</span><span class="p">:</span>
+                <span class="n">seq_pattern</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="n">seq</span><span class="p">,</span> <span class="n">terminus</span><span class="o">=</span><span class="n">terminus</span><span class="p">,</span> <span class="n">list_pos</span><span class="o">=</span><span class="n">pattern_pos</span><span class="p">)</span>
+                <span class="n">seq_splits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">seq_pattern</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">seq_splits</span></div>
+
+<div class="viewcode-block" id="SplitRange.labels_pattern"><a class="viewcode-back" href="../../../generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange.labels_pattern">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">labels_pattern</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_min</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_max</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">len_max</span><span class="o">=</span><span class="mi">15</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get labels for range of Pattern splits.</span>
+<span class="sd">        Output matches with SequenceFeature.pattern.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        steps: list of integer indicating possible step sizes</span>
+<span class="sd">        n_min: integer indicating minimum of elements in Pattern split</span>
+<span class="sd">        n_min: integer indicating maximum of elements in Pattern split</span>
+<span class="sd">        len_max: maximum of sequence length for splitting</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        labels: list of labels of Pattern splits</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">steps</span> <span class="o">=</span> <span class="n">check_steps</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">)</span>
+        <span class="n">list_pattern_pos</span> <span class="o">=</span> <span class="n">get_list_pattern_pos</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span> <span class="n">n_min</span><span class="o">=</span><span class="n">n_min</span><span class="p">,</span> <span class="n">n_max</span><span class="o">=</span><span class="n">n_max</span><span class="p">,</span> <span class="n">len_max</span><span class="o">=</span><span class="n">len_max</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">terminus</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">pattern_pos</span> <span class="ow">in</span> <span class="n">list_pattern_pos</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">(</span><span class="si">{}</span><span class="s2">,</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">STR_PATTERN</span><span class="p">,</span> <span class="n">terminus</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pattern_pos</span><span class="p">))</span>
+                <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">labels</span></div>
+
+    <span class="c1"># Periodic pattern methods</span>
+<div class="viewcode-block" id="SplitRange.periodicpattern"><a class="viewcode-back" href="../../../generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange.periodicpattern">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">periodicpattern</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get range of all possible PeriodicPattern splits for given sequence.</span>
+<span class="sd">        Output matches with SequenceFeature.labels_periodicpattern.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        seq: sequence (e.g., amino acids sequence for protein)</span>
+<span class="sd">        steps: list of integer indicating possible step sizes</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        seq_splits: list of sequence PeriodicPattern splits&quot;&quot;&quot;</span>
+        <span class="n">steps</span> <span class="o">=</span> <span class="n">check_steps</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">)</span>
+        <span class="n">sp</span> <span class="o">=</span> <span class="n">Split</span><span class="p">()</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">periodicpattern</span>  <span class="c1"># Unbound function for higher performance</span>
+        <span class="n">seq_splits</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">terminus</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">step1</span><span class="p">,</span> <span class="n">step2</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">step1</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">seq_periodicpattern</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="n">seq</span><span class="p">,</span> <span class="n">terminus</span><span class="o">=</span><span class="n">terminus</span><span class="p">,</span> <span class="n">step1</span><span class="o">=</span><span class="n">step1</span><span class="p">,</span> <span class="n">step2</span><span class="o">=</span><span class="n">step2</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">)</span>
+                    <span class="n">seq_splits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">seq_periodicpattern</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">seq_splits</span></div>
+
+<div class="viewcode-block" id="SplitRange.labels_periodicpattern"><a class="viewcode-back" href="../../../generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange.labels_periodicpattern">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">labels_periodicpattern</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get labels of all possible PeriodicPattern splits.</span>
+<span class="sd">        Output matches with SequenceFeature.periodicpattern.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        steps: list of integer indicating possible step sizes</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        labels: list of labels of Pattern splits</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">steps</span> <span class="o">=</span> <span class="n">check_steps</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">terminus</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">step1</span><span class="p">,</span> <span class="n">step2</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">step1</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">(</span><span class="si">{}</span><span class="s2">,i+</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">,</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">STR_PERIODIC_PATTERN</span><span class="p">,</span> <span class="n">terminus</span><span class="p">,</span> <span class="n">step1</span><span class="p">,</span> <span class="n">step2</span><span class="p">,</span> <span class="n">start</span><span class="p">)</span>
+                    <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">labels</span></div></div>
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2023, Stephan Breimann.
+
+    </p>
+  </div> 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
