@@ -104,9 +104,9 @@ html_static_path = [os.path.join(path_source, '_static')]
 html_css_files = ['css/style.css']
 html_js_files = ['toggle_menu.js']
 html_show_sphinx = False
-html_logo = "artwork/logo_big.png"
+html_logo = "artwork/logo_big_trans.png"
+html_favicon = "artwork/logo_small.png"
 """
-html_logo = "logo_big.png"
 html_favicon = "path_to_your_favicon.ico"
 htmlhelp_basename = "YOUR_PROJECT_NAMEdoc"
 """

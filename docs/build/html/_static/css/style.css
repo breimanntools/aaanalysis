@@ -1,53 +1,69 @@
+/* Style for the version text in the sidebar */
 .wy-side-nav-search>div.version {
     color: black;
 }
+
+/* Responsive Table Styles */
 @media screen and (min-width: 767px) {
+   /* Makes the table cells wrap text */
    .wy-table-responsive table td {
       white-space: normal;
    }
+
+   /* Makes the table overflow visible */
    .wy-table-responsive {
       overflow: visible;
    }
 }
 
-.wy-side-nav-search .wy-dropdown>a img.logo,.wy-side-nav-search>a img.logo {
-   max-width: 40%;
+/* Logo styling in the sidebar */
+.wy-side-nav-search .wy-dropdown>a img.logo, .wy-side-nav-search>a img.logo {
+   max-width: 40%;  /* Sets the maximum width of the logo to 40% of its parent element */
 }
 
+/* Style for the top navigation bar */
 .wy-nav-top {
-   background: #343131;
+   background: #343131;  /* Sets the background color */
 }
 
+/* Style for highlighted text */
 .highlight {
-   background: #f7f7f7;
+   background: #f7f7f7;  /* Sets the background color */
 }
 
+/* Style for the search input box in the sidebar */
 .wy-side-nav-search input[type=text] {
-   border-color: #666666;
+   border-color: #666666;  /* Sets the border color */
 }
 
+/* General link styling */
 a {
-   color: #008bfb;
+   color: #008bfb;  /* Sets the link color */
 }
 
+/* Link styling on hover */
 a:hover {
-   color: #008bfb;
+   color: #008bfb;  /* Sets the hover color */
 }
 
+/* Link styling for visited links */
 a:visited {
-   color: #008bfb;
+   color: #008bfb;  /* Sets the visited link color */
 }
 
+/* Styling for specific dt elements in rst-content */
 html.writer-html4 .rst-content dl:not(.docutils)>dt, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)>dt {
    background: #008bfb11;
    color: #0086f6;
    border-top: 3px solid #008bfbaa;
 }
 
+/* Style for the current version in the version menu */
 .rst-versions .rst-current-version {
-   color: #fcfcfc;
+   color: #fcfcfc;  /* Sets the text color */
 }
 
+/* Style for vertical menu items */
 .wy-menu-vertical a {
-   color: #d9d9d9;
+   color: #d9d9d9;  /* Sets the text color */
 }
