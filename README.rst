@@ -57,21 +57,16 @@ Install
    or
    conda install -c conda-forge aaanalysis
 
-You can also use the GitHub repository:
+You can also use the GitHub repository and install dependencies using poetry:
 
 .. code-block:: bash
 
    git clone https://github.com/breimanntools/aaanalysis
    cd aaanalysis
-
-Set up a virtual environment and install dependencies using poetry:
-
-.. code-block:: bash
-
    poetry install
 
-Contributing and Feedback
-=========================
+Contributions
+=============
 We welcome bug reports, feature requests, and code contributions.
 
 - **Issues**: Found a bug or have a feature idea? Please open an issue on our GitHub Repository.
