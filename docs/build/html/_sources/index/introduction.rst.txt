@@ -6,7 +6,7 @@ It was developed to compare two sets of protein sequences using amino acids scal
 for any (biological) sequence which can be represented by numerical values.
 
 Workflow
-========
+--------
 A typical workflow consists of the following steps:
 
 - **AAclust**: k-optimized clustering wrapper framework to select redundancy-reduced sets of numerical scales (e.g., amino acid scales)

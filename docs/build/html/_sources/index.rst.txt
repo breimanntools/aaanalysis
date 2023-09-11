@@ -22,20 +22,20 @@ Install
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: OVERVIEW
 
    index/introduction.rst
    index/usage_principles.rst
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: EXAMPLES
 
    tutorials.rst
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: REFERENCES
 
    api.rst
