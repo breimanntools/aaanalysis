@@ -1,5 +1,6 @@
-Welcome to the AAanalysis documentation!
-========================================
+Welcome to the AAanalysis documentation
+=======================================
+.. include:: docs/source/index/badges.rst
 
 **AAanalysis** (Amino Acid analysis) is a Python framework for interpretable sequence-based protein prediction,
 providing the following algorithms:
@@ -13,14 +14,16 @@ amino acid scale sets (**load_scales**), and their in-depth two-level classifica
 
 Install
 =======
-
-AAanalysis can be installed from `PyPi <https://pypi.org/project/aaanalysis>`_:
+**AAanalysis** can be installed either from `PyPi <https://pypi.org/project/aaanalysis>`_ or
+`conda-forge <https://anaconda.org/conda-forge/aaanalysis>`_:
 
 .. code-block:: bash
 
    pip install -u aaanalysis
+   or
+   conda install -c conda-forge aaanalysis
 
-or via GitHub repository:
+You can also use the GitHub repository:
 
 .. code-block:: bash
 

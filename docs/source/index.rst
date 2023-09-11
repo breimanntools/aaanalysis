@@ -5,27 +5,41 @@
 
 Welcome to the AAanalysis documentation
 =======================================
+.. include:: index/badges.rst
 
 .. include:: overview.rst
 
 Install
 =======
-**AAanalysis** can be installed from `PyPi <https://pypi.org/project/aaanalysis>`_:
+**AAanalysis** can be installed either from `PyPi <https://pypi.org/project/aaanalysis>`_ or
+`conda-forge <https://anaconda.org/conda-forge/aaanalysis>`_:
 
 .. code-block:: bash
 
    pip install -u aaanalysis
+   or
+   conda install -c conda-forge aaanalysis
 
-Contents
-========
 
 .. toctree::
    :maxdepth: 2
-   :caption: Table of Contents
+   :caption: OVERVIEW
+
+   index/introduction.rst
+   index/usage_principles.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: EXAMPLES
 
    tutorials.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: REFERENCES
+
    api.rst
-   references.rst
+   index/references.rst
 
 Indices and tables
 ==================
@@ -37,4 +51,4 @@ Indices and tables
 Citation
 ========
 
-.. include:: citations.rst
+.. include:: index/citations.rst

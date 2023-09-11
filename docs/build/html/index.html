@@ -9,12 +9,12 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="index.html" />
 <meta property="og:site_name" content="AAanalysis" />
-<meta property="og:description" content="AAanalysis(Amino Acid analysis) is a Python framework for interpretable sequence-based protein prediction, providing the following algorithms: AAclust: k-optimized clustering wrapper framework to s..." />
+<meta property="og:description" content="Build Status Python-check PyPI - Status Supported Python Versions PyPI - Package Version Conda - Package Version Documentation Status License Downloads AAanalysis(Amino Acid analysis) is a Python f..." />
 <meta property="og:image:width" content="1146" />
 <meta property="og:image:height" content="600" />
-<meta property="og:image" content="/_images/social_previews/summary_index_8467f51f.png" />
-<meta property="og:image:alt" content="AAanalysis(Amino Acid analysis) is a Python framework for interpretable sequence-based protein prediction, providing the following algorithms: AAclust: k-opt..." />
-<meta name="description" content="AAanalysis(Amino Acid analysis) is a Python framework for interpretable sequence-based protein prediction, providing the following algorithms: AAclust: k-optimized clustering wrapper framework to s..." />
+<meta property="og:image" content="/_images/social_previews/summary_index_08b80e48.png" />
+<meta property="og:image:alt" content="Build Status Python-check PyPI - Status Supported Python Versions PyPI - Package Version Conda - Package Version Documentation Status License Downloads AAana..." />
+<meta name="description" content="Build Status Python-check PyPI - Status Supported Python Versions PyPI - Package Version Conda - Package Version Documentation Status License Downloads AAanalysis(Amino Acid analysis) is a Python f..." />
 <meta name="twitter:card" content="summary_large_image" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -60,7 +60,7 @@
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Tutorials" href="tutorials.html" /> 
+    <link rel="next" title="Introduction" href="index/introduction.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -109,11 +109,20 @@
               
             
             
-              <p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+              <p class="caption" role="heading"><span class="caption-text">OVERVIEW</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index/introduction.html#workflow">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index/usage_principles.html">Usage Principles</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">EXAMPLES</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">REFERENCES</span></p>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index/references.html">References</a></li>
 </ul>
 
             
@@ -183,6 +192,15 @@
             
   <section id="welcome-to-the-aaanalysis-documentation">
 <h1>Welcome to the AAanalysis documentation<a class="headerlink" href="#welcome-to-the-aaanalysis-documentation" title="Permalink to this heading">¶</a></h1>
+<a class="reference external image-reference" href="https://github.com/breimanntools/aaanalysis/actions"><img alt="Build Status" src="https://github.com/breimanntools/aaanalysis/workflows/Build/badge.svg" /></a>
+<a class="reference external image-reference" href="https://github.com/breimanntools/aaanalysis/actions"><img alt="Python-check" src="https://github.com/breimanntools/aaanalysis/workflows/Python-check/badge.svg" /></a>
+<a class="reference external image-reference" href="https://pypi.org/project/aaanalysis/"><img alt="PyPI - Status" src="https://img.shields.io/pypi/status/aaanalysis.svg" /></a>
+<a class="reference external image-reference" href="https://pypi.python.org/pypi/aaanalysis"><img alt="Supported Python Versions" src="https://img.shields.io/pypi/pyversions/aaanalysis.svg" /></a>
+<a class="reference external image-reference" href="https://pypi.python.org/pypi/aaanalysis"><img alt="PyPI - Package Version" src="https://img.shields.io/pypi/v/aaanalysis.svg" /></a>
+<a class="reference external image-reference" href="https://anaconda.org/conda-forge/aaanalysis"><img alt="Conda - Package Version" src="https://anaconda.org/conda-forge/aaanalysis/badges/version.svg" /></a>
+<a class="reference external image-reference" href="https://aaanalysis.readthedocs.io/en/latest/?badge=latest"><img alt="Documentation Status" src="https://readthedocs.org/projects/aaanalysis/badge/?version=latest" /></a>
+<a class="reference external image-reference" href="https://github.com/breimanntools/aaanalysis/blob/master/LICENSE"><img alt="License" src="https://img.shields.io/github/license/breimanntools/aaanalysis.svg" /></a>
+<a class="reference external image-reference" href="https://pepy.tech/project/aaanalysis"><img alt="Downloads" src="https://pepy.tech/badge/aaanalysis" /></a>
 <p id="overview"><strong>AAanalysis</strong> (Amino Acid analysis) is a Python framework for interpretable sequence-based protein prediction,
 providing the following algorithms:</p>
 <ul class="simple">
@@ -195,15 +213,23 @@ amino acid scale sets (<strong>load_scales</strong>), and their in-depth two-lev
 </section>
 <section id="install">
 <h1>Install<a class="headerlink" href="#install" title="Permalink to this heading">¶</a></h1>
-<p><strong>AAanalysis</strong> can be installed from <a class="reference external" href="https://pypi.org/project/aaanalysis">PyPi</a>:</p>
+<p><strong>AAanalysis</strong> can be installed either from <a class="reference external" href="https://pypi.org/project/aaanalysis">PyPi</a> or
+<a class="reference external" href="https://anaconda.org/conda-forge/aaanalysis">conda-forge</a>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-u<span class="w"> </span>aaanalysis
+or
+conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>aaanalysis
 </pre></div>
 </div>
-</section>
-<section id="contents">
-<h1>Contents<a class="headerlink" href="#contents" title="Permalink to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Table of Contents</span></p>
+<p class="caption" role="heading"><span class="caption-text">OVERVIEW</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="index/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index/introduction.html#workflow">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index/usage_principles.html">Usage Principles</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">EXAMPLES</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tutorials.html#data-loading">Data loading</a></li>
@@ -213,6 +239,11 @@ amino acid scale sets (<strong>load_scales</strong>), and their in-depth two-lev
 <li class="toctree-l2"><a class="reference internal" href="tutorials.html#protein-prediction">Protein prediction</a></li>
 </ul>
 </li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">REFERENCES</span></p>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api.html#data-loading">Data Loading</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#aaclust">AAclust</a></li>
@@ -221,7 +252,7 @@ amino acid scale sets (<strong>load_scales</strong>), and their in-depth two-lev
 <li class="toctree-l2"><a class="reference internal" href="api.html#plot-utilities">Plot Utilities</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="index/references.html">References</a></li>
 </ul>
 </div>
 </section>
@@ -235,7 +266,7 @@ amino acid scale sets (<strong>load_scales</strong>), and their in-depth two-lev
 </section>
 <section id="citation">
 <h1>Citation<a class="headerlink" href="#citation" title="Permalink to this heading">¶</a></h1>
-<p id="citations">If you use ‘AAanalysis’ in your research, please cite the appropriate publication:</p>
+<p id="citations">If you use ‘AAanalysis’ in your work, please cite the respective publication:</p>
 <dl class="simple">
 <dt><strong>AAclust</strong>:</dt><dd><p>[Citation details and link if available]</p>
 </dd>
@@ -256,7 +287,7 @@ amino acid scale sets (<strong>load_scales</strong>), and their in-depth two-lev
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="tutorials.html" class="btn btn-neutral float-right" title="Tutorials" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index/introduction.html" class="btn btn-neutral float-right" title="Introduction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
