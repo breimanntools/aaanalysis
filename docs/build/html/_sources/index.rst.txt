@@ -14,7 +14,7 @@ Install
 
 .. code-block:: bash
 
-   pip install -U aaanalysis  (Note: Changed '-u' to '-U' for upgrading packages)
+   pip install -u aaanalysis
 
 Contents
 ========

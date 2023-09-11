@@ -18,7 +18,8 @@
 
 /* Logo styling in the sidebar */
 .wy-side-nav-search .wy-dropdown>a img.logo, .wy-side-nav-search>a img.logo {
-   max-width: 40%;  /* Sets the maximum width of the logo to 40% of its parent element */
+   max-width: 60%;  /* Sets the maximum width of the logo to 40% of its parent element */
+   max-height: 60px;  /* Adjust as needed */
 }
 
 /* Style for the top navigation bar */
@@ -60,7 +61,7 @@ html.writer-html4 .rst-content dl:not(.docutils)>dt, html.writer-html5 .rst-cont
 
 /* Style for the current version in the version menu */
 .rst-versions .rst-current-version {
-   color: #fcfcfc;  /* Sets the text color */
+   color: #d9d9d9;  /* Sets the text color */
 }
 
 /* Style for vertical menu items */
