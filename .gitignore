@@ -1,6 +1,5 @@
 # Default ignored files
-/data/
-/results/
 /venv/
 /.idea/
+/dist/
 /dev_scripts/
