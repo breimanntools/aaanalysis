@@ -7,7 +7,7 @@ import platform
 SEP = "\\" if platform.system() == "Windows" else "/"
 FOLDER_SOURCE = os.path.dirname(os.path.abspath(__file__))
 FOLDER_REF = FOLDER_SOURCE + SEP + "index" + SEP
-FOLDER_RESOURCES = FOLDER_SOURCE + SEP + "_resources" + SEP
+FOLDER_RESOURCES = FOLDER_SOURCE + SEP + "resources" + SEP
 FOLDER_TABLES = FOLDER_RESOURCES + "tables" + SEP
 
 FILE_REF = FOLDER_REF + "references.rst"
