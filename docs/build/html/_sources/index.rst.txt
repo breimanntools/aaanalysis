@@ -7,7 +7,7 @@ Welcome to the AAanalysis documentation
 =======================================
 .. include:: index/badges.rst
 
-.. include:: resources/overview.rst
+.. include:: _resources/overview.rst
 
 Install
 =======
@@ -39,7 +39,7 @@ Install
    :caption: REFERENCES
 
    api.rst
-   resources/tables.rst
+   _resources/tables.rst
    index/references.rst
 
 Indices and tables
