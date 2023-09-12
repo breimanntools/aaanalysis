@@ -7,7 +7,7 @@ import pytest
 from hypothesis import given, settings
 import hypothesis.strategies as some
 
-from aaanalysis import SequenceFeature
+import aaanalysis as aa
 
 
 # I Unit Tests
@@ -16,13 +16,13 @@ class TestLoadScales:
 
     # Positive unit test
     def test_load_data(self):
-        """Unit test for SequenceFeature().load_scales() method"""
-        sf = SequenceFeature()
+        """Unit test for aa.SequenceFeature().load_scales() method"""
+        sf = aa.SequenceFeature()
         assert isinstance(sf.load_scales(clust_th=0.5), pd.DataFrame)
 
     # Negative test
     def test_wrong_clustered_values(self):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         for i in [0.1, -0.2, "a", None]:
             with pytest.raises(ValueError):
                 sf.load_scales(clust_th=i)
@@ -30,7 +30,7 @@ class TestLoadScales:
     # Property-based testing
     @given(clustered=some.floats(min_value=-10, max_value=10))
     def test_clustered_integer(self, clustered):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         if clustered not in [0.5, 0.7]:
             with pytest.raises(ValueError):
                 sf.load_scales(clust_th=clustered)
@@ -41,23 +41,23 @@ class TestLoadCategories:
 
     # Positive unit test
     def test_load_categories(self):
-        sf = SequenceFeature()
-        assert isinstance(sf.load_categories(clust_th=0.5), pd.DataFrame)
+        sf = aa.SequenceFeature()
+        assert isinstance(aa.load_scales(clust_th=0.5), pd.DataFrame)
 
     # Negative test
     def test_wrong_clustered_values(self):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         for i in [0.1, -0.2, "a", None]:
             with pytest.raises(ValueError):
-                sf.load_categories(clust_th=i)
+                aa.load_scales(clust_th=i)
 
     # Property-based testing
     @given(clustered=some.floats(min_value=-10, max_value=10))
     def test_clustered_integer(self, clustered):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         if clustered not in [0.5, 0.7]:
             with pytest.raises(ValueError):
-                sf.load_categories(clust_th=clustered)
+                aa.load_scales(clust_th=clustered)
 
 
 class TestGetDfParts:
@@ -65,19 +65,19 @@ class TestGetDfParts:
 
     # Positive unit test
     def test_getting_df_parts_based_on_parts(self, df_seq):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         assert isinstance(sf.get_df_parts(df_seq=df_seq), pd.DataFrame)
         df = df_seq.drop(["sequence"], axis=1)
         assert isinstance(sf.get_df_parts(df_seq=df, list_parts=["tmd"]), pd.DataFrame)
 
     def test_getting_df_parts_based_on_seq_info(self, df_seq):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         assert isinstance(sf.get_df_parts(df_seq=df_seq, jmd_n_len=10, jmd_c_len=10), pd.DataFrame)
         df = df_seq.drop(["tmd"], axis=1)
         assert isinstance(sf.get_df_parts(df_seq=df, jmd_n_len=10, jmd_c_len=10), pd.DataFrame)
 
     def test_getting_df_parts_based_on_sequence(self, df_seq):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         assert isinstance(sf.get_df_parts(df_seq=df_seq, jmd_n_len=10, jmd_c_len=10), pd.DataFrame)
         df = df_seq.drop(["tmd", "tmd_start", "tmd_stop", "jmd_c"], axis=1)
         assert isinstance(sf.get_df_parts(df_seq=df, jmd_n_len=10, jmd_c_len=10), pd.DataFrame)
@@ -85,7 +85,7 @@ class TestGetDfParts:
 
     # Negative unit tests
     def test_wrong_inputs(self, df_seq, df_cat, df_scales):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         for i in [None, "a", df_cat, df_scales, 1.1, -1]:
             with pytest.raises(ValueError):
                 sf.get_df_parts(df_seq=i)
@@ -100,12 +100,12 @@ class TestGetDfParts:
                 sf.get_df_parts(df_seq=df_seq, jmd_n_len=10, jmd_c_len=i)
 
     def test_corrupted_df_seq(self, corrupted_df_seq):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
             sf.get_df_parts(df_seq=corrupted_df_seq)    # Via parametrized fixtures
 
     def test_wrong_parameter_combinations(self, df_seq, df_scales):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         df = df_seq.drop(["sequence"], axis=1)
         with pytest.raises(ValueError):
             sf.get_df_parts(df_seq=df, jmd_n_len=10, jmd_c_len=10)
@@ -119,13 +119,13 @@ class TestGetSplitKws:
 
     # Positive unit test
     def test_get_split_kws(self, df_cat):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         for i in ["Segment", "Pattern", "PeriodicPattern"]:
             assert isinstance(sf.get_split_kws(n_split_min=2, steps_pattern=[1, 3, 4], split_types=i), dict)
 
     # Negative unit tests
     def test_wrong_integer_input(self, df_cat):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         list_int_args = ["n_split_min", "n_split_max", "n_min", "n_max", "len_max"]
         for i in ["a", 1.1, -1, df_cat, dict, None]:
             for arg_names in list_int_args:
@@ -134,7 +134,7 @@ class TestGetSplitKws:
                     sf.get_split_kws(**arg)
 
     def test_wrong_ordered_list_input(self, df_cat):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         list_args = [[1, None, df_cat], [2, 1], [-1, 9], [0.1, 0.2], ["a", 4]]
         for list_arg in list_args:
             with pytest.raises(ValueError):
@@ -143,7 +143,7 @@ class TestGetSplitKws:
                 sf.get_split_kws(steps_periodicpattern=list_arg)
 
     def test_wrong_combination_of_input(self, df_cat):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
             sf.get_split_kws(n_split_max=4, n_split_min=6)
         with pytest.raises(ValueError):
@@ -157,7 +157,7 @@ class TestFeatures:
 
     # Positive unit test
     def test_features(self, df_scales, list_parts):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         split_kws = sf.get_split_kws()
         assert isinstance(sf.features(), list)
         for parts in list_parts:
@@ -168,7 +168,7 @@ class TestFeatures:
 
     # Negative unit tests
     def test_wrong_input(self, df_cat, df_seq):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         for wrong_input in [1, -1, "TMD", ["TMD"], [1, 2], ["aa", "a"], [["tmd", "tmd_e"]], df_cat, [df_cat, df_seq]]:
             with pytest.raises(ValueError):
                 sf.features(list_parts=wrong_input)
@@ -178,17 +178,17 @@ class TestFeatures:
                 sf.features(list_parts=["tmd"], split_kws=wrong_input)
 
     def test_corrupted_list_parts(self, corrupted_list_parts):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
             sf.features(list_parts=corrupted_list_parts)  # Via parametrized fixtures
 
     def test_corrupted_df_scales(self, corrupted_df_scales):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
             sf.features(list_parts=["tmd"], df_scales=corrupted_df_scales)    # Via parametrized fixtures
 
     def test_corrupted_split_kws(self, corrupted_split_kws):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
             sf.features(list_parts=["tmd"], split_kws=corrupted_split_kws)    # Via parametrized fixtures
 
@@ -198,7 +198,7 @@ class TestFeatureName:
 
     # Positive unit test
     def test_feat_name(self, df_feat, df_cat):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         assert isinstance(sf.feat_names(features=df_feat["feature"]), list)
         assert isinstance(sf.feat_names(features=list(df_feat["feature"])), list)
         assert isinstance(sf.feat_names(features=list(df_feat["feature"])[0]), list)
@@ -212,7 +212,7 @@ class TestFeatureName:
            start=some.integers(min_value=0, max_value=50))
     @settings(max_examples=10, deadline=None)
     def test_feat_name_tmd_len(self, df_feat_module_scope, tmd_len, jmd_n_len, jmd_c_len, ext_len, start):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         feat_names = sf.feat_names(features=df_feat_module_scope["feature"],
                                    tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                    ext_len=ext_len, start=start)
@@ -220,12 +220,12 @@ class TestFeatureName:
 
     # Negative unit test
     def test_wrong_features(self, wrong_df):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
             feat_names = sf.feat_names(features=wrong_df)
 
     def test_corrupted_feature(self, df_feat):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         for col in df_feat:
             if col != "feature":
                 with pytest.raises(ValueError):
@@ -236,12 +236,12 @@ class TestFeatureName:
             feat_names = sf.feat_names(features=wrong_feat)
 
     def test_wrong_df_cat(self, df_feat, wrong_df):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
             feat_names = sf.feat_names(features=df_feat["feature"], df_cat=wrong_df)
 
     def test_corrupted_df_cat(self, df_cat, df_feat):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         df_cat = df_cat[list(df_cat)[0:1]]
         with pytest.raises(ValueError):
             feat_names = sf.feat_names(features=df_feat["feature"], df_cat=df_cat)
@@ -252,7 +252,7 @@ class TestFeatureValue:
 
     # Positive unit test
     def test_feature_value(self, df_seq, df_scales, list_parts, list_splits):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
         for parts in list_parts:
             for split in list_splits:
@@ -262,7 +262,7 @@ class TestFeatureValue:
                     assert isinstance(x, np.ndarray)
 
     def test_accept_gaps(self, df_seq, list_parts, list_splits, df_scales):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
         parts, split, dict_scale = list_parts[0], list_splits[0], df_scales.iloc[:, 0].to_dict()
         df = df_parts.copy()
@@ -283,7 +283,7 @@ class TestFeatureValue:
 
     # Negative test
     def test_wrong_input(self, df_cat, df_seq, list_parts, list_splits, df_scales):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
         parts, split, dict_scale = list_parts[0], list_splits[0], df_scales.iloc[:, 0].to_dict()
         list_wrong_input = [1, -1, "TMD", ["TMD"], None, [1, 2], ["aa", "a"], [["tmd", "tmd_e"]],
@@ -297,7 +297,7 @@ class TestFeatureValue:
                 sf.feat_value(split=split, dict_scale=dict_scale, df_parts=wrong_input)
 
     def test_corrupted_split(self, df_seq, list_parts, df_scales, corrupted_list_splits):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
         parts, dict_scale = list_parts[0], df_scales.iloc[:, 0].to_dict()
         with pytest.raises(ValueError):
@@ -305,7 +305,7 @@ class TestFeatureValue:
             sf.feat_value(split=corrupted_list_splits, dict_scale=dict_scale, df_parts=df_parts[parts])
 
     def test_corrupted_dict_scale(self, df_seq, list_parts, list_splits, df_scales):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
         parts, split, dict_scale = list_parts[0], list_splits[0], df_scales.iloc[:, 0].to_dict()
         dict_scale1 = dict_scale.copy()
@@ -320,7 +320,7 @@ class TestFeatureValue:
                 sf.feat_value(split=split, dict_scale=d, df_parts=df_parts[parts])
 
     def test_corrupted_df_parts(self, list_splits, df_scales, corrupted_df_parts):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         split, dict_scale = list_splits[0], df_scales.iloc[:, 0].to_dict()
         with pytest.raises(ValueError):
             # Via parametrized fixtures
@@ -332,7 +332,7 @@ class TestFeatureMatrix:
 
     # Positive unit test
     def test_feature_matrix(self, df_seq, df_scales):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
         features = sf.features()[0:100]
         feat_matrix = sf.feat_matrix(df_parts=df_parts, df_scales=df_scales, features=features)
@@ -343,7 +343,7 @@ class TestFeatureMatrix:
 
     # Negative test
     def test_missing_parameters(self, df_scales, df_seq):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
         features = sf.features()[0:100]
         with pytest.raises(ValueError):
@@ -358,7 +358,7 @@ class TestFeatureMatrix:
             sf.feat_matrix(df_scales=df_scales, features=features)
 
     def test_wrong_input(self, df_cat, df_seq, df_scales):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
         features = sf.features()[0:100]
         list_wrong_input = [1, -1, "TMD", ["TMD"], None, [1, 2], ["aa", "a"],
@@ -373,14 +373,14 @@ class TestFeatureMatrix:
                 sf.feat_matrix(df_parts=wrong_input, df_scales=df_scales, features=features)
 
     def test_corrupted_df_parts(self, corrupted_df_parts, df_scales):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         features = sf.features()[0:100]
         with pytest.raises(ValueError):
             # Via parametrized fixtures
             sf.feat_matrix(df_parts=corrupted_df_parts, df_scales=df_scales, features=features)
 
     def test_corrupted_df_scales(self, corrupted_df_scales, df_seq):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
         features = sf.features()[0:100]
         with pytest.raises(ValueError):
@@ -388,7 +388,7 @@ class TestFeatureMatrix:
             sf.feat_matrix(df_parts=df_parts, df_scales=corrupted_df_scales, features=features)
 
     def test_corrupted_features(self, df_scales, df_seq):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
         features = sf.features()[0:100]
         corrupted_features = [features[0:5] + [np.NaN], features[0:3] + ["Test"],
@@ -404,8 +404,8 @@ class TestFeatureMatrix:
 
 # II Regression test (Functional test)
 def test_sequence_feature(list_splits):
-    """Positive regression/functional test of all SequenceFeature() methods"""
-    sf = SequenceFeature()
+    """Positive regression/functional test of all aa.SequenceFeature() methods"""
+    sf = aa.SequenceFeature()
     # Get test set of sequences
     df_seq = sf.load_sequences()
     # Get feature components

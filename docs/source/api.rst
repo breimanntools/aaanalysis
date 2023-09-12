@@ -1,8 +1,8 @@
 .. currentmodule:: aaanalysis
 
-==============
-API Reference
-==============
+===
+API
+===
 
 This page contains the API reference for public objects and functions in AAanalysis. For more examples
 and practical usage, refer to our :ref:`example notebooks <api_examples>`.

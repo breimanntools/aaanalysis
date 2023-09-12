@@ -7,7 +7,7 @@ Welcome to the AAanalysis documentation
 =======================================
 .. include:: index/badges.rst
 
-.. include:: overview.rst
+.. include:: _resources/overview.rst
 
 Install
 =======
@@ -35,10 +35,11 @@ Install
    tutorials.rst
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: REFERENCES
 
    api.rst
+   _resources/tables.rst
    index/references.rst
 
 Indices and tables

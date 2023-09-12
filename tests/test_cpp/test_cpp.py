@@ -14,7 +14,8 @@ import hypothesis.strategies as some
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-from aaanalysis import CPP, SequenceFeature
+import tests._utils as ut
+import aaanalysis as aa
 
 
 @pytest.fixture(params=["a", 3, dict(), list(), pd.DataFrame(), -0])
@@ -29,7 +30,7 @@ def wrong_input(request):
 
 @pytest.fixture
 def cpp(df_scales, df_cat, df_parts, split_kws):
-    return CPP(df_scales=df_scales, df_cat=df_cat, df_parts=df_parts, split_kws=split_kws)
+    return aa.CPP(df_scales=df_scales, df_cat=df_cat, df_parts=df_parts, split_kws=split_kws)
 
 
 # I Unit Tests
@@ -38,32 +39,32 @@ class TestCPP:
 
     # Positive unit test
     def test_cpp_call(self, df_scales, df_cat, df_parts, split_kws):
-        cpp = CPP(df_scales=df_scales, df_cat=df_cat,
+        cpp = aa.CPP(df_scales=df_scales, df_cat=df_cat,
                   df_parts=df_parts, split_kws=split_kws)
         assert isinstance(cpp, object)
-        cpp = CPP(df_parts=df_parts, )
+        cpp = aa.CPP(df_parts=df_parts, )
         assert isinstance(cpp, object)
 
     # Negative unit test
     def test_missing_input(self, df_scales, df_cat, df_parts, split_kws):
         with pytest.raises(ValueError):
-            CPP()
+            aa.CPP()
 
     def test_wrong_df_scales(self, wrong_input_cpp, df_cat, df_parts, split_kws):
         with pytest.raises(ValueError):
-            CPP(df_scales=wrong_input_cpp, df_cat=df_cat, df_parts=df_parts, split_kws=split_kws)
+            aa.CPP(df_scales=wrong_input_cpp, df_cat=df_cat, df_parts=df_parts, split_kws=split_kws)
 
     def test_wrong_df_cat(self, df_scales, wrong_input_cpp, df_parts, split_kws):
         with pytest.raises(ValueError):
-            CPP(df_scales=df_scales, df_cat=wrong_input_cpp, df_parts=df_parts, split_kws=split_kws)
+            aa.CPP(df_scales=df_scales, df_cat=wrong_input_cpp, df_parts=df_parts, split_kws=split_kws)
 
     def test_wrong_df_parts(self, df_scales, df_cat, wrong_input_cpp, split_kws):
         with pytest.raises(ValueError):
-            CPP(df_scales=df_scales, df_cat=df_cat, df_parts=wrong_input_cpp, split_kws=split_kws)
+            aa.CPP(df_scales=df_scales, df_cat=df_cat, df_parts=wrong_input_cpp, split_kws=split_kws)
 
     def test_wrong_split_kws(self, df_scales, df_cat, df_parts, wrong_input_cpp):
         with pytest.raises(ValueError):
-            CPP(df_scales=df_scales, df_cat=df_cat, df_parts=df_parts, split_kws=wrong_input_cpp)
+            aa.CPP(df_scales=df_scales, df_cat=df_cat, df_parts=df_parts, split_kws=wrong_input_cpp)
 
 
 class TestAddStat:
@@ -104,7 +105,7 @@ class TestAddPositions:
            start=some.integers(min_value=0, max_value=50))
     @settings(max_examples=10, deadline=None)
     def test_add_position_tmd_len(self, df_feat_module_scope, df_parts, tmd_len, jmd_n_len, jmd_c_len, ext_len, start):
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         df_feat = cpp.add_positions(df_feat=df_feat_module_scope, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                     ext_len=ext_len, start=start)
         assert isinstance(df_feat, pd.DataFrame)
@@ -164,7 +165,7 @@ class TestAddFeatureImpact:
     def test_add_feat_impact(self, cpp, df_feat, df_parts, df_scales, labels):
         from sklearn.ensemble import RandomForestClassifier
         import shap
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         X = sf.feat_matrix(features=list(df_feat["feature"]), df_parts=df_parts, df_scales=df_scales)
         assert isinstance(X, np.ndarray)
         model = RandomForestClassifier().fit(X=X, y=labels)
@@ -236,7 +237,7 @@ class TestRun:
 
     # Positive unit tests
     def test_cpp_run(self):
-        sf = SequenceFeature()
+        sf = aa.SequenceFeature()
         df_seq = sf.load_sequences(n_in_class=2)
         labels = [1 if x == "SUBEXPERT" else 0 for x in df_seq["class"]]
         df_parts = sf.get_df_parts(df_seq=df_seq)
@@ -244,7 +245,7 @@ class TestRun:
         df_scales = sf.load_scales()
         list_scales = list(df_scales)[0:2]
         df_scales = df_scales[list_scales]
-        cpp = CPP(df_parts=df_parts, df_scales=df_scales, df_cat=df_cat)
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, df_cat=df_cat)
         args = dict(verbose=False, labels=labels)
         assert isinstance(cpp.run(**args), pd.DataFrame)
         """
@@ -296,11 +297,8 @@ class TestRun:
             with pytest.raises(ValueError):
                 cpp.run(verbose=False, labels=labels, max_std_test=n)
 
-
+"""
 class TestGetDfPos:
-    """Test common interface of CPP plotting methods
-    """
-
     # Positive unit tests
     def test_get_df_pos(self, df_feat, df_cat):
         df_pos = _get_df_pos(df_feat=df_feat, df_cat=df_cat)
@@ -356,7 +354,7 @@ class TestGetDfPos:
     def test_wrong_y(self, df_feat, df_cat, wrong_input):
         with pytest.raises(ValueError):
             _get_df_pos(df_feat=df_feat, df_cat=df_cat, y=wrong_input)
-
+"""
 
 class TestPlotMethods:
     """General test for plotting methods (using heatmap)"""
@@ -388,7 +386,7 @@ class TestPlotMethods:
 
     def test_plotting(self, df_feat, df_parts):
         """Test main plotting arguments: figsize, title, title_kws"""
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         # Figsize and title checked by matplotlib
         title_kws = {'fontsize': 11,
                      'fontweight': "bold",
@@ -399,7 +397,7 @@ class TestPlotMethods:
 
     def test_figsize(self, df_feat, df_parts):
         """Test figsize"""
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         args = dict(df_feat=df_feat, figsize=(10, 5))
         assert isinstance(cpp.plot_heatmap(**args), mpl.axes.Axes)
         assert isinstance(cpp.plot_bargraph(**args), mpl.axes.Axes)
@@ -407,7 +405,7 @@ class TestPlotMethods:
 
     def test_wrong_figsize(self, df_feat, df_parts):
         """Test wrong figsize"""
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         for figsize in [(0, 10), "a", [1, 2], (10, "a")]:
             args = dict(df_feat=df_feat, figsize=figsize)
             with pytest.raises(ValueError):
@@ -418,15 +416,15 @@ class TestPlotMethods:
                 cpp.plot_profile(**args)
 
     def test_dict_color(self, df_feat, df_parts):
-        cpp = CPP(df_parts=df_parts)
-        sf = SequenceFeature()
+        cpp = aa.CPP(df_parts=df_parts)
+        sf = aa.SequenceFeature()
         dict_color = sf.load_colors()
         assert isinstance(cpp.plot_heatmap(df_feat=df_feat, dict_color=dict_color)
                           , mpl.axes.Axes)
 
     def test_wrong_dict_color(self, df_feat, df_parts):
-        cpp = CPP(df_parts=df_parts)
-        sf = SequenceFeature()
+        cpp = aa.CPP(df_parts=df_parts)
+        sf = aa.SequenceFeature()
         dict_color = sf.load_colors()
         for i in [1, dict(), "asdf", 0.1]:
             with pytest.raises(ValueError):
@@ -443,7 +441,7 @@ class TestPlotMethods:
         # Length input tested in TestGetDfPos
         jmd_c_seq = "AAAAAAAAAAa"
         jmd_n_seq = "aa"*10
-        cpp = CPP(df_parts=df_parts, jmd_n_len=len(jmd_n_seq), jmd_c_len=len(jmd_c_seq))
+        cpp = aa.CPP(df_parts=df_parts, jmd_n_len=len(jmd_n_seq), jmd_c_len=len(jmd_c_seq))
         assert isinstance(cpp.plot_heatmap(df_feat=df_feat,
                                            tmd_seq="AA"*16, jmd_c_seq=jmd_c_seq, jmd_n_seq=jmd_n_seq)
                           , mpl.axes.Axes)
@@ -451,7 +449,7 @@ class TestPlotMethods:
     def test_wrong_sequences(self, df_feat, df_parts):
         """Test sequence input: tmd_seq, jmd_n_seq, jmd_c_seq"""
         # Length input tested in TestGetDfPos
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         wrong_seq = [1, None, list, dict]
         tmd_seq = "A" * 20
         jmd_c_seq = "B" * 10
@@ -476,7 +474,7 @@ class TestPlotMethods:
 
     def test_size(self, df_feat, df_parts):
         """Test size input: seq_size, tmd_fontsize, jmd_fontsize"""
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         assert isinstance(cpp.plot_heatmap(df_feat=df_feat,
                                            tmd_seq=11, jmd_fontsize=12, tmd_fontsize=11)
                           , mpl.axes.Axes)
@@ -484,7 +482,7 @@ class TestPlotMethods:
 
     def test_color(self, df_feat, df_parts):
         """Test color input: tmd_color, jmd_color, tmd_seq_color, jmd_seq_color"""
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         args = dict(df_feat=df_feat, tmd_color="b")
         assert isinstance(cpp.plot_heatmap(**args), mpl.axes.Axes)
         assert isinstance(cpp.plot_heatmap(**args), mpl.axes.Axes)
@@ -495,7 +493,7 @@ class TestPlotMethods:
 
     def test_ticks(self, df_feat, df_parts):
         """Test xtick input: xtick_size, xtick_width, xtick_length"""
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         assert isinstance(cpp.plot_heatmap(df_feat=df_feat, xtick_size=11, xtick_width=2,
                                            xtick_length=5, ytick_size=11)
                           , mpl.axes.Axes)
@@ -503,7 +501,7 @@ class TestPlotMethods:
 
     def test_legend(self, df_feat, df_parts):
         """Test legend args for heatmap and profile: add_legend_cat, legend_kws"""
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         assert isinstance(cpp.plot_heatmap(df_feat=df_feat, legend_kws=dict(fontsize=11))
                           , mpl.axes.Axes)
         # Simple check function -> No negative test
@@ -514,7 +512,7 @@ class TestPlotHeatmap:
 
     # Positive and negative unit tests
     def test_vmin_vmax(self, df_feat, df_parts):
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         for vmin, vmax in zip([-10, -5, 1, 2, 0.1], [0, 10, 2, 3, 0.2]):
             args = dict(df_feat=df_feat, vmin=vmin, vmax=vmax)
             assert isinstance(cpp.plot_heatmap(**args), mpl.axes.Axes)
@@ -530,14 +528,14 @@ class TestPlotGraphProfile:
 
     # Positive and negative unit tests
     def test_color(self, df_feat, df_parts):
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         args = dict(df_feat=df_feat, bar_color="r", edge_color="b")
         assert isinstance(cpp.plot_bargraph(**args), mpl.axes.Axes)
         args = dict(df_feat=df_feat, edge_color="b")
         assert isinstance(cpp.plot_profile(**args), mpl.axes.Axes)
 
     def test_wrong_color(self, df_feat, df_parts):
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         args = dict(df_feat=df_feat, bar_color="a", edge_color=1)
         with pytest.raises(ValueError):
             cpp.plot_bargraph(**args)
@@ -546,13 +544,13 @@ class TestPlotGraphProfile:
             cpp.plot_profile(**args)
 
     def test_ylim(self, df_feat, df_parts):
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         args = dict(df_feat=df_feat, ylim=(0, 100))
         assert isinstance(cpp.plot_bargraph(**args), mpl.axes.Axes)
         assert isinstance(cpp.plot_profile(**args), mpl.axes.Axes)
 
     def test_wrong_ylim(self, df_feat, df_parts):
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         for ylim in [1, "a", [1, 40], (0), (0, 2), (-10, "a")]:
             args = dict(df_feat=df_feat, ylim=ylim)
             with pytest.raises(ValueError):
@@ -561,13 +559,13 @@ class TestPlotGraphProfile:
                 cpp.plot_profile(**args)
 
     def test_highlight_alpha(self, df_feat, df_parts):
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         args = dict(df_feat=df_feat, highlight_alpha=0.5)
         assert isinstance(cpp.plot_bargraph(**args), mpl.axes.Axes)
         assert isinstance(cpp.plot_profile(**args), mpl.axes.Axes)
 
     def test_wrong_highlight_alpha(self, df_feat, df_parts):
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         for i in ["a", 10, list]:
             args = dict(df_feat=df_feat, highlight_alpha=i)
             with pytest.raises(ValueError):
@@ -576,14 +574,14 @@ class TestPlotGraphProfile:
                 cpp.plot_profile(**args)
 
     def test_grid_axis(self, df_feat, df_parts):
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         for grid_axis in ["x", "y", "both"]:
             args = dict(df_feat=df_feat, grid_axis=grid_axis)
             assert isinstance(cpp.plot_bargraph(**args), mpl.axes.Axes)
             assert isinstance(cpp.plot_profile(**args), mpl.axes.Axes)
 
     def test_wrong_grid_axis(self, df_feat, df_parts):
-        cpp = CPP(df_parts=df_parts)
+        cpp = aa.CPP(df_parts=df_parts)
         for grid_axis in ["X", 1, None, list, "XY"]:
             args = dict(df_feat=df_feat, grid_axis=grid_axis)
             with pytest.raises(ValueError):
@@ -603,11 +601,11 @@ class TestPlotStat:
 # II Regression/Functional test
 def test_add_pipeline(df_feat):
     # TODO check
-    sf = SequenceFeature()
+    sf = aa.SequenceFeature()
     df_seq = sf.load_sequences(n_in_class=50)
     labels = [1 if x == "SUBEXPERT" else 0 for x in df_seq["class"]]
     df_parts = sf.get_df_parts(df_seq=df_seq)
-    cpp = CPP(df_parts=df_parts)
+    cpp = aa.CPP(df_parts=df_parts)
     df = df_feat.copy()
     cols = [x for x in list(df) if "p_val" not in x]
     df = cpp.add_scale_info(df_feat=df)

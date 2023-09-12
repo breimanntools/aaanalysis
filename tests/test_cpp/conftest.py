@@ -48,8 +48,9 @@ import pandas as pd
 import numpy as np
 import pytest
 
-from cpp_tools import SequenceFeature
-import cpp_tools._utils as ut
+import aaanalysis as aa
+from aaanalysis import SequenceFeature
+import tests._utils as ut
 
 
 # Valid functions
@@ -73,8 +74,7 @@ def df_cat():
 
 @pytest.fixture(scope="module")
 def df_scales():
-    sf = SequenceFeature()
-    df_scales = sf.load_scales()
+    df_scales = aa.load_scales()
     return df_scales
 
 

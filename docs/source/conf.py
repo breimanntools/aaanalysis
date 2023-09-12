@@ -7,6 +7,9 @@ from datetime import datetime
 import platform
 from types import WrapperDescriptorType
 
+sys.path.append(os.path.abspath('.'))
+from create_tables_doc import generate_table_rst
+
 # -- Path and Platform setup --------------------------------------------------
 SEP = "\\" if platform.system() == "Windows" else "/"
 path_source = os.path.join(os.path.dirname(__file__))
@@ -14,6 +17,7 @@ path_source = os.path.join(os.path.dirname(__file__))
 # Root path
 sys.path.insert(0, os.path.abspath('../../'))
 sys.path.insert(0, os.path.abspath('../../aaanalysis'))
+sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------
 project = 'AAanalysis'
@@ -120,6 +124,9 @@ texinfo_documents = [
     (master_doc, "AAanalysis", "AAanalysis Documentation", author, "AAanalysis",
      "Advanced analysis tools for researchers.", "Miscellaneous"),
 ]
+
+# Create table.rst
+generate_table_rst()
 
 # -- Linkcode configuration ---------------------------------------------------
 _module_path = os.path.dirname(importlib.util.find_spec("aaanalysis").origin)  # type: ignore

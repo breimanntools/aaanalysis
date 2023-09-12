@@ -6,6 +6,7 @@ import os
 import platform
 from sklearn.utils import check_array, check_consistent_length
 
+
 # Helper Function
 def _folder_path(super_folder, folder_name):
     """Modification of separator (OS depending)"""
