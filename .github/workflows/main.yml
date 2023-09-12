@@ -17,6 +17,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      -
+    - name: Download and Install Python 3.11
+      run: |
+        wget https://www.python.org/ftp/python/3.11/Python-3.11.0.tgz
+        tar xvf Python-3.11.0.tgz
+        cd Python-3.11.0
+        ./configure --enable-optimizations
+        make
+        sudo make altinstall
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
