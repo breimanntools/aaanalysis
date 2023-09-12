@@ -9,17 +9,13 @@ on:
       - master
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         python-version: [3.9, 3.10, 3.11]
-        check: ['tests', 'flake8', 'mypy', 'black']
-
     steps:
     - uses: actions/checkout@v2
-
     - name: Cache Python dependencies
       uses: actions/cache@v2
       with:
@@ -27,30 +23,40 @@ jobs:
         key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-${{ matrix.python-version }}-
-
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest flake8 mypy black
-
+        pip install pytest
     - name: Run Tests
-      if: matrix.check == 'tests'
       run: pytest tests
 
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Cache Python dependencies
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-3.9-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-3.9-
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 mypy black
     - name: Run flake8
-      if: matrix.check == 'flake8'
       run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-
     - name: Run mypy
-      if: matrix.check == 'mypy'
       run: mypy --strict ./
-
     - name: Check code formatting with black
-      if: matrix.check == 'black'
       run: black --check ./
