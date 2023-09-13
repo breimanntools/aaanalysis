@@ -5,7 +5,7 @@ for given parts and features .
 
 from aaanalysis.cpp._part import Parts
 from aaanalysis.cpp._split import Split
-import aaanalysis.cpp._utils as ut
+import aaanalysis.utils as ut
 
 
 # I Helper Functions
@@ -17,15 +17,6 @@ def check_dict_part_pos(dict_part_pos=None):
         error = f"Following parts from 'dict_part_pos' are not valid: {wrong_parts}." \
                 f"\n Parts should be as follows: {ut.LIST_ALL_PARTS}"
         raise ValueError(error)
-
-
-def check_part_args_non_negative_int(tmd_len=20, jmd_n_len=10, jmd_c_len=10, ext_len=0, start=1):
-    """Check if args non-negative integers"""
-    ut.check_non_negative_number(name="start", val=start)
-    args = zip(["tmd_len", "jmd_n_len", "jmd_c_len", "ext_len"],
-               [tmd_len, jmd_n_len, jmd_c_len, ext_len])
-    for name, val in args:
-        ut.check_non_negative_number(name=name, val=val, min_val=0)
 
 
 # II Main Functions
@@ -48,8 +39,8 @@ class SequenceFeaturePositions:
         -------
         dict_part_pos: dictionary with parts to positions of parts
         """
-        check_part_args_non_negative_int(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
-                                         ext_len=ext_len, start=start)
+        ut.check_non_negative_number(name="start", val=start, min_val=1)
+        ut.check_args_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len)
         pa = Parts()
         jmd_n = list(range(0, jmd_n_len))
         tmd = list(range(jmd_n_len, tmd_len+jmd_n_len))

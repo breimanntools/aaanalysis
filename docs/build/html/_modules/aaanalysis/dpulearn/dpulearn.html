@@ -116,7 +116,7 @@
 <p class="caption" role="heading"><span class="caption-text">REFERENCES</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../_resources/tables.html">Tables for the Project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_resources/tables.html">Tables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../index/references.html">References</a></li>
 </ul>
 
@@ -193,7 +193,7 @@
 <span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="kn">import</span> <span class="n">PCA</span>
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">import</span> <span class="nn">aaanalysis._utils</span> <span class="k">as</span> <span class="nn">ut</span>
+<span class="kn">import</span> <span class="nn">aaanalysis.utils</span> <span class="k">as</span> <span class="nn">ut</span>
 
 <span class="c1"># Settings</span>
 <span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">&#39;expand_frame_repr&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>  <span class="c1"># Single line print for pd.Dataframe</span>
@@ -292,7 +292,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">mask_pos</span> <span class="o">=</span> <span class="n">labels</span> <span class="o">==</span> <span class="n">label_pos</span>
     <span class="n">mask_unl</span> <span class="o">=</span> <span class="n">labels</span> <span class="o">!=</span> <span class="n">label_pos</span>
-    <span class="c1"># Compute the average distances to the positive data points</span>
+    <span class="c1"># Compute the average distances to the positive datapoints</span>
     <span class="n">avg_dist</span> <span class="o">=</span> <span class="n">pairwise_distances</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">mask_pos</span><span class="p">],</span> <span class="n">X</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="c1"># Select negatives based on largest average distance to positives</span>
     <span class="n">top_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">avg_dist</span><span class="p">[</span><span class="n">mask_unl</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="n">n_neg</span><span class="p">]</span>
@@ -340,7 +340,7 @@
     <span class="n">columns_pca</span> <span class="o">=</span> <span class="n">_columns_pca</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">list_n_neg</span><span class="p">)]</span>
     <span class="n">df_seq</span><span class="p">[</span><span class="n">columns_pca</span><span class="p">]</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">components_</span><span class="o">.</span><span class="n">T</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">columns_pca</span><span class="p">)]</span>
 
-    <span class="c1"># Get mean of positive data for each component</span>
+    <span class="c1"># Get mean of positive datafor each component</span>
     <span class="n">mask_pos</span> <span class="o">=</span> <span class="n">labels</span> <span class="o">==</span> <span class="n">label_pos</span>
     <span class="n">mask_unl</span> <span class="o">=</span> <span class="n">labels</span> <span class="o">!=</span> <span class="n">label_pos</span>
     <span class="n">pc_means</span> <span class="o">=</span> <span class="n">df_seq</span><span class="p">[</span><span class="n">mask_pos</span><span class="p">][</span><span class="n">columns_pca</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -394,7 +394,7 @@
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
 <span class="sd">    labels_ : array-like, shape (n_samples,)</span>
-<span class="sd">        Labels of each data point.</span>
+<span class="sd">        Labels of each datapoint.</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
@@ -452,7 +452,7 @@
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        Create small example data for dPUlearn containg positive (&#39;pos&#39;, 1) and unlabeled (&#39;unl&#39;, 2) data</span>
+<span class="sd">        Create small example datafor dPUlearn containg positive (&#39;pos&#39;, 1) and unlabeled (&#39;unl&#39;, 2) _data</span>
 
 <span class="sd">        &gt;&gt;&gt; import aaanalysis as aa</span>
 <span class="sd">        &gt;&gt;&gt; import pandas as pd</span>
@@ -487,8 +487,10 @@
             <span class="n">new_labels</span><span class="p">,</span> <span class="n">df_seq</span> <span class="o">=</span> <span class="n">_get_neg_via_pca</span><span class="p">(</span><span class="o">**</span><span class="n">args</span><span class="p">,</span> <span class="n">n_components</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_components</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">pca_kwargs</span><span class="p">)</span>
         <span class="c1"># Set new labels</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">labels_</span> <span class="o">=</span> <span class="n">new_labels</span>
-        <span class="k">return</span> <span class="n">df_seq</span></div></div>
+        <span class="k">return</span> <span class="n">df_seq</span></div>
 
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>  <span class="c1"># TODO add evaluation function</span></div>
 </pre></div>
 
            </div>

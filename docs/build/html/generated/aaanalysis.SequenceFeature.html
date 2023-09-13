@@ -139,7 +139,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api.html#plot-utilities">Plot Utilities</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../_resources/tables.html">Tables for the Project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_resources/tables.html">Tables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../index/references.html">References</a></li>
 </ul>
 
@@ -214,7 +214,7 @@
 <h1>aaanalysis.SequenceFeature<a class="headerlink" href="#aaanalysis-sequencefeature" title="Permalink to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="aaanalysis.SequenceFeature">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">SequenceFeature</span></span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L163-L529"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">SequenceFeature</span></span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L169-L623"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve and create sequence feature components (Part, Split, and Scale).</p>
 <p class="rubric">Notes</p>
 <dl class="simple">
@@ -250,20 +250,26 @@ all amino acids obtained by splitting a sequence part.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.SequenceFeature.__init__" title="aaanalysis.SequenceFeature.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(*args, **kwargs)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.SequenceFeature.feat_matrix" title="aaanalysis.SequenceFeature.feat_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">feat_matrix</span></code></a>([df_parts, features, df_scales, ...])</p></td>
-<td><p>Create feature matrix for given feature names and sequence parts.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.SequenceFeature.add_dif" title="aaanalysis.SequenceFeature.add_dif"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_dif</span></code></a>([df_feat, df_seq, labels, ...])</p></td>
+<td><p>Add feature value difference between sample and reference group to DataFrame.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.SequenceFeature.feat_names" title="aaanalysis.SequenceFeature.feat_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">feat_names</span></code></a>([features, df_cat, tmd_len, ...])</p></td>
-<td><p>Convert feature ids (PART-SPLIT-SCALE) into feature name (scale name [positions]).</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.SequenceFeature.feat_value" title="aaanalysis.SequenceFeature.feat_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">feat_value</span></code></a>([df_parts, split, dict_scale, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.SequenceFeature.add_feat_value" title="aaanalysis.SequenceFeature.add_feat_value"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_feat_value</span></code></a>([df_parts, split, ...])</p></td>
 <td><p>Create feature values for all sequence parts by combining Part, Split, and Scale.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.SequenceFeature.features" title="aaanalysis.SequenceFeature.features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">features</span></code></a>([list_parts, split_kws, df_scales, ...])</p></td>
-<td><p>Create list of feature ids for given Parts, Splits, and Scales</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.SequenceFeature.add_position" title="aaanalysis.SequenceFeature.add_position"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_position</span></code></a>([df_feat, features, start, ...])</p></td>
+<td><p>Create list with positions for given feature names</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.SequenceFeature.get_df_parts" title="aaanalysis.SequenceFeature.get_df_parts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_df_parts</span></code></a>([df_seq, list_parts, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.SequenceFeature.feat_matrix" title="aaanalysis.SequenceFeature.feat_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">feat_matrix</span></code></a>([features, df_parts, df_scales, ...])</p></td>
+<td><p>Create feature matrix for given feature ids and sequence parts.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.SequenceFeature.feat_names" title="aaanalysis.SequenceFeature.feat_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">feat_names</span></code></a>([features, df_cat, tmd_len, ...])</p></td>
+<td><p>Convert feature ids (PART-SPLIT-SCALE) into feature names (scale name [positions]).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.SequenceFeature.get_df_parts" title="aaanalysis.SequenceFeature.get_df_parts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_df_parts</span></code></a>([df_seq, list_parts, ...])</p></td>
 <td><p>Create DataFrane with sequence parts.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.SequenceFeature.get_features" title="aaanalysis.SequenceFeature.get_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_features</span></code></a>([list_parts, split_kws, ...])</p></td>
+<td><p>Create list of all feature ids for given Parts, Splits, and Scales</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.SequenceFeature.get_split_kws" title="aaanalysis.SequenceFeature.get_split_kws"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_split_kws</span></code></a>([n_split_min, n_split_max, ...])</p></td>
 <td><p>Create dictionary with kwargs for three split types: Segment, Pattern, PeriodicPattern</p></td>
@@ -271,31 +277,29 @@ all amino acids obtained by splitting a sequence part.</p>
 </tbody>
 </table>
 <dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.SequenceFeature.feat_matrix">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">feat_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_scales</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.feat_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L469-L529"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.feat_matrix" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create feature matrix for given feature names and sequence parts.</p>
+<dt class="sig sig-object py" id="aaanalysis.SequenceFeature.add_dif">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_dif</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_feat=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_seq=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_name=&lt;class</span> <span class="pre">'str'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_group=0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_len=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_len=10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_parts=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_scales=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.add_dif"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L539-L580"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.add_dif" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add feature value difference between sample and reference group to DataFrame.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>df_parts: :class:`pandas.DataFrame`</strong></dt><dd><p>DataFrame with sequence parts.</p>
+<dt><strong>df_feat: :class:`pandas.DataFrame`</strong></dt><dd><p>Feature DataFrame (CPP output) to add sample difference.</p>
 </dd>
-<dt><strong>features: str, list of strings, pd.Series</strong></dt><dd><p>Ids of features for which matrix of feature values should be created.</p>
+<dt><strong>df_seq: :class:`pandas.DataFrame`</strong></dt><dd><p>DataFrame with sequences and sample names, in which the given sample name is included.</p>
 </dd>
-<dt><strong>df_scales: :class:`pandas.DataFrame`, optional</strong></dt><dd><p>DataFrame with default amino acid scales.</p>
+<dt><strong>labels: array-like, shape (n_samples)</strong></dt><dd><p>Class labels for samples in sequence DataFrame.</p>
+</dd>
+<dt><strong>sample_name: str</strong></dt><dd><p>Name of sample for which the feature value difference to a given reference group should be computed.</p>
+</dd>
+<dt><strong>ref_group: int, default = 0</strong></dt><dd><p>Class label of reference group.</p>
 </dd>
 <dt><strong>accept_gaps: bool, default = False</strong></dt><dd><p>Whether to accept missing values by enabling omitting for computations (if True).</p>
 </dd>
-<dt><strong>n_jobs: int, default = None,</strong></dt><dd><p>The number of jobs to run in parallel. If None, it will be set to the maximum.</p>
-</dd>
-<dt><strong>verbose: bool, default = True</strong></dt><dd><p>Whether to print size of to be created feature matrix (if True) or not otherwise.</p>
-</dd>
-<dt><strong>return_labels: bool, default = False</strong></dt><dd><p>Whether to return sample labels in addition to feature matrix.</p>
-</dd>
 </dl>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
-<dt>feat_matrix: array-like or sparse matrix, shape (n_samples, n_features)</dt><dd><p>Feature values of samples.</p>
+<dt>df_feat: <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></dt><dd><p>Feature DataFrame including feature value difference.</p>
 </dd>
 </dl>
 </dd>
@@ -303,50 +307,8 @@ all amino acids obtained by splitting a sequence part.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.SequenceFeature.feat_names">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">feat_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.feat_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L362-L417"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.feat_names" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert feature ids (PART-SPLIT-SCALE) into feature name (scale name [positions]).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>features: str, list of strings, pd.Series</strong></dt><dd><p>Ids of features for which feature names should be created.</p>
-</dd>
-<dt><strong>df_cat: :class:`pandas.DataFrame`, default = SequenceFeature.load_categories</strong></dt><dd><p>DataFrame with default categories for physicochemical amino acid scales</p>
-</dd>
-<dt><strong>tmd_len: int, &gt;0</strong></dt><dd><p>Length of TMD.</p>
-</dd>
-<dt><strong>jmd_n_len: int, &gt;0</strong></dt><dd><p>Length of JMD-N.</p>
-</dd>
-<dt><strong>jmd_c_len: int, &gt;0</strong></dt><dd><p>Length of JMD-C.</p>
-</dd>
-<dt><strong>ext_len:int, &gt;0</strong></dt><dd><p>Length of TMD-extending part (starting from C and N terminal part of TMD).
-Conditions: ext_len&lt;jmd_m_len and ext_len&lt;jmd_c_len</p>
-</dd>
-<dt><strong>start: int, &gt;=0</strong></dt><dd><p>Position label of first amino acid position (starting at N-terminus).</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>feat_names: list of strings</dt><dd><p>Names of features.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<dl class="simple">
-<dt>Positions are given depending on the three split types:</dt><dd><ul class="simple">
-<li><p>Segment: [first…last]</p></li>
-<li><p>Pattern: [all positions]</p></li>
-<li><p>PeriodicPattern: [first..step1/step2..last]</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.SequenceFeature.feat_value">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">feat_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dict_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.feat_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L420-L467"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.feat_value" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="aaanalysis.SequenceFeature.add_feat_value">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_feat_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dict_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.add_feat_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L490-L537"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.add_feat_value" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create feature values for all sequence parts by combining Part, Split, and Scale.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -396,25 +358,66 @@ are as follows: ‘Segment(5,7)’, ‘Pattern(C,1,2)’, ‘PeriodicPattern(N,i
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.SequenceFeature.features">
-<span class="sig-name descname"><span class="pre">features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_scales</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L323-L360"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.features" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create list of feature ids for given Parts, Splits, and Scales</p>
+<dt class="sig sig-object py" id="aaanalysis.SequenceFeature.add_position">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_feat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">part_split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.add_position"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L582-L623"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.add_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create list with positions for given feature names</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>list_parts: list of strings (n&gt;=1 parts), default = [“tmd_e”, “jmd_n_tmd_n”, “tmd_c_jmd_c”]</strong></dt><dd><p>Names of sequence parts which should be created (e.g., ‘tmd’).</p>
+<dt><strong>df_feat: :class:`pandas.DataFrame`</strong></dt><dd><p>Feature DataFrame (CPP output) to add sample difference.</p>
 </dd>
-<dt><strong>split_kws: dict, default = SequenceFeature.get_split_kws</strong></dt><dd><p>Nested dictionary with parameter dictionary for each chosen split_type.</p>
+<dt><strong>features: str, list of strings, pd.Series</strong></dt><dd><p>Ids of features for which feature names should be created.</p>
 </dd>
-<dt><strong>df_scales: :class:`pandas.DataFrame`, default = SequenceFeature.load_scales</strong></dt><dd><p>DataFrame with default amino acid scales.</p>
+<dt><strong>start: int, &gt;=0, default = 1</strong></dt><dd><p>Position label of first amino acid position (starting at N-terminus).</p>
 </dd>
-<dt><strong>all_parts: bool, default = False</strong></dt><dd><p>Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.</p>
+<dt><strong>tmd_len: int, &gt;0, default = 20</strong></dt><dd><p>Length of TMD.</p>
+</dd>
+<dt><strong>jmd_n_len</strong><span class="classifier">int, &gt;=0, default = 10</span></dt><dd><p>Length of JMD-N.</p>
+</dd>
+<dt><strong>jmd_c_len</strong><span class="classifier">int, &gt;=0, default = 10</span></dt><dd><p>Length of JMD-C.</p>
+</dd>
+<dt><strong>ext_len</strong><span class="classifier">int, &gt;=0, default = 4</span></dt><dd><p>Length of TMD-extending part (starting from C and N terminal part of TMD).
+Conditions: ext_len &lt; jmd_m_len and ext_len &lt; jmd_c_len.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
-<dt>features: list of strings</dt><dd><p>Ids of all possible features for combination of Parts, Splits, and Scales with form: PART-SPLIT-SCALE</p>
+<dt>feat_positions: list</dt><dd><p>list with positions for each feature in feat_names</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The length parameters define the total number of positions (jmd_n_len + tmd_len + jmd_c_len).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.SequenceFeature.feat_matrix">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">feat_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_scales</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.feat_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L367-L427"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.feat_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create feature matrix for given feature ids and sequence parts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>features: str, list of strings, pd.Series</strong></dt><dd><p>Ids of features for which matrix of feature values should be created.</p>
+</dd>
+<dt><strong>df_parts: :class:`pandas.DataFrame`</strong></dt><dd><p>DataFrame with sequence parts.</p>
+</dd>
+<dt><strong>df_scales: :class:`pandas.DataFrame`, optional</strong></dt><dd><p>DataFrame with default amino acid scales.</p>
+</dd>
+<dt><strong>accept_gaps: bool, default = False</strong></dt><dd><p>Whether to accept missing values by enabling omitting for computations (if True).</p>
+</dd>
+<dt><strong>n_jobs: int, default = None,</strong></dt><dd><p>The number of jobs to run in parallel. If None, it will be set to the maximum.</p>
+</dd>
+<dt><strong>verbose: bool, default = True</strong></dt><dd><p>Whether to print size of to be created feature matrix (if True) or not otherwise.</p>
+</dd>
+<dt><strong>return_labels: bool, default = False</strong></dt><dd><p>Whether to return sample labels in addition to feature matrix.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>feat_matrix: array-like or sparse matrix, shape (n_samples, n_features)</dt><dd><p>Feature values of samples.</p>
 </dd>
 </dl>
 </dd>
@@ -422,8 +425,50 @@ are as follows: ‘Segment(5,7)’, ‘Pattern(C,1,2)’, ‘PeriodicPattern(N,i
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.SequenceFeature.feat_names">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">feat_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.feat_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L430-L485"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.feat_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert feature ids (PART-SPLIT-SCALE) into feature names (scale name [positions]).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>features: str, list of strings, pd.Series</strong></dt><dd><p>Ids of features for which feature names should be created.</p>
+</dd>
+<dt><strong>df_cat: :class:`pandas.DataFrame`, default = SequenceFeature.load_categories</strong></dt><dd><p>DataFrame with default categories for physicochemical amino acid scales</p>
+</dd>
+<dt><strong>tmd_len: int, &gt;0</strong></dt><dd><p>Length of TMD.</p>
+</dd>
+<dt><strong>jmd_n_len: int, &gt;0</strong></dt><dd><p>Length of JMD-N.</p>
+</dd>
+<dt><strong>jmd_c_len: int, &gt;0</strong></dt><dd><p>Length of JMD-C.</p>
+</dd>
+<dt><strong>ext_len:int, &gt;0</strong></dt><dd><p>Length of TMD-extending part (starting from C and N terminal part of TMD).
+Conditions: ext_len&lt;jmd_m_len and ext_len&lt;jmd_c_len</p>
+</dd>
+<dt><strong>start: int, &gt;=0</strong></dt><dd><p>Position label of first amino acid position (starting at N-terminus).</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>feat_names: list of strings</dt><dd><p>Names of features.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<dl class="simple">
+<dt>Positions are given depending on the three split types:</dt><dd><ul class="simple">
+<li><p>Segment: [first…last]</p></li>
+<li><p>Pattern: [all positions]</p></li>
+<li><p>PeriodicPattern: [first..step1/step2..last]</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.SequenceFeature.get_df_parts">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_df_parts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.get_df_parts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L192-L257"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.get_df_parts" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_df_parts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_seq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.get_df_parts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L198-L262"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.get_df_parts" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create DataFrane with sequence parts.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -470,8 +515,34 @@ or sequence part (‘jmd_n’, ‘tmd’, ‘jmd_c’) columns.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.SequenceFeature.get_features">
+<span class="sig-name descname"><span class="pre">get_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">list_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_scales</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.get_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L328-L365"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.get_features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create list of all feature ids for given Parts, Splits, and Scales</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>list_parts: list of strings (n&gt;=1 parts), default = [“tmd_e”, “jmd_n_tmd_n”, “tmd_c_jmd_c”]</strong></dt><dd><p>Names of sequence parts which should be created (e.g., ‘tmd’).</p>
+</dd>
+<dt><strong>split_kws: dict, default = SequenceFeature.get_split_kws</strong></dt><dd><p>Nested dictionary with parameter dictionary for each chosen split_type.</p>
+</dd>
+<dt><strong>df_scales: :class:`pandas.DataFrame`, default = SequenceFeature.load_scales</strong></dt><dd><p>DataFrame with default amino acid scales.</p>
+</dd>
+<dt><strong>all_parts: bool, default = False</strong></dt><dd><p>Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>features: list of strings</dt><dd><p>Ids of all possible features for combination of Parts, Splits, and Scales with form: PART-SPLIT-SCALE</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.SequenceFeature.get_split_kws">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_split_kws</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_split_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_split_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps_pattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">len_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps_periodicpattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.get_split_kws"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L259-L321"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.get_split_kws" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_split_kws</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_split_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_split_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps_pattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">len_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps_periodicpattern</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/feature.html#SequenceFeature.get_split_kws"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/feature.py#L264-L326"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.SequenceFeature.get_split_kws" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create dictionary with kwargs for three split types: Segment, Pattern, PeriodicPattern</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

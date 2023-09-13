@@ -6,55 +6,19 @@ import pandas as pd
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 
-import aaanalysis._utils as ut
+import aaanalysis._utils._utils_constants as ut_c
+import aaanalysis._utils._utils_check as ut_check
+import aaanalysis._utils._utils_output as ut_o
 
 # Settings
 
 # Default Split names
-STR_SCALE_CAT = "scale_classification"
 STR_SEGMENT = "Segment"
 STR_PATTERN = "Pattern"
 STR_PERIODIC_PATTERN = "PeriodicPattern"
 
-# Default column names for scales and categories
-COL_ENTRY = "entry"     # ACC, protein entry, uniprot id
-COL_NAME = "name"       # Entry name, Protein name, Uniprot Name
-COL_SCALE_ID = "scale_id"
-COLS_PARTS = ["jmd_n", "tmd", "jmd_c"]
-COL_SEQ = "sequence"
-COL_TMD_START = "tmd_start"
-COL_TMD_STOP = "tmd_stop"
-COLS_SEQ_INFO = [COL_SEQ, COL_TMD_START, COL_TMD_STOP]  # TODO
-COL_CAT = "category"
-COL_SUBCAT = "subcategory"
-COL_SCALE_NAME = "scale_name"
-COL_SCALE_DES = "scale_description"
-
 # DEFAULT Signs
 STR_AA_GAP = "-"
-
-# Default column names for feature statistics
-COL_FEATURE = "feature"
-COL_ABS_AUC = "abs_auc"
-COL_MEAN_DIF = "mean_dif"
-COL_ABS_MEAN_DIF = "abs_mean_dif"
-COL_STD_TEST = "std_test"
-COL_STD_REF = "std_ref"
-
-COL_FEAT_IMPACT = "feat_impact"
-COL_FEAT_IMPORTANCE = "feat_importance"
-
-DICT_COLOR = {"ASA/Volume": "tab:blue",
-              "Composition": "tab:orange",
-              "Conformation": "tab:green",
-              "Energy": "tab:red",
-              "Others": "tab:gray",
-              "Polarity": "gold",
-              "Shape": "tab:cyan",
-              "Structure-Activity": "tab:brown"}
-
-COLOR_SHAP_HIGHER = '#FF0D57'   # (255, 13, 87)
-COLOR_SHAP_LOWER = '#1E88E5'    # (30, 136, 229)
 
 # Default column names for cpp analysis
 LIST_ALL_PARTS = ["tmd", "tmd_e", "tmd_n", "tmd_c", "jmd_n", "jmd_c", "ext_c", "ext_n",
@@ -84,22 +48,6 @@ def check_color(name=None, val=None, accept_none=False):
         raise ValueError(error)
 
 
-def check_col_in_df(df=None, name_df=None, col=None, type_check=False):
-    """Check if column in DataFrame"""
-    list_col = list(df)
-    if type_check == "numerical":
-        list_col = [col for col, data_type in zip(list(df), df.dtypes) if data_type == float]
-    elif type_check == "categorical":
-        list_col = [col for col, data_type in zip(list(df), df.dtypes) if data_type == str]
-    else:
-        if type_check:
-            raise TypeError("'type_check' should be False, 'numerical', or 'categorical'")
-        else:
-            type_check = "any"
-    if not isinstance(col, str) or col not in list_col:
-        raise ValueError(f"'{col}' should be {type_check} column in '{name_df}': {list_col}")
-
-
 def check_y_categorical(df=None, y=None):
     """Check if y in df"""
     list_cat_columns = [col for col, data_type in zip(list(df), df.dtypes)
@@ -126,9 +74,9 @@ def check_labels(labels=None, df=None, name_df=None):
 def check_ylim(df=None, ylim=None, val_col=None, retrieve_plot=False, scaling_factor=1.1):
     """"""
     if ylim is not None:
-        ut.check_tuple(name="ylim", val=ylim, n=2)
-        ut.check_float(name="ylim:min", val=ylim[0], just_float=False)
-        ut.check_float(name="ylim:max", val=ylim[1], just_float=False)
+        ut_check.check_tuple(name="ylim", val=ylim, n=2)
+        ut_check.check_float(name="ylim:min", val=ylim[0], just_float=False)
+        ut_check.check_float(name="ylim:max", val=ylim[1], just_float=False)
         max_val = round(max(df[val_col]), 3)
         max_y = ylim[1]
         if max_val >= max_y:
@@ -143,31 +91,74 @@ def check_ylim(df=None, ylim=None, val_col=None, retrieve_plot=False, scaling_fa
 
 
 # Sequence check function
+def _check_seq(seq, len_, name_seq, name_len, verbose):
+    """"""
+    if seq is None:
+        return len_
+    else:
+        if type(seq) != str:
+            raise ValueError(f"'{name_seq}' should be string (type={type(seq)})")
+        if len_ is not None:
+            # Waring sequence length doesn't match the corresponding length parameter
+            if len(seq) != len_ and verbose:
+                warning_msg = f"The length of {seq} ({len(seq)}) does not match {name_len} ({len_})."
+                ut_o.print_red(f"Warning: {warning_msg}")
+        return len(seq)
+
+
+def check_args_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None, ext_len=None,
+                   tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, verbose=False,
+                   accept_tmd_none=False):
+    """Check length parameters and if they are matching with sequences if provided"""
+    # Check lengths
+    tmd_seq_given = tmd_seq is not None or accept_tmd_none # If tmd_seq is given, tmd_len can be None
+    ut_check.check_non_negative_number(name="tmd_len", val=tmd_len, accept_none=tmd_seq_given, min_val=1)
+    ut_check.check_non_negative_number(name="jmd_n_len", val=jmd_n_len, accept_none=True, min_val=1)
+    ut_check.check_non_negative_number(name="jmd_c_len", val=jmd_c_len, accept_none=True, min_val=1)
+    ut_check.check_non_negative_number(name="ext_len", val=ext_len, accept_none=True)
+    # Check if lengths are matching
+    if ext_len is not None:
+        if jmd_n_len is None:
+            raise ValueError(f"'jmd_n_len' should not be None if 'ext_len' ({ext_len}) is given")
+        if jmd_c_len is None:
+            raise ValueError(f"'jmd_c_len' should not be None if 'ext_len' ({ext_len}) is given")
+        if jmd_n_len is not None and ext_len > jmd_n_len:
+            raise ValueError(f"'ext_len' ({ext_len}) must be <= jmd_n_len ({jmd_n_len})")
+        if jmd_c_len is not None and ext_len > jmd_c_len:
+            raise ValueError(f"'ext_len' ({ext_len}) must be <= jmd_c_len ({jmd_c_len})")
+    # Check if lengths and sequences match
+    tmd_len = _check_seq(tmd_seq, tmd_len, "tmd_seq", "tmd_len", verbose)
+    jmd_n_len = _check_seq(jmd_n_seq, jmd_n_len, "jmd_n_seq", "jmd_n_len", verbose)
+    jmd_c_len = _check_seq(jmd_c_seq, jmd_c_len, "jmd_c_seq", "jmd_c_len", verbose)
+    args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+    return args_len
+
+# TODO
 def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     """Get features from df"""
     # TODO check
     if df_seq is None or not isinstance(df_seq, pd.DataFrame):
         raise ValueError("Type of 'df_seq' ({}) must be pd.DataFrame".format(type(df_seq)))
-    if COL_ENTRY not in list(df_seq):
-        raise ValueError("'{}' must be in 'df_seq'".format(COL_ENTRY))
-    seq_info_in_df = set(COLS_SEQ_INFO).issubset(set(df_seq))
-    parts_in_df = set(COLS_PARTS).issubset(set(df_seq))
-    seq_in_df = COL_SEQ in set(df_seq)
+    if ut_c.COL_ENTRY not in list(df_seq):
+        raise ValueError("'{}' must be in 'df_seq'".format(ut_c.COL_ENTRY))
+    seq_info_in_df = set(ut_c.COLS_SEQ_INFO).issubset(set(df_seq))
+    parts_in_df = set(ut_c.COLS_PARTS).issubset(set(df_seq))
+    seq_in_df = ut_c.COL_SEQ in set(df_seq)
     if "start" in list(df_seq):
-        raise ValueError(f"'df_seq' should not contain 'start' in columns. Change column to '{COL_TMD_START}'.")
+        raise ValueError(f"'df_seq' should not contain 'start' in columns. Change column to '{ut_c.COL_TMD_START}'.")
     if "stop" in list(df_seq):
-        raise ValueError(f"'df_seq' should not contain 'stop' in columns. Change column to '{COL_TMD_STOP}'.")
+        raise ValueError(f"'df_seq' should not contain 'stop' in columns. Change column to '{ut_c.COL_TMD_STOP}'.")
     if not (seq_info_in_df or parts_in_df or seq_in_df):
-        raise ValueError(f"'df_seq' should contain ['{COL_SEQ}'], {COLS_SEQ_INFO}, or {COLS_PARTS}")
+        raise ValueError(f"'df_seq' should contain ['{ut_c.COL_SEQ}'], {ut_c.COLS_SEQ_INFO}, or {ut_c.COLS_PARTS}")
     # Check data type in part or sequence columns
     else:
         if seq_info_in_df or seq_in_df:
-            error = f"Sequence column ('{COL_SEQ}') should only contain strings"
-            dict_wrong_seq = {COL_SEQ: [x for x in df_seq[COL_SEQ].values if type(x) != str]}
+            error = f"Sequence column ('{ut_c.COL_SEQ}') should only contain strings"
+            dict_wrong_seq = {ut_c.COL_SEQ: [x for x in df_seq[ut_c.COL_SEQ].values if type(x) != str]}
         else:
-            cols = COLS_PARTS
+            cols = ut_c.COLS_PARTS
             error = f"Part columns ('{cols}') should only contain strings"
-            dict_wrong_seq = {part: [x for x in df_seq[part].values if type(x) != str] for part in COLS_PARTS}
+            dict_wrong_seq = {part: [x for x in df_seq[part].values if type(x) != str] for part in ut_c.COLS_PARTS}
         # Filter empty lists
         dict_wrong_seq = {part: dict_wrong_seq[part] for part in dict_wrong_seq if len(dict_wrong_seq[part]) > 0}
         n_wrong_entries = sum([len(dict_wrong_seq[part]) for part in dict_wrong_seq])
@@ -177,33 +168,33 @@ def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     # Check if only sequence given -> Convert sequence to tmd
     if seq_in_df and not parts_in_df:
         if seq_info_in_df:
-            for entry, start, stop in zip(df_seq[COL_ENTRY], df_seq[COL_TMD_START], df_seq[COL_TMD_STOP]):
-                ut.check_non_negative_number(name=f"tmd_start [{entry}]", val=start)
-                ut.check_non_negative_number(name=f"tmd_start [{entry}]", val=stop,)
-            tmd_start = [int(x) for x in df_seq[COL_TMD_START]]
-            tmd_stop = [int(x) for x in df_seq[COL_TMD_STOP]]
+            for entry, start, stop in zip(df_seq[ut_c.COL_ENTRY], df_seq[ut_c.COL_TMD_START], df_seq[ut_c.COL_TMD_STOP]):
+                ut_check.check_non_negative_number(name=f"tmd_start [{entry}]", val=start)
+                ut_check.check_non_negative_number(name=f"tmd_start [{entry}]", val=stop,)
+            tmd_start = [int(x) for x in df_seq[ut_c.COL_TMD_START]]
+            tmd_stop = [int(x) for x in df_seq[ut_c.COL_TMD_STOP]]
         else:
             tmd_start = 1 if jmd_n_len is None else 1 + jmd_n_len
-            tmd_stop = [len(x)-1 for x in df_seq[COL_SEQ]]
+            tmd_stop = [len(x)-1 for x in df_seq[ut_c.COL_SEQ]]
             if jmd_c_len is not None:
                 tmd_stop = [x - jmd_c_len for x in tmd_stop]
-        df_seq[COL_TMD_START] = tmd_start
-        df_seq[COL_TMD_STOP] = tmd_stop
-        seq_info_in_df = set(COLS_SEQ_INFO).issubset(set(df_seq))
+        df_seq[ut_c.COL_TMD_START] = tmd_start
+        df_seq[ut_c.COL_TMD_STOP] = tmd_stop
+        seq_info_in_df = set(ut_c.COLS_SEQ_INFO).issubset(set(df_seq))
     # Check parameter combinations
     if [jmd_n_len, jmd_c_len].count(None) == 1:
         raise ValueError("'jmd_n_len' and 'jmd_c_len' should both be given (not None) or None")
     if not parts_in_df and seq_info_in_df and jmd_n_len is None and jmd_c_len is None:
         error = f"'jmd_n_len' and 'jmd_c_len' should not be None if " \
-                f"sequence information ({COLS_SEQ_INFO}) are given."
+                f"sequence information ({ut_c.COLS_SEQ_INFO}) are given."
         raise ValueError(error)
     if not seq_info_in_df and jmd_n_len is not None and jmd_c_len is not None:
-        error = f"If not all sequence information ({COLS_SEQ_INFO}) are given," \
+        error = f"If not all sequence information ({ut_c.COLS_SEQ_INFO}) are given," \
                 f"'jmd_n_len' and 'jmd_c_len' should be None."
         raise ValueError(error)
     if not parts_in_df and seq_info_in_df and (jmd_c_len is None or jmd_n_len is None):
         error = "If part columns ({}) are not in 'df_seq' but sequence information ({}), " \
-                "\n'jmd_n_len' and 'jmd_c_len' should be given (not None).".format(COLS_PARTS, COLS_SEQ_INFO)
+                "\n'jmd_n_len' and 'jmd_c_len' should be given (not None).".format(ut_c.COLS_PARTS, ut_c.COLS_SEQ_INFO)
         raise ValueError(error)
     return df_seq
 
@@ -211,7 +202,7 @@ def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
 # Scale check functions
 def check_df_scales(df_scales=None, df_parts=None, accept_none=False, accept_gaps=False):
     """Check if df_scales is a valid input and matching to df_parts"""
-    ut.check_bool(name="accept_gaps", val=accept_gaps)
+    ut_check.check_bool(name="accept_gaps", val=accept_gaps)
     if accept_none and df_scales is None:
         return  # Skip check
     if not isinstance(df_scales, pd.DataFrame):
@@ -262,17 +253,17 @@ def check_df_cat(df_cat=None, df_scales=None, accept_none=True, verbose=True):
     if not isinstance(df_cat, pd.DataFrame):
         raise ValueError("'df_cat' should be type pd.DataFrame (not {})".format(type(df_cat)))
     # Check columns
-    for col in [COL_SCALE_ID, COL_CAT, COL_SUBCAT]:
+    for col in [ut_c.COL_SCALE_ID, ut_c.COL_CAT, ut_c.COL_SUBCAT]:
         if col not in df_cat:
             raise ValueError(f"'{col}' not in 'df_cat'")
     # Check scales from df_cat and df_scales do match
     if df_scales is not None:
-        scales_cat = list(df_cat[COL_SCALE_ID])
+        scales_cat = list(df_cat[ut_c.COL_SCALE_ID])
         scales = list(df_scales)
         overlap_scales = [x for x in scales if x in scales_cat]
         difference_scales = list(set(scales).difference(set(scales_cat)))
         # Adjust df_cat and df_scales
-        df_cat = df_cat[df_cat[COL_SCALE_ID].isin(overlap_scales)]
+        df_cat = df_cat[df_cat[ut_c.COL_SCALE_ID].isin(overlap_scales)]
         df_scales = df_scales[overlap_scales]
         if verbose and len(difference_scales) > 0:
             str_warning = f"Scales from 'df_scales' and 'df_cat' do not overlap completely."
@@ -403,7 +394,7 @@ def check_split(split=None):
             i_th, n_split = [int(x) for x in split.split("(")[1].replace(")", "").split(",")]
             # Check if values non-negative integers
             for name, val in zip(["i_th", "n_split"], [i_th, n_split]):
-                ut.check_non_negative_number(name=name, val=val)
+                ut_check.check_non_negative_number(name=name, val=val)
             # Check if i-th and n_split are valid
             if i_th > n_split:
                 raise ValueError
@@ -416,7 +407,7 @@ def check_split(split=None):
             start = int(start[0])
             # Check if values non-negative integers
             for name, val in zip(["start", "step1", "step2"], [start, step1, step2]):
-                ut.check_non_negative_number(name=name, val=val)
+                ut_check.check_non_negative_number(name=name, val=val)
             # Check if terminus valid
             terminus = split.split("i+")[0].split("(")[1].replace(",", "")
             if terminus not in ["N", "C"]:
@@ -431,7 +422,7 @@ def check_split(split=None):
             list_pos = [int(x) for x in list_pos]
             for val in list_pos:
                 name = "pos" + str(val)
-                ut.check_non_negative_number(name=name, val=val)
+                ut_check.check_non_negative_number(name=name, val=val)
             # Check if terminus valid
             if terminus not in ["N", "C"]:
                 raise ValueError
@@ -510,16 +501,16 @@ def check_df_feat(df_feat=None, df_cat=None):
     if len(df_feat) == 0 or len(list(df_feat)) == 0:
         raise ValueError("'df_feat' should be not empty")
     # Check if feature column in df_feat
-    if COL_FEATURE not in df_feat:
-        raise ValueError(f"'{COL_FEATURE}' must be column in 'df_feat'")
-    list_feat = list(df_feat[COL_FEATURE])
+    if ut_c.COL_FEATURE not in df_feat:
+        raise ValueError(f"'{ut_c.COL_FEATURE}' must be column in 'df_feat'")
+    list_feat = list(df_feat[ut_c.COL_FEATURE])
     for feat in list_feat:
         if feat.count("-") != 2:
             raise ValueError(f"'{feat}' is no valid feature")
     # Check if df_feat matches df_cat
     if df_cat is not None:
         scales = set([x.split("-")[2] for x in list_feat])
-        list_scales = list(df_cat[COL_SCALE_ID])
+        list_scales = list(df_cat[ut_c.COL_SCALE_ID])
         missing_scales = [x for x in scales if x not in list_scales]
         if len(missing_scales) > 0:
             raise ValueError(f"Following scales occur in 'df_feat' but not in 'df_cat': {missing_scales}")
@@ -550,21 +541,3 @@ def get_vf_scale(dict_scale=None, accept_gaps=False):
     return vf_scale
 
 
-# Progress bar
-def print_start_progress():
-    """Print start progress"""
-    progress_bar = " " * 25
-    ut.print_red(f"\r   |{progress_bar}| 0.00%", end="")
-
-
-def print_progress(i=0, n=0):
-    """Print progress"""
-    progress = min(np.round(i/n * 100, 2), 100)
-    progress_bar = "#" * int(progress/4) + " " * (25-int(progress/4))
-    ut.print_red(f"\r   |{progress_bar}| {progress:.2f}%", end="")
-
-
-def print_finished_progress():
-    """Print finished progress bar"""
-    progress_bar = "#" * 25
-    ut.print_red(f"\r   |{progress_bar}| 100.00%")

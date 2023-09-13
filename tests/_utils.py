@@ -19,7 +19,7 @@ SEP = "\\" if platform.system() == "Windows" else "/"
 FOLDER_PROJECT = str(Path(__file__).parent.parent).replace('/', SEP) + SEP
 FOLDER_PROJECT += "tests" + SEP
 FOLDER_RESULTS = _folder_path(FOLDER_PROJECT, 'results')
-FOLDER_DATA = _folder_path(FOLDER_PROJECT, 'data')
+FOLDER_DATA = _folder_path(FOLDER_PROJECT, '_data')
 
 # General Columns and strings
 COL_SCALE_ID = "scale_id"

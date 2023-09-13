@@ -5,10 +5,27 @@ Default plotting functions
 import seaborn as sns
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import aaanalysis._utils as ut
+import aaanalysis.utils as ut
+
+
+
+LIST_AA_COLOR_PALETTES = ["FEAT", "SHAP", "GGPLOT"]
+LIST_AA_COLOR_DICTS = ["DICT_SCALE_CAT", "DICT_COLOR"]
+LIST_AA_COLORS = LIST_AA_COLOR_PALETTES + LIST_AA_COLOR_DICTS
+
+LIST_FONTS = ['Arial', 'Avant Garde', 'Bitstream Vera Sans', 'Computer Modern Sans Serif', 'DejaVu Sans',
+              'Geneva', 'Helvetica', 'Lucid', 'Lucida Grande', 'Verdana']
 
 
 # Helper functions
+def check_font_style(font="Arial"):
+    """"""
+    if font not in LIST_FONTS:
+        error_message = f"'font' ({font}) not in recommended fonts: {LIST_FONTS}. Set font manually by:" \
+                        f"\n\tplt.rcParams['font.sans-serif'] = '{font}'"
+        raise ValueError(error_message)
+
+
 def check_fig_format(fig_format="pdf"):
     """"""
     list_fig_formats = ['eps', 'jpg', 'jpeg', 'pdf', 'pgf', 'png', 'ps',
@@ -40,8 +57,137 @@ def check_cats(list_cat=None, dict_color=None, labels=None):
     return list_cat
 
 
-# Default plotting functions
-def plot_settings(fig_format="pdf", verbose=False, grid=False, grid_axis="y", font_scale=0.7,
+# Get color maps
+def _get_shap_cmap(n_colors=100, facecolor_dark=True):
+    """Generate a diverging color map for feature values."""
+    n = 20
+    cmap_low = sns.light_palette(ut.COLOR_SHAP_NEG, input="hex", reverse=True, n_colors=int(n_colors/2)+n)
+    cmap_high = sns.light_palette(ut.COLOR_SHAP_POS, input="hex", n_colors=int(n_colors/2)+n)
+    c_middle = [(0, 0, 0)] if facecolor_dark else [cmap_low[-1]]
+    cmap = cmap_low[0:-n] + c_middle + cmap_high[n:]
+    return cmap
+
+
+def _get_feat_cmap(n_colors=100, facecolor_dark=False):
+    """Generate a diverging color map for feature values."""
+    n = 5
+    cmap = sns.color_palette("RdBu_r", n_colors=n_colors + n * 2)
+    cmap_low, cmap_high = cmap[0:int((n_colors + n * 2) / 2)], cmap[int((n_colors + n * 2) / 2):]
+    c_middle = [(0, 0, 0)] if facecolor_dark else [cmap_low[-1]]
+    cmap = cmap_low[0:-n] + c_middle + cmap_high[n:]
+    return cmap
+
+
+def _get_ggplot_cmap(n_colors=100):
+    """Generate a circular GGplot color palette."""
+    cmap = sns.color_palette("husl", n_colors)
+    return cmap
+
+
+def _get_default_colors(name=None, n_colors=100, facecolor_dark=True):
+    """Retrieve default color maps based on palette name."""
+    args = dict(n_colors=n_colors, facecolor_dark=facecolor_dark)
+    if name == "SHAP":
+        return _get_shap_cmap(**args)
+    elif name == "FEAT":
+        return _get_feat_cmap(**args)
+    elif name == "GGPLOT":
+        return _get_ggplot_cmap(n_colors=n_colors)
+
+
+def _get_cmap_with_gap(n_colors=100, color_pos=None, color_neg=None, color_center=None, pct_gap=10, pct_center=None,
+                       input="hex"):
+    """Generate a custom color map with a gap."""
+    n_gap = int(n_colors*pct_gap/2)
+    cmap_pos = sns.light_palette(color_pos, input=input, n_colors=int(n_colors/2)+n_gap)
+    cmap_neg = sns.light_palette(color_neg, input=input, reverse=True, n_colors=int(n_colors/2)+n_gap)
+    color_center = [cmap_neg[-1]] if color_center is None else color_center
+    color_center = [color_center] if type(color_center) is str else color_center
+    if pct_center is None:
+        cmap = cmap_neg[0:-n_gap] + color_center + cmap_pos[n_gap:]
+    else:
+        n_center = int(n_colors * pct_center)
+        n_gap += int(n_center/2)
+        cmap = cmap_neg[0:-n_gap] + color_center * n_center + cmap_pos[n_gap:]
+    return cmap
+
+
+# Default plotting function
+def plot_get_cmap(name=None, n_colors=100, facecolor_dark=False,
+                  color_pos=None, color_neg=None, color_center=None,
+                  input="hex", pct_gap=10, pct_center=None):
+    """
+    Retrieve color maps or color dictionaries specified for AAanalysis.
+
+    Parameters
+    ----------
+    name : str, optional
+        The name of the color palette to use in AAanalysis. Options include:
+         - 'SHAP', 'FEAT', 'GGPLOT': Return color maps for SHAP plots, CPP feature maps/heatmaps,
+            and datagrouping as in GGplot, respectively.
+         - 'DICT_COLOR', 'DICT_SCALE_CAT': Return default color dictionaries for plots (e.g., bars in CPPPlot.profile)
+            and scale categories (e.g., CPPPlot.heatmap), respectively.
+    n_colors : int, default=100
+        Number of colors in the color map.
+    facecolor_dark : bool, default=False
+        Whether to use a dark face color for 'SHAP' and 'FEAT'.
+    color_pos : str, optional
+        Hex code for the positive color.
+    color_neg : str, optional
+        Hex code for the negative color.
+    color_center : str or list, optional
+        Hex code or list for the center color.
+    input : str, {'rgb', 'hls', 'husl', 'xkcd'}
+        Color space to interpret the input color. The first three options
+        apply to tuple inputs and the latter applies to string inputs.
+    pct_gap : int, default=10
+        Percentage size of the gap between color ranges.
+    pct_center : float, optional
+        Percentage size of the center color in the map.
+
+    Returns
+    -------
+    cmap : list or dict
+        If 'name' parameter is 'SHAP', 'FEAT', or 'GGPLOT', a list of colors specified for AAanalysis will be returned.
+        If 'name' parameter is None, a list of colors based on provided colors
+
+    See Also
+    --------
+    sns.color_palette : Function to generate a color palette in seaborn.
+    sns.light_palette : Function to generate a lighter color palette in seaborn.
+    """
+    # TODO check color dict name
+    if name in LIST_AA_COLOR_PALETTES:
+        cmap = _get_default_colors(name=name, n_colors=n_colors, facecolor_dark=facecolor_dark)
+        return cmap
+    cmap = _get_cmap_with_gap(n_colors=n_colors, color_pos=color_pos, color_neg=color_neg,
+                              color_center=color_center, pct_gap=pct_gap, pct_center=pct_center,
+                              input=input)
+    return cmap
+
+
+def plot_get_cdict(name=None):
+    """
+    Retrieve color dictionaries specified for AAanalysis.
+
+    Parameters
+    ----------
+    name : str, {'DICT_COLOR', 'DICT_SCALE_CAT'}
+        The name of default color dictionaries for plots (e.g., bars in CPPPlot.profile)
+        and scale categories (e.g., CPPPlot.heatmap), respectively.
+
+    Returns
+    -------
+    cmap :  dict
+       Specific AAanalysis color dictionary.
+    """
+    # TODO check color dict name
+    color_dict = ut.DICT_COLOR if name == "DICT_COLORS" else ut.DICT_COLOR_CAT
+    return color_dict
+
+
+def plot_settings(fig_format="pdf", verbose=False, grid=False, grid_axis="y",
+                  font_scale=0.7, font="Arial",
                   change_size=True, weight_bold=True, adjust_elements=True,
                   short_ticks=False, no_ticks=False,
                   no_ticks_y=False, short_ticks_y=False, no_ticks_x=False, short_ticks_x=False):
@@ -60,6 +206,8 @@ def plot_settings(fig_format="pdf", verbose=False, grid=False, grid_axis="y", fo
         Choose the axis ('y', 'x', 'both') to apply the grid to.
     font_scale : float, default=0.7
         Sets the scale for font sizes in the plot.
+    font : str, default='Arial'
+        Name of sans-serif font (e.g., 'Arial', 'Verdana', 'Helvetica', 'DejaVu Sans')
     change_size : bool, default=True
         If True, adjusts the size of plot elements.
     weight_bold : bool, default=True
@@ -90,6 +238,7 @@ def plot_settings(fig_format="pdf", verbose=False, grid=False, grid_axis="y", fo
     """
     # Check input
     check_fig_format(fig_format=fig_format)
+    check_font_style(font=font)
     check_grid_axis(grid_axis=grid_axis)
     args_bool = {"verbose": verbose, "grid": grid, "change_size": change_size, "weight_bold": weight_bold,
                  "adjust_elements": adjust_elements,
@@ -107,13 +256,12 @@ def plot_settings(fig_format="pdf", verbose=False, grid=False, grid_axis="y", fo
         print(plt.rcParams.keys)    # Print all plot settings that can be modified in general
     if not change_size:
         plt.rcParams["font.family"] = "sans-serif"
-        plt.rcParams["font.sans-serif"] = "Arial"
-        font = {'family': 'Arial'}
-        mpl.rc('font', **font)
+        plt.rcParams["font.sans-serif"] = font
+        mpl.rc('font', **{'family': font})
         return
     sns.set_context("talk", font_scale=font_scale)  # Font settings https://matplotlib.org/3.1.1/tutorials/text/text_props.html
     plt.rcParams["font.family"] = "sans-serif"
-    plt.rcParams["font.sans-serif"] = "Arial"
+    plt.rcParams["font.sans-serif"] = font
     if weight_bold:
         plt.rcParams["axes.labelweight"] = "bold"
         plt.rcParams["axes.titleweight"] = "bold"
@@ -152,7 +300,7 @@ def plot_settings(fig_format="pdf", verbose=False, grid=False, grid_axis="y", fo
         mpl.rcParams['pdf.fonttype'] = 42
     elif "svg" in fig_format:
         mpl.rcParams['svg.fonttype'] = 'none'
-    font = {'family': 'Arial', "weight": "bold"} if weight_bold else {"family": "Arial"}
+    font = {'family': font, "weight": "bold"} if weight_bold else {"family": font}
     mpl.rc('font', **font)
     if adjust_elements:
         # Error bars

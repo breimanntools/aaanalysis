@@ -58,7 +58,7 @@ extensions = [
     # 'sphinx.ext.napoleon',  # Support for Numpy-style and Google-style docstrings
     # 'sphinx_autodoc_typehints',  # Display Python type hints in documentation (needs to be after napoleon)
     # 'sphinx_book_theme',  # Theme optimized for book-style content presentation
-    # 'pydata_sphinx_theme',  # Theme with a focus on long-form content and optimized for data-focused libraries
+    # 'pydata_sphinx_theme',  # Theme with a focus on long-form content and optimized for _data-focused libraries
 ]
 
 # -- Autodoc & Numpydoc settings ----------------------------------------------

@@ -116,7 +116,7 @@
 <p class="caption" role="heading"><span class="caption-text">REFERENCES</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../_resources/tables.html">Tables for the Project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_resources/tables.html">Tables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../index/references.html">References</a></li>
 </ul>
 
@@ -193,8 +193,7 @@
 <span class="kn">from</span> <span class="nn">sklearn.metrics.pairwise</span> <span class="kn">import</span> <span class="n">pairwise_distances</span>
 <span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
 
-<span class="kn">import</span> <span class="nn">aaanalysis.aaclust._utils</span> <span class="k">as</span> <span class="nn">_ut</span>
-<span class="kn">import</span> <span class="nn">aaanalysis._utils</span> <span class="k">as</span> <span class="nn">ut</span>
+<span class="kn">import</span> <span class="nn">aaanalysis.utils</span> <span class="k">as</span> <span class="nn">ut</span>
 
 
 <span class="c1"># I Helper Functions</span>
@@ -386,7 +385,7 @@
 <span class="k">def</span> <span class="nf">_get_quality_measure</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label_cluster</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get quality measure single cluster given by feature matrix X, labels, and label of cluster&quot;&quot;&quot;</span>
     <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span> <span class="o">==</span> <span class="n">label_cluster</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="n">_ut</span><span class="o">.</span><span class="n">METRIC_CORRELATION</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="n">ut</span><span class="o">.</span><span class="n">METRIC_CORRELATION</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">get_min_cor</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">on_center</span><span class="o">=</span><span class="n">on_center</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">get_max_dist</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">on_center</span><span class="o">=</span><span class="n">on_center</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
@@ -395,7 +394,7 @@
 <span class="k">def</span> <span class="nf">_get_best_cluster</span><span class="p">(</span><span class="n">dict_clust_qm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get cluster with best quality measure: either highest minimum Pearson correlation</span>
 <span class="sd">    or lowest distance measure&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="n">_ut</span><span class="o">.</span><span class="n">METRIC_CORRELATION</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="n">ut</span><span class="o">.</span><span class="n">METRIC_CORRELATION</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">dict_clust_qm</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">dict_clust_qm</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">dict_clust_qm</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">dict_clust_qm</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
@@ -534,7 +533,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
         <span class="k">if</span> <span class="n">model_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">model_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-        <span class="n">model_kwargs</span> <span class="o">=</span> <span class="n">_ut</span><span class="o">.</span><span class="n">check_model</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="n">model_kwargs</span><span class="p">)</span>
+        <span class="n">model_kwargs</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_model</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="n">model_kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span> <span class="o">=</span> <span class="n">model_kwargs</span>
         <span class="c1"># AAclust clustering settings</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span> <span class="o">=</span> <span class="n">verbose</span>
@@ -550,9 +549,9 @@
     <span class="c1"># Clustering method</span>
 <div class="viewcode-block" id="AAclust.fit"><a class="viewcode-back" href="../../../generated/aaanalysis.AAclust.html#aaanalysis.AAclust.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">min_th</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="n">merge_metric</span><span class="o">=</span><span class="s2">&quot;euclidean&quot;</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Fit the AAclust model on the data, optimizing cluster formation using Pearson correlation.</span>
+<span class="sd">        Fit the AAclust model on the _data, optimizing cluster formation using Pearson correlation.</span>
 
-<span class="sd">        AAclust determines the optimal number of clusters, k, without pre-specification. It partitions data (X) into</span>
+<span class="sd">        AAclust determines the optimal number of clusters, k, without pre-specification. It partitions data(X) into</span>
 <span class="sd">        clusters by maximizing the within-cluster Pearson correlation beyond the &#39;min_th&#39; threshold. The quality of</span>
 <span class="sd">        clustering is either based on the minimum Pearson correlation of all members (&#39;min_cor all&#39;) or between</span>
 <span class="sd">        the cluster center and its members (&#39;min_cor center&#39;), governed by `on_center`.</span>
@@ -594,8 +593,8 @@
 <span class="sd">        For further information, refer to the AAclust paper : TODO: add link to AAclust paper</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Check input</span>
-        <span class="n">_ut</span><span class="o">.</span><span class="n">check_min_th</span><span class="p">(</span><span class="n">min_th</span><span class="o">=</span><span class="n">min_th</span><span class="p">)</span>
-        <span class="n">merge_metric</span> <span class="o">=</span> <span class="n">_ut</span><span class="o">.</span><span class="n">check_merge_metric</span><span class="p">(</span><span class="n">merge_metric</span><span class="o">=</span><span class="n">merge_metric</span><span class="p">)</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_min_th</span><span class="p">(</span><span class="n">min_th</span><span class="o">=</span><span class="n">min_th</span><span class="p">)</span>
+        <span class="n">merge_metric</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_merge_metric</span><span class="p">(</span><span class="n">merge_metric</span><span class="o">=</span><span class="n">merge_metric</span><span class="p">)</span>
         <span class="n">X</span><span class="p">,</span> <span class="n">names</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_feat_matrix</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">)</span>
         <span class="n">args</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="p">,</span> <span class="n">min_th</span><span class="o">=</span><span class="n">min_th</span><span class="p">,</span> <span class="n">on_center</span><span class="o">=</span><span class="n">on_center</span><span class="p">)</span>
         <span class="c1"># Clustering using given clustering models</span>
@@ -727,7 +726,7 @@
 <span class="sd">        medoid_labels : array-like</span>
 <span class="sd">            The labels corresponding to each medoid.</span>
 <span class="sd">        medoid_ind : array-like</span>
-<span class="sd">            Indexes of medoids within the original data.</span>
+<span class="sd">            Indexes of medoids within the original _data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">medoids</span><span class="p">,</span> <span class="n">medoid_labels</span><span class="p">,</span> <span class="n">medoid_ind</span> <span class="o">=</span> <span class="n">get_cluster_medoids</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">medoids</span><span class="p">,</span> <span class="n">medoid_labels</span><span class="p">,</span> <span class="n">medoid_ind</span></div>
@@ -745,9 +744,9 @@
 <span class="sd">        X_ref : array-like</span>
 <span class="sd">            Reference feature matrix.</span>
 <span class="sd">        labels_test : list or array-like, optional</span>
-<span class="sd">            Cluster labels for the test data.</span>
+<span class="sd">            Cluster labels for the test _data.</span>
 <span class="sd">        labels_ref : list or array-like, optional</span>
-<span class="sd">            Cluster labels for the reference data.</span>
+<span class="sd">            Cluster labels for the reference _data.</span>
 <span class="sd">        n : int, default = 3</span>
 <span class="sd">            Number of top centers to consider based on correlation strength.</span>
 <span class="sd">        positive : bool, default = True</span>
@@ -771,7 +770,7 @@
             <span class="n">names_ref</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">labels_ref</span><span class="p">))</span> <span class="k">if</span> <span class="s2">&quot;unclassified&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
         <span class="n">masks_ref</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">True</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">label</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">labels_ref</span><span class="p">]</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">names_ref</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">on_center</span><span class="p">:</span>
-            <span class="c1"># Get centers for all clusters in reference data</span>
+            <span class="c1"># Get centers for all clusters in reference _data</span>
             <span class="n">centers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">cluster_center</span><span class="p">(</span><span class="n">X_ref</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span> <span class="k">for</span> <span class="n">mask</span> <span class="ow">in</span> <span class="n">masks_ref</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
             <span class="c1"># Compute correlation of test data with centers</span>
             <span class="n">Xtest_centers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">X_test</span><span class="p">,</span> <span class="n">centers</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -780,7 +779,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">masks_test</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">True</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">j</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels_test</span><span class="p">))]</span>
                           <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">labels_test</span><span class="p">)]</span>
-            <span class="c1"># Compute minimum correlation of test data with each group of reference data</span>
+            <span class="c1"># Compute minimum correlation of test data with each group of reference _data</span>
             <span class="n">X_corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">_min_cor_all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">X_test</span><span class="p">[</span><span class="n">mask_test</span><span class="p">],</span> <span class="n">X_ref</span><span class="p">[</span><span class="n">mask_ref</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
                                 <span class="k">for</span> <span class="n">mask_ref</span> <span class="ow">in</span> <span class="n">masks_ref</span> <span class="p">]</span> <span class="k">for</span> <span class="n">mask_test</span> <span class="ow">in</span> <span class="n">masks_test</span><span class="p">])</span>
         <span class="c1"># Get index for n centers with highest/lowest correlation for each scale</span>
@@ -795,7 +794,11 @@
             <span class="n">top_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">names_ref</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ind</span><span class="p">]</span>
             <span class="n">str_corr</span> <span class="o">=</span> <span class="s2">&quot;;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">corr</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">top_names</span><span class="p">,</span> <span class="n">top_corr</span><span class="p">)])</span>
             <span class="n">list_top_center_name_corr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">str_corr</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">list_top_center_name_corr</span></div></div>
+        <span class="k">return</span> <span class="n">list_top_center_name_corr</span></div>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span></div>
+        <span class="c1"># TODO add evaluation function</span>
 </pre></div>
 
            </div>

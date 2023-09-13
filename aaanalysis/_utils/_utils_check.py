@@ -1,41 +1,11 @@
-#! /usr/bin/python3
 """
-Config with folder structure
+Utility check functions
 """
-import os
-import platform
 from sklearn.utils import check_array, check_consistent_length
+import pandas as pd
 
 
-# Helper Function
-def _folder_path(super_folder, folder_name):
-    """Modification of separator (OS depending)"""
-    path = os.path.join(super_folder, folder_name + SEP)
-    return path
-
-
-# Folder
-SEP = "\\" if platform.system() == "Windows" else "/"
-FOLDER_PROJECT = os.path.dirname(os.path.abspath(__file__))
-FOLDER_DATA = _folder_path(FOLDER_PROJECT, 'data')
-URL_DATA = "https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data/"
-
-# Default data for protein analysis
-STR_SCALES = "scales"   # Min-max normalized scales (from AAontology)
-STR_SCALES_RAW = "scales_raw"   # Ras scales (from AAontology)
-STR_SCALES_PC = "scales_pc"     # AAclust pc-based scales (pc: principal component)
-STR_SCALE_CAT = "scale_classification"  # AAontology
-STR_TOP60 = "top60"    # AAclustTop60
-STR_TOP60_EVAL = "top60_eval"  # AAclustTop60 evaluation
-
-# Column names
-COL_SCALE_ID = "scale_id"
-COL_SEQ = "sequence"
-COL_CAT = "category"
-COL_SUBCAT = "subcategory"
-
-
-# General check functions
+# Type checking functions
 def check_non_negative_number(name=None, val=None, min_val=0, max_val=None, accept_none=False,
                               just_int=True):
     """Check if value of given name variable is non-negative integer"""
@@ -108,8 +78,7 @@ def check_tuple(name=None, val=None, n=None):
         raise ValueError(error)
 
 
-# Data check functions
-# TODO update
+# Array checking functions
 def check_feat_matrix(X=None, names=None, labels=None):
     """Check if X and y match (y can be labels or names). Otherwise, transpose X or give error."""
     # TODO type check
@@ -141,7 +110,40 @@ def check_feat_matrix(X=None, y=None):
 """
 
 
-# Plotting & print functions
-def print_red(input_str, **args):
-    """Prints the given string in red text."""
-    print(f"\033[91m{input_str}\033[0m", **args)
+# df checking functions
+def check_col_in_df(df=None, name_df=None, col=None, col_type=None, accept_nan=False, error_if_exists=False):
+    """
+    Check if the column exists in the DataFrame, if the values have the correct type, and if NaNs are allowed.
+    """
+    # Check if the column already exists and raise error if error_if_exists is True
+    if error_if_exists and (col in df.columns):
+        raise ValueError(f"Column '{col}' already exists in '{name_df}'")
+
+    # Check if the column exists in the DataFrame
+    if col not in df.columns:
+        raise ValueError(f"'{col}' must be a column in '{name_df}': {list(df.columns)}")
+
+    # Make col_type a list if it is not already
+    if col_type is not None and not isinstance(col_type, list):
+        col_type = [col_type]
+
+    # Check if the types match
+    if col_type is not None:
+        wrong_types = [x for x in df[col] if not any([isinstance(x, t) for t in col_type])]
+
+        # Remove NaNs from the list of wrong types if they are accepted
+        if accept_nan:
+            wrong_types = [x for x in wrong_types if not pd.isna(x)]
+
+        if len(wrong_types) > 0:
+            raise ValueError(f"Values in '{col}' should be of type(s) {col_type}, "
+                             f"but the following values do not match: {wrong_types}")
+
+    # Check if NaNs are present when they are not accepted
+    if not accept_nan:
+        if df[col].isna().sum() > 0:
+            raise ValueError(f"NaN values are not allowed in '{col}'.")
+
+
+
+

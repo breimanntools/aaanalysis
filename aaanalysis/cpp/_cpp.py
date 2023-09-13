@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-import aaanalysis.cpp._utils as ut
+import aaanalysis.utils as ut
 
 
 # I Helper Functions
@@ -358,22 +358,22 @@ def draw_shap_legend(x=None, y=10, offset_text=1, fontsize=13):
     arrow_dif = y * 0.02
     plt.text(x - offset_text, y, 'higher',
              fontweight='bold',
-             fontsize=fontsize, color=ut.COLOR_SHAP_HIGHER,
+             fontsize=fontsize, color=ut.COLOR_SHAP_POS,
              horizontalalignment='right')
 
-    plt.text(x + offset_text*1.1, y, 'lower',
+    plt.text(x + offset_text * 1.1, y, 'lower',
              fontweight='bold',
-             fontsize=fontsize, color=ut.COLOR_SHAP_LOWER,
+             fontsize=fontsize, color=ut.COLOR_SHAP_NEG,
              horizontalalignment='left')
 
-    plt.text(x, y-arrow_dif, r'$\leftarrow$',
+    plt.text(x, y - arrow_dif, r'$\leftarrow$',
              fontweight='bold',
-             fontsize=fontsize+1, color=ut.COLOR_SHAP_LOWER,
+             fontsize=fontsize+1, color=ut.COLOR_SHAP_NEG,
              horizontalalignment='center')
 
-    plt.text(x, y+arrow_dif, r'$\rightarrow$',
+    plt.text(x, y + arrow_dif, r'$\rightarrow$',
              fontweight='bold',
-             fontsize=fontsize+1, color=ut.COLOR_SHAP_HIGHER,
+             fontsize=fontsize+1, color=ut.COLOR_SHAP_POS,
              horizontalalignment='center')
 
 
@@ -395,8 +395,6 @@ class CPPPlots:
     # Constants
     XLIM_ADD = 3
     YLIM_ADD = 1
-    HIGHER_COLOR = '#FF0D57'    # (255, 13, 87)
-    LOWER_COLOR = '#1E88E5'     # (30, 136, 229)
 
     # Helper methods
     def _get_starts(self, x_shift=0):
@@ -632,8 +630,8 @@ class CPPPlots:
             df_pos = df_pos.sum(axis=1)
             df_neg = df_bar[df_bar < 0]
             df_neg = df_neg.sum(axis=1)
-            ax = df_pos.plot(ax=ax, color=ut.COLOR_SHAP_HIGHER, **plot_args)
-            ax = df_neg.plot(ax=ax, color=ut.COLOR_SHAP_LOWER, **plot_args)
+            ax = df_pos.plot(ax=ax, color=ut.COLOR_SHAP_POS, **plot_args)
+            ax = df_neg.plot(ax=ax, color=ut.COLOR_SHAP_NEG, **plot_args)
             ylim = ut.check_ylim(df=df, val_col="y", ylim=ylim, retrieve_plot=True)
             plt.ylim(ylim)
             if add_legend:
@@ -687,8 +685,8 @@ class CPPPlots:
         """Show summary static values of feature categories/sub_categories per position as heat map"""
         facecolor = "black" if facecolor_dark else "white"
         # Default arguments for heatmap
-        cmap = get_cmap_heatmap(df_pos=df_pos, cmap=cmap, n_colors=cmap_n_colors, higher_color=ut.COLOR_SHAP_HIGHER,
-                                lower_color=ut.COLOR_SHAP_LOWER, facecolor_dark=facecolor_dark)
+        cmap = get_cmap_heatmap(df_pos=df_pos, cmap=cmap, n_colors=cmap_n_colors, higher_color=ut.COLOR_SHAP_POS,
+                                lower_color=ut.COLOR_SHAP_NEG, facecolor_dark=facecolor_dark)
         center = get_center_heatmap(df_pos=df_pos)
         dict_cbar, cbar_kws_ = get_cbar_args_heatmap(cbar_kws=cbar_kws, df_pos=df_pos)
         linewidths = 0.01 if grid_on else 0

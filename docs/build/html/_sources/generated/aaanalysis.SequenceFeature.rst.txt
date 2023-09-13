@@ -14,11 +14,13 @@
    .. autosummary::
    
       ~SequenceFeature.__init__
+      ~SequenceFeature.add_dif
+      ~SequenceFeature.add_feat_value
+      ~SequenceFeature.add_position
       ~SequenceFeature.feat_matrix
       ~SequenceFeature.feat_names
-      ~SequenceFeature.feat_value
-      ~SequenceFeature.features
       ~SequenceFeature.get_df_parts
+      ~SequenceFeature.get_features
       ~SequenceFeature.get_split_kws
    
    

@@ -93,7 +93,7 @@ class TestAddPositions:
 
     # Positive unit tests
     def test_add_positions(self, df_feat, cpp):
-        df_feat = cpp.add_positions(df_feat=df_feat, tmd_len=30)
+        df_feat = cpp._add_positions(df_feat=df_feat, tmd_len=30)
         assert isinstance(df_feat, pd.DataFrame)
         assert "positions" in list(df_feat)
 
@@ -106,35 +106,35 @@ class TestAddPositions:
     @settings(max_examples=10, deadline=None)
     def test_add_position_tmd_len(self, df_feat_module_scope, df_parts, tmd_len, jmd_n_len, jmd_c_len, ext_len, start):
         cpp = aa.CPP(df_parts=df_parts)
-        df_feat = cpp.add_positions(df_feat=df_feat_module_scope, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
-                                    ext_len=ext_len, start=start)
+        df_feat = cpp._add_positions(df_feat=df_feat_module_scope, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
+                                     ext_len=ext_len, start=start)
         assert isinstance(df_feat, pd.DataFrame)
 
     # Negative unit tests
     def test_wrong_tmd_len(self, df_feat, cpp, wrong_input):
         with pytest.raises(ValueError):
-            cpp.add_positions(df_feat=df_feat, tmd_len=wrong_input)
+            cpp._add_positions(df_feat=df_feat, tmd_len=wrong_input)
 
     def test_wrong_jmd_len(self, df_feat, cpp, wrong_input):
         with pytest.raises(ValueError):
-            cpp.add_positions(df_feat=df_feat, jmd_n_len=wrong_input)
+            cpp._add_positions(df_feat=df_feat, jmd_n_len=wrong_input)
         with pytest.raises(ValueError):
-            cpp.add_positions(df_feat=df_feat, jmd_c_len=wrong_input)
+            cpp._add_positions(df_feat=df_feat, jmd_c_len=wrong_input)
 
     def test_wrong_ext_len(self, df_feat, cpp, wrong_input):
         with pytest.raises(ValueError):
-            cpp.add_positions(df_feat=df_feat, ext_len=wrong_input)
+            cpp._add_positions(df_feat=df_feat, ext_len=wrong_input)
         # ext_len >= jmd_n_len or jmd_c_len
         with pytest.raises(ValueError):
-            cpp.add_positions(df_feat=df_feat, ext_len=5, jmd_n_len=3)
+            cpp._add_positions(df_feat=df_feat, ext_len=5, jmd_n_len=3)
         with pytest.raises(ValueError):
-            cpp.add_positions(df_feat=df_feat, ext_len=5, jmd_c_len=3)
+            cpp._add_positions(df_feat=df_feat, ext_len=5, jmd_c_len=3)
 
     def test_wrong_start(self, df_feat, cpp, wrong_input):
         with pytest.raises(ValueError):
-            cpp.add_positions(df_feat=df_feat, start=wrong_input)
+            cpp._add_positions(df_feat=df_feat, start=wrong_input)
         with pytest.raises(ValueError):
-            cpp.add_positions(df_feat=df_feat, start=-4)
+            cpp._add_positions(df_feat=df_feat, start=-4)
 
 
 class TestAddScaleCategory:
@@ -611,14 +611,14 @@ def test_add_pipeline(df_feat):
     df = cpp.add_scale_info(df_feat=df)
     assert df_feat[cols].equals(df[cols])
     df = cpp.add_stat(df_feat=df, labels=labels)
-    df = cpp.add_positions(df_feat=df)
+    df = cpp._add_positions(df_feat=df)
     assert df_feat[cols].equals(df[cols])
     df = cpp.add_scale_info(df_feat=df)
     assert df_feat[cols].equals(df[cols])
-    df = cpp.add_positions(df_feat=df)
+    df = cpp._add_positions(df_feat=df)
     df = cpp.add_stat(df_feat=df, labels=labels)
     assert df_feat[cols].equals(df[cols])
-    df = cpp.add_positions(df_feat=df)
+    df = cpp._add_positions(df_feat=df)
     assert df_feat[cols].equals(df[cols])
 
 

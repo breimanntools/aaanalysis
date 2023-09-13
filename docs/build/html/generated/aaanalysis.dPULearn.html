@@ -137,7 +137,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../api.html#plot-utilities">Plot Utilities</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../_resources/tables.html">Tables for the Project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../_resources/tables.html">Tables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../index/references.html">References</a></li>
 </ul>
 
@@ -212,7 +212,7 @@
 <h1>aaanalysis.dPULearn<a class="headerlink" href="#aaanalysis-dpulearn" title="Permalink to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="aaanalysis.dPULearn">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">dPULearn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/dpulearn/dpulearn.html#dPULearn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/dpulearn/dpulearn.py#L185-L304"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">dPULearn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/dpulearn/dpulearn.html#dPULearn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/dpulearn/dpulearn.py#L185-L307"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Deterministic Positive-Unlabeled (dPULearn) model.</p>
 <p>dPULearn offers a deterministic approach for Positive-Unlabeled (PU) learning. The model primarily employs
 Principal Component Analysis (PCA) to reduce the dimensionality of the feature space. Based on the most
@@ -252,7 +252,7 @@ If a metric is specified, distance-based identification is performed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Attributes</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>labels_</strong><span class="classifier">array-like, shape (n_samples,)</span></dt><dd><p>Labels of each data point.</p>
+<dt><strong>labels_</strong><span class="classifier">array-like, shape (n_samples,)</span></dt><dd><p>Labels of each datapoint.</p>
 </dd>
 </dl>
 </dd>
@@ -272,7 +272,10 @@ If a metric is specified, distance-based identification is performed.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.dPULearn.__init__" title="aaanalysis.dPULearn.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([verbose, n_components, ...])</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.dPULearn.fit" title="aaanalysis.dPULearn.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(X[, labels, n_neg, label_pos, name_neg, ...])</p></td>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.dPULearn.fit" title="aaanalysis.dPULearn.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(X[, labels, n_neg, label_pos, name_neg, ...])</p></td>
 <td><p>Fit the dPULearn model to identify reliable negative samples from the provided feature matrix and labels.</p></td>
 </tr>
 </tbody>
@@ -311,7 +314,7 @@ from the provided feature matrix and labels.</p>
 <p class="rubric">Notes</p>
 <p>Distance-based identification is used if <cite>metric</cite> is specified during class initialization.</p>
 <p class="rubric">Examples</p>
-<p>Create small example data for dPUlearn containg positive (‘pos’, 1) and unlabeled (‘unl’, 2) data</p>
+<p>Create small example datafor dPUlearn containg positive (‘pos’, 1) and unlabeled (‘unl’, 2) _data</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>

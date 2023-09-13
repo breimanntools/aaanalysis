@@ -7,8 +7,7 @@ from collections import OrderedDict
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster import KMeans
 
-import aaanalysis.aaclust._utils as _ut
-import aaanalysis._utils as ut
+import aaanalysis.utils as ut
 
 
 # I Helper Functions
@@ -200,7 +199,7 @@ def _get_min_cor_cluster(X, labels=None, label_cluster=None, on_center=True):
 def _get_quality_measure(X, metric=None, labels=None, label_cluster=None, on_center=True):
     """Get quality measure single cluster given by feature matrix X, labels, and label of cluster"""
     mask = [l == label_cluster for l in labels]
-    if metric == _ut.METRIC_CORRELATION:
+    if metric == ut.METRIC_CORRELATION:
         return get_min_cor(X[mask], on_center=on_center)
     else:
         return get_max_dist(X[mask], on_center=on_center, metric=metric)
@@ -209,7 +208,7 @@ def _get_quality_measure(X, metric=None, labels=None, label_cluster=None, on_cen
 def _get_best_cluster(dict_clust_qm=None, metric=None):
     """Get cluster with best quality measure: either highest minimum Pearson correlation
     or lowest distance measure"""
-    if metric == _ut.METRIC_CORRELATION:
+    if metric == ut.METRIC_CORRELATION:
         return max(dict_clust_qm, key=dict_clust_qm.get)
     else:
         return min(dict_clust_qm, key=dict_clust_qm.get)
@@ -348,7 +347,7 @@ class AAclust:
         self.model = model
         if model_kwargs is None:
             model_kwargs = dict()
-        model_kwargs = _ut.check_model(model=self.model, model_kwargs=model_kwargs)
+        model_kwargs = ut.check_model(model=self.model, model_kwargs=model_kwargs)
         self._model_kwargs = model_kwargs
         # AAclust clustering settings
         self._verbose = verbose
@@ -364,9 +363,9 @@ class AAclust:
     # Clustering method
     def fit(self, X, names=None, on_center=True, min_th=0,  merge_metric="euclidean", n_clusters=None):
         """
-        Fit the AAclust model on the data, optimizing cluster formation using Pearson correlation.
+        Fit the AAclust model on the _data, optimizing cluster formation using Pearson correlation.
 
-        AAclust determines the optimal number of clusters, k, without pre-specification. It partitions data (X) into
+        AAclust determines the optimal number of clusters, k, without pre-specification. It partitions data(X) into
         clusters by maximizing the within-cluster Pearson correlation beyond the 'min_th' threshold. The quality of
         clustering is either based on the minimum Pearson correlation of all members ('min_cor all') or between
         the cluster center and its members ('min_cor center'), governed by `on_center`.
@@ -408,8 +407,8 @@ class AAclust:
         For further information, refer to the AAclust paper : TODO: add link to AAclust paper
         """
         # Check input
-        _ut.check_min_th(min_th=min_th)
-        merge_metric = _ut.check_merge_metric(merge_metric=merge_metric)
+        ut.check_min_th(min_th=min_th)
+        merge_metric = ut.check_merge_metric(merge_metric=merge_metric)
         X, names = ut.check_feat_matrix(X=X, names=names)
         args = dict(model=self.model, model_kwargs=self._model_kwargs, min_th=min_th, on_center=on_center)
         # Clustering using given clustering models
@@ -541,7 +540,7 @@ class AAclust:
         medoid_labels : array-like
             The labels corresponding to each medoid.
         medoid_ind : array-like
-            Indexes of medoids within the original data.
+            Indexes of medoids within the original _data.
         """
         medoids, medoid_labels, medoid_ind = get_cluster_medoids(X, labels=labels)
         return medoids, medoid_labels, medoid_ind
@@ -559,9 +558,9 @@ class AAclust:
         X_ref : array-like
             Reference feature matrix.
         labels_test : list or array-like, optional
-            Cluster labels for the test data.
+            Cluster labels for the test _data.
         labels_ref : list or array-like, optional
-            Cluster labels for the reference data.
+            Cluster labels for the reference _data.
         n : int, default = 3
             Number of top centers to consider based on correlation strength.
         positive : bool, default = True
@@ -585,7 +584,7 @@ class AAclust:
             names_ref = [x for x in list(dict.fromkeys(labels_ref)) if "unclassified" not in x.lower()]
         masks_ref = [[True if i == label else False for i in labels_ref] for label in names_ref]
         if on_center:
-            # Get centers for all clusters in reference data
+            # Get centers for all clusters in reference _data
             centers = np.concatenate([cluster_center(X_ref[mask]) for mask in masks_ref], axis=0)
             # Compute correlation of test data with centers
             Xtest_centers = np.concatenate([X_test, centers], axis=0)
@@ -594,7 +593,7 @@ class AAclust:
         else:
             masks_test = [[True if i == j else False for j in range(0, len(labels_test))]
                           for i, _ in enumerate(labels_test)]
-            # Compute minimum correlation of test data with each group of reference data
+            # Compute minimum correlation of test data with each group of reference _data
             X_corr = np.array([[_min_cor_all(np.concatenate([X_test[mask_test], X_ref[mask_ref]], axis=0))
                                 for mask_ref in masks_ref ] for mask_test in masks_test])
         # Get index for n centers with highest/lowest correlation for each scale
@@ -610,3 +609,7 @@ class AAclust:
             str_corr = ";".join([f"{name} ({round(corr, 3)})" for name, corr in zip(top_names, top_corr)])
             list_top_center_name_corr.append(str_corr)
         return list_top_center_name_corr
+
+    def eval(self):
+        """"""
+        # TODO add evaluation function

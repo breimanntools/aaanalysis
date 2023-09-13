@@ -1,7 +1,7 @@
 """
 Script for Part objects used to retrieve sequence parts for given sequences.
 """
-import aaanalysis.cpp._utils as ut
+import aaanalysis.utils as ut
 
 
 # I Helper Functions

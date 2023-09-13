@@ -116,7 +116,7 @@
 <p class="caption" role="heading"><span class="caption-text">REFERENCES</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../_resources/tables.html">Tables for the Project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_resources/tables.html">Tables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../index/references.html">References</a></li>
 </ul>
 
@@ -192,7 +192,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">re</span>
 
-<span class="kn">import</span> <span class="nn">aaanalysis._utils</span> <span class="k">as</span> <span class="nn">ut</span>
+<span class="kn">import</span> <span class="nn">aaanalysis.utils</span> <span class="k">as</span> <span class="nn">ut</span>
 
 
 <span class="c1"># I Helper Functions</span>
@@ -230,8 +230,8 @@
 <span class="sd">    Three types of benchmark datasets are provided:</span>
 <span class="sd">        - Residue prediction: 6 datasets used to predict residue (amino acid) specific properties</span>
 <span class="sd">            (&#39;AA_CASPASE3&#39;, &#39;AA_FURIN&#39;, &#39;AA_LDR&#39;, &#39;AA_MMP2&#39;, &#39;AA_RNABIND&#39;, &#39;AA_SA&#39;)</span>
-<span class="sd">        - Domain prediction: 1 dataset used to predict domain specific properties (containing unlabeled data)</span>
-<span class="sd">            (DOM_SUBGSEC)</span>
+<span class="sd">        - Domain prediction: 1 dataset used to predict domain specific properties (_PU contains unlabeled _data)</span>
+<span class="sd">            (DOM_GSEC, DOM_GSEC_PU)</span>
 <span class="sd">        - Sequence prediction: 6 datasets used to predict sequence specific properties</span>
 <span class="sd">            (&#39;SEQ_AMYLO&#39;, &#39;SEQ_CAPSID&#39;, &#39;SEQ_DISULFIDE&#39;, &#39;SEQ_LOCATION&#39;, &#39;SEQ_SOLUBLE&#39;, &#39;SEQ_TAIL&#39;)</span>
 
@@ -271,20 +271,25 @@
     <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">list_datasets</span><span class="p">:</span>
         <span class="n">list_aa</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">list_datasets</span> <span class="k">if</span> <span class="s1">&#39;AA&#39;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span>
         <span class="n">list_seq</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">list_datasets</span> <span class="k">if</span> <span class="s1">&#39;SEQ&#39;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;name&#39; (</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">) is not valid.</span><span class="se">\n</span><span class="s2"> Amino acid datasets: </span><span class="si">{</span><span class="n">list_aa</span><span class="si">}</span><span class="se">\n</span><span class="s2"> Sequence datasets: </span><span class="si">{</span><span class="n">list_seq</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">list_dom</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">list_datasets</span> <span class="k">if</span> <span class="s1">&#39;DOM&#39;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;name&#39; (</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">) is not valid.&quot;</span>
+                         <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> Amino acid datasets: </span><span class="si">{</span><span class="n">list_aa</span><span class="si">}</span><span class="s2">&quot;</span>
+                         <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> Sequence datasets: </span><span class="si">{</span><span class="n">list_seq</span><span class="si">}</span><span class="s2">&quot;</span>
+                         <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> Domain datasets: </span><span class="si">{</span><span class="n">list_dom</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">folder_in</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.tsv&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="c1"># Filter data</span>
+    <span class="c1"># Filter _data</span>
     <span class="k">if</span> <span class="n">min_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">min_len</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_SEQ</span><span class="p">]]</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">max_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">max_len</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_SEQ</span><span class="p">]]</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">labels</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">])</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">])</span>
     <span class="c1"># Adjust non-canonical amino acid (keep, remove, or replace by gap)</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">_adjust_non_canonical_aa</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="n">non_canonical_aa</span><span class="o">=</span><span class="n">non_canonical_aa</span><span class="p">)</span>
+    <span class="c1"># Select balanced groups</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_LABEL</span><span class="p">])</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_LABEL</span><span class="p">]</span> <span class="o">==</span> <span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">df</span></div>
 
 
@@ -327,7 +332,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">LIST_DATASETS</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;name&#39; (</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">) is not valid. Choose one of following: </span><span class="si">{</span><span class="n">LIST_DATASETS</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="c1"># Load data</span>
+    <span class="c1"># Load _data</span>
     <span class="n">df_cat</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">FOLDER_DATA</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ut</span><span class="o">.</span><span class="n">STR_SCALE_CAT</span><span class="si">}</span><span class="s2">.xlsx&quot;</span><span class="p">)</span>
     <span class="n">df_cat</span> <span class="o">=</span> <span class="n">_filter_scales</span><span class="p">(</span><span class="n">df_cat</span><span class="o">=</span><span class="n">df_cat</span><span class="p">,</span> <span class="n">unclassified_in</span><span class="o">=</span><span class="n">unclassified_in</span><span class="p">,</span> <span class="n">just_aaindex</span><span class="o">=</span><span class="n">just_aaindex</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="n">ut</span><span class="o">.</span><span class="n">STR_SCALE_CAT</span><span class="p">:</span>

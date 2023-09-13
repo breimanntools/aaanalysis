@@ -12,7 +12,7 @@ from statsmodels.stats.multitest import multipletests
 import warnings
 
 from aaanalysis.cpp._split import SplitRange
-import aaanalysis.cpp._utils as ut
+import aaanalysis.utils as ut
 
 
 # I Helper Functions

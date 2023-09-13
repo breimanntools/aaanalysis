@@ -159,38 +159,38 @@ class TestFeatures:
     def test_features(self, df_scales, list_parts):
         sf = aa.SequenceFeature()
         split_kws = sf.get_split_kws()
-        assert isinstance(sf.features(), list)
+        assert isinstance(sf.get_features(), list)
         for parts in list_parts:
-            assert isinstance(sf.features(list_parts=parts), list)
+            assert isinstance(sf.get_features(list_parts=parts), list)
             for split_type in split_kws:
                 args = dict(list_parts=parts, df_scales=df_scales, split_kws={split_type: split_kws[split_type]})
-                assert isinstance(sf.features(**args), list)
+                assert isinstance(sf.get_features(**args), list)
 
     # Negative unit tests
     def test_wrong_input(self, df_cat, df_seq):
         sf = aa.SequenceFeature()
         for wrong_input in [1, -1, "TMD", ["TMD"], [1, 2], ["aa", "a"], [["tmd", "tmd_e"]], df_cat, [df_cat, df_seq]]:
             with pytest.raises(ValueError):
-                sf.features(list_parts=wrong_input)
+                sf.get_features(list_parts=wrong_input)
             with pytest.raises(ValueError):
-                sf.features(list_parts=["tmd"], df_scales=wrong_input)
+                sf.get_features(list_parts=["tmd"], df_scales=wrong_input)
             with pytest.raises(ValueError):
-                sf.features(list_parts=["tmd"], split_kws=wrong_input)
+                sf.get_features(list_parts=["tmd"], split_kws=wrong_input)
 
     def test_corrupted_list_parts(self, corrupted_list_parts):
         sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
-            sf.features(list_parts=corrupted_list_parts)  # Via parametrized fixtures
+            sf.get_features(list_parts=corrupted_list_parts)  # Via parametrized fixtures
 
     def test_corrupted_df_scales(self, corrupted_df_scales):
         sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
-            sf.features(list_parts=["tmd"], df_scales=corrupted_df_scales)    # Via parametrized fixtures
+            sf.get_features(list_parts=["tmd"], df_scales=corrupted_df_scales)    # Via parametrized fixtures
 
     def test_corrupted_split_kws(self, corrupted_split_kws):
         sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
-            sf.features(list_parts=["tmd"], split_kws=corrupted_split_kws)    # Via parametrized fixtures
+            sf.get_features(list_parts=["tmd"], split_kws=corrupted_split_kws)    # Via parametrized fixtures
 
 
 class TestFeatureName:
@@ -258,7 +258,7 @@ class TestFeatureValue:
             for split in list_splits:
                 for i in range(0, len(df_scales)):
                     dict_scale = df_scales.iloc[:, i].to_dict()
-                    x = sf.feat_value(split=split, dict_scale=dict_scale, df_parts=df_parts[parts])
+                    x = sf.add_feat_value(split=split, dict_scale=dict_scale, df_parts=df_parts[parts])
                     assert isinstance(x, np.ndarray)
 
     def test_accept_gaps(self, df_seq, list_parts, list_splits, df_scales):
@@ -268,18 +268,18 @@ class TestFeatureValue:
         df = df_parts.copy()
         args = dict(split=split, dict_scale=dict_scale)
         df[parts] = "AAA-CCC"
-        assert isinstance(sf.feat_value(**args, df_parts=df[parts], accept_gaps=True), np.ndarray)
+        assert isinstance(sf.add_feat_value(**args, df_parts=df[parts], accept_gaps=True), np.ndarray)
         with pytest.raises(ValueError):
-            sf.feat_value(**args, df_parts=df[parts], accept_gaps=False)
+            sf.add_feat_value(**args, df_parts=df[parts], accept_gaps=False)
         df[parts] = "------"
         with pytest.raises(ValueError):
-            sf.feat_value(**args, df_parts=df[parts], accept_gaps=True)
+            sf.add_feat_value(**args, df_parts=df[parts], accept_gaps=True)
         args = dict(split=split, df_parts=df_parts[parts])
         dict_scale_na = dict_scale.copy()
         dict_scale_na["A"] = np.NaN
-        assert isinstance(sf.feat_value(**args, dict_scale=dict_scale_na, accept_gaps=True), np.ndarray)
+        assert isinstance(sf.add_feat_value(**args, dict_scale=dict_scale_na, accept_gaps=True), np.ndarray)
         with pytest.raises(ValueError):
-            sf.feat_value(**args, dict_scale=dict_scale_na, accept_gaps=False)
+            sf.add_feat_value(**args, dict_scale=dict_scale_na, accept_gaps=False)
 
     # Negative test
     def test_wrong_input(self, df_cat, df_seq, list_parts, list_splits, df_scales):
@@ -290,11 +290,11 @@ class TestFeatureValue:
                             df_cat, [df_cat, df_seq], dict(a=1)]
         for wrong_input in list_wrong_input:
             with pytest.raises(ValueError):
-                sf.feat_value(split=wrong_input, dict_scale=dict_scale, df_parts=df_parts[parts])
+                sf.add_feat_value(split=wrong_input, dict_scale=dict_scale, df_parts=df_parts[parts])
             with pytest.raises(ValueError):
-                sf.feat_value(split=split, dict_scale=wrong_input, df_parts=df_parts[parts])
+                sf.add_feat_value(split=split, dict_scale=wrong_input, df_parts=df_parts[parts])
             with pytest.raises(ValueError):
-                sf.feat_value(split=split, dict_scale=dict_scale, df_parts=wrong_input)
+                sf.add_feat_value(split=split, dict_scale=dict_scale, df_parts=wrong_input)
 
     def test_corrupted_split(self, df_seq, list_parts, df_scales, corrupted_list_splits):
         sf = aa.SequenceFeature()
@@ -302,7 +302,7 @@ class TestFeatureValue:
         parts, dict_scale = list_parts[0], df_scales.iloc[:, 0].to_dict()
         with pytest.raises(ValueError):
             # Via parametrized fixtures
-            sf.feat_value(split=corrupted_list_splits, dict_scale=dict_scale, df_parts=df_parts[parts])
+            sf.add_feat_value(split=corrupted_list_splits, dict_scale=dict_scale, df_parts=df_parts[parts])
 
     def test_corrupted_dict_scale(self, df_seq, list_parts, list_splits, df_scales):
         sf = aa.SequenceFeature()
@@ -317,14 +317,14 @@ class TestFeatureValue:
         wrong_dict_scales = [dict(A=1, B=np.NaN), dict(a=0), dict_scale1, dict_scale2, dict_scale3, dict_scale3]
         for d in wrong_dict_scales:
             with pytest.raises(ValueError):
-                sf.feat_value(split=split, dict_scale=d, df_parts=df_parts[parts])
+                sf.add_feat_value(split=split, dict_scale=d, df_parts=df_parts[parts])
 
     def test_corrupted_df_parts(self, list_splits, df_scales, corrupted_df_parts):
         sf = aa.SequenceFeature()
         split, dict_scale = list_splits[0], df_scales.iloc[:, 0].to_dict()
         with pytest.raises(ValueError):
             # Via parametrized fixtures
-            sf.feat_value(split=split, dict_scale=dict_scale, df_parts=corrupted_df_parts)
+            sf.add_feat_value(split=split, dict_scale=dict_scale, df_parts=corrupted_df_parts)
 
 
 class TestFeatureMatrix:
@@ -334,7 +334,7 @@ class TestFeatureMatrix:
     def test_feature_matrix(self, df_seq, df_scales):
         sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
-        features = sf.features()[0:100]
+        features = sf.get_features()[0:100]
         feat_matrix = sf.feat_matrix(df_parts=df_parts, df_scales=df_scales, features=features)
         assert isinstance(feat_matrix, np.ndarray)
         assert feat_matrix.shape == (len(df_seq), len(features))
@@ -345,7 +345,7 @@ class TestFeatureMatrix:
     def test_missing_parameters(self, df_scales, df_seq):
         sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
-        features = sf.features()[0:100]
+        features = sf.get_features()[0:100]
         with pytest.raises(ValueError):
             sf.feat_matrix(df_parts=df_parts)
         with pytest.raises(ValueError):
@@ -360,7 +360,7 @@ class TestFeatureMatrix:
     def test_wrong_input(self, df_cat, df_seq, df_scales):
         sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
-        features = sf.features()[0:100]
+        features = sf.get_features()[0:100]
         list_wrong_input = [1, -1, "TMD", ["TMD"], None, [1, 2], ["aa", "a"],
                             [["tmd", "tmd_e"]], df_cat, [df_cat, df_seq], dict(a=1)]
         for wrong_input in list_wrong_input:
@@ -374,7 +374,7 @@ class TestFeatureMatrix:
 
     def test_corrupted_df_parts(self, corrupted_df_parts, df_scales):
         sf = aa.SequenceFeature()
-        features = sf.features()[0:100]
+        features = sf.get_features()[0:100]
         with pytest.raises(ValueError):
             # Via parametrized fixtures
             sf.feat_matrix(df_parts=corrupted_df_parts, df_scales=df_scales, features=features)
@@ -382,7 +382,7 @@ class TestFeatureMatrix:
     def test_corrupted_df_scales(self, corrupted_df_scales, df_seq):
         sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
-        features = sf.features()[0:100]
+        features = sf.get_features()[0:100]
         with pytest.raises(ValueError):
             # Via parametrized fixtures
             sf.feat_matrix(df_parts=df_parts, df_scales=corrupted_df_scales, features=features)
@@ -390,7 +390,7 @@ class TestFeatureMatrix:
     def test_corrupted_features(self, df_scales, df_seq):
         sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
-        features = sf.features()[0:100]
+        features = sf.get_features()[0:100]
         corrupted_features = [features[0:5] + [np.NaN], features[0:3] + ["Test"],
                               "a",
                               [[features[0:4]]],
@@ -413,7 +413,7 @@ def test_sequence_feature(list_splits):
     df_scales = sf.load_scales()
     split_kws = sf.get_split_kws()
     # Get features (names, values, matrix)
-    features = sf.features()[0:100]
+    features = sf.get_features()[0:100]
     feat_matrix = sf.feat_matrix(df_parts=df_parts, df_scales=df_scales, features=features)
     assert isinstance(feat_matrix, np.ndarray)
     assert feat_matrix.shape == (len(df_seq), len(features))

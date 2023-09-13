@@ -1,11 +1,11 @@
-Tables for the Project
+Tables
 ======================
 
 .. contents::
     :local:
     :depth: 1
 
-Overview of Tables
+Overview Table
 ------------------
 .. list-table::
    :header-rows: 1
@@ -157,6 +157,26 @@ Protein benchmark datasets
      - Prediction of tail proteins
      - Galiez16
      - 1 (tail protein), 0 (non-tail protein)
+   * - Domain
+     - DOM_GSEC
+     - 126
+     - 92964
+     - 63
+     - 63
+     - nan
+     - Prediction of gamma-secretase substrates
+     - Breimann23c
+     - 1 (substrate), 0 (non-substrate)
+   * - Domain
+     - DOM_GSEC_PU
+     - 694
+     - 494524
+     - 63
+     - 0
+     - nan
+     - Prediction of gamma-secretase substrates (PU dataset)
+     - Breimann23c
+     - 1 (substrate), 2 (unknown substrate status)
 
 Amino acid scale datasets
 -------------------------
@@ -177,7 +197,7 @@ Amino acid scale datasets
      - 586
      - Kawashima08
    * - scales_classification
-     - Classification of scales
+     - Classification of scales (Aaontology)
      - 586
      - Breimann23b
    * - scales_pc

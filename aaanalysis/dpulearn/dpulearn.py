@@ -7,7 +7,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.decomposition import PCA
 import math
 import warnings
-import aaanalysis._utils as ut
+import aaanalysis.utils as ut
 
 # Settings
 pd.set_option('expand_frame_repr', False)  # Single line print for pd.Dataframe
@@ -106,7 +106,7 @@ def _get_neg_via_distance(X=None, labels=None, metric="euclidean", n_neg=None,
     """
     mask_pos = labels == label_pos
     mask_unl = labels != label_pos
-    # Compute the average distances to the positive data points
+    # Compute the average distances to the positive datapoints
     avg_dist = pairwise_distances(X[mask_pos], X, metric=metric).mean(axis=0)
     # Select negatives based on largest average distance to positives
     top_indices = np.argsort(avg_dist[mask_unl])[::-1][:n_neg]
@@ -154,7 +154,7 @@ def _get_neg_via_pca(X=None, labels=None, n_components=0.8, n_neg=None,
     columns_pca = _columns_pca[0:len(list_n_neg)]
     df_seq[columns_pca] = pca.components_.T[:, 0:len(columns_pca)]
 
-    # Get mean of positive data for each component
+    # Get mean of positive datafor each component
     mask_pos = labels == label_pos
     mask_unl = labels != label_pos
     pc_means = df_seq[mask_pos][columns_pca].mean(axis=0)
@@ -208,7 +208,7 @@ class dPULearn:
     Attributes
     ----------
     labels_ : array-like, shape (n_samples,)
-        Labels of each data point.
+        Labels of each datapoint.
 
     Notes
     -----
@@ -266,7 +266,7 @@ class dPULearn:
 
         Examples
         --------
-        Create small example data for dPUlearn containg positive ('pos', 1) and unlabeled ('unl', 2) data
+        Create small example datafor dPUlearn containg positive ('pos', 1) and unlabeled ('unl', 2) _data
 
         >>> import aaanalysis as aa
         >>> import pandas as pd
@@ -303,3 +303,5 @@ class dPULearn:
         self.labels_ = new_labels
         return df_seq
 
+    def eval(self):
+        """"""  # TODO add evaluation function

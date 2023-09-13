@@ -16,6 +16,7 @@
       ~AAclust.__init__
       ~AAclust.cluster_naming
       ~AAclust.correlation
+      ~AAclust.eval
       ~AAclust.fit
       ~AAclust.get_cluster_centers
       ~AAclust.get_cluster_medoids

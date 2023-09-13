@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import re
 
-import aaanalysis._utils as ut
+import aaanalysis.utils as ut
 
 
 # I Helper Functions
@@ -44,8 +44,8 @@ def load_dataset(name="INFO", n=None, non_canonical_aa="remove", min_len=None, m
     Three types of benchmark datasets are provided:
         - Residue prediction: 6 datasets used to predict residue (amino acid) specific properties
             ('AA_CASPASE3', 'AA_FURIN', 'AA_LDR', 'AA_MMP2', 'AA_RNABIND', 'AA_SA')
-        - Domain prediction: 1 dataset used to predict domain specific properties (containing unlabeled data)
-            (DOM_SUBGSEC)
+        - Domain prediction: 1 dataset used to predict domain specific properties (_PU contains unlabeled _data)
+            (DOM_GSEC, DOM_GSEC_PU)
         - Sequence prediction: 6 datasets used to predict sequence specific properties
             ('SEQ_AMYLO', 'SEQ_CAPSID', 'SEQ_DISULFIDE', 'SEQ_LOCATION', 'SEQ_SOLUBLE', 'SEQ_TAIL')
 
@@ -85,20 +85,25 @@ def load_dataset(name="INFO", n=None, non_canonical_aa="remove", min_len=None, m
     if name not in list_datasets:
         list_aa = [x for x in list_datasets if 'AA' in x]
         list_seq = [x for x in list_datasets if 'SEQ' in x]
-        raise ValueError(f"'name' ({name}) is not valid.\n Amino acid datasets: {list_aa}\n Sequence datasets: {list_seq}")
+        list_dom = [x for x in list_datasets if 'DOM' in x]
+        raise ValueError(f"'name' ({name}) is not valid."
+                         f"\n Amino acid datasets: {list_aa}"
+                         f"\n Sequence datasets: {list_seq}"
+                         f"\n Domain datasets: {list_dom}")
     df = pd.read_csv(folder_in + name + ".tsv", sep="\t")
-    # Filter data
+    # Filter _data
     if min_len is not None:
         mask = [len(x) >= min_len for x in df[ut.COL_SEQ]]
         df = df[mask]
     if max_len is not None:
         mask = [len(x) <= max_len for x in df[ut.COL_SEQ]]
         df = df[mask]
-    if n is not None:
-        labels = set(df["label"])
-        df = pd.concat([df[df["label"] == l].head(n) for l in labels])
     # Adjust non-canonical amino acid (keep, remove, or replace by gap)
     df = _adjust_non_canonical_aa(df=df, non_canonical_aa=non_canonical_aa)
+    # Select balanced groups
+    if n is not None:
+        labels = set(df[ut.COL_LABEL])
+        df = pd.concat([df[df[ut.COL_LABEL] == l].head(n) for l in labels])
     return df
 
 
@@ -141,7 +146,7 @@ def load_scales(name="scales", just_aaindex=False, unclassified_in=True):
     """
     if name not in LIST_DATASETS:
         raise ValueError(f"'name' ({name}) is not valid. Choose one of following: {LIST_DATASETS}")
-    # Load data
+    # Load _data
     df_cat = pd.read_excel(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.xlsx")
     df_cat = _filter_scales(df_cat=df_cat, unclassified_in=unclassified_in, just_aaindex=just_aaindex)
     if name == ut.STR_SCALE_CAT:

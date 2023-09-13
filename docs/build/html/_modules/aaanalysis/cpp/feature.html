@@ -116,7 +116,7 @@
 <p class="caption" role="heading"><span class="caption-text">REFERENCES</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api.html">API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../_resources/tables.html">Tables for the Project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../_resources/tables.html">Tables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../index/references.html">References</a></li>
 </ul>
 
@@ -195,17 +195,32 @@
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">repeat</span>
 <span class="kn">import</span> <span class="nn">multiprocessing</span> <span class="k">as</span> <span class="nn">mp</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
 <span class="kn">from</span> <span class="nn">aaanalysis.cpp._feature_pos</span> <span class="kn">import</span> <span class="n">SequenceFeaturePositions</span>
 <span class="kn">from</span> <span class="nn">aaanalysis.cpp._split</span> <span class="kn">import</span> <span class="n">Split</span><span class="p">,</span> <span class="n">SplitRange</span>
 <span class="kn">from</span> <span class="nn">aaanalysis.cpp._part</span> <span class="kn">import</span> <span class="n">Parts</span>
-<span class="kn">import</span> <span class="nn">aaanalysis.cpp._utils</span> <span class="k">as</span> <span class="nn">_ut</span>
-<span class="kn">import</span> <span class="nn">aaanalysis._utils</span> <span class="k">as</span> <span class="nn">ut</span>
+
 <span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
+<span class="kn">import</span> <span class="nn">aaanalysis.utils</span> <span class="k">as</span> <span class="nn">ut</span>
+
+<span class="c1"># TODO simplify and check</span>
 
 
 <span class="c1"># I Helper Functions</span>
+<span class="c1"># Check for add methods</span>
+<span class="k">def</span> <span class="nf">check_ref_group</span><span class="p">(</span><span class="n">ref_group</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if ref group class lable&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ref_group</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;ref_group&#39; (</span><span class="si">{</span><span class="n">ref_group</span><span class="si">}</span><span class="s2">) not class label: </span><span class="si">{</span><span class="nb">set</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">check_sample_in_df_seq</span><span class="p">(</span><span class="n">sample_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">df_seq</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if sample name in df_seq&quot;&quot;&quot;</span>
+    <span class="n">list_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">df_seq</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_NAME</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">sample_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">list_names</span><span class="p">:</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&#39;sample_name&#39; (&#39;</span><span class="si">{</span><span class="n">sample_name</span><span class="si">}</span><span class="s2">&#39;) not in &#39;</span><span class="si">{</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_NAME</span><span class="si">}</span><span class="s2">&#39; of &#39;df_seq&#39;.&quot;</span> \
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Valid names are: </span><span class="si">{</span><span class="n">list_names</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
 
 
 <span class="c1"># Check load functions</span>
@@ -215,21 +230,12 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;clust_th&#39; should be 0.3, 0.5, 0.7, or 0.9&quot;</span><span class="p">)</span>
 
 
-<span class="c1"># Check functions get_df_parts</span>
-<span class="k">def</span> <span class="nf">check_jmd_len</span><span class="p">(</span><span class="n">jmd_n_len</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">accept_none</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check jmd_n_len and jmd_c_len&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">accept_none</span> <span class="ow">and</span> <span class="n">jmd_n_len</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">jmd_c_len</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>     <span class="c1"># skip check</span>
-    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="s2">&quot;jmd_n_len&quot;</span><span class="p">,</span> <span class="s2">&quot;jmd_c_len&quot;</span><span class="p">],</span> <span class="p">[</span><span class="n">jmd_n_len</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="p">]):</span>
-        <span class="n">ut</span><span class="o">.</span><span class="n">check_non_negative_number</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">val</span><span class="p">)</span>
-
-
 <span class="c1"># Check functions get_split_kws</span>
 <span class="k">def</span> <span class="nf">check_split_types</span><span class="p">(</span><span class="n">split_types</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check split_type&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">split_types</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">split_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">split_types</span><span class="p">]</span>
-    <span class="n">list_split_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">_ut</span><span class="o">.</span><span class="n">STR_SEGMENT</span><span class="p">,</span> <span class="n">_ut</span><span class="o">.</span><span class="n">STR_PATTERN</span><span class="p">,</span> <span class="n">_ut</span><span class="o">.</span><span class="n">STR_PERIODIC_PATTERN</span><span class="p">]</span>
+    <span class="n">list_split_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">STR_SEGMENT</span><span class="p">,</span> <span class="n">ut</span><span class="o">.</span><span class="n">STR_PATTERN</span><span class="p">,</span> <span class="n">ut</span><span class="o">.</span><span class="n">STR_PERIODIC_PATTERN</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">split_types</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">split_types</span> <span class="o">=</span> <span class="n">list_split_types</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="n">list_split_types</span><span class="p">)</span><span class="o">.</span><span class="n">issuperset</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">split_types</span><span class="p">)):</span>
@@ -262,7 +268,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get missing elements&quot;&quot;&quot;</span>
     <span class="n">seq_elements</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">df_parts</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()))</span>
     <span class="k">if</span> <span class="n">accept_gaps</span><span class="p">:</span>
-        <span class="n">missing_elements</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">seq_elements</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">scale_elements</span> <span class="ow">and</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">_ut</span><span class="o">.</span><span class="n">STR_AA_GAP</span><span class="p">]</span>
+        <span class="n">missing_elements</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">seq_elements</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">scale_elements</span> <span class="ow">and</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">ut</span><span class="o">.</span><span class="n">STR_AA_GAP</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">missing_elements</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">seq_elements</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">scale_elements</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">missing_elements</span>
@@ -319,12 +325,12 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper function to create feature values for feature matrix&quot;&quot;&quot;</span>
     <span class="n">sp</span> <span class="o">=</span> <span class="n">Split</span><span class="p">()</span>
     <span class="c1"># Get vectorized split function</span>
-    <span class="n">split_type</span><span class="p">,</span> <span class="n">split_kwargs</span> <span class="o">=</span> <span class="n">_ut</span><span class="o">.</span><span class="n">check_split</span><span class="p">(</span><span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">)</span>
+    <span class="n">split_type</span><span class="p">,</span> <span class="n">split_kwargs</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_split</span><span class="p">(</span><span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">)</span>
     <span class="n">f_split</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sp</span><span class="p">,</span> <span class="n">split_type</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
     <span class="c1"># Vectorize split function using anonymous function</span>
     <span class="n">vf_split</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">f_split</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="o">**</span><span class="n">split_kwargs</span><span class="p">))</span>
     <span class="c1"># Get vectorized scale function</span>
-    <span class="n">vf_scale</span> <span class="o">=</span> <span class="n">_ut</span><span class="o">.</span><span class="n">get_vf_scale</span><span class="p">(</span><span class="n">dict_scale</span><span class="o">=</span><span class="n">dict_scale</span><span class="p">,</span> <span class="n">accept_gaps</span><span class="o">=</span><span class="n">accept_gaps</span><span class="p">)</span>
+    <span class="n">vf_scale</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">get_vf_scale</span><span class="p">(</span><span class="n">dict_scale</span><span class="o">=</span><span class="n">dict_scale</span><span class="p">,</span> <span class="n">accept_gaps</span><span class="o">=</span><span class="n">accept_gaps</span><span class="p">)</span>
     <span class="c1"># Combine part split and scale to get feature values</span>
     <span class="n">part_split</span> <span class="o">=</span> <span class="n">vf_split</span><span class="p">(</span><span class="n">df_parts</span><span class="p">)</span>
     <span class="n">feature_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">vf_scale</span><span class="p">(</span><span class="n">part_split</span><span class="p">),</span> <span class="mi">5</span><span class="p">)</span>  <span class="c1"># feature values</span>
@@ -374,7 +380,7 @@
 <span class="sd">        &#39;tmd_jmd&#39;, &#39;jmd_n_tmd_n&#39;, &#39;tmd_c_jmd_c&#39;, &#39;ext_n_tmd_n&#39;, &#39;tmd_c_ext_c&#39;]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="c1"># Basic data structures for features</span>
+    <span class="c1"># Basic datastructures for features</span>
 <div class="viewcode-block" id="SequenceFeature.get_df_parts"><a class="viewcode-back" href="../../../generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature.get_df_parts">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">get_df_parts</span><span class="p">(</span><span class="n">df_seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">list_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jmd_n_len</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ext_len</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">all_parts</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create DataFrane with sequence parts.</span>
@@ -420,22 +426,21 @@
 <span class="sd">        &gt;&gt;&gt; df_seq = aa.load_dataset(name=&#39;GSEC_SUB_SEQ&#39;)</span>
 <span class="sd">        &gt;&gt;&gt; df_parts = sf.get_df_parts(df_seq=df_seq, jmd_n_len=10, jmd_c_len=10)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">check_jmd_len</span><span class="p">(</span><span class="n">jmd_n_len</span><span class="o">=</span><span class="n">jmd_n_len</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="n">jmd_c_len</span><span class="p">)</span>
-        <span class="n">ut</span><span class="o">.</span><span class="n">check_non_negative_number</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;ext_len&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">ext_len</span><span class="p">)</span>
-        <span class="n">df_seq</span> <span class="o">=</span> <span class="n">_ut</span><span class="o">.</span><span class="n">check_df_seq</span><span class="p">(</span><span class="n">df_seq</span><span class="o">=</span><span class="n">df_seq</span><span class="p">,</span> <span class="n">jmd_n_len</span><span class="o">=</span><span class="n">jmd_n_len</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="n">jmd_c_len</span><span class="p">)</span>
-        <span class="n">list_parts</span> <span class="o">=</span> <span class="n">_ut</span><span class="o">.</span><span class="n">check_list_parts</span><span class="p">(</span><span class="n">list_parts</span><span class="o">=</span><span class="n">list_parts</span><span class="p">,</span> <span class="n">all_parts</span><span class="o">=</span><span class="n">all_parts</span><span class="p">)</span>
-        <span class="n">seq_info_in_df</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">_ut</span><span class="o">.</span><span class="n">COLS_SEQ_INFO</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">df_seq</span><span class="p">))</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_args_len</span><span class="p">(</span><span class="n">jmd_n_len</span><span class="o">=</span><span class="n">jmd_n_len</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="n">jmd_c_len</span><span class="p">,</span> <span class="n">ext_len</span><span class="o">=</span><span class="n">ext_len</span><span class="p">,</span> <span class="n">accept_tmd_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">df_seq</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_df_seq</span><span class="p">(</span><span class="n">df_seq</span><span class="o">=</span><span class="n">df_seq</span><span class="p">,</span> <span class="n">jmd_n_len</span><span class="o">=</span><span class="n">jmd_n_len</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="n">jmd_c_len</span><span class="p">)</span>
+        <span class="n">list_parts</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_list_parts</span><span class="p">(</span><span class="n">list_parts</span><span class="o">=</span><span class="n">list_parts</span><span class="p">,</span> <span class="n">all_parts</span><span class="o">=</span><span class="n">all_parts</span><span class="p">)</span>
+        <span class="n">seq_info_in_df</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">COLS_SEQ_INFO</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">df_seq</span><span class="p">))</span>
         <span class="n">pa</span> <span class="o">=</span> <span class="n">Parts</span><span class="p">()</span>
         <span class="n">dict_parts</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df_seq</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-            <span class="n">entry</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">_ut</span><span class="o">.</span><span class="n">COL_ENTRY</span><span class="p">]</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_ENTRY</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">jmd_c_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">jmd_n_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">seq_info_in_df</span><span class="p">:</span>
-                <span class="n">seq</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">_ut</span><span class="o">.</span><span class="n">COLS_SEQ_INFO</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+                <span class="n">seq</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COLS_SEQ_INFO</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
                 <span class="n">parts</span> <span class="o">=</span> <span class="n">pa</span><span class="o">.</span><span class="n">create_parts</span><span class="p">(</span><span class="n">seq</span><span class="o">=</span><span class="n">seq</span><span class="p">,</span> <span class="n">tmd_start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">tmd_stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span>
                                         <span class="n">jmd_n_len</span><span class="o">=</span><span class="n">jmd_n_len</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="n">jmd_c_len</span><span class="p">)</span>
                 <span class="n">jmd_n</span><span class="p">,</span> <span class="n">tmd</span><span class="p">,</span> <span class="n">jmd_c</span> <span class="o">=</span> <span class="n">parts</span><span class="o">.</span><span class="n">jmd_n</span><span class="p">,</span> <span class="n">parts</span><span class="o">.</span><span class="n">tmd</span><span class="p">,</span> <span class="n">parts</span><span class="o">.</span><span class="n">jmd_c</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">jmd_n</span><span class="p">,</span> <span class="n">tmd</span><span class="p">,</span> <span class="n">jmd_c</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">_ut</span><span class="o">.</span><span class="n">COLS_PARTS</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+                <span class="n">jmd_n</span><span class="p">,</span> <span class="n">tmd</span><span class="p">,</span> <span class="n">jmd_c</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COLS_PARTS</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
             <span class="n">dict_part_seq</span> <span class="o">=</span> <span class="n">pa</span><span class="o">.</span><span class="n">get_dict_part_seq</span><span class="p">(</span><span class="n">tmd</span><span class="o">=</span><span class="n">tmd</span><span class="p">,</span> <span class="n">jmd_n</span><span class="o">=</span><span class="n">jmd_n</span><span class="p">,</span> <span class="n">jmd_c</span><span class="o">=</span><span class="n">jmd_c</span><span class="p">,</span> <span class="n">ext_len</span><span class="o">=</span><span class="n">ext_len</span><span class="p">)</span>
             <span class="n">dict_part_seq</span> <span class="o">=</span> <span class="p">{</span><span class="n">part</span><span class="p">:</span> <span class="n">dict_part_seq</span><span class="p">[</span><span class="n">part</span><span class="p">]</span> <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">list_parts</span><span class="p">}</span>
             <span class="n">dict_parts</span><span class="p">[</span><span class="n">entry</span><span class="p">]</span> <span class="o">=</span> <span class="n">dict_part_seq</span>
@@ -499,15 +504,15 @@
             <span class="n">steps_pattern</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">steps_periodicpattern</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">steps_periodicpattern</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>      <span class="c1"># Differences between interacting amino acids in helix (without gaps)</span>
-        <span class="n">split_kws</span> <span class="o">=</span> <span class="p">{</span><span class="n">_ut</span><span class="o">.</span><span class="n">STR_SEGMENT</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">n_split_min</span><span class="o">=</span><span class="n">n_split_min</span><span class="p">,</span> <span class="n">n_split_max</span><span class="o">=</span><span class="n">n_split_max</span><span class="p">),</span>
-                     <span class="n">_ut</span><span class="o">.</span><span class="n">STR_PATTERN</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="n">steps_pattern</span><span class="p">,</span> <span class="n">n_min</span><span class="o">=</span><span class="n">n_min</span><span class="p">,</span> <span class="n">n_max</span><span class="o">=</span><span class="n">n_max</span><span class="p">,</span> <span class="n">len_max</span><span class="o">=</span><span class="n">len_max</span><span class="p">),</span>
-                     <span class="n">_ut</span><span class="o">.</span><span class="n">STR_PERIODIC_PATTERN</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="n">steps_periodicpattern</span><span class="p">)}</span>
+        <span class="n">split_kws</span> <span class="o">=</span> <span class="p">{</span><span class="n">ut</span><span class="o">.</span><span class="n">STR_SEGMENT</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">n_split_min</span><span class="o">=</span><span class="n">n_split_min</span><span class="p">,</span> <span class="n">n_split_max</span><span class="o">=</span><span class="n">n_split_max</span><span class="p">),</span>
+                     <span class="n">ut</span><span class="o">.</span><span class="n">STR_PATTERN</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="n">steps_pattern</span><span class="p">,</span> <span class="n">n_min</span><span class="o">=</span><span class="n">n_min</span><span class="p">,</span> <span class="n">n_max</span><span class="o">=</span><span class="n">n_max</span><span class="p">,</span> <span class="n">len_max</span><span class="o">=</span><span class="n">len_max</span><span class="p">),</span>
+                     <span class="n">ut</span><span class="o">.</span><span class="n">STR_PERIODIC_PATTERN</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">steps</span><span class="o">=</span><span class="n">steps_periodicpattern</span><span class="p">)}</span>
         <span class="n">split_kws</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="n">split_kws</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">split_types</span><span class="p">}</span>
-        <span class="n">_ut</span><span class="o">.</span><span class="n">check_split_kws</span><span class="p">(</span><span class="n">split_kws</span><span class="o">=</span><span class="n">split_kws</span><span class="p">)</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_split_kws</span><span class="p">(</span><span class="n">split_kws</span><span class="o">=</span><span class="n">split_kws</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">split_kws</span></div>
 
-<div class="viewcode-block" id="SequenceFeature.features"><a class="viewcode-back" href="../../../generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature.features">[docs]</a>    <span class="k">def</span> <span class="nf">features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split_kws</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">df_scales</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">all_parts</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create list of feature ids for given Parts, Splits, and Scales</span>
+<div class="viewcode-block" id="SequenceFeature.get_features"><a class="viewcode-back" href="../../../generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature.get_features">[docs]</a>    <span class="k">def</span> <span class="nf">get_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split_kws</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">df_scales</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">all_parts</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create list of all feature ids for given Parts, Splits, and Scales</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -526,9 +531,9 @@
 <span class="sd">            Ids of all possible features for combination of Parts, Splits, and Scales with form: PART-SPLIT-SCALE</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">list_parts</span> <span class="o">=</span> <span class="n">_ut</span><span class="o">.</span><span class="n">check_list_parts</span><span class="p">(</span><span class="n">list_parts</span><span class="o">=</span><span class="n">list_parts</span><span class="p">,</span> <span class="n">all_parts</span><span class="o">=</span><span class="n">all_parts</span><span class="p">)</span>
-        <span class="n">_ut</span><span class="o">.</span><span class="n">check_split_kws</span><span class="p">(</span><span class="n">split_kws</span><span class="o">=</span><span class="n">split_kws</span><span class="p">)</span>
-        <span class="n">_ut</span><span class="o">.</span><span class="n">check_df_scales</span><span class="p">(</span><span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">,</span> <span class="n">accept_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">list_parts</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_list_parts</span><span class="p">(</span><span class="n">list_parts</span><span class="o">=</span><span class="n">list_parts</span><span class="p">,</span> <span class="n">all_parts</span><span class="o">=</span><span class="n">all_parts</span><span class="p">)</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_split_kws</span><span class="p">(</span><span class="n">split_kws</span><span class="o">=</span><span class="n">split_kws</span><span class="p">)</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_df_scales</span><span class="p">(</span><span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">,</span> <span class="n">accept_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">df_scales</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">df_scales</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_scales</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">split_kws</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -545,9 +550,72 @@
                              <span class="k">for</span> <span class="n">sc</span> <span class="ow">in</span> <span class="n">scales</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">features</span></div>
 
+<div class="viewcode-block" id="SequenceFeature.feat_matrix"><a class="viewcode-back" href="../../../generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature.feat_matrix">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">feat_matrix</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">df_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">df_scales</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">accept_gaps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">n_jobs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_labels</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create feature matrix for given feature ids and sequence parts.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        features: str, list of strings, pd.Series</span>
+<span class="sd">            Ids of features for which matrix of feature values should be created.</span>
+<span class="sd">        df_parts: :class:`pandas.DataFrame`</span>
+<span class="sd">            DataFrame with sequence parts.</span>
+<span class="sd">        df_scales: :class:`pandas.DataFrame`, optional</span>
+<span class="sd">            DataFrame with default amino acid scales.</span>
+<span class="sd">        accept_gaps: bool, default = False</span>
+<span class="sd">            Whether to accept missing values by enabling omitting for computations (if True).</span>
+<span class="sd">        n_jobs: int, default = None,</span>
+<span class="sd">            The number of jobs to run in parallel. If None, it will be set to the maximum.</span>
+<span class="sd">        verbose: bool, default = True</span>
+<span class="sd">            Whether to print size of to be created feature matrix (if True) or not otherwise.</span>
+<span class="sd">        return_labels: bool, default = False</span>
+<span class="sd">            Whether to return sample labels in addition to feature matrix.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        feat_matrix: array-like or sparse matrix, shape (n_samples, n_features)</span>
+<span class="sd">            Feature values of samples.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_non_negative_number</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;j_jobs&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">n_jobs</span><span class="p">,</span> <span class="n">accept_none</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">min_val</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">just_int</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">df_scales</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">df_scales</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_scales</span><span class="p">()</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_df_scales</span><span class="p">(</span><span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">)</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_df_parts</span><span class="p">(</span><span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">)</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_features</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span> <span class="n">parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span> <span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">)</span>
+        <span class="n">check_df_scales_matches_df_parts</span><span class="p">(</span><span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">,</span> <span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span> <span class="n">accept_gaps</span><span class="o">=</span><span class="n">accept_gaps</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="n">n_feat</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+            <span class="n">n_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_parts</span><span class="p">)</span>
+            <span class="n">n_vals</span> <span class="o">=</span> <span class="n">n_feat</span> <span class="o">*</span> <span class="n">n_samples</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Feature matrix for </span><span class="si">{</span><span class="n">n_feat</span><span class="si">}</span><span class="s2"> features and </span><span class="si">{</span><span class="n">n_samples</span><span class="si">}</span><span class="s2"> samples will be created&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">n_vals</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="o">*</span><span class="mi">1000</span><span class="p">:</span>
+                <span class="n">warning</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Feature matrix with n=</span><span class="si">{</span><span class="n">n_vals</span><span class="si">}</span><span class="s2">&gt;=10^6 values will be created, which will take some time.</span><span class="se">\n</span><span class="s2">&quot;</span> \
+                          <span class="s2">&quot;It is recommended to create a feature matrix for a pre-selected number features &quot;</span> \
+                          <span class="s2">&quot;so that 10^6 values are not exceeded.&quot;</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">warning</span><span class="p">)</span>
+        <span class="c1"># Create feature matrix using parallel processing</span>
+        <span class="n">dict_all_scales</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">get_dict_all_scales</span><span class="p">(</span><span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">)</span>
+        <span class="n">n_processes</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(),</span> <span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)])</span> <span class="k">if</span> <span class="n">n_jobs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">n_jobs</span>
+        <span class="n">feat_chunks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array_split</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">n_processes</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">feat_chunks</span><span class="p">,</span> <span class="n">repeat</span><span class="p">(</span><span class="n">dict_all_scales</span><span class="p">),</span> <span class="n">repeat</span><span class="p">(</span><span class="n">df_parts</span><span class="p">),</span> <span class="n">repeat</span><span class="p">(</span><span class="n">accept_gaps</span><span class="p">))</span>
+        <span class="k">with</span> <span class="n">mp</span><span class="o">.</span><span class="n">get_context</span><span class="p">(</span><span class="s2">&quot;spawn&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="n">n_processes</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">starmap</span><span class="p">(</span><span class="n">_feature_matrix</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+        <span class="n">feat_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">return_labels</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Tuple of (feat_matrix, labels) will be returned&quot;</span><span class="p">)</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">df_parts</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">feat_matrix</span><span class="p">,</span> <span class="n">labels</span>  <span class="c1"># X, y</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Only feat_matrix (without labels) will be returned&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">feat_matrix</span>  <span class="c1"># X</span></div>
+
+    <span class="c1"># Additional feature related methods</span>
 <div class="viewcode-block" id="SequenceFeature.feat_names"><a class="viewcode-back" href="../../../generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature.feat_names">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">feat_names</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">df_cat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tmd_len</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">jmd_n_len</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">ext_len</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert feature ids (PART-SPLIT-SCALE) into feature name (scale name [positions]).</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert feature ids (PART-SPLIT-SCALE) into feature names (scale name [positions]).</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -580,31 +648,33 @@
 <span class="sd">            - PeriodicPattern: [first..step1/step2..last]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Check input (length checked in SequenceFeaturePositions)</span>
-        <span class="n">features</span> <span class="o">=</span> <span class="n">_ut</span><span class="o">.</span><span class="n">check_features</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">)</span>
-        <span class="n">_ut</span><span class="o">.</span><span class="n">check_df_cat</span><span class="p">(</span><span class="n">df_cat</span><span class="o">=</span><span class="n">df_cat</span><span class="p">)</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_features</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">)</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_df_cat</span><span class="p">(</span><span class="n">df_cat</span><span class="o">=</span><span class="n">df_cat</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">df_cat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">df_cat</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_scales</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">_ut</span><span class="o">.</span><span class="n">STR_SCALE_CAT</span><span class="p">)</span>
+            <span class="n">df_cat</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_scales</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">ut</span><span class="o">.</span><span class="n">STR_SCALE_CAT</span><span class="p">)</span>
         <span class="c1"># Get feature names</span>
         <span class="n">sfp</span> <span class="o">=</span> <span class="n">SequenceFeaturePositions</span><span class="p">()</span>
         <span class="n">dict_part_pos</span> <span class="o">=</span> <span class="n">sfp</span><span class="o">.</span><span class="n">get_dict_part_pos</span><span class="p">(</span><span class="n">tmd_len</span><span class="o">=</span><span class="n">tmd_len</span><span class="p">,</span> <span class="n">jmd_n_len</span><span class="o">=</span><span class="n">jmd_n_len</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="n">jmd_c_len</span><span class="p">,</span>
                                               <span class="n">ext_len</span><span class="o">=</span><span class="n">ext_len</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">)</span>
         <span class="n">list_positions</span> <span class="o">=</span> <span class="n">sfp</span><span class="o">.</span><span class="n">get_positions</span><span class="p">(</span><span class="n">dict_part_pos</span><span class="o">=</span><span class="n">dict_part_pos</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">)</span>
-        <span class="n">dict_scales</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">df_cat</span><span class="p">[</span><span class="n">_ut</span><span class="o">.</span><span class="n">COL_SCALE_ID</span><span class="p">],</span> <span class="n">df_cat</span><span class="p">[</span><span class="n">_ut</span><span class="o">.</span><span class="n">COL_SCALE_NAME</span><span class="p">]))</span>
+        <span class="n">dict_scales</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">df_cat</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_SCALE_ID</span><span class="p">],</span> <span class="n">df_cat</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_SCALE_NAME</span><span class="p">]))</span>
         <span class="n">feat_names</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">feat_id</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">list_positions</span><span class="p">):</span>
             <span class="n">part</span><span class="p">,</span> <span class="n">split</span><span class="p">,</span> <span class="n">scale</span> <span class="o">=</span> <span class="n">feat_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
             <span class="n">split_type</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;(&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">split_type</span> <span class="o">==</span> <span class="n">_ut</span><span class="o">.</span><span class="n">STR_SEGMENT</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">split_type</span> <span class="o">==</span> <span class="n">ut</span><span class="o">.</span><span class="n">STR_SEGMENT</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="n">pos</span> <span class="o">=</span> <span class="n">pos</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;...&quot;</span> <span class="o">+</span> <span class="n">pos</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">split_type</span> <span class="o">==</span> <span class="n">_ut</span><span class="o">.</span><span class="n">STR_PERIODIC_PATTERN</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">split_type</span> <span class="o">==</span> <span class="n">ut</span><span class="o">.</span><span class="n">STR_PERIODIC_PATTERN</span><span class="p">:</span>
                 <span class="n">step</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;+&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="n">pos</span> <span class="o">=</span> <span class="n">pos</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;..&quot;</span> <span class="o">+</span> <span class="n">step</span> <span class="o">+</span> <span class="s2">&quot;..&quot;</span> <span class="o">+</span> <span class="n">pos</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">feat_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dict_scales</span><span class="p">[</span><span class="n">scale</span><span class="p">]</span><span class="si">}</span><span class="s2"> [</span><span class="si">{</span><span class="n">pos</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">feat_names</span></div>
 
     <span class="c1"># Feature: Part + Split + Scale</span>
-<div class="viewcode-block" id="SequenceFeature.feat_value"><a class="viewcode-back" href="../../../generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature.feat_value">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">feat_value</span><span class="p">(</span><span class="n">df_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dict_scale</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">accept_gaps</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="c1"># For what used? Not redudant with feature matrix?</span>
+    <span class="c1"># TODO Add functions (modify df_feat)</span>
+<div class="viewcode-block" id="SequenceFeature.add_feat_value"><a class="viewcode-back" href="../../../generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature.add_feat_value">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">add_feat_value</span><span class="p">(</span><span class="n">df_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dict_scale</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">accept_gaps</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create feature values for all sequence parts by combining Part, Split, and Scale.</span>
 
 <span class="sd">        Parameters</span>
@@ -643,8 +713,8 @@
 <span class="sd">        All numbers should be non-negative integers. Examples for each split type</span>
 <span class="sd">        are as follows: &#39;Segment(5,7)&#39;, &#39;Pattern(C,1,2)&#39;, &#39;PeriodicPattern(N,i+2/3,1)&#39;.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">_ut</span><span class="o">.</span><span class="n">check_df_parts</span><span class="p">(</span><span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">)</span>
-        <span class="n">_ut</span><span class="o">.</span><span class="n">check_split</span><span class="p">(</span><span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">)</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_df_parts</span><span class="p">(</span><span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">)</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_split</span><span class="p">(</span><span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">)</span>
         <span class="n">check_dict_scale</span><span class="p">(</span><span class="n">dict_scale</span><span class="o">=</span><span class="n">dict_scale</span><span class="p">,</span> <span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span> <span class="n">accept_gaps</span><span class="o">=</span><span class="n">accept_gaps</span><span class="p">)</span>
         <span class="n">feature_value</span> <span class="o">=</span> <span class="n">_feature_value</span><span class="p">(</span><span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span>
                                        <span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">,</span>
@@ -652,67 +722,92 @@
                                        <span class="n">accept_gaps</span><span class="o">=</span><span class="n">accept_gaps</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">feature_value</span></div>
 
-<div class="viewcode-block" id="SequenceFeature.feat_matrix"><a class="viewcode-back" href="../../../generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature.feat_matrix">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">feat_matrix</span><span class="p">(</span><span class="n">df_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">df_scales</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">accept_gaps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                    <span class="n">n_jobs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_labels</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create feature matrix for given feature names and sequence parts.</span>
+<div class="viewcode-block" id="SequenceFeature.add_dif"><a class="viewcode-back" href="../../../generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature.add_dif">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">add_dif</span><span class="p">(</span><span class="n">df_feat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">df_seq</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sample_name</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">ref_group</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="n">accept_gaps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">jmd_n_len</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">df_parts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">df_scales</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add feature value difference between sample and reference group to DataFrame.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        df_parts: :class:`pandas.DataFrame`</span>
-<span class="sd">            DataFrame with sequence parts.</span>
-<span class="sd">        features: str, list of strings, pd.Series</span>
-<span class="sd">            Ids of features for which matrix of feature values should be created.</span>
-<span class="sd">        df_scales: :class:`pandas.DataFrame`, optional</span>
-<span class="sd">            DataFrame with default amino acid scales.</span>
+<span class="sd">        df_feat: :class:`pandas.DataFrame`</span>
+<span class="sd">            Feature DataFrame (CPP output) to add sample difference.</span>
+<span class="sd">        df_seq: :class:`pandas.DataFrame`</span>
+<span class="sd">            DataFrame with sequences and sample names, in which the given sample name is included.</span>
+<span class="sd">        labels: array-like, shape (n_samples)</span>
+<span class="sd">            Class labels for samples in sequence DataFrame.</span>
+<span class="sd">        sample_name: str</span>
+<span class="sd">            Name of sample for which the feature value difference to a given reference group should be computed.</span>
+<span class="sd">        ref_group: int, default = 0</span>
+<span class="sd">            Class label of reference group.</span>
 <span class="sd">        accept_gaps: bool, default = False</span>
 <span class="sd">            Whether to accept missing values by enabling omitting for computations (if True).</span>
-<span class="sd">        n_jobs: int, default = None,</span>
-<span class="sd">            The number of jobs to run in parallel. If None, it will be set to the maximum.</span>
-<span class="sd">        verbose: bool, default = True</span>
-<span class="sd">            Whether to print size of to be created feature matrix (if True) or not otherwise.</span>
-<span class="sd">        return_labels: bool, default = False</span>
-<span class="sd">            Whether to return sample labels in addition to feature matrix.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        feat_matrix: array-like or sparse matrix, shape (n_samples, n_features)</span>
-<span class="sd">            Feature values of samples.</span>
+<span class="sd">        df_feat: :class:`pandas.DataFrame`</span>
+<span class="sd">            Feature DataFrame including feature value difference.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">ut</span><span class="o">.</span><span class="n">check_non_negative_number</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;j_jobs&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">n_jobs</span><span class="p">,</span> <span class="n">accept_none</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">min_val</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">just_int</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">df_scales</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">df_scales</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_scales</span><span class="p">()</span>
-        <span class="n">_ut</span><span class="o">.</span><span class="n">check_df_scales</span><span class="p">(</span><span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">)</span>
-        <span class="n">_ut</span><span class="o">.</span><span class="n">check_df_parts</span><span class="p">(</span><span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">)</span>
-        <span class="n">features</span> <span class="o">=</span> <span class="n">_ut</span><span class="o">.</span><span class="n">check_features</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span> <span class="n">parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span> <span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">)</span>
-        <span class="n">check_df_scales_matches_df_parts</span><span class="p">(</span><span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">,</span> <span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span> <span class="n">accept_gaps</span><span class="o">=</span><span class="n">accept_gaps</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-            <span class="n">n_feat</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-            <span class="n">n_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_parts</span><span class="p">)</span>
-            <span class="n">n_vals</span> <span class="o">=</span> <span class="n">n_feat</span> <span class="o">*</span> <span class="n">n_samples</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Feature matrix for </span><span class="si">{</span><span class="n">n_feat</span><span class="si">}</span><span class="s2"> features and </span><span class="si">{</span><span class="n">n_samples</span><span class="si">}</span><span class="s2"> samples will be created&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">n_vals</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="o">*</span><span class="mi">1000</span><span class="p">:</span>
-                <span class="n">warning</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Feature matrix with n=</span><span class="si">{</span><span class="n">n_vals</span><span class="si">}</span><span class="s2">&gt;=10^6 values will be created, which will take some time.</span><span class="se">\n</span><span class="s2">&quot;</span> \
-                          <span class="s2">&quot;It is recommended to create a feature matrix for a pre-selected number features &quot;</span> \
-                          <span class="s2">&quot;so that 10^6 values are not exceeded.&quot;</span>
-                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">warning</span><span class="p">)</span>
-        <span class="c1"># Create feature matrix using parallel processing</span>
-        <span class="n">dict_all_scales</span> <span class="o">=</span> <span class="n">_ut</span><span class="o">.</span><span class="n">get_dict_all_scales</span><span class="p">(</span><span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">)</span>
-        <span class="n">n_processes</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(),</span> <span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)])</span> <span class="k">if</span> <span class="n">n_jobs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">n_jobs</span>
-        <span class="n">feat_chunks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array_split</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">n_processes</span><span class="p">)</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">feat_chunks</span><span class="p">,</span> <span class="n">repeat</span><span class="p">(</span><span class="n">dict_all_scales</span><span class="p">),</span> <span class="n">repeat</span><span class="p">(</span><span class="n">df_parts</span><span class="p">),</span> <span class="n">repeat</span><span class="p">(</span><span class="n">accept_gaps</span><span class="p">))</span>
-        <span class="k">with</span> <span class="n">mp</span><span class="o">.</span><span class="n">get_context</span><span class="p">(</span><span class="s2">&quot;spawn&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="o">=</span><span class="n">n_processes</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">starmap</span><span class="p">(</span><span class="n">_feature_matrix</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
-        <span class="n">feat_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">return_labels</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Tuple of (feat_matrix, labels) will be returned&quot;</span><span class="p">)</span>
-            <span class="n">labels</span> <span class="o">=</span> <span class="n">df_parts</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-            <span class="k">return</span> <span class="n">feat_matrix</span><span class="p">,</span> <span class="n">labels</span>  <span class="c1"># X, y</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Only feat_matrix (without labels) will be returned&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">feat_matrix</span>  <span class="c1"># X</span></div></div>
+        <span class="c1"># Check input</span>
+        <span class="n">df_feat</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_df_feat</span><span class="p">(</span><span class="n">df_feat</span><span class="o">=</span><span class="n">df_feat</span><span class="p">)</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_df_seq</span><span class="p">(</span><span class="n">df_seq</span><span class="o">=</span><span class="n">df_seq</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="n">jmd_c_len</span><span class="p">,</span> <span class="n">jmd_n_len</span><span class="o">=</span><span class="n">jmd_n_len</span><span class="p">)</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_labels</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">df</span><span class="o">=</span><span class="n">df_seq</span><span class="p">,</span> <span class="n">name_df</span><span class="o">=</span><span class="s2">&quot;df_seq&quot;</span><span class="p">)</span>
+        <span class="n">check_ref_group</span><span class="p">(</span><span class="n">ref_group</span><span class="o">=</span><span class="n">ref_group</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+        <span class="n">check_sample_in_df_seq</span><span class="p">(</span><span class="n">sample_name</span><span class="o">=</span><span class="n">sample_name</span><span class="p">,</span> <span class="n">df_seq</span><span class="o">=</span><span class="n">df_seq</span><span class="p">)</span>
+        <span class="c1"># Add sample difference to reference group</span>
+        <span class="n">sf</span> <span class="o">=</span> <span class="n">SequenceFeature</span><span class="p">()</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">feat_matrix</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">df_feat</span><span class="p">[</span><span class="s2">&quot;feature&quot;</span><span class="p">]),</span>
+                           <span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span>
+                           <span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">,</span>
+                           <span class="n">accept_gaps</span><span class="o">=</span><span class="n">accept_gaps</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="n">ref_group</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">df_seq</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_NAME</span><span class="p">])</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">sample_name</span><span class="p">)</span>
+        <span class="n">df_feat</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;dif_</span><span class="si">{</span><span class="n">sample_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">df_feat</span></div>
+
+<div class="viewcode-block" id="SequenceFeature.add_position"><a class="viewcode-back" href="../../../generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature.add_position">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">add_position</span><span class="p">(</span><span class="n">df_feat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">tmd_len</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">jmd_n_len</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">ext_len</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+                     <span class="n">part_split</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create list with positions for given feature names</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df_feat: :class:`pandas.DataFrame`</span>
+<span class="sd">            Feature DataFrame (CPP output) to add sample difference.</span>
+<span class="sd">        features: str, list of strings, pd.Series</span>
+<span class="sd">            Ids of features for which feature names should be created.</span>
+<span class="sd">        start: int, &gt;=0, default = 1</span>
+<span class="sd">            Position label of first amino acid position (starting at N-terminus).</span>
+<span class="sd">        tmd_len: int, &gt;0, default = 20</span>
+<span class="sd">            Length of TMD.</span>
+<span class="sd">        jmd_n_len : int, &gt;=0, default = 10</span>
+<span class="sd">            Length of JMD-N.</span>
+<span class="sd">        jmd_c_len : int, &gt;=0, default = 10</span>
+<span class="sd">            Length of JMD-C.</span>
+<span class="sd">        ext_len : int, &gt;=0, default = 4</span>
+<span class="sd">            Length of TMD-extending part (starting from C and N terminal part of TMD).</span>
+<span class="sd">            Conditions: ext_len &lt; jmd_m_len and ext_len &lt; jmd_c_len.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        feat_positions: list</span>
+<span class="sd">            list with positions for each feature in feat_names</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The length parameters define the total number of positions (jmd_n_len + tmd_len + jmd_c_len).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO add sequence, generalize check functions for tmd_len ...</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">check_features</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">)</span>
+        <span class="n">ut</span><span class="o">.</span><span class="n">check_non_negative_number</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;tmd_len&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">tmd_len</span><span class="p">,</span> <span class="n">just_int</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">min_val</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">jmd_n_len</span><span class="o">=</span><span class="n">jmd_n_len</span><span class="p">,</span> <span class="n">jmd_c_len</span><span class="o">=</span><span class="n">jmd_c_len</span><span class="p">,</span> <span class="n">ext_len</span><span class="o">=</span><span class="n">ext_len</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="n">ut</span><span class="o">.</span><span class="n">check_non_negative_number</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">just_int</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">min_val</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">sfp</span> <span class="o">=</span> <span class="n">SequenceFeaturePositions</span><span class="p">()</span>
+        <span class="n">dict_part_pos</span> <span class="o">=</span> <span class="n">sfp</span><span class="o">.</span><span class="n">get_dict_part_pos</span><span class="p">(</span><span class="n">tmd_len</span><span class="o">=</span><span class="n">tmd_len</span><span class="p">,</span> <span class="o">**</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">feat_positions</span> <span class="o">=</span> <span class="n">sfp</span><span class="o">.</span><span class="n">get_positions</span><span class="p">(</span><span class="n">dict_part_pos</span><span class="o">=</span><span class="n">dict_part_pos</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">feat_positions</span></div></div>
+
 </pre></div>
 
            </div>

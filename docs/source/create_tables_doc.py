@@ -73,7 +73,7 @@ def generate_table_rst():
     list_tables = [_f_xlsx(on=True, file=x) for x in sorted(df_mapper[COL_MAP_TABLE])]
     _check_tables(list_tables)
     rst_content = _convert_excel_to_rst(df_mapper)
-    rst_content = f"Tables for the Project\n======================\n\n.. contents::\n    :local:\n    :depth: 1\n\nOverview of Tables\n------------------\n{rst_content}"
+    rst_content = f"Tables\n======================\n\n.. contents::\n    :local:\n    :depth: 1\n\nOverview Table\n------------------\n{rst_content}"
     for index, row in df_mapper.iterrows():
         table_name = row[COL_MAP_TABLE]
         description = row[COL_DESCRIPTION]

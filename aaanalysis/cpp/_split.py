@@ -4,7 +4,7 @@ Script with Split objects used to fragment sequence parts into distinct segments
 import numpy as np
 import itertools
 
-import aaanalysis.cpp._utils as ut
+import aaanalysis.utils as ut
 
 
 # I Helper Functions

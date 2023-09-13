@@ -1,6 +1,5 @@
-#! /usr/bin/python3
 """
-Config with folder structure
+Utility functions for AAclust module
 """
 import inspect
 
