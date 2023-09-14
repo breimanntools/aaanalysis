@@ -24,36 +24,46 @@ Data Loading
     aaanalysis.load_dataset
     aaanalysis.load_scales
 
-.. _aaclust_api:
+.. _preprocessing_api:
 
-AAclust
--------
+Preprocessing
+-------------
 .. autosummary::
     :toctree: generated/
 
     aaanalysis.AAclust
 
-.. _cpp_api:
+.. _feature_engineering_api:
 
-CPP Module
-----------
+Feature Engineering
+-------------------
 .. autosummary::
     :toctree: generated/
 
-    aaanalysis.CPP
+
     aaanalysis.SequenceFeature
-    aaanalysis.SplitRange
+    aaanalysis.CPP
+    aaanalysis.CPPPlot
 
-.. _dpulearn_api:
+.. _pu_learning_api:
 
-dPUlearn
---------
+PU Learning
+-----------
 .. autosummary::
     :toctree: generated/
 
     aaanalysis.dPULearn
 
 .. _plot_api:
+
+Explainable AI
+--------------
+
+
+Perturbation
+------------
+
+
 
 Plot Utilities
 --------------
@@ -63,4 +73,6 @@ Plot Utilities
     aaanalysis.plot_settings
     aaanalysis.plot_set_legend
     aaanalysis.plot_gcfs
+    aaanalysis.plot_get_cmap
+    aaanalysis.plot_get_cdict
 

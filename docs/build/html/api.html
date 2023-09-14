@@ -134,24 +134,28 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.load_scales.html">aaanalysis.load_scales</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#aaclust">AAclust</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#preprocessing">Preprocessing</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.AAclust.html">aaanalysis.AAclust</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#cpp-module">CPP Module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.CPP.html">aaanalysis.CPP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#feature-engineering">Feature Engineering</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.SequenceFeature.html">aaanalysis.SequenceFeature</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.SplitRange.html">aaanalysis.SplitRange</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.CPP.html">aaanalysis.CPP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.CPPPlot.html">aaanalysis.CPPPlot</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#dpulearn">dPUlearn</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pu-learning">PU Learning</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.dPULearn.html">aaanalysis.dPULearn</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#explainable-ai">Explainable AI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#perturbation">Perturbation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#plot-utilities">Plot Utilities</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_settings.html">aaanalysis.plot_settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_set_legend.html">aaanalysis.plot_set_legend</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_gcfs.html">aaanalysis.plot_gcfs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_get_cmap.html">aaanalysis.plot_get_cmap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_get_cdict.html">aaanalysis.plot_get_cdict</a></li>
 </ul>
 </li>
 </ul>
@@ -251,8 +255,8 @@ For convenience, it is common to import the module as follows:</p>
 </tbody>
 </table>
 </div>
-<div class="section" id="aaclust">
-<span id="aaclust-api"></span><h2>AAclust<a class="headerlink" href="#aaclust" title="Permalink to this heading">¶</a></h2>
+<div class="section" id="preprocessing">
+<span id="preprocessing-api"></span><h2>Preprocessing<a class="headerlink" href="#preprocessing" title="Permalink to this heading">¶</a></h2>
 <table class="autosummary longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -265,28 +269,28 @@ For convenience, it is common to import the module as follows:</p>
 </tbody>
 </table>
 </div>
-<div class="section" id="cpp-module">
-<span id="cpp-api"></span><h2>CPP Module<a class="headerlink" href="#cpp-module" title="Permalink to this heading">¶</a></h2>
+<div class="section" id="feature-engineering">
+<span id="feature-engineering-api"></span><h2>Feature Engineering<a class="headerlink" href="#feature-engineering" title="Permalink to this heading">¶</a></h2>
 <table class="autosummary longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.CPP.html#aaanalysis.CPP" title="aaanalysis.CPP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.CPP</span></code></a>([df_scales, df_cat, ...])</p></td>
-<td><p>Create and filter features that are most discriminant between two sets of sequences.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature" title="aaanalysis.SequenceFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.SequenceFeature</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature" title="aaanalysis.SequenceFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.SequenceFeature</span></code></a>()</p></td>
 <td><p>Retrieve and create sequence feature components (Part, Split, and Scale).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.SplitRange.html#aaanalysis.SplitRange" title="aaanalysis.SplitRange"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.SplitRange</span></code></a>()</p></td>
-<td><p>Class for creating range of splits for testing sets of multiple features in CPP</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.CPP.html#aaanalysis.CPP" title="aaanalysis.CPP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.CPP</span></code></a>([df_scales, df_cat, ...])</p></td>
+<td><p>Create and filter features that are most discriminant between two sets of sequences.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.CPPPlot.html#aaanalysis.CPPPlot" title="aaanalysis.CPPPlot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.CPPPlot</span></code></a>([df_cat, accept_gaps, ...])</p></td>
+<td><p>Create and filter features that are most discriminant between two sets of sequences.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="section" id="dpulearn">
-<span id="dpulearn-api"></span><h2>dPUlearn<a class="headerlink" href="#dpulearn" title="Permalink to this heading">¶</a></h2>
+<div class="section" id="pu-learning">
+<span id="pu-learning-api"></span><h2>PU Learning<a class="headerlink" href="#pu-learning" title="Permalink to this heading">¶</a></h2>
 <table class="autosummary longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -299,8 +303,14 @@ For convenience, it is common to import the module as follows:</p>
 </tbody>
 </table>
 </div>
+<div class="section" id="explainable-ai">
+<span id="plot-api"></span><h2>Explainable AI<a class="headerlink" href="#explainable-ai" title="Permalink to this heading">¶</a></h2>
+</div>
+<div class="section" id="perturbation">
+<h2>Perturbation<a class="headerlink" href="#perturbation" title="Permalink to this heading">¶</a></h2>
+</div>
 <div class="section" id="plot-utilities">
-<span id="plot-api"></span><h2>Plot Utilities<a class="headerlink" href="#plot-utilities" title="Permalink to this heading">¶</a></h2>
+<h2>Plot Utilities<a class="headerlink" href="#plot-utilities" title="Permalink to this heading">¶</a></h2>
 <table class="autosummary longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -315,6 +325,12 @@ For convenience, it is common to import the module as follows:</p>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_gcfs.html#aaanalysis.plot_gcfs" title="aaanalysis.plot_gcfs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_gcfs</span></code></a>()</p></td>
 <td><p>Get current font size, which is set by ut.plot_settings function</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.plot_get_cmap.html#aaanalysis.plot_get_cmap" title="aaanalysis.plot_get_cmap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_get_cmap</span></code></a>([name, n_colors, ...])</p></td>
+<td><p>Retrieve color maps or color dictionaries specified for AAanalysis.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_get_cdict.html#aaanalysis.plot_get_cdict" title="aaanalysis.plot_get_cdict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_get_cdict</span></code></a>([name])</p></td>
+<td><p>Retrieve color dictionaries specified for AAanalysis.</p></td>
 </tr>
 </tbody>
 </table>

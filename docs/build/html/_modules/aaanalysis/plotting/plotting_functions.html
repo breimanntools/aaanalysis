@@ -299,7 +299,7 @@
 
 
 <span class="c1"># Default plotting function</span>
-<span class="k">def</span> <span class="nf">plot_get_cmap</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_colors</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">facecolor_dark</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<div class="viewcode-block" id="plot_get_cmap"><a class="viewcode-back" href="../../../generated/aaanalysis.plot_get_cmap.html#aaanalysis.plot_get_cmap">[docs]</a><span class="k">def</span> <span class="nf">plot_get_cmap</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">n_colors</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">facecolor_dark</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                   <span class="n">color_pos</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">color_neg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">color_center</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                   <span class="nb">input</span><span class="o">=</span><span class="s2">&quot;hex&quot;</span><span class="p">,</span> <span class="n">pct_gap</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">pct_center</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -349,10 +349,10 @@
     <span class="n">cmap</span> <span class="o">=</span> <span class="n">_get_cmap_with_gap</span><span class="p">(</span><span class="n">n_colors</span><span class="o">=</span><span class="n">n_colors</span><span class="p">,</span> <span class="n">color_pos</span><span class="o">=</span><span class="n">color_pos</span><span class="p">,</span> <span class="n">color_neg</span><span class="o">=</span><span class="n">color_neg</span><span class="p">,</span>
                               <span class="n">color_center</span><span class="o">=</span><span class="n">color_center</span><span class="p">,</span> <span class="n">pct_gap</span><span class="o">=</span><span class="n">pct_gap</span><span class="p">,</span> <span class="n">pct_center</span><span class="o">=</span><span class="n">pct_center</span><span class="p">,</span>
                               <span class="nb">input</span><span class="o">=</span><span class="nb">input</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">cmap</span>
+    <span class="k">return</span> <span class="n">cmap</span></div>
 
 
-<span class="k">def</span> <span class="nf">plot_get_cdict</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="plot_get_cdict"><a class="viewcode-back" href="../../../generated/aaanalysis.plot_get_cdict.html#aaanalysis.plot_get_cdict">[docs]</a><span class="k">def</span> <span class="nf">plot_get_cdict</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Retrieve color dictionaries specified for AAanalysis.</span>
 
@@ -369,7 +369,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># TODO check color dict name</span>
     <span class="n">color_dict</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">DICT_COLOR</span> <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;DICT_COLORS&quot;</span> <span class="k">else</span> <span class="n">ut</span><span class="o">.</span><span class="n">DICT_COLOR_CAT</span>
-    <span class="k">return</span> <span class="n">color_dict</span>
+    <span class="k">return</span> <span class="n">color_dict</span></div>
 
 
 <div class="viewcode-block" id="plot_settings"><a class="viewcode-back" href="../../../generated/aaanalysis.plot_settings.html#aaanalysis.plot_settings">[docs]</a><span class="k">def</span> <span class="nf">plot_settings</span><span class="p">(</span><span class="n">fig_format</span><span class="o">=</span><span class="s2">&quot;pdf&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">grid_axis</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span>
