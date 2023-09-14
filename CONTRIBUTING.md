@@ -28,7 +28,7 @@ It's invaluable for maintainers when bug reports include a Minimal Reproducible 
 - Self-contained: Ensure it includes all necessary data and imports.
 - Reproducible: Verify that it consistently reproduces the problem.
 
-For a guide on crafting effective bug reports, see [How To Craft Minimal Bug Reports](#).
+For a guide on crafting effective bug reports, see [How To Craft Minimal Bug Reports](https://matthewrocklin.com/minimal-bug-reports).
 
 ## Installing the latest version
 
