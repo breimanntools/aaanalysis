@@ -61,7 +61,7 @@ Contributions
 =============
 
 We welcome bug reports, feature requests, code, or documentation updates. For details, refer to our
-`CONTRIBUTING.md <https://github.com/breimanntools/aaanalysis/blob/master/CONTRIBUTING.md>`_.
+`CONTRIBUTING.rst <https://github.com/breimanntools/aaanalysis/blob/master/CONTRIBUTING.rst>`_.
 Please email stephanbreimann@gmail.com for further questions or suggestions?
 
 Citations

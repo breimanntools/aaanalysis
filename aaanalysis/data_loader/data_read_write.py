@@ -5,7 +5,6 @@ import time
 import pandas as pd
 import numpy as np
 
-import scripts._utils as ut
 
 # Settings
 pd.set_option('expand_frame_repr', False)  # Single line print for pd.Dataframe
@@ -15,18 +14,11 @@ pd.set_option('expand_frame_repr', False)  # Single line print for pd.Dataframe
 
 
 # II Main Functions
+def read_fasta():
+    """"""
+    # TODO implement a fasta parser to df_seq
 
 
-# III Test/Caller Functions
-
-
-# IV Main
-def main():
-    t0 = time.time()
-
-    t1 = time.time()
-    print("Time:", t1 - t0)
-
-
-if __name__ == "__main__":
-    main()
+def to_fasta(df_seq=None):
+    """"""
+    # TODO implement a writer to fasta from df_seq

@@ -8,7 +8,7 @@ from aaanalysis.cpp._feature_stat import SequenceFeatureStatistics
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
-
+from aaanalysis.template_classes import Tool
 
 # I Helper Functions
 
@@ -29,7 +29,7 @@ def _filtering_info(df=None, df_scales=None, check_cat=True):
 # TODO simplify checks & interface (end-to-end check with tests & docu)
 
 # II Main Functions
-class CPP:
+class CPP(Tool):
     """
     Create and filter features that are most discriminant between two sets of sequences.
 

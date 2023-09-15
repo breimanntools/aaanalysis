@@ -14,8 +14,7 @@ from aaanalysis._utils.utils_aaclust import *
 from aaanalysis._utils.utils_cpp import *
 
 
-
-# I Folder
+# I Folder structure
 def _folder_path(super_folder, folder_name):
     """Modification of separator (OS depending)"""
     path = os.path.join(super_folder, folder_name + SEP)
@@ -28,6 +27,4 @@ FOLDER_DATA = _folder_path(FOLDER_PROJECT, '_data')
 URL_DATA = "https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data/"
 
 
-# II Helper Function
-
-# TODO add template classes Wrapper, Tool
+# II MAIN FUNCTIONS

@@ -1,5 +1,5 @@
 """
-This is a script for creating template Wrapper and Toll classes used in the AAanalysis library
+This is a script for creating template Wrapper and Tool classes used in the AAanalysis library
 """
 from abc import ABC, abstractmethod, abstractproperty
 

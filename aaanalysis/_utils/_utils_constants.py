@@ -1,9 +1,11 @@
 """
-This is a script for constants (e.g., names or column names)
+This is a script containing constant names, column names, or colors.
+
+AAanalysis comprises these primary pd.DataFrames: df_seq, df_part, df_cat, df_scales, df_feat
+
 """
 
-
-# Default datasets for protein analysis
+# Default scale datasets for protein analysis
 STR_SCALES = "scales"   # Min-max normalized scales (from AAontology)
 STR_SCALES_RAW = "scales_raw"   # Raw scales (from AAontology)
 STR_SCALES_PC = "scales_pc"     # AAclust pc-based scales (pc: principal component)
@@ -11,7 +13,9 @@ STR_SCALE_CAT = "scale_classification"  # AAontology
 STR_TOP60 = "top60"    # AAclustTop60
 STR_TOP60_EVAL = "top60_eval"  # AAclustTop60 evaluation
 
-# Column name datasets (DOM_GSEC)
+
+# Column names for primary df
+# df_seq
 COL_ENTRY = "entry"     # ACC, protein entry, uniprot id
 COL_NAME = "name"       # Entry name, Protein name, Uniprot Name
 COL_LABEL = "label"
@@ -20,15 +24,18 @@ COLS_PARTS = ["jmd_n", "tmd", "jmd_c"]
 COL_TMD_START = "tmd_start"
 COL_TMD_STOP = "tmd_stop"
 COLS_SEQ_INFO = [COL_SEQ, COL_TMD_START, COL_TMD_STOP]  # TODO
+# df_part
 
-# Column names scales (scale_classification)
+# df_scales
+# Column for df_cat (as defined in AAontology, retrieved by aa.load_scales(name="scale_cat"))
 COL_SCALE_ID = "scale_id"
 COL_CAT = "category"
 COL_SUBCAT = "subcategory"
 COL_SCALE_NAME = "scale_name"
 COL_SCALE_DES = "scale_description"
 
-# Column names cpp features
+
+# Columns for df_feat
 COL_FEATURE = "feature"
 # COL_CAT, COL_SUBCAT, COL_SCALE_NAME, COL_SCALE_DES
 COL_ABS_AUC = "abs_auc"
@@ -40,9 +47,18 @@ COL_PVAL_MW = "p_val_mann_whitney"
 COL_PVAL_FDR = "p_val_fdr_bh"
 COL_POSITION = "positions"
 
+# Columns for df_feat after processing with explainable AI methods
 COL_FEAT_IMPORTANCE = "feat_importance"
 COO_FEAT_IMP_STD = "feat_importance_std"
 COL_FEAT_IMPACT = "feat_impact"
+
+
+# Column name datasets (DOM_GSEC)
+
+
+
+# Column names cpp features
+
 
 # Standard colors
 COLOR_SHAP_POS = '#FF0D57'  # (255, 13, 87)
