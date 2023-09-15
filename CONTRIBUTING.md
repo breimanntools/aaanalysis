@@ -23,7 +23,7 @@ Newcomers can start by tackling issues labeled `good first issue`.
 
 ### Objectives
 
-- Establish a comprehensive toolkit for sequence-based protein prediction.
+- Establish a comprehensive toolkit for interpretable, sequence-based protein prediction.
 - Enable robust learning from small and unbalanced datasets, common in life sciences.
 - Integrate seamlessly with machine learning and explainable AI libraries such as
 [scikit-learn](https://scikit-learn.org/stable/) and [SHAP](https://shap.readthedocs.io/en/latest/index.html).
@@ -41,7 +41,7 @@ Newcomers can start by tackling issues labeled `good first issue`.
 - We emphasize fair, accountable, and transparent machine learning, as detailed in 
 [Interpretable Machine Learning with Python](https://www.packtpub.com/product/interpretable-machine-learning-with-python/9781800203907).
 - We're committed to offering diverse evaluation metrics and interpretable visualizations, aiming to extend to 
-causal inference and other aspects of explainable AI.
+other aspects of explainable AI such as causal inference.
 
 ## Writing Helpful Bug Reports
 
