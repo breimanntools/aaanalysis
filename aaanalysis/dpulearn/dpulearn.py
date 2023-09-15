@@ -266,7 +266,7 @@ class dPULearn:
 
         Examples
         --------
-        Create small example datafor dPUlearn containg positive ('pos', 1) and unlabeled ('unl', 2) _data
+        Create small example datafor dPUlearn containg positive ('pos', 1) and unlabeled ('unl', 2) data
 
         >>> import aaanalysis as aa
         >>> import pandas as pd

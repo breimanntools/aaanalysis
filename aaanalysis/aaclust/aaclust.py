@@ -363,7 +363,7 @@ class AAclust:
     # Clustering method
     def fit(self, X, names=None, on_center=True, min_th=0,  merge_metric="euclidean", n_clusters=None):
         """
-        Fit the AAclust model on the _data, optimizing cluster formation using Pearson correlation.
+        Fit the AAclust model on the data, optimizing cluster formation using Pearson correlation.
 
         AAclust determines the optimal number of clusters, k, without pre-specification. It partitions data(X) into
         clusters by maximizing the within-cluster Pearson correlation beyond the 'min_th' threshold. The quality of
@@ -540,7 +540,7 @@ class AAclust:
         medoid_labels : array-like
             The labels corresponding to each medoid.
         medoid_ind : array-like
-            Indexes of medoids within the original _data.
+            Indexes of medoids within the original data.
         """
         medoids, medoid_labels, medoid_ind = get_cluster_medoids(X, labels=labels)
         return medoids, medoid_labels, medoid_ind
@@ -558,9 +558,9 @@ class AAclust:
         X_ref : array-like
             Reference feature matrix.
         labels_test : list or array-like, optional
-            Cluster labels for the test _data.
+            Cluster labels for the test data.
         labels_ref : list or array-like, optional
-            Cluster labels for the reference _data.
+            Cluster labels for the reference data.
         n : int, default = 3
             Number of top centers to consider based on correlation strength.
         positive : bool, default = True
@@ -584,7 +584,7 @@ class AAclust:
             names_ref = [x for x in list(dict.fromkeys(labels_ref)) if "unclassified" not in x.lower()]
         masks_ref = [[True if i == label else False for i in labels_ref] for label in names_ref]
         if on_center:
-            # Get centers for all clusters in reference _data
+            # Get centers for all clusters in reference data
             centers = np.concatenate([cluster_center(X_ref[mask]) for mask in masks_ref], axis=0)
             # Compute correlation of test data with centers
             Xtest_centers = np.concatenate([X_test, centers], axis=0)
@@ -593,7 +593,7 @@ class AAclust:
         else:
             masks_test = [[True if i == j else False for j in range(0, len(labels_test))]
                           for i, _ in enumerate(labels_test)]
-            # Compute minimum correlation of test data with each group of reference _data
+            # Compute minimum correlation of test data with each group of reference data
             X_corr = np.array([[_min_cor_all(np.concatenate([X_test[mask_test], X_ref[mask_ref]], axis=0))
                                 for mask_ref in masks_ref ] for mask_test in masks_test])
         # Get index for n centers with highest/lowest correlation for each scale

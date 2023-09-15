@@ -534,7 +534,7 @@ class CPPPlot:
 
         Warnings
         --------
-        - 'cmap_n_colors' is effective only if 'vmin' and 'vmax' align with the _data.
+        - 'cmap_n_colors' is effective only if 'vmin' and 'vmax' align with the data.
 
         - 'tmd_seq_color' and 'jmd_seq_color' are applicable only when 'tmd_seq', 'jmd_n_seq', and 'jmd_c_seq' are provided.
 

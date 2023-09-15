@@ -5,7 +5,7 @@ import os
 import pandas as pd
 import numpy as np
 import re
-
+from typing import Optional, Literal
 import aaanalysis.utils as ut
 
 
@@ -36,39 +36,42 @@ def _adjust_non_canonical_aa(df=None, non_canonical_aa="remove"):
         df[ut.COL_SEQ] = [re.sub(f'[{"".join(list_non_canonical_aa)}]', STR_AA_GAP, x) for x in df[ut.COL_SEQ]]
     return df
 
-
-def load_dataset(name="INFO", n=None, non_canonical_aa="remove", min_len=None, max_len=None):
+# TODO write test and check in READTHEDOCA (end-to-end solution)
+def load_dataset(name: str = "INFO",
+                 n: Optional[int] = None,
+                 non_canonical_aa: Literal["remove", "keep", "gap"] = "remove",
+                 min_len: Optional[int] = None,
+                 max_len: Optional[int] = None) -> pd.DataFrame:
     """
     Load protein benchmarking datasets or their general overview by setting 'name' to 'INFO'.
 
     Three types of benchmark datasets are provided:
         - Residue prediction: 6 datasets used to predict residue (amino acid) specific properties
             ('AA_CASPASE3', 'AA_FURIN', 'AA_LDR', 'AA_MMP2', 'AA_RNABIND', 'AA_SA')
-        - Domain prediction: 1 dataset used to predict domain specific properties (_PU contains unlabeled _data)
+        - Domain prediction: 1 dataset used to predict domain specific properties (_PU contains unlabeled data)
             (DOM_GSEC, DOM_GSEC_PU)
         - Sequence prediction: 6 datasets used to predict sequence specific properties
             ('SEQ_AMYLO', 'SEQ_CAPSID', 'SEQ_DISULFIDE', 'SEQ_LOCATION', 'SEQ_SOLUBLE', 'SEQ_TAIL')
 
     Parameters
     ----------
-    name : str, default="INFO"
-        Name of the dataset ('Dataset' column).
-    n : int, optional, default=None
+    name :
+        Name of the dataset. See 'Dataset' column in overview dataframe (name='INFO').
+    n :
         Number of proteins per class. If None, the whole dataset will be returned.
-    non_canonical_aa: {'remove', 'keep', 'gap'}, default='remove'
+    non_canonical_aa :
         Options for modifying non-canonical amino acids:
-
         - 'remove': Sequences containing non-canonical amino acids are removed.
         - 'keep': Sequences containing non-canonical amino acids are not removed.
         - 'gap': Sequences are kept and modified by replacing non-canonical amino acids by gap symbol ('X').
-    min_len : int, optional, default=None
-        Minimum length of sequences used for filtering.
-    max_len : int, optional, default=None
-        Maximum length of sequences used for filtering.
+    min_len :
+        Minimum length of sequences for filtering. None to disable.
+    max_len :
+        Maximum length of sequences for filtering. None to disable
 
     Returns
     -------
-    df : :class:`pandas.DataFrame`
+    df_seq
         Dataframe with the selected sequence dataset.
 
     Notes
@@ -91,7 +94,7 @@ def load_dataset(name="INFO", n=None, non_canonical_aa="remove", min_len=None, m
                          f"\n Sequence datasets: {list_seq}"
                          f"\n Domain datasets: {list_dom}")
     df = pd.read_csv(folder_in + name + ".tsv", sep="\t")
-    # Filter _data
+    # Filter Rdata
     if min_len is not None:
         mask = [len(x) >= min_len for x in df[ut.COL_SEQ]]
         df = df[mask]
@@ -99,12 +102,12 @@ def load_dataset(name="INFO", n=None, non_canonical_aa="remove", min_len=None, m
         mask = [len(x) <= max_len for x in df[ut.COL_SEQ]]
         df = df[mask]
     # Adjust non-canonical amino acid (keep, remove, or replace by gap)
-    df = _adjust_non_canonical_aa(df=df, non_canonical_aa=non_canonical_aa)
+    df_seq = _adjust_non_canonical_aa(df=df, non_canonical_aa=non_canonical_aa)
     # Select balanced groups
     if n is not None:
-        labels = set(df[ut.COL_LABEL])
-        df = pd.concat([df[df[ut.COL_LABEL] == l].head(n) for l in labels])
-    return df
+        labels = set(df_seq[ut.COL_LABEL])
+        df_seq = pd.concat([df_seq[df_seq[ut.COL_LABEL] == l].head(n) for l in labels])
+    return df_seq
 
 
 # Load scales
@@ -146,7 +149,7 @@ def load_scales(name="scales", just_aaindex=False, unclassified_in=True):
     """
     if name not in LIST_DATASETS:
         raise ValueError(f"'name' ({name}) is not valid. Choose one of following: {LIST_DATASETS}")
-    # Load _data
+    # Load data
     df_cat = pd.read_excel(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.xlsx")
     df_cat = _filter_scales(df_cat=df_cat, unclassified_in=unclassified_in, just_aaindex=just_aaindex)
     if name == ut.STR_SCALE_CAT:

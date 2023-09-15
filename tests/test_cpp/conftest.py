@@ -13,7 +13,7 @@ II Positive vs negative testing
     b) Negative testing: Check if code troughs error with invalid input
 
 II Additional test strategies
-    a) Property-Based Testing: Validate assumptions (hypothesis) of code using automatically generated _data
+    a) Property-Based Testing: Validate assumptions (hypothesis) of code using automatically generated data
         "Complementary to unit testing" (p. 224-230, The Pragmatic Programmer)
     b) Functional test: Check single bit of functionality in a system (similar to regression test?)
         Unit test vs. functional test (Code is doing things right vs. Code is doing right things)

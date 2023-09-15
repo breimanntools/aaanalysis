@@ -63,8 +63,8 @@ Further guidelines can be found `here <https://matthewrocklin.com/minimal-bug-re
 Installation
 ------------
 
-Installation of the latest version
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Latest Version
+^^^^^^^^^^^^^^
 
 To test the latest development version, you can use pip:
 
@@ -72,8 +72,8 @@ To test the latest development version, you can use pip:
 
   pip install git+https://github.com/breimanntools/aaanalysis.git@master
 
-Set Up Local Development Environment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Local Development Environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Fork and Clone
 """"""""""""""
@@ -194,8 +194,8 @@ Documentation Style
 
 - **Further Details**: See `docs/source/conf.py` for more.
 
-Building the Docs Locally
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Building the Docs
+^^^^^^^^^^^^^^^^^
 
 To generate the documentation locally:
 

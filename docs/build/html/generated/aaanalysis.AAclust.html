@@ -277,7 +277,7 @@ for each cluster, which is the closest to the cluster’s center, yielding a red
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.AAclust.fit" title="aaanalysis.AAclust.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(X[, names, on_center, min_th, ...])</p></td>
-<td><p>Fit the AAclust model on the _data, optimizing cluster formation using Pearson correlation.</p></td>
+<td><p>Fit the AAclust model on the data, optimizing cluster formation using Pearson correlation.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.AAclust.get_cluster_centers" title="aaanalysis.AAclust.get_cluster_centers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cluster_centers</span></code></a>(X[, labels])</p></td>
 <td><p>Computes the center of each cluster based on the given labels.</p></td>
@@ -322,9 +322,9 @@ most frequent scales. If the name is already used or does not exist, it defaults
 </dd>
 <dt><strong>X_ref</strong><span class="classifier">array-like</span></dt><dd><p>Reference feature matrix.</p>
 </dd>
-<dt><strong>labels_test</strong><span class="classifier">list or array-like, optional</span></dt><dd><p>Cluster labels for the test _data.</p>
+<dt><strong>labels_test</strong><span class="classifier">list or array-like, optional</span></dt><dd><p>Cluster labels for the test data.</p>
 </dd>
-<dt><strong>labels_ref</strong><span class="classifier">list or array-like, optional</span></dt><dd><p>Cluster labels for the reference _data.</p>
+<dt><strong>labels_ref</strong><span class="classifier">list or array-like, optional</span></dt><dd><p>Cluster labels for the reference data.</p>
 </dd>
 <dt><strong>n</strong><span class="classifier">int, default = 3</span></dt><dd><p>Number of top centers to consider based on correlation strength.</p>
 </dd>
@@ -348,7 +348,7 @@ most frequent scales. If the name is already used or does not exist, it defaults
 <dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.AAclust.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_center</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_th</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'euclidean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_clusters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/aaclust/aaclust.html#AAclust.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L364-L454"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust.fit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fit the AAclust model on the _data, optimizing cluster formation using Pearson correlation.</p>
+<dd><p>Fit the AAclust model on the data, optimizing cluster formation using Pearson correlation.</p>
 <p>AAclust determines the optimal number of clusters, k, without pre-specification. It partitions data(X) into
 clusters by maximizing the within-cluster Pearson correlation beyond the ‘min_th’ threshold. The quality of
 clustering is either based on the minimum Pearson correlation of all members (‘min_cor all’) or between
@@ -433,7 +433,7 @@ the cluster center and its members (‘min_cor center’), governed by <cite>on_
 </dd>
 <dt><strong>medoid_labels</strong><span class="classifier">array-like</span></dt><dd><p>The labels corresponding to each medoid.</p>
 </dd>
-<dt><strong>medoid_ind</strong><span class="classifier">array-like</span></dt><dd><p>Indexes of medoids within the original _data.</p>
+<dt><strong>medoid_ind</strong><span class="classifier">array-like</span></dt><dd><p>Indexes of medoids within the original data.</p>
 </dd>
 </dl>
 </dd>

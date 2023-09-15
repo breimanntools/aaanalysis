@@ -192,7 +192,7 @@
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">re</span>
-
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Literal</span>
 <span class="kn">import</span> <span class="nn">aaanalysis.utils</span> <span class="k">as</span> <span class="nn">ut</span>
 
 
@@ -223,39 +223,42 @@
         <span class="n">df</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_SEQ</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;[</span><span class="si">{</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">list_non_canonical_aa</span><span class="p">)</span><span class="si">}</span><span class="s1">]&#39;</span><span class="p">,</span> <span class="n">STR_AA_GAP</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_SEQ</span><span class="p">]]</span>
     <span class="k">return</span> <span class="n">df</span>
 
-
-<div class="viewcode-block" id="load_dataset"><a class="viewcode-back" href="../../../generated/aaanalysis.load_dataset.html#aaanalysis.load_dataset">[docs]</a><span class="k">def</span> <span class="nf">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">non_canonical_aa</span><span class="o">=</span><span class="s2">&quot;remove&quot;</span><span class="p">,</span> <span class="n">min_len</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="c1"># TODO write test and check in READTHEDOCA (end-to-end solution)</span>
+<div class="viewcode-block" id="load_dataset"><a class="viewcode-back" href="../../../generated/aaanalysis.load_dataset.html#aaanalysis.load_dataset">[docs]</a><span class="k">def</span> <span class="nf">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;INFO&quot;</span><span class="p">,</span>
+                 <span class="n">n</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">non_canonical_aa</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;remove&quot;</span><span class="p">,</span> <span class="s2">&quot;keep&quot;</span><span class="p">,</span> <span class="s2">&quot;gap&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;remove&quot;</span><span class="p">,</span>
+                 <span class="n">min_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">max_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Load protein benchmarking datasets or their general overview by setting &#39;name&#39; to &#39;INFO&#39;.</span>
 
 <span class="sd">    Three types of benchmark datasets are provided:</span>
 <span class="sd">        - Residue prediction: 6 datasets used to predict residue (amino acid) specific properties</span>
 <span class="sd">            (&#39;AA_CASPASE3&#39;, &#39;AA_FURIN&#39;, &#39;AA_LDR&#39;, &#39;AA_MMP2&#39;, &#39;AA_RNABIND&#39;, &#39;AA_SA&#39;)</span>
-<span class="sd">        - Domain prediction: 1 dataset used to predict domain specific properties (_PU contains unlabeled _data)</span>
+<span class="sd">        - Domain prediction: 1 dataset used to predict domain specific properties (_PU contains unlabeled data)</span>
 <span class="sd">            (DOM_GSEC, DOM_GSEC_PU)</span>
 <span class="sd">        - Sequence prediction: 6 datasets used to predict sequence specific properties</span>
 <span class="sd">            (&#39;SEQ_AMYLO&#39;, &#39;SEQ_CAPSID&#39;, &#39;SEQ_DISULFIDE&#39;, &#39;SEQ_LOCATION&#39;, &#39;SEQ_SOLUBLE&#39;, &#39;SEQ_TAIL&#39;)</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    name : str, default=&quot;INFO&quot;</span>
-<span class="sd">        Name of the dataset (&#39;Dataset&#39; column).</span>
-<span class="sd">    n : int, optional, default=None</span>
+<span class="sd">    name :</span>
+<span class="sd">        Name of the dataset. See &#39;Dataset&#39; column in overview dataframe (name=&#39;INFO&#39;).</span>
+<span class="sd">    n :</span>
 <span class="sd">        Number of proteins per class. If None, the whole dataset will be returned.</span>
-<span class="sd">    non_canonical_aa: {&#39;remove&#39;, &#39;keep&#39;, &#39;gap&#39;}, default=&#39;remove&#39;</span>
+<span class="sd">    non_canonical_aa :</span>
 <span class="sd">        Options for modifying non-canonical amino acids:</span>
-
 <span class="sd">        - &#39;remove&#39;: Sequences containing non-canonical amino acids are removed.</span>
 <span class="sd">        - &#39;keep&#39;: Sequences containing non-canonical amino acids are not removed.</span>
 <span class="sd">        - &#39;gap&#39;: Sequences are kept and modified by replacing non-canonical amino acids by gap symbol (&#39;X&#39;).</span>
-<span class="sd">    min_len : int, optional, default=None</span>
-<span class="sd">        Minimum length of sequences used for filtering.</span>
-<span class="sd">    max_len : int, optional, default=None</span>
-<span class="sd">        Maximum length of sequences used for filtering.</span>
+<span class="sd">    min_len :</span>
+<span class="sd">        Minimum length of sequences for filtering. None to disable.</span>
+<span class="sd">    max_len :</span>
+<span class="sd">        Maximum length of sequences for filtering. None to disable</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    df : :class:`pandas.DataFrame`</span>
+<span class="sd">    df_seq</span>
 <span class="sd">        Dataframe with the selected sequence dataset.</span>
 
 <span class="sd">    Notes</span>
@@ -278,7 +281,7 @@
                          <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> Sequence datasets: </span><span class="si">{</span><span class="n">list_seq</span><span class="si">}</span><span class="s2">&quot;</span>
                          <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> Domain datasets: </span><span class="si">{</span><span class="n">list_dom</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">folder_in</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.tsv&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="c1"># Filter _data</span>
+    <span class="c1"># Filter Rdata</span>
     <span class="k">if</span> <span class="n">min_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">min_len</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_SEQ</span><span class="p">]]</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
@@ -286,12 +289,12 @@
         <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">max_len</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_SEQ</span><span class="p">]]</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
     <span class="c1"># Adjust non-canonical amino acid (keep, remove, or replace by gap)</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">_adjust_non_canonical_aa</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="n">non_canonical_aa</span><span class="o">=</span><span class="n">non_canonical_aa</span><span class="p">)</span>
+    <span class="n">df_seq</span> <span class="o">=</span> <span class="n">_adjust_non_canonical_aa</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="n">non_canonical_aa</span><span class="o">=</span><span class="n">non_canonical_aa</span><span class="p">)</span>
     <span class="c1"># Select balanced groups</span>
     <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">labels</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_LABEL</span><span class="p">])</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_LABEL</span><span class="p">]</span> <span class="o">==</span> <span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">df</span></div>
+        <span class="n">labels</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">df_seq</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_LABEL</span><span class="p">])</span>
+        <span class="n">df_seq</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df_seq</span><span class="p">[</span><span class="n">df_seq</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_LABEL</span><span class="p">]</span> <span class="o">==</span> <span class="n">l</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">df_seq</span></div>
 
 
 <span class="c1"># Load scales</span>
@@ -333,7 +336,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">LIST_DATASETS</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;name&#39; (</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">) is not valid. Choose one of following: </span><span class="si">{</span><span class="n">LIST_DATASETS</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="c1"># Load _data</span>
+    <span class="c1"># Load data</span>
     <span class="n">df_cat</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">FOLDER_DATA</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ut</span><span class="o">.</span><span class="n">STR_SCALE_CAT</span><span class="si">}</span><span class="s2">.xlsx&quot;</span><span class="p">)</span>
     <span class="n">df_cat</span> <span class="o">=</span> <span class="n">_filter_scales</span><span class="p">(</span><span class="n">df_cat</span><span class="o">=</span><span class="n">df_cat</span><span class="p">,</span> <span class="n">unclassified_in</span><span class="o">=</span><span class="n">unclassified_in</span><span class="p">,</span> <span class="n">just_aaindex</span><span class="o">=</span><span class="n">just_aaindex</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="n">ut</span><span class="o">.</span><span class="n">STR_SCALE_CAT</span><span class="p">:</span>
