@@ -1,38 +1,61 @@
 # Contributing to AAanalysis
 
 - [Introduction](#introduction)
-- [Writing helpful bug reports](#writing-helpful-bug-reports)
-- [Installing the latest version](#installing-the-latest-version)
-- [Setting up a local development environment](#setting-up-a-local-development-environment)
-- [Pull Requests (PRs)](#pull-requests-prs)
+- [Vision](#vision)
+- [Bug Reports](#writing-helpful-bug-reports)
+- [Installation](#installing-the-latest-version)
+- [Local Environment](#setting-up-a-local-development-environment)
+- [Pull Requests](#pull-requests-prs)
 - [Documentation](#documentation)
 
 ## Introduction
 
-Thank you for considering contributing to AAanalysis. AAanalysis is an open-source effort dedicated to providing a 
-framework for interpretable protein prediction, and your involvement is invaluable.
+Welcome and thank you for considering a contribution to AAanalysis! We are an open-source initiative focusing on
+interpretable protein prediction. Your involvement is invaluable to us. Contributions can be made in the following ways:
 
-You can contribute by:
+- Filing bug reports or feature suggestions on our GitHub issue tracker.
+- Submitting improvements via Pull Requests (PRs).
+- Participating in project discussions.
 
-- Reporting bugs and suggesting features in our GitHub issue tracker.
-- Proposing and implementing improvements via Pull Requests.
-- Engaging in discussions on the relevant topics.
+Newcomers can start by tackling issues labeled `good first issue`.
 
-If you're new to the project, consider looking for issues tagged with `good first issue`.
+## Vision
 
-## Writing helpful bug reports
+### Objectives
 
-It's invaluable for maintainers when bug reports include a Minimal Reproducible Example (MRE). An MRE should be:
+- Establish a comprehensive toolkit for sequence-based protein prediction.
+- Enable robust learning from small and unbalanced datasets, common in life sciences.
+- Integrate seamlessly with machine learning and explainable AI libraries such as
+[scikit-learn](https://scikit-learn.org/stable/) and [SHAP](https://shap.readthedocs.io/en/latest/index.html).
+- Offer flexible interoperability with other Python packages like [biopython](https://biopython.org/).
 
-- Minimal: Use as few lines of code as possible that still showcase the problem.
-- Self-contained: Ensure it includes all necessary data and imports.
-- Reproducible: Verify that it consistently reproduces the problem.
+### Non-goals
 
-For a guide on crafting effective bug reports, see [How To Craft Minimal Bug Reports](https://matthewrocklin.com/minimal-bug-reports).
+- Reimplementation of existing solutions.
+- Ignoring the biological context.
+- Reliance on opaque, black-box models.
 
-## Installing the latest version
+### Principles
 
-To obtain the latest version of aaanalysis, you can install directly from the master branch:
+- Algorithms should be biologically inspired and combine empirical insights with cutting-edge computational methods.
+- We emphasize fair, accountable, and transparent machine learning, as detailed in 
+[Interpretable Machine Learning with Python](https://www.packtpub.com/product/interpretable-machine-learning-with-python/9781800203907).
+- We're committed to offering diverse evaluation metrics and interpretable visualizations, aiming to extend to 
+causal inference and other aspects of explainable AI.
+
+## Writing Helpful Bug Reports
+
+For effective bug reports, please include a Minimal Reproducible Example (MRE):
+
+- **Minimal**: Include the least amount of code to demonstrate the issue.
+- **Self-contained**: Ensure all necessary data and imports are included.
+- **Reproducible**: Confirm the example reliably replicates the issue.
+
+Further guidelines can be found [here](https://matthewrocklin.com/minimal-bug-reports).
+
+## Installing the Latest Version
+
+Install the latest development version using pip:
 
 ```bash
 pip install git+https://github.com/breimanntools/aaanalysis.git@master
@@ -42,18 +65,19 @@ This allows you to test the latest developments before they're officially releas
 Alternatively, if you plan to modify the source code, follow the steps below 
 to set up a local development environment.
 
-## Setting up a local development environment
+## Setting Up a Local Development Environment
 
 ### Fork and Clone
 
-1. Fork the GitHub repository (https://github.com/breimanntools/aaanalysis)
+1. Fork the [repository](https://github.com/breimanntools/aaanalysis)
 2. Clone your fork:  
 ```bash
 git clone https://github.com/YOUR_USERNAME/aaanalysis.git
 ```
 
 ### Install Dependencies
-After you've cloned the repository, you can set up a Python environment and install all the required dependencies.
+
+Navigate to the project folder and set up the Python environment.
 
 1. Navigate to project folder
 ```bash
@@ -69,9 +93,9 @@ conda activate aanalysis
 poetry install
 ```
 
-### Unit Tests with Pytest
+### Run Unit Tests
 
-We use pytest for running unit tests. To run the tests locally, use:
+We utilize [pytest](https://docs.pytest.org/en/7.4.x/) and [hypothesis](https://hypothesis.readthedocs.io/en/latest/).
 
 ```bash
 pytest
@@ -81,55 +105,61 @@ This will execute all the test cases in the tests/ directory.
 
 ## Pull Requests (PRs)
 
-For significant changes, please start by opening an Issue to discuss the proposed changes.
-For minor adjustments, such as typo fixes, you can directly submit a PR.
+For substantial changes, start by opening an issue for discussion. For minor changes like typos, submit a PR directly.
 
-Ensure your PR is:
+Ensure your PR:
 
-- Concise: Keep the scope limited to make the review process smoother.
-- Descriptive: Use clear branch names like `fix/data-loading-issue` or `doc/update-readme`.
+- Is focused and concise.
+- Has a descriptive and clear branch name like `fix/data-loading-issue` or `doc/update-readme`.
+- Is up-to-date with the master branch and passes all tests.
 
-When your PR is ready for review, ensure:
+### Preview Changes
 
-- It's updated with the master branch.
-- All tests pass.
-
-### Previewing changes on Pull Requests
-
-The documentation is automatically built for each Pull Request, allowing for a convenient preview:
-
-- Look for "All checks have passed", then click "Show all checks".
-- Navigate to the check titled "docs/readthedocs.org".
-- Click on "Details" to see the preview.
+To preview documentation changes in PRs, follow the "docs/readthedocs.org" check link under "All checks have passed".
 
 ## Documentation
 
 Documentation is a crucial part of the project. If you make any modifications to the documentation,
 please ensure they render correctly.
 
-### Coding Principles
-
-We strive for a modular, robust, and easily extendable codebase. We achieve this by adhering to flat class 
-hierarchies and functional programming principles, as outlined in [this paper](https://dl.acm.org/doi/10.5555/3288797). 
-We also prioritize user-friendly interfaces, complete with descriptive error messages 
-and [Python type hints](https://docs.python.org/3/library/typing.html).
-
 ### Naming Conventions
 
-We aim to maintain interface consistency with established libraries like scikit-learn, pandas, matplotlib, and seaborn. 
+We strive for interface consistency with well-established libraries like 
+[scikit-learn](https://scikit-learn.org/stable/),
+[pandas](https://pandas.pydata.org/),
+[matplotlib](https://matplotlib.org/),
+and [seaborn](https://seaborn.pydata.org/).
 
-For the sake of consistency, we employ two types of template classes:
+#### Class Templates
 
-- **Wrapper**: These classes are designed to extend scikit-learn models (or similar interfaces). They feature `.fit` 
-and `.eval` methods for model training and evaluation, respectively. Examples include extending KMeans 
-for specific functionalities like redundancy-reduction via AAclust.
+We primarily use two class templates for organizing our codebase:
 
-- **Tool**: These standalone classes focus on specialized tasks, such as feature engineering for protein prediction. 
-Each class offers `.run` and `.eval` methods to execute its complete processing pipeline and generate various evaluation metrics.
+- **Wrapper**: Designed to extend models from libraries like scikit-learn. These classes contain `.fit` and `.eval` methods 
+for model training and evaluation, respectively. For example, a Wrapper class could extend the KMeans algorithm to offer 
+specialized functionalities like redundancy reduction via AAclust.
 
-Both `Wrapper` and `Tool` classes come with accompanying plotting classes to visualize their analysis or evaluation results.
+- **Tool**: Standalone classes that focus on specialized tasks, such as feature engineering for protein prediction. 
+They feature `.run` and `.eval` methods to carry out the complete processing pipeline and generate various evaluation metrics.
 
-### Documentation style
+Both `Wrapper` and `Tool` classes come with supplementary plotting classes for visualization.
+
+#### Function and Method Naming
+
+We semi-strictly adhere to the naming conventions established by the aforementioned libraries. 
+Functions/Methods processing data values should correspond with the names specified in our primary `pd.DataFrame` 
+columns, as defined in `/_utils/_utils_constants.py`.
+
+
+### Code Philosophy
+
+We aim for a modular, robust, and easily extendable codebase. Therefore, we adhere to flat class 
+hierarchies (i.e., only inheriting from `Wrapper` or `Tool` is recommended) and functional programming principles, 
+as outlined in [A Philosophy of Software Design](https://dl.acm.org/doi/10.5555/3288797). We also prioritize 
+user-friendly interfaces, complete with descriptive error messages and [Python type hints](https://docs.python.org/3/library/typing.html), 
+comprehensively described in [Robust Python](https://www.oreilly.com/library/view/robust-python/9781098100650/).
+
+
+### Documentation Style
 
 - **Docstring Style**: We use Numpy-style docstrings. Learn more in the
 [Numpy Docstring Guide](https://numpydoc.readthedocs.io/en/latest/format.html).
@@ -142,10 +172,10 @@ see this [reStructuredText Primer](https://www.sphinx-doc.org/en/master/usage/re
 - **Further Details**: See `docs/source/conf.py` for more.
 
 
-### Building the docs locally
+### Building the Docs Locally
 
 To generate the documentation locally:
 
 - Go to the `docs` directory.
-- Execute `make html`.
+- Run `make html`.
 - Open `_build/html/index.html` in a browser.
