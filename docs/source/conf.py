@@ -32,7 +32,7 @@ todo_include_todos = False
 # -- General configuration ---------------------------------------------------
 templates_path = ['_templates']
 exclude_patterns = []
-source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
 master_doc = 'index'
 
 nitpicky = True
@@ -55,6 +55,7 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',  # Integrate Matplotlib plots in docs
     'sphinx_design',  # Advanced design elements for Sphinx docs
     'sphinxext.opengraph',  # OpenGraph meta tags for rich link previews
+
     # 'sphinx.ext.napoleon',  # Support for Numpy-style and Google-style docstrings
     # 'sphinx_autodoc_typehints',  # Display Python type hints in documentation (needs to be after napoleon)
     # 'sphinx_book_theme',  # Theme optimized for book-style content presentation

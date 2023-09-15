@@ -6,7 +6,6 @@
 Welcome to the AAanalysis documentation
 =======================================
 .. include:: index/badges.rst
-
 .. include:: _resources/overview.rst
 
 Install
@@ -27,6 +26,7 @@ Install
 
    index/introduction.rst
    index/usage_principles.rst
+   index/CONTRIBUTING_COPY.rst
 
 .. toctree::
    :maxdepth: 1
@@ -39,6 +39,7 @@ Install
    :caption: REFERENCES
 
    api.rst
+
    _resources/tables.rst
    index/references.rst
 

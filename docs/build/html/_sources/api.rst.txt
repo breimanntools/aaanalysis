@@ -16,8 +16,8 @@ Then you can access all methods and objects via the `aa` alias, such as `aa.load
 
 .. _data_api:
 
-Data Loading
-------------
+Data
+----
 .. autosummary::
     :toctree: generated/
 

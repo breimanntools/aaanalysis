@@ -119,6 +119,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../index/usage_principles.html">Usage Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index/CONTRIBUTING_COPY.html">Contributing</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">EXAMPLES</span></p>
 <ul>
@@ -127,7 +128,7 @@
 <p class="caption" role="heading"><span class="caption-text">REFERENCES</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="../api.html#data-loading">Data Loading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#data">Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#preprocessing">Preprocessing</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="../api.html#feature-engineering">Feature Engineering</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="aaanalysis.SequenceFeature.html">aaanalysis.SequenceFeature</a></li>
@@ -288,11 +289,11 @@ of sequences at the positional level (e.g., amino acid level for protein sequenc
 Recommended when aiming to emphasize features with fewer positions using ‘val_col’=’feat_impact’ and ‘value_type’=’mean’.</p></li>
 </ul>
 </dd>
-<dt><strong>figsize</strong><span class="classifier">tuple(float, float), default = (10,7)</span></dt><dd><p>Width and height of the figure in inches passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="(in Matplotlib v3.7.3)"><code class="xref py py-func docutils literal notranslate"><span class="pre">matplotlib.pyplot.figure()</span></code></a>.</p>
+<dt><strong>figsize</strong><span class="classifier">tuple(float, float), default = (10,7)</span></dt><dd><p>Width and height of the figure in inches passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="(in Matplotlib v3.8.0rc1)"><code class="xref py py-func docutils literal notranslate"><span class="pre">matplotlib.pyplot.figure()</span></code></a>.</p>
 </dd>
-<dt><strong>title</strong><span class="classifier">str, optional</span></dt><dd><p>Title of figure used by <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.title.html#matplotlib.pyplot.title" title="(in Matplotlib v3.7.3)"><code class="xref py py-func docutils literal notranslate"><span class="pre">matplotlib.pyplot.title()</span></code></a>.</p>
+<dt><strong>title</strong><span class="classifier">str, optional</span></dt><dd><p>Title of figure used by <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.title.html#matplotlib.pyplot.title" title="(in Matplotlib v3.8.0rc1)"><code class="xref py py-func docutils literal notranslate"><span class="pre">matplotlib.pyplot.title()</span></code></a>.</p>
 </dd>
-<dt><strong>title_kws</strong><span class="classifier">dict, optional</span></dt><dd><p>Keyword arguments passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.title.html#matplotlib.pyplot.title" title="(in Matplotlib v3.7.3)"><code class="xref py py-func docutils literal notranslate"><span class="pre">matplotlib.pyplot.title()</span></code></a>.</p>
+<dt><strong>title_kws</strong><span class="classifier">dict, optional</span></dt><dd><p>Keyword arguments passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.title.html#matplotlib.pyplot.title" title="(in Matplotlib v3.8.0rc1)"><code class="xref py py-func docutils literal notranslate"><span class="pre">matplotlib.pyplot.title()</span></code></a>.</p>
 </dd>
 <dt><strong>vmin, vmax</strong><span class="classifier">float, optional</span></dt><dd><p>Values to anchor the colormap, otherwise, inferred from data and other keyword arguments.</p>
 </dd>
@@ -303,7 +304,7 @@ Recommended when aiming to emphasize features with fewer positions using ‘val_
 </dd>
 <dt><strong>dict_color</strong><span class="classifier">dict, optional</span></dt><dd><p>Map of colors for scale categories classifying scales shown on y-axis.</p>
 </dd>
-<dt><strong>cbar_kws</strong><span class="classifier">dict of key, value mappings, optional</span></dt><dd><p>Keyword arguments for <a class="reference external" href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.colorbar" title="(in Matplotlib v3.7.3)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.figure.Figure.colorbar()</span></code></a>.</p>
+<dt><strong>cbar_kws</strong><span class="classifier">dict of key, value mappings, optional</span></dt><dd><p>Keyword arguments for <a class="reference external" href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.colorbar" title="(in Matplotlib v3.8.0rc1)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.figure.Figure.colorbar()</span></code></a>.</p>
 </dd>
 <dt><strong>add_jmd_tmd</strong><span class="classifier">bool, default = True</span></dt><dd><p>Whether to add colored bar under heatmap indicating sequence parts (JMD-N, TMD, JMD-C).</p>
 </dd>
@@ -332,20 +333,20 @@ Recommended if feature impact or mean difference should be depicted for one samp
 </dd>
 <dt><strong>tmd_jmd_fontsize</strong><span class="classifier">float, optional</span></dt><dd><p>Font size of ‘TMD’, ‘JMD-N’ and ‘JMD-C’  label in points. If None, optimized automatically.</p>
 </dd>
-<dt><strong>xtick_size</strong><span class="classifier">float, default = 11.0</span></dt><dd><p>Size of x ticks in points. Passed as ‘size’ argument to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.set_xticklabels.html#matplotlib.axes.Axes.set_xticklabels" title="(in Matplotlib v3.7.3)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.set_xticklabels()</span></code></a>.</p>
+<dt><strong>xtick_size</strong><span class="classifier">float, default = 11.0</span></dt><dd><p>Size of x ticks in points. Passed as ‘size’ argument to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.set_xticklabels.html#matplotlib.axes.Axes.set_xticklabels" title="(in Matplotlib v3.8.0rc1)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.set_xticklabels()</span></code></a>.</p>
 </dd>
-<dt><strong>xtick_width</strong><span class="classifier">float, default = 2.0</span></dt><dd><p>Widht of x ticks in points. Passed as ‘width’ argument to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.tick_params.html#matplotlib.axes.Axes.tick_params" title="(in Matplotlib v3.7.3)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.tick_params()</span></code></a>.</p>
+<dt><strong>xtick_width</strong><span class="classifier">float, default = 2.0</span></dt><dd><p>Widht of x ticks in points. Passed as ‘width’ argument to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.tick_params.html#matplotlib.axes.Axes.tick_params" title="(in Matplotlib v3.8.0rc1)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.tick_params()</span></code></a>.</p>
 </dd>
-<dt><strong>xtick_length</strong><span class="classifier">float, default = 5.0,</span></dt><dd><p>Length of x ticks in points. Passed as ‘length’ argument to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.tick_params.html#matplotlib.axes.Axes.tick_params" title="(in Matplotlib v3.7.3)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.tick_params()</span></code></a>.</p>
+<dt><strong>xtick_length</strong><span class="classifier">float, default = 5.0,</span></dt><dd><p>Length of x ticks in points. Passed as ‘length’ argument to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.tick_params.html#matplotlib.axes.Axes.tick_params" title="(in Matplotlib v3.8.0rc1)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.tick_params()</span></code></a>.</p>
 </dd>
-<dt><strong>ytick_size</strong><span class="classifier">float, optional</span></dt><dd><p>Size of scale information as y ticks in points. Passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.tick_params.html#matplotlib.axes.Axes.tick_params" title="(in Matplotlib v3.7.3)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.tick_params()</span></code></a>.
+<dt><strong>ytick_size</strong><span class="classifier">float, optional</span></dt><dd><p>Size of scale information as y ticks in points. Passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.tick_params.html#matplotlib.axes.Axes.tick_params" title="(in Matplotlib v3.8.0rc1)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.tick_params()</span></code></a>.
 If None, optimized automatically.</p>
 </dd>
 <dt><strong>add_legend_cat</strong><span class="classifier">bool, default = True,</span></dt><dd><p>Whether to add legend for categories under plot and classification of scales at y-axis.</p>
 </dd>
-<dt><strong>legend_kws</strong><span class="classifier">dict, optional</span></dt><dd><p>Keyword arguments passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html#matplotlib.axes.Axes.legend" title="(in Matplotlib v3.7.3)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.legend()</span></code></a></p>
+<dt><strong>legend_kws</strong><span class="classifier">dict, optional</span></dt><dd><p>Keyword arguments passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html#matplotlib.axes.Axes.legend" title="(in Matplotlib v3.8.0rc1)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.legend()</span></code></a></p>
 </dd>
-<dt><strong>kwargs</strong><span class="classifier">other keyword arguments</span></dt><dd><p>All other keyword arguments passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.pcolormesh.html#matplotlib.axes.Axes.pcolormesh" title="(in Matplotlib v3.7.3)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.pcolormesh()</span></code></a>.</p>
+<dt><strong>kwargs</strong><span class="classifier">other keyword arguments</span></dt><dd><p>All other keyword arguments passed to <a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.pcolormesh.html#matplotlib.axes.Axes.pcolormesh" title="(in Matplotlib v3.8.0rc1)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">matplotlib.axes.Axes.pcolormesh()</span></code></a>.</p>
 </dd>
 </dl>
 </dd>
