@@ -363,7 +363,9 @@ conda<span class="w"> </span>activate<span class="w"> </span>aanalysis
 please ensure they render correctly.</p>
 <div class="section" id="naming-conventions">
 <h3>Naming Conventions<a class="headerlink" href="#naming-conventions" title="Permalink to this heading">¶</a></h3>
-<p>We strive for interface consistency with well-established libraries like <a class="reference external" href="https://scikit-learn.org/stable/">scikit-learn</a>, <cite>pandas &lt;https://pandas.pydata.org/&gt;</cite>, <cite>matplotlib &lt;https://matplotlib.org/&gt;</cite>, and <cite>seaborn &lt;https://seaborn.pydata.org/&gt;</cite>.</p>
+<p>We strive for interface consistency with well-established libraries like
+<a class="reference external" href="https://scikit-learn.org/stable/">scikit-learn</a>, <a class="reference external" href="https://pandas.pydata.org/">pandas</a>,
+<a class="reference external" href="https://matplotlib.org/">matplotlib</a>, and <a class="reference external" href="https://seaborn.pydata.org/">seaborn</a>.</p>
 <div class="section" id="class-templates">
 <h4>Class Templates<a class="headerlink" href="#class-templates" title="Permalink to this heading">¶</a></h4>
 <p>We primarily use two class templates for organizing our codebase:</p>
@@ -386,16 +388,18 @@ processing data values should correspond with the names specified in our primary
 <h3>Code Philosophy<a class="headerlink" href="#code-philosophy" title="Permalink to this heading">¶</a></h3>
 <p>We aim for a modular, robust, and easily extendable codebase. Therefore, we adhere to flat class hierarchies
 (i.e., only inheriting from <cite>Wrapper</cite> or <cite>Tool</cite> is recommended) and functional programming principles, as outlined in
-<cite>A Philosophy of Software Design &lt;https://dl.acm.org/doi/10.5555/3288797&gt;</cite>.
+<a class="reference external" href="https://dl.acm.org/doi/10.5555/3288797">A Philosophy of Software Design</a>.
 We also prioritize user-friendly interfaces, complete with descriptive error messages and
-<cite>Python type hints &lt;https://docs.python.org/3/library/typing.html&gt;</cite>, comprehensively described in
-<cite>Robust Python &lt;https://www.oreilly.com/library/view/robust-python/9781098100650/&gt;</cite>.</p>
+<a class="reference external" href="https://docs.python.org/3/library/typing.html">Python type hints</a>, comprehensively described in
+<a class="reference external" href="https://www.oreilly.com/library/view/robust-python/9781098100650/">Robust Python</a>.</p>
 </div>
 <div class="section" id="documentation-style">
 <h3>Documentation Style<a class="headerlink" href="#documentation-style" title="Permalink to this heading">¶</a></h3>
 <ul class="simple">
-<li><p><strong>Docstring Style</strong>: We use Numpy-style docstrings. Learn more in the <a class="reference external" href="https://numpydoc.readthedocs.io/en/latest/format.html">Numpy Docstring Guide</a>.</p></li>
-<li><p><strong>Markup Language</strong>: Documentation is in reStructuredText (.rst). For an introduction, see this <a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html">reStructuredText Primer</a>.</p></li>
+<li><p><strong>Docstring Style</strong>: We use Numpy-style docstrings. Learn more in the
+<a class="reference external" href="https://numpydoc.readthedocs.io/en/latest/format.html">Numpy Docstring Guide</a>.</p></li>
+<li><p><strong>Markup Language</strong>: Documentation is in reStructuredText (.rst). For an introduction, see this
+<a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html">reStructuredText Primer</a>.</p></li>
 <li><p><strong>Autodoc</strong>: We use <cite>sphinx.ext.autodoc</cite> for automatic inclusion of docstrings in the documentation.</p></li>
 <li><p><strong>Further Details</strong>: See <cite>docs/source/conf.py</cite> for more.</p></li>
 </ul>

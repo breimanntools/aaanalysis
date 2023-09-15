@@ -147,7 +147,9 @@ please ensure they render correctly.
 Naming Conventions
 ^^^^^^^^^^^^^^^^^^^
 
-We strive for interface consistency with well-established libraries like `scikit-learn <https://scikit-learn.org/stable/>`_, `pandas <https://pandas.pydata.org/>`, `matplotlib <https://matplotlib.org/>`, and `seaborn <https://seaborn.pydata.org/>`.
+We strive for interface consistency with well-established libraries like
+`scikit-learn <https://scikit-learn.org/stable/>`_, `pandas <https://pandas.pydata.org/>`_,
+`matplotlib <https://matplotlib.org/>`_, and `seaborn <https://seaborn.pydata.org/>`_.
 
 Class Templates
 """""""""""""""
@@ -174,17 +176,19 @@ Code Philosophy
 
 We aim for a modular, robust, and easily extendable codebase. Therefore, we adhere to flat class hierarchies
 (i.e., only inheriting from `Wrapper` or `Tool` is recommended) and functional programming principles, as outlined in
-`A Philosophy of Software Design <https://dl.acm.org/doi/10.5555/3288797>`.
+`A Philosophy of Software Design <https://dl.acm.org/doi/10.5555/3288797>`_.
 We also prioritize user-friendly interfaces, complete with descriptive error messages and
-`Python type hints <https://docs.python.org/3/library/typing.html>`, comprehensively described in
-`Robust Python <https://www.oreilly.com/library/view/robust-python/9781098100650/>`.
+`Python type hints <https://docs.python.org/3/library/typing.html>`_, comprehensively described in
+`Robust Python <https://www.oreilly.com/library/view/robust-python/9781098100650/>`_.
 
 Documentation Style
 ^^^^^^^^^^^^^^^^^^^^
 
-- **Docstring Style**: We use Numpy-style docstrings. Learn more in the `Numpy Docstring Guide <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
+- **Docstring Style**: We use Numpy-style docstrings. Learn more in the
+  `Numpy Docstring Guide <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
 
-- **Markup Language**: Documentation is in reStructuredText (.rst). For an introduction, see this `reStructuredText Primer <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_.
+- **Markup Language**: Documentation is in reStructuredText (.rst). For an introduction, see this
+  `reStructuredText Primer <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_.
 
 - **Autodoc**: We use `sphinx.ext.autodoc` for automatic inclusion of docstrings in the documentation.
 
