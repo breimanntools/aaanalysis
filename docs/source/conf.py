@@ -65,15 +65,24 @@ extensions = [
 # Autodoc settings
 # See https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#configuration
 autodoc_default_options = {
-    "members": True,
-    "inherited-members": True,
-    "autodoc_typehints": "description",
+    "members": True,  # Document members (methods, attributes, etc.) of documented classes and modules
+    "undoc-members": False,  # Document members without docstrings
+    "private-members": False,  # Document members with a name prefixed by an underscore (_)
+    "special-members": "",  # Document special members like __call__, __getitem__
+    "inherited-members": False,  # Document members that are inherited from the base class
+    "show-inheritance": False,  # Show the base classes in the documentation for a class
+    "ignore-module-all": False,  # Ignore __all__ when looking for members to document
+    "exclude-members": "__init__",  # List of members to be excluded from documentation
+    "member-order": "groupwise",  # Sort the documented members. Options: 'alphabetical', 'bysource', 'groupwise'
+    "autodoc_typehints": "description",  # How to display type hints. Options: 'none', 'signature', 'description'
+    "imported-members": False,  # Document members imported into the documented module from other modules
 }
+
 
 # Auto summary settings
 # See https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html#configuration
 autosummary_generate = True
-autosummary_ignore_module_all = True
+autosummary_ignore_module_all = False
 
 # Numpydoc settings
 # See https://numpydoc.readthedocs.io/en/latest/install.html#sphinx-extensions-configuration

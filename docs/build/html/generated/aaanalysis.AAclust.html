@@ -220,7 +220,8 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="aaanalysis.AAclust">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">AAclust</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/aaclust/aaclust.html#AAclust"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L306-L615"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust" title="Permalink to this definition">¶</a></dt>
-<dd><p>AAclust: A k-optimized clustering framework for selecting redundancy-reduced set of numerical scales.</p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>AAclust: A k-optimized clustering framework for selecting redundancy-reduced set of numerical scales.</p>
 <p>AAclust is designed primarily for amino acid scales but is versatile enough for any set of numerical indices.
 It takes clustering models that require a pre-defined number of clusters (k) from
 <cite>scikit-learn &lt;https://scikit-learn.org/stable/modules/clustering.html&gt;</cite>. By leveraging Pearson correlation as
@@ -277,7 +278,7 @@ for each cluster, which is the closest to the cluster’s center, yielding a red
 <tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.AAclust.correlation" title="aaanalysis.AAclust.correlation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">correlation</span></code></a>(X_test, X_ref[, labels_test, ...])</p></td>
 <td><p>Computes the correlation of test data with reference cluster centers.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval</span></code>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.AAclust.eval" title="aaanalysis.AAclust.eval"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval</span></code></a>()</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.AAclust.fit" title="aaanalysis.AAclust.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(X[, names, on_center, min_th, ...])</p></td>
@@ -348,6 +349,11 @@ most frequent scales. If the name is already used or does not exist, it defaults
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.AAclust.eval">
+<span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/aaclust/aaclust.html#AAclust.eval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L613-L615"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust.eval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.AAclust.fit">

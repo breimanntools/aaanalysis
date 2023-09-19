@@ -35,8 +35,8 @@ class CPP(Tool):
 
     Parameters
     ----------
-    df_scales : :class:`pandas.DataFrame`, default = aa.load_scales(name=ut.STR_SCALE_CAT)
-        DataFrame with default amino acid scales.
+    df_scales : :class:`pandas.DataFrame`
+        DataFrame with amino acid scales.
     df_cat : :class:`pandas.DataFrame`, default = aa.load_categories
         DataFrame with default categories for physicochemical amino acid scales.
     df_parts : :class:`pandas.DataFrame`
