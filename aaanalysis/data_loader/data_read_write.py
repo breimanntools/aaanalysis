@@ -1,5 +1,7 @@
 """
-This is a script for ...
+This is a script for reading and writing df_seq to the fasta file format, which is the most commonly used format
+in computational biology. This fasta format enables a smooth interaction with the biopython package.
+See https://bioperl.org/formats/sequence_formats/FASTA_sequence_format for description of input fasta format.
 """
 import time
 import pandas as pd

@@ -1,8 +1,10 @@
 .. Developer Notes:
-    This fill is a summary of sources and conventions for software development in Python used in this project.
-    Aims of the project and our naming conventions are defined in 'Vision' and 'Documentation', respectively.
-    Please modify only CONTRIBUTING.rst and just update by copy-pasting the /docs/source/index/CONTRIBUTING_COPY.rst,
-    which is used for the readthedocs documentation.
+    - This file summarizes Python dev conventions for this project.
+    - Refer to 'Vision' for project aims and 'Documentation' for naming conventions.
+    - Only modify  CONTRIBUTING.rst and then update the /docs/source/index/CONTRIBUTING_COPY.rst.
+    Some minor doc tools
+    - You can use Traffic analytics (https://docs.readthedocs.io/en/stable/analytics.html) for doc traffic
+    - Check URLs with LinkChecker (bash: linkchecker ./docs/_build/html/index.html)
 
 ============
 Contributing
@@ -202,13 +204,16 @@ Documentation Style
 - **Code Style**: Please follow the `PEP 8 <https://peps.python.org/pep-0008/>`_ and
   `PEP 20 <https://peps.python.org/pep-0020/>`_ style guides for Python code.
 
-- **Markup Language**: Documentation is in reStructuredText (.rst). For an introduction, see this
-  `reStructuredText Primer <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_.
+- **Markup Language**: Documentation is in reStructuredText (.rst). See for an introduction (
+  `reStructuredText Primer <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_) and for
+  cheat sheets (`reStructureText Cheatsheet <https://docs.generic-mapping-tools.org/6.2/rst-cheatsheet.html>`_ or
+  `Sphinx Tutorial <https://sphinx-tutorial.readthedocs.io/cheatsheet/>`_).
 
 - **Autodoc**: We use `Sphinx <https://www.sphinx-doc.org/en/master/index.html>`_
   for automatic inclusion of docstrings in the documentation, including its
-  `autodoc <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_ and
-  `napoleon <https://sphinxcontrib-napoleon.readthedocs.io/en/latest/#>`_ extensions.
+  `autodoc <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_,
+  `napoleon <https://sphinxcontrib-napoleon.readthedocs.io/en/latest/#>`_, and
+  `sphinx-design <https://sphinx-design.readthedocs.io/en/rtd-theme/>`_ extensions.
 
 - **Further Details**: See `docs/source/conf.py` for more.
 

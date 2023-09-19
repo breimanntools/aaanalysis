@@ -1,8 +1,10 @@
 .. Developer Notes:
-    This fill is a summary of sources and conventions for software development in Python used in this project.
-    Aims of the project and our naming conventions are defined in 'Vision' and 'Documentation', respectively.
-    Please modify only CONTRIBUTING.rst and just update by copy-pasting the /docs/source/index/CONTRIBUTING_COPY.rst,
-    which is used for the readthedocs documentation.
+    - This file summarizes Python dev conventions for this project.
+    - Refer to 'Vision' for project aims and 'Documentation' for naming conventions.
+    - Only modify  CONTRIBUTING.rst and then update the /docs/source/index/CONTRIBUTING_COPY.rst.
+    Some minor doc tools
+    - You can use Traffic analytics (https://docs.readthedocs.io/en/stable/analytics.html) for doc traffic
+    - Check URLs with LinkChecker (bash: linkchecker ./docs/_build/html/index.html)
 
 ============
 Contributing

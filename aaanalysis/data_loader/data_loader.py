@@ -1,11 +1,15 @@
 """
-This is a script for loading protein sequence benchmarking datasets and amino acid scales and
-their two-level classification (AAontology).
+This is a script for general data loading functions, such as
+a) Protein sequence benchmarking datasets
+b) Amino acid scales datasets or their two-level classification (AAontology)
+Please define new loading functions by their loaded data by introducing a new data table in
+docs/source/index/tables_templates.rst.
 """
 import os
 import pandas as pd
 import numpy as np
 import re
+from pandas import DataFrame
 from typing import Optional, Literal
 import aaanalysis.utils as ut
 
@@ -16,10 +20,24 @@ NAME_SCALE_SETS_BASE = [ut.STR_SCALES, ut.STR_SCALES_RAW]
 NAMES_SCALE_SETS = NAME_SCALE_SETS_BASE + [ut.STR_SCALE_CAT, ut.STR_SCALES_PC, ut.STR_TOP60, ut.STR_TOP60_EVAL]
 FOLDER_BENCHMARKS = folder_in = ut.FOLDER_DATA + "benchmarks" + ut.SEP
 
+
 # I Helper Functions
+# For load_dataset
+def check_name_of_dataset(name="INFO", folder_in=None):
+    """"""
+    if name == "INFO":
+        return
+    list_datasets = [x.split(".")[0] for x in os.listdir(folder_in) if "." in x]
+    if name not in list_datasets:
+        list_aa = [x for x in list_datasets if 'AA' in x]
+        list_seq = [x for x in list_datasets if 'SEQ' in x]
+        list_dom = [x for x in list_datasets if 'DOM' in x]
+        raise ValueError(f"'name' ({name}) is not valid."
+                         f"\n Amino acid datasets: {list_aa}"
+                         f"\n Sequence datasets: {list_seq}"
+                         f"\n Domain datasets: {list_dom}")
 
 
-# II Main Functions
 def _adjust_non_canonical_aa(df=None, non_canonical_aa="remove"):
     """"""
     list_options = ["remove", "keep", "gap"]
@@ -40,26 +58,27 @@ def _adjust_non_canonical_aa(df=None, non_canonical_aa="remove"):
     return df
 
 
-def check_name_of_dataset(name="INFO", folder_in=None):
-    """"""
-    if name == "INFO":
-        return
-    list_datasets = [x.split(".")[0] for x in os.listdir(folder_in) if "." in x]
-    if name not in list_datasets:
-        list_aa = [x for x in list_datasets if 'AA' in x]
-        list_seq = [x for x in list_datasets if 'SEQ' in x]
-        list_dom = [x for x in list_datasets if 'DOM' in x]
-        raise ValueError(f"'name' ({name}) is not valid."
-                         f"\n Amino acid datasets: {list_aa}"
-                         f"\n Sequence datasets: {list_seq}"
-                         f"\n Domain datasets: {list_dom}")
+# For load_scales
+def _filter_scales(df_cat=None, unclassified_in=False, just_aaindex=False):
+    """Filter scales for unclassified and aaindex scales"""
+    list_ids_not_in_aaindex = [x for x in df_cat[ut.COL_SCALE_ID] if "LINS" in x or "KOEH" in x]
+    list_ids_unclassified = [x for x, cat, sub_cat in zip(df_cat[ut.COL_SCALE_ID], df_cat[ut.COL_CAT], df_cat[ut.COL_SUBCAT])
+                             if "Unclassified" in sub_cat or cat == "Others"]
+    list_ids_to_exclude = []
+    if not unclassified_in:
+        list_ids_to_exclude.extend(list_ids_unclassified)
+    if just_aaindex:
+        list_ids_to_exclude.extend(list_ids_not_in_aaindex)
+    df_cat = df_cat[~df_cat[ut.COL_SCALE_ID].isin(list_ids_to_exclude)]
+    return df_cat
 
 
+# II Main Functions
 def load_dataset(name: str = "INFO",
                  n: Optional[int] = None,
                  non_canonical_aa: Literal["remove", "keep", "gap"] = "remove",
                  min_len: Optional[int] = None,
-                 max_len: Optional[int] = None) -> pd.DataFrame:
+                 max_len: Optional[int] = None) -> DataFrame:
     """
     Load protein benchmarking datasets.
 
@@ -88,7 +107,7 @@ def load_dataset(name: str = "INFO",
 
     Returns
     -------
-    pd.DataFrame
+    DataFrame
         Dataframe (df_seq) containing the selected sequence dataset.
 
     Notes
@@ -120,26 +139,11 @@ def load_dataset(name: str = "INFO",
 
 
 # Load scales
-def _filter_scales(df_cat=None, unclassified_in=False, just_aaindex=False):
-    """Filter scales for unclassified and aaindex scales"""
-    list_ids_not_in_aaindex = [x for x in df_cat[ut.COL_SCALE_ID] if "LINS" in x or "KOEH" in x]
-    list_ids_unclassified = [x for x, cat, sub_cat in zip(df_cat[ut.COL_SCALE_ID], df_cat[ut.COL_CAT], df_cat[ut.COL_SUBCAT])
-                             if "Unclassified" in sub_cat or cat == "Others"]
-    list_ids_to_exclude = []
-    if not unclassified_in:
-        list_ids_to_exclude.extend(list_ids_unclassified)
-    if just_aaindex:
-        list_ids_to_exclude.extend(list_ids_not_in_aaindex)
-    df_cat = df_cat[~df_cat[ut.COL_SCALE_ID].isin(list_ids_to_exclude)]
-    return df_cat
-
-
-# Extend for AAclustTop60
 def load_scales(name="scales", just_aaindex=False, unclassified_in=True):
     """
     Load amino acid scales, scale classification (AAontology), or scale evaluation.
 
-    A through analysis of the residue and sequence datasets can be found in TODO[Breimann23a].
+    A through analysis of the residue and sequence datasets can be found in [Breimann23a]_.
 
     Parameters
     ----------
@@ -155,7 +159,7 @@ def load_scales(name="scales", just_aaindex=False, unclassified_in=True):
 
     Returns
     -------
-    df : :class:`pandas.DataFrame`
+    pd.DataFrame
         Dataframe for the selected scale dataset.
     """
     if name not in NAMES_SCALE_SETS:

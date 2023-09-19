@@ -23,3 +23,8 @@ python:
 submodules:
   include:
      - "docs/tutorials"
+
+formats:
+  - pdf
+  - htmlzip
+  - epub
