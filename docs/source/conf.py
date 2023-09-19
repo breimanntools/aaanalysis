@@ -150,7 +150,7 @@ html_context = {
     'display_github': True,  # Add the 'Edit on GitHub' link
     'github_user': 'breimanntools',
     'github_repo': 'aaanalysis',
-    'github_version': 'master/docs/source/',
+    'github_version': 'master/',
 }
 
 
