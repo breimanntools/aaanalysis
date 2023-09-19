@@ -202,8 +202,10 @@ Documentation Style
 - **Code Style**: Please follow the `PEP 8 <https://peps.python.org/pep-0008/>`_ and
   `PEP 20 <https://peps.python.org/pep-0020/>`_ style guides for Python code.
 
-- **Markup Language**: Documentation is in reStructuredText (.rst). For an introduction, see this
-  `reStructuredText Primer <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_.
+- **Markup Language**: Documentation is in reStructuredText (.rst). See for an introduction (
+  `reStructuredText Primer <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_) and for
+  cheat sheets (`reStructureText Cheatsheet <https://docs.generic-mapping-tools.org/6.2/rst-cheatsheet.html>`_ or
+  `Sphinx Tutorial <https://sphinx-tutorial.readthedocs.io/cheatsheet/>`_).
 
 - **Autodoc**: We use `Sphinx <https://www.sphinx-doc.org/en/master/index.html>`_
   for automatic inclusion of docstrings in the documentation, including its

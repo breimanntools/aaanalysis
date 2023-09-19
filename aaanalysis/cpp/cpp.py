@@ -52,6 +52,7 @@ class CPP(Tool):
     Notes
     -----
     The CPP.run() method performs all steps of the CPP algorithm.
+
     """
     def __init__(self, df_scales=None, df_cat=None, df_parts=None, split_kws=None,
                  accept_gaps=False, verbose=True):

@@ -73,9 +73,13 @@ def load_dataset(name: str = "INFO",
         Number of proteins per class. If None, the whole dataset will be returned.
     non_canonical_aa
         Options for modifying non-canonical amino acids:
+
         - 'remove': Sequences containing non-canonical amino acids are removed.
+
         - 'keep': Sequences containing non-canonical amino acids are not removed.
+
         - 'gap': Sequences are kept and modified by replacing non-canonical amino acids by gap symbol ('X').
+
     min_len
         Minimum length of sequences for filtering. None to disable
     max_len

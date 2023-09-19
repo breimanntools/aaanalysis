@@ -59,7 +59,7 @@ threadpoolctl = "^3.1.0"
 #... (keep the other dependencies as they are)
 [tool.poetry.dev-dependencies]
 sphinx = ">=5.0,<7.0"
-sphinx_rtd_theme = "^0.5.2" #0.5.2
+sphinx_rtd_theme = "^1.1.1" #0.5.2
 #sphinx_book_theme = "^1.0.1"
 #pydata_sphinx_theme = "^0.13.3"
 sphinx-design = { version = "^0.5", python = ">=3.8" }
