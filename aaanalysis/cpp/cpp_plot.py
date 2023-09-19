@@ -224,9 +224,10 @@ class CPPPlot:
     verbose : bool, default = True
         Whether to print progress information about the algorithm (if True).
 
-    Notes
-    -----
+    Note
+    ----
     The CPP.run() method performs all steps of the CPP algorithm.
+
     """
     def __init__(self, df_cat=None, accept_gaps=False, jmd_n_len=10, jmd_c_len=10, ext_len=4, verbose=True):
         # Load default scales if not specified
@@ -460,6 +461,7 @@ class CPPPlot:
             Method to aggregate numerical values from 'val_col'.
         normalize : {True, False, 'positions', 'positions_only'}, bool/str, default = False
             Specifies normalization for numerical values in 'val_col':
+
             - False: Set value at all positions of a feature without further normalization.
 
             - True: Set value at all positions of a feature and normalize across all features.
