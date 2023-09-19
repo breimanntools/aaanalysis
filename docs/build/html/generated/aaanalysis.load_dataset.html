@@ -120,11 +120,10 @@
 <h1>aaanalysis.load_dataset<a class="headerlink" href="#aaanalysis-load-dataset" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="aaanalysis.load_dataset">
-<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">load_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'INFO'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_canonical_aa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'remove'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/data_loader/data_loader.html#load_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data_loader/data_loader.py#L56-L119"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.load_dataset" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">load_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'INFO'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_canonical_aa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'remove'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/data_loader/data_loader.html#load_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data_loader/data_loader.py#L58-L119"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.load_dataset" title="Permalink to this definition"></a></dt>
 <dd><p>Load protein benchmarking datasets.</p>
-<p>The benchmarks are distinguished into residue/amino acid (‘AA’), domain (‘DOM’), and sequence (‘SEQ’) level
-datasets. An overview table can be retrieved by using default setting (name=’INFO’). A through analysis of
-the residue and sequence datasets can be found in [Breimann23a].</p>
+<p>The benchmarks are  distinguished into amino acid (‘AA’), domain (‘DOM’), and sequence (‘SEQ’) level
+datasets. Use default settings (name=’INFO’) of an overview table. Detailed analysis is in <a href="#id1"><span class="problematic" id="id2">:cite:`Breimann23a`</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -132,13 +131,13 @@ the residue and sequence datasets can be found in [Breimann23a].</p>
 <li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Number of proteins per class. If None, the whole dataset will be returned.</p></li>
 <li><p><strong>non_canonical_aa</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘remove’, ‘keep’, ‘gap’]) – <p>Options for modifying non-canonical amino acids:</p>
 <ul>
-<li><p>’remove’: Sequences containing non-canonical amino acids are removed.</p></li>
-<li><p>’keep’: Sequences containing non-canonical amino acids are not removed.</p></li>
-<li><p>’gap’: Sequences are kept and modified by replacing non-canonical amino acids by gap symbol (‘X’).</p></li>
+<li><p>’remove’: Remove sequences containing non-canonical amino acids.</p></li>
+<li><p>’keep’: Do not remove sequences containing non-canonical amino acids.</p></li>
+<li><p>’gap’: Non-canonical amino acids are replaced by gap symbol (‘X’).</p></li>
 </ul>
 </p></li>
-<li><p><strong>min_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Minimum length of sequences for filtering. None to disable</p></li>
-<li><p><strong>max_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Maximum length of sequences for filtering. None to disable</p></li>
+<li><p><strong>min_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Minimum length of sequences for filtering (disabled by default).</p></li>
+<li><p><strong>max_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Maximum length of sequences for filtering (disabled by default).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -150,7 +149,7 @@ the residue and sequence datasets can be found in [Breimann23a].</p>
 </dl>
 <div class="admonition-notes admonition">
 <p class="admonition-title">Notes</p>
-<p>See further information on the benchmark datasets in</p>
+<p>See further information on the benchmark datasets in ref table.</p>
 </div>
 </dd></dl>
 

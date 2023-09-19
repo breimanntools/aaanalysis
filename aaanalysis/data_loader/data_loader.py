@@ -9,12 +9,14 @@ import re
 from typing import Optional, Literal
 import aaanalysis.utils as ut
 
-
-# I Helper Functions
+# Constants
 STR_AA_GAP = "-"
 LIST_CANONICAL_AA = ['N', 'A', 'I', 'V', 'K', 'Q', 'R', 'M', 'H', 'F', 'E', 'D', 'C', 'G', 'L', 'T', 'S', 'Y', 'W', 'P']
 NAME_SCALE_SETS_BASE = [ut.STR_SCALES, ut.STR_SCALES_RAW]
 NAMES_SCALE_SETS = NAME_SCALE_SETS_BASE + [ut.STR_SCALE_CAT, ut.STR_SCALES_PC, ut.STR_TOP60, ut.STR_TOP60_EVAL]
+FOLDER_BENCHMARKS = folder_in = ut.FOLDER_DATA + "benchmarks" + ut.SEP
+
+# I Helper Functions
 
 
 # II Main Functions
@@ -61,9 +63,8 @@ def load_dataset(name: str = "INFO",
     """
     Load protein benchmarking datasets.
 
-    The benchmarks are distinguished into residue/amino acid ('AA'), domain ('DOM'), and sequence ('SEQ') level
-    datasets. An overview table can be retrieved by using default setting (name='INFO'). A through analysis of
-    the residue and sequence datasets can be found in [Breimann23a].
+    The benchmarks are  distinguished into amino acid ('AA'), domain ('DOM'), and sequence ('SEQ') level
+    datasets. Use default settings (name='INFO') of an overview table. Detailed analysis is in :cite:`Breimann23a`.
 
     Parameters
     ----------
@@ -74,16 +75,16 @@ def load_dataset(name: str = "INFO",
     non_canonical_aa
         Options for modifying non-canonical amino acids:
 
-        - 'remove': Sequences containing non-canonical amino acids are removed.
+        - 'remove': Remove sequences containing non-canonical amino acids.
 
-        - 'keep': Sequences containing non-canonical amino acids are not removed.
+        - 'keep': Do not remove sequences containing non-canonical amino acids.
 
-        - 'gap': Sequences are kept and modified by replacing non-canonical amino acids by gap symbol ('X').
+        - 'gap': Non-canonical amino acids are replaced by gap symbol ('X').
 
     min_len
-        Minimum length of sequences for filtering. None to disable
+        Minimum length of sequences for filtering (disabled by default).
     max_len
-        Maximum length of sequences for filtering. None to disable
+        Maximum length of sequences for filtering (disabled by default).
 
     Returns
     -------
@@ -92,17 +93,16 @@ def load_dataset(name: str = "INFO",
 
     Notes
     -----
-    See further information on the benchmark datasets in
+    See further information on the benchmark datasets in ref table.
 
     """
     ut.check_non_negative_number(name="n", val=n, accept_none=True)
     ut.check_non_negative_number(name="min_len", val=min_len, accept_none=True)
-    folder_in = ut.FOLDER_DATA + "benchmarks" + ut.SEP
-    check_name_of_dataset(name=name, folder_in=folder_in)
+    check_name_of_dataset(name=name, folder_in=FOLDER_BENCHMARKS)
     # Load overview table
     if name == "INFO":
-        return pd.read_excel(folder_in + "INFO_benchmarks.xlsx")
-    df = pd.read_csv(folder_in + name + ".tsv", sep="\t")
+        return pd.read_excel(FOLDER_BENCHMARKS + "INFO_benchmarks.xlsx")
+    df = pd.read_csv(FOLDER_BENCHMARKS + name + ".tsv", sep="\t")
     # Filter Rdata
     if min_len is not None:
         mask = [len(x) >= min_len for x in df[ut.COL_SEQ]]

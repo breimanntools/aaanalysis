@@ -104,12 +104,14 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Literal</span>
 <span class="kn">import</span> <span class="nn">aaanalysis.utils</span> <span class="k">as</span> <span class="nn">ut</span>
 
-
-<span class="c1"># I Helper Functions</span>
+<span class="c1"># Constants</span>
 <span class="n">STR_AA_GAP</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span>
 <span class="n">LIST_CANONICAL_AA</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;V&#39;</span><span class="p">,</span> <span class="s1">&#39;K&#39;</span><span class="p">,</span> <span class="s1">&#39;Q&#39;</span><span class="p">,</span> <span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span> <span class="s1">&#39;H&#39;</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="s1">&#39;C&#39;</span><span class="p">,</span> <span class="s1">&#39;G&#39;</span><span class="p">,</span> <span class="s1">&#39;L&#39;</span><span class="p">,</span> <span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="s1">&#39;S&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">,</span> <span class="s1">&#39;W&#39;</span><span class="p">,</span> <span class="s1">&#39;P&#39;</span><span class="p">]</span>
 <span class="n">NAME_SCALE_SETS_BASE</span> <span class="o">=</span> <span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">STR_SCALES</span><span class="p">,</span> <span class="n">ut</span><span class="o">.</span><span class="n">STR_SCALES_RAW</span><span class="p">]</span>
 <span class="n">NAMES_SCALE_SETS</span> <span class="o">=</span> <span class="n">NAME_SCALE_SETS_BASE</span> <span class="o">+</span> <span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">STR_SCALE_CAT</span><span class="p">,</span> <span class="n">ut</span><span class="o">.</span><span class="n">STR_SCALES_PC</span><span class="p">,</span> <span class="n">ut</span><span class="o">.</span><span class="n">STR_TOP60</span><span class="p">,</span> <span class="n">ut</span><span class="o">.</span><span class="n">STR_TOP60_EVAL</span><span class="p">]</span>
+<span class="n">FOLDER_BENCHMARKS</span> <span class="o">=</span> <span class="n">folder_in</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">FOLDER_DATA</span> <span class="o">+</span> <span class="s2">&quot;benchmarks&quot;</span> <span class="o">+</span> <span class="n">ut</span><span class="o">.</span><span class="n">SEP</span>
+
+<span class="c1"># I Helper Functions</span>
 
 
 <span class="c1"># II Main Functions</span>
@@ -156,9 +158,8 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Load protein benchmarking datasets.</span>
 
-<span class="sd">    The benchmarks are distinguished into residue/amino acid (&#39;AA&#39;), domain (&#39;DOM&#39;), and sequence (&#39;SEQ&#39;) level</span>
-<span class="sd">    datasets. An overview table can be retrieved by using default setting (name=&#39;INFO&#39;). A through analysis of</span>
-<span class="sd">    the residue and sequence datasets can be found in [Breimann23a].</span>
+<span class="sd">    The benchmarks are  distinguished into amino acid (&#39;AA&#39;), domain (&#39;DOM&#39;), and sequence (&#39;SEQ&#39;) level</span>
+<span class="sd">    datasets. Use default settings (name=&#39;INFO&#39;) of an overview table. Detailed analysis is in :cite:`Breimann23a`.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -169,16 +170,16 @@
 <span class="sd">    non_canonical_aa</span>
 <span class="sd">        Options for modifying non-canonical amino acids:</span>
 
-<span class="sd">        - &#39;remove&#39;: Sequences containing non-canonical amino acids are removed.</span>
+<span class="sd">        - &#39;remove&#39;: Remove sequences containing non-canonical amino acids.</span>
 
-<span class="sd">        - &#39;keep&#39;: Sequences containing non-canonical amino acids are not removed.</span>
+<span class="sd">        - &#39;keep&#39;: Do not remove sequences containing non-canonical amino acids.</span>
 
-<span class="sd">        - &#39;gap&#39;: Sequences are kept and modified by replacing non-canonical amino acids by gap symbol (&#39;X&#39;).</span>
+<span class="sd">        - &#39;gap&#39;: Non-canonical amino acids are replaced by gap symbol (&#39;X&#39;).</span>
 
 <span class="sd">    min_len</span>
-<span class="sd">        Minimum length of sequences for filtering. None to disable</span>
+<span class="sd">        Minimum length of sequences for filtering (disabled by default).</span>
 <span class="sd">    max_len</span>
-<span class="sd">        Maximum length of sequences for filtering. None to disable</span>
+<span class="sd">        Maximum length of sequences for filtering (disabled by default).</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -187,17 +188,16 @@
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
-<span class="sd">    See further information on the benchmark datasets in</span>
+<span class="sd">    See further information on the benchmark datasets in ref table.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">ut</span><span class="o">.</span><span class="n">check_non_negative_number</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">accept_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">ut</span><span class="o">.</span><span class="n">check_non_negative_number</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;min_len&quot;</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="n">min_len</span><span class="p">,</span> <span class="n">accept_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">folder_in</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">FOLDER_DATA</span> <span class="o">+</span> <span class="s2">&quot;benchmarks&quot;</span> <span class="o">+</span> <span class="n">ut</span><span class="o">.</span><span class="n">SEP</span>
-    <span class="n">check_name_of_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">folder_in</span><span class="o">=</span><span class="n">folder_in</span><span class="p">)</span>
+    <span class="n">check_name_of_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">folder_in</span><span class="o">=</span><span class="n">FOLDER_BENCHMARKS</span><span class="p">)</span>
     <span class="c1"># Load overview table</span>
     <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;INFO&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">folder_in</span> <span class="o">+</span> <span class="s2">&quot;INFO_benchmarks.xlsx&quot;</span><span class="p">)</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">folder_in</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.tsv&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">FOLDER_BENCHMARKS</span> <span class="o">+</span> <span class="s2">&quot;INFO_benchmarks.xlsx&quot;</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">FOLDER_BENCHMARKS</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.tsv&quot;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="c1"># Filter Rdata</span>
     <span class="k">if</span> <span class="n">min_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">min_len</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">df</span><span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">COL_SEQ</span><span class="p">]]</span>
