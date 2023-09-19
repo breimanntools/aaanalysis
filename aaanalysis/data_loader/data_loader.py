@@ -53,7 +53,6 @@ def check_name_of_dataset(name="INFO", folder_in=None):
                          f"\n Domain datasets: {list_dom}")
 
 
-# TODO write test and check in READTHEDOCA (end-to-end solution)
 def load_dataset(name: str = "INFO",
                  n: Optional[int] = None,
                  non_canonical_aa: Literal["remove", "keep", "gap"] = "remove",
@@ -64,7 +63,7 @@ def load_dataset(name: str = "INFO",
 
     The benchmarks are distinguished into residue/amino acid ('AA'), domain ('DOM'), and sequence ('SEQ') level
     datasets. An overview table can be retrieved by using default setting (name='INFO'). A through analysis of
-    the residue and sequence datasets can be found in TODO[Breimann23a].
+    the residue and sequence datasets can be found in [Breimann23a].
 
     Parameters
     ----------
