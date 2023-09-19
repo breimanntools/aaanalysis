@@ -207,8 +207,9 @@ Documentation Style
 
 - **Autodoc**: We use `Sphinx <https://www.sphinx-doc.org/en/master/index.html>`_
   for automatic inclusion of docstrings in the documentation, including its
-  `autodoc <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_ and
-  `napoleon <https://sphinxcontrib-napoleon.readthedocs.io/en/latest/#>`_ extensions.
+  `autodoc <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_,
+  `napoleon <https://sphinxcontrib-napoleon.readthedocs.io/en/latest/#>`_, and
+  `sphinx-design <https://sphinx-design.readthedocs.io/en/rtd-theme/>`_ extensions.
 
 - **Further Details**: See `docs/source/conf.py` for more.
 
