@@ -1,4 +1,5 @@
-.. Comments explain how to set up each badge and its purpose
+.. Developer Notes:
+    Comments explain how to set up each badge and its purpose. Please update badges in README.rst and vice versa
 
 .. Group 1: Build and Test Status
 .. --------------------------------

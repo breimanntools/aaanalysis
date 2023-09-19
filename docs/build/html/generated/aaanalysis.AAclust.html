@@ -129,18 +129,22 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../api.html#data">Data</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="../api.html#preprocessing">Preprocessing</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#feature-engineering">Feature Engineering</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href="#">aaanalysis.AAclust</a></li>
+<li class="toctree-l3"><a class="reference internal" href="aaanalysis.SequenceFeature.html">aaanalysis.SequenceFeature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="aaanalysis.CPP.html">aaanalysis.CPP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="aaanalysis.CPPPlot.html">aaanalysis.CPPPlot</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../api.html#feature-engineering">Feature Engineering</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#pu-learning">PU Learning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#explainable-ai">Explainable AI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#perturbation">Perturbation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#plot-utilities">Plot Utilities</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../_resources/tables.html">Tables</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../_index/tables.html">Tables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../index/references.html">References</a></li>
 </ul>
 
@@ -304,6 +308,7 @@ most frequent scales. If the name is already used or does not exist, it defaults
 </dd>
 <dt><strong>Returns</strong></dt><dd></dd>
 <dt><strong>——-</strong></dt><dd></dd>
+<dt><strong>:</strong></dt><dd></dd>
 <dt><strong>cluster_names</strong><span class="classifier">list</span></dt><dd><p>A list of renamed clusters based on scale names.</p>
 </dd>
 </dl>
@@ -338,6 +343,7 @@ most frequent scales. If the name is already used or does not exist, it defaults
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
+<dt>:</dt><dd></dd>
 <dt><strong>list_top_center_name_corr</strong><span class="classifier">list of str</span></dt><dd><p>Names and correlations of centers having strongest (positive/negative) correlation with test data samples.</p>
 </dd>
 </dl>
@@ -377,6 +383,7 @@ the cluster center and its members (‘min_cor center’), governed by <cite>on_
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl>
+<dt>:</dt><dd></dd>
 <dt><strong>names_medoid</strong><span class="classifier">list of str, if <cite>names</cite> is provided</span></dt><dd><p>Names of the medoids.</p>
 </dd>
 </dl>
@@ -405,6 +412,7 @@ the cluster center and its members (‘min_cor center’), governed by <cite>on_
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
+<dt>:</dt><dd></dd>
 <dt><strong>centers</strong><span class="classifier">array-like</span></dt><dd><p>The computed center for each cluster.</p>
 </dd>
 <dt><strong>center_labels</strong><span class="classifier">array-like</span></dt><dd><p>The labels associated with each computed center.</p>
@@ -429,6 +437,7 @@ the cluster center and its members (‘min_cor center’), governed by <cite>on_
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
+<dt>:</dt><dd></dd>
 <dt><strong>medoids</strong><span class="classifier">array-like</span></dt><dd><p>The medoid for each cluster.</p>
 </dd>
 <dt><strong>medoid_labels</strong><span class="classifier">array-like</span></dt><dd><p>The labels corresponding to each medoid.</p>

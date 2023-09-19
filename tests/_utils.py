@@ -1,7 +1,7 @@
-#! /usr/bin/python3
 """
-Config with folder structure
+File for testing utility functions and constants.
 """
+
 import os
 import platform
 from pathlib import Path

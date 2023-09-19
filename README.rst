@@ -1,5 +1,7 @@
 Welcome to the AAanalysis documentation
 =======================================
+.. Developer Notes:
+    Please update badges in README.rst and vice versa
 .. image:: https://github.com/breimanntools/aaanalysis/workflows/Build/badge.svg
    :target: https://github.com/breimanntools/aaanalysis/actions
    :alt: Build Status

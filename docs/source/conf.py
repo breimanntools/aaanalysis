@@ -31,7 +31,7 @@ todo_include_todos = False
 
 # -- General configuration ---------------------------------------------------
 templates_path = ['_templates']
-exclude_patterns = []
+exclude_patterns = ['index/tables_templates.rst']
 source_suffix = ['.rst', '.md']
 master_doc = 'index'
 
@@ -55,9 +55,8 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',  # Integrate Matplotlib plots in docs
     'sphinx_design',  # Advanced design elements for Sphinx docs
     'sphinxext.opengraph',  # OpenGraph meta tags for rich link previews
-
-    # 'sphinx.ext.napoleon',  # Support for Numpy-style and Google-style docstrings
-    # 'sphinx_autodoc_typehints',  # Display Python type hints in documentation (needs to be after napoleon)
+    'sphinx.ext.napoleon',  # Support for Numpy-style and Google-style docstrings
+    'sphinx_autodoc_typehints',  # Display Python type hints in documentation (needs to be after napoleon)
     # 'sphinx_book_theme',  # Theme optimized for book-style content presentation
     # 'pydata_sphinx_theme',  # Theme with a focus on long-form content and optimized for _data-focused libraries
 ]
@@ -67,13 +66,39 @@ autodoc_default_options = {
     "members": True,
     "inherited-members": True
 }
+
 autosummary_generate = True
 numpydoc_show_class_members = False
-"""
-napoleon_google_docstring = False
+
+# Sphinx-autodoc-typehints settings
+set_type_checking_flag = True
+typehints = 'description'
+
+# Napoleon settings
+# See https://sphinxcontrib-napoleon.readthedocs.io/en/latest/sphinxcontrib.napoleon.html#sphinxcontrib.napoleon.Config
+napoleon_google_docstring = False   # Not default
 napoleon_numpy_docstring = True
-napoleon_use_rtype = True
+napoleon_include_init_with_doc = False
+napoleon_include_private_with_doc = False
+napoleon_include_special_with_doc = False
+napoleon_use_admonition_for_examples = False
+napoleon_use_admonition_for_notes = False
+napoleon_use_admonition_for_references = False
+napoleon_use_ivar = False
 napoleon_use_param = True
+napoleon_use_rtype = True
+napoleon_use_keyword = True
+napoleon_custom_sections = None
+
+"""
+myst_enable_extensions = [
+    "amsmath",
+    "colon_fence",
+    "deflist",
+    "dollarmath",
+    "html_image",
+    "html_admonition",
+]
 napoleon_custom_sections = [('Params', 'Parameters')]
 """
 

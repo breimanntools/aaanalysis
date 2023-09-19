@@ -1,5 +1,5 @@
 """
-Config with folder structure
+Config with folder structure. Most imported modules contain checking functions for code validation
 """
 import os
 import platform
@@ -28,3 +28,23 @@ URL_DATA = "https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/d
 
 
 # II MAIN FUNCTIONS
+# Check key dataframes using constants and general checking functions
+def check_df_seq():
+    """"""
+
+
+def check_df_parts():
+    """"""
+
+
+def check_df_cat():
+    """"""
+
+
+def check_df_scales():
+    """"""
+
+
+def check_df_feat():
+    """"""
+

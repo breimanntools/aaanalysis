@@ -129,8 +129,8 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../api.html#data">Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../api.html#preprocessing">Preprocessing</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="../api.html#feature-engineering">Feature Engineering</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="aaanalysis.AAclust.html">aaanalysis.AAclust</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">aaanalysis.SequenceFeature</a></li>
 <li class="toctree-l3"><a class="reference internal" href="aaanalysis.CPP.html">aaanalysis.CPP</a></li>
 <li class="toctree-l3"><a class="reference internal" href="aaanalysis.CPPPlot.html">aaanalysis.CPPPlot</a></li>
@@ -142,7 +142,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../api.html#plot-utilities">Plot Utilities</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../_resources/tables.html">Tables</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../_index/tables.html">Tables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../index/references.html">References</a></li>
 </ul>
 
@@ -302,6 +304,7 @@ all amino acids obtained by splitting a sequence part.</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
+<dt>:</dt><dd></dd>
 <dt>df_feat: <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></dt><dd><p>Feature DataFrame including feature value difference.</p>
 </dd>
 </dl>
@@ -328,6 +331,7 @@ all amino acids obtained by splitting a sequence part.</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
+<dt>:</dt><dd></dd>
 <dt>feature_value: array-like, shape (n_samples, n_parts)</dt><dd><p>Average scale values over sequence parts.</p>
 </dd>
 </dl>
@@ -386,6 +390,7 @@ Conditions: ext_len &lt; jmd_m_len and ext_len &lt; jmd_c_len.</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
+<dt>:</dt><dd></dd>
 <dt>feat_positions: list</dt><dd><p>list with positions for each feature in feat_names</p>
 </dd>
 </dl>
@@ -420,6 +425,7 @@ Conditions: ext_len &lt; jmd_m_len and ext_len &lt; jmd_c_len.</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
+<dt>:</dt><dd></dd>
 <dt>feat_matrix: array-like or sparse matrix, shape (n_samples, n_features)</dt><dd><p>Feature values of samples.</p>
 </dd>
 </dl>
@@ -453,6 +459,7 @@ Conditions: ext_len&lt;jmd_m_len and ext_len&lt;jmd_c_len</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
+<dt>:</dt><dd></dd>
 <dt>feat_names: list of strings</dt><dd><p>Names of features.</p>
 </dd>
 </dl>
@@ -493,6 +500,7 @@ or sequence part (‘jmd_n’, ‘tmd’, ‘jmd_c’) columns.</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
+<dt>:</dt><dd></dd>
 <dt>df_parts: <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></dt><dd><p>DataFrame with sequence parts.</p>
 </dd>
 </dl>
@@ -536,6 +544,7 @@ or sequence part (‘jmd_n’, ‘tmd’, ‘jmd_c’) columns.</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
+<dt>:</dt><dd></dd>
 <dt>features: list of strings</dt><dd><p>Ids of all possible features for combination of Parts, Splits, and Scales with form: PART-SPLIT-SCALE</p>
 </dd>
 </dl>
@@ -570,6 +579,7 @@ or sequence part (‘jmd_n’, ‘tmd’, ‘jmd_c’) columns.</p>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
+<dt>:</dt><dd></dd>
 <dt>split_kws: dict</dt><dd><p>Nested dictionary with parameters for chosen split_types:</p>
 <ol class="loweralpha simple">
 <li><p>Segment: {n_split_min:1, n_split_max=15}</p></li>

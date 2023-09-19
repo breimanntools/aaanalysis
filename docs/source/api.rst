@@ -24,15 +24,6 @@ Data
     aaanalysis.load_dataset
     aaanalysis.load_scales
 
-.. _preprocessing_api:
-
-Preprocessing
--------------
-.. autosummary::
-    :toctree: generated/
-
-    aaanalysis.AAclust
-
 .. _feature_engineering_api:
 
 Feature Engineering
@@ -40,7 +31,7 @@ Feature Engineering
 .. autosummary::
     :toctree: generated/
 
-
+    aaanalysis.AAclust
     aaanalysis.SequenceFeature
     aaanalysis.CPP
     aaanalysis.CPPPlot

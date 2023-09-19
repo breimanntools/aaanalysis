@@ -156,7 +156,9 @@
 <p class="caption" role="heading"><span class="caption-text">REFERENCES</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../_resources/tables.html">Tables</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../_index/tables.html">Tables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
 </ul>
 
@@ -246,7 +248,8 @@ interpretable protein prediction. Your involvement is invaluable to us. Contribu
 <li><p>Submitting improvements via Pull Requests.</p></li>
 <li><p>Participating in project discussions.</p></li>
 </ul>
-<p>Newcomers can start by tackling issues labeled <a class="reference external" href="https://github.com/breimanntools/aaanalysis/issues">good first issue</a>.</p>
+<p>Newcomers can start by tackling issues labeled <a class="reference external" href="https://github.com/breimanntools/aaanalysis/issues">good first issue</a>.
+Please email <a class="reference external" href="mailto:stephanbreimann&#37;&#52;&#48;gmail&#46;com">stephanbreimann<span>&#64;</span>gmail<span>&#46;</span>com</a> for further questions or suggestions?</p>
 </div>
 <div class="section" id="vision">
 <h2><a class="toc-backref" href="#id3">Vision</a><a class="headerlink" href="#vision" title="Permalink to this heading">¶</a></h2>
@@ -363,7 +366,7 @@ conda<span class="w"> </span>activate<span class="w"> </span>aanalysis
 please ensure they render correctly.</p>
 <div class="section" id="naming-conventions">
 <h3>Naming Conventions<a class="headerlink" href="#naming-conventions" title="Permalink to this heading">¶</a></h3>
-<p>We strive for interface consistency with well-established libraries like
+<p>We strive for consistency of our public interfaces with well-established libraries like
 <a class="reference external" href="https://scikit-learn.org/stable/">scikit-learn</a>, <a class="reference external" href="https://pandas.pydata.org/">pandas</a>,
 <a class="reference external" href="https://matplotlib.org/">matplotlib</a>, and <a class="reference external" href="https://seaborn.pydata.org/">seaborn</a>.</p>
 <div class="section" id="class-templates">
@@ -375,7 +378,12 @@ for model training and evaluation, respectively.</p></li>
 <li><p><strong>Tool</strong>: Standalone classes that focus on specialized tasks, such as feature engineering for protein prediction.
 They feature <cite>.run</cite> and <cite>.eval</cite> methods to carry out the complete processing pipeline and generate various evaluation metrics.</p></li>
 </ul>
-<p>Both <cite>Wrapper</cite> and <cite>Tool</cite> classes come with supplementary plotting classes for visualization.</p>
+<p>The remaining classes should fulfill two further purposes, without being directly implemented using class inheritance.</p>
+<ul class="simple">
+<li><p><strong>Data visualization</strong>: Supplementary plotting classes for <cite>Wrapper</cite> and <cite>Tool</cite> classes, named accordingly using a
+<cite>Plot</cite> suffix (e.g., ‘CPPPlot’). These classes implement an <cite>.eval</cite> method to visualize the key evaluation measures.</p></li>
+<li><p><strong>Analysis support</strong>: Supportive pre-processing classes  for <cite>Wrapper</cite> and <cite>Tool</cite> classes.</p></li>
+</ul>
 </div>
 <div class="section" id="function-and-method-naming">
 <h4>Function and Method Naming<a class="headerlink" href="#function-and-method-naming" title="Permalink to this heading">¶</a></h4>
@@ -389,18 +397,25 @@ processing data values should correspond with the names specified in our primary
 <p>We aim for a modular, robust, and easily extendable codebase. Therefore, we adhere to flat class hierarchies
 (i.e., only inheriting from <cite>Wrapper</cite> or <cite>Tool</cite> is recommended) and functional programming principles, as outlined in
 <a class="reference external" href="https://dl.acm.org/doi/10.5555/3288797">A Philosophy of Software Design</a>.
-We also prioritize user-friendly interfaces, complete with descriptive error messages and
-<a class="reference external" href="https://docs.python.org/3/library/typing.html">Python type hints</a>, comprehensively described in
-<a class="reference external" href="https://www.oreilly.com/library/view/robust-python/9781098100650/">Robust Python</a>.</p>
+Our goal is to provide a user-friendly public interface using concise description and
+<a class="reference external" href="https://docs.python.org/3/library/typing.html">Python type hints</a> (see also this Python Enhancement Proposal
+<a class="reference external" href="https://peps.python.org/pep-0484/">PEP 484</a>
+or the <a class="reference external" href="https://www.oreilly.com/library/view/robust-python/9781098100650/">Robust Python</a> book).
+For the validation of user inputs, we use comprehensive checking functions with descriptive error messages.</p>
 </div>
 <div class="section" id="documentation-style">
 <h3>Documentation Style<a class="headerlink" href="#documentation-style" title="Permalink to this heading">¶</a></h3>
 <ul class="simple">
-<li><p><strong>Docstring Style</strong>: We use Numpy-style docstrings. Learn more in the
-<a class="reference external" href="https://numpydoc.readthedocs.io/en/latest/format.html">Numpy Docstring Guide</a>.</p></li>
+<li><p><strong>Docstring Style</strong>: We use the <a class="reference external" href="https://numpydoc.readthedocs.io/en/latest/format.html">Numpy Docstring style</a> and
+adhere to the <a class="reference external" href="https://peps.python.org/pep-0257/">PEP 257</a> docstring conventions.</p></li>
+<li><p><strong>Code Style</strong>: Please follow the <a class="reference external" href="https://peps.python.org/pep-0008/">PEP 8</a> and
+<a class="reference external" href="https://peps.python.org/pep-0020/">PEP 20</a> style guides for Python code.</p></li>
 <li><p><strong>Markup Language</strong>: Documentation is in reStructuredText (.rst). For an introduction, see this
 <a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html">reStructuredText Primer</a>.</p></li>
-<li><p><strong>Autodoc</strong>: We use <cite>sphinx.ext.autodoc</cite> for automatic inclusion of docstrings in the documentation.</p></li>
+<li><p><strong>Autodoc</strong>: We use <a class="reference external" href="https://www.sphinx-doc.org/en/master/index.html">Sphinx</a>
+for automatic inclusion of docstrings in the documentation, including its
+<a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html">autodoc</a> and
+<a class="reference external" href="https://sphinxcontrib-napoleon.readthedocs.io/en/latest/#">napoleon</a> extensions.</p></li>
 <li><p><strong>Further Details</strong>: See <cite>docs/source/conf.py</cite> for more.</p></li>
 </ul>
 </div>

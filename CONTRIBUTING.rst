@@ -1,3 +1,9 @@
+.. Developer Notes:
+    This fill is a summary of sources and conventions for software development in Python used in this project.
+    Aims of the project and our naming conventions are defined in 'Vision' and 'Documentation', respectively.
+    Please modify only CONTRIBUTING.rst and just update by copy-pasting the /docs/source/index/CONTRIBUTING_COPY.rst,
+    which is used for the readthedocs documentation.
+
 ============
 Contributing
 ============
@@ -7,7 +13,7 @@ Contributing
   :depth: 1
 
 Introduction
-------------
+============
 
 Welcome and thank you for considering a contribution to AAanalysis! We are an open-source project focusing on
 interpretable protein prediction. Your involvement is invaluable to us. Contributions can be made in the following ways:
@@ -17,13 +23,13 @@ interpretable protein prediction. Your involvement is invaluable to us. Contribu
 - Participating in project discussions.
 
 Newcomers can start by tackling issues labeled `good first issue <https://github.com/breimanntools/aaanalysis/issues>`_.
-
+Please email stephanbreimann@gmail.com for further questions or suggestions?
 
 Vision
-------
+======
 
 Objectives
-^^^^^^^^^^
+----------
 
 - Establish a comprehensive toolkit for interpretable, sequence-based protein prediction.
 - Enable robust learning from small and unbalanced datasets, common in life sciences.
@@ -32,14 +38,14 @@ Objectives
 - Offer flexible interoperability with other Python packages like `biopython <https://biopython.org/>`_.
 
 Non-goals
-^^^^^^^^^
+---------
 
 - Reimplementation of existing solutions.
 - Ignoring the biological context.
 - Reliance on opaque, black-box models.
 
 Principles
-^^^^^^^^^^
+----------
 
 - Algorithms should be biologically inspired and combine empirical insights with cutting-edge computational methods.
 - We emphasize fair, accountable, and transparent machine learning, as detailed
@@ -49,7 +55,7 @@ Principles
 
 
 Bug Reports
------------
+===========
 
 For effective bug reports, please include a Minimal Reproducible Example (MRE):
 
@@ -61,10 +67,10 @@ Further guidelines can be found `here <https://matthewrocklin.com/minimal-bug-re
 
 
 Installation
-------------
+============
 
 Latest Version
-^^^^^^^^^^^^^^
+--------------
 
 To test the latest development version, you can use pip:
 
@@ -73,7 +79,7 @@ To test the latest development version, you can use pip:
   pip install git+https://github.com/breimanntools/aaanalysis.git@master
 
 Local Development Environment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 Fork and Clone
 """"""""""""""
@@ -122,7 +128,7 @@ This will execute all the test cases in the tests/ directory.
 
 
 Pull Requests
--------------
+=============
 
 For substantial changes, start by opening an issue for discussion. For minor changes like typos, submit a pull request directly.
 
@@ -133,21 +139,21 @@ Ensure your pull request:
 - Is up-to-date with the master branch and passes all tests.
 
 Preview Changes
-^^^^^^^^^^^^^^^
+---------------
 
 To preview documentation changes in pull requests, follow the "docs/readthedocs.org" check link under "All checks have passed".
 
 
 Documentation
--------------
+=============
 
 Documentation is a crucial part of the project. If you make any modifications to the documentation,
 please ensure they render correctly.
 
 Naming Conventions
-^^^^^^^^^^^^^^^^^^^
+------------------
 
-We strive for interface consistency with well-established libraries like
+We strive for consistency of our public interfaces with well-established libraries like
 `scikit-learn <https://scikit-learn.org/stable/>`_, `pandas <https://pandas.pydata.org/>`_,
 `matplotlib <https://matplotlib.org/>`_, and `seaborn <https://seaborn.pydata.org/>`_.
 
@@ -162,7 +168,11 @@ We primarily use two class templates for organizing our codebase:
 - **Tool**: Standalone classes that focus on specialized tasks, such as feature engineering for protein prediction.
   They feature `.run` and `.eval` methods to carry out the complete processing pipeline and generate various evaluation metrics.
 
-Both `Wrapper` and `Tool` classes come with supplementary plotting classes for visualization.
+The remaining classes should fulfill two further purposes, without being directly implemented using class inheritance.
+
+- **Data visualization**: Supplementary plotting classes for `Wrapper` and `Tool` classes, named accordingly using a
+  `Plot` suffix (e.g., 'CPPPlot'). These classes implement an `.eval` method to visualize the key evaluation measures.
+- **Analysis support**: Supportive pre-processing classes  for `Wrapper` and `Tool` classes.
 
 Function and Method Naming
 """"""""""""""""""""""""""
@@ -172,30 +182,38 @@ processing data values should correspond with the names specified in our primary
 `aaanalysis/_utils/_utils_constants.py`.
 
 Code Philosophy
-^^^^^^^^^^^^^^^
+---------------
 
 We aim for a modular, robust, and easily extendable codebase. Therefore, we adhere to flat class hierarchies
 (i.e., only inheriting from `Wrapper` or `Tool` is recommended) and functional programming principles, as outlined in
 `A Philosophy of Software Design <https://dl.acm.org/doi/10.5555/3288797>`_.
-We also prioritize user-friendly interfaces, complete with descriptive error messages and
-`Python type hints <https://docs.python.org/3/library/typing.html>`_, comprehensively described in
-`Robust Python <https://www.oreilly.com/library/view/robust-python/9781098100650/>`_.
+Our goal is to provide a user-friendly public interface using concise description and
+`Python type hints <https://docs.python.org/3/library/typing.html>`_ (see also this Python Enhancement Proposal
+`PEP 484 <https://peps.python.org/pep-0484/>`_
+or the `Robust Python <https://www.oreilly.com/library/view/robust-python/9781098100650/>`_ book).
+For the validation of user inputs, we use comprehensive checking functions with descriptive error messages.
 
 Documentation Style
-^^^^^^^^^^^^^^^^^^^^
+-------------------
 
-- **Docstring Style**: We use Numpy-style docstrings. Learn more in the
-  `Numpy Docstring Guide <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
+- **Docstring Style**: We use the `Numpy Docstring style <https://numpydoc.readthedocs.io/en/latest/format.html>`_ and
+  adhere to the `PEP 257 <https://peps.python.org/pep-0257/>`_ docstring conventions.
+
+- **Code Style**: Please follow the `PEP 8 <https://peps.python.org/pep-0008/>`_ and
+  `PEP 20 <https://peps.python.org/pep-0020/>`_ style guides for Python code.
 
 - **Markup Language**: Documentation is in reStructuredText (.rst). For an introduction, see this
   `reStructuredText Primer <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_.
 
-- **Autodoc**: We use `sphinx.ext.autodoc` for automatic inclusion of docstrings in the documentation.
+- **Autodoc**: We use `Sphinx <https://www.sphinx-doc.org/en/master/index.html>`_
+  for automatic inclusion of docstrings in the documentation, including its
+  `autodoc <https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html>`_ and
+  `napoleon <https://sphinxcontrib-napoleon.readthedocs.io/en/latest/#>`_ extensions.
 
 - **Further Details**: See `docs/source/conf.py` for more.
 
 Building the Docs
-^^^^^^^^^^^^^^^^^
+-----------------
 
 To generate the documentation locally:
 

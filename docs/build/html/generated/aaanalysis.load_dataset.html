@@ -133,7 +133,6 @@
 <li class="toctree-l3"><a class="reference internal" href="aaanalysis.load_scales.html">aaanalysis.load_scales</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../api.html#preprocessing">Preprocessing</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#feature-engineering">Feature Engineering</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#pu-learning">PU Learning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#explainable-ai">Explainable AI</a></li>
@@ -141,7 +140,9 @@
 <li class="toctree-l2"><a class="reference internal" href="../api.html#plot-utilities">Plot Utilities</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../_resources/tables.html">Tables</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../_index/tables.html">Tables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../index/references.html">References</a></li>
 </ul>
 
@@ -216,32 +217,15 @@
 <h1>aaanalysis.load_dataset<a class="headerlink" href="#aaanalysis-load-dataset" title="Permalink to this heading">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="aaanalysis.load_dataset">
-<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">load_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'INFO'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_canonical_aa</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.11)"><span class="pre">Literal</span></a><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'remove'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'keep'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'gap'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'remove'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_len</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_len</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><span class="pre">DataFrame</span></a></span></span><a class="reference internal" href="../_modules/aaanalysis/data_loader/data_loader.html#load_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data_loader/data_loader.py#L40-L110"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.load_dataset" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load protein benchmarking datasets or their general overview by setting ‘name’ to ‘INFO’.</p>
-<dl class="simple">
-<dt>Three types of benchmark datasets are provided:</dt><dd><ul class="simple">
-<li><dl class="simple">
-<dt>Residue prediction: 6 datasets used to predict residue (amino acid) specific properties</dt><dd><p>(‘AA_CASPASE3’, ‘AA_FURIN’, ‘AA_LDR’, ‘AA_MMP2’, ‘AA_RNABIND’, ‘AA_SA’)</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Domain prediction: 1 dataset used to predict domain specific properties (_PU contains unlabeled data)</dt><dd><p>(DOM_GSEC, DOM_GSEC_PU)</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Sequence prediction: 6 datasets used to predict sequence specific properties</dt><dd><p>(‘SEQ_AMYLO’, ‘SEQ_CAPSID’, ‘SEQ_DISULFIDE’, ‘SEQ_LOCATION’, ‘SEQ_SOLUBLE’, ‘SEQ_TAIL’)</p>
-</dd>
-</dl>
-</li>
-</ul>
-</dd>
-</dl>
+<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">load_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'INFO'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_canonical_aa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'remove'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/data_loader/data_loader.html#load_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data_loader/data_loader.py#L57-L116"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.load_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load protein benchmarking datasets.</p>
+<p>The benchmarks are distinguished into residue/amino acid (‘AA’), domain (‘DOM’), and sequence (‘SEQ’) level
+datasets. An overview table can be retrieved by using default setting (name=’INFO’). A through analysis of
+the residue and sequence datasets can be found in TODO[Breimann23a].</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>name</strong></dt><dd><p>Name of the dataset. See ‘Dataset’ column in overview dataframe (name=’INFO’).</p>
+<dt><strong>name</strong></dt><dd><p>Name of the dataset. See ‘Dataset’ column in overview table.</p>
 </dd>
 <dt><strong>n</strong></dt><dd><p>Number of proteins per class. If None, the whole dataset will be returned.</p>
 </dd>
@@ -250,7 +234,7 @@
 - ‘keep’: Sequences containing non-canonical amino acids are not removed.
 - ‘gap’: Sequences are kept and modified by replacing non-canonical amino acids by gap symbol (‘X’).</p>
 </dd>
-<dt><strong>min_len</strong></dt><dd><p>Minimum length of sequences for filtering. None to disable.</p>
+<dt><strong>min_len</strong></dt><dd><p>Minimum length of sequences for filtering. None to disable</p>
 </dd>
 <dt><strong>max_len</strong></dt><dd><p>Maximum length of sequences for filtering. None to disable</p>
 </dd>
@@ -258,13 +242,17 @@
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
+<dt>:</dt><dd></dd>
 <dt>df_seq</dt><dd><p>Dataframe with the selected sequence dataset.</p>
 </dd>
 </dl>
 </dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></p>
+</dd>
 </dl>
 <p class="rubric">Notes</p>
-<p>For further information on the benchmark datasets, refer to the AAclust paper : TODO: add link to AAclust paper</p>
+<p>See further information on the benchmark datasets in</p>
 </dd></dl>
 
 </div>

@@ -1,12 +1,12 @@
-.. AAanalysis documentation master file, created by
-   sphinx-quickstart on Fri Aug 11 17:25:32 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. Developer Notes:
+   This is the landing page for the AAanalysis documentation using Sphinx, containing the root `toctree` directive.
+   The documentation will be hosted on Read the docs.
+
 
 Welcome to the AAanalysis documentation
 =======================================
-.. include:: index/badges.rst
-.. include:: _resources/overview.rst
+.. include:: _index/badges.rst
+.. include:: _index/overview.rst
 
 Install
 =======
@@ -40,7 +40,10 @@ Install
 
    api.rst
 
-   _resources/tables.rst
+.. toctree::
+   :maxdepth: 1
+
+   _index/tables.rst
    index/references.rst
 
 Indices and tables

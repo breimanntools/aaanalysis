@@ -6,12 +6,13 @@ import platform
 # Folder and File Constants
 SEP = "\\" if platform.system() == "Windows" else "/"
 FOLDER_SOURCE = os.path.dirname(os.path.abspath(__file__))
-FOLDER_REF = FOLDER_SOURCE + SEP + "index" + SEP
-FOLDER_RESOURCES = FOLDER_SOURCE + SEP + "_resources" + SEP
-FOLDER_TABLES = FOLDER_RESOURCES + "tables" + SEP
+FOLDER_IND = FOLDER_SOURCE + SEP + "index" + SEP
+FOLDER_IND_ = FOLDER_SOURCE + SEP + "_index" + SEP
+FOLDER_TABLES = FOLDER_IND_ + "tables" + SEP
 
-FILE_REF = FOLDER_REF + "references.rst"
-FILE_TABLE = FOLDER_RESOURCES + "tables.rst"
+FILE_REF = FOLDER_IND + "references.rst"
+FILE_TABLE_TEMPLATE = FOLDER_IND_ + "tables_template.rst"
+FILE_TABLE = FOLDER_IND_ + "tables.rst"
 FILE_MAPPER = FOLDER_TABLES + "0_mapper.xlsx"
 LIST_TABLES = list(sorted([x for x in os.listdir(FOLDER_TABLES) if x != "0_mapper.xlsx"]))
 
