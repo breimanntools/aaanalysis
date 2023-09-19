@@ -62,7 +62,7 @@ Install
 Contributions
 =============
 
-We welcome bug reports, feature requests, code, or documentation updates. For details, refer to our
+We welcome bug reports, feature requests, or updates on documentations and code. For details, refer to our
 `CONTRIBUTING.rst <https://github.com/breimanntools/aaanalysis/blob/master/CONTRIBUTING.rst>`_.
 Please email stephanbreimann@gmail.com for further questions or suggestions?
 

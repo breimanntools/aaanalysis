@@ -62,17 +62,28 @@ extensions = [
 ]
 
 # -- Autodoc & Numpydoc settings ----------------------------------------------
+# Autodoc settings
+# See https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#configuration
 autodoc_default_options = {
     "members": True,
-    "inherited-members": True
+    "inherited-members": True,
+    "autodoc_typehints": "description",
 }
 
+# Auto summary settings
+# See https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html#configuration
 autosummary_generate = True
-numpydoc_show_class_members = False
+autosummary_ignore_module_all = True
 
-# Sphinx-autodoc-typehints settings
-set_type_checking_flag = True
-typehints = 'description'
+# Numpydoc settings
+# See https://numpydoc.readthedocs.io/en/latest/install.html#sphinx-extensions-configuration
+numpydoc_use_plots = True
+numpydoc_show_class_members = False
+numpydoc_show_inherited_class_members = False
+numpydoc_class_members_toctree = False
+numpydoc_xref_param_type = False # Test True
+# numpydoc_xref_aliases = { create aliases which can be reference in doc}
+# numpydoc_validation_checks = {"all"}    # Strict checking for Sphinx build
 
 # Napoleon settings
 # See https://sphinxcontrib-napoleon.readthedocs.io/en/latest/sphinxcontrib.napoleon.html#sphinxcontrib.napoleon.Config
@@ -90,17 +101,6 @@ napoleon_use_rtype = True
 napoleon_use_keyword = True
 napoleon_custom_sections = None
 
-"""
-myst_enable_extensions = [
-    "amsmath",
-    "colon_fence",
-    "deflist",
-    "dollarmath",
-    "html_image",
-    "html_admonition",
-]
-napoleon_custom_sections = [('Params', 'Parameters')]
-"""
 
 # -- Intersphinx mapping -----------------------------------------------------
 intersphinx_mapping = {
