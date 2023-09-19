@@ -32,6 +32,13 @@
    background: #f7f7f7;  /* Sets the background color */
 }
 
+/* Style for inline code */
+.rst-content code {
+    background-color: #f5f5f5;  /* Gray background */
+    font-family: monospace;     /* Monospace font */
+    padding: 2px 2px;           /* Padding around the text */
+}
+
 /* Style for the search input box in the sidebar */
 .wy-side-nav-search input[type=text] {
    border-color: #666666;  /* Sets the border color */

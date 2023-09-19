@@ -43,7 +43,6 @@ extensions = [
     'sphinx.ext.autodoc',  # Autogenerate documentation from docstrings
     #'numpydoc',  # Support for Numpy-style docstrings
     'sphinx.ext.autosummary',  # Generate summary tables for API reference
-    'sphinx.ext.viewcode',  # Link from docs to source code
     'sphinx_rtd_theme',  # Theme emulating "Read the Docs" style # "sphinx_book_theme"
     'sphinx_copybutton',  # Adds a "copy" button to code blocks
     'sphinx.ext.intersphinx',  # Links to documentation of objects in other Sphinx projects
@@ -146,6 +145,15 @@ html_css_files = ['css/style.css']
 html_show_sphinx = False
 html_logo = "_artwork/logo_big_trans.png"
 html_favicon = "_artwork/logo_small.png"
+
+html_context = {
+    'display_github': True,  # Add the 'Edit on GitHub' link
+    'github_user': 'breimanntools',
+    'github_repo': 'aaanalysis',
+    'github_version': 'master/docs/source/',
+}
+
+
 """
 html_favicon = "path_to_your_favicon.ico"
 htmlhelp_basename = "YOUR_PROJECT_NAMEdoc"

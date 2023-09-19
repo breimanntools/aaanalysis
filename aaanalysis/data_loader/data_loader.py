@@ -63,8 +63,8 @@ def load_dataset(name: str = "INFO",
     """
     Load protein benchmarking datasets.
 
-    The benchmarks are  distinguished into amino acid ('AA'), domain ('DOM'), and sequence ('SEQ') level
-    datasets. Use default settings (name='INFO') of an overview table. Detailed analysis is in :cite:`Breimann23a`.
+    The benchmarks are categorized into amino acid ('AA'), domain ('DOM'), and sequence ('SEQ') level
+    datasets. Use default settings (``name='INFO'``) for an overview table. Detailed analysis is in [Breimann23a]_.
 
     Parameters
     ----------
@@ -88,8 +88,8 @@ def load_dataset(name: str = "INFO",
 
     Returns
     -------
-    df_seq
-        Dataframe with the selected sequence dataset.
+    pd.DataFrame
+        Dataframe (df_seq) containing the selected sequence dataset.
 
     Notes
     -----
