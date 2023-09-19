@@ -41,10 +41,10 @@ suppress_warnings = ['ref.citation', 'myst.header']
 
 extensions = [
     'sphinx.ext.autodoc',  # Autogenerate documentation from docstrings
-    'numpydoc',  # Support for Numpy-style docstrings
+    #'numpydoc',  # Support for Numpy-style docstrings
     'sphinx.ext.autosummary',  # Generate summary tables for API reference
     'sphinx.ext.viewcode',  # Link from docs to source code
-    'sphinx_rtd_theme',  # Theme emulating "Read the Docs" style
+    'sphinx_rtd_theme',  # Theme emulating "Read the Docs" style # "sphinx_book_theme"
     'sphinx_copybutton',  # Adds a "copy" button to code blocks
     'sphinx.ext.intersphinx',  # Links to documentation of objects in other Sphinx projects
     'sphinx.ext.doctest',  # Test code examples in documentation
@@ -73,7 +73,7 @@ autodoc_default_options = {
     "show-inheritance": False,  # Show the base classes in the documentation for a class
     "ignore-module-all": False,  # Ignore __all__ when looking for members to document
     "exclude-members": "__init__",  # List of members to be excluded from documentation
-    "member-order": "groupwise",  # Sort the documented members. Options: 'alphabetical', 'bysource', 'groupwise'
+    "member-order": "bysource",  # Sort the documented members. Options: 'alphabetical', 'bysource', 'groupwise'
     "autodoc_typehints": "description",  # How to display type hints. Options: 'none', 'signature', 'description'
     "imported-members": False,  # Document members imported into the documented module from other modules
 }
@@ -84,6 +84,7 @@ autodoc_default_options = {
 autosummary_generate = True
 autosummary_ignore_module_all = False
 
+"""
 # Numpydoc settings
 # See https://numpydoc.readthedocs.io/en/latest/install.html#sphinx-extensions-configuration
 numpydoc_use_plots = True
@@ -93,6 +94,7 @@ numpydoc_class_members_toctree = False
 numpydoc_xref_param_type = False # Test True
 # numpydoc_xref_aliases = { create aliases which can be reference in doc}
 # numpydoc_validation_checks = {"all"}    # Strict checking for Sphinx build
+"""
 
 # Napoleon settings
 # See https://sphinxcontrib-napoleon.readthedocs.io/en/latest/sphinxcontrib.napoleon.html#sphinxcontrib.napoleon.Config

@@ -125,26 +125,22 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">CPP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_scales</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/cpp.html#CPP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L32-L321"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.CPP" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Tool</span></code></p>
 <p>Create and filter features that are most discriminant between two sets of sequences.</p>
-<dl class="field-list">
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl>
-<dt><strong>df_scales</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></span></dt><dd><p>DataFrame with amino acid scales.</p>
-</dd>
-<dt><strong>df_cat</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, default = aa.load_categories</span></dt><dd><p>DataFrame with default categories for physicochemical amino acid scales.</p>
-</dd>
-<dt><strong>df_parts</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></span></dt><dd><p>DataFrame with sequence parts.</p>
-</dd>
-<dt><strong>split_kws</strong><span class="classifier">dict, default = SequenceFeature.get_split_kws</span></dt><dd><p>Nested dictionary with parameter dictionary for each chosen split_type.</p>
-</dd>
-<dt><strong>accept_gaps</strong><span class="classifier">bool, default = False</span></dt><dd><p>Whether to accept missing values by enabling omitting for computations (if True).</p>
-</dd>
-<dt><strong>verbose</strong><span class="classifier">bool, default = True</span></dt><dd><p>Whether to print progress information about the algorithm (if True).</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_scales</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – DataFrame with amino acid scales.</p></li>
+<li><p><strong>df_cat</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, default = aa.load_categories) – DataFrame with default categories for physicochemical amino acid scales.</p></li>
+<li><p><strong>df_parts</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – DataFrame with sequence parts.</p></li>
+<li><p><strong>split_kws</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a><em>, </em><em>default = SequenceFeature.get_split_kws</em>) – Nested dictionary with parameter dictionary for each chosen split_type.</p></li>
+<li><p><strong>accept_gaps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>default = False</em>) – Whether to accept missing values by enabling omitting for computations (if True).</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>default = True</em>) – Whether to print progress information about the algorithm (if True).</p></li>
+</ul>
 </dd>
 </dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
+<div class="admonition-notes admonition">
+<p class="admonition-title">Notes</p>
 <p>The CPP.run() method performs all steps of the CPP algorithm.</p>
+</div>
 <dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.CPP.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_scales</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_parts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_gaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/cpp.html#CPP.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L57-L78"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.CPP.__init__" title="Permalink to this definition"></a></dt>
@@ -169,61 +165,41 @@
 </tbody>
 </table>
 <dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.CPP.eval">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_feat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/cpp.html#CPP.eval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L318-L321"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.CPP.eval" title="Permalink to this definition"></a></dt>
-<dd><p>Get evaluation for provided dataset</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.CPP.run">
 <span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parametric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tmd_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_n_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jmd_c_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ext_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_cat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_pre_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pct_pre_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_std_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_overlap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_cor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_processes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/cpp.html#CPP.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L205-L316"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.CPP.run" title="Permalink to this definition"></a></dt>
 <dd><p>Perform CPP pipeline by creation and two-step filtering of features. CPP aims to
 identify a collection of non-redundant features that are most discriminant between
 a test and a reference group of sequences.</p>
-<dl class="field-list">
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>labels</strong><span class="classifier">array-like, shape (n_samples)</span></dt><dd><p>Class labels for samples in sequence DataFrame (test=1, reference=0).</p>
-</dd>
-<dt><strong>parametric</strong><span class="classifier">bool, default = False</span></dt><dd><p>Whether to use parametric (T-test) or non-parametric (U-test) test for p-value computation.</p>
-</dd>
-<dt><strong>n_filter</strong><span class="classifier">int, default = 100</span></dt><dd><p>Number of features to be filtered/selected by CPP algorithm.</p>
-</dd>
-<dt><strong>n_pre_filter</strong><span class="classifier">int, optional</span></dt><dd><p>Number of feature to be pre-filtered by CPP algorithm. If None, a percentage of all features is used.</p>
-</dd>
-<dt><strong>tmd_len</strong><span class="classifier">int, &gt;0</span></dt><dd><p>Length of TMD used for positions. TODO add link to explanation</p>
-</dd>
-<dt><strong>start</strong><span class="classifier">int, &gt;=0</span></dt><dd><p>Position label of first amino acid position (starting at N-terminus).</p>
-</dd>
-<dt><strong>jmd_n_len</strong><span class="classifier">int, &gt;=0, default = 10</span></dt><dd><p>Length of JMD-N.</p>
-</dd>
-<dt><strong>jmd_c_len</strong><span class="classifier">int, &gt;=0, default = 10</span></dt><dd><p>Length of JMD-C.</p>
-</dd>
-<dt><strong>ext_len</strong><span class="classifier">int, &gt;=0, default = 4</span></dt><dd><p>Length of TMD-extending part (starting from C and N terminal part of TMD).
-Should be longer than jmd_n_len and jmd_c_len</p>
-</dd>
-<dt><strong>check_cat</strong><span class="classifier">bool, default = True</span></dt><dd><p>Whether to check for redundancy within scale categories.</p>
-</dd>
-<dt><strong>pct_pre_filter</strong><span class="classifier">int, default = 5</span></dt><dd><p>Percentage of all features that should remain after the pre-filtering step.</p>
-</dd>
-<dt><strong>max_std_test</strong><span class="classifier">float [0-1], default = 0.2</span></dt><dd><p>Maximum standard deviation within the test group used as threshold for pre-filtering.</p>
-</dd>
-<dt><strong>max_overlap</strong><span class="classifier">float [0-1], default = 0.5</span></dt><dd><p>Maximum positional overlap of features used as threshold for filtering.</p>
-</dd>
-<dt><strong>max_cor</strong><span class="classifier">float [0-1], default = 0.5</span></dt><dd><p>Maximum Pearson correlation of features used as threshold for filtering.</p>
-</dd>
-<dt><strong>n_processes</strong><span class="classifier">int, default = None</span></dt><dd><p>Number of CPUs used for multiprocessing. If None, number will be optimized automatically.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>labels</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>)</em>) – Class labels for samples in sequence DataFrame (test=1, reference=0).</p></li>
+<li><p><strong>parametric</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>default = False</em>) – Whether to use parametric (T-test) or non-parametric (U-test) test for p-value computation.</p></li>
+<li><p><strong>n_filter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>default = 100</em>) – Number of features to be filtered/selected by CPP algorithm.</p></li>
+<li><p><strong>n_pre_filter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – Number of feature to be pre-filtered by CPP algorithm. If None, a percentage of all features is used.</p></li>
+<li><p><strong>tmd_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>&gt;0</em>) – Length of TMD used for positions. TODO add link to explanation</p></li>
+<li><p><strong>start</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>&gt;=0</em>) – Position label of first amino acid position (starting at N-terminus).</p></li>
+<li><p><strong>jmd_n_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>&gt;=0</em><em>, </em><em>default = 10</em>) – Length of JMD-N.</p></li>
+<li><p><strong>jmd_c_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>&gt;=0</em><em>, </em><em>default = 10</em>) – Length of JMD-C.</p></li>
+<li><p><strong>ext_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>&gt;=0</em><em>, </em><em>default = 4</em>) – Length of TMD-extending part (starting from C and N terminal part of TMD).
+Should be longer than jmd_n_len and jmd_c_len</p></li>
+<li><p><strong>check_cat</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>default = True</em>) – Whether to check for redundancy within scale categories.</p></li>
+<li><p><strong>pct_pre_filter</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>default = 5</em>) – Percentage of all features that should remain after the pre-filtering step.</p></li>
+<li><p><strong>max_std_test</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em> [</em><em>0-1</em><em>]</em><em>, </em><em>default = 0.2</em>) – Maximum standard deviation within the test group used as threshold for pre-filtering.</p></li>
+<li><p><strong>max_overlap</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em> [</em><em>0-1</em><em>]</em><em>, </em><em>default = 0.5</em>) – Maximum positional overlap of features used as threshold for filtering.</p></li>
+<li><p><strong>max_cor</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em> [</em><em>0-1</em><em>]</em><em>, </em><em>default = 0.5</em>) – Maximum Pearson correlation of features used as threshold for filtering.</p></li>
+<li><p><strong>n_processes</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>default = None</em>) – Number of CPUs used for multiprocessing. If None, number will be optimized automatically.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl>
-<dt><strong>df_feat</strong><span class="classifier"><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, shape (n_feature, n_feature_information)</span></dt><dd><p>DataFrame with a unique identifier, scale information, statistics, and positions for each feature.</p>
+<dd class="field-even"><p><strong>df_feat</strong> – DataFrame with a unique identifier, scale information, statistics, and positions for each feature.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, shape (n_feature, n_feature_information)</p>
 </dd>
 </dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
+<div class="admonition-notes admonition">
+<p class="admonition-title">Notes</p>
 <p>The feature DataFrame contains the following eleven columns, including the unique
 feature id (1), scale information (2-4), statistical results used for filtering and
 ranking (5-10), and feature positions (11):</p>
@@ -240,6 +216,13 @@ ranking (5-10), and feature positions (11):</p>
 <li><p>p_val_fdr_bh: Benjamini-Hochberg FDR corrected p-values</p></li>
 <li><p>positions: Feature positions for default settings</p></li>
 </ol>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.CPP.eval">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_feat</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/aaanalysis/cpp/cpp.html#CPP.eval"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/cpp/cpp.py#L318-L321"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.CPP.eval" title="Permalink to this definition"></a></dt>
+<dd><p>Get evaluation for provided dataset</p>
 </dd></dl>
 
 </dd></dl>

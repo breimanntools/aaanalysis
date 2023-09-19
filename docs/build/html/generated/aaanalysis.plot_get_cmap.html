@@ -127,48 +127,40 @@
 <dd><p>Retrieve color maps or color dictionaries specified for AAanalysis.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>name</strong><span class="classifier">str, optional</span></dt><dd><dl class="simple">
-<dt>The name of the color palette to use in AAanalysis. Options include:</dt><dd><ul class="simple">
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – <dl class="simple">
+<dt>The name of the color palette to use in AAanalysis. Options include:</dt><dd><ul>
 <li><dl class="simple">
-<dt>‘SHAP’, ‘FEAT’, ‘GGPLOT’: Return color maps for SHAP plots, CPP feature maps/heatmaps,</dt><dd><p>and datagrouping as in GGplot, respectively.</p>
+<dt>’SHAP’, ‘FEAT’, ‘GGPLOT’: Return color maps for SHAP plots, CPP feature maps/heatmaps,</dt><dd><p>and datagrouping as in GGplot, respectively.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>‘DICT_COLOR’, ‘DICT_SCALE_CAT’: Return default color dictionaries for plots (e.g., bars in CPPPlot.profile)</dt><dd><p>and scale categories (e.g., CPPPlot.heatmap), respectively.</p>
+<dt>’DICT_COLOR’, ‘DICT_SCALE_CAT’: Return default color dictionaries for plots (e.g., bars in CPPPlot.profile)</dt><dd><p>and scale categories (e.g., CPPPlot.heatmap), respectively.</p>
 </dd>
 </dl>
 </li>
 </ul>
 </dd>
 </dl>
-</dd>
-<dt><strong>n_colors</strong><span class="classifier">int, default=100</span></dt><dd><p>Number of colors in the color map.</p>
-</dd>
-<dt><strong>facecolor_dark</strong><span class="classifier">bool, default=False</span></dt><dd><p>Whether to use a dark face color for ‘SHAP’ and ‘FEAT’.</p>
-</dd>
-<dt><strong>color_pos</strong><span class="classifier">str, optional</span></dt><dd><p>Hex code for the positive color.</p>
-</dd>
-<dt><strong>color_neg</strong><span class="classifier">str, optional</span></dt><dd><p>Hex code for the negative color.</p>
-</dd>
-<dt><strong>color_center</strong><span class="classifier">str or list, optional</span></dt><dd><p>Hex code or list for the center color.</p>
-</dd>
-<dt><strong>input</strong><span class="classifier">str, {‘rgb’, ‘hls’, ‘husl’, ‘xkcd’}</span></dt><dd><p>Color space to interpret the input color. The first three options
-apply to tuple inputs and the latter applies to string inputs.</p>
-</dd>
-<dt><strong>pct_gap</strong><span class="classifier">int, default=10</span></dt><dd><p>Percentage size of the gap between color ranges.</p>
-</dd>
-<dt><strong>pct_center</strong><span class="classifier">float, optional</span></dt><dd><p>Percentage size of the center color in the map.</p>
-</dd>
-</dl>
+</p></li>
+<li><p><strong>n_colors</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>default=100</em>) – Number of colors in the color map.</p></li>
+<li><p><strong>facecolor_dark</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>default=False</em>) – Whether to use a dark face color for ‘SHAP’ and ‘FEAT’.</p></li>
+<li><p><strong>color_pos</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – Hex code for the positive color.</p></li>
+<li><p><strong>color_neg</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – Hex code for the negative color.</p></li>
+<li><p><strong>color_center</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em>, </em><em>optional</em>) – Hex code or list for the center color.</p></li>
+<li><p><strong>input</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>{'rgb'</em><em>, </em><em>'hls'</em><em>, </em><em>'husl'</em><em>, </em><em>'xkcd'}</em>) – Color space to interpret the input color. The first three options
+apply to tuple inputs and the latter applies to string inputs.</p></li>
+<li><p><strong>pct_gap</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>default=10</em>) – Percentage size of the gap between color ranges.</p></li>
+<li><p><strong>pct_center</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – Percentage size of the center color in the map.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>cmap</strong><span class="classifier">list or dict</span></dt><dd><p>If ‘name’ parameter is ‘SHAP’, ‘FEAT’, or ‘GGPLOT’, a list of colors specified for AAanalysis will be returned.
+<dd class="field-even"><p><strong>cmap</strong> – If ‘name’ parameter is ‘SHAP’, ‘FEAT’, or ‘GGPLOT’, a list of colors specified for AAanalysis will be returned.
 If ‘name’ parameter is None, a list of colors based on provided colors</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)">list</a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)">dict</a></p>
 </dd>
 </dl>
 <div class="admonition seealso">

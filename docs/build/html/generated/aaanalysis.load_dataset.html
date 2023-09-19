@@ -127,38 +127,31 @@ datasets. An overview table can be retrieved by using default setting (name=’I
 the residue and sequence datasets can be found in [Breimann23a].</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>name</strong></dt><dd><p>Name of the dataset. See ‘Dataset’ column in overview table.</p>
-</dd>
-<dt><strong>n</strong></dt><dd><p>Number of proteins per class. If None, the whole dataset will be returned.</p>
-</dd>
-<dt><strong>non_canonical_aa</strong></dt><dd><p>Options for modifying non-canonical amino acids:</p>
-<ul class="simple">
-<li><p>‘remove’: Sequences containing non-canonical amino acids are removed.</p></li>
-<li><p>‘keep’: Sequences containing non-canonical amino acids are not removed.</p></li>
-<li><p>‘gap’: Sequences are kept and modified by replacing non-canonical amino acids by gap symbol (‘X’).</p></li>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of the dataset. See ‘Dataset’ column in overview table.</p></li>
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Number of proteins per class. If None, the whole dataset will be returned.</p></li>
+<li><p><strong>non_canonical_aa</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘remove’, ‘keep’, ‘gap’]) – <p>Options for modifying non-canonical amino acids:</p>
+<ul>
+<li><p>’remove’: Sequences containing non-canonical amino acids are removed.</p></li>
+<li><p>’keep’: Sequences containing non-canonical amino acids are not removed.</p></li>
+<li><p>’gap’: Sequences are kept and modified by replacing non-canonical amino acids by gap symbol (‘X’).</p></li>
+</ul>
+</p></li>
+<li><p><strong>min_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Minimum length of sequences for filtering. None to disable</p></li>
+<li><p><strong>max_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Maximum length of sequences for filtering. None to disable</p></li>
 </ul>
 </dd>
-<dt><strong>min_len</strong></dt><dd><p>Minimum length of sequences for filtering. None to disable</p>
-</dd>
-<dt><strong>max_len</strong></dt><dd><p>Maximum length of sequences for filtering. None to disable</p>
-</dd>
-</dl>
-</dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>df_seq</dt><dd><p>Dataframe with the selected sequence dataset.</p>
+<dd class="field-even"><p>Dataframe with the selected sequence dataset.</p>
 </dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>See further information on the benchmark datasets in</p>
-<dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a></p>
+<dd class="field-odd"><p>df_seq</p>
 </dd>
 </dl>
+<div class="admonition-notes admonition">
+<p class="admonition-title">Notes</p>
+<p>See further information on the benchmark datasets in</p>
+</div>
 </dd></dl>
 
 </div>
