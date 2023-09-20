@@ -230,7 +230,7 @@ class SequenceFeature:
 
         >>> import aaanalysis as aa
         >>> sf = aa.SequenceFeature()
-        >>> df_seq = aa.load_dataset(name='DOM_GSE')
+        >>> df_seq = aa.load_dataset(name='DOM_GSEC')
         >>> df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=["tmd_e", "tmd_jmd"], jmd_n_len=10, jmd_c_len=10)
         """
         ut.check_args_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len, accept_tmd_none=True)

@@ -185,6 +185,10 @@ def load_dataset(name: str = "INFO",
     DataFrame
         Dataframe (df_seq) containing the selected sequence dataset.
 
+    See also
+    --------
+    See an overview of all benchmarks in :ref:`1_overview_benchmarks` and a detailed usage tutorial in the
+    `data loader tutorial <tutorials/tutorial2_data_loader.ipynb>`_.
 
     Examples
     --------

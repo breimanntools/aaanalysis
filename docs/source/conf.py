@@ -32,7 +32,7 @@ todo_include_todos = False
 
 # -- General configuration ---------------------------------------------------
 templates_path = ['_templates']
-exclude_patterns = ['index/tables_templates.rst']
+exclude_patterns = ['tables_templates.rst']
 source_suffix = ['.rst', '.md']
 master_doc = 'index'
 

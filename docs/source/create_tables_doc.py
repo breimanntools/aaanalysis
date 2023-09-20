@@ -11,7 +11,7 @@ FOLDER_TABLES = FOLDER_IND + "tables" + SEP
 
 FILE_REF = FOLDER_IND + "references.rst"
 FILE_TABLE_TEMPLATE = FOLDER_SOURCE + "tables_template.rst"
-FILE_TABLE = FOLDER_IND + "tables.rst"
+FILE_TABLE_SAVED = FOLDER_IND + "tables.rst"
 FILE_MAPPER = FOLDER_TABLES + "0_mapper.xlsx"
 LIST_TABLES = list(sorted([x for x in os.listdir(FOLDER_TABLES) if x != "0_mapper.xlsx"]))
 
@@ -20,6 +20,7 @@ COL_DESCRIPTION = "Description"
 COL_REF = "Reference"
 
 COLUMN_WIDTH = 8
+
 
 # Helper Functions
 def _f_xlsx(on=True, file=None, ending=".xlsx"):
@@ -112,7 +113,7 @@ def generate_table_rst():
                 rst_content += tables_dict[table_marker] + "\n"
 
     # Write the new content to the output .rst file
-    with open(FILE_TABLE, 'w') as f:
+    with open(FILE_TABLE_SAVED, 'w') as f:
         f.write(rst_content)
 
 
