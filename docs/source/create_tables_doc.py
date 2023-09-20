@@ -7,12 +7,11 @@ import platform
 SEP = "\\" if platform.system() == "Windows" else "/"
 FOLDER_SOURCE = os.path.dirname(os.path.abspath(__file__)) + SEP
 FOLDER_IND = FOLDER_SOURCE + "index" + SEP
-FOLDER_IND_ = FOLDER_SOURCE + "_index" + SEP
-FOLDER_TABLES = FOLDER_IND_ + "tables" + SEP
+FOLDER_TABLES = FOLDER_IND + "tables" + SEP
 
 FILE_REF = FOLDER_IND + "references.rst"
 FILE_TABLE_TEMPLATE = FOLDER_IND + "tables_template.rst"
-FILE_TABLE_SAVED = FOLDER_IND_ + "tables.rst"
+FILE_TABLE_SAVED = FOLDER_SOURCE + "tables.rst"
 FILE_MAPPER = FOLDER_TABLES + "0_mapper.xlsx"
 LIST_TABLES = list(sorted([x for x in os.listdir(FOLDER_TABLES) if x != "0_mapper.xlsx"]))
 
@@ -67,8 +66,8 @@ def _convert_excel_to_rst(df):
         new_row = []
         for col, val in zip(header, row):
             if col == "Reference":  # Special handling for the 'Reference' column
-                new_row.append(str(val))
-                #new_row.append(f":ref:`{val} <{val}>`")    #Include references
+                #new_row.append(str(val))
+                new_row.append(f":ref:`{val} <{val}>`")    #Include references
             else:
                 new_row.append(str(val))
         rst_output += "   * - " + "\n     - ".join(new_row) + "\n"
@@ -112,7 +111,7 @@ def generate_table_rst():
         if match:
             table_marker = match.group(1)
             if table_marker in tables_dict:
-                rst_content += tables_dict[table_marker] + "\n"
+                rst_content += "\n" + tables_dict[table_marker] + "\n"
 
     # Write the new content to the output .rst file
     with open(FILE_TABLE_SAVED, 'w') as f:

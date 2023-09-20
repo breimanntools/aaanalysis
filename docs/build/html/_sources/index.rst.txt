@@ -43,7 +43,7 @@ Install
 .. toctree::
    :maxdepth: 1
 
-   _index/tables.rst
+   tables.rst
    index/references.rst
 
 Indices and tables

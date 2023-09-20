@@ -1,12 +1,19 @@
 ..
-    Developer Notes:
-    This is the index file for all tables of the AAanalysis documentation. Each table should be saved the /tables
-    directory. This file will serve as template for tables.rst, which is automatically created on the information
-    provided here and in the .csv tables from the /tables directory. Add a new table as .csv in the /tables directory,
-    in the overview table at the beginning of this document, and a new section with a short description of it in this
-    document. Each column and important data types (e.g., categories) should be described. Each table should contain a
-    'Reference' column.
-    Ignore 'tables_template.rst: WARNING: document isn't included in any toctree' warning
+   Developer Notes:
+   This is the index file for all tables of the AAanalysis documentation.
+   Tables should be saved in the /tables directory. This file serves as a template
+   for tables.rst, which is automatically generated based on the information here and
+   in the .csv tables from the /tables directory.
+
+   To add a new table:
+   1. Save it as a .csv file in the /tables directory.
+   2. Add an entry for it in the "Overview Table" section below.
+   3. Add a new section describing it, including each column and any important data types (e.g., categories).
+
+   Note: Each table should include a 'Reference' column.
+
+   Ignore the warning: 'tables_template.rst: WARNING: document isn't included in any toctree.'
+..
 
 Tables
 ======================
@@ -17,28 +24,26 @@ Tables
 
 Overview Table
 --------------
-All tables from the AAanalysis documentation are given here in chronological order of the project history.
+All tables from the AAanalysis documentation are listed here, in chronological order based on the project history.
 
 .. _0_mapper:
 
-Protein benchmark datasets
+Protein Benchmark Datasets
 --------------------------
 Three types of benchmark datasets are provided:
 
-- Residue prediction (AA): Datasets used to predict residue (amino acid) specific properties.
-- Domain prediction (DOM): Dataset used to predict domain specific properties.
-- Sequence prediction (SEQ): Datasets used to predict sequence specific properties.
+- Residue prediction (AA): Datasets used to predict specific properties of amino acid residues.
+- Domain prediction (DOM): Datasets used to predict specific properties of domains.
+- Sequence prediction (SEQ): Datasets used to predict specific properties of sequences.
 
-The classification of each dataset is indicated as first part of their name followed by an abbreviation for the
-specific dataset (e.g., 'AA_LDR', 'DOM_GSEC', 'SEQ_AMYLO'). For some datasets, an additional version of it is provided
-for positive-unlabeled (PU) learning containing only positive (1) and unlabeled (2) data samples, as indicated by
-*dataset_name_PU* (e.g., 'DOM_GSEC_PU').
+Datasets are named beginning with a classification (e.g., 'AA_LDR', 'DOM_GSEC', 'SEQ_AMYLO').
+Some datasets have an additional version for positive-unlabeled (PU) learning containing only positive (1)
+and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset name (e.g., 'DOM_GSEC_PU').
 
 .. _1_overview_benchmarks:
 
-Amino acid scale datasets
+Amino Acid Scale Datasets
 -------------------------
-Different amino acid scale datasets are provided
+Various amino acid scale datasets are provided.
 
 .. _2_overview_scales:
-

@@ -1,12 +1,19 @@
-.. Developer Notes:
-    This is the index file for usage principles. Files for each part are saved in the /usage_principles directory
-    and the overview the AAanalysis package is given as component diagram (internal dependencies) and context diagram
-    (external dependencies). Always give the concise code examples reflecting the usage examples. Instead of including
-    comprehensive tables here, add them in tables.rst and refer to them with a short explanation
+..
+   Developer Notes:
+   This is the index file that outlines the usage principles for the AAanalysis package.
+   Files for individual usage principles are stored in the /usage_principles directory.
+
+   This document provides an overview of:
+   - Component diagram (illustrating internal dependencies)
+   - Context diagram (depicting external dependencies)
+
+   Instead of including comprehensive tables here, refer to tables in tables.rst with concise explanations.
+   Always include brief code examples that mirror the corresponding usage examples.
+..
 
 Usage Principles
 ================
-Import AAanalysis as:
+To get started with AAanalysis, import it as follows:
 
 .. code-block:: python
 

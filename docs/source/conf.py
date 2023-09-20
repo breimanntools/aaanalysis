@@ -12,10 +12,7 @@ sys.path.append(os.path.abspath('.'))
 from create_tables_doc import generate_table_rst
 
 # -- Path and Platform setup --------------------------------------------------
-SEP = "\\" if platform.system() == "Windows" else "/"
 path_source = os.path.join(os.path.dirname(__file__))
-
-# Root path
 sys.path.insert(0, os.path.abspath('../../'))
 sys.path.insert(0, os.path.abspath('../../aaanalysis'))
 sys.path.insert(0, os.path.abspath('.'))
@@ -32,7 +29,7 @@ todo_include_todos = False
 
 # -- General configuration ---------------------------------------------------
 templates_path = ['_templates']
-exclude_patterns = ['tables_templates.rst']
+exclude_patterns = ['index/tables_template.rst']
 source_suffix = ['.rst', '.md']
 master_doc = 'index'
 
