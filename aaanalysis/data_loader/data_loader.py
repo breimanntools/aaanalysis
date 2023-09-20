@@ -242,7 +242,7 @@ def load_scales(name="scales", just_aaindex=False, unclassified_in=True):
     """
     Load amino acid scales, scale classification (AAontology), or scale evaluation.
 
-    A thorough analysis of the residue and sequence datasets can be found in [Breimann23a]_.
+    A thorough analysis of the residue and sequence datasets can be found in.
 
     Parameters
     ----------
