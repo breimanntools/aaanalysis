@@ -5,7 +5,6 @@
 
 Welcome to the AAanalysis documentation
 =======================================
-.. include:: index/badges.rst
 .. include:: index/overview.rst
 
 Install
@@ -31,7 +30,6 @@ Install
    :maxdepth: 1
    :caption: EXAMPLES
 
-   tutorials.rst
 
 .. toctree::
    :maxdepth: 2
