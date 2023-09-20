@@ -21,8 +21,8 @@ Data
 .. autosummary::
     :toctree: generated/
 
-    aaanalysis.load_dataset
-    aaanalysis.load_scales
+    .. aaanalysis.load_dataset
+    .. aaanalysis.load_scales
 
 .. _feature_engineering_api:
 
@@ -31,10 +31,10 @@ Feature Engineering
 .. autosummary::
     :toctree: generated/
 
-    aaanalysis.AAclust
-    aaanalysis.SequenceFeature
-    aaanalysis.CPP
-    aaanalysis.CPPPlot
+    .. aaanalysis.AAclust
+    .. aaanalysis.SequenceFeature
+    .. aaanalysis.CPP
+    .. aaanalysis.CPPPlot
 
 .. _pu_learning_api:
 
@@ -43,7 +43,7 @@ PU Learning
 .. autosummary::
     :toctree: generated/
 
-    aaanalysis.dPULearn
+    .. aaanalysis.dPULearn
 
 .. _plot_api:
 
@@ -61,9 +61,9 @@ Plot Utilities
 .. autosummary::
     :toctree: generated/
 
-    aaanalysis.plot_settings
-    aaanalysis.plot_set_legend
-    aaanalysis.plot_gcfs
-    aaanalysis.plot_get_cmap
-    aaanalysis.plot_get_cdict
+    .. aaanalysis.plot_settings
+    .. aaanalysis.plot_set_legend
+    .. aaanalysis.plot_gcfs
+    .. aaanalysis.plot_get_cmap
+    .. aaanalysis.plot_get_cdict
 

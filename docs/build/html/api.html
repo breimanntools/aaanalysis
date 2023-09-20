@@ -40,7 +40,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="aaanalysis.load_dataset" href="generated/aaanalysis.load_dataset.html" />
+    <link rel="next" title="Tables" href="index/tables.html" />
     <link rel="prev" title="Tutorials" href="tutorials.html" /> 
 </head>
 
@@ -80,32 +80,12 @@
 <p class="caption" role="heading"><span class="caption-text">REFERENCES</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#data">Data</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.load_dataset.html">aaanalysis.load_dataset</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.load_scales.html">aaanalysis.load_scales</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#feature-engineering">Feature Engineering</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.AAclust.html">aaanalysis.AAclust</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.SequenceFeature.html">aaanalysis.SequenceFeature</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.CPP.html">aaanalysis.CPP</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.CPPPlot.html">aaanalysis.CPPPlot</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#pu-learning">PU Learning</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.dPULearn.html">aaanalysis.dPULearn</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#data">Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#feature-engineering">Feature Engineering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pu-learning">PU Learning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#explainable-ai">Explainable AI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#perturbation">Perturbation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#plot-utilities">Plot Utilities</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_settings.html">aaanalysis.plot_settings</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_set_legend.html">aaanalysis.plot_set_legend</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_gcfs.html">aaanalysis.plot_gcfs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_get_cmap.html">aaanalysis.plot_get_cmap</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_get_cdict.html">aaanalysis.plot_get_cdict</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#plot-utilities">Plot Utilities</a></li>
 </ul>
 </li>
 </ul>
@@ -151,12 +131,6 @@ For convenience, it is common to import the module as follows:</p>
 <span id="data-api"></span><h2>Data<a class="headerlink" href="#data" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.load_dataset.html#aaanalysis.load_dataset" title="aaanalysis.load_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.load_dataset</span></code></a>([name, n, random, ...])</p></td>
-<td><p>Load protein benchmarking datasets.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.load_scales.html#aaanalysis.load_scales" title="aaanalysis.load_scales"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.load_scales</span></code></a>([name, just_aaindex, ...])</p></td>
-<td><p>Load amino acid scales, scale classification (AAontology), or scale evaluation.</p></td>
-</tr>
 </tbody>
 </table>
 </section>
@@ -164,18 +138,6 @@ For convenience, it is common to import the module as follows:</p>
 <span id="feature-engineering-api"></span><h2>Feature Engineering<a class="headerlink" href="#feature-engineering" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.AAclust.html#aaanalysis.AAclust" title="aaanalysis.AAclust"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.AAclust</span></code></a>([model, model_kwargs, ...])</p></td>
-<td><p>AAclust: A k-optimized clustering framework for selecting redundancy-reduced set of numerical scales.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature" title="aaanalysis.SequenceFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.SequenceFeature</span></code></a>()</p></td>
-<td><p>Retrieve and create sequence feature components (Part, Split, and Scale).</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.CPP.html#aaanalysis.CPP" title="aaanalysis.CPP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.CPP</span></code></a>([df_scales, df_cat, ...])</p></td>
-<td><p>Create and filter features that are most discriminant between two sets of sequences.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.CPPPlot.html#aaanalysis.CPPPlot" title="aaanalysis.CPPPlot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.CPPPlot</span></code></a>([df_cat, accept_gaps, ...])</p></td>
-<td><p>Create and filter features that are most discriminant between two sets of sequences.</p></td>
-</tr>
 </tbody>
 </table>
 </section>
@@ -183,9 +145,6 @@ For convenience, it is common to import the module as follows:</p>
 <span id="pu-learning-api"></span><h2>PU Learning<a class="headerlink" href="#pu-learning" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.dPULearn.html#aaanalysis.dPULearn" title="aaanalysis.dPULearn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.dPULearn</span></code></a>([verbose, n_components, ...])</p></td>
-<td><p>Deterministic Positive-Unlabeled (dPULearn) model.</p></td>
-</tr>
 </tbody>
 </table>
 </section>
@@ -199,21 +158,6 @@ For convenience, it is common to import the module as follows:</p>
 <h2>Plot Utilities<a class="headerlink" href="#plot-utilities" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_settings.html#aaanalysis.plot_settings" title="aaanalysis.plot_settings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_settings</span></code></a>([fig_format, ...])</p></td>
-<td><p>Configure general settings for plot visualization with various customization options.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.plot_set_legend.html#aaanalysis.plot_set_legend" title="aaanalysis.plot_set_legend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_set_legend</span></code></a>([ax, handles, ...])</p></td>
-<td><p>Set a customizable legend for a plot.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_gcfs.html#aaanalysis.plot_gcfs" title="aaanalysis.plot_gcfs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_gcfs</span></code></a>()</p></td>
-<td><p>Get current font size, which is set by ut.plot_settings function</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.plot_get_cmap.html#aaanalysis.plot_get_cmap" title="aaanalysis.plot_get_cmap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_get_cmap</span></code></a>([name, n_colors, ...])</p></td>
-<td><p>Retrieve color maps or color dictionaries specified for AAanalysis.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_get_cdict.html#aaanalysis.plot_get_cdict" title="aaanalysis.plot_get_cdict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_get_cdict</span></code></a>([name])</p></td>
-<td><p>Retrieve color dictionaries specified for AAanalysis.</p></td>
-</tr>
 </tbody>
 </table>
 </section>
@@ -224,7 +168,7 @@ For convenience, it is common to import the module as follows:</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="tutorials.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="generated/aaanalysis.load_dataset.html" class="btn btn-neutral float-right" title="aaanalysis.load_dataset" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index/tables.html" class="btn btn-neutral float-right" title="Tables" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
