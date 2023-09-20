@@ -117,10 +117,3 @@ def generate_table_rst():
     # Write the new content to the output .rst file
     with open(FILE_TABLE_SAVED, 'w') as f:
         f.write(rst_content)
-
-
-# IV Main
-if __name__ == "__main__":
-    generate_table_rst()
-
-

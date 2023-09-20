@@ -9,7 +9,7 @@ from types import WrapperDescriptorType
 
 sys.path.append(os.path.abspath('.'))
 
-from create_tables_doc import generate_table_rst
+#from create_tables_doc import generate_table_rst
 
 # -- Path and Platform setup --------------------------------------------------
 SEP = "\\" if platform.system() == "Windows" else "/"
@@ -172,7 +172,7 @@ texinfo_documents = [
 ]
 
 # Create table.rst
-generate_table_rst()
+#generate_table_rst()
 
 # -- Linkcode configuration ---------------------------------------------------
 _module_path = os.path.dirname(importlib.util.find_spec("aaanalysis").origin)  # type: ignore
