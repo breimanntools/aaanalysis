@@ -25,7 +25,7 @@ Install
    :caption: OVERVIEW
 
    index/introduction.rst
-   usage_principles.rst
+   index/usage_principles.rst
    index/CONTRIBUTING_COPY.rst
 
 .. toctree::
@@ -43,7 +43,7 @@ Install
 .. toctree::
    :maxdepth: 1
 
-   index/tables.rst
+   _index/tables.rst
    index/references.rst
 
 Indices and tables
