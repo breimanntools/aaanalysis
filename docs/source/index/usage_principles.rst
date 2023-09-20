@@ -15,8 +15,8 @@ Import AAanalysis as:
 .. toctree::
    :maxdepth: 1
 
-   index/usage_principles/data_flow_entry_points
-   index/usage_principles/aaontology
-   index/usage_principles/feature_identification
-   index/usage_principles/pu_learning
-   index/usage_principles/xai
+   usage_principles/data_flow_entry_points
+   usage_principles/aaontology
+   usage_principles/feature_identification
+   usage_principles/pu_learning
+   usage_principles/xai
