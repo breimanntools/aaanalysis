@@ -187,7 +187,7 @@ def load_dataset(name: str = "INFO",
     See also
     --------
     See an overview of all benchmarks in  and a detailed usage tutorial in the
-    data loader tutorial .
+    data loader tutorial.
 
     Examples
     --------

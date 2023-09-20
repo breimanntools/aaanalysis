@@ -22,7 +22,7 @@ python:
 
 submodules:
   include:
-     - "docs/tutorials"
+     - "tutorials"
 
 formats:
   - pdf
