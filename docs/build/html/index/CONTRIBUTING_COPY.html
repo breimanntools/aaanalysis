@@ -40,7 +40,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Tutorials" href="../tutorials.html" />
-    <link rel="prev" title="Usage Principles" href="usage_principles.html" /> 
+    <link rel="prev" title="Usage Principles" href="../usage_principles.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -65,7 +65,7 @@
               <p class="caption" role="heading"><span class="caption-text">OVERVIEW</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage_principles.html">Usage Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage_principles.html">Usage Principles</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Contributing</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#vision">Vision</a><ul>
@@ -88,6 +88,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#naming-conventions">Naming Conventions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#code-philosophy">Code Philosophy</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#documentation-style">Documentation Style</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#documentation-layers">Documentation Layers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#building-the-docs">Building the Docs</a></li>
 </ul>
 </li>
@@ -103,7 +104,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../_index/tables.html">Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tables.html">Tables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
 </ul>
 
@@ -323,7 +324,18 @@ for automatic inclusion of docstrings in the documentation, including its
 <a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html">autodoc</a>,
 <a class="reference external" href="https://sphinxcontrib-napoleon.readthedocs.io/en/latest/#">napoleon</a>, and
 <a class="reference external" href="https://sphinx-design.readthedocs.io/en/rtd-theme/">sphinx-design</a> extensions.</p></li>
-<li><p><strong>Further Details</strong>: See <cite>docs/source/conf.py</cite> for more.</p></li>
+<li><p><strong>Further Details</strong>: See our <a class="reference external" href="https://github.com/breimanntools/aaanalysis/blob/master/docs/source/conf.py">conf.py</a>
+for more.</p></li>
+</ul>
+</div>
+<div class="section" id="documentation-layers">
+<h3>Documentation Layers<a class="headerlink" href="#documentation-layers" title="Permalink to this heading"></a></h3>
+<p>This project’s documentation is organized across four distinct layers, each with a specific focus and level of detail:</p>
+<ul class="simple">
+<li><p><strong>Docstrings</strong>: Concise code description, with minimal usage examples and references to other layers (in ‘See also’).</p></li>
+<li><p><strong>Usage Principles</strong>: Bird’s-eye view with background and key principles, reflecting by selected code examples.</p></li>
+<li><p><strong>Tutorial</strong>: Close-up on public interface, as step-by-step guide on essential usage with medium detail.</p></li>
+<li><p><strong>Tables</strong>:  Close-up on data or other tabular overviews, with detailed explanation of columns and critical values.</p></li>
 </ul>
 </div>
 <div class="section" id="building-the-docs">
@@ -348,7 +360,7 @@ make<span class="w"> </span>html
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="usage_principles.html" class="btn btn-neutral float-left" title="Usage Principles" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../usage_principles.html" class="btn btn-neutral float-left" title="Usage Principles" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="../tutorials.html" class="btn btn-neutral float-right" title="Tutorials" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

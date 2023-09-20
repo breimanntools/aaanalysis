@@ -15,8 +15,8 @@ from aaanalysis.template_classes import Tool
 
 # Filtering functions
 def _filtering_info(df=None, df_scales=None, check_cat=True):
-    """Get datasets structures for filtering, two dictionaries with feature to scales category resp.
-    feature positions and one datasets frame with paired pearson correlations of all scales"""
+    """Get datasets structures for filtering, two dictionaries with feature to scale category resp.
+    feature positions and one data sets frame with paired pearson correlations of all scales"""
     if check_cat:
         dict_c = dict(zip(df[ut.COL_FEATURE], df["category"]))
     else:

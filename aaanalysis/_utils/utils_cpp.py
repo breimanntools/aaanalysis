@@ -91,31 +91,33 @@ def check_ylim(df=None, ylim=None, val_col=None, retrieve_plot=False, scaling_fa
 
 
 # Sequence check function
-def _check_seq(seq, len_, name_seq, name_len, verbose):
+def _check_seq(seq, len_, name_seq, name_len):
     """"""
     if seq is None:
         return len_
     else:
-        if type(seq) != str:
+        if not isinstance(seq, str):
             raise ValueError(f"'{name_seq}' should be string (type={type(seq)})")
         if len_ is not None:
             # Waring sequence length doesn't match the corresponding length parameter
-            if len(seq) != len_ and verbose:
-                warning_msg = f"The length of {seq} ({len(seq)}) does not match {name_len} ({len_})."
-                ut_o.print_red(f"Warning: {warning_msg}")
+            if len(seq) < len_:
+                raise ValueError(f"The length of {seq} ({len(seq)}) should be >= {name_len} ({len_}).")
         return len(seq)
 
 
 def check_args_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None, ext_len=None,
-                   tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, verbose=False,
-                   accept_tmd_none=False):
+                   tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, accept_tmd_none=False):
     """Check length parameters and if they are matching with sequences if provided"""
     # Check lengths
-    tmd_seq_given = tmd_seq is not None or accept_tmd_none # If tmd_seq is given, tmd_len can be None
+    tmd_seq_given = tmd_seq is not None or accept_tmd_none  # If tmd_seq is given, tmd_len can be None
     ut_check.check_non_negative_number(name="tmd_len", val=tmd_len, accept_none=tmd_seq_given, min_val=1)
     ut_check.check_non_negative_number(name="jmd_n_len", val=jmd_n_len, accept_none=True, min_val=1)
     ut_check.check_non_negative_number(name="jmd_c_len", val=jmd_c_len, accept_none=True, min_val=1)
     ut_check.check_non_negative_number(name="ext_len", val=ext_len, accept_none=True)
+    # Check if lengths and sequences match
+    tmd_len = _check_seq(tmd_seq, tmd_len, "tmd_seq", "tmd_len")
+    jmd_n_len = _check_seq(jmd_n_seq, jmd_n_len, "jmd_n_seq", "jmd_n_len")
+    jmd_c_len = _check_seq(jmd_c_seq, jmd_c_len, "jmd_c_seq", "jmd_c_len")
     # Check if lengths are matching
     if ext_len is not None:
         if jmd_n_len is None:
@@ -123,13 +125,10 @@ def check_args_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None, ext_len=None,
         if jmd_c_len is None:
             raise ValueError(f"'jmd_c_len' should not be None if 'ext_len' ({ext_len}) is given")
         if jmd_n_len is not None and ext_len > jmd_n_len:
-            raise ValueError(f"'ext_len' ({ext_len}) must be <= jmd_n_len ({jmd_n_len})")
+            raise ValueError(f"'ext_len' ({ext_len}) must be <= length of jmd_n ({jmd_n_len})")
         if jmd_c_len is not None and ext_len > jmd_c_len:
-            raise ValueError(f"'ext_len' ({ext_len}) must be <= jmd_c_len ({jmd_c_len})")
-    # Check if lengths and sequences match
-    tmd_len = _check_seq(tmd_seq, tmd_len, "tmd_seq", "tmd_len", verbose)
-    jmd_n_len = _check_seq(jmd_n_seq, jmd_n_len, "jmd_n_seq", "jmd_n_len", verbose)
-    jmd_c_len = _check_seq(jmd_c_seq, jmd_c_len, "jmd_c_seq", "jmd_c_len", verbose)
+            raise ValueError(f"'ext_len' ({ext_len}) must be <= length of jmd_c ({jmd_c_len})")
+
     args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     return args_len
 

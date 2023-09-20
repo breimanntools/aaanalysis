@@ -49,7 +49,7 @@ class SequenceFeaturePositions:
         jmd_n = [i + start for i in jmd_n]
         tmd = [i + start for i in tmd]
         jmd_c = [i + start for i in jmd_c]
-        dict_part_pos = pa.get_dict_part_seq(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c, ext_len=ext_len)
+        dict_part_pos = pa.get_dict_part_seq(tmd_seq=tmd, jmd_n_seq=jmd_n, jmd_c_seq=jmd_c, ext_len=ext_len)
         return dict_part_pos
 
     @staticmethod

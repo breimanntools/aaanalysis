@@ -36,7 +36,7 @@ def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
         raise ValueError("Type of 'df_seq' ({}) must be pd.DataFrame".format(type(df_seq)))
     if ut_c.COL_ENTRY not in list(df_seq):
         raise ValueError("'{}' must be in 'df_seq'".format(ut_c.COL_ENTRY))
-    seq_info_in_df = set(ut_c.COLS_SEQ_INFO).issubset(set(df_seq))
+    seq_info_in_df = set(ut_c.COLS_SEQ_TMD_POS_KEY).issubset(set(df_seq))
     parts_in_df = set(ut_c.COLS_PARTS).issubset(set(df_seq))
     seq_in_df = ut_c.COL_SEQ in set(df_seq)
     if "start" in list(df_seq):
@@ -44,7 +44,7 @@ def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     if "stop" in list(df_seq):
         raise ValueError(f"'df_seq' should not contain 'stop' in columns. Change column to '{ut_c.COL_TMD_STOP}'.")
     if not (seq_info_in_df or parts_in_df or seq_in_df):
-        raise ValueError(f"'df_seq' should contain ['{ut_c.COL_SEQ}'], {ut_c.COLS_SEQ_INFO}, or {ut_c.COLS_PARTS}")
+        raise ValueError(f"'df_seq' should contain ['{ut_c.COL_SEQ}'], {ut_c.COLS_SEQ_TMD_POS_KEY}, or {ut_c.COLS_PARTS}")
     # Check data type in part or sequence columns
     else:
         if seq_info_in_df or seq_in_df:
@@ -75,21 +75,21 @@ def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
                 tmd_stop = [x - jmd_c_len for x in tmd_stop]
         df_seq[ut_c.COL_TMD_START] = tmd_start
         df_seq[ut_c.COL_TMD_STOP] = tmd_stop
-        seq_info_in_df = set(ut_c.COLS_SEQ_INFO).issubset(set(df_seq))
+        seq_info_in_df = set(ut_c.COLS_SEQ_TMD_POS_KEY).issubset(set(df_seq))
     # Check parameter combinations
     if [jmd_n_len, jmd_c_len].count(None) == 1:
         raise ValueError("'jmd_n_len' and 'jmd_c_len' should both be given (not None) or None")
     if not parts_in_df and seq_info_in_df and jmd_n_len is None and jmd_c_len is None:
         error = f"'jmd_n_len' and 'jmd_c_len' should not be None if " \
-                f"sequence information ({ut_c.COLS_SEQ_INFO}) are given."
+                f"sequence information ({ut_c.COLS_SEQ_TMD_POS_KEY}) are given."
         raise ValueError(error)
     if not seq_info_in_df and jmd_n_len is not None and jmd_c_len is not None:
-        error = f"If not all sequence information ({ut_c.COLS_SEQ_INFO}) are given," \
+        error = f"If not all sequence information ({ut_c.COLS_SEQ_TMD_POS_KEY}) are given," \
                 f"'jmd_n_len' and 'jmd_c_len' should be None."
         raise ValueError(error)
     if not parts_in_df and seq_info_in_df and (jmd_c_len is None or jmd_n_len is None):
         error = "If part columns ({}) are not in 'df_seq' but sequence information ({}), " \
-                "\n'jmd_n_len' and 'jmd_c_len' should be given (not None).".format(ut_c.COLS_PARTS, ut_c.COLS_SEQ_INFO)
+                "\n'jmd_n_len' and 'jmd_c_len' should be given (not None).".format(ut_c.COLS_PARTS, ut_c.COLS_SEQ_TMD_POS_KEY)
         raise ValueError(error)
     return df_seq
 

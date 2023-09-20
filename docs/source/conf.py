@@ -8,6 +8,7 @@ import platform
 from types import WrapperDescriptorType
 
 sys.path.append(os.path.abspath('.'))
+
 from create_tables_doc import generate_table_rst
 
 # -- Path and Platform setup --------------------------------------------------

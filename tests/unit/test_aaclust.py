@@ -36,7 +36,7 @@ def get_feat_matrix(df_cat=None, df_scales=None, unclassified_in=True, return_co
 
 def get_data():
     """"""
-    df_cat = aa.load_scales(name="scale_classification")
+    df_cat = aa.load_scales(name="scales_cat")
     df_scales = aa.load_scales(name="scales")
     X, scales = get_feat_matrix(df_cat=df_cat.copy(),
                                 df_scales=df_scales.copy(),

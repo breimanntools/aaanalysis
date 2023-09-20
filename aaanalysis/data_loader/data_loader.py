@@ -13,16 +13,18 @@ from pandas import DataFrame
 from typing import Optional, Literal
 import aaanalysis.utils as ut
 
+# TODO add amino acid window selection
 # Constants
 STR_AA_GAP = "-"
 LIST_CANONICAL_AA = ['N', 'A', 'I', 'V', 'K', 'Q', 'R', 'M', 'H', 'F', 'E', 'D', 'C', 'G', 'L', 'T', 'S', 'Y', 'W', 'P']
 NAME_SCALE_SETS_BASE = [ut.STR_SCALES, ut.STR_SCALES_RAW]
 NAMES_SCALE_SETS = NAME_SCALE_SETS_BASE + [ut.STR_SCALE_CAT, ut.STR_SCALES_PC, ut.STR_TOP60, ut.STR_TOP60_EVAL]
 FOLDER_BENCHMARKS = folder_in = ut.FOLDER_DATA + "benchmarks" + ut.SEP
+LIST_NON_CANONICAL_OPTIONS = ["remove", "keep", "gap"]
 
 
 # I Helper Functions
-# For load_dataset
+# Check functions for load_dataset
 def check_name_of_dataset(name="INFO", folder_in=None):
     """"""
     if name == "INFO":
@@ -38,11 +40,52 @@ def check_name_of_dataset(name="INFO", folder_in=None):
                          f"\n Domain datasets: {list_dom}")
 
 
+def check_min_max_val(min_len=None, max_len=None):
+    """Check if min_val and max_val are valid and match"""
+    ut.check_non_negative_number(name="min_len", val=min_len, min_val=1, accept_none=True, just_int=True)
+    ut.check_non_negative_number(name="max_len", val=max_len, min_val=1, accept_none=True, just_int=True)
+    if min_len is None or max_len is None:
+        return
+    if isinstance(min_len, int) and isinstance(max_len, int) and min_len > max_len:
+        raise ValueError(f"'min_len' ({min_len}) should not be smaller than 'max_len' ({max_len})")
+
+
+def check_non_canonical_aa(non_canonical_aa="remove"):
+    """Check if non_canonical_aa is valid"""
+    if non_canonical_aa not in LIST_NON_CANONICAL_OPTIONS:
+        raise ValueError(f"'non_canonical_aa' ({non_canonical_aa}) should be on of following:"
+                         f" {LIST_NON_CANONICAL_OPTIONS }")
+
+
+def check_aa_window_size(aa_window_size=None):
+    """Check if aa_window size is a positive odd integer"""
+    if aa_window_size is None:
+        return
+    ut.check_non_negative_number(name="aa_window_size", val=aa_window_size, min_val=1)
+    if aa_window_size % 2 == 0:
+        raise ValueError(f"'aa_window_size' ({aa_window_size}) must be an odd number.")
+
+
+def post_check_df_seq(df_seq=None, n=None, name=None, n_match=True):
+    """Check if length of df_seq is valid"""
+    max_n = df_seq["label"].value_counts().min()
+    error_message = f"'n' ({n}) is too high since smaller class for '{name}' contains {max_n} samples." \
+                    f" This maximum value depends on filtering settings."
+    # Validation of sequence and domain datasets
+    if n is not None:
+        if n_match and len(df_seq) != n*2:
+            raise ValueError(error_message)
+        elif len(df_seq) < n*2:
+            raise ValueError(error_message)
+
+
+# Helper functions for load_datasets
+def is_aa_level(name=None):
+    return name.split("_")[0] == "AA"
+
+
 def _adjust_non_canonical_aa(df=None, non_canonical_aa="remove"):
     """"""
-    list_options = ["remove", "keep", "gap"]
-    if non_canonical_aa not in list_options:
-        raise ValueError(f"'non_canonical_aa' ({non_canonical_aa}) should be on of following: {list_options}")
     if non_canonical_aa == "keep":
         return df
     # Get all non-canonical amino acids
@@ -56,6 +99,31 @@ def _adjust_non_canonical_aa(df=None, non_canonical_aa="remove"):
     else:
         df[ut.COL_SEQ] = [re.sub(f'[{"".join(list_non_canonical_aa)}]', STR_AA_GAP, x) for x in df[ut.COL_SEQ]]
     return df
+
+
+def _get_aa_window(df_seq=None, aa_window_size=9):
+    """Get amino acid windows from df_seq"""
+    min_seq_len = df_seq[ut.COL_SEQ].apply(len).min()
+    if df_seq[ut.COL_SEQ].apply(len).min() <= aa_window_size:
+        raise ValueError(f"'aa_window_size' ({aa_window_size}) should be smaller than shortest sequence ({min_seq_len})")
+    n_pre = n_post = int((aa_window_size - 1) / 2)  # checked to be an odd number before
+    list_aa = []
+    list_labels = []
+    list_entries = []
+    for entry, seq, labels in zip(df_seq[ut.COL_ENTRY], df_seq[ut.COL_SEQ], df_seq[ut.COL_LABEL]):
+        for i in range(len(seq)):
+            start_pre, end_pre = max(i - n_pre, 0), i
+            start_post, end_post = i + 1, i + n_post + 1
+            aa_window = seq[start_pre:end_pre] + seq[i] + seq[start_post:end_post]
+            list_aa.append(aa_window)
+            entry_pos = f"{entry}_pos{i}"
+            list_entries.append(entry_pos)
+        list_labels.extend(labels.split(","))
+    df_seq = pd.DataFrame({ut.COL_ENTRY: list_entries, ut.COL_SEQ: list_aa, ut.COL_LABEL: list_labels})
+    df_seq = df_seq[df_seq[ut.COL_SEQ].apply(len) == aa_window_size]    # Remove too short windows at sequence edges
+    return df_seq
+
+# Check functions for load_scales
 
 
 # For load_scales
@@ -76,9 +144,12 @@ def _filter_scales(df_cat=None, unclassified_in=False, just_aaindex=False):
 # II Main Functions
 def load_dataset(name: str = "INFO",
                  n: Optional[int] = None,
+                 random: bool = False,
                  non_canonical_aa: Literal["remove", "keep", "gap"] = "remove",
                  min_len: Optional[int] = None,
-                 max_len: Optional[int] = None) -> DataFrame:
+                 max_len: Optional[int] = None,
+                 aa_window_size: Optional[int] = 9,
+                 ) -> DataFrame:
     """
     Load protein benchmarking datasets.
 
@@ -90,51 +161,80 @@ def load_dataset(name: str = "INFO",
     name
         Name of the dataset. See 'Dataset' column in overview table.
     n
-        Number of proteins per class. If None, the whole dataset will be returned.
+        Number of proteins per class, selected by index. If None, the whole dataset will be returned.
+    random
+        If True, ``n`` random selected proteins per class will be chosen.
     non_canonical_aa
         Options for modifying non-canonical amino acids:
 
         - 'remove': Remove sequences containing non-canonical amino acids.
 
-        - 'keep': Do not remove sequences containing non-canonical amino acids.
+        - 'keep': Dont remove sequences containing non-canonical amino acids.
 
         - 'gap': Non-canonical amino acids are replaced by gap symbol ('X').
 
     min_len
-        Minimum length of sequences for filtering (disabled by default).
+        Minimum length of sequences for filtering, disabled by default.
     max_len
-        Maximum length of sequences for filtering (disabled by default).
+        Maximum length of sequences for filtering, disabled by default.
+    aa_window_size
+        Length of amino acid window, only used for amino acid dataset level (``name='AA_'``) and if ``n`` given.
 
     Returns
     -------
     DataFrame
         Dataframe (df_seq) containing the selected sequence dataset.
 
-    Notes
-    -----
-    See further information on the benchmark datasets in ref table.
+    See also
+    --------
+    See an overview of all benchmarks in :ref:`1_overview_benchmarks` and a detailed usage tutorial in the
+    `data loader tutorial <tutorials/tutorial2_data_loader.ipynb>`_.
+
+    Examples
+    --------
+    >>> import aaanalysis as aa
+    >>> df_seq = aa.load_dataset(name="SEQ_AMYLO", n=100)
 
     """
-    ut.check_non_negative_number(name="n", val=n, accept_none=True)
-    ut.check_non_negative_number(name="min_len", val=min_len, accept_none=True)
     check_name_of_dataset(name=name, folder_in=FOLDER_BENCHMARKS)
+    ut.check_non_negative_number(name="n", val=n, min_val=1, accept_none=True)
+    check_non_canonical_aa(non_canonical_aa=non_canonical_aa)
+    check_min_max_val(min_len=min_len, max_len=max_len)
+    check_aa_window_size(aa_window_size=aa_window_size)
     # Load overview table
     if name == "INFO":
         return pd.read_excel(FOLDER_BENCHMARKS + "INFO_benchmarks.xlsx")
     df = pd.read_csv(FOLDER_BENCHMARKS + name + ".tsv", sep="\t")
-    # Filter Rdata
+    # Filter data
     if min_len is not None:
         mask = [len(x) >= min_len for x in df[ut.COL_SEQ]]
         df = df[mask]
+        if len(df) == 0:
+            raise ValueError(f"'min_len' ({min_len}) is too high and removed all sequences.")
     if max_len is not None:
         mask = [len(x) <= max_len for x in df[ut.COL_SEQ]]
         df = df[mask]
+        if len(df) == 0:
+            raise ValueError(f"'max_len' ({max_len}) is too low and removed all sequences.")
     # Adjust non-canonical amino acid (keep, remove, or replace by gap)
     df_seq = _adjust_non_canonical_aa(df=df, non_canonical_aa=non_canonical_aa)
+    # Adjust amino acid windows for 'AA' datasets
+    if is_aa_level(name=name):
+        # Special case that unfiltered df_seq is returned
+        if aa_window_size is None:
+            return df_seq.reset_index(drop=True)
+        df_seq = _get_aa_window(df_seq=df_seq, aa_window_size=aa_window_size)
     # Select balanced groups
+    post_check_df_seq(df_seq=df_seq, n=n, name=name, n_match=False)
     if n is not None:
         labels = set(df_seq[ut.COL_LABEL])
-        df_seq = pd.concat([df_seq[df_seq[ut.COL_LABEL] == l].head(n) for l in labels])
+        if random:
+            df_seq = pd.concat([df_seq[df_seq[ut.COL_LABEL] == l].sample(n) for l in labels])
+        else:
+            df_seq = pd.concat([df_seq[df_seq[ut.COL_LABEL] == l].head(n) for l in labels])
+    # Adjust index
+    df_seq = df_seq.reset_index(drop=True)
+    post_check_df_seq(df_seq=df_seq, n=n, name=name)
     return df_seq
 
 
@@ -143,23 +243,23 @@ def load_scales(name="scales", just_aaindex=False, unclassified_in=True):
     """
     Load amino acid scales, scale classification (AAontology), or scale evaluation.
 
-    A through analysis of the residue and sequence datasets can be found in [Breimann23a]_.
+    A thorough analysis of the residue and sequence datasets can be found in [Breimann23a]_.
 
     Parameters
     ----------
     name : str, default = 'scales'
-        Name of the dataset to load. Options are 'scales', 'scales_raw', 'scale_cat',
+        Name of the dataset to load. Options are 'scales', 'scales_raw', 'scales_cat',
         'scales_pc', 'top60', and 'top60_eval'.
     unclassified_in : bool, optional
         Whether unclassified scales should be included. The 'Others' category counts as unclassified.
-        Only relevant if `name` is 'scales', 'scales_raw', or 'scale_classification'.
+        Only relevant if `name` is 'scales', 'scales_raw', or 'scales_cat'.
     just_aaindex : bool, optional
         Whether only scales provided from AAindex should be given.
-        Only relevant if `name` is 'scales', 'scales_raw', or 'scale_classification'.
+        Only relevant if `name` is 'scales', 'scales_raw', or 'scales_cat'.
 
     Returns
     -------
-    pd.DataFrame
+    DataFrame
         Dataframe for the selected scale dataset.
     """
     if name not in NAMES_SCALE_SETS:

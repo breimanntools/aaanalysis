@@ -20,9 +20,10 @@ A summary of different testing strategies is provided as general background:
 Notes
 -----
 Recommended testing commands:
-    a) General:     pytest -v -p no:warnings --tb=no {line, short}
-    b) Doctest:     pytest -v --doctest-modules -p no:warnings cpp_tools/feature.py
-    c) Last failed: pytest --lf
+    a) General:     pytest -v -p no:warnings --tb=no test_cpp.py {line, short}
+    b) Function:    pytest -v -p no:warnings --tb=no test_cpp.py::TestCPP:test_add_stat
+    c) Doctest:     pytest -v --doctest-modules -p no:warnings cpp_tools/feature.py
+    d) Last failed: pytest --lf
 
 Recommended testing pattern: GIVEN, WHEN, THEN
 

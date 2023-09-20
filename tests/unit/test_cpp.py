@@ -1,10 +1,5 @@
 """
-This is a script for CPP object
-
-Recommended testing commands:
-    a) General:     pytest -v -p no:warnings --tb=no test_cpp.py
-    b) Function:    pytest -v -p no:warnings --tb=no test_cpp.py::TestCPP:test_add_stat
-    c) Doctest:     pytest -v --doctest-modules -p no:warnings cpp_to
+This is a script for Unit tests of the CPP class
 """
 import pandas as pd
 import numpy as np

@@ -18,16 +18,6 @@ def check_parts(tmd=None, jmd_n=None, jmd_c=None):
         raise ValueError("'tmd', 'jmd_n', and 'jmd_c' must be given (should not be None)")
 
 
-def check_ext_len(jmd_n=None, jmd_c=None, ext_len=None):
-    """Check if lengths are matching"""
-    if jmd_n is None or jmd_c is None:
-        raise ValueError(f"'jmd_n' ({jmd_n}) and 'jmd_c' ({jmd_c}) should be given (not None)")
-    if ext_len > len(jmd_n):
-        raise ValueError(f"'ext_len' ({ext_len}) must be <= length of jmd_n ({len(jmd_n)})")
-    if ext_len > len(jmd_c):
-        raise ValueError(f"'ext_len' ({ext_len}) must be <= length of jmd_c ({len(jmd_c)})")
-
-
 # Part helper functions
 def _retrieve_string_starting_at_end(seq, start=None, end=None):
     """Reverse_string_start_end"""
@@ -178,16 +168,16 @@ class Parts:
         return parts
 
     @staticmethod
-    def get_dict_part_seq(df=None, entry=None, tmd=None, jmd_n=None, jmd_c=None, ext_len=0):
+    def get_dict_part_seq(df=None, entry=None, tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, ext_len=None):
         """Get dictionary for part to sequence either (a) form df using entry or (b) from sequence.
 
         Parameters
         ----------
         df: df with sequence features
         entry: entry for which dict_part_seq should be created
-        tmd: sequence of TMD
-        jmd_n: sequence of JMD-N
-        jmd_c: sequence of JMD-C
+        tmd_seq: sequence of TMD
+        jmd_n_seq: sequence of JMD-N
+        jmd_c_seq: sequence of JMD-C
         ext_len: length of extending part (starting from C and N terminal part of TMD)
 
         Returns
@@ -195,8 +185,8 @@ class Parts:
         dict_part_seq: dictionary with parts to sequence of parts for given entry
         """
         if not (df is None or entry is None):
-            tmd, jmd_n, jmd_c = _get_parts_from_df(df=df, entry=entry)
-        check_parts(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c)
-        check_ext_len(jmd_n=jmd_n, jmd_c=jmd_c, ext_len=ext_len)
-        dict_part_seq = _get_dict_part_seq_from_seq(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c, ext_len=ext_len)
+            tmd_seq, jmd_n_seq, jmd_c_seq = _get_parts_from_df(df=df, entry=entry)
+        check_parts(tmd=tmd_seq, jmd_n=jmd_n_seq, jmd_c=jmd_c_seq)
+        ut.check_args_len(jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, ext_len=ext_len, accept_tmd_none=True)
+        dict_part_seq = _get_dict_part_seq_from_seq(tmd=tmd_seq, jmd_n=jmd_n_seq, jmd_c=jmd_c_seq, ext_len=ext_len)
         return dict_part_seq

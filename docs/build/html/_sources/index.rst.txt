@@ -5,8 +5,8 @@
 
 Welcome to the AAanalysis documentation
 =======================================
-.. include:: _index/badges.rst
-.. include:: _index/overview.rst
+.. include:: index/badges.rst
+.. include:: index/overview.rst
 
 Install
 =======
@@ -25,7 +25,7 @@ Install
    :caption: OVERVIEW
 
    index/introduction.rst
-   index/usage_principles.rst
+   usage_principles.rst
    index/CONTRIBUTING_COPY.rst
 
 .. toctree::
@@ -43,7 +43,7 @@ Install
 .. toctree::
    :maxdepth: 1
 
-   _index/tables.rst
+   index/tables.rst
    index/references.rst
 
 Indices and tables

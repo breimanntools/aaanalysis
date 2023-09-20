@@ -215,7 +215,21 @@ Documentation Style
   `napoleon <https://sphinxcontrib-napoleon.readthedocs.io/en/latest/#>`_, and
   `sphinx-design <https://sphinx-design.readthedocs.io/en/rtd-theme/>`_ extensions.
 
-- **Further Details**: See `docs/source/conf.py` for more.
+- **Further Details**: See our `conf.py <https://github.com/breimanntools/aaanalysis/blob/master/docs/source/conf.py>`_
+  for more.
+
+Documentation Layers
+---------------------
+This project's documentation is organized across four distinct layers, each with a specific focus and level of detail:
+
+- **Docstrings**: Concise code description, with minimal usage examples and references to other layers (in 'See also').
+
+- **Usage Principles**: Bird's-eye view with background and key principles, reflecting by selected code examples.
+
+- **Tutorial**: Close-up on public interface, as step-by-step guide on essential usage with medium detail.
+
+- **Tables**:  Close-up on data or other tabular overviews, with detailed explanation of columns and critical values.
+
 
 Building the Docs
 -----------------

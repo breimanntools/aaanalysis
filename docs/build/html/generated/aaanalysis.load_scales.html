@@ -63,7 +63,7 @@
               <p class="caption" role="heading"><span class="caption-text">OVERVIEW</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index/introduction.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../index/usage_principles.html">Usage Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage_principles.html">Usage Principles</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../index/CONTRIBUTING_COPY.html">Contributing</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">EXAMPLES</span></p>
@@ -87,7 +87,7 @@
 </li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../_index/tables.html">Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index/tables.html">Tables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../index/references.html">References</a></li>
 </ul>
 
@@ -120,25 +120,25 @@
 <h1>aaanalysis.load_scales<a class="headerlink" href="#aaanalysis-load-scales" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="aaanalysis.load_scales">
-<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">load_scales</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'scales'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">just_aaindex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unclassified_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data_loader/data_loader.py#L142-L176"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.load_scales" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">load_scales</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'scales'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">just_aaindex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unclassified_in</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data_loader/data_loader.py#L242-L276"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.load_scales" title="Permalink to this definition"></a></dt>
 <dd><p>Load amino acid scales, scale classification (AAontology), or scale evaluation.</p>
-<p>A through analysis of the residue and sequence datasets can be found in <a class="reference internal" href="../index/references.html#breimann23a" id="id1"><span>[Breimann23a]</span></a>.</p>
+<p>A thorough analysis of the residue and sequence datasets can be found in <a class="reference internal" href="../index/references.html#breimann23a" id="id1"><span>[Breimann23a]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>default = 'scales'</em>) – Name of the dataset to load. Options are ‘scales’, ‘scales_raw’, ‘scale_cat’,
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>default = 'scales'</em>) – Name of the dataset to load. Options are ‘scales’, ‘scales_raw’, ‘scales_cat’,
 ‘scales_pc’, ‘top60’, and ‘top60_eval’.</p></li>
 <li><p><strong>unclassified_in</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether unclassified scales should be included. The ‘Others’ category counts as unclassified.
-Only relevant if <cite>name</cite> is ‘scales’, ‘scales_raw’, or ‘scale_classification’.</p></li>
+Only relevant if <cite>name</cite> is ‘scales’, ‘scales_raw’, or ‘scales_cat’.</p></li>
 <li><p><strong>just_aaindex</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether only scales provided from AAindex should be given.
-Only relevant if <cite>name</cite> is ‘scales’, ‘scales_raw’, or ‘scale_classification’.</p></li>
+Only relevant if <cite>name</cite> is ‘scales’, ‘scales_raw’, or ‘scales_cat’.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>Dataframe for the selected scale dataset.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
+<dd class="field-odd"><p>DataFrame</p>
 </dd>
 </dl>
 </dd></dl>

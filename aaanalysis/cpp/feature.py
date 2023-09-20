@@ -196,7 +196,7 @@ class SequenceFeature:
 
     # Basic datastructures for features
     @staticmethod
-    def get_df_parts(df_seq=None, list_parts=None, jmd_n_len=None, jmd_c_len=None, ext_len=4, all_parts=False):
+    def get_df_parts(df_seq=None, list_parts=None, jmd_n_len=None, jmd_c_len=None, ext_len=None, all_parts=False):
         """Create DataFrane with sequence parts.
 
         Parameters
@@ -226,36 +226,29 @@ class SequenceFeature:
 
         Examples
         --------
-        Get sequence parts based on parts columns in df_seq with with 'tmd_e', and 'tmd_jmd' as parts:
+        Get sequence parts from df_seq with 'tmd_e', and 'tmd_jmd' as parts and jmd length of 10:
 
         >>> import aaanalysis as aa
         >>> sf = aa.SequenceFeature()
-        >>> df_seq = aa.load_dataset(name='GSEC_SUB_SEQ')
-        >>> df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=["tmd_e", "tmd_jmd"])
-
-        Get sequence parts based on sequence column in df_seq and jmd_n_len and jmd_c_len with default parts:
-
-        >>> import aaanalysis as aa
-        >>> sf = aa.SequenceFeature()
-        >>> df_seq = aa.load_dataset(name='GSEC_SUB_SEQ')
-        >>> df_parts = sf.get_df_parts(df_seq=df_seq, jmd_n_len=10, jmd_c_len=10)
+        >>> df_seq = aa.load_dataset(name='DOM_GSE')
+        >>> df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=["tmd_e", "tmd_jmd"], jmd_n_len=10, jmd_c_len=10)
         """
         ut.check_args_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len, accept_tmd_none=True)
         df_seq = ut.check_df_seq(df_seq=df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         list_parts = ut.check_list_parts(list_parts=list_parts, all_parts=all_parts)
-        seq_info_in_df = set(ut.COLS_SEQ_INFO).issubset(set(df_seq))
+        seq_info_in_df = set(ut.COLS_SEQ_TMD_POS_KEY).issubset(set(df_seq))
         pa = Parts()
         dict_parts = {}
         for i, row in df_seq.iterrows():
             entry = row[ut.COL_ENTRY]
             if jmd_c_len is not None and jmd_n_len is not None and seq_info_in_df:
-                seq, start, stop = row[ut.COLS_SEQ_INFO].values
+                seq, start, stop = row[ut.COLS_SEQ_TMD_POS_KEY].values
                 parts = pa.create_parts(seq=seq, tmd_start=start, tmd_stop=stop,
                                         jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
                 jmd_n, tmd, jmd_c = parts.jmd_n, parts.tmd, parts.jmd_c
             else:
                 jmd_n, tmd, jmd_c = row[ut.COLS_PARTS].values
-            dict_part_seq = pa.get_dict_part_seq(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c, ext_len=ext_len)
+            dict_part_seq = pa.get_dict_part_seq(tmd_seq=tmd, jmd_n_seq=jmd_n, jmd_c_seq=jmd_c, ext_len=ext_len)
             dict_part_seq = {part: dict_part_seq[part] for part in list_parts}
             dict_parts[entry] = dict_part_seq
         df_parts = pd.DataFrame.from_dict(dict_parts, orient="index")

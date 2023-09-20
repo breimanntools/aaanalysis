@@ -63,7 +63,7 @@
               <p class="caption" role="heading"><span class="caption-text">OVERVIEW</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../index/introduction.html">Introduction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../index/usage_principles.html">Usage Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage_principles.html">Usage Principles</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../index/CONTRIBUTING_COPY.html">Contributing</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">EXAMPLES</span></p>
@@ -87,7 +87,7 @@
 </li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../_index/tables.html">Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index/tables.html">Tables</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../index/references.html">References</a></li>
 </ul>
 
@@ -120,7 +120,7 @@
 <h1>aaanalysis.load_dataset<a class="headerlink" href="#aaanalysis-load-dataset" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="aaanalysis.load_dataset">
-<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">load_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'INFO'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_canonical_aa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'remove'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data_loader/data_loader.py#L77-L138"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.load_dataset" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">load_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'INFO'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_canonical_aa</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'remove'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aa_window_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data_loader/data_loader.py#L145-L238"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.load_dataset" title="Permalink to this definition"></a></dt>
 <dd><p>Load protein benchmarking datasets.</p>
 <p>The benchmarks are categorized into amino acid (‘AA’), domain (‘DOM’), and sequence (‘SEQ’) level
 datasets. Use default settings (<code class="docutils literal notranslate"><span class="pre">name='INFO'</span></code>) for an overview table. Detailed analysis is in <a class="reference internal" href="../index/references.html#breimann23a" id="id1"><span>[Breimann23a]</span></a>.</p>
@@ -128,16 +128,18 @@ datasets. Use default settings (<code class="docutils literal notranslate"><span
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – Name of the dataset. See ‘Dataset’ column in overview table.</p></li>
-<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Number of proteins per class. If None, the whole dataset will be returned.</p></li>
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Number of proteins per class, selected by index. If None, the whole dataset will be returned.</p></li>
+<li><p><strong>random</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – If True, <code class="docutils literal notranslate"><span class="pre">n</span></code> random selected proteins per class will be chosen.</p></li>
 <li><p><strong>non_canonical_aa</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Literal" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Literal</span></code></a>[‘remove’, ‘keep’, ‘gap’]) – <p>Options for modifying non-canonical amino acids:</p>
 <ul>
 <li><p>’remove’: Remove sequences containing non-canonical amino acids.</p></li>
-<li><p>’keep’: Do not remove sequences containing non-canonical amino acids.</p></li>
+<li><p>’keep’: Dont remove sequences containing non-canonical amino acids.</p></li>
 <li><p>’gap’: Non-canonical amino acids are replaced by gap symbol (‘X’).</p></li>
 </ul>
 </p></li>
-<li><p><strong>min_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Minimum length of sequences for filtering (disabled by default).</p></li>
-<li><p><strong>max_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Maximum length of sequences for filtering (disabled by default).</p></li>
+<li><p><strong>min_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Minimum length of sequences for filtering, disabled by default.</p></li>
+<li><p><strong>max_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Maximum length of sequences for filtering, disabled by default.</p></li>
+<li><p><strong>aa_window_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.11)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Length of amino acid window, only used for amino acid dataset level (<code class="docutils literal notranslate"><span class="pre">name='AA_'</span></code>) and if <code class="docutils literal notranslate"><span class="pre">n</span></code> given.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -147,9 +149,17 @@ datasets. Use default settings (<code class="docutils literal notranslate"><span
 <dd class="field-odd"><p>DataFrame</p>
 </dd>
 </dl>
-<div class="admonition-notes admonition">
-<p class="admonition-title">Notes</p>
-<p>See further information on the benchmark datasets in ref table.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p>See an overview of all benchmarks in <a class="reference internal" href="../tables_template.html#overview-benchmarks"><span class="std std-ref">Amino acid scale datasets</span></a> and a detailed usage tutorial in the
+<a class="reference external" href="tutorials/tutorial2_data_loader.ipynb">data loader tutorial</a>.</p>
+</div>
+<div class="admonition-examples admonition">
+<p class="admonition-title">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SEQ_AMYLO&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 </dd></dl>
 

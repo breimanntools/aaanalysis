@@ -4,9 +4,13 @@
 Tutorials
 =========
 
+Quick start
+-----------
+
+
 Data loading
 ------------
-`View data loading notebook <#path_to_notebook_for_load_data>`_
+`View data loading notebook <../tutorials/tutorial2_data_loader.ipynb>`_
 
 Redundancy-reduction
 --------------------

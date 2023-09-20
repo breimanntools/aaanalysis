@@ -13,20 +13,19 @@ import tests._utils as ut
 # Valid functions
 @pytest.fixture(scope="module")
 def df_seq():
-    df_test = pd.read_excel(ut.FOLDER_DATA + ut.FILE_TEST).head(10)
-    df_ref = pd.read_excel(ut.FOLDER_DATA + ut.FILE_REF_OTHERS).head(10)
-    return pd.concat([df_test, df_ref]).reset_index(drop=True)
+    return aa.load_dataset(name="DOM_GSEC_PU", n=10)
 
 
 @pytest.fixture(scope="module")
 def labels(df_seq):
-    labels = [1 if x == "SUBEXPERT" else 0 for x in df_seq["class"]]
+    labels = [1 if x == "SUBEXPERT" else 0 for x in df_seq["label"]]
     return labels
 
 
 @pytest.fixture(scope="module")
 def df_cat():
-    return pd.read_excel(ut.FOLDER_DATA + ut.FILE_CAT_07)
+    df_cat = aa.load_scales(name="scales_cat").head(100)
+    return df_cat
 
 
 @pytest.fixture(scope="module")
@@ -101,9 +100,7 @@ def corrupted_list_splits(request):
 
 
 def _corrupted_df_seq():
-    df_test = pd.read_excel(ut.FOLDER_DATA + ut.FILE_TEST).head(10)
-    df_ref = pd.read_excel(ut.FOLDER_DATA + ut.FILE_REF_OTHERS).head(10)
-    df_seq = pd.concat([df_test, df_ref]).reset_index(drop=True)
+    df_seq = aa.load_dataset(name="DOM_GSEC_PU", n=10)
     dfa = df_seq.drop(["sequence"], axis=1)
     df1 = dfa.drop(["tmd"], axis=1)
     df2 = dfa.copy()
@@ -126,7 +123,7 @@ def corrupted_df_seq(request):
 
 
 def _corrupted_df_scales():
-    df_scales = pd.read_excel(ut.FOLDER_DATA + ut.FILE_SCALES, index_col=0)
+    df_scales = aa.load_scales()
     scales = list(df_scales)
     df1 = df_scales.copy()
     df1[scales[0]] = "a"
@@ -170,8 +167,8 @@ def corrupted_split_kws(request):
 
 
 def _corrupted_df_parts():
+    df_seq = aa.load_dataset(name="DOM_GSEC")
     sf = SequenceFeature()
-    df_seq = sf.load_sequences()
     df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
     df1 = pd.concat([df_parts, df_parts], axis=0)
     df2 = pd.concat([df_parts, df_parts], axis=1)
@@ -190,10 +187,8 @@ def corrupted_df_parts(request):
 
 
 def _corrupted_labels():
-    df_test = pd.read_excel(ut.FOLDER_DATA + ut.FILE_TEST).head(10)
-    df_ref = pd.read_excel(ut.FOLDER_DATA + ut.FILE_REF_OTHERS).head(10)
-    df_seq = pd.concat([df_test, df_ref]).reset_index(drop=True)
-    labels = [1 if x == "SUBEXPERT" else 0 for x in df_seq["class"]]
+    df_seq = aa.load_dataset(name="DOM_GSEC", n=10)
+    labels = df_seq["label"].to_list()
     labels_a = [str(x) for x in labels]
     labels_b = [x + 1 for x in labels]
     labels_c = labels.copy()
@@ -212,6 +207,3 @@ def _corrupted_labels():
 @pytest.fixture(params=_corrupted_labels())
 def corrupted_labels(request):
     return request.param
-
-
-

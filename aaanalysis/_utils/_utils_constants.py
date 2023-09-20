@@ -9,7 +9,7 @@ AAanalysis comprises these primary pd.DataFrames: df_seq, df_part, df_cat, df_sc
 STR_SCALES = "scales"   # Min-max normalized scales (from AAontology)
 STR_SCALES_RAW = "scales_raw"   # Raw scales (from AAontology)
 STR_SCALES_PC = "scales_pc"     # AAclust pc-based scales (pc: principal component)
-STR_SCALE_CAT = "scale_classification"  # AAontology
+STR_SCALE_CAT = "scales_cat"  # AAontology
 STR_TOP60 = "top60"    # AAclustTop60
 STR_TOP60_EVAL = "top60_eval"  # AAclustTop60 evaluation
 
@@ -23,7 +23,9 @@ COL_SEQ = "sequence"
 COLS_PARTS = ["jmd_n", "tmd", "jmd_c"]
 COL_TMD_START = "tmd_start"
 COL_TMD_STOP = "tmd_stop"
-COLS_SEQ_INFO = [COL_SEQ, COL_TMD_START, COL_TMD_STOP]  # TODO
+COLS_SEQ_KEY = [COL_ENTRY, COL_SEQ, COL_LABEL]
+COLS_SEQ_TMD_POS_KEY = [COL_SEQ, COL_TMD_START, COL_TMD_STOP]  # TODO adjust to COL_ENTRY
+COLS_SEQ_TMD_PART_KEY = [COL_ENTRY, COL_SEQ] + COLS_PARTS
 # df_part
 
 # df_scales

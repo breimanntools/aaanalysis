@@ -5,14 +5,13 @@ import platform
 
 # Folder and File Constants
 SEP = "\\" if platform.system() == "Windows" else "/"
-FOLDER_SOURCE = os.path.dirname(os.path.abspath(__file__))
-FOLDER_IND = FOLDER_SOURCE + SEP + "index" + SEP
-FOLDER_IND_ = FOLDER_SOURCE + SEP + "_index" + SEP
-FOLDER_TABLES = FOLDER_IND_ + "tables" + SEP
+FOLDER_SOURCE = os.path.dirname(os.path.abspath(__file__)) + SEP
+FOLDER_IND = FOLDER_SOURCE + "index" + SEP
+FOLDER_TABLES = FOLDER_IND + "tables" + SEP
 
 FILE_REF = FOLDER_IND + "references.rst"
-FILE_TABLE_TEMPLATE = FOLDER_IND_ + "tables_template.rst"
-FILE_TABLE = FOLDER_IND_ + "tables.rst"
+FILE_TABLE_TEMPLATE = FOLDER_SOURCE + "tables_template.rst"
+FILE_TABLE = FOLDER_IND + "tables.rst"
 FILE_MAPPER = FOLDER_TABLES + "0_mapper.xlsx"
 LIST_TABLES = list(sorted([x for x in os.listdir(FOLDER_TABLES) if x != "0_mapper.xlsx"]))
 
@@ -20,6 +19,7 @@ COL_MAP_TABLE = "Table"
 COL_DESCRIPTION = "Description"
 COL_REF = "Reference"
 
+COLUMN_WIDTH = 8
 
 # Helper Functions
 def _f_xlsx(on=True, file=None, ending=".xlsx"):
@@ -57,32 +57,67 @@ def _check_tables(list_tables):
 def _convert_excel_to_rst(df):
     header = df.columns.tolist()
     rows = df.values.tolist()
-    columns = [header] + rows
-    rst_output = ".. list-table::\n   :header-rows: 1\n   :widths: " + " ".join(["10"] * len(header)) + "\n\n"
-    for row in columns:
-        rst_output += "   * - " + "\n     - ".join(map(str, row)) + "\n"
-
+    rst_output = ".. list-table::\n   :header-rows: 1\n   :widths: " + " ".join([f"{COLUMN_WIDTH}"] * len(header)) + "\n\n"
+    # Include the header
+    rst_output += "   * - " + "\n     - ".join(header) + "\n"
+    # Include the rows
+    for row in rows:
+        new_row = []
+        for col, val in zip(header, row):
+            if col == "Reference":  # Special handling for the 'Reference' column
+                new_row.append(f":ref:`{val} <{val}>`")
+            else:
+                new_row.append(str(val))
+        rst_output += "   * - " + "\n     - ".join(new_row) + "\n"
     return rst_output
 
 
 # Main Functionality
 def generate_table_rst():
+    # Read the existing references
     with open(FILE_REF, 'r') as f:
         list_refs = f.read()
     list_refs = re.findall(r'\.\. \[([^\]]+)\]', list_refs)
+
+    # Read the existing template
+    with open(FILE_TABLE_TEMPLATE, 'r') as f:
+        template_lines = f.readlines()
+
+    # Read the mapper file and convert it to reStructuredText format
     df_mapper = pd.read_excel(FILE_MAPPER)
-    list_tables = [_f_xlsx(on=True, file=x) for x in sorted(df_mapper[COL_MAP_TABLE])]
-    _check_tables(list_tables)
-    rst_content = _convert_excel_to_rst(df_mapper)
-    rst_content = f"Tables\n======================\n\n.. contents::\n    :local:\n    :depth: 1\n\nOverview Table\n------------------\n{rst_content}"
+    overview_table_rst = _convert_excel_to_rst(df_mapper)
+
+    # Generate the tables and store them in a dictionary
+    tables_dict = {"0_mapper": overview_table_rst}
     for index, row in df_mapper.iterrows():
         table_name = row[COL_MAP_TABLE]
-        description = row[COL_DESCRIPTION]
         df = pd.read_excel(FOLDER_TABLES + _f_xlsx(on=True, file=table_name))
+        # Check the references for each table
         table_refs = df[COL_REF].tolist()
         _check_references(table_name=table_name, table_refs=table_refs, list_refs=list_refs)
-        rst_content += f"\n{description}\n{'-' * len(description)}\n"
-        rst_content += _convert_excel_to_rst(df)
+        table_rst = _convert_excel_to_rst(df)
+        tables_dict[table_name] = table_rst
 
+    # Initialize variables
+    rst_content = ""
+
+    # Loop through the lines of the template
+    for line in template_lines:
+        rst_content += line
+        # Check for hooks like ".. _1_overview_benchmarks:"
+        match = re.search(r'\.\. _(\w+):', line)
+        if match:
+            table_marker = match.group(1)
+            if table_marker in tables_dict:
+                rst_content += tables_dict[table_marker] + "\n"
+
+    # Write the new content to the output .rst file
     with open(FILE_TABLE, 'w') as f:
         f.write(rst_content)
+
+
+# IV Main
+if __name__ == "__main__":
+    generate_table_rst()
+
+
