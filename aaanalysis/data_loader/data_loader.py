@@ -13,7 +13,6 @@ from pandas import DataFrame
 from typing import Optional, Literal
 import aaanalysis.utils as ut
 
-# TODO add amino acid window selection
 # Constants
 STR_AA_GAP = "-"
 LIST_CANONICAL_AA = ['N', 'A', 'I', 'V', 'K', 'Q', 'R', 'M', 'H', 'F', 'E', 'D', 'C', 'G', 'L', 'T', 'S', 'Y', 'W', 'P']
@@ -142,58 +141,16 @@ def _filter_scales(df_cat=None, unclassified_in=False, just_aaindex=False):
 
 
 # II Main Functions
-def load_dataset(name: str = "INFO",
-                 n: Optional[int] = None,
-                 random: bool = False,
-                 non_canonical_aa: Literal["remove", "keep", "gap"] = "remove",
-                 min_len: Optional[int] = None,
-                 max_len: Optional[int] = None,
-                 aa_window_size: Optional[int] = 9,
-                 ) -> DataFrame:
+def load_dataset(name="INFO",
+                 n=None,
+                 random=False,
+                 non_canonical_aa="remove",
+                 min_len=None,
+                 max_len=None,
+                 aa_window_size=9):
     """
     Load protein benchmarking datasets.
 
-    The benchmarks are categorized into amino acid ('AA'), domain ('DOM'), and sequence ('SEQ') level
-    datasets. Use default settings (``name='INFO'``) for an overview table. Detailed analysis is in [Breimann23a]_.
-
-    Parameters
-    ----------
-    name
-        Name of the dataset. See 'Dataset' column in overview table.
-    n
-        Number of proteins per class, selected by index. If None, the whole dataset will be returned.
-    random
-        If True, ``n`` random selected proteins per class will be chosen.
-    non_canonical_aa
-        Options for modifying non-canonical amino acids:
-
-        - 'remove': Remove sequences containing non-canonical amino acids.
-
-        - 'keep': Dont remove sequences containing non-canonical amino acids.
-
-        - 'gap': Non-canonical amino acids are replaced by gap symbol ('X').
-
-    min_len
-        Minimum length of sequences for filtering, disabled by default.
-    max_len
-        Maximum length of sequences for filtering, disabled by default.
-    aa_window_size
-        Length of amino acid window, only used for amino acid dataset level (``name='AA_'``) and if ``n`` given.
-
-    Returns
-    -------
-    DataFrame
-        Dataframe (df_seq) containing the selected sequence dataset.
-
-    See also
-    --------
-    See an overview of all benchmarks in :ref:`1_overview_benchmarks` and a detailed usage tutorial in the
-    `data loader tutorial <tutorials/tutorial2_data_loader.ipynb>`_.
-
-    Examples
-    --------
-    >>> import aaanalysis as aa
-    >>> df_seq = aa.load_dataset(name="SEQ_AMYLO", n=100)
 
     """
     check_name_of_dataset(name=name, folder_in=FOLDER_BENCHMARKS)
