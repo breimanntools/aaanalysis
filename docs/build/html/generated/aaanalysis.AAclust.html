@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+<meta property="og:title" content="aaanalysis.AAclust" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="generated/aaanalysis.AAclust.html" />
+<meta property="og:site_name" content="AAanalysis" />
+<meta property="og:image:width" content="1146" />
+<meta property="og:image:height" content="600" />
+<meta property="og:image" content="/_images/social_previews/summary_generated_aaanalysis.AAclust_20fb7a30.png" />
+<meta property="og:image:alt" content="" />
+<meta name="twitter:card" content="summary_large_image" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aaanalysis.AAclust &mdash; AAanalysis</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/style.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo_small.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
+        <script src="../_static/design-tabs.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="aaanalysis.SequenceFeature" href="aaanalysis.SequenceFeature.html" />
+    <link rel="prev" title="aaanalysis.load_scales" href="aaanalysis.load_scales.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/logo_big_trans.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                latest
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">OVERVIEW</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../index/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage_principles.html">Usage Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index/CONTRIBUTING_COPY.html">Contributing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">EXAMPLES</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">REFERENCES</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../api.html#data">Data</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#feature-engineering">Feature Engineering</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">aaanalysis.AAclust</a></li>
+<li class="toctree-l3"><a class="reference internal" href="aaanalysis.SequenceFeature.html">aaanalysis.SequenceFeature</a></li>
+<li class="toctree-l3"><a class="reference internal" href="aaanalysis.CPP.html">aaanalysis.CPP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="aaanalysis.CPPPlot.html">aaanalysis.CPPPlot</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#pu-learning">PU Learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#explainable-ai">Explainable AI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#perturbation">Perturbation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#plot-utilities">Plot Utilities</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../index/tables.html">Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index/references.html">References</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">AAanalysis</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../api.html">API</a></li>
+      <li class="breadcrumb-item active">aaanalysis.AAclust</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/breimanntools/aaanalysis/blob/master/generated/aaanalysis.AAclust.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="aaanalysis-aaclust">
+<h1>aaanalysis.AAclust<a class="headerlink" href="#aaanalysis-aaclust" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="aaanalysis.AAclust">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">AAclust</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L306-L615"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>AAclust: A k-optimized clustering framework for selecting redundancy-reduced set of numerical scales.</p>
+<p>AAclust is designed primarily for amino acid scales but is versatile enough for any set of numerical indices.
+It takes clustering models that require a pre-defined number of clusters (k) from
+<cite>scikit-learn &lt;https://scikit-learn.org/stable/modules/clustering.html&gt;</cite>. By leveraging Pearson correlation as
+similarity measure, AAclust optimizes the value of k. It then selects one representative sample (termed as ‘medoid’)
+for each cluster, which is the closest to the cluster’s center, yielding a redundancy-reduced sample set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (callable, optional, default =  <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html#sklearn.cluster.KMeans" title="(in scikit-learn v1.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">sklearn.cluster.KMeans</span></code></a>) – The employed clustering model requiring pre-defined number of clusters ‘k’, given as ‘n_clusters’ parameter.</p></li>
+<li><p><strong>model_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a><em>, </em><em>optional</em><em>, </em><em>default = {}</em>) – A dictionary of keyword arguments to pass to the selected clustering model.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>optional</em><em>, </em><em>default = False</em>) – A flag to enable or disable verbose outputs.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="aaanalysis.AAclust.n_clusters">
+<span class="sig-name descname"><span class="pre">n_clusters</span></span><a class="headerlink" href="#aaanalysis.AAclust.n_clusters" title="Permalink to this definition"></a></dt>
+<dd><p>Number of clusters obtained by AAclust.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)">int</a>, default = None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="aaanalysis.AAclust.labels_">
+<span class="sig-name descname"><span class="pre">labels_</span></span><a class="headerlink" href="#aaanalysis.AAclust.labels_" title="Permalink to this definition"></a></dt>
+<dd><p>Cluster labels in the order of samples in the feature matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like, default = None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="aaanalysis.AAclust.centers_">
+<span class="sig-name descname"><span class="pre">centers_</span></span><a class="headerlink" href="#aaanalysis.AAclust.centers_" title="Permalink to this definition"></a></dt>
+<dd><p>Average scale values corresponding to each cluster.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like, default = None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="aaanalysis.AAclust.center_labels_">
+<span class="sig-name descname"><span class="pre">center_labels_</span></span><a class="headerlink" href="#aaanalysis.AAclust.center_labels_" title="Permalink to this definition"></a></dt>
+<dd><p>Cluster labels for each cluster center.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like, default = None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="aaanalysis.AAclust.medoids_">
+<span class="sig-name descname"><span class="pre">medoids_</span></span><a class="headerlink" href="#aaanalysis.AAclust.medoids_" title="Permalink to this definition"></a></dt>
+<dd><p>Representative samples (one for each cluster center).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like, default = None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="aaanalysis.AAclust.medoid_labels_">
+<span class="sig-name descname"><span class="pre">medoid_labels_</span></span><a class="headerlink" href="#aaanalysis.AAclust.medoid_labels_" title="Permalink to this definition"></a></dt>
+<dd><p>Cluster labels for each medoid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like, default = None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="aaanalysis.AAclust.medoid_ind_">
+<span class="sig-name descname"><span class="pre">medoid_ind_</span></span><a class="headerlink" href="#aaanalysis.AAclust.medoid_ind_" title="Permalink to this definition"></a></dt>
+<dd><p>Indices of the chosen medoids within the original dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like, default = None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.AAclust.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L343-L361"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust.__init__" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.AAclust.__init__" title="aaanalysis.AAclust.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([model, model_kwargs, verbose])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.AAclust.cluster_naming" title="aaanalysis.AAclust.cluster_naming"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cluster_naming</span></code></a>([names, labels, ...])</p></td>
+<td><p>Assigns names to clusters based on scale names and their frequency.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.AAclust.correlation" title="aaanalysis.AAclust.correlation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">correlation</span></code></a>(X_test, X_ref[, labels_test, ...])</p></td>
+<td><p>Computes the correlation of test data with reference cluster centers.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.AAclust.eval" title="aaanalysis.AAclust.eval"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.AAclust.fit" title="aaanalysis.AAclust.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(X[, names, on_center, min_th, ...])</p></td>
+<td><p>Fit the AAclust model on the data, optimizing cluster formation using Pearson correlation.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.AAclust.get_cluster_centers" title="aaanalysis.AAclust.get_cluster_centers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cluster_centers</span></code></a>(X[, labels])</p></td>
+<td><p>Computes the center of each cluster based on the given labels.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.AAclust.get_cluster_medoids" title="aaanalysis.AAclust.get_cluster_medoids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cluster_medoids</span></code></a>(X[, labels])</p></td>
+<td><p>Computes the medoid of each cluster based on the given labels.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.AAclust.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_center</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_th</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merge_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'euclidean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_clusters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L364-L454"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust.fit" title="Permalink to this definition"></a></dt>
+<dd><p>Fit the AAclust model on the data, optimizing cluster formation using Pearson correlation.</p>
+<p>AAclust determines the optimal number of clusters, k, without pre-specification. It partitions data(X) into
+clusters by maximizing the within-cluster Pearson correlation beyond the ‘min_th’ threshold. The quality of
+clustering is either based on the minimum Pearson correlation of all members (‘min_cor all’) or between
+the cluster center and its members (‘min_cor center’), governed by <cite>on_center</cite>.</p>
+<p>The clustering undergoes three stages:
+1. Estimate the lower bound of k.
+2. Refine k using the chosen quality metric.
+3. Optionally merge smaller clusters, as directed by <cite>merge_metric</cite>.</p>
+<p>Finally, a representative scale (medoid) ‘closest to each cluster center is chosen for redundancy reduction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix where <cite>n_samples</cite> is the number of samples and <cite>n_features</cite> is the number of features.</p></li>
+<li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – Sample names. If provided, returns names of the medoids.</p></li>
+<li><p><strong>on_center</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>default = True</em>) – If True, the correlation threshold is applied to the cluster center. Otherwise, it’s applied to all cluster members.</p></li>
+<li><p><strong>min_th</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>default = 0</em>) – Pearson correlation threshold for clustering (between 0 and 1).</p></li>
+<li><p><strong>merge_metric</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em> or </em><em>None</em><em>, </em><em>default = &quot;euclidean&quot;</em>) – Metric used for optional cluster merging. Can be “euclidean”, “pearson”, or None (no merging).</p></li>
+<li><p><strong>n_clusters</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>optional</em>) – Pre-defined number of clusters. If provided, AAclust uses this instead of optimizing k.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>names_medoid</strong> – Names of the medoids.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of str, if <cite>names</cite> is provided</p>
+</dd>
+</dl>
+<div class="admonition-notes admonition">
+<p class="admonition-title">Notes</p>
+<p>The ‘fit’ method sets the following attributes: :attr: <cite>aaanalysis.AAclust.n_clusters”,
+:attr: `aaanalysis.AAclust.labels_</cite>, :attr: <cite>aaanalysis.AAclust.centers_</cite>,
+:attr: <cite>aaanalysis.AAclust.center_labels_</cite>, :attr: <cite>aaanalysis.AAclust.medoids_</cite>.
+:attr: <cite>aaanalysis.AAclust.medoid_labels_</cite>, :attr: <cite>aaanalysis.AAclust.medoid_ind_</cite>.</p>
+<p>For further information, refer to the AAclust paper : TODO: add link to AAclust paper</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.AAclust.cluster_naming">
+<span class="sig-name descname"><span class="pre">cluster_naming</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_unclassified</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Unclassified'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L456-L500"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust.cluster_naming" title="Permalink to this definition"></a></dt>
+<dd><p>Assigns names to clusters based on scale names and their frequency.</p>
+<p>This method renames clusters based on the names of the scales in each cluster, with priority given to the
+most frequent scales. If the name is already used or does not exist, it defaults to ‘name_unclassified’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em>, </em><em>optional</em>) – List of scale names corresponding to each sample.</p></li>
+<li><p><strong>labels</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em>, </em><em>optional</em>) – Cluster labels. If not provided, uses the labels from the fitted model.</p></li>
+<li><p><strong>name_unclassified</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>default = &quot;Unclassified&quot;</em>) – Name assigned to clusters that cannot be classified with the given names.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>cluster_names</strong> – A list of renamed clusters based on scale names.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)">list</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.AAclust.get_cluster_centers">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_cluster_centers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L502-L522"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust.get_cluster_centers" title="Permalink to this definition"></a></dt>
+<dd><p>Computes the center of each cluster based on the given labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix where <cite>n_samples</cite> is the number of samples and <cite>n_features</cite> is the number of features.</p></li>
+<li><p><strong>labels</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em> or </em><em>array-like</em><em>, </em><em>optional</em>) – Cluster labels for each sample in X.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>centers</strong> (<em>array-like</em>) – The computed center for each cluster.</p></li>
+<li><p><strong>center_labels</strong> (<em>array-like</em>) – The labels associated with each computed center.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.AAclust.get_cluster_medoids">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_cluster_medoids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L524-L546"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust.get_cluster_medoids" title="Permalink to this definition"></a></dt>
+<dd><p>Computes the medoid of each cluster based on the given labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>X</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix where <cite>n_samples</cite> is the number of samples and <cite>n_features</cite> is the number of features.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>labels<span class="classifier">list or array-like, optional</span></dt><dd><p>Cluster labels for each sample in X.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>medoids</strong> (<em>array-like</em>) – The medoid for each cluster.</p></li>
+<li><p><strong>medoid_labels</strong> (<em>array-like</em>) – The labels corresponding to each medoid.</p></li>
+<li><p><strong>medoid_ind</strong> (<em>array-like</em>) – Indexes of medoids within the original data.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.AAclust.correlation">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">correlation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_test</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels_ref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positive</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_center</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">except_unclassified</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L548-L611"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust.correlation" title="Permalink to this definition"></a></dt>
+<dd><p>Computes the correlation of test data with reference cluster centers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X_test</strong> (<em>array-like</em>) – Test feature matrix.</p></li>
+<li><p><strong>X_ref</strong> (<em>array-like</em>) – Reference feature matrix.</p></li>
+<li><p><strong>labels_test</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em> or </em><em>array-like</em><em>, </em><em>optional</em>) – Cluster labels for the test data.</p></li>
+<li><p><strong>labels_ref</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em> or </em><em>array-like</em><em>, </em><em>optional</em>) – Cluster labels for the reference data.</p></li>
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>default = 3</em>) – Number of top centers to consider based on correlation strength.</p></li>
+<li><p><strong>positive</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>default = True</em>) – If True, considers positive correlations. Else, negative correlations.</p></li>
+<li><p><strong>on_center</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>default = False</em>) – If True, correlation is computed with cluster centers. Otherwise, with all cluster members.</p></li>
+<li><p><strong>except_unclassified</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>default = True</em>) – If True, excludes ‘unclassified’ clusters from the reference list.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>list_top_center_name_corr</strong> – Names and correlations of centers having strongest (positive/negative) correlation with test data samples.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)">list</a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="aaanalysis.AAclust.eval">
+<span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/aaclust/aaclust.py#L613-L615"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust.eval" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="aaanalysis.load_scales.html" class="btn btn-neutral float-left" title="aaanalysis.load_scales" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="aaanalysis.SequenceFeature.html" class="btn btn-neutral float-right" title="aaanalysis.SequenceFeature" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Stephan Breimann.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

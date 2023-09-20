@@ -153,7 +153,7 @@ def load_dataset(name: str = "INFO",
     Load protein benchmarking datasets.
 
     The benchmarks are categorized into amino acid ('AA'), domain ('DOM'), and sequence ('SEQ') level
-    datasets. Use default settings (``name='INFO'``) for an overview table. Detailed analysis is in .
+    datasets. Use default settings (``name='INFO'``) for an overview table. Detailed analysis is in [Breimann23a]_.
 
     Parameters
     ----------
@@ -186,8 +186,8 @@ def load_dataset(name: str = "INFO",
 
     See also
     --------
-    See an overview of all benchmarks in  and a detailed usage tutorial in the
-    data loader tutorial.
+    See an overview of all benchmarks in :ref:`1_overview_benchmarks` and a detailed usage tutorial in the
+    `data loader tutorial <tutorials/tutorial2_data_loader.ipynb>`_.
 
     Examples
     --------
@@ -242,7 +242,7 @@ def load_scales(name="scales", just_aaindex=False, unclassified_in=True):
     """
     Load amino acid scales, scale classification (AAontology), or scale evaluation.
 
-    A thorough analysis of the residue and sequence datasets can be found in.
+    A thorough analysis of the residue and sequence datasets can be found in [Breimann23a]_.
 
     Parameters
     ----------
