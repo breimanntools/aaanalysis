@@ -28,14 +28,15 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/jquery.js?v=5d32c60e"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-        <script src="_static/documentation_options.js?v=a4664895"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-        <script src="_static/clipboard.min.js?v=a7894cd8"></script>
-        <script src="_static/copybutton.js?v=f281be69"></script>
-        <script src="_static/design-tabs.js?v=36754332"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+        <script src="_static/clipboard.min.js"></script>
+        <script src="_static/copybutton.js"></script>
+        <script src="_static/design-tabs.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -138,7 +139,7 @@
            <div itemprop="articleBody">
              
   <section id="api">
-<h1>API<a class="headerlink" href="#api" title="Link to this heading"></a></h1>
+<h1>API<a class="headerlink" href="#api" title="Permalink to this heading"></a></h1>
 <p>This page contains the API reference for public objects and functions in AAanalysis. For more examples
 and practical usage, refer to our <a class="reference external" href="https://shap.readthedocs.io/en/latest/api_examples.html#api-examples" title="(in SHAP vlatest)"><span class="xref std std-ref">example notebooks</span></a>.
 For convenience, it is common to import the module as follows:</p>
@@ -147,7 +148,7 @@ For convenience, it is common to import the module as follows:</p>
 </div>
 <p>Then you can access all methods and objects via the <cite>aa</cite> alias, such as <cite>aa.load_dataset</cite>.</p>
 <section id="data">
-<span id="data-api"></span><h2>Data<a class="headerlink" href="#data" title="Link to this heading"></a></h2>
+<span id="data-api"></span><h2>Data<a class="headerlink" href="#data" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.load_dataset.html#aaanalysis.load_dataset" title="aaanalysis.load_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.load_dataset</span></code></a>([name, n, random, ...])</p></td>
@@ -160,7 +161,7 @@ For convenience, it is common to import the module as follows:</p>
 </table>
 </section>
 <section id="feature-engineering">
-<span id="feature-engineering-api"></span><h2>Feature Engineering<a class="headerlink" href="#feature-engineering" title="Link to this heading"></a></h2>
+<span id="feature-engineering-api"></span><h2>Feature Engineering<a class="headerlink" href="#feature-engineering" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.AAclust.html#aaanalysis.AAclust" title="aaanalysis.AAclust"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.AAclust</span></code></a>([model, model_kwargs, ...])</p></td>
@@ -179,7 +180,7 @@ For convenience, it is common to import the module as follows:</p>
 </table>
 </section>
 <section id="pu-learning">
-<span id="pu-learning-api"></span><h2>PU Learning<a class="headerlink" href="#pu-learning" title="Link to this heading"></a></h2>
+<span id="pu-learning-api"></span><h2>PU Learning<a class="headerlink" href="#pu-learning" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.dPULearn.html#aaanalysis.dPULearn" title="aaanalysis.dPULearn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.dPULearn</span></code></a>([verbose, n_components, ...])</p></td>
@@ -189,13 +190,13 @@ For convenience, it is common to import the module as follows:</p>
 </table>
 </section>
 <section id="explainable-ai">
-<span id="plot-api"></span><h2>Explainable AI<a class="headerlink" href="#explainable-ai" title="Link to this heading"></a></h2>
+<span id="plot-api"></span><h2>Explainable AI<a class="headerlink" href="#explainable-ai" title="Permalink to this heading"></a></h2>
 </section>
 <section id="perturbation">
-<h2>Perturbation<a class="headerlink" href="#perturbation" title="Link to this heading"></a></h2>
+<h2>Perturbation<a class="headerlink" href="#perturbation" title="Permalink to this heading"></a></h2>
 </section>
 <section id="plot-utilities">
-<h2>Plot Utilities<a class="headerlink" href="#plot-utilities" title="Link to this heading"></a></h2>
+<h2>Plot Utilities<a class="headerlink" href="#plot-utilities" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_settings.html#aaanalysis.plot_settings" title="aaanalysis.plot_settings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_settings</span></code></a>([fig_format, ...])</p></td>
