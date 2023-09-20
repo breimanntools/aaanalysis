@@ -71,7 +71,7 @@ for positive-unlabeled (PU) learning containing only positive (1) and unlabeled 
      - 184900
      - PROSPERous
      - Prediction of caspase-3 cleavage site
-     - :ref:`Song18 <Song18>`
+     - Song18
      - 1 (adjacent to cleavage site), 0 (not adjacent to cleavage site)
    * - Amino acid
      - AA_FURIN
@@ -81,7 +81,7 @@ for positive-unlabeled (PU) learning containing only positive (1) and unlabeled 
      - 58840
      - PROSPERous
      - Prediction of furin cleavage site
-     - :ref:`Song18 <Song18>`
+     - Song18
      - 1 (adjacent to cleavage site), 0 (not adjacent to cleavage site)
    * - Amino acid
      - AA_LDR
@@ -91,7 +91,7 @@ for positive-unlabeled (PU) learning containing only positive (1) and unlabeled 
      - 82779
      - IDP-Seq2Seq
      - Prediction of long intrinsically disordered regions (LDR)
-     - :ref:`Tang20 <Tang20>`
+     - Tang20
      - 1 (disordered), 0 (ordered)
    * - Amino acid
      - AA_MMP2
@@ -101,7 +101,7 @@ for positive-unlabeled (PU) learning containing only positive (1) and unlabeled 
      - 310560
      - PROSPERous
      - Prediction of Matrix metallopeptidase-2 (MMP2) cleavage site
-     - :ref:`Song18 <Song18>`
+     - Song18
      - 1 (adjacent to cleavage site), 0 (not adjacent to cleavage site)
    * - Amino acid
      - AA_RNABIND
@@ -111,7 +111,7 @@ for positive-unlabeled (PU) learning containing only positive (1) and unlabeled 
      - 48509
      - GMKSVM-RU
      - Prediction of RNA-binding protein residues (RBP60 dataset)
-     - :ref:`Yang21 <Yang21>`
+     - Yang21
      - 1 (binding), 0 (non-binding)
    * - Amino acid
      - AA_SA
@@ -121,7 +121,7 @@ for positive-unlabeled (PU) learning containing only positive (1) and unlabeled 
      - 84523
      - PROSPERous
      - Prediction of solvent accessibility (SA) of residue (AA_CASPASE3 data set)
-     - :ref:`Song18 <Song18>`
+     - Song18
      - 1 (exposed/accessible), 0 (buried/non-accessible)
    * - Sequence
      - SEQ_AMYLO
@@ -131,7 +131,7 @@ for positive-unlabeled (PU) learning containing only positive (1) and unlabeled 
      - 903
      - ReRF-Pred
      - Prediction of amyloidognenic regions
-     - :ref:`Teng21 <Teng21>`
+     - Teng21
      - 1 (amyloidogenic), 0 (non-amyloidogenic)
    * - Sequence
      - SEQ_CAPSID
@@ -141,7 +141,7 @@ for positive-unlabeled (PU) learning containing only positive (1) and unlabeled 
      - 4071
      - VIRALpro
      - Prediction of capdsid proteins
-     - :ref:`Galiez16 <Galiez16>`
+     - Galiez16
      - 1 (capsid protein), 0 (non-capsid protein)
    * - Sequence
      - SEQ_DISULFIDE
@@ -151,7 +151,7 @@ for positive-unlabeled (PU) learning containing only positive (1) and unlabeled 
      - 1650
      - Dipro
      - Prediction of disulfide bridges in sequences
-     - :ref:`Cheng06 <Cheng06>`
+     - Cheng06
      - 1 (sequence with SS bond), 0 (sequence without SS bond)
    * - Sequence
      - SEQ_LOCATION
@@ -161,7 +161,7 @@ for positive-unlabeled (PU) learning containing only positive (1) and unlabeled 
      - 790
      - nan
      - Prediction of subcellular location of protein (cytoplasm vs plasma membrane)
-     - :ref:`Shen19 <Shen19>`
+     - Shen19
      - 1 (protein in cytoplasm), 0 (protein in plasma membrane) 
    * - Sequence
      - SEQ_SOLUBLE
@@ -171,7 +171,7 @@ for positive-unlabeled (PU) learning containing only positive (1) and unlabeled 
      - 8704
      - SOLpro
      - Prediction of soluble and insoluble proteins
-     - :ref:`Magnan09 <Magnan09>`
+     - Magnan09
      - 1 (soluble), 0 (insoluble)
    * - Sequence
      - SEQ_TAIL
@@ -181,7 +181,7 @@ for positive-unlabeled (PU) learning containing only positive (1) and unlabeled 
      - 4094
      - VIRALpro
      - Prediction of tail proteins
-     - :ref:`Galiez16 <Galiez16>`
+     - Galiez16
      - 1 (tail protein), 0 (non-tail protein)
    * - Domain
      - DOM_GSEC
@@ -191,7 +191,7 @@ for positive-unlabeled (PU) learning containing only positive (1) and unlabeled 
      - 63
      - nan
      - Prediction of gamma-secretase substrates
-     - :ref:`Breimann23c <Breimann23c>`
+     - Breimann23c
      - 1 (substrate), 0 (non-substrate)
    * - Domain
      - DOM_GSEC_PU
@@ -201,7 +201,7 @@ for positive-unlabeled (PU) learning containing only positive (1) and unlabeled 
      - 0
      - nan
      - Prediction of gamma-secretase substrates (PU dataset)
-     - :ref:`Breimann23c <Breimann23c>`
+     - Breimann23c
      - 1 (substrate), 2 (unknown substrate status)
 
 
@@ -221,26 +221,26 @@ Different amino acid scale datasets are provided
    * - scales
      - Amino acid scales (min-max normalized)
      - 586
-     - :ref:`Breimann23b <Breimann23b>`
+     - Breimann23b
    * - scales_raw
      - Amino acid scales (raw values)
      - 586
-     - :ref:`Kawashima08 <Kawashima08>`
+     - Kawashima08
    * - scales_classification
      - Classification of scales (Aaontology)
      - 586
-     - :ref:`Breimann23b <Breimann23b>`
+     - Breimann23b
    * - scales_pc
      - Principal component (PC) compressed scales
      - 20
-     - :ref:`Breimann23a <Breimann23a>`
+     - Breimann23a
    * - top60
      - Top 60 scale subsets
      - 60
-     - :ref:`Breimann23a <Breimann23a>`
+     - Breimann23a
    * - top60_eval
      - Evaluation of top 60 scale subsets
      - 60
-     - :ref:`Breimann23a <Breimann23a>`
+     - Breimann23a
 
 

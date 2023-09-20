@@ -36,7 +36,7 @@ exclude_patterns = ['tables_templates.rst']
 source_suffix = ['.rst', '.md']
 master_doc = 'index'
 
-nitpicky = True
+nitpicky = False #True
 needs_sphinx = '4.0'
 suppress_warnings = ['ref.citation', 'myst.header']
 
@@ -180,8 +180,8 @@ _module_path = os.path.dirname(importlib.util.find_spec("aaanalysis").origin)  #
 
 def linkcode_resolve(domain, info):
     """
-    Determine the URL corresponding to Python object. This will link
-    directly to the correct version of the file on GitHub.
+    #Determine the URL corresponding to Python object. This will link
+    #directly to the correct version of the file on GitHub.
     """
     if domain != 'py':
         return None
