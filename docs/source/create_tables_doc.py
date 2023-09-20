@@ -67,8 +67,8 @@ def _convert_excel_to_rst(df):
         new_row = []
         for col, val in zip(header, row):
             if col == "Reference":  # Special handling for the 'Reference' column
-                #new_row.append(str(val))
-                new_row.append(f":ref:`{val} <{val}>`")    #Include references
+                new_row.append(str(val))
+                #new_row.append(f":ref:`{val} <{val}>`")    #Include references
             else:
                 new_row.append(str(val))
         rst_output += "   * - " + "\n     - ".join(new_row) + "\n"
