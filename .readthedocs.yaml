@@ -24,6 +24,7 @@ submodules:
   include:
      - "tutorials"
 
-formats:
-  - htmlzip
-  - epub
+#formats: disabled during development
+#  - htmlzip
+#  - epub
+#  - pdf (run into error when created by RTD)

@@ -79,7 +79,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 184900
      - PROSPERous
      - Prediction of caspase-3 cleavage site
-     - Song18
+     - :ref:`Song18 <Song18>`
      - 1 (adjacent to cleavage site), 0 (not adjacent to cleavage site)
    * - Amino acid
      - AA_FURIN
@@ -89,7 +89,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 58840
      - PROSPERous
      - Prediction of furin cleavage site
-     - Song18
+     - :ref:`Song18 <Song18>`
      - 1 (adjacent to cleavage site), 0 (not adjacent to cleavage site)
    * - Amino acid
      - AA_LDR
@@ -99,7 +99,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 82779
      - IDP-Seq2Seq
      - Prediction of long intrinsically disordered regions (LDR)
-     - Tang20
+     - :ref:`Tang20 <Tang20>`
      - 1 (disordered), 0 (ordered)
    * - Amino acid
      - AA_MMP2
@@ -109,7 +109,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 310560
      - PROSPERous
      - Prediction of Matrix metallopeptidase-2 (MMP2) cleavage site
-     - Song18
+     - :ref:`Song18 <Song18>`
      - 1 (adjacent to cleavage site), 0 (not adjacent to cleavage site)
    * - Amino acid
      - AA_RNABIND
@@ -119,7 +119,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 48509
      - GMKSVM-RU
      - Prediction of RNA-binding protein residues (RBP60 dataset)
-     - Yang21
+     - :ref:`Yang21 <Yang21>`
      - 1 (binding), 0 (non-binding)
    * - Amino acid
      - AA_SA
@@ -129,7 +129,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 84523
      - PROSPERous
      - Prediction of solvent accessibility (SA) of residue (AA_CASPASE3 data set)
-     - Song18
+     - :ref:`Song18 <Song18>`
      - 1 (exposed/accessible), 0 (buried/non-accessible)
    * - Sequence
      - SEQ_AMYLO
@@ -139,7 +139,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 903
      - ReRF-Pred
      - Prediction of amyloidognenic regions
-     - Teng21
+     - :ref:`Teng21 <Teng21>`
      - 1 (amyloidogenic), 0 (non-amyloidogenic)
    * - Sequence
      - SEQ_CAPSID
@@ -149,7 +149,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 4071
      - VIRALpro
      - Prediction of capdsid proteins
-     - Galiez16
+     - :ref:`Galiez16 <Galiez16>`
      - 1 (capsid protein), 0 (non-capsid protein)
    * - Sequence
      - SEQ_DISULFIDE
@@ -159,7 +159,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 1650
      - Dipro
      - Prediction of disulfide bridges in sequences
-     - Cheng06
+     - :ref:`Cheng06 <Cheng06>`
      - 1 (sequence with SS bond), 0 (sequence without SS bond)
    * - Sequence
      - SEQ_LOCATION
@@ -169,7 +169,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 790
      - nan
      - Prediction of subcellular location of protein (cytoplasm vs plasma membrane)
-     - Shen19
+     - :ref:`Shen19 <Shen19>`
      - 1 (protein in cytoplasm), 0 (protein in plasma membrane) 
    * - Sequence
      - SEQ_SOLUBLE
@@ -179,7 +179,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 8704
      - SOLpro
      - Prediction of soluble and insoluble proteins
-     - Magnan09
+     - :ref:`Magnan09 <Magnan09>`
      - 1 (soluble), 0 (insoluble)
    * - Sequence
      - SEQ_TAIL
@@ -189,7 +189,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 4094
      - VIRALpro
      - Prediction of tail proteins
-     - Galiez16
+     - :ref:`Galiez16 <Galiez16>`
      - 1 (tail protein), 0 (non-tail protein)
    * - Domain
      - DOM_GSEC
@@ -199,7 +199,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 63
      - nan
      - Prediction of gamma-secretase substrates
-     - Breimann23c
+     - :ref:`Breimann23c <Breimann23c>`
      - 1 (substrate), 0 (non-substrate)
    * - Domain
      - DOM_GSEC_PU
@@ -209,7 +209,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 0
      - nan
      - Prediction of gamma-secretase substrates (PU dataset)
-     - Breimann23c
+     - :ref:`Breimann23c <Breimann23c>`
      - 1 (substrate), 2 (unknown substrate status)
 
 
@@ -230,25 +230,25 @@ Various amino acid scale datasets are provided.
    * - scales
      - Amino acid scales (min-max normalized)
      - 586
-     - Breimann23b
+     - :ref:`Breimann23b <Breimann23b>`
    * - scales_raw
      - Amino acid scales (raw values)
      - 586
-     - Kawashima08
+     - :ref:`Kawashima08 <Kawashima08>`
    * - scales_classification
      - Classification of scales (Aaontology)
      - 586
-     - Breimann23b
+     - :ref:`Breimann23b <Breimann23b>`
    * - scales_pc
      - Principal component (PC) compressed scales
      - 20
-     - Breimann23a
+     - :ref:`Breimann23a <Breimann23a>`
    * - top60
      - Top 60 scale subsets
      - 60
-     - Breimann23a
+     - :ref:`Breimann23a <Breimann23a>`
    * - top60_eval
      - Evaluation of top 60 scale subsets
      - 60
-     - Breimann23a
+     - :ref:`Breimann23a <Breimann23a>`
 
