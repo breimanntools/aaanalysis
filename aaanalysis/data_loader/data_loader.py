@@ -158,7 +158,7 @@ def load_dataset(name: str = "INFO",
     Parameters
     ----------
     name
-        Name of the dataset. See 'Dataset' column in overview table.
+        Name of the dataset, from 'Dataset' column in overview table.
     n
         Number of proteins per class, selected by index. If None, the whole dataset will be returned.
     random
@@ -168,7 +168,7 @@ def load_dataset(name: str = "INFO",
 
         - 'remove': Remove sequences containing non-canonical amino acids.
 
-        - 'keep': Dont remove sequences containing non-canonical amino acids.
+        - 'keep': Don't remove sequences containing non-canonical amino acids.
 
         - 'gap': Non-canonical amino acids are replaced by gap symbol ('X').
 
