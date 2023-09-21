@@ -10,6 +10,7 @@ from types import WrapperDescriptorType
 sys.path.append(os.path.abspath('.'))
 
 from create_tables_doc import generate_table_rst
+from create_notebooks_docs import export_notebooks_to_rst
 
 # -- Path and Platform setup --------------------------------------------------
 path_source = os.path.join(os.path.dirname(__file__))
@@ -45,7 +46,7 @@ extensions = [
     'sphinx_copybutton',  # Adds a "copy" button to code blocks
     'sphinx.ext.intersphinx',  # Links to documentation of objects in other Sphinx projects
     'sphinx.ext.doctest',  # Test code examples in documentation
-    'nbsphinx',  # Integrate Jupyter notebooks (myst-nb alternative)
+    'nbsphinx',  # Integrate Jupyter tutorials (myst-nb alternative)
     'sphinx.ext.mathjax',  # Render math equations using MathJax
     'sphinx.ext.coverage',  # Checks documentation coverage for modules
     'sphinx.ext.linkcode',  # Link from docs to specific lines in source code
@@ -109,9 +110,9 @@ napoleon_use_keyword = True
 napoleon_custom_sections = None
 
 
-# -- Juypter notebooks integration -------------------------------------------
-nbsphinx_execute = 'auto'
-
+# -- Juypter tutorials integration -------------------------------------------
+nbsphinx_execute = 'never'
+export_notebooks_to_rst()
 
 # -- Intersphinx mapping -----------------------------------------------------
 intersphinx_mapping = {
@@ -142,7 +143,7 @@ html_theme_options = {
     "titles_only": False,
 }
 html_static_path = [os.path.join(path_source, '_static')]
-html_css_files = ['css/style.css']
+html_css_files = ['css/style.css', 'css/notebook.css']
 html_show_sphinx = False
 html_logo = "_artwork/logo_big_trans.png"
 html_favicon = "_artwork/logo_small.png"

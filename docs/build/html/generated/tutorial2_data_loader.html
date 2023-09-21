@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18: http://docutils.sourceforge.net/" />
+<meta property="og:title" content="Data loading" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="generated/tutorial2_data_loader.html" />
+<meta property="og:site_name" content="AAanalysis" />
+<meta property="og:description" content="An overview of the benchmark datasets are provided by default: Benchmark datasets are categorized into amino acid (‘AA’), domain (‘DOM’), and sequence (‘SEQ’) level datasets, indicated name suffix...." />
+<meta property="og:image:width" content="1146" />
+<meta property="og:image:height" content="600" />
+<meta property="og:image" content="/_images/social_previews/summary_generated_tutorial2_data_loader_2dbaecee.png" />
+<meta property="og:image:alt" content="An overview of the benchmark datasets are provided by default: Benchmark datasets are categorized into amino acid (‘AA’), domain (‘DOM’), and sequence (‘SEQ’..." />
+<meta name="description" content="An overview of the benchmark datasets are provided by default: Benchmark datasets are categorized into amino acid (‘AA’), domain (‘DOM’), and sequence (‘SEQ’) level datasets, indicated name suffix...." />
+<meta name="twitter:card" content="summary_large_image" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data loading &mdash; AAanalysis</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/style.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/notebook.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo_small.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
+        <script src="../_static/design-tabs.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/logo_big_trans.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                latest
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">OVERVIEW</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../index/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index/usage_principles.html">Usage Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index/CONTRIBUTING_COPY.html">Contributing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">EXAMPLES</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">REFERENCES</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../index/tables.html">Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index/references.html">References</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">AAanalysis</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Data loading</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/breimanntools/aaanalysis/blob/master/generated/tutorial2_data_loader.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="data-loading">
+<h1>Data loading<a class="headerlink" href="#data-loading" title="Permalink to this heading"></a></h1>
+<p>An overview of the benchmark datasets are provided by default:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
+<span class="n">df_info</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">df_info</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">7</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>         <span class="n">Level</span>        <span class="n">Dataset</span>  <span class="c1"># Sequences  # Amino acids  # Positives  # Negatives    Predictor</span>
+<span class="mi">0</span>   <span class="n">Amino</span> <span class="n">acid</span>    <span class="n">AA_CASPASE3</span>          <span class="mi">233</span>         <span class="mi">185605</span>          <span class="mi">705</span>       <span class="mi">184900</span>   <span class="n">PROSPERous</span>
+<span class="mi">1</span>   <span class="n">Amino</span> <span class="n">acid</span>       <span class="n">AA_FURIN</span>           <span class="mi">71</span>          <span class="mi">59003</span>          <span class="mi">163</span>        <span class="mi">58840</span>   <span class="n">PROSPERous</span>
+<span class="mi">2</span>   <span class="n">Amino</span> <span class="n">acid</span>         <span class="n">AA_LDR</span>          <span class="mi">342</span>         <span class="mi">118248</span>        <span class="mi">35469</span>        <span class="mi">82779</span>  <span class="n">IDP</span><span class="o">-</span><span class="n">Seq2Seq</span>
+<span class="mi">3</span>   <span class="n">Amino</span> <span class="n">acid</span>        <span class="n">AA_MMP2</span>          <span class="mi">573</span>         <span class="mi">312976</span>         <span class="mi">2416</span>       <span class="mi">310560</span>   <span class="n">PROSPERous</span>
+<span class="mi">4</span>   <span class="n">Amino</span> <span class="n">acid</span>     <span class="n">AA_RNABIND</span>          <span class="mi">221</span>          <span class="mi">55001</span>         <span class="mi">6492</span>        <span class="mi">48509</span>    <span class="n">GMKSVM</span><span class="o">-</span><span class="n">RU</span>
+<span class="mi">5</span>   <span class="n">Amino</span> <span class="n">acid</span>          <span class="n">AA_SA</span>          <span class="mi">233</span>         <span class="mi">185605</span>       <span class="mi">101082</span>        <span class="mi">84523</span>   <span class="n">PROSPERous</span>
+<span class="mi">6</span>     <span class="n">Sequence</span>      <span class="n">SEQ_AMYLO</span>         <span class="mi">1414</span>           <span class="mi">8484</span>          <span class="mi">511</span>          <span class="mi">903</span>    <span class="n">ReRF</span><span class="o">-</span><span class="n">Pred</span>
+<span class="mi">7</span>     <span class="n">Sequence</span>     <span class="n">SEQ_CAPSID</span>         <span class="mi">7935</span>        <span class="mi">3364680</span>         <span class="mi">3864</span>         <span class="mi">4071</span>     <span class="n">VIRALpro</span>
+<span class="mi">8</span>     <span class="n">Sequence</span>  <span class="n">SEQ_DISULFIDE</span>         <span class="mi">2547</span>         <span class="mi">614470</span>          <span class="mi">897</span>         <span class="mi">1650</span>        <span class="n">Dipro</span>
+<span class="mi">9</span>     <span class="n">Sequence</span>   <span class="n">SEQ_LOCATION</span>         <span class="mi">1835</span>         <span class="mi">732398</span>         <span class="mi">1045</span>          <span class="mi">790</span>          <span class="n">NaN</span>
+<span class="mi">10</span>    <span class="n">Sequence</span>    <span class="n">SEQ_SOLUBLE</span>        <span class="mi">17408</span>        <span class="mi">4432269</span>         <span class="mi">8704</span>         <span class="mi">8704</span>       <span class="n">SOLpro</span>
+<span class="mi">11</span>    <span class="n">Sequence</span>       <span class="n">SEQ_TAIL</span>         <span class="mi">6668</span>        <span class="mi">2671690</span>         <span class="mi">2574</span>         <span class="mi">4094</span>     <span class="n">VIRALpro</span>
+<span class="mi">12</span>      <span class="n">Domain</span>       <span class="n">DOM_GSEC</span>          <span class="mi">126</span>          <span class="mi">92964</span>           <span class="mi">63</span>           <span class="mi">63</span>          <span class="n">NaN</span>
+<span class="mi">13</span>      <span class="n">Domain</span>    <span class="n">DOM_GSEC_PU</span>          <span class="mi">694</span>         <span class="mi">494524</span>           <span class="mi">63</span>            <span class="mi">0</span>          <span class="n">NaN</span>
+</pre></div>
+</div>
+<p>Benchmark datasets are categorized into amino acid (‘AA’), domain
+(‘DOM’), and sequence (‘SEQ’) level datasets, indicated name suffix.</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">df_seq1</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;AA_FURIN&quot;</span><span class="p">)</span>
+<span class="n">df_seq2</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SEQ_AMYLO&quot;</span><span class="p">)</span>
+<span class="n">df_seq3</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;DOM_GSEC&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">df_seq3</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">entry</span>                                           <span class="n">sequence</span>  <span class="n">label</span>  <span class="n">tmd_start</span>  <span class="n">tmd_stop</span>       <span class="n">jmd_n</span>                      <span class="n">tmd</span>       <span class="n">jmd_c</span>
+<span class="mi">0</span>  <span class="n">P05067</span>  <span class="n">MLPGLALLLLAAWTARALEVPTDGNAGLLAEPQIAMFCGRLNMHMN</span><span class="o">...</span>      <span class="mi">1</span>        <span class="mi">701</span>       <span class="mi">723</span>  <span class="n">FAEDVGSNKG</span>  <span class="n">AIIGLMVGGVVIATVIVITLVML</span>  <span class="n">KKKQYTSIHH</span>
+<span class="mi">1</span>  <span class="n">P14925</span>  <span class="n">MAGRARSGLLLLLLGLLALQSSCLAFRSPLSVFKRFKETTRSFSNE</span><span class="o">...</span>      <span class="mi">1</span>        <span class="mi">868</span>       <span class="mi">890</span>  <span class="n">KLSTEPGSGV</span>  <span class="n">SVVLITTLLVIPVLVLLAIVMFI</span>  <span class="n">RWKKSRAFGD</span>
+<span class="mi">2</span>  <span class="n">P70180</span>  <span class="n">MRSLLLFTFSACVLLARVLLAGGASSGAGDTRPGSRRRAREALAAQ</span><span class="o">...</span>      <span class="mi">1</span>        <span class="mi">477</span>       <span class="mi">499</span>  <span class="n">PCKSSGGLEE</span>  <span class="n">SAVTGIVVGALLGAGLLMAFYFF</span>  <span class="n">RKKYRITIER</span>
+<span class="mi">3</span>  <span class="n">Q03157</span>  <span class="n">MGPTSPAARGQGRRWRPPPLPLLLPLSLLLLRAQLAVGNLAVGSPS</span><span class="o">...</span>      <span class="mi">1</span>        <span class="mi">585</span>       <span class="mi">607</span>  <span class="n">APSGTGVSRE</span>  <span class="n">ALSGLLIMGAGGGSLIVLSLLLL</span>  <span class="n">RKKKPYGTIS</span>
+<span class="mi">4</span>  <span class="n">Q06481</span>  <span class="n">MAATGTAAAAATGRLLLLLLVGLTAPALALAGYIEALAANAGTGFA</span><span class="o">...</span>      <span class="mi">1</span>        <span class="mi">694</span>       <span class="mi">716</span>  <span class="n">LREDFSLSSS</span>  <span class="n">ALIGLLVIAVAIATVIVISLVML</span>  <span class="n">RKRQYGTISH</span>
+</pre></div>
+</div>
+<p>For some datasets, an additional version of it is provided for
+positive-unlabeled (PU) learning containing only positive (1) and
+unlabeled (2) data samples, as indicated by <em>dataset_name_PU</em> (e.g.,
+‘DOM_GSEC_PU’).</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Stephan Breimann.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

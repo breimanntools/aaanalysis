@@ -20,10 +20,6 @@ python:
     - requirements: requirements.txt
     - requirements: docs/requirements_docs.txt
 
-submodules:
-  include:
-     - "tutorials"
-
 #formats: disabled during development
 #  - htmlzip
 #  - epub

@@ -20,4 +20,4 @@ Further Tutorials
 .. toctree::
    :maxdepth: 1
 
-   tutorials/tutorial2_data_loader
+   tutorial2_data_loader
