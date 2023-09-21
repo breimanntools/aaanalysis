@@ -1,3 +1,9 @@
+..
+   Developer Notes:
+   The tutorials are referenced here such that the path must be relative to work for Sphinx referencing system elsewher.
+..
+
+
 .. _tutorials:
 
 
@@ -10,7 +16,7 @@ Quick start
 
 Data loading
 ------------
-`View data loading notebook <../tutorials/tutorial2_data_loader.ipynb>`_
+`View data loading tutorial <../../tutorials/tutorial2_data_loader.ipynb>`_
 
 Redundancy-reduction
 --------------------

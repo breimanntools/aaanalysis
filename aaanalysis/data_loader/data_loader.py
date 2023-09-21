@@ -186,8 +186,8 @@ def load_dataset(name: str = "INFO",
 
     See Also
     --------
-    * Overview of all benchmarks in `1_overview_benchmarks`.
-    * Step-by-step guide in the `data loader tutorial <tutorials/tutorial2_data_loader.ipynb>`_.
+    * Overview of all benchmarks in :ref:`1_overview_benchmarks`.
+    * Step-by-step guide in the `data loading tutorial <tutorial2_data_loader>`_.
 
     Examples
     --------

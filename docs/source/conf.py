@@ -5,6 +5,7 @@ import inspect
 from typing import Any
 from datetime import datetime
 import platform
+import myst_nb
 from types import WrapperDescriptorType
 
 sys.path.append(os.path.abspath('.'))
@@ -30,7 +31,7 @@ todo_include_todos = False
 # -- General configuration ---------------------------------------------------
 templates_path = ['_templates']
 exclude_patterns = ['index/tables_template.rst']
-source_suffix = ['.rst', '.md']
+source_suffix = ['.rst', '.md', '.ipynb']
 master_doc = 'index'
 
 nitpicky = False #True
@@ -107,6 +108,11 @@ napoleon_use_param = True
 napoleon_use_rtype = True
 napoleon_use_keyword = True
 napoleon_custom_sections = None
+
+
+# -- Juypter notebooks integration -------------------------------------------
+nb_execution_mode = "auto"
+myst_nb.notebook_dirs = ["../tutorials"]
 
 
 # -- Intersphinx mapping -----------------------------------------------------
