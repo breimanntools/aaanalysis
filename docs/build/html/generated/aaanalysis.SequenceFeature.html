@@ -195,7 +195,7 @@ all amino acids obtained by splitting a sequence part.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df_seq</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – DataFrame with sequence information comprising either sequence (‘sequence’, ‘tmd_start’, ‘tmd_stop’)
+<li><p><strong>df_seq</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – DataFrame with sequence information comprising either sequence (‘sequence’, ‘tmd_start’, ‘tmd_stop’)
 or sequence part (‘jmd_n’, ‘tmd’, ‘jmd_c’) columns.</p></li>
 <li><p><strong>list_parts</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em> of </em><em>string</em><em>, </em><em>len&gt;=1</em>) – Names of sequence parts which should be created (e.g., ‘tmd’).</p></li>
 <li><p><strong>jmd_n_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>default = None</em><em>, </em><em>optional</em>) – Length of JMD-N in number of amino acids. If None, ‘jmd_n’ column must be given in df_seq.</p></li>
@@ -208,7 +208,7 @@ or sequence part (‘jmd_n’, ‘tmd’, ‘jmd_c’) columns.</p></li>
 <dd class="field-even"><p><strong>df_parts</strong> – DataFrame with sequence parts.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></p>
 </dd>
 </dl>
 <div class="admonition-notes admonition">
@@ -283,7 +283,7 @@ or sequence part (‘jmd_n’, ‘tmd’, ‘jmd_c’) columns.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>list_parts</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em> of </em><em>strings</em><em> (</em><em>n&gt;=1 parts</em><em>)</em><em>, </em><em>default =</em><em> [</em><em>&quot;tmd_e&quot;</em><em>, </em><em>&quot;jmd_n_tmd_n&quot;</em><em>, </em><em>&quot;tmd_c_jmd_c&quot;</em><em>]</em>) – Names of sequence parts which should be created (e.g., ‘tmd’).</p></li>
 <li><p><strong>split_kws</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a><em>, </em><em>default = SequenceFeature.get_split_kws</em>) – Nested dictionary with parameter dictionary for each chosen split_type.</p></li>
-<li><p><strong>df_scales</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, default = SequenceFeature.load_scales) – DataFrame with default amino acid scales.</p></li>
+<li><p><strong>df_scales</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, default = SequenceFeature.load_scales) – DataFrame with default amino acid scales.</p></li>
 <li><p><strong>all_parts</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>default = False</em>) – Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.</p></li>
 </ul>
 </dd>
@@ -304,8 +304,8 @@ or sequence part (‘jmd_n’, ‘tmd’, ‘jmd_c’) columns.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>features</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em> of </em><em>strings</em><em>, </em><em>pd.Series</em>) – Ids of features for which matrix of feature values should be created.</p></li>
-<li><p><strong>df_parts</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – DataFrame with sequence parts.</p></li>
-<li><p><strong>df_scales</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, optional) – DataFrame with default amino acid scales.</p></li>
+<li><p><strong>df_parts</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – DataFrame with sequence parts.</p></li>
+<li><p><strong>df_scales</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, optional) – DataFrame with default amino acid scales.</p></li>
 <li><p><strong>accept_gaps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>default = False</em>) – Whether to accept missing values by enabling omitting for computations (if True).</p></li>
 <li><p><strong>n_jobs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>default = None</em><em>,</em>) – The number of jobs to run in parallel. If None, it will be set to the maximum.</p></li>
 <li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>default = True</em>) – Whether to print size of to be created feature matrix (if True) or not otherwise.</p></li>
@@ -329,7 +329,7 @@ or sequence part (‘jmd_n’, ‘tmd’, ‘jmd_c’) columns.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>features</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em> of </em><em>strings</em><em>, </em><em>pd.Series</em>) – Ids of features for which feature names should be created.</p></li>
-<li><p><strong>df_cat</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, default = SequenceFeature.load_categories) – DataFrame with default categories for physicochemical amino acid scales</p></li>
+<li><p><strong>df_cat</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>, default = SequenceFeature.load_categories) – DataFrame with default categories for physicochemical amino acid scales</p></li>
 <li><p><strong>tmd_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>&gt;0</em>) – Length of TMD.</p></li>
 <li><p><strong>jmd_n_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>&gt;0</em>) – Length of JMD-N.</p></li>
 <li><p><strong>jmd_c_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>&gt;0</em>) – Length of JMD-C.</p></li>
@@ -365,7 +365,7 @@ Conditions: ext_len&lt;jmd_m_len and ext_len&lt;jmd_c_len</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df_parts</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – DataFrame with sequence parts.</p></li>
+<li><p><strong>df_parts</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – DataFrame with sequence parts.</p></li>
 <li><p><strong>split</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – Name of Split following given convention.</p></li>
 <li><p><strong>dict_scale</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><em>dict</em></a>) – Dictionary mapping a numerical value to each letter of given sequences</p></li>
 <li><p><strong>accept_gaps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>default = False</em>) – Whether to accept missing values by enabling omitting for computations (if True).</p></li>
@@ -414,8 +414,8 @@ are as follows: ‘Segment(5,7)’, ‘Pattern(C,1,2)’, ‘PeriodicPattern(N,i
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df_feat</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – Feature DataFrame (CPP output) to add sample difference.</p></li>
-<li><p><strong>df_seq</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – DataFrame with sequences and sample names, in which the given sample name is included.</p></li>
+<li><p><strong>df_feat</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – Feature DataFrame (CPP output) to add sample difference.</p></li>
+<li><p><strong>df_seq</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – DataFrame with sequences and sample names, in which the given sample name is included.</p></li>
 <li><p><strong>labels</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>)</em>) – Class labels for samples in sequence DataFrame.</p></li>
 <li><p><strong>sample_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a>) – Name of sample for which the feature value difference to a given reference group should be computed.</p></li>
 <li><p><strong>ref_group</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>default = 0</em>) – Class label of reference group.</p></li>
@@ -426,7 +426,7 @@ are as follows: ‘Segment(5,7)’, ‘Pattern(C,1,2)’, ‘PeriodicPattern(N,i
 <dd class="field-even"><p><strong>df_feat</strong> – Feature DataFrame including feature value difference.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -438,7 +438,7 @@ are as follows: ‘Segment(5,7)’, ‘Pattern(C,1,2)’, ‘PeriodicPattern(N,i
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df_feat</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – Feature DataFrame (CPP output) to add sample difference.</p></li>
+<li><p><strong>df_feat</strong> (<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></a>) – Feature DataFrame (CPP output) to add sample difference.</p></li>
 <li><p><strong>features</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em> of </em><em>strings</em><em>, </em><em>pd.Series</em>) – Ids of features for which feature names should be created.</p></li>
 <li><p><strong>start</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>&gt;=0</em><em>, </em><em>default = 1</em>) – Position label of first amino acid position (starting at N-terminus).</p></li>
 <li><p><strong>tmd_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>&gt;0</em><em>, </em><em>default = 20</em>) – Length of TMD.</p></li>
