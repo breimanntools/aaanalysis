@@ -4,8 +4,9 @@
 API
 ===
 
-This page contains the API reference for public objects and functions in AAanalysis. For more examples
-and practical usage, refer to our :ref:`example notebooks <api_examples>`.
+This page contains the API reference for public objects and functions in AAanalysis. See more examples
+and practical usage in our :ref:`tutorials <tutorials>`.
+
 For convenience, it is common to import the module as follows:
 
 .. code-block:: python
