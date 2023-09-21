@@ -25,6 +25,5 @@ submodules:
      - "tutorials"
 
 formats:
-  - pdf
   - htmlzip
   - epub
