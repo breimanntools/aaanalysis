@@ -109,13 +109,14 @@ def generate_table_rst():
         # Check for hooks like ".. _1_overview_benchmarks:"
         match = re.search(r'\.\. _(\w+):', line)
         if not match:
-            rst_content += line
+            if STR_ADD_TABLE in line and table_name in tables_dict:
+                rst_content += "\n" + tables_dict[table_name] + "\n"
+            else:
+                rst_content += line
         else:
             line_with_new_marker = line.replace(STR_REMOVE, "")
             rst_content += line_with_new_marker
             table_name = match.group(1).replace(STR_REMOVE, "")
-        if STR_ADD_TABLE in line and table_name in tables_dict:
-            rst_content += "\n" + tables_dict[table_name] + "\n"
 
     # Write the new content to the output .rst file
     with open(FILE_TABLE_SAVED, 'w') as f:

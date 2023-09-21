@@ -33,7 +33,6 @@ Overview Table
 --------------
 All tables from the AAanalysis documentation are listed here, in chronological order based on the project history.
 
-ADD-TABLE
 
 .. list-table::
    :header-rows: 1
@@ -64,7 +63,6 @@ Datasets are named beginning with a classification (e.g., 'AA_LDR', 'DOM_GSEC', 
 Some datasets have an additional version for positive-unlabeled (PU) learning containing only positive (1)
 and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset name (e.g., 'DOM_GSEC_PU').
 
-ADD-TABLE
 
 .. list-table::
    :header-rows: 1
@@ -228,7 +226,6 @@ Amino Acid Scale Datasets
 -------------------------
 Various amino acid scale datasets are provided.
 
-ADD-TABLE
 
 .. list-table::
    :header-rows: 1
