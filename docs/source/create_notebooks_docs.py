@@ -37,11 +37,9 @@ def export_notebooks_to_rst():
     for filename in os.listdir(FOLDER_NOTEBOOKS):
         if filename.endswith('.ipynb') and filename not in LIST_EXCLUDE:
             full_path = os.path.join(FOLDER_NOTEBOOKS, filename)
-
             # Load the notebook
             with open(full_path, 'r') as f:
                 notebook = nbformat.read(f, as_version=4)
-
             # Export to RST
             rst_exporter = nbconvert.RSTExporter()
             rst_data, _ = rst_exporter.from_notebook_node(notebook)

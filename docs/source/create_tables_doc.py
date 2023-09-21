@@ -12,7 +12,7 @@ FOLDER_TABLES = FOLDER_IND + "tables" + SEP
 FILE_REF = FOLDER_IND + "references.rst"
 FILE_TABLE_TEMPLATE = FOLDER_IND + "tables_template.rst"
 FILE_TABLE_SAVED = FOLDER_IND + "tables.rst"
-FILE_MAPPER = FOLDER_TABLES + "0_mapper.xlsx"
+FILE_MAPPER = FOLDER_TABLES + "t0_mapper.xlsx"
 LIST_TABLES = list(sorted([x for x in os.listdir(FOLDER_TABLES) if x != "0_mapper.xlsx"]))
 
 COL_MAP_TABLE = "Table"
@@ -20,6 +20,8 @@ COL_DESCRIPTION = "Description"
 COL_REF = "Reference"
 
 COLUMN_WIDTH = 8
+STR_REMOVE = "_XXX" # Check with tables_template.rst for consistency
+STR_ADD_TABLE = "ADD-TABLE"
 
 
 # Helper Functions
@@ -89,7 +91,7 @@ def generate_table_rst():
     overview_table_rst = _convert_excel_to_rst(df_mapper)
 
     # Generate the tables and store them in a dictionary
-    tables_dict = {"0_mapper": overview_table_rst}
+    tables_dict = {"t0_mapper": overview_table_rst}
     for index, row in df_mapper.iterrows():
         table_name = row[COL_MAP_TABLE]
         df = pd.read_excel(FOLDER_TABLES + _f_xlsx(on=True, file=table_name))
@@ -101,16 +103,19 @@ def generate_table_rst():
 
     # Initialize variables
     rst_content = ""
-
+    table_name = ""
     # Loop through the lines of the template
     for line in template_lines:
-        rst_content += line
         # Check for hooks like ".. _1_overview_benchmarks:"
         match = re.search(r'\.\. _(\w+):', line)
-        if match:
-            table_marker = match.group(1)
-            if table_marker in tables_dict:
-                rst_content += "\n" + tables_dict[table_marker] + "\n"
+        if not match:
+            rst_content += line
+        else:
+            line_with_new_marker = line.replace(STR_REMOVE, "")
+            rst_content += line_with_new_marker
+            table_name = match.group(1).replace(STR_REMOVE, "")
+        if STR_ADD_TABLE in line and table_name in tables_dict:
+            rst_content += "\n" + tables_dict[table_name] + "\n"
 
     # Write the new content to the output .rst file
     with open(FILE_TABLE_SAVED, 'w') as f:
