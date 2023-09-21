@@ -5,7 +5,6 @@ import inspect
 from typing import Any
 from datetime import datetime
 import platform
-import myst_nb
 from types import WrapperDescriptorType
 
 sys.path.append(os.path.abspath('.'))
@@ -30,7 +29,7 @@ todo_include_todos = False
 
 # -- General configuration ---------------------------------------------------
 templates_path = ['_templates']
-exclude_patterns = ['index/tables_template.rst']
+exclude_patterns = ['index/tables_template.rst', '**.ipynb_checkpoints']
 source_suffix = ['.rst', '.md', '.ipynb']
 master_doc = 'index'
 
@@ -46,7 +45,7 @@ extensions = [
     'sphinx_copybutton',  # Adds a "copy" button to code blocks
     'sphinx.ext.intersphinx',  # Links to documentation of objects in other Sphinx projects
     'sphinx.ext.doctest',  # Test code examples in documentation
-    'myst_nb',  # Integrate Jupyter notebooks using MyST parser
+    'nbsphinx',  # Integrate Jupyter notebooks (myst-nb alternative)
     'sphinx.ext.mathjax',  # Render math equations using MathJax
     'sphinx.ext.coverage',  # Checks documentation coverage for modules
     'sphinx.ext.linkcode',  # Link from docs to specific lines in source code
@@ -111,8 +110,7 @@ napoleon_custom_sections = None
 
 
 # -- Juypter notebooks integration -------------------------------------------
-nb_execution_mode = "auto"
-myst_nb.notebook_dirs = ["../tutorials"]
+nbsphinx_execute = 'auto'
 
 
 # -- Intersphinx mapping -----------------------------------------------------

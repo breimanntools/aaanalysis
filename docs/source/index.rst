@@ -1,10 +1,11 @@
-.. Developer Notes:
+..
+   Developer Notes:
    This is the landing page for the AAanalysis documentation using Sphinx, containing the root `toctree` directive.
    The documentation will be hosted on Read the docs.
+..
 
-
-Welcome to the AAanalysis documentation
-=======================================
+Welcome to the AAanalysis documentation!
+========================================
 .. include:: index/badges.rst
 .. include:: index/overview.rst
 

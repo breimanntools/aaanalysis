@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18: http://docutils.sourceforge.net/" />
+<meta property="og:title" content="<no title>" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="tutorials/tutorial2_data_loader.html" />
+<meta property="og:site_name" content="AAanalysis" />
+<meta property="og:description" content="{,- “cells”: [,-{, “cell_type”: “markdown”, “source”: [ “# Data loadingn”, “n”, “<!– (tutorial2_data_loader)= –>n”, “n”, “An overview of the benchmark datasets are provided by default:”], “metadata..." />
+<meta property="og:image:width" content="1146" />
+<meta property="og:image:height" content="600" />
+<meta property="og:image" content="/_images/social_previews/summary_tutorials_tutorial2_data_loader_df1ada51.png" />
+<meta property="og:image:alt" content="{,- “cells”: [,-{, “cell_type”: “markdown”, “source”: [ “# Data loadingn”, “n”, “<!– (tutorial2_data_loader)= –>n”, “n”, “An overview of the benchmark datase..." />
+<meta name="description" content="{,- “cells”: [,-{, “cell_type”: “markdown”, “source”: [ “# Data loadingn”, “n”, “<!– (tutorial2_data_loader)= –>n”, “n”, “An overview of the benchmark datasets are provided by default:”], “metadata..." />
+<meta name="twitter:card" content="summary_large_image" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>&lt;no title&gt; &mdash; AAanalysis</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/style.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo_small.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
+        <script src="../_static/design-tabs.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API" href="../api.html" />
+    <link rel="prev" title="Tutorials" href="../tutorials.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/logo_big_trans.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                latest
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">OVERVIEW</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../index/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index/usage_principles.html">Usage Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index/CONTRIBUTING_COPY.html">Contributing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">EXAMPLES</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">REFERENCES</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../index/tables.html">Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index/references.html">References</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">AAanalysis</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">&lt;no title&gt;</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/breimanntools/aaanalysis/blob/master/tutorials/tutorial2_data_loader.ipynb" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <dl>
+<dt>{</dt><dd><dl>
+<dt>“cells”: [</dt><dd><dl>
+<dt>{</dt><dd><p>“cell_type”: “markdown”,
+“source”: [</p>
+<blockquote>
+<div><p>“# Data loadingn”,
+“n”,
+“&lt;!– (tutorial2_data_loader)= –&gt;n”,
+“n”,
+“An overview of the benchmark datasets are provided by default:”</p>
+</div></blockquote>
+<p>],
+“metadata”: {</p>
+<blockquote>
+<div><p>“collapsed”: false,
+“pycharm”: {</p>
+<blockquote>
+<div><p>“name”: “#%% mdn”</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>}</p>
+</dd>
+</dl>
+<p>},
+{</p>
+<blockquote>
+<div><p>“cell_type”: “code”,
+“execution_count”: null,
+“outputs”: [],
+“source”: [</p>
+<blockquote>
+<div><p>“import aaanalysis as aan”,
+“df_info = aa.load_dataset()n”,
+“print(df_info)”</p>
+</div></blockquote>
+<p>],
+“metadata”: {</p>
+<blockquote>
+<div><p>“collapsed”: false,
+“pycharm”: {</p>
+<blockquote>
+<div><p>“name”: “#%%n”,
+“is_executing”: true</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>},
+{</p>
+<blockquote>
+<div><p>“cell_type”: “markdown”,
+“source”: [</p>
+<blockquote>
+<div><p>“Benchmark datasets are categorized into amino acid (‘AA’), domain (‘DOM’), and sequence (‘SEQ’) level datasets, indicated name suffix.”</p>
+</div></blockquote>
+<p>],
+“metadata”: {</p>
+<blockquote>
+<div><p>“collapsed”: false,
+“pycharm”: {</p>
+<blockquote>
+<div><p>“name”: “#%% mdn”</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>},
+{</p>
+<blockquote>
+<div><p>“cell_type”: “code”,
+“execution_count”: null,
+“outputs”: [],
+“source”: [</p>
+<blockquote>
+<div><p>“df_seq1 = aa.load_dataset(name=&quot;AA_FURIN&quot;)n”,
+“df_seq2 = aa.load_dataset(name=&quot;SEQ_AMYLO&quot;)n”,
+“df_seq3 = aa.load_dataset(name=&quot;DOM_GSEC&quot;)”</p>
+</div></blockquote>
+<p>],
+“metadata”: {</p>
+<blockquote>
+<div><p>“collapsed”: false,
+“pycharm”: {</p>
+<blockquote>
+<div><p>“name”: “#%%n”</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>},
+{</p>
+<blockquote>
+<div><p>“cell_type”: “markdown”,
+“source”: [</p>
+<blockquote>
+<div><p>“For some datasets, an additional version of it is providedn”,
+“for positive-unlabeled (PU) learning containing only positive (1) and unlabeled (2) data samples, as indicated byn”,
+“<em>dataset_name_PU</em> (e.g., ‘DOM_GSEC_PU’).n”</p>
+</div></blockquote>
+<p>],
+“metadata”: {</p>
+<blockquote>
+<div><p>“collapsed”: false,
+“pycharm”: {</p>
+<blockquote>
+<div><p>“name”: “#%% mdn”</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>}</p>
+</dd>
+</dl>
+<p>],
+“metadata”: {</p>
+<blockquote>
+<div><dl class="simple">
+<dt>“kernelspec”: {</dt><dd><p>“display_name”: “Python 3”,
+“language”: “python”,
+“name”: “python3”</p>
+</dd>
+</dl>
+<p>},
+“language_info”: {</p>
+<blockquote>
+<div><dl class="simple">
+<dt>“codemirror_mode”: {</dt><dd><p>“name”: “ipython”,
+“version”: 2</p>
+</dd>
+</dl>
+<p>},
+“file_extension”: “.py”,
+“mimetype”: “text/x-python”,
+“name”: “python”,
+“nbconvert_exporter”: “python”,
+“pygments_lexer”: “ipython2”,
+“version”: “2.7.6”</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>},
+“nbformat”: 4,
+“nbformat_minor”: 0</p>
+</dd>
+</dl>
+<p>}</p>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../tutorials.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../api.html" class="btn btn-neutral float-right" title="API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Stephan Breimann.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
