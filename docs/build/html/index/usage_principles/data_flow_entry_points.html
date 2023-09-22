@@ -6,12 +6,12 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="index/usage_principles/data_flow_entry_points.html" />
 <meta property="og:site_name" content="AAanalysis" />
-<meta property="og:description" content="The AAanalysis toolkit uses different DataFrames starting from DataFrames containing amino acid scales information (df_scales, df_cat) or sequence information (df_seq), which can be modified to obt..." />
+<meta property="og:description" content="Data Flow: Components of AAanalysis: The AAanalysis toolkit uses different DataFrames. It starts with DataFrames containing amino acid scales information ( df_scales, df_cat) or protein sequence in..." />
 <meta property="og:image:width" content="1146" />
 <meta property="og:image:height" content="600" />
-<meta property="og:image" content="/_images/social_previews/summary_index_usage_principles_data_flow_entry_points_98e2fab0.png" />
-<meta property="og:image:alt" content="The AAanalysis toolkit uses different DataFrames starting from DataFrames containing amino acid scales information (df_scales, df_cat) or sequence informatio..." />
-<meta name="description" content="The AAanalysis toolkit uses different DataFrames starting from DataFrames containing amino acid scales information (df_scales, df_cat) or sequence information (df_seq), which can be modified to obt..." />
+<meta property="og:image" content="/_images/social_previews/summary_index_usage_principles_data_flow_entry_points_e56a73dd.png" />
+<meta property="og:image:alt" content="Data Flow: Components of AAanalysis: The AAanalysis toolkit uses different DataFrames. It starts with DataFrames containing amino acid scales information ( d..." />
+<meta name="description" content="Data Flow: Components of AAanalysis: The AAanalysis toolkit uses different DataFrames. It starts with DataFrames containing amino acid scales information ( df_scales, df_cat) or protein sequence in..." />
 <meta name="twitter:card" content="summary_large_image" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -72,7 +72,11 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../usage_principles.html">Usage Principles</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Data Flow and Enry Points</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Data Flow and Enry Points</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#data-flow-components-of-aaanalysis">Data Flow: Components of AAanalysis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#entry-points-bridges-to-external-libraries">Entry Points: Bridges to External Libraries</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="aaontology.html">AAontology: Classification of amino acid scales</a></li>
 <li class="toctree-l2"><a class="reference internal" href="feature_identification.html">Identifying Physicochemical Signatures using CPP</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pu_learning.html">Learning from unbalanced and small data</a></li>
@@ -121,10 +125,19 @@
              
   <section id="data-flow-and-enry-points">
 <h1>Data Flow and Enry Points<a class="headerlink" href="#data-flow-and-enry-points" title="Permalink to this heading"></a></h1>
-<p>The AAanalysis toolkit uses different DataFrames starting from DataFrames containing amino acid scales information
-(df_scales, df_cat) or sequence information (df_seq), which can be modified to obtain specific sequence parts (df_parts).
-Amino acid scales and sequence parts together with split settings are the input for the CPP algorithm, creating
-various physicochemical features (df_feat) by comparing two sets of protein sequences.</p>
+<section id="data-flow-components-of-aaanalysis">
+<h2>Data Flow: Components of AAanalysis<a class="headerlink" href="#data-flow-components-of-aaanalysis" title="Permalink to this heading"></a></h2>
+<p>The AAanalysis toolkit uses different DataFrames. It starts with DataFrames containing amino acid scales information
+(<strong>df_scales</strong>, <strong>df_cat</strong>) or protein sequence information (<strong>df_seq</strong>). Sequences can be segmented into sequence
+parts (<strong>df_parts</strong>), which can be split, as defined by <strong>split_kws</strong>. Amino acid scales and sequence parts together
+with split settings are the input for the CPP algorithm, creating various physicochemical features (<strong>df_feat</strong>) by
+comparing two sets of protein sequences.</p>
+<p>See the primary data flow within the AAanalysis toolkit in this diagram:</p>
+<img alt="../../_images/components.png" src="../../_images/components.png" />
+</section>
+<section id="entry-points-bridges-to-external-libraries">
+<h2>Entry Points: Bridges to External Libraries<a class="headerlink" href="#entry-points-bridges-to-external-libraries" title="Permalink to this heading"></a></h2>
+</section>
 </section>
 
 
