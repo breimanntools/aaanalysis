@@ -23,6 +23,8 @@ COLUMN_WIDTH = 8
 STR_REMOVE = "_XXX" # Check with tables_template.rst for consistency
 STR_ADD_TABLE = "ADD-TABLE"
 
+EXCLUDE_FROM_REF_CHECK = ["t3a_aaontology_categories",
+                          "t3b_aaontology_subcategories"]
 
 # Helper Functions
 def _f_xlsx(on=True, file=None, ending=".xlsx"):
@@ -96,8 +98,9 @@ def generate_table_rst():
         table_name = row[COL_MAP_TABLE]
         df = pd.read_excel(FOLDER_TABLES + _f_xlsx(on=True, file=table_name))
         # Check the references for each table
-        table_refs = df[COL_REF].tolist()
-        _check_references(table_name=table_name, table_refs=table_refs, list_refs=list_refs)
+        if table_name not in EXCLUDE_FROM_REF_CHECK:
+            table_refs = df[COL_REF].tolist()
+            _check_references(table_name=table_name, table_refs=table_refs, list_refs=list_refs)
         table_rst = _convert_excel_to_rst(df)
         tables_dict[table_name] = table_rst
 

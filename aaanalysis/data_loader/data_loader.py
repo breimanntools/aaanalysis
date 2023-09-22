@@ -288,7 +288,13 @@ def load_scales(name: str = "scales",
 
     Notes
     -----
-    Some additional notes about the function can be added here, similar to the `load_dataset` function.
+    The ``df_cat`` DataFrame includs these columns:
+
+    - 'entry': Protein identifier, either the UniProt accession number or an id based on index.
+    - 'sequence': Amino acid sequence.
+    - 'label': Binary classification label (0 for negatives, 1 for positives).
+    - 'tmd_start', 'tmd_stop': Start and stop positions of TMD (present only at domain level).
+    - 'jmd_n', 'tmd', 'jmd_c': Sequences for JMD_N, TMD, and JMD_C respectively.
 
     Examples
     --------

@@ -12,7 +12,7 @@
    3. Create a new descriptive section here that elucidates the table's columns and any
       essential data types, such as categories.
 
-   Note: Each table should include a 'Reference' column.
+   Note: Each table should include a 'Reference' column (include exceptions in create_tables_doc.py).
 
    # Key Annotations for Automated Table Generation via create_tables_doc.py:
    _XXX: A string to be stripped from the references. This prevents redundancies that may result
@@ -58,6 +58,29 @@ ADD-TABLE
 Amino Acid Scale Datasets
 -------------------------
 Various amino acid scale datasets are provided.
+
+ADD-TABLE
+
+AAontology
+----------
+AAontology ([Breimann23b]_) provides a two-tiered system for amino acid classification, designed to enhance the interpretability of
+sequence-based protein predictions. It encompasses 586 physicochemical scales, which are systematically arranged
+into ``67 subcategories`` and further grouped into ``8 categories``. Every scale, subcategory, and main category
+is clearly defined and supported by key references. The scales were grouped into their respective subcategories
+using a combination of AAclust ([Breimann23a]_) clustering and assessments of biological similarity. Those scales that couldn't
+be allocated to a specific subcategory are labeled as 'unclassified'.
+
+.. _t3a_aaontology_categories_XXX:
+
+Categories
+''''''''''
+
+ADD-TABLE
+
+.. _t3b_aaontology_subcategories_XXX:
+
+Subcategories
+'''''''''''''
 
 ADD-TABLE
 
