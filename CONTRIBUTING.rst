@@ -230,6 +230,9 @@ This project's documentation is organized across four distinct layers, each with
 
 - **Tables**:  Close-up on data or other tabular overviews, with detailed explanation of columns and critical values.
 
+See the reference order in this image:
+
+.. image :: /docs/source/_artwork/diagrams/ref_order.png
 
 Building the Docs
 -----------------
