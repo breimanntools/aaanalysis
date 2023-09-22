@@ -270,43 +270,8 @@ Or randomly selected using ``random=True``:
 .. code:: ipython2
 
     df_seq = aa.load_dataset(name="SEQ_CAPSID", n=100, random=True)
-    df_seq["label"].value_counts()
 
-
-
-
-.. parsed-literal::
-
-    label
-    0    100
-    1    100
-    Name: count, dtype: int64
-
-
-
-The protein sequences have varying length:
-
-.. code:: ipython2
-
-    df_seq = aa.load_dataset(name="SEQ_CAPSID", n=100)
-    df_seq["sequence"].apply(len).describe()
-
-
-
-
-.. parsed-literal::
-
-    count     200.000000
-    mean      377.170000
-    std       217.297543
-    min        20.000000
-    25%       238.000000
-    50%       331.000000
-    75%       468.000000
-    max      1403.000000
-    Name: sequence, dtype: float64
-
-
+The protein sequences can have varying length:
 
 .. code:: ipython2
 
@@ -315,16 +280,16 @@ The protein sequences have varying length:
     warnings.simplefilter(action='ignore', category=FutureWarning)
     import matplotlib.pyplot as plt
     import seaborn as sns
+    # Utility AAanalysis function for publication ready plots
     aa.plot_settings(font_scale=1.2) 
     list_seq_lens = df_seq["sequence"].apply(len)
-    # Utility AAanalysis function for publication ready plots
     sns.histplot(list_seq_lens, binwidth=50)
     sns.despine()
     plt.show()
 
 
 
-.. image:: output_10_0.png
+.. image:: output_9_0.png
 
 
 Which can be easily filtered using ``min_len`` and ``max_len``
@@ -341,7 +306,7 @@ parameters:
 
 
 
-.. image:: output_12_0.png
+.. image:: output_11_0.png
 
 
 Loading of protein benchmarks: Amino acid window size
@@ -524,38 +489,38 @@ Sequences can be pre-filtered using ``min_len`` and ``max_len`` and
       <tbody>
         <tr>
           <th>0</th>
-          <td>CASPASE3_201_pos116</td>
-          <td>IVVSDPEDITDCPRTPDTPNN</td>
+          <td>CASPASE3_55_pos170</td>
+          <td>KKRKLEEEEDGKLKKPKNKDK</td>
           <td>1</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>CASPASE3_224_pos368</td>
-          <td>TKVCSSMDENDGPGEGDELGR</td>
+          <td>CASPASE3_29_pos185</td>
+          <td>CPHHERCSDSDGLAPPQHLIR</td>
           <td>1</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>CASPASE3_26_pos44</td>
-          <td>AAHDTEATATDYHTTSHPGTH</td>
+          <td>CASPASE3_64_pos431</td>
+          <td>DNPLNWPDEKDSSFYRNFGST</td>
           <td>1</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>CASPASE3_218_pos1976</td>
-          <td>EDLKQPMAERKAQLDALAFDI</td>
+          <td>CASPASE3_93_pos455</td>
+          <td>FVKNMNRDSTFIVNKTITAEV</td>
           <td>0</td>
         </tr>
         <tr>
           <th>4</th>
-          <td>CASPASE3_186_pos392</td>
-          <td>IPKAFVGNQLPFVGFTYYSNR</td>
+          <td>CASPASE3_38_pos129</td>
+          <td>SSFDLDYDFQRDYYDRMYSYP</td>
           <td>0</td>
         </tr>
         <tr>
           <th>5</th>
-          <td>CASPASE3_63_pos1364</td>
-          <td>VNVKCVAPYPSLLPSQDNIDG</td>
+          <td>CASPASE3_8_pos33</td>
+          <td>RPPQLRPGAPTSLQTEPQGNP</td>
           <td>0</td>
         </tr>
       </tbody>
@@ -908,5 +873,7 @@ example, the ``DOM_GSEC_PU`` dataset corresponds to the
     </table>
     <p>694 rows × 8 columns</p>
     </div>
+
+
 
 

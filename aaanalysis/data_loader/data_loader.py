@@ -156,7 +156,7 @@ def load_dataset(name: str = "INFO",
     Load protein benchmarking datasets.
 
     The benchmarks are categorized into amino acid ('AA'), domain ('DOM'), and sequence ('SEQ') level datasets.
-    By default (``name='INFO'``), an overview table is provided. For in-depth details, refer to [Breimann23a]_.
+    By default, an overview table is provided (``name='INFO'``). For in-depth details, refer to [Breimann23a]_.
 
     Parameters
     ----------
@@ -248,6 +248,11 @@ def load_dataset(name: str = "INFO",
     post_check_df_seq(df_seq=df_seq, n=n, name=name)
     return df_seq
 
+# TODO add selection of top sets
+# TODO add check
+# TODO add tests
+# TODO adds nots on scales_cat, eval_top60
+# TODO add table of AAontology in tables
 
 # Load scales
 def load_scales(name: str = "scales",
@@ -258,11 +263,11 @@ def load_scales(name: str = "scales",
     Load amino acid scales, scale classifications (AAontology), or scale evaluations.
 
     The amino acid scales (``name='scales_raw'``) comprise all scales from AAindex ([Kawashima08]_) and two additional
-    datasources. They were min-max normalized (``'scales'``) and where organized in a two-level classification called AAontology
-    (``'scales_cat'``), as detailed in [Breimann23b]_. The first 20 princpical component (PC) of all compressed
-    scales are provided (``'scales_pc'``), and where used for an in-depth analysis of redudancy-reduced scale subsets
-    obtained by :class:`AAclust` ([Breimann23a]_). The 60 best scale sets are provided (all by ``'top60'`` or
-    selected by 'top60_n'), inclusive their evaluation (``'top60_eval'``).
+    datasources. They were min-max normalized (``'scales'``) and organized in a two-level classification called
+    AAontology (``'scales_cat'``), as detailed in [Breimann23b]_. The first 20 princpical component (PC) of all
+    compressed scales are provided (``'scales_pc'``), and were used for an in-depth analysis of redudancy-reduced
+    scale subsets obtained by :class:`AAclust` ([Breimann23a]_). The 60 best scale sets are provided (all by ``'top60'``
+    or selected by 'top60_n'), inclusive their evaluation (``'top60_eval'``).
 
     Parameters
     ----------

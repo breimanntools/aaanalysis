@@ -9,7 +9,7 @@
 <meta property="og:description" content="This is a tutorial on loading of protein and amino acid scale datasets. Loading of protein benchmarks: Load the overview table of protein benchmark datasets using the default settings: The benchmar..." />
 <meta property="og:image:width" content="1146" />
 <meta property="og:image:height" content="600" />
-<meta property="og:image" content="/_images/social_previews/summary_generated_tutorial2_data_loader_17a0722e.png" />
+<meta property="og:image" content="/None" />
 <meta property="og:image:alt" content="This is a tutorial on loading of protein and amino acid scale datasets. Loading of protein benchmarks: Load the overview table of protein benchmark datasets..." />
 <meta name="description" content="This is a tutorial on loading of protein and amino acid scale datasets. Loading of protein benchmarks: Load the overview table of protein benchmark datasets using the default settings: The benchmar..." />
 <meta name="twitter:card" content="summary_large_image" />
@@ -355,45 +355,23 @@ chosen by the <code class="docutils literal notranslate"><span class="pre">n</sp
 </div>
 <p>Or randomly selected using <code class="docutils literal notranslate"><span class="pre">random=True</span></code>:</p>
 <div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SEQ_CAPSID&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">df_seq</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">label</span>
-<span class="mi">0</span>    <span class="mi">100</span>
-<span class="mi">1</span>    <span class="mi">100</span>
-<span class="n">Name</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">int64</span>
-</pre></div>
-</div>
-<p>The protein sequences have varying length:</p>
-<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SEQ_CAPSID&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-<span class="n">df_seq</span><span class="p">[</span><span class="s2">&quot;sequence&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">count</span>     <span class="mf">200.000000</span>
-<span class="n">mean</span>      <span class="mf">377.170000</span>
-<span class="n">std</span>       <span class="mf">217.297543</span>
-<span class="nb">min</span>        <span class="mf">20.000000</span>
-<span class="mi">25</span><span class="o">%</span>       <span class="mf">238.000000</span>
-<span class="mi">50</span><span class="o">%</span>       <span class="mf">331.000000</span>
-<span class="mi">75</span><span class="o">%</span>       <span class="mf">468.000000</span>
-<span class="nb">max</span>      <span class="mf">1403.000000</span>
-<span class="n">Name</span><span class="p">:</span> <span class="n">sequence</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
-</pre></div>
-</div>
+<p>The protein sequences can have varying length:</p>
 <div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot distribution</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="c1"># Utility AAanalysis function for publication ready plots</span>
 <span class="n">aa</span><span class="o">.</span><span class="n">plot_settings</span><span class="p">(</span><span class="n">font_scale</span><span class="o">=</span><span class="mf">1.2</span><span class="p">)</span>
 <span class="n">list_seq_lens</span> <span class="o">=</span> <span class="n">df_seq</span><span class="p">[</span><span class="s2">&quot;sequence&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
-<span class="c1"># Utility AAanalysis function for publication ready plots</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">histplot</span><span class="p">(</span><span class="n">list_seq_lens</span><span class="p">,</span> <span class="n">binwidth</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">despine</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<img alt="../_images/output_10_0.png" src="../_images/output_10_0.png" />
+<img alt="../_images/output_9_0.png" src="../_images/output_9_0.png" />
 <p>Which can be easily filtered using <code class="docutils literal notranslate"><span class="pre">min_len</span></code> and <code class="docutils literal notranslate"><span class="pre">max_len</span></code>
 parameters:</p>
 <div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SEQ_CAPSID&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">min_len</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">800</span><span class="p">)</span>
@@ -404,7 +382,7 @@ parameters:</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<img alt="../_images/output_12_0.png" src="../_images/output_12_0.png" />
+<img alt="../_images/output_11_0.png" src="../_images/output_11_0.png" />
 </section>
 <section id="loading-of-protein-benchmarks-amino-acid-window-size">
 <h2>Loading of protein benchmarks: Amino acid window size<a class="headerlink" href="#loading-of-protein-benchmarks-amino-acid-window-size" title="Permalink to this heading"></a></h2>
@@ -556,38 +534,38 @@ window size is 9, sizes between 5 and 15 are also popular.</p>
   <tbody>
     <tr>
       <th>0</th>
-      <td>CASPASE3_201_pos116</td>
-      <td>IVVSDPEDITDCPRTPDTPNN</td>
+      <td>CASPASE3_55_pos170</td>
+      <td>KKRKLEEEEDGKLKKPKNKDK</td>
       <td>1</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>CASPASE3_224_pos368</td>
-      <td>TKVCSSMDENDGPGEGDELGR</td>
+      <td>CASPASE3_29_pos185</td>
+      <td>CPHHERCSDSDGLAPPQHLIR</td>
       <td>1</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>CASPASE3_26_pos44</td>
-      <td>AAHDTEATATDYHTTSHPGTH</td>
+      <td>CASPASE3_64_pos431</td>
+      <td>DNPLNWPDEKDSSFYRNFGST</td>
       <td>1</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>CASPASE3_218_pos1976</td>
-      <td>EDLKQPMAERKAQLDALAFDI</td>
+      <td>CASPASE3_93_pos455</td>
+      <td>FVKNMNRDSTFIVNKTITAEV</td>
       <td>0</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>CASPASE3_186_pos392</td>
-      <td>IPKAFVGNQLPFVGFTYYSNR</td>
+      <td>CASPASE3_38_pos129</td>
+      <td>SSFDLDYDFQRDYYDRMYSYP</td>
       <td>0</td>
     </tr>
     <tr>
       <th>5</th>
-      <td>CASPASE3_63_pos1364</td>
-      <td>VNVKCVAPYPSLLPSQDNIDG</td>
+      <td>CASPASE3_8_pos33</td>
+      <td>RPPQLRPGAPTSLQTEPQGNP</td>
       <td>0</td>
     </tr>
   </tbody>
