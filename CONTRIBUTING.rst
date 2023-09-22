@@ -234,6 +234,13 @@ See the reference order in this image:
 
 .. image :: /docs/source/_artwork/diagrams/ref_order.png
 
+The :doc:`API <api>` specifically highlights the **docstrings** for our public objects and functions.
+Within these docstrings, scientific :doc:`References` may be mentioned in their extended sections.
+Additional references should be organized in the *See Also* section in this sequence: :doc:`Usage Principles`,
+:doc:`Tutorials`, and :doc:`Tables`. **External library** links are to be included only when crucial.
+Note that the Usage Principles can freely reference :doc:`References`, :doc:`Tutorials`, and :doc:`Tables`.
+
+
 Building the Docs
 -----------------
 
