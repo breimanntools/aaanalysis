@@ -6,12 +6,12 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="generated/tutorial2_data_loader.html" />
 <meta property="og:site_name" content="AAanalysis" />
-<meta property="og:description" content="An overview of the benchmark datasets are provided by default: Benchmark datasets are categorized into amino acid (‘AA’), domain (‘DOM’), and sequence (‘SEQ’) level datasets, indicated name suffix...." />
+<meta property="og:description" content="This is a tutorial on loading of protein and amino acid scale datasets. Loading of protein benchmarks: Load the overview table of protein benchmark datasets using the default settings: The benchmar..." />
 <meta property="og:image:width" content="1146" />
 <meta property="og:image:height" content="600" />
-<meta property="og:image" content="/_images/social_previews/summary_generated_tutorial2_data_loader_2dbaecee.png" />
-<meta property="og:image:alt" content="An overview of the benchmark datasets are provided by default: Benchmark datasets are categorized into amino acid (‘AA’), domain (‘DOM’), and sequence (‘SEQ’..." />
-<meta name="description" content="An overview of the benchmark datasets are provided by default: Benchmark datasets are categorized into amino acid (‘AA’), domain (‘DOM’), and sequence (‘SEQ’) level datasets, indicated name suffix...." />
+<meta property="og:image" content="/_images/social_previews/summary_generated_tutorial2_data_loader_17a0722e.png" />
+<meta property="og:image:alt" content="This is a tutorial on loading of protein and amino acid scale datasets. Loading of protein benchmarks: Load the overview table of protein benchmark datasets..." />
+<meta name="description" content="This is a tutorial on loading of protein and amino acid scale datasets. Loading of protein benchmarks: Load the overview table of protein benchmark datasets using the default settings: The benchmar..." />
 <meta name="twitter:card" content="summary_large_image" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -121,49 +121,804 @@
              
   <section id="data-loading">
 <h1>Data loading<a class="headerlink" href="#data-loading" title="Permalink to this heading"></a></h1>
-<p>An overview of the benchmark datasets are provided by default:</p>
+<p>This is a tutorial on loading of protein and amino acid scale datasets.</p>
+<section id="loading-of-protein-benchmarks">
+<h2>Loading of protein benchmarks<a class="headerlink" href="#loading-of-protein-benchmarks" title="Permalink to this heading"></a></h2>
+<p>Load the overview table of protein benchmark datasets using the default
+settings:</p>
 <div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
 <span class="n">df_info</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">df_info</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">7</span><span class="p">])</span>
+<span class="n">df_info</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">7</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">13</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>         <span class="n">Level</span>        <span class="n">Dataset</span>  <span class="c1"># Sequences  # Amino acids  # Positives  # Negatives    Predictor</span>
-<span class="mi">0</span>   <span class="n">Amino</span> <span class="n">acid</span>    <span class="n">AA_CASPASE3</span>          <span class="mi">233</span>         <span class="mi">185605</span>          <span class="mi">705</span>       <span class="mi">184900</span>   <span class="n">PROSPERous</span>
-<span class="mi">1</span>   <span class="n">Amino</span> <span class="n">acid</span>       <span class="n">AA_FURIN</span>           <span class="mi">71</span>          <span class="mi">59003</span>          <span class="mi">163</span>        <span class="mi">58840</span>   <span class="n">PROSPERous</span>
-<span class="mi">2</span>   <span class="n">Amino</span> <span class="n">acid</span>         <span class="n">AA_LDR</span>          <span class="mi">342</span>         <span class="mi">118248</span>        <span class="mi">35469</span>        <span class="mi">82779</span>  <span class="n">IDP</span><span class="o">-</span><span class="n">Seq2Seq</span>
-<span class="mi">3</span>   <span class="n">Amino</span> <span class="n">acid</span>        <span class="n">AA_MMP2</span>          <span class="mi">573</span>         <span class="mi">312976</span>         <span class="mi">2416</span>       <span class="mi">310560</span>   <span class="n">PROSPERous</span>
-<span class="mi">4</span>   <span class="n">Amino</span> <span class="n">acid</span>     <span class="n">AA_RNABIND</span>          <span class="mi">221</span>          <span class="mi">55001</span>         <span class="mi">6492</span>        <span class="mi">48509</span>    <span class="n">GMKSVM</span><span class="o">-</span><span class="n">RU</span>
-<span class="mi">5</span>   <span class="n">Amino</span> <span class="n">acid</span>          <span class="n">AA_SA</span>          <span class="mi">233</span>         <span class="mi">185605</span>       <span class="mi">101082</span>        <span class="mi">84523</span>   <span class="n">PROSPERous</span>
-<span class="mi">6</span>     <span class="n">Sequence</span>      <span class="n">SEQ_AMYLO</span>         <span class="mi">1414</span>           <span class="mi">8484</span>          <span class="mi">511</span>          <span class="mi">903</span>    <span class="n">ReRF</span><span class="o">-</span><span class="n">Pred</span>
-<span class="mi">7</span>     <span class="n">Sequence</span>     <span class="n">SEQ_CAPSID</span>         <span class="mi">7935</span>        <span class="mi">3364680</span>         <span class="mi">3864</span>         <span class="mi">4071</span>     <span class="n">VIRALpro</span>
-<span class="mi">8</span>     <span class="n">Sequence</span>  <span class="n">SEQ_DISULFIDE</span>         <span class="mi">2547</span>         <span class="mi">614470</span>          <span class="mi">897</span>         <span class="mi">1650</span>        <span class="n">Dipro</span>
-<span class="mi">9</span>     <span class="n">Sequence</span>   <span class="n">SEQ_LOCATION</span>         <span class="mi">1835</span>         <span class="mi">732398</span>         <span class="mi">1045</span>          <span class="mi">790</span>          <span class="n">NaN</span>
-<span class="mi">10</span>    <span class="n">Sequence</span>    <span class="n">SEQ_SOLUBLE</span>        <span class="mi">17408</span>        <span class="mi">4432269</span>         <span class="mi">8704</span>         <span class="mi">8704</span>       <span class="n">SOLpro</span>
-<span class="mi">11</span>    <span class="n">Sequence</span>       <span class="n">SEQ_TAIL</span>         <span class="mi">6668</span>        <span class="mi">2671690</span>         <span class="mi">2574</span>         <span class="mi">4094</span>     <span class="n">VIRALpro</span>
-<span class="mi">12</span>      <span class="n">Domain</span>       <span class="n">DOM_GSEC</span>          <span class="mi">126</span>          <span class="mi">92964</span>           <span class="mi">63</span>           <span class="mi">63</span>          <span class="n">NaN</span>
-<span class="mi">13</span>      <span class="n">Domain</span>    <span class="n">DOM_GSEC_PU</span>          <span class="mi">694</span>         <span class="mi">494524</span>           <span class="mi">63</span>            <span class="mi">0</span>          <span class="n">NaN</span>
-</pre></div>
-</div>
-<p>Benchmark datasets are categorized into amino acid (‘AA’), domain
-(‘DOM’), and sequence (‘SEQ’) level datasets, indicated name suffix.</p>
-<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">df_seq1</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;AA_FURIN&quot;</span><span class="p">)</span>
-<span class="n">df_seq2</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SEQ_AMYLO&quot;</span><span class="p">)</span>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Level</th>
+      <th>Dataset</th>
+      <th># Sequences</th>
+      <th># Amino acids</th>
+      <th># Positives</th>
+      <th># Negatives</th>
+      <th>Predictor</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Amino acid</td>
+      <td>AA_CASPASE3</td>
+      <td>233</td>
+      <td>185605</td>
+      <td>705</td>
+      <td>184900</td>
+      <td>PROSPERous</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Amino acid</td>
+      <td>AA_FURIN</td>
+      <td>71</td>
+      <td>59003</td>
+      <td>163</td>
+      <td>58840</td>
+      <td>PROSPERous</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Amino acid</td>
+      <td>AA_LDR</td>
+      <td>342</td>
+      <td>118248</td>
+      <td>35469</td>
+      <td>82779</td>
+      <td>IDP-Seq2Seq</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Amino acid</td>
+      <td>AA_MMP2</td>
+      <td>573</td>
+      <td>312976</td>
+      <td>2416</td>
+      <td>310560</td>
+      <td>PROSPERous</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Amino acid</td>
+      <td>AA_RNABIND</td>
+      <td>221</td>
+      <td>55001</td>
+      <td>6492</td>
+      <td>48509</td>
+      <td>GMKSVM-RU</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Amino acid</td>
+      <td>AA_SA</td>
+      <td>233</td>
+      <td>185605</td>
+      <td>101082</td>
+      <td>84523</td>
+      <td>PROSPERous</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Sequence</td>
+      <td>SEQ_AMYLO</td>
+      <td>1414</td>
+      <td>8484</td>
+      <td>511</td>
+      <td>903</td>
+      <td>ReRF-Pred</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Sequence</td>
+      <td>SEQ_CAPSID</td>
+      <td>7935</td>
+      <td>3364680</td>
+      <td>3864</td>
+      <td>4071</td>
+      <td>VIRALpro</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Sequence</td>
+      <td>SEQ_DISULFIDE</td>
+      <td>2547</td>
+      <td>614470</td>
+      <td>897</td>
+      <td>1650</td>
+      <td>Dipro</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Sequence</td>
+      <td>SEQ_LOCATION</td>
+      <td>1835</td>
+      <td>732398</td>
+      <td>1045</td>
+      <td>790</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>Sequence</td>
+      <td>SEQ_SOLUBLE</td>
+      <td>17408</td>
+      <td>4432269</td>
+      <td>8704</td>
+      <td>8704</td>
+      <td>SOLpro</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>Sequence</td>
+      <td>SEQ_TAIL</td>
+      <td>6668</td>
+      <td>2671690</td>
+      <td>2574</td>
+      <td>4094</td>
+      <td>VIRALpro</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>Domain</td>
+      <td>DOM_GSEC</td>
+      <td>126</td>
+      <td>92964</td>
+      <td>63</td>
+      <td>63</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+</div><p>The benchmark datasets are categorized into amino acid (‘AA’), domain
+(‘DOM’), and sequence (‘SEQ’) level datasets, indicated by their
+<code class="docutils literal notranslate"><span class="pre">name</span></code> prefix, as exemplified here.</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">df_seq1</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;AA_CASPASE3&quot;</span><span class="p">)</span>
+<span class="n">df_seq2</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SEQ_CAPSID&quot;</span><span class="p">)</span>
 <span class="n">df_seq3</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;DOM_GSEC&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">df_seq3</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">df_seq2</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="c1"># Compare columns of three types</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">entry</span>                                           <span class="n">sequence</span>  <span class="n">label</span>  <span class="n">tmd_start</span>  <span class="n">tmd_stop</span>       <span class="n">jmd_n</span>                      <span class="n">tmd</span>       <span class="n">jmd_c</span>
-<span class="mi">0</span>  <span class="n">P05067</span>  <span class="n">MLPGLALLLLAAWTARALEVPTDGNAGLLAEPQIAMFCGRLNMHMN</span><span class="o">...</span>      <span class="mi">1</span>        <span class="mi">701</span>       <span class="mi">723</span>  <span class="n">FAEDVGSNKG</span>  <span class="n">AIIGLMVGGVVIATVIVITLVML</span>  <span class="n">KKKQYTSIHH</span>
-<span class="mi">1</span>  <span class="n">P14925</span>  <span class="n">MAGRARSGLLLLLLGLLALQSSCLAFRSPLSVFKRFKETTRSFSNE</span><span class="o">...</span>      <span class="mi">1</span>        <span class="mi">868</span>       <span class="mi">890</span>  <span class="n">KLSTEPGSGV</span>  <span class="n">SVVLITTLLVIPVLVLLAIVMFI</span>  <span class="n">RWKKSRAFGD</span>
-<span class="mi">2</span>  <span class="n">P70180</span>  <span class="n">MRSLLLFTFSACVLLARVLLAGGASSGAGDTRPGSRRRAREALAAQ</span><span class="o">...</span>      <span class="mi">1</span>        <span class="mi">477</span>       <span class="mi">499</span>  <span class="n">PCKSSGGLEE</span>  <span class="n">SAVTGIVVGALLGAGLLMAFYFF</span>  <span class="n">RKKYRITIER</span>
-<span class="mi">3</span>  <span class="n">Q03157</span>  <span class="n">MGPTSPAARGQGRRWRPPPLPLLLPLSLLLLRAQLAVGNLAVGSPS</span><span class="o">...</span>      <span class="mi">1</span>        <span class="mi">585</span>       <span class="mi">607</span>  <span class="n">APSGTGVSRE</span>  <span class="n">ALSGLLIMGAGGGSLIVLSLLLL</span>  <span class="n">RKKKPYGTIS</span>
-<span class="mi">4</span>  <span class="n">Q06481</span>  <span class="n">MAATGTAAAAATGRLLLLLLVGLTAPALALAGYIEALAANAGTGFA</span><span class="o">...</span>      <span class="mi">1</span>        <span class="mi">694</span>       <span class="mi">716</span>  <span class="n">LREDFSLSSS</span>  <span class="n">ALIGLLVIAVAIATVIVISLVML</span>  <span class="n">RKRQYGTISH</span>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>entry</th>
+      <th>sequence</th>
+      <th>label</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>CAPSID_1</td>
+      <td>MVTHNVKINKHVTRRSYSSAKEVLEIPPLTEVQTASYKWFMDKGIK...</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>CAPSID_2</td>
+      <td>MKKRQKKMTLSNFTDTSFQDFVSAEQVDDKSAMALINRAEDFKAGQ...</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div><p>Each dataset can be utilized for a binary classification, with labels
+being positive (1) or negative (0). A balanced number of samples can be
+chosen by the <code class="docutils literal notranslate"><span class="pre">n</span></code> parameter, defining the sample number per class.</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SEQ_CAPSID&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="c1"># Returns 200 samples, 100 positives and 100 negatives</span>
+<span class="n">df_seq</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>For some datasets, an additional version of it is provided for
-positive-unlabeled (PU) learning containing only positive (1) and
-unlabeled (2) data samples, as indicated by <em>dataset_name_PU</em> (e.g.,
-‘DOM_GSEC_PU’).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">label</span>
+<span class="mi">0</span>    <span class="mi">100</span>
+<span class="mi">1</span>    <span class="mi">100</span>
+<span class="n">Name</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">int64</span>
+</pre></div>
+</div>
+<p>Or randomly selected using <code class="docutils literal notranslate"><span class="pre">random=True</span></code>:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SEQ_CAPSID&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">df_seq</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">label</span>
+<span class="mi">0</span>    <span class="mi">100</span>
+<span class="mi">1</span>    <span class="mi">100</span>
+<span class="n">Name</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">int64</span>
+</pre></div>
+</div>
+<p>The protein sequences have varying length:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SEQ_CAPSID&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">df_seq</span><span class="p">[</span><span class="s2">&quot;sequence&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">count</span>     <span class="mf">200.000000</span>
+<span class="n">mean</span>      <span class="mf">377.170000</span>
+<span class="n">std</span>       <span class="mf">217.297543</span>
+<span class="nb">min</span>        <span class="mf">20.000000</span>
+<span class="mi">25</span><span class="o">%</span>       <span class="mf">238.000000</span>
+<span class="mi">50</span><span class="o">%</span>       <span class="mf">331.000000</span>
+<span class="mi">75</span><span class="o">%</span>       <span class="mf">468.000000</span>
+<span class="nb">max</span>      <span class="mf">1403.000000</span>
+<span class="n">Name</span><span class="p">:</span> <span class="n">sequence</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">float64</span>
+</pre></div>
+</div>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot distribution</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="n">aa</span><span class="o">.</span><span class="n">plot_settings</span><span class="p">(</span><span class="n">font_scale</span><span class="o">=</span><span class="mf">1.2</span><span class="p">)</span>
+<span class="n">list_seq_lens</span> <span class="o">=</span> <span class="n">df_seq</span><span class="p">[</span><span class="s2">&quot;sequence&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
+<span class="c1"># Utility AAanalysis function for publication ready plots</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">histplot</span><span class="p">(</span><span class="n">list_seq_lens</span><span class="p">,</span> <span class="n">binwidth</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">despine</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/output_10_0.png" src="../_images/output_10_0.png" />
+<p>Which can be easily filtered using <code class="docutils literal notranslate"><span class="pre">min_len</span></code> and <code class="docutils literal notranslate"><span class="pre">max_len</span></code>
+parameters:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SEQ_CAPSID&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">min_len</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">800</span><span class="p">)</span>
+<span class="n">list_seq_lens</span> <span class="o">=</span> <span class="n">df_seq</span><span class="p">[</span><span class="s2">&quot;sequence&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
+<span class="n">aa</span><span class="o">.</span><span class="n">plot_settings</span><span class="p">(</span><span class="n">font_scale</span><span class="o">=</span><span class="mf">1.2</span><span class="p">)</span>  <span class="c1"># Utility AAanalysis function for publication ready plots</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">histplot</span><span class="p">(</span><span class="n">list_seq_lens</span><span class="p">,</span> <span class="n">binwidth</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">despine</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/output_12_0.png" src="../_images/output_12_0.png" />
+</section>
+<section id="loading-of-protein-benchmarks-amino-acid-window-size">
+<h2>Loading of protein benchmarks: Amino acid window size<a class="headerlink" href="#loading-of-protein-benchmarks-amino-acid-window-size" title="Permalink to this heading"></a></h2>
+<p>For amino acid level datasets, labels are provided for each residue
+position, which can be seen by setting <code class="docutils literal notranslate"><span class="pre">aa_window_size=None</span></code>:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;AA_CASPASE3&quot;</span><span class="p">,</span> <span class="n">aa_window_size</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">df_seq</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>entry</th>
+      <th>sequence</th>
+      <th>label</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>CASPASE3_1</td>
+      <td>MSLFDLFRGFFGFPGPRSHRDPFFGGMTRDEDDDEEEEEEGGSWGR...</td>
+      <td>0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>CASPASE3_2</td>
+      <td>MEVTGDAGVPESGEIRTLKPCLLRRNYSREQHGVAASCLEDLRSKA...</td>
+      <td>0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,...</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>CASPASE3_3</td>
+      <td>MRARSGARGALLLALLLCWDPTPSLAGIDSGGQALPDSFPSAPAEQ...</td>
+      <td>0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,...</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>CASPASE3_4</td>
+      <td>MDAKARNCLLQHREALEKDIKTSYIMDHMISDGFLTISEEEKVRNE...</td>
+      <td>0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,...</td>
+    </tr>
+  </tbody>
+</table>
+</div><p>For convenience, we provide an “amino acid window” of length n. This
+window represents a specific amino acid, which is flanked by (n-1)/2
+residues on both its N-terminal and C-terminal sides. It’s essential for
+n to be odd, ensuring equal residues on both sides. While the default
+window size is 9, sizes between 5 and 15 are also popular.</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;AA_CASPASE3&quot;</span><span class="p">)</span>
+<span class="n">df_seq</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>entry</th>
+      <th>sequence</th>
+      <th>label</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>CASPASE3_1_pos4</td>
+      <td>MSLFDLFRG</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>CASPASE3_1_pos5</td>
+      <td>SLFDLFRGF</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>CASPASE3_1_pos6</td>
+      <td>LFDLFRGFF</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>CASPASE3_1_pos7</td>
+      <td>FDLFRGFFG</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div><p>Sequences can be pre-filtered using <code class="docutils literal notranslate"><span class="pre">min_len</span></code> and <code class="docutils literal notranslate"><span class="pre">max_len</span></code> and
+<code class="docutils literal notranslate"><span class="pre">n</span></code> residues can be randomly selected by <code class="docutils literal notranslate"><span class="pre">random</span></code> with different
+<code class="docutils literal notranslate"><span class="pre">aa_window_size</span></code>s.</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;AA_CASPASE3&quot;</span><span class="p">,</span> <span class="n">min_len</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">aa_window_size</span><span class="o">=</span><span class="mi">21</span><span class="p">)</span>
+<span class="n">df_seq</span>
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>entry</th>
+      <th>sequence</th>
+      <th>label</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>CASPASE3_201_pos116</td>
+      <td>IVVSDPEDITDCPRTPDTPNN</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>CASPASE3_224_pos368</td>
+      <td>TKVCSSMDENDGPGEGDELGR</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>CASPASE3_26_pos44</td>
+      <td>AAHDTEATATDYHTTSHPGTH</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>CASPASE3_218_pos1976</td>
+      <td>EDLKQPMAERKAQLDALAFDI</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>CASPASE3_186_pos392</td>
+      <td>IPKAFVGNQLPFVGFTYYSNR</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>CASPASE3_63_pos1364</td>
+      <td>VNVKCVAPYPSLLPSQDNIDG</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div></section>
+<section id="loading-of-protein-benchmarks-positive-unlabeled-pu-datasets">
+<h2>Loading of protein benchmarks: Positive-Unlabeled (PU) datasets<a class="headerlink" href="#loading-of-protein-benchmarks-positive-unlabeled-pu-datasets" title="Permalink to this heading"></a></h2>
+<p>In typical binary classification, data is labeled as positive (1) or
+negative (0). But with many protein sequence datasets, we face
+challenges: they might be small, unbalanced, or lack a clear negative
+class. For datasets with only positive and unlabeled samples (2), we use
+PU learning. This approach identifies reliable negatives from the
+unlabeled data to make binary classification possible. We offer
+benchmark datasets for this scenario, denoted by the <code class="docutils literal notranslate"><span class="pre">_PU</span></code> suffix. For
+example, the <code class="docutils literal notranslate"><span class="pre">DOM_GSEC_PU</span></code> dataset corresponds to the
+<code class="docutils literal notranslate"><span class="pre">DOM_GSEC</span> <span class="pre">set</span></code>.</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;DOM_GSEC&quot;</span><span class="p">)</span>
+<span class="n">df_seq</span>
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>entry</th>
+      <th>sequence</th>
+      <th>label</th>
+      <th>tmd_start</th>
+      <th>tmd_stop</th>
+      <th>jmd_n</th>
+      <th>tmd</th>
+      <th>jmd_c</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>P05067</td>
+      <td>MLPGLALLLLAAWTARALEVPTDGNAGLLAEPQIAMFCGRLNMHMN...</td>
+      <td>1</td>
+      <td>701</td>
+      <td>723</td>
+      <td>FAEDVGSNKG</td>
+      <td>AIIGLMVGGVVIATVIVITLVML</td>
+      <td>KKKQYTSIHH</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>P14925</td>
+      <td>MAGRARSGLLLLLLGLLALQSSCLAFRSPLSVFKRFKETTRSFSNE...</td>
+      <td>1</td>
+      <td>868</td>
+      <td>890</td>
+      <td>KLSTEPGSGV</td>
+      <td>SVVLITTLLVIPVLVLLAIVMFI</td>
+      <td>RWKKSRAFGD</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>P70180</td>
+      <td>MRSLLLFTFSACVLLARVLLAGGASSGAGDTRPGSRRRAREALAAQ...</td>
+      <td>1</td>
+      <td>477</td>
+      <td>499</td>
+      <td>PCKSSGGLEE</td>
+      <td>SAVTGIVVGALLGAGLLMAFYFF</td>
+      <td>RKKYRITIER</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Q03157</td>
+      <td>MGPTSPAARGQGRRWRPPPLPLLLPLSLLLLRAQLAVGNLAVGSPS...</td>
+      <td>1</td>
+      <td>585</td>
+      <td>607</td>
+      <td>APSGTGVSRE</td>
+      <td>ALSGLLIMGAGGGSLIVLSLLLL</td>
+      <td>RKKKPYGTIS</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Q06481</td>
+      <td>MAATGTAAAAATGRLLLLLLVGLTAPALALAGYIEALAANAGTGFA...</td>
+      <td>1</td>
+      <td>694</td>
+      <td>716</td>
+      <td>LREDFSLSSS</td>
+      <td>ALIGLLVIAVAIATVIVISLVML</td>
+      <td>RKRQYGTISH</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>121</th>
+      <td>P36941</td>
+      <td>MLLPWATSAPGLAWGPLVLGLFGLLAASQPQAVPPYASENQTCRDQ...</td>
+      <td>0</td>
+      <td>226</td>
+      <td>248</td>
+      <td>PLPPEMSGTM</td>
+      <td>LMLAVLLPLAFFLLLATVFSCIW</td>
+      <td>KSHPSLCRKL</td>
+    </tr>
+    <tr>
+      <th>122</th>
+      <td>P25446</td>
+      <td>MLWIWAVLPLVLAGSQLRVHTQGTNSISESLKLRRRVRETDKNCSE...</td>
+      <td>0</td>
+      <td>170</td>
+      <td>187</td>
+      <td>NCRKQSPRNR</td>
+      <td>LWLLTILVLLIPLVFIYR</td>
+      <td>KYRKRKCWKR</td>
+    </tr>
+    <tr>
+      <th>123</th>
+      <td>Q9P2J2</td>
+      <td>MVWCLGLAVLSLVISQGADGRGKPEVVSVVGRAGESVVLGCDLLPP...</td>
+      <td>0</td>
+      <td>738</td>
+      <td>760</td>
+      <td>PGLLPQPVLA</td>
+      <td>GVVGGVCFLGVAVLVSILAGCLL</td>
+      <td>NRRRAARRRR</td>
+    </tr>
+    <tr>
+      <th>124</th>
+      <td>Q96J42</td>
+      <td>MVPAAGRRPPRVMRLLGWWQVLLWVLGLPVRGVEVAEESGRLWSEE...</td>
+      <td>0</td>
+      <td>324</td>
+      <td>342</td>
+      <td>LPSTLIKSVD</td>
+      <td>WLLVFSLFFLISFIMYATI</td>
+      <td>RTESIRWLIP</td>
+    </tr>
+    <tr>
+      <th>125</th>
+      <td>P0DPA2</td>
+      <td>MRVGGAFHLLLVCLSPALLSAVRINGDGQEVLYLAEGDNVRLGCPY...</td>
+      <td>0</td>
+      <td>265</td>
+      <td>287</td>
+      <td>KVSDSRRIGV</td>
+      <td>IIGIVLGSLLALGCLAVGIWGLV</td>
+      <td>CCCCGGSGAG</td>
+    </tr>
+  </tbody>
+</table>
+<p>126 rows × 8 columns</p>
+</div><div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">df_seq_pu</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;DOM_GSEC_PU&quot;</span><span class="p">)</span>
+<span class="n">df_seq_pu</span>
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>entry</th>
+      <th>sequence</th>
+      <th>label</th>
+      <th>tmd_start</th>
+      <th>tmd_stop</th>
+      <th>jmd_n</th>
+      <th>tmd</th>
+      <th>jmd_c</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>P05067</td>
+      <td>MLPGLALLLLAAWTARALEVPTDGNAGLLAEPQIAMFCGRLNMHMN...</td>
+      <td>1</td>
+      <td>701</td>
+      <td>723</td>
+      <td>FAEDVGSNKG</td>
+      <td>AIIGLMVGGVVIATVIVITLVML</td>
+      <td>KKKQYTSIHH</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>P14925</td>
+      <td>MAGRARSGLLLLLLGLLALQSSCLAFRSPLSVFKRFKETTRSFSNE...</td>
+      <td>1</td>
+      <td>868</td>
+      <td>890</td>
+      <td>KLSTEPGSGV</td>
+      <td>SVVLITTLLVIPVLVLLAIVMFI</td>
+      <td>RWKKSRAFGD</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>P70180</td>
+      <td>MRSLLLFTFSACVLLARVLLAGGASSGAGDTRPGSRRRAREALAAQ...</td>
+      <td>1</td>
+      <td>477</td>
+      <td>499</td>
+      <td>PCKSSGGLEE</td>
+      <td>SAVTGIVVGALLGAGLLMAFYFF</td>
+      <td>RKKYRITIER</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Q03157</td>
+      <td>MGPTSPAARGQGRRWRPPPLPLLLPLSLLLLRAQLAVGNLAVGSPS...</td>
+      <td>1</td>
+      <td>585</td>
+      <td>607</td>
+      <td>APSGTGVSRE</td>
+      <td>ALSGLLIMGAGGGSLIVLSLLLL</td>
+      <td>RKKKPYGTIS</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Q06481</td>
+      <td>MAATGTAAAAATGRLLLLLLVGLTAPALALAGYIEALAANAGTGFA...</td>
+      <td>1</td>
+      <td>694</td>
+      <td>716</td>
+      <td>LREDFSLSSS</td>
+      <td>ALIGLLVIAVAIATVIVISLVML</td>
+      <td>RKRQYGTISH</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>689</th>
+      <td>P60852</td>
+      <td>MAGGSATTWGYPVALLLLVATLGLGRWLQPDPGLPGLRHSYDCGIK...</td>
+      <td>2</td>
+      <td>602</td>
+      <td>624</td>
+      <td>DSNGNSSLRP</td>
+      <td>LLWAVLLLPAVALVLGFGVFVGL</td>
+      <td>SQTWAQKLWE</td>
+    </tr>
+    <tr>
+      <th>690</th>
+      <td>P20239</td>
+      <td>MARWQRKASVSSPCGRSIYRFLSLLFTLVTSVNSVSLPQSENPAFP...</td>
+      <td>2</td>
+      <td>684</td>
+      <td>703</td>
+      <td>IIAKDIASKT</td>
+      <td>LGAVAALVGSAVILGFICYL</td>
+      <td>YKKRTIRFNH</td>
+    </tr>
+    <tr>
+      <th>691</th>
+      <td>P21754</td>
+      <td>MELSYRLFICLLLWGSTELCYPQPLWLLQGGASHPETSVQPVLVEC...</td>
+      <td>2</td>
+      <td>387</td>
+      <td>409</td>
+      <td>EQWALPSDTS</td>
+      <td>VVLLGVGLAVVVSLTLTAVILVL</td>
+      <td>TRRCRTASHP</td>
+    </tr>
+    <tr>
+      <th>692</th>
+      <td>Q12836</td>
+      <td>MWLLRCVLLCVSLSLAVSGQHKPEAPDYSSVLHCGPWSFQFAVNLN...</td>
+      <td>2</td>
+      <td>506</td>
+      <td>528</td>
+      <td>EKLRVPVDSK</td>
+      <td>VLWVAGLSGTLILGALLVSYLAV</td>
+      <td>KKQKSCPDQM</td>
+    </tr>
+    <tr>
+      <th>693</th>
+      <td>Q8TCW7</td>
+      <td>MEQIWLLLLLTIRVLPGSAQFNGYNCDANLHSRFPAERDISVYCGV...</td>
+      <td>2</td>
+      <td>374</td>
+      <td>396</td>
+      <td>PFQLNAITSA</td>
+      <td>LISGMVILGVTSFSLLLCSLALL</td>
+      <td>HRKGPTSLVL</td>
+    </tr>
+  </tbody>
+</table>
+<p>694 rows × 8 columns</p>
+</div></section>
 </section>
 
 

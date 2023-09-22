@@ -23,6 +23,7 @@ import os
 import nbconvert
 import nbformat
 from pathlib import Path
+from nbconvert.writers import FilesWriter
 
 # Folder and File Constants
 SEP = os.sep
@@ -40,9 +41,12 @@ def export_notebooks_to_rst():
             # Load the notebook
             with open(full_path, 'r') as f:
                 notebook = nbformat.read(f, as_version=4)
-            # Export to RST
+            # Set up the RST exporter and file writer
             rst_exporter = nbconvert.RSTExporter()
-            rst_data, _ = rst_exporter.from_notebook_node(notebook)
-            dest_path_rst = os.path.join(FOLDER_GENERATED_RST, filename.replace('.ipynb', '.rst'))
-            with open(dest_path_rst, 'wt') as f:
-                f.write(rst_data)
+            writer = FilesWriter(build_directory=FOLDER_GENERATED_RST)
+            # Convert to RST
+            output, resources = rst_exporter.from_notebook_node(notebook)
+            # Write the RST and any accompanying files (like images)
+            writer.write(output, resources, notebook_name=filename.replace('.ipynb', ''))
+
+

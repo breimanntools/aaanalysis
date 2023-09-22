@@ -123,7 +123,10 @@ def _get_aa_window(df_seq=None, aa_window_size=9):
     return df_seq
 
 # Check functions for load_scales
-
+def check_name_of_scale(name: str):
+    # Check if the provided scale name is valid
+    if name not in NAMES_SCALE_SETS:
+        raise ValueError(f"'name' ({name}) is not valid. Choose one of following: {NAMES_SCALE_SETS}")
 
 # For load_scales
 def _filter_scales(df_cat=None, unclassified_in=False, just_aaindex=False):
@@ -152,13 +155,13 @@ def load_dataset(name: str = "INFO",
     """
     Load protein benchmarking datasets.
 
-    The benchmarks are categorized into amino acid ('AA'), domain ('DOM'), and sequence ('SEQ') level
-    datasets. Use default settings (``name='INFO'``) for an overview table. Detailed analysis is in [Breimann23a]_.
+    The benchmarks are categorized into amino acid ('AA'), domain ('DOM'), and sequence ('SEQ') level datasets.
+    By default (``name='INFO'``), an overview table is provided. For in-depth details, refer to [Breimann23a]_.
 
     Parameters
     ----------
     name
-        Name of the dataset, from 'Dataset' column in overview table.
+        The name of the loaded dataset, from 'Dataset' column in overview table.
     n
         Number of proteins per class, selected by index. If None, the whole dataset will be returned.
     random
@@ -167,9 +170,7 @@ def load_dataset(name: str = "INFO",
         Options for modifying non-canonical amino acids:
 
         - 'remove': Remove sequences containing non-canonical amino acids.
-
         - 'keep': Don't remove sequences containing non-canonical amino acids.
-
         - 'gap': Non-canonical amino acids are replaced by gap symbol ('X').
 
     min_len
@@ -181,18 +182,29 @@ def load_dataset(name: str = "INFO",
 
     Returns
     -------
-    DataFrame
-        Dataframe (df_seq) with the selected sequence dataset.
+    pandas.DataFrame
+        A DataFrame of either the selected sequence dataset (``df_seq``) or
+        general info on all benchmark datasets (``df_info``).
 
-    See Also
-    --------
-    * Overview of all benchmarks in :ref:`t1_overview_benchmarks`.
-    * Step-by-step guide in the `data loading tutorial <tutorial2_data_loader.html>`_.
+    Notes
+    -----
+    The ``df_seq`` DataFrame includs these columns:
+
+    - 'entry': Protein identifier, either the UniProt accession number or an id based on index.
+    - 'sequence': Amino acid sequence.
+    - 'label': Binary classification label (0 for negatives, 1 for positives).
+    - 'tmd_start', 'tmd_stop': Start and stop positions of TMD (present only at domain level).
+    - 'jmd_n', 'tmd', 'jmd_c': Sequences for JMD_N, TMD, and JMD_C respectively.
 
     Examples
     --------
     >>> import aaanalysis as aa
     >>> df_seq = aa.load_dataset(name="SEQ_AMYLO", n=100)
+
+    See Also
+    --------
+    * Step-by-step guide in the `data loading tutorial <tutorial2_data_loader.html>`_.
+    * Overview of all benchmarks in :ref:`t1_overview_benchmarks`.
 
     """
     check_name_of_dataset(name=name, folder_in=FOLDER_BENCHMARKS)
@@ -238,32 +250,55 @@ def load_dataset(name: str = "INFO",
 
 
 # Load scales
-def load_scales(name="scales", just_aaindex=False, unclassified_in=True):
+def load_scales(name: str = "scales",
+                just_aaindex: bool = False,
+                unclassified_in: bool = True
+                ) -> DataFrame:
     """
-    Load amino acid scales, scale classification (AAontology), or scale evaluation.
+    Load amino acid scales, scale classifications (AAontology), or scale evaluations.
 
-    A thorough analysis of the residue and sequence datasets can be found in .
+    The amino acid scales (``name='scales_raw'``) comprise all scales from AAindex ([Kawashima08]_) and two additional
+    datasources. They were min-max normalized (``'scales'``) and where organized in a two-level classification called AAontology
+    (``'scales_cat'``), as detailed in [Breimann23b]_. The first 20 princpical component (PC) of all compressed
+    scales are provided (``'scales_pc'``), and where used for an in-depth analysis of redudancy-reduced scale subsets
+    obtained by :class:`AAclust` ([Breimann23a]_). The 60 best scale sets are provided (all by ``'top60'`` or
+    selected by 'top60_n'), inclusive their evaluation (``'top60_eval'``).
 
     Parameters
     ----------
-    name : str, default = 'scales'
-        Name of the dataset to load. Options are 'scales', 'scales_raw', 'scales_cat',
-        'scales_pc', 'top60', and 'top60_eval'.
-    unclassified_in : bool, optional
-        Whether unclassified scales should be included. The 'Others' category counts as unclassified.
-        Only relevant if `name` is 'scales', 'scales_raw', or 'scales_cat'.
-    just_aaindex : bool, optional
-        Whether only scales provided from AAindex should be given.
-        Only relevant if `name` is 'scales', 'scales_raw', or 'scales_cat'.
+    name
+        Dataset name to be loaded. Options include 'scales', 'scales_raw', 'scales_cat','scales_pc',
+        'top60', and 'top60_eval'. Select the n-th scale set of the top60 sets by 'Top60_n'.
+    just_aaindex
+        If True, only scales sourced from AAindex will be returned.
+        Relevant only if `name` is among 'scales', 'scales_raw', or 'scales_cat'.
+    unclassified_in
+        Determines inclusion of unclassified scales. Scales under 'Others' are considered unclassified.
+        Pertinent only for 'scales', 'scales_raw', or 'scales_cat'.
 
     Returns
     -------
-    DataFrame
-        Dataframe for the selected scale dataset.
+    pandas.DataFrame
+        A DataFrame containing the chosen scale dataset.
+
+    Notes
+    -----
+    Some additional notes about the function can be added here, similar to the `load_dataset` function.
+
+    Examples
+    --------
+    >>> import aaanalysis as aa
+    >>> df_scales = aa.load_scales()
+
+    See Also
+    --------
+    * Additional references and related functions can be added here, just like in the `load_dataset` function.
+
     """
-    if name not in NAMES_SCALE_SETS:
-        raise ValueError(f"'name' ({name}) is not valid. Choose one of following: {NAMES_SCALE_SETS}")
-    # Load _data
+    check_name_of_scale(name=name)
+    ut.check_bool(name="just_aaindex", val=just_aaindex)
+    ut.check_bool(name="unclassified_in", val=unclassified_in)
+    # Load data
     df_cat = pd.read_excel(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.xlsx")
     df_cat = _filter_scales(df_cat=df_cat, unclassified_in=unclassified_in, just_aaindex=just_aaindex)
     if name == ut.STR_SCALE_CAT:

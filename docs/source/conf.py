@@ -13,7 +13,7 @@ sys.path.append(os.path.abspath('.'))
 # Create notebooks rst and table rst first
 from create_tables_doc import generate_table_rst
 from create_notebooks_docs import export_notebooks_to_rst
-export_notebooks_to_rst()
+processed_notebooks = export_notebooks_to_rst()
 generate_table_rst()
 
 # -- Path and Platform setup --------------------------------------------------
@@ -64,6 +64,7 @@ extensions = [
 
 
 # -- Autodoc & Numpydoc settings ----------------------------------------------
+# Autodoc settings
 # Autodoc settings
 # See https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#configuration
 autodoc_default_options = {
