@@ -231,15 +231,16 @@ This project's documentation is organized across four distinct layers, each with
 
 - **Tables**:  Close-up on data or other tabular overviews, with detailed explanation of columns and critical values.
 
-See the reference order in this image:
+See our reference order here (exceptions confirm the rules):
 
 .. image :: /_artwork/diagrams/ref_order.png
 
-The :ref:`API <api>` showcases **docstrings** for our public objects and functions. Within these docstrings, scientific
+The :ref:`API <api>` showcases **Docstrings** for our public objects and functions. Within these docstrings, scientific
 :ref:`References <references>` may be mentioned in their extended sections. For additional links in docstrings,
-use the *See Also* section in this order:  :ref:`Usage Principles <usage_principles>`, :ref:`Tutorials <tutorials>`,
-:ref:`Tables <tables>`. Only include **External library** references when absolutely necessary. Note that the
-Usage Principles documentation is open for direct linking to References, Tutorials, and Tables.
+use the *See Also* section in this order:  :ref:`Usage Principles <usage_principles>`, :ref:`Tables <tables>`,
+:ref:`Tutorials <tutorials>`. Only include **External library** references when absolutely necessary. Note that the
+Usage Principles documentation is open for direct linking to References, Tutorials, and Tables, which can as well
+include links to References.
 
 Building the Docs
 -----------------
