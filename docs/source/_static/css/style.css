@@ -34,17 +34,13 @@ a:visited {
 
 /* ------ Layout Styles ------ */
 
-/* Override content width */
-.wy-nav-content-wrap {
-    max-width: 100%;
-    width: 100%;
-    padding-right: 0;
-}
 
 /* Override the content area */
 .wy-nav-content {
-    max-width: 62%;
-    width: 62%;
+    /*max-width: 65% destroys default behavior*/
+    width: 100%;
+    padding-left: 45px;
+    padding-right: 45px;
 }
 
 /* ------ Table Styles ------ */
@@ -59,7 +55,7 @@ a:visited {
 .rst-content table {
     display: block;
     overflow-x: auto;
-    white-space: nowrap;
+    * white-space: nowrap;
 }
 
 /* ------ Logo Styles ------ */
