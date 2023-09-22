@@ -203,7 +203,7 @@ def load_dataset(name: str = "INFO",
 
     See Also
     --------
-    * Step-by-step guide in the `data loading tutorial <tutorial2_data_loader.html>`_.
+    * Step-by-step guide in the `data loading tutorial <tutorial2a_data_loader.html>`_.
     * Overview of all benchmarks in :ref:`t1_overview_benchmarks`.
 
     """
