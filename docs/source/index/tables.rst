@@ -20,6 +20,8 @@
    ADD-TABLE: Placeholder indicating where tables for the corresponding section should be inserted.
 ..
 
+.. _tables:
+
 Tables
 ======
 

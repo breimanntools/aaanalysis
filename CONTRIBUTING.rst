@@ -2,9 +2,10 @@
     - This file summarizes Python dev conventions for this project.
     - Refer to 'Vision' for project aims and 'Documentation' for naming conventions.
     - Only modify  CONTRIBUTING.rst and then update the /docs/source/index/CONTRIBUTING_COPY.rst.
+    - Remove '/docs/source' from image paths for CONTRIBUTING_COPY.
     Some minor doc tools
-    - You can use Traffic analytics (https://docs.readthedocs.io/en/stable/analytics.html) for doc traffic
-    - Check URLs with LinkChecker (bash: linkchecker ./docs/_build/html/index.html)
+    - You can use Traffic analytics (https://docs.readthedocs.io/en/stable/analytics.html) for doc traffic.
+    - Check URLs with LinkChecker (bash: linkchecker ./docs/_build/html/index.html).
 
 ============
 Contributing
@@ -234,12 +235,11 @@ See the reference order in this image:
 
 .. image :: /docs/source/_artwork/diagrams/ref_order.png
 
-The :doc:`API <api>` specifically highlights the **docstrings** for our public objects and functions.
-Within these docstrings, scientific :doc:`References` may be mentioned in their extended sections.
-Additional references should be organized in the *See Also* section in this sequence: :doc:`Usage Principles`,
-:doc:`Tutorials`, and :doc:`Tables`. **External library** links are to be included only when crucial.
-Note that the Usage Principles can freely reference :doc:`References`, :doc:`Tutorials`, and :doc:`Tables`.
-
+The :ref:`API <api>` showcases **docstrings** for our public objects and functions. Within these docstrings, scientific
+:ref:`References <references>` may be mentioned in their extended sections. For additional links in docstrings,
+use the *See Also* section in this order:  :ref:`Usage Principles <usage_principles>`, :ref:`Tutorials <tutorials>`,
+:ref:`Tables <tables>`. Only include **External library** references when absolutely necessary. Note that the
+Usage Principles documentation is open for direct linking to References, Tutorials, and Tables.
 
 Building the Docs
 -----------------

@@ -1,5 +1,7 @@
 .. currentmodule:: aaanalysis
 
+.. _api:
+
 ===
 API
 ===

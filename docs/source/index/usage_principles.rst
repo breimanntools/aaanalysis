@@ -11,6 +11,8 @@
    Always include brief code examples that mirror the corresponding usage examples.
 ..
 
+.. _usage_principles:
+
 Usage Principles
 ================
 To get started with AAanalysis, import it as follows:

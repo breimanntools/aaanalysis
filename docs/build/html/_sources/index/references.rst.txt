@@ -1,3 +1,25 @@
+..
+   Developer Note:
+
+   This RST document lists references for the project, organized into four sections:
+
+   1. **Algorithms**: For algorithm-based references.
+   2. **Datasets and Benchmarks**: For dataset and benchmark tool references.
+   3. **Use Cases**: Currently empty but reserved for application-related references.
+   4. **Further Information**: For any additional, miscellaneous references.
+
+   To add a new citation:
+
+   1. Choose the appropriate section.
+   2. Add a unique citation identifier (e.g., `[Breimann23a]`).
+   3. Provide the full citation, followed by the optional link if available. Use the syntax `.. [CitationID]` for
+   the citation and `` `Title <URL>`__ `` for the link.
+
+   Make sure to update all related documents that need to reference the new citation.
+..
+
+.. _references:
+
 References
 ==========
 

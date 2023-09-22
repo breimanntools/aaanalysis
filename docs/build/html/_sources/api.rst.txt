@@ -1,19 +1,19 @@
 .. currentmodule:: aaanalysis
 
+.. _api:
+
 ===
 API
 ===
 
-This page contains the API reference for public objects and functions in AAanalysis. See more examples
-and practical usage in our :ref:`tutorials <tutorials>`.
-
-For convenience, it is common to import the module as follows:
+This Application Programming Interface (API) is the public interface for the objects and functions of our AAanalysis
+Python toolkit, which can be imported by:
 
 .. code-block:: python
 
     import aaanalysis as aa
 
-Then you can access all methods and objects via the `aa` alias, such as `aa.load_dataset`.
+You can then access all methods and objects via the `aa` alias, such as `aa.load_dataset`.
 
 .. _data_api:
 

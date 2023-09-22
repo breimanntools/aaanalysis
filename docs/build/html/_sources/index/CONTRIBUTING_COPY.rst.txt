@@ -2,9 +2,10 @@
     - This file summarizes Python dev conventions for this project.
     - Refer to 'Vision' for project aims and 'Documentation' for naming conventions.
     - Only modify  CONTRIBUTING.rst and then update the /docs/source/index/CONTRIBUTING_COPY.rst.
+    - Remove '/docs/source' from image paths for CONTRIBUTING_COPY.
     Some minor doc tools
-    - You can use Traffic analytics (https://docs.readthedocs.io/en/stable/analytics.html) for doc traffic
-    - Check URLs with LinkChecker (bash: linkchecker ./docs/_build/html/index.html)
+    - You can use Traffic analytics (https://docs.readthedocs.io/en/stable/analytics.html) for doc traffic.
+    - Check URLs with LinkChecker (bash: linkchecker ./docs/_build/html/index.html).
 
 ============
 Contributing
@@ -230,6 +231,15 @@ This project's documentation is organized across four distinct layers, each with
 
 - **Tables**:  Close-up on data or other tabular overviews, with detailed explanation of columns and critical values.
 
+See the reference order in this image:
+
+.. image :: /_artwork/diagrams/ref_order.png
+
+The :ref:`API <api>` showcases **docstrings** for our public objects and functions. Within these docstrings, scientific
+:ref:`References <references>` may be mentioned in their extended sections. For additional links in docstrings,
+use the *See Also* section in this order:  :ref:`Usage Principles <usage_principles>`, :ref:`Tutorials <tutorials>`,
+:ref:`Tables <tables>`. Only include **External library** references when absolutely necessary. Note that the
+Usage Principles documentation is open for direct linking to References, Tutorials, and Tables.
 
 Building the Docs
 -----------------
