@@ -1,5 +1,5 @@
-Data loading
-============
+Data Loading Tutorial
+=====================
 
 This is a tutorial on loading of protein benchmark datasets.
 

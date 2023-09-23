@@ -137,7 +137,7 @@ def _filter_scales(df_cat=None, unclassified_in=False, just_aaindex=False):
 
 def _get_selected_scales(top60_n=None):
     """"""
-    df_eval = pd.read_excel(ut.FOLDER_DATA + f"{ut.STR_TOP60}.xlsx").drop("top60_id", axis=1)
+    df_eval = ut.read_excel_cached(ut.FOLDER_DATA + f"{ut.STR_TOP60}.xlsx").drop("top60_id", axis=1)
     # Find the names of the index where the value is not 0
     _df = df_eval.iloc[top60_n - 1]
     selected_scales = _df[_df != 0].index.tolist()
@@ -222,7 +222,7 @@ def load_dataset(name: str = "INFO",
     See Also
     --------
     * Overview of all benchmarks in :ref:`t1_overview_benchmarks`.
-    * Step-by-step guide in the `data loading tutorial <tutorial2a_data_loader.html>`_.
+    * Step-by-step guide in the `Data Loading Tutorial <tutorial2a_data_loader.html>`_.
     """
 
     check_name_of_dataset(name=name, folder_in=FOLDER_BENCHMARKS)
@@ -266,7 +266,7 @@ def load_dataset(name: str = "INFO",
     post_check_df_seq(df_seq=df_seq, n=n, name=name)
     return df_seq
 
-# TODO add tests
+# TODO add tutorial
 
 # Load scales
 def load_scales(name: str = "scales",
@@ -323,10 +323,9 @@ def load_scales(name: str = "scales",
     --------
     * Overview of all loading options: :ref:`t2_overview_scales`.
     * AAontology: :ref:`t3a_aaontology_categories` and :ref:`t3b_aaontology_subcategories` tables.
-    * Step-by-step guide in the `data loading tutorial <tutorial2b_scales_loader.html>`_.
+    * Step-by-step guide in the `Scale Loading Tutorial <tutorial2b_scales_loader.html>`_.
     * :class:`AAclust` for customizing redundancy-reduced scale sets.
     """
-
     check_name_of_scale(name=name)
     ut.check_bool(name="just_aaindex", val=just_aaindex)
     ut.check_bool(name="unclassified_in", val=unclassified_in)
@@ -348,6 +347,9 @@ def load_scales(name: str = "scales",
 
     # Load unfiltered data
     if unclassified_in and not just_aaindex:
+        if name == ut.STR_SCALE_CAT:
+            df_cat = ut.read_excel_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.xlsx")
+            return df_cat
         df = ut.read_excel_cached(ut.FOLDER_DATA + name + ".xlsx", index_col=0)
         return df
 
@@ -355,7 +357,7 @@ def load_scales(name: str = "scales",
     df_cat = ut.read_excel_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.xlsx")
     df_cat = _filter_scales(df_cat=df_cat, unclassified_in=unclassified_in, just_aaindex=just_aaindex)
     if name == ut.STR_SCALE_CAT:
-        return df_cat
+        return df_cat.reset_index(drop=True)
 
     # Load and filter scales
     df = ut.read_excel_cached(ut.FOLDER_DATA + name + ".xlsx", index_col=0)

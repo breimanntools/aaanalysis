@@ -24,6 +24,20 @@ Recommended testing commands:
     b) Function:    pytest -v -p no:warnings --tb=no test_cpp.py::TestCPP:test_add_stat
     c) Doctest:     pytest -v --doctest-modules -p no:warnings cpp_tools/feature.py
     d) Last failed: pytest --lf
+    e) Coverage     pytest --cov=aaanalysis (from root where module and tests are??)
+
+Different levels of verbosity
+    a) Very:        pytest -vv -s -l --full-trace
+    b) Medium:      pytest -v
+    c) Sparse:      pytest -q
+
+    Parameters
+    # vv: each v increases verb.
+    # s: shows prints
+    # l: shows local variable tracking
+    # --full-trace: Give a full traceback on any error
+    # -q, --quiet: Decrease verbosity.
+    # -p: include pytest plugin
 
 Recommended testing pattern: GIVEN, WHEN, THEN
 

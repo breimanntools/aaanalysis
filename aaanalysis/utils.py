@@ -34,13 +34,13 @@ URL_DATA = "https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/d
 def read_excel_cached(name, index_col=None):
     """Load cached dataframe to save loading time"""
     df = pd.read_excel(name, index_col=index_col)
-    return df
+    return df.copy()
 
 @lru_cache(maxsize=None)
 def read_csv_cached(name, sep=None):
     """Load cached dataframe to save loading time"""
     df = pd.read_csv(name, sep=sep)
-    return df
+    return df.copy()
 
 
 # Check key dataframes using constants and general checking functions (df_seq, df_parts, df_cat, df_scales, df_feat)
