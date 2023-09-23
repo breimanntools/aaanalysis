@@ -7,7 +7,6 @@ import inspect
 METRIC_CORRELATION = "correlation"
 LIST_METRICS = [METRIC_CORRELATION, "manhattan",  "euclidean", "cosine"]
 
-
 # Check functions
 def check_model(model=None, model_kwargs=None, except_None=True):
     """"""

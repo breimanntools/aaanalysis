@@ -2,13 +2,10 @@
 This is a script with utility functions and settings for CPP project.
 """
 import numpy as np
-import pandas as pd
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 
-import aaanalysis._utils._utils_constants as ut_c
 import aaanalysis._utils._utils_check as ut_check
-import aaanalysis._utils._utils_output as ut_o
 
 # Settings
 
@@ -104,7 +101,7 @@ def _check_seq(seq, len_, name_seq, name_len):
                 raise ValueError(f"The length of {seq} ({len(seq)}) should be >= {name_len} ({len_}).")
         return len(seq)
 
-
+# TODO split in two (separation of concerns)
 def check_args_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None, ext_len=None,
                    tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, accept_tmd_none=False):
     """Check length parameters and if they are matching with sequences if provided"""
@@ -116,6 +113,7 @@ def check_args_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None, ext_len=None,
     ut_check.check_non_negative_number(name="ext_len", val=ext_len, accept_none=True)
     # Check if lengths and sequences match
     tmd_len = _check_seq(tmd_seq, tmd_len, "tmd_seq", "tmd_len")
+    print(jmd_n_seq)
     jmd_n_len = _check_seq(jmd_n_seq, jmd_n_len, "jmd_n_seq", "jmd_n_len")
     jmd_c_len = _check_seq(jmd_c_seq, jmd_c_len, "jmd_c_seq", "jmd_c_len")
     # Check if lengths are matching
@@ -269,7 +267,7 @@ def check_split(split=None):
 
 # Scale functions
 def get_dict_all_scales(df_scales=None):
-    """Get nested dictionary where each scales is a key for a amino acid scale value dictionary"""
+    """Get nested dictionary where each scale is a key for an amino acid scale value dictionary"""
     dict_all_scales = {col: dict(zip(df_scales.index.to_list(), df_scales[col])) for col in list(df_scales)}
     return dict_all_scales
 

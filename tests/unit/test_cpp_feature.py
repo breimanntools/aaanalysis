@@ -11,55 +11,6 @@ import aaanalysis as aa
 
 
 # I Unit Tests
-class TestLoadScales:
-    """Unit test for loading scales"""
-
-    # Positive unit test
-    def test_load_data(self):
-        """Unit test for aa.SequenceFeature().load_scales() method"""
-        sf = aa.SequenceFeature()
-        assert isinstance(sf.load_scales(clust_th=0.5), pd.DataFrame)
-
-    # Negative test
-    def test_wrong_clustered_values(self):
-        sf = aa.SequenceFeature()
-        for i in [0.1, -0.2, "a", None]:
-            with pytest.raises(ValueError):
-                sf.load_scales(clust_th=i)
-
-    # Property-based testing
-    @given(clustered=some.floats(min_value=-10, max_value=10))
-    def test_clustered_integer(self, clustered):
-        sf = aa.SequenceFeature()
-        if clustered not in [0.5, 0.7]:
-            with pytest.raises(ValueError):
-                sf.load_scales(clust_th=clustered)
-
-
-class TestLoadCategories:
-    """Unit test for loading DataFrame with sequence categories"""
-
-    # Positive unit test
-    def test_load_categories(self):
-        sf = aa.SequenceFeature()
-        assert isinstance(aa.load_scales(clust_th=0.5), pd.DataFrame)
-
-    # Negative test
-    def test_wrong_clustered_values(self):
-        sf = aa.SequenceFeature()
-        for i in [0.1, -0.2, "a", None]:
-            with pytest.raises(ValueError):
-                aa.load_scales(clust_th=i)
-
-    # Property-based testing
-    @given(clustered=some.floats(min_value=-10, max_value=10))
-    def test_clustered_integer(self, clustered):
-        sf = aa.SequenceFeature()
-        if clustered not in [0.5, 0.7]:
-            with pytest.raises(ValueError):
-                aa.load_scales(clust_th=clustered)
-
-
 class TestGetDfParts:
     """Unit test for loading DataFrame with sequence parts"""
 
@@ -407,10 +358,10 @@ def test_sequence_feature(list_splits):
     """Positive regression/functional test of all aa.SequenceFeature() methods"""
     sf = aa.SequenceFeature()
     # Get test set of sequences
-    df_seq = sf.load_sequences()
+    df_seq = aa.load_dataset()
     # Get feature components
     df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=False)
-    df_scales = sf.load_scales()
+    df_scales = aa.load_scales()
     split_kws = sf.get_split_kws()
     # Get features (names, values, matrix)
     features = sf.get_features()[0:100]

@@ -9,7 +9,7 @@ from pathlib import Path
 
 # Helper Function
 def _folder_path(super_folder, folder_name):
-    """Modification of separator (OS depending)"""
+    """Modification of separator (OS-depending)"""
     path = os.path.join(super_folder, folder_name + SEP)
     return path
 

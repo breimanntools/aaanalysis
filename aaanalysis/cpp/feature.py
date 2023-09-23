@@ -164,7 +164,7 @@ def _feature_matrix(feat_names, dict_all_scales, df_parts, accept_gaps):
                                            accept_gaps=accept_gaps)
     return feat_matrix
     
-    
+
 # II Main Functions
 class SequenceFeature:
     """Retrieve and create sequence feature components (Part, Split, and Scale).

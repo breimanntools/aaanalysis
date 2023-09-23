@@ -4,16 +4,22 @@ Config with folder structure. Most imported modules contain checking functions f
 import os
 import platform
 from functools import lru_cache
+import pandas as pd
+import numpy as np
 
-# Import utility functions for specific purposes
-from aaanalysis._utils._utils_constants import *
-from aaanalysis._utils._utils_check import *
-from aaanalysis._utils._utils_output import *
-
-# Import utility function for specific modules
-from aaanalysis._utils.utils_aaclust import *
-from aaanalysis._utils.utils_cpp import *
-
+# Import utility functions explicitly
+from aaanalysis._utils._utils_check import (check_non_negative_number, check_float, check_str, check_bool,
+                                            check_dict, check_tuple,
+                                            check_feat_matrix, check_col_in_df)
+from aaanalysis._utils._utils_output import (print_red, print_start_progress, print_progress, print_finished_progress)
+from aaanalysis._utils.utils_aaclust import (check_model, check_min_th, check_merge_metric,
+                                             METRIC_CORRELATION, LIST_METRICS)
+from aaanalysis._utils.utils_cpp import (check_color, check_y_categorical, check_labels, check_ylim,
+                                         check_args_len, check_list_parts, check_split_kws, check_split,
+                                         get_dict_all_scales, get_vf_scale,
+                                         STR_SEGMENT, STR_PATTERN, STR_PERIODIC_PATTERN, STR_AA_GAP,
+                                         LIST_PARTS, LIST_ALL_PARTS, SPLIT_DESCRIPTION)
+#from aaanalysis.utils.utils_dpulearn import ()
 
 # I Folder structure
 def _folder_path(super_folder, folder_name):
@@ -28,7 +34,95 @@ FOLDER_DATA = _folder_path(FOLDER_PROJECT, '_data')
 URL_DATA = "https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data/"
 
 
+# Constants
+# Default scale datasets for protein analysis
+STR_SCALES = "scales"   # Min-max normalized scales (from AAontology)
+STR_SCALES_RAW = "scales_raw"   # Raw scales (from AAontology)
+STR_SCALES_PC = "scales_pc"     # AAclust pc-based scales (pc: principal component)
+STR_SCALE_CAT = "scales_cat"  # AAontology
+STR_TOP60 = "top60"    # AAclustTop60
+STR_TOP60_EVAL = "top60_eval"  # AAclustTop60 evaluation
+NAMES_SCALE_SETS = [STR_SCALES, STR_SCALES_RAW, STR_SCALE_CAT,
+                    STR_SCALES_PC, STR_TOP60, STR_TOP60_EVAL]
+
+
+# Column names for primary df
+# df_seq
+COL_ENTRY = "entry"     # ACC, protein entry, uniprot id
+COL_NAME = "name"       # Entry name, Protein name, Uniprot Name
+COL_LABEL = "label"
+COL_SEQ = "sequence"
+COLS_PARTS = ["jmd_n", "tmd", "jmd_c"]
+COL_TMD_START = "tmd_start"
+COL_TMD_STOP = "tmd_stop"
+COLS_SEQ_KEY = [COL_ENTRY, COL_SEQ, COL_LABEL]
+COLS_SEQ_TMD_POS_KEY = [COL_SEQ, COL_TMD_START, COL_TMD_STOP]  # TODO adjust to COL_ENTRY
+COLS_SEQ_TMD_PART_KEY = [COL_ENTRY, COL_SEQ] + COLS_PARTS
+# df_part
+
+# df_scales
+# Column for df_cat (as defined in AAontology, retrieved by aa.load_scales(name="scale_cat"))
+COL_SCALE_ID = "scale_id"
+COL_CAT = "category"
+COL_SUBCAT = "subcategory"
+COL_SCALE_NAME = "scale_name"
+COL_SCALE_DES = "scale_description"
+
+
+# Columns for df_feat
+COL_FEATURE = "feature"
+# COL_CAT, COL_SUBCAT, COL_SCALE_NAME, COL_SCALE_DES
+COL_ABS_AUC = "abs_auc"
+COL_ABS_MEAN_DIF = "abs_mean_dif"
+COL_MEAN_DIF = "mean_dif"
+COL_STD_TEST = "std_test"
+COL_STD_REF = "std_ref"
+COL_PVAL_MW = "p_val_mann_whitney"
+COL_PVAL_FDR = "p_val_fdr_bh"
+COL_POSITION = "positions"
+
+# Columns for df_feat after processing with explainable AI methods
+COL_FEAT_IMPORTANCE = "feat_importance"
+COO_FEAT_IMP_STD = "feat_importance_std"
+COL_FEAT_IMPACT = "feat_impact"
+
+
+# Column name datasets (DOM_GSEC)
+
+
+
+# Column names cpp features
+
+
+# Standard colors
+COLOR_SHAP_POS = '#FF0D57'  # (255, 13, 87)
+COLOR_SHAP_NEG = '#1E88E5'  # (30, 136, 229)
+COLOR_FEAT_POS = '#9D2B39'  # (157, 43, 57) Mean difference
+COLOR_FEAT_NEG = '#326599'  # (50, 101, 133) Mean difference
+COLOR_FEAT_IMP = '#7F7F7F'  # (127, 127, 127) feature importance
+COLOR_TMD = '#00FA9A'       # (0, 250, 154)
+COLOR_JMD = '#0000FF'       # (0, 0, 255)
+
+DICT_COLOR = {"SHAP_POS": COLOR_SHAP_POS,
+              "SHAP_NEG": COLOR_SHAP_NEG,
+              "FEAT_POS": COLOR_FEAT_POS,
+              "FEAT_NEG": COLOR_FEAT_NEG,
+              "FEAT_IMP": COLOR_FEAT_IMP,
+              "TMD": COLOR_TMD,
+              "JMD": COLOR_JMD}
+
+DICT_COLOR_CAT = {"ASA/Volume": "tab:blue",
+                  "Composition": "tab:orange",
+                  "Conformation": "tab:green",
+                  "Energy": "tab:red",
+                  "Others": "tab:gray",
+                  "Polarity": "gold",
+                  "Shape": "tab:cyan",
+                  "Structure-Activity": "tab:brown"}
+
+
 # II MAIN FUNCTIONS
+# Main Helper functions
 # Caching for data loading for better performance (data loaded ones)
 @lru_cache(maxsize=None)
 def read_excel_cached(name, index_col=None):
@@ -43,32 +137,33 @@ def read_csv_cached(name, sep=None):
     return df.copy()
 
 
+# Main check functions
 # Check key dataframes using constants and general checking functions (df_seq, df_parts, df_cat, df_scales, df_feat)
 def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     """Get features from df"""
     # TODO check
     if df_seq is None or not isinstance(df_seq, pd.DataFrame):
         raise ValueError("Type of 'df_seq' ({}) must be pd.DataFrame".format(type(df_seq)))
-    if ut_c.COL_ENTRY not in list(df_seq):
-        raise ValueError("'{}' must be in 'df_seq'".format(ut_c.COL_ENTRY))
-    seq_info_in_df = set(ut_c.COLS_SEQ_TMD_POS_KEY).issubset(set(df_seq))
-    parts_in_df = set(ut_c.COLS_PARTS).issubset(set(df_seq))
-    seq_in_df = ut_c.COL_SEQ in set(df_seq)
+    if COL_ENTRY not in list(df_seq):
+        raise ValueError("'{}' must be in 'df_seq'".format(COL_ENTRY))
+    seq_info_in_df = set(COLS_SEQ_TMD_POS_KEY).issubset(set(df_seq))
+    parts_in_df = set(COLS_PARTS).issubset(set(df_seq))
+    seq_in_df = COL_SEQ in set(df_seq)
     if "start" in list(df_seq):
-        raise ValueError(f"'df_seq' should not contain 'start' in columns. Change column to '{ut_c.COL_TMD_START}'.")
+        raise ValueError(f"'df_seq' should not contain 'start' in columns. Change column to '{COL_TMD_START}'.")
     if "stop" in list(df_seq):
-        raise ValueError(f"'df_seq' should not contain 'stop' in columns. Change column to '{ut_c.COL_TMD_STOP}'.")
+        raise ValueError(f"'df_seq' should not contain 'stop' in columns. Change column to '{COL_TMD_STOP}'.")
     if not (seq_info_in_df or parts_in_df or seq_in_df):
-        raise ValueError(f"'df_seq' should contain ['{ut_c.COL_SEQ}'], {ut_c.COLS_SEQ_TMD_POS_KEY}, or {ut_c.COLS_PARTS}")
+        raise ValueError(f"'df_seq' should contain ['{COL_SEQ}'], {COLS_SEQ_TMD_POS_KEY}, or {COLS_PARTS}")
     # Check data type in part or sequence columns
     else:
         if seq_info_in_df or seq_in_df:
-            error = f"Sequence column ('{ut_c.COL_SEQ}') should only contain strings"
-            dict_wrong_seq = {ut_c.COL_SEQ: [x for x in df_seq[ut_c.COL_SEQ].values if type(x) != str]}
+            error = f"Sequence column ('{COL_SEQ}') should only contain strings"
+            dict_wrong_seq = {COL_SEQ: [x for x in df_seq[COL_SEQ].values if type(x) != str]}
         else:
-            cols = ut_c.COLS_PARTS
+            cols = COLS_PARTS
             error = f"Part columns ('{cols}') should only contain strings"
-            dict_wrong_seq = {part: [x for x in df_seq[part].values if type(x) != str] for part in ut_c.COLS_PARTS}
+            dict_wrong_seq = {part: [x for x in df_seq[part].values if type(x) != str] for part in COLS_PARTS}
         # Filter empty lists
         dict_wrong_seq = {part: dict_wrong_seq[part] for part in dict_wrong_seq if len(dict_wrong_seq[part]) > 0}
         n_wrong_entries = sum([len(dict_wrong_seq[part]) for part in dict_wrong_seq])
@@ -78,33 +173,33 @@ def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     # Check if only sequence given -> Convert sequence to tmd
     if seq_in_df and not parts_in_df:
         if seq_info_in_df:
-            for entry, start, stop in zip(df_seq[ut_c.COL_ENTRY], df_seq[ut_c.COL_TMD_START], df_seq[ut_c.COL_TMD_STOP]):
-                ut_check.check_non_negative_number(name=f"tmd_start [{entry}]", val=start)
-                ut_check.check_non_negative_number(name=f"tmd_start [{entry}]", val=stop,)
-            tmd_start = [int(x) for x in df_seq[ut_c.COL_TMD_START]]
-            tmd_stop = [int(x) for x in df_seq[ut_c.COL_TMD_STOP]]
+            for entry, start, stop in zip(df_seq[COL_ENTRY], df_seq[COL_TMD_START], df_seq[COL_TMD_STOP]):
+                check_non_negative_number(name=f"tmd_start [{entry}]", val=start)
+                check_non_negative_number(name=f"tmd_start [{entry}]", val=stop,)
+            tmd_start = [int(x) for x in df_seq[COL_TMD_START]]
+            tmd_stop = [int(x) for x in df_seq[COL_TMD_STOP]]
         else:
             tmd_start = 1 if jmd_n_len is None else 1 + jmd_n_len
-            tmd_stop = [len(x)-1 for x in df_seq[ut_c.COL_SEQ]]
+            tmd_stop = [len(x)-1 for x in df_seq[COL_SEQ]]
             if jmd_c_len is not None:
                 tmd_stop = [x - jmd_c_len for x in tmd_stop]
-        df_seq[ut_c.COL_TMD_START] = tmd_start
-        df_seq[ut_c.COL_TMD_STOP] = tmd_stop
-        seq_info_in_df = set(ut_c.COLS_SEQ_TMD_POS_KEY).issubset(set(df_seq))
+        df_seq[COL_TMD_START] = tmd_start
+        df_seq[COL_TMD_STOP] = tmd_stop
+        seq_info_in_df = set(COLS_SEQ_TMD_POS_KEY).issubset(set(df_seq))
     # Check parameter combinations
     if [jmd_n_len, jmd_c_len].count(None) == 1:
         raise ValueError("'jmd_n_len' and 'jmd_c_len' should both be given (not None) or None")
     if not parts_in_df and seq_info_in_df and jmd_n_len is None and jmd_c_len is None:
         error = f"'jmd_n_len' and 'jmd_c_len' should not be None if " \
-                f"sequence information ({ut_c.COLS_SEQ_TMD_POS_KEY}) are given."
+                f"sequence information ({COLS_SEQ_TMD_POS_KEY}) are given."
         raise ValueError(error)
     if not seq_info_in_df and jmd_n_len is not None and jmd_c_len is not None:
-        error = f"If not all sequence information ({ut_c.COLS_SEQ_TMD_POS_KEY}) are given," \
+        error = f"If not all sequence information ({COLS_SEQ_TMD_POS_KEY}) are given," \
                 f"'jmd_n_len' and 'jmd_c_len' should be None."
         raise ValueError(error)
     if not parts_in_df and seq_info_in_df and (jmd_c_len is None or jmd_n_len is None):
         error = "If part columns ({}) are not in 'df_seq' but sequence information ({}), " \
-                "\n'jmd_n_len' and 'jmd_c_len' should be given (not None).".format(ut_c.COLS_PARTS, ut_c.COLS_SEQ_TMD_POS_KEY)
+                "\n'jmd_n_len' and 'jmd_c_len' should be given (not None).".format(COLS_PARTS, COLS_SEQ_TMD_POS_KEY)
         raise ValueError(error)
     return df_seq
 
@@ -145,17 +240,17 @@ def check_df_cat(df_cat=None, df_scales=None, accept_none=True, verbose=True):
     if not isinstance(df_cat, pd.DataFrame):
         raise ValueError("'df_cat' should be type pd.DataFrame (not {})".format(type(df_cat)))
     # Check columns
-    for col in [ut_c.COL_SCALE_ID, ut_c.COL_CAT, ut_c.COL_SUBCAT]:
+    for col in [COL_SCALE_ID, COL_CAT, COL_SUBCAT]:
         if col not in df_cat:
             raise ValueError(f"'{col}' not in 'df_cat'")
     # Check scales from df_cat and df_scales do match
     if df_scales is not None:
-        scales_cat = list(df_cat[ut_c.COL_SCALE_ID])
+        scales_cat = list(df_cat[COL_SCALE_ID])
         scales = list(df_scales)
         overlap_scales = [x for x in scales if x in scales_cat]
         difference_scales = list(set(scales).difference(set(scales_cat)))
         # Adjust df_cat and df_scales
-        df_cat = df_cat[df_cat[ut_c.COL_SCALE_ID].isin(overlap_scales)]
+        df_cat = df_cat[df_cat[COL_SCALE_ID].isin(overlap_scales)]
         df_scales = df_scales[overlap_scales]
         if verbose and len(difference_scales) > 0:
             str_warning = f"Scales from 'df_scales' and 'df_cat' do not overlap completely."
@@ -171,7 +266,7 @@ def check_df_cat(df_cat=None, df_scales=None, accept_none=True, verbose=True):
 
 def check_df_scales(df_scales=None, df_parts=None, accept_none=False, accept_gaps=False):
     """Check if df_scales is a valid input and matching to df_parts"""
-    ut_check.check_bool(name="accept_gaps", val=accept_gaps)
+    check_bool(name="accept_gaps", val=accept_gaps)
     if accept_none and df_scales is None:
         return  # Skip check
     if not isinstance(df_scales, pd.DataFrame):
@@ -223,16 +318,16 @@ def check_df_feat(df_feat=None, df_cat=None):
     if len(df_feat) == 0 or len(list(df_feat)) == 0:
         raise ValueError("'df_feat' should be not empty")
     # Check if feature column in df_feat
-    if ut_c.COL_FEATURE not in df_feat:
-        raise ValueError(f"'{ut_c.COL_FEATURE}' must be column in 'df_feat'")
-    list_feat = list(df_feat[ut_c.COL_FEATURE])
+    if COL_FEATURE not in df_feat:
+        raise ValueError(f"'{COL_FEATURE}' must be column in 'df_feat'")
+    list_feat = list(df_feat[COL_FEATURE])
     for feat in list_feat:
         if feat.count("-") != 2:
             raise ValueError(f"'{feat}' is no valid feature")
     # Check if df_feat matches df_cat
     if df_cat is not None:
         scales = set([x.split("-")[2] for x in list_feat])
-        list_scales = list(df_cat[ut_c.COL_SCALE_ID])
+        list_scales = list(df_cat[COL_SCALE_ID])
         missing_scales = [x for x in scales if x not in list_scales]
         if len(missing_scales) > 0:
             raise ValueError(f"Following scales occur in 'df_feat' but not in 'df_cat': {missing_scales}")
