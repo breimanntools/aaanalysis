@@ -266,8 +266,6 @@ def load_dataset(name: str = "INFO",
     post_check_df_seq(df_seq=df_seq, n=n, name=name)
     return df_seq
 
-# TODO add tutorial
-
 # Load scales
 def load_scales(name: str = "scales",
                 just_aaindex: bool = False,
@@ -365,4 +363,3 @@ def load_scales(name: str = "scales",
         selected_scales = [x for x in list(df) if x in list(df_cat[ut.COL_SCALE_ID])]
         df = df[selected_scales]
     return df
-

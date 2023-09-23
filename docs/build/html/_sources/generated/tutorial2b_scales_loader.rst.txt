@@ -16,8 +16,10 @@ Three sets of numerical amino acid scales
    two other datasets.
 -  ``scales``: Min-max normalized version of the raw scales.
 -  ``scales_pc``: Scales compressed using principal component analysis
-   (PCA). Amino acid scales are indicated by a unique id (columns) and
-   assign a numerical value to each canonical amino acid:
+   (PCA).
+
+Amino acid scales are indicated by a unique id (columns) and assign a
+numerical value to each canonical amino acid:
 
 .. code:: ipython2
 
@@ -589,15 +591,16 @@ AAontology
 ----------
 
 -  ``scales_cat`` provides a two-level classification for all
-   ``scales``, termed AAontology. The entries in the ``scale_id`` column
-   align with the column names of ``df_scales`` and \`\ ``df_raw``.
-   Additional columns detail further information from AAontology, such
-   as scale category or description.
+   ``scales``, termed AAontology.
+
+The entries in the ``scale_id`` column align with the column names of
+``df_scales`` and \`\ ``df_raw``. Additional columns detail further
+information from AAontology, such as scale category or description.
 
 .. code:: ipython2
 
     df_cat = aa.load_scales(name="scales_cat")
-    df_cat
+    df_cat.head(10)
 
 
 
@@ -622,100 +625,96 @@ AAontology
       <thead>
         <tr style="text-align: right;">
           <th></th>
+          <th>scale_id</th>
           <th>category</th>
           <th>subcategory</th>
           <th>scale_name</th>
           <th>scale_description</th>
         </tr>
-        <tr>
-          <th>scale_id</th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-        </tr>
       </thead>
       <tbody>
         <tr>
-          <th>LINS030110</th>
+          <th>0</th>
+          <td>LINS030110</td>
           <td>ASA/Volume</td>
           <td>Accessible surface area (ASA)</td>
           <td>ASA (folded coil/turn)</td>
           <td>Total median accessible surfaces of whole resi...</td>
         </tr>
         <tr>
-          <th>LINS030113</th>
+          <th>1</th>
+          <td>LINS030113</td>
           <td>ASA/Volume</td>
           <td>Accessible surface area (ASA)</td>
           <td>ASA (folded coil/turn)</td>
           <td>% total accessible surfaces of whole residues ...</td>
         </tr>
         <tr>
-          <th>JANJ780101</th>
+          <th>2</th>
+          <td>JANJ780101</td>
           <td>ASA/Volume</td>
           <td>Accessible surface area (ASA)</td>
           <td>ASA (folded protein)</td>
           <td>Average accessible surface area (Janin et al.,...</td>
         </tr>
         <tr>
-          <th>JANJ780103</th>
+          <th>3</th>
+          <td>JANJ780103</td>
           <td>ASA/Volume</td>
           <td>Accessible surface area (ASA)</td>
           <td>ASA (folded protein)</td>
           <td>Percentage of exposed residues (Janin et al., ...</td>
         </tr>
         <tr>
-          <th>LINS030104</th>
+          <th>4</th>
+          <td>LINS030104</td>
           <td>ASA/Volume</td>
           <td>Accessible surface area (ASA)</td>
           <td>ASA (folded protein)</td>
           <td>Total median accessible surfaces of whole resi...</td>
         </tr>
         <tr>
-          <th>...</th>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
+          <th>5</th>
+          <td>LINS030107</td>
+          <td>ASA/Volume</td>
+          <td>Accessible surface area (ASA)</td>
+          <td>ASA (folded protein)</td>
+          <td>% total accessible surfaces vs win3 of whole r...</td>
         </tr>
         <tr>
-          <th>GEOR030108</th>
-          <td>Structure-Activity</td>
-          <td>Stability (helix-coil)</td>
-          <td>Linker (helical)</td>
-          <td>Linker propensity from helical (annotated by D...</td>
+          <th>6</th>
+          <td>CHOC760102</td>
+          <td>ASA/Volume</td>
+          <td>Accessible surface area (ASA)</td>
+          <td>ASA (folded proteins)</td>
+          <td>Residue accessible surface area in folded prot...</td>
         </tr>
         <tr>
-          <th>FINA770101</th>
-          <td>Structure-Activity</td>
-          <td>Stability (helix-coil)</td>
-          <td>Stability (helix-coil)</td>
-          <td>Helix-coil equilibrium constant (Finkelstein-P...</td>
+          <th>7</th>
+          <td>LINS030116</td>
+          <td>ASA/Volume</td>
+          <td>Accessible surface area (ASA)</td>
+          <td>ASA (folded β-strand)</td>
+          <td>Total median accessible surfaces of whole resi...</td>
         </tr>
         <tr>
-          <th>PTIO830101</th>
-          <td>Structure-Activity</td>
-          <td>Stability (helix-coil)</td>
-          <td>Stability (helix-coil)</td>
-          <td>Helix-coil equilibrium constant (Ptitsyn-Finke...</td>
+          <th>8</th>
+          <td>LINS030119</td>
+          <td>ASA/Volume</td>
+          <td>Accessible surface area (ASA)</td>
+          <td>ASA (folded β-strand)</td>
+          <td>% total accessible surfaces of whole residues ...</td>
         </tr>
         <tr>
-          <th>SUEM840101</th>
-          <td>Structure-Activity</td>
-          <td>Stability (helix-coil)</td>
-          <td>Stability (helix-coil)</td>
-          <td>Zimm-Bragg parameter s at 20 C (Sueki et al., ...</td>
-        </tr>
-        <tr>
-          <th>SUEM840102</th>
-          <td>Structure-Activity</td>
-          <td>Unclassified (Structure-Activity)</td>
-          <td>Stability (extended-coil)</td>
-          <td>Zimm-Bragg parameter sigma x 1.0E4 (Sueki et a...</td>
+          <th>9</th>
+          <td>LINS030103</td>
+          <td>ASA/Volume</td>
+          <td>Accessible surface area (ASA)</td>
+          <td>Hydrophilic ASA</td>
+          <td>Hydrophilic accessible surfaces of whole resid...</td>
         </tr>
       </tbody>
     </table>
-    <p>586 rows × 4 columns</p>
     </div>
 
 
@@ -724,17 +723,19 @@ Redundancy-reduce scale subsets
 -------------------------------
 
 The remaining two datasets stem from an in-depth analysis of
-redundancy-reduced subsets of ``scales`` using AAclust. - ``top60``
-comprises the 60 best performing scale sets, benchmarked on our protein
-datasets available by the ``aa.load_dataset`` function. These have a
-unique AAclust id (``top60_id`` index, ‘ACC’ for AAclust) and the
-presence (1) or absence (0) of scales is indicated.
+redundancy-reduced subsets of ``scales`` using AAclust.
+
+-  ``top60`` comprises the 60 best performing scale sets, benchmarked on
+   our protein datasets available by the ``aa.load_dataset`` function.
+
+These have a unique AAclust id (``top60_id`` index, ‘ACC’ for AAclust)
+and the presence (1) or absence (0) of scales is indicated.
 
 .. code:: ipython2
 
     df_top60 = aa.load_scales(name="top60")
     df_top60.sum(axis=1)    # Shows number of scales in each subset
-    df_top60
+    df_top60.head(10)
 
 
 
@@ -1047,1209 +1048,9 @@ presence (1) or absence (0) of scales is indicated.
           <td>0</td>
           <td>1</td>
         </tr>
-        <tr>
-          <th>AAC11</th>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC12</th>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC13</th>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC14</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC15</th>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC16</th>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>...</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC17</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC18</th>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC19</th>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>...</td>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC20</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC21</th>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC22</th>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC23</th>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>1</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC24</th>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>...</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC25</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>1</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC26</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC27</th>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC28</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC29</th>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC30</th>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>...</td>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC31</th>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC32</th>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>...</td>
-          <td>0</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC33</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC34</th>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC35</th>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC36</th>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC37</th>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC38</th>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC39</th>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC40</th>
-          <td>1</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>...</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC41</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC42</th>
-          <td>1</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-        </tr>
-        <tr>
-          <th>AAC43</th>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC44</th>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC45</th>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC46</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC47</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC48</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC49</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC50</th>
-          <td>0</td>
-          <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC51</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC52</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC53</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>1</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC54</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC55</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC56</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC57</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC58</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC59</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>AAC60</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>...</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
       </tbody>
     </table>
-    <p>60 rows × 586 columns</p>
+    <p>10 rows × 586 columns</p>
     </div>
 
 
@@ -4370,7 +3171,7 @@ category), set ``unclassified_in=False``:
     df_scales = aa.load_scales(just_aaindex=True)
     df_raw = aa.load_scales(name="scales_raw", unclassified_in=False)
     df_cat = aa.load_scales(name="scales_cat", just_aaindex=True, unclassified_in=False)
-    df_cat
+    df_cat.head(10)
 
 
 
@@ -4404,7 +3205,7 @@ category), set ``unclassified_in=False``:
       </thead>
       <tbody>
         <tr>
-          <th>2</th>
+          <th>0</th>
           <td>JANJ780101</td>
           <td>ASA/Volume</td>
           <td>Accessible surface area (ASA)</td>
@@ -4412,7 +3213,7 @@ category), set ``unclassified_in=False``:
           <td>Average accessible surface area (Janin et al.,...</td>
         </tr>
         <tr>
-          <th>3</th>
+          <th>1</th>
           <td>JANJ780103</td>
           <td>ASA/Volume</td>
           <td>Accessible surface area (ASA)</td>
@@ -4420,7 +3221,7 @@ category), set ``unclassified_in=False``:
           <td>Percentage of exposed residues (Janin et al., ...</td>
         </tr>
         <tr>
-          <th>6</th>
+          <th>2</th>
           <td>CHOC760102</td>
           <td>ASA/Volume</td>
           <td>Accessible surface area (ASA)</td>
@@ -4428,7 +3229,7 @@ category), set ``unclassified_in=False``:
           <td>Residue accessible surface area in folded prot...</td>
         </tr>
         <tr>
-          <th>19</th>
+          <th>3</th>
           <td>GUYH850104</td>
           <td>ASA/Volume</td>
           <td>Accessible surface area (ASA)</td>
@@ -4436,7 +3237,7 @@ category), set ``unclassified_in=False``:
           <td>Apparent partition energies calculated from Ja...</td>
         </tr>
         <tr>
-          <th>20</th>
+          <th>4</th>
           <td>GUYH850105</td>
           <td>ASA/Volume</td>
           <td>Accessible surface area (ASA)</td>
@@ -4444,57 +3245,47 @@ category), set ``unclassified_in=False``:
           <td>Apparent partition energies calculated from Ch...</td>
         </tr>
         <tr>
-          <th>...</th>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
+          <th>5</th>
+          <td>RACS770103</td>
+          <td>ASA/Volume</td>
+          <td>Accessible surface area (ASA)</td>
+          <td>Side chain orientation</td>
+          <td>Side chain orientational preference (Rackovsky...</td>
         </tr>
         <tr>
-          <th>580</th>
-          <td>FAUJ880107</td>
-          <td>Structure-Activity</td>
-          <td>Stability</td>
-          <td>α-CH chemical shifts (backbone-dynamics)</td>
-          <td>N.m.r. chemical shift of alpha-carbon (Faucher...</td>
+          <th>6</th>
+          <td>VHEG790101</td>
+          <td>ASA/Volume</td>
+          <td>Accessible surface area (ASA)</td>
+          <td>TFE to lipophilic phase</td>
+          <td>Transfer free energy to lipophilic phase (von ...</td>
         </tr>
         <tr>
-          <th>581</th>
-          <td>GEOR030108</td>
-          <td>Structure-Activity</td>
-          <td>Stability (helix-coil)</td>
-          <td>Linker (helical)</td>
-          <td>Linker propensity from helical (annotated by D...</td>
+          <th>7</th>
+          <td>BIOV880101</td>
+          <td>ASA/Volume</td>
+          <td>Buried</td>
+          <td>Buriability</td>
+          <td>Information value for accessibility; average f...</td>
         </tr>
         <tr>
-          <th>582</th>
-          <td>FINA770101</td>
-          <td>Structure-Activity</td>
-          <td>Stability (helix-coil)</td>
-          <td>Stability (helix-coil)</td>
-          <td>Helix-coil equilibrium constant (Finkelstein-P...</td>
+          <th>8</th>
+          <td>BIOV880102</td>
+          <td>ASA/Volume</td>
+          <td>Buried</td>
+          <td>Buriability</td>
+          <td>Information value for accessibility; average f...</td>
         </tr>
         <tr>
-          <th>583</th>
-          <td>PTIO830101</td>
-          <td>Structure-Activity</td>
-          <td>Stability (helix-coil)</td>
-          <td>Stability (helix-coil)</td>
-          <td>Helix-coil equilibrium constant (Ptitsyn-Finke...</td>
-        </tr>
-        <tr>
-          <th>584</th>
-          <td>SUEM840101</td>
-          <td>Structure-Activity</td>
-          <td>Stability (helix-coil)</td>
-          <td>Stability (helix-coil)</td>
-          <td>Zimm-Bragg parameter s at 20 C (Sueki et al., ...</td>
+          <th>9</th>
+          <td>WERD780101</td>
+          <td>ASA/Volume</td>
+          <td>Buried</td>
+          <td>Buriability</td>
+          <td>Propensity to be buried inside (Wertz-Scheraga...</td>
         </tr>
       </tbody>
     </table>
-    <p>499 rows × 5 columns</p>
     </div>
-
 
 
