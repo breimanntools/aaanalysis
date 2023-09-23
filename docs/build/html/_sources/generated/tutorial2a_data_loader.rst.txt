@@ -1,7 +1,7 @@
 Data loading
 ============
 
-This is a tutorial on loading of protein and amino acid scale datasets.
+This is a tutorial on loading of protein benchmark datasets.
 
 Loading of protein benchmarks
 -----------------------------

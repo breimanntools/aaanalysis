@@ -21,3 +21,4 @@ Further Tutorials
    :maxdepth: 1
 
    generated/tutorial2a_data_loader
+   generated/tutorial2b_scales_loader

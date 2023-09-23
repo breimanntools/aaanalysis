@@ -24,3 +24,7 @@ def read_fasta():
 def to_fasta(df_seq=None):
     """"""
     # TODO implement a writer to fasta from df_seq
+
+def to_df_scales(df=None):
+    """"""
+    # TODO implement parser from df to df_seq (remove not necessary columns and adjust naming)

@@ -12,6 +12,8 @@ STR_SCALES_PC = "scales_pc"     # AAclust pc-based scales (pc: principal compone
 STR_SCALE_CAT = "scales_cat"  # AAontology
 STR_TOP60 = "top60"    # AAclustTop60
 STR_TOP60_EVAL = "top60_eval"  # AAclustTop60 evaluation
+NAMES_SCALE_SETS = [STR_SCALES, STR_SCALES_RAW, STR_SCALE_CAT,
+                    STR_SCALES_PC, STR_TOP60, STR_TOP60_EVAL]
 
 
 # Column names for primary df
