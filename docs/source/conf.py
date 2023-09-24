@@ -6,6 +6,8 @@ from typing import Any
 from datetime import datetime
 import platform
 from types import WrapperDescriptorType
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 sys.path.append(os.path.abspath('.'))
 

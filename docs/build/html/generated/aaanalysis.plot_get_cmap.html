@@ -8,7 +8,7 @@
 <meta property="og:site_name" content="AAanalysis" />
 <meta property="og:image:width" content="1146" />
 <meta property="og:image:height" content="600" />
-<meta property="og:image" content="/_images/social_previews/summary_generated_aaanalysis.plot_get_cmap_6e0e4868.png" />
+<meta property="og:image" content="/None" />
 <meta property="og:image:alt" content="" />
 <meta name="twitter:card" content="summary_large_image" />
 
@@ -129,22 +129,22 @@
 <h1>aaanalysis.plot_get_cmap<a class="headerlink" href="#aaanalysis-plot-get-cmap" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="aaanalysis.plot_get_cmap">
-<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">plot_get_cmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CPP'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">facecolor_dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/plotting/plotting_functions.py#L135-L192"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.plot_get_cmap" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">plot_get_cmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CPP'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">facecolor_dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/plotting/plotting_functions.py#L136-L198"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.plot_get_cmap" title="Permalink to this definition"></a></dt>
 <dd><p>Returns color maps specified for AAanalysis.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – <dl class="simple">
-<dt>Name of the AAanalysis color palettes:</dt><dd><ul>
-<li><p>’CPP’: Continuous color map for CPP plots (with gap at center).</p></li>
-<li><p>’SHAP’: Continuous color map for CPP-SHP plots (with gap at center).</p></li>
-<li><p>’TAB’: List of Tableau (tab) colors for appealing visualization of categories.</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – <p>The name of the AAanalysis color palettes.</p>
+<blockquote>
+<div><ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">CPP</span></code>: Continuous color map for CPP plots.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SHAP</span></code>: Continuous color map for CPP-SHP plots.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TAB</span></code>: List of Tableau (tab) colors for appealing visualization of categories.</p></li>
 </ul>
-</dd>
-</dl>
+</div></blockquote>
 </p></li>
 <li><p><strong>n_colors</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Number of colors in the color map. Must be &gt;=2 for ‘CPP’ and ‘SHAP’ and 2-9 for ‘TAB’.</p></li>
-<li><p><strong>facecolor_dark</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether to use a dark face color for ‘CPP’ and ‘SHAP’.</p></li>
+<li><p><strong>facecolor_dark</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether central color in ‘CPP’ and ‘SHAP’ is black (if <code class="docutils literal notranslate"><span class="pre">True</span></code>) or white.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -159,20 +159,24 @@
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">colors</span> <span class="o">=</span> <span class="n">plot_get_cmap</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;TAB&quot;</span><span class="p">,</span> <span class="n">n_colors</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SEQ_AMYLO&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Classes&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Class A&#39;</span><span class="p">,</span> <span class="s1">&#39;Class B&#39;</span><span class="p">,</span> <span class="s1">&#39;Class C&#39;</span><span class="p">],</span> <span class="s1">&#39;Values&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">23</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">17</span><span class="p">]}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">colors</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">plot_get_cmap</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;TAB&quot;</span><span class="p">,</span> <span class="n">n_colors</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Classes&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Class A&#39;</span><span class="p">,</span> <span class="s1">&#39;Class B&#39;</span><span class="p">,</span> <span class="s1">&#39;Class C&#39;</span><span class="p">,</span> <span class="s2">&quot;Class D&quot;</span><span class="p">],</span> <span class="s1">&#39;Values&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">23</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">43</span><span class="p">,</span> <span class="mi">38</span><span class="p">]}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">aa</span><span class="o">.</span><span class="n">plot_settings</span><span class="p">(</span><span class="n">no_ticks_x</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">font_scale</span><span class="o">=</span><span class="mf">1.2</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sns</span><span class="o">.</span><span class="n">barplot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Classes&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;Values&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="n">colors</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
+<p>(<a class="reference download internal" download="" href="../_downloads/b89a5a5e2e370853db1a08a17e57d011/aaanalysis-plot_get_cmap-1.py"><code class="xref download docutils literal notranslate"><span class="pre">Source</span> <span class="pre">code</span></code></a>, <a class="reference download internal" download="" href="../_downloads/66bab6772bcdd8174a0341e1b4e2798a/aaanalysis-plot_get_cmap-1.png"><code class="xref download docutils literal notranslate"><span class="pre">png</span></code></a>, <a class="reference download internal" download="" href="../_downloads/9a0b484fda28ffc8b4ee29c0c15cae72/aaanalysis-plot_get_cmap-1.hires.png"><code class="xref download docutils literal notranslate"><span class="pre">hires.png</span></code></a>, <a class="reference download internal" download="" href="../_downloads/795a736e5af756908120c8bda412fd28/aaanalysis-plot_get_cmap-1.pdf"><code class="xref download docutils literal notranslate"><span class="pre">pdf</span></code></a>)</p>
+<figure class="align-default">
+<img alt="../_images/aaanalysis-plot_get_cmap-1.png" class="plot-directive" src="../_images/aaanalysis-plot_get_cmap-1.png" />
+</figure>
 </div>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <ul class="simple">
 <li><p>Example notebooks in <a class="reference external" href="plotting_prelude.html">Plotting Prelude</a>.</p></li>
-<li><p>sns.color_palette function to generate a color palette in seaborn.</p></li>
-<li><p>sns.light_palette function to generate a lighter color palettes.</p></li>
+<li><p><a class="reference external" href="https://seaborn.pydata.org/generated/seaborn.color_palette.html#seaborn.color_palette" title="(in seaborn v0.12.2)"><code class="xref py py-func docutils literal notranslate"><span class="pre">seaborn.color_palette()</span></code></a> function to generate a color palette in seaborn.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">seaborn.light_palette</span> <span class="pre">function()</span></code> to generate a lighter color palettes.</p></li>
 <li><p><a class="reference external" href="https://matplotlib.org/stable/gallery/color/named_colors.html">Matplotlib color names</a></p></li>
 </ul>
 </div>

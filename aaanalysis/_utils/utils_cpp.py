@@ -117,10 +117,10 @@ def check_args_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None, ext_len=None,
     """Check length parameters and if they are matching with sequences if provided"""
     # Check lengths
     tmd_seq_given = tmd_seq is not None or accept_tmd_none  # If tmd_seq is given, tmd_len can be None
-    ut_check.check_non_negative_number(name="tmd_len", val=tmd_len, accept_none=tmd_seq_given, min_val=1)
-    ut_check.check_non_negative_number(name="jmd_n_len", val=jmd_n_len, accept_none=True, min_val=1)
-    ut_check.check_non_negative_number(name="jmd_c_len", val=jmd_c_len, accept_none=True, min_val=1)
-    ut_check.check_non_negative_number(name="ext_len", val=ext_len, accept_none=True)
+    ut_check.check_non_negative_number(name="tmd_len", val=tmd_len, accept_none=tmd_seq_given, min_val=1, just_int=True)
+    ut_check.check_non_negative_number(name="jmd_n_len", val=jmd_n_len, accept_none=True, min_val=1, just_int=True)
+    ut_check.check_non_negative_number(name="jmd_c_len", val=jmd_c_len, accept_none=True, min_val=1, just_int=True)
+    ut_check.check_non_negative_number(name="ext_len", val=ext_len, accept_none=True, just_int=True)
     # Check if lengths and sequences match (any sequence is excepted, strings, lists, arrays)
     tmd_len = _check_seq(tmd_seq, tmd_len, "tmd_seq", "tmd_len")
     jmd_n_len = _check_seq(jmd_n_seq, jmd_n_len, "jmd_n_seq", "jmd_n_len")
@@ -220,7 +220,7 @@ def check_split(split=None):
             i_th, n_split = [int(x) for x in split.split("(")[1].replace(")", "").split(",")]
             # Check if values non-negative integers
             for name, val in zip(["i_th", "n_split"], [i_th, n_split]):
-                ut_check.check_non_negative_number(name=name, val=val)
+                ut_check.check_non_negative_number(name=name, val=val, just_int=True)
             # Check if i-th and n_split are valid
             if i_th > n_split:
                 raise ValueError
@@ -233,7 +233,7 @@ def check_split(split=None):
             start = int(start[0])
             # Check if values non-negative integers
             for name, val in zip(["start", "step1", "step2"], [start, step1, step2]):
-                ut_check.check_non_negative_number(name=name, val=val)
+                ut_check.check_non_negative_number(name=name, val=val, just_int=True)
             # Check if terminus valid
             terminus = split.split("i+")[0].split("(")[1].replace(",", "")
             if terminus not in ["N", "C"]:
@@ -248,7 +248,7 @@ def check_split(split=None):
             list_pos = [int(x) for x in list_pos]
             for val in list_pos:
                 name = "pos" + str(val)
-                ut_check.check_non_negative_number(name=name, val=val)
+                ut_check.check_non_negative_number(name=name, val=val, just_int=True)
             # Check if terminus valid
             if terminus not in ["N", "C"]:
                 raise ValueError

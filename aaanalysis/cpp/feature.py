@@ -61,7 +61,7 @@ def check_split_int_args(kwargs_int=None):
     """Check type of given arguments"""
     for arg in kwargs_int:
         arg_val = kwargs_int[arg]
-        ut.check_non_negative_number(name=arg, val=arg_val)
+        ut.check_non_negative_number(name=arg, val=arg_val, just_int=False)
 
 
 def check_split_list_args(kwargs_list=None, accept_none=True):

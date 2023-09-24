@@ -7,6 +7,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import aaanalysis.utils as ut
 from typing import List, Union, Tuple
+import warnings
 
 STR_CMAP_CPP = "CPP"
 STR_CMAP_SHAP = "SHAP"
@@ -23,7 +24,7 @@ LIST_FONTS = ['Arial', 'Avant Garde',
 
 # Helper functions
 # Check plot_settings
-def check_font_style(font="Arial"):
+def check_font(font="Arial"):
     """"""
     if font not in LIST_FONTS:
         error_message = f"'font' ({font}) not in recommended fonts: {LIST_FONTS}. Set font manually by:" \
@@ -66,7 +67,7 @@ def check_cats(list_cat=None, dict_color=None, labels=None):
 # Get color maps
 def _get_cpp_cmap(n_colors=100, facecolor_dark=False):
     """Generate a diverging color map for CPP feature values."""
-    ut.check_non_negative_number(name="n_colors", val=n_colors, min_val=2)
+    ut.check_non_negative_number(name="n_colors", val=n_colors, min_val=2, just_int=True)
     n = 5
     cmap = sns.color_palette(palette="RdBu_r", n_colors=n_colors + n * 2)
     cmap_low, cmap_high = cmap[0:int((n_colors + n * 2) / 2)], cmap[int((n_colors + n * 2) / 2):]
@@ -142,14 +143,16 @@ def plot_get_cmap(name: str = "CPP",
     Parameters
     ----------
     name
-        Name of the AAanalysis color palettes:
-         - 'CPP': Continuous color map for CPP plots (with gap at center).
-         - 'SHAP': Continuous color map for CPP-SHP plots (with gap at center).
-         - 'TAB': List of Tableau (tab) colors for appealing visualization of categories.
+        The name of the AAanalysis color palettes.
+
+         - ``CPP``: Continuous color map for CPP plots.
+         - ``SHAP``: Continuous color map for CPP-SHP plots.
+         - ``TAB``: List of Tableau (tab) colors for appealing visualization of categories.
+
     n_colors
         Number of colors in the color map. Must be >=2 for 'CPP' and 'SHAP' and 2-9 for 'TAB'.
     facecolor_dark
-        Whether to use a dark face color for 'CPP' and 'SHAP'.
+        Whether central color in 'CPP' and 'SHAP' is black (if ``True``) or white.
 
     Returns
     -------
@@ -158,20 +161,23 @@ def plot_get_cmap(name: str = "CPP",
 
     Examples
     --------
-    >>> import matplotlib.pyplot as plt
-    >>> import seaborn as sns
-    >>> import aaanalysis as aa
-    >>> colors = plot_get_cmap(name="TAB", n_colors=3)
-    >>> df_seq = aa.load_dataset(name="SEQ_AMYLO", n=100)
-    >>> data = {'Classes': ['Class A', 'Class B', 'Class C'], 'Values': [23, 45, 17]}
-    >>> sns.barplot(x='Classes', y='Values', data=data, palette=colors)
-    >>> plt.show()
+    .. plot::
+        :include-source:
+
+        >>> import matplotlib.pyplot as plt
+        >>> import seaborn as sns
+        >>> import aaanalysis as aa
+        >>> colors = aa.plot_get_cmap(name="TAB", n_colors=4)
+        >>> data = {'Classes': ['Class A', 'Class B', 'Class C', "Class D"], 'Values': [23, 27, 43, 38]}
+        >>> aa.plot_settings(no_ticks_x=True, font_scale=1.2)
+        >>> sns.barplot(x='Classes', y='Values', data=data, palette=colors)
+        >>> plt.show()
 
     See Also
     --------
     * Example notebooks in `Plotting Prelude <plotting_prelude.html>`_.
-    * sns.color_palette function to generate a color palette in seaborn.
-    * sns.light_palette function to generate a lighter color palettes.
+    * :func:`seaborn.color_palette` function to generate a color palette in seaborn.
+    * :func:`seaborn.light_palette function` to generate a lighter color palettes.
     * `Matplotlib color names <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
     """
     # Check input
@@ -182,13 +188,13 @@ def plot_get_cmap(name: str = "CPP",
 
     # Get color maps
     if name == STR_CMAP_SHAP:
-        ut.check_non_negative_number(name="n_colors", val=n_colors, min_val=3)
+        ut.check_non_negative_number(name="n_colors", val=n_colors, min_val=3, just_int=True)
         return _get_shap_cmap(n_colors=n_colors, facecolor_dark=facecolor_dark)
     elif name == STR_CMAP_CPP:
-        ut.check_non_negative_number(name="n_colors", val=n_colors, min_val=3)
+        ut.check_non_negative_number(name="n_colors", val=n_colors, min_val=3, just_int=True)
         return _get_cpp_cmap(n_colors=n_colors, facecolor_dark=facecolor_dark)
     elif name == STR_CMAP_TAB:
-        ut.check_non_negative_number(name="n_colors", val=n_colors, min_val=2, max_val=9)
+        ut.check_non_negative_number(name="n_colors", val=n_colors, min_val=2, max_val=9, just_int=True)
         return _get_tab_color(n_colors=n_colors)
 
 
@@ -199,14 +205,15 @@ def plot_get_cdict(name: str = "DICT_COLOR") -> dict:
     Parameters
     ----------
     name
-        Name of the AAanalysis color dictionary:
-         - 'DICT_COLOR': Dictionary with default colors for plots.
-         - 'DICT_CAT': Dictionary with default colors for scale categories.
+        The name of the AAanalysis color dictionary.
+
+         - ``DICT_COLOR``: Dictionary with default colors for plots.
+         - ``DICT_CAT``: Dictionary with default colors for scale categories.
 
     Returns
     -------
     dict
-       Specific AAanalysis color dictionary.
+       AAanalysis color dictionary.
 
     Examples
     --------
@@ -222,83 +229,145 @@ def plot_get_cdict(name: str = "DICT_COLOR") -> dict:
     else:
         return ut.DICT_COLOR_CAT
 
-# TODO check, interface, doc, test
-def plot_settings(fig_format="pdf", verbose=False, grid=False, grid_axis="y",
-                  font_scale=0.7, font="Arial",
-                  change_size=True, weight_bold=True, adjust_elements=True,
-                  short_ticks=False, no_ticks=False,
-                  no_ticks_y=False, short_ticks_y=False, no_ticks_x=False, short_ticks_x=False):
+# TODO test
+def plot_settings(font_scale: float = 1,
+                  font: str = "Arial",
+                  fig_format: str = "pdf",
+                  weight_bold: bool = True,
+                  adjust_only_font: bool = False,
+                  adjust_further_elements: bool = True,
+                  grid: bool = False,
+                  grid_axis: str = "y",
+                  no_ticks: bool = False,
+                  short_ticks: bool = False,
+                  no_ticks_x: bool = False,
+                  short_ticks_x: bool = False,
+                  no_ticks_y: bool = False,
+                  short_ticks_y: bool = False,
+                  show_options: bool = False) -> None:
     """
     Configure general settings for plot visualization with various customization options.
 
+    This function modifies the global settings of :mod:`matplotlib` and :mod:`seaborn` libraries.
+    PDFs are embedded such that they can be edited using image editing software.
+
     Parameters
     ----------
-    fig_format : str, default='pdf'
-        Specifies the file format for saving the plot.
-    verbose : bool, default=False
-        If True, enables verbose output.
-    grid : bool, default=False
-        If True, makes the grid visible.
-    grid_axis : str, default='y'
-        Choose the axis ('y', 'x', 'both') to apply the grid to.
-    font_scale : float, default=0.7
-        Sets the scale for font sizes in the plot.
-    font : str, default='Arial'
-        Name of sans-serif font (e.g., 'Arial', 'Verdana', 'Helvetica', 'DejaVu Sans')
-    change_size : bool, default=True
-        If True, adjusts the size of plot elements.
-    weight_bold : bool, default=True
-        If True, text elements appear in bold.
-    adjust_elements : bool, default=True
-        If True, makes additional visual and layout adjustments to the plot.
-    short_ticks : bool, default=False
-        If True, uses short tick marks.
-    no_ticks : bool, default=False
-        If True, removes all tick marks.
-    no_ticks_y : bool, default=False
-        If True, removes tick marks on the y-axis.
-    short_ticks_y : bool, default=False
-        If True, uses short tick marks on the y-axis.
-    no_ticks_x : bool, default=False
-        If True, removes tick marks on the x-axis.
-    short_ticks_x : bool, default=False
-        If True, uses short tick marks on the x-axis.
-
-    Notes
-    -----
-    This function modifies the global settings of Matplotlib and Seaborn libraries.
+    font_scale
+       Scaling factor to scale the size of font elements. Consistent with :func:`seaborn.set_context`.
+    font
+       Name of text font. Common options are 'Arial', 'Verdana', 'Helvetica', or 'DejaVu Sans' (Matplotlib default).
+    fig_format
+       Specifies the file format for saving plots. Most backends support png, pdf, ps, eps and svg.
+    weight_bold
+       If ``True``, font and line elements are bold.
+    adjust_only_font
+       If ``True``, only the font style will be adjusted, leaving other elements unchanged.
+    adjust_further_elements
+       If ``True``, makes additional visual and layout adjustments to the plot (errorbars, legend).
+    grid
+       If ``True``, display the grid in plots.
+    grid_axis
+       Choose the axis ('y', 'x', 'both') to apply the grid to.
+    no_ticks
+       If ``True``, remove all tick marks on both x and y axes.
+    short_ticks
+       If ``True``, display short tick marks on both x and y axes. Is ignored if ``no_ticks=True``.
+    no_ticks_x
+       If ``True``, remove tick marks on the x-axis.
+    short_ticks_x
+       If ``True``, display short tick marks on the x-axis. Is ignored if ``no_ticks=True``.
+    no_ticks_y
+       If ``True``, remove tick marks on the y-axis.
+    short_ticks_y
+       If ``True``, display short tick marks on the y-axis. Is ignored if ``no_ticks=True``.
+    show_options
+       If ``True``, show all plot runtime configurations of matplotlib.
 
     Examples
     --------
-    >>> import aaanalysis as aa
-    >>> aa.plot_settings(fig_format="pdf", font_scale=1.0, weight_bold=False)
+    Create default seaborn plot:
+
+    .. plot::
+        :include-source:
+
+        >>> import matplotlib.pyplot as plt
+        >>> import seaborn as sns
+        >>> import aaanalysis as aa
+        >>> data = {'Classes': ['Class A', 'Class B', 'Class C'], 'Values': [23, 27, 43]}
+        >>> sns.barplot(x='Classes', y='Values', data=data)
+        >>> sns.despine()
+        >>> plt.title("Seaborn default")
+        >>> plt.tight_layout()
+        >>> plt.show()
+
+    Adjust polts with AAanalysis:
+
+    .. plot::
+        :include-source:
+
+        >>> import matplotlib.pyplot as plt
+        >>> import seaborn as sns
+        >>> import aaanalysis as aa
+        >>> data = {'Classes': ['Class A', 'Class B', 'Class C'], 'Values': [23, 27, 43]}
+        >>> colors = aa.plot_get_cmap(name="TAB", n_colors=3)
+        >>> sns.barplot(x='Classes', y='Values', data=data, palette=colors)
+        >>> sns.despine()
+        >>> plt.title("Seaborn default")
+        >>> plt.tight_layout()
+        >>> plt.show()
+
+    See Also
+    --------
+    * :func:`seaborn.set_context`, where ``font_scale`` is utilized.
+    * :data:`matplotlib.rcParams`, which manages the global settings in :mod:`matplotlib`.
     """
     # Check input
+    ut.check_non_negative_number(name="font_scale", val=font_scale, min_val=0, just_int=False)
+    check_font(font=font)
     check_fig_format(fig_format=fig_format)
-    check_font_style(font=font)
     check_grid_axis(grid_axis=grid_axis)
-    args_bool = {"verbose": verbose, "grid": grid, "change_size": change_size, "weight_bold": weight_bold,
-                 "adjust_elements": adjust_elements,
-                 "short_ticks": short_ticks, "no_ticks": no_ticks, "no_ticks_y": no_ticks_y,
-                 "short_ticks_y": short_ticks_y, "no_ticks_x": no_ticks_x, "short_ticks_x": short_ticks_x}
+    args_bool = {"weight_bold": weight_bold, "adjust_only_font": adjust_only_font,
+                 "adjust_further_elements": adjust_further_elements, "grid": grid,
+                 "short_ticks": short_ticks, "short_ticks_x": short_ticks_x, "short_ticks_y": short_ticks_y,
+                 "no_ticks": no_ticks, "no_ticks_y": no_ticks_y, "no_ticks_x": no_ticks_x,
+                 "show_options": show_options,}
     for key in args_bool:
         ut.check_bool(name=key, val=args_bool[key])
-    ut.check_non_negative_number(name="font_scale", val=font_scale, min_val=0, just_int=False)
+
+    # Warning
+    if no_ticks and any([short_ticks, short_ticks_x, short_ticks_y]):
+        warnings.warn("`no_ticks` is set to True, so 'short_ticks' parameters will be ignored.")
+    if no_ticks_x and short_ticks_x:
+        warnings.warn("`no_ticks_x` is set to True, so 'short_ticks_x' will be ignored.")
+    if no_ticks_y and short_ticks_y:
+        warnings.warn("`no_ticks_y` is set to True, so 'short_ticks_y' will be ignored.")
+
+    # Print all plot settings/runtime configurations of matplotlib
+    if show_options:
+        print(plt.rcParams.keys)
 
     # Set embedded fonts in PDF
     mpl.rcParams.update(mpl.rcParamsDefault)
     mpl.rcParams["pdf.fonttype"] = 42
-    mpl.rcParams["pdf.fonttype"] = 42
-    if verbose:
-        print(plt.rcParams.keys)    # Print all plot settings that can be modified in general
-    if not change_size:
+
+    # Change only font style
+    if adjust_only_font:
         plt.rcParams["font.family"] = "sans-serif"
         plt.rcParams["font.sans-serif"] = font
-        mpl.rc('font', **{'family': font})
         return
-    sns.set_context("talk", font_scale=font_scale)  # Font settings https://matplotlib.org/3.1.1/tutorials/text/text_props.html
+
+    # Apply all changes
+    sns.set_context("talk", font_scale=font_scale)
+    # Font settings
     plt.rcParams["font.family"] = "sans-serif"
     plt.rcParams["font.sans-serif"] = font
+    font_settings = {'family': 'sans-serif', "weight": "bold"} if weight_bold else {'family': 'sans-serif'}
+    mpl.rc('font', **font_settings)
+    # Grid
+    plt.rcParams["axes.grid.axis"] = grid_axis
+    plt.rcParams["axes.grid"] = grid
+    # Adjust weight of text and lines
     if weight_bold:
         plt.rcParams["axes.labelweight"] = "bold"
         plt.rcParams["axes.titleweight"] = "bold"
@@ -308,51 +377,36 @@ def plot_settings(fig_format="pdf", verbose=False, grid=False, grid_axis="y",
         plt.rcParams["xtick.minor.width"] = 0.6
         plt.rcParams["ytick.major.width"] = 0.8
         plt.rcParams["ytick.minor.width"] = 0.6
-    if short_ticks:
+    # Handle tick options (short are default matplotlib options, otherwise from seaborn)
+    if short_ticks or short_ticks_x:
         plt.rcParams["xtick.major.size"] = 3.5
         plt.rcParams["xtick.minor.size"] = 2
+    if short_ticks or short_ticks_y:
         plt.rcParams["ytick.major.size"] = 3.5
         plt.rcParams["ytick.minor.size"] = 2
-    if short_ticks_x:
-        plt.rcParams["xtick.major.size"] = 3.5
-        plt.rcParams["xtick.minor.size"] = 2
-    if short_ticks_y:
-        plt.rcParams["ytick.major.size"] = 3.5
-        plt.rcParams["ytick.minor.size"] = 2
-    if no_ticks:
+    if no_ticks or no_ticks_x:
         plt.rcParams["xtick.major.size"] = 0
         plt.rcParams["xtick.minor.size"] = 0
+    if no_ticks or no_ticks_y:
         plt.rcParams["ytick.major.size"] = 0
         plt.rcParams["ytick.minor.size"] = 0
-    if no_ticks_x:
-        plt.rcParams["xtick.major.size"] = 0
-        plt.rcParams["xtick.minor.size"] = 0
-    if no_ticks_y:
-        plt.rcParams["ytick.major.size"] = 0
-        plt.rcParams["ytick.minor.size"] = 0
-
-    plt.rcParams["axes.labelsize"] = 17 #13.5
-    plt.rcParams["axes.titlesize"] = 16.5 #15
+    # Handle figure format
     if fig_format == "pdf":
         mpl.rcParams['pdf.fonttype'] = 42
     elif "svg" in fig_format:
         mpl.rcParams['svg.fonttype'] = 'none'
-    font = {'family': font, "weight": "bold"} if weight_bold else {"family": font}
-    mpl.rc('font', **font)
-    if adjust_elements:
+    # Additional adjustments
+    if adjust_further_elements:
         # Error bars
-        plt.rcParams["errorbar.capsize"] = 10   # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.errorbar.html
-        # Grid
-        plt.rcParams["axes.grid.axis"] = grid_axis  # 'y', 'x', 'both'
-        plt.rcParams["axes.grid"] = grid
+        plt.rcParams["errorbar.capsize"] = 10
         # Legend
         plt.rcParams["legend.frameon"] = False
-        plt.rcParams["legend.fontsize"] = "medium" #"x-small"
-        plt.rcParams["legend.loc"] = 'upper right'  # https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.legend.html
+        plt.rcParams["legend.fontsize"] = "medium"
+        plt.rcParams["legend.loc"] = 'upper right'
 
 
 def plot_gcfs():
-    """Get current font size, which is set by ``plot_settings`` function"""
+    """Get current font size, which is set by :func:`plot_settings` function."""
     # Get the current plotting context
     current_context = sns.plotting_context()
     font_size = current_context['font.size']

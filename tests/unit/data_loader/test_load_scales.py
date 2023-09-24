@@ -1,6 +1,5 @@
 from hypothesis import given, settings, example
 import hypothesis.strategies as some
-import aaanalysis.utils as ut
 import aaanalysis as aa
 from pandas import DataFrame
 import pytest

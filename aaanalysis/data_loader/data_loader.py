@@ -102,7 +102,7 @@ def check_aa_window_size(aa_window_size=None):
     """Check if aa_window size is a positive odd integer"""
     if aa_window_size is None:
         return
-    ut.check_non_negative_number(name="aa_window_size", val=aa_window_size, min_val=1)
+    ut.check_non_negative_number(name="aa_window_size", val=aa_window_size, min_val=1, just_int=True)
     if aa_window_size % 2 == 0:
         raise ValueError(f"'aa_window_size' ({aa_window_size}) must be an odd number.")
 
@@ -155,7 +155,7 @@ def check_top60_n(name=None, top60_n=None):
     """Check if name is valid and top60_n is between 1 and 60"""
     if top60_n is None:
         return
-    ut.check_non_negative_number(name="top60_n", val=top60_n, min_val=1, max_val=60)
+    ut.check_non_negative_number(name="top60_n", val=top60_n, min_val=1, max_val=60, just_int=True)
     matching_scale_sets = [ut.STR_SCALES, ut.STR_SCALE_CAT, ut.STR_SCALES_RAW]
     if name not in matching_scale_sets:
         raise ValueError(f"'name' ('{name}') is not valid for 'top60_n' ({top60_n})."
@@ -187,9 +187,9 @@ def load_dataset(name: str = "INFO",
     non_canonical_aa
         Options for handling non-canonical amino acids:
 
-        - 'remove': Remove sequences containing non-canonical amino acids.
-        - 'keep': Don't remove sequences containing non-canonical amino acids.
-        - 'gap': Non-canonical amino acids are replaced by the gap symbol ('X').
+        - ``remove``: Remove sequences containing non-canonical amino acids.
+        - ``keep``: Don't remove sequences containing non-canonical amino acids.
+        - ``gap``: Non-canonical amino acids are replaced by the gap symbol ('X').
 
     min_len
         Minimum length of sequences for filtering, disabled by default.
@@ -226,7 +226,7 @@ def load_dataset(name: str = "INFO",
     """
 
     check_name_of_dataset(name=name, folder_in=FOLDER_BENCHMARKS)
-    ut.check_non_negative_number(name="n", val=n, min_val=1, accept_none=True)
+    ut.check_non_negative_number(name="n", val=n, min_val=1, accept_none=True, just_int=True)
     check_non_canonical_aa(non_canonical_aa=non_canonical_aa)
     check_min_max_val(min_len=min_len, max_len=max_len)
     check_aa_window_size(aa_window_size=aa_window_size)

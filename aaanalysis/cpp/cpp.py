@@ -271,9 +271,9 @@ class CPP(Tool):
         # Check input
         ut.check_labels(labels=labels, df=self.df_parts, name_df="df_parts")
         ut.check_args_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len)
-        ut.check_non_negative_number(name="n_filter", val=n_filter, min_val=1)
-        ut.check_non_negative_number(name="n_pre_filter", val=n_pre_filter, min_val=1, accept_none=True)
-        ut.check_non_negative_number(name="pct_pre_filter", val=pct_pre_filter, min_val=5, max_val=100)
+        ut.check_non_negative_number(name="n_filter", val=n_filter, min_val=1, just_int=True)
+        ut.check_non_negative_number(name="n_pre_filter", val=n_pre_filter, min_val=1, accept_none=True, just_int=True)
+        ut.check_non_negative_number(name="pct_pre_filter", val=pct_pre_filter, min_val=5, max_val=100, just_int=True)
         ut.check_non_negative_number(name="max_std_test", val=max_std_test, min_val=0.0, max_val=1.0, just_int=False)
         ut.check_non_negative_number(name="max_overlap", val=max_overlap, min_val=0.0, max_val=1.0, just_int=False)
         ut.check_bool(name="verbose", val=self._verbose)

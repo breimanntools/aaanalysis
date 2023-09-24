@@ -381,10 +381,10 @@ def draw_shap_legend(x=None, y=10, offset_text=1, fontsize=13):
 class CPPPlots:
     """Class for plotting functions for CPP analysis"""
     def __init__(self, tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1):
-        ut.check_non_negative_number(name="tmd_len", val=tmd_len, min_val=1)
-        ut.check_non_negative_number(name="jmd_n_len", val=jmd_n_len, min_val=0)
-        ut.check_non_negative_number(name="jmd_c_len", val=jmd_c_len, min_val=0)
-        ut.check_non_negative_number(name="start", val=start)
+        ut.check_non_negative_number(name="tmd_len", val=tmd_len, min_val=1, just_int=True)
+        ut.check_non_negative_number(name="jmd_n_len", val=jmd_n_len, min_val=0, just_int=True)
+        ut.check_non_negative_number(name="jmd_c_len", val=jmd_c_len, min_val=0, just_int=True)
+        ut.check_non_negative_number(name="start", val=start, just_int=True)
         self.jmd_n_len = jmd_n_len
         self.tmd_len = tmd_len
         self.jmd_c_len = jmd_c_len

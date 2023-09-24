@@ -7,8 +7,10 @@ import pandas as pd
 
 # Type checking functions
 def check_non_negative_number(name=None, val=None, min_val=0, max_val=None, accept_none=False,
-                              just_int=True):
+                              just_int=None):
     """Check if value of given name variable is non-negative integer"""
+    if just_int is None:
+        raise ValueError("'just_int' must be specified")
     check_types = [int] if just_int else [float, int]
     str_check = "non-negative int" if just_int else "non-negative float or int"
     add_str = f"n>={min_val}" if max_val is None else f"{min_val}<=n<={max_val}"

@@ -360,7 +360,7 @@ class CPPPlot:
         # Args checked by Matplotlib: title, legend_kws
         # Args checked by internal plotting functions: ylim
         ut.check_non_negative_number(name="bar_width", val=bar_width, min_val=0, just_int=False)
-        ut.check_non_negative_number(name="start", val=start, min_val=0)
+        ut.check_non_negative_number(name="start", val=start, min_val=0, just_int=True)
         ut.check_non_negative_number(name="tmd_area_alpha", val=highlight_alpha, min_val=0, max_val=1, just_int=False)
         ut.check_bool(name="add_jmd_tmd", val=add_jmd_tmd)
         ut.check_bool(name="highlight_tmd_area", val=highlight_tmd_area)
@@ -577,9 +577,9 @@ class CPPPlot:
 
         # Checking input
         # Args checked by Matplotlib: title, cmap, cbar_kws, legend_kws
-        ut.check_non_negative_number(name="start", val=start, min_val=0)
+        ut.check_non_negative_number(name="start", val=start, min_val=0, just_int=True)
         ut.check_non_negative_number(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
-        ut.check_non_negative_number(name="cmap_n_colors", val=cmap_n_colors, min_val=1, accept_none=True)
+        ut.check_non_negative_number(name="cmap_n_colors", val=cmap_n_colors, min_val=1, accept_none=True, just_int=True)
         ut.check_bool(name="add_jmd_tmd", val=add_jmd_tmd)
         ut.check_bool(name="add_legend_cat", val=add_legend_cat)
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
