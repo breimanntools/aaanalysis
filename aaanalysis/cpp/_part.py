@@ -12,9 +12,10 @@ def check_input_part_creation(seq=None, tmd_start=None, tmd_stop=None):
         raise ValueError("'seq', 'tmd_start', 'tmd_stop' must be given (should not be None).")
 
 
-def check_parts(tmd=None, jmd_n=None, jmd_c=None):
+def check_parts_exist(tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None):
     """Check if parts are given"""
-    if None in [tmd, jmd_n, jmd_c]:
+    list_parts = [tmd_seq, jmd_n_seq, jmd_c_seq]
+    if None in list_parts:
         raise ValueError("'tmd', 'jmd_n', and 'jmd_c' must be given (should not be None)")
 
 
@@ -186,7 +187,9 @@ class Parts:
         """
         if not (df is None or entry is None):
             tmd_seq, jmd_n_seq, jmd_c_seq = _get_parts_from_df(df=df, entry=entry)
-        check_parts(tmd=tmd_seq, jmd_n=jmd_n_seq, jmd_c=jmd_c_seq)
+        check_parts_exist(tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
+        # Parts can be sequences or lists with positions
+        # TODO
         ut.check_args_len(jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, ext_len=ext_len, accept_tmd_none=True)
         dict_part_seq = _get_dict_part_seq_from_seq(tmd=tmd_seq, jmd_n=jmd_n_seq, jmd_c=jmd_c_seq, ext_len=ext_len)
         return dict_part_seq

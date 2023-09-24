@@ -15,7 +15,8 @@ from aaanalysis._utils._utils_output import (print_red, print_start_progress, pr
 from aaanalysis._utils.utils_aaclust import (check_model, check_min_th, check_merge_metric,
                                              METRIC_CORRELATION, LIST_METRICS)
 from aaanalysis._utils.utils_cpp import (check_color, check_y_categorical, check_labels, check_ylim,
-                                         check_args_len, check_list_parts, check_split_kws, check_split,
+                                         check_args_len, check_args_len, check_list_parts,
+                                         check_split_kws, check_split,
                                          get_dict_all_scales, get_vf_scale,
                                          STR_SEGMENT, STR_PATTERN, STR_PERIODIC_PATTERN, STR_AA_GAP,
                                          LIST_PARTS, LIST_ALL_PARTS, SPLIT_DESCRIPTION)
@@ -136,7 +137,7 @@ def read_csv_cached(name, sep=None):
     df = pd.read_csv(name, sep=sep)
     return df.copy()
 
-
+# TODO check each of this checking function (make simpler)
 # Main check functions
 # Check key dataframes using constants and general checking functions (df_seq, df_parts, df_cat, df_scales, df_feat)
 def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):

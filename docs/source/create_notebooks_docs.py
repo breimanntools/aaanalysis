@@ -31,7 +31,7 @@ FOLDER_PROJECT = str(Path(__file__).parent.parent.parent) + SEP
 FOLDER_SOURCE = os.path.dirname(os.path.abspath(__file__)) + SEP
 FOLDER_NOTEBOOKS = FOLDER_PROJECT + "tutorials" + SEP
 FOLDER_GENERATED_RST = FOLDER_SOURCE + "generated" + SEP  # Saving .rst directly in 'generated'
-LIST_EXCLUDE = ["tutorial1_quick_start.ipynb"]
+LIST_EXCLUDE = []
 
 def export_notebooks_to_rst():
     """Export Jupyter tutorials to RST without execution."""

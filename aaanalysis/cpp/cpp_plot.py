@@ -347,9 +347,11 @@ class CPPPlot:
 
         """
         # Group arguments
-        args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,)
+        args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
         args_size = check_args_size(seq_size=seq_size, tmd_jmd_fontsize=tmd_jmd_fontsize)
-        args_len = ut.check_args_len(tmd_len=tmd_len, jmd_n_len=self.jmd_n_len, jmd_c_len=self.jmd_c_len, **args_seq)
+        # TODO CHECK
+        args_len = ut.check_args_len(tmd_len=tmd_len, jmd_n_len=self.jmd_n_len, jmd_c_len=self.jmd_c_len,
+                                     jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
@@ -567,6 +569,7 @@ class CPPPlot:
         # Group arguments
         args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
         args_size = check_args_size(seq_size=seq_size, tmd_jmd_fontsize=tmd_jmd_fontsize)
+        # TODO CHECK
         args_len = ut.check_args_len(tmd_len=tmd_len, jmd_n_len=self.jmd_n_len, jmd_c_len=self.jmd_c_len, **args_seq)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)

@@ -14,6 +14,8 @@ Quick start
 .. toctree::
    :maxdepth: 1
 
+   generated/tutorial1_quick_start
+   generated/plotting_prelude
 
 Further Tutorials
 -----------------
