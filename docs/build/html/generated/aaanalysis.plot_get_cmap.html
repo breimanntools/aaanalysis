@@ -129,54 +129,52 @@
 <h1>aaanalysis.plot_get_cmap<a class="headerlink" href="#aaanalysis-plot-get-cmap" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="aaanalysis.plot_get_cmap">
-<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">plot_get_cmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">facecolor_dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_neg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_center</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'hex'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pct_gap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pct_center</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/plotting/plotting_functions.py#L116-L166"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.plot_get_cmap" title="Permalink to this definition"></a></dt>
-<dd><p>Retrieve color maps or color dictionaries specified for AAanalysis.</p>
+<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">plot_get_cmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'CPP'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">facecolor_dark</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/plotting/plotting_functions.py#L135-L192"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.plot_get_cmap" title="Permalink to this definition"></a></dt>
+<dd><p>Returns color maps specified for AAanalysis.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – <dl class="simple">
-<dt>The name of the color palette to use in AAanalysis. Options include:</dt><dd><ul>
-<li><dl class="simple">
-<dt>’SHAP’, ‘FEAT’, ‘GGPLOT’: Return color maps for SHAP plots, CPP feature maps/heatmaps,</dt><dd><p>and datagrouping as in GGplot, respectively.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>’DICT_COLOR’, ‘DICT_SCALE_CAT’: Return default color dictionaries for plots (e.g., bars in CPPPlot.profile)</dt><dd><p>and scale categories (e.g., CPPPlot.heatmap), respectively.</p>
-</dd>
-</dl>
-</li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – <dl class="simple">
+<dt>Name of the AAanalysis color palettes:</dt><dd><ul>
+<li><p>’CPP’: Continuous color map for CPP plots (with gap at center).</p></li>
+<li><p>’SHAP’: Continuous color map for CPP-SHP plots (with gap at center).</p></li>
+<li><p>’TAB’: List of Tableau (tab) colors for appealing visualization of categories.</p></li>
 </ul>
 </dd>
 </dl>
 </p></li>
-<li><p><strong>n_colors</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>default=100</em>) – Number of colors in the color map.</p></li>
-<li><p><strong>facecolor_dark</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><em>bool</em></a><em>, </em><em>default=False</em>) – Whether to use a dark face color for ‘SHAP’ and ‘FEAT’.</p></li>
-<li><p><strong>color_pos</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – Hex code for the positive color.</p></li>
-<li><p><strong>color_neg</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>optional</em>) – Hex code for the negative color.</p></li>
-<li><p><strong>color_center</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)"><em>list</em></a><em>, </em><em>optional</em>) – Hex code or list for the center color.</p></li>
-<li><p><strong>input</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>{'rgb'</em><em>, </em><em>'hls'</em><em>, </em><em>'husl'</em><em>, </em><em>'xkcd'}</em>) – Color space to interpret the input color. The first three options
-apply to tuple inputs and the latter applies to string inputs.</p></li>
-<li><p><strong>pct_gap</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><em>int</em></a><em>, </em><em>default=10</em>) – Percentage size of the gap between color ranges.</p></li>
-<li><p><strong>pct_center</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.11)"><em>float</em></a><em>, </em><em>optional</em>) – Percentage size of the center color in the map.</p></li>
+<li><p><strong>n_colors</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>) – Number of colors in the color map. Must be &gt;=2 for ‘CPP’ and ‘SHAP’ and 2-9 for ‘TAB’.</p></li>
+<li><p><strong>facecolor_dark</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – Whether to use a dark face color for ‘CPP’ and ‘SHAP’.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>cmap</strong> – If ‘name’ parameter is ‘SHAP’, ‘FEAT’, or ‘GGPLOT’, a list of colors specified for AAanalysis will be returned.
-If ‘name’ parameter is None, a list of colors based on provided colors</p>
+<dd class="field-even"><p>List with colors given as RGB tuples (for ‘CPP’ and ‘SHAP’) or matplotlib color names (for ‘TAB’).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)">list</a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)">dict</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.11)">list</a></p>
 </dd>
 </dl>
+<div class="admonition-examples admonition">
+<p class="admonition-title">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">colors</span> <span class="o">=</span> <span class="n">plot_get_cmap</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;TAB&quot;</span><span class="p">,</span> <span class="n">n_colors</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;SEQ_AMYLO&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Classes&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Class A&#39;</span><span class="p">,</span> <span class="s1">&#39;Class B&#39;</span><span class="p">,</span> <span class="s1">&#39;Class C&#39;</span><span class="p">],</span> <span class="s1">&#39;Values&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">23</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">17</span><span class="p">]}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sns</span><span class="o">.</span><span class="n">barplot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Classes&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;Values&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="n">colors</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
-<dl class="simple">
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">sns.color_palette</span></code></dt><dd><p>Function to generate a color palette in seaborn.</p>
-</dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">sns.light_palette</span></code></dt><dd><p>Function to generate a lighter color palette in seaborn.</p>
-</dd>
-</dl>
+<ul class="simple">
+<li><p>Example notebooks in <a class="reference external" href="plotting_prelude.html">Plotting Prelude</a>.</p></li>
+<li><p>sns.color_palette function to generate a color palette in seaborn.</p></li>
+<li><p>sns.light_palette function to generate a lighter color palettes.</p></li>
+<li><p><a class="reference external" href="https://matplotlib.org/stable/gallery/color/named_colors.html">Matplotlib color names</a></p></li>
+</ul>
 </div>
 </dd></dl>
 

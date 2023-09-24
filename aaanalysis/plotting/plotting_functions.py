@@ -1,23 +1,28 @@
-#! /usr/bin/python3
 """
-Default plotting functions
+Plotting utility functions for AAanalysis to create publication ready figures. Can
+be used for any Python project independently of AAanalysis.
 """
 import seaborn as sns
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import aaanalysis.utils as ut
+from typing import List, Union, Tuple
 
+STR_CMAP_CPP = "CPP"
+STR_CMAP_SHAP = "SHAP"
+STR_CMAP_TAB = "TAB"
+STR_DICT_COLOR = "DICT_COLOR"
+STR_DICT_CAT = "DICT_CAT"
 
-
-LIST_AA_COLOR_PALETTES = ["FEAT", "SHAP", "GGPLOT"]
-LIST_AA_COLOR_DICTS = ["DICT_SCALE_CAT", "DICT_COLOR"]
-LIST_AA_COLORS = LIST_AA_COLOR_PALETTES + LIST_AA_COLOR_DICTS
-
-LIST_FONTS = ['Arial', 'Avant Garde', 'Bitstream Vera Sans', 'Computer Modern Sans Serif', 'DejaVu Sans',
-              'Geneva', 'Helvetica', 'Lucid', 'Lucida Grande', 'Verdana']
+LIST_FONTS = ['Arial', 'Avant Garde',
+              'Bitstream Vera Sans', 'Computer Modern Sans Serif',
+              'DejaVu Sans', 'Geneva',
+              'Helvetica', 'Lucid',
+              'Lucida Grande', 'Verdana']
 
 
 # Helper functions
+# Check plot_settings
 def check_font_style(font="Arial"):
     """"""
     if font not in LIST_FONTS:
@@ -41,6 +46,7 @@ def check_grid_axis(grid_axis="y"):
         raise ValueError(f"'grid_axis' ({grid_axis}) should be one of following: {list_grid_axis}")
 
 
+# Check plot_set_legend
 def check_cats(list_cat=None, dict_color=None, labels=None):
     """"""
     ut.check_dict(name="dict_color", val=dict_color, accept_none=False)
@@ -58,46 +64,59 @@ def check_cats(list_cat=None, dict_color=None, labels=None):
 
 
 # Get color maps
+def _get_cpp_cmap(n_colors=100, facecolor_dark=False):
+    """Generate a diverging color map for CPP feature values."""
+    ut.check_non_negative_number(name="n_colors", val=n_colors, min_val=2)
+    n = 5
+    cmap = sns.color_palette(palette="RdBu_r", n_colors=n_colors + n * 2)
+    cmap_low, cmap_high = cmap[0:int((n_colors + n * 2) / 2)], cmap[int((n_colors + n * 2) / 2):]
+    c_middle = [(0, 0, 0)] if facecolor_dark else [cmap_low[-1]]
+    add_to_end = 1  # Must be added to keep list size consistent
+    cmap = cmap_low[0:-n] + c_middle + cmap_high[n+add_to_end:]
+    return cmap
+
+
 def _get_shap_cmap(n_colors=100, facecolor_dark=True):
     """Generate a diverging color map for feature values."""
-    n = 20
+    n = 20 # TODO check if 5 is better for CPP-SHAP heatmap
     cmap_low = sns.light_palette(ut.COLOR_SHAP_NEG, input="hex", reverse=True, n_colors=int(n_colors/2)+n)
     cmap_high = sns.light_palette(ut.COLOR_SHAP_POS, input="hex", n_colors=int(n_colors/2)+n)
     c_middle = [(0, 0, 0)] if facecolor_dark else [cmap_low[-1]]
-    cmap = cmap_low[0:-n] + c_middle + cmap_high[n:]
+    add_to_end = (n_colors+1)%2 # Must be added to keep list size consistent
+    cmap = cmap_low[0:-n] + c_middle + cmap_high[n+add_to_end:]
     return cmap
 
+def _get_tab_color(n_colors=None):
+    """Get default color lists for up to 9 categories """
+    # Base lists
+    list_colors_3_to_4 = ["tab:gray", "tab:blue", "tab:red", "tab:orange"]
+    list_colors_5_to_6 = ["tab:blue", "tab:cyan", "tab:gray","tab:red",
+                          "tab:orange", "tab:brown"]
+    list_colors_8_to_9 = ["tab:blue", "tab:orange", "tab:green", "tab:red",
+                          "tab:gray", "gold", "tab:cyan", "tab:brown",
+                          "tab:purple"]
+    # Two classes
+    if n_colors == 2:
+        return ["tab:blue", "tab:red"]
+    # Control/base + 2-3 classes
+    elif n_colors in [3, 4]:
+        return list_colors_3_to_4[0:n_colors]
+    # 5-7 classes (gray in middle as visual "breather")
+    elif n_colors in [5, 6]:
+        return list_colors_5_to_6[0:n_colors]
+    elif n_colors == 7:
+        return ["tab:blue", "tab:cyan", "tab:purple", "tab:gray",
+                "tab:red", "tab:orange", "tab:brown"]
+    # 8-9 classes (colors from scale categories)
+    elif n_colors in [8, 9]:
+        return list_colors_8_to_9[0:n_colors]
 
-def _get_feat_cmap(n_colors=100, facecolor_dark=False):
-    """Generate a diverging color map for feature values."""
-    n = 5
-    cmap = sns.color_palette("RdBu_r", n_colors=n_colors + n * 2)
-    cmap_low, cmap_high = cmap[0:int((n_colors + n * 2) / 2)], cmap[int((n_colors + n * 2) / 2):]
-    c_middle = [(0, 0, 0)] if facecolor_dark else [cmap_low[-1]]
-    cmap = cmap_low[0:-n] + c_middle + cmap_high[n:]
-    return cmap
+# TODO check if needed later
+def _get_cmap_with_gap(n_colors=100, pct_gap=10, pct_center=None,
+                       color_pos=None, color_neg=None, color_center=None, input="hex"):
+    """Generate a custom color map with a gap.
 
-
-def _get_ggplot_cmap(n_colors=100):
-    """Generate a circular GGplot color palette."""
-    cmap = sns.color_palette("husl", n_colors)
-    return cmap
-
-
-def _get_default_colors(name=None, n_colors=100, facecolor_dark=True):
-    """Retrieve default color maps based on palette name."""
-    args = dict(n_colors=n_colors, facecolor_dark=facecolor_dark)
-    if name == "SHAP":
-        return _get_shap_cmap(**args)
-    elif name == "FEAT":
-        return _get_feat_cmap(**args)
-    elif name == "GGPLOT":
-        return _get_ggplot_cmap(n_colors=n_colors)
-
-
-def _get_cmap_with_gap(n_colors=100, color_pos=None, color_neg=None, color_center=None, pct_gap=10, pct_center=None,
-                       input="hex"):
-    """Generate a custom color map with a gap."""
+    """
     n_gap = int(n_colors*pct_gap/2)
     cmap_pos = sns.light_palette(color_pos, input=input, n_colors=int(n_colors/2)+n_gap)
     cmap_neg = sns.light_palette(color_neg, input=input, reverse=True, n_colors=int(n_colors/2)+n_gap)
@@ -113,79 +132,97 @@ def _get_cmap_with_gap(n_colors=100, color_pos=None, color_neg=None, color_cente
 
 
 # Default plotting function
-def plot_get_cmap(name=None, n_colors=100, facecolor_dark=False,
-                  color_pos=None, color_neg=None, color_center=None,
-                  input="hex", pct_gap=10, pct_center=None):
+def plot_get_cmap(name: str = "CPP",
+                  n_colors: int = 100,
+                  facecolor_dark: bool = False
+                  ) -> Union[List[Tuple[float, float, float]], List[str]]:
     """
-    Retrieve color maps or color dictionaries specified for AAanalysis.
+    Returns color maps specified for AAanalysis.
 
     Parameters
     ----------
-    name : str, optional
-        The name of the color palette to use in AAanalysis. Options include:
-         - 'SHAP', 'FEAT', 'GGPLOT': Return color maps for SHAP plots, CPP feature maps/heatmaps,
-            and datagrouping as in GGplot, respectively.
-         - 'DICT_COLOR', 'DICT_SCALE_CAT': Return default color dictionaries for plots (e.g., bars in CPPPlot.profile)
-            and scale categories (e.g., CPPPlot.heatmap), respectively.
-    n_colors : int, default=100
-        Number of colors in the color map.
-    facecolor_dark : bool, default=False
-        Whether to use a dark face color for 'SHAP' and 'FEAT'.
-    color_pos : str, optional
-        Hex code for the positive color.
-    color_neg : str, optional
-        Hex code for the negative color.
-    color_center : str or list, optional
-        Hex code or list for the center color.
-    input : str, {'rgb', 'hls', 'husl', 'xkcd'}
-        Color space to interpret the input color. The first three options
-        apply to tuple inputs and the latter applies to string inputs.
-    pct_gap : int, default=10
-        Percentage size of the gap between color ranges.
-    pct_center : float, optional
-        Percentage size of the center color in the map.
+    name
+        Name of the AAanalysis color palettes:
+         - 'CPP': Continuous color map for CPP plots (with gap at center).
+         - 'SHAP': Continuous color map for CPP-SHP plots (with gap at center).
+         - 'TAB': List of Tableau (tab) colors for appealing visualization of categories.
+    n_colors
+        Number of colors in the color map. Must be >=2 for 'CPP' and 'SHAP' and 2-9 for 'TAB'.
+    facecolor_dark
+        Whether to use a dark face color for 'CPP' and 'SHAP'.
 
     Returns
     -------
-    cmap : list or dict
-        If 'name' parameter is 'SHAP', 'FEAT', or 'GGPLOT', a list of colors specified for AAanalysis will be returned.
-        If 'name' parameter is None, a list of colors based on provided colors
+    list
+        List with colors given as RGB tuples (for 'CPP' and 'SHAP') or matplotlib color names (for 'TAB').
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import seaborn as sns
+    >>> import aaanalysis as aa
+    >>> colors = plot_get_cmap(name="TAB", n_colors=3)
+    >>> df_seq = aa.load_dataset(name="SEQ_AMYLO", n=100)
+    >>> data = {'Classes': ['Class A', 'Class B', 'Class C'], 'Values': [23, 45, 17]}
+    >>> sns.barplot(x='Classes', y='Values', data=data, palette=colors)
+    >>> plt.show()
 
     See Also
     --------
-    sns.color_palette : Function to generate a color palette in seaborn.
-    sns.light_palette : Function to generate a lighter color palette in seaborn.
+    * Example notebooks in `Plotting Prelude <plotting_prelude.html>`_.
+    * sns.color_palette function to generate a color palette in seaborn.
+    * sns.light_palette function to generate a lighter color palettes.
+    * `Matplotlib color names <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
     """
-    # TODO check color dict name
-    if name in LIST_AA_COLOR_PALETTES:
-        cmap = _get_default_colors(name=name, n_colors=n_colors, facecolor_dark=facecolor_dark)
-        return cmap
-    cmap = _get_cmap_with_gap(n_colors=n_colors, color_pos=color_pos, color_neg=color_neg,
-                              color_center=color_center, pct_gap=pct_gap, pct_center=pct_center,
-                              input=input)
-    return cmap
+    # Check input
+    list_names = [STR_CMAP_CPP, STR_CMAP_SHAP, STR_CMAP_TAB]
+    if name not in list_names:
+        raise ValueError(f"'name' must be one of following: {list_names}")
+    ut.check_bool(name="facecolor_dark", val=facecolor_dark)
+
+    # Get color maps
+    if name == STR_CMAP_SHAP:
+        ut.check_non_negative_number(name="n_colors", val=n_colors, min_val=3)
+        return _get_shap_cmap(n_colors=n_colors, facecolor_dark=facecolor_dark)
+    elif name == STR_CMAP_CPP:
+        ut.check_non_negative_number(name="n_colors", val=n_colors, min_val=3)
+        return _get_cpp_cmap(n_colors=n_colors, facecolor_dark=facecolor_dark)
+    elif name == STR_CMAP_TAB:
+        ut.check_non_negative_number(name="n_colors", val=n_colors, min_val=2, max_val=9)
+        return _get_tab_color(n_colors=n_colors)
 
 
-def plot_get_cdict(name=None):
+def plot_get_cdict(name: str = "DICT_COLOR") -> dict:
     """
-    Retrieve color dictionaries specified for AAanalysis.
+    Returns color dictionaries specified for AAanalysis.
 
     Parameters
     ----------
-    name : str, {'DICT_COLOR', 'DICT_SCALE_CAT'}
-        The name of default color dictionaries for plots (e.g., bars in CPPPlot.profile)
-        and scale categories (e.g., CPPPlot.heatmap), respectively.
+    name
+        Name of the AAanalysis color dictionary:
+         - 'DICT_COLOR': Dictionary with default colors for plots.
+         - 'DICT_CAT': Dictionary with default colors for scale categories.
 
     Returns
     -------
-    cmap :  dict
+    dict
        Specific AAanalysis color dictionary.
+
+    Examples
+    --------
+    >>> import aaanalysis as aa
+    >>> dict_color = aa.plot_get_cdict(name="DICT_COLOR")
+
     """
-    # TODO check color dict name
-    color_dict = ut.DICT_COLOR if name == "DICT_COLORS" else ut.DICT_COLOR_CAT
-    return color_dict
+    list_names = [STR_DICT_COLOR, STR_DICT_CAT]
+    if name not in list_names:
+        raise ValueError(f"'name' must be one of following: {list_names}")
+    if name == STR_DICT_COLOR:
+        return ut.DICT_COLOR
+    else:
+        return ut.DICT_COLOR_CAT
 
-
+# TODO check, interface, doc, test
 def plot_settings(fig_format="pdf", verbose=False, grid=False, grid_axis="y",
                   font_scale=0.7, font="Arial",
                   change_size=True, weight_bold=True, adjust_elements=True,
@@ -315,13 +352,13 @@ def plot_settings(fig_format="pdf", verbose=False, grid=False, grid_axis="y",
 
 
 def plot_gcfs():
-    """Get current font size, which is set by ut.plot_settings function"""
+    """Get current font size, which is set by ``plot_settings`` function"""
     # Get the current plotting context
     current_context = sns.plotting_context()
     font_size = current_context['font.size']
     return font_size
 
-
+# TODO check, interface, doc, test
 def plot_set_legend(ax=None, handles=None, dict_color=None, list_cat=None, labels=None, y=-0.2, x=0.5, ncol=3,
                     fontsize=11, weight="normal", lw=0, edgecolor=None, return_handles=False, loc="upper left",
                     labelspacing=0.2, columnspacing=1, title=None, fontsize_legend=None, title_align_left=True,
@@ -403,6 +440,7 @@ def plot_set_legend(ax=None, handles=None, dict_color=None, list_cat=None, label
     ut.check_non_negative_number(name="ncol", val=ncol, min_val=0, just_int=False, accept_none=True)
     ut.check_bool(name="return_handles", val=return_handles)
     ut.check_bool(name="title_align_left", val=title_align_left)
+
     # TODO check other args
     # Prepare the legend handles
     dict_leg = {cat: dict_color[cat] for cat in list_cat}

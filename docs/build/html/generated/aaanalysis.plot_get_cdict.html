@@ -129,20 +129,33 @@
 <h1>aaanalysis.plot_get_cdict<a class="headerlink" href="#aaanalysis-plot-get-cdict" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="aaanalysis.plot_get_cdict">
-<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">plot_get_cdict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/plotting/plotting_functions.py#L169-L186"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.plot_get_cdict" title="Permalink to this definition"></a></dt>
-<dd><p>Retrieve color dictionaries specified for AAanalysis.</p>
+<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">plot_get_cdict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DICT_COLOR'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/plotting/plotting_functions.py#L195-L223"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.plot_get_cdict" title="Permalink to this definition"></a></dt>
+<dd><p>Returns color dictionaries specified for AAanalysis.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><em>str</em></a><em>, </em><em>{'DICT_COLOR'</em><em>, </em><em>'DICT_SCALE_CAT'}</em>) – The name of default color dictionaries for plots (e.g., bars in CPPPlot.profile)
-and scale categories (e.g., CPPPlot.heatmap), respectively.</p>
+<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – <dl class="simple">
+<dt>Name of the AAanalysis color dictionary:</dt><dd><ul class="simple">
+<li><p>’DICT_COLOR’: Dictionary with default colors for plots.</p></li>
+<li><p>’DICT_CAT’: Dictionary with default colors for scale categories.</p></li>
+</ul>
+</dd>
+</dl>
+</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>cmap</strong> – Specific AAanalysis color dictionary.</p>
+<dd class="field-even"><p>Specific AAanalysis color dictionary.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)">dict</a></p>
 </dd>
 </dl>
+<div class="admonition-examples admonition">
+<p class="admonition-title">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dict_color</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">plot_get_cdict</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;DICT_COLOR&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 </dd></dl>
 
 </section>
