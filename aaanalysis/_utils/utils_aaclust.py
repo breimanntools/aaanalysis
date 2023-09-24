@@ -37,3 +37,9 @@ def check_merge_metric(merge_metric=None):
         error = f"'merge_metric' should be None or one of following: {LIST_METRICS}"
         raise ValueError(error)
     return merge_metric
+
+def check_feat_matrix_n_clust_match(X=None, n_clusters=None):
+    """"""
+    n_samples, n_features = X.shape
+    if n_samples <= n_clusters:
+        raise ValueError(f"'X' must contain more samples ({n_samples}) then 'n_clusters' ({n_clusters})")

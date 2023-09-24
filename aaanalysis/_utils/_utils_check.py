@@ -80,14 +80,13 @@ def check_tuple(name=None, val=None, n=None):
 
 # Array checking functions
 def check_feat_matrix(X=None, names=None, labels=None):
-    """Check if X and y match (y can be labels or names). Otherwise, transpose X or give error."""
-    # TODO type check
-    X = check_array(X)
+    """Transpose matrix and check if X and y match (y can be labels or names). Transpose back otherwise """
+    X = check_array(X).transpose()
     if labels is not None:
         check_consistent_length(X, labels)
     n_samples, n_features = X.shape
     if n_samples == 0 or n_features == 0:
-        raise ValueError(f"Shape of X ({n_samples}, {n_features}) indicates empty feature matrix.")
+        raise ValueError(f"Shape of 'X' ({n_samples}, {n_features}) indicates empty feature matrix.")
     if names is None:
         return X, names
     else:

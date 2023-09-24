@@ -13,6 +13,7 @@ from aaanalysis._utils._utils_check import (check_non_negative_number, check_flo
                                             check_feat_matrix, check_col_in_df)
 from aaanalysis._utils._utils_output import (print_red, print_start_progress, print_progress, print_finished_progress)
 from aaanalysis._utils.utils_aaclust import (check_model, check_min_th, check_merge_metric,
+                                             check_feat_matrix_n_clust_match,
                                              METRIC_CORRELATION, LIST_METRICS)
 from aaanalysis._utils.utils_cpp import (check_color, check_y_categorical, check_labels, check_ylim,
                                          check_args_len, check_args_len, check_list_parts,

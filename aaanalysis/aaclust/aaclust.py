@@ -11,6 +11,8 @@ import aaanalysis.utils as ut
 
 
 # I Helper Functions
+
+
 # Obtain centroids and medoids
 def cluster_center(X):
     """Compute cluster center (i.e., arithmetical mean over all data points/observations of a cluster)"""
@@ -29,7 +31,7 @@ def _cluster_medoid(X):
     """Obtain cluster medoids (i.e., scale closest to cluster center used as representative scale for a cluster)"""
     # Create new array with cluster center and given
     center_X = np.concatenate([cluster_center(X), X], axis=0)
-    # Get index for scale with highest correlation with cluster center
+    # Get index for scale with the highest correlation with cluster center
     ind_max = np.corrcoef(center_X)[0, 1:].argmax()
     return ind_max
 
@@ -410,6 +412,7 @@ class AAclust:
         ut.check_min_th(min_th=min_th)
         merge_metric = ut.check_merge_metric(merge_metric=merge_metric)
         X, names = ut.check_feat_matrix(X=X, names=names)
+        ut.check_feat_matrix_n_clust_match(X=X, n_clusters=n_clusters)
         args = dict(model=self.model, model_kwargs=self._model_kwargs, min_th=min_th, on_center=on_center)
         # Clustering using given clustering models
         if n_clusters is not None:

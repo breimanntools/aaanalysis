@@ -34,9 +34,8 @@ available at your fingertips with the ``aa.load_scales()`` function.
 .. code:: ipython3
 
     import aaanalysis as aa
-    # Load scales and scale categories (AAontology) 
+    
     df_scales = aa.load_scales()
-    # Load training data
     df_seq = aa.load_dataset(name="DOM_GSEC", n=50)
     df_seq.head(5)
 
@@ -156,11 +155,12 @@ set of 100 scales, as defined by the ``n_clusters`` parameters:
 
     from sklearn.cluster import AgglomerativeClustering
     import numpy as np
-    aac = aa.AAclust(model=AgglomerativeClustering, model_kwargs=dict(linkage="ward"))
+    
+    aac = aa.AAclust(model=AgglomerativeClustering)
     X = np.array(df_scales)
-    scales = aac.fit(X, n_clusters=100, names=list(df_scales)) 
+    scales = aac.fit(X, names=list(df_scales), n_clusters=100) 
     df_scales = df_scales[scales]
-    df_scales
+    df_scales[scales[0:4]].head(5)
 
 
 
@@ -189,43 +189,9 @@ set of 100 scales, as defined by the ``n_clusters`` parameters:
           <th>SIMZ760101</th>
           <th>NAKH900106</th>
           <th>AURR980112</th>
-          <th>CORJ870107</th>
-          <th>ROBB760113</th>
-          <th>MIYS990104</th>
-          <th>BIGC670101</th>
-          <th>ROSG850102</th>
-          <th>ZIMJ680105</th>
-          <th>...</th>
-          <th>YUTK870102</th>
-          <th>SUEM840102</th>
-          <th>VASM830102</th>
-          <th>VELV850101</th>
-          <th>VENT840101</th>
-          <th>MONM990101</th>
-          <th>GEOR030102</th>
-          <th>GEOR030106</th>
-          <th>KARS160120</th>
-          <th>LINS030117</th>
         </tr>
         <tr>
           <th>AA</th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
-          <th></th>
           <th></th>
           <th></th>
           <th></th>
@@ -239,23 +205,6 @@ set of 100 scales, as defined by the ``n_clusters`` parameters:
           <td>0.268</td>
           <td>0.237</td>
           <td>0.787</td>
-          <td>0.446</td>
-          <td>0.101</td>
-          <td>0.479</td>
-          <td>0.164</td>
-          <td>0.564</td>
-          <td>0.444</td>
-          <td>...</td>
-          <td>0.557</td>
-          <td>0.103</td>
-          <td>0.617</td>
-          <td>0.295</td>
-          <td>0</td>
-          <td>0.077</td>
-          <td>0.250</td>
-          <td>0.516</td>
-          <td>0.952</td>
-          <td>0.186</td>
         </tr>
         <tr>
           <th>C</th>
@@ -263,23 +212,6 @@ set of 100 scales, as defined by the ``n_clusters`` parameters:
           <td>0.258</td>
           <td>0.303</td>
           <td>0.104</td>
-          <td>0.725</td>
-          <td>0.849</td>
-          <td>0.000</td>
-          <td>0.323</td>
-          <td>1.000</td>
-          <td>0.000</td>
-          <td>...</td>
-          <td>0.680</td>
-          <td>0.337</td>
-          <td>0.734</td>
-          <td>0.657</td>
-          <td>0</td>
-          <td>0.154</td>
-          <td>0.246</td>
-          <td>0.000</td>
-          <td>0.952</td>
-          <td>0.000</td>
         </tr>
         <tr>
           <th>D</th>
@@ -287,23 +219,6 @@ set of 100 scales, as defined by the ``n_clusters`` parameters:
           <td>0.206</td>
           <td>0.000</td>
           <td>0.451</td>
-          <td>0.000</td>
-          <td>0.790</td>
-          <td>0.803</td>
-          <td>0.324</td>
-          <td>0.256</td>
-          <td>0.000</td>
-          <td>...</td>
-          <td>0.574</td>
-          <td>0.909</td>
-          <td>0.225</td>
-          <td>1.000</td>
-          <td>0</td>
-          <td>0.923</td>
-          <td>0.091</td>
-          <td>0.404</td>
-          <td>0.952</td>
-          <td>0.186</td>
         </tr>
         <tr>
           <th>E</th>
@@ -311,23 +226,6 @@ set of 100 scales, as defined by the ``n_clusters`` parameters:
           <td>0.210</td>
           <td>0.090</td>
           <td>0.823</td>
-          <td>0.233</td>
-          <td>0.092</td>
-          <td>0.859</td>
-          <td>0.488</td>
-          <td>0.256</td>
-          <td>0.025</td>
-          <td>...</td>
-          <td>0.402</td>
-          <td>0.077</td>
-          <td>0.531</td>
-          <td>0.046</td>
-          <td>0</td>
-          <td>0.923</td>
-          <td>0.404</td>
-          <td>0.610</td>
-          <td>0.952</td>
-          <td>0.349</td>
         </tr>
         <tr>
           <th>F</th>
@@ -335,387 +233,9 @@ set of 100 scales, as defined by the ``n_clusters`` parameters:
           <td>0.887</td>
           <td>0.724</td>
           <td>0.402</td>
-          <td>0.950</td>
-          <td>0.328</td>
-          <td>0.000</td>
-          <td>0.783</td>
-          <td>0.923</td>
-          <td>1.000</td>
-          <td>...</td>
-          <td>0.680</td>
-          <td>0.233</td>
-          <td>0.023</td>
-          <td>0.749</td>
-          <td>1</td>
-          <td>0.000</td>
-          <td>0.536</td>
-          <td>0.712</td>
-          <td>0.952</td>
-          <td>0.326</td>
-        </tr>
-        <tr>
-          <th>G</th>
-          <td>0.025</td>
-          <td>0.032</td>
-          <td>0.259</td>
-          <td>0.055</td>
-          <td>0.352</td>
-          <td>1.000</td>
-          <td>0.662</td>
-          <td>0.000</td>
-          <td>0.513</td>
-          <td>0.175</td>
-          <td>...</td>
-          <td>0.525</td>
-          <td>0.000</td>
-          <td>0.455</td>
-          <td>0.040</td>
-          <td>0</td>
-          <td>0.692</td>
-          <td>0.000</td>
-          <td>0.210</td>
-          <td>0.952</td>
-          <td>0.023</td>
-        </tr>
-        <tr>
-          <th>H</th>
-          <td>0.840</td>
-          <td>0.387</td>
-          <td>0.401</td>
-          <td>0.463</td>
-          <td>0.610</td>
-          <td>0.454</td>
-          <td>0.479</td>
-          <td>0.561</td>
-          <td>0.667</td>
-          <td>0.338</td>
-          <td>...</td>
-          <td>0.754</td>
-          <td>0.000</td>
-          <td>0.345</td>
-          <td>0.191</td>
-          <td>0</td>
-          <td>0.923</td>
-          <td>0.201</td>
-          <td>0.612</td>
-          <td>0.562</td>
-          <td>0.419</td>
-        </tr>
-        <tr>
-          <th>I</th>
-          <td>0.000</td>
-          <td>0.990</td>
-          <td>0.697</td>
-          <td>0.512</td>
-          <td>0.969</td>
-          <td>0.151</td>
-          <td>0.056</td>
-          <td>0.663</td>
-          <td>0.923</td>
-          <td>0.894</td>
-          <td>...</td>
-          <td>0.820</td>
-          <td>0.714</td>
-          <td>0.070</td>
-          <td>0.000</td>
-          <td>1</td>
-          <td>0.154</td>
-          <td>0.161</td>
-          <td>0.457</td>
-          <td>0.583</td>
-          <td>0.140</td>
-        </tr>
-        <tr>
-          <th>K</th>
-          <td>0.506</td>
-          <td>0.516</td>
-          <td>0.127</td>
-          <td>0.591</td>
-          <td>0.027</td>
-          <td>0.613</td>
-          <td>1.000</td>
-          <td>0.694</td>
-          <td>0.000</td>
-          <td>0.044</td>
-          <td>...</td>
-          <td>0.615</td>
-          <td>0.012</td>
-          <td>0.688</td>
-          <td>0.294</td>
-          <td>0</td>
-          <td>0.923</td>
-          <td>0.195</td>
-          <td>0.536</td>
-          <td>0.912</td>
-          <td>1.000</td>
-        </tr>
-        <tr>
-          <th>L</th>
-          <td>0.272</td>
-          <td>0.835</td>
-          <td>0.905</td>
-          <td>0.732</td>
-          <td>1.000</td>
-          <td>0.076</td>
-          <td>0.014</td>
-          <td>0.663</td>
-          <td>0.846</td>
-          <td>0.925</td>
-          <td>...</td>
-          <td>1.000</td>
-          <td>0.428</td>
-          <td>0.771</td>
-          <td>0.000</td>
-          <td>1</td>
-          <td>0.000</td>
-          <td>0.513</td>
-          <td>0.690</td>
-          <td>0.952</td>
-          <td>0.186</td>
-        </tr>
-        <tr>
-          <th>M</th>
-          <td>0.704</td>
-          <td>0.452</td>
-          <td>1.000</td>
-          <td>1.000</td>
-          <td>0.883</td>
-          <td>0.084</td>
-          <td>0.113</td>
-          <td>0.620</td>
-          <td>0.846</td>
-          <td>0.756</td>
-          <td>...</td>
-          <td>0.689</td>
-          <td>0.701</td>
-          <td>0.512</td>
-          <td>0.651</td>
-          <td>0</td>
-          <td>0.077</td>
-          <td>0.151</td>
-          <td>0.670</td>
-          <td>0.952</td>
-          <td>0.372</td>
-        </tr>
-        <tr>
-          <th>N</th>
-          <td>0.988</td>
-          <td>0.029</td>
-          <td>0.381</td>
-          <td>0.287</td>
-          <td>0.171</td>
-          <td>0.924</td>
-          <td>0.718</td>
-          <td>0.398</td>
-          <td>0.282</td>
-          <td>0.162</td>
-          <td>...</td>
-          <td>0.508</td>
-          <td>0.000</td>
-          <td>0.313</td>
-          <td>0.028</td>
-          <td>0</td>
-          <td>1.000</td>
-          <td>0.277</td>
-          <td>0.342</td>
-          <td>0.952</td>
-          <td>0.093</td>
-        </tr>
-        <tr>
-          <th>P</th>
-          <td>0.605</td>
-          <td>0.871</td>
-          <td>0.403</td>
-          <td>0.000</td>
-          <td>0.130</td>
-          <td>0.824</td>
-          <td>0.803</td>
-          <td>0.376</td>
-          <td>0.308</td>
-          <td>0.750</td>
-          <td>...</td>
-          <td>0.566</td>
-          <td>0.545</td>
-          <td>0.937</td>
-          <td>0.157</td>
-          <td>0</td>
-          <td>1.000</td>
-          <td>1.000</td>
-          <td>1.000</td>
-          <td>0.952</td>
-          <td>0.698</td>
-        </tr>
-        <tr>
-          <th>Q</th>
-          <td>0.519</td>
-          <td>0.000</td>
-          <td>0.203</td>
-          <td>0.805</td>
-          <td>0.238</td>
-          <td>0.546</td>
-          <td>0.732</td>
-          <td>0.539</td>
-          <td>0.256</td>
-          <td>0.388</td>
-          <td>...</td>
-          <td>0.697</td>
-          <td>0.428</td>
-          <td>0.446</td>
-          <td>0.602</td>
-          <td>0</td>
-          <td>0.923</td>
-          <td>0.478</td>
-          <td>0.530</td>
-          <td>0.952</td>
-          <td>0.256</td>
-        </tr>
-        <tr>
-          <th>R</th>
-          <td>0.531</td>
-          <td>0.268</td>
-          <td>0.061</td>
-          <td>0.738</td>
-          <td>0.482</td>
-          <td>0.748</td>
-          <td>0.634</td>
-          <td>0.735</td>
-          <td>0.308</td>
-          <td>0.112</td>
-          <td>...</td>
-          <td>0.000</td>
-          <td>0.000</td>
-          <td>0.550</td>
-          <td>0.760</td>
-          <td>0</td>
-          <td>1.000</td>
-          <td>0.549</td>
-          <td>0.728</td>
-          <td>0.952</td>
-          <td>0.372</td>
-        </tr>
-        <tr>
-          <th>S</th>
-          <td>0.679</td>
-          <td>0.045</td>
-          <td>0.450</td>
-          <td>0.293</td>
-          <td>0.293</td>
-          <td>0.798</td>
-          <td>0.704</td>
-          <td>0.188</td>
-          <td>0.359</td>
-          <td>0.256</td>
-          <td>...</td>
-          <td>0.656</td>
-          <td>0.000</td>
-          <td>0.868</td>
-          <td>0.657</td>
-          <td>0</td>
-          <td>0.231</td>
-          <td>0.168</td>
-          <td>0.399</td>
-          <td>0.952</td>
-          <td>0.186</td>
-        </tr>
-        <tr>
-          <th>T</th>
-          <td>0.494</td>
-          <td>0.174</td>
-          <td>0.619</td>
-          <td>0.360</td>
-          <td>0.279</td>
-          <td>0.529</td>
-          <td>0.577</td>
-          <td>0.352</td>
-          <td>0.462</td>
-          <td>0.419</td>
-          <td>...</td>
-          <td>0.574</td>
-          <td>0.000</td>
-          <td>1.000</td>
-          <td>0.745</td>
-          <td>0</td>
-          <td>0.000</td>
-          <td>0.344</td>
-          <td>0.513</td>
-          <td>0.000</td>
-          <td>0.419</td>
-        </tr>
-        <tr>
-          <th>V</th>
-          <td>0.000</td>
-          <td>0.577</td>
-          <td>0.183</td>
-          <td>0.451</td>
-          <td>0.907</td>
-          <td>0.000</td>
-          <td>0.127</td>
-          <td>0.492</td>
-          <td>0.872</td>
-          <td>0.719</td>
-          <td>...</td>
-          <td>0.770</td>
-          <td>0.000</td>
-          <td>0.408</td>
-          <td>0.045</td>
-          <td>1</td>
-          <td>0.077</td>
-          <td>0.151</td>
-          <td>0.467</td>
-          <td>0.952</td>
-          <td>0.163</td>
-        </tr>
-        <tr>
-          <th>W</th>
-          <td>0.926</td>
-          <td>1.000</td>
-          <td>0.707</td>
-          <td>0.805</td>
-          <td>0.500</td>
-          <td>0.773</td>
-          <td>0.070</td>
-          <td>1.000</td>
-          <td>0.846</td>
-          <td>0.894</td>
-          <td>...</td>
-          <td>0.467</td>
-          <td>1.000</td>
-          <td>0.138</td>
-          <td>0.434</td>
-          <td>1</td>
-          <td>0.231</td>
-          <td>0.066</td>
-          <td>0.440</td>
-          <td>1.000</td>
-          <td>0.349</td>
-        </tr>
-        <tr>
-          <th>Y</th>
-          <td>0.802</td>
-          <td>0.990</td>
-          <td>0.425</td>
-          <td>0.524</td>
-          <td>0.771</td>
-          <td>0.798</td>
-          <td>0.127</td>
-          <td>0.806</td>
-          <td>0.615</td>
-          <td>0.762</td>
-          <td>...</td>
-          <td>0.557</td>
-          <td>0.857</td>
-          <td>0.000</td>
-          <td>0.408</td>
-          <td>1</td>
-          <td>0.154</td>
-          <td>0.110</td>
-          <td>0.666</td>
-          <td>0.736</td>
-          <td>0.349</td>
         </tr>
       </tbody>
     </table>
-    <p>20 rows × 100 columns</p>
     </div>
 
 
@@ -731,15 +251,15 @@ sequences: the test set and the reference set. Supported by the
 C-terminal adjacent regions (JMD-N and JMD-C, respectively), obtained
 ``sf.get_df_parts``. - ``Splits``: These ``Parts`` can be split into
 various continuous segments or discontinuous patterns, specified
-``sf.get_split_kws()``. - ``Scales``: Sets of amino acid scales. We
-first use SequenceFeature to obtain Parts and Splits:
+``sf.get_split_kws()``. - ``Scales``: Sets of amino acid scales.
+
+We use SequenceFeature to obtain Parts and Splits:
 
 .. code:: ipython3
 
-    # Feature Engineering
     y = list(df_seq["label"])
     sf = aa.SequenceFeature()
-    df_parts = sf.get_df_parts(df_seq=df_seq, jmd_n_len=10, jmd_c_len=10, list_parts=["tmd_jmd"])
+    df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=["tmd_jmd"])
     split_kws = sf.get_split_kws(n_split_max=1, split_types=["Segment"])
     df_parts.head(5)
 
@@ -803,9 +323,9 @@ As a baseline approach, we use CPP to compute the average values for the
 
 .. code:: ipython3
 
-    # Small set of features (100 features created)
-    cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws, verbose=False)
-    df_feat = cpp.run(labels=y, tmd_len=20, jmd_n_len=10, jmd_c_len=10, n_filter=100)  # Default values for lengths are used
+    # Small set of CPP features (100 features are created)
+    cpp = aa.CPP(df_scales=df_scales, df_parts=df_parts, split_kws=split_kws, verbose=False)
+    df_feat = cpp.run(labels=y) 
     df_feat
 
 
@@ -927,16 +447,16 @@ A feature matrix from a given set of CPP features can be created using
 
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.model_selection import cross_val_score
-    X = sf.feat_matrix(df_parts=df_parts, df_scales=df_scales, features=df_feat["feature"])
-    # ML evaluation
+    
+    X = sf.feat_matrix(df_parts=df_parts, features=df_feat["feature"])
     rf = RandomForestClassifier()
-    cv_base = cross_val_score(rf, X, y, scoring="accuracy", cv=5, n_jobs=8) # Set n_jobs=1 to disable multi-processing
+    cv_base = cross_val_score(rf, X, y, scoring="accuracy")
     print(f"Mean accuracy of {round(np.mean(cv_base), 2)}")
 
 
 .. parsed-literal::
 
-    Mean accuracy of 0.57
+    Mean accuracy of 0.58
 
 
 Creating more features with CPP will take some more time. but improve
@@ -944,12 +464,11 @@ prediction performance:
 
 .. code:: ipython3
 
-    # Default CPP features  (around 100.000 features)
-    split_kws = sf.get_split_kws()
-    df_parts = sf.get_df_parts(df_seq=df_seq, jmd_n_len=10, jmd_c_len=10)
-    cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws, verbose=False)
-    df_feat = cpp.run(labels=y, n_processes=8, n_filter=100)
-    df_feat
+    # CPP features with default splits (around 100.000 features)
+    df_parts = sf.get_df_parts(df_seq=df_seq)
+    cpp = aa.CPP(df_scales=df_scales, df_parts=df_parts, verbose=False)
+    df_feat = cpp.run(labels=y)
+    df_feat.head(10)
 
 
 
@@ -1071,104 +590,87 @@ prediction performance:
           <td>32,33</td>
         </tr>
         <tr>
-          <th>...</th>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
+          <th>5</th>
+          <td>TMD_C_JMD_C-Segment(4,9)-ROBB760113</td>
+          <td>Conformation</td>
+          <td>β-turn</td>
+          <td>β-turn</td>
+          <td>Information measure for loop (Robson-Suzuki, 1...</td>
+          <td>0.337</td>
+          <td>0.319440</td>
+          <td>-0.319440</td>
+          <td>0.175203</td>
+          <td>0.255754</td>
+          <td>6.100000e-09</td>
+          <td>1.185395e-06</td>
+          <td>27,28</td>
         </tr>
         <tr>
-          <th>95</th>
-          <td>JMD_N_TMD_N-Pattern(C,6,9)-NAKH900106</td>
-          <td>Composition</td>
-          <td>Mitochondrial proteins</td>
-          <td>Mitochondrial proteins</td>
-          <td>Normalized composition from animal (Nakashima ...</td>
-          <td>0.228</td>
-          <td>0.172120</td>
-          <td>-0.172120</td>
-          <td>0.180254</td>
-          <td>0.199987</td>
-          <td>8.754340e-05</td>
-          <td>2.693037e-04</td>
-          <td>12,15</td>
+          <th>6</th>
+          <td>TMD_C_JMD_C-Segment(2,2)-EISD860102</td>
+          <td>Energy</td>
+          <td>Isoelectric point</td>
+          <td>Atom-based hydrophobic moment</td>
+          <td>Atom-based hydrophobic moment (Eisenberg-McLac...</td>
+          <td>0.337</td>
+          <td>0.139567</td>
+          <td>0.139567</td>
+          <td>0.098917</td>
+          <td>0.101842</td>
+          <td>6.300000e-09</td>
+          <td>1.185395e-06</td>
+          <td>31,32,33,34,35,36,37,38,39,40</td>
         </tr>
         <tr>
-          <th>96</th>
-          <td>JMD_N_TMD_N-Pattern(C,6,9,12)-ZIMJ680105</td>
-          <td>Others</td>
-          <td>PC 2</td>
-          <td>Principal Component 1 (Zimmerman)</td>
-          <td>RF rank (Zimmerman et al., 1968)</td>
-          <td>0.227</td>
-          <td>0.133867</td>
-          <td>-0.133867</td>
-          <td>0.160532</td>
-          <td>0.161415</td>
-          <td>9.118090e-05</td>
-          <td>2.778863e-04</td>
-          <td>9,12,15</td>
+          <th>7</th>
+          <td>TMD_C_JMD_C-Segment(4,5)-RICJ880113</td>
+          <td>Conformation</td>
+          <td>α-helix (C-cap)</td>
+          <td>α-helix (C-terminal, inside)</td>
+          <td>Relative preference value at C2 (Richardson-Ri...</td>
+          <td>0.336</td>
+          <td>0.223765</td>
+          <td>0.223765</td>
+          <td>0.133513</td>
+          <td>0.178217</td>
+          <td>7.100000e-09</td>
+          <td>1.185395e-06</td>
+          <td>33,34,35,36</td>
         </tr>
         <tr>
-          <th>97</th>
-          <td>JMD_N_TMD_N-Segment(7,8)-KARS160107</td>
+          <th>8</th>
+          <td>TMD_C_JMD_C-Segment(5,7)-KARS160107</td>
           <td>Shape</td>
           <td>Side chain length</td>
           <td>Eccentricity (maximum)</td>
           <td>Diameter (maximum eccentricity) (Karkbara-Knis...</td>
-          <td>0.227</td>
-          <td>0.098674</td>
-          <td>-0.098674</td>
-          <td>0.104428</td>
-          <td>0.124875</td>
-          <td>8.945330e-05</td>
-          <td>2.740061e-04</td>
-          <td>16,17</td>
+          <td>0.331</td>
+          <td>0.217594</td>
+          <td>0.217594</td>
+          <td>0.136011</td>
+          <td>0.172395</td>
+          <td>1.130000e-08</td>
+          <td>1.331786e-06</td>
+          <td>32,33,34</td>
         </tr>
         <tr>
-          <th>98</th>
-          <td>JMD_N_TMD_N-Pattern(C,6,9,12)-SIMZ760101</td>
+          <th>9</th>
+          <td>TMD_C_JMD_C-Pattern(C,4,8)-JURD980101</td>
           <td>Polarity</td>
           <td>Hydrophobicity</td>
-          <td>Transfer free energy (TFE) to outside</td>
-          <td>Transfer free energy (Simon, 1976), Cited by C...</td>
-          <td>0.225</td>
-          <td>0.161307</td>
-          <td>-0.161307</td>
-          <td>0.192235</td>
-          <td>0.212741</td>
-          <td>1.036749e-04</td>
-          <td>3.042894e-04</td>
-          <td>9,12,15</td>
-        </tr>
-        <tr>
-          <th>99</th>
-          <td>JMD_N_TMD_N-Pattern(C,3,6)-TANS770102</td>
-          <td>Conformation</td>
-          <td>α-helix (C-term, out)</td>
-          <td>α-helix (C-terminal, outside)</td>
-          <td>Normalized frequency of isolated helix (Tanaka...</td>
-          <td>0.224</td>
-          <td>0.108020</td>
-          <td>-0.108020</td>
-          <td>0.133731</td>
-          <td>0.139419</td>
-          <td>1.143783e-04</td>
-          <td>3.272494e-04</td>
-          <td>15,18</td>
+          <td>Hydrophobicity</td>
+          <td>Modified Kyte-Doolittle hydrophobicity scale (...</td>
+          <td>0.329</td>
+          <td>0.264720</td>
+          <td>-0.264720</td>
+          <td>0.141666</td>
+          <td>0.233134</td>
+          <td>1.480000e-08</td>
+          <td>1.425259e-06</td>
+          <td>33,37</td>
         </tr>
       </tbody>
     </table>
-    <p>100 rows × 13 columns</p>
     </div>
 
 
@@ -1182,21 +684,23 @@ Which can be again used for machine learning:
     warnings.simplefilter(action='ignore', category=FutureWarning)
     import matplotlib.pyplot as plt
     import pandas as pd
-    X = sf.feat_matrix(df_parts=df_parts, df_scales=df_scales, features=df_feat["feature"])
-    # ML evaluation
+    
+    X = sf.feat_matrix(df_parts=df_parts, features=df_feat["feature"])
     rf = RandomForestClassifier()
     cv = cross_val_score(rf, X, y, scoring="accuracy", cv=5, n_jobs=1) 
     print(f"Mean accuracy of {round(np.mean(cv), 2)}")
+    
     aa.plot_settings(font_scale=1.1)
     sns.barplot(pd.DataFrame({"Baseline": cv_base, "CPP": cv}), palette=["tab:blue", "tab:red"])
     plt.ylabel("Mean accuracy", size=aa.plot_gcfs()+1)
+    plt.ylim(0, 1)
     sns.despine()
     plt.show()
 
 
 .. parsed-literal::
 
-    Mean accuracy of 0.95
+    Mean accuracy of 0.9
 
 
 
