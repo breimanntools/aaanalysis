@@ -6,7 +6,7 @@ import seaborn as sns
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import aaanalysis.utils as ut
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Dict, Optional
 import warnings
 
 LIST_FONTS = ['Arial', 'Avant Garde',
@@ -410,75 +410,95 @@ def plot_gcfs():
     return font_size
 
 # TODO check, interface, doc, test
-def plot_set_legend(ax=None, handles=None, dict_color=None, list_cat=None, labels=None, y=-0.2, x=0.5, ncol=3,
-                    fontsize=11, weight="normal", lw=0, edgecolor=None, return_handles=False, loc="upper left",
-                    labelspacing=0.2, columnspacing=1, title=None, fontsize_legend=None, title_align_left=True,
-                    fontsize_weight="normal", shape=None, **kwargs):
+
+def plot_set_legend(ax: Optional[plt.Axes] = None,
+                    handles: Optional[List] = None,
+                    dict_color: Optional[Dict[str, str]] = None,
+                    list_cat: Optional[List[str]] = None,
+                    labels: Optional[List[str]] = None,
+                    y: Optional[int] = None,
+                    x: Optional[int] = None,
+                    ncol: int = 3,
+                    fontsize: Optional[int] = None,
+                    weight: str = "normal",
+                    lw: float = 0,
+                    edgecolor: Optional[str] = None,
+                    return_handles: bool = False,
+                    loc: str = "upper left",
+                    labelspacing: float = 0.2,
+                    columnspacing: int = 1,
+                    title: Optional[str] = None,
+                    fontsize_legend: Optional[int] = None,
+                    title_align_left: bool = True,
+                    fontsize_weight: str = "normal",
+                    shape: Optional[str] = None,
+                    **kwargs) -> Union[plt.Axes, Tuple[List, List[str]]]:
     """
     Set a customizable legend for a plot.
 
     Parameters
     ----------
-    ax : matplotlib.axes.Axes, default=None
-        The axes to attach the legend to.
-    handles : list, default=None
-        Handles for legend items.
-    dict_color : dict, default=None
+    ax
+        The axes to attach the legend to. If not provided, the current axes will be used.
+    handles
+        Handles for legend items. If not provided, they will be generated based on `dict_color` and `list_cat`.
+    dict_color
         A dictionary mapping categories to colors.
-    list_cat : list, default=None
+    list_cat
         List of categories to include in the legend.
-    labels : list, default=None
+    labels
         Labels for legend items.
-    y : float, default=-0.2
+    y
         The y-coordinate for the legend's anchor point.
-    x : float, default=0.5
+    x
         The x-coordinate for the legend's anchor point.
-    ncol : int, default=3
+    ncol
         Number of columns in the legend.
-    fontsize : int, default=11
+    fontsize
         Font size for the legend text.
-    weight : str, default='normal'
+    weight
         Weight of the font.
-    lw : float, default=0
+    lw
         Line width for legend items.
-    edgecolor : color, default=None
+    edgecolor
         Edge color for legend items.
-    return_handles : bool, default=False
-        Whether to return handles and labels.
-    loc : str, default='upper left'
+    return_handles
+        Whether to return handles and labels. If `True`, function returns `handles, labels` instead of the axes.
+    loc
         Location for the legend.
-    labelspacing : float, default=0.2
+    labelspacing
         Vertical spacing between legend items.
-    columnspacing : int, default=1
+    columnspacing
         Horizontal spacing between legend columns.
-    title : str, default=None
+    title
         Title for the legend.
-    fontsize_legend : int, default=None
+    fontsize_legend
         Font size for the legend title.
-    title_align_left : bool, default=True
+    title_align_left
         Whether to align the title to the left.
-    fontsize_weight : str, default='normal'
+    fontsize_weight
         Font weight for the legend title.
-    shape : str, default=None
-        Marker shape for legend items.
-    **kwargs : dict
-        Additional arguments passed directly to ax.legend() for finer control.
+    shape
+        Marker shape for legend items. Refer to `matplotlib.lines.Line2D` for available shapes.
 
     Returns
     -------
-    ax : matplotlib.axes.Axes
-        The axes with the legend applied.
-
-    See Also
-    --------
-    matplotlib.pyplot.legend : For additional details on how the 'loc' parameter can be customized.
-    matplotlib.lines.Line2D : For additional details on the different types of marker shapes ('shape' parameter).
+    ax
+        The axes with the legend applied. If `return_handles=True`, it returns handles and labels instead.
 
     Examples
     --------
     >>> import aaanalysis as aa
     >>> aa.plot_set_legend(ax=ax, dict_color={'Cat1': 'red', 'Cat2': 'blue'}, shape='o')
+
+    See Also
+    --------
+    matplotlib.pyplot.legend
+        For additional details on how the 'loc' parameter can be customized.
+    matplotlib.lines.Line2D
+        For details on the different types of marker shapes ('shape' parameter).
     """
+
     # Check input
     if ax is None:
         ax = plt.gca()
@@ -487,37 +507,36 @@ def plot_set_legend(ax=None, handles=None, dict_color=None, list_cat=None, label
                   "columnspacing": columnspacing}
     for key in args_float:
         ut.check_float(name=key, val=args_float[key])
-    ut.check_non_negative_number(name="ncol", val=ncol, min_val=1, just_int=True, accept_none=False)
-    ut.check_non_negative_number(name="ncol", val=ncol, min_val=0, just_int=False, accept_none=True)
+    ut.check_non_negative_number(name="ncol", val=ncol, min_val=1, just_int=True, accept_none=True)
     ut.check_bool(name="return_handles", val=return_handles)
     ut.check_bool(name="title_align_left", val=title_align_left)
 
     # TODO check other args
-    # Prepare the legend handles
-    dict_leg = {cat: dict_color[cat] for cat in list_cat}
-    # Generate function for legend markers based on provided shape
-    if shape is None:
-        if edgecolor is None:
-            f = lambda l, c: mpl.patches.Patch(facecolor=l, label=c, lw=lw, edgecolor=l)
-        else:
-            f = lambda l, c: mpl.patches.Patch(facecolor=l, label=c, lw=lw, edgecolor=edgecolor)
-    else:
-        f = lambda l, c: plt.Line2D([0], [0], marker=shape, color='w', markerfacecolor=l, markersize=10, label=c)
-    # Create handles if not provided
-    handles = [f(l, c) for c, l in dict_leg.items()] if handles is None else handles
+    # Function to create legend markers
+    def create_marker(color, category):
+        if shape is None:
+            args = {'facecolor': color, 'label': category, 'lw': lw}
+            if edgecolor:
+                args['edgecolor'] = edgecolor
+            return mpl.patches.Patch(**args)
+        return plt.Line2D([0], [0], marker=shape, color='w', markerfacecolor=color, markersize=10, label=category)
+
+    # Generate legend items if not provided
+    if not handles and dict_color and list_cat:
+        handles = [create_marker(dict_color[cat], cat) for cat in list_cat]
+
     # Return handles and labels if required
     if return_handles:
-        return handles, labels
-    # Prepare labels and args
-    if labels is None:
-        labels = list(dict_leg.keys())
+        return handles, labels if labels else list_cat
+    # Set up legend properties
+    labels = labels or list_cat
     args = dict(prop={"weight": weight, "size": fontsize}, **kwargs)
-    if fontsize_legend is not None:
+    if fontsize_legend:
         args["title_fontproperties"] = {"weight": fontsize_weight, "size": fontsize_legend}
     # Create the legend
     legend = ax.legend(handles=handles, labels=labels, bbox_to_anchor=(x, y), ncol=ncol, loc=loc,
                        labelspacing=labelspacing, columnspacing=columnspacing, borderpad=0, **args, title=title)
-    # Align the title if required
+    # Align title if needed
     if title_align_left:
         legend._legend_box.align = "left"
     return ax

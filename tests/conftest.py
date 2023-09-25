@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 
 import aaanalysis as aa
-from aaanalysis import SequenceFeature
 import tests._utils as ut
 
 
@@ -36,13 +35,13 @@ def df_scales():
 
 @pytest.fixture(scope="module")
 def df_parts(df_seq):
-    sf = SequenceFeature()
+    sf = aa.SequenceFeature()
     return sf.get_df_parts(df_seq=df_seq)
 
 
 @pytest.fixture(scope="module")
 def split_kws():
-    sf = SequenceFeature()
+    sf = aa.SequenceFeature()
     return sf.get_split_kws()
 
 
@@ -144,7 +143,7 @@ def corrupted_df_scales(request):
 
 
 def _corrupted_split_kws():
-    sf = SequenceFeature()
+    sf = aa.SequenceFeature()
     split_kws = sf.get_split_kws()
     kws1 = split_kws.copy()
     kws1["test"] = 1
@@ -168,7 +167,7 @@ def corrupted_split_kws(request):
 
 def _corrupted_df_parts():
     df_seq = aa.load_dataset(name="DOM_GSEC")
-    sf = SequenceFeature()
+    sf = aa.SequenceFeature()
     df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=True)
     df1 = pd.concat([df_parts, df_parts], axis=0)
     df2 = pd.concat([df_parts, df_parts], axis=1)

@@ -8,6 +8,7 @@ from hypothesis import given, settings
 import hypothesis.strategies as some
 
 import aaanalysis as aa
+import aaanalysis.data_loader.load_scales_
 
 
 # I Unit Tests
@@ -361,7 +362,7 @@ def test_sequence_feature(list_splits):
     df_seq = aa.load_dataset()
     # Get feature components
     df_parts = sf.get_df_parts(df_seq=df_seq, all_parts=False)
-    df_scales = aa.load_scales()
+    df_scales = aaanalysis.data_loader.load_scales_.load_scales()
     split_kws = sf.get_split_kws()
     # Get features (names, values, matrix)
     features = sf.get_features()[0:100]

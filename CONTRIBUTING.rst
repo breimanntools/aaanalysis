@@ -282,45 +282,26 @@ For reviewing your code's logic, ensuring conciseness, and promoting clarity, tr
 .. code-block:: none
 
     "
-    Analyze and evaluate the provided TARGET CODE to ensure it adheres to best coding practices and is free from logical errors.
+    Review the TARGET CODE for adherence to coding practices.
 
     Inputs:
     TARGET CODE:
     - START OF CODE
     -------------------------------------
-    your code
+    [your code here]
     -------------------------------------
     - END OF CODE
 
-    **Key Directive**: Identify vulnerabilities, inefficiencies, and areas of improvement. This is crucial.
+    Key Areas:
+    1. Syntax issues (not formatting).
+    2. Logic and Flow anomalies.
+    3. Missing or inadequate Error Handling.
+    4. Other improvement areas (readability, hard-coded values, etc.)
 
-    Requirements:
-
-    1. Syntax and Formatting:
-    - Ensure consistent indentation and formatting throughout.
-    - Use meaningful variable and function names.
-    - Avoid hard-coded values; suggest constants or configuration inputs if necessary.
-
-    2. Logic and Flow:
-    - Confirm that the logic flows correctly and efficiently.
-    - Identify any potential issues like infinite loops, off-by-one errors, or misused conditions.
-
-    3. Error Handling:
-    - Suggest robust error handling mechanisms.
-    - Highlight potential areas where exceptions might arise and are not currently handled.
-
-    4. General Guidelines:
-    - Suggest improvements for readability and maintainability.
-    - Do not leave any placeholders like "TODO", "Fix this", "Add ..." without suggestions.
-    - Offer potential refactorings if they simplify the code without losing clarity.
-
-    Output Expectations:
-    - Detailed feedback on the TARGET CODE with line references.
-    - Suggestions for improvements and potential refactorings.
-    - Highlighted vulnerabilities and their proposed resolutions.
+    Expected Output:
+    - Concise bullet-pointed feedback.
+    - A complete, improved version of the function addressing all identified issues.
     "
-
-
 
 Interface optimization
 ----------------------
@@ -335,7 +316,7 @@ To enhance the public interface or signature of your functions and classes, empl
     TARGET FUNCTION:
     - START OF CODE
     -------------------------------------
-    your code
+    [your code here]
     -------------------------------------
     - END OF CODE
 
@@ -381,7 +362,7 @@ or a custom  testing template:
     TARGET FUNCTION:
     - START OF CODE
     -------------------------------------
-    your code
+    [your code here]
     -------------------------------------
     - END OF CODE
 

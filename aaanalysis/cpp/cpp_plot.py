@@ -7,6 +7,7 @@ import seaborn as sns
 import inspect
 
 import aaanalysis
+import aaanalysis.data_loader.load_scales_
 from aaanalysis.cpp._cpp import CPPPlots, get_optimal_fontsize
 
 import aaanalysis.utils as ut
@@ -230,7 +231,7 @@ class CPPPlot:
 
         ut.check_bool(name="verbose", val=verbose)
         if df_cat is None:
-            df_cat = aaanalysis.load_scales(name=ut.COL_SCALE_ID)
+            df_cat = aaanalysis.data_loader.load_scales_.load_scales(name=ut.COL_SCALE_ID)
             self.df_cat = df_cat
         self._verbose = verbose
         self._accept_gaps = accept_gaps

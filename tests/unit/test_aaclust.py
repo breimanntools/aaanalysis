@@ -7,6 +7,7 @@ import numpy as np
 from sklearn.cluster import AgglomerativeClustering, KMeans
 
 import aaanalysis as aa
+import aaanalysis.data_loader.load_scales_
 from aaanalysis.aaclust.aaclust import get_min_cor, estimate_lower_bound_n_clusters, \
     optimize_n_clusters, merge_clusters, AAclust
 
@@ -36,8 +37,8 @@ def get_feat_matrix(df_cat=None, df_scales=None, unclassified_in=True, return_co
 
 def get_data():
     """"""
-    df_cat = aa.load_scales(name="scales_cat")
-    df_scales = aa.load_scales(name="scales")
+    df_cat = aaanalysis.data_loader.load_scales_.load_scales(name="scales_cat")
+    df_scales = aaanalysis.data_loader.load_scales_.load_scales(name="scales")
     X, scales = get_feat_matrix(df_cat=df_cat.copy(),
                                 df_scales=df_scales.copy(),
                                 unclassified_in=True)
