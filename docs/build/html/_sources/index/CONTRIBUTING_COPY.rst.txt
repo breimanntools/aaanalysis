@@ -380,7 +380,7 @@ or a custom  testing template:
     1. Normal Cases Test Class:
     - Name: 'Test[TARGET FUNCTION NAME]'.
     - Objective: Test EACH parameter *INDIVIDUALLY*.
-    - Tests: For EACH parameter, at least 10 positive and 10 negative tests.
+    - Tests: Test EACH parameter, at least 10 positive and 10 negative tests for this class.
 
     2. Complex Cases Test Class:
     - Name: 'Test[TARGET FUNCTION NAME]Complex'.

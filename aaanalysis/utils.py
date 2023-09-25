@@ -11,6 +11,7 @@ import numpy as np
 from aaanalysis._utils._utils_check import (check_number_range, check_number_val,
                                             check_str, check_bool,
                                             check_dict, check_tuple,
+                                            check_ax,
                                             check_feat_matrix, check_col_in_df)
 from aaanalysis._utils._utils_output import (print_red, print_start_progress, print_progress, print_finished_progress)
 from aaanalysis._utils.utils_aaclust import (check_model, check_min_th, check_merge_metric,

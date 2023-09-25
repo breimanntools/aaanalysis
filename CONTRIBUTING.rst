@@ -380,7 +380,7 @@ or a custom  testing template:
     1. Normal Cases Test Class:
     - Name: 'Test[TARGET FUNCTION NAME]'.
     - Objective: Test EACH parameter *INDIVIDUALLY*.
-    - Tests: For EACH parameter, at least 10 positive and 10 negative tests.
+    - Tests: Test EACH parameter, at least 10 positive and 10 negative tests for this class.
 
     2. Complex Cases Test Class:
     - Name: 'Test[TARGET FUNCTION NAME]Complex'.
@@ -400,3 +400,7 @@ or a custom  testing template:
 
     Reminder: In Normal Cases, it's crucial to test parameters individually.
     "
+
+You can run this prompt multiple times or ask to continue. After copy-pasting all results into
+your final testing script. Copy this script and provide it to ChatGPT with the prompt to remove
+redundancy and to make it more concise.

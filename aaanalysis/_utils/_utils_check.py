@@ -6,6 +6,18 @@ import pandas as pd
 
 
 # Type checking functions
+def check_number_val(name=None, val=None, accept_none=False, just_int=False):
+    """Check if value is float"""
+    if just_int is None:
+        raise ValueError("'just_int' must be specified")
+    if accept_none and val is None:
+        return None
+    valid_types = (int,) if just_int else (float, int)
+    type_description = "int" if just_int else "float or int"
+    if not isinstance(val, valid_types):
+        raise ValueError(f"'{name}' ({val}) should be {type_description})")
+
+
 def check_number_range(name=None, val=None, min_val=0, max_val=None, accept_none=False, just_int=None):
     """Check if value of given name is within defined range"""
     if just_int is None:
@@ -24,22 +36,8 @@ def check_number_range(name=None, val=None, min_val=0, max_val=None, accept_none
         raise ValueError(error)
 
 
-def check_number_val(name=None, val=None, accept_none=False, just_int=False):
-    """Check if value is float"""
-    check_types = [int] if just_int else [float, int]
-    if accept_none and val is None:
-        return None
-    if type(val) not in [float, int]:
-        error = f"'{name}' ({val}) should be float"
-        if not just_int:
-            error += " or int."
-        else:
-            error += "."
-        raise ValueError(error)
-
-
 def check_str(name=None, val=None, accept_none=False):
-    """"""
+    """Check type string"""
     if accept_none and val is None:
         return None
     if not isinstance(val, str):
@@ -47,37 +45,39 @@ def check_str(name=None, val=None, accept_none=False):
 
 
 def check_bool(name=None, val=None):
-    """"""
-    if type(val) != bool:
+    """Check if the provided value is a boolean."""
+    if not isinstance(val, bool):
         raise ValueError(f"'{name}' ({val}) should be bool.")
 
 
 def check_dict(name=None, val=None, accept_none=False):
-    """"""
-    error = f"'{name}' ('{val}') should be a dictionary"
-    if accept_none:
-        error += " or None."
-    else:
-        error += "."
+    """Check if the provided value is a dictionary."""
     if accept_none and val is None:
         return None
     if not isinstance(val, dict):
+        error = f"'{name}' ({val}) should be a dictionary"
+        error += " or None." if accept_none else "."
         raise ValueError(error)
 
 
-def check_tuple(name=None, val=None, n=None):
+def check_tuple(name=None, val=None, n=None, check_n=True):
     """"""
-    error = f"'{name}' ('{val}') should be a tuple"
-    if n is not None:
-        error += f" with {n} elements."
-    else:
-        error += "."
     if not isinstance(val, tuple):
-        raise ValueError(error)
-    if n is not None and len(val) != n:
-        raise ValueError(error)
+        raise ValueError(f"'{name}' ({val}) should be a tuple.")
+    if check_n and n is not None and len(val) != n:
+        raise ValueError(f"'{name}' ({val}) should be a tuple with {n} elements.")
 
 
+# Check special types
+def check_ax(ax=None, accept_none=False):
+    """"""
+    import matplotlib.axes
+    if accept_none and ax is None:
+        return None
+    if not isinstance(ax, matplotlib.axes.Axes):
+        raise ValueError(f"'ax' (type={type(ax)}) should be mpl.axes.Axes or None.")
+
+# TODO check these functions if used
 # Array checking functions
 def check_feat_matrix(X=None, names=None, labels=None):
     """Transpose matrix and check if X and y match (y can be labels or names). Transpose back otherwise """
