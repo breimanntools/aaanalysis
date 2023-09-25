@@ -127,7 +127,8 @@ We utilize `pytest <https://docs.pytest.org/en/7.4.x/>`_ and `hypothesis <https:
 
   pytest
 
-This will execute all the test cases in the tests/ directory.
+This will execute all the test cases in the tests/ directory. Check out our
+`README on testing <https://github.com/breimanntools/aaanalysis/blob/master/tests/README_TESTING>`_.
 
 
 Pull Requests
@@ -235,12 +236,15 @@ See our reference order here (exceptions confirm the rules):
 
 .. image :: /_artwork/diagrams/ref_order.png
 
-The :ref:`API <api>` showcases **Docstrings** for our public objects and functions. Within these docstrings, scientific
-:ref:`References <references>` may be mentioned in their extended sections. For additional links in docstrings,
-use the *See Also* section in this order:  :ref:`Usage Principles <usage_principles>`, :ref:`Tables <tables>`,
-:ref:`Tutorials <tutorials>`. Only include **External library** references when absolutely necessary. Note that the
-Usage Principles documentation is open for direct linking to References, Tutorials, and Tables, which can as well
-include links to References.
+The `API <https://aaanalysis.readthedocs.io/en/latest/api.html>`_ showcases **Docstrings** for our public objects
+and functions. Within these docstrings, scientific
+`References <https://aaanalysis.readthedocs.io/en/latest/index/references.html>`_
+may be mentioned in their extended sections. For additional links in docstrings, use the *See Also* section in this order:
+`Usage Principles <https://aaanalysis.readthedocs.io/en/latest/api.html>`_,
+`Tables <https://aaanalysis.readthedocs.io/en/latest/index/tables.html>`_,
+`Tutorials <https://aaanalysis.readthedocs.io/en/latest/tutorials.html>`_. Only include **External library** references
+when absolutely necessary. Note that the Usage Principles documentation is open for direct linking to References,
+Tutorials, and Tables, which can as well include links to References.
 
 Building the Docs
 -----------------
