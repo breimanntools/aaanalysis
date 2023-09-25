@@ -4,6 +4,7 @@ This is a script for testing the aa.plot_get_cmap function.
 from hypothesis import given, strategies as st
 import pytest
 import aaanalysis as aa
+import aaanalysis.plotting.plot_get_cmap_
 import aaanalysis.utils as ut
 
 

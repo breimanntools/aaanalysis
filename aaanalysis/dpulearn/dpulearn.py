@@ -66,7 +66,7 @@ def _check_labels(labels=None, verbose=False, label_pos=None):
 
 def _check_n_neg(labels=None, n_neg=None, label_pos=None, label_neg=None):
     """"""
-    ut.check_non_negative_number(name='n_neg', val=n_neg, min_val=1, just_int=True)
+    ut.check_number_range(name='n_neg', val=n_neg, min_val=1, just_int=True)
     if sum([x == label_neg for x in labels]) > 0:
         raise ValueError(f"'labels' should not contain labels for negatives ({label_neg})")
     n_pos = sum([x == label_pos for x in labels])

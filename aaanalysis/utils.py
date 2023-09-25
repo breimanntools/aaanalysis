@@ -8,7 +8,8 @@ import pandas as pd
 import numpy as np
 
 # Import utility functions explicitly
-from aaanalysis._utils._utils_check import (check_non_negative_number, check_float, check_str, check_bool,
+from aaanalysis._utils._utils_check import (check_number_range, check_number_val,
+                                            check_str, check_bool,
                                             check_dict, check_tuple,
                                             check_feat_matrix, check_col_in_df)
 from aaanalysis._utils._utils_output import (print_red, print_start_progress, print_progress, print_finished_progress)
@@ -183,8 +184,8 @@ def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     if seq_in_df and not parts_in_df:
         if seq_info_in_df:
             for entry, start, stop in zip(df_seq[COL_ENTRY], df_seq[COL_TMD_START], df_seq[COL_TMD_STOP]):
-                check_non_negative_number(name=f"tmd_start [{entry}]", val=start, just_int=True)
-                check_non_negative_number(name=f"tmd_start [{entry}]", val=stop, just_int=True)
+                check_number_range(name=f"tmd_start [{entry}]", val=start, just_int=True)
+                check_number_range(name=f"tmd_start [{entry}]", val=stop, just_int=True)
             tmd_start = [int(x) for x in df_seq[COL_TMD_START]]
             tmd_stop = [int(x) for x in df_seq[COL_TMD_STOP]]
         else:

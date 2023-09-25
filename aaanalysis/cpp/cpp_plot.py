@@ -41,8 +41,8 @@ def check_normalize(normalize=True):
 # Check for plotting methods
 def check_args_size(seq_size=None, tmd_jmd_fontsize=None):
     """Check if sequence size parameters match"""
-    ut.check_non_negative_number(name="seq_size", val=seq_size, min_val=0, accept_none=True, just_int=False)
-    ut.check_non_negative_number(name="tmd_jmd_fontsize", val=tmd_jmd_fontsize, min_val=0, accept_none=True, just_int=False)
+    ut.check_number_range(name="seq_size", val=seq_size, min_val=0, accept_none=True, just_int=False)
+    ut.check_number_range(name="tmd_jmd_fontsize", val=tmd_jmd_fontsize, min_val=0, accept_none=True, just_int=False)
     args_size = dict(seq_size=seq_size, tmd_jmd_fontsize=tmd_jmd_fontsize)
     return args_size
 
@@ -50,9 +50,9 @@ def check_args_size(seq_size=None, tmd_jmd_fontsize=None):
 def check_args_xtick(xtick_size=None, xtick_width=None, xtick_length=None):
     """Check if x tick parameters non-negative float"""
     args = dict(accept_none=True, just_int=False, min_val=0)
-    ut.check_non_negative_number(name="xtick_size", val=xtick_size, **args)
-    ut.check_non_negative_number(name="xtick_width", val=xtick_width, **args)
-    ut.check_non_negative_number(name="xtick_length", val=xtick_length, **args)
+    ut.check_number_range(name="xtick_size", val=xtick_size, **args)
+    ut.check_number_range(name="xtick_width", val=xtick_width, **args)
+    ut.check_number_range(name="xtick_length", val=xtick_length, **args)
     args_xtick = dict(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
     return args_xtick
 
@@ -60,9 +60,9 @@ def check_args_xtick(xtick_size=None, xtick_width=None, xtick_length=None):
 def check_args_ytick(ytick_size=None, ytick_width=None, ytick_length=None):
     """Check if y tick parameters non-negative float"""
     args = dict(accept_none=True, just_int=False, min_val=1)
-    ut.check_non_negative_number(name="ytick_size", val=ytick_size, **args)
-    ut.check_non_negative_number(name="ytick_width", val=ytick_width, **args)
-    ut.check_non_negative_number(name="ytick_length", val=ytick_length, **args)
+    ut.check_number_range(name="ytick_size", val=ytick_size, **args)
+    ut.check_number_range(name="ytick_width", val=ytick_width, **args)
+    ut.check_number_range(name="ytick_length", val=ytick_length, **args)
     args_ytick = dict(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
     return args_ytick
 
@@ -86,8 +86,8 @@ def check_seq_color(tmd_seq_color=None, jmd_seq_color=None):
 def check_figsize(figsize=None):
     """"""
     ut.check_tuple(name="figsize", val=figsize, n=2)
-    ut.check_non_negative_number(name="figsize:width", val=figsize[0], min_val=1, just_int=False)
-    ut.check_non_negative_number(name="figsize:height", val=figsize[1], min_val=1, just_int=False)
+    ut.check_number_range(name="figsize:width", val=figsize[0], min_val=1, just_int=False)
+    ut.check_number_range(name="figsize:height", val=figsize[1], min_val=1, just_int=False)
 
 
 def check_dict_color(dict_color=None, df_cat=None):
@@ -124,8 +124,8 @@ def check_parameters(func=None, name_called_func=None, e=None):
 # Check heatmap plotting
 def check_vmin_vmax(vmin=None, vmax=None):
     """Check if number of cmap colors is valid with given value range"""
-    ut.check_float(name="vmin", val=vmin, accept_none=True, just_float=False)
-    ut.check_float(name="vmax", val=vmax, accept_none=True, just_float=False)
+    ut.check_number_val(name="vmin", val=vmin, accept_none=True, just_int=False)
+    ut.check_number_val(name="vmax", val=vmax, accept_none=True, just_int=False)
     if vmin is not None and vmax is not None and vmin >= vmax:
         raise ValueError(f"'vmin' ({vmin}) < 'vmax' ({vmax}) not fulfilled.")
 
@@ -144,10 +144,9 @@ def check_ylabel_fontweight(ylabel_fontweight=None, accept_none=True):
     if accept_none and ylabel_fontweight is None:
         return
     name = "ylabel_fontweight"
-    args = dict(name=name, val=ylabel_fontweight)
     list_weights = ['light', 'medium', 'bold']
     if type(ylabel_fontweight) in [float, int]:
-        ut.check_non_negative_number(**args, min_val=0, max_val=1000, just_int=False)
+        ut.check_number_range(name=name, val=ylabel_fontweight, min_val=0, max_val=1000, just_int=False)
     elif isinstance(ylabel_fontweight, str):
         if ylabel_fontweight not in list_weights:
             error = f"'{name}' ({ylabel_fontweight}) should be one of following: {list_weights}"
@@ -360,9 +359,9 @@ class CPPPlot:
         # Checking input
         # Args checked by Matplotlib: title, legend_kws
         # Args checked by internal plotting functions: ylim
-        ut.check_non_negative_number(name="bar_width", val=bar_width, min_val=0, just_int=False)
-        ut.check_non_negative_number(name="start", val=start, min_val=0, just_int=True)
-        ut.check_non_negative_number(name="tmd_area_alpha", val=highlight_alpha, min_val=0, max_val=1, just_int=False)
+        ut.check_number_range(name="bar_width", val=bar_width, min_val=0, just_int=False)
+        ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
+        ut.check_number_range(name="tmd_area_alpha", val=highlight_alpha, min_val=0, max_val=1, just_int=False)
         ut.check_bool(name="add_jmd_tmd", val=add_jmd_tmd)
         ut.check_bool(name="highlight_tmd_area", val=highlight_tmd_area)
         ut.check_bool(name="grid", val=grid)
@@ -578,9 +577,9 @@ class CPPPlot:
 
         # Checking input
         # Args checked by Matplotlib: title, cmap, cbar_kws, legend_kws
-        ut.check_non_negative_number(name="start", val=start, min_val=0, just_int=True)
-        ut.check_non_negative_number(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
-        ut.check_non_negative_number(name="cmap_n_colors", val=cmap_n_colors, min_val=1, accept_none=True, just_int=True)
+        ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
+        ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
+        ut.check_number_range(name="cmap_n_colors", val=cmap_n_colors, min_val=1, accept_none=True, just_int=True)
         ut.check_bool(name="add_jmd_tmd", val=add_jmd_tmd)
         ut.check_bool(name="add_legend_cat", val=add_legend_cat)
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)

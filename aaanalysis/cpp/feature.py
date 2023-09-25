@@ -62,7 +62,7 @@ def check_split_int_args(kwargs_int=None):
     """Check type of given arguments"""
     for arg in kwargs_int:
         arg_val = kwargs_int[arg]
-        ut.check_non_negative_number(name=arg, val=arg_val, just_int=False)
+        ut.check_number_range(name=arg, val=arg_val, just_int=False)
 
 
 def check_split_list_args(kwargs_list=None, accept_none=True):
@@ -385,7 +385,7 @@ class SequenceFeature:
         feat_matrix: array-like or sparse matrix, shape (n_samples, n_features)
             Feature values of samples.
         """
-        ut.check_non_negative_number(name="j_jobs", val=n_jobs, accept_none=True, min_val=1, just_int=True)
+        ut.check_number_range(name="j_jobs", val=n_jobs, accept_none=True, min_val=1, just_int=True)
         if df_scales is None:
             df_scales = aaanalysis.data_loader.load_scales_.load_scales()
         ut.check_df_scales(df_scales=df_scales)
@@ -607,10 +607,10 @@ class SequenceFeature:
         """
         # TODO add sequence, generalize check functions for tmd_len ...
         features = ut.check_features(features=features)
-        ut.check_non_negative_number(name="tmd_len", val=tmd_len, just_int=True, min_val=1)
+        ut.check_number_range(name="tmd_len", val=tmd_len, just_int=True, min_val=1)
         args = dict(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len, start=start)
         for name in args:
-            ut.check_non_negative_number(name=name, val=args[name], just_int=True, min_val=0)
+            ut.check_number_range(name=name, val=args[name], just_int=True, min_val=0)
         sfp = SequenceFeaturePositions()
         dict_part_pos = sfp.get_dict_part_pos(tmd_len=tmd_len, **args)
         feat_positions = sfp.get_positions(dict_part_pos=dict_part_pos, features=features)

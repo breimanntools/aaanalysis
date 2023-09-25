@@ -18,7 +18,7 @@ def check_top60_n(name=None, top60_n=None):
     """Check if name is valid and top60_n is between 1 and 60"""
     if top60_n is None:
         return
-    ut.check_non_negative_number(name="top60_n", val=top60_n, min_val=1, max_val=60, just_int=True)
+    ut.check_number_range(name="top60_n", val=top60_n, min_val=1, max_val=60, just_int=True)
     matching_scale_sets = [ut.STR_SCALES, ut.STR_SCALE_CAT, ut.STR_SCALES_RAW]
     if name not in matching_scale_sets:
         raise ValueError(f"'name' ('{name}') is not valid for 'top60_n' ({top60_n})."

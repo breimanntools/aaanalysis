@@ -39,7 +39,7 @@ class SequenceFeaturePositions:
         -------
         dict_part_pos: dictionary with parts to positions of parts
         """
-        ut.check_non_negative_number(name="start", val=start, min_val=1, just_int=True)
+        ut.check_number_range(name="start", val=start, min_val=1, just_int=True)
         ut.check_args_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len)
         pa = Parts()
         jmd_n = list(range(0, jmd_n_len))

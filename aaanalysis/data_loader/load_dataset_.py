@@ -36,8 +36,8 @@ def check_name_of_dataset(name="INFO", folder_in=None):
 
 def check_min_max_val(min_len=None, max_len=None):
     """Check if min_val and max_val are valid and match"""
-    ut.check_non_negative_number(name="min_len", val=min_len, min_val=1, accept_none=True, just_int=True)
-    ut.check_non_negative_number(name="max_len", val=max_len, min_val=1, accept_none=True, just_int=True)
+    ut.check_number_range(name="min_len", val=min_len, min_val=1, accept_none=True, just_int=True)
+    ut.check_number_range(name="max_len", val=max_len, min_val=1, accept_none=True, just_int=True)
     if min_len is None or max_len is None:
         return
     if isinstance(min_len, int) and isinstance(max_len, int) and min_len > max_len:
@@ -55,7 +55,7 @@ def check_aa_window_size(aa_window_size=None):
     """Check if aa_window size is a positive odd integer"""
     if aa_window_size is None:
         return
-    ut.check_non_negative_number(name="aa_window_size", val=aa_window_size, min_val=1, just_int=True)
+    ut.check_number_range(name="aa_window_size", val=aa_window_size, min_val=1, just_int=True)
     if aa_window_size % 2 == 0:
         raise ValueError(f"'aa_window_size' ({aa_window_size}) must be an odd number.")
 
@@ -183,7 +183,7 @@ def load_dataset(name: str = "INFO",
     """
 
     check_name_of_dataset(name=name, folder_in=FOLDER_BENCHMARKS)
-    ut.check_non_negative_number(name="n", val=n, min_val=1, accept_none=True, just_int=True)
+    ut.check_number_range(name="n", val=n, min_val=1, accept_none=True, just_int=True)
     check_non_canonical_aa(non_canonical_aa=non_canonical_aa)
     check_min_max_val(min_len=min_len, max_len=max_len)
     check_aa_window_size(aa_window_size=aa_window_size)

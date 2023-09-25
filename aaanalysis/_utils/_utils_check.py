@@ -1,39 +1,37 @@
 """
-Utility check functions
+Basic utility check functions for type checking
 """
 from sklearn.utils import check_array, check_consistent_length
 import pandas as pd
 
 
 # Type checking functions
-def check_non_negative_number(name=None, val=None, min_val=0, max_val=None, accept_none=False,
-                              just_int=None):
-    """Check if value of given name variable is non-negative integer"""
+def check_number_range(name=None, val=None, min_val=0, max_val=None, accept_none=False, just_int=None):
+    """Check if value of given name is within defined range"""
     if just_int is None:
         raise ValueError("'just_int' must be specified")
-    check_types = [int] if just_int else [float, int]
-    str_check = "non-negative int" if just_int else "non-negative float or int"
-    add_str = f"n>={min_val}" if max_val is None else f"{min_val}<=n<={max_val}"
-    if accept_none:
-        add_str += " or None"
-    error = f"'{name}' ({val}) should be {str_check} n, with " + add_str
     if accept_none and val is None:
         return None
-    if type(val) not in check_types:
-        raise ValueError(error)
-    if val < min_val:
-        raise ValueError(error)
-    if max_val is not None and val > max_val:
+    valid_types = (int,) if just_int else (float, int)
+    type_description = "int" if just_int else "float or int"
+
+    # Verify the value's type and range
+    if not isinstance(val, valid_types) or val < min_val or (max_val is not None and val > max_val):
+        range_desc = f"n>={min_val}" if max_val is None else f"{min_val}<=n<={max_val}"
+        error = f"'{name}' ({val}) should be {type_description} in the range: {range_desc}"
+        if accept_none:
+            error += " or None"
         raise ValueError(error)
 
 
-def check_float(name=None, val=None, accept_none=False, just_float=True):
+def check_number_val(name=None, val=None, accept_none=False, just_int=False):
     """Check if value is float"""
+    check_types = [int] if just_int else [float, int]
     if accept_none and val is None:
         return None
     if type(val) not in [float, int]:
         error = f"'{name}' ({val}) should be float"
-        if not just_float:
+        if not just_int:
             error += " or int."
         else:
             error += "."
