@@ -16,7 +16,7 @@ pd.set_option('expand_frame_repr', False)  # Single line print for pd.Dataframe
 
 # TODO simplify checks & interface (end-to-end check with tests & docu)
 # TODO plot_functions test & refactor (end-to-end)
-
+# TODO use decorator for redudant signatures (https://github.com/scverse/scanpy/blob/master/scanpy/preprocessing/_qc.py)
 
 # I Helper Functions
 def check_value_type(val_type=None, count_in=True):

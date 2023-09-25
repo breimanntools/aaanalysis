@@ -31,7 +31,7 @@ class TestLoadScales:
 
     def test_load_scales_unclassified_in(self):
         """Test the 'unclassified_in' parameter."""
-        df = aa.load_scales(unclassified_in=True)
+        df = aa.load_scales(unclassified_out=True)
         assert isinstance(df, DataFrame)
 
     @settings(deadline=1000)
@@ -64,24 +64,24 @@ class TestLoadScalesComplex:
     # Positive tests
     def test_load_scales_both_filters(self):
         """Test both 'just_aaindex' and 'unclassified_in' together."""
-        df = aa.load_scales(just_aaindex=True, unclassified_in=True)
+        df = aa.load_scales(just_aaindex=True, unclassified_out=True)
         assert isinstance(df, DataFrame)
 
     def test_load_scales_all_params(self):
         """Test all parameters together."""
-        df = aa.load_scales(name="scales", just_aaindex=True, unclassified_in=True, top60_n=10)
+        df = aa.load_scales(name="scales", just_aaindex=True, unclassified_out=True, top60_n=10)
         assert isinstance(df, DataFrame)
 
     def test_load_scales_name_and_filters(self):
         """Test 'name' with 'just_aaindex' and 'unclassified_in' together."""
-        df = aa.load_scales(name="scales_cat", just_aaindex=True, unclassified_in=False)
+        df = aa.load_scales(name="scales_cat", just_aaindex=True, unclassified_out=False)
         assert isinstance(df, DataFrame)
 
     # Negative tests
     def test_load_scales_invalid_combination(self):
         """Test with all invalid parameters."""
         with pytest.raises(ValueError):
-            aa.load_scales(name="scales_cat", just_aaindex=True, unclassified_in=False, top60_n=-5)
+            aa.load_scales(name="scales_cat", just_aaindex=True, unclassified_out=False, top60_n=-5)
 
     def test_invalid_complex_scenario_1(self):
         """Test a complex combination of parameters."""
@@ -95,14 +95,14 @@ class TestLoadScalesVeryComplex:
     # Positive tests
     def test_load_scales_all_filters_with_top60(self):
         """Test all filters ('just_aaindex', 'unclassified_in', 'top60_n')."""
-        df = aa.load_scales(just_aaindex=True, unclassified_in=False, top60_n=5)
+        df = aa.load_scales(just_aaindex=True, unclassified_out=False, top60_n=5)
         assert isinstance(df, DataFrame)
 
     # Negative tests
     def test_load_scales_invalid_all_filters(self):
         """Test with all invalid filters."""
         with pytest.raises(ValueError):
-            aa.load_scales(name="scales_cat", just_aaindex=True, unclassified_in=False, top60_n=100)
+            aa.load_scales(name="scales_cat", just_aaindex=True, unclassified_out=False, top60_n=100)
 
     def test_invalid_very_complex_scenario_1(self):
         """Test a very complex scenario with extreme values."""
@@ -112,7 +112,7 @@ class TestLoadScalesVeryComplex:
     def test_invalid_very_complex_scenario_2(self):
         """Test a very complex scenario with conflicting parameters."""
         with pytest.raises(ValueError):
-            aa.load_scales(name="some_name", top60_n=-100, unclassified_in="yes")
+            aa.load_scales(name="some_name", top60_n=-100, unclassified_out="yes")
 
     def test_invalid_very_complex_scenario_3(self):
         """Test a very complex scenario with both invalid and out-of-bounds values."""

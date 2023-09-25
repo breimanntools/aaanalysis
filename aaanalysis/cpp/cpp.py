@@ -315,7 +315,13 @@ class CPP(Tool):
             print(f"4. CPP returns df with {len(df_feat)} unique features including general information and statistics")
         return df_feat
 
+    # TODO get evaluation for any dataset for compelete
+    """
     @staticmethod
     def eval(df_feat=None, features=None):
-        """Get evaluation for provided dataset"""
-        # TODO get evaluation for any dataset for compelete
+    """
+    # TODO filter based on correlation of features
+    """
+    @staticmethod
+    def filter_corr(df_parts=None, df_feat=None, max_corr=None):
+    """

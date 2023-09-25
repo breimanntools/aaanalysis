@@ -1,5 +1,5 @@
 """
-This is a script for ...
+This is a script for the plotting class of dPULearn.
 """
 import time
 import pandas as pd
@@ -14,18 +14,18 @@ pd.set_option('expand_frame_repr', False)  # Single line print for pd.Dataframe
 
 
 # II Main Functions
+class dPULearnPlot:
+    """"""
+    def __int__(self):
+        pass
+
+    @staticmethod
+    def eval():
+        """Plot eval output of dPULearn (n per component)"""
+
+    @staticmethod
+    def components(df_seq=None, x="PC1", y="PC2", show_mean_x=False, show_mean_y=False):
+        """Plot PC map for PC analysis """
 
 
-# III Test/Caller Functions
 
-
-# IV Main
-def main():
-    t0 = time.time()
-
-    t1 = time.time()
-    print("Time:", t1 - t0)
-
-
-if __name__ == "__main__":
-    main()

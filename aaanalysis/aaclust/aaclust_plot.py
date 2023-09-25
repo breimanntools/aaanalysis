@@ -1,5 +1,5 @@
 """
-This is a script for ...
+This is a script for the plotting class of AAclust.
 """
 import time
 import pandas as pd
@@ -14,17 +14,16 @@ pd.set_option('expand_frame_repr', False)  # Single line print for pd.Dataframe
 
 
 # II Main Functions
+class AAclustPlot:
+    """"""
+    def __int__(self):
+        pass
 
-# III Test/Caller Functions
+    @staticmethod
+    def eval():
+        """Plot eval output of dPULearn (n per component)"""
 
+    @staticmethod
+    def eval_cat(df_seq=None):
+        """Plot donut plot for proportion of categories"""
 
-# IV Main
-def main():
-    t0 = time.time()
-
-    t1 = time.time()
-    print("Time:", t1 - t0)
-
-
-if __name__ == "__main__":
-    main()

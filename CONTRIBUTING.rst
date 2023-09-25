@@ -368,7 +368,9 @@ To enhance the public interface or signature of your functions and classes, empl
 
 Testing
 -------
-For generating efficient tests with extensive coverage and considering edge cases, utilize the prompt template below:
+Generate efficient tests with extensive coverage and considering edge cases using the prompt template below,
+utilizing `our <https://github.com/breimanntools/aaanalysis/blob/master/tests/unit/data_loader_tests/test_load_dataset.py>`_
+or a custom  testing template:
 
 .. code-block:: none
 

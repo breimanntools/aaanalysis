@@ -121,13 +121,13 @@ def post_check_df_seq(df_seq=None, n=None, name=None, n_match=True):
 
 
 # Helper functions for load_scales
-def _filter_scales(df_cat=None, unclassified_in=False, just_aaindex=False):
+def _filter_scales(df_cat=None, unclassified_out=False, just_aaindex=False):
     """Filter scales for unclassified and aaindex scales"""
     list_ids_not_in_aaindex = [x for x in df_cat[ut.COL_SCALE_ID] if "LINS" in x or "KOEH" in x]
     list_ids_unclassified = [x for x, cat, sub_cat in zip(df_cat[ut.COL_SCALE_ID], df_cat[ut.COL_CAT], df_cat[ut.COL_SUBCAT])
                              if "Unclassified" in sub_cat or cat == "Others"]
     list_ids_to_exclude = []
-    if not unclassified_in:
+    if unclassified_out:
         list_ids_to_exclude.extend(list_ids_unclassified)
     if just_aaindex:
         list_ids_to_exclude.extend(list_ids_not_in_aaindex)
@@ -269,7 +269,7 @@ def load_dataset(name: str = "INFO",
 # Load scales
 def load_scales(name: str = "scales",
                 just_aaindex: bool = False,
-                unclassified_in: bool = True,
+                unclassified_out: bool = False,
                 top60_n: Optional[int] = None
                 ) -> DataFrame:
     """
@@ -289,8 +289,8 @@ def load_scales(name: str = "scales",
         Name of the loaded dataset: 'scales', 'scales_raw', 'scales_cat', 'scales_pc', 'top60', 'top60_eval'.
     just_aaindex
         If True, returns only scales from AAindex. Relevant only for 'scales', 'scales_raw', or 'scales_cat'.
-    unclassified_in
-        Determines inclusion of unclassified scales. Relevant only for 'scales', 'scales_raw', or 'scales_cat'.
+    unclassified_out
+        Determines exclusion of unclassified scales. Relevant only for 'scales', 'scales_raw', or 'scales_cat'.
     top60_n
          Select the n-th scale set from top60 sets and return it for 'scales', 'scales_raw', or 'scales_cat'.
 
@@ -326,7 +326,7 @@ def load_scales(name: str = "scales",
     """
     check_name_of_scale(name=name)
     ut.check_bool(name="just_aaindex", val=just_aaindex)
-    ut.check_bool(name="unclassified_in", val=unclassified_in)
+    ut.check_bool(name="unclassified_in", val=unclassified_out)
     check_top60_n(name=name, top60_n=top60_n)
 
     # Load and filter top60 scales
@@ -344,7 +344,7 @@ def load_scales(name: str = "scales",
             raise ValueError(f"Wrong 'name' ('{name}') for 'top60_n")
 
     # Load unfiltered data
-    if unclassified_in and not just_aaindex:
+    if not unclassified_out and not just_aaindex:
         if name == ut.STR_SCALE_CAT:
             df_cat = ut.read_excel_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.xlsx")
             return df_cat
@@ -353,7 +353,7 @@ def load_scales(name: str = "scales",
 
     # Load and filter scale categories
     df_cat = ut.read_excel_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.xlsx")
-    df_cat = _filter_scales(df_cat=df_cat, unclassified_in=unclassified_in, just_aaindex=just_aaindex)
+    df_cat = _filter_scales(df_cat=df_cat, unclassified_out=unclassified_out, just_aaindex=just_aaindex)
     if name == ut.STR_SCALE_CAT:
         return df_cat.reset_index(drop=True)
 
