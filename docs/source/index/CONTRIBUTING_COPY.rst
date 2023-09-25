@@ -240,7 +240,7 @@ The `API <https://aaanalysis.readthedocs.io/en/latest/api.html>`_ showcases **Do
 and functions. Within these docstrings, scientific
 `References <https://aaanalysis.readthedocs.io/en/latest/index/references.html>`_
 may be mentioned in their extended sections. For additional links in docstrings, use the *See Also* section in this order:
-`Usage Principles <https://aaanalysis.readthedocs.io/en/latest/api.html>`_,
+`Usage Principles <https://aaanalysis.readthedocs.io/en/latest/index/usage_principles.html>`_,
 `Tables <https://aaanalysis.readthedocs.io/en/latest/index/tables.html>`_,
 `Tutorials <https://aaanalysis.readthedocs.io/en/latest/tutorials.html>`_. Only include **External library** references
 when absolutely necessary. Note that the Usage Principles documentation is open for direct linking to References,
