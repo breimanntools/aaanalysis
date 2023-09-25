@@ -9,12 +9,6 @@ import aaanalysis.utils as ut
 from typing import List, Union, Tuple
 import warnings
 
-STR_CMAP_CPP = "CPP"
-STR_CMAP_SHAP = "SHAP"
-STR_CMAP_TAB = "TAB"
-STR_DICT_COLOR = "DICT_COLOR"
-STR_DICT_CAT = "DICT_CAT"
-
 LIST_FONTS = ['Arial', 'Avant Garde',
               'Bitstream Vera Sans', 'Computer Modern Sans Serif',
               'DejaVu Sans', 'Geneva',
@@ -22,7 +16,7 @@ LIST_FONTS = ['Arial', 'Avant Garde',
               'Lucida Grande', 'Verdana']
 
 
-# Helper functions
+# I Helper functions
 # Check plot_settings
 def check_font(font="Arial"):
     """"""
@@ -132,9 +126,10 @@ def _get_cmap_with_gap(n_colors=100, pct_gap=10, pct_center=None,
     return cmap
 
 
-# Default plotting function
+# II Main functions
+# Plotting colors
 def plot_get_cmap(name: str = "CPP",
-                  n_colors: int = 100,
+                  n_colors: int = 101,
                   facecolor_dark: bool = False
                   ) -> Union[List[Tuple[float, float, float]], List[str]]:
     """
@@ -147,17 +142,17 @@ def plot_get_cmap(name: str = "CPP",
 
          - ``CPP``: Continuous color map for CPP plots.
          - ``SHAP``: Continuous color map for CPP-SHP plots.
-         - ``TAB``: List of Tableau (tab) colors for appealing visualization of categories.
+         - ``CAT``: Color list for appealing visualization of categories.
 
     n_colors
-        Number of colors in the color map. Must be >=2 for 'CPP' and 'SHAP' and 2-9 for 'TAB'.
+        Number of colors in the color map. Must be >=2 for 'CPP' and 'SHAP' and 2-9 for 'CAT'.
     facecolor_dark
         Whether central color in 'CPP' and 'SHAP' is black (if ``True``) or white.
 
     Returns
     -------
     list
-        List with colors given as RGB tuples (for 'CPP' and 'SHAP') or matplotlib color names (for 'TAB').
+        List with colors given as RGB tuples (for 'CPP' and 'SHAP') or matplotlib color names (for 'CAT').
 
     Examples
     --------
@@ -167,7 +162,7 @@ def plot_get_cmap(name: str = "CPP",
         >>> import matplotlib.pyplot as plt
         >>> import seaborn as sns
         >>> import aaanalysis as aa
-        >>> colors = aa.plot_get_cmap(name="TAB", n_colors=4)
+        >>> colors = aa.plot_get_cmap(name="CAT", n_colors=4)
         >>> data = {'Classes': ['Class A', 'Class B', 'Class C', "Class D"], 'Values': [23, 27, 43, 38]}
         >>> aa.plot_settings(no_ticks_x=True, font_scale=1.2)
         >>> sns.barplot(x='Classes', y='Values', data=data, palette=colors)
@@ -181,19 +176,19 @@ def plot_get_cmap(name: str = "CPP",
     * `Matplotlib color names <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
     """
     # Check input
-    list_names = [STR_CMAP_CPP, STR_CMAP_SHAP, STR_CMAP_TAB]
+    list_names = [ut.STR_CMAP_CPP, ut.STR_CMAP_SHAP, ut.STR_CMAP_CAT]
     if name not in list_names:
         raise ValueError(f"'name' must be one of following: {list_names}")
     ut.check_bool(name="facecolor_dark", val=facecolor_dark)
 
     # Get color maps
-    if name == STR_CMAP_SHAP:
+    if name == ut.STR_CMAP_SHAP:
         ut.check_non_negative_number(name="n_colors", val=n_colors, min_val=3, just_int=True)
         return _get_shap_cmap(n_colors=n_colors, facecolor_dark=facecolor_dark)
-    elif name == STR_CMAP_CPP:
+    elif name == ut.STR_CMAP_CPP:
         ut.check_non_negative_number(name="n_colors", val=n_colors, min_val=3, just_int=True)
         return _get_cpp_cmap(n_colors=n_colors, facecolor_dark=facecolor_dark)
-    elif name == STR_CMAP_TAB:
+    elif name == ut.STR_CMAP_CAT:
         ut.check_non_negative_number(name="n_colors", val=n_colors, min_val=2, max_val=9, just_int=True)
         return _get_tab_color(n_colors=n_colors)
 
@@ -221,15 +216,16 @@ def plot_get_cdict(name: str = "DICT_COLOR") -> dict:
     >>> dict_color = aa.plot_get_cdict(name="DICT_COLOR")
 
     """
-    list_names = [STR_DICT_COLOR, STR_DICT_CAT]
+    list_names = [ut.STR_DICT_COLOR, ut.STR_DICT_CAT]
     if name not in list_names:
         raise ValueError(f"'name' must be one of following: {list_names}")
-    if name == STR_DICT_COLOR:
+    if name == ut.STR_DICT_COLOR:
         return ut.DICT_COLOR
     else:
         return ut.DICT_COLOR_CAT
 
-# TODO test
+
+# Plotting adjuster
 def plot_settings(font_scale: float = 1,
                   font: str = "Arial",
                   fig_format: str = "pdf",
@@ -310,7 +306,7 @@ def plot_settings(font_scale: float = 1,
         >>> import seaborn as sns
         >>> import aaanalysis as aa
         >>> data = {'Classes': ['Class A', 'Class B', 'Class C'], 'Values': [23, 27, 43]}
-        >>> colors = aa.plot_get_cmap(name="TAB", n_colors=3)
+        >>> colors = aa.plot_get_cmap(name="CAT", n_colors=3)
         >>> aa.plot_settings()
         >>> sns.barplot(x='Classes', y='Values', data=data, palette=colors)
         >>> sns.despine()

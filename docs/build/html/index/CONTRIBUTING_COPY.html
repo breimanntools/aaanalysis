@@ -6,12 +6,12 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="index/CONTRIBUTING_COPY.html" />
 <meta property="og:site_name" content="AAanalysis" />
-<meta property="og:description" content="Introduction, Vision, Bug Reports, Installation, Pull Requests, Documentation. Introduction: Welcome and thank you for considering a contribution to AAanalysis! We are an open-source project focusi..." />
+<meta property="og:description" content="Introduction, Vision, Bug Reports, Installation, Pull Requests, Documentation, Use ChatGPT!. Introduction: Welcome and thank you for considering a contribution to AAanalysis! We are an open-source ..." />
 <meta property="og:image:width" content="1146" />
 <meta property="og:image:height" content="600" />
-<meta property="og:image" content="/_images/social_previews/summary_index_CONTRIBUTING_COPY_330fa982.png" />
-<meta property="og:image:alt" content="Introduction, Vision, Bug Reports, Installation, Pull Requests, Documentation. Introduction: Welcome and thank you for considering a contribution to AAanalys..." />
-<meta name="description" content="Introduction, Vision, Bug Reports, Installation, Pull Requests, Documentation. Introduction: Welcome and thank you for considering a contribution to AAanalysis! We are an open-source project focusi..." />
+<meta property="og:image" content="/_images/social_previews/summary_index_CONTRIBUTING_COPY_f2a77e8f.png" />
+<meta property="og:image:alt" content="Introduction, Vision, Bug Reports, Installation, Pull Requests, Documentation, Use ChatGPT!. Introduction: Welcome and thank you for considering a contributi..." />
+<meta name="description" content="Introduction, Vision, Bug Reports, Installation, Pull Requests, Documentation, Use ChatGPT!. Introduction: Welcome and thank you for considering a contribution to AAanalysis! We are an open-source ..." />
 <meta name="twitter:card" content="summary_large_image" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -98,6 +98,12 @@
 <li class="toctree-l3"><a class="reference internal" href="#building-the-docs">Building the Docs</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#use-chatgpt">Use ChatGPT!</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#code-checking">Code checking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#interface-optimization">Interface optimization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#testing">Testing</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -148,6 +154,7 @@
 <li><p><a class="reference internal" href="#installation" id="id5">Installation</a></p></li>
 <li><p><a class="reference internal" href="#pull-requests" id="id6">Pull Requests</a></p></li>
 <li><p><a class="reference internal" href="#documentation" id="id7">Documentation</a></p></li>
+<li><p><a class="reference internal" href="#use-chatgpt" id="id8">Use ChatGPT!</a></p></li>
 </ul>
 </nav>
 <section id="introduction">
@@ -366,6 +373,155 @@ make<span class="w"> </span>html
 <ul class="simple">
 <li><p>Open <cite>_build/html/index.html</cite> in a browser.</p></li>
 </ul>
+</section>
+</section>
+<section id="use-chatgpt">
+<h2><a class="toc-backref" href="#id8" role="doc-backlink">Use ChatGPT!</a><a class="headerlink" href="#use-chatgpt" title="Permalink to this heading"></a></h2>
+<p>Leverage the power of ChatGPT to optimize various facets of your software development process,
+including code checking, interface optimization, and effective testing.</p>
+<p>Simply use the templates provided below and fill in the blank spaces between
+<code class="docutils literal notranslate"><span class="pre">START</span> <span class="pre">OF</span> <span class="pre">CODE</span></code> and <code class="docutils literal notranslate"><span class="pre">END</span> <span class="pre">OF</span> <span class="pre">CODE</span></code> with the specifics of your task.</p>
+<p>Due to the token limit of ChatGPT, the answers might not be complete. Use this prompt to continue the answer of ChatGPT:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&quot;Continue from where you left off.&quot;
+</pre></div>
+</div>
+<section id="code-checking">
+<h3>Code checking<a class="headerlink" href="#code-checking" title="Permalink to this heading"></a></h3>
+<p>For reviewing your code’s logic, ensuring conciseness, and promoting clarity, try the following prompt:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&quot;
+Analyze and evaluate the provided TARGET CODE to ensure it adheres to best coding practices and is free from logical errors.
+
+Inputs:
+TARGET CODE:
+- START OF CODE
+-------------------------------------
+your code
+-------------------------------------
+- END OF CODE
+
+**Key Directive**: Identify vulnerabilities, inefficiencies, and areas of improvement. This is crucial.
+
+Requirements:
+
+1. Syntax and Formatting:
+- Ensure consistent indentation and formatting throughout.
+- Use meaningful variable and function names.
+- Avoid hard-coded values; suggest constants or configuration inputs if necessary.
+
+2. Logic and Flow:
+- Confirm that the logic flows correctly and efficiently.
+- Identify any potential issues like infinite loops, off-by-one errors, or misused conditions.
+
+3. Error Handling:
+- Suggest robust error handling mechanisms.
+- Highlight potential areas where exceptions might arise and are not currently handled.
+
+4. General Guidelines:
+- Suggest improvements for readability and maintainability.
+- Do not leave any placeholders like &quot;TODO&quot;, &quot;Fix this&quot;, &quot;Add ...&quot; without suggestions.
+- Offer potential refactorings if they simplify the code without losing clarity.
+
+Output Expectations:
+- Detailed feedback on the TARGET CODE with line references.
+- Suggestions for improvements and potential refactorings.
+- Highlighted vulnerabilities and their proposed resolutions.
+&quot;
+</pre></div>
+</div>
+</section>
+<section id="interface-optimization">
+<h3>Interface optimization<a class="headerlink" href="#interface-optimization" title="Permalink to this heading"></a></h3>
+<p>To enhance the public interface or signature of your functions and classes, employ the following prompt:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&quot;
+Review and suggest improvements for the interface of the given TARGET FUNCTION to enhance its usability, clarity, and integration capabilities.
+
+Inputs:
+TARGET FUNCTION:
+- START OF CODE
+-------------------------------------
+your code
+-------------------------------------
+- END OF CODE
+
+**Key Directive**: The interface should be intuitive, versatile, and easy for other developers to integrate and use.
+
+Requirements:
+
+1. Signature Clarity:
+- Ensure function/method names are descriptive and concise.
+- Parameters should have clear names and, if possible, default values that make sense.
+
+2. Documentation:
+- Suggest comprehensive docstrings for the function.
+- Propose comments for complex code blocks to aid understanding.
+
+3. Return Values and Types:
+- Advise on consistent return types, considering scenarios like error or null conditions.
+- Recommend clear naming for returned objects, especially if using data structures like dictionaries or tuples.
+
+4. General Guidelines:
+- Avoid overloading the interface with too many parameters; suggest alternatives if needed.
+- Consider common use cases and ensure they are easily achievable with the proposed interface.
+- The interface should promote good coding practices and be resistant to misuse.
+
+Output Expectations:
+- Feedback and suggestions on function/method signatures.
+- Proposed docstrings and comments.
+- Recommendations for ensuring a consistent and intuitive interface.
+&quot;
+</pre></div>
+</div>
+</section>
+<section id="testing">
+<h3>Testing<a class="headerlink" href="#testing" title="Permalink to this heading"></a></h3>
+<p>For generating efficient tests with extensive coverage and considering edge cases, utilize the prompt template below:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&quot;
+Generate test functions for a given TARGET FUNCTION using the style of the provided TESTING TEMPLATE.
+
+Inputs:
+TARGET FUNCTION:
+- START OF CODE
+-------------------------------------
+your code
+-------------------------------------
+- END OF CODE
+
+TESTING TEMPLATE:
+- START OF CODE
+-------------------------------------
+your code
+-------------------------------------
+- END OF CODE
+
+**Key Directive**: For the Normal Cases Test Class, EACH function MUST test ONLY ONE individual parameter of the TARGET FUNCTION using Hypothesis for property-based testing. This is crucial.
+
+Requirements:
+
+1. Normal Cases Test Class:
+- Name: &#39;Test[TARGET FUNCTION NAME]&#39;.
+- Objective: Test EACH parameter *INDIVIDUALLY*.
+- Tests: For EACH parameter, at least 10 positive and 10 negative tests.
+
+2. Complex Cases Test Class:
+- Name: &#39;Test[TARGET FUNCTION NAME]Complex&#39;.
+- Objective: Test combinations of the TARGET FUNCTION parameters.
+- Tests: At least 5 positive and 5 negative that intricately challenge the TARGET FUNCTION.
+
+3. General Guidelines:
+- Use Hypothesis for property-based testing, but test parameters individually for the Normal Cases Test Class .
+- Tests should be clear, concise, and non-redundant.
+- Do not leave any placeholders like &quot;TODO&quot;, &quot;Fill this&quot;, &quot;Add ...&quot; incomplete.
+- Expose potential issues in the TARGET FUNCTION.
+
+Output Expectations:
+- Two test classes: one for normal cases (individual parameters) and one for complex cases (combinations).
+- In Normal Cases, one function = one parameter tested.
+- Total: at least 30 unique tests, 150+ lines of code.
+
+Reminder: In Normal Cases, it&#39;s crucial to test parameters individually.
+&quot;
+</pre></div>
+</div>
 </section>
 </section>
 </section>

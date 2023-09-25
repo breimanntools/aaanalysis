@@ -256,3 +256,160 @@ To generate the documentation locally:
   make html
 
 - Open `_build/html/index.html` in a browser.
+
+Use ChatGPT!
+============
+Leverage the power of ChatGPT to optimize various facets of your software development process,
+including code checking, interface optimization, and effective testing.
+
+Simply use the templates provided below and fill in the blank spaces between
+``START OF CODE`` and ``END OF CODE`` with the specifics of your task.
+
+Due to the token limit of ChatGPT, the answers might not be complete. Use this prompt to continue the answer of ChatGPT:
+
+.. code-block:: none
+
+    "Continue from where you left off."
+
+Code checking
+-------------
+For reviewing your code's logic, ensuring conciseness, and promoting clarity, try the following prompt:
+
+.. code-block:: none
+
+    "
+    Analyze and evaluate the provided TARGET CODE to ensure it adheres to best coding practices and is free from logical errors.
+
+    Inputs:
+    TARGET CODE:
+    - START OF CODE
+    -------------------------------------
+    your code
+    -------------------------------------
+    - END OF CODE
+
+    **Key Directive**: Identify vulnerabilities, inefficiencies, and areas of improvement. This is crucial.
+
+    Requirements:
+
+    1. Syntax and Formatting:
+    - Ensure consistent indentation and formatting throughout.
+    - Use meaningful variable and function names.
+    - Avoid hard-coded values; suggest constants or configuration inputs if necessary.
+
+    2. Logic and Flow:
+    - Confirm that the logic flows correctly and efficiently.
+    - Identify any potential issues like infinite loops, off-by-one errors, or misused conditions.
+
+    3. Error Handling:
+    - Suggest robust error handling mechanisms.
+    - Highlight potential areas where exceptions might arise and are not currently handled.
+
+    4. General Guidelines:
+    - Suggest improvements for readability and maintainability.
+    - Do not leave any placeholders like "TODO", "Fix this", "Add ..." without suggestions.
+    - Offer potential refactorings if they simplify the code without losing clarity.
+
+    Output Expectations:
+    - Detailed feedback on the TARGET CODE with line references.
+    - Suggestions for improvements and potential refactorings.
+    - Highlighted vulnerabilities and their proposed resolutions.
+    "
+
+
+
+Interface optimization
+----------------------
+To enhance the public interface or signature of your functions and classes, employ the following prompt:
+
+.. code-block:: none
+
+    "
+    Review and suggest improvements for the interface of the given TARGET FUNCTION to enhance its usability, clarity, and integration capabilities.
+
+    Inputs:
+    TARGET FUNCTION:
+    - START OF CODE
+    -------------------------------------
+    your code
+    -------------------------------------
+    - END OF CODE
+
+    **Key Directive**: The interface should be intuitive, versatile, and easy for other developers to integrate and use.
+
+    Requirements:
+
+    1. Signature Clarity:
+    - Ensure function/method names are descriptive and concise.
+    - Parameters should have clear names and, if possible, default values that make sense.
+
+    2. Documentation:
+    - Suggest comprehensive docstrings for the function.
+    - Propose comments for complex code blocks to aid understanding.
+
+    3. Return Values and Types:
+    - Advise on consistent return types, considering scenarios like error or null conditions.
+    - Recommend clear naming for returned objects, especially if using data structures like dictionaries or tuples.
+
+    4. General Guidelines:
+    - Avoid overloading the interface with too many parameters; suggest alternatives if needed.
+    - Consider common use cases and ensure they are easily achievable with the proposed interface.
+    - The interface should promote good coding practices and be resistant to misuse.
+
+    Output Expectations:
+    - Feedback and suggestions on function/method signatures.
+    - Proposed docstrings and comments.
+    - Recommendations for ensuring a consistent and intuitive interface.
+    "
+
+Testing
+-------
+For generating efficient tests with extensive coverage and considering edge cases, utilize the prompt template below:
+
+.. code-block:: none
+
+    "
+    Generate test functions for a given TARGET FUNCTION using the style of the provided TESTING TEMPLATE.
+
+    Inputs:
+    TARGET FUNCTION:
+    - START OF CODE
+    -------------------------------------
+    your code
+    -------------------------------------
+    - END OF CODE
+
+    TESTING TEMPLATE:
+    - START OF CODE
+    -------------------------------------
+    your code
+    -------------------------------------
+    - END OF CODE
+
+    **Key Directive**: For the Normal Cases Test Class, EACH function MUST test ONLY ONE individual parameter of the TARGET FUNCTION using Hypothesis for property-based testing. This is crucial.
+
+    Requirements:
+
+    1. Normal Cases Test Class:
+    - Name: 'Test[TARGET FUNCTION NAME]'.
+    - Objective: Test EACH parameter *INDIVIDUALLY*.
+    - Tests: For EACH parameter, at least 10 positive and 10 negative tests.
+
+    2. Complex Cases Test Class:
+    - Name: 'Test[TARGET FUNCTION NAME]Complex'.
+    - Objective: Test combinations of the TARGET FUNCTION parameters.
+    - Tests: At least 5 positive and 5 negative that intricately challenge the TARGET FUNCTION.
+
+    3. General Guidelines:
+    - Use Hypothesis for property-based testing, but test parameters individually for the Normal Cases Test Class .
+    - Tests should be clear, concise, and non-redundant.
+    - Do not leave any placeholders like "TODO", "Fill this", "Add ..." incomplete.
+    - Expose potential issues in the TARGET FUNCTION.
+
+    Output Expectations:
+    - Two test classes: one for normal cases (individual parameters) and one for complex cases (combinations).
+    - In Normal Cases, one function = one parameter tested.
+    - Total: at least 30 unique tests, 150+ lines of code.
+
+    Reminder: In Normal Cases, it's crucial to test parameters individually.
+    "

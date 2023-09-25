@@ -16,7 +16,7 @@ import aaanalysis.utils as ut
 # COL_FEAT_IMPACT = "feat_impact"
 
 # II Main Functions
-class Tree:
+class TreeModel:
     """A wrapper for Tree based prediction models and Tree explainer from SHAP package to
     explain prediction (typically binary classification) results at global and individual level"""
     def __init__(self, model=None):
@@ -32,7 +32,7 @@ class Tree:
         """"""
 
 
-class TreeSHAP:
+class ShapModel:
     """A wrapper for Tree explainer from SHAP package"""
     def __init__(self, model=None):
         """"""

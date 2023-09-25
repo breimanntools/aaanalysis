@@ -48,6 +48,8 @@ providing the following algorithms:
 Moreover, AAanalysis provides functions for loading protein benchmark datasets (**load_data**),
 amino acid scale sets (**load_scales**), and their in-depth two-level classification (**AAontology**).
 
+If you are only looking for making publication-ready plots easily, see our `Plotting Prelude <https://https://aaanalysis.readthedocs.io/en/latest/generated/plotting_prelude.htmll>`.
+
 Install
 =======
 **AAanalysis** can be installed either from `PyPi <https://pypi.org/project/aaanalysis>`_ or
@@ -61,14 +63,13 @@ Install
 
 Contributions
 =============
-
-We welcome bug reports, feature requests, or updates on documentations and code. For details, refer to our
-`CONTRIBUTING.rst <https://github.com/breimanntools/aaanalysis/blob/master/CONTRIBUTING.rst>`_.
-Please email stephanbreimann@gmail.com for further questions or suggestions?
+We appreciate bug reports, feature requests, or updates on documentation and code. For details, please refer to our
+`CONTRIBUTING.rst <https://github.com/breimanntools/aaanalysis/blob/master/CONTRIBUTING.rst>`_. This guide includes
+not only specifics related to  `AAanalysis`, but also general software development hacks such as handy ChatGPT prompts.
+For further questions or suggestions, please email stephanbreimann@gmail.com.
 
 Citations
 =========
-
 If you use 'AAanalysis' in your work, please cite the respective publication as follows:
 
 **AAclust**:
