@@ -63,9 +63,9 @@ Install
 
 Contributions
 =============
-We appreciate bug reports, feature requests, or updates on documentation and code. For details, please refer to our
+We appreciate bug reports, feature requests, or updates on documentation and code. For details, please refer to
 `CONTRIBUTING.rst <https://github.com/breimanntools/aaanalysis/blob/master/CONTRIBUTING.rst>`_. This guide includes
-not only specifics about `AAanalysis`, but also software development hacks such as ChatGPT prompts. For further questions
+not only specifics about `AAanalysis`, but also ChatGPT prompts for software development. For further questions
 or suggestions, please email stephanbreimann@gmail.com.
 
 Citations
