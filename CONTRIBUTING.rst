@@ -127,7 +127,7 @@ We utilize `pytest <https://docs.pytest.org/en/7.4.x/>`_ and `hypothesis <https:
 
   pytest
 
-This will execute all the test cases in the tests/ directory.
+This will execute all the test cases in the tests/ directory. Check out our `README on testing <https://github.com/breimanntools/aaanalysis/tree/master/tests/README_TESTING.txt>`.
 
 
 Pull Requests
