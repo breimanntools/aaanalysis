@@ -1,4 +1,4 @@
-Plotting prelude
+Plotting Prelude
 ================
 
 These are some of our utility plotting functions to make

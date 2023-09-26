@@ -155,27 +155,38 @@ def plot_settings(font_scale: float = 1,
     if show_options:
         print(plt.rcParams.keys)
 
-    # Set embedded fonts in PDF
+    # Set all values to matplotlib default
     mpl.rcParams.update(mpl.rcParamsDefault)
-    mpl.rcParams["pdf.fonttype"] = 42
 
     # Change only font style
     if adjust_only_font:
+        mpl.rcParams['pdf.fonttype'] = 42  # Set embedded fonts in PDF via TrueType
+        mpl.rcParams['ps.fonttype'] = 42
+        mpl.rcParams['svg.fonttype'] = 'none'
         plt.rcParams["font.family"] = "sans-serif"
         plt.rcParams["font.sans-serif"] = font
         return
 
     # Apply all changes
     sns.set_context("talk", font_scale=font_scale)
+
+    # Handle storing of vectorized figure format
+    mpl.rcParams['pdf.fonttype'] = 42  # Set embedded fonts in PDF via TrueType
+    mpl.rcParams['ps.fonttype'] = 42
+    mpl.rcParams['svg.fonttype'] = 'none'
+
     # Font settings
     plt.rcParams["font.family"] = "sans-serif"
     plt.rcParams["font.sans-serif"] = font
     font_settings = {'family': 'sans-serif', "weight": "bold"} if weight_bold else {'family': 'sans-serif'}
     mpl.rc('font', **font_settings)
+
     # Grid
     plt.rcParams["axes.grid.axis"] = grid_axis
     plt.rcParams["axes.grid"] = grid
     plt.rcParams["grid.linewidth"] = 1 if weight_bold else 0.8
+    plt.rcParams["axes.axisbelow"] = True
+
     # Adjust weight of text and lines
     if weight_bold:
         plt.rcParams["axes.labelweight"] = "bold"
@@ -209,11 +220,6 @@ def plot_settings(font_scale: float = 1,
         set_tick_size(axis="y", major_size=short_major_size, minor_size=short_minor_size)
     else:
         set_tick_size(axis="y", major_size=default_major_size, minor_size=default_minor_size)
-
-    # Handle storing of vectorized figure format
-    mpl.rcParams['pdf.fonttype'] = 42   # TrueType
-    mpl.rcParams['ps.fonttype'] = 42
-    mpl.rcParams['svg.fonttype'] = 'none'
 
     # Additional adjustments
     if adjust_further_elements:
