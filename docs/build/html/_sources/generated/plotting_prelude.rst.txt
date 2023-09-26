@@ -89,3 +89,4 @@ Retrieve the set font size and create an independent legend like this:
 
 .. image:: output_9_0.png
 
+
