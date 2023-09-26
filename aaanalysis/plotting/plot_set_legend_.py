@@ -27,7 +27,7 @@ def _check_validity(item, valid_items, item_name, list_cat):
         if item not in valid_items:
             raise ValueError(f"'{item_name}' ('{item}') must be one of following: {valid_items}")
         else:
-            return [item] * len(list_cat)
+            list_items = [item] * len(list_cat)
     else:
         wrong_items = [x for x in item if x not in valid_items]
         if len(wrong_items) != 0:
@@ -36,7 +36,8 @@ def _check_validity(item, valid_items, item_name, list_cat):
         if len(item) != len(list_cat):
             raise ValueError(f"Length must match of '{item_name}' ({item}) and categories ({list_cat}).")
         else:
-            return item
+            list_items = item
+    return list_items
 
 # Checking functios
 def check_list_cat(dict_color=None, list_cat=None):
@@ -50,15 +51,21 @@ def check_list_cat(dict_color=None, list_cat=None):
     # Check if lengths match
     if len(dict_color) != len(list_cat):
         raise ValueError(f"Length must match between 'list_cat' ({len(list_cat)}) and 'dict_colors' ({len(dict_color)}).")
+    if list_cat is None:
+        raise ValueError("'list_cat' was not set properly.")
+    return list_cat
 
 
 def check_labels(list_cat=None, labels=None):
     """"""
     if labels is None:
-        return list_cat
+        labels = list_cat
     # If list_cat is provided, check its length against labels
     if len(list_cat) != len(labels):
         raise ValueError(f"Length must match of 'labels' ({len(labels)}) and categories ({len(list_cat)}).")
+    if labels is None:
+        raise ValueError("'labels' was not set properly.")
+    return labels
 
 
 def check_marker(marker=None, list_cat=None, lw=0):
@@ -72,7 +79,7 @@ def check_marker(marker=None, list_cat=None, lw=0):
 def check_marker_size(marker_size=None, list_cat=None):
     """"""
     if isinstance(marker_size, (int, float)):
-        ut.check_number_val(name='marker_size', val=marker_size, accept_none=True, just_int=False)
+        ut.check_number_range(name='marker_size', val=marker_size, min_val=0, accept_none=True, just_int=False)
         marker_size = [marker_size] * len(list_cat)
         return marker_size
     elif marker_size is None:
@@ -80,7 +87,7 @@ def check_marker_size(marker_size=None, list_cat=None):
         return marker_size
     elif isinstance(marker_size, list):
         for i in marker_size:
-            ut.check_number_val(name='marker_size', val=i, accept_none=True, just_int=False)
+            ut.check_number_range(name='marker_size', val=i, min_val=0, accept_none=True, just_int=False)
         return marker_size
     elif isinstance(marker_size, list) and len(marker_size) != len(list_cat):
         raise ValueError(f"Length must match of 'marker_size' (marker_size) and categories ({list_cat}).")
@@ -104,18 +111,17 @@ def check_linestyle(marker_linestyle=None, list_cat=None):
 
 def check_hatches(marker=None, hatch=None, list_cat=None):
     """"""
-
     valid_hatches = ['/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*']
     # Check if hatch can be chosen
     if hatch is None:
-        return [None] * len(list_cat)
+        hatches = [None] * len(list_cat)
     if marker is not None:
         raise ValueError(f"'marker' ('{marker}') must be None if 'hatch' ('{hatch}') is given.")
     # Check if hatch is valid
     if isinstance(hatch, str):
         if hatch not in valid_hatches:
             raise ValueError(f"'hatch' ('{hatch}') must be one of following: {valid_hatches}")
-        return [hatch] * len(list_cat)
+        hatches = [hatch] * len(list_cat)
     # Check if hatch match with categories
     if isinstance(hatch, list):
         wrong_hatch = [x for x in hatch if x not in valid_hatches]
@@ -125,7 +131,12 @@ def check_hatches(marker=None, hatch=None, list_cat=None):
         if len(hatch) != len(list_cat):
             raise ValueError(f"Length must match of 'hatch' ({hatch}) and categories ({list_cat}).")
         else:
-            return hatch
+            hatches = hatch
+    else:
+        hatches = [None] * len(list_cat)
+    if not isinstance(hatches, list):
+        raise ValueError("'hutch' not set properly")
+    return hatches
 
 # Helper function
 def _create_marker(color, label, marker, marker_size, lw, edgecolor, linestyle, hatch):
@@ -230,7 +241,7 @@ def plot_set_legend(ax: Optional[plt.Axes] = None,
     fontsize_weight
         Font weight for the legend title.
     lw
-        Line width for legend items.
+        Line width for legend items. If negative, corners are rounded.
     edgecolor
         Edge color for legend items.
     marker
@@ -288,6 +299,7 @@ def plot_set_legend(ax: Optional[plt.Axes] = None,
     ut.check_dict(name="dict_color", val=dict_color, accept_none=False)
     list_cat = check_list_cat(dict_color=dict_color, list_cat=list_cat)
     labels = check_labels(list_cat=list_cat, labels=labels)
+
     hatch = check_hatches(marker=marker, hatch=hatch, list_cat=list_cat) # Must be before check_marker !
 
     marker = check_marker(marker=marker, list_cat=list_cat, lw=lw)
@@ -298,13 +310,15 @@ def plot_set_legend(ax: Optional[plt.Axes] = None,
     ut.check_bool(name="loc_out", val=loc_out)
 
     ut.check_number_range(name="ncol", val=ncol, min_val=1, accept_none=True, just_int=True)
-    args_float = {"x": x, "y": y,
-                  "labelspacing": labelspacing, "columnspacing": columnspacing,
-                  "handletextpad": handletextpad, "handlelength": handlelength,
-                  "fontsize": fontsize, "fontsize_legend": fontsize_title,
-                  "lw": lw}
-    for key in args_float:
-        ut.check_number_val(name=key, val=args_float[key], accept_none=True, just_int=False)
+    ut.check_number_val(name="x", val=x, accept_none=True, just_int=False)
+    ut.check_number_val(name="y", val=y, accept_none=True, just_int=False)
+    ut.check_number_val(name="lw", val=lw, accept_none=True, just_int=False)
+
+    args_non_neg = {"labelspacing": labelspacing, "columnspacing": columnspacing,
+                    "handletextpad": handletextpad, "handlelength": handlelength,
+                    "fontsize": fontsize, "fontsize_legend": fontsize_title}
+    for key in args_non_neg:
+        ut.check_number_range(name=key, val=args_non_neg[key], min_val=0, accept_none=True, just_int=False)
 
     # Remove existing legend
     if ax.get_legend() is not None and len(ax.get_legend().get_lines()) > 0:

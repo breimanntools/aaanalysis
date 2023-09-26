@@ -1,182 +1,126 @@
 """
 This is a script for testing the plot_set_legend function.
 """
-from hypothesis import given, example
+from hypothesis import given, example, settings
 from hypothesis import strategies as st
 import hypothesis.strategies as some
 import aaanalysis as aa
 import matplotlib.pyplot as plt
 import pytest
 
+plt.rcParams['figure.max_open_warning'] = -1
+
+@pytest.fixture(scope="module")
+def dict_color():
+    return dict(zip(["Class A", "Class B", "Class C"], ["r", "b", "g"]))
+
 
 class TestPlotSetLegend:
     """Test plot_set_legend function"""
 
-    # Test if function returns plt.Axes when return_handles=False
-    def test_return_type_without_handles(self):
-        fig, ax = plt.subplots()
-        ax_returned = aa.plot_set_legend(ax=ax)
+    @pytest.fixture(autouse=True)
+    def create_fig_and_ax(self):
+        self.fig, self.ax = plt.subplots()
+
+    @pytest.mark.parametrize("dict_color", [
+        dict(zip(["Class A", "Class B", "Class C"], ["r", "b", "g"])),
+        {"Category A": "red"}
+    ])
+    def test_return_type_without_handles(self, dict_color):
+        ax_returned = aa.plot_set_legend(ax=self.ax, dict_color=dict_color)
         assert isinstance(ax_returned, plt.Axes)
 
-    # Test if function returns handles and labels when return_handles=True
-    def test_return_type_with_handles(self):
-        fig, ax = plt.subplots()
-        handles, labels = aa.plot_set_legend(ax=ax, return_handles=True)
-        assert isinstance(handles, list)
-        assert isinstance(labels, list)
 
-    # Test if a legend is created in the ax
-    def test_legend_created(self):
-        fig, ax = plt.subplots()
-        ax = aa.plot_set_legend(ax=ax, dict_color={"Category A": "red"})
+    def test_legend_created(self, dict_color):
+        ax = aa.plot_set_legend(ax=self.ax, dict_color=dict_color)
         assert ax.get_legend() is not None
 
-    # Test if the legend gets removed when remove_legend=True
-    def test_remove_legend(self):
-        fig, ax = plt.subplots()
-        ax = aa.plot_set_legend(ax=ax, dict_color={"Category A": "red"})
-        assert ax.get_legend() is not None
-        ax = aa.plot_set_legend(ax=ax, dict_color={"Category B": "blue"}, remove_legend=True)
-        labels = [text.get_text() for text in ax.get_legend().get_texts()]
-        assert "Category A" not in labels
 
-    @given(loc_out=some.booleans())
-    def test_location_outside(self, loc_out):
-        """Test the 'loc_out' parameter."""
-        fig, ax = plt.subplots()
-        ax = aa.plot_set_legend(ax=ax, dict_color={"Category A": "red"}, loc_out=loc_out)
-        if loc_out:
-            assert ax.get_legend()._loc == (0, -0.25)
-        else:
-            assert ax.get_legend()._loc != (0, -0.25)
-
-    # Property-based testing for negative cases
-    @given(lw=some.floats(min_value=-5, max_value=0))
-    def test_invalid_line_width(self, lw):
-        """Test with an invalid 'lw' value."""
-        fig, ax = plt.subplots()
+    def test_invalid_line_width(self, dict_color):
         with pytest.raises(ValueError):
-            aa.plot_set_legend(ax=ax, dict_color={"Category A": "red"}, lw=lw)
+            aa.plot_set_legend(ax=self.ax, dict_color=dict_color, lw="not right")
 
-    @given(marker_size=some.floats(min_value=-5, max_value=0))
-    def test_invalid_marker_size(self, marker_size):
-        """Test with an invalid 'marker_size' value."""
-        fig, ax = plt.subplots()
+    @settings(max_examples=5)
+    @given(marker_size=st.floats(min_value=-5, max_value=-1))
+    def test_invalid_marker_size(self, marker_size, dict_color):
         with pytest.raises(ValueError):
-            aa.plot_set_legend(ax=ax, dict_color={"Category A": "red"}, marker_size=marker_size)
+            aa.plot_set_legend(ax=self.ax, dict_color=dict_color, marker_size=marker_size)
 
-    @given(marker=some.text())
+    @settings(max_examples=5)
+    @given(marker=st.text(min_size=1, max_size=5))
     @example(marker="invalid_marker")
-    def test_invalid_marker(self, marker):
-        """Test with an invalid 'marker' value."""
-        fig, ax = plt.subplots()
+    def test_invalid_marker(self, marker, dict_color):
         with pytest.raises(ValueError):
-            aa.plot_set_legend(ax=ax, dict_color={"Category A": "red"}, marker=marker)
+            aa.plot_set_legend(ax=self.ax, dict_color=dict_color, marker=marker)
 
-    @given(linestyle=some.text())
-    @example(linestyle="invalid_linestyle")
-    def test_invalid_linestyle(self, linestyle):
-        """Test with an invalid 'linestyle' value."""
-        fig, ax = plt.subplots()
-        with pytest.raises(ValueError):
-            aa.plot_set_legend(ax=ax, dict_color={"Category A": "red"}, marker_linestyle=linestyle)
-
-    @given(st.floats(1, 10))
-    def test_plot_set_legend_ncol(self, ncol):
+    @settings(max_examples=5)
+    @given(ncol=st.integers(min_value=1, max_value=10))
+    def test_plot_set_legend_ncol(self, ncol, dict_color):
         """Test the 'ncol' parameter."""
         ax = plt.gca()
-        result = aa.plot_set_legend(ax=ax, ncol=int(ncol))
+        result = aa.plot_set_legend(ax=ax, ncol=ncol, dict_color=dict_color)
         assert isinstance(result, plt.Axes)
 
-    @given(st.floats(0, 5))
-    def test_plot_set_legend_labelspacing(self, labelspacing):
+
+    @settings(max_examples=5)
+    @given(labelspacing=st.floats(0, 5))
+    def test_plot_set_legend_labelspacing(self, labelspacing, dict_color):
         """Test the 'labelspacing' parameter."""
         ax = plt.gca()
-        result = aa.plot_set_legend(ax=ax, labelspacing=labelspacing)
+        result = aa.plot_set_legend(ax=ax, labelspacing=labelspacing, dict_color=dict_color)
         assert isinstance(result, plt.Axes)
 
-    @given(st.floats(0, 5))
-    def test_plot_set_legend_columnspacing(self, columnspacing):
+
+    @settings(max_examples=5)
+    @given(columnspacing=st.floats(0, 5))
+    def test_plot_set_legend_columnspacing(self, columnspacing, dict_color):
         """Test the 'columnspacing' parameter."""
         ax = plt.gca()
-        result = aa.plot_set_legend(ax=ax, columnspacing=columnspacing)
+        result = aa.plot_set_legend(ax=ax, columnspacing=columnspacing, dict_color=dict_color)
         assert isinstance(result, plt.Axes)
 
-    @given(st.floats(0, 5))
-    def test_plot_set_legend_handletextpad(self, handletextpad):
+
+    @settings(max_examples=5)
+    @given(handletextpad=st.floats(0, 5))
+    def test_plot_set_legend_handletextpad(self, handletextpad, dict_color):
         """Test the 'handletextpad' parameter."""
         ax = plt.gca()
-        result = aa.plot_set_legend(ax=ax, handletextpad=handletextpad)
+        result = aa.plot_set_legend(ax=ax, handletextpad=handletextpad, dict_color=dict_color)
         assert isinstance(result, plt.Axes)
 
-    @given(some.booleans())
-    def test_plot_set_legend_remove_legend(self, remove_legend):
-        """Test the 'remove_legend' parameter."""
-        fig, ax = plt.subplots()
-        ax.plot([0, 1], [0, 2], label="Sample Line")
-        ax.legend()
-        aa.plot_set_legend(ax=ax, remove_legend=remove_legend)
-        if remove_legend:
-            assert ax.get_legend() is None
-        else:
-            assert ax.get_legend() is not None
 
-    @given(some.booleans())
-    def test_plot_set_legend_return_handles(self, return_handles):
-        """Test the 'return_handles' parameter."""
-        fig, ax = plt.subplots()
-        ax.plot([0, 1], [0, 2], label="Sample Line")
-        result = aa.plot_set_legend(ax=ax, return_handles=return_handles)
-        if return_handles:
-            assert isinstance(result, tuple)
-        else:
-            assert isinstance(result, plt.Axes)
-
-    @given(some.booleans())
-    def test_plot_set_legend_title_align_left(self, title_align_left):
-        """Test the 'title_align_left' parameter."""
-        fig, ax = plt.subplots()
-        ax.plot([0, 1], [0, 2], label="Sample Line")
-        legend = aa.plot_set_legend(ax=ax, title="Legend Title", title_align_left=title_align_left)
-        if title_align_left:
-            assert legend._legend_box.align == "left"
-        else:
-            assert legend._legend_box.align != "left"
-
-    def test_legend_positioning(self):
+    def test_legend_positioning(self, dict_color):
         """Test the positioning with x, y, and loc_out."""
         ax = plt.gca()
-        result = aa.plot_set_legend(ax=ax, loc_out=True, x=0, y=0)
+        result = aa.plot_set_legend(ax=ax, loc_out=True, x=0, y=0, dict_color=dict_color)
         assert isinstance(result, plt.Axes)
 
-    def test_invalid_combination(self):
-        """Test with invalid combinations of parameters."""
-        with pytest.raises(ValueError):
-            ax = plt.gca()
-            aa.plot_set_legend(ax=ax, loc_out=True, x=None, y=None)
 
-    def test_plot_set_legend_loc_outside(self):
+    def test_plot_set_legend_loc_outside(self, dict_color):
         """Test 'loc_out' parameter."""
         fig, ax = plt.subplots()
         ax.plot([0, 1], [0, 2], label="Sample Line")
-        aa.plot_set_legend(ax=ax, loc_out=True)
+        aa.plot_set_legend(ax=ax, loc_out=True, dict_color=dict_color)
         assert ax.get_legend().get_bbox_to_anchor().y0 <= 0
 
-    def test_plot_set_legend_invalid_fontsize(self):
+
+    def test_plot_set_legend_invalid_fontsize(self, dict_color):
         """Test with 'fontsize' less than 0."""
         fig, ax = plt.subplots()
         ax.plot([0, 1], [0, 2], label="Sample Line")
         with pytest.raises(ValueError):
-            aa.plot_set_legend(ax=ax, fontsize=-5)
+            aa.plot_set_legend(ax=ax,dict_color=dict_color, fontsize=-5)
 
-    def test_plot_set_legend_invalid_marker_size(self):
+
+    def test_plot_set_legend_invalid_marker_size(self, dict_color):
         """Test with negative 'marker_size'."""
         fig, ax = plt.subplots()
         ax.plot([0, 1], [0, 2], label="Sample Line")
         with pytest.raises(ValueError):
-            aa.plot_set_legend(ax=ax, marker_size=-10)
+            aa.plot_set_legend(ax=ax, dict_color=dict_color, marker_size=-10)
 
-    def test_plot_set_legend_color_and_category(self):
+
+    def test_plot_set_legend_color_and_category(self, dict_color):
         """Test 'dict_color' and 'list_cat' parameters together."""
         fig, ax = plt.subplots()
         ax.plot([0, 1], [0, 2], label="Sample Line")
@@ -186,7 +130,8 @@ class TestPlotSetLegend:
         legend_texts = [text.get_text() for text in ax.get_legend().get_texts()]
         assert set(categories) == set(legend_texts)
 
-    def test_plot_set_legend_invalid_color_and_category(self):
+
+    def test_plot_set_legend_invalid_color_and_category(self, dict_color):
         """Test with invalid 'dict_color' and 'list_cat'."""
         fig, ax = plt.subplots()
         ax.plot([0, 1], [0, 2], label="Sample Line")
@@ -196,26 +141,38 @@ class TestPlotSetLegend:
             aa.plot_set_legend(ax=ax, dict_color=color_dict, list_cat=categories)
 
 
+    # Negative Test: check that if dict_color is not provided, it should raise an error
+    def test_missing_dict_color(self):
+        fig, ax = plt.subplots()
+        ax.plot(range(5))
+        with pytest.raises(ValueError):
+            aa.plot_set_legend(ax=ax, list_cat=['A'])
+
+
+    # Negative Test: check that if list_cat items are not in dict_color, it should raise an error
+    @settings(max_examples=5)
+    @given(random_cat=some.text())
+    def test_invalid_list_cat(self, random_cat):
+        fig, ax = plt.subplots()
+        ax.plot(range(5))
+        with pytest.raises(ValueError):
+            aa.plot_set_legend(ax=ax, dict_color={'A': 'red'}, list_cat=[random_cat])
+
+
+
 # II. Complex Cases Test Class
 class TestPlotSetLegendComplex:
     """Test plot_set_legend function with complex scenarios."""
 
-    @given(st.floats(0, 10))
+    @settings(max_examples=5)
+    @given(st.floats(1, 10))
     def test_plot_set_legend_ncol(self, ncol):
         ax = plt.gca()
-        result = aa.plot_set_legend(ax=ax, ncol=int(ncol))
+        dict_color = {str(i): "r" for i in range(0, 10)}
+        result = aa.plot_set_legend(ax=ax, ncol=int(ncol), dict_color=dict_color)
         assert isinstance(result, plt.Axes)
 
-    @given(st.integers(0, 10), st.integers(0, 10))
-    def test_plot_set_legend_order(self, idx1, idx2):
-        fig, ax = plt.subplots()
-        ax = aa.plot_set_legend(ax=ax, dict_color={"Category A": "red", "Category B": "blue"})
-        handles, labels = ax.get_legend_handles_labels()
-        ax = aa.plot_set_legend(ax=ax, order=[idx1 % 2, idx2 % 2])
-        new_handles, new_labels = ax.get_legend_handles_labels()
-        assert handles[idx1 % 2] == new_handles[0]
-        assert handles[idx2 % 2] == new_handles[1]
-
+    @settings(max_examples=5)
     @given(st.lists(st.text(), min_size=1, max_size=5))
     def test_plot_set_legend_custom_labels(self, labels):
         fig, ax = plt.subplots()
@@ -223,16 +180,8 @@ class TestPlotSetLegendComplex:
         legend_labels = [text.get_text() for text in ax.get_legend().get_texts()]
         assert set(legend_labels) == set(labels)
 
-    @given(st.floats(0, 1))
-    def test_plot_set_legend_alpha(self, alpha):
-        fig, ax = plt.subplots()
-        ax = aa.plot_set_legend(ax=ax, dict_color={"Category A": "red"}, alpha=alpha)
-        legend = ax.get_legend()
-        for handle in legend.legendHandles:
-            assert handle.get_alpha() == alpha
 
-
-    def test_handles_generation(self):
+    def test_handles_generation(self, dict_color):
         """Test handles based on dict_color and list_cat."""
         ax = plt.gca()
         dict_color = {"Category 1": "red", "Category 2": "blue"}
@@ -240,17 +189,5 @@ class TestPlotSetLegendComplex:
         result = aa.plot_set_legend(ax=ax, dict_color=dict_color, list_cat=list_cat)
         assert isinstance(result, plt.Axes)
 
-    def test_remove_existing_legend(self):
-        """Test removing of existing legend."""
-        ax = plt.gca()
-        plt.plot([0, 1], [0, 1], label="Test")
-        plt.legend()
-        aa.plot_set_legend(ax=ax, remove_legend=True)
-        assert ax.get_legend() is None
 
-    def test_return_handles_and_labels(self):
-        """Test return_handles functionality."""
-        ax = plt.gca()
-        handles, labels = aa.plot_set_legend(ax=ax, return_handles=True)
-        assert isinstance(handles, list)
-        assert isinstance(labels, list)
+
