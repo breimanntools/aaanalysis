@@ -143,6 +143,32 @@ Documentation tools help you maintain project documentation.
 
 (Not applicable as Docstrings are inline comments; no bash commands.)
 
+### Sphinx directives
+
+    :mod: - Reference a Python module.
+    Example: :mod:`os` would link to the documentation for the os module.
+
+    :func: - Reference a Python function.
+    Example: :func:`print` would link to the documentation for the print function.
+
+    :data: - Reference a module-level variable.
+    Example: :data:`sys.path` would link to the documentation for the sys.path variable.
+
+    :const: - Reference a "constant". This can be any immutable primitive data type (like a string or number).
+    Example: :const:`True` would link to the documentation where the Python constant True is described.
+
+    :class: - Reference a Python class.
+    Example: :class:`matplotlib.axes.Axes` would link to the documentation for the Axes class in the matplotlib.axes module.
+
+    :meth: - Reference a method of a Python class.
+    Example: :meth:`str.split` would link to the documentation for the split method of the str class.
+
+    :attr: - Reference a class attribute.
+    Example: :attr:`Exception.args` would link to the documentation for the args attribute of the Exception class.
+
+    :exc: - Reference a Python exception.
+    Example: :exc:`ValueError` would link to the documentation for the ValueError exception.
+
 ---
 
 ## Continuous Integration/Continuous Deployment (CI/CD)

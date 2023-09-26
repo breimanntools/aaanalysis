@@ -25,7 +25,7 @@ def plot_gcfs():
         >>> aa.plot_settings()
         >>> sns.barplot(y='Classes', x='Values', data=data, palette=colors)
         >>> sns.despine()
-        >>> plt.title("Big Title (+4 bigger than rest)", size=aa.plot_gcfs()+4)
+        >>> plt.title("Two points bigger title", size=aa.plot_gcfs()+2)
         >>> plt.tight_layout()
         >>> plt.show()
 

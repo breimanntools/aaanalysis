@@ -304,7 +304,7 @@ def get_names_cluster(list_names=None, name_medoid=None, name_unclassified="Uncl
         names_cluster = [name_unclassified]
     return names_cluster
 
-
+# TODO check, interface, testing, simplifying (Remove functions if not needed)
 class AAclust:
     """
     AAclust: A k-optimized clustering framework for selecting redundancy-reduced set of numerical scales.

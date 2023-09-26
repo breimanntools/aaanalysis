@@ -18,10 +18,6 @@ class TestPlotSettings:
         aa.plot_settings(font="Verdana")
         assert "Verdana" in mpl.rcParams["font.sans-serif"]
 
-    def test_fig_format_pdf(self):
-        aa.plot_settings(fig_format="pdf")
-        assert mpl.rcParams["pdf.fonttype"] == 42
-
     def test_weight_bold(self):
         aa.plot_settings(weight_bold=True)
         assert mpl.rcParams["axes.labelweight"] == "bold"
@@ -57,10 +53,6 @@ class TestPlotSettings:
         with pytest.raises(ValueError):
             aa.plot_settings(font="InvalidFont")
 
-    def test_invalid_fig_format(self):
-        with pytest.raises(ValueError):
-            aa.plot_settings(fig_format="exe")
-
     def test_invalid_grid_axis(self):
         with pytest.raises(ValueError):
             aa.plot_settings(grid_axis="z")
@@ -81,21 +73,19 @@ class TestPlotSettingsComplexCases:
 
     @given(st.floats(min_value=0, allow_nan=False, allow_infinity=False),
            st.sampled_from(["Arial", "Verdana", "Helvetica", "DejaVu Sans"]),
-           st.sampled_from(["pdf", "png", "ps", "eps", "svg"]),
            st.booleans(),
            st.booleans(),
            st.booleans(),
            st.booleans(),
            st.booleans(),
            st.sampled_from(["x", "y", "both"]))
-    @example(1.5, "Arial", "pdf", True, False, False, True, False, "y")
-    @example(1.0, "Verdana", "png", False, True, True, False, True, "x")
+    @example(1.5, "Arial", True, False, False, True, False, "y")
+    @example(1.0, "Verdana", False, True, True, False, True, "x")
     @settings(max_examples=5)
-    def test_complex_positive_cases(self, font_scale, font, fig_format, weight_bold, adjust_only_font, adjust_further_elements, grid, no_ticks, grid_axis):
-        aa.plot_settings(font_scale=font_scale, font=font, fig_format=fig_format, weight_bold=weight_bold, adjust_only_font=adjust_only_font, adjust_further_elements=adjust_further_elements, grid=grid, no_ticks=no_ticks, grid_axis=grid_axis)
+    def test_complex_positive_cases(self, font_scale, font, weight_bold, adjust_only_font, adjust_further_elements, grid, no_ticks, grid_axis):
+        aa.plot_settings(font_scale=font_scale, font=font, weight_bold=weight_bold, adjust_only_font=adjust_only_font, adjust_further_elements=adjust_further_elements, grid=grid, no_ticks=no_ticks, grid_axis=grid_axis)
 
     @given(st.floats(max_value=-0.01, allow_nan=False, allow_infinity=False),
-           st.text(),
            st.text(),
            st.booleans(),
            st.booleans(),
@@ -103,9 +93,9 @@ class TestPlotSettingsComplexCases:
            st.booleans(),
            st.booleans(),
            st.text())
-    @example(-1.0, "InvalidFont", "exe", True, False, False, True, False, "z")
+    @example(-1.0, "InvalidFont", True, False, False, True, False, "z")
     @settings(max_examples=5)
-    def test_complex_negative_cases(self, font_scale, font, fig_format, weight_bold, adjust_only_font, adjust_further_elements, grid, no_ticks, grid_axis):
+    def test_complex_negative_cases(self, font_scale, font, weight_bold, adjust_only_font, adjust_further_elements, grid, no_ticks, grid_axis):
         with pytest.raises(Exception):
-            aa.plot_settings(font_scale=font_scale, font=font, fig_format=fig_format, weight_bold=weight_bold, adjust_only_font=adjust_only_font, adjust_further_elements=adjust_further_elements, grid=grid, no_ticks=no_ticks, grid_axis=grid_axis)
+            aa.plot_settings(font_scale=font_scale, font=font, weight_bold=weight_bold, adjust_only_font=adjust_only_font, adjust_further_elements=adjust_further_elements, grid=grid, no_ticks=no_ticks, grid_axis=grid_axis)
 

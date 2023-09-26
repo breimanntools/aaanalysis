@@ -37,11 +37,12 @@ to get this:
 .. code:: ipython2
 
     import aaanalysis as aa
+    
     colors = aa.plot_get_clist()
     aa.plot_settings()
     sns.barplot(x='Classes', y='Values', data=data, palette=colors)
     sns.despine()
-    plt.title("Adjusted by AAanalysis 1")
+    plt.title("Adjusted by AAanalysis")
     plt.tight_layout()
     plt.show()
 
@@ -50,17 +51,20 @@ to get this:
 .. image:: output_5_0.png
 
 
-The settings can be easily adjusted and colors are provided for up to 9
-classes:
+The settings can be easily adjusted. Use our customized sets of 2 to 9
+colors for an appealing comparison of categorical data via
+``aa.plot_get_clist``:
 
 .. code:: ipython2
 
     data = {'Classes': ['Class A', 'Class B', 'Class C', "Class D", "Class E"], 'Values': [23, 27, 43, 9, 14]}
+    
     colors = aa.plot_get_clist(n_colors=5)
     aa.plot_settings(no_ticks_x=True, short_ticks_y=True, grid=True, grid_axis="y")
+    
     sns.barplot(x='Classes', y='Values', data=data, palette=colors)
     sns.despine()
-    plt.title("Adjusted by AAanalysis 2")
+    plt.title("Adjusted by AAanalysis (grid, no x ticks)")
     plt.tight_layout()
     plt.show()
 
@@ -69,7 +73,8 @@ classes:
 .. image:: output_7_0.png
 
 
-Retrieve the set font size and create an independent legend like this:
+You can easily increase the fontsize of the labels in matching to the
+other elements and create an independent legend like this:
 
 .. code:: ipython2
 
@@ -77,9 +82,11 @@ Retrieve the set font size and create an independent legend like this:
     colors = aa.plot_get_clist(n_colors=5)
     aa.plot_settings(no_ticks_x=True, short_ticks_y=True)
     sns.barplot(x='Classes', y='Values', data=data, palette=colors, hatch=["/", "/", "/", ".", "."])
-    fontsize = aa.plot_gcfs()
     sns.despine()
-    plt.title("Adjusted by AAanalysis 3")
+    
+    fontsize = aa.plot_gcfs()
+    plt.title("Adjusted by AAanalysis (hatches, smaller title)", size=fontsize-2)
+    
     dict_color = {"Group 1": "black", "Group 2": "black"}
     aa.plot_set_legend(dict_color=dict_color, ncol=1, x=0.7, y=0.9, hatch=["/", "."])
     plt.tight_layout()
@@ -88,5 +95,4 @@ Retrieve the set font size and create an independent legend like this:
 
 
 .. image:: output_9_0.png
-
 
