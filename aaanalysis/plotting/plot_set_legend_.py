@@ -179,9 +179,9 @@ def plot_set_legend(ax: Optional[plt.Axes] = None,
                     **kwargs
                     ) -> Union[plt.Axes, Tuple[List, List[str]]]:
     """
-      Sets a customizable legend for a plot.
+    Sets an independntly customizable plot legend.
 
-    Legends can be flexbily adjusted based on ``handles`` or categories and colors provided in ``dict_color``.
+    Legends can be flexbily adjusted based categories and colors provided in ``dict_color`` dictionary.
     This functions comprises the most convinient settings for ``func:`matplotlib.pyplot.legend``.
 
     Parameters

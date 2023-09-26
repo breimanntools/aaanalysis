@@ -54,7 +54,7 @@ def plot_settings(font_scale: float = 1,
                   short_ticks_y: bool = False,
                   show_options: bool = False) -> None:
     """
-    Configures general settings for plot visualization.
+    Configures general plot settings.
 
     This function modifies the global settings of :mod:`matplotlib` and :mod:`seaborn` libraries.
     It adjusts font embedding for vector formats like PDF and SVG, ensuring compatibility and
