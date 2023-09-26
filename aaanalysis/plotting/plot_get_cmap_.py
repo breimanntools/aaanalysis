@@ -30,30 +30,6 @@ def _get_shap_cmap(n_colors=100, facecolor_dark=True):
     cmap = cmap_low[0:-n] + c_middle + cmap_high[n+add_to_end:]
     return cmap
 
-def _get_tab_color(n_colors=None):
-    """Get default color lists for up to 9 categories """
-    # Base lists
-    list_colors_3_to_4 = ["tab:gray", "tab:blue", "tab:red", "tab:orange"]
-    list_colors_5_to_6 = ["tab:blue", "tab:cyan", "tab:gray","tab:red",
-                          "tab:orange", "tab:brown"]
-    list_colors_8_to_9 = ["tab:blue", "tab:orange", "tab:green", "tab:red",
-                          "tab:gray", "gold", "tab:cyan", "tab:brown",
-                          "tab:purple"]
-    # Two classes
-    if n_colors == 2:
-        return ["tab:blue", "tab:red"]
-    # Control/base + 2-3 classes
-    elif n_colors in [3, 4]:
-        return list_colors_3_to_4[0:n_colors]
-    # 5-7 classes (gray in middle as visual "breather")
-    elif n_colors in [5, 6]:
-        return list_colors_5_to_6[0:n_colors]
-    elif n_colors == 7:
-        return ["tab:blue", "tab:cyan", "tab:purple", "tab:gray",
-                "tab:red", "tab:orange", "tab:brown"]
-    # 8-9 classes (colors from scale categories)
-    elif n_colors in [8, 9]:
-        return list_colors_8_to_9[0:n_colors]
 
 # TODO check if needed later
 def _get_cmap_with_gap(n_colors=100, pct_gap=10, pct_center=None,
@@ -81,7 +57,7 @@ def plot_get_cmap(name: str = "CPP",
                   facecolor_dark: bool = False
                   ) -> Union[List[Tuple[float, float, float]], List[str]]:
     """
-    Returns color maps specified for AAanalysis.
+    Returns color map specified for AAanalysis.
 
     Parameters
     ----------
@@ -90,17 +66,16 @@ def plot_get_cmap(name: str = "CPP",
 
          - ``CPP``: Continuous color map for CPP plots.
          - ``SHAP``: Continuous color map for CPP-SHP plots.
-         - ``CAT``: Color list for appealing visualization of categories.
 
     n_colors
-        Number of colors in the color map. Must be >=2 for 'CPP' and 'SHAP' and 2-9 for 'CAT'.
+        Number of colors. Must be at least 3.
     facecolor_dark
-        Whether central color in 'CPP' and 'SHAP' is black (if ``True``) or white.
+        Whether central color in is black (if ``True``) or white.
 
     Returns
     -------
     list
-        List with colors given as RGB tuples (for 'CPP' and 'SHAP') or matplotlib color names (for 'CAT').
+        List with colors given as RGB tuples.
 
     Examples
     --------
@@ -110,8 +85,8 @@ def plot_get_cmap(name: str = "CPP",
         >>> import matplotlib.pyplot as plt
         >>> import seaborn as sns
         >>> import aaanalysis as aa
-        >>> colors = aa.plot_get_cmap(name="CAT", n_colors=4)
-        >>> data = {'Classes': ['Class A', 'Class B', 'Class C', "Class D"], 'Values': [23, 27, 43, 38]}
+        >>> colors = aa.plot_get_cmap(name="CPP", n_colors=3)
+        >>> data = {'Classes': ['Class A', 'Class B', 'Class C',], 'Values': [10, 23, 33]}
         >>> aa.plot_settings(no_ticks_x=True, font_scale=1.2)
         >>> sns.barplot(x='Classes', y='Values', data=data, palette=colors)
         >>> plt.show()
@@ -119,12 +94,13 @@ def plot_get_cmap(name: str = "CPP",
     See Also
     --------
     * Example notebooks in `Plotting Prelude <plotting_prelude.html>`_.
+    * `Matplotlib color names <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
     * :func:`seaborn.color_palette` function to generate a color palette in seaborn.
     * :func:`seaborn.light_palette function` to generate a lighter color palettes.
-    * `Matplotlib color names <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
+    * The `SHAP <shap:mod:shap>`_ package.
     """
     # Check input
-    list_names = [ut.STR_CMAP_CPP, ut.STR_CMAP_SHAP, ut.STR_CMAP_CAT]
+    list_names = [ut.STR_CMAP_CPP, ut.STR_CMAP_SHAP]
     if name not in list_names:
         raise ValueError(f"'name' must be one of following: {list_names}")
     ut.check_bool(name="facecolor_dark", val=facecolor_dark)
@@ -133,9 +109,6 @@ def plot_get_cmap(name: str = "CPP",
     if name == ut.STR_CMAP_SHAP:
         ut.check_number_range(name="n_colors", val=n_colors, min_val=3, just_int=True)
         return _get_shap_cmap(n_colors=n_colors, facecolor_dark=facecolor_dark)
-    elif name == ut.STR_CMAP_CPP:
+    else:
         ut.check_number_range(name="n_colors", val=n_colors, min_val=3, just_int=True)
         return _get_cpp_cmap(n_colors=n_colors, facecolor_dark=facecolor_dark)
-    elif name == ut.STR_CMAP_CAT:
-        ut.check_number_range(name="n_colors", val=n_colors, min_val=2, max_val=9, just_int=True)
-        return _get_tab_color(n_colors=n_colors)

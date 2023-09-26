@@ -136,7 +136,7 @@ def plot_set_legend(ax: Optional[plt.Axes] = None,
                     **kwargs
                     ) -> Union[plt.Axes, Tuple[List, List[str]]]:
     """
-    Set a customizable legend for a plot.
+    Sets a customizable legend for a plot.
 
     Legends can be flexbily adjusted based on ``handles`` or categories and colors provided in ``dict_color``.
     This functions comprises the most convinient settings for ``func:`matplotlib.pyplot.legend``.
@@ -167,7 +167,7 @@ def plot_set_legend(ax: Optional[plt.Axes] = None,
     x
         The x-coordinate for the legend's anchor point.
     ncol
-        Number of columns in the legend.
+        Number of columns in the legend, at least 1.
     labelspacing
         Vertical spacing between legend items.
     columnspacing
@@ -215,12 +215,12 @@ def plot_set_legend(ax: Optional[plt.Axes] = None,
         >>> import seaborn as sns
         >>> import aaanalysis as aa
         >>> data = {'Classes': ['A', 'B', 'C'], 'Values': [23, 27, 43]}
-        >>> colors = aa.plot_get_cmap(name="CAT", n_colors=3)
+        >>> colors = aa.plot_get_clist()
         >>> aa.plot_settings()
         >>> sns.barplot(x='Classes', y='Values', data=data, palette=colors)
         >>> sns.despine()
         >>> dict_color = dict(zip(["Class A", "Class B", "Class C"], colors))
-        >>> aa.plot_set_legend(dict_color=dict_color, ncol=1, marker="-", lw=10, loc_out=True)
+        >>> aa.plot_set_legend(dict_color=dict_color, ncol=3, x=0, y=1.1, handletextpad=0.4)
         >>> plt.tight_layout()
         >>> plt.show()
 

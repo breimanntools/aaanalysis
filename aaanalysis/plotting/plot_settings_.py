@@ -57,7 +57,7 @@ def plot_settings(font_scale: float = 1,
                   short_ticks_y: bool = False,
                   show_options: bool = False) -> None:
     """
-    Configure general settings for plot visualization with various customization options.
+    Configures general settings for plot visualization.
 
     This function modifies the global settings of :mod:`matplotlib` and :mod:`seaborn` libraries.
     PDFs are embedded such that they can be edited using image editing software.
@@ -121,7 +121,7 @@ def plot_settings(font_scale: float = 1,
         >>> import seaborn as sns
         >>> import aaanalysis as aa
         >>> data = {'Classes': ['Class A', 'Class B', 'Class C'], 'Values': [23, 27, 43]}
-        >>> colors = aa.plot_get_cmap(name="CAT", n_colors=3)
+        >>> colors = aa.plot_get_clist()
         >>> aa.plot_settings()
         >>> sns.barplot(x='Classes', y='Values', data=data, palette=colors)
         >>> sns.despine()

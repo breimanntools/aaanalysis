@@ -127,7 +127,6 @@ DICT_COLOR_CAT = {"ASA/Volume": "tab:blue",
 # Parameter options for cmaps and color dicts
 STR_CMAP_CPP = "CPP"
 STR_CMAP_SHAP = "SHAP"
-STR_CMAP_CAT = "CAT"
 STR_DICT_COLOR = "DICT_COLOR"
 STR_DICT_CAT = "DICT_CAT"
 

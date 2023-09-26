@@ -2,7 +2,7 @@
     - This file summarizes Python dev conventions for this project.
     - Refer to 'Vision' for project aims and 'Documentation' for naming conventions.
     - Only modify  CONTRIBUTING.rst and then update the /docs/source/index/CONTRIBUTING_COPY.rst.
-    - Remove '/docs/source' from image paths for CONTRIBUTING_COPY!!!!!!!!
+    - Remove '/docs/source' from image paths for CONTRIBUTING_COPY.
     Some minor doc tools
     - You can use Traffic analytics (https://docs.readthedocs.io/en/stable/analytics.html) for doc traffic.
     - Check URLs with LinkChecker (bash: linkchecker ./docs/_build/html/index.html).
@@ -273,7 +273,7 @@ Due to the token limit of ChatGPT, the answers might not be complete. Use this p
 
 .. code-block:: none
 
-    "Continue from where you left off."
+    Continue from where you left off.
 
 Code checking
 -------------
@@ -400,3 +400,7 @@ or a custom  testing template:
 
     Reminder: In Normal Cases, it's crucial to test parameters individually.
     "
+
+You can run this prompt multiple times or ask to continue. After copy-pasting all results into
+your final testing script. Copy this script and provide it to ChatGPT with the prompt to remove
+redundancy and to make it more concise.

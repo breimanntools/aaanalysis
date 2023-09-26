@@ -4,7 +4,7 @@ from aaanalysis import utils as ut
 # Main function
 def plot_get_cdict(name: str = "DICT_COLOR") -> dict:
     """
-    Returns color dictionaries specified for AAanalysis.
+    Returns color dictionarie specified for AAanalysis.
 
     Parameters
     ----------

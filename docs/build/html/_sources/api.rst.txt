@@ -62,9 +62,11 @@ Plot Utilities
 .. autosummary::
     :toctree: generated/
 
+    aaanalysis.plot_get_clist
+    aaanalysis.plot_get_cmap
+    aaanalysis.plot_get_cdict
     aaanalysis.plot_settings
     aaanalysis.plot_set_legend
     aaanalysis.plot_gcfs
-    aaanalysis.plot_get_cmap
-    aaanalysis.plot_get_cdict
+
 

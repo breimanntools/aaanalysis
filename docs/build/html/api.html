@@ -100,11 +100,12 @@
 <li class="toctree-l2"><a class="reference internal" href="#explainable-ai">Explainable AI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#perturbation">Perturbation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#plot-utilities">Plot Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_get_clist.html">aaanalysis.plot_get_clist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_get_cmap.html">aaanalysis.plot_get_cmap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_get_cdict.html">aaanalysis.plot_get_cdict</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_settings.html">aaanalysis.plot_settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_set_legend.html">aaanalysis.plot_set_legend</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_gcfs.html">aaanalysis.plot_gcfs</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_get_cmap.html">aaanalysis.plot_get_cmap</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_get_cdict.html">aaanalysis.plot_get_cdict</a></li>
 </ul>
 </li>
 </ul>
@@ -152,10 +153,10 @@ Python toolkit, which can be imported by:</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.load_dataset.html#aaanalysis.load_dataset" title="aaanalysis.load_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.load_dataset</span></code></a>([name, n, random, ...])</p></td>
-<td><p>Load protein benchmarking datasets.</p></td>
+<td><p>Loads protein benchmarking datasets.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.load_scales.html#aaanalysis.load_scales" title="aaanalysis.load_scales"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.load_scales</span></code></a>([name, just_aaindex, ...])</p></td>
-<td><p>Load amino acid scales or their classification (AAontology).</p></td>
+<td><p>Loads amino acid scales or their classification (AAontology).</p></td>
 </tr>
 </tbody>
 </table>
@@ -199,20 +200,23 @@ Python toolkit, which can be imported by:</p>
 <h2>Plot Utilities<a class="headerlink" href="#plot-utilities" title="Permalink to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_settings.html#aaanalysis.plot_settings" title="aaanalysis.plot_settings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_settings</span></code></a>([font_scale, font, ...])</p></td>
-<td><p>Configure general settings for plot visualization with various customization options.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.plot_set_legend.html#aaanalysis.plot_set_legend" title="aaanalysis.plot_set_legend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_set_legend</span></code></a>([ax, ...])</p></td>
-<td><p>Set a customizable legend for a plot.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_gcfs.html#aaanalysis.plot_gcfs" title="aaanalysis.plot_gcfs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_gcfs</span></code></a>()</p></td>
-<td><p>Get current font size, which is set by <a class="reference internal" href="generated/aaanalysis.plot_settings.html#aaanalysis.plot_settings" title="aaanalysis.plot_settings"><code class="xref py py-func docutils literal notranslate"><span class="pre">plot_settings()</span></code></a> function.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_get_clist.html#aaanalysis.plot_get_clist" title="aaanalysis.plot_get_clist"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_get_clist</span></code></a>([n_colors])</p></td>
+<td><p>Returns list of 2 to 9 colors.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.plot_get_cmap.html#aaanalysis.plot_get_cmap" title="aaanalysis.plot_get_cmap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_get_cmap</span></code></a>([name, n_colors, ...])</p></td>
-<td><p>Returns color maps specified for AAanalysis.</p></td>
+<td><p>Returns color map specified for AAanalysis.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_get_cdict.html#aaanalysis.plot_get_cdict" title="aaanalysis.plot_get_cdict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_get_cdict</span></code></a>([name])</p></td>
-<td><p>Returns color dictionaries specified for AAanalysis.</p></td>
+<td><p>Returns color dictionarie specified for AAanalysis.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.plot_settings.html#aaanalysis.plot_settings" title="aaanalysis.plot_settings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_settings</span></code></a>([font_scale, font, ...])</p></td>
+<td><p>Configures general settings for plot visualization.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_set_legend.html#aaanalysis.plot_set_legend" title="aaanalysis.plot_set_legend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_set_legend</span></code></a>([ax, ...])</p></td>
+<td><p>Sets a customizable legend for a plot.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.plot_gcfs.html#aaanalysis.plot_gcfs" title="aaanalysis.plot_gcfs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_gcfs</span></code></a>()</p></td>
+<td><p>Gets current font size.</p></td>
 </tr>
 </tbody>
 </table>

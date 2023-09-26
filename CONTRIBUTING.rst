@@ -273,7 +273,7 @@ Due to the token limit of ChatGPT, the answers might not be complete. Use this p
 
 .. code-block:: none
 
-    "Continue from where you left off."
+    Continue from where you left off.
 
 Code checking
 -------------
