@@ -261,97 +261,13 @@ To generate the documentation locally:
 
 - Open `_build/html/index.html` in a browser.
 
-Use ChatGPT!
-============
-Leverage the power of ChatGPT to optimize various facets of your software development process,
-including code checking, interface optimization, and effective testing.
 
-Simply use the templates provided below and fill in the blank spaces between
-``START OF CODE`` and ``END OF CODE`` with the specifics of your task.
-
-Due to the token limit of ChatGPT, the answers might not be complete. Use this prompt to continue the answer of ChatGPT:
-
-.. code-block:: none
-
-    Continue from where you left off.
-
-Code checking
--------------
-For reviewing your code's logic, ensuring conciseness, and promoting clarity, try the following prompt:
-
-.. code-block:: none
-
-    "
-    Review the TARGET CODE for adherence to coding practices.
-
-    Inputs:
-    TARGET CODE:
-    - START OF CODE
-    -------------------------------------
-    [your code here]
-    -------------------------------------
-    - END OF CODE
-
-    Key Areas:
-    1. Syntax issues (not formatting).
-    2. Logic and Flow anomalies.
-    3. Missing or inadequate Error Handling.
-    4. Other improvement areas (readability, hard-coded values, etc.)
-
-    Expected Output:
-    - Concise bullet-pointed feedback.
-    - A complete, improved version of the function addressing all identified issues.
-    "
-
-Interface optimization
-----------------------
-To enhance the public interface or signature of your functions and classes, employ the following prompt:
-
-.. code-block:: none
-
-    "
-    Review and suggest improvements for the interface of the given TARGET FUNCTION to enhance its usability, clarity, and integration capabilities.
-
-    Inputs:
-    TARGET FUNCTION:
-    - START OF CODE
-    -------------------------------------
-    [your code here]
-    -------------------------------------
-    - END OF CODE
-
-    **Key Directive**: The interface should be intuitive, versatile, and easy for other developers to integrate and use.
-
-    Requirements:
-
-    1. Signature Clarity:
-    - Ensure function/method names are descriptive and concise.
-    - Parameters should have clear names and, if possible, default values that make sense.
-
-    2. Documentation:
-    - Suggest comprehensive docstrings for the function.
-    - Propose comments for complex code blocks to aid understanding.
-
-    3. Return Values and Types:
-    - Advise on consistent return types, considering scenarios like error or null conditions.
-    - Recommend clear naming for returned objects, especially if using data structures like dictionaries or tuples.
-
-    4. General Guidelines:
-    - Avoid overloading the interface with too many parameters; suggest alternatives if needed.
-    - Consider common use cases and ensure they are easily achievable with the proposed interface.
-    - The interface should promote good coding practices and be resistant to misuse.
-
-    Output Expectations:
-    - Feedback and suggestions on function/method signatures.
-    - Proposed docstrings and comments.
-    - Recommendations for ensuring a consistent and intuitive interface.
-    "
-
-Testing
--------
-Generate efficient tests with extensive coverage and considering edge cases using the prompt template below,
-utilizing `our <https://github.com/breimanntools/aaanalysis/blob/master/tests/unit/data_loader_tests/test_load_dataset.py>`_
-or a custom  testing template:
+Test with ChatGPT
+=================
+To optimize testing with ChatGPT, use the template below and fill in the blank spaces between
+``START OF CODE`` and ``END OF CODE``. For testing templates,
+utilize `our <https://github.com/breimanntools/aaanalysis/blob/master/tests/unit/data_loader_tests/test_load_dataset.py>`_
+or any custom testing template.
 
 .. code-block:: none
 
@@ -401,6 +317,10 @@ or a custom  testing template:
     Reminder: In Normal Cases, it's crucial to test parameters individually.
     "
 
-You can run this prompt multiple times or ask to continue. After copy-pasting all results into
-your final testing script. Copy this script and provide it to ChatGPT with the prompt to remove
-redundancy and to make it more concise.
+ChatGPT has a token limit, which may truncate responses. To continue, use:
+
+.. code-block:: none
+
+    Continue from where you left off.
+
+Repeat as necessary and compile the results. Once done, provide the script to ChatGPT for further refinement.

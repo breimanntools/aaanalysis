@@ -89,8 +89,8 @@
 <li class="toctree-l3"><a class="reference internal" href="aaanalysis.plot_get_cmap.html">aaanalysis.plot_get_cmap</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">aaanalysis.plot_get_cdict</a></li>
 <li class="toctree-l3"><a class="reference internal" href="aaanalysis.plot_settings.html">aaanalysis.plot_settings</a></li>
-<li class="toctree-l3"><a class="reference internal" href="aaanalysis.plot_set_legend.html">aaanalysis.plot_set_legend</a></li>
 <li class="toctree-l3"><a class="reference internal" href="aaanalysis.plot_gcfs.html">aaanalysis.plot_gcfs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="aaanalysis.plot_set_legend.html">aaanalysis.plot_set_legend</a></li>
 </ul>
 </li>
 </ul>
@@ -130,7 +130,7 @@
 <h1>aaanalysis.plot_get_cdict<a class="headerlink" href="#aaanalysis-plot-get-cdict" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="aaanalysis.plot_get_cdict">
-<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">plot_get_cdict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DICT_COLOR'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/plotting/plot_get_cdict_.py#L5-L34"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.plot_get_cdict" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">plot_get_cdict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DICT_COLOR'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/plotting/plot_get_cdict_.py#L5-L46"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.plot_get_cdict" title="Permalink to this definition"></a></dt>
 <dd><p>Returns color dictionarie specified for AAanalysis.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -152,10 +152,23 @@
 </dl>
 <div class="admonition-examples admonition">
 <p class="admonition-title">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">dict_color</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">plot_get_cdict</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;DICT_COLOR&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Keys&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">dict_color</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="s1">&#39;Values&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">dict_color</span><span class="p">)</span> <span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">aa</span><span class="o">.</span><span class="n">plot_settings</span><span class="p">(</span><span class="n">weight_bold</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span> <span class="o">=</span> <span class="n">sns</span><span class="o">.</span><span class="n">barplot</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s2">&quot;Values&quot;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">&quot;Keys&quot;</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="n">dict_color</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sns</span><span class="o">.</span><span class="n">despine</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
+<p>(<a class="reference download internal" download="" href="../_downloads/20e5ddd817bbcde5f3f20553dc240224/aaanalysis-plot_get_cdict-1.py"><code class="xref download docutils literal notranslate"><span class="pre">Source</span> <span class="pre">code</span></code></a>, <a class="reference download internal" download="" href="../_downloads/d45f65c776cc932c3ee1e73d6fc0d1f2/aaanalysis-plot_get_cdict-1.png"><code class="xref download docutils literal notranslate"><span class="pre">png</span></code></a>, <a class="reference download internal" download="" href="../_downloads/c5507a06d35192c196108df07ce56ba1/aaanalysis-plot_get_cdict-1.hires.png"><code class="xref download docutils literal notranslate"><span class="pre">hires.png</span></code></a>, <a class="reference download internal" download="" href="../_downloads/163aacac4bd235c9af7a62d7b4d0c89f/aaanalysis-plot_get_cdict-1.pdf"><code class="xref download docutils literal notranslate"><span class="pre">pdf</span></code></a>)</p>
+<figure class="align-default">
+<img alt="../_images/aaanalysis-plot_get_cdict-1.png" class="plot-directive" src="../_images/aaanalysis-plot_get_cdict-1.png" />
+</figure>
 </div>
 </dd></dl>
 

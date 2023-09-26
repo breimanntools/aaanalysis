@@ -39,8 +39,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Tables" href="../index/tables.html" />
-    <link rel="prev" title="aaanalysis.plot_set_legend" href="aaanalysis.plot_set_legend.html" /> 
+    <link rel="next" title="aaanalysis.plot_set_legend" href="aaanalysis.plot_set_legend.html" />
+    <link rel="prev" title="aaanalysis.plot_settings" href="aaanalysis.plot_settings.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -89,8 +89,8 @@
 <li class="toctree-l3"><a class="reference internal" href="aaanalysis.plot_get_cmap.html">aaanalysis.plot_get_cmap</a></li>
 <li class="toctree-l3"><a class="reference internal" href="aaanalysis.plot_get_cdict.html">aaanalysis.plot_get_cdict</a></li>
 <li class="toctree-l3"><a class="reference internal" href="aaanalysis.plot_settings.html">aaanalysis.plot_settings</a></li>
-<li class="toctree-l3"><a class="reference internal" href="aaanalysis.plot_set_legend.html">aaanalysis.plot_set_legend</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">aaanalysis.plot_gcfs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="aaanalysis.plot_set_legend.html">aaanalysis.plot_set_legend</a></li>
 </ul>
 </li>
 </ul>
@@ -130,20 +130,21 @@
 <h1>aaanalysis.plot_gcfs<a class="headerlink" href="#aaanalysis-plot-gcfs" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="aaanalysis.plot_gcfs">
-<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">plot_gcfs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/plotting/plot_gcfs_.py#L7-L34"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.plot_gcfs" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">plot_gcfs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/plotting/plot_gcfs_.py#L7-L36"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.plot_gcfs" title="Permalink to this definition"></a></dt>
 <dd><p>Gets current font size.</p>
 <p>This font size can be set by <a class="reference internal" href="aaanalysis.plot_settings.html#aaanalysis.plot_settings" title="aaanalysis.plot_settings"><code class="xref py py-func docutils literal notranslate"><span class="pre">plot_settings()</span></code></a> function.</p>
 <div class="admonition-examples admonition">
 <p class="admonition-title">Examples</p>
+<p>Here are the default colors used in CPP and CPP-SHAP plots:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Classes&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Class A&#39;</span><span class="p">,</span> <span class="s1">&#39;Class B&#39;</span><span class="p">,</span> <span class="s1">&#39;Class C&#39;</span><span class="p">],</span> <span class="s1">&#39;Values&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">23</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">43</span><span class="p">]}</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">colors</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">plot_get_clist</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">aa</span><span class="o">.</span><span class="n">plot_settings</span><span class="p">(</span><span class="n">font_scale</span><span class="o">=</span><span class="mf">0.85</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">sns</span><span class="o">.</span><span class="n">barplot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s1">&#39;Classes&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s1">&#39;Values&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="n">colors</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">aa</span><span class="o">.</span><span class="n">plot_settings</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sns</span><span class="o">.</span><span class="n">barplot</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="s1">&#39;Classes&#39;</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="s1">&#39;Values&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="n">colors</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sns</span><span class="o">.</span><span class="n">despine</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Big Title (+4 than rest)&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">aa</span><span class="o">.</span><span class="n">plot_gcfs</span><span class="p">()</span><span class="o">+</span><span class="mi">4</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Big Title (+4 bigger than rest)&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">aa</span><span class="o">.</span><span class="n">plot_gcfs</span><span class="p">()</span><span class="o">+</span><span class="mi">4</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
@@ -161,8 +162,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="aaanalysis.plot_set_legend.html" class="btn btn-neutral float-left" title="aaanalysis.plot_set_legend" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../index/tables.html" class="btn btn-neutral float-right" title="Tables" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="aaanalysis.plot_settings.html" class="btn btn-neutral float-left" title="aaanalysis.plot_settings" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="aaanalysis.plot_set_legend.html" class="btn btn-neutral float-right" title="aaanalysis.plot_set_legend" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

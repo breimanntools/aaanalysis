@@ -6,12 +6,12 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="index/CONTRIBUTING_COPY.html" />
 <meta property="og:site_name" content="AAanalysis" />
-<meta property="og:description" content="Introduction, Vision, Bug Reports, Installation, Pull Requests, Documentation, Use ChatGPT!. Introduction: Welcome and thank you for considering a contribution to AAanalysis! We are an open-source ..." />
+<meta property="og:description" content="Introduction, Vision, Bug Reports, Installation, Pull Requests, Documentation, Test with ChatGPT. Introduction: Welcome and thank you for considering a contribution to AAanalysis! We are an open-so..." />
 <meta property="og:image:width" content="1146" />
 <meta property="og:image:height" content="600" />
-<meta property="og:image" content="/_images/social_previews/summary_index_CONTRIBUTING_COPY_f2a77e8f.png" />
-<meta property="og:image:alt" content="Introduction, Vision, Bug Reports, Installation, Pull Requests, Documentation, Use ChatGPT!. Introduction: Welcome and thank you for considering a contributi..." />
-<meta name="description" content="Introduction, Vision, Bug Reports, Installation, Pull Requests, Documentation, Use ChatGPT!. Introduction: Welcome and thank you for considering a contribution to AAanalysis! We are an open-source ..." />
+<meta property="og:image" content="/_images/social_previews/summary_index_CONTRIBUTING_COPY_fcdbf6a9.png" />
+<meta property="og:image:alt" content="Introduction, Vision, Bug Reports, Installation, Pull Requests, Documentation, Test with ChatGPT. Introduction: Welcome and thank you for considering a contr..." />
+<meta name="description" content="Introduction, Vision, Bug Reports, Installation, Pull Requests, Documentation, Test with ChatGPT. Introduction: Welcome and thank you for considering a contribution to AAanalysis! We are an open-so..." />
 <meta name="twitter:card" content="summary_large_image" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -98,12 +98,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#building-the-docs">Building the Docs</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#use-chatgpt">Use ChatGPT!</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#code-checking">Code checking</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#interface-optimization">Interface optimization</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#testing">Testing</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#test-with-chatgpt">Test with ChatGPT</a></li>
 </ul>
 </li>
 </ul>
@@ -154,7 +149,7 @@
 <li><p><a class="reference internal" href="#installation" id="id5">Installation</a></p></li>
 <li><p><a class="reference internal" href="#pull-requests" id="id6">Pull Requests</a></p></li>
 <li><p><a class="reference internal" href="#documentation" id="id7">Documentation</a></p></li>
-<li><p><a class="reference internal" href="#use-chatgpt" id="id8">Use ChatGPT!</a></p></li>
+<li><p><a class="reference internal" href="#test-with-chatgpt" id="id8">Test with ChatGPT</a></p></li>
 </ul>
 </nav>
 <section id="introduction">
@@ -379,91 +374,12 @@ make<span class="w"> </span>html
 </ul>
 </section>
 </section>
-<section id="use-chatgpt">
-<h2><a class="toc-backref" href="#id8" role="doc-backlink">Use ChatGPT!</a><a class="headerlink" href="#use-chatgpt" title="Permalink to this heading"></a></h2>
-<p>Leverage the power of ChatGPT to optimize various facets of your software development process,
-including code checking, interface optimization, and effective testing.</p>
-<p>Simply use the templates provided below and fill in the blank spaces between
-<code class="docutils literal notranslate"><span class="pre">START</span> <span class="pre">OF</span> <span class="pre">CODE</span></code> and <code class="docutils literal notranslate"><span class="pre">END</span> <span class="pre">OF</span> <span class="pre">CODE</span></code> with the specifics of your task.</p>
-<p>Due to the token limit of ChatGPT, the answers might not be complete. Use this prompt to continue the answer of ChatGPT:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Continue from where you left off.
-</pre></div>
-</div>
-<section id="code-checking">
-<h3>Code checking<a class="headerlink" href="#code-checking" title="Permalink to this heading"></a></h3>
-<p>For reviewing your code’s logic, ensuring conciseness, and promoting clarity, try the following prompt:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&quot;
-Review the TARGET CODE for adherence to coding practices.
-
-Inputs:
-TARGET CODE:
-- START OF CODE
--------------------------------------
-[your code here]
--------------------------------------
-- END OF CODE
-
-Key Areas:
-1. Syntax issues (not formatting).
-2. Logic and Flow anomalies.
-3. Missing or inadequate Error Handling.
-4. Other improvement areas (readability, hard-coded values, etc.)
-
-Expected Output:
-- Concise bullet-pointed feedback.
-- A complete, improved version of the function addressing all identified issues.
-&quot;
-</pre></div>
-</div>
-</section>
-<section id="interface-optimization">
-<h3>Interface optimization<a class="headerlink" href="#interface-optimization" title="Permalink to this heading"></a></h3>
-<p>To enhance the public interface or signature of your functions and classes, employ the following prompt:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&quot;
-Review and suggest improvements for the interface of the given TARGET FUNCTION to enhance its usability, clarity, and integration capabilities.
-
-Inputs:
-TARGET FUNCTION:
-- START OF CODE
--------------------------------------
-[your code here]
--------------------------------------
-- END OF CODE
-
-**Key Directive**: The interface should be intuitive, versatile, and easy for other developers to integrate and use.
-
-Requirements:
-
-1. Signature Clarity:
-- Ensure function/method names are descriptive and concise.
-- Parameters should have clear names and, if possible, default values that make sense.
-
-2. Documentation:
-- Suggest comprehensive docstrings for the function.
-- Propose comments for complex code blocks to aid understanding.
-
-3. Return Values and Types:
-- Advise on consistent return types, considering scenarios like error or null conditions.
-- Recommend clear naming for returned objects, especially if using data structures like dictionaries or tuples.
-
-4. General Guidelines:
-- Avoid overloading the interface with too many parameters; suggest alternatives if needed.
-- Consider common use cases and ensure they are easily achievable with the proposed interface.
-- The interface should promote good coding practices and be resistant to misuse.
-
-Output Expectations:
-- Feedback and suggestions on function/method signatures.
-- Proposed docstrings and comments.
-- Recommendations for ensuring a consistent and intuitive interface.
-&quot;
-</pre></div>
-</div>
-</section>
-<section id="testing">
-<h3>Testing<a class="headerlink" href="#testing" title="Permalink to this heading"></a></h3>
-<p>Generate efficient tests with extensive coverage and considering edge cases using the prompt template below,
-utilizing <a class="reference external" href="https://github.com/breimanntools/aaanalysis/blob/master/tests/unit/data_loader_tests/test_load_dataset.py">our</a>
-or a custom  testing template:</p>
+<section id="test-with-chatgpt">
+<h2><a class="toc-backref" href="#id8" role="doc-backlink">Test with ChatGPT</a><a class="headerlink" href="#test-with-chatgpt" title="Permalink to this heading"></a></h2>
+<p>To optimize testing with ChatGPT, use the template below and fill in the blank spaces between
+<code class="docutils literal notranslate"><span class="pre">START</span> <span class="pre">OF</span> <span class="pre">CODE</span></code> and <code class="docutils literal notranslate"><span class="pre">END</span> <span class="pre">OF</span> <span class="pre">CODE</span></code>. For testing templates,
+utilize <a class="reference external" href="https://github.com/breimanntools/aaanalysis/blob/master/tests/unit/data_loader_tests/test_load_dataset.py">our</a>
+or any custom testing template.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&quot;
 Generate test functions for a given TARGET FUNCTION using the style of the provided TESTING TEMPLATE.
 
@@ -511,10 +427,11 @@ Reminder: In Normal Cases, it&#39;s crucial to test parameters individually.
 &quot;
 </pre></div>
 </div>
-<p>You can run this prompt multiple times or ask to continue. After copy-pasting all results into
-your final testing script. Copy this script and provide it to ChatGPT with the prompt to remove
-redundancy and to make it more concise.</p>
-</section>
+<p>ChatGPT has a token limit, which may truncate responses. To continue, use:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Continue from where you left off.
+</pre></div>
+</div>
+<p>Repeat as necessary and compile the results. Once done, provide the script to ChatGPT for further refinement.</p>
 </section>
 </section>
 

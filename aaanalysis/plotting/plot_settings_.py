@@ -40,6 +40,13 @@ def check_grid_axis(grid_axis="y"):
         raise ValueError(f"'grid_axis' ({grid_axis}) should be one of following: {list_grid_axis}")
 
 
+# Helper function
+def set_tick_size(axis=None, major_size=None, minor_size=None):
+    """Set tick size for the given axis."""
+    plt.rcParams[f"{axis}tick.major.size"] = major_size
+    plt.rcParams[f"{axis}tick.minor.size"] = minor_size
+
+
 # II Main functions
 def plot_settings(font_scale: float = 1,
                   font: str = "Arial",
@@ -123,7 +130,7 @@ def plot_settings(font_scale: float = 1,
         >>> data = {'Classes': ['Class A', 'Class B', 'Class C'], 'Values': [23, 27, 43]}
         >>> colors = aa.plot_get_clist()
         >>> aa.plot_settings()
-        >>> sns.barplot(x='Classes', y='Values', data=data, palette=colors)
+        >>> sns.barplot(data=data, x='Classes', y='Values', palette=colors)
         >>> sns.despine()
         >>> plt.title("Adjusted")
         >>> plt.tight_layout()
@@ -189,24 +196,37 @@ def plot_settings(font_scale: float = 1,
         plt.rcParams["xtick.minor.width"] = 0.6
         plt.rcParams["ytick.major.width"] = 0.8
         plt.rcParams["ytick.minor.width"] = 0.6
-    # Handle tick options (short are default matplotlib options, otherwise from seaborn)
-    if short_ticks or short_ticks_x:
-        plt.rcParams["xtick.major.size"] = 3.5
-        plt.rcParams["xtick.minor.size"] = 2
-    if short_ticks or short_ticks_y:
-        plt.rcParams["ytick.major.size"] = 3.5
-        plt.rcParams["ytick.minor.size"] = 2
+
+    # Tick sizes
+    default_major_size = 6
+    default_minor_size = 4
+    short_major_size = 3.5
+    short_minor_size = 2
+    no_major_size = 0
+    no_minor_size = 0
+
+    # Set x ticks
     if no_ticks or no_ticks_x:
-        plt.rcParams["xtick.major.size"] = 0
-        plt.rcParams["xtick.minor.size"] = 0
+        set_tick_size(axis="x", major_size=no_major_size, minor_size=no_minor_size)
+    elif short_ticks or short_ticks_x:
+        set_tick_size(axis="x", major_size=short_major_size, minor_size=short_minor_size)
+    else:
+        set_tick_size(axis="x", major_size=default_major_size, minor_size=default_minor_size)
+
+    # Set y ticks
     if no_ticks or no_ticks_y:
-        plt.rcParams["ytick.major.size"] = 0
-        plt.rcParams["ytick.minor.size"] = 0
+        set_tick_size(axis="y", major_size=no_major_size, minor_size=no_minor_size)
+    elif short_ticks or short_ticks_y:
+        set_tick_size(axis="y", major_size=short_major_size, minor_size=short_minor_size)
+    else:
+        set_tick_size(axis="y", major_size=default_major_size, minor_size=default_minor_size)
+
     # Handle figure format
     if fig_format == "pdf":
         mpl.rcParams['pdf.fonttype'] = 42
     elif "svg" in fig_format:
         mpl.rcParams['svg.fonttype'] = 'none'
+
     # Additional adjustments
     if adjust_further_elements:
         # Error bars

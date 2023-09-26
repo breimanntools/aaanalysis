@@ -9,36 +9,13 @@ import matplotlib.lines as mlines
 
 
 # I Helper functions
-# Checking functios
-def check_dict_colors(dict_color=None, list_cat=None, labels=None):
-    """"""
-    ut.check_dict(name="dict_color", val=dict_color, accept_none=False)
-    # If labels are provided
-    if labels:
-        # If list_cat is provided, check its length against labels
-        if list_cat:
-            if len(list_cat) != len(labels):
-                raise ValueError(f"Length of 'list_cat' ({len(list_cat)}) and 'labels' ({len(labels)}) must match")
-        # If list_cat isn't provided, check the length of dict_color against labels
-        elif len(dict_color) != len(labels):
-            raise ValueError(f"Length of 'dict_color' ({len(dict_color)}) and 'labels' ({len(labels)}) must match")
-    # Default list_cat to the keys of dict_color if not provided
-    if not list_cat:
-        list_cat = list(dict_color.keys())
-    return list_cat
-
-
-def check_x_y(x=None, y=None):
-    """"""
-    ut.check_number_val(name="x", val=x, accept_none=True, just_int=False)
-    ut.check_number_val(name="y", val=y, accept_none=True, just_int=False)
-    # Check if matching
-    if x is None and y is None:
-        return
-    if x is not None and y is not None:
-        return
-    raise ValueError(f"'x' ({x}) and 'y' ({y}) must either both be None or both given.")
-
+def _items_grouped(lst):
+    for i in range(1, len(lst)):
+        if lst[i] == lst[i - 1]:  # Same item as before, continue
+            continue
+        if lst[i] in lst[:i]:  # Different item but already appeared earlier in the list
+            return False
+    return True
 
 
 def _check_validity(item, valid_items, item_name, list_cat):
@@ -48,18 +25,40 @@ def _check_validity(item, valid_items, item_name, list_cat):
     item_is_list = isinstance(item, list)
     if not item_is_list:
         if item not in valid_items:
-            raise ValueError(f"'{item_name}' ('{item}') must be one of the following: {valid_items}")
+            raise ValueError(f"'{item_name}' ('{item}') must be one of following: {valid_items}")
         else:
             return [item] * len(list_cat)
     else:
         wrong_items = [x for x in item if x not in valid_items]
         if len(wrong_items) != 0:
             raise ValueError(
-                f"'{item_name}' contains wrong items ('{wrong_items}')! Must be one of the following: {valid_items}")
+                f"'{item_name}' contains wrong items ('{wrong_items}')! Must be one of following: {valid_items}")
         if len(item) != len(list_cat):
-            raise ValueError(f"Length of '{item_name}' ({item}) and categories ({list_cat}) must match!")
+            raise ValueError(f"Length must match of '{item_name}' ({item}) and categories ({list_cat}).")
         else:
             return item
+
+# Checking functios
+def check_list_cat(dict_color=None, list_cat=None):
+    """"""
+    if list_cat is None:
+        return list(dict_color.keys())
+    # Check if all elements of list_cat are keys in dict_colors
+    if not all(elem in dict_color for elem in list_cat):
+        missing_keys = [elem for elem in list_cat if elem not in dict_color]
+        raise ValueError(f"The following keys in 'list_cat' are not in 'dict_colors': {', '.join(missing_keys)}")
+    # Check if lengths match
+    if len(dict_color) != len(list_cat):
+        raise ValueError(f"Length must match between 'list_cat' ({len(list_cat)}) and 'dict_colors' ({len(dict_color)}).")
+
+
+def check_labels(list_cat=None, labels=None):
+    """"""
+    if labels is None:
+        return list_cat
+    # If list_cat is provided, check its length against labels
+    if len(list_cat) != len(labels):
+        raise ValueError(f"Length must match of 'labels' ({len(labels)}) and categories ({len(list_cat)}).")
 
 
 def check_marker(marker=None, list_cat=None, lw=0):
@@ -70,10 +69,28 @@ def check_marker(marker=None, list_cat=None, lw=0):
         raise ValueError(f"If marker is '{marker}', 'lw' ({lw}) must be > 0.")
     return _check_validity(marker, all_markers, 'marker', list_cat)
 
+def check_marker_size(marker_size=None, list_cat=None):
+    """"""
+    if isinstance(marker_size, (int, float)):
+        ut.check_number_val(name='marker_size', val=marker_size, accept_none=True, just_int=False)
+        marker_size = [marker_size] * len(list_cat)
+        return marker_size
+    elif marker_size is None:
+        marker_size = [marker_size] * len(list_cat)
+        return marker_size
+    elif isinstance(marker_size, list):
+        for i in marker_size:
+            ut.check_number_val(name='marker_size', val=i, accept_none=True, just_int=False)
+        return marker_size
+    elif isinstance(marker_size, list) and len(marker_size) != len(list_cat):
+        raise ValueError(f"Length must match of 'marker_size' (marker_size) and categories ({list_cat}).")
+    else:
+        raise ValueError(f"'marker_size' has wrong data type: {type(marker_size)}")
+
 
 def check_linestyle(marker_linestyle=None, list_cat=None):
     """Check validity of linestyle."""
-    _lines = ['-', '--', '-.', ':']
+    _lines = ['-', '--', '-.', ':', ]
     _names = ["solid", "dashed", "dashed-doted", "dotted"]
     dict_names_lines = dict(zip(_names, _lines))
     # Names to line styles
@@ -85,27 +102,61 @@ def check_linestyle(marker_linestyle=None, list_cat=None):
     return _check_validity(marker_linestyle, valid_linestyles, 'marker_linestyle', list_cat)
 
 
+def check_hatches(marker=None, hatch=None, list_cat=None):
+    """"""
+
+    valid_hatches = ['/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*']
+    # Check if hatch can be chosen
+    if hatch is None:
+        return [None] * len(list_cat)
+    if marker is not None:
+        raise ValueError(f"'marker' ('{marker}') must be None if 'hatch' ('{hatch}') is given.")
+    # Check if hatch is valid
+    if isinstance(hatch, str):
+        if hatch not in valid_hatches:
+            raise ValueError(f"'hatch' ('{hatch}') must be one of following: {valid_hatches}")
+        return [hatch] * len(list_cat)
+    # Check if hatch match with categories
+    if isinstance(hatch, list):
+        wrong_hatch = [x for x in hatch if x not in valid_hatches]
+        if len(wrong_hatch) != 0:
+            raise ValueError(
+                f"'hatch' contains wrong values ('{wrong_hatch}')! Must be one of following: {valid_hatches}")
+        if len(hatch) != len(list_cat):
+            raise ValueError(f"Length must match of 'hatch' ({hatch}) and categories ({list_cat}).")
+        else:
+            return hatch
+
 # Helper function
-def _create_marker(color, category, marker, marker_size, lw, edgecolor, linestyle='-'):
+def _create_marker(color, label, marker, marker_size, lw, edgecolor, linestyle, hatch):
     """Create custom marker based on input."""
-    if marker == "-":  # If marker is '-', treat it as a line
-        return plt.Line2D([0, 1], [0, 1], color=color, linestyle=linestyle, lw=lw, label=category)
-
     if marker is None:
-        args = {'facecolor': color, 'label': category, 'lw': lw}
-        if edgecolor:
-            args['edgecolor'] = edgecolor
+        args = {'facecolor': color,
+                'label': label,
+                'lw': lw,
+                'hatch': hatch,
+                "edgecolor": edgecolor}
         return mpl.patches.Patch(**args)
+    # If marker is '-', treat it as a line
+    if marker == "-":
+        if lw <= 0:
+            raise ValueError("'lw' should not be greater 0 if 'marker' is a line ('-').")
+        return plt.Line2D([0, 1], [0, 1], color=color, linestyle=linestyle, lw=lw, label=label)
 
-    return plt.Line2D([0], [0], marker=marker, color='w', linestyle=linestyle, markerfacecolor=color,
-                      markersize=marker_size, label=category)
+
+    return plt.Line2D(xdata=[0], ydata=[0],
+                      marker=marker,
+                      color=edgecolor,
+                      markerfacecolor=color,
+                      markersize=marker_size,
+                      label=label,
+                      lw=0,
+                      markeredgewidth=lw)
+
 
 # II Main function
 def plot_set_legend(ax: Optional[plt.Axes] = None,
-                    remove_legend: bool = True,
-                    handles: Optional[List] = None,
-                    return_handles: bool = False,
-                    # Color and Categories
+                    # Categories and colors
                     dict_color: Optional[Dict[str, str]] = None,
                     list_cat: Optional[List[str]] = None,
                     labels: Optional[List[str]] = None,
@@ -128,10 +179,11 @@ def plot_set_legend(ax: Optional[plt.Axes] = None,
                     lw: Union[int, float] = 0,
                     edgecolor: Optional[str] = None,
                     marker: Optional[Union[str, int, list]] = None,
-                    marker_size: Union[int, float] = 10,
+                    marker_size: Union[int, float, List[Union[int, float]]] = 10,
                     marker_linestyle: Union[str, list] = "-",
+                    hatch: Optional[str] = None,
                     # Title
-                    title: Optional[str] = None,
+                    title: str = None,
                     title_align_left: bool = True,
                     **kwargs
                     ) -> Union[plt.Axes, Tuple[List, List[str]]]:
@@ -145,13 +197,6 @@ def plot_set_legend(ax: Optional[plt.Axes] = None,
     ----------
     ax
         The axes to attach the legend to. If not provided, the current axes will be used.
-    remove_legend:
-        Remove legend of given or current axes.
-    handles
-        Handles for legend items. If not provided, they will be generated based on ``dict_color`` and ``list_cat``.
-    return_handles
-        Whether to return handles and labels. If ``True``, function returns ``handles``, ``labels`` instead of the axes.
-
     dict_color
         A dictionary mapping categories to colors.
     list_cat
@@ -189,11 +234,13 @@ def plot_set_legend(ax: Optional[plt.Axes] = None,
     edgecolor
         Edge color for legend items.
     marker
-        Marker shape for legend items. '-' is added to the :mod:`matplotlib` default options to use lines as markers.
+        Marker for legend items. '-' is added to the
     marker_size
         Marker size for legend items.
     marker_linestyle
         Marker linestyle of legend items.
+    hatch
+        Filling pattern for default marker.
     title
         Title for the legend.
     title_align_left
@@ -228,35 +275,43 @@ def plot_set_legend(ax: Optional[plt.Axes] = None,
     --------
     * `Matplotlib markers <https://matplotlib.org/stable/api/markers_api.html>`.
     * `Linestyles of markers <https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html>`
+    * `Hatches <https://matplotlib.org/stable/gallery/shapes_and_collections/hatch_style_reference.html>`_ filling patterns.
     * :func:`matplotlib.lines.Line2D` for available marker shapes and line properties.
     * :func:`matplotlib.axes.Axes`, which is the core object in matplotlib.
     * :func:`matplotlib.pyplot.gca` to get the current Axes instance.
     """
-    # Check basic input
+    # Check input
     ut.check_ax(ax=ax, accept_none=True)
     if ax is None:
         ax = plt.gca()
 
-    ut.check_bool(name="remove_current_legend", val=remove_legend)
-    ut.check_bool(name="return_handles", val=return_handles)
+    ut.check_dict(name="dict_color", val=dict_color, accept_none=False)
+    list_cat = check_list_cat(dict_color=dict_color, list_cat=list_cat)
+    labels = check_labels(list_cat=list_cat, labels=labels)
+    hatch = check_hatches(marker=marker, hatch=hatch, list_cat=list_cat) # Must be before check_marker !
+
+    marker = check_marker(marker=marker, list_cat=list_cat, lw=lw)
+    marker_size = check_marker_size(marker_size, list_cat=list_cat)
+    marker_linestyle = check_linestyle(marker_linestyle=marker_linestyle, list_cat=list_cat)
+
     ut.check_bool(name="title_align_left", val=title_align_left)
     ut.check_bool(name="loc_out", val=loc_out)
 
     ut.check_number_range(name="ncol", val=ncol, min_val=1, accept_none=True, just_int=True)
-    args_float = {"labelspacing": labelspacing, "columnspacing": columnspacing,
+    args_float = {"x": x, "y": y,
+                  "labelspacing": labelspacing, "columnspacing": columnspacing,
                   "handletextpad": handletextpad, "handlelength": handlelength,
                   "fontsize": fontsize, "fontsize_legend": fontsize_title,
-                  "lw": lw, "marker_size": marker_size}
+                  "lw": lw}
     for key in args_float:
         ut.check_number_val(name=key, val=args_float[key], accept_none=True, just_int=False)
-    check_x_y(x=x, y=y)
 
-    # Set y an x if legend should be outside
-    if loc_out:
-        x = x if x is not None else 0
-        y = y if y is not None else -0.25
+    # Remove existing legend
+    if ax.get_legend() is not None and len(ax.get_legend().get_lines()) > 0:
+        ax.legend_.remove()
 
-    # Universal Legend Arguments
+    # Update legend arguments
+    edgecolor = "white" if edgecolor is None else edgecolor
     args = dict(loc=loc,
                 ncol=ncol,
                 fontsize=fontsize,
@@ -269,39 +324,28 @@ def plot_set_legend(ax: Optional[plt.Axes] = None,
                 edgecolor=edgecolor,
                 prop={"weight": weight, "size": fontsize})
     args.update(kwargs)
+
     if fontsize_title:
         args["title_fontproperties"] = {"weight": fontsize_weight, "size": fontsize_title}
-    if x is not None and y is not None:
+
+    # Adjust x and y
+    if loc_out:
+        # Set values under legend
+        x = 0 if x is None else x
+        y = -0.25 if y is None else y
+
+    if x is not None or y is not None:
+        # Set default bbox values
+        x = 1 if x is None else x
+        y = 1 if y is None else y
         args["bbox_to_anchor"] = (x, y)
 
-    # Use default plt.legend if no dict_color provided
-    if dict_color is None:
-        plt.legend(handles=handles, labels=labels, **args)
-        return ax
-
-    # Check if legend exists
-    if remove_legend:
-        if ax.get_legend() is not None and len(ax.get_legend().get_lines()) > 0:
-            ax.legend_.remove()
-
-    # Adjust and check dict_colors and all arguments depending on it
-    list_cat = check_dict_colors(list_cat=list_cat, dict_color=dict_color, labels=labels)
-    marker = check_marker(marker=marker, list_cat=list_cat, lw=lw)
-    marker_linestyle = check_linestyle(marker_linestyle=marker_linestyle, list_cat=list_cat)
-
-    # Generate legend items if not provided using dict_cat and list_cat
-    if not handles and dict_color and list_cat:
-        handles = [_create_marker(dict_color[cat], cat, marker[i], marker_size, lw, edgecolor, marker_linestyle[i])
-                   for i, cat in enumerate(list_cat)]
-    labels = list_cat if labels is None else labels
+    # Generate legend items
+    handles = [_create_marker(dict_color[cat], labels[i], marker[i], marker_size[i], lw, edgecolor, marker_linestyle[i], hatch[i])
+               for i, cat in enumerate(list_cat)]
     # Create the legend
     legend = ax.legend(handles=handles, labels=labels, **args)
-
     # Align title if needed
     if title_align_left:
         legend._legend_box.align = "left"
-
-    if return_handles:
-        return handles, labels if labels else list_cat
-    else:
-        return ax
+    return ax
