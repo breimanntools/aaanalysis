@@ -25,15 +25,6 @@ def check_font(font="Arial"):
         raise ValueError(error_message)
 
 
-def check_fig_format(fig_format="pdf"):
-    """"""
-    list_fig_formats = ['eps', 'jpg', 'jpeg', 'pdf', 'pgf', 'png', 'ps',
-                        'raw', 'rgba', 'svg', 'svgz', 'tif', 'tiff', 'webp']
-    ut.check_str(name="fig_format", val=fig_format)
-    if fig_format not in list_fig_formats:
-        raise ValueError(f"'fig_format' should be one of following: {list_fig_formats}")
-
-
 def check_grid_axis(grid_axis="y"):
     list_grid_axis = ["y", "x", "both"]
     if grid_axis not in list_grid_axis:
@@ -50,7 +41,6 @@ def set_tick_size(axis=None, major_size=None, minor_size=None):
 # II Main functions
 def plot_settings(font_scale: float = 1,
                   font: str = "Arial",
-                  fig_format: str = "pdf",
                   weight_bold: bool = True,
                   adjust_only_font: bool = False,
                   adjust_further_elements: bool = True,
@@ -67,7 +57,8 @@ def plot_settings(font_scale: float = 1,
     Configures general settings for plot visualization.
 
     This function modifies the global settings of :mod:`matplotlib` and :mod:`seaborn` libraries.
-    PDFs are embedded such that they can be edited using image editing software.
+    It adjusts font embedding for vector formats like PDF and SVG, ensuring compatibility and
+    editability across various viewers and editing software.
 
     Parameters
     ----------
@@ -75,8 +66,6 @@ def plot_settings(font_scale: float = 1,
        Scaling factor to scale the size of font elements. Consistent with :func:`seaborn.set_context`.
     font
        Name of text font. Common options are 'Arial', 'Verdana', 'Helvetica', or 'DejaVu Sans' (Matplotlib default).
-    fig_format
-       Specifies the file format for saving plots. Most backends support png, pdf, ps, eps and svg.
     weight_bold
        If ``True``, font and line elements are bold.
     adjust_only_font
@@ -138,13 +127,13 @@ def plot_settings(font_scale: float = 1,
 
     See Also
     --------
+    * More examples in `Plotting Prelude <plotting_prelude.html>`_.
     * :func:`seaborn.set_context`, where ``font_scale`` is utilized.
     * :data:`matplotlib.rcParams`, which manages the global settings in :mod:`matplotlib`.
     """
     # Check input
     ut.check_number_range(name="font_scale", val=font_scale, min_val=0, just_int=False)
     check_font(font=font)
-    check_fig_format(fig_format=fig_format)
     check_grid_axis(grid_axis=grid_axis)
     args_bool = {"weight_bold": weight_bold, "adjust_only_font": adjust_only_font,
                  "adjust_further_elements": adjust_further_elements, "grid": grid,
@@ -186,6 +175,7 @@ def plot_settings(font_scale: float = 1,
     # Grid
     plt.rcParams["axes.grid.axis"] = grid_axis
     plt.rcParams["axes.grid"] = grid
+    plt.rcParams["grid.linewidth"] = 1 if weight_bold else 0.8
     # Adjust weight of text and lines
     if weight_bold:
         plt.rcParams["axes.labelweight"] = "bold"
@@ -204,7 +194,6 @@ def plot_settings(font_scale: float = 1,
     short_minor_size = 2
     no_major_size = 0
     no_minor_size = 0
-
     # Set x ticks
     if no_ticks or no_ticks_x:
         set_tick_size(axis="x", major_size=no_major_size, minor_size=no_minor_size)
@@ -221,11 +210,10 @@ def plot_settings(font_scale: float = 1,
     else:
         set_tick_size(axis="y", major_size=default_major_size, minor_size=default_minor_size)
 
-    # Handle figure format
-    if fig_format == "pdf":
-        mpl.rcParams['pdf.fonttype'] = 42
-    elif "svg" in fig_format:
-        mpl.rcParams['svg.fonttype'] = 'none'
+    # Handle storing of vectorized figure format
+    mpl.rcParams['pdf.fonttype'] = 42   # TrueType
+    mpl.rcParams['ps.fonttype'] = 42
+    mpl.rcParams['svg.fonttype'] = 'none'
 
     # Additional adjustments
     if adjust_further_elements:

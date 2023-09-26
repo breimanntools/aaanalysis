@@ -39,7 +39,7 @@ def plot_get_clist(n_colors: int = 3) -> List[str]:
 
     See Also
     --------
-    * Example notebooks in `Plotting Prelude <plotting_prelude.html>`_.
+    * The example notebooks in `Plotting Prelude <plotting_prelude.html>`_.
     * `Matplotlib color names <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
     * :func:`seaborn.color_palette` function to generate a color palette in seaborn.
     """

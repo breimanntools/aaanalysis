@@ -93,7 +93,7 @@ def plot_get_cmap(name: str = "CPP",
 
     See Also
     --------
-    * Example notebooks in `Plotting Prelude <plotting_prelude.html>`_.
+    * Our `Plotting Prelude <plotting_prelude.html>`_.
     * `Matplotlib color names <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
     * :func:`seaborn.color_palette` function to generate a color palette in seaborn.
     * :func:`seaborn.light_palette function` to generate a lighter color palettes.

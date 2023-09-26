@@ -192,7 +192,7 @@ def plot_set_legend(ax: Optional[plt.Axes] = None,
                     marker: Optional[Union[str, int, list]] = None,
                     marker_size: Union[int, float, List[Union[int, float]]] = 10,
                     marker_linestyle: Union[str, list] = "-",
-                    hatch: Optional[str] = None,
+                    hatch: Optional[Union[str, List[str]]] = None,
                     # Title
                     title: str = None,
                     title_align_left: bool = True,
@@ -284,6 +284,7 @@ def plot_set_legend(ax: Optional[plt.Axes] = None,
 
     See Also
     --------
+    * More examples in `Plotting Prelude <plotting_prelude.html>`_.
     * `Matplotlib markers <https://matplotlib.org/stable/api/markers_api.html>`.
     * `Linestyles of markers <https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html>`
     * `Hatches <https://matplotlib.org/stable/gallery/shapes_and_collections/hatch_style_reference.html>`_ filling patterns.

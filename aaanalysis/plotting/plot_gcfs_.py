@@ -29,6 +29,9 @@ def plot_gcfs():
         >>> plt.tight_layout()
         >>> plt.show()
 
+    See Also
+    --------
+    * Our `Plotting Prelude <plotting_prelude.html>`_.
     """
     # Get the current plotting context
     current_context = sns.plotting_context()
