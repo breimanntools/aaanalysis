@@ -98,7 +98,10 @@
 <li class="toctree-l3"><a class="reference internal" href="#building-the-docs">Building the Docs</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#test-with-chatgpt">Test with ChatGPT</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#test-with-chatgpt">Test with ChatGPT</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#test-guided-development-tgd">Test Guided Development (TGD)</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -256,7 +259,8 @@ conda<span class="w"> </span>activate<span class="w"> </span>aanalysis
 </pre></div>
 </div>
 <p>This will execute all the test cases in the tests/ directory. Check out our
-<a class="reference external" href="https://github.com/breimanntools/aaanalysis/blob/master/tests/README_TESTING">README on testing</a>.</p>
+<a class="reference external" href="https://github.com/breimanntools/aaanalysis/blob/master/tests/README_TESTING">README on testing</a>. See further
+useful commands in our <a class="reference external" href="https://github.com/breimanntools/aaanalysis/blob/master/docs/project_cheat_sheet.md">Project Cheat Sheet</a>.</p>
 </section>
 </section>
 </section>
@@ -376,8 +380,8 @@ make<span class="w"> </span>html
 </section>
 <section id="test-with-chatgpt">
 <h2><a class="toc-backref" href="#id8" role="doc-backlink">Test with ChatGPT</a><a class="headerlink" href="#test-with-chatgpt" title="Permalink to this heading"></a></h2>
-<p>To optimize testing with ChatGPT, use the template below and fill in the blank spaces between
-<code class="docutils literal notranslate"><span class="pre">START</span> <span class="pre">OF</span> <span class="pre">CODE</span></code> and <code class="docutils literal notranslate"><span class="pre">END</span> <span class="pre">OF</span> <span class="pre">CODE</span></code>. For testing templates,
+<p>To optimize testing, use ChatGPT with the template below and fill in the blank spaces between <code class="docutils literal notranslate"><span class="pre">START</span> <span class="pre">OF</span> <span class="pre">CODE</span></code>
+and <code class="docutils literal notranslate"><span class="pre">END</span> <span class="pre">OF</span> <span class="pre">CODE</span></code>. For testing templates,
 utilize <a class="reference external" href="https://github.com/breimanntools/aaanalysis/blob/master/tests/unit/data_loader_tests/test_load_dataset.py">our</a>
 or any custom testing template.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&quot;
@@ -427,11 +431,19 @@ Reminder: In Normal Cases, it&#39;s crucial to test parameters individually.
 &quot;
 </pre></div>
 </div>
-<p>ChatGPT has a token limit, which may truncate responses. To continue, use:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Continue from where you left off.
-</pre></div>
-</div>
-<p>Repeat as necessary and compile the results. Once done, provide the script to ChatGPT for further refinement.</p>
+<p>ChatGPT has a token limit, which may truncate responses. To continue, simply ask <strong>continue processing</strong> or something
+similar. Repeat as necessary and compile the results. Once done, provide the script to ChatGPT for further refinement.</p>
+<section id="test-guided-development-tgd">
+<h3>Test Guided Development (TGD)<a class="headerlink" href="#test-guided-development-tgd" title="Permalink to this heading"></a></h3>
+<p>Leverage ChatGPT-provided testing scripts to refine your code and its interface. If ChatGPT struggles or produces
+erroneous tests, it often indicates ambiguities or complexities in your function’s naming or logic. Address these
+insights to ensure intuitive and robust code design through the TGD approach. You can provide the complete function or
+only its <strong>signature &amp; docstring</strong>:</p>
+<p><strong>Signature &amp; Docstring</strong>: Focus on interface testing by providing the function’s signature and docstring,
+aiming to ensure alignment with its external behavior and documentation.</p>
+<p><strong>Complete Function</strong>: Submit the entire function code for deeper test generation, targeting comprehensive
+coverage that accounts for internal logic and intricacies.</p>
+</section>
 </section>
 </section>
 

@@ -128,7 +128,8 @@ We utilize `pytest <https://docs.pytest.org/en/7.4.x/>`_ and `hypothesis <https:
   pytest
 
 This will execute all the test cases in the tests/ directory. Check out our
-`README on testing <https://github.com/breimanntools/aaanalysis/blob/master/tests/README_TESTING>`_.
+`README on testing <https://github.com/breimanntools/aaanalysis/blob/master/tests/README_TESTING>`_. See further
+useful commands in our `Project Cheat Sheet <https://github.com/breimanntools/aaanalysis/blob/master/docs/project_cheat_sheet.md>`_.
 
 
 Pull Requests
@@ -264,8 +265,8 @@ To generate the documentation locally:
 
 Test with ChatGPT
 =================
-To optimize testing with ChatGPT, use the template below and fill in the blank spaces between
-``START OF CODE`` and ``END OF CODE``. For testing templates,
+To optimize testing, use ChatGPT with the template below and fill in the blank spaces between ``START OF CODE``
+and ``END OF CODE``. For testing templates,
 utilize `our <https://github.com/breimanntools/aaanalysis/blob/master/tests/unit/data_loader_tests/test_load_dataset.py>`_
 or any custom testing template.
 
@@ -317,10 +318,18 @@ or any custom testing template.
     Reminder: In Normal Cases, it's crucial to test parameters individually.
     "
 
-ChatGPT has a token limit, which may truncate responses. To continue, use:
+ChatGPT has a token limit, which may truncate responses. To continue, simply ask **continue processing** or something
+similar. Repeat as necessary and compile the results. Once done, provide the script to ChatGPT for further refinement.
 
-.. code-block:: none
+Test Guided Development (TGD)
+-----------------------------
+Leverage ChatGPT-provided testing scripts to refine your code and its interface. If ChatGPT struggles or produces
+erroneous tests, it often indicates ambiguities or complexities in your function's naming or logic. Address these
+insights to ensure intuitive and robust code design through the TGD approach. You can provide the complete function or
+only its **signature & docstring**:
 
-    Continue from where you left off.
+**Signature & Docstring**: Focus on interface testing by providing the function's signature and docstring,
+aiming to ensure alignment with its external behavior and documentation.
 
-Repeat as necessary and compile the results. Once done, provide the script to ChatGPT for further refinement.
+**Complete Function**: Submit the entire function code for deeper test generation, targeting comprehensive
+coverage that accounts for internal logic and intricacies.

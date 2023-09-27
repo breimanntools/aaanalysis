@@ -144,7 +144,7 @@ def _create_marker(color, label, marker, marker_size, lw, edgecolor, linestyle, 
                       lw=0,
                       markeredgewidth=lw)
 
-
+# TODO update checks for e.g., - should give warning if other parameters do not match
 # II Main function
 def plot_set_legend(ax: Optional[plt.Axes] = None,
                     # Categories and colors
@@ -170,7 +170,7 @@ def plot_set_legend(ax: Optional[plt.Axes] = None,
                     marker: Optional[Union[str, int, list]] = None,
                     marker_size: Union[int, float, List[Union[int, float]]] = 10,
                     lw: Union[int, float] = 0,
-                    linestyle: Union[str, list] = "-",
+                    linestyle: Optional[Union[str, list]] = None,
                     edgecolor: str = "white",
                     hatch: Optional[Union[str, List[str]]] = None,
                     # Title
