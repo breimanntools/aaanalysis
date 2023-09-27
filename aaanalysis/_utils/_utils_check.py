@@ -15,7 +15,7 @@ def check_number_val(name=None, val=None, accept_none=False, just_int=False):
     valid_types = (int,) if just_int else (float, int)
     type_description = "int" if just_int else "float or int"
     if not isinstance(val, valid_types):
-        raise ValueError(f"'{name}' ({val}) should be {type_description})")
+        raise ValueError(f"'{name}' ({val}) should be {type_description}.")
 
 
 def check_number_range(name=None, val=None, min_val=0, max_val=None, accept_none=False, just_int=None):

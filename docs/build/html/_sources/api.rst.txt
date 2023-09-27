@@ -67,6 +67,6 @@ Plot Utilities
     aaanalysis.plot_get_cdict
     aaanalysis.plot_settings
     aaanalysis.plot_gcfs
-    aaanalysis.plot_set_legend
+    aaanalysis.plot_legend
 
 

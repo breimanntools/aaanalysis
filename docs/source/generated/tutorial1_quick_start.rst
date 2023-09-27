@@ -141,8 +141,6 @@ Which can be again used for machine learning:
 .. code:: ipython3
 
     import seaborn as sns
-    import warnings
-    warnings.simplefilter(action='ignore', category=FutureWarning)
     import matplotlib.pyplot as plt
     import pandas as pd
     

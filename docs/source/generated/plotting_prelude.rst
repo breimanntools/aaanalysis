@@ -10,8 +10,6 @@ Let us first make all imports and create some data
 
     import matplotlib.pyplot as plt
     import seaborn as sns
-    import warnings
-    warnings.simplefilter(action='ignore', category=FutureWarning) 
     
     data = {'Classes': ['Class A', 'Class B', 'Class C'], 'Values': [23, 27, 43]}
 
