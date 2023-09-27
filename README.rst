@@ -65,13 +65,12 @@ Install
 Contributions
 =============
 We appreciate bug reports, feature requests, or updates on documentation and code. For details, please refer to
-`CONTRIBUTING.rst <https://github.com/breimanntools/aaanalysis/blob/master/CONTRIBUTING.rst>`_. This guide includes
-specifics about `AAanalysis` and also ChatGPT prompts for software development. For further questions or suggestions,
-please email stephanbreimann@gmail.com.
+`contributing guidelines <CONTRIBUTING.rst>`_. These include specifics about AAanalysis and also notes on Testing
+Guided Development (TGD) using ChatGPT. For further questions or suggestions, please email stephanbreimann@gmail.com.
 
 Citations
 =========
-If you use 'AAanalysis' in your work, please cite the respective publication as follows:
+If you use AAanalysis in your work, please cite the respective publication as follows:
 
 **AAclust**:
    [Citation details and link if available]
