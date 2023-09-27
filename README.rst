@@ -65,7 +65,7 @@ Install
 Contributing
 ============
 We appreciate bug reports, feature requests, or updates on documentation and code. For details, please refer to
-`contributing guidelines <CONTRIBUTING.rst>`_. These include specifics about AAanalysis and also notes on Testing
+`Contributing Guidelines <CONTRIBUTING.rst>`_. These include specifics about AAanalysis and also notes on Testing
 Guided Development (TGD) using ChatGPT. For further questions or suggestions, please email stephanbreimann@gmail.com.
 
 Citations
