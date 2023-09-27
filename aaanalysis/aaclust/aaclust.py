@@ -6,6 +6,7 @@ import numpy as np
 from collections import OrderedDict
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster import KMeans
+from typing import Optional, Callable, Dict, Union, List, Any
 
 import aaanalysis.utils as ut
 
@@ -99,7 +100,7 @@ def get_max_dist(X, on_center=True, metric="euclidean"):
 # II Main Functions
 # AAclust algorithm steps (estimate lower bound for n_clusters -> optimization of n_clusters -> merge clusters)
 # 1. Step (Estimation of n clusters)
-def estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6, on_center=True):
+def estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6, on_center=True, verbose=True):
     """
     Estimate the lower bound of the number of clusters (k).
 
@@ -119,12 +120,16 @@ def estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6
     on_center : bool, optional, default = True
         Whether the minimum correlation is computed for all observations within a cluster
         or just for the cluster center.
+    verbose : bool, optional, default = False
+        A flag to enable or disable verbose outputs.
 
     Returns
     -------
     n_clusters : int
         Estimated lower bound for the number of clusters (k).
     """
+    if verbose:
+        ut.print_green("1. Estimation of lower bound of k (number of clusters)", end="")
     f = lambda c: get_min_cor(X, labels=model(n_clusters=c, **model_kwargs).fit(X).labels_, on_center=on_center)
     # Create range between 10% and 90% of all scales (10% steps) as long as minimum correlation is lower than threshold
     n_samples, n_features = X.shape
@@ -140,11 +145,13 @@ def estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6
     # Select second highest lower bound (highest lower bound is faster but might surpass true bound)
     nclust_mincor.sort(key=lambda x: x[0], reverse=True)
     n_clusters = nclust_mincor[1][0] if len(nclust_mincor) > 1 else nclust_mincor[0][0]  # Otherwise, only existing one
+    if verbose:
+        ut.print_green(f": k={n_clusters}")
     return n_clusters
 
 
 # 2. Step (Optimization of n clusters)
-def optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_th=0.5, on_center=True):
+def optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_th=0.5, on_center=True, verbose=True):
     """
     Optimize the number of clusters using a recursive algorithm.
 
@@ -168,12 +175,18 @@ def optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_t
     on_center : bool, optional, default = True
         Whether the minimum correlation is computed for all observations within a cluster
         or just for the cluster center.
+    verbose : bool, optional, default = False
+        A flag to enable or disable verbose outputs.
 
     Returns
     -------
     n_clusters : int
         Optimized number of clusters (k) after the recursive clustering.
     """
+    if verbose:
+        objective_fct = "min_cor_center" if on_center else "min_cor_all"
+        ut.print_green(f"2. Optimization of k by recursive clustering ({objective_fct}, min_th={min_th})", end="")
+
     n_samples, n_features = X.shape
     f = lambda c: get_min_cor(X, labels=model(n_clusters=c, **model_kwargs).fit(X).labels_, on_center=on_center)
     min_cor = f(n_clusters)
@@ -187,6 +200,8 @@ def optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_t
             n_clusters = max(1, n_clusters - step * 2)
             step = 1
             min_cor = f(n_clusters)
+    if verbose:
+        ut.print_green(f": k={n_clusters}")
     return n_clusters
 
 
@@ -208,7 +223,7 @@ def _get_quality_measure(X, metric=None, labels=None, label_cluster=None, on_cen
 
 
 def _get_best_cluster(dict_clust_qm=None, metric=None):
-    """Get cluster with best quality measure: either highest minimum Pearson correlation
+    """Get cluster with the best quality measure: either highest minimum Pearson correlation
     or lowest distance measure"""
     if metric == ut.METRIC_CORRELATION:
         return max(dict_clust_qm, key=dict_clust_qm.get)
@@ -216,7 +231,7 @@ def _get_best_cluster(dict_clust_qm=None, metric=None):
         return min(dict_clust_qm, key=dict_clust_qm.get)
 
 
-def merge_clusters(X, n_max=5, labels=None, min_th=0.5, on_center=True, metric="correlation"):
+def merge_clusters(X, n_max=5, labels=None, min_th=0.5, on_center=True, metric="correlation", verbose=True):
     """
     Merge small clusters into other clusters optimizing a given quality measure.
 
@@ -241,12 +256,16 @@ def merge_clusters(X, n_max=5, labels=None, min_th=0.5, on_center=True, metric="
     metric : str, optional, default = 'correlation'
         Quality measure used to optimize merging. Can be 'correlation' for maximum correlation
         or any valid distance metric like 'euclidean' for minimum distance.
+    verbose : bool, optional, default = False
+        A flag to enable or disable verbose outputs.
 
     Returns
     -------
     labels : array-like, shape (n_samples,)
         Cluster labels for observations after merging.
     """
+    if verbose:
+        ut.print_green("3. Cluster merging (optional)", end="")
     unique_labels = list(OrderedDict.fromkeys(labels))
     for n in range(1, n_max):
         s_clusters = [x for x in unique_labels if labels.count(x) == n]   # Smallest clusters
@@ -267,6 +286,8 @@ def merge_clusters(X, n_max=5, labels=None, min_th=0.5, on_center=True, metric="
     sorted_labels = pd.Series(labels).value_counts().index  # sorted in descending order of size
     dict_update = {label: i for label, i in zip(sorted_labels, range(0, len(set(labels))))}
     labels = [dict_update[label] for label in labels]
+    if verbose:
+        ut.print_green(f": k={len(set(labels))}")
     return labels
 
 
@@ -307,63 +328,66 @@ def get_names_cluster(list_names=None, name_medoid=None, name_unclassified="Uncl
 # TODO check, interface, testing, simplifying (Remove functions if not needed)
 class AAclust:
     """
-    AAclust: A k-optimized clustering framework for selecting redundancy-reduced set of numerical scales.
+    A k-optimized clustering framework for selecting redundancy-reduced sets of numerical scales.
 
-    AAclust is designed primarily for amino acid scales but is versatile enough for any set of numerical indices.
-    It takes clustering models that require a pre-defined number of clusters (k) from
-    `scikit-learn <https://scikit-learn.org/stable/modules/clustering.html>`. By leveraging Pearson correlation as
-    similarity measure, AAclust optimizes the value of k. It then selects one representative sample (termed as 'medoid')
-    for each cluster, which is the closest to the cluster's center, yielding a redundancy-reduced sample set.
+    AAclust is designed primarily for amino acid scales but can be used for any set of numerical indices.
+    It uses clustering models from `scikit-learn <https://scikit-learn.org/stable/modules/clustering.html>`_
+    that require a pre-defined number of clusters (k). Using Pearson correlation as similarity measure.
+    AAclust optimizes the value of k, selects a representative sample ('medoid')for each cluster closest to
+    the center, resulting in a redundancy-reduced sample set.
 
     Parameters
     ----------
-    model : callable, optional, default =  :class:`sklearn.cluster.KMeans`
-        The employed clustering model requiring pre-defined number of clusters 'k', given as 'n_clusters' parameter.
-    model_kwargs : dict, optional, default = {}
-        A dictionary of keyword arguments to pass to the selected clustering model.
-
-    verbose : bool, optional, default = False
-        A flag to enable or disable verbose outputs.
+    model
+        The clustering model that requires the number of clusters 'k'.
+    model_kwargs
+        Keyword arguments to pass to the selected clustering model.
+    verbose
+        If ``True``, verbose outputs are enabled.
 
     Attributes
     ----------
-    n_clusters : int, default = None
+    n_clusters
         Number of clusters obtained by AAclust.
-    labels_ : array-like, default = None
+    labels_
         Cluster labels in the order of samples in the feature matrix.
-    centers_ : array-like, default = None
+    centers_
         Average scale values corresponding to each cluster.
-    center_labels_ : array-like, default = None
+    center_labels_
         Cluster labels for each cluster center.
-    medoids_ : array-like, default = None
+    medoids_
         Representative samples (one for each cluster center).
-    medoid_labels_ : array-like, default = None
+    medoid_labels_
         Cluster labels for each medoid.
-    medoid_ind_ : array-like, default = None
+    medoid_ind_
         Indices of the chosen medoids within the original dataset.
     """
-    def __init__(self, model=None, model_kwargs=None, verbose=False):
+    def __init__(self,
+                 model: Optional[Callable] = None,
+                 model_kwargs: Optional[Dict] = None,
+                 verbose: bool = False):
         # Model parameters
-        if model is None:
-            model = KMeans
-        self.model = model
-        if model_kwargs is None:
-            model_kwargs = dict()
-        model_kwargs = ut.check_model(model=self.model, model_kwargs=model_kwargs)
+        self.model = model or KMeans
+        model_kwargs = ut.check_model(model=self.model, model_kwargs=model_kwargs or {})
         self._model_kwargs = model_kwargs
-        # AAclust clustering settings
-        self._verbose = verbose
-        # Output parameters (will be set during model fitting)
-        self.n_clusters = None  # Number of by AAclust obtained clusters
-        self.labels_ = None     # Cluster labels in order of samples in feature matrix
-        self.centers_ = None    # Mean scales for each cluster
-        self.center_labels_ = None
-        self.medoids_ = None
-        self.medoid_labels_ = None
-        self.medoid_ind_ = None
+        self._verbose = ut.check_verbose(verbose)
+        # Output parameters (set during model fitting)
+        self.n_clusters: Optional[int] = None
+        self.labels_: Optional[ut.ArrayLikeInt] = None
+        self.centers_: Optional[ut.ArrayLikeFloat] = None
+        self.center_labels_: Optional[ut.ArrayLikeInt] = None
+        self.medoids_: Optional[ut.ArrayLikeAny] = None
+        self.medoid_labels_: Optional[ut.ArrayLikeInt] = None
+        self.medoid_ind_: Optional[ut.ArrayLikeInt] = None
 
-    # Clustering method
-    def fit(self, X, names=None, on_center=True, min_th=0,  merge_metric="euclidean", n_clusters=None):
+    def fit(self,
+            X: ut.ArrayLikeFloat,
+            names: Optional[List[str]] = None,
+            on_center: bool = True,
+            min_th: float = 0,
+            merge_metric: Union[str, None] = "euclidean",
+            n_clusters: Optional[int] = None
+            ) -> Optional[List[str]]:
         """
         Fit the AAclust model on the data, optimizing cluster formation using Pearson correlation.
 
@@ -381,69 +405,57 @@ class AAclust:
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
-        names : list of str, optional
+        X
+            Feature matrix of shape (n_samples, n_features).
+        names
             Sample names. If provided, returns names of the medoids.
-        on_center : bool, default = True
-            If True, the correlation threshold is applied to the cluster center. Otherwise, it's applied to all cluster members.
-        min_th : float, default = 0
+        on_center
+            If ``True``, the correlation threshold is applied to the cluster center. Otherwise, it's applied to all cluster members.
+        min_th
             Pearson correlation threshold for clustering (between 0 and 1).
-        merge_metric : str or None, default = "euclidean"
+        merge_metric
             Metric used for optional cluster merging. Can be "euclidean", "pearson", or None (no merging).
-        n_clusters : int, optional
+        n_clusters
             Pre-defined number of clusters. If provided, AAclust uses this instead of optimizing k.
 
         Returns
         -------
-        names_medoid : list of str, if `names` is provided
-            Names of the medoids.
+        names_medoid
+            Names of the medoids, if ``names`` is provided.
 
         Notes
         -----
-        The 'fit' method sets the following attributes: :attr: `aaanalysis.AAclust.n_clusters",
-        :attr: `aaanalysis.AAclust.labels_`, :attr: `aaanalysis.AAclust.centers_`,
-        :attr: `aaanalysis.AAclust.center_labels_`, :attr: `aaanalysis.AAclust.medoids_`.
-        :attr: `aaanalysis.AAclust.medoid_labels_`, :attr: `aaanalysis.AAclust.medoid_ind_`.
+        Set all attributes within the :class:`aanalysis.AAclust` class.
 
-        For further information, refer to the AAclust paper : TODO: add link to AAclust paper
         """
         # Check input
         ut.check_min_th(min_th=min_th)
         merge_metric = ut.check_merge_metric(merge_metric=merge_metric)
         X, names = ut.check_feat_matrix(X=X, names=names)
         ut.check_feat_matrix_n_clust_match(X=X, n_clusters=n_clusters)
-        args = dict(model=self.model, model_kwargs=self._model_kwargs, min_th=min_th, on_center=on_center)
+        args = dict(model=self.model, model_kwargs=self._model_kwargs, min_th=min_th, on_center=on_center,
+                    verbose=self._verbose)
+        
         # Clustering using given clustering models
         if n_clusters is not None:
             labels = self.model(n_clusters=n_clusters, **self._model_kwargs).fit(X).labels_.tolist()
+        
         # Clustering using AAclust algorithm
         else:
-            # Estimation of lower bound of number of clusters via testing range between 10% and 90% of all scales
-            if self._verbose:
-                print("1. Estimation of lower bound of k (number of clusters)", end="")
+            # Step 1.: Estimation of lower bound of k (number of clusters)
             n_clusters_lb = estimate_lower_bound_n_clusters(X, **args)
-            if self._verbose:
-                print(f": k={n_clusters_lb}")
-            # Optimization of number of clusters by recursive clustering
-            if self._verbose:
-                objective_fct = "min_cor_center" if on_center else "min_cor_all"
-                print(f"2. Optimization of k by recursive clustering ({objective_fct}, min_th={min_th})", end="")
+            # Step 2. Optimization of k by recursive clustering
             n_clusters = optimize_n_clusters(X, n_clusters=n_clusters_lb, **args)
-            if self._verbose:
-                print(f": k={n_clusters}")
             labels = self.model(n_clusters=n_clusters, **self._model_kwargs).fit(X).labels_.tolist()
-            # Cluster merging: assign scales from small clusters to other cluster with highest minimum correlation
+            # Step 3. Cluster merging (optional)
             if merge_metric is not None:
-                if self._verbose:
-                    print("3. Cluster merging (optional)", end="")
                 labels = merge_clusters(X, labels=labels, min_th=min_th, on_center=on_center, metric=merge_metric)
-                if self._verbose:
-                    print(f": k={len(set(labels))}")
+
         # Obtain cluster centers and medoids
         medoids, medoid_labels, medoid_ind = get_cluster_medoids(X, labels=labels)
         centers, center_labels = get_cluster_centers(X, labels=labels)
-        # Save results
+        
+        # Save results in output parameters
         self.n_clusters = len(set(labels))
         self.labels_ = np.array(labels)
         self.centers_ = centers
@@ -451,6 +463,7 @@ class AAclust:
         self.medoids_ = medoids     # Representative scales
         self.medoid_labels_ = medoid_labels
         self.medoid_ind_ = medoid_ind   # Index of medoids
+        
         # Return labels of medoid if y is given
         if names is not None:
             names_medoid = [names[i] for i in medoid_ind]

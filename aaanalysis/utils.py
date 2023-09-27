@@ -5,15 +5,19 @@ import os
 import platform
 from functools import lru_cache
 import pandas as pd
+from typing import Union, List, Tuple, Any
 import numpy as np
 
+# Import options
+from aaanalysis.config import options
 # Import utility functions explicitly
 from aaanalysis._utils._utils_check import (check_number_range, check_number_val,
                                             check_str, check_bool,
                                             check_dict, check_tuple,
                                             check_ax,
                                             check_feat_matrix, check_col_in_df)
-from aaanalysis._utils._utils_output import (print_red, print_start_progress, print_progress, print_finished_progress)
+from aaanalysis._utils._utils_output import (print_red, print_green, print_blue,
+                                             print_start_progress, print_progress, print_finished_progress)
 from aaanalysis._utils.utils_aaclust import (check_model, check_min_th, check_merge_metric,
                                              check_feat_matrix_n_clust_match,
                                              METRIC_CORRELATION, LIST_METRICS)
@@ -36,6 +40,12 @@ SEP = "\\" if platform.system() == "Windows" else "/"
 FOLDER_PROJECT = os.path.dirname(os.path.abspath(__file__))
 FOLDER_DATA = _folder_path(FOLDER_PROJECT, '_data')
 URL_DATA = "https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data/"
+
+
+# Types
+ArrayLikeInt = Union[List[int], Tuple[int], np.ndarray]
+ArrayLikeFloat = Union[List[float], Tuple[float], np.ndarray]
+ArrayLikeAny = Union[List[Any], Tuple[Any], np.ndarray]
 
 
 # Constants
@@ -146,8 +156,18 @@ def read_csv_cached(name, sep=None):
     df = pd.read_csv(name, sep=sep)
     return df.copy()
 
-# TODO check each of this checking function (make simpler)
 # Main check functions
+def check_verbose(verbose):
+    check_bool(name="verbose", val=verbose)
+    # System level verbosity
+    verbose_value = options['verbose']
+    # If system level is negative return
+    if not verbose_value:
+        return verbose_value
+    else:
+        return verbose
+
+# TODO check each of this checking function (make simpler)
 # Check key dataframes using constants and general checking functions (df_seq, df_parts, df_cat, df_scales, df_feat)
 def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     """Get features from df"""
