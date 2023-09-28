@@ -1,13 +1,66 @@
 """
 This is a script for ...
 """
-from sklearn.utils import check_array, check_consistent_length
 import pandas as pd
+import numpy as np
+# Write wrapper around scikit checkers
+from sklearn.utils import check_array
+
+# Array checking functions
+def check_array_like(name=None, val=None, dtype=None, accept_none=False,
+                     ensure_2d=False, allow_nan=False):
+    """
+    Check if the provided value matches the specified dtype.
+    If dtype is None, checks for general array-likeness.
+    If dtype is 'int', 'float', or 'any', checks for specific types.
+    """
+    if accept_none and val is None:
+        return None
+
+    # Convert DataFrame and Series to np.ndarray
+    if isinstance(val, (pd.DataFrame, pd.Series)):
+        val = val.values
+
+    # Utilize Scikit-learn's check_array for robust checking
+    if dtype == 'int':
+        expected_dtype = 'int'
+    elif dtype == 'float':
+        expected_dtype = 'float64'
+    elif dtype == 'any':
+        expected_dtype = None
+    else:
+        raise ValueError(f"'dtype' ({dtype}) not recognized.")
+    try:
+        val = check_array(val, dtype=expected_dtype, ensure_2d=ensure_2d, force_all_finite=not allow_nan)
+    except Exception as e:
+        raise ValueError(f"'{name}' should be array-like with {dtype} values."
+                         f"\nscikit message:\n\t{e}")
+
+    return val
+
+
+def check_feat_matrix(X=None, y=None, name_y="labels",
+                      ensure_2d=True, allow_nan=False):
+    """Check feature matrix valid and matches with y if (if provided)"""
+    if X is None:
+        raise ValueError("Feature matrix 'X' should not be None")
+    try:
+        X = check_array(X, dtype="float64", ensure_2d=ensure_2d, force_all_finite=not allow_nan)
+    except Exception as e:
+        raise ValueError(f"Feature matrix 'X'  be array-like with float values."
+                         f"\nscikit message:\n\t{e}")
+    if y is None:
+        return X
+    n_samples, n_features = X.shape
+    if n_samples != len(y):
+        raise ValueError(f"Number of samples does not match for 'X' ({len(n_samples)}) and '{name_y}' ({y}.")
+    if n_samples == 0 or n_features == 0:
+        raise ValueError(f"Shape of 'X' ({n_samples}, {n_features}) indicates empty feature matrix.")
+    return X
 
 # TODO check these functions if used
-# Array checking functions
+"""
 def check_feat_matrix(X=None, y=None, labels=None):
-    """Transpose matrix and check if X and y match (y can be labels or names). Transpose back otherwise """
     X = check_array(X).transpose()
     if labels is not None:
         check_consistent_length(X, labels)
@@ -23,7 +76,7 @@ def check_feat_matrix(X=None, y=None, labels=None):
             error = f"Shape of X ({n_samples}, {n_features}) does not match with number of labels in y ({len(y)})."
             raise ValueError(error)
         return X, y
-
+"""
 """
 def check_feat_matrix(X=None, y=None):
     #Check if X (feature matrix) and y (class labels) are not None and match

@@ -1,32 +1,18 @@
-"""
-This is a script for ...
-"""
-import time
+"""Define new data types"""
 import pandas as pd
 import numpy as np
-
-import scripts._utils as ut
-
-# Settings
-pd.set_option('expand_frame_repr', False)  # Single line print for pd.Dataframe
+from typing import Union, List, Tuple, Any
 
 
-# I Helper Functions
-
-
-# II Main Functions
-
-
-# III Test/Caller Functions
-
-
-# IV Main
-def main():
-    t0 = time.time()
-
-    t1 = time.time()
-    print("Time:", t1 - t0)
-
-
-if __name__ == "__main__":
-    main()
+# Types
+ArrayLike = Union[
+    List[Union[int, float, Any]],
+    Tuple[Union[int, float, Any], ...],
+    np.ndarray,
+    pd.DataFrame,
+    pd.Series
+]
+ArrayLikeInt = Union[List[int], Tuple[int], np.ndarray]
+ArrayLikeFloat = Union[List[Union[float, int]], Tuple[Union[float, int]], np.ndarray]
+ArrayLikeAny = Union[List[Any], Tuple[Any], np.ndarray]
+ArrayLikeBool = Union[List[bool], Tuple[bool], np.ndarray]

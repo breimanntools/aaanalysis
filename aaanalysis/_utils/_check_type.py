@@ -57,16 +57,20 @@ def check_dict(name=None, val=None, accept_none=False):
         raise ValueError(error)
 
 
-def check_tuple(name=None, val=None, n=None, check_n=True):
+def check_tuple(name=None, val=None, n=None, check_n=True, accept_none=False):
     """"""
+    if accept_none and val is None:
+        return None
     if not isinstance(val, tuple):
         raise ValueError(f"'{name}' ({val}) should be a tuple.")
     if check_n and n is not None and len(val) != n:
         raise ValueError(f"'{name}' ({val}) should be a tuple with {n} elements.")
 
 
-def check_list(name=None, val=None):
+def check_list(name=None, val=None, accept_none=False):
     """"""
+    if accept_none and val is None:
+        return None
     if not isinstance(val, list):
         raise ValueError(f"'{name}' (type: {type(val)}) should be a list.")
 

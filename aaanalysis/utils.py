@@ -5,20 +5,22 @@ import os
 import platform
 from functools import lru_cache
 import pandas as pd
-from typing import Union, List, Tuple, Any
 import numpy as np
 
 from aaanalysis.config import options
+
 
 # Import checking functions explicitly
 from aaanalysis._utils._check_type import (check_number_range, check_number_val, check_str, check_bool,
                                            check_dict, check_tuple, check_list,
                                            check_ax)
 
-from aaanalysis._utils._check_data import (check_feat_matrix, check_col_in_df)
+from aaanalysis._utils._check_data import (check_array_like, check_feat_matrix, check_col_in_df)
 
 # Import utility functions explicitly
-from aaanalysis._utils._utils_output import (print_red, print_green, print_blue,
+from aaanalysis._utils._new_types import ArrayLike, ArrayLikeFloat, ArrayLikeAny, ArrayLikeInt, ArrayLikeBool
+
+from aaanalysis._utils._utils_output import (_print_red, print_out, _print_blue,
                                              print_start_progress, print_progress, print_finished_progress)
 from aaanalysis._utils.utils_cpp import (check_color, check_y_categorical, check_labels, check_ylim,
                                          check_args_len, check_args_len, check_list_parts,
@@ -39,12 +41,6 @@ SEP = "\\" if platform.system() == "Windows" else "/"
 FOLDER_PROJECT = os.path.dirname(os.path.abspath(__file__))
 FOLDER_DATA = _folder_path(FOLDER_PROJECT, '_data')
 URL_DATA = "https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data/"
-
-
-# Types
-ArrayLikeInt = Union[List[int], Tuple[int], np.ndarray]
-ArrayLikeFloat = Union[List[float], Tuple[float], np.ndarray]
-ArrayLikeAny = Union[List[Any], Tuple[Any], np.ndarray]
 
 
 # I Constants

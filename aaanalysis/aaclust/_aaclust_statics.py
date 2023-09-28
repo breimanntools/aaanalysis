@@ -16,7 +16,7 @@ def compute_centers(X, labels=None):
     center_labels = list(OrderedDict.fromkeys(labels))
     list_masks = [[True if i == label else False for i in labels] for label in center_labels]
     centers = np.concatenate([_cluster_center(X[mask]) for mask in list_masks]).round(3)
-    return centers, center_labels
+    return centers, np.array(center_labels)
 
 
 def compute_medoids(X, labels=None):
@@ -26,11 +26,11 @@ def compute_medoids(X, labels=None):
     list_ind_max = [_cluster_medoid(X[mask]) for mask in list_masks]
     indices = np.array(range(0, len(labels)))
     medoid_ind = [indices[m][i] for m, i in zip(list_masks, list_ind_max)]
-    medoid_labels = [labels[i] for i in medoid_ind]
+    medoid_labels = np.array([labels[i] for i in medoid_ind])
     medoids = np.array([X[i, :] for i in medoid_ind])
     return medoids, medoid_labels, medoid_ind
 
-def compute_corr(X, X_ref, labels=None, labels_ref=None, n=3, positive=True, on_center=False):
+def compute_correlation(X, X_ref, labels=None, labels_ref=None, n=3, positive=True, on_center=False):
     """Computes Pearson correlation of given data with reference data."""
     names_ref = list(dict.fromkeys(labels_ref))
     masks_ref = [[i == label for i in labels_ref] for label in names_ref]

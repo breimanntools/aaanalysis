@@ -88,7 +88,6 @@ autodoc_default_options = {
     "imported-members": False,  # Document members imported into the documented module from other modules
 }
 
-
 # Auto summary settings
 # See https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html#configuration
 autosummary_generate = True

@@ -109,7 +109,7 @@ def estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6
         Estimated lower bound for the number of clusters (k).
     """
     if verbose:
-        ut.print_green("1. Estimation of lower bound of k (number of clusters)", end="")
+        ut.print_out("1. Estimation of lower bound of k (number of clusters)", end="")
     f = lambda c: get_min_cor(X, labels=model(n_clusters=c, **model_kwargs).fit(X).labels_, on_center=on_center)
     # Create range between 10% and 90% of all scales (10% steps) as long as minimum correlation is lower than threshold
     n_samples, n_features = X.shape
@@ -126,7 +126,7 @@ def estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6
     nclust_mincor.sort(key=lambda x: x[0], reverse=True)
     n_clusters = nclust_mincor[1][0] if len(nclust_mincor) > 1 else nclust_mincor[0][0]  # Otherwise, only existing one
     if verbose:
-        ut.print_green(f": k={n_clusters}")
+        ut.print_out(f": k={n_clusters}")
     return n_clusters
 
 
@@ -165,7 +165,7 @@ def optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_t
     """
     if verbose:
         objective_fct = "min_cor_center" if on_center else "min_cor_all"
-        ut.print_green(f"2. Optimization of k by recursive clustering ({objective_fct}, min_th={min_th})", end="")
+        ut.print_out(f"2. Optimization of k by recursive clustering ({objective_fct}, min_th={min_th})", end="")
 
     n_samples, n_features = X.shape
     f = lambda c: get_min_cor(X, labels=model(n_clusters=c, **model_kwargs).fit(X).labels_, on_center=on_center)
@@ -181,7 +181,7 @@ def optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_t
             step = 1
             min_cor = f(n_clusters)
     if verbose:
-        ut.print_green(f": k={n_clusters}")
+        ut.print_out(f": k={n_clusters}")
     return n_clusters
 
 
@@ -245,7 +245,7 @@ def merge_clusters(X, n_max=5, labels=None, min_th=0.5, on_center=True, metric="
         Cluster labels for observations after merging.
     """
     if verbose:
-        ut.print_green("3. Cluster merging (optional)", end="")
+        ut.print_out("3. Cluster merging (optional)", end="")
     unique_labels = list(OrderedDict.fromkeys(labels))
     for n in range(1, n_max):
         s_clusters = [x for x in unique_labels if labels.count(x) == n]   # Smallest clusters
@@ -267,6 +267,6 @@ def merge_clusters(X, n_max=5, labels=None, min_th=0.5, on_center=True, metric="
     dict_update = {label: i for label, i in zip(sorted_labels, range(0, len(set(labels))))}
     labels = [dict_update[label] for label in labels]
     if verbose:
-        ut.print_green(f": k={len(set(labels))}")
+        ut.print_out(f": k={len(set(labels))}")
     return labels
 

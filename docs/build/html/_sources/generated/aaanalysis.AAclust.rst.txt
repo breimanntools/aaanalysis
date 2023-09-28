@@ -15,7 +15,7 @@
    
       ~AAclust.__init__
       ~AAclust.compute_centers
-      ~AAclust.compute_corr
+      ~AAclust.compute_correlation
       ~AAclust.compute_coverage
       ~AAclust.compute_medoids
       ~AAclust.evaluate
