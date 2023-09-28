@@ -8,28 +8,27 @@ import pandas as pd
 from typing import Union, List, Tuple, Any
 import numpy as np
 
-# Import options
 from aaanalysis.config import options
+
+# Import checking functions explicitly
+from aaanalysis._utils._check_type import (check_number_range, check_number_val, check_str, check_bool,
+                                           check_dict, check_tuple, check_list,
+                                           check_ax)
+
+from aaanalysis._utils._check_data import (check_feat_matrix, check_col_in_df)
+
 # Import utility functions explicitly
-from aaanalysis._utils._utils_check import (check_number_range, check_number_val,
-                                            check_str, check_bool,
-                                            check_dict, check_tuple,
-                                            check_ax,
-                                            check_feat_matrix, check_col_in_df)
 from aaanalysis._utils._utils_output import (print_red, print_green, print_blue,
                                              print_start_progress, print_progress, print_finished_progress)
-from aaanalysis._utils.utils_aaclust import (check_model, check_min_th, check_merge_metric,
-                                             check_feat_matrix_n_clust_match,
-                                             METRIC_CORRELATION, LIST_METRICS)
 from aaanalysis._utils.utils_cpp import (check_color, check_y_categorical, check_labels, check_ylim,
                                          check_args_len, check_args_len, check_list_parts,
                                          check_split_kws, check_split,
                                          get_dict_all_scales, get_vf_scale,
                                          STR_SEGMENT, STR_PATTERN, STR_PERIODIC_PATTERN, STR_AA_GAP,
                                          LIST_PARTS, LIST_ALL_PARTS, SPLIT_DESCRIPTION)
-#from aaanalysis.utils.utils_dpulearn import ()
 
-# I Folder structure
+
+# Folder structure
 def _folder_path(super_folder, folder_name):
     """Modification of separator (OS-depending)"""
     path = os.path.join(super_folder, folder_name + SEP)
@@ -48,7 +47,7 @@ ArrayLikeFloat = Union[List[float], Tuple[float], np.ndarray]
 ArrayLikeAny = Union[List[Any], Tuple[Any], np.ndarray]
 
 
-# Constants
+# I Constants
 # Default scale datasets for protein analysis
 STR_SCALES = "scales"   # Min-max normalized scales (from AAontology)
 STR_SCALES_RAW = "scales_raw"   # Raw scales (from AAontology)
@@ -59,6 +58,10 @@ STR_TOP60_EVAL = "top60_eval"  # AAclustTop60 evaluation
 NAMES_SCALE_SETS = [STR_SCALES, STR_SCALES_RAW, STR_SCALE_CAT,
                     STR_SCALES_PC, STR_TOP60, STR_TOP60_EVAL]
 
+# Options
+METRIC_CORRELATION = "correlation"
+LIST_METRICS = [METRIC_CORRELATION, "manhattan",  "euclidean", "cosine"]
+STR_UNCLASSIFIED = "Unclassified"
 
 # Column names for primary df
 # df_seq
@@ -72,6 +75,7 @@ COL_TMD_STOP = "tmd_stop"
 COLS_SEQ_KEY = [COL_ENTRY, COL_SEQ, COL_LABEL]
 COLS_SEQ_TMD_POS_KEY = [COL_SEQ, COL_TMD_START, COL_TMD_STOP]  # TODO adjust to COL_ENTRY
 COLS_SEQ_TMD_PART_KEY = [COL_ENTRY, COL_SEQ] + COLS_PARTS
+
 # df_part
 
 # df_scales
@@ -140,9 +144,9 @@ STR_CMAP_SHAP = "SHAP"
 STR_DICT_COLOR = "DICT_COLOR"
 STR_DICT_CAT = "DICT_CAT"
 
+# II Helper functions
 
-# II MAIN FUNCTIONS
-# Main Helper functions
+# III MAIN FUNCTIONS
 # Caching for data loading for better performance (data loaded ones)
 @lru_cache(maxsize=None)
 def read_excel_cached(name, index_col=None):
@@ -168,7 +172,8 @@ def check_verbose(verbose):
         return verbose
 
 # TODO check each of this checking function (make simpler)
-# Check key dataframes using constants and general checking functions (df_seq, df_parts, df_cat, df_scales, df_feat)
+# Check key dataframes using constants and general checking functions
+# df_seq, df_parts, df_cat, df_scales, df_feat, and features
 def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     """Get features from df"""
     # TODO check
@@ -364,8 +369,6 @@ def check_df_feat(df_feat=None, df_cat=None):
     return df_feat.copy()
 
 
-# Check further important data types
-# Feature name check function
 def check_features(features=None, parts=None, df_scales=None):
     """Check if feature names are valid for df_parts and df_scales
 

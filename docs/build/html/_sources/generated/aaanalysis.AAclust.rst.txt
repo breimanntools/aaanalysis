@@ -14,12 +14,13 @@
    .. autosummary::
    
       ~AAclust.__init__
-      ~AAclust.cluster_naming
-      ~AAclust.correlation
-      ~AAclust.eval
+      ~AAclust.compute_centers
+      ~AAclust.compute_corr
+      ~AAclust.compute_coverage
+      ~AAclust.compute_medoids
+      ~AAclust.evaluate
       ~AAclust.fit
-      ~AAclust.get_cluster_centers
-      ~AAclust.get_cluster_medoids
+      ~AAclust.name_clusters
    
    
 

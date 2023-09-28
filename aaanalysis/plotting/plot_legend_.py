@@ -9,23 +9,23 @@ import matplotlib.lines as mlines
 import warnings
 
 # I Helper functions
-def marker_has_line(marker):
+def marker_has(marker, val=None):
     if isinstance(marker, str):
-        return marker == "-"
+        return marker == val
     elif marker is None:
         return False
     elif isinstance(marker, list):
-        return any([x == "-" for x in marker])
+        return any([x == val for x in marker])
     else:
         raise ValueError(f"'marker' ({marker}) is wrong")
 
-def marker_has_no_line(marker):
+def marker_has_no(marker, val=None):
     if isinstance(marker, str):
-        return marker != "-"
+        return marker != val
     elif marker is None:
         return False
     elif isinstance(marker, list):
-        return any([x != "-" for x in marker])
+        return any([x != val for x in marker])
     else:
         raise ValueError(f"'marker' ({marker}) is wrong")
 
@@ -69,8 +69,8 @@ def check_hatches(marker=None, hatch=None, list_cat=None):
         if len(hatch) != len(list_cat):
             raise ValueError(f"Length must match of 'hatch' ({hatch}) and categories ({list_cat}).")  # Check if hatch can be chosen
     # Warn for parameter conflicts
-    if marker and hatch:
-        warnings.warn(f"'hatch' can only be applied to the default marker, set '{marker}=None'.")
+    if marker_has_no(marker, val=None) and hatch:
+        warnings.warn(f"'hatch' can only be applied to the default marker, set 'marker=None'.")
     # Create hatch list
     list_hatch = [hatch] * len(list_cat) if not isinstance(hatch, list) else hatch
     return list_hatch
@@ -90,7 +90,7 @@ def check_marker(marker=None, list_cat=None, lw=0):
         if len(marker) != len(list_cat):
             raise ValueError(f"Length must match of 'marker' ({marker}) and categories ({list_cat}).")
     # Warn for parameter conflicts
-    if marker_has_line(marker) and lw <= 0:
+    if marker_has(marker, val="-") and lw <= 0:
         warnings.warn(f"Marker lines ('-') are only shown if 'lw' ({lw}) is > 0.")
     # Create marker list
     list_marker = [marker] * len(list_cat) if not isinstance(marker, list) else marker
@@ -133,7 +133,7 @@ def check_linestyle(linestyle=None, list_cat=None, marker=None):
             raise ValueError(f"'marker_linestyle' ('{linestyle}') must be one of following: {_lines},"
                              f" or corresponding names: {_names} ")
     # Warn for parameter conflicts
-    if linestyle is not None and marker_has_no_line(marker):
+    if linestyle is not None and marker_has_no(marker, val="-"):
         warnings.warn(f"'linestyle' ({linestyle}) is only applicable to marker lines ('-'), not to '{marker}'.")
     # Create list_marker_linestyle list
     list_marker_linestyle = [linestyle] * len(list_cat) if not isinstance(linestyle, list) else linestyle
@@ -141,7 +141,7 @@ def check_linestyle(linestyle=None, list_cat=None, marker=None):
 
 
 # Helper function
-def _create_marker(color, label, marker, marker_size, lw, edgecolor, linestyle, hatch):
+def _create_marker(color, label, marker, marker_size, lw, edgecolor, linestyle, hatch, hatchcolor):
     """Create custom marker based on input."""
     # Default marker (matching to plot)
     if marker is None:
@@ -149,7 +149,7 @@ def _create_marker(color, label, marker, marker_size, lw, edgecolor, linestyle, 
                                  label=label,
                                  lw=lw,
                                  hatch=hatch,
-                                 edgecolor=edgecolor)
+                                 edgecolor=hatchcolor)
     # If marker is '-', treat it as a line
     if marker == "-":
          return plt.Line2D(xdata=[0, 1], ydata=[0, 1],
@@ -196,6 +196,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
                 linestyle: Optional[Union[str, list]] = None,
                 edgecolor: str = None,
                 hatch: Optional[Union[str, List[str]]] = None,
+                hatchcolor: str = "white",
                 # Title
                 title: str = None,
                 title_align_left: bool = True,
@@ -255,6 +256,8 @@ def plot_legend(ax: Optional[plt.Axes] = None,
         Edge color of legend items. Not applicable to lines.
     hatch
         Filling pattern for default marker. Only applicable when ``marker=None``.
+    hatchcolor
+        Hatch color of legend items. Only applicable when ``marker=None``.
     title
         Title for the legend.
     title_align_left
@@ -278,10 +281,10 @@ def plot_legend(ax: Optional[plt.Axes] = None,
         >>> data = {'Classes': ['A', 'B', 'C'], 'Values': [23, 27, 43]}
         >>> colors = aa.plot_get_clist()
         >>> aa.plot_settings()
-        >>> sns.barplot(x='Classes', y='Values', data=data, palette=colors)
+        >>> sns.barplot(x='Classes', y='Values', data=data, palette=colors, hatch=["/", ".", "."])
         >>> sns.despine()
         >>> dict_color = {"Group 1": "black", "Group 2": "black"}
-        >>> aa.plot_legend(dict_color=dict_color, ncol=3, x=0, y=1.1, handletextpad=0.4)
+        >>> aa.plot_legend(dict_color=dict_color, ncol=2, y=1.1, hatch=["/", "."])
         >>> plt.tight_layout()
         >>> plt.show()
 
@@ -342,10 +345,11 @@ def plot_legend(ax: Optional[plt.Axes] = None,
     if loc_out:
         x, y = x or 0, y or -0.25
     if x or y:
-        args["bbox_to_anchor"] = (x or 1, y or 1)
+        args["bbox_to_anchor"] = (x or 0, y or 1)
 
     # Create handles and legend
-    handles = [_create_marker(dict_color[cat], labels[i], marker[i], marker_size[i], lw, edgecolor, linestyle[i], hatch[i])
+    handles = [_create_marker(dict_color[cat], labels[i], marker[i], marker_size[i],
+                              lw, edgecolor, linestyle[i], hatch[i], hatchcolor)
                for i, cat in enumerate(list_cat)]
 
     legend = ax.legend(handles=handles, labels=labels, **args)
