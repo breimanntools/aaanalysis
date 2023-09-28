@@ -69,7 +69,17 @@ def load_scales(name: str = "scales",
     Parameters
     ----------
     name
-        Name of the loaded dataset: 'scales', 'scales_raw', 'scales_cat', 'scales_pc', 'top60', 'top60_eval'.
+        Name of the loaded dataset:
+
+        - ``scales_raw``: All amino acid scales.
+        - ``scales``:  Min-max normlized raw scales.
+        - ``scales_cat``: Two-level classification (AAontology).
+        - ``scales_pc``: First 20 PC of compressed scales.
+        - ``top60``:  Selection of 60 best performing scale sets.
+        - ``top60_eval``: Evaluation of 60 best performing scale sets.
+
+        Or Number between 1 and 60 to select the i-th top60 dataset.
+
     just_aaindex
         If True, returns only scales from AAindex. Relevant only for 'scales', 'scales_raw', or 'scales_cat'.
     unclassified_out

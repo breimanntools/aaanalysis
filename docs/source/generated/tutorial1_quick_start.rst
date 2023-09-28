@@ -20,6 +20,13 @@ What You Will Learn:
 4. **Explainable AI**: Interpret predictions at the group and individual
    levels by combining ``CPP`` with ``SHAP``.
 
+.. code:: ipython3
+
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import numpy as np
+
 1. Loading Sequences and Scales
 -------------------------------
 
@@ -61,7 +68,6 @@ set of 100 scales, as defined by the ``n_clusters`` parameters:
 .. code:: ipython3
 
     from sklearn.cluster import AgglomerativeClustering
-    import numpy as np
     
     aac = aa.AAclust(model=AgglomerativeClustering)
     X = np.array(df_scales)
@@ -74,12 +80,14 @@ Comparative Physicochemical Profiling (CPP)
 CPP is a sequence-based feature engineering algorithm. It aims at
 identifying a set of features most discriminant between two sets of
 sequences: the test set and the reference set. Supported by the
-``SequenceFeature`` object (``sf``), A CPP feature integrates: -
-**Parts**: Are combination of a target middle domain (TMD) and N- and
-C-terminal adjacent regions (JMD-N and JMD-C, respectively), obtained
-``sf.get_df_parts``. - **Splits**: These Parts can be split into various
-continuous segments or discontinuous patterns, specified
-``sf.get_split_kws()``. - **Scales**: Sets of amino acid scales.
+``SequenceFeature`` object (``sf``), A CPP feature integrates:
+
+-  **Parts**: Are combination of a target middle domain (TMD) and N- and
+   C-terminal adjacent regions (JMD-N and JMD-C, respectively), obtained
+   ``sf.get_df_parts``.
+-  **Splits**: These Parts can be split into various continuous segments
+   or discontinuous patterns, specified ``sf.get_split_kws()``.
+-  **Scales**: Sets of amino acid scales.
 
 We use SequenceFeature to obtain Parts and Splits. These together with
 the Scales are used by CPP as input to identify the set of
@@ -123,10 +131,10 @@ A feature matrix from a given set of CPP features can be created using
 
 .. parsed-literal::
 
-    Mean accuracy of 0.57
+    Mean accuracy of 0.6
 
 
-Creating more features with CPP will take some more time. but improve
+Creating more features with CPP will take some more time, but improve
 prediction performance:
 
 .. code:: ipython3
@@ -135,24 +143,17 @@ prediction performance:
     df_parts = sf.get_df_parts(df_seq=df_seq)
     cpp = aa.CPP(df_scales=df_scales, df_parts=df_parts, verbose=False)
     df_feat = cpp.run(labels=y)
-
-Which can be again used for machine learning:
-
-.. code:: ipython3
-
-    import seaborn as sns
-    import matplotlib.pyplot as plt
-    import pandas as pd
-    
     X = sf.feat_matrix(df_parts=df_parts, features=df_feat["feature"])
+    
     rf = RandomForestClassifier()
     cv = cross_val_score(rf, X, y, scoring="accuracy", cv=5, n_jobs=1) 
     print(f"Mean accuracy of {round(np.mean(cv), 2)}")
     
-    aa.plot_settings(font_scale=1.1)
+    aa.plot_settings()
     sns.barplot(pd.DataFrame({"Baseline": cv_base, "CPP": cv}), palette=["tab:blue", "tab:red"])
     plt.ylabel("Mean accuracy", size=aa.plot_gcfs()+1)
     plt.ylim(0, 1)
+    plt.title("Comparison of Feature Engineering Methods")
     sns.despine()
     plt.show()
 

@@ -66,19 +66,25 @@ extensions = [
 
 # -- Autodoc & Numpydoc settings ----------------------------------------------
 # Autodoc settings
-# Autodoc settings
 # See https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#configuration
+# Define the settings for undocumented members, private members, etc.
+undocumented_members = False
+private_members = False
+special_members = ""  # Modify this if you have specific special members to include
+exclude_initialization = "__init__"
+type_hints_display = "description"
+autodoc_member_order = 'bysource'
+
 autodoc_default_options = {
     "members": True,  # Document members (methods, attributes, etc.) of documented classes and modules
-    "undoc-members": False,  # Document members without docstrings
-    "private-members": False,  # Document members with a name prefixed by an underscore (_)
-    "special-members": "",  # Document special members like __call__, __getitem__
+    "undoc-members": undocumented_members,
+    "private-members": private_members,
+    "special-members": special_members,
     "inherited-members": False,  # Document members that are inherited from the base class
     "show-inheritance": False,  # Show the base classes in the documentation for a class
     "ignore-module-all": False,  # Ignore __all__ when looking for members to document
-    "exclude-members": "__init__",  # List of members to be excluded from documentation
-    "member-order": "bysource",  # Sort the documented members. Options: 'alphabetical', 'bysource', 'groupwise'
-    "autodoc_typehints": "description",  # How to display type hints. Options: 'none', 'signature', 'description'
+    "exclude-members": exclude_initialization,
+    "autodoc_typehints": type_hints_display,
     "imported-members": False,  # Document members imported into the documented module from other modules
 }
 

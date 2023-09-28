@@ -4,13 +4,12 @@ This is a script for the AAclust clustering wrapper method.
 import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
-from typing import Optional, Callable, Dict, Union, List
+from typing import Optional, Callable, Dict, Union, List, Tuple
 import inspect
 
 import aaanalysis.utils as ut
 from aaanalysis.aaclust._aaclust import estimate_lower_bound_n_clusters, optimize_n_clusters, merge_clusters
-from aaanalysis.aaclust._aaclust_statics import compute_centers, compute_medoids, compute_corr
-from aaanalysis.aaclust._aaclust_name_clusters import name_clusters
+from aaanalysis.aaclust._aaclust_statics import compute_centers, compute_medoids, compute_corr, name_clusters
 
 
 # I Helper Functions
@@ -47,9 +46,9 @@ class AAclust:
 
     AAclust is designed primarily for amino acid scales but can be used for any set of numerical indices.
     It uses clustering models like from the `scikit-learn clustering model <https://scikit-learn.org/stable/modules/clustering.html>`_
-    that require a pre-defined number of clusters (k). Utilizing Pearson correlation as similarity measure.
-    AAclust optimizes the value of k, selects a representative sample ('medoid')for each cluster closest to
-    the center, resulting in a redundancy-reduced sample set.
+    that require a pre-defined number of clusters (k), set by their ``n_clusters`` parameter. Utilizing Pearson
+    correlation as similarity measure. AAclust optimizes the value of k, selects a representative sample
+    ('medoid') for each cluster closest to the center, resulting in a redundancy-reduced sample set.
 
     Parameters
     ----------
@@ -104,12 +103,14 @@ class AAclust:
             n_clusters: Optional[int] = None
             ) -> Optional[List[str]]:
         """
-        Fit the AAclust model on the data, optimizing cluster formation using Pearson correlation.
+        Apply AAclust algorithm on the data.
 
-        AAclust determines the optimal number of clusters, k, without pre-specification. It partitions data(X) into
-        clusters by maximizing the within-cluster Pearson correlation beyond the 'min_th' threshold. The quality of
+         optimizing cluster formation using Pearson correlation.
+
+        AAclust determines the optimal number of clusters, k, without pre-specification. It partitions data (``X``) into
+        clusters by maximizing the within-cluster Pearson correlation beyond the ``min_th`` threshold. The quality of
         clustering is either based on the minimum Pearson correlation of all members ('min_cor all') or between
-        the cluster center and its members ('min_cor center'), governed by `on_center`.
+        the cluster center and its members ('min_cor center'), governed by `on_center`. See details in AAclust.
 
         The clustering undergoes three stages:
         1. Estimate the lower bound of k.
@@ -188,7 +189,12 @@ class AAclust:
         """Evaluate one or more results"""
         # TODO add evaluation function
 
-    def name_clusters(self, names=None):
+    # TODO adjust docstrings and simplify interfaces
+    @staticmethod
+    def name_clusters(X: ut.ArrayLikeFloat,
+                      labels=None,
+                      names: Optional[List[str]] = None,
+                      ):
         """
         Assigns names to clusters based on scale names and their frequency.
 
@@ -197,104 +203,113 @@ class AAclust:
 
         Parameters
         ----------
-        names : list, optional
+        X
+            Feature matrix of shape (n_samples, n_features).
+        labels
+            Cluster labels for each sample in X.
+        names
             List of scale names corresponding to each sample.
 
         Returns
         -------
-        cluster_names : list
-            A list of renamed clusters based on scale names.
+        list
+            ``cluster_names``: A list of renamed clusters based on scale names.
         """
         # Check input
         ut.check_list(name='names', val=names)
-        # Get internal values set during fit
-        labels = self.labels_
-        dict_medoids = dict(zip(self.medoid_labels_, self.medoid_ind_))
-        # Obtain cluster names
-        cluster_names = name_clusters(names=names, labels=labels, dict_medoids=dict_medoids)
+        # Get cluster names
+        cluster_names = name_clusters(X, labels=labels, names=names)
         return cluster_names
 
     @staticmethod
-    def compute_centers(X, labels=None):
+    def compute_centers(X: ut.ArrayLikeFloat,
+                        labels: Optional[ut.ArrayLikeInt] = None
+                        ) -> Tuple[ut.ArrayLikeFloat, ut.ArrayLikeInt]:
         """
         Computes the center of each cluster based on the given labels.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
-        labels : list or array-like, optional
+        X
+            Feature matrix of shape (n_samples, n_features).
+        labels
             Cluster labels for each sample in X.
 
         Returns
         -------
-        centers : array-like
+        centers
             The computed center for each cluster.
-        center_labels : array-like
+        center_labels
             The labels associated with each computed center.
         """
         centers, center_labels = compute_centers(X, labels=labels)
         return centers, center_labels
 
     @staticmethod
-    def compute_medoids(X, labels=None):
+    def compute_medoids(X: ut.ArrayLikeFloat,
+                        labels: Optional[ut.ArrayLikeInt] = None
+                        ) -> Tuple[ut.ArrayLikeAny, ut.ArrayLikeInt, ut.ArrayLikeInt]:
         """
         Computes the medoid of each cluster based on the given labels.
 
         Parameters
         ----------
-         X : array-like, shape (n_samples, n_features)
-            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
-        labels : list or array-like, optional
+        X
+            Feature matrix of shape (n_samples, n_features).
+        labels
             Cluster labels for each sample in X.
 
         Returns
         -------
-        medoids : array-like
+        medoids
             The medoid for each cluster.
-        medoid_labels : array-like
+        medoid_labels
             The labels corresponding to each medoid.
-        medoid_ind : array-like
+        medoid_ind
             Indexes of medoids within the original data.
         """
         medoids, medoid_labels, medoid_ind = compute_medoids(X, labels=labels)
         return medoids, medoid_labels, medoid_ind
 
     @staticmethod
-    def compute_corr(X, X_ref, labels=None, labels_ref=None, n=3, positive=True, on_center=False, except_unclassified=True):
+    def compute_corr(X: ut.ArrayLikeFloat,
+                     X_ref: ut.ArrayLikeFloat,
+                     labels: Optional[ut.ArrayLikeInt] = None,
+                     labels_ref: Optional[ut.ArrayLikeInt] = None,
+                     n: int = 3,
+                     positive: bool = True,
+                     on_center: bool = False
+                     ) -> List[str]:
         """
-        Computes the correlation of given data with reference data.
-
-        The reference data are typically the cluster centers or cluster medoids.
+        Computes the Pearson correlation of given data with reference data.
 
         Parameters
         ----------
-        X : array-like
-            Test feature matrix.
-        X_ref : array-like
+        X
+            Feature matrix of shape (n_samples, n_features).
+        X_ref
             Reference feature matrix.
-        labels : list or array-like, optional
+        labels
             Cluster labels for the test data.
-        labels_ref : list or array-like, optional
+        labels_ref
             Cluster labels for the reference data.
-        n : int, default = 3
+        n
             Number of top centers to consider based on correlation strength.
-        positive : bool, default = True
+        positive
             If True, considers positive correlations. Else, negative correlations.
-        on_center : bool, default = False
+        on_center
             If True, correlation is computed with cluster centers. Otherwise, with all cluster members.
 
         Returns
         -------
-        list_top_center_name_corr : list of str
-            Names and correlations of centers having strongest (positive/negative) correlation with test data samples.
+        list_top_center_name_corr
+            Names and correlations of centers having the strongest (positive/negative) correlation with test data samples.
         """
         # Check input
         X, labels = ut.check_feat_matrix(X=X, y=labels)
         X_ref, labels_ref = ut.check_feat_matrix(X=X_ref, y=labels_ref)
         list_top_center_name_corr = compute_corr(X, X_ref, labels=labels, labels_ref=labels_ref,
-                                                 n=n, positive=positive, on_center=on_center,
-                                                 except_unclassified=except_unclassified)
+                                                 n=n, positive=positive, on_center=on_center)
         return list_top_center_name_corr
 
     @staticmethod
