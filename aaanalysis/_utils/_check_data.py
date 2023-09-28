@@ -39,7 +39,7 @@ def check_array_like(name=None, val=None, dtype=None, accept_none=False,
     return val
 
 
-def check_feat_matrix(X=None, y=None, name_y="labels",
+def check_feat_matrix(X=None, y=None, y_name="labels",
                       ensure_2d=True, allow_nan=False):
     """Check feature matrix valid and matches with y if (if provided)"""
     if X is None:
@@ -53,7 +53,7 @@ def check_feat_matrix(X=None, y=None, name_y="labels",
         return X
     n_samples, n_features = X.shape
     if n_samples != len(y):
-        raise ValueError(f"Number of samples does not match for 'X' ({len(n_samples)}) and '{name_y}' ({y}.")
+        raise ValueError(f"Number of samples does not match for 'X' ({len(n_samples)}) and '{y_name}' ({y}.")
     if n_samples == 0 or n_features == 0:
         raise ValueError(f"Shape of 'X' ({n_samples}, {n_features}) indicates empty feature matrix.")
     return X
