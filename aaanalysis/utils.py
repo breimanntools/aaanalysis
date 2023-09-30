@@ -18,7 +18,7 @@ from aaanalysis._utils._check_type import (check_number_range, check_number_val,
 from aaanalysis._utils._check_data import (check_array_like, check_feat_matrix, check_col_in_df)
 
 # Import utility functions explicitly
-from aaanalysis._utils._new_types import ArrayLike, ArrayLikeFloat, ArrayLikeAny, ArrayLikeInt, ArrayLikeBool
+from aaanalysis._utils._new_types import (ArrayLike, KBasedClusterModel)
 
 from aaanalysis._utils._utils_output import (_print_red, print_out, _print_blue,
                                              print_start_progress, print_progress, print_finished_progress)

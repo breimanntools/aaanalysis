@@ -3,8 +3,10 @@ This is a script for the AAclust clustering wrapper method.
 """
 import pandas as pd
 import numpy as np
+from typing import Type
 from typing import Optional, Callable, Dict, Union, List, Tuple
 import inspect
+from inspect import isclass
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, calinski_harabasz_score
 
@@ -16,7 +18,7 @@ from aaanalysis.aaclust._aaclust_statics import compute_centers, compute_medoids
 
 # I Helper Functions
 # Check functions
-def check_model(model=None, model_kwargs=None, except_None=False):
+def check_model_class(model_class=None, model_kwargs=None, except_None=False):
     """
     Check if the provided model has 'n_clusters' as a parameter.
     Filter the model_kwargs to only include keys that are valid parameters for the model.
@@ -24,13 +26,16 @@ def check_model(model=None, model_kwargs=None, except_None=False):
     model_kwargs = model_kwargs or {}
     if except_None:
         return model_kwargs
+    # Check if model_class is actually a class and not an instance
+    if not isclass(model_class):
+        raise ValueError(f"'{model_class}' is not a model class. Please provide a valid model class.")
     # Check if model is callable
-    if not callable(getattr(model, "__call__", None)):
-        raise ValueError(f"'{model}' is not a callable model.")
-    list_model_args = list(inspect.signature(model).parameters.keys())
+    if not callable(getattr(model_class, "__call__", None)):
+        raise ValueError(f"'{model_class}' is not a callable model.")
+    list_model_args = list(inspect.signature(model_class).parameters.keys())
     # Check if 'n_clusters' is a parameter of the model
     if "n_clusters" not in list_model_args:
-        error = f"'n_clusters' should be an argument in the given 'model' ({model})."
+        error = f"'n_clusters' should be an argument in the given 'model' ({model_class})."
         raise ValueError(error)
     # Filter model_kwargs to only include valid parameters for the model
     model_kwargs = {x: model_kwargs[x] for x in model_kwargs if x in list_model_args}
@@ -58,17 +63,15 @@ class AAclust:
     """
     A k-optimized clustering wrapper for selecting redundancy-reduced sets of numerical scales.
 
-    AAclust is designed primarily for amino acid scales but can be used for any set of numerical indices,
-    introduced in [Breimann23a]_. It uses clustering models like from the `scikit-learn clustering model
-    <https://scikit-learn.org/stable/modules/clustering.html>`_ that require a pre-defined number of clusters (k),
-    set by their ``n_clusters`` parameter. AAclust optimizes the value of k by utilizing Pearson correlation
-    and then selects a representative sample ('medoid') for each cluster closest to the center,
-    resulting in a redundancy-reduced sample set.
+    AAclust uses clustering models that require a pre-defined number of clusters (k, set by ``n_clusters``),
+    such as k-means or other `scikit-learn clustering models <https://scikit-learn.org/stable/modules/clustering.html>`_.
+    AAclust optimizes the value of k by utilizing Pearson correlation and then selects a representative sample ('medoid')
+    for each cluster closest to the center, resulting in a redundancy-reduced sample set. See [Breimann23a]_.
 
     Parameters
     ----------
-    model
-        A clustering model with ``n_clusters`` parameter.
+    model_class
+        A clustering model class with ``n_clusters`` parameter. This class will be instantiated during the ``fit`` method.
     model_kwargs
         Keyword arguments to pass to the selected clustering model.
     verbose
@@ -76,6 +79,8 @@ class AAclust:
 
     Attributes
     ----------
+    model : object
+        The instantiated clustering model object after calling the ``fit`` method.
     n_clusters : int
         Number of clusters obtained by AAclust.
     labels_ : array-like, shape (n_samples, )
@@ -95,34 +100,35 @@ class AAclust:
 
     Notes
     -----
-    All attributes are set during ``.fit`` and can be directly accessed.
-
+    * All attributes are set during ``.fit`` and can be directly accessed.
+    * AAclust is designed primarily for amino acid scales but can be used for any set of numerical indices.
     """
     def __init__(self,
-                 model: Optional[Callable] = None,
+                 model_class: Type[ut.KBasedClusterModel] = None,
                  model_kwargs: Optional[Dict] = None,
                  verbose: bool = False):
         # Model parameters
-        if model is None:
-            model = KMeans
+        if model_class is None:
+            model_class = KMeans
             # Set to avoid FutureWarning (only for default model)
             model_kwargs = model_kwargs or dict(n_init="auto")
-        model_kwargs = check_model(model=model, model_kwargs=model_kwargs)
-        self.model = model
+        model_kwargs = check_model_class(model_class=model_class, model_kwargs=model_kwargs)
+        self.model_class = model_class
         self._model_kwargs = model_kwargs
         self._verbose = ut.check_verbose(verbose)
         # Output parameters (set during model fitting)
+        self.model : Optional[ut.KBasedClusterModel] = None
         self.n_clusters: Optional[int] = None
-        self.labels_: Optional[ut.ArrayLikeInt] = None
-        self.centers_: Optional[ut.ArrayLikeFloat] = None
-        self.center_labels_: Optional[ut.ArrayLikeInt] = None
-        self.medoids_: Optional[ut.ArrayLikeFloat] = None
-        self.medoid_labels_: Optional[ut.ArrayLikeInt] = None
-        self.is_medoid_: Optional[ut.ArrayLikeBool] = None
+        self.labels_: Optional[ut.ArrayLike] = None
+        self.centers_: Optional[ut.ArrayLike] = None
+        self.center_labels_: Optional[ut.ArrayLike] = None
+        self.medoids_: Optional[ut.ArrayLike] = None
+        self.medoid_labels_: Optional[ut.ArrayLike] = None
+        self.is_medoid_: Optional[ut.ArrayLike] = None
         self.medoid_names_: Optional[List[str]] = None
 
     def fit(self,
-            X: ut.ArrayLikeFloat,
+            X: ut.ArrayLike,
             n_clusters: Optional[int] = None,
             on_center: bool = True,
             min_th: float = 0,
@@ -140,14 +146,14 @@ class AAclust:
 
         1. Estimate the lower bound of k.
         2. Refine k using the chosen quality metric.
-        3. Optionally, merge smaller clusters, as directed by `merge_metric`.
+        3. Optionally, merge smaller clusters, as directed by ``merge_metric``.
 
         A representative scale (medoid) closest to each cluster center is chosen for redundancy reduction.
 
         Parameters
         ----------
-        X
-            Feature matrix of shape (n_samples, n_features).
+        X : `array-like, shape (n_samples, n_features)`
+            Feature matrix.
         n_clusters
             Pre-defined number of clusters. If provided, AAclust uses this instead of optimizing k.
         min_th
@@ -183,12 +189,13 @@ class AAclust:
         X = ut.check_feat_matrix(X=X, y=names, y_name="names")
         check_match_feat_matrix_n_clusters(X=X, n_clusters=n_clusters)
 
-        args = dict(model=self.model, model_kwargs=self._model_kwargs, min_th=min_th, on_center=on_center,
+        args = dict(model=self.model_class, model_kwargs=self._model_kwargs, min_th=min_th, on_center=on_center,
                     verbose=self._verbose)
 
         # Clustering using given clustering models
         if n_clusters is not None:
-            labels = self.model(n_clusters=n_clusters, **self._model_kwargs).fit(X).labels_.tolist()
+            self.model = self.model_class(n_clusters=n_clusters, **self._model_kwargs)
+            labels = self.model.fit(X).labels_.tolist()
 
         # Clustering using AAclust algorithm
         else:
@@ -196,7 +203,8 @@ class AAclust:
             n_clusters_lb = estimate_lower_bound_n_clusters(X, **args)
             # Step 2. Optimization of k by recursive clustering
             n_clusters = optimize_n_clusters(X, n_clusters=n_clusters_lb, **args)
-            labels = self.model(n_clusters=n_clusters, **self._model_kwargs).fit(X).labels_.tolist()
+            self.model = self.model_class(n_clusters=n_clusters, **self._model_kwargs)
+            labels = self.model.fit(X).labels_.tolist()
             # Step 3. Cluster merging (optional)
             if merge_metric is not None:
                 labels = merge_clusters(X, labels=labels, min_th=min_th, on_center=on_center,
@@ -219,8 +227,8 @@ class AAclust:
         return self
 
     @staticmethod
-    def evaluate(X: ut.ArrayLikeFloat,
-                 labels:ut.ArrayLikeInt = None
+    def evaluate(X: ut.ArrayLike,
+                 labels:ut.ArrayLike = None
                  ) -> Tuple[float, float, float]:
         """Evaluate the quality of clustering using three established measures.
 
@@ -237,10 +245,10 @@ class AAclust:
 
         Parameters
         ----------
-        X
-            Feature matrix of shape (n_samples, n_features).
-        labels
-            Cluster labels for each sample in ``X``, with shape (n_samples, ).
+        X : `array-like, shape (n_samples, n_features)`
+            Feature matrix.
+        labels : `array-like, shape (n_samples, )`
+            Cluster labels for each sample in ``X``.
 
         Returns
         -------
@@ -270,8 +278,8 @@ class AAclust:
         return BIC, CH, SC
 
     @staticmethod
-    def name_clusters(X: ut.ArrayLikeFloat,
-                      labels: ut.ArrayLikeInt = None,
+    def name_clusters(X: ut.ArrayLike,
+                      labels: ut.ArrayLike = None,
                       names: List[str] = None
                       ) -> List[str]:
         """
@@ -282,10 +290,10 @@ class AAclust:
 
         Parameters
         ----------
-        X
-            Feature matrix of shape (n_samples, n_features).
-        labels
-            Cluster labels for each sample in ``X``, with shape (n_samples, ).
+        X : `array-like, shape (n_samples, n_features)`
+            Feature matrix.
+        labels : `array-like, shape (n_samples, )`
+            Cluster labels for each sample in ``X``.
         names
             List of scale names corresponding to each sample.
 
@@ -303,18 +311,18 @@ class AAclust:
         return cluster_names
 
     @staticmethod
-    def compute_centers(X: ut.ArrayLikeFloat,
-                        labels: ut.ArrayLikeInt = None
-                        ) -> Tuple[ut.ArrayLikeFloat, ut.ArrayLikeInt]:
+    def compute_centers(X: ut.ArrayLike,
+                        labels: ut.ArrayLike = None
+                        ) -> Tuple[ut.ArrayLike, ut.ArrayLike]:
         """
         Computes the center of each cluster based on the given labels.
 
         Parameters
         ----------
-        X
-            Feature matrix of shape (n_samples, n_features).
-        labels
-            Cluster labels for each sample in ``X``, with shape (n_samples, ).
+        X : `array-like, shape (n_samples, n_features)`
+            Feature matrix.
+        labels : `array-like, shape (n_samples, )`
+            Cluster labels for each sample in ``X``.
 
         Returns
         -------
@@ -331,18 +339,18 @@ class AAclust:
         return centers, center_labels
 
     @staticmethod
-    def compute_medoids(X: ut.ArrayLikeFloat,
-                        labels: ut.ArrayLikeInt = None
-                        ) -> Tuple[ut.ArrayLikeFloat, ut.ArrayLikeInt]:
+    def compute_medoids(X: ut.ArrayLike,
+                        labels: ut.ArrayLike = None
+                        ) -> Tuple[ut.ArrayLike, ut.ArrayLike]:
         """
         Computes the medoid of each cluster based on the given labels.
 
         Parameters
         ----------
-        X
-            Feature matrix of shape (n_samples, n_features).
-        labels
-            Cluster labels for each sample in ``X``, with shape (n_samples, ).
+        X : `array-like, shape (n_samples, n_features)`
+            Feature matrix.
+        labels : `array-like, shape (n_samples, )`
+            Cluster labels for each sample in ``X``.
 
         Returns
         -------
@@ -361,10 +369,10 @@ class AAclust:
         return medoids, medoid_labels
 
     @staticmethod
-    def compute_correlation(X: ut.ArrayLikeFloat,
-                            X_ref: ut.ArrayLikeFloat,
-                            labels: ut.ArrayLikeInt = None,
-                            labels_ref: ut.ArrayLikeInt = None,
+    def compute_correlation(X: ut.ArrayLike,
+                            X_ref: ut.ArrayLike,
+                            labels: ut.ArrayLike = None,
+                            labels_ref: ut.ArrayLike = None,
                             n: int = 3,
                             positive: bool = True,
                             on_center: bool = False
@@ -374,14 +382,14 @@ class AAclust:
 
         Parameters
         ----------
-        X
-            Feature matrix of shape (n_samples, n_features).
-        X_ref
-            Reference feature matrix of shape (n_samples, n_features).
-        labels
-            Cluster labels for the test data, with shape (n_samples, )
-        labels_ref
-            Cluster labels for the reference data, with shape (n_samples, )
+        X : `array-like, shape (n_samples, n_features)`
+            Feature matrix.
+        X_ref : `array-like, shape (n_samples, n_features)`
+            Feature matrix of reference data.
+        labels : `array-like, shape (n_samples, )`
+            Cluster labels for each sample in ``X``.
+        labels_ref  : `array-like, shape (n_samples, )`
+            Cluster labels for the reference data.
         n
             Number of top centers to consider based on correlation strength.
         positive
