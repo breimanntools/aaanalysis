@@ -285,7 +285,7 @@ class dPULearn:
         >>> labels = dpul.labels_   # Updated labels
 
         """
-        ut.check_feat_matrix(X=X, labels=labels)
+        ut.check_feat_matrix(X=X, y=labels, y_name="label")
         df_seq = _check_df_seq(df_seq=df_seq, col_class=col_class)
         labels = _check_labels(labels=labels, verbose=self.verbose, label_pos=label_pos)
         label_neg = _get_label_neg(labels=labels)

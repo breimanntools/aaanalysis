@@ -1,6 +1,7 @@
 """
 This is a script for testing the AAclust class functions.
 """
+import inspect
 from hypothesis import given, example
 import hypothesis.strategies as some
 import aaanalysis.utils as ut
@@ -33,37 +34,33 @@ X_mock = [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]]  # Mocked data
 class TestAAclust:
     """Test aa.AAclust class individual parameters"""
 
-    @given(model=some.none() | some.sampled_from(list(K_BASED_MODELS.keys())))
-    def test_k_based_model_parameter(self, model):
+    @given(model_class_name=some.none() | some.sampled_from(list(K_BASED_MODELS.keys())))
+    def test_k_based_model_parameter(self, model_class_name):
         """Test the 'model' parameter for k_based models."""
-        if model:
-            ModelClass = K_BASED_MODELS[model]
+        if model_class_name:
+            ModelClass = K_BASED_MODELS[model_class_name]
             aaclust = aa.AAclust(model_class=ModelClass)
-            # Checking if model_class attribute stores the class reference, not an instance
             assert aaclust.model_class is ModelClass
-        if not model:
+        elif model_class_name is None:
             aaclust = aa.AAclust()
-            # Checking if model_class attribute stores the default model
-            assert aaclust.model_class is KMeans
+            assert aaclust.model_class is AgglomerativeClustering
         else:
             with pytest.raises(ValueError):
-                aa.AAclust(model_class=model)
+                aa.AAclust(model_class=model_class_name)
 
-    @given(model=some.sampled_from(list(K_BASED_MODELS.keys())))
-    def test_k_based_model_parameter_after_fit(self, model):
+    @given(model_class_name=some.sampled_from(list(K_BASED_MODELS.keys())))
+    def test_k_based_model_parameter_after_fit(self, model_class_name):
         """Test the 'model' parameter for k_based models after fitting."""
-        ModelClass = K_BASED_MODELS[model]
+        ModelClass = K_BASED_MODELS[model_class_name]
         aaclust = aa.AAclust(model_class=ModelClass)
-        # Assuming AAclust's fit method doesn't require any other arguments except data
         aaclust.fit(X_mock)
-        # Checking if the instance of the model has been created after calling fit
         assert isinstance(aaclust.model, ModelClass)
 
-    @given(model=some.sampled_from(list(K_FREE_MODELS.keys())))
-    def test_k_free_model_parameter_negative(self, model_class):
+    @given(model_class_name=some.sampled_from(list(K_FREE_MODELS.keys())))
+    def test_k_free_model_parameter_negative(self, model_class_name):
         """Negative test for 'model' parameter for k_free models."""
         with pytest.raises(ValueError):
-            aa.AAclust(model_class=model_class)
+            aa.AAclust(model_class=model_class_name)
 
     @given(model_kwargs=some.dictionaries(keys=some.text(), values=some.integers()))
     def test_model_kwargs_parameter(self, model_kwargs):
@@ -85,12 +82,12 @@ class TestAAclust:
 class TestAAclustComplex:
     """Test aa.AAclust class with complex scenarios"""
 
-    @given(model=some.none() | some.sampled_from(list(K_BASED_MODELS.keys())),
+    @given(model_class_name=some.none() | some.sampled_from(list(K_BASED_MODELS.keys())),
            model_kwargs=some.dictionaries(keys=some.text(), values=some.integers()))
-    def test_k_based_model_and_model_kwargs(self, model, model_kwargs):
+    def test_k_based_model_and_model_kwargs(self, model_class_name, model_kwargs):
         """Test 'model' and 'model_kwargs' parameters together for k_based models."""
-        if model:
-            ModelClass = K_BASED_MODELS[model]
+        if model_class_name:
+            ModelClass = K_BASED_MODELS[model_class_name]
             try:
                 aaclust = aa.AAclust(model_class=ModelClass(**model_kwargs), model_kwargs=model_kwargs)
                 assert isinstance(aaclust.model_class, ModelClass)
@@ -100,7 +97,7 @@ class TestAAclustComplex:
                     aa.AAclust(model_class=ModelClass(**model_kwargs), model_kwargs=model_kwargs)
         else:
             with pytest.raises(ValueError):
-                aa.AAclust(model_class=model, model_kwargs=model_kwargs)
+                aa.AAclust(model_class=model_class_name, model_kwargs=model_kwargs)
 
     @given(model_kwargs=some.dictionaries(keys=some.text(), values=some.integers()),
            verbose=some.booleans())

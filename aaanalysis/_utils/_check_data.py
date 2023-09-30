@@ -47,7 +47,7 @@ def check_feat_matrix(X=None, y=None, y_name="labels",
     try:
         X = check_array(X, dtype="float64", ensure_2d=ensure_2d, force_all_finite=not allow_nan)
     except Exception as e:
-        raise ValueError(f"Feature matrix 'X'  be array-like with float values."
+        raise ValueError(f"Feature matrix 'X' should be array-like with float values."
                          f"\nscikit message:\n\t{e}")
     if y is None:
         return X
@@ -57,36 +57,6 @@ def check_feat_matrix(X=None, y=None, y_name="labels",
     if n_samples == 0 or n_features == 0:
         raise ValueError(f"Shape of 'X' ({n_samples}, {n_features}) indicates empty feature matrix.")
     return X
-
-# TODO check these functions if used
-"""
-def check_feat_matrix(X=None, y=None, labels=None):
-    X = check_array(X).transpose()
-    if labels is not None:
-        check_consistent_length(X, labels)
-    n_samples, n_features = X.shape
-    if n_samples == 0 or n_features == 0:
-        raise ValueError(f"Shape of 'X' ({n_samples}, {n_features}) indicates empty feature matrix.")
-    if y is None:
-        return X, y
-    else:
-        if n_samples != len(y):
-            X = X.transpose()
-        if X.shape[0] != len(y):
-            error = f"Shape of X ({n_samples}, {n_features}) does not match with number of labels in y ({len(y)})."
-            raise ValueError(error)
-        return X, y
-"""
-"""
-def check_feat_matrix(X=None, y=None):
-    #Check if X (feature matrix) and y (class labels) are not None and match
-    if X is None:
-        raise ValueError("'X' should not be None")
-    check_array(X)    # Default checking function from sklearn
-
-    if len(y) != X.shape[0]:
-        raise ValueError(f"'y' (labels) does not match to 'X' (feature matrix)")
-"""
 
 
 # df checking functions

@@ -5,7 +5,6 @@ from hypothesis import given, strategies as st
 import pytest
 import aaanalysis as aa
 
-
 class TestPlotGetCList:
     """Test plot_get_clist function"""
 

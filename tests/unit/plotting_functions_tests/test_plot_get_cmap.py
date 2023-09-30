@@ -6,7 +6,6 @@ import pytest
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
-
 class TestPlotGetCMap:
     """Test plot_get_cmap function"""
 

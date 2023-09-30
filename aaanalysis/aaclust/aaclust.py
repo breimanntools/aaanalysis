@@ -1,13 +1,12 @@
 """
 This is a script for the AAclust clustering wrapper method.
 """
-import pandas as pd
 import numpy as np
 from typing import Type
-from typing import Optional, Callable, Dict, Union, List, Tuple
+from typing import Optional, Dict, Union, List, Tuple
 import inspect
 from inspect import isclass
-from sklearn.cluster import KMeans
+from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics import silhouette_score, calinski_harabasz_score
 
 from aaanalysis.aaclust._aaclust_bic import bic_score
@@ -15,30 +14,36 @@ import aaanalysis.utils as ut
 from aaanalysis.aaclust._aaclust import estimate_lower_bound_n_clusters, optimize_n_clusters, merge_clusters
 from aaanalysis.aaclust._aaclust_statics import compute_centers, compute_medoids, compute_correlation, name_clusters
 
-
 # I Helper Functions
 # Check functions
-def check_model_class(model_class=None, model_kwargs=None, except_None=False):
-    """
-    Check if the provided model has 'n_clusters' as a parameter.
-    Filter the model_kwargs to only include keys that are valid parameters for the model.
-    """
-    model_kwargs = model_kwargs or {}
-    if except_None:
-        return model_kwargs
+def check_mode_class(model_class=None):
+    """"""
     # Check if model_class is actually a class and not an instance
     if not isclass(model_class):
         raise ValueError(f"'{model_class}' is not a model class. Please provide a valid model class.")
     # Check if model is callable
     if not callable(getattr(model_class, "__call__", None)):
         raise ValueError(f"'{model_class}' is not a callable model.")
+    return model_class
+
+
+def check_model_kwargs(model_class=None, model_kwargs=None):
+    """
+    Check if the provided model has 'n_clusters' as a parameter.
+    Filter the model_kwargs to only include keys that are valid parameters for the model.
+    """
+    model_kwargs = model_kwargs or {}
+    if model_class is None:
+        raise ValueError("'model_class' must be provided.")
     list_model_args = list(inspect.signature(model_class).parameters.keys())
     # Check if 'n_clusters' is a parameter of the model
     if "n_clusters" not in list_model_args:
         error = f"'n_clusters' should be an argument in the given 'model' ({model_class})."
         raise ValueError(error)
     # Filter model_kwargs to only include valid parameters for the model
-    model_kwargs = {x: model_kwargs[x] for x in model_kwargs if x in list_model_args}
+    not_valid_kwargs = [x for x in model_kwargs if x not in list_model_args]
+    if len(not_valid_kwargs):
+        raise ValueError(f"'model_kwargs' contains non valid arguments: {not_valid_kwargs}")
     return model_kwargs
 
 
@@ -54,8 +59,6 @@ def check_match_feat_matrix_n_clusters(X=None, n_clusters=None):
     n_samples, n_features = X.shape
     if n_clusters is not None and n_samples <= n_clusters:
         raise ValueError(f"'X' must contain more samples ({n_samples}) then 'n_clusters' ({n_clusters})")
-
-
 
 
 # II Main Functions
@@ -104,15 +107,12 @@ class AAclust:
     * AAclust is designed primarily for amino acid scales but can be used for any set of numerical indices.
     """
     def __init__(self,
-                 model_class: Type[ut.KBasedClusterModel] = None,
+                 model_class: Type[ut.KBasedClusterModel] = AgglomerativeClustering,
                  model_kwargs: Optional[Dict] = None,
                  verbose: bool = False):
         # Model parameters
-        if model_class is None:
-            model_class = KMeans
-            # Set to avoid FutureWarning (only for default model)
-            model_kwargs = model_kwargs or dict(n_init="auto")
-        model_kwargs = check_model_class(model_class=model_class, model_kwargs=model_kwargs)
+        model_class = check_mode_class(model_class=model_class)
+        model_kwargs = check_model_kwargs(model_class=model_class, model_kwargs=model_kwargs)
         self.model_class = model_class
         self._model_kwargs = model_kwargs
         self._verbose = ut.check_verbose(verbose)
@@ -139,16 +139,9 @@ class AAclust:
 
         AAclust determines the optimal number of clusters, k, without pre-specification. It partitions data (``X``) into
         clusters by maximizing the within-cluster Pearson correlation beyond the ``min_th`` threshold. The quality of
-        clustering is either based on the minimum Pearson correlation of all members ('min_cor all') or between
-        the cluster center and its members ('min_cor center'), governed by `on_center`. See details in [Breimann23a]_.
-
-        The AAclust algorithm has three steps:
-
-        1. Estimate the lower bound of k.
-        2. Refine k using the chosen quality metric.
-        3. Optionally, merge smaller clusters, as directed by ``merge_metric``.
-
-        A representative scale (medoid) closest to each cluster center is chosen for redundancy reduction.
+        clustering is either based on the minimum Pearson correlation of all members (``on_center=False``) or between
+        the cluster center and its members (``on_center=True``), using either the 'min_cor_all' or 'min_cor_center'
+         function, respectively, as described in [Breimann23a]_.
 
         Parameters
         ----------
@@ -177,8 +170,14 @@ class AAclust:
 
         Notes
         -----
-        Sets all attributes within the :class:`aanalysis.AAclust` class.
+        - Sets all attributes of the :class:`aanalysis.AAclust` class.
 
+        - The AAclust algorithm consists of three main steps:
+            1. Estimate the lower bound of k.
+            2. Refine k using the chosen quality metric.
+            3. Optionally, merge smaller clusters as directed by the ``merge_metric``.
+
+        - A representative scale (medoid) closest to each cluster center is selected for redundancy reduction.
         """
         # Check input
         ut.check_list(name="names", val=names, accept_none=True)
@@ -194,6 +193,7 @@ class AAclust:
 
         # Clustering using given clustering models
         if n_clusters is not None:
+            AgglomerativeClustering(n_clusters=n_clusters, **self._model_kwargs)
             self.model = self.model_class(n_clusters=n_clusters, **self._model_kwargs)
             labels = self.model.fit(X).labels_.tolist()
 
@@ -268,7 +268,6 @@ class AAclust:
         # Check input
         ut.check_array_like(name="labels", val=labels, dtype="int")
         ut.check_feat_matrix(X=X, y=labels, y_name="labels")
-
         # Bayesian Information Criterion
         BIC = bic_score(X, labels)
         # Calinski-Harabasz Index

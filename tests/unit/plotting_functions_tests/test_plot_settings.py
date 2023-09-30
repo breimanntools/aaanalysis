@@ -6,7 +6,6 @@ from hypothesis import given, strategies as st, example, settings
 import matplotlib as mpl
 import aaanalysis as aa
 
-
 class TestPlotSettings:
 
     # Positive Tests
