@@ -177,7 +177,7 @@ class AAclust:
 
         Notes
         -----
-        Set all attributes within the :class:`aanalysis.AAclust` class.
+        Sets all attributes within the :class:`aanalysis.AAclust` class.
 
         """
         # Check input
@@ -326,10 +326,10 @@ class AAclust:
 
         Returns
         -------
-        centers
-            The computed center for each cluster, with shape (n_clusters, )
-        center_labels
-            The labels associated with each computed center, with shape (n_clusters, ).
+        centers : `array-like, shape (n_clusters, )`
+            The computed center for each cluster.
+        center_labels : `array-like, shape (n_clusters, )`
+            The labels associated with each computed center.
         """
         # Check input
         ut.check_array_like(name="labels", val=labels, dtype="int")
@@ -354,12 +354,10 @@ class AAclust:
 
         Returns
         -------
-        medoids
+        medoids : `array-like, shape (n_clusters, )`
             The medoid for each cluster.
-        medoid_labels
+        medoid_labels : `array-like, shape (n_clusters, )`
             The labels corresponding to each medoid.
-        medoid_ind
-            Indexes of medoids within the original data.
         """
         # Check input
         ut.check_array_like(name="labels", val=labels, dtype="int")
