@@ -11,7 +11,6 @@ from sklearn.metrics import silhouette_score, calinski_harabasz_score
 from sklearn.base import ClusterMixin
 from sklearn.exceptions import ConvergenceWarning
 import warnings
-import traceback
 
 from aaanalysis.aaclust._aaclust_bic import bic_score
 import aaanalysis.utils as ut
@@ -73,7 +72,7 @@ def check_match_feat_matrix_n_clusters(X=None, n_clusters=None):
 
 def post_check_n_clusters(n_clusters_actual=None, n_clusters=None):
     """Check if n_clusters set properly"""
-    if n_clusters_actual < n_clusters:
+    if n_clusters is not None and n_clusters_actual < n_clusters:
         warnings.warn(f"'n_clusters' was reduced from {n_clusters} to {n_clusters_actual} "
                       f"during AAclust algorithm.", ConvergenceWarning)
 
@@ -98,46 +97,6 @@ def check_match_feat_matrix_labels(X=None, labels=None):
     if n_samples <= n_classes:
         raise ValueError(f"'X' must contain more samples ({n_samples}) than number of classes in labels ({n_classes})")
 
-
-# Decorators
-class CatchRuntimeWarnings:
-    """Context manager to catch RuntimeWarnings and store them in a list."""
-    def __enter__(self):
-        self._warn_list = []
-        self._other_warnings = []
-        self._showwarning_orig = warnings.showwarning
-        warnings.showwarning = self._catch_warning
-        return self
-
-    def __exit__(self, exc_type, exc_value, tb):
-        warnings.showwarning = self._showwarning_orig
-        # Re-issue any other warnings that were caught but not RuntimeWarning
-        for warn_message, warn_category, filename, lineno in self._other_warnings:
-            warnings.warn_explicit(warn_message, warn_category, filename, lineno)
-
-    def _catch_warning(self, message, category, filename, lineno, file=None, line=None):
-        if category == RuntimeWarning:
-            line_content = traceback.format_list([(filename, lineno, "", line)])[0].strip()
-            warning_msg = f"{message}: {line_content.split(', in')[1]}"
-            self._warn_list.append(warning_msg)
-        else:
-            # Store other warnings for re-issuing later
-            self._other_warnings.append((message, category, filename, lineno))
-
-    def get_warnings(self):
-        return self._warn_list
-
-def catch_runtime_warnings(func):
-    def wrapper(*args, **kwargs):
-        with CatchRuntimeWarnings() as crw:
-            result = func(*args, **kwargs)
-        if crw.get_warnings():
-            list_warnings = crw.get_warnings()
-            n = len(list_warnings)
-            summary_msg = f"The following {n} 'RuntimeWarnings' were caught:\n" + "\n".join(crw.get_warnings())
-            warnings.warn(summary_msg, RuntimeWarning)
-        return result
-    return wrapper
 
 
 # II Main Functions
@@ -213,7 +172,7 @@ class AAclust(Wrapper):
         self.is_medoid_: Optional[ut.ArrayLike] = None
         self.medoid_names_: Optional[List[str]] = None
 
-    @catch_runtime_warnings
+    @ut.catch_runtime_warnings
     def fit(self,
             X: ut.ArrayLike,
             n_clusters: Optional[int] = None,
@@ -305,6 +264,7 @@ class AAclust(Wrapper):
             if merge_metric is not None:
                 labels = merge_clusters(X, labels=labels, min_th=min_th, on_center=on_center,
                                         metric=merge_metric, verbose=self._verbose)
+                n_clusters = len(set(labels))
 
         # Obtain cluster centers and medoids
         medoids, medoid_labels, medoid_ind = compute_medoids(X, labels=labels)
@@ -349,12 +309,13 @@ class AAclust(Wrapper):
 
         Returns
         -------
-        BIC
-            BIC value for clustering.
-        CH
-            CH value for clustering.
-        SC
-            SC value for clustering.
+        tuple of (BIC, CH, SC)
+            - BIC
+                BIC value for clustering.
+            - CH
+                CH value for clustering.
+            - SC
+                SC value for clustering.
 
         Notes
         -----
@@ -417,7 +378,8 @@ class AAclust(Wrapper):
 
     @staticmethod
     def comp_centers(X: ut.ArrayLike,
-                     labels: ut.ArrayLike = None) -> Tuple[ut.ArrayLike, ut.ArrayLike]:
+                     labels: ut.ArrayLike = None
+                     ) -> Tuple[ut.ArrayLike, ut.ArrayLike]:
         """
         Computes the center of each cluster based on the given labels.
 

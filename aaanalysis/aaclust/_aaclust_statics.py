@@ -1,7 +1,6 @@
 """
 This is a script for the static methods of the AAclust class.
 """
-from collections import OrderedDict
 import numpy as np
 import pandas as pd
 

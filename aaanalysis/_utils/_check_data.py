@@ -37,8 +37,8 @@ def check_array_like(name=None, val=None, dtype=None, accept_none=False,
                          f"\nscikit message:\n\t{e}")
     return val
 
-
-def check_feat_matrix(X=None, y=None, y_name="labels", accept_none_y=False,
+# TODO separation of concerns
+def check_feat_matrix(X=None, y=None, y_name="labels", accept_none_y=True,
                       ensure_2d=True, allow_nan=False, min_n_unique_samples=3, min_n_features=2):
     """Check feature matrix valid and matches with y if (if provided)"""
     # Check if X is None

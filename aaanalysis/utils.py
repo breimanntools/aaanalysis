@@ -9,19 +9,19 @@ import numpy as np
 
 from aaanalysis.config import options
 
-
-# Import checking functions explicitly
+# Import utility functions explicitly
 from aaanalysis._utils._check_type import (check_number_range, check_number_val, check_str, check_bool,
                                            check_dict, check_tuple, check_list,
                                            check_ax)
-
 from aaanalysis._utils._check_data import (check_array_like, check_feat_matrix, check_col_in_df)
 
-# Import utility functions explicitly
 from aaanalysis._utils._new_types import ArrayLike
+from aaanalysis._utils._decorators import (catch_runtime_warnings, CatchRuntimeWarnings,
+                                           catch_convergence_warning, ClusteringConvergenceException)
 
 from aaanalysis._utils._utils_output import (_print_red, print_out, _print_blue,
                                              print_start_progress, print_progress, print_finished_progress)
+
 from aaanalysis._utils.utils_cpp import (check_color, check_y_categorical, check_labels, check_ylim,
                                          check_args_len, check_args_len, check_list_parts,
                                          check_split_kws, check_split,

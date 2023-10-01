@@ -43,7 +43,7 @@ class TestAAclust:
             assert aaclust.model_class is ModelClass
         elif model_class_name is None:
             aaclust = aa.AAclust()
-            assert aaclust.model_class is AgglomerativeClustering
+            assert aaclust.model_class is KMeans
         else:
             with pytest.raises(ValueError):
                 aa.AAclust(model_class=model_class_name)
