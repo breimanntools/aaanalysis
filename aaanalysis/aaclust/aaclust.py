@@ -15,8 +15,10 @@ import traceback
 
 from aaanalysis.aaclust._aaclust_bic import bic_score
 import aaanalysis.utils as ut
-from aaanalysis.aaclust._aaclust import estimate_lower_bound_n_clusters, optimize_n_clusters, merge_clusters
-from aaanalysis.aaclust._aaclust_statics import compute_centers, compute_medoids, compute_correlation, name_clusters
+from aaanalysis.aaclust._aaclust import (estimate_lower_bound_n_clusters, optimize_n_clusters, merge_clusters,
+                                         compute_centers, compute_medoids)
+from aaanalysis.aaclust._aaclust_statics import compute_correlation, name_clusters
+from aaanalysis.template_classes import Wrapper
 
 # I Helper Functions
 # Check functions
@@ -76,6 +78,27 @@ def post_check_n_clusters(n_clusters_actual=None, n_clusters=None):
                       f"during AAclust algorithm.", ConvergenceWarning)
 
 
+def check_labels(labels=None):
+    """"""
+    if labels is None:
+        raise ValueError("'labels' should not be None")
+    unique_labels = set(labels)
+    n_unique_labels = len(unique_labels)
+    if n_unique_labels == 1:
+        raise ValueError(f"'labels' should contain more than one different value ({unique_labels})")
+    wrong_type = [l for l in labels if not np.issubdtype(type(l), np.integer)]
+    if len(wrong_type) > 0:
+        raise ValueError(f"'labels' contains wrong following wrong items: {wrong_type}")
+
+
+def check_match_feat_matrix_labels(X=None, labels=None):
+    """"""
+    n_samples, n_features = X.shape
+    n_classes = len(set(labels))
+    if n_samples <= n_classes:
+        raise ValueError(f"'X' must contain more samples ({n_samples}) than number of classes in labels ({n_classes})")
+
+
 # Decorators
 class CatchRuntimeWarnings:
     """Context manager to catch RuntimeWarnings and store them in a list."""
@@ -118,7 +141,7 @@ def catch_runtime_warnings(func):
 
 
 # II Main Functions
-class AAclust:
+class AAclust(Wrapper):
     """
     A k-optimized clustering wrapper for selecting redundancy-reduced sets of numerical scales.
 
@@ -164,7 +187,7 @@ class AAclust:
 
     See Also
     --------
-    * `Scikit-learn clustering model classes <https://scikit-learn.org/stable/modules/clustering.html>`_
+    * Scikit-learn `clustering model classes <https://scikit-learn.org/stable/modules/clustering.html>`_.
 
     """
     def __init__(self,
@@ -240,7 +263,7 @@ class AAclust:
 
         - The AAclust algorithm consists of three main steps:
             1. Estimate the lower bound of k.
-            2. Refine k using the chosen quality metric.
+            2. Refine k (recursively) using the chosen quality metric.
             3. Optionally, merge smaller clusters as directed by the ``merge_metric``.
 
         - A representative scale (medoid) closest to each cluster center is selected for redundancy reduction.
@@ -248,6 +271,10 @@ class AAclust:
         See Also
         --------
         * :func:`sklearn.metrics.pairwise_distances` were used as distances for merging.
+
+        Warnings
+        --------
+        * All RuntimeWarnings during the AAclust algorithm are caught and bundled into one RuntimeWarning.
         """
         # Check input
         ut.check_list(name="names", val=names, accept_none=True)
@@ -297,9 +324,9 @@ class AAclust:
         return self
 
     @staticmethod
-    def evaluate(X: ut.ArrayLike,
-                 labels:ut.ArrayLike = None
-                 ) -> Tuple[float, float, float]:
+    def eval(X: ut.ArrayLike,
+             labels:ut.ArrayLike = None
+             ) -> Tuple[float, float, float]:
         """Evaluates the quality of clustering using three established measures.
 
         Clustering quality is quantified using:
@@ -341,7 +368,9 @@ class AAclust:
         """
         # Check input
         ut.check_array_like(name="labels", val=labels, dtype="int")
-        ut.check_feat_matrix(X=X, y=labels, y_name="labels")
+        check_labels(labels=labels)
+        X = ut.check_feat_matrix(X=X, y=labels, y_name="labels")
+        check_match_feat_matrix_labels(X=X, labels=labels)
         # Bayesian Information Criterion
         BIC = bic_score(X, labels)
         # Calinski-Harabasz Index
@@ -374,19 +403,21 @@ class AAclust:
         -------
         cluster_names : list
             A list of renamed clusters based on scale names.
+
         """
         # Check input
         ut.check_array_like(name="labels", val=labels, dtype="int")
-        ut.check_list(name='names', val=names)
-        ut.check_feat_matrix(X=X, y=labels, y_name="labels")
+        check_labels(labels=labels)
+        X = ut.check_feat_matrix(X=X, y=labels, y_name="labels")
+        check_match_feat_matrix_labels(X=X, labels=labels)
+        ut.check_feat_matrix(X=X, y=names, y_name="names")
         # Get cluster names
         cluster_names = name_clusters(X, labels=labels, names=names)
         return cluster_names
 
     @staticmethod
-    def compute_centers(X: ut.ArrayLike,
-                        labels: ut.ArrayLike = None
-                        ) -> Tuple[ut.ArrayLike, ut.ArrayLike]:
+    def comp_centers(X: ut.ArrayLike,
+                     labels: ut.ArrayLike = None) -> Tuple[ut.ArrayLike, ut.ArrayLike]:
         """
         Computes the center of each cluster based on the given labels.
 
@@ -403,18 +434,21 @@ class AAclust:
             The computed center for each cluster.
         center_labels : `array-like, shape (n_clusters, )`
             The labels associated with each computed center.
+
         """
         # Check input
         ut.check_array_like(name="labels", val=labels, dtype="int")
+        check_labels(labels=labels)
         ut.check_feat_matrix(X=X, y=labels, y_name="labels")
+        check_match_feat_matrix_labels(X=X, labels=labels)
         # Get cluster centers
         centers, center_labels = compute_centers(X, labels=labels)
         return centers, center_labels
 
     @staticmethod
-    def compute_medoids(X: ut.ArrayLike,
-                        labels: ut.ArrayLike = None
-                        ) -> Tuple[ut.ArrayLike, ut.ArrayLike]:
+    def comp_medoids(X: ut.ArrayLike,
+                     labels: ut.ArrayLike = None
+                     ) -> Tuple[ut.ArrayLike, ut.ArrayLike]:
         """
         Computes the medoid of each cluster based on the given labels.
 
@@ -431,23 +465,26 @@ class AAclust:
             The medoid for each cluster.
         medoid_labels : `array-like, shape (n_clusters, )`
             The labels corresponding to each medoid.
+
         """
         # Check input
         ut.check_array_like(name="labels", val=labels, dtype="int")
-        ut.check_feat_matrix(X=X, y=labels, y_name="labels")
+        check_labels(labels=labels)
+        X = ut.check_feat_matrix(X=X, y=labels, y_name="labels")
+        check_match_feat_matrix_labels(X=X, labels=labels)
         # Get cluster medoids
         medoids, medoid_labels, _ = compute_medoids(X, labels=labels)
         return medoids, medoid_labels
 
     @staticmethod
-    def compute_correlation(X: ut.ArrayLike,
-                            X_ref: ut.ArrayLike,
-                            labels: ut.ArrayLike = None,
-                            labels_ref: ut.ArrayLike = None,
-                            n: int = 3,
-                            positive: bool = True,
-                            on_center: bool = False
-                            ) -> List[str]:
+    def comp_correlation(X: ut.ArrayLike,
+                         X_ref: ut.ArrayLike,
+                         labels: ut.ArrayLike = None,
+                         labels_ref: ut.ArrayLike = None,
+                         n: int = 3,
+                         positive: bool = True,
+                         on_center: bool = False
+                         ) -> List[str]:
         """
         Computes the Pearson correlation of given data with reference data.
 
@@ -479,16 +516,21 @@ class AAclust:
         """
         # Check input
         ut.check_array_like(name="labels", val=labels, dtype="int")
+        check_labels(labels=labels)
         ut.check_array_like(name="labels_ref", val=labels_ref, dtype="int")
-        ut.check_feat_matrix(X=X, y=labels, y_name="labels")
-        ut.check_feat_matrix(X=X_ref, y=labels_ref, y_name="labels_ref")
+        check_labels(labels=labels_ref)
+        X = ut.check_feat_matrix(X=X, y=labels, y_name="labels")
+        X_ref = ut.check_feat_matrix(X=X_ref, y=labels_ref, y_name="labels_ref")
+        check_match_feat_matrix_labels(X=X, labels=labels)
+        check_match_feat_matrix_labels(X=X_ref, labels=labels_ref)
         ut.check_number_range(name="n", val=n, min_val=2)
 
+        # Get correlations
         list_top_center_name_corr = compute_correlation(X, X_ref, labels=labels, labels_ref=labels_ref,
                                                         n=n, positive=positive, on_center=on_center)
         return list_top_center_name_corr
 
     @staticmethod
-    def compute_coverage(names=None, names_ref=None):
+    def comp_coverage(names=None, names_ref=None):
         """Computes coverage of """
 

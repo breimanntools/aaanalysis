@@ -1,5 +1,5 @@
 """
-This is a script for testing the AAclust class functions.
+This is a script for testing the AAclust class.
 """
 import inspect
 from hypothesis import given, example

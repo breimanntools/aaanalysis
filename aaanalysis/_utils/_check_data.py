@@ -35,16 +35,17 @@ def check_array_like(name=None, val=None, dtype=None, accept_none=False,
     except Exception as e:
         raise ValueError(f"'{name}' should be array-like with {dtype} values."
                          f"\nscikit message:\n\t{e}")
-
     return val
 
 
-def check_feat_matrix(X=None, y=None, y_name="labels",
+def check_feat_matrix(X=None, y=None, y_name="labels", accept_none_y=False,
                       ensure_2d=True, allow_nan=False, min_n_unique_samples=3, min_n_features=2):
     """Check feature matrix valid and matches with y if (if provided)"""
     # Check if X is None
     if X is None:
         raise ValueError("Feature matrix 'X' should not be None.")
+    if not accept_none_y and y is None:
+        raise ValueError(f"'{y_name}' ({y}) should not be None.")
     # Use check_array from scikit to convert
     try:
         X = check_array(X, dtype="float64", ensure_2d=ensure_2d, force_all_finite=not allow_nan)

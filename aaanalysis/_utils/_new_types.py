@@ -27,3 +27,5 @@ NestedGeneral2 = Union[List[Union[int, float]], Tuple[Union[int, float]]]
 NestedGeneral3 = Union[List[NestedGeneral2], Tuple[NestedGeneral2]]
 NestedGeneral4 = Union[List[NestedGeneral3], Tuple[NestedGeneral3]]
 ArrayLike = Union[NestedGeneral2, NestedGeneral3, NestedGeneral4, np.ndarray, pd.DataFrame, pd.Series]
+
+# Can be used only in signature but not as return type, since

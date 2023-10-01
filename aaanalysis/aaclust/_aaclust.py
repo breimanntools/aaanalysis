@@ -24,6 +24,14 @@ def _cluster_center(X):
     return X.mean(axis=0)[np.newaxis, :]
 
 
+def compute_centers(X, labels=None):
+    """Obtain cluster centers and their labels"""
+    center_labels = list(OrderedDict.fromkeys(labels))
+    list_masks = [[True if i == label else False for i in labels] for label in center_labels]
+    centers = np.concatenate([_cluster_center(X[mask]) for mask in list_masks]).round(3)
+    return centers, np.array(center_labels)
+
+
 def _cluster_medoid(X):
     """Obtain cluster medoids (i.e., scale closest to cluster center used as representative scale for a cluster)"""
     # Create new array with cluster center and given
@@ -31,6 +39,18 @@ def _cluster_medoid(X):
     # Get index for scale with the highest correlation with cluster center
     ind_max = np.corrcoef(center_X)[0, 1:].argmax()
     return ind_max
+
+
+def compute_medoids(X, labels=None):
+    """Obtain cluster medoids and their labels"""
+    unique_labels = list(OrderedDict.fromkeys(labels))
+    list_masks = [[True if i == label else False for i in labels] for label in unique_labels]
+    list_ind_max = [_cluster_medoid(X[mask]) for mask in list_masks]
+    indices = np.array(range(0, len(labels)))
+    medoid_ind = [indices[m][i] for m, i in zip(list_masks, list_ind_max)]
+    medoid_labels = np.array([labels[i] for i in medoid_ind])
+    medoids = np.array([X[i, :] for i in medoid_ind])
+    return medoids, medoid_labels, medoid_ind
 
 
 # Compute minimum correlation on center or all scales
