@@ -11,6 +11,9 @@ import pandas as pd
 import numpy as np
 from collections import OrderedDict
 from sklearn.metrics.pairwise import pairwise_distances
+import warnings
+from sklearn.exceptions import ConvergenceWarning
+import functools
 
 import aaanalysis.utils as ut
 
@@ -77,10 +80,38 @@ def get_max_dist(X, on_center=True, metric="euclidean"):
         max_dist = pairwise_distances(X, metric=metric).max()
     return max_dist
 
+# Catch convergence warning
+# Wrap your function calls with this custom exception to indicate early stopping
+class ClusteringConvergenceException(Exception):
+    def __init__(self, message, distinct_clusters):
+        super().__init__(message)
+        self.distinct_clusters = distinct_clusters
+
+# Add a warning catcher inside your function
+def catch_convergence_warning(func):
+    def wrapper(*args, **kwargs):
+        with warnings.catch_warnings(record=True) as w:
+            # Trigger the "always" behavior for ConvergenceWarning
+            warnings.simplefilter("always", ConvergenceWarning)
+            result = func(*args, **kwargs)  # Call the original function
+
+            # Check if the warning is the one we're interested in
+            for warn in w:
+                if issubclass(warn.category, ConvergenceWarning):
+                    message = str(warn.message)
+                    if "Number of distinct clusters" in message:
+                        distinct_clusters = int(message.split("(")[1].split(")")[0].split()[0])
+                        raise ClusteringConvergenceException(f"Process stopped due to ConvergenceWarning.", distinct_clusters)
+            return result
+    return wrapper
+
+
+
 
 # II Main Functions
 # 1. Step (Estimation of n clusters)
-def estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6, on_center=True, verbose=True):
+@catch_convergence_warning
+def _estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6, on_center=True, verbose=True):
     """
     Estimate the lower bound of the number of clusters (k).
 
@@ -129,9 +160,20 @@ def estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6
         ut.print_out(f": k={n_clusters}")
     return n_clusters
 
+def estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6, on_center=True, verbose=True):
+    """Wrapper for _estimate_lower_bound_n_clusters to catch convergence warnings"""
+    try:
+        n_clusters = _estimate_lower_bound_n_clusters(X, model=model, model_kwargs=model_kwargs,
+                                                      min_th=min_th, on_center=on_center,
+                                                      verbose=verbose)
+    except ClusteringConvergenceException as e:
+        n_clusters = e.distinct_clusters
+    return n_clusters
+
 
 # 2. Step (Optimization of n clusters)
-def optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_th=0.5, on_center=True, verbose=True):
+@catch_convergence_warning
+def _optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_th=0.5, on_center=True, verbose=True):
     """
     Optimize the number of clusters using a recursive algorithm.
 
@@ -182,6 +224,17 @@ def optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_t
             min_cor = f(n_clusters)
     if verbose:
         ut.print_out(f": k={n_clusters}")
+    return n_clusters
+
+
+def optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_th=0.5, on_center=True, verbose=True):
+    """Wrapper for _optimize_n_clusters to catch convergence warnings"""
+    try:
+        n_clusters = _optimize_n_clusters(X, model=model, model_kwargs=model_kwargs,
+                                          n_clusters=n_clusters, min_th=min_th, on_center=on_center,
+                                          verbose=verbose)
+    except ClusteringConvergenceException as e:
+        n_clusters = e.distinct_clusters
     return n_clusters
 
 

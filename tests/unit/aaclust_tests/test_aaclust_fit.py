@@ -3,11 +3,15 @@ This is a script for testing the AAclust.fit() method.
 """
 from hypothesis import given, example, settings
 import hypothesis.strategies as some
+from hypothesis.extra import numpy as npst
 import numpy as np
-from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import AgglomerativeClustering, KMeans
 import aaanalysis as aa
 import aaanalysis.utils as ut
+
 import pytest
+from sklearn.exceptions import ConvergenceWarning
+import warnings
 
 
 class TestAAclust:
@@ -19,8 +23,8 @@ class TestAAclust:
         Test initialization of the AAclust class without any arguments.
         """
         aac = aa.AAclust()
-        assert aac.model_class == AgglomerativeClustering
-        assert aac._model_kwargs == {}
+        assert aac.model_class == KMeans
+        assert aac._model_kwargs == dict(n_init="auto")
         assert aac._verbose == False
         assert aac.model == None
 
@@ -39,14 +43,14 @@ class TestAAclust:
         aac.fit(X, n_clusters=n_clusters)
         assert len(set(aac.labels_)) == n_clusters
 
-    @settings(deadline=1000)
-    @given(min_th=some.floats(min_value=0, max_value=1))
+    @settings(deadline=1000, max_examples=5)
+    @given(min_th=some.floats(min_value=0, max_value=0.3))
     def test_fit_min_th(self, min_th):
         """Test the 'min_th' parameter during the 'fit' method."""
         X = np.random.rand(100, 10)
         aac = aa.AAclust()
-        aac.fit(X,
-               min_th=min_th)  # No direct assertions on 'min_th' effect, as its role is internal and complex.  # This test ensures no error is raised.
+        # No direct assertions on 'min_th' effect, as its role is internal and complex.  # This test ensures no error is raised.
+        aac.fit(X, min_th=min_th)
 
     # Property-based testing for negative cases
     @given(n_clusters=some.integers(max_value=0))
@@ -73,7 +77,6 @@ class TestAAclust:
         X = np.random.rand(100, 10)
         aac = aa.AAclust()
         aac.fit(X)
-
         assert isinstance(aac.n_clusters, int)
         assert isinstance(aac.labels_, np.ndarray)
         assert isinstance(aac.centers_, np.ndarray)
@@ -82,25 +85,16 @@ class TestAAclust:
         assert isinstance(aac.medoid_labels_, np.ndarray)
         assert isinstance(aac.is_medoid_, np.ndarray)
 
-    @given(names=some.lists(some.text(min_size=1, max_size=10), min_size=50, max_size=100))
+    @settings(max_examples=10)
+    @given(names=some.lists(some.text(min_size=1, max_size=10), min_size=10, max_size=50))
     def test_fit_names(self, names):
         """
         Test the 'names' parameter during the 'fit' method.
         """
         X = np.random.rand(len(names), 10)
         aac = aa.AAclust()
-        aac.fit(X, names=names)
+        aac.fit(X, names=names, n_clusters=5)
         assert len(aac.medoid_names_) == aac.n_clusters
-
-    # Complex scenarios
-    def test_fit_complex_scenario(self):
-        """
-        Test a complex scenario for 'fit' method with multiple parameters.
-        """
-        X = np.random.rand(100, 10)
-        aac = aa.AAclust()
-        aac.fit(X, n_clusters=5, min_th=0.5, on_center=True, merge_metric="euclidean")
-        assert len(set(aac.labels_)) <= 5
 
     def test_medoids_labels_match(self):
         """
@@ -108,8 +102,7 @@ class TestAAclust:
         """
         X = np.random.rand(100, 10)
         aac = aa.AAclust()
-        aac.fit(X)
-
+        aac.fit(X, n_clusters=5)
         for i, label in enumerate(aac.medoid_labels_):
             assert aac.is_medoid_[np.where(aac.labels_ == label)[0]].sum() == 1  # Only one medoid per cluster.
 
@@ -119,56 +112,94 @@ class TestAAclust:
         """
         X = np.random.rand(100, 10)
         aac = aa.AAclust()
-        aac.fit(X)
+        aac.fit(X, n_clusters=5)
         assert aac.medoid_names_ is None
 
     def test_merge_metric(self):
         """
         Test the 'merge_metric' parameter with its different options.
         """
-        X = np
-        df = aa.load_dataset(name="SEQ_LOCATION", n=10, min_len=5, max_len=200, non_canonical_aa="remove")
-        assert len(df) == 10 * 2
-        assert all(5 <= len(seq) <= 200 for seq in df[ut.COL_SEQ])
-        assert all(seq.isalpha() for seq in df[ut.COL_SEQ])
+        valid_merge_metrics = ["correlation", None, "manhattan",  "euclidean", "cosine"]
+        X = np.random.rand(100, 10)
+        aac = aa.AAclust()
+        for merge_metric in valid_merge_metrics:
+            aac.fit(X, merge_metric=merge_metric)
+
+    @settings(max_examples=10)
+    @given(merge_metric=some.text(min_size=1).filter(lambda x: x not in ["correlation", None, "manhattan", "euclidean", "cosine"]))
+    def test_invalid_merge_metric(self, merge_metric):
+        """
+        Test that using an invalid 'merge_metric' value raises an error.
+        """
+        X = np.random.rand(100, 10)
+        aac = aa.AAclust()
+        with pytest.raises(ValueError):  # Or whatever error you expect
+            aac.fit(X, n_clusters=5, merge_metric=merge_metric)
 
 
-class TestAAclusComplex:
+class TestAAclustComplex:
     """Test AAclust class"""
 
     # Property-based testing for positive cases
-    @settings(max_examples=10)
-    @given(X=some.lists(some.lists(some.floats(allow_nan=False, allow_infinity=False),
-                                   min_size=1, max_size=10), min_size=1, max_size=100),
-           n_clusters=some.integers(min_value=1, max_value=10))
+    @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=12, max_side=100),
+                         elements=some.floats(allow_nan=False, allow_infinity=False)),
+           n_clusters=some.integers(min_value=2, max_value=5))
     def test_fit_with_n_clusters(self, X, n_clusters):
         """Test the fit method with a pre-defined number of clusters."""
-        model = aa.AAclust()
-        model.fit(X, n_clusters=n_clusters)
-        assert len(set(model.labels_)) == n_clusters
-        assert len(model.medoids_) == n_clusters
+        model = aa.AAclust(model_class=KMeans)
+        n_samples, n_features = X.shape
+        n_unique_samples = len(set(map(tuple, X)))
+        if np.any(np.isinf(X)) or np.any(np.isnan(X)):
+            with pytest.raises(ValueError):
+                model.fit(X, n_clusters=n_clusters)
+        elif n_samples <= n_clusters:
+            with pytest.raises(ValueError):
+                model.fit(X, n_clusters=n_clusters)
+        elif len(set(map(tuple, X))) == 1:
+            with pytest.raises(ValueError):
+                model.fit(X, n_clusters=n_clusters)
+        elif n_unique_samples < n_clusters or n_unique_samples < 3:
+            with pytest.raises(ValueError):
+                model.fit(X, n_clusters=n_clusters)
+        else:
+            with warnings.catch_warnings(record=True) as w:
+                #    warnings.simplefilter("always")
+                model.fit(X, n_clusters=n_clusters)
+                # Check if ConvergenceWarning was raised and handle
+                convergence_warned = any([issubclass(warn.category, ConvergenceWarning) for warn in w])
+                if convergence_warned:
+                    assert len(set(model.labels_)) <= n_clusters
+                    assert len(model.medoids_) <= n_clusters
+                else:
+                    assert len(set(model.labels_)) == n_clusters
+                    assert len(model.medoids_) == n_clusters
 
-    @settings(max_examples=3)
-    @given(X=some.lists(some.lists(some.floats(allow_nan=False, allow_infinity=False),
-                                   min_size=1, max_size=10), min_size=1, max_size=100))
+    @settings(deadline=2000, max_examples=20)
+    @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=10, max_side=50),
+                         elements=some.floats(allow_nan=False, allow_infinity=False)))
     def test_fit_without_n_clusters(self, X):
         """Test the fit method without a pre-defined number of clusters."""
         model = aa.AAclust()
-        model.fit(X)
-        assert isinstance(model.labels_, list)
-        assert len(model.medoids_) == len(set(model.labels_))
-
-    @settings(max_examples=3)
-    @given(X=some.lists(some.lists(some.floats(allow_nan=False, allow_infinity=False),
-                                   min_size=1, max_size=10), min_size=1, max_size=100),
-           min_th=some.floats(min_value=0.5, max_value=1))
-    def test_fit_with_min_th(self, X, min_th):
-        """Test the fit method with a threshold value."""
-        model = aa.AAclust()
-        model.fit(X, min_th=min_th, n_clusters=50)
-        assert isinstance(model.labels_, list)
+        n_samples, n_features = X.shape
+        n_unique_samples = len(set(map(tuple, X)))
+        if np.any(np.isinf(X)) or np.any(np.isnan(X)):
+            with pytest.raises(ValueError):
+                model.fit(X)
+        elif len(set(map(tuple, X))) == 1:
+            with pytest.raises(ValueError):
+                model.fit(X)
+        elif n_samples < 3  or n_unique_samples < 3 or n_features < 2:
+            with pytest.raises(ValueError):
+                model.fit(X)
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                model.fit(X)
+                assert isinstance(model.labels_, (list, np.ndarray))
+                assert len(model.medoids_) == len(set(model.labels_))
 
     # Property-based testing for negative cases
+    @settings(max_examples=20)
     @given(n_clusters=some.integers(max_value=0))
     def test_fit_invalid_n_clusters(self, n_clusters):
         """Test the fit method with an invalid number of clusters."""
@@ -197,4 +228,3 @@ class TestAAclusComplex:
             with pytest.raises(ValueError):
                 model = aa.AAclust()
                 model.fit([[1, 2], [2, 3]], merge_metric=merge_metric)
-

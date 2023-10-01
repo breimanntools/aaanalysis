@@ -40,22 +40,45 @@ def check_array_like(name=None, val=None, dtype=None, accept_none=False,
 
 
 def check_feat_matrix(X=None, y=None, y_name="labels",
-                      ensure_2d=True, allow_nan=False):
+                      ensure_2d=True, allow_nan=False, min_n_unique_samples=3, min_n_features=2):
     """Check feature matrix valid and matches with y if (if provided)"""
+    # Check if X is None
     if X is None:
-        raise ValueError("Feature matrix 'X' should not be None")
+        raise ValueError("Feature matrix 'X' should not be None.")
+    # Use check_array from scikit to convert
     try:
         X = check_array(X, dtype="float64", ensure_2d=ensure_2d, force_all_finite=not allow_nan)
     except Exception as e:
         raise ValueError(f"Feature matrix 'X' should be array-like with float values."
                          f"\nscikit message:\n\t{e}")
-    if y is None:
-        return X
+
+    # Check X values (not Nan, inf or None)
+    if not allow_nan and np.any(np.isnan(X)):
+        raise ValueError("Feature matrix 'X' should not contain NaN values.")
+    if np.any(np.isinf(X)):
+        raise ValueError("Feature matrix 'X' should not contain infinite values.")
+    if X.dtype == object:
+        if np.any([elem is None for row in X for elem in row]):
+            raise ValueError("Feature matrix 'X' should not contain None.")
+
+    # Check all identical samples
+    if len(set(map(tuple, X))) == 1:
+        raise ValueError("Feature matrix 'X' should not have all identical samples.")
+
     n_samples, n_features = X.shape
-    if n_samples != len(y):
-        raise ValueError(f"Number of samples does not match for 'X' ({len(n_samples)}) and '{y_name}' ({y}.")
+    n_unique_samples = len(set(map(tuple, X)))
+    if y is not None and n_samples != len(y):
+        raise ValueError(f"Number of samples does not match for 'X' ({n_samples}) and '{y_name}' ({y}.")
+
     if n_samples == 0 or n_features == 0:
-        raise ValueError(f"Shape of 'X' ({n_samples}, {n_features}) indicates empty feature matrix.")
+        raise ValueError(f"Shape of 'X' ({n_samples}, {n_features}) indicates empty feature matrix."
+                         f"\nX = {X}")
+    if n_unique_samples < min_n_unique_samples or n_samples < min_n_unique_samples:
+        raise ValueError(f"Number of unique samples ({n_unique_samples}) should be at least {min_n_unique_samples}."
+                         f"\nX = {X}")
+    if n_features < min_n_features:
+        raise ValueError(f"'n_features' ({n_features}) should be at least {min_n_features}."
+                         f"\nX = {X}")
     return X
 
 

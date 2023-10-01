@@ -6,8 +6,12 @@ from typing import Type
 from typing import Optional, Dict, Union, List, Tuple
 import inspect
 from inspect import isclass
-from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import AgglomerativeClustering, KMeans
 from sklearn.metrics import silhouette_score, calinski_harabasz_score
+from sklearn.base import ClusterMixin
+from sklearn.exceptions import ConvergenceWarning
+import warnings
+import traceback
 
 from aaanalysis.aaclust._aaclust_bic import bic_score
 import aaanalysis.utils as ut
@@ -58,7 +62,59 @@ def check_match_feat_matrix_n_clusters(X=None, n_clusters=None):
     """"""
     n_samples, n_features = X.shape
     if n_clusters is not None and n_samples <= n_clusters:
-        raise ValueError(f"'X' must contain more samples ({n_samples}) then 'n_clusters' ({n_clusters})")
+        raise ValueError(f"'X' must contain more samples ({n_samples}) than 'n_clusters' ({n_clusters})")
+    n_unique_samples = len(set(map(tuple, X)))
+    if n_clusters is not None and n_unique_samples < n_clusters:
+        raise ValueError(f"'n_clusters' ({n_clusters}) should be >= number of unique samples ({n_unique_samples})"
+                         f" in Feature matrix 'X'.")
+
+
+def post_check_n_clusters(n_clusters_actual=None, n_clusters=None):
+    """Check if n_clusters set properly"""
+    if n_clusters_actual < n_clusters:
+        warnings.warn(f"'n_clusters' was reduced from {n_clusters} to {n_clusters_actual} "
+                      f"during AAclust algorithm.", ConvergenceWarning)
+
+
+# Decorators
+class CatchRuntimeWarnings:
+    """Context manager to catch RuntimeWarnings and store them in a list."""
+    def __enter__(self):
+        self._warn_list = []
+        self._other_warnings = []
+        self._showwarning_orig = warnings.showwarning
+        warnings.showwarning = self._catch_warning
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        warnings.showwarning = self._showwarning_orig
+        # Re-issue any other warnings that were caught but not RuntimeWarning
+        for warn_message, warn_category, filename, lineno in self._other_warnings:
+            warnings.warn_explicit(warn_message, warn_category, filename, lineno)
+
+    def _catch_warning(self, message, category, filename, lineno, file=None, line=None):
+        if category == RuntimeWarning:
+            line_content = traceback.format_list([(filename, lineno, "", line)])[0].strip()
+            warning_msg = f"{message}: {line_content.split(', in')[1]}"
+            self._warn_list.append(warning_msg)
+        else:
+            # Store other warnings for re-issuing later
+            self._other_warnings.append((message, category, filename, lineno))
+
+    def get_warnings(self):
+        return self._warn_list
+
+def catch_runtime_warnings(func):
+    def wrapper(*args, **kwargs):
+        with CatchRuntimeWarnings() as crw:
+            result = func(*args, **kwargs)
+        if crw.get_warnings():
+            list_warnings = crw.get_warnings()
+            n = len(list_warnings)
+            summary_msg = f"The following {n} 'RuntimeWarnings' were caught:\n" + "\n".join(crw.get_warnings())
+            warnings.warn(summary_msg, RuntimeWarning)
+        return result
+    return wrapper
 
 
 # II Main Functions
@@ -105,19 +161,26 @@ class AAclust:
     -----
     * All attributes are set during ``.fit`` and can be directly accessed.
     * AAclust is designed primarily for amino acid scales but can be used for any set of numerical indices.
+
+    See Also
+    --------
+    * `Scikit-learn clustering model classes <https://scikit-learn.org/stable/modules/clustering.html>`_
+
     """
     def __init__(self,
-                 model_class: Type[ut.KBasedClusterModel] = AgglomerativeClustering,
+                 model_class: Type[ClusterMixin] = KMeans,
                  model_kwargs: Optional[Dict] = None,
                  verbose: bool = False):
         # Model parameters
         model_class = check_mode_class(model_class=model_class)
+        if model_kwargs is None and model_class is KMeans:
+            model_kwargs = dict(n_init="auto")
         model_kwargs = check_model_kwargs(model_class=model_class, model_kwargs=model_kwargs)
         self.model_class = model_class
         self._model_kwargs = model_kwargs
         self._verbose = ut.check_verbose(verbose)
         # Output parameters (set during model fitting)
-        self.model : Optional[ut.KBasedClusterModel] = None
+        self.model : Optional[ClusterMixin] = None
         self.n_clusters: Optional[int] = None
         self.labels_: Optional[ut.ArrayLike] = None
         self.centers_: Optional[ut.ArrayLike] = None
@@ -127,6 +190,7 @@ class AAclust:
         self.is_medoid_: Optional[ut.ArrayLike] = None
         self.medoid_names_: Optional[List[str]] = None
 
+    @catch_runtime_warnings
     def fit(self,
             X: ut.ArrayLike,
             n_clusters: Optional[int] = None,
@@ -146,9 +210,9 @@ class AAclust:
         Parameters
         ----------
         X : `array-like, shape (n_samples, n_features)`
-            Feature matrix.
+            Feature matrix with at lest 3 unique samples.
         n_clusters
-            Pre-defined number of clusters. If provided, AAclust uses this instead of optimizing k.
+            Pre-defined number of clusters. If provided, k is not optimized. Must be 0 > n_clusters > n_samples.
         min_th
             Pearson correlation threshold for clustering (between 0 and 1).
         on_center
@@ -156,9 +220,11 @@ class AAclust:
         merge_metric
             Metric used as similarity measure for optional cluster merging:
 
-             - ``None``: No merging is performed.
-             - ``euclidean``: Euclidean distance.
-             - ``pearson``: Pearson correlation.
+             - ``None``: No merging is performed
+             - ``correlation``: Pearson correlation
+             - ``euclidean``: Euclidean distance
+             - ``manhattan``: Manhattan distance
+             - ``cosine``: Cosine distance
 
         names
             Sample names. If provided, sets :attr:`AAclust.medoid_names_` attribute.
@@ -178,11 +244,15 @@ class AAclust:
             3. Optionally, merge smaller clusters as directed by the ``merge_metric``.
 
         - A representative scale (medoid) closest to each cluster center is selected for redundancy reduction.
+
+        See Also
+        --------
+        * :func:`sklearn.metrics.pairwise_distances` were used as distances for merging.
         """
         # Check input
         ut.check_list(name="names", val=names, accept_none=True)
         ut.check_number_range(name="mint_th", val=min_th, min_val=0, max_val=1, just_int=False, accept_none=False)
-        ut.check_number_range(name="n_clusters", val=n_clusters, min_val=0, just_int=True, accept_none=True)
+        ut.check_number_range(name="n_clusters", val=n_clusters, min_val=1, just_int=True, accept_none=True)
         check_merge_metric(merge_metric=merge_metric)
         ut.check_bool(name="on_center", val=on_center)
         X = ut.check_feat_matrix(X=X, y=names, y_name="names")
@@ -193,7 +263,6 @@ class AAclust:
 
         # Clustering using given clustering models
         if n_clusters is not None:
-            AgglomerativeClustering(n_clusters=n_clusters, **self._model_kwargs)
             self.model = self.model_class(n_clusters=n_clusters, **self._model_kwargs)
             labels = self.model.fit(X).labels_.tolist()
 
@@ -215,6 +284,7 @@ class AAclust:
         centers, center_labels = compute_centers(X, labels=labels)
 
         # Save results in output parameters
+        post_check_n_clusters(n_clusters_actual=len(set(labels)), n_clusters=n_clusters)
         self.n_clusters = len(set(labels))
         self.labels_ = np.array(labels)
         self.centers_ = centers
@@ -230,7 +300,7 @@ class AAclust:
     def evaluate(X: ut.ArrayLike,
                  labels:ut.ArrayLike = None
                  ) -> Tuple[float, float, float]:
-        """Evaluate the quality of clustering using three established measures.
+        """Evaluates the quality of clustering using three established measures.
 
         Clustering quality is quantified using:
 
@@ -264,6 +334,10 @@ class AAclust:
         BIC was modified to align with the SC and CH, so that higher values signify better clustering
         contrary to conventional BIC implementation favoring lower values. See [Breimann23a]_.
 
+        See Also
+        --------
+        * :func:`sklearn.metrics.calinski_harabasz_score`.
+        * :func:`sklearn.metrics.silhouette_score`.
         """
         # Check input
         ut.check_array_like(name="labels", val=labels, dtype="int")
@@ -398,6 +472,10 @@ class AAclust:
         -------
         list_top_center_name_corr : list
             Names and correlations of centers having the strongest (positive/negative) correlation with test data samples.
+
+        See Also
+        --------
+        * :func:`numpy.corrcoe` was used to compute the correlation.
         """
         # Check input
         ut.check_array_like(name="labels", val=labels, dtype="int")
