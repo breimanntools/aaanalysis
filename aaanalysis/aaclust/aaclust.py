@@ -248,7 +248,7 @@ class AAclust(Wrapper):
         # Check input
         X = ut.check_X(X=X)
         ut.check_X_unique_samples(X=X)
-        names = ut.check_list(name="names", val=names, accept_none=True)
+        names = ut.check_list_like(name="names", val=names, accept_none=True)
         ut.check_number_range(name="mint_th", val=min_th, min_val=0, max_val=1, just_int=False, accept_none=False)
         ut.check_number_range(name="n_clusters", val=n_clusters, min_val=1, just_int=True, accept_none=True)
         check_merge_metric(merge_metric=merge_metric)
@@ -391,7 +391,7 @@ class AAclust(Wrapper):
         X = ut.check_X(X=X)
         ut.check_X_unique_samples(X=X)
         labels = ut.check_labels(labels=labels)
-        names = ut.check_list(name="names", val=names, accept_none=False)
+        names = ut.check_list_like(name="names", val=names, accept_none=False)
         ut.check_bool(name="shorten_names", val=shorten_names)
         ut.check_match_X_labels(X=X, labels=labels)
         check_match_X_names(X=X, names=names, accept_none=False)
@@ -487,7 +487,7 @@ class AAclust(Wrapper):
 
         Returns
         -------
-        df_corr
+        df_corr : pd.DataFrame
             DataFrame with correlation either for each pair in ``X`` of shape (n_samples, n_samples) or
             for each pair between ``X`` and ``X_ref`` of shape (n_samples, n_samples_ref).
 
@@ -535,15 +535,15 @@ class AAclust(Wrapper):
         names
             List of sample names. Should be subset of ``names_ref``.
         names_ref
-            List of reference sample names. Should superset of ``names``.
+            List of reference sample names. Should be superset of ``names``.
 
         Returns
         -------
-        coverage
+        coverage : float
             Percentage of unique names from ``names`` that are found in ``names_ref``.
         """
-        names = ut.check_list(name="names", val=names, accept_none=False)
-        names_ref = ut.check_list(name="names_ref", val=names_ref, accept_none=False)
+        names = ut.check_list_like(name="names", val=names, accept_none=False)
+        names_ref = ut.check_list_like(name="names_ref", val=names_ref, accept_none=False)
         ut.check_superset_subset(subset=names, name_subset="names",
                                  superset=names_ref, name_superset="names_ref")
         # Compute coverage

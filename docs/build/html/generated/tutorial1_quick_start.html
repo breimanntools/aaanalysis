@@ -180,9 +180,9 @@ the scale closes to the cluster center). We will use AAclust to obtain a
 set of 100 scales, as defined by the <code class="docutils literal notranslate"><span class="pre">n_clusters</span></code> parameters:</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">AgglomerativeClustering</span>
 
-<span class="n">aac</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclust</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">AgglomerativeClustering</span><span class="p">)</span>
-<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df_scales</span><span class="p">)</span>
-<span class="n">scales</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">df_scales</span><span class="p">),</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">aac</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclust</span><span class="p">(</span><span class="n">model_class</span><span class="o">=</span><span class="n">AgglomerativeClustering</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df_scales</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+<span class="n">scales</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">df_scales</span><span class="p">),</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">medoid_names_</span>
 <span class="n">df_scales</span> <span class="o">=</span> <span class="n">df_scales</span><span class="p">[</span><span class="n">scales</span><span class="p">]</span>
 </pre></div>
 </div>
@@ -235,10 +235,10 @@ scales over the entire TMD-JMD sequences:</p>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean accuracy of </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cv_base</span><span class="p">),</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Mean</span> <span class="n">accuracy</span> <span class="n">of</span> <span class="mf">0.6</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Mean</span> <span class="n">accuracy</span> <span class="n">of</span> <span class="mf">0.58</span>
 </pre></div>
 </div>
-<p>Creating more features with CPP will take some more time, but improve
+<p>Creating more features with CPP will take a little time, but improve
 prediction performance:</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># CPP features with default splits (around 100.000 features)</span>
 <span class="n">df_parts</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">get_df_parts</span><span class="p">(</span><span class="n">df_seq</span><span class="o">=</span><span class="n">df_seq</span><span class="p">)</span>
@@ -254,7 +254,7 @@ prediction performance:</p>
 <span class="n">sns</span><span class="o">.</span><span class="n">barplot</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;Baseline&quot;</span><span class="p">:</span> <span class="n">cv_base</span><span class="p">,</span> <span class="s2">&quot;CPP&quot;</span><span class="p">:</span> <span class="n">cv</span><span class="p">}),</span> <span class="n">palette</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tab:blue&quot;</span><span class="p">,</span> <span class="s2">&quot;tab:red&quot;</span><span class="p">])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Mean accuracy&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">aa</span><span class="o">.</span><span class="n">plot_gcfs</span><span class="p">()</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Comparison of Feature Engineering Methods&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Comparison of Feature Engineering Methods&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">aa</span><span class="o">.</span><span class="n">plot_gcfs</span><span class="p">()</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">sns</span><span class="o">.</span><span class="n">despine</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>

@@ -70,7 +70,7 @@ def check_tuple(name=None, val=None, n=None, check_n=True, accept_none=False):
         raise ValueError(f"'{name}' ({val}) should be a tuple with {n} elements.")
 
 
-def check_list(name=None, val=None, accept_none=False, convert=True):
+def check_list_like(name=None, val=None, accept_none=False, convert=True):
     """"""
     if accept_none and val is None:
         return None

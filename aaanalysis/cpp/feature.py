@@ -10,7 +10,6 @@ from itertools import repeat
 import multiprocessing as mp
 import warnings
 
-import aaanalysis.data_handling.load_scales_
 from aaanalysis.cpp._feature_pos import SequenceFeaturePositions
 from aaanalysis.cpp._split import Split, SplitRange
 from aaanalysis.cpp._part import Parts
@@ -343,7 +342,7 @@ class SequenceFeature:
         ut.check_split_kws(split_kws=split_kws)
         ut.check_df_scales(df_scales=df_scales, accept_none=True)
         if df_scales is None:
-            df_scales = aaanalysis.data_loader.load_scales_.load_scales()
+            df_scales = aa.load_scales()
         if split_kws is None:
             split_kws = self.get_split_kws()
         scales = list(df_scales)
@@ -387,7 +386,7 @@ class SequenceFeature:
         """
         ut.check_number_range(name="j_jobs", val=n_jobs, accept_none=True, min_val=1, just_int=True)
         if df_scales is None:
-            df_scales = aaanalysis.data_loader.load_scales_.load_scales()
+            df_scales = aa.load_scales()
         ut.check_df_scales(df_scales=df_scales)
         ut.check_df_parts(df_parts=df_parts)
         features = ut.check_features(features=features, parts=df_parts, df_scales=df_scales)
@@ -459,7 +458,7 @@ class SequenceFeature:
         features = ut.check_features(features=features)
         ut.check_df_cat(df_cat=df_cat)
         if df_cat is None:
-            df_cat = aaanalysis.data_loader.load_scales_.load_scales(name=ut.STR_SCALE_CAT)
+            df_cat = aa.load_scales(name=ut.STR_SCALE_CAT)
         # Get feature names
         sfp = SequenceFeaturePositions()
         dict_part_pos = sfp.get_dict_part_pos(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,

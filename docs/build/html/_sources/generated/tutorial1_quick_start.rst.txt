@@ -69,9 +69,9 @@ set of 100 scales, as defined by the ``n_clusters`` parameters:
 
     from sklearn.cluster import AgglomerativeClustering
     
-    aac = aa.AAclust(model=AgglomerativeClustering)
-    X = np.array(df_scales)
-    scales = aac.fit(X, names=list(df_scales), n_clusters=100) 
+    aac = aa.AAclust(model_class=AgglomerativeClustering)
+    X = np.array(df_scales).T
+    scales = aac.fit(X, names=list(df_scales), n_clusters=100).medoid_names_ 
     df_scales = df_scales[scales]
 
 Comparative Physicochemical Profiling (CPP)
@@ -131,10 +131,10 @@ A feature matrix from a given set of CPP features can be created using
 
 .. parsed-literal::
 
-    Mean accuracy of 0.6
+    Mean accuracy of 0.58
 
 
-Creating more features with CPP will take some more time, but improve
+Creating more features with CPP will take a little time, but improve
 prediction performance:
 
 .. code:: ipython3
@@ -153,7 +153,7 @@ prediction performance:
     sns.barplot(pd.DataFrame({"Baseline": cv_base, "CPP": cv}), palette=["tab:blue", "tab:red"])
     plt.ylabel("Mean accuracy", size=aa.plot_gcfs()+1)
     plt.ylim(0, 1)
-    plt.title("Comparison of Feature Engineering Methods")
+    plt.title("Comparison of Feature Engineering Methods", size=aa.plot_gcfs()-1)
     sns.despine()
     plt.show()
 

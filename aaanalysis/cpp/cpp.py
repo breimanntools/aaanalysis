@@ -3,7 +3,6 @@ This is a script for ...
 """
 import pandas as pd
 
-import aaanalysis.data_handling.load_scales_
 from aaanalysis.cpp.feature import SequenceFeature
 from aaanalysis.cpp._feature_stat import SequenceFeatureStatistics
 
@@ -60,9 +59,9 @@ class CPP(Tool):
         # Load default scales if not specified
         sf = SequenceFeature()
         if df_cat is None:
-            df_cat = aaanalysis.data_loader.load_scales_.load_scales(name=ut.STR_SCALE_CAT)
+            df_cat = aa.load_scales(name=ut.STR_SCALE_CAT)
         if df_scales is None:
-            df_scales = aaanalysis.data_loader.load_scales_.load_scales()
+            df_scales = aa.load_scales()
         if split_kws is None:
             split_kws = sf.get_split_kws()
         ut.check_bool(name="verbose", val=verbose)

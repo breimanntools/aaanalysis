@@ -11,7 +11,7 @@ from aaanalysis.config import options
 
 # Import utility functions explicitly
 from aaanalysis._utils._check_type import (check_number_range, check_number_val, check_str, check_bool,
-                                           check_dict, check_tuple, check_list,
+                                           check_dict, check_tuple, check_list_like,
                                            check_ax)
 from aaanalysis._utils._check_data import (check_X,  check_X_unique_samples, check_labels, check_match_X_labels,
                                            check_superset_subset,
