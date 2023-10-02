@@ -124,17 +124,17 @@ class AAclust(Wrapper):
         The instantiated clustering model object after calling the ``fit`` method.
     n_clusters : int
         Number of clusters obtained by AAclust.
-    labels_ : array-like, shape (n_samples, )
+    labels_ : `array-like, shape (n_samples, )`
         Cluster labels in the order of samples in ``X``.
-    centers_ : array-like, shape (n_clusters, n_features)
+    centers_ : `array-like, shape (n_clusters, n_features)`
         Average scale values corresponding to each cluster.
-    center_labels_ : array-like, shape (n_clusters, )
+    center_labels_ : `array-like, shape (n_clusters, )`
         Cluster labels for each cluster center.
-    medoids_ : array-like, shape (n_clusters, n_features)
+    medoids_ : `array-like, shape (n_clusters, n_features)`
         Representative samples, one for each cluster.
-    medoid_labels_ :  array-like, shape (n_clusters, )
+    medoid_labels_ :  `array-like, shape (n_clusters, )`
         Cluster labels for each medoid.
-    is_medoid_ : array-like, shape (n_samples, )
+    is_medoid_ : `array-like, shape (n_samples, )`
         Array indicating samples being medoids (1) or not (0). Same order as ``labels_``.
     medoid_names_ : list
         Names of the medoids. Set if ``names`` is provided to ``fit``.
@@ -164,17 +164,17 @@ class AAclust(Wrapper):
         # Output parameters (set during model fitting)
         self.model : Optional[ClusterMixin] = None
         self.n_clusters: Optional[int] = None
-        self.labels_: Optional[ut.ArrayLike] = None
-        self.centers_: Optional[ut.ArrayLike] = None
-        self.center_labels_: Optional[ut.ArrayLike] = None
-        self.medoids_: Optional[ut.ArrayLike] = None
-        self.medoid_labels_: Optional[ut.ArrayLike] = None
-        self.is_medoid_: Optional[ut.ArrayLike] = None
+        self.labels_: Optional[ut.ArrayLike1D] = None
+        self.centers_: Optional[ut.ArrayLike1D] = None
+        self.center_labels_: Optional[ut.ArrayLike1D] = None
+        self.medoids_: Optional[ut.ArrayLike1D] = None
+        self.medoid_labels_: Optional[ut.ArrayLike1D] = None
+        self.is_medoid_: Optional[ut.ArrayLike1D] = None
         self.medoid_names_: Optional[List[str]] = None
 
     @ut.catch_runtime_warnings
     def fit(self,
-            X: ut.ArrayLike,
+            X: ut.ArrayLike2D,
             n_clusters: Optional[int] = None,
             on_center: bool = True,
             min_th: float = 0,
@@ -192,7 +192,7 @@ class AAclust(Wrapper):
         Parameters
         ----------
         X : `array-like, shape (n_samples, n_features)`
-            Feature matrix with at lest 3 unique samples.
+            Feature matrix. Rows correspond to scales and columns to amino acids.
         n_clusters
             Pre-defined number of clusters. If provided, k is not optimized. Must be 0 > n_clusters > n_samples.
         min_th
@@ -284,8 +284,8 @@ class AAclust(Wrapper):
         return self
 
     @staticmethod
-    def eval(X: ut.ArrayLike,
-             labels:ut.ArrayLike = None
+    def eval(X: ut.ArrayLike2D,
+             labels:ut.ArrayLike1D = None
              ) -> Tuple[float, float, float]:
         """Evaluates the quality of clustering using three established measures.
 
@@ -303,17 +303,17 @@ class AAclust(Wrapper):
         Parameters
         ----------
         X : `array-like, shape (n_samples, n_features)`
-            Feature matrix.
+            Feature matrix. Rows correspond to scales and columns to amino acids.
         labels : `array-like, shape (n_samples, )`
             Cluster labels for each sample in ``X``.
 
         Returns
         -------
-        BIC
+        BIC : float
             BIC value for clustering.
-        CH
+        CH : float
             CH value for clustering.
-        SC
+        SC : float
             SC value for clustering.
 
         Notes
@@ -340,8 +340,8 @@ class AAclust(Wrapper):
         return BIC, CH, SC
 
     @staticmethod
-    def name_clusters(X: ut.ArrayLike,
-                      labels: ut.ArrayLike = None,
+    def name_clusters(X: ut.ArrayLike2D,
+                      labels: ut.ArrayLike1D = None,
                       names: List[str] = None
                       ) -> List[str]:
         """
@@ -353,7 +353,7 @@ class AAclust(Wrapper):
         Parameters
         ----------
         X : `array-like, shape (n_samples, n_features)`
-            Feature matrix.
+            Feature matrix. Rows correspond to scales and columns to amino acids.
         labels : `array-like, shape (n_samples, )`
             Cluster labels for each sample in ``X``.
         names
@@ -375,16 +375,16 @@ class AAclust(Wrapper):
         return cluster_names
 
     @staticmethod
-    def comp_centers(X: ut.ArrayLike,
-                     labels: ut.ArrayLike = None
-                     ) -> Tuple[ut.ArrayLike, ut.ArrayLike]:
+    def comp_centers(X: ut.ArrayLike2D,
+                     labels: ut.ArrayLike1D = None
+                     ) -> Tuple[ut.ArrayLike1D, ut.ArrayLike1D]:
         """
         Computes the center of each cluster based on the given labels.
 
         Parameters
         ----------
         X : `array-like, shape (n_samples, n_features)`
-            Feature matrix.
+            Feature matrix. Rows correspond to scales and columns to amino acids.
         labels : `array-like, shape (n_samples, )`
             Cluster labels for each sample in ``X``.
 
@@ -405,16 +405,16 @@ class AAclust(Wrapper):
         return centers, center_labels
 
     @staticmethod
-    def comp_medoids(X: ut.ArrayLike,
-                     labels: ut.ArrayLike = None
-                     ) -> Tuple[ut.ArrayLike, ut.ArrayLike]:
+    def comp_medoids(X: ut.ArrayLike2D,
+                     labels: ut.ArrayLike1D = None
+                     ) -> Tuple[ut.ArrayLike1D, ut.ArrayLike1D]:
         """
         Computes the medoid of each cluster based on the given labels.
 
         Parameters
         ----------
         X : `array-like, shape (n_samples, n_features)`
-            Feature matrix.
+            Feature matrix. Rows correspond to scales and columns to amino acids.
         labels : `array-like, shape (n_samples, )`
             Cluster labels for each sample in ``X``.
 
@@ -424,7 +424,6 @@ class AAclust(Wrapper):
             The medoid for each cluster.
         medoid_labels : `array-like, shape (n_clusters, )`
             The labels corresponding to each medoid.
-
         """
         # Check input
         ut.check_array_like(name="labels", val=labels, dtype="int")
@@ -436,10 +435,10 @@ class AAclust(Wrapper):
         return medoids, medoid_labels
 
     @staticmethod
-    def comp_correlation(X: ut.ArrayLike,
-                         X_ref: ut.ArrayLike,
-                         labels: ut.ArrayLike = None,
-                         labels_ref: ut.ArrayLike = None,
+    def comp_correlation(X: ut.ArrayLike2D,
+                         X_ref: ut.ArrayLike2D,
+                         labels: ut.ArrayLike1D = None,
+                         labels_ref: ut.ArrayLike1D = None,
                          n: int = 3,
                          positive: bool = True,
                          on_center: bool = False
@@ -450,7 +449,7 @@ class AAclust(Wrapper):
         Parameters
         ----------
         X : `array-like, shape (n_samples, n_features)`
-            Feature matrix.
+            Feature matrix. Rows correspond to scales and columns to amino acids.
         X_ref : `array-like, shape (n_samples, n_features)`
             Feature matrix of reference data.
         labels : `array-like, shape (n_samples, )`

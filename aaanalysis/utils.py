@@ -15,7 +15,7 @@ from aaanalysis._utils._check_type import (check_number_range, check_number_val,
                                            check_ax)
 from aaanalysis._utils._check_data import (check_array_like, check_feat_matrix, check_col_in_df)
 
-from aaanalysis._utils._new_types import ArrayLike1D, ArrayLike
+from aaanalysis._utils._new_types import ArrayLike1D, ArrayLike2D
 from aaanalysis._utils._decorators import (catch_runtime_warnings, CatchRuntimeWarnings,
                                            catch_convergence_warning, ClusteringConvergenceException)
 

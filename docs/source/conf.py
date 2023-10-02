@@ -93,7 +93,7 @@ autodoc_default_options = {
 typehints_fully_qualified = False
 set_type_checking_flag = False
 always_document_param_types = True
-typehints_document_rtype = True
+typehints_document_rtype = False
 
 
 # Auto summary settings

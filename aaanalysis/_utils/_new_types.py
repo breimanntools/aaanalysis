@@ -1,31 +1,19 @@
-"""Define new data types"""
-from __future__ import annotations
-import pandas as pd
+from typing import Union, NewType, Sequence
 import numpy as np
-from typing import Union, List, Tuple, Any, Protocol, TypeVar, Generic, Optional
-from sklearn.base import BaseEstimator
+import pandas as pd
 
-# Array-like Types
-"""
-ArrayLike = Union[
-    List[Union[int, float, Any]],
-    Tuple[Union[int, float, Any], ...],
-    np.ndarray,
-    pd.DataFrame,
-    pd.Series
-]
-
-ArrayLikeInt = Union[List[int], List[int], Tuple[int], np.ndarray]
-ArrayLikeFloat = Union[List[Union[float, int]], Tuple[Union[float, int]], np.ndarray]
-ArrayLikeAny = Union[List[Any], Tuple[Any], np.ndarray]
-ArrayLikeBool = Union[List[bool], Tuple[bool], np.ndarray]
-"""
-
-# Array-like Types until depth 3
-# General ArrayLike (only numbers)
-# 1D
+# Define the basic numeric type
 NumericType = Union[int, float]
-ArrayLike1D = Union[List[NumericType], Tuple[NumericType], pd.Series]
 
-# 2D
-ArrayLike = Union[List[List[NumericType]], Tuple[Tuple[NumericType]], np.ndarray, pd.DataFrame]
+# Define the 1D and 2D types using Union
+ArrayLike1DUnion = Union[Sequence[NumericType], np.ndarray, pd.Series]
+ArrayLike2DUnion = Union[Sequence[Sequence[NumericType]], np.ndarray, pd.DataFrame]
+
+# Now, we'll create distinct named types using NewType.
+# This won't change runtime behavior but will be recognized by static type checkers and can be documented.
+
+# A 1D array-like object. Can be a sequence (e.g., list or tuple) of ints/floats, numpy ndarray, or pandas Series.
+ArrayLike1D = NewType("ArrayLike1D", ArrayLike1DUnion)
+
+# A 2D array-like object. Can be a sequence of sequence of ints/floats, numpy ndarray, or pandas DataFrame.
+ArrayLike2D = NewType("ArrayLike2D", ArrayLike2DUnion)
