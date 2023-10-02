@@ -105,7 +105,7 @@ def get_max_dist(X, on_center=True, metric="euclidean"):
 
 # II Main Functions
 # 1. Step (Estimation of n clusters)
-@ut.catch_convergence_warning
+@ut.catch_convergence_warning()
 def _estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6, on_center=True, verbose=True):
     """
     Estimate the lower bound of the number of clusters (k).
@@ -167,7 +167,7 @@ def estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6
 
 
 # 2. Step (Optimization of n clusters)
-@ut.catch_convergence_warning
+@ut.catch_convergence_warning()
 def _optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_th=0.5, on_center=True, verbose=True):
     """
     Optimize the number of clusters using a recursive algorithm.

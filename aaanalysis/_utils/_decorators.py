@@ -5,7 +5,6 @@ import warnings
 import traceback
 from sklearn.exceptions import ConvergenceWarning
 import functools
-from functools import wraps
 
 # Catch Runtime
 class CatchRuntimeWarnings:
@@ -35,18 +34,30 @@ class CatchRuntimeWarnings:
     def get_warnings(self):
         return self._warn_list
 
-def catch_runtime_warnings(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        with CatchRuntimeWarnings() as crw:
-            result = func(*args, **kwargs)
-        if crw.get_warnings():
-            list_warnings = crw.get_warnings()
-            n = len(list_warnings)
-            summary_msg = f"The following {n} 'RuntimeWarnings' were caught:\n" + "\nRuntimeWarning: ".join(crw.get_warnings())
-            warnings.warn(summary_msg, RuntimeWarning)
-        return result
-    return wrapper
+def catch_runtime_warnings():
+    """Decorator to catch RuntimeWarnings and store them in a list.
+
+    Returns
+    -------
+    decorated_func : method
+        The decorated function.
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            with CatchRuntimeWarnings() as crw:
+                result = func(*args, **kwargs)
+            if crw.get_warnings():
+                list_warnings = crw.get_warnings()
+                n = len(list_warnings)
+                summary_msg = f"The following {n} 'RuntimeWarnings' were caught:\n" + "\nRuntimeWarning: ".join(crw.get_warnings())
+                warnings.warn(summary_msg, RuntimeWarning)
+            return result
+        return wrapper
+
+    return decorator
+
+
 
 
 # Catch convergence
@@ -55,22 +66,32 @@ class ClusteringConvergenceException(Exception):
         super().__init__(message)
         self.distinct_clusters = distinct_clusters
 
-def catch_convergence_warning(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        with warnings.catch_warnings(record=True) as w:
-            # Trigger the "always" behavior for ConvergenceWarning
-            warnings.simplefilter("always", ConvergenceWarning)
-            result = func(*args, **kwargs)  # Call the original function
+def catch_convergence_warning():
+    """Decorator to catch ConvergenceWarnings and raise custom exceptions.
 
-            # Check if the warning is the one we're interested in
-            for warn in w:
-                if issubclass(warn.category, ConvergenceWarning):
-                    message = str(warn.message)
-                    if "Number of distinct clusters" in message:
-                        distinct_clusters = int(message.split("(")[1].split(")")[0].split()[0])
-                        raise ClusteringConvergenceException(f"Process stopped due to ConvergenceWarning.", distinct_clusters)
+    Returns
+    -------
+    decorated_func : method
+        The decorated function.
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            with warnings.catch_warnings(record=True) as w:
+                # Trigger the "always" behavior for ConvergenceWarning
+                warnings.simplefilter("always", ConvergenceWarning)
+                result = func(*args, **kwargs)  # Call the original function
+
+                # Check if the warning is the one we're interested in
+                for warn in w:
+                    if issubclass(warn.category, ConvergenceWarning):
+                        message = str(warn.message)
+                        if "Number of distinct clusters" in message:
+                            distinct_clusters = int(message.split("(")[1].split(")")[0].split()[0])
+                            raise ClusteringConvergenceException(f"Process stopped due to ConvergenceWarning.", distinct_clusters)
             return result
-    return wrapper
+        return wrapper
+
+    return decorator
 
 

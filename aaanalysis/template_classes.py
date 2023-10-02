@@ -44,7 +44,6 @@ class Wrapper(ABC):
     @abstractmethod
     def fit(self, *args, **kwargs):
         """Fit the model with data."""
-        raise NotImplementedError
 
     @abstractmethod
     def eval(self, *args, **kwargs):

@@ -161,7 +161,7 @@ class AAclust(Wrapper):
         self.is_medoid_: Optional[ut.ArrayLike1D] = None
         self.medoid_names_: Optional[List[str]] = None
 
-    @ut.catch_runtime_warnings
+    @ut.catch_runtime_warnings()
     def fit(self,
             X: ut.ArrayLike2D,
             n_clusters: Optional[int] = None,
@@ -276,7 +276,7 @@ class AAclust(Wrapper):
         return self
 
     @staticmethod
-    @ut.catch_runtime_warnings
+    @ut.catch_runtime_warnings()
     def eval(X: ut.ArrayLike2D,
              labels:ut.ArrayLike1D = None
              ) -> Tuple[float, float, float]:
