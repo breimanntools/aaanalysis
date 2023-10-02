@@ -15,15 +15,21 @@ pd.set_option('expand_frame_repr', False)  # Single line print for pd.Dataframe
 
 # II Main Functions
 class AAclustPlot:
-    """"""
-    def __int__(self):
-        pass
+    """Plot results of AAclust analysis"""
+    def __int__(self, model):
+        self.model = model
+
 
     @staticmethod
     def eval():
-        """Plot eval output of dPULearn (n per component)"""
+        """Plot eval output of BIC, CH, SC"""
+
+    def center(self):
+        """PCA plot of clustering with centers highlighted"""
+
+    def medoids(self):
+        """PCA plot of clustering with medoids highlighted"""
 
     @staticmethod
-    def eval_cat(df_seq=None):
-        """Plot donut plot for proportion of categories"""
-
+    def correlation():
+        """Heatmap for correlation"""

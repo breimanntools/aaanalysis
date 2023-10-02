@@ -11,6 +11,7 @@ from sklearn.metrics import silhouette_score, calinski_harabasz_score
 from sklearn.base import ClusterMixin
 from sklearn.exceptions import ConvergenceWarning
 import warnings
+import pandas as pd
 
 from aaanalysis.aaclust._aaclust_bic import bic_score
 import aaanalysis.utils as ut
@@ -78,6 +79,26 @@ def check_match_X_n_clusters(X=None, n_clusters=None, accept_none=True):
         raise ValueError(f"n_samples={n_samples} (in 'X') should be >= 'n_clusters' ({n_clusters})")
     if n_unique_samples < n_clusters:
         raise ValueError(f"'n_clusters' ({n_clusters}) should be >= n_unique_samples={n_unique_samples} (in 'X').")
+
+def check_X_X_ref(X=None, X_ref=None):
+    """"""
+    n_samples, n_features = X.shape
+    n_samples_ref, n_features_ref = X_ref.shape
+    if n_features != n_features_ref:
+        raise ValueError(f"n_features does not match for 'X' ({n_features}) and 'X_ref' ({n_features_ref}).")
+
+
+def check_labels_cor(labels=None, labels_name="labels"):
+    """"""
+    if labels is None:
+        raise ValueError(f"'{labels_name}' should not be None.")
+    # Convert labels to a numpy array if it's not already
+    labels = np.asarray(labels)
+    unique_labels = set(labels)
+    wrong_types = [l for l in unique_labels if not np.issubdtype(type(l), np.integer)]
+    if wrong_types:
+        raise ValueError(f"Labels in '{labels_name}' should be type int, but contain: {set(map(type, wrong_types))}")
+    return labels
 
 
 # Post check functions
@@ -198,7 +219,7 @@ class AAclust(Wrapper):
              - ``cosine``: Cosine distance
 
         names
-            Sample names. If provided, sets :attr:`AAclust.medoid_names_` attribute.
+            List of sample names. If provided, sets :attr:`AAclust.medoid_names_` attribute.
 
         Returns
         -------
@@ -227,7 +248,7 @@ class AAclust(Wrapper):
         # Check input
         X = ut.check_X(X=X)
         ut.check_X_unique_samples(X=X)
-        ut.check_list(name="names", val=names, accept_none=True)
+        names = ut.check_list(name="names", val=names, accept_none=True)
         ut.check_number_range(name="mint_th", val=min_th, min_val=0, max_val=1, just_int=False, accept_none=False)
         ut.check_number_range(name="n_clusters", val=n_clusters, min_val=1, just_int=True, accept_none=True)
         check_merge_metric(merge_metric=merge_metric)
@@ -341,7 +362,8 @@ class AAclust(Wrapper):
     @staticmethod
     def name_clusters(X: ut.ArrayLike2D,
                       labels: ut.ArrayLike1D = None,
-                      names: List[str] = None
+                      names: List[str] = None,
+                      shorten_names : bool = True,
                       ) -> List[str]:
         """
         Assigns names to clusters based on the frequency of names.
@@ -356,7 +378,9 @@ class AAclust(Wrapper):
         labels : `array-like, shape (n_samples, )`
             Cluster labels for each sample in ``X``.
         names
-            List of scale names corresponding to each sample.
+            List of sample names.
+        shorten_names
+            If ``True`` shorten version of the names will be used.
 
         Returns
         -------
@@ -367,11 +391,12 @@ class AAclust(Wrapper):
         X = ut.check_X(X=X)
         ut.check_X_unique_samples(X=X)
         labels = ut.check_labels(labels=labels)
-        ut.check_list(name="names", val=names, accept_none=False)
+        names = ut.check_list(name="names", val=names, accept_none=False)
+        ut.check_bool(name="shorten_names", val=shorten_names)
         ut.check_match_X_labels(X=X, labels=labels)
         check_match_X_names(X=X, names=names, accept_none=False)
         # Get cluster names
-        cluster_names = name_clusters(X, labels=labels, names=names)
+        cluster_names = name_clusters(X, labels=labels, names=names, shorten_names=shorten_names)
         return cluster_names
 
     @staticmethod
@@ -436,13 +461,12 @@ class AAclust(Wrapper):
 
     @staticmethod
     def comp_correlation(X: ut.ArrayLike2D,
-                         X_ref: ut.ArrayLike2D,
+                         X_ref: Optional[ut.ArrayLike2D] = None,
                          labels: ut.ArrayLike1D = None,
-                         labels_ref: ut.ArrayLike1D = None,
-                         n: int = 3,
-                         positive: bool = True,
-                         on_center: bool = False
-                         ) -> List[str]:
+                         labels_ref: Optional[ut.ArrayLike1D] = None,
+                         names : Optional[List[str]] = None,
+                         names_ref : Optional[List[str]] = None
+                         ) -> pd.DataFrame:
         """
         Computes the Pearson correlation of given data with reference data.
 
@@ -451,43 +475,83 @@ class AAclust(Wrapper):
         X : `array-like, shape (n_samples, n_features)`
             Feature matrix. Rows correspond to scales and columns to amino acids.
         X_ref : `array-like, shape (n_samples, n_features)`
-            Feature matrix of reference data.
+            Feature matrix of reference data. If given, samples of ``X`` are compared with samples of ``X_ref``.
         labels : `array-like, shape (n_samples, )`
             Cluster labels for each sample in ``X``.
-        labels_ref  : `array-like, shape (n_samples, )`
-            Cluster labels for the reference data.
-        n
-            Number of top centers to consider based on correlation strength.
-        positive
-            If True, considers positive correlations. Else, negative correlations.
-        on_center
-            If True, correlation is computed with cluster centers. Otherwise, with all cluster members.
+        labels_ref  : `array-like, shape (n_samples_ref, )`
+            Cluster labels for each sample in ``X_ref``.
+        names
+            List of sample names corresponding to ``X``.
+        names_ref
+            List of sample names corresponding to ``X_ref``.
 
         Returns
         -------
-        list_top_center_name_corr : list
-            Names and correlations of centers having the strongest (positive/negative) correlation with test data samples.
+        df_corr
+            DataFrame with correlation either for each pair in ``X`` of shape (n_samples, n_samples) or
+            for each pair between ``X`` and ``X_ref`` of shape (n_samples, n_samples_ref).
+
+        Notes
+        -----
+        * Rows will be sorted in ascending order of ``labels``.
+        * Columns will be sorted in ascending order of ``labels`` or ``labels_ref`` if given.
+        * Labels are replaced by respective names if given.
 
         See Also
         --------
-        * :func:`numpy.corrcoe` was used to compute the correlation.
+        * :func:`pandas.DataFrame.corr` used to compute the correlation.
         """
         # Check input
-        X = ut.check_X(X=X)
-        ut.check_X_unique_samples(X=X)
-        labels = ut.check_labels(labels=labels)
+        X = ut.check_X(X=X, min_n_samples=2)
+        ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
+        labels = check_labels_cor(labels=labels, labels_name="labels")
         ut.check_match_X_labels(X=X, labels=labels)
-        X = ut.check_X(X=X_ref)
-        ut.check_X_unique_samples(X=X_ref)
-        labels = ut.check_labels(labels=labels_ref)
-        ut.check_match_X_labels(X=X_ref, labels=labels_ref)
-        ut.check_number_range(name="n", val=n, min_val=2)
+        check_match_X_names(X=X, names=names, accept_none=True)
+        if X_ref is not None:
+            X_ref = ut.check_X(X=X_ref, min_n_samples=1)
+            labels_ref = check_labels_cor(labels=labels_ref, labels_name="labels_ref")
+            ut.check_match_X_labels(X=X_ref, labels=labels_ref)
+            check_match_X_names(X=X_ref, names=names_ref, accept_none=True)
+            check_X_X_ref(X=X, X_ref=X_ref)
         # Get correlations
-        list_top_center_name_corr = compute_correlation(X, X_ref, labels=labels, labels_ref=labels_ref,
-                                                        n=n, positive=positive, on_center=on_center)
-        return list_top_center_name_corr
+        df_corr = compute_correlation(X, X_ref=X_ref,
+                                      labels=labels, labels_ref=labels_ref,
+                                      names=names, names_ref=names_ref)
+        return df_corr
 
     @staticmethod
-    def comp_coverage(names=None, names_ref=None):
-        """Computes coverage of """
+    def comp_coverage(names : [List[str]] =None,
+                      names_ref : [List[str]] =None
+                      ) -> float :
+        """
+        Computes the percentage of unique names from ``names`` that are present in ``names_ref``.
+
+        This method helps in understanding the coverage of a particular set of names (subset)
+        within a reference set of names (universal set). Each name from both ``names`` and ``names_ref``
+        are considered only once, regardless of repetition.
+
+        Parameters
+        ----------
+        names
+            List of sample names. Should be subset of ``names_ref``.
+        names_ref
+            List of reference sample names. Should superset of ``names``.
+
+        Returns
+        -------
+        coverage
+            Percentage of unique names from ``names`` that are found in ``names_ref``.
+        """
+        names = ut.check_list(name="names", val=names, accept_none=False)
+        names_ref = ut.check_list(name="names_ref", val=names_ref, accept_none=False)
+        ut.check_superset_subset(subset=names, name_subset="names",
+                                 superset=names_ref, name_superset="names_ref")
+        # Compute coverage
+        n_unique_names = len(set(names))
+        n_unique_ref = len(set(names_ref))
+        coverage = round(n_unique_names/n_unique_ref*100, 2)
+        return coverage
+
+
+
 

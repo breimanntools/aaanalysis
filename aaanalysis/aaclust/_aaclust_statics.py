@@ -8,41 +8,52 @@ import aaanalysis.utils as ut
 from aaanalysis.aaclust._aaclust import _cluster_center, compute_medoids,  min_cor_all
 
 # I Helper Functions
+def _sort_X_labels_names(X, labels=None, names=None):
+    """"""
+    sorted_order = np.argsort(labels)
+    labels = [labels[i] for i in sorted_order]
+    X = X[sorted_order]
+    if names:
+        names = [names[i] for i in sorted_order]
+    return X, labels, names
+
+def _get_df_corr(X=None, X_ref=None):
+    """"""
+    # Temporary labels to avoid any confusion with potential duplicates
+    X_labels = range(len(X))
+    X_ref_labels = range(len(X), len(X) + len(X_ref))
+    combined = np.vstack((X, X_ref))
+    df_corr_full = pd.DataFrame(combined.T).corr()
+    # Select only the rows corresponding to X and columns corresponding to X_ref
+    df_corr = df_corr_full.loc[X_labels, X_ref_labels]
+    return df_corr
+
 
 # II Main Functions
-def compute_correlation(X, X_ref, labels=None, labels_ref=None, n=3, positive=True, on_center=False):
+def compute_correlation(X, X_ref=None, labels=None, labels_ref=None, names=None, names_ref=None):
     """Computes Pearson correlation of given data with reference data."""
-    names_ref = list(dict.fromkeys(labels_ref))
-    masks_ref = [[i == label for i in labels_ref] for label in names_ref]
-    if on_center:
-        # Get centers for all clusters in reference data
-        centers = np.concatenate([_cluster_center(X_ref[mask]) for mask in masks_ref], axis=0)
-        # Compute correlation of test data with centers
-        Xtest_centers = np.concatenate([X, centers], axis=0)
-        n_test = X.shape[0]
-        X_corr = np.corrcoef(Xtest_centers)[:n_test, n_test:]
+    # Sort based on labels
+    X, labels, names = _sort_X_labels_names(X, labels=labels, names=names)
+    if X_ref is not None:
+        X_ref, labels_ref, names_ref = _sort_X_labels_names(X_ref, labels=labels_ref, names=names_ref)
+    # Compute correlations
+    if X_ref is None:
+        df_corr = pd.DataFrame(X.T).corr()
     else:
-        masks_test = [[True if i == j else False for j in range(0, len(labels))] for i, _ in enumerate(labels)]
-        # Compute minimum correlation of test data with each group of reference data
-        X_corr = np.array(
-            [[min_cor_all(np.concatenate([X[mask_test], X_ref[mask_ref]], axis=0)) for mask_ref in masks_ref] for
-             mask_test in masks_test])
-    # Get index for n centers with highest/lowest correlation for each scale
-    if positive:
-        list_top_center_ind = X_corr.argsort()[:, -n:][:, ::-1]
+        df_corr = _get_df_corr(X=X, X_ref=X_ref)
+    # Replace indexes and columns with names or labels
+    df_corr.index = names if names else labels
+    if X_ref is None:
+        df_corr.columns = names if names else labels
     else:
-        list_top_center_ind = X_corr.argsort()[:, :n]
-    # Get name and correlation for centers correlating strongest (positive/negative) with test data samples
-    list_top_center_name_corr = []
-    for i, ind in enumerate(list_top_center_ind):
-        top_corr = X_corr[i, :][ind]
-        top_names = [names_ref[x] for x in ind]
-        str_corr = ";".join([f"{name} ({round(corr, 3)})" for name, corr in zip(top_names, top_corr)])
-        list_top_center_name_corr.append(str_corr)
-    return list_top_center_name_corr
+        df_corr.columns = names_ref if names_ref else labels_ref
+    return df_corr
+
 
 # Obtain cluster names
-def _get_cluster_names(list_names=None, name_medoid=None, name_unclassified="Unclassified"):
+def _get_cluster_names(list_names=None, name_medoid=None,
+                       name_unclassified="Unclassified",
+                       shorten_names=True):
     """
     Get list of cluster names sorted based on following criteria (descending order):
         a) Frequency of term (most frequent term is preferred)
@@ -62,7 +73,8 @@ def _get_cluster_names(list_names=None, name_medoid=None, name_unclassified="Unc
     # Create list of shorter names not containing information given in parentheses
     list_short_names = [x.split(" (")[0] for x in list_names if " (" in x]
     if len(list_names) > 1:
-        list_names.extend(list_short_names)
+        if shorten_names:
+            list_names.extend(list_short_names)
         # Obtain information to check criteria for sorting scale names
         df_counts = pd.Series(list_names).value_counts().to_frame().reset_index()   # Compute frequencies of names
         df_counts.columns = ["name", "count"]
@@ -75,7 +87,7 @@ def _get_cluster_names(list_names=None, name_medoid=None, name_unclassified="Unc
         names_cluster = [name_unclassified]
     return names_cluster
 
-def name_clusters(X, labels=None, names=None):
+def name_clusters(X, labels=None, names=None, shorten_names=True):
     """"""
     medoids, medoid_labels, medoid_ind = compute_medoids(X, labels=labels)
     dict_medoids = dict(zip(medoid_labels, medoid_ind))
@@ -87,7 +99,8 @@ def name_clusters(X, labels=None, names=None):
         name_medoid = names[dict_medoids[clust]]
         list_names = [names[i] for i in range(0, len(names)) if labels[i] == clust]
         names_cluster = _get_cluster_names(list_names=list_names, name_medoid=name_medoid,
-                                           name_unclassified=ut.STR_UNCLASSIFIED)
+                                           name_unclassified=ut.STR_UNCLASSIFIED,
+                                           shorten_names=shorten_names)
         assigned = False
         for name in names_cluster:
             if name not in dict_cluster_names.values() or name == ut.STR_UNCLASSIFIED:

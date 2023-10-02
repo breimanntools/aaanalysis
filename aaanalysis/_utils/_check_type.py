@@ -1,6 +1,9 @@
 """
 Basic utility check functions for type checking
 """
+import pandas as pd
+import numpy as np
+
 
 # Type checking functions
 def check_number_val(name=None, val=None, accept_none=False, just_int=False):
@@ -67,12 +70,21 @@ def check_tuple(name=None, val=None, n=None, check_n=True, accept_none=False):
         raise ValueError(f"'{name}' ({val}) should be a tuple with {n} elements.")
 
 
-def check_list(name=None, val=None, accept_none=False):
+def check_list(name=None, val=None, accept_none=False, convert=True):
     """"""
     if accept_none and val is None:
         return None
-    if not isinstance(val, list):
-        raise ValueError(f"'{name}' (type: {type(val)}) should be a list.")
+    if not convert:
+        if not isinstance(val, list):
+            raise ValueError(f"'{name}' (type: {type(val)}) should be a list.")
+    else:
+        allowed_types = (list, tuple, np.ndarray, pd.Series)
+        if not isinstance(val, allowed_types):
+            raise ValueError(f"'{name}' (type: {type(val)}) should be one of {allowed_types}.")
+        if isinstance(val, np.ndarray) and val.ndim != 1:
+            raise ValueError(f"'{name}' is a multi-dimensional numpy array and cannot be considered as a list.")
+        val = list(val)
+    return val
 
 # Check special types
 def check_ax(ax=None, accept_none=False):

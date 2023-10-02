@@ -59,14 +59,13 @@ def check_X_unique_samples(X, min_n_unique_samples=3):
 def check_labels(labels=None):
     """"""
     if labels is None:
-        raise ValueError("'labels' should not be None")
-
+        raise ValueError(f"'labels' should not be None.")
     # Convert labels to a numpy array if it's not already
     labels = np.asarray(labels)
 
     unique_labels = set(labels)
     if len(unique_labels) == 1:
-       raise ValueError(f"'labels' should contain more than one different value ({unique_labels})")
+       raise ValueError(f"'labels' should contain more than one different value ({unique_labels}).")
     wrong_types = [l for l in unique_labels if not np.issubdtype(type(l), np.integer)]
     if wrong_types:
         raise ValueError(f"Labels in 'labels' should be type int, but contain: {set(map(type, wrong_types))}")
@@ -78,6 +77,13 @@ def check_match_X_labels(X=None, labels=None):
     n_samples, n_features = X.shape
     if n_samples != len(labels):
         raise ValueError(f"n_samples does not match for 'X' ({len(X)}) and 'labels' ({len(labels)}).")
+
+# Check sets
+def check_superset_subset(subset=None, superset=None, name_subset=None, name_superset=None):
+    """"""
+    wrong_elements = [x for x in subset if x not in superset]
+    if len(wrong_elements) != 0:
+        raise ValueError(f"'{name_superset}' does not contain the following elements of '{name_subset}': {wrong_elements}")
 
 
 # df checking functions
