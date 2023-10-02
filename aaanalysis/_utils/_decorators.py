@@ -92,4 +92,28 @@ def catch_convergence_warning():
 
     return decorator
 
+# Catch invalid division (could be added to AAclust().comp_medoids())
+class InvalidDivisionException(Exception):
+    pass
+
+def catch_invalid_divide_warning():
+    """Decorator to catch specific RuntimeWarnings related to invalid division
+       and raise custom exceptions.
+
+    Returns
+    -------
+    decorated_func : method
+        The decorated function.
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            with CatchRuntimeWarnings() as crw:
+                result = func(*args, **kwargs)
+            if crw.get_warnings():
+                raise InvalidDivisionException(f"\nError due to RuntimeWarning: {crw.get_warnings()[0]}")
+            return result
+        return wrapper
+    return decorator
+
 

@@ -9,8 +9,26 @@ import aaanalysis as aa
 import warnings
 import pytest
 
+# Helper function
+def check_invalid_conditions(X, labels=None):
+    n_samples, n_features = X.shape
+    n_unique_samples = len(set(map(tuple, X)))
+    n_classes = len(set(labels))
+    conditions = [
+        (len(set(labels)) == 1 or len(labels) != n_samples,
+        "Length of labels should match n_samples and not have all identical values."),
+        (np.any(np.isinf(X)) or np.any(np.isnan(X)), "X contains NaN or Inf"),
+        (n_unique_samples == 1, "Feature matrix 'X' should not have all identical samples."),
+        (n_samples < 3 or n_unique_samples < 3, f"n_samples={n_samples} and n_unique_samples={n_unique_samples} should be >= 3"),
+        (n_features < 2, f"n_features={n_features} should be >= 2"),
+        (n_classes == 1 or n_classes >= n_samples, f"n_classes should be > 1 and < n_samples")
+    ]
+    for condition, msg in conditions:
+        if condition:
+            return True
+    return False
 
-
+# Main function
 class TestAAclustEvaluate:
     """Test evaluate function of the TARGET FUNCTION"""
 
@@ -50,32 +68,17 @@ class TestAAclustEvaluate:
         labels_length=some.integers(min_value=10, max_value=50))
     def test_matching_X_labels(self, X, labels_length):
         """Test evaluate with matching X and labels dimensions."""
-        n_samples, n_features = X.shape
-        n_unique_samples = len(set(map(tuple, X)))
-        labels = np.random.randint(1, 5, size=labels_length)  # Random label assignments
-        n_classes = len(set(labels))
-
-        # Check for invalid X conditions that should raise a ValueError
-        invalid_conditions = [(len(set(labels)) == 1 or len(labels) != n_samples,
-                               "Length of labels should match n_samples and not have all identical values."),
-            (np.any(np.isinf(X)) or np.any(np.isnan(X)), "X contains NaN or Inf"),
-            (n_unique_samples == 1, "Feature matrix 'X' should not have all identical samples."), (
-            n_samples < 3 or n_unique_samples < 3,
-            f"n_samples={n_samples} and n_unique_samples={n_unique_samples} should be >= 3"),
-            (n_features < 2, f"n_features={n_features} should be >= 2"),
-            (n_classes == 1 or n_classes >= n_samples, f"n_classes should be > 1 and < n_samples")]
-
-        for condition, msg in invalid_conditions:
-            if condition:
-                with pytest.raises(ValueError):
-                    aa.AAclust().eval(X, labels)
-                return  # exit early since an invalid condition was met
-
-        # If no invalid conditions are met
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RuntimeWarning)
-            result = aa.AAclust().eval(X, labels)
-            assert isinstance(result, tuple)
+        # Random label assignments
+        labels = np.random.randint(1, 5, size=labels_length)
+        is_invalid = check_invalid_conditions(X, labels=labels)
+        if is_invalid:
+            with pytest.raises(ValueError):
+                aa.AAclust().eval(X, labels)
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                result = aa.AAclust().eval(X, labels)
+                assert isinstance(result, tuple)
 
 
 class TestAAclustEvaluateComplex:
@@ -88,33 +91,17 @@ class TestAAclustEvaluateComplex:
                               elements=some.integers(min_value=0, max_value=10)))
     def test_return_values_range(self, X, labels):
         """Test the range of the return values from the 'evaluate' function."""
-        n_samples, n_features = X.shape
-        n_unique_samples = len(set(map(tuple, X)))
-        n_classes = len(set(labels))
-
-        # Check for invalid X conditions that should raise a ValueError
-        invalid_conditions = [(np.any(np.isinf(X)) or np.any(np.isnan(X)), "X contains NaN or Inf"),
-            (n_unique_samples == 1, "Feature matrix 'X' should not have all identical samples."), (
-            n_samples < 3 or n_unique_samples < 3,
-            f"n_samples={n_samples} and n_unique_samples={n_unique_samples} should be >= 3"),
-            (n_features < 2, f"n_features={n_features} should be >= 2"), (
-            len(set(labels)) == 1 or len(labels) != n_samples,
-            "Length of labels should match n_samples and not have all identical values."),
-            (n_classes == 1 or n_classes >= n_samples, f"n_classes should be > 1 and < n_samples")]
-
-        for condition, msg in invalid_conditions:
-            if condition:
-                with pytest.raises(ValueError):
-                    aa.AAclust().eval(X, labels)
-                return  # exit early since an invalid condition was met
-
-        # If no invalid conditions are met
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RuntimeWarning)
-            BIC, CH, SC = aa.AAclust().eval(X, labels)
-            assert -np.inf <= BIC <= np.inf
-            assert 0 <= CH
-            assert -1 <= SC <= 1
+        is_invalid = check_invalid_conditions(X, labels=labels)
+        if is_invalid:
+            with pytest.raises(ValueError):
+                aa.AAclust().eval(X, labels)
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                BIC, CH, SC = aa.AAclust().eval(X, labels)
+                assert -np.inf <= BIC <= np.inf
+                assert 0 <= CH
+                assert -1 <= SC <= 1
 
     @settings(deadline=1000, max_examples=5)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, max_side=50),
@@ -123,30 +110,14 @@ class TestAAclustEvaluateComplex:
                               elements=some.integers(min_value=0, max_value=10)))
     def test_evaluate_large_dataset(self, X, labels):
         """Test the 'evaluate' function with large datasets."""
-        n_samples, n_features = X.shape
-        n_unique_samples = len(set(map(tuple, X)))
-        n_classes = len(set(labels))
-
-        # Check for invalid X and labels conditions that should raise a ValueError
-        invalid_conditions = [(np.any(np.isinf(X)) or np.any(np.isnan(X)), "X contains NaN or Inf"),
-            (n_unique_samples == 1, "Feature matrix 'X' should not have all identical samples."), (
-            n_samples < 3 or n_unique_samples < 3,
-            f"n_samples={n_samples} and n_unique_samples={n_unique_samples} should be >= 3"),
-            (n_features < 2, f"n_features={n_features} should be >= 2"), (
-            len(set(labels)) == 1 or len(labels) != n_samples,
-            "Length of labels should match n_samples and not have all identical values."),
-            (n_classes == 1 or n_classes >= n_samples, f"n_classes should be > 1 and < n_samples")]
-
-        for condition, msg in invalid_conditions:
-            if condition:
-                with pytest.raises(ValueError):
-                    aa.AAclust().eval(X, labels)
-                return  # exit early since an invalid condition was met
-
-        # If no invalid conditions are met
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RuntimeWarning)
-            assert isinstance(aa.AAclust().eval(X, labels), tuple)
+        is_invalid = check_invalid_conditions(X, labels=labels)
+        if is_invalid:
+            with pytest.raises(ValueError):
+                aa.AAclust().eval(X, labels)
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                assert isinstance(aa.AAclust().eval(X, labels), tuple)
 
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=1, max_side=2),
                          elements=some.floats(allow_nan=False, allow_infinity=False)))

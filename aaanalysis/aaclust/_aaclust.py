@@ -20,14 +20,12 @@ def _cluster_center(X):
     """Compute cluster center (i.e., arithmetical mean over all data points/observations of a cluster)"""
     return X.mean(axis=0)[np.newaxis, :]
 
-
 def compute_centers(X, labels=None):
     """Obtain cluster centers and their labels"""
     center_labels = list(OrderedDict.fromkeys(labels))
     list_masks = [[True if i == label else False for i in labels] for label in center_labels]
     centers = np.concatenate([_cluster_center(X[mask]) for mask in list_masks]).round(3)
     return centers, np.array(center_labels)
-
 
 def _cluster_medoid(X):
     """Obtain cluster medoids (i.e., scale closest to cluster center used as representative scale for a cluster)"""

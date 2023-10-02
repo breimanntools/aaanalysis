@@ -38,10 +38,10 @@ def check_X(X, min_n_samples=3, min_n_features=2, ensure_2d=True, allow_nan=Fals
     X = _check_array_like(name="X", val=X, dtype="float", ensure_2d=ensure_2d, allow_nan=allow_nan)
     n_samples, n_features = X.shape
     if n_samples < min_n_samples:
-        raise ValueError(f"n_samples={n_samples} (in 'X') should be >= {min_n_samples}."
+        raise ValueError(f"n_samples ({n_samples} in 'X') should be >= {min_n_samples}."
                          f"\nX = {X}")
     if n_features < min_n_features:
-        raise ValueError(f"n_features={n_features} (in 'X') should be >= {min_n_features}."
+        raise ValueError(f"n_features ({n_features} in 'X') should be >= {min_n_features}."
                          f"\nX = {X}")
     return X
 
@@ -66,7 +66,7 @@ def check_labels(labels=None):
 
     unique_labels = set(labels)
     if len(unique_labels) == 1:
-        raise ValueError(f"'labels' should contain more than one different value ({unique_labels})")
+       raise ValueError(f"'labels' should contain more than one different value ({unique_labels})")
     wrong_types = [l for l in unique_labels if not np.issubdtype(type(l), np.integer)]
     if wrong_types:
         raise ValueError(f"Labels in 'labels' should be type int, but contain: {set(map(type, wrong_types))}")

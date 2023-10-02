@@ -13,7 +13,22 @@ import pytest
 from sklearn.exceptions import ConvergenceWarning
 import warnings
 
+# Helper function
+def check_invalid_conditions(X):
+    n_samples, n_features = X.shape
+    n_unique_samples = len(set(map(tuple, X)))
+    conditions = [
+        (np.any(np.isinf(X)) or np.any(np.isnan(X)), "X contains NaN or Inf"),
+        (n_unique_samples == 1, "Feature matrix 'X' should not have all identical samples."),
+        (n_samples < 3, f"n_samples={n_samples} should be >= 3"),
+        (n_unique_samples < 3, f"n_unique_samples={n_unique_samples} should be >= 3"),
+        (n_features < 2, f"n_features={n_features} should be >= 2")]
+    for condition, msg in conditions:
+        if condition:
+            return True
+    return False
 
+# Main function
 class TestAAclust:
     """Test AAclust class"""
 
@@ -151,7 +166,8 @@ class TestAAclustComplex:
         n_unique_samples = len(set(map(tuple, X)))
 
         # Check for invalid X conditions that should raise a ValueError
-        invalid_conditions = [(np.any(np.isinf(X)) or np.any(np.isnan(X)), "X contains NaN or Inf"),
+        invalid_conditions = [
+            (np.any(np.isinf(X)) or np.any(np.isnan(X)), "X contains NaN or Inf"),
             (n_unique_samples == 1, "Feature matrix 'X' should not have all identical samples."),
             (n_samples < 3, f"n_samples={n_samples} should be >= 3"),
             (n_unique_samples < 3, f"n_unique_samples={n_unique_samples} should be >= 3"),
@@ -183,26 +199,16 @@ class TestAAclustComplex:
     def test_fit_without_n_clusters(self, X):
         """Test the fit method without a pre-defined number of clusters."""
         model = aa.AAclust()
-        n_samples, n_features = X.shape
-        n_unique_samples = len(set(map(tuple, X)))
-        # Check for invalid X conditions that should raise a ValueError
-        invalid_conditions = [(np.any(np.isinf(X)) or np.any(np.isnan(X)), "X contains NaN or Inf"),
-            (n_unique_samples == 1, "Feature matrix 'X' should not have all identical samples."),
-            (n_samples < 3, f"n_samples={n_samples} should be >= 3"),
-            (n_unique_samples < 3, f"n_unique_samples={n_unique_samples} should be >= 3"),
-            (n_features < 2, f"n_features={n_features} should be >= 2")]
-        for condition, msg in invalid_conditions:
-            if condition:
-                with pytest.raises(ValueError):
-                    model.fit(X)
-                return  # exit early since an invalid condition was met
-
-        # If no invalid conditions are met
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RuntimeWarning)
-            model.fit(X)
-            assert isinstance(model.labels_, (list, np.ndarray))
-            assert len(model.medoids_) == len(set(model.labels_))
+        is_invalid = check_invalid_conditions(X)
+        if is_invalid:
+            with pytest.raises(ValueError):
+                model.fit(X)
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                model.fit(X)
+                assert isinstance(model.labels_, (list, np.ndarray))
+                assert len(model.medoids_) == len(set(model.labels_))
 
     # Property-based testing for negative cases
     @settings(max_examples=20)

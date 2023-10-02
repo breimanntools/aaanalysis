@@ -18,7 +18,8 @@ from aaanalysis._utils._check_data import (check_X,  check_X_unique_samples, che
 
 from aaanalysis._utils._new_types import ArrayLike1D, ArrayLike2D
 from aaanalysis._utils._decorators import (catch_runtime_warnings, CatchRuntimeWarnings,
-                                           catch_convergence_warning, ClusteringConvergenceException)
+                                           catch_convergence_warning, ClusteringConvergenceException,
+                                           catch_invalid_divide_warning)
 
 from aaanalysis._utils._utils_output import (_print_red, print_out, _print_blue,
                                              print_start_progress, print_progress, print_finished_progress)
