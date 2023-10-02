@@ -5,7 +5,7 @@ import warnings
 import traceback
 from sklearn.exceptions import ConvergenceWarning
 import functools
-
+from functools import wraps
 
 # Catch Runtime
 class CatchRuntimeWarnings:
@@ -36,6 +36,7 @@ class CatchRuntimeWarnings:
         return self._warn_list
 
 def catch_runtime_warnings(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         with CatchRuntimeWarnings() as crw:
             result = func(*args, **kwargs)
@@ -55,6 +56,7 @@ class ClusteringConvergenceException(Exception):
         self.distinct_clusters = distinct_clusters
 
 def catch_convergence_warning(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         with warnings.catch_warnings(record=True) as w:
             # Trigger the "always" behavior for ConvergenceWarning

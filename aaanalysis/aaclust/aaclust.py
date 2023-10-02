@@ -187,7 +187,7 @@ class AAclust(Wrapper):
         clusters by maximizing the within-cluster Pearson correlation beyond the ``min_th`` threshold. The quality of
         clustering is either based on the minimum Pearson correlation of all members (``on_center=False``) or between
         the cluster center and its members (``on_center=True``), using either the 'min_cor_all' or 'min_cor_center'
-         function, respectively, as described in [Breimann23a]_.
+        function, respectively, as described in [Breimann23a]_.
 
         Parameters
         ----------
