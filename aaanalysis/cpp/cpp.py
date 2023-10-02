@@ -3,7 +3,7 @@ This is a script for ...
 """
 import pandas as pd
 
-import aaanalysis.data_loader.load_scales_
+import aaanalysis.data_handling.load_scales_
 from aaanalysis.cpp.feature import SequenceFeature
 from aaanalysis.cpp._feature_stat import SequenceFeatureStatistics
 

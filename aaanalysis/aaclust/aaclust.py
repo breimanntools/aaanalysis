@@ -309,13 +309,12 @@ class AAclust(Wrapper):
 
         Returns
         -------
-        tuple of (BIC, CH, SC)
-            - BIC
-                BIC value for clustering.
-            - CH
-                CH value for clustering.
-            - SC
-                SC value for clustering.
+        BIC
+            BIC value for clustering.
+        CH
+            CH value for clustering.
+        SC
+            SC value for clustering.
 
         Notes
         -----
@@ -363,8 +362,7 @@ class AAclust(Wrapper):
         Returns
         -------
         cluster_names : list
-            A list of renamed clusters based on scale names.
-
+            A list of renamed clusters based on names.
         """
         # Check input
         ut.check_array_like(name="labels", val=labels, dtype="int")
@@ -396,7 +394,6 @@ class AAclust(Wrapper):
             The computed center for each cluster.
         center_labels : `array-like, shape (n_clusters, )`
             The labels associated with each computed center.
-
         """
         # Check input
         ut.check_array_like(name="labels", val=labels, dtype="int")

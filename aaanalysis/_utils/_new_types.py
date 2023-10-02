@@ -23,7 +23,9 @@ ArrayLikeBool = Union[List[bool], Tuple[bool], np.ndarray]
 
 # Array-like Types until depth 3
 # General ArrayLike (only numbers)
-NestedGeneral2 = Union[List[Union[int, float]], Tuple[Union[int, float]]]
-NestedGeneral3 = Union[List[NestedGeneral2], Tuple[NestedGeneral2]]
-NestedGeneral4 = Union[List[NestedGeneral3], Tuple[NestedGeneral3]]
-ArrayLike = Union[NestedGeneral2, NestedGeneral3, NestedGeneral4, np.ndarray, pd.DataFrame, pd.Series]
+# 1D
+NumericType = Union[int, float]
+ArrayLike1D = Union[List[NumericType], Tuple[NumericType], pd.Series]
+
+# 2D
+ArrayLike = Union[List[List[NumericType]], Tuple[Tuple[NumericType]], np.ndarray, pd.DataFrame]

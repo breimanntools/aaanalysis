@@ -8,7 +8,7 @@ from hypothesis import given, settings
 import hypothesis.strategies as some
 
 import aaanalysis as aa
-import aaanalysis.data_loader.load_scales_
+import aaanalysis.data_handling.load_scales_
 
 
 # I Unit Tests

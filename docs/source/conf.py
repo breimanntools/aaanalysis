@@ -7,8 +7,6 @@ from datetime import datetime
 import platform
 from types import WrapperDescriptorType
 import warnings
-from sphinx.application import Sphinx
-from sphinx.ext.autodoc import Documenter
 
 sys.path.append(os.path.abspath('.'))
 
@@ -20,12 +18,11 @@ processed_notebooks = export_notebooks_to_rst()
 generate_table_rst()
 
 # -- Path and Platform setup --------------------------------------------------
-SEP = os.sep
 path_source = os.path.join(os.path.dirname(__file__))
 sys.path.insert(0, os.path.abspath('../../'))
 sys.path.insert(0, os.path.abspath('../../aaanalysis'))
-path_aaanalysis = os.path.abspath('../../aaanalysis')
 sys.path.insert(0, os.path.abspath('.'))
+
 
 # -- Project information -----------------------------------------------------
 project = 'AAanalysis'
@@ -91,48 +88,19 @@ autodoc_default_options = {
     "autodoc_typehints": type_hints_display,
     "imported-members": False,  # Document members imported into the documented module from other modules
 }
+
+# Type hint settings
 typehints_fully_qualified = False
+set_type_checking_flag = False
+always_document_param_types = True
+typehints_document_rtype = True
+
 
 # Auto summary settings
 # See https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html#configuration
 autosummary_generate = True
-#autosummary_ignore_module_all = False   # TODO check
+autosummary_ignore_module_all = False
 
-def process_signature(app: Sphinx, what: str, name: str,
-                      obj: Any, options: Any, signature: str,
-                      return_annotation: Any) -> tuple:
-    """
-    Modify the signature before it's rendered.
-    """
-    #full_path = path_aaanalysis + "_utils" + SEP + "_new_types.py"  # Adjust to your full import path
-    full_path = "aaanalysis._utils._new_types.ArrayLike"
-    alias = "ArrayLike"
-
-    # Process function/method signature
-    if signature:
-        signature = signature.replace(full_path, alias)
-
-    # Process return annotation
-    if return_annotation:
-        return_annotation = return_annotation.replace(full_path, alias)
-
-    return signature, return_annotation
-
-def setup(app: Sphinx) -> None:
-    """Setup function to connect the event."""
-    app.connect("autodoc-process-signature", process_signature)
-
-"""
-# Numpydoc settings
-# See https://numpydoc.readthedocs.io/en/latest/install.html#sphinx-extensions-configuration
-numpydoc_use_plots = True
-numpydoc_show_class_members = False
-numpydoc_show_inherited_class_members = False
-numpydoc_class_members_toctree = False
-numpydoc_xref_param_type = False # Test True
-# numpydoc_xref_aliases = { create aliases which can be reference in doc}
-# numpydoc_validation_checks = {"all"}    # Strict checking for Sphinx build
-"""
 
 # Napoleon settings
 # See https://sphinxcontrib-napoleon.readthedocs.io/en/latest/sphinxcontrib.napoleon.html#sphinxcontrib.napoleon.Config
@@ -149,7 +117,6 @@ napoleon_use_param = True
 napoleon_use_rtype = True
 napoleon_use_keyword = True
 napoleon_custom_sections = None
-
 
 # -- Juypter tutorials integration --------------------------------------------
 nbsphinx_execute = 'never'

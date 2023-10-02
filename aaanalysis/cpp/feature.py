@@ -10,7 +10,7 @@ from itertools import repeat
 import multiprocessing as mp
 import warnings
 
-import aaanalysis.data_loader.load_scales_
+import aaanalysis.data_handling.load_scales_
 from aaanalysis.cpp._feature_pos import SequenceFeaturePositions
 from aaanalysis.cpp._split import Split, SplitRange
 from aaanalysis.cpp._part import Parts

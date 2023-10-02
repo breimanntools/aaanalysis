@@ -7,7 +7,7 @@ import seaborn as sns
 import inspect
 
 import aaanalysis
-import aaanalysis.data_loader.load_scales_
+import aaanalysis.data_handling.load_scales_
 from aaanalysis.cpp._cpp import CPPPlots, get_optimal_fontsize
 
 import aaanalysis.utils as ut
