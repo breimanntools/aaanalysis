@@ -1,3 +1,4 @@
+"""This is a script to test AAclust().name_clusters()"""
 from hypothesis import given, settings
 import hypothesis.strategies as some
 from hypothesis.extra import numpy as npst

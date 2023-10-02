@@ -1,0 +1,1 @@
+"""This is a script to test AAclust().comp_centers()"""

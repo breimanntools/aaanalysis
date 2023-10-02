@@ -97,11 +97,6 @@ def get_max_dist(X, on_center=True, metric="euclidean"):
         max_dist = pairwise_distances(X, metric=metric).max()
     return max_dist
 
-# Catch convergence warning
-# Wrap your function calls with this custom exception to indicate early stopping
-
-
-
 
 # II Main Functions
 # 1. Step (Estimation of n clusters)
