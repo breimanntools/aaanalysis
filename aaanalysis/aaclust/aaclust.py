@@ -20,7 +20,7 @@ from aaanalysis.aaclust._aaclust_statics import compute_correlation, name_cluste
 from aaanalysis.template_classes import Wrapper
 
 # I Helper Functions
-# Check functions
+# Check parameter functions
 def check_mode_class(model_class=None):
     """"""
     # Check if model_class is actually a class and not an instance
@@ -30,7 +30,6 @@ def check_mode_class(model_class=None):
     if not callable(getattr(model_class, "__call__", None)):
         raise ValueError(f"'{model_class}' is not a callable model.")
     return model_class
-
 
 def check_model_kwargs(model_class=None, model_kwargs=None):
     """
@@ -59,44 +58,34 @@ def check_merge_metric(merge_metric=None):
         raise ValueError(error)
 
 
-def check_match_feat_matrix_n_clusters(X=None, n_clusters=None):
+# Check parameter matching functions
+def check_match_X_names(X=None, names=None, accept_none=True):
     """"""
+    if accept_none and names is None:
+        return
     n_samples, n_features = X.shape
-    if n_clusters is not None and n_samples <= n_clusters:
-        raise ValueError(f"'X' must contain more samples ({n_samples}) than 'n_clusters' ({n_clusters})")
+    if n_samples != len(names):
+        raise ValueError(f"n_samples does not match for 'X' ({len(X)}) and 'names' ({len(names)}).")
+
+
+def check_match_X_n_clusters(X=None, n_clusters=None, accept_none=True):
+    """"""
+    if accept_none and n_clusters is None:
+        return
+    n_samples, n_features = X.shape
     n_unique_samples = len(set(map(tuple, X)))
-    if n_clusters is not None and n_unique_samples < n_clusters:
-        raise ValueError(f"'n_clusters' ({n_clusters}) should be >= number of unique samples ({n_unique_samples})"
-                         f" in Feature matrix 'X'.")
+    if n_samples < n_clusters:
+        raise ValueError(f"n_samples={n_samples} (in 'X') should be >= 'n_clusters' ({n_clusters})")
+    if n_unique_samples < n_clusters:
+        raise ValueError(f"'n_clusters' ({n_clusters}) should be >= n_unique_samples={n_unique_samples} (in 'X').")
 
 
+# Post check functions
 def post_check_n_clusters(n_clusters_actual=None, n_clusters=None):
     """Check if n_clusters set properly"""
     if n_clusters is not None and n_clusters_actual < n_clusters:
         warnings.warn(f"'n_clusters' was reduced from {n_clusters} to {n_clusters_actual} "
                       f"during AAclust algorithm.", ConvergenceWarning)
-
-
-def check_labels(labels=None):
-    """"""
-    if labels is None:
-        raise ValueError("'labels' should not be None")
-    unique_labels = set(labels)
-    n_unique_labels = len(unique_labels)
-    if n_unique_labels == 1:
-        raise ValueError(f"'labels' should contain more than one different value ({unique_labels})")
-    wrong_type = [l for l in labels if not np.issubdtype(type(l), np.integer)]
-    if len(wrong_type) > 0:
-        raise ValueError(f"'labels' contains wrong following wrong items: {wrong_type}")
-
-
-def check_match_feat_matrix_labels(X=None, labels=None):
-    """"""
-    n_samples, n_features = X.shape
-    n_classes = len(set(labels))
-    if n_samples <= n_classes:
-        raise ValueError(f"'X' must contain more samples ({n_samples}) than number of classes in labels ({n_classes})")
-
 
 
 # II Main Functions
@@ -236,13 +225,16 @@ class AAclust(Wrapper):
         * All RuntimeWarnings during the AAclust algorithm are caught and bundled into one RuntimeWarning.
         """
         # Check input
+        X = ut.check_X(X=X)
+        ut.check_X_unique_samples(X=X)
         ut.check_list(name="names", val=names, accept_none=True)
         ut.check_number_range(name="mint_th", val=min_th, min_val=0, max_val=1, just_int=False, accept_none=False)
         ut.check_number_range(name="n_clusters", val=n_clusters, min_val=1, just_int=True, accept_none=True)
         check_merge_metric(merge_metric=merge_metric)
         ut.check_bool(name="on_center", val=on_center)
-        X = ut.check_feat_matrix(X=X, y=names, y_name="names")
-        check_match_feat_matrix_n_clusters(X=X, n_clusters=n_clusters)
+
+        check_match_X_n_clusters(X=X, n_clusters=n_clusters, accept_none=True)
+        check_match_X_names(X=X, names=names, accept_none=True)
 
         args = dict(model=self.model_class, model_kwargs=self._model_kwargs, min_th=min_th, on_center=on_center,
                     verbose=self._verbose)
@@ -284,6 +276,7 @@ class AAclust(Wrapper):
         return self
 
     @staticmethod
+    @ut.catch_runtime_warnings
     def eval(X: ut.ArrayLike2D,
              labels:ut.ArrayLike1D = None
              ) -> Tuple[float, float, float]:
@@ -327,16 +320,22 @@ class AAclust(Wrapper):
         * :func:`sklearn.metrics.silhouette_score`.
         """
         # Check input
-        ut.check_array_like(name="labels", val=labels, dtype="int")
-        check_labels(labels=labels)
-        X = ut.check_feat_matrix(X=X, y=labels, y_name="labels")
-        check_match_feat_matrix_labels(X=X, labels=labels)
+        X = ut.check_X(X=X)
+        ut.check_X_unique_samples(X=X)
+        labels = ut.check_labels(labels=labels)
+        ut.check_match_X_labels(X=X, labels=labels)
         # Bayesian Information Criterion
         BIC = bic_score(X, labels)
         # Calinski-Harabasz Index
         CH = calinski_harabasz_score(X, labels)
+        if np.isnan(CH):
+            CH = 0
+            warnings.warn("CH was set to 0 because sklearn.metric.calinski_harabasz_score returned NaN.", RuntimeWarning)
         # Silhouette Coefficient
         SC = silhouette_score(X, labels)
+        if np.isnan(SC):
+            SC = -1
+            warnings.warn("SC was set to -1 because sklearn.metric.silhouette_score returned NaN.", RuntimeWarning)
         return BIC, CH, SC
 
     @staticmethod
@@ -365,11 +364,12 @@ class AAclust(Wrapper):
             A list of renamed clusters based on names.
         """
         # Check input
-        ut.check_array_like(name="labels", val=labels, dtype="int")
-        check_labels(labels=labels)
-        X = ut.check_feat_matrix(X=X, y=labels, y_name="labels")
-        check_match_feat_matrix_labels(X=X, labels=labels)
-        ut.check_feat_matrix(X=X, y=names, y_name="names")
+        X = ut.check_X(X=X)
+        ut.check_X_unique_samples(X=X)
+        labels = ut.check_labels(labels=labels)
+        ut.check_list(name="names", val=names, accept_none=False)
+        ut.check_match_X_labels(X=X, labels=labels)
+        check_match_X_names(X=X, names=names, accept_none=False)
         # Get cluster names
         cluster_names = name_clusters(X, labels=labels, names=names)
         return cluster_names
@@ -396,10 +396,10 @@ class AAclust(Wrapper):
             The labels associated with each computed center.
         """
         # Check input
-        ut.check_array_like(name="labels", val=labels, dtype="int")
-        check_labels(labels=labels)
-        ut.check_feat_matrix(X=X, y=labels, y_name="labels")
-        check_match_feat_matrix_labels(X=X, labels=labels)
+        X = ut.check_X(X=X)
+        ut.check_X_unique_samples(X=X)
+        labels = ut.check_labels(labels=labels)
+        ut.check_match_X_labels(X=X, labels=labels)
         # Get cluster centers
         centers, center_labels = compute_centers(X, labels=labels)
         return centers, center_labels
@@ -426,10 +426,10 @@ class AAclust(Wrapper):
             The labels corresponding to each medoid.
         """
         # Check input
-        ut.check_array_like(name="labels", val=labels, dtype="int")
-        check_labels(labels=labels)
-        X = ut.check_feat_matrix(X=X, y=labels, y_name="labels")
-        check_match_feat_matrix_labels(X=X, labels=labels)
+        X = ut.check_X(X=X)
+        ut.check_X_unique_samples(X=X)
+        labels = ut.check_labels(labels=labels)
+        ut.check_match_X_labels(X=X, labels=labels)
         # Get cluster medoids
         medoids, medoid_labels, _ = compute_medoids(X, labels=labels)
         return medoids, medoid_labels
@@ -473,16 +473,15 @@ class AAclust(Wrapper):
         * :func:`numpy.corrcoe` was used to compute the correlation.
         """
         # Check input
-        ut.check_array_like(name="labels", val=labels, dtype="int")
-        check_labels(labels=labels)
-        ut.check_array_like(name="labels_ref", val=labels_ref, dtype="int")
-        check_labels(labels=labels_ref)
-        X = ut.check_feat_matrix(X=X, y=labels, y_name="labels")
-        X_ref = ut.check_feat_matrix(X=X_ref, y=labels_ref, y_name="labels_ref")
-        check_match_feat_matrix_labels(X=X, labels=labels)
-        check_match_feat_matrix_labels(X=X_ref, labels=labels_ref)
+        X = ut.check_X(X=X)
+        ut.check_X_unique_samples(X=X)
+        labels = ut.check_labels(labels=labels)
+        ut.check_match_X_labels(X=X, labels=labels)
+        X = ut.check_X(X=X_ref)
+        ut.check_X_unique_samples(X=X_ref)
+        labels = ut.check_labels(labels=labels_ref)
+        ut.check_match_X_labels(X=X_ref, labels=labels_ref)
         ut.check_number_range(name="n", val=n, min_val=2)
-
         # Get correlations
         list_top_center_name_corr = compute_correlation(X, X_ref, labels=labels, labels_ref=labels_ref,
                                                         n=n, positive=positive, on_center=on_center)

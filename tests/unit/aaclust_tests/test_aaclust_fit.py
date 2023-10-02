@@ -149,30 +149,33 @@ class TestAAclustComplex:
         model = aa.AAclust(model_class=KMeans)
         n_samples, n_features = X.shape
         n_unique_samples = len(set(map(tuple, X)))
-        if np.any(np.isinf(X)) or np.any(np.isnan(X)):
-            with pytest.raises(ValueError):
-                model.fit(X, n_clusters=n_clusters)
-        elif n_samples <= n_clusters:
-            with pytest.raises(ValueError):
-                model.fit(X, n_clusters=n_clusters)
-        elif len(set(map(tuple, X))) == 1:
-            with pytest.raises(ValueError):
-                model.fit(X, n_clusters=n_clusters)
-        elif n_unique_samples < n_clusters or n_unique_samples < 3:
-            with pytest.raises(ValueError):
-                model.fit(X, n_clusters=n_clusters)
-        else:
-            with warnings.catch_warnings(record=True) as w:
-                #    warnings.simplefilter("always")
-                model.fit(X, n_clusters=n_clusters)
-                # Check if ConvergenceWarning was raised and handle
-                convergence_warned = any([issubclass(warn.category, ConvergenceWarning) for warn in w])
-                if convergence_warned:
-                    assert len(set(model.labels_)) <= n_clusters
-                    assert len(model.medoids_) <= n_clusters
-                else:
-                    assert len(set(model.labels_)) == n_clusters
-                    assert len(model.medoids_) == n_clusters
+
+        # Check for invalid X conditions that should raise a ValueError
+        invalid_conditions = [(np.any(np.isinf(X)) or np.any(np.isnan(X)), "X contains NaN or Inf"),
+            (n_unique_samples == 1, "Feature matrix 'X' should not have all identical samples."),
+            (n_samples < 3, f"n_samples={n_samples} should be >= 3"),
+            (n_unique_samples < 3, f"n_unique_samples={n_unique_samples} should be >= 3"),
+            (n_samples <= n_clusters, f"n_samples={n_samples} should be > n_clusters"),
+            (n_unique_samples < n_clusters, f"n_unique_samples={n_unique_samples} should be >= n_clusters"),
+            (n_features < 2, f"n_features={n_features} should be >= 2")]
+
+        for condition, msg in invalid_conditions:
+            if condition:
+                with pytest.raises(ValueError):
+                    model.fit(X, n_clusters=n_clusters)
+                return  # exit early since an invalid condition was met
+
+        # If no invalid conditions are met
+        with warnings.catch_warnings(record=True) as w:
+            model.fit(X, n_clusters=n_clusters)
+            # Check if ConvergenceWarning was raised and handle
+            convergence_warned = any([issubclass(warn.category, ConvergenceWarning) for warn in w])
+            if convergence_warned:
+                assert len(set(model.labels_)) <= n_clusters
+                assert len(model.medoids_) <= n_clusters
+            else:
+                assert len(set(model.labels_)) == n_clusters
+                assert len(model.medoids_) == n_clusters
 
     @settings(deadline=2000, max_examples=20)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=10, max_side=50),
@@ -182,21 +185,24 @@ class TestAAclustComplex:
         model = aa.AAclust()
         n_samples, n_features = X.shape
         n_unique_samples = len(set(map(tuple, X)))
-        if np.any(np.isinf(X)) or np.any(np.isnan(X)):
-            with pytest.raises(ValueError):
-                model.fit(X)
-        elif len(set(map(tuple, X))) == 1:
-            with pytest.raises(ValueError):
-                model.fit(X)
-        elif n_samples < 3  or n_unique_samples < 3 or n_features < 2:
-            with pytest.raises(ValueError):
-                model.fit(X)
-        else:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", RuntimeWarning)
-                model.fit(X)
-                assert isinstance(model.labels_, (list, np.ndarray))
-                assert len(model.medoids_) == len(set(model.labels_))
+        # Check for invalid X conditions that should raise a ValueError
+        invalid_conditions = [(np.any(np.isinf(X)) or np.any(np.isnan(X)), "X contains NaN or Inf"),
+            (n_unique_samples == 1, "Feature matrix 'X' should not have all identical samples."),
+            (n_samples < 3, f"n_samples={n_samples} should be >= 3"),
+            (n_unique_samples < 3, f"n_unique_samples={n_unique_samples} should be >= 3"),
+            (n_features < 2, f"n_features={n_features} should be >= 2")]
+        for condition, msg in invalid_conditions:
+            if condition:
+                with pytest.raises(ValueError):
+                    model.fit(X)
+                return  # exit early since an invalid condition was met
+
+        # If no invalid conditions are met
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            model.fit(X)
+            assert isinstance(model.labels_, (list, np.ndarray))
+            assert len(model.medoids_) == len(set(model.labels_))
 
     # Property-based testing for negative cases
     @settings(max_examples=20)

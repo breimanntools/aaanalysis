@@ -137,7 +137,7 @@ class CPP(Tool):
         """
         # Check input
         df_feat = ut.check_df_feat(df_feat=df_feat)
-        ut.check_labels(labels=labels, df=self.df_parts, name_df="df_parts")
+        ut.check_labels_(labels=labels, df=self.df_parts, name_df="df_parts")
         ut.check_bool(name="parametric", val=parametric)
 
         # Add feature statistics
@@ -270,7 +270,7 @@ class CPP(Tool):
         11. positions: Feature positions for default settings
         """
         # Check input
-        ut.check_labels(labels=labels, df=self.df_parts, name_df="df_parts")
+        ut.check_labels_(labels=labels, df=self.df_parts, name_df="df_parts")
         ut.check_args_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len)
         ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
         ut.check_number_range(name="n_pre_filter", val=n_pre_filter, min_val=1, accept_none=True, just_int=True)

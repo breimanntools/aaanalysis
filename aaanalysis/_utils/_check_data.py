@@ -6,27 +6,21 @@ import numpy as np
 # Write wrapper around scikit checkers
 from sklearn.utils import check_array
 
-# Array checking functions
-def check_array_like(name=None, val=None, dtype=None, accept_none=False,
-                     ensure_2d=False, allow_nan=False):
+# Helper functions
+def _check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan=False):
     """
     Check if the provided value matches the specified dtype.
     If dtype is None, checks for general array-likeness.
     If dtype is 'int', 'float', or 'any', checks for specific types.
     """
-    if accept_none and val is None:
-        return None
-
-    # Convert DataFrame and Series to np.ndarray
-    if isinstance(val, (pd.DataFrame, pd.Series)):
-        val = val.values
-
+    if name is None:
+        raise ValueError(f"'{name}' should not be None.")
     # Utilize Scikit-learn's check_array for robust checking
     if dtype == 'int':
         expected_dtype = 'int'
     elif dtype == 'float':
         expected_dtype = 'float64'
-    elif dtype == 'any':
+    elif dtype == 'any' or dtype is None:
         expected_dtype = None
     else:
         raise ValueError(f"'dtype' ({dtype}) not recognized.")
@@ -37,50 +31,54 @@ def check_array_like(name=None, val=None, dtype=None, accept_none=False,
                          f"\nscikit message:\n\t{e}")
     return val
 
-# TODO separation of concerns
-def check_feat_matrix(X=None, y=None, y_name="labels", accept_none_y=True,
-                      ensure_2d=True, allow_nan=False, min_n_unique_samples=3, min_n_features=2):
-    """Check feature matrix valid and matches with y if (if provided)"""
-    # Check if X is None
-    if X is None:
-        raise ValueError("Feature matrix 'X' should not be None.")
-    if not accept_none_y and y is None:
-        raise ValueError(f"'{y_name}' ({y}) should not be None.")
-    # Use check_array from scikit to convert
-    try:
-        X = check_array(X, dtype="float64", ensure_2d=ensure_2d, force_all_finite=not allow_nan)
-    except Exception as e:
-        raise ValueError(f"Feature matrix 'X' should be array-like with float values."
-                         f"\nscikit message:\n\t{e}")
 
-    # Check X values (not Nan, inf or None)
-    if not allow_nan and np.any(np.isnan(X)):
-        raise ValueError("Feature matrix 'X' should not contain NaN values.")
-    if np.any(np.isinf(X)):
-        raise ValueError("Feature matrix 'X' should not contain infinite values.")
-    if X.dtype == object:
-        if np.any([elem is None for row in X for elem in row]):
-            raise ValueError("Feature matrix 'X' should not contain None.")
+# Check feature matrix and labels
+def check_X(X, min_n_samples=3, min_n_features=2, ensure_2d=True, allow_nan=False):
+    """Check the feature matrix X is valid."""
+    X = _check_array_like(name="X", val=X, dtype="float", ensure_2d=ensure_2d, allow_nan=allow_nan)
+    n_samples, n_features = X.shape
+    if n_samples < min_n_samples:
+        raise ValueError(f"n_samples={n_samples} (in 'X') should be >= {min_n_samples}."
+                         f"\nX = {X}")
+    if n_features < min_n_features:
+        raise ValueError(f"n_features={n_features} (in 'X') should be >= {min_n_features}."
+                         f"\nX = {X}")
+    return X
 
-    # Check all identical samples
+
+def check_X_unique_samples(X, min_n_unique_samples=3):
+    """Check if the matrix X has a sufficient number of unique samples."""
     if len(set(map(tuple, X))) == 1:
         raise ValueError("Feature matrix 'X' should not have all identical samples.")
 
-    n_samples, n_features = X.shape
     n_unique_samples = len(set(map(tuple, X)))
-    if y is not None and n_samples != len(y):
-        raise ValueError(f"Number of samples does not match for 'X' ({n_samples}) and '{y_name}' ({y}.")
-
-    if n_samples == 0 or n_features == 0:
-        raise ValueError(f"Shape of 'X' ({n_samples}, {n_features}) indicates empty feature matrix."
-                         f"\nX = {X}")
-    if n_unique_samples < min_n_unique_samples or n_samples < min_n_unique_samples:
-        raise ValueError(f"Number of unique samples ({n_unique_samples}) should be at least {min_n_unique_samples}."
-                         f"\nX = {X}")
-    if n_features < min_n_features:
-        raise ValueError(f"'n_features' ({n_features}) should be at least {min_n_features}."
+    if n_unique_samples < min_n_unique_samples:
+        raise ValueError(f"n_unique_samples ({n_unique_samples}) should be >= {min_n_unique_samples}."
                          f"\nX = {X}")
     return X
+
+def check_labels(labels=None):
+    """"""
+    if labels is None:
+        raise ValueError("'labels' should not be None")
+
+    # Convert labels to a numpy array if it's not already
+    labels = np.asarray(labels)
+
+    unique_labels = set(labels)
+    if len(unique_labels) == 1:
+        raise ValueError(f"'labels' should contain more than one different value ({unique_labels})")
+    wrong_types = [l for l in unique_labels if not np.issubdtype(type(l), np.integer)]
+    if wrong_types:
+        raise ValueError(f"Labels in 'labels' should be type int, but contain: {set(map(type, wrong_types))}")
+    return labels
+
+
+def check_match_X_labels(X=None, labels=None):
+    """"""
+    n_samples, n_features = X.shape
+    if n_samples != len(labels):
+        raise ValueError(f"n_samples does not match for 'X' ({len(X)}) and 'labels' ({len(labels)}).")
 
 
 # df checking functions

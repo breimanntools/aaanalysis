@@ -559,7 +559,7 @@ class SequenceFeature:
         # Check input
         df_feat = ut.check_df_feat(df_feat=df_feat)
         ut.check_df_seq(df_seq=df_seq, jmd_c_len=jmd_c_len, jmd_n_len=jmd_n_len)
-        ut.check_labels(labels=labels, df=df_seq, name_df="df_seq")
+        ut.check_labels_(labels=labels, df=df_seq, name_df="df_seq")
         check_ref_group(ref_group=ref_group, labels=labels)
         check_sample_in_df_seq(sample_name=sample_name, df_seq=df_seq)
         # Add sample difference to reference group

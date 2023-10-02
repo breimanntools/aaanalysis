@@ -145,11 +145,11 @@ def plot_settings(font_scale: float = 1,
 
     # Warning
     if no_ticks and any([short_ticks, short_ticks_x, short_ticks_y]):
-        warnings.warn("`no_ticks` is set to True, so 'short_ticks' parameters will be ignored.")
+        warnings.warn("`no_ticks` is set to True, so 'short_ticks' parameters will be ignored.", UserWarning)
     if no_ticks_x and short_ticks_x:
-        warnings.warn("`no_ticks_x` is set to True, so 'short_ticks_x' will be ignored.")
+        warnings.warn("`no_ticks_x` is set to True, so 'short_ticks_x' will be ignored.", UserWarning)
     if no_ticks_y and short_ticks_y:
-        warnings.warn("`no_ticks_y` is set to True, so 'short_ticks_y' will be ignored.")
+        warnings.warn("`no_ticks_y` is set to True, so 'short_ticks_y' will be ignored.", UserWarning)
 
     # Print all plot settings/runtime configurations of matplotlib
     if show_options:

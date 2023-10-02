@@ -70,7 +70,7 @@ def check_hatches(marker=None, hatch=None, list_cat=None):
             raise ValueError(f"Length must match of 'hatch' ({hatch}) and categories ({list_cat}).")  # Check if hatch can be chosen
     # Warn for parameter conflicts
     if marker_has_no(marker, val=None) and hatch:
-        warnings.warn(f"'hatch' can only be applied to the default marker, set 'marker=None'.")
+        warnings.warn(f"'hatch' can only be applied to the default marker, set 'marker=None'.", UserWarning)
     # Create hatch list
     list_hatch = [hatch] * len(list_cat) if not isinstance(hatch, list) else hatch
     return list_hatch
@@ -91,7 +91,7 @@ def check_marker(marker=None, list_cat=None, lw=0):
             raise ValueError(f"Length must match of 'marker' ({marker}) and categories ({list_cat}).")
     # Warn for parameter conflicts
     if marker_has(marker, val="-") and lw <= 0:
-        warnings.warn(f"Marker lines ('-') are only shown if 'lw' ({lw}) is > 0.")
+        warnings.warn(f"Marker lines ('-') are only shown if 'lw' ({lw}) is > 0.", UserWarning)
     # Create marker list
     list_marker = [marker] * len(list_cat) if not isinstance(marker, list) else marker
     return list_marker
@@ -134,7 +134,7 @@ def check_linestyle(linestyle=None, list_cat=None, marker=None):
                              f" or corresponding names: {_names} ")
     # Warn for parameter conflicts
     if linestyle is not None and marker_has_no(marker, val="-"):
-        warnings.warn(f"'linestyle' ({linestyle}) is only applicable to marker lines ('-'), not to '{marker}'.")
+        warnings.warn(f"'linestyle' ({linestyle}) is only applicable to marker lines ('-'), not to '{marker}'.", UserWarning)
     # Create list_marker_linestyle list
     list_marker_linestyle = [linestyle] * len(list_cat) if not isinstance(linestyle, list) else linestyle
     return list_marker_linestyle

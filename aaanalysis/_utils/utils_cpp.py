@@ -54,7 +54,7 @@ def check_y_categorical(df=None, y=None):
                          "of 'df': {}".format(list_cat_columns))
 
 
-def check_labels(labels=None, df=None, name_df=None):
+def check_labels_(labels=None, df=None, name_df=None):
     """Check if y not None and just containing 0 and 1"""
     if labels is None:
         raise ValueError("'labels' should not be None")
