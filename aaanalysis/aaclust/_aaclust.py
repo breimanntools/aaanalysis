@@ -31,7 +31,7 @@ def compute_centers(X, labels=None):
 
 def _cluster_medoid(X):
     """Obtain cluster medoids (i.e., scale closest to cluster center used as representative scale for a cluster)"""
-    # Create new array with cluster center and given
+    # Create new array with cluster center and given array
     center_X = np.concatenate([_cluster_center(X), X], axis=0)
     # Get index for scale with the highest correlation with cluster center
     ind_max = np.corrcoef(center_X)[0, 1:].argmax()

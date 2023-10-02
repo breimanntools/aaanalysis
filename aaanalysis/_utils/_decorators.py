@@ -58,8 +58,6 @@ def catch_runtime_warnings():
     return decorator
 
 
-
-
 # Catch convergence
 class ClusteringConvergenceException(Exception):
     def __init__(self, message, distinct_clusters):

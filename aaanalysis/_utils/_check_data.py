@@ -48,10 +48,9 @@ def check_X(X, min_n_samples=3, min_n_features=2, ensure_2d=True, allow_nan=Fals
 
 def check_X_unique_samples(X, min_n_unique_samples=3):
     """Check if the matrix X has a sufficient number of unique samples."""
-    if len(set(map(tuple, X))) == 1:
-        raise ValueError("Feature matrix 'X' should not have all identical samples.")
-
     n_unique_samples = len(set(map(tuple, X)))
+    if n_unique_samples == 1:
+        raise ValueError("Feature matrix 'X' should not have all identical samples.")
     if n_unique_samples < min_n_unique_samples:
         raise ValueError(f"n_unique_samples ({n_unique_samples}) should be >= {min_n_unique_samples}."
                          f"\nX = {X}")

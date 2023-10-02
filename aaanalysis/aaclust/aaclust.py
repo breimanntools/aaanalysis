@@ -347,7 +347,7 @@ class AAclust(Wrapper):
         Assigns names to clusters based on the frequency of names.
 
         Names with higher frequency are prioritized. If a name is already assigned to a cluster,
-        or the cluster contains one sample, its name is set to 'unclassified'.
+        or the cluster contains one sample, its name is set to 'Unclassified'.
 
         Parameters
         ----------
