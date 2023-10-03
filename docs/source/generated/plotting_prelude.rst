@@ -86,7 +86,7 @@ other elements and create an independent legend like this:
     plt.title("Adjusted by AAanalysis (hatches, smaller title)", size=fontsize-2)
     
     dict_color = {"Group 1": "black", "Group 2": "black"}
-    aa.plot_set_legend(dict_color=dict_color, ncol=1, x=0.7, y=0.9, hatch=["/", "."])
+    aa.plot_legend(dict_color=dict_color, ncol=1, x=0.7, y=0.9, hatch=["/", "."])
     plt.tight_layout()
     plt.show()
 

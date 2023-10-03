@@ -13,7 +13,7 @@ settings:
 
     import aaanalysis as aa
     df_info = aa.load_dataset()
-    df_info.iloc[:, :7].head(13)
+    df_info.iloc[:13, :7]
 
 
 
@@ -390,75 +390,7 @@ window size is 9, sizes between 5 and 15 are also popular.
 
 .. code:: ipython2
 
-    df_seq = aa.load_dataset(name="AA_CASPASE3")
-    df_seq.head(4)
-
-
-
-
-.. raw:: html
-
-    <div>
-    <style scoped>
-        .dataframe tbody tr th:only-of-type {
-            vertical-align: middle;
-        }
-    
-        .dataframe tbody tr th {
-            vertical-align: top;
-        }
-    
-        .dataframe thead th {
-            text-align: right;
-        }
-    </style>
-    <table border="1" class="dataframe">
-      <thead>
-        <tr style="text-align: right;">
-          <th></th>
-          <th>entry</th>
-          <th>sequence</th>
-          <th>label</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <th>0</th>
-          <td>CASPASE3_1_pos4</td>
-          <td>MSLFDLFRG</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>1</th>
-          <td>CASPASE3_1_pos5</td>
-          <td>SLFDLFRGF</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>2</th>
-          <td>CASPASE3_1_pos6</td>
-          <td>LFDLFRGFF</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>3</th>
-          <td>CASPASE3_1_pos7</td>
-          <td>FDLFRGFFG</td>
-          <td>0</td>
-        </tr>
-      </tbody>
-    </table>
-    </div>
-
-
-
-Sequences can be pre-filtered using ``min_len`` and ``max_len`` and
-``n`` residues can be randomly selected by ``random`` with different
-``aa_window_size``\ s.
-
-.. code:: ipython2
-
-    df_seq = aa.load_dataset(name="AA_CASPASE3", min_len=20, n=3, random=True, aa_window_size=21)
+    df_seq = aa.load_dataset(name="AA_CASPASE3", n=2)
     df_seq
 
 
@@ -492,38 +424,94 @@ Sequences can be pre-filtered using ``min_len`` and ``max_len`` and
       <tbody>
         <tr>
           <th>0</th>
-          <td>CASPASE3_55_pos170</td>
-          <td>KKRKLEEEEDGKLKKPKNKDK</td>
+          <td>CASPASE3_1_pos126</td>
+          <td>QTLRDSMLK</td>
           <td>1</td>
         </tr>
         <tr>
           <th>1</th>
-          <td>CASPASE3_29_pos185</td>
-          <td>CPHHERCSDSDGLAPPQHLIR</td>
+          <td>CASPASE3_1_pos127</td>
+          <td>TLRDSMLKY</td>
           <td>1</td>
         </tr>
         <tr>
           <th>2</th>
-          <td>CASPASE3_64_pos431</td>
-          <td>DNPLNWPDEKDSSFYRNFGST</td>
-          <td>1</td>
+          <td>CASPASE3_1_pos4</td>
+          <td>MSLFDLFRG</td>
+          <td>0</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>CASPASE3_93_pos455</td>
-          <td>FVKNMNRDSTFIVNKTITAEV</td>
+          <td>CASPASE3_1_pos5</td>
+          <td>SLFDLFRGF</td>
+          <td>0</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+Sequences can be pre-filtered using ``min_len`` and ``max_len`` and
+``n`` residues can be randomly selected by ``random`` with different
+``aa_window_size``\ s.
+
+.. code:: ipython2
+
+    df_seq = aa.load_dataset(name="AA_CASPASE3", min_len=20, n=2, random=True, aa_window_size=21)
+    df_seq
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>entry</th>
+          <th>sequence</th>
+          <th>label</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>CASPASE3_94_pos31</td>
+          <td>VSHWQQQSYLDSGIHSGATTT</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>CASPASE3_129_pos530</td>
+          <td>WFNKVLEDKTDDASTPATDTS</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>CASPASE3_76_pos554</td>
+          <td>QLLRGVKHLHDNWILHRDLKT</td>
           <td>0</td>
         </tr>
         <tr>
-          <th>4</th>
-          <td>CASPASE3_38_pos129</td>
-          <td>SSFDLDYDFQRDYYDRMYSYP</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>5</th>
-          <td>CASPASE3_8_pos33</td>
-          <td>RPPQLRPGAPTSLQTEPQGNP</td>
+          <th>3</th>
+          <td>CASPASE3_19_pos163</td>
+          <td>GHRGNSLDRRSQGGPHLSGAV</td>
           <td>0</td>
         </tr>
       </tbody>
@@ -547,7 +535,7 @@ example, the ``DOM_GSEC_PU`` dataset corresponds to the
 
 .. code:: ipython2
 
-    df_seq = aa.load_dataset(name="DOM_GSEC")
+    df_seq = aa.load_dataset(name="DOM_GSEC", n=2)
     df_seq
 
 
@@ -586,6 +574,28 @@ example, the ``DOM_GSEC_PU`` dataset corresponds to the
       <tbody>
         <tr>
           <th>0</th>
+          <td>Q14802</td>
+          <td>MQKVTLGLLVFLAGFPVLDANDLEDKNSPFYYDWHSLQVGGLICAG...</td>
+          <td>0</td>
+          <td>37</td>
+          <td>59</td>
+          <td>NSPFYYDWHS</td>
+          <td>LQVGGLICAGVLCAMGIIIVMSA</td>
+          <td>KCKCKFGQKS</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>Q86UE4</td>
+          <td>MAARSWQDELAQQAEEGSARLREMLSVGLGFLRTELGLDLGLEPKR...</td>
+          <td>0</td>
+          <td>50</td>
+          <td>72</td>
+          <td>LGLEPKRYPG</td>
+          <td>WVILVGTGALGLLLLFLLGYGWA</td>
+          <td>AACAGARKKR</td>
+        </tr>
+        <tr>
+          <th>2</th>
           <td>P05067</td>
           <td>MLPGLALLLLAAWTARALEVPTDGNAGLLAEPQIAMFCGRLNMHMN...</td>
           <td>1</td>
@@ -596,7 +606,7 @@ example, the ``DOM_GSEC_PU`` dataset corresponds to the
           <td>KKKQYTSIHH</td>
         </tr>
         <tr>
-          <th>1</th>
+          <th>3</th>
           <td>P14925</td>
           <td>MAGRARSGLLLLLLGLLALQSSCLAFRSPLSVFKRFKETTRSFSNE...</td>
           <td>1</td>
@@ -606,115 +616,15 @@ example, the ``DOM_GSEC_PU`` dataset corresponds to the
           <td>SVVLITTLLVIPVLVLLAIVMFI</td>
           <td>RWKKSRAFGD</td>
         </tr>
-        <tr>
-          <th>2</th>
-          <td>P70180</td>
-          <td>MRSLLLFTFSACVLLARVLLAGGASSGAGDTRPGSRRRAREALAAQ...</td>
-          <td>1</td>
-          <td>477</td>
-          <td>499</td>
-          <td>PCKSSGGLEE</td>
-          <td>SAVTGIVVGALLGAGLLMAFYFF</td>
-          <td>RKKYRITIER</td>
-        </tr>
-        <tr>
-          <th>3</th>
-          <td>Q03157</td>
-          <td>MGPTSPAARGQGRRWRPPPLPLLLPLSLLLLRAQLAVGNLAVGSPS...</td>
-          <td>1</td>
-          <td>585</td>
-          <td>607</td>
-          <td>APSGTGVSRE</td>
-          <td>ALSGLLIMGAGGGSLIVLSLLLL</td>
-          <td>RKKKPYGTIS</td>
-        </tr>
-        <tr>
-          <th>4</th>
-          <td>Q06481</td>
-          <td>MAATGTAAAAATGRLLLLLLVGLTAPALALAGYIEALAANAGTGFA...</td>
-          <td>1</td>
-          <td>694</td>
-          <td>716</td>
-          <td>LREDFSLSSS</td>
-          <td>ALIGLLVIAVAIATVIVISLVML</td>
-          <td>RKRQYGTISH</td>
-        </tr>
-        <tr>
-          <th>...</th>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-        </tr>
-        <tr>
-          <th>121</th>
-          <td>P36941</td>
-          <td>MLLPWATSAPGLAWGPLVLGLFGLLAASQPQAVPPYASENQTCRDQ...</td>
-          <td>0</td>
-          <td>226</td>
-          <td>248</td>
-          <td>PLPPEMSGTM</td>
-          <td>LMLAVLLPLAFFLLLATVFSCIW</td>
-          <td>KSHPSLCRKL</td>
-        </tr>
-        <tr>
-          <th>122</th>
-          <td>P25446</td>
-          <td>MLWIWAVLPLVLAGSQLRVHTQGTNSISESLKLRRRVRETDKNCSE...</td>
-          <td>0</td>
-          <td>170</td>
-          <td>187</td>
-          <td>NCRKQSPRNR</td>
-          <td>LWLLTILVLLIPLVFIYR</td>
-          <td>KYRKRKCWKR</td>
-        </tr>
-        <tr>
-          <th>123</th>
-          <td>Q9P2J2</td>
-          <td>MVWCLGLAVLSLVISQGADGRGKPEVVSVVGRAGESVVLGCDLLPP...</td>
-          <td>0</td>
-          <td>738</td>
-          <td>760</td>
-          <td>PGLLPQPVLA</td>
-          <td>GVVGGVCFLGVAVLVSILAGCLL</td>
-          <td>NRRRAARRRR</td>
-        </tr>
-        <tr>
-          <th>124</th>
-          <td>Q96J42</td>
-          <td>MVPAAGRRPPRVMRLLGWWQVLLWVLGLPVRGVEVAEESGRLWSEE...</td>
-          <td>0</td>
-          <td>324</td>
-          <td>342</td>
-          <td>LPSTLIKSVD</td>
-          <td>WLLVFSLFFLISFIMYATI</td>
-          <td>RTESIRWLIP</td>
-        </tr>
-        <tr>
-          <th>125</th>
-          <td>P0DPA2</td>
-          <td>MRVGGAFHLLLVCLSPALLSAVRINGDGQEVLYLAEGDNVRLGCPY...</td>
-          <td>0</td>
-          <td>265</td>
-          <td>287</td>
-          <td>KVSDSRRIGV</td>
-          <td>IIGIVLGSLLALGCLAVGIWGLV</td>
-          <td>CCCCGGSGAG</td>
-        </tr>
       </tbody>
     </table>
-    <p>126 rows × 8 columns</p>
     </div>
 
 
 
 .. code:: ipython2
 
-    df_seq_pu = aa.load_dataset(name="DOM_GSEC_PU")
+    df_seq_pu = aa.load_dataset(name="DOM_GSEC_PU", n=2)
     df_seq_pu
 
 
@@ -775,108 +685,28 @@ example, the ``DOM_GSEC_PU`` dataset corresponds to the
         </tr>
         <tr>
           <th>2</th>
-          <td>P70180</td>
-          <td>MRSLLLFTFSACVLLARVLLAGGASSGAGDTRPGSRRRAREALAAQ...</td>
-          <td>1</td>
-          <td>477</td>
-          <td>499</td>
-          <td>PCKSSGGLEE</td>
-          <td>SAVTGIVVGALLGAGLLMAFYFF</td>
-          <td>RKKYRITIER</td>
+          <td>P12821</td>
+          <td>MGAASGRRGPGLLLPLPLLLLLPPQPALALDPGLQPGNFSADEAGA...</td>
+          <td>2</td>
+          <td>1257</td>
+          <td>1276</td>
+          <td>GLDLDAQQAR</td>
+          <td>VGQWLLLFLGIALLVATLGL</td>
+          <td>SQRLFSIRHR</td>
         </tr>
         <tr>
           <th>3</th>
-          <td>Q03157</td>
-          <td>MGPTSPAARGQGRRWRPPPLPLLLPLSLLLLRAQLAVGNLAVGSPS...</td>
-          <td>1</td>
-          <td>585</td>
-          <td>607</td>
-          <td>APSGTGVSRE</td>
-          <td>ALSGLLIMGAGGGSLIVLSLLLL</td>
-          <td>RKKKPYGTIS</td>
-        </tr>
-        <tr>
-          <th>4</th>
-          <td>Q06481</td>
-          <td>MAATGTAAAAATGRLLLLLLVGLTAPALALAGYIEALAANAGTGFA...</td>
-          <td>1</td>
-          <td>694</td>
-          <td>716</td>
-          <td>LREDFSLSSS</td>
-          <td>ALIGLLVIAVAIATVIVISLVML</td>
-          <td>RKRQYGTISH</td>
-        </tr>
-        <tr>
-          <th>...</th>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-          <td>...</td>
-        </tr>
-        <tr>
-          <th>689</th>
-          <td>P60852</td>
-          <td>MAGGSATTWGYPVALLLLVATLGLGRWLQPDPGLPGLRHSYDCGIK...</td>
+          <td>P36896</td>
+          <td>MAESAGASSFFPLVVLLLAGSGGSGPRGVQALLCACTSCLQANYTC...</td>
           <td>2</td>
-          <td>602</td>
-          <td>624</td>
-          <td>DSNGNSSLRP</td>
-          <td>LLWAVLLLPAVALVLGFGVFVGL</td>
-          <td>SQTWAQKLWE</td>
-        </tr>
-        <tr>
-          <th>690</th>
-          <td>P20239</td>
-          <td>MARWQRKASVSSPCGRSIYRFLSLLFTLVTSVNSVSLPQSENPAFP...</td>
-          <td>2</td>
-          <td>684</td>
-          <td>703</td>
-          <td>IIAKDIASKT</td>
-          <td>LGAVAALVGSAVILGFICYL</td>
-          <td>YKKRTIRFNH</td>
-        </tr>
-        <tr>
-          <th>691</th>
-          <td>P21754</td>
-          <td>MELSYRLFICLLLWGSTELCYPQPLWLLQGGASHPETSVQPVLVEC...</td>
-          <td>2</td>
-          <td>387</td>
-          <td>409</td>
-          <td>EQWALPSDTS</td>
-          <td>VVLLGVGLAVVVSLTLTAVILVL</td>
-          <td>TRRCRTASHP</td>
-        </tr>
-        <tr>
-          <th>692</th>
-          <td>Q12836</td>
-          <td>MWLLRCVLLCVSLSLAVSGQHKPEAPDYSSVLHCGPWSFQFAVNLN...</td>
-          <td>2</td>
-          <td>506</td>
-          <td>528</td>
-          <td>EKLRVPVDSK</td>
-          <td>VLWVAGLSGTLILGALLVSYLAV</td>
-          <td>KKQKSCPDQM</td>
-        </tr>
-        <tr>
-          <th>693</th>
-          <td>Q8TCW7</td>
-          <td>MEQIWLLLLLTIRVLPGSAQFNGYNCDANLHSRFPAERDISVYCGV...</td>
-          <td>2</td>
-          <td>374</td>
-          <td>396</td>
-          <td>PFQLNAITSA</td>
-          <td>LISGMVILGVTSFSLLLCSLALL</td>
-          <td>HRKGPTSLVL</td>
+          <td>127</td>
+          <td>149</td>
+          <td>EHPSMWGPVE</td>
+          <td>LVGIIAGPVFLLFLIIIIVFLVI</td>
+          <td>NYHQRVYHNR</td>
         </tr>
       </tbody>
     </table>
-    <p>694 rows × 8 columns</p>
     </div>
-
-
 
 
