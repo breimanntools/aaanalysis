@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18: http://docutils.sourceforge.net/" />
+<meta property="og:title" content="Slow Start with AAanalysis" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="generated/tutorial1_slow_start.html" />
+<meta property="og:site_name" content="AAanalysis" />
+<meta property="og:description" content="Dive into the powerful capabilities of AAanalysis —a Python framework dedicated to sequence-based, alignment-free protein prediction. In this tutorial, using gamma-secretase substrates and non-subs..." />
+<meta property="og:image:width" content="1146" />
+<meta property="og:image:height" content="600" />
+<meta property="og:image" content="/_images/social_previews/summary_generated_tutorial1_slow_start_5c361538.png" />
+<meta property="og:image:alt" content="Dive into the powerful capabilities of AAanalysis —a Python framework dedicated to sequence-based, alignment-free protein prediction. In this tutorial, using..." />
+<meta name="description" content="Dive into the powerful capabilities of AAanalysis —a Python framework dedicated to sequence-based, alignment-free protein prediction. In this tutorial, using gamma-secretase substrates and non-subs..." />
+<meta name="twitter:card" content="summary_large_image" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Slow Start with AAanalysis &mdash; AAanalysis</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/style.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/notebook.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo_small.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
+        <script src="../_static/design-tabs.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Plotting Prelude" href="plotting_prelude.html" />
+    <link rel="prev" title="Quick Start with AAanalysis" href="tutorial1_quick_start.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #343131" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/logo_big_trans.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                latest
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">OVERVIEW</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../index/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index/usage_principles.html">Usage Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index/CONTRIBUTING_COPY.html">Contributing</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">EXAMPLES</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">Tutorials</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../tutorials.html#quick-start">Quick start</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="tutorial1_quick_start.html">Quick Start with AAanalysis</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Slow Start with AAanalysis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="plotting_prelude.html">Plotting Prelude</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#further-tutorials">Further Tutorials</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">REFERENCES</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../index/tables.html">Tables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../index/references.html">References</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #343131" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">AAanalysis</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Slow Start with AAanalysis</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/breimanntools/aaanalysis/blob/master/generated/tutorial1_slow_start.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="slow-start-with-aaanalysis">
+<h1>Slow Start with AAanalysis<a class="headerlink" href="#slow-start-with-aaanalysis" title="Permalink to this heading"></a></h1>
+<p>Dive into the powerful capabilities of <strong>AAanalysis</strong>—a Python framework
+dedicated to sequence-based, alignment-free protein prediction. In this
+tutorial, using gamma-secretase substrates and non-substrates as an
+example, we’ll focus on extracting interpretable features from protein
+sequences using the <code class="docutils literal notranslate"><span class="pre">AAclust</span></code> and <code class="docutils literal notranslate"><span class="pre">CPP</span></code> models and how they can be
+harnessed for binary classification tasks.</p>
+<section id="what-you-will-learn">
+<h2>What You Will Learn:<a class="headerlink" href="#what-you-will-learn" title="Permalink to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>Loading Sequences and Scales</strong>: How to easily load protein
+sequences and their amino acid scales.</p></li>
+<li><p><strong>Feature Engineering</strong>: Extract essential features using the
+<code class="docutils literal notranslate"><span class="pre">AAclust</span></code> and <code class="docutils literal notranslate"><span class="pre">CPP</span></code> models.</p></li>
+<li><p><strong>Protein Prediction</strong>: Make predictions using the RandomForest
+model.</p></li>
+<li><p><strong>Explainable AI</strong>: Interpret predictions at the group and individual
+levels by combining <code class="docutils literal notranslate"><span class="pre">CPP</span></code> with <code class="docutils literal notranslate"><span class="pre">SHAP</span></code>.</p></li>
+</ol>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+</pre></div>
+</div>
+</section>
+<section id="loading-sequences-and-scales">
+<h2>1. Loading Sequences and Scales<a class="headerlink" href="#loading-sequences-and-scales" title="Permalink to this heading"></a></h2>
+<p>With AAanalysis, you have access to numerous benchmark datasets for
+protein sequence analysis. Using our γ-secretase substrates and
+non-substrates dataset as a hands-on example, you can effortlessly
+retrieve these datasets using the <code class="docutils literal notranslate"><span class="pre">aa.load_dataset()</span></code> function.
+Furthermore, amino acid scales, predominantly from AAindex, along with
+their hierarchical classification (known as <code class="docutils literal notranslate"><span class="pre">AAontology</span></code>), are
+available at your fingertips with the <code class="docutils literal notranslate"><span class="pre">aa.load_scales()</span></code> function.</p>
+<p>We now load the scales dataset and a dataset of 50 γ-secretase
+substrates and non-substrates:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
+
+<span class="n">df_scales</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_scales</span><span class="p">()</span>
+<span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;DOM_GSEC&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="feature-engineering">
+<h2>2. Feature Engineering<a class="headerlink" href="#feature-engineering" title="Permalink to this heading"></a></h2>
+<p>The centerpiece of AAanalysis is the Comparative Physicochemical
+Profiling (<code class="docutils literal notranslate"><span class="pre">CPP</span></code>) model, which is supported by <code class="docutils literal notranslate"><span class="pre">AAclust</span></code> for the
+pre-selection of amino acid scales.</p>
+<section id="aaclust">
+<h3>AAclust<a class="headerlink" href="#aaclust" title="Permalink to this heading"></a></h3>
+<p>Since redundancy is an essential problem for machine learning tasks, the
+<code class="docutils literal notranslate"><span class="pre">AAclust</span></code> object provides a lightweight wrapper for sklearn clustering
+algorithms such as Agglomerative clustering. AAclust clusters a set of
+scales and selects for each cluster the most representative scale (i.e.,
+the scale closes to the cluster center). We will use AAclust to obtain a
+set of 100 scales, as defined by the <code class="docutils literal notranslate"><span class="pre">n_clusters</span></code> parameters:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">AgglomerativeClustering</span>
+
+<span class="n">aac</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclust</span><span class="p">(</span><span class="n">model_class</span><span class="o">=</span><span class="n">AgglomerativeClustering</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df_scales</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+<span class="n">scales</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">df_scales</span><span class="p">),</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">medoid_names_</span>
+<span class="n">df_scales</span> <span class="o">=</span> <span class="n">df_scales</span><span class="p">[</span><span class="n">scales</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="comparative-physicochemical-profiling-cpp">
+<h3>Comparative Physicochemical Profiling (CPP)<a class="headerlink" href="#comparative-physicochemical-profiling-cpp" title="Permalink to this heading"></a></h3>
+<p>CPP is a sequence-based feature engineering algorithm. It aims at
+identifying a set of features most discriminant between two sets of
+sequences: the test set and the reference set. Supported by the
+<code class="docutils literal notranslate"><span class="pre">SequenceFeature</span></code> object (<code class="docutils literal notranslate"><span class="pre">sf</span></code>), A CPP feature integrates:</p>
+<ul class="simple">
+<li><p><strong>Parts</strong>: Are combination of a target middle domain (TMD) and N- and
+C-terminal adjacent regions (JMD-N and JMD-C, respectively), obtained
+<code class="docutils literal notranslate"><span class="pre">sf.get_df_parts</span></code>.</p></li>
+<li><p><strong>Splits</strong>: These Parts can be split into various continuous segments
+or discontinuous patterns, specified <code class="docutils literal notranslate"><span class="pre">sf.get_split_kws()</span></code>.</p></li>
+<li><p><strong>Scales</strong>: Sets of amino acid scales.</p></li>
+</ul>
+<p>We use SequenceFeature to obtain Parts and Splits. These together with
+the Scales are used by CPP as input to identify the set of
+characteristic features to discriminate between γ-secretase substrates
+and non-substrates:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">y</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">df_seq</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">])</span>
+<span class="n">sf</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">SequenceFeature</span><span class="p">()</span>
+<span class="n">df_parts</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">get_df_parts</span><span class="p">(</span><span class="n">df_seq</span><span class="o">=</span><span class="n">df_seq</span><span class="p">,</span> <span class="n">list_parts</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tmd_jmd&quot;</span><span class="p">])</span>
+<span class="n">split_kws</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">get_split_kws</span><span class="p">(</span><span class="n">n_split_max</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">split_types</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Segment&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Running the CPP algorithm creates all Part, Split, Split combinations
+and filters a selected maximum of non-redundant features. As a baseline
+approach, we use CPP to compute the average values for the 100 selected
+scales over the entire TMD-JMD sequences:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Small set of CPP features (100 features are created)</span>
+<span class="n">cpp</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">CPP</span><span class="p">(</span><span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">,</span> <span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span> <span class="n">split_kws</span><span class="o">=</span><span class="n">split_kws</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">df_feat</span> <span class="o">=</span> <span class="n">cpp</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="protein-prediction">
+<h2>3. Protein Prediction<a class="headerlink" href="#protein-prediction" title="Permalink to this heading"></a></h2>
+<p>A feature matrix from a given set of CPP features can be created using
+<code class="docutils literal notranslate"><span class="pre">sf.feat_matrix</span></code> and used for machine learning:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.ensemble</span> <span class="kn">import</span> <span class="n">RandomForestClassifier</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">cross_val_score</span>
+
+<span class="n">X</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">feat_matrix</span><span class="p">(</span><span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="n">df_feat</span><span class="p">[</span><span class="s2">&quot;feature&quot;</span><span class="p">])</span>
+<span class="n">rf</span> <span class="o">=</span> <span class="n">RandomForestClassifier</span><span class="p">()</span>
+<span class="n">cv_base</span> <span class="o">=</span> <span class="n">cross_val_score</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s2">&quot;accuracy&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean accuracy of </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cv_base</span><span class="p">),</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Mean</span> <span class="n">accuracy</span> <span class="n">of</span> <span class="mf">0.57</span>
+</pre></div>
+</div>
+<p>Creating more features with CPP will take a little time, but improve
+prediction performance:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># CPP features with default splits (around 100.000 features)</span>
+<span class="n">df_parts</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">get_df_parts</span><span class="p">(</span><span class="n">df_seq</span><span class="o">=</span><span class="n">df_seq</span><span class="p">)</span>
+<span class="n">cpp</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">CPP</span><span class="p">(</span><span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">,</span> <span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">df_feat</span> <span class="o">=</span> <span class="n">cpp</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">feat_matrix</span><span class="p">(</span><span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="n">df_feat</span><span class="p">[</span><span class="s2">&quot;feature&quot;</span><span class="p">])</span>
+
+<span class="n">rf</span> <span class="o">=</span> <span class="n">RandomForestClassifier</span><span class="p">()</span>
+<span class="n">cv</span> <span class="o">=</span> <span class="n">cross_val_score</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean accuracy of </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cv</span><span class="p">),</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">aa</span><span class="o">.</span><span class="n">plot_settings</span><span class="p">()</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">barplot</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;Baseline&quot;</span><span class="p">:</span> <span class="n">cv_base</span><span class="p">,</span> <span class="s2">&quot;CPP&quot;</span><span class="p">:</span> <span class="n">cv</span><span class="p">}),</span> <span class="n">palette</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tab:blue&quot;</span><span class="p">,</span> <span class="s2">&quot;tab:red&quot;</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Mean accuracy&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">aa</span><span class="o">.</span><span class="n">plot_gcfs</span><span class="p">()</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Comparison of Feature Engineering Methods&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">aa</span><span class="o">.</span><span class="n">plot_gcfs</span><span class="p">()</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">despine</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Mean</span> <span class="n">accuracy</span> <span class="n">of</span> <span class="mf">0.88</span>
+</pre></div>
+</div>
+<img alt="../_images/output_13_1.png" src="../_images/output_13_1.png" />
+</section>
+<section id="explainable-ai">
+<h2>4. Explainable AI<a class="headerlink" href="#explainable-ai" title="Permalink to this heading"></a></h2>
+<section id="explainable-ai-on-group-level">
+<h3>Explainable AI on group level<a class="headerlink" href="#explainable-ai-on-group-level" title="Permalink to this heading"></a></h3>
+</section>
+<section id="explainable-ai-on-individual-level">
+<h3>Explainable AI on individual level<a class="headerlink" href="#explainable-ai-on-individual-level" title="Permalink to this heading"></a></h3>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="tutorial1_quick_start.html" class="btn btn-neutral float-left" title="Quick Start with AAanalysis" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="plotting_prelude.html" class="btn btn-neutral float-right" title="Plotting Prelude" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Stephan Breimann.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

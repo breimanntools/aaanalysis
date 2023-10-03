@@ -15,6 +15,7 @@ Quick start
    :maxdepth: 1
 
    generated/tutorial1_quick_start
+   generated/tutorial1_slow_start
    generated/plotting_prelude
 
 Further Tutorials
