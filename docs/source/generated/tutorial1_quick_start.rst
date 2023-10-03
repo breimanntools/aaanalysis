@@ -131,7 +131,7 @@ A feature matrix from a given set of CPP features can be created using
 
 .. parsed-literal::
 
-    Mean accuracy of 0.58
+    Mean accuracy of 0.57
 
 
 Creating more features with CPP will take a little time, but improve
@@ -160,7 +160,7 @@ prediction performance:
 
 .. parsed-literal::
 
-    Mean accuracy of 0.9
+    Mean accuracy of 0.88
 
 
 

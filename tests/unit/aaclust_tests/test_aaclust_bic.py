@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from aaanalysis.aaclust._aaclust_bic import bic_score
+from aaanalysis.feature_engineering.aaclust._aaclust_bic import bic_score
 
 
 def test_bic_known_dataset():

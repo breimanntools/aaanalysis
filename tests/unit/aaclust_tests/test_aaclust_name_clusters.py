@@ -107,8 +107,9 @@ class TestNameClustersComplex:
         names = ['scale'+str(i) for i in range(X.shape[0])]
         n_samples, n_feature = X.shape
         n_unique_samples = len(set(map(tuple, X)))
-        if n_samples < 2 or n_feature < 2 or n_unique_samples < 3:
+        if n_samples < 2 or n_feature < 2 or n_unique_samples < 3 or len(labels) != n_samples:
             with pytest.raises(ValueError):
+                warnings.simplefilter("ignore", RuntimeWarning)
                 aa.AAclust().name_clusters(X, labels, names)
         else:
             with warnings.catch_warnings():
@@ -126,4 +127,5 @@ class TestNameClustersComplex:
         n_unique_samples = len(set(map(tuple, X)))
         if n_samples < 2 or n_feature < 2 or n_unique_samples < 3:
             with pytest.raises(ValueError):
+                warnings.simplefilter("ignore", RuntimeWarning)
                 aa.AAclust().name_clusters(X, labels, names)
