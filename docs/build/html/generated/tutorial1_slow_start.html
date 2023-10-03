@@ -77,13 +77,16 @@
 <p class="caption" role="heading"><span class="caption-text">EXAMPLES</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">Tutorials</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="../tutorials.html#quick-start">Quick start</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../tutorials.html#getting-started">Getting Started</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="tutorial1_quick_start.html">Quick Start with AAanalysis</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Slow Start with AAanalysis</a></li>
 <li class="toctree-l3"><a class="reference internal" href="plotting_prelude.html">Plotting Prelude</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#further-tutorials">Further Tutorials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#data-handling">Data Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#feature-engineering">Feature Engineering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#pu-learning">PU Learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials.html#explainable-ai">Explainable AI</a></li>
 </ul>
 </li>
 </ul>
@@ -145,6 +148,9 @@ levels by combining <code class="docutils literal notranslate"><span class="pre"
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
+<span class="n">aa</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s2">&quot;verbose&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 </pre></div>
 </div>
 </section>
@@ -159,9 +165,7 @@ their hierarchical classification (known as <code class="docutils literal notran
 available at your fingertips with the <code class="docutils literal notranslate"><span class="pre">aa.load_scales()</span></code> function.</p>
 <p>We now load the scales dataset and a dataset of 50 γ-secretase
 substrates and non-substrates:</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
-
-<span class="n">df_scales</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_scales</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">df_scales</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_scales</span><span class="p">()</span>
 <span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;DOM_GSEC&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -179,9 +183,9 @@ algorithms such as Agglomerative clustering. AAclust clusters a set of
 scales and selects for each cluster the most representative scale (i.e.,
 the scale closes to the cluster center). We will use AAclust to obtain a
 set of 100 scales, as defined by the <code class="docutils literal notranslate"><span class="pre">n_clusters</span></code> parameters:</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">AgglomerativeClustering</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">KMeans</span>
 
-<span class="n">aac</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclust</span><span class="p">(</span><span class="n">model_class</span><span class="o">=</span><span class="n">AgglomerativeClustering</span><span class="p">)</span>
+<span class="n">aac</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclust</span><span class="p">(</span><span class="n">model_class</span><span class="o">=</span><span class="n">KMeans</span><span class="p">)</span>
 <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df_scales</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
 <span class="n">scales</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">df_scales</span><span class="p">),</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">medoid_names_</span>
 <span class="n">df_scales</span> <span class="o">=</span> <span class="n">df_scales</span><span class="p">[</span><span class="n">scales</span><span class="p">]</span>
@@ -206,8 +210,7 @@ or discontinuous patterns, specified <code class="docutils literal notranslate">
 the Scales are used by CPP as input to identify the set of
 characteristic features to discriminate between γ-secretase substrates
 and non-substrates:</p>
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">y</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">df_seq</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">])</span>
-<span class="n">sf</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">SequenceFeature</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sf</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">SequenceFeature</span><span class="p">()</span>
 <span class="n">df_parts</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">get_df_parts</span><span class="p">(</span><span class="n">df_seq</span><span class="o">=</span><span class="n">df_seq</span><span class="p">,</span> <span class="n">list_parts</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tmd_jmd&quot;</span><span class="p">])</span>
 <span class="n">split_kws</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">get_split_kws</span><span class="p">(</span><span class="n">n_split_max</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">split_types</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Segment&quot;</span><span class="p">])</span>
 </pre></div>
@@ -217,7 +220,8 @@ and filters a selected maximum of non-redundant features. As a baseline
 approach, we use CPP to compute the average values for the 100 selected
 scales over the entire TMD-JMD sequences:</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Small set of CPP features (100 features are created)</span>
-<span class="n">cpp</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">CPP</span><span class="p">(</span><span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">,</span> <span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span> <span class="n">split_kws</span><span class="o">=</span><span class="n">split_kws</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">df_seq</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">])</span>
+<span class="n">cpp</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">CPP</span><span class="p">(</span><span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">,</span> <span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span> <span class="n">split_kws</span><span class="o">=</span><span class="n">split_kws</span><span class="p">)</span>
 <span class="n">df_feat</span> <span class="o">=</span> <span class="n">cpp</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -236,14 +240,17 @@ scales over the entire TMD-JMD sequences:</p>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mean accuracy of </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cv_base</span><span class="p">),</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Mean</span> <span class="n">accuracy</span> <span class="n">of</span> <span class="mf">0.57</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Mean</span> <span class="n">accuracy</span> <span class="n">of</span> <span class="mf">0.58</span>
 </pre></div>
 </div>
-<p>Creating more features with CPP will take a little time, but improve
+<p>CPP uses around 1000 Splits by default, yielding 100.000 features for
+100 Scales and 1 Part. Creating and filtering all these Part-Split-Scale
+combinations will take a little time (~1.5 minutes for this example on
+an i7-10510U (4 cores, 8 threads) with multiprocessing), but improve
 prediction performance:</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># CPP features with default splits (around 100.000 features)</span>
 <span class="n">df_parts</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">get_df_parts</span><span class="p">(</span><span class="n">df_seq</span><span class="o">=</span><span class="n">df_seq</span><span class="p">)</span>
-<span class="n">cpp</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">CPP</span><span class="p">(</span><span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">,</span> <span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">cpp</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">CPP</span><span class="p">(</span><span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">,</span> <span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">)</span>
 <span class="n">df_feat</span> <span class="o">=</span> <span class="n">cpp</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
 <span class="n">X</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">feat_matrix</span><span class="p">(</span><span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="n">df_feat</span><span class="p">[</span><span class="s2">&quot;feature&quot;</span><span class="p">])</span>
 
@@ -260,10 +267,10 @@ prediction performance:</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Mean</span> <span class="n">accuracy</span> <span class="n">of</span> <span class="mf">0.88</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Mean</span> <span class="n">accuracy</span> <span class="n">of</span> <span class="mf">0.93</span>
 </pre></div>
 </div>
-<img alt="../_images/output_13_1.png" src="../_images/output_13_1.png" />
+<img alt="../_images/NOTEBOOK_1_output_13_1.png" src="../_images/NOTEBOOK_1_output_13_1.png" />
 </section>
 <section id="explainable-ai">
 <h2>4. Explainable AI<a class="headerlink" href="#explainable-ai" title="Permalink to this heading"></a></h2>

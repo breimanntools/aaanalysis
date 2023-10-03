@@ -64,12 +64,11 @@ class CPP(Tool):
             df_scales = aa.load_scales()
         if split_kws is None:
             split_kws = sf.get_split_kws()
-        ut.check_bool(name="verbose", val=verbose)
         ut.check_df_parts(df_parts=df_parts, verbose=verbose)
         df_parts = ut.check_df_scales(df_scales=df_scales, df_parts=df_parts, accept_gaps=accept_gaps)
         df_cat, df_scales = ut.check_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
         ut.check_split_kws(split_kws=split_kws)
-        self._verbose = verbose
+        self._verbose = ut.check_verbose(verbose)
         self._accept_gaps = accept_gaps
         # Feature components: Scales + Part + Split
         self.df_cat = df_cat.copy()
@@ -276,7 +275,6 @@ class CPP(Tool):
         ut.check_number_range(name="pct_pre_filter", val=pct_pre_filter, min_val=5, max_val=100, just_int=True)
         ut.check_number_range(name="max_std_test", val=max_std_test, min_val=0.0, max_val=1.0, just_int=False)
         ut.check_number_range(name="max_overlap", val=max_overlap, min_val=0.0, max_val=1.0, just_int=False)
-        ut.check_bool(name="verbose", val=self._verbose)
         # Settings and creation of objects
         args = dict(split_kws=self.split_kws, df_scales=self.df_scales)
         if self._verbose:

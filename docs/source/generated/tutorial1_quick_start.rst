@@ -5,7 +5,7 @@ Quick Start with AAanalysis
 prediction, centered around the ``CPP`` model for interpretable feature
 engineering.
 
-After importing third-party packages and ``aanalsis as aa``:
+First import some third-party packages and ``aanalsis``:
 
 .. code:: ipython3
 
@@ -15,6 +15,7 @@ After importing third-party packages and ``aanalsis as aa``:
     import numpy as np
     
     import aaanalysis as aa
+    aa.options["verbose"] = False
 
 We can load a dataset of amino acid scales and an example dataset for
 γ-secretase of 50 substrates and 50 non-substrates:
@@ -37,12 +38,11 @@ model for pre-selecting a redundancy-reduced set of amino acid scales:
 We can now use the *Comparative Physical Profiling (CPP)* algorithm,
 which aims at identifying a set of features most discriminant between
 two sets of sequences. Its core idea is the CPP feature concept, defined
-as a combination a *Parts*, *Splits*, and *Scales*, which can be
-obtained by the ``SequenceFeature`` object:
+as a combination of *Parts*, *Splits*, and *Scales*. Parts and Splits
+can be obtained using ``SequenceFeature``:
 
 .. code:: ipython3
 
-    y = list(df_seq["label"])
     sf = aa.SequenceFeature()
     df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=["tmd_jmd"])
     split_kws = sf.get_split_kws(n_split_max=1, split_types=["Segment"])
@@ -55,7 +55,8 @@ scales over the entire TMD-JMD sequences:
 .. code:: ipython3
 
     # Small set of CPP features (100 features are created)
-    cpp = aa.CPP(df_scales=df_scales, df_parts=df_parts, split_kws=split_kws, verbose=False)
+    y = list(df_seq["label"])
+    cpp = aa.CPP(df_scales=df_scales, df_parts=df_parts, split_kws=split_kws)
     df_feat = cpp.run(labels=y) 
 
 For **Machine Learning**, a feature matrix from a given set of CPP
@@ -84,7 +85,7 @@ prediction performance:
 
     # CPP features with default splits (around 100.000 features)
     df_parts = sf.get_df_parts(df_seq=df_seq)
-    cpp = aa.CPP(df_scales=df_scales, df_parts=df_parts, verbose=False)
+    cpp = aa.CPP(df_scales=df_scales, df_parts=df_parts)
     df_feat = cpp.run(labels=y)
     X = sf.feat_matrix(df_parts=df_parts, features=df_feat["feature"])
     
@@ -107,5 +108,5 @@ prediction performance:
 
 
 
-.. image:: output_13_1.png
+.. image:: NOTEBOOK_1_output_13_1.png
 

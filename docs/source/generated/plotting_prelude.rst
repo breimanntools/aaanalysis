@@ -26,7 +26,7 @@ this:
 
 
 
-.. image:: output_3_0.png
+.. image:: NOTEBOOK_1_output_3_0.png
 
 
 Just call our ``aa.plot_setting`` function with our optimized color set
@@ -46,7 +46,7 @@ to get this:
 
 
 
-.. image:: output_5_0.png
+.. image:: NOTEBOOK_2_output_5_0.png
 
 
 The settings can be easily adjusted. Use our customized sets of 2 to 9
@@ -68,7 +68,7 @@ colors for an appealing comparison of categorical data via
 
 
 
-.. image:: output_7_0.png
+.. image:: NOTEBOOK_3_output_7_0.png
 
 
 You can easily increase the fontsize of the labels in matching to the
@@ -92,5 +92,6 @@ other elements and create an independent legend like this:
 
 
 
-.. image:: output_9_0.png
+.. image:: NOTEBOOK_4_output_9_0.png
+
 

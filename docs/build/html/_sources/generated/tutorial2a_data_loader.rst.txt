@@ -291,7 +291,7 @@ The protein sequences can have varying length:
 
 
 
-.. image:: output_9_0.png
+.. image:: NOTEBOOK_1_output_9_0.png
 
 
 Which can be easily filtered using ``min_len`` and ``max_len``
@@ -309,7 +309,7 @@ parameters:
 
 
 
-.. image:: output_11_0.png
+.. image:: NOTEBOOK_2_output_11_0.png
 
 
 Loading of protein benchmarks: Amino acid window size
@@ -708,5 +708,6 @@ example, the ``DOM_GSEC_PU`` dataset corresponds to the
       </tbody>
     </table>
     </div>
+
 
 

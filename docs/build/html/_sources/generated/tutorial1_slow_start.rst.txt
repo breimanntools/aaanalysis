@@ -26,6 +26,9 @@ What You Will Learn:
     import matplotlib.pyplot as plt
     import pandas as pd
     import numpy as np
+    
+    import aaanalysis as aa
+    aa.options["verbose"] = False
 
 1. Loading Sequences and Scales
 -------------------------------
@@ -43,8 +46,6 @@ substrates and non-substrates:
 
 .. code:: ipython3
 
-    import aaanalysis as aa
-    
     df_scales = aa.load_scales()
     df_seq = aa.load_dataset(name="DOM_GSEC", n=50)
 
@@ -67,9 +68,9 @@ set of 100 scales, as defined by the ``n_clusters`` parameters:
 
 .. code:: ipython3
 
-    from sklearn.cluster import AgglomerativeClustering
+    from sklearn.cluster import KMeans
     
-    aac = aa.AAclust(model_class=AgglomerativeClustering)
+    aac = aa.AAclust(model_class=KMeans)
     X = np.array(df_scales).T
     scales = aac.fit(X, names=list(df_scales), n_clusters=100).medoid_names_ 
     df_scales = df_scales[scales]
@@ -96,7 +97,6 @@ and non-substrates:
 
 .. code:: ipython3
 
-    y = list(df_seq["label"])
     sf = aa.SequenceFeature()
     df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=["tmd_jmd"])
     split_kws = sf.get_split_kws(n_split_max=1, split_types=["Segment"])
@@ -109,7 +109,8 @@ scales over the entire TMD-JMD sequences:
 .. code:: ipython3
 
     # Small set of CPP features (100 features are created)
-    cpp = aa.CPP(df_scales=df_scales, df_parts=df_parts, split_kws=split_kws, verbose=False)
+    y = list(df_seq["label"])
+    cpp = aa.CPP(df_scales=df_scales, df_parts=df_parts, split_kws=split_kws)
     df_feat = cpp.run(labels=y) 
 
 3. Protein Prediction
@@ -131,17 +132,20 @@ A feature matrix from a given set of CPP features can be created using
 
 .. parsed-literal::
 
-    Mean accuracy of 0.57
+    Mean accuracy of 0.58
 
 
-Creating more features with CPP will take a little time, but improve
+CPP uses around 1000 Splits by default, yielding 100.000 features for
+100 Scales and 1 Part. Creating and filtering all these Part-Split-Scale
+combinations will take a little time (~1.5 minutes for this example on
+an i7-10510U (4 cores, 8 threads) with multiprocessing), but improve
 prediction performance:
 
 .. code:: ipython3
 
     # CPP features with default splits (around 100.000 features)
     df_parts = sf.get_df_parts(df_seq=df_seq)
-    cpp = aa.CPP(df_scales=df_scales, df_parts=df_parts, verbose=False)
+    cpp = aa.CPP(df_scales=df_scales, df_parts=df_parts)
     df_feat = cpp.run(labels=y)
     X = sf.feat_matrix(df_parts=df_parts, features=df_feat["feature"])
     
@@ -160,11 +164,11 @@ prediction performance:
 
 .. parsed-literal::
 
-    Mean accuracy of 0.88
+    Mean accuracy of 0.93
 
 
 
-.. image:: output_13_1.png
+.. image:: NOTEBOOK_1_output_13_1.png
 
 
 4. Explainable AI

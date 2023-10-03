@@ -411,3 +411,4 @@ excluded by setting ``unclassified_out=True``:
     df_scales = aa.load_scales(just_aaindex=True, unclassified_out=True)
     df_raw = aa.load_scales(name="scales_raw")
     df_cat = aa.load_scales(name="scales_cat", just_aaindex=True, unclassified_out=True)
+
