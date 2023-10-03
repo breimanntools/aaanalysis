@@ -1,3 +1,3 @@
-from aaanalysis.aaclust.aaclust import AAclust
+from aaanalysis.aaclust_plot.aaclust_plot import AAclustPlot
 
-__all__ = ["AAclust"]
+__all__ = ["AAclustPlot"]

@@ -10,12 +10,14 @@ import numpy as np
 from aaanalysis.config import options
 
 # Import utility functions explicitly
+from aaanalysis._utils._check_data import (check_X,  check_X_unique_samples, check_labels, check_match_X_labels,
+                                           check_array_like, check_superset_subset,
+                                           check_col_in_df)
+from aaanalysis._utils._check_models import check_mode_class, check_model_kwargs
 from aaanalysis._utils._check_type import (check_number_range, check_number_val, check_str, check_bool,
                                            check_dict, check_tuple, check_list_like,
                                            check_ax)
-from aaanalysis._utils._check_data import (check_X,  check_X_unique_samples, check_labels, check_match_X_labels,
-                                           check_superset_subset,
-                                           check_col_in_df)
+
 from aaanalysis._utils.utils_cpp import (check_color, check_y_categorical, check_labels_, check_ylim,
                                          check_args_len, check_args_len, check_list_parts,
                                          check_split_kws, check_split,

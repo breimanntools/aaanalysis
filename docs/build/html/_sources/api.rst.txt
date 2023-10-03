@@ -33,6 +33,7 @@ Feature Engineering
     :toctree: generated/
 
     aaanalysis.AAclust
+    aaanalysis.AAclustPlot
     aaanalysis.SequenceFeature
     aaanalysis.CPP
     aaanalysis.CPPPlot

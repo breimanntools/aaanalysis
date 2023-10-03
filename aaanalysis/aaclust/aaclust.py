@@ -2,56 +2,28 @@
 This is a script for the AAclust clustering wrapper method.
 """
 import numpy as np
-from typing import Type
-from typing import Optional, Dict, Union, List, Tuple
+from typing import Optional, Dict, Union, List, Tuple, Type
 import inspect
 from inspect import isclass
-from sklearn.cluster import AgglomerativeClustering, KMeans
+from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score, calinski_harabasz_score
 from sklearn.base import ClusterMixin
 from sklearn.exceptions import ConvergenceWarning
 import warnings
 import pandas as pd
 
-from aaanalysis.aaclust._aaclust_bic import bic_score
+
+from aaanalysis.template_classes import Wrapper
 import aaanalysis.utils as ut
+
 from aaanalysis.aaclust._aaclust import (estimate_lower_bound_n_clusters, optimize_n_clusters, merge_clusters,
                                          compute_centers, compute_medoids)
+from aaanalysis.aaclust._aaclust_bic import bic_score
 from aaanalysis.aaclust._aaclust_statics import compute_correlation, name_clusters
-from aaanalysis.template_classes import Wrapper
+
 
 # I Helper Functions
 # Check parameter functions
-def check_mode_class(model_class=None):
-    """"""
-    # Check if model_class is actually a class and not an instance
-    if not isclass(model_class):
-        raise ValueError(f"'{model_class}' is not a model class. Please provide a valid model class.")
-    # Check if model is callable
-    if not callable(getattr(model_class, "__call__", None)):
-        raise ValueError(f"'{model_class}' is not a callable model.")
-    return model_class
-
-def check_model_kwargs(model_class=None, model_kwargs=None):
-    """
-    Check if the provided model has 'n_clusters' as a parameter.
-    Filter the model_kwargs to only include keys that are valid parameters for the model.
-    """
-    model_kwargs = model_kwargs or {}
-    if model_class is None:
-        raise ValueError("'model_class' must be provided.")
-    list_model_args = list(inspect.signature(model_class).parameters.keys())
-    # Check if 'n_clusters' is a parameter of the model
-    if "n_clusters" not in list_model_args:
-        error = f"'n_clusters' should be an argument in the given 'model' ({model_class})."
-        raise ValueError(error)
-    # Filter model_kwargs to only include valid parameters for the model
-    not_valid_kwargs = [x for x in model_kwargs if x not in list_model_args]
-    if len(not_valid_kwargs):
-        raise ValueError(f"'model_kwargs' contains non valid arguments: {not_valid_kwargs}")
-    return model_kwargs
-
-
 def check_merge_metric(merge_metric=None):
     """"""
     if merge_metric is not None and merge_metric not in ut.LIST_METRICS:
@@ -122,7 +94,7 @@ class AAclust(Wrapper):
     Parameters
     ----------
     model_class
-        A clustering model class with ``n_clusters`` parameter. This class will be instantiated during the ``fit`` method.
+        A clustering model class with ``n_clusters`` parameter. This class will be instantiated by the ``fit`` method.
     model_kwargs
         Keyword arguments to pass to the selected clustering model.
     verbose
@@ -164,10 +136,11 @@ class AAclust(Wrapper):
                  model_kwargs: Optional[Dict] = None,
                  verbose: bool = False):
         # Model parameters
-        model_class = check_mode_class(model_class=model_class)
+        model_class = ut.check_mode_class(model_class=model_class)
         if model_kwargs is None and model_class is KMeans:
             model_kwargs = dict(n_init="auto")
-        model_kwargs = check_model_kwargs(model_class=model_class, model_kwargs=model_kwargs)
+        model_kwargs = ut.check_model_kwargs(model_class=model_class, model_kwargs=model_kwargs,
+                                             param_to_check="n_clusters")
         self.model_class = model_class
         self._model_kwargs = model_kwargs
         self._verbose = ut.check_verbose(verbose)
@@ -296,11 +269,11 @@ class AAclust(Wrapper):
             self.medoid_names_ =  [names[i] for i in medoid_ind]
         return self
 
-    @staticmethod
     @ut.catch_runtime_warnings()
-    def eval(X: ut.ArrayLike2D,
-             labels:ut.ArrayLike1D = None
-             ) -> Tuple[float, float, float]:
+    def eval(self,
+             X: ut.ArrayLike2D,
+             labels: Optional[ut.ArrayLike1D] = None
+             ) -> Tuple[int, float, float, float]:
         """Evaluates the quality of clustering using three established measures.
 
         Clustering quality is quantified using:
@@ -323,12 +296,14 @@ class AAclust(Wrapper):
 
         Returns
         -------
+        n_clusters : int
+            Number of clusters, equal to number of medoids.
         BIC : float
-            BIC value for clustering.
+            BIC value for clustering (-inf to inf).
         CH : float
-            CH value for clustering.
+            CH value for clustering (0 to inf).
         SC : float
-            SC value for clustering.
+            SC value for clustering (-1 to 1).
 
         Notes
         -----
@@ -343,8 +318,13 @@ class AAclust(Wrapper):
         # Check input
         X = ut.check_X(X=X)
         ut.check_X_unique_samples(X=X)
+        if labels is None:
+            labels = self.labels_
         labels = ut.check_labels(labels=labels)
         ut.check_match_X_labels(X=X, labels=labels)
+
+        # Number of clusters (number of medoids)
+        n_clusters = len(set(labels))
         # Bayesian Information Criterion
         BIC = bic_score(X, labels)
         # Calinski-Harabasz Index
@@ -357,7 +337,7 @@ class AAclust(Wrapper):
         if np.isnan(SC):
             SC = -1
             warnings.warn("SC was set to -1 because sklearn.metric.silhouette_score returned NaN.", RuntimeWarning)
-        return BIC, CH, SC
+        return n_clusters, BIC, CH, SC
 
     @staticmethod
     def name_clusters(X: ut.ArrayLike2D,

@@ -96,8 +96,9 @@ class TestCompCentersComplex:
         is_invalid = check_invalid_conditions(X, labels)
         if is_invalid:
             with pytest.raises(ValueError):
-                warnings.simplefilter("ignore", RuntimeWarning)
-                aa.AAclust().comp_medoids(X, labels)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    aa.AAclust().comp_medoids(X, labels)
         else:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
@@ -113,4 +114,6 @@ class TestCompCentersComplex:
     def test_combination_invalid_parameters(self, X, labels):
         """Test combination of invalid parameters."""
         with pytest.raises(ValueError):
-            aa.AAclust().comp_medoids(X, labels)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                aa.AAclust().comp_medoids(X, labels)

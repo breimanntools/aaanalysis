@@ -7,7 +7,7 @@ import numpy as np
 from sklearn.utils import check_array
 
 # Helper functions
-def _check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan=False):
+def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan=False):
     """
     Check if the provided value matches the specified dtype.
     If dtype is None, checks for general array-likeness.
@@ -35,7 +35,7 @@ def _check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_na
 # Check feature matrix and labels
 def check_X(X, min_n_samples=3, min_n_features=2, ensure_2d=True, allow_nan=False):
     """Check the feature matrix X is valid."""
-    X = _check_array_like(name="X", val=X, dtype="float", ensure_2d=ensure_2d, allow_nan=allow_nan)
+    X = check_array_like(name="X", val=X, dtype="float", ensure_2d=ensure_2d, allow_nan=allow_nan)
     n_samples, n_features = X.shape
     if n_samples < min_n_samples:
         raise ValueError(f"n_samples ({n_samples} in 'X') should be >= {min_n_samples}."

@@ -88,6 +88,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#feature-engineering">Feature Engineering</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.AAclust.html">aaanalysis.AAclust</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.AAclustPlot.html">aaanalysis.AAclustPlot</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.SequenceFeature.html">aaanalysis.SequenceFeature</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.CPP.html">aaanalysis.CPP</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.CPPPlot.html">aaanalysis.CPPPlot</a></li>
@@ -168,13 +169,16 @@ Python toolkit, which can be imported by:</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.AAclust.html#aaanalysis.AAclust" title="aaanalysis.AAclust"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.AAclust</span></code></a>([model_class, ...])</p></td>
 <td><p>A k-optimized clustering wrapper for selecting redundancy-reduced sets of numerical scales.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature" title="aaanalysis.SequenceFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.SequenceFeature</span></code></a>()</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.AAclustPlot.html#aaanalysis.AAclustPlot" title="aaanalysis.AAclustPlot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.AAclustPlot</span></code></a>([model_class, ...])</p></td>
+<td><p>Plot results of AAclust analysis.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.SequenceFeature.html#aaanalysis.SequenceFeature" title="aaanalysis.SequenceFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.SequenceFeature</span></code></a>()</p></td>
 <td><p>Retrieve and create sequence feature components (Part, Split, and Scale).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.CPP.html#aaanalysis.CPP" title="aaanalysis.CPP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.CPP</span></code></a>([df_scales, df_cat, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.CPP.html#aaanalysis.CPP" title="aaanalysis.CPP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.CPP</span></code></a>([df_scales, df_cat, ...])</p></td>
 <td><p>Create and filter features that are most discriminant between two sets of sequences.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.CPPPlot.html#aaanalysis.CPPPlot" title="aaanalysis.CPPPlot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.CPPPlot</span></code></a>([df_cat, accept_gaps, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.CPPPlot.html#aaanalysis.CPPPlot" title="aaanalysis.CPPPlot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.CPPPlot</span></code></a>([df_cat, accept_gaps, ...])</p></td>
 <td><p>Create and filter features that are most discriminant between two sets of sequences.</p></td>
 </tr>
 </tbody>
@@ -212,8 +216,8 @@ Python toolkit, which can be imported by:</p>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.plot_settings.html#aaanalysis.plot_settings" title="aaanalysis.plot_settings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_settings</span></code></a>([font_scale, font, ...])</p></td>
 <td><p>Configures general plot settings.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_gcfs.html#aaanalysis.plot_gcfs" title="aaanalysis.plot_gcfs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_gcfs</span></code></a>()</p></td>
-<td><p>Gets current font size.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.plot_gcfs.html#aaanalysis.plot_gcfs" title="aaanalysis.plot_gcfs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_gcfs</span></code></a>([option])</p></td>
+<td><p>Gets current font size (or axes linewdith).</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.plot_legend.html#aaanalysis.plot_legend" title="aaanalysis.plot_legend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.plot_legend</span></code></a>([ax, dict_color, ...])</p></td>
 <td><p>Sets an independntly customizable plot legend.</p></td>

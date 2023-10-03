@@ -98,7 +98,8 @@ class TestAAclustEvaluateComplex:
         else:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
-                BIC, CH, SC = aa.AAclust().eval(X, labels)
+                n_clusters, BIC, CH, SC = aa.AAclust().eval(X, labels)
+                assert n_clusters > 0
                 assert -np.inf <= BIC <= np.inf
                 assert 0 <= CH
                 assert -1 <= SC <= 1
