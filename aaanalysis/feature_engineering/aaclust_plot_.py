@@ -12,15 +12,11 @@ import seaborn as sns
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
+from aaanalysis.feature_engineering.aaclust_plot._aaclust_plot_eval import plot_eval
 
 # I Helper Functions
-def _get_rank(data):
+def _get_components(data=None, model_class=None):
     """"""
-    _df = data.copy()
-    _df['BIC_rank'] = _df['BIC'].rank(ascending=False)
-    _df['CH_rank'] = _df['CH'].rank(ascending=False)
-    _df['SC_rank'] = _df['SC'].rank(ascending=False)
-    return _df[['BIC_rank', 'CH_rank', 'SC_rank']].mean(axis=1).round(2)
 
 # TODO add check functions finish other methods, testing, compression
 
@@ -69,28 +65,8 @@ class AAclustPlot:
             raise ValueError(f"'data' should contain the following four columns: {columns}")
         if names is None:
             names = [f"Model {i}" for i in range(1, n_samples+1)]
-        data = pd.DataFrame(data, columns=columns, index=names)
-        data["rank"] = _get_rank(data)
-        data = data.sort_values(by="rank", ascending=True)
         # Plotting
-        fig, axes = plt.subplots(1, 4, sharey=True, figsize=figsize)
-        for i, col in enumerate(columns):
-            ax = axes[i]
-            sns.barplot(ax=ax, data=data, y=data.index, x=col, color=colors[i])
-            # Customize subplots
-            ax.set_ylabel("")
-            ax.set_xlabel(col)
-            ax.axvline(0, color='black') #, linewidth=aa.plot_gcfs("axes.linewidth"))
-            if dict_xlims and col in dict_xlims:
-                ax.set_xlim(dict_xlims[col])
-            if i == 0:
-                ax.set_title("Number of clusters", weight="bold")
-            elif i == 2:
-                ax.set_title("Quality measures", weight="bold")
-            sns.despine(ax=ax, left=True)
-            ax.tick_params(axis='y', which='both', left=False)
-        plt.tight_layout()
-        plt.subplots_adjust(wspace=0.25, hspace=0)
+        fig, axes = plot_eval()
 
 
     def center(self, data):

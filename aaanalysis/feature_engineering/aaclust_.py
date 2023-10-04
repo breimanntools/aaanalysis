@@ -17,7 +17,8 @@ import aaanalysis.utils as ut
 from aaanalysis.feature_engineering.aaclust._aaclust import (estimate_lower_bound_n_clusters, optimize_n_clusters, merge_clusters,
                                                              compute_centers, compute_medoids)
 from aaanalysis.feature_engineering.aaclust._aaclust_bic import bic_score
-from aaanalysis.feature_engineering.aaclust._aaclust_statics import compute_correlation, name_clusters
+from aaanalysis.feature_engineering.aaclust._aaclust_comp_corr import compute_correlation
+from aaanalysis.feature_engineering.aaclust._aaclust_name_clusters import name_clusters
 
 
 # I Helper Functions
