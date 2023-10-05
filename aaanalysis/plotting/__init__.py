@@ -1,16 +1,16 @@
-from aaanalysis.plotting.plot_get_clist_ import plot_get_clist
-from aaanalysis.plotting.plot_get_cmap_ import plot_get_cmap
-from aaanalysis.plotting.plot_get_cdict_ import plot_get_cdict
-from aaanalysis.plotting.plot_settings_ import plot_settings
-from aaanalysis.plotting.plot_gcfs_ import plot_gcfs
-from aaanalysis.plotting.plot_legend_ import plot_legend
+from ._plot_get_clist import plot_get_clist
+from ._plot_get_cmap import plot_get_cmap
+from ._plot_get_cdict import plot_get_cdict
+from ._plot_settings import plot_settings
+from ._plot_gcfs import plot_gcfs
+from ._plot_legend import plot_legend
 
 
-
-__all__ = ["plot_get_clist",
-           "plot_get_cmap",
-           "plot_get_cdict",
-           "plot_settings",
-           "plot_legend",
-           "plot_gcfs",
-           ]
+__all__ = [
+    "plot_get_clist",
+    "plot_get_cmap",
+    "plot_get_cdict",
+    "plot_settings",
+    "plot_legend",
+    "plot_gcfs",
+]

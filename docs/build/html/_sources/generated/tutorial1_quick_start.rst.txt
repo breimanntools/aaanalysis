@@ -75,7 +75,7 @@ features can be created using ``sf.feat_matrix``:
 
 .. parsed-literal::
 
-    Mean accuracy of 0.57
+    Mean accuracy of 0.63
 
 
 Creating more features with CPP will take a little time, but improve
@@ -104,9 +104,10 @@ prediction performance:
 
 .. parsed-literal::
 
-    Mean accuracy of 0.91
+    Mean accuracy of 0.88
 
 
 
 .. image:: NOTEBOOK_1_output_13_1.png
+
 

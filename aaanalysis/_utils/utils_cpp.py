@@ -29,7 +29,7 @@ SPLIT_DESCRIPTION = "\n a) {}(i-th,n_split)" \
                     "\nwhere all numbers should be non-negative integers, and N/C means N or C."\
     .format(STR_SEGMENT, STR_PATTERN, STR_PERIODIC_PATTERN)
 
-
+# TODO to CPP backend
 # II Main Functions
 # General check functions
 def check_color(name=None, val=None, accept_none=False):

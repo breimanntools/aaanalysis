@@ -17,8 +17,8 @@ You can then access all methods and objects via the `aa` alias, such as `aa.load
 
 .. _data_api:
 
-Data
-----
+Data Handling
+-------------
 .. autosummary::
     :toctree: generated/
 
@@ -47,7 +47,7 @@ PU Learning
 
     aaanalysis.dPULearn
 
-.. _plot_api:
+
 
 Explainable AI
 --------------
@@ -56,7 +56,7 @@ Explainable AI
 Perturbation
 ------------
 
-
+.. _plot_api:
 
 Plot Utilities
 --------------

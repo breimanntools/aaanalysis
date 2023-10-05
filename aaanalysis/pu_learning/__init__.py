@@ -1,3 +1,3 @@
-from aaanalysis.pu_learning.dpulearn_ import dPULearn
+from ._dpulearn import dPULearn
 
 __all__ = ["dPULearn"]

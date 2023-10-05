@@ -1,9 +1,14 @@
-from aaanalysis.feature_engineering.aaclust_ import AAclust
-from aaanalysis.feature_engineering.aaclust_plot_ import AAclustPlot
-from aaanalysis.feature_engineering.cpp.feature import SequenceFeature
-from aaanalysis.feature_engineering.cpp.feature import SplitRange
-from aaanalysis.feature_engineering.cpp_plot_ import CPPPlot
-from aaanalysis.feature_engineering.cpp_ import CPP
+from ._aaclust import AAclust
+from ._aaclust_plot import AAclustPlot
+from ._cpp_plot import CPPPlot
+from ._cpp import CPP
+from ._backend.cpp.feature import SequenceFeature, SplitRange
 
-
-__all__ = ["AAclust", "AAclustPlot", "CPP", "CPPPlot", "SequenceFeature", "SplitRange"]
+__all__ = [
+    "AAclust",
+    "AAclustPlot",
+    "SequenceFeature",
+    "SplitRange",
+    "CPP",
+    "CPPPlot",
+]
