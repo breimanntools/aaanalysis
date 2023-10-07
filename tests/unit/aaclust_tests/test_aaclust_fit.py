@@ -40,8 +40,14 @@ class TestAAclust:
         aac = aa.AAclust()
         assert aac.model_class == KMeans
         assert aac._model_kwargs == dict(n_init="auto")
-        assert aac._verbose == False
-        assert aac.model == None
+        assert aac._verbose is True # Default value from options
+        assert aac.model is None
+        aa.options["verbose"] = False
+        assert aac._verbose is True
+        # New options set if new object instantiated
+        aac = aa.AAclust()
+        assert aac._verbose is False
+
 
     # Property-based testing for positive cases
     @given(verbose=some.booleans())

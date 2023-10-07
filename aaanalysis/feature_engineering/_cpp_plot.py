@@ -9,7 +9,7 @@ import inspect
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
-from ._backend.cpp_plot.cpp_plot_method import CPPPlots, get_optimal_fontsize
+from ._backend.cpp.cpp_plot import CPPPlots, get_optimal_fontsize
 
 
 # Settings

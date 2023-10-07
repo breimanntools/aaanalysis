@@ -1,27 +1,18 @@
 """
-This is a script for computing the Bayesian Information Criterion (BIC) used in the AAclust.eval() method.
+This is a script for the backend of the AAclust.eval method.
 """
 import numpy as np
 from scipy.spatial import distance
+from sklearn.metrics import silhouette_score, calinski_harabasz_score
 
-from .aaclust_methods import compute_centers
+from ._utils_aaclust import _compute_centers
 
 # I Helper Functions
 
 
 # II Main function
 def bic_score(X, labels=None):
-    """Computes the BIC metric for given clusters.
-
-    Returns
-    -------
-    BIC : float
-        BIC value between -inf and inf. Greater values indicate better clustering.
-
-    See also
-    --------
-    https://stats.stackexchange.com/questions/90769/using-bic-to-estimate-the-number-of-k-in-kmeans
-    """
+    """Computes the Bayesian Information Criterion (BIC) metric for given clusters."""
     epsilon = 1e-10 # prevent division by zero
 
     # Check if labels match to number of clusters
@@ -35,7 +26,7 @@ def bic_score(X, labels=None):
     # Map labels to increasing order starting with 0
     unique_labels, inverse = np.unique(labels, return_inverse=True)
     labels = inverse
-    centers, center_labels = compute_centers(X, labels=labels)
+    centers, center_labels = _compute_centers(X, labels=labels)
     size_clusters = np.bincount(labels)
 
     # Compute variance over all clusters
@@ -56,3 +47,14 @@ def bic_score(X, labels=None):
     bic_components = size_clusters * (log_size_clusters - log_n_samples) - 0.5 * size_clusters * n_features * log_bcv - 0.5 * (size_clusters - 1) * n_features
     bic = np.sum(bic_components) - const_term
     return bic
+
+
+def evaluate_clustering(X, labels=None):
+    """Evaluate clustering results using BIC, CH, SC scores"""
+    # Bayesian Information Criterion
+    bic = bic_score(X, labels)
+    # Calinski-Harabasz Index
+    ch = calinski_harabasz_score(X, labels)
+    # Silhouette Coefficient
+    sc = silhouette_score(X, labels)
+    return bic, ch, sc

@@ -164,14 +164,13 @@ def read_csv_cached(name, sep=None):
 
 # Main check functions
 def check_verbose(verbose):
-    check_bool(name="verbose", val=verbose)
-    # System level verbosity
-    verbose_value = options['verbose']
-    # If system level is negative return
-    if not verbose_value:
-        return verbose_value
+    if verbose is None:
+        # System level verbosity
+        verbose = options['verbose']
     else:
-        return verbose
+        check_bool(name="verbose", val=verbose)
+    return verbose
+
 
 # TODO check each of this checking function (make simpler)
 # Check key dataframes using constants and general checking functions

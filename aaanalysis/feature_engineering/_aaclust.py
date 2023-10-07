@@ -1,10 +1,9 @@
 """
-This is a script for the AAclust clustering wrapper method.
+This is a script for the interface of the AAclust class, used for clustering wrapper method.
 """
 import numpy as np
 from typing import Optional, Dict, Union, List, Tuple, Type
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score, calinski_harabasz_score
 from sklearn.base import ClusterMixin
 from sklearn.exceptions import ConvergenceWarning
 import warnings
@@ -15,8 +14,9 @@ from aaanalysis.template_classes import Wrapper
 import aaanalysis.utils as ut
 
 from ._backend.aaclust.aaclust_fit import estimate_lower_bound_n_clusters, optimize_n_clusters, merge_clusters
-from ._backend.aaclust.aaclust_eval import bic_score
-from ._backend.aaclust.aaclust_methods import (compute_centers, compute_medoids,
+from ._backend.aaclust.aaclust_eval import evaluate_clustering
+from ._backend.aaclust.aaclust_methods import (compute_centers,
+                                               compute_medoids,
                                                name_clusters,
                                                compute_correlation)
 
@@ -132,7 +132,7 @@ class AAclust(Wrapper):
     def __init__(self,
                  model_class: Type[ClusterMixin] = KMeans,
                  model_kwargs: Optional[Dict] = None,
-                 verbose: bool = False):
+                 verbose: Optional[bool] = None):
         # Model parameters
         model_class = ut.check_mode_class(model_class=model_class)
         if model_kwargs is None and model_class is KMeans:
@@ -310,7 +310,8 @@ class AAclust(Wrapper):
 
         Notes
         -----
-        BIC was modified to align with the SC and CH, so that higher values signify better clustering
+        BIC was adapted form this `StackExchange discussion <https://stats.stackexchange.com/questions/90769/using-bic-to-estimate-the-number-of-k-in-kmeans`
+        and modified to align with the SC and CH score so that higher values signify better clustering,
         contrary to conventional BIC implementation favoring lower values. See [Breimann23a]_.
 
         See Also
@@ -326,21 +327,18 @@ class AAclust(Wrapper):
         labels = ut.check_labels(labels=labels)
         ut.check_match_X_labels(X=X, labels=labels)
 
-        # Number of clusters (number of medoids)
+        # Get number of clusters (number of medoids) and evaluation measures
         n_clusters = len(set(labels))
-        # Bayesian Information Criterion
-        BIC = bic_score(X, labels)
-        # Calinski-Harabasz Index
-        CH = calinski_harabasz_score(X, labels)
-        if np.isnan(CH):
-            CH = 0
-            warnings.warn("CH was set to 0 because sklearn.metric.calinski_harabasz_score returned NaN.", RuntimeWarning)
-        # Silhouette Coefficient
-        SC = silhouette_score(X, labels)
-        if np.isnan(SC):
-            SC = -1
-            warnings.warn("SC was set to -1 because sklearn.metric.silhouette_score returned NaN.", RuntimeWarning)
-        return n_clusters, BIC, CH, SC
+        bic, ch, sc = evaluate_clustering(X, labels=labels)
+        if np.isnan(ch):
+            ch = 0
+            if self._verbose:
+                warnings.warn("CH was set to 0 because sklearn.metric.calinski_harabasz_score returned NaN.", RuntimeWarning)
+        if np.isnan(sc):
+            sc = -1
+            if self._verbose:
+                warnings.warn("SC was set to -1 because sklearn.metric.silhouette_score returned NaN.", RuntimeWarning)
+        return n_clusters, bic, ch, sc
 
     @staticmethod
     def name_clusters(X: ut.ArrayLike2D,

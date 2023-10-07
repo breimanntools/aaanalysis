@@ -1,14 +1,13 @@
 """
-This is a script for the AAclust methods.
+This is a script for the backend of various AAclust methods.
 """
 import pandas as pd
 import numpy as np
 from collections import OrderedDict
 
 import aaanalysis.utils as ut
-from ._utils_aaclust import _cluster_center, _cluster_medoid
+from ._utils_aaclust import _cluster_medoid, _compute_centers
 
-# Settings
 
 # I Helper function
 
@@ -16,10 +15,9 @@ from ._utils_aaclust import _cluster_center, _cluster_medoid
 # II Main Functions
 def compute_centers(X, labels=None):
     """Obtain cluster centers and their labels"""
-    center_labels = list(OrderedDict.fromkeys(labels))
-    list_masks = [[True if i == label else False for i in labels] for label in center_labels]
-    centers = np.concatenate([_cluster_center(X[mask]) for mask in list_masks]).round(3)
-    return centers, np.array(center_labels)
+    # Function in utilis for not breaking dependency rules:
+    # Backend functions should only depend on backend utility functions
+    return _compute_centers(X, labels=labels)
 
 
 def compute_medoids(X, labels=None):

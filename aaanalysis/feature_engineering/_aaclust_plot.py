@@ -1,5 +1,5 @@
 """
-This is a script for the plotting class of AAclust.
+This is a script for the interface of the AAclustPlot class, used for plotting the results of AAclust.
 """
 from sklearn.decomposition import PCA
 from typing import Optional, Dict, Union, List, Tuple, Type
@@ -8,7 +8,7 @@ from sklearn.base import  TransformerMixin
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
-from ._backend.aaclust_plot.aaclust_plot_eval import plot_eval
+from ._backend.aaclust.aaclust_plot import plot_eval
 
 
 # I Helper Functions

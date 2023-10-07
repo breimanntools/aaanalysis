@@ -1,7 +1,8 @@
 """
-This is a script for three main steps of the AAclust algorithm and further helper functions.
+This is a script for the backend of the AAclust.fit() method.
 
-AAclust algorithm steps
+The fit functions performs the AAclust algorithm consisting of three steps:
+
 1. Estimate lower bound for n_clusters
 2. Optimization of n_clusters
 3. Merge clusters
@@ -17,7 +18,7 @@ from ._utils_aaclust import _cluster_center
 
 # I Helper Functions
 
-
+# TODO simplify documenation (DRY)
 # Compute minimum correlation on center or all scales
 def min_cor_center(X):
     """Get minimum for correlation of all columns with cluster center, defined as the mean values
