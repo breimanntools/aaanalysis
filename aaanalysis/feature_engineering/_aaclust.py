@@ -78,6 +78,21 @@ def post_check_n_clusters(n_clusters_actual=None, n_clusters=None):
         warnings.warn(f"'n_clusters' was reduced from {n_clusters} to {n_clusters_actual} "
                       f"during AAclust algorithm.", ConvergenceWarning)
 
+# Common interface
+_common_params_X_labels = """
+    Parameters
+    ----------
+    X : `array-like, shape (n_samples, n_features)`
+        Feature matrix. Rows typically correspond to scales and columns to amino acids.
+    labels : `array-like, shape (n_samples, )`
+        Cluster labels for each sample in ``X``.
+"""
+
+def common_params_X_labels(func):
+    """Decorator to create common parameter interface for X and labels"""
+    func.__doc__ = f"{_common_params_X_labels}\n{func.__doc__}"
+    return func
+
 
 # II Main Functions
 class AAclust(Wrapper):
@@ -173,7 +188,7 @@ class AAclust(Wrapper):
         Parameters
         ----------
         X : `array-like, shape (n_samples, n_features)`
-            Feature matrix. Rows correspond to scales and columns to amino acids.
+            Feature matrix. Rows typically correspond to scales and columns to amino acids.
         n_clusters
             Pre-defined number of clusters. If provided, k is not optimized. Must be 0 > n_clusters > n_samples.
         min_th
@@ -420,7 +435,7 @@ class AAclust(Wrapper):
         Parameters
         ----------
         X : `array-like, shape (n_samples, n_features)`
-            Feature matrix. Rows correspond to scales and columns to amino acids.
+            Feature matrix. Rows typically correspond to scales and columns to amino acids.
         labels : `array-like, shape (n_samples, )`
             Cluster labels for each sample in ``X``.
 

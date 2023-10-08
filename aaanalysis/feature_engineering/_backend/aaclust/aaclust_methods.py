@@ -10,28 +10,6 @@ from ._utils_aaclust import _cluster_medoid, _compute_centers
 
 
 # I Helper function
-
-
-# II Main Functions
-def compute_centers(X, labels=None):
-    """Obtain cluster centers and their labels"""
-    # Function in utilis for not breaking dependency rules:
-    # Backend functions should only depend on backend utility functions
-    return _compute_centers(X, labels=labels)
-
-
-def compute_medoids(X, labels=None):
-    """Obtain cluster medoids and their labels"""
-    unique_labels = list(OrderedDict.fromkeys(labels))
-    list_masks = [[True if i == label else False for i in labels] for label in unique_labels]
-    list_ind_max = [_cluster_medoid(X[mask]) for mask in list_masks]
-    indices = np.array(range(0, len(labels)))
-    medoid_ind = [indices[m][i] for m, i in zip(list_masks, list_ind_max)]
-    medoid_labels = np.array([labels[i] for i in medoid_ind])
-    medoids = np.array([X[i, :] for i in medoid_ind])
-    return medoids, medoid_labels, medoid_ind
-
-
 # Name clusters
 def _get_cluster_names(list_names=None, name_medoid=None,
                        name_unclassified="Unclassified",
@@ -69,6 +47,49 @@ def _get_cluster_names(list_names=None, name_medoid=None,
         names_cluster = [name_unclassified]
     return names_cluster
 
+
+# Compute correlation
+def _sort_X_labels_names(X, labels=None, names=None):
+    """Sort labels"""
+    sorted_order = np.argsort(labels)
+    labels = [labels[i] for i in sorted_order]
+    X = X[sorted_order]
+    if names:
+        names = [names[i] for i in sorted_order]
+    return X, labels, names
+
+def _get_df_corr(X=None, X_ref=None):
+    """Get df with correlations"""
+    # Temporary labels to avoid any confusion with potential duplicates
+    X_labels = range(len(X))
+    X_ref_labels = range(len(X), len(X) + len(X_ref))
+    combined = np.vstack((X, X_ref))
+    df_corr_full = pd.DataFrame(combined.T).corr()
+    # Select only the rows corresponding to X and columns corresponding to X_ref
+    df_corr = df_corr_full.loc[X_labels, X_ref_labels]
+    return df_corr
+
+
+# II Main Functions
+def compute_centers(X, labels=None):
+    """Obtain cluster centers and their labels"""
+    # Function in utilis for not breaking dependency rules:
+    # Backend functions should only depend on backend utility functions
+    return _compute_centers(X, labels=labels)
+
+
+def compute_medoids(X, labels=None):
+    """Obtain cluster medoids and their labels"""
+    unique_labels = list(OrderedDict.fromkeys(labels))
+    list_masks = [[True if i == label else False for i in labels] for label in unique_labels]
+    list_ind_max = [_cluster_medoid(X[mask]) for mask in list_masks]
+    indices = np.array(range(0, len(labels)))
+    medoid_ind = [indices[m][i] for m, i in zip(list_masks, list_ind_max)]
+    medoid_labels = np.array([labels[i] for i in medoid_ind])
+    medoids = np.array([X[i, :] for i in medoid_ind])
+    return medoids, medoid_labels, medoid_ind
+
+
 def name_clusters(X, labels=None, names=None, shorten_names=True):
     """"""
     medoids, medoid_labels, medoid_ind = compute_medoids(X, labels=labels)
@@ -94,27 +115,6 @@ def name_clusters(X, labels=None, names=None, shorten_names=True):
     cluster_names = [dict_cluster_names[label] for label in labels]
     return cluster_names
 
-
-# Compute correlation
-def _sort_X_labels_names(X, labels=None, names=None):
-    """Sort labels"""
-    sorted_order = np.argsort(labels)
-    labels = [labels[i] for i in sorted_order]
-    X = X[sorted_order]
-    if names:
-        names = [names[i] for i in sorted_order]
-    return X, labels, names
-
-def _get_df_corr(X=None, X_ref=None):
-    """Get df with correlations"""
-    # Temporary labels to avoid any confusion with potential duplicates
-    X_labels = range(len(X))
-    X_ref_labels = range(len(X), len(X) + len(X_ref))
-    combined = np.vstack((X, X_ref))
-    df_corr_full = pd.DataFrame(combined.T).corr()
-    # Select only the rows corresponding to X and columns corresponding to X_ref
-    df_corr = df_corr_full.loc[X_labels, X_ref_labels]
-    return df_corr
 
 def compute_correlation(X, X_ref=None, labels=None, labels_ref=None, names=None, names_ref=None):
     """Computes Pearson correlation of given data with reference data."""

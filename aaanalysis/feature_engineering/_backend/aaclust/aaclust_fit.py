@@ -17,9 +17,6 @@ import aaanalysis.utils as ut
 from ._utils_aaclust import _cluster_center
 
 # I Helper Functions
-
-# TODO simplify documenation (DRY)
-# Compute minimum correlation on center or all scales
 def min_cor_center(X):
     """Get minimum for correlation of all columns with cluster center, defined as the mean values
     for each amino acid over all scales."""
@@ -52,9 +49,8 @@ def get_min_cor(X, labels=None, on_center=True):
     return min_cor
 
 
-# Get maximum distance on center or all scales
 def get_max_dist(X, on_center=True, metric="euclidean"):
-    """"""
+    """Get maximum distance on center or all scales"""
     # Maximum distance for cluster
     if on_center:
         # Create new matrix including cluster center
@@ -76,25 +72,6 @@ def _estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.
 
     This function estimates the lower bound of the number of clusters by testing a range
     between 10% and 90% of all observations, incrementing in 10% steps.
-
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
-        Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
-    model : callable, optional
-        k-based clustering model to use.
-    model_kwargs : dict, optional
-        Dictionary of keyword arguments to pass to the clustering model.
-    min_th : float, optional, default = 0.6
-        Minimum threshold of within-cluster Pearson correlation required for a valid clustering.
-    on_center : bool, optional, default = True
-        Whether the minimum correlation is computed for all observations within a cluster
-        or just for the cluster center.
-
-    Returns
-    -------
-    n_clusters : int
-        Estimated lower bound for the number of clusters (k).
     """
     f = lambda c: get_min_cor(X, labels=model(n_clusters=c, **model_kwargs).fit(X).labels_, on_center=on_center)
     # Create range between 10% and 90% of all scales (10% steps) as long as minimum correlation is lower than threshold
@@ -133,27 +110,6 @@ def _optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_
     that the minimum within-cluster correlation is achieved for all clusters. It is an efficiency
     optimized version of a step-wise algorithm where the `n_clusters` is incrementally increased
     until a stop condition is met.
-
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
-        Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
-    model : callable, optional
-        k-based clustering model to use.
-    model_kwargs : dict, optional
-        Dictionary of keyword arguments to pass to the clustering model.
-    n_clusters : int, optional
-        Estimated number of clusters (k).
-    min_th : float, optional, default = 0.5
-        Minimum threshold of within-cluster Pearson correlation required for a valid clustering.
-    on_center : bool, optional, default = True
-        Whether the minimum correlation is computed for all observations within a cluster
-        or just for the cluster center.
-
-    Returns
-    -------
-    n_clusters : int
-        Optimized number of clusters (k) after the recursive clustering.
     """
     n_samples, n_features = X.shape
     f = lambda c: get_min_cor(X, labels=model(n_clusters=c, **model_kwargs).fit(X).labels_, on_center=on_center)
@@ -215,30 +171,7 @@ def merge_clusters(X, n_max=5, labels=None, min_th=0.5, on_center=True, metric="
     based on a specified quality measure (Pearson correlation or a distance metric).
     Merging is conducted only if the new assignment meets a minimum within-cluster Pearson
     correlation threshold defined by `min_th`.
-
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
-        Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
-    n_max : int, optional, default = 5
-        Maximum cluster size for small clusters to be considered for merging.
-    labels : array-like, shape (n_samples,), optional
-        Initial cluster labels for observations.
-    min_th : float, optional, default = 0.5
-        Minimum threshold of within-cluster Pearson correlation required for merging.
-    on_center : bool, optional, default = True
-        Whether the minimum correlation is computed for all observations within a cluster
-        or just for the cluster center.
-    metric : str, optional, default = 'correlation'
-        Quality measure used to optimize merging. Can be 'correlation' for maximum correlation
-        or any valid distance metric like 'euclidean' for minimum distance.
-
-    Returns
-    -------
-    labels : array-like, shape (n_samples,)
-        Cluster labels for observations after merging.
     """
-
     unique_labels = list(OrderedDict.fromkeys(labels))
     for n in range(1, n_max):
         s_clusters = [x for x in unique_labels if labels.count(x) == n]   # Smallest clusters
