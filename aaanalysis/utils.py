@@ -7,33 +7,32 @@ from functools import lru_cache
 import pandas as pd
 import numpy as np
 
-from aaanalysis.config import options
+from .config import options
 
 # Import utility functions explicitly
-from aaanalysis._utils._check_data import (check_X,  check_X_unique_samples, check_labels, check_match_X_labels,
-                                           check_array_like, check_superset_subset,
-                                           check_col_in_df)
-from aaanalysis._utils._check_models import check_mode_class, check_model_kwargs
-from aaanalysis._utils._check_type import (check_number_range, check_number_val, check_str, check_bool,
-                                           check_dict, check_tuple, check_list_like,
-                                           check_ax)
+from ._utils.check_data import (check_X, check_X_unique_samples, check_labels, check_match_X_labels,
+                                check_array_like, check_superset_subset,
+                                check_col_in_df)
+from ._utils.check_models import check_mode_class, check_model_kwargs
+from ._utils.check_type import (check_number_range, check_number_val, check_str, check_bool,
+                                check_dict, check_tuple, check_list_like,
+                                check_ax)
 
-from aaanalysis._utils.utils_cpp import (check_color, check_y_categorical, check_labels_, check_ylim,
-                                         check_args_len, check_args_len, check_list_parts,
-                                         check_split_kws, check_split,
-                                         get_dict_all_scales, get_vf_scale,
-                                         STR_SEGMENT, STR_PATTERN, STR_PERIODIC_PATTERN, STR_AA_GAP,
-                                         LIST_PARTS, LIST_ALL_PARTS, SPLIT_DESCRIPTION)
+from ._utils.utils_cpp import (check_color, check_y_categorical, check_labels_, check_ylim,
+                               check_args_len, check_args_len, check_list_parts,
+                               check_split_kws, check_split,
+                               get_dict_all_scales, get_vf_scale,
+                               STR_SEGMENT, STR_PATTERN, STR_PERIODIC_PATTERN, STR_AA_GAP,
+                               LIST_PARTS, LIST_ALL_PARTS, SPLIT_DESCRIPTION)
 
-from aaanalysis._utils._new_types import ArrayLike1D, ArrayLike2D
+from ._utils.new_types import ArrayLike1D, ArrayLike2D
 
-from aaanalysis._utils._decorators import (catch_runtime_warnings, CatchRuntimeWarnings,
-                                           catch_convergence_warning, ClusteringConvergenceException,
-                                           catch_invalid_divide_warning)
+from ._utils.decorators import (catch_runtime_warnings, CatchRuntimeWarnings,
+                                catch_convergence_warning, ClusteringConvergenceException,
+                                catch_invalid_divide_warning,
+                                doc_params)
 
-from aaanalysis._utils._utils_output import (print_out, print_start_progress, print_progress, print_finished_progress)
-
-
+from ._utils.utils_output import (print_out, print_start_progress, print_progress, print_finished_progress)
 
 
 # Folder structure

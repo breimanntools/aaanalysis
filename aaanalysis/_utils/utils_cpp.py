@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 
-import aaanalysis._utils._check_type as ut_check
+import aaanalysis._utils.check_type as ut_check
 
 # Settings
 
