@@ -18,7 +18,7 @@ class TestAAclustPlotEval:
     def test_data_input(self, n_samples):
         """Test the 'data' parameter with valid data."""
         data = np.random.randn(n_samples, 4)
-        fig, axes =  aa.AAclustPlot().eval(data=data)
+        fig, axes =  aa.AAclustPlot().eval(data_eval=data)
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, np.ndarray)
         assert len(axes) == 4
@@ -29,7 +29,7 @@ class TestAAclustPlotEval:
         """Test the 'names' parameter with valid data."""
         data = np.random.randn(3, 4)
         names = [f"Set {i}" for i in range(3)]
-        fig, axes =  aa.AAclustPlot().eval(data=data, names=names)
+        fig, axes =  aa.AAclustPlot().eval(data_eval=data, names=names)
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, np.ndarray)
         assert len(axes) == 4
@@ -41,7 +41,7 @@ class TestAAclustPlotEval:
         """Test the 'dict_xlims' parameter with valid data."""
         dict_xlims = {"BIC": (2, 5), "CH": (3, 5)}
         data = np.random.randn(5, 4)
-        fig, axes =  aa.AAclustPlot().eval(data=data, dict_xlims=dict_xlims)
+        fig, axes =  aa.AAclustPlot().eval(data_eval=data, dict_xlims=dict_xlims)
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, np.ndarray)
         assert len(axes) == 4
@@ -53,7 +53,7 @@ class TestAAclustPlotEval:
     def test_figsize_input(self, figsize):
         """Test the 'figsize' parameter with valid data."""
         data = np.random.randn(5, 4)
-        fig, axes =  aa.AAclustPlot().eval(data=data, figsize=figsize)
+        fig, axes =  aa.AAclustPlot().eval(data_eval=data, figsize=figsize)
         assert fig.get_size_inches()[0] == figsize[0]
         assert fig.get_size_inches()[1] == figsize[1]
         plt.close()
@@ -65,7 +65,7 @@ class TestAAclustPlotEval:
     def test_data_with_nans_and_infs(self, data):
         """Test the 'data' parameter with NaN and Inf."""
         with pytest.raises(ValueError):
-            fig, axes =  aa.AAclustPlot().eval(data=data)
+            fig, axes =  aa.AAclustPlot().eval(data_eval=data)
             plt.close()
 
 
@@ -73,7 +73,7 @@ class TestAAclustPlotEval:
         """Test with invalid data shape."""
         data = [[0.5, 0.4], [0.3]]
         with pytest.raises(ValueError):
-            aa.AAclustPlot().eval(data=data)
+            aa.AAclustPlot().eval(data_eval=data)
             plt.close()
 
     def test_names_but_no_data(self):
@@ -81,7 +81,7 @@ class TestAAclustPlotEval:
         data = []
         names = ["Set 1", "Set 2", "Set 3"]
         with pytest.raises(ValueError):
-            aa.AAclustPlot().eval(data=data, names=names)
+            aa.AAclustPlot().eval(data_eval=data, names=names)
             plt.close()
 
     @settings(max_examples=5)
@@ -90,7 +90,7 @@ class TestAAclustPlotEval:
         """Test the 'names' parameter with insufficient data."""
         data = np.random.randn(5, 5)
         with pytest.raises(ValueError):
-            fig, axes =  aa.AAclustPlot().eval(data=data, names=names)
+            fig, axes =  aa.AAclustPlot().eval(data_eval=data, names=names)
             plt.close()
 
     def test_invalid_dict_xlims(self):
@@ -98,7 +98,7 @@ class TestAAclustPlotEval:
         dict_xlims = {"BIC": (2, -5), "CH": (3, -5)}
         data = np.random.randn(5, 4)
         with pytest.raises(ValueError):
-            fig, axes =  aa.AAclustPlot().eval(data=data, dict_xlims=dict_xlims)
+            fig, axes =  aa.AAclustPlot().eval(data_eval=data, dict_xlims=dict_xlims)
             plt.close()
 
 
@@ -111,25 +111,25 @@ class TestEvalComplex:
         names = ["Set 1", "Set 2", "Set 3"]
         dict_xlims = {"n_clusters": (2, 4), "BIC": (0.1, 1.0), "CH": (0.2, 0.8), "SC": (0.3, 0.9)}
         figsize = (8, 7)
-        fig, axes =  aa.AAclustPlot().eval(data=data, names=names, dict_xlims=dict_xlims, figsize=figsize)
+        fig, axes =  aa.AAclustPlot().eval(data_eval=data, names=names, dict_xlims=dict_xlims, figsize=figsize)
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, np.ndarray)
         assert len(axes) == 4
         assert isinstance(axes[0], plt.Axes)
         plt.close()
-        fig, axes =  aa.AAclustPlot().eval(data=data, dict_xlims=dict_xlims, figsize=figsize)
+        fig, axes =  aa.AAclustPlot().eval(data_eval=data, dict_xlims=dict_xlims, figsize=figsize)
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, np.ndarray)
         assert len(axes) == 4
         assert isinstance(axes[0], plt.Axes)
         plt.close()
-        fig, axes =  aa.AAclustPlot().eval(data=data, figsize=figsize)
+        fig, axes =  aa.AAclustPlot().eval(data_eval=data, figsize=figsize)
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, np.ndarray)
         assert len(axes) == 4
         assert isinstance(axes[0], plt.Axes)
         plt.close()
-        fig, axes =  aa.AAclustPlot().eval(data=data)
+        fig, axes =  aa.AAclustPlot().eval(data_eval=data)
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, np.ndarray)
         assert len(axes) == 4
@@ -142,7 +142,7 @@ class TestEvalComplex:
         data = np.random.randn(5, 4)
         names = ["Set 1", "Set 2", "Set 3"]  # Insufficient names
         with pytest.raises(ValueError):
-            fig, axes =  aa.AAclustPlot().eval(data=data, names=names)
+            fig, axes =  aa.AAclustPlot().eval(data_eval=data, names=names)
             plt.close()
 
     def test_combination_with_nan_data(self):
@@ -150,5 +150,5 @@ class TestEvalComplex:
         data = np.array([[np.nan, 1.0], [1.0, np.nan]])
         names = ["Set 1", "Set 2"]
         with pytest.raises(ValueError):
-            fig, axes =  aa.AAclustPlot().eval(data=data, names=names)
+            fig, axes =  aa.AAclustPlot().eval(data_eval=data, names=names)
             plt.close()

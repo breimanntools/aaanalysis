@@ -83,6 +83,15 @@ class TestCompCenters:
         with pytest.raises(ValueError):
             aa.AAclust().comp_medoids(X, None)
 
+    @given(metric=some.text())
+    def test_fit_invalid_metric(self, metric):
+        """Test the fit method with an invalid merge metric value."""
+        X = np.random.rand(5, 2)
+        if metric not in ["euclidean", "correlation"]:
+            with pytest.raises(ValueError):
+                aa.AAclust().comp_medoids(X, None, metric=metric)
+
+
 # Complex Cases
 class TestCompCentersComplex:
     """Test comp_medoids function of the AAclust class for Complex Cases."""

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
-from ._backend.aaclust.aaclust_plot import plot_eval
+from ._backend.aaclust.aaclust_plot import plot_eval, plot_center_or_medoid, plot_correlation
 
 
 # I Helper Functions
@@ -59,6 +59,7 @@ def check_dict_xlims(dict_xlims=None):
 
 
 # TODO add check functions finish other methods, testing, compression
+
 # II Main Functions
 class AAclustPlot:
     """Plot results of AAclust analysis.
@@ -89,7 +90,7 @@ class AAclustPlot:
         self.model_kwargs = model_kwargs
 
     @staticmethod
-    def eval(data: ut.ArrayLike2D,
+    def eval(data_eval: ut.ArrayLike2D,
              names: Optional[List[str]] = None,
              dict_xlims: Optional[Union[None, dict]] = None,
              figsize: Optional[Tuple[int, int]] = (7, 6)
@@ -101,7 +102,7 @@ class AAclustPlot:
 
         Parameters
         ----------
-        data : `array-like, shape (n_samples, n_features)`
+        data_eval : `array-like, shape (n_samples, n_features)`
             Evaluation matrix or DataFrame. `Rows` correspond to scale sets and `columns` to the following
             four evaluation measures:
 
@@ -134,9 +135,9 @@ class AAclustPlot:
         * :meth:`AAclust.eval` for details on evaluation measures.
         """
         # Check input
-        ut.check_array_like(name="data", val=data)
+        ut.check_array_like(name="data", val=data_eval)
         ut.check_list_like(name="names", val=names, accept_none=True)
-        df_eval = check_match_data_names(data=data, names=names)
+        df_eval = check_match_data_names(data=data_eval, names=names)
         check_dict_xlims(dict_xlims=dict_xlims)
         ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
         # Plotting
@@ -148,11 +149,62 @@ class AAclustPlot:
         return fig, axes
 
 
-    def center(self, data):
+    def center(self,
+               X: ut.ArrayLike2D,
+               labels: ut.ArrayLike1D = None,
+               figsize: Optional[Tuple[int, int]] = (7, 6),
+               dot_alpha: Optional[float] = 0.75,
+               dot_size: Optional[int] = 100,
+               component_x : Optional[int] = 1,
+               component_y : Optional[int] = 2,
+               ) -> pd.DataFrame:
         """PCA plot of clustering with centers highlighted"""
+        # Check input
+        X = ut.check_X(X=X)
+        ut.check_X_unique_samples(X=X)
+        labels = ut.check_labels(labels=labels)
+        ut.check_match_X_labels(X=X, labels=labels)
+        ut.check_number_range(name="component_x", val=component_x, accept_none=False, min_val=1, just_int=True)
+        ut.check_number_range(name="component_y", val=component_y, accept_none=False, min_val=1, just_int=True)
+        ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
+        ut.check_number_range(name="dot_alpha", val=dot_alpha, accept_none=False, min_val=0, max_val=1, just_int=False)
+        ut.check_number_range(name="dot_size", val=dot_size, accept_none=False, min_val=1, just_int=True)
+        # Create plot
+        df_components = plot_center_or_medoid(X, labels=labels, plot_centers=True,
+                                              component_x=component_x, component_y=component_y,
+                                              model_class=self.model_class, model_kwargs=self.model_kwargs,
+                                              figsize=figsize, dot_size=dot_size, dot_alpha=dot_alpha)
+        return df_components
 
-    def medoids(self, data):
+    def medoids(self,
+                X: ut.ArrayLike2D,
+                labels: ut.ArrayLike1D = None,
+                figsize: Optional[Tuple[int, int]] = (7, 6),
+                dot_alpha: Optional[float] = 0.75,
+                dot_size: Optional[int] = 100,
+                component_x : Optional[int] = 1,
+                component_y : Optional[int] = 2,
+                metric: Optional[str] = "euclidean",
+                ) -> pd.DataFrame:
         """PCA plot of clustering with medoids highlighted"""
+        # Check input
+        X = ut.check_X(X=X)
+        ut.check_X_unique_samples(X=X)
+        labels = ut.check_labels(labels=labels)
+        ut.check_match_X_labels(X=X, labels=labels)
+        ut.check_number_range(name="component_x", val=component_x, accept_none=False, min_val=1, just_int=True)
+        ut.check_number_range(name="component_y", val=component_y, accept_none=False, min_val=1, just_int=True)
+        ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
+        ut.check_number_range(name="dot_alpha", val=dot_alpha, accept_none=False, min_val=0, max_val=1, just_int=False)
+        ut.check_number_range(name="dot_size", val=dot_size, accept_none=False, min_val=1, just_int=True)
+        ut.check_metric(metric=metric)
+        # Create plot
+        df_components = plot_center_or_medoid(X, labels=labels, plot_centers=False, component_x=component_x,
+                                              component_y=component_y, metric=metric, model_class=self.model_class,
+                                              model_kwargs=self.model_kwargs, figsize=figsize, dot_size=dot_size,
+                                              dot_alpha=dot_alpha)
+
+        return df_components
 
     @staticmethod
     def correlation(df_corr=None):

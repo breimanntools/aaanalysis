@@ -1,5 +1,6 @@
 """
-Config with folder structure. Most imported modules contain checking functions for code validation
+This is the main script for utility functions, folder structure, and constants.
+Most imported modules contain checking functions for code validation.
 """
 import os
 import platform
@@ -33,6 +34,7 @@ from ._utils.decorators import (catch_runtime_warnings, CatchRuntimeWarnings,
                                 doc_params)
 
 from ._utils.utils_output import (print_out, print_start_progress, print_progress, print_finished_progress)
+from ._utils.utils_ploting import (plot_gco)
 
 
 # Folder structure
@@ -115,7 +117,6 @@ COL_FEAT_IMPACT = "feat_impact"
 # Column name datasets (DOM_GSEC)
 
 
-
 # Column names cpp features
 
 
@@ -175,6 +176,13 @@ def check_verbose(verbose):
     else:
         check_bool(name="verbose", val=verbose)
     return verbose
+
+
+def check_metric(metric=None):
+    """"""
+    if metric not in LIST_METRICS:
+        error = f"'metric' should be None or one of following: {LIST_METRICS}"
+        raise ValueError(error)
 
 
 # TODO check each of this checking function (make simpler)

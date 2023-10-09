@@ -6,7 +6,7 @@ import numpy as np
 from collections import OrderedDict
 
 import aaanalysis.utils as ut
-from ._utils_aaclust import _cluster_medoid, _compute_centers
+from ._utils_aaclust import _compute_centers, _compute_medoids
 
 
 # I Helper function
@@ -78,16 +78,13 @@ def compute_centers(X, labels=None):
     return _compute_centers(X, labels=labels)
 
 
-def compute_medoids(X, labels=None):
+def compute_medoids(X, labels=None, metric="correlation"):
     """Obtain cluster medoids and their labels"""
-    unique_labels = list(OrderedDict.fromkeys(labels))
-    list_masks = [[True if i == label else False for i in labels] for label in unique_labels]
-    list_ind_max = [_cluster_medoid(X[mask]) for mask in list_masks]
-    indices = np.array(range(0, len(labels)))
-    medoid_ind = [indices[m][i] for m, i in zip(list_masks, list_ind_max)]
-    medoid_labels = np.array([labels[i] for i in medoid_ind])
-    medoids = np.array([X[i, :] for i in medoid_ind])
-    return medoids, medoid_labels, medoid_ind
+    if metric is None:
+        metric = "correlation"
+    # Function in utilis for not breaking dependency rules:
+    # Backend functions should only depend on backend utility functions
+    return _compute_medoids(X, labels=labels, metric=metric)
 
 
 def name_clusters(X, labels=None, names=None, shorten_names=True):

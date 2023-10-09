@@ -71,11 +71,11 @@ def check_labels(labels=None):
     return labels
 
 
-def check_match_X_labels(X=None, labels=None):
+def check_match_X_labels(X=None, X_name="X", labels=None, labels_name="labels"):
     """"""
     n_samples, n_features = X.shape
     if n_samples != len(labels):
-        raise ValueError(f"n_samples does not match for 'X' ({len(X)}) and 'labels' ({len(labels)}).")
+        raise ValueError(f"n_samples does not match for '{X_name}' ({len(X)}) and '{labels_name}' ({len(labels)}).")
 
 # Check sets
 def check_superset_subset(subset=None, superset=None, name_subset=None, name_superset=None):

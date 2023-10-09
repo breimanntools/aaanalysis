@@ -22,14 +22,6 @@ from ._backend.aaclust.aaclust_methods import (compute_centers,
                                                compute_correlation)
 
 # I Helper Functions
-# Check parameter functions
-def check_merge_metric(merge_metric=None):
-    """"""
-    if merge_metric is not None and merge_metric not in ut.LIST_METRICS:
-        error = f"'merge_metric' should be None or one of following: {ut.LIST_METRICS}"
-        raise ValueError(error)
-
-
 # Check parameter matching functions
 def check_match_X_names(X=None, names=None, accept_none=True):
     """"""
@@ -122,11 +114,11 @@ class AAclust(Wrapper):
         Cluster labels in the order of samples in ``X``.
     centers_ : `array-like, shape (n_clusters, n_features)`
         Average scale values corresponding to each cluster.
-    center_labels_ : `array-like, shape (n_clusters, )`
+    labels_centers_ : `array-like, shape (n_clusters, )`
         Cluster labels for each cluster center.
     medoids_ : `array-like, shape (n_clusters, n_features)`
         Representative samples, one for each cluster.
-    medoid_labels_ :  `array-like, shape (n_clusters, )`
+    labels_medoids_ :  `array-like, shape (n_clusters, )`
         Cluster labels for each medoid.
     is_medoid_ : `array-like, shape (n_samples, )`
         Array indicating samples being medoids (1) or not (0). Same order as ``labels_``.
@@ -161,9 +153,9 @@ class AAclust(Wrapper):
         self.n_clusters: Optional[int] = None
         self.labels_: Optional[ut.ArrayLike1D] = None
         self.centers_: Optional[ut.ArrayLike1D] = None
-        self.center_labels_: Optional[ut.ArrayLike1D] = None
+        self.labels_centers_: Optional[ut.ArrayLike1D] = None
         self.medoids_: Optional[ut.ArrayLike1D] = None
-        self.medoid_labels_: Optional[ut.ArrayLike1D] = None
+        self.labels_medoids_: Optional[ut.ArrayLike1D] = None
         self.is_medoid_: Optional[ut.ArrayLike1D] = None
         self.medoid_names_: Optional[List[str]] = None
 
@@ -174,7 +166,8 @@ class AAclust(Wrapper):
             n_clusters: Optional[int] = None,
             on_center: bool = True,
             min_th: float = 0.3,
-            merge_metric: Union[str, None] = "euclidean",
+            merge: bool = True,
+            metric: str = "euclidean",
             names: Optional[List[str]] = None) -> "AAclust":
         """
         Applies AAclust algorithm to feature matrix (``X``).
@@ -194,14 +187,15 @@ class AAclust(Wrapper):
             Pearson correlation threshold for clustering (between 0 and 1).
         on_center
             If ``True``, ``min_th`` is applied to the cluster center. Otherwise, to all cluster members.
-        merge_metric
-            Metric used as similarity measure for optional cluster merging:
+        merge
+            If ``True``, the optional merging step is performed.
+        metric
+            Metric used as similarity measure for optional cluster merging and obtained medoids:
 
-             - ``None``: No merging is performed
-             - ``correlation``: Pearson correlation
-             - ``euclidean``: Euclidean distance
-             - ``manhattan``: Manhattan distance
-             - ``cosine``: Cosine distance
+             - ``correlation``: Pearson correlation (maximum)
+             - ``euclidean``: Euclidean distance (minimum)
+             - ``manhattan``: Manhattan distance (minimum)
+             - ``cosine``: Cosine distance (minimum)
 
         names
             List of sample names. If provided, sets :attr:`AAclust.medoid_names_` attribute.
@@ -236,7 +230,7 @@ class AAclust(Wrapper):
         names = ut.check_list_like(name="names", val=names, accept_none=True)
         ut.check_number_range(name="mint_th", val=min_th, min_val=0, max_val=1, just_int=False, accept_none=False)
         ut.check_number_range(name="n_clusters", val=n_clusters, min_val=1, just_int=True, accept_none=True)
-        check_merge_metric(merge_metric=merge_metric)
+        ut.check_metric(metric=metric)
         ut.check_bool(name="on_center", val=on_center)
 
         check_match_X_n_clusters(X=X, n_clusters=n_clusters, accept_none=True)
@@ -263,10 +257,10 @@ class AAclust(Wrapper):
             self.model = self.model_class(n_clusters=n_clusters, **self._model_kwargs)
             labels = self.model.fit(X).labels_.tolist()
             # Step 3. Cluster merging (optional)
-            if merge_metric is not None:
+            if metric is not None:
                 if self._verbose:
                     ut.print_out(f"3. Cluster merging (k={len(labels)})", end="")
-                labels = merge_clusters(X, labels=labels, min_th=min_th, on_center=on_center, metric=merge_metric)
+                labels = merge_clusters(X, labels=labels, min_th=min_th, on_center=on_center, metric=metric)
                 n_clusters = len(set(labels))
 
         # Obtain cluster centers and medoids
@@ -278,9 +272,9 @@ class AAclust(Wrapper):
         self.n_clusters = len(set(labels))
         self.labels_ = np.array(labels)
         self.centers_ = centers
-        self.center_labels_ = center_labels
+        self.labels_centers_ = center_labels
         self.medoids_ = medoids     # Representative scales
-        self.medoid_labels_ = medoid_labels
+        self.labels_medoids_ = medoid_labels
         self.is_medoid_ = np.array([i in medoid_ind for i in range(0, len(labels))])
         if names is not None:
             self.medoid_names_ =  [names[i] for i in medoid_ind]
@@ -341,7 +335,6 @@ class AAclust(Wrapper):
             labels = self.labels_
         labels = ut.check_labels(labels=labels)
         ut.check_match_X_labels(X=X, labels=labels)
-
         # Get number of clusters (number of medoids) and evaluation measures
         n_clusters = len(set(labels))
         bic, ch, sc = evaluate_clustering(X, labels=labels)
@@ -413,7 +406,7 @@ class AAclust(Wrapper):
         -------
         centers : `array-like, shape (n_clusters, )`
             The computed center for each cluster.
-        center_labels : `array-like, shape (n_clusters, )`
+        labels_centers : `array-like, shape (n_clusters, )`
             The labels associated with each computed center.
         """
         # Check input
@@ -422,14 +415,15 @@ class AAclust(Wrapper):
         labels = ut.check_labels(labels=labels)
         ut.check_match_X_labels(X=X, labels=labels)
         # Get cluster centers
-        centers, center_labels = compute_centers(X, labels=labels)
-        return centers, center_labels
+        centers, labels_centers = compute_centers(X, labels=labels)
+        return centers, labels_centers
 
     @staticmethod
     @ut.doc_params(doc_param_X=doc_param_X,
                    doc_param_labels=doc_param_labels)
     def comp_medoids(X: ut.ArrayLike2D,
-                     labels: ut.ArrayLike1D = None
+                     labels: ut.ArrayLike1D = None,
+                     metric: str = "correlation"
                      ) -> Tuple[ut.ArrayLike1D, ut.ArrayLike1D]:
         """
         Computes the medoid of each cluster based on the given labels.
@@ -438,12 +432,19 @@ class AAclust(Wrapper):
         ----------
         {doc_param_X}
         {doc_param_labels}
+        metric
+            Metric used as similarity measure to obtain medoids:
+
+             - ``correlation``: Pearson correlation (maximum)
+             - ``euclidean``: Euclidean distance (minimum)
+             - ``manhattan``: Manhattan distance (minimum)
+             - ``cosine``: Cosine distance (minimum)
 
         Returns
         -------
         medoids : `array-like, shape (n_clusters, )`
             The medoid for each cluster.
-        medoid_labels : `array-like, shape (n_clusters, )`
+        labels_medoids : `array-like, shape (n_clusters, )`
             The labels corresponding to each medoid.
         """
         # Check input
@@ -451,9 +452,10 @@ class AAclust(Wrapper):
         ut.check_X_unique_samples(X=X)
         labels = ut.check_labels(labels=labels)
         ut.check_match_X_labels(X=X, labels=labels)
+        ut.check_metric(metric=metric)
         # Get cluster medoids
-        medoids, medoid_labels, _ = compute_medoids(X, labels=labels)
-        return medoids, medoid_labels
+        medoids, labels_medoids, _ = compute_medoids(X, labels=labels, metric=metric)
+        return medoids, labels_medoids
 
     @staticmethod
     @ut.doc_params(doc_param_X=doc_param_X,

@@ -101,9 +101,9 @@ class TestAAclust:
         assert isinstance(aac.n_clusters, int)
         assert isinstance(aac.labels_, np.ndarray)
         assert isinstance(aac.centers_, np.ndarray)
-        assert isinstance(aac.center_labels_, np.ndarray)
+        assert isinstance(aac.labels_centers_, np.ndarray)
         assert isinstance(aac.medoids_, np.ndarray)
-        assert isinstance(aac.medoid_labels_, np.ndarray)
+        assert isinstance(aac.labels_medoids_, np.ndarray)
         assert isinstance(aac.is_medoid_, np.ndarray)
 
     @settings(max_examples=10)
@@ -124,7 +124,7 @@ class TestAAclust:
         X = np.random.rand(100, 10)
         aac = aa.AAclust()
         aac.fit(X, n_clusters=5)
-        for i, label in enumerate(aac.medoid_labels_):
+        for i, label in enumerate(aac.labels_medoids_):
             assert aac.is_medoid_[np.where(aac.labels_ == label)[0]].sum() == 1  # Only one medoid per cluster.
 
     def test_fit_no_names(self):
@@ -136,26 +136,26 @@ class TestAAclust:
         aac.fit(X, n_clusters=5)
         assert aac.medoid_names_ is None
 
-    def test_merge_metric(self):
+    def test_metric(self):
         """
-        Test the 'merge_metric' parameter with its different options.
+        Test the 'metric' parameter with its different options.
         """
-        valid_merge_metrics = ["correlation", None, "manhattan",  "euclidean", "cosine"]
+        valid_metrics = ["correlation", "manhattan",  "euclidean", "cosine"]
         X = np.random.rand(100, 10)
         aac = aa.AAclust()
-        for merge_metric in valid_merge_metrics:
-            aac.fit(X, merge_metric=merge_metric)
+        for metric in valid_metrics:
+            aac.fit(X, metric=metric)
 
     @settings(max_examples=10)
-    @given(merge_metric=some.text(min_size=1).filter(lambda x: x not in ["correlation", None, "manhattan", "euclidean", "cosine"]))
-    def test_invalid_merge_metric(self, merge_metric):
+    @given(metric=some.text(min_size=1).filter(lambda x: x not in ["correlation", None, "manhattan", "euclidean", "cosine"]))
+    def test_invalid_metric(self, metric):
         """
-        Test that using an invalid 'merge_metric' value raises an error.
+        Test that using an invalid 'metric' value raises an error.
         """
         X = np.random.rand(100, 10)
         aac = aa.AAclust()
         with pytest.raises(ValueError):  # Or whatever error you expect
-            aac.fit(X, n_clusters=5, merge_metric=merge_metric)
+            aac.fit(X, n_clusters=5, metric=metric)
 
 
 class TestAAclustComplex:
@@ -238,11 +238,11 @@ class TestAAclustComplex:
             model = aa.AAclust()
             model.fit("invalid")
 
-    @given(merge_metric=some.text())
-    @example(merge_metric="invalid_option")
-    def test_fit_invalid_merge_metric(self, merge_metric):
+    @given(metric=some.text())
+    @example(metric="invalid_option")
+    def test_fit_invalid_metric(self, metric):
         """Test the fit method with an invalid merge metric value."""
-        if merge_metric not in ["euclidean", "pearson", None]:
+        if metric not in ["euclidean", "correlation"]:
             with pytest.raises(ValueError):
                 model = aa.AAclust()
-                model.fit([[1, 2], [2, 3]], merge_metric=merge_metric)
+                model.fit([[1, 2], [2, 3]], metric=metric)

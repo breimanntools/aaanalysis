@@ -58,7 +58,7 @@ class TestCompCorrelation:
         if is_invalid:
             with pytest.raises(ValueError):
                 warnings.simplefilter("ignore", RuntimeWarning)
-                aa.AAclust.comp_correlation(X, X_ref, labels)
+                aa.AAclust.comp_correlation(X, X_ref=X_ref, labels=labels)
 
     @given(labels_ref=npst.arrays(dtype=np.int32,
                                   shape=npst.array_shapes(min_dims=1, max_dims=1, min_side=10, max_side=30),
@@ -74,7 +74,7 @@ class TestCompCorrelation:
                 warnings.simplefilter("ignore", RuntimeWarning)
                 aa.AAclust.comp_correlation(X, X_ref=X_ref, labels=labels, labels_ref=labels_ref)
         else:
-            assert isinstance(aa.AAclust.comp_correlation(X, X_ref, labels, labels_ref), pd.DataFrame)
+            assert isinstance(aa.AAclust.comp_correlation(X, labels=labels, X_ref=X_ref, labels_ref=labels_ref), pd.DataFrame)
 
 
 
@@ -87,7 +87,7 @@ class TestCompCorrelation:
         X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
         X_ref = np.array([[1.0, 2.0], [3.0, 4.0]])
         with pytest.raises(ValueError):
-            aa.AAclust.comp_correlation(X, X_ref, labels=np.array([1, 2, 1]), labels_ref=labels_ref)
+            aa.AAclust.comp_correlation(X, labels=np.array([1, 2, 1]), X_ref=X_ref, labels_ref=labels_ref)
 
     @given(names=some.lists(some.text(), min_size=1, max_size=5))
     def test_valid_names(self, names):
@@ -131,9 +131,9 @@ class TestCompCorrelation:
         is_invalid = check_invalid_conditions(X, labels) or check_invalid_conditions(X_ref, labels_ref, min_samples=1, check_unique=False)
         if is_invalid:
             with pytest.raises(ValueError):
-                aa.AAclust.comp_correlation(X, X_ref, labels, labels_ref, names_ref=names_ref)
+                aa.AAclust.comp_correlation(X, X_ref=X_ref, labels=labels, labels_ref=labels_ref, names_ref=names_ref)
         else:
-            result_df = aa.AAclust.comp_correlation(X, X_ref, labels, labels_ref, names_ref=names_ref)
+            result_df = aa.AAclust.comp_correlation(X, X_ref=X_ref, labels=labels, labels_ref=labels_ref, names_ref=names_ref)
             assert isinstance(result_df, pd.DataFrame)
 
     @given(names_ref=some.lists(some.integers(), min_size=1, max_size=5))
@@ -146,7 +146,7 @@ class TestCompCorrelation:
         is_invalid = check_invalid_conditions(X, labels) or check_invalid_conditions(X_ref, labels_ref, min_samples=1, check_unique=False)
         if is_invalid:
             with pytest.raises(ValueError):
-                aa.AAclust.comp_correlation(X, X_ref, labels, labels_ref, names_ref=names_ref)
+                aa.AAclust.comp_correlation(X, X_ref=X_ref, labels=labels, labels_ref=labels_ref, names_ref=names_ref)
 
 
 # Complex Cases
