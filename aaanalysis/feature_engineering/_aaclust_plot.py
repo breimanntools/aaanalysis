@@ -60,7 +60,6 @@ def check_dict_xlims(dict_xlims=None):
 
 
 # TODO add check functions finish other methods, testing, compression
-
 # II Main Functions
 class AAclustPlot:
     """Plot results of AAclust analysis.
@@ -151,7 +150,7 @@ class AAclustPlot:
                               colors=colors)
         return fig, axes
 
-
+    # TODO check functions, docstring, testing
     def center(self,
                X: ut.ArrayLike2D,
                labels: ut.ArrayLike1D = None,
@@ -193,6 +192,7 @@ class AAclustPlot:
                                                   legend=legend, palette=palette)
         return ax, df_components
 
+    # TODO check functions, docstring, testing
     def medoids(self,
                 X: ut.ArrayLike2D,
                 labels: ut.ArrayLike1D = None,
@@ -205,6 +205,7 @@ class AAclustPlot:
                 dot_size: Optional[int] = 100,
                 legend: Optional[bool] = True,
                 palette: Optional[mpl.colors.ListedColormap] = None,
+                return_data : Optional[bool] = False
                 ) -> Tuple[plt.Axes, pd.DataFrame]:
         """PCA plot of clustering with medoids highlighted"""
         # Check input
@@ -225,15 +226,73 @@ class AAclustPlot:
                                                   ax=ax, figsize=figsize,
                                                   dot_size=dot_size, dot_alpha=dot_alpha,
                                                   legend=legend, palette=palette)
+        if return_data:
+           return df_components
+        return ax
 
-        return ax, df_components
 
+    # TODO check functions, docstring, testing
     @staticmethod
-    def correlation(df_corr=None, labels_sorted=None, **kwargs_heatmap):
-        """Heatmap for correlation
+    def correlation(df_corr: Optional[pd.DataFrame] = None,
+                    labels: Optional[List[str]] = None,
+                    bar_position: str = "left",
+                    bar_width: float = 0.1,
+                    bar_spacing: float = 0.1,
+                    bar_colors: Union[str, List[str]] = "gray",
+                    bar_ticklabel_pad: Optional[float] = None,
+                    vmin: float = -1,
+                    vmax: float = 1,
+                    cmap: str = "viridis",
+                    **kwargs_heatmap
+                    ) -> plt.Axes:
+        """
+        Heatmap for correlation matrix with colored sidebar to label clusters.
+
+        Parameters
+        ----------
+        df_corr : `array-like, shape (n_samples, n_clusters)`
+            DataFrame with correlation matrix. `Rows` typically correspond to scales and `columns` to clusters.
+        labels
+            Labels determining the grouping and coloring of the side color bar.
+            It should be of the same length as `df_corr` columns/rows.
+            Defaults to None.
+        bar_position
+            Position of the colored sidebar (``left``, ``right``, ``top``, or ``down``). If ``None``, no sidebar is added.
+        bar_width
+            Width of the sidebar.
+        bar_spacing
+            Space between the heatmap and the side color bar.
+        bar_colors
+            Either a single color or a list of colors for each unique label in `labels`.
+        bar_ticklabel_pad
+            Padding for y-axis tick labels. If ``None``, uses default padding.
+        vmin
+            Minimum value of the color scale in the ``sns.heatmap()``.
+        vmax
+            Maximum value of the color scale in the ``sns.heatmap()``.
+        cmap
+            Colormap to be used for the ``sns.heatmap()``.
+        **kwargs_heatmap
+            Additional keyword arguments passed to ``sns.heatmap()``.
+
+        Returns
+        -------
+        ax : matplotlib.axes._axes.Axes
+            Axes object with the correlation heatmap.
+
+        Notes
+        -----
+        - Ensure `labels` and `df_corr` are in the same order to avoid mislabeling.
+
         See Also
         --------
-        - :func:`seaborn.heatmap` for information on kwargs_heatmap.
+        sns.heatmap : Seaborn function for creating heatmaps.
+
         """
-        plot_correlation(df_corr=df_corr, labels_sorted=labels_sorted, **kwargs_heatmap)
+        ax = plot_correlation(df_corr=df_corr, labels_sorted=labels,
+                              bar_position=bar_position,
+                              bar_width=bar_width, bar_spacing=bar_spacing, bar_colors=bar_colors,
+                              bar_ticklabel_pad=bar_ticklabel_pad,
+                              vmin=vmin, vmax=vmax, cmap=cmap, **kwargs_heatmap)
         plt.tight_layout()
+        return ax

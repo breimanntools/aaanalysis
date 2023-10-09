@@ -34,7 +34,7 @@ from ._utils.decorators import (catch_runtime_warnings, CatchRuntimeWarnings,
                                 doc_params)
 
 from ._utils.utils_output import (print_out, print_start_progress, print_progress, print_finished_progress)
-from ._utils.utils_ploting import (plot_gco)
+from ._utils.utils_ploting import plot_gco, plot_add_bars
 
 
 # Folder structure

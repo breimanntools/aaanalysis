@@ -21,7 +21,7 @@ class TestAAclustPlot:
         assert aac_plot.model_class == PCA
 
     # Negative Test Cases
-    def test_invalid_key_model_kwargs(self, model_kwargs):
+    def test_invalid_key_model_kwargs(self):
         """Test invalid keys for model_kwargs parameter."""
         model_kwargs = {"Wrong key": 1}
         with pytest.raises(ValueError):  # Adjust depending on real check functions

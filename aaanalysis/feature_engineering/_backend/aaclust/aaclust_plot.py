@@ -143,14 +143,16 @@ def plot_center_or_medoid(X=None, labels=None,
     return ax, df_components
 
 
-def plot_correlation(df_corr=None, labels_sorted=None, **kwargs):
-    """"""
-    _kwargs = dict(cmap="viridis", vmin=-1, vmax=1,
-                   cbar_kws = {"label": "Pearson correlation"})
-
-    _kwargs.update(**kwargs)
-    ax = sns.heatmap(df_corr, **_kwargs)
-    print(labels_sorted)
+def plot_correlation(df_corr=None, labels_sorted=None,
+                     bar_position="left", bar_width=0.1, bar_spacing=0.1, bar_colors="gray", bar_ticklabel_pad=None,
+                     vmin=-1, vmax=1, cmap="viridis", **kwargs_heatmap):
+    """Plots heatmap for clustering results with rows (y-axis) corresponding to scales and columns (x-axis) to clusters."""
+    # Plot heatmap
+    _kwargs_heatmap = {"cmap": cmap, "vmin": vmin, "vmax": vmax,
+                       "cbar_kws": {"label": "Pearson correlation"},
+                       **kwargs_heatmap}
+    ax = sns.heatmap(data=df_corr, **_kwargs_heatmap)
+    # Adjust ticks
     ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
     # Customizing color bart tick lines
@@ -158,5 +160,11 @@ def plot_correlation(df_corr=None, labels_sorted=None, **kwargs):
     lw = ut.plot_gco(option="axes.linewidth")
     fs = ut.plot_gco(option="font.size")
     cbar.ax.tick_params(axis='y', width=lw, length=6, color='black', labelsize=fs-1)
+    # Add bars for highlighting clustering
+    if bar_position is not None:
+        ut.plot_add_bars(ax=ax, labels=labels_sorted, bar_spacing=bar_spacing, bar_width=bar_width,
+                         position=bar_position, colors=bar_colors)
+        if bar_ticklabel_pad is not None:
+            ax.tick_params(axis="y", which="both", pad=bar_ticklabel_pad)
     plt.tight_layout()
     return ax
