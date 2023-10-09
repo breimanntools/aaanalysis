@@ -45,8 +45,10 @@ class TestCompCorrelation:
         else:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
-                result_df = aa.AAclust.comp_correlation(X, labels=labels)
+                result_df, labels_sorted = aa.AAclust.comp_correlation(X, labels=labels)
                 assert isinstance(result_df, pd.DataFrame)
+                assert len(result_df) == len(labels_sorted)
+                assert isinstance(labels_sorted, np.ndarray)
 
     @given(X_ref=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=1, max_side=5),
                              elements=some.floats(allow_nan=True, allow_infinity=True)))
@@ -74,7 +76,10 @@ class TestCompCorrelation:
                 warnings.simplefilter("ignore", RuntimeWarning)
                 aa.AAclust.comp_correlation(X, X_ref=X_ref, labels=labels, labels_ref=labels_ref)
         else:
-            assert isinstance(aa.AAclust.comp_correlation(X, labels=labels, X_ref=X_ref, labels_ref=labels_ref), pd.DataFrame)
+            result_df, labels_sorted = aa.AAclust.comp_correlation(X, labels=labels, X_ref=X_ref, labels_ref=labels_ref)
+            assert isinstance(result_df, pd.DataFrame)
+            assert len(result_df) == len(labels_sorted)
+            assert isinstance(labels_sorted, np.ndarray)
 
 
 
@@ -101,8 +106,10 @@ class TestCompCorrelation:
                 aa.AAclust.comp_correlation(X, labels=labels, names=names)
         else:
             warnings.simplefilter("ignore", RuntimeWarning)
-            result_df = aa.AAclust.comp_correlation(X, labels=labels, names=names)
+            result_df, labels_sorted = aa.AAclust.comp_correlation(X, labels=labels, names=names)
             assert isinstance(result_df, pd.DataFrame)
+            assert len(result_df) == len(labels_sorted)
+            assert isinstance(labels_sorted, np.ndarray)
 
 
     @given(names=some.lists(some.integers(), min_size=1, max_size=5))
@@ -133,8 +140,10 @@ class TestCompCorrelation:
             with pytest.raises(ValueError):
                 aa.AAclust.comp_correlation(X, X_ref=X_ref, labels=labels, labels_ref=labels_ref, names_ref=names_ref)
         else:
-            result_df = aa.AAclust.comp_correlation(X, X_ref=X_ref, labels=labels, labels_ref=labels_ref, names_ref=names_ref)
+            result_df, labels_sorted = aa.AAclust.comp_correlation(X, X_ref=X_ref, labels=labels, labels_ref=labels_ref, names_ref=names_ref)
             assert isinstance(result_df, pd.DataFrame)
+            assert len(result_df) == len(labels_sorted)
+            assert isinstance(labels_sorted, np.ndarray)
 
     @given(names_ref=some.lists(some.integers(), min_size=1, max_size=5))
     def test_invalid_names_ref_dtype(self, names_ref):
@@ -171,8 +180,10 @@ class TestCompCorrelationComplex:
         else:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
-                result_df = aa.AAclust.comp_correlation(X, X_ref=X_ref, labels=labels, labels_ref=labels_ref, names=names, names_ref=names_ref)
+                result_df, labels_sorted = aa.AAclust.comp_correlation(X, X_ref=X_ref, labels=labels, labels_ref=labels_ref, names=names, names_ref=names_ref)
                 assert isinstance(result_df, pd.DataFrame)
+                assert len(result_df) == len(labels_sorted)
+                assert isinstance(labels_sorted, np.ndarray)
 
     @settings(deadline=1000, max_examples=5)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
@@ -207,8 +218,10 @@ class TestCompCorrelationComplex:
             with pytest.raises(ValueError):
                 aa.AAclust.comp_correlation(X, labels=labels, names=names)
         else:
-            result_df = aa.AAclust.comp_correlation(X, labels=labels, names=names)
+            result_df, labels_sorted = aa.AAclust.comp_correlation(X, labels=labels, names=names)
             assert isinstance(result_df, pd.DataFrame)
+            assert len(result_df) == len(labels_sorted)
+            assert isinstance(labels_sorted, np.ndarray)
 
     @settings(deadline=1000, max_examples=5)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),

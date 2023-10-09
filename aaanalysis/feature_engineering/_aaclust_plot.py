@@ -6,6 +6,7 @@ from sklearn.decomposition import PCA
 from typing import Optional, Dict, Union, List, Tuple, Type
 from sklearn.base import  TransformerMixin
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
@@ -85,7 +86,9 @@ class AAclustPlot:
         model_class = ut.check_mode_class(model_class=model_class)
         model_kwargs = ut.check_model_kwargs(model_class=model_class,
                                              model_kwargs=model_kwargs,
-                                             param_to_check="n_components")
+                                             param_to_check="n_components",
+                                             method_to_check="transform")
+
         self.model_class = model_class
         self.model_kwargs = model_kwargs
 
@@ -152,13 +155,25 @@ class AAclustPlot:
     def center(self,
                X: ut.ArrayLike2D,
                labels: ut.ArrayLike1D = None,
+               component_x: Optional[int] = 1,
+               component_y: Optional[int] = 2,
+               ax : Optional[plt.Axes] = None,
                figsize: Optional[Tuple[int, int]] = (7, 6),
                dot_alpha: Optional[float] = 0.75,
                dot_size: Optional[int] = 100,
-               component_x : Optional[int] = 1,
-               component_y : Optional[int] = 2,
-               ) -> pd.DataFrame:
-        """PCA plot of clustering with centers highlighted"""
+               legend : Optional[bool] =True,
+               palette : Optional[mpl.colors.ListedColormap] = None,
+               ) -> Tuple[plt.Axes, pd.DataFrame]:
+        """PCA plot of clustering with centers highlighted
+        Parameters
+        ----------
+        palette
+                list of RGB tuples or :class:`matplotlib.colors.ListedColormap`
+
+        See Also
+        --------
+        See the :ref:`tutorial <palette_tutorial>` for more information.
+        """
         # Check input
         X = ut.check_X(X=X)
         ut.check_X_unique_samples(X=X)
@@ -170,22 +185,27 @@ class AAclustPlot:
         ut.check_number_range(name="dot_alpha", val=dot_alpha, accept_none=False, min_val=0, max_val=1, just_int=False)
         ut.check_number_range(name="dot_size", val=dot_size, accept_none=False, min_val=1, just_int=True)
         # Create plot
-        df_components = plot_center_or_medoid(X, labels=labels, plot_centers=True,
-                                              component_x=component_x, component_y=component_y,
-                                              model_class=self.model_class, model_kwargs=self.model_kwargs,
-                                              figsize=figsize, dot_size=dot_size, dot_alpha=dot_alpha)
-        return df_components
+        ax, df_components = plot_center_or_medoid(X, labels=labels, plot_centers=True,
+                                                  component_x=component_x, component_y=component_y,
+                                                  model_class=self.model_class, model_kwargs=self.model_kwargs,
+                                                  ax=ax, figsize=figsize,
+                                                  dot_size=dot_size, dot_alpha=dot_alpha,
+                                                  legend=legend, palette=palette)
+        return ax, df_components
 
     def medoids(self,
                 X: ut.ArrayLike2D,
                 labels: ut.ArrayLike1D = None,
+                component_x: Optional[int] = 1,
+                component_y: Optional[int] = 2,
+                metric: Optional[str] = "euclidean",
+                ax: Optional[plt.Axes] = None,
                 figsize: Optional[Tuple[int, int]] = (7, 6),
                 dot_alpha: Optional[float] = 0.75,
                 dot_size: Optional[int] = 100,
-                component_x : Optional[int] = 1,
-                component_y : Optional[int] = 2,
-                metric: Optional[str] = "euclidean",
-                ) -> pd.DataFrame:
+                legend: Optional[bool] = True,
+                palette: Optional[mpl.colors.ListedColormap] = None,
+                ) -> Tuple[plt.Axes, pd.DataFrame]:
         """PCA plot of clustering with medoids highlighted"""
         # Check input
         X = ut.check_X(X=X)
@@ -199,13 +219,21 @@ class AAclustPlot:
         ut.check_number_range(name="dot_size", val=dot_size, accept_none=False, min_val=1, just_int=True)
         ut.check_metric(metric=metric)
         # Create plot
-        df_components = plot_center_or_medoid(X, labels=labels, plot_centers=False, component_x=component_x,
-                                              component_y=component_y, metric=metric, model_class=self.model_class,
-                                              model_kwargs=self.model_kwargs, figsize=figsize, dot_size=dot_size,
-                                              dot_alpha=dot_alpha)
+        ax, df_components = plot_center_or_medoid(X, labels=labels, plot_centers=False, metric=metric,
+                                                  component_x=component_x, component_y=component_y,
+                                                  model_class=self.model_class, model_kwargs=self.model_kwargs,
+                                                  ax=ax, figsize=figsize,
+                                                  dot_size=dot_size, dot_alpha=dot_alpha,
+                                                  legend=legend, palette=palette)
 
-        return df_components
+        return ax, df_components
 
     @staticmethod
-    def correlation(df_corr=None):
-        """Heatmap for correlation"""
+    def correlation(df_corr=None, labels_sorted=None, **kwargs_heatmap):
+        """Heatmap for correlation
+        See Also
+        --------
+        - :func:`seaborn.heatmap` for information on kwargs_heatmap.
+        """
+        plot_correlation(df_corr=df_corr, labels_sorted=labels_sorted, **kwargs_heatmap)
+        plt.tight_layout()

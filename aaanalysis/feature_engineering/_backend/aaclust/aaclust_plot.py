@@ -26,12 +26,11 @@ def _get_mean_rank(data):
 
 def _get_components(X, model_class=None, n_components=2, model_kwargs=None):
     """
-    Apply dimensionality reduction on X using the specified model and
-    return the reduced components as DataFrame.
+    Apply dimensionality reduction on X using the specified mode.
 
     Returns:
         df_components : DataFrame of shape (n_samples, n_components)
-            The reduced components labeled "component_1", "component_2", etc.
+            The reduced components labeled "PC1", "PC2", etc.
     """
     model_kwargs["n_components"] = n_components
     # Initialize and fit the model
@@ -104,7 +103,9 @@ def plot_center_or_medoid(X=None, labels=None,
                           plot_centers=True, metric="correlation",
                           component_x=1, component_y=1,
                           model_class=None, model_kwargs=None,
-                          figsize=(7, 6), dot_alpha=0.75, dot_size=100):
+                          ax=None, figsize=(7, 6),
+                          dot_alpha=0.75, dot_size=100,
+                          legend=True, palette=None):
     """Plot compressed (e.g., by PCA) clustering results with highlighting cluster centers or cluster medoids"""
     n_components = max(component_x, component_y)
     df_components, model = _get_components(X, model_class, n_components, model_kwargs)
@@ -115,31 +116,47 @@ def plot_center_or_medoid(X=None, labels=None,
         X_ref, labels_ref, _ = _compute_medoids(X, labels=labels, metric=metric)
     X_ref_transformed = model.transform(X_ref)
     # Plotting
-    plt.figure(figsize=figsize)
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
     n_clusters = len(set(labels))
-    palette = sns.color_palette("husl", n_clusters)
-    sns.scatterplot(x=df_components.iloc[:, component_x - 1],
-                    y=df_components.iloc[:, component_y - 1],
-                    hue=labels, palette=palette, alpha=dot_alpha,
-                    s=dot_size)
+    if palette is None:
+        palette = sns.color_palette("husl", n_clusters)
+    ax = sns.scatterplot(x=df_components.iloc[:, component_x - 1],
+                         y=df_components.iloc[:, component_y - 1],
+                         hue=labels, palette=palette, alpha=dot_alpha,
+                         s=dot_size, ax=ax, legend=legend)
     # Highlight centers or medoids
     kwargs = dict(x=X_ref_transformed[:, component_x - 1],
                   y=X_ref_transformed[:, component_y - 1],
                   hue=labels_ref, palette=palette,
-                  s=dot_size * 1.5, edgecolor="k", linewidth=1, legend=False)
+                  s=dot_size * 1.5, edgecolor="k", linewidth=1,
+                  legend=False, ax=ax)
     if plot_centers:
-        sns.scatterplot(**kwargs, marker="X")
+        ax = sns.scatterplot(**kwargs, marker="X")
     else:
-        sns.scatterplot(**kwargs)
+        ax = sns.scatterplot(**kwargs)
     plt.xlabel(df_components.columns[component_x - 1])
     plt.ylabel(df_components.columns[component_y - 1])
-    plt.legend(title="clusters", bbox_to_anchor=(0.95, 1), loc='upper left')
+    if legend:
+        plt.legend(title="clusters", bbox_to_anchor=(0.95, 1), loc='upper left')
     plt.tight_layout()
-    return df_components
+    return ax, df_components
 
 
-def plot_correlation(df_corr=None):
+def plot_correlation(df_corr=None, labels_sorted=None, **kwargs):
     """"""
-    ax = sns.heatmap(df_corr, cmap="viridis", vmin=-1, vmax=1)
+    _kwargs = dict(cmap="viridis", vmin=-1, vmax=1,
+                   cbar_kws = {"label": "Pearson correlation"})
+
+    _kwargs.update(**kwargs)
+    ax = sns.heatmap(df_corr, **_kwargs)
+    print(labels_sorted)
     ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
+    # Customizing color bart tick lines
+    cbar = ax.collections[0].colorbar
+    lw = ut.plot_gco(option="axes.linewidth")
+    fs = ut.plot_gco(option="font.size")
+    cbar.ax.tick_params(axis='y', width=lw, length=6, color='black', labelsize=fs-1)
+    plt.tight_layout()
+    return ax

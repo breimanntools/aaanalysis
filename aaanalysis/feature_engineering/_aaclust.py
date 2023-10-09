@@ -466,7 +466,7 @@ class AAclust(Wrapper):
                          labels_ref: Optional[ut.ArrayLike1D] = None,
                          names : Optional[List[str]] = None,
                          names_ref : Optional[List[str]] = None
-                         ) -> pd.DataFrame:
+                         ) -> Tuple[pd.DataFrame, ut.ArrayLike1D]:
         """
         Computes the Pearson correlation of given data with reference data.
 
@@ -488,6 +488,8 @@ class AAclust(Wrapper):
         df_corr : pd.DataFrame
             DataFrame with correlation either for each pair in ``X`` of shape (n_samples, n_samples) or
             for each pair between ``X`` and ``X_ref`` of shape (n_samples, n_samples_ref).
+        labels_sorted: `array-like, shape (n_samples_ref, )`
+            Cluster labels for each sample and sorted as in `df_corr`.
 
         Notes
         -----
@@ -512,10 +514,10 @@ class AAclust(Wrapper):
             check_match_X_names(X=X_ref, names=names_ref, accept_none=True)
             check_X_X_ref(X=X, X_ref=X_ref)
         # Get correlations
-        df_corr = compute_correlation(X, X_ref=X_ref,
-                                      labels=labels, labels_ref=labels_ref,
-                                      names=names, names_ref=names_ref)
-        return df_corr
+        df_corr, labels_sorted = compute_correlation(X, X_ref=X_ref,
+                                                     labels=labels, labels_ref=labels_ref,
+                                                     names=names, names_ref=names_ref)
+        return df_corr, labels_sorted
 
     @staticmethod
     def comp_coverage(names : [List[str]] =None,

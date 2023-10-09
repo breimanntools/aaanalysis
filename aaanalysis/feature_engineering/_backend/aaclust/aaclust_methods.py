@@ -52,7 +52,7 @@ def _get_cluster_names(list_names=None, name_medoid=None,
 def _sort_X_labels_names(X, labels=None, names=None):
     """Sort labels"""
     sorted_order = np.argsort(labels)
-    labels = [labels[i] for i in sorted_order]
+    labels = np.array([labels[i] for i in sorted_order])
     X = X[sorted_order]
     if names:
         names = [names[i] for i in sorted_order]
@@ -116,7 +116,7 @@ def name_clusters(X, labels=None, names=None, shorten_names=True):
 def compute_correlation(X, X_ref=None, labels=None, labels_ref=None, names=None, names_ref=None):
     """Computes Pearson correlation of given data with reference data."""
     # Sort based on labels
-    X, labels, names = _sort_X_labels_names(X, labels=labels, names=names)
+    X, labels_sorted, names_sorted = _sort_X_labels_names(X, labels=labels, names=names)
     if X_ref is not None:
         X_ref, labels_ref, names_ref = _sort_X_labels_names(X_ref, labels=labels_ref, names=names_ref)
     # Compute correlations
@@ -125,9 +125,9 @@ def compute_correlation(X, X_ref=None, labels=None, labels_ref=None, names=None,
     else:
         df_corr = _get_df_corr(X=X, X_ref=X_ref)
     # Replace indexes and columns with names or labels
-    df_corr.index = names if names else labels
+    df_corr.index = names_sorted if names else labels_sorted
     if X_ref is None:
-        df_corr.columns = names if names else labels
+        df_corr.columns = names_sorted if names else labels_sorted
     else:
         df_corr.columns = names_ref if names_ref else labels_ref
-    return df_corr
+    return df_corr, labels_sorted
