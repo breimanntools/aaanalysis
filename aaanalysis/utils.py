@@ -59,10 +59,16 @@ STR_TOP60_EVAL = "top60_eval"  # AAclustTop60 evaluation
 NAMES_SCALE_SETS = [STR_SCALES, STR_SCALES_RAW, STR_SCALE_CAT,
                     STR_SCALES_PC, STR_TOP60, STR_TOP60_EVAL]
 
-# Options
+# AAclust
 METRIC_CORRELATION = "correlation"
 LIST_METRICS = [METRIC_CORRELATION, "manhattan",  "euclidean", "cosine"]
 STR_UNCLASSIFIED = "Unclassified"
+COL_N_CLUST = "n_clusters"
+COL_BIC = "BIC"
+COL_CH = "CH"
+COL_SC = "SC"
+COL_RANK = "rank"
+COLS_EVAL_AACLUST = [COL_N_CLUST, COL_BIC, COL_CH, COL_SC]
 
 # Column names for primary df
 # df_seq
@@ -247,7 +253,7 @@ def check_df_parts(df_parts=None, verbose=True):
             print(warning)
         #raise ValueError("'df_part' should not be None")
     else:
-        if not (isinstance(df_parts, pd.DataFrame)):
+        if not isinstance(df_parts, pd.DataFrame):
             raise ValueError(f"'df_parts' ({type(df_parts)}) must be type pd.DataFrame")
         if len(list(df_parts)) == 0 or len(df_parts) == 0:
             raise ValueError("'df_parts' should not be empty pd.DataFrame")

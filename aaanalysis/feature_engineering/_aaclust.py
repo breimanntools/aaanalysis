@@ -1,5 +1,6 @@
 """
-This is a script for the interface of the AAclust class, used for clustering wrapper method.
+This is a script for the interface of the AAclust class, a clustering wrapper object to obtain redundancy-reduced
+scale subsets.
 """
 import numpy as np
 from typing import Optional, Dict, Union, List, Tuple, Type

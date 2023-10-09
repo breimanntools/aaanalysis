@@ -1,5 +1,5 @@
 """
-This is a script for adjust output (mainly for python console)
+This is a script for adjusting terminal output.
 """
 import numpy as np
 

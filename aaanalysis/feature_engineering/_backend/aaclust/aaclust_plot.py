@@ -1,50 +1,82 @@
 """
-This is a script for the AAclust plot_eval method.
+This is a script for the backend of the AAclustPlot object for all plotting functions.
 """
 import time
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-
 import aaanalysis.utils as ut
+import matplotlib.ticker as mticker
 
 
 # I Helper Functions
-def _get_rank(data):
+# Computation helper functions
+def _get_mean_rank(data):
     """"""
     _df = data.copy()
-    _df['BIC_rank'] = _df['BIC'].rank(ascending=False)
-    _df['CH_rank'] = _df['CH'].rank(ascending=False)
-    _df['SC_rank'] = _df['SC'].rank(ascending=False)
-    return _df[['BIC_rank', 'CH_rank', 'SC_rank']].mean(axis=1).round(2)
+    _df['BIC_rank'] = _df[ut.COL_BIC].rank(ascending=False)
+    _df['CH_rank'] = _df[ut.COL_CH].rank(ascending=False)
+    _df['SC_rank'] = _df[ut.COL_SC].rank(ascending=False)
+    rank = _df[['BIC_rank', 'CH_rank', 'SC_rank']].mean(axis=1).round(2)
+    return rank
+
+def _get_components(data=None, model_class=None):
+    """"""
+
+# Plotting helper functions
+def _adjust_spines(ax=None):
+    """Adjust spines to be in middle if data range from <0 to >0"""
+    min_val, max_val = ax.get_xlim()
+    if max_val > 0 and min_val >= 0:
+        sns.despine(ax=ax)
+    else:
+        sns.despine(ax=ax, left=True)
+        current_lw = ax.spines['bottom'].get_linewidth()
+        ax.axvline(0, color='black', linewidth=current_lw)
+        val = max([abs(min_val), abs(max_val)])
+        ax.set_xlim(-val, val)
+    return ax
+
+
+def _x_ticks_0(ax):
+    """Apply custom formatting for x-axis ticks."""
+    def custom_x_ticks(x, pos):
+        """Format x-axis ticks."""
+        return f'{x:.2f}' if x else f'{x:.0f}'
+    ax.xaxis.set_major_formatter(mticker.FuncFormatter(custom_x_ticks))
+
+
+
 
 # II Main Functions
-def plot_eval(data=None, names=None, dict_xlims=None, figsize=None, columns=None, colors=None):
-    """"""
-    data = pd.DataFrame(data, columns=columns, index=names)
-    data["rank"] = _get_rank(data)
-    data = data.sort_values(by="rank", ascending=True)
+def plot_eval(df_eval=None, dict_xlims=None, figsize=None, colors=None):
+    """Plot evaluation of AAclust clustering results"""
+    df_eval[ut.COL_RANK] = _get_mean_rank(df_eval)
+    df_eval = df_eval.sort_values(by=ut.COL_RANK, ascending=True)
     # Plotting
     fig, axes = plt.subplots(1, 4, sharey=True, figsize=figsize)
-    for i, col in enumerate(columns):
+    for i, col in enumerate(ut.COLS_EVAL_AACLUST):
         ax = axes[i]
-        sns.barplot(ax=ax, data=data, y=data.index, x=col, color=colors[i])
+        sns.barplot(ax=ax, data=df_eval, y=df_eval.index, x=col, color=colors[i])
         # Customize subplots
         ax.set_ylabel("")
         ax.set_xlabel(col)
-        ax.axvline(0, color='black')  # , linewidth=aa.plot_gcfs("axes.linewidth"))
+        # Adjust spines
+        ax = _adjust_spines(ax=ax)
+        # Manual xlims, if needed
         if dict_xlims and col in dict_xlims:
             ax.set_xlim(dict_xlims[col])
         if i == 0:
-            ax.set_title("Number of clusters", weight="bold")
+            ax.set_title("Clustering", weight="bold")
         elif i == 2:
             ax.set_title("Quality measures", weight="bold")
-        sns.despine(ax=ax, left=True)
         ax.tick_params(axis='y', which='both', left=False)
+        _x_ticks_0(ax=ax)
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.25, hspace=0)
     return fig, axes
+
 
 def _plot_pca(df_pred=None, filter_classes=None, x=None, y=None,  others=True, highlight_rel=True,
               figsize=(6, 6), highlight_mean=True, list_classes=None):

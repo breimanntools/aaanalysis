@@ -1,9 +1,8 @@
 """
-This is a script for ...
+This is a script for data checking utility functions.
 """
 import pandas as pd
 import numpy as np
-# Write wrapper around scikit checkers
 from sklearn.utils import check_array
 
 # Helper functions
