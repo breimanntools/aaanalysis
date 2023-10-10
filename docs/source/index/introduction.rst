@@ -7,7 +7,7 @@ for any (biological) sequence which can be represented by numerical values.
 
 Workflow
 --------
-A typical workflow consists of the following steps:
+A typical workflow involves the following algorithms:
 
 - **AAclust**: k-optimized clustering wrapper framework to select redundancy-reduced sets of numerical scales (e.g., amino acid scales)
 - **CPP**: Comparative Physicochemical Profiling, a feature engineering algorithm comparing two sets of protein sequences to identify the set of most distinctive features.
