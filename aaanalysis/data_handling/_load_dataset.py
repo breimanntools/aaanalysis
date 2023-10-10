@@ -19,16 +19,17 @@ LIST_NON_CANONICAL_OPTIONS = ["remove", "keep", "gap"]
 
 # I Helper Functions
 # Check functions
-def check_name_of_dataset(name="INFO", folder_in=None):
+def check_name_of_dataset(name="Overview", folder_in=None):
     """"""
-    if name == "INFO":
+    if name == "Overview":
         return
-    list_datasets = [x.split(".")[0] for x in os.listdir(folder_in) if "." in x]
+    list_datasets = [x.split(".")[0] for x in os.listdir(folder_in)
+                     if "." in x and not x.startswith(".")]
     if name not in list_datasets:
         list_aa = [x for x in list_datasets if 'AA' in x]
         list_seq = [x for x in list_datasets if 'SEQ' in x]
         list_dom = [x for x in list_datasets if 'DOM' in x]
-        raise ValueError(f"'name' ({name}) is not valid."
+        raise ValueError(f"'name' ({name}) is not valid. Chose one of the following:"
                          f"\n Amino acid datasets: {list_aa}"
                          f"\n Sequence datasets: {list_seq}"
                          f"\n Domain datasets: {list_dom}")
@@ -119,7 +120,7 @@ def _get_aa_window(df_seq=None, aa_window_size=9):
 
 
 # II Main Functions
-def load_dataset(name: str = "INFO",
+def load_dataset(name: str = "Overview",
                  n: Optional[int] = None,
                  random: bool = False,
                  non_canonical_aa: Literal["remove", "keep", "gap"] = "remove",
@@ -131,7 +132,7 @@ def load_dataset(name: str = "INFO",
     Loads protein benchmarking datasets.
 
     The benchmarks are categorized into amino acid ('AA'), domain ('DOM'), and sequence ('SEQ') level datasets.
-    By default, an overview table is provided (``name='INFO'``). For in-depth details, refer to [Breimann23a]_.
+    By default, an overview table is provided (``name='Overview'``). For in-depth details, refer to [Breimann23a]_.
 
     Parameters
     ----------
@@ -159,7 +160,7 @@ def load_dataset(name: str = "INFO",
     -------
     pandas.DataFrame
         A DataFrame of either the selected sequence dataset (``df_seq``) or
-        general info on all benchmark datasets (``df_info``).
+        overview on all benchmark datasets (``df_overview``).
 
     Notes
     -----
@@ -188,8 +189,8 @@ def load_dataset(name: str = "INFO",
     check_min_max_val(min_len=min_len, max_len=max_len)
     check_aa_window_size(aa_window_size=aa_window_size)
     # Load overview table
-    if name == "INFO":
-        return ut.read_excel_cached(FOLDER_BENCHMARKS + "INFO_benchmarks.xlsx")
+    if name == "Overview":
+        return ut.read_excel_cached(FOLDER_BENCHMARKS + "Overview.xlsx")
     df = ut.read_csv_cached(FOLDER_BENCHMARKS + name + ".tsv", sep="\t")
     # Filter data
     if min_len is not None:
