@@ -1,21 +1,36 @@
-# Default ignored files
+# Directories
 /venv/
-/.idea/
-/dist/
 /dev_scripts/
 /recipe/
 /tutorials/.ipynb_checkpoints/
-/aaanalysis/_archive/
+/dist/
 
-# Byte-compiled / optimized / DLL files
+# IDEs & Editors
+## PyCharm
+/.idea/
+*.iml
+
+## VS Code
+/.vscode/
+
+# Operating System Files
+## macOS
+.DS_Store
+
+## Windows
+Thumbs.db
+
+# Python Artifacts
+## Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
+## C extensions
 *.so
 
-# Distribution / packaging
+# Distribution & Packaging
+## General
 .Python
 build/
 develop-eggs/
@@ -34,3 +49,73 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+
+## PyInstaller
+*.manifest
+*.spec
+
+# Test & Coverage
+## General
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+## pytest
+.pytest_cache/
+
+## tox & nox
+.tox/
+.nox/
+
+## hypothesis
+.hypothesis/
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Documentation
+docs/_build/
+
+# Build Systems
+## PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# Type Checkers & Analyzers
+## mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+## Pyre
+.pyre/
+
+## pytype
+.pytype/
+
+# Profiling
+.prof
+
+# Cython
+cython_debug/

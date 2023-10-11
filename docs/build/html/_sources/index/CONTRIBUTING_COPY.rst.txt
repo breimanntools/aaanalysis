@@ -105,16 +105,16 @@ Navigate to the project folder and set up the Python environment.
 
     cd aaanalysis
 
-**2a. Using `conda` for Environment Setup**
+**2a. Using conda for Environment Setup**
 
-Create and activate a new `conda` environment named `aaanalysis`, using Python 3.9:
+Create and activate a new `conda` environment named 'venv', using Python 3.9:
 
 .. code-block:: bash
 
     conda create -n venv python=3.9
     conda activate venv
 
-**2b. Using `venv` for Environment Setup**
+**2b. Using venv for Environment Setup**
 
 Alternatively, create and activate a virtual environment within the project folder using venv:
 
@@ -123,17 +123,17 @@ Alternatively, create and activate a virtual environment within the project fold
     python -m venv venv
     source venv/bin/activate  # Use `venv\Scripts\activate` on Windows
 
-**3a. Installing Dependencies with `poetry`**
+**3a. Installing Dependencies with poetry**
 
-Install dependencies as defined in `pyproject.toml` using `poetry`:
+Install dependencies as defined in 'pyproject.toml' using `poetry`:
 
 .. code-block:: bash
 
     poetry install
 
-**3b. Installing Dependencies with `pip`**
+**3b. Installing Dependencies with pip**
 
-Alternatively, use `pip` to install dependencies from `requirements.txt` and additional development requirements:
+Alternatively, use `pip` to install dependencies from 'requirements.txt' and additional development requirements:
 
 .. code-block:: bash
 
@@ -143,8 +143,8 @@ Alternatively, use `pip` to install dependencies from `requirements.txt` and add
 **General Notes**
 
 - **Additional Requirement**: Some non-Python utilities might to be need installed separately, such as Pandoc.
-- **Manage Dependencies**: Ensure dependencies are updated as specified in `pyproject.toml` or `requirements.txt`
-    after pulling updates from the repository.
+- **Manage Dependencies**: Ensure dependencies are updated as specified in 'pyproject.toml' or 'requirements.txt'
+  after pulling updates from the repository.
 
 Run Unit Tests
 """"""""""""""

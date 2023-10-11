@@ -238,25 +238,25 @@ explainable AI such as causal inference.</p></li>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>aaanalysis
 </pre></div>
 </div>
-<p><strong>2a. Using `conda` for Environment Setup</strong></p>
-<p>Create and activate a new <cite>conda</cite> environment named <cite>aaanalysis</cite>, using Python 3.9:</p>
+<p><strong>2a. Using conda for Environment Setup</strong></p>
+<p>Create and activate a new <cite>conda</cite> environment named ‘venv’, using Python 3.9:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>venv<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.9
 conda<span class="w"> </span>activate<span class="w"> </span>venv
 </pre></div>
 </div>
-<p><strong>2b. Using `venv` for Environment Setup</strong></p>
+<p><strong>2b. Using venv for Environment Setup</strong></p>
 <p>Alternatively, create and activate a virtual environment within the project folder using venv:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
 <span class="nb">source</span><span class="w"> </span>venv/bin/activate<span class="w">  </span><span class="c1"># Use `venv\Scripts\activate` on Windows</span>
 </pre></div>
 </div>
-<p><strong>3a. Installing Dependencies with `poetry`</strong></p>
-<p>Install dependencies as defined in <cite>pyproject.toml</cite> using <cite>poetry</cite>:</p>
+<p><strong>3a. Installing Dependencies with poetry</strong></p>
+<p>Install dependencies as defined in ‘pyproject.toml’ using <cite>poetry</cite>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>install
 </pre></div>
 </div>
-<p><strong>3b. Installing Dependencies with `pip`</strong></p>
-<p>Alternatively, use <cite>pip</cite> to install dependencies from <cite>requirements.txt</cite> and additional development requirements:</p>
+<p><strong>3b. Installing Dependencies with pip</strong></p>
+<p>Alternatively, use <cite>pip</cite> to install dependencies from ‘requirements.txt’ and additional development requirements:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>docs/source/requirements_docs.txt
 </pre></div>
@@ -264,11 +264,8 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
 <p><strong>General Notes</strong></p>
 <ul class="simple">
 <li><p><strong>Additional Requirement</strong>: Some non-Python utilities might to be need installed separately, such as Pandoc.</p></li>
-<li><dl class="simple">
-<dt><strong>Manage Dependencies</strong>: Ensure dependencies are updated as specified in <cite>pyproject.toml</cite> or <cite>requirements.txt</cite></dt><dd><p>after pulling updates from the repository.</p>
-</dd>
-</dl>
-</li>
+<li><p><strong>Manage Dependencies</strong>: Ensure dependencies are updated as specified in ‘pyproject.toml’ or ‘requirements.txt’
+after pulling updates from the repository.</p></li>
 </ul>
 </section>
 <section id="run-unit-tests">
