@@ -144,7 +144,7 @@ Alternatively, use `pip` to install dependencies from `requirements.txt` and add
 
 - **Additional Requirement**: Some non-Python utilities might to be need installed separately, such as Pandoc.
 - **Manage Dependencies**: Ensure dependencies are updated as specified in `pyproject.toml` or `requirements.txt`
-    after pulling updates from the repository.
+  after pulling updates from the repository.
 
 Run Unit Tests
 """"""""""""""
