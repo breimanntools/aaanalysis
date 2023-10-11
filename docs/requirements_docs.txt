@@ -22,4 +22,4 @@ hypothesis==6.86.2
 black==22.12.0
 #Install juypter locally (not for RTD)
 jupyter>=1.0.0
-jsonschema>=4.19.1
+jsonschema>=4.17.0
