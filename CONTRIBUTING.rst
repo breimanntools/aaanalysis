@@ -75,7 +75,7 @@ Installation
 Latest Version
 --------------
 
-To test the latest development version, you can use pip:
+To install the latest development version using pip, execute the following:
 
 .. code-block:: bash
 
@@ -84,8 +84,8 @@ To test the latest development version, you can use pip:
 Local Development Environment
 -----------------------------
 
-Fork and Clone
-""""""""""""""
+Fork and Clone the Repository
+"""""""""""""""""""""""""""""
 
 1. Fork the `repository <https://github.com/breimanntools/aaanalysis>`_
 2. Clone your fork:
@@ -103,20 +103,48 @@ Navigate to the project folder and set up the Python environment.
 
 .. code-block:: bash
 
-  cd aaanalysis
+    cd aaanalysis
 
-2. Create a new isolated Python environment using `conda`:
+**2a. Using `conda` for Environment Setup**
 
-.. code-block:: bash
-
-  conda create -n aanalysis python=3.9
-  conda activate aanalysis
-
-3. Install dependencies using `poetry`:
+Create and activate a new `conda` environment named `aaanalysis`, using Python 3.9:
 
 .. code-block:: bash
 
-  poetry install
+    conda create -n venv python=3.9
+    conda activate venv
+
+**2b. Using `venv` for Environment Setup**
+
+Alternatively, create and activate a virtual environment within the project folder using venv:
+
+.. code-block:: bash
+
+    python -m venv venv
+    source venv/bin/activate  # Use `venv\Scripts\activate` on Windows
+
+**3a. Installing Dependencies with `poetry`**
+
+Install dependencies as defined in `pyproject.toml` using `poetry`:
+
+.. code-block:: bash
+
+    poetry install
+
+**3b. Installing Dependencies with `pip`**
+
+Alternatively, use `pip` to install dependencies from `requirements.txt` and additional development requirements:
+
+.. code-block:: bash
+
+    pip install -r requirements.txt
+    pip install -r docs/source/requirements_docs.txt
+
+**General Notes**
+
+- **Additional Requirement**: Some non-Python utilities might to be need installed separately, such as Pandoc.
+- **Manage Dependencies**: Ensure dependencies are updated as specified in `pyproject.toml` or `requirements.txt`
+    after pulling updates from the repository.
 
 Run Unit Tests
 """"""""""""""

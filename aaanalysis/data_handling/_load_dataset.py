@@ -13,7 +13,7 @@ import aaanalysis.utils as ut
 # Constants
 STR_AA_GAP = "-"
 LIST_CANONICAL_AA = ['N', 'A', 'I', 'V', 'K', 'Q', 'R', 'M', 'H', 'F', 'E', 'D', 'C', 'G', 'L', 'T', 'S', 'Y', 'W', 'P']
-FOLDER_BENCHMARKS = folder_in = ut.FOLDER_DATA + "benchmarks" + ut.SEP
+FOLDER_BENCHMARKS = ut.FOLDER_DATA + "benchmarks" + ut.SEP
 LIST_NON_CANONICAL_OPTIONS = ["remove", "keep", "gap"]
 
 

@@ -2,7 +2,7 @@
 sphinx==5.3.0   #,<7.0   # Newest version not campatible with myst_nb
 sphinx_rtd_theme==1.3.0 # 1.1.1 # 0.5.2
 #pydata_sphinx_theme>=0.13.3
-sphinx_design==0.5
+sphinx_design==0.5.0
 sphinx_copybutton==0.5.2
 sphinxext-opengraph==0.8.2
 sphinx-autodoc-typehints==1.15.0 #1.11.1
@@ -21,3 +21,5 @@ pytest-mpl==0.16.1 #0.13
 hypothesis==6.86.2
 black==22.12.0
 #Install juypter locally (not for RTD)
+jupyter>=1.0.0
+jsonschema>=4.19.1
