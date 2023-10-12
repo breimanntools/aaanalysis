@@ -58,6 +58,34 @@ def check_dict_xlims(dict_xlims=None):
             raise ValueError(f"'dict_xlims:min' ({xmin}) should be < 'dict_xlims:max' ({xmax}) for '{key}'.")
 
 
+# Common interface
+doc_param_center_medoid_data = \
+"""\
+X : array-like of shape (n_samples, n_features)
+    Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.\
+labels : array-like of shape (n_samples,)
+    Cluster labels for each sample in ``X``. If `None`, no grouping is used.
+component_x
+    Index of the PCA component for the x-axis.
+component_y
+    Index of the PCA component for the y-axis.\
+"""
+
+doc_param_center_medoid_fig = \
+"""\
+ax
+    Pre-defined Axes object to plot on. If `None`, a new Axes object is created.
+figsize
+    Figure size (width, height) in inches.
+dot_alpha
+    Alpha value of the plotted dots.
+dot_size
+    Size of the plotted dots.
+legend
+    Whether to show the legend.
+palette
+    Colormap for the labels. If `None`, a default colormap is used.\
+"""
 
 # TODO add check functions finish other methods, testing, compression
 # II Main Functions
@@ -151,6 +179,8 @@ class AAclustPlot:
         return fig, axes
 
     # TODO check functions, docstring, testing
+    @ut.doc_params(doc_param_center_medoid_data=doc_param_center_medoid_data,
+                   doc_param_center_medoid_fig=doc_param_center_medoid_fig)
     def center(self,
                X: ut.ArrayLike2D,
                labels: ut.ArrayLike1D = None,
@@ -164,14 +194,27 @@ class AAclustPlot:
                palette : Optional[mpl.colors.ListedColormap] = None,
                ) -> Tuple[plt.Axes, pd.DataFrame]:
         """PCA plot of clustering with centers highlighted
+
         Parameters
         ----------
-        palette
-                list of RGB tuples or :class:`matplotlib.colors.ListedColormap`
+        {doc_param_center_medoid_data}
+        {doc_param_center_medoid_fig}
+
+        Returns
+        -------
+        ax
+            Axes object with the PCA plot.
+        df_components
+            DataFrame with the PCA components.
+
+        Notes
+        -----
+        - Ensure `X` and `labels` are in the same order to avoid mislabeling.
 
         See Also
         --------
-        See the :ref:`tutorial <palette_tutorial>` for more information.
+        - See the :ref:`tutorial <palette_tutorial>` for more information.
+        - See colormaps from matplotlib in :class:`matplotlib.colors.ListedColormap`.
         """
         # Check input
         X = ut.check_X(X=X)
@@ -193,6 +236,8 @@ class AAclustPlot:
         return ax, df_components
 
     # TODO check functions, docstring, testing
+    @ut.doc_params(doc_param_center_medoid_data=doc_param_center_medoid_data,
+                   doc_param_center_medoid_fig=doc_param_center_medoid_fig)
     def medoids(self,
                 X: ut.ArrayLike2D,
                 labels: ut.ArrayLike1D = None,
@@ -207,7 +252,28 @@ class AAclustPlot:
                 palette: Optional[mpl.colors.ListedColormap] = None,
                 return_data : Optional[bool] = False
                 ) -> Tuple[plt.Axes, pd.DataFrame]:
-        """PCA plot of clustering with medoids highlighted"""
+        """PCA plot of clustering with medoids highlighted
+
+        Parameters
+        ----------
+        {doc_param_center_medoid_data}
+        metric
+            The distance metric for calculating medoid. Any metric from `scipy.spatial.distance` can be used.
+        {doc_param_center_medoid_fig}
+        return_data : bool, optional, default=False
+            If `True`, returns PCA components DataFrame. If `False`, returns the Axes object.
+
+        Returns
+        -------
+        ax
+            Axes object with the PCA plot.
+        df_components
+            DataFrame with the PCA components.
+
+        Notes
+        -----
+        - Ensure `X` and `labels` are in the same order to avoid mislabeling.
+        """
         # Check input
         X = ut.check_X(X=X)
         ut.check_X_unique_samples(X=X)
@@ -240,6 +306,9 @@ class AAclustPlot:
                     bar_spacing: float = 0.1,
                     bar_colors: Union[str, List[str]] = "gray",
                     bar_ticklabel_pad: Optional[float] = None,
+                    cluster_x : bool = True,
+                    cluster_y : bool = False,
+                    method : str = "average",
                     vmin: float = -1,
                     vmax: float = 1,
                     cmap: str = "viridis",
@@ -266,14 +335,20 @@ class AAclustPlot:
             Either a single color or a list of colors for each unique label in `labels`.
         bar_ticklabel_pad
             Padding for y-axis tick labels. If ``None``, uses default padding.
+        cluster_x:
+            If True, x-axis (samples) are clustered.
+        cluster_y:
+            If True, y-axis (clusters) are clustered.
+        method:
+            Linkage method from :func:`scipy.cluster.hierarchy.linkage` used for clustering.
         vmin
-            Minimum value of the color scale in the ``sns.heatmap()``.
+            Minimum value of the color scale in :func:`seaborn.heatmap`.
         vmax
-            Maximum value of the color scale in the ``sns.heatmap()``.
+            Maximum value of the color scale in :func:`seaborn.heatmap`.
         cmap
-            Colormap to be used for the ``sns.heatmap()``.
+            Colormap to be used for the :func:`seaborn.heatmap`.
         **kwargs_heatmap
-            Additional keyword arguments passed to ``sns.heatmap()``.
+            Additional keyword arguments passed to :func:`seaborn.heatmap`.
 
         Returns
         -------
@@ -286,13 +361,14 @@ class AAclustPlot:
 
         See Also
         --------
-        sns.heatmap : Seaborn function for creating heatmaps.
+        :func:`seaborn.heatmap`: Seaborn function for creating heatmaps.
 
         """
         ax = plot_correlation(df_corr=df_corr, labels_sorted=labels,
                               bar_position=bar_position,
                               bar_width=bar_width, bar_spacing=bar_spacing, bar_colors=bar_colors,
                               bar_ticklabel_pad=bar_ticklabel_pad,
+                              cluster_x=cluster_x, cluster_y=cluster_y, method=method,
                               vmin=vmin, vmax=vmax, cmap=cmap, **kwargs_heatmap)
         plt.tight_layout()
         return ax

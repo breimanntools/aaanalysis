@@ -51,14 +51,11 @@ def _get_cluster_names(list_names=None, name_medoid=None,
 # Compute correlation
 def _sort_X_labels_names(X, labels=None, names=None):
     """Sort labels"""
-    print(labels)
     sorted_order = np.argsort(labels)
     labels = np.array([labels[i] for i in sorted_order])
-    print(labels)
     X = X[sorted_order]
     if names:
         names = [names[i] for i in sorted_order]
-    print(names)
     return X, labels, names
 
 def _get_df_corr(X=None, X_ref=None):

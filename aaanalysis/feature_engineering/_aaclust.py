@@ -133,7 +133,6 @@ class AAclust(Wrapper):
     See Also
     --------
     * Scikit-learn `clustering model classes <https://scikit-learn.org/stable/modules/clustering.html>`_.
-
     """
     def __init__(self,
                  model_class: Type[ClusterMixin] = KMeans,

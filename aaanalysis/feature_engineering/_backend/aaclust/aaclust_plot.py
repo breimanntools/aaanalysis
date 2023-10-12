@@ -8,6 +8,7 @@ import seaborn as sns
 import numpy as np
 import matplotlib.ticker as mticker
 from sklearn.decomposition import PCA
+from scipy.cluster.hierarchy import linkage, leaves_list
 
 import aaanalysis.utils as ut
 from ._utils_aaclust import _compute_medoids, _compute_centers
@@ -45,6 +46,11 @@ def _get_components(X, model_class=None, n_components=2, model_kwargs=None):
     df_components = pd.DataFrame(components, columns=columns)
     return df_components, model
 
+
+def _get_clustered_order(df, method='average'):
+    linked = linkage(df.corr(), method=method)
+    new_order = leaves_list(linked)
+    return df.iloc[:, new_order]
 
 
 # Plotting helper functions
@@ -143,10 +149,16 @@ def plot_center_or_medoid(X=None, labels=None,
     return ax, df_components
 
 
-def plot_correlation(df_corr=None, labels_sorted=None,
+def plot_correlation(df_corr=None, labels_sorted=None, cluster_x=True, cluster_y=False, method="average",
                      bar_position="left", bar_width=0.1, bar_spacing=0.1, bar_colors="gray", bar_ticklabel_pad=None,
-                     vmin=-1, vmax=1, cmap="viridis", **kwargs_heatmap):
+                     vmin=-1, vmax=1, cmap="viridis",
+                     **kwargs_heatmap):
     """Plots heatmap for clustering results with rows (y-axis) corresponding to scales and columns (x-axis) to clusters."""
+    # Adjust order of df_corr
+    if cluster_x:
+        df_corr = _get_clustered_order(df_corr, method=method)
+    if cluster_y:
+        df_corr = _get_clustered_order(df_corr.T, method=method).T
     # Plot heatmap
     _kwargs_heatmap = {"cmap": cmap, "vmin": vmin, "vmax": vmax,
                        "cbar_kws": {"label": "Pearson correlation"},
