@@ -150,9 +150,8 @@ def plot_center_or_medoid(X=None, labels=None,
 
 
 def plot_correlation(df_corr=None, labels_sorted=None, cluster_x=True, cluster_y=False, method="average",
-                     bar_position="left", bar_width=0.1, bar_spacing=0.1, bar_colors="gray", bar_ticklabel_pad=None,
-                     vmin=-1, vmax=1, cmap="viridis",
-                     **kwargs_heatmap):
+                     bar_position="left", bar_width=0.1, bar_spacing=0.1, bar_colors="gray", bar_set_tick_labels=False,
+                     vmin=-1, vmax=1, cmap="viridis", **kwargs_heatmap):
     """Plots heatmap for clustering results with rows (y-axis) corresponding to scales and columns (x-axis) to clusters."""
     # Adjust order of df_corr
     if cluster_x:
@@ -174,9 +173,8 @@ def plot_correlation(df_corr=None, labels_sorted=None, cluster_x=True, cluster_y
     cbar.ax.tick_params(axis='y', width=lw, length=6, color='black', labelsize=fs-1)
     # Add bars for highlighting clustering
     if bar_position is not None:
-        ut.plot_add_bars(ax=ax, labels=labels_sorted, bar_spacing=bar_spacing, bar_width=bar_width,
-                         position=bar_position, colors=bar_colors)
-        if bar_ticklabel_pad is not None:
-            ax.tick_params(axis="y", which="both", pad=bar_ticklabel_pad)
+        ut.plot_add_bars(ax=ax, labels=labels_sorted, position=bar_position,
+                         bar_spacing=bar_spacing, bar_width=bar_width,
+                         set_tick_labels=bar_set_tick_labels, colors=bar_colors)
     plt.tight_layout()
     return ax

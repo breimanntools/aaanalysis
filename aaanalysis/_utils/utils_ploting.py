@@ -31,6 +31,7 @@ def _get_positions_lengths_colors(labels, color_map):
     return positions, lengths, colors
 
 def _get_xy_wh(ax=None, position=None, pos=None, barspacing=None, length=None, bar_width=None):
+    """Get x and y position together with width and height/length"""
     x_min, x_max = ax.get_xlim()
     y_min, y_max = ax.get_ylim()
     if position == 'bottom':
@@ -49,6 +50,7 @@ def _get_xy_wh(ax=None, position=None, pos=None, barspacing=None, length=None, b
         raise ValueError("Position should be 'left', 'right', 'top', or 'bottom'.")
 
 def _get_xy_hava(position=None, xy=None, wh=None):
+    """Get x and y position together with horizontal alignment and vertical alignment"""
     bar_width = wh[1] if position in ['bottom', 'top'] else wh[0]
     if position == 'bottom':
         text_x = xy[0] + wh[0] / 2
@@ -79,10 +81,32 @@ def _add_bar_labels(ax=None, bar_labels_align=None, position=None, bar_width=Non
                 transform=ax.transData, clip_on=False)
 
 
+def _add_text_labels(ax=None, position=None, bar_width=None, bar_spacing=None):
+    """Add text labels next to the bars."""
+    # Obtain tick labels and locations based on the specified position
+    if position in ['left', 'right']:
+        tick_labels = [item.get_text() for item in ax.get_yticklabels()]
+        tick_locs = ax.get_yticks()
+        ax.yaxis.set_visible(False)  # Hide the original y-axis
+    else:  # ['top', 'bottom']
+        tick_labels = [item.get_text() for item in ax.get_xticklabels()]
+        tick_locs = ax.get_xticks()
+        ax.xaxis.set_visible(False)  # Hide the original x-axis
+    _bar_spacing = bar_spacing * 1.5
+    for idx, label in enumerate(tick_labels):
+        if position == 'left':
+            ax.text(-_bar_spacing - bar_width, tick_locs[idx], label, ha='right', va='center')
+        elif position == 'right':
+            ax.text(1 + _bar_spacing + bar_width, tick_locs[idx], label, ha='left', va='center')
+        elif position == 'top':
+            ax.text(tick_locs[idx], 1 + _bar_spacing + bar_width, label, ha='center', va='bottom')
+        elif position == 'bottom':
+            ax.text(tick_locs[idx], -_bar_spacing - bar_width, label, ha='center', va='top')
+
 
 # Main function
-def plot_add_bars(ax, labels, position='left', bar_spacing=0.05, colors='tab:gray', bar_labels=None,
-                  bar_labels_align='horizontal', bar_width=0.1):
+def plot_add_bars(ax=None, labels=None, position='left', bar_spacing=0.05, colors='tab:gray', bar_labels=None,
+                  bar_labels_align='horizontal', bar_width=0.1, set_tick_labels=False):
     """
     Add colored bars along a specified axis of the plot based on label grouping.
 
@@ -95,6 +119,7 @@ def plot_add_bars(ax, labels, position='left', bar_spacing=0.05, colors='tab:gra
         bar_labels (list, optional): Labels for the bars.
         bar_labels_align (str): Text alignment for bar labels, either 'horizontal' or other valid matplotlib alignment.
         bar_width (float): Width of the bars.
+        set_tick_labels (bool) : Whether to adjust tick labels.
 
     Note:
         This function adds colored bars in correspondence with the provided `labels` to visualize groupings in plots.
@@ -118,6 +143,8 @@ def plot_add_bars(ax, labels, position='left', bar_spacing=0.05, colors='tab:gra
         ax.add_patch(mpatches.Rectangle(xy=xy, width=wh[0], height=wh[1],
                                         facecolor=bar_color, edgecolor=edgecolor, linewidth=0.5,
                                         **args))
+    if set_tick_labels:
+        _add_text_labels(ax=ax, position=position, bar_width=bar_width, bar_spacing=bar_spacing)
 
 
 def plot_gco(option='font.size', show_options=False):

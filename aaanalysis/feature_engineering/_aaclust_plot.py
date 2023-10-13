@@ -305,7 +305,7 @@ class AAclustPlot:
                     bar_width: float = 0.1,
                     bar_spacing: float = 0.1,
                     bar_colors: Union[str, List[str]] = "gray",
-                    bar_ticklabel_pad: Optional[float] = None,
+                    bar_set_tick_labels: bool = True,
                     cluster_x : bool = True,
                     cluster_y : bool = False,
                     method : str = "average",
@@ -333,8 +333,8 @@ class AAclustPlot:
             Space between the heatmap and the side color bar.
         bar_colors
             Either a single color or a list of colors for each unique label in `labels`.
-        bar_ticklabel_pad
-            Padding for y-axis tick labels. If ``None``, uses default padding.
+        bar_set_tick_labels
+            Add text labels next to the bars without padding.
         cluster_x:
             If True, x-axis (samples) are clustered.
         cluster_y:
@@ -358,6 +358,8 @@ class AAclustPlot:
         Notes
         -----
         - Ensure `labels` and `df_corr` are in the same order to avoid mislabeling.
+        - `bar_tick_labels=True` will remove tick labels and set them as text for optimal spacing
+          so that they can not be adjusted or retrieved afterward (e.g., via `ax.get_xticklabels()`).
 
         See Also
         --------
@@ -367,7 +369,7 @@ class AAclustPlot:
         ax = plot_correlation(df_corr=df_corr, labels_sorted=labels,
                               bar_position=bar_position,
                               bar_width=bar_width, bar_spacing=bar_spacing, bar_colors=bar_colors,
-                              bar_ticklabel_pad=bar_ticklabel_pad,
+                              bar_set_tick_labels=bar_set_tick_labels,
                               cluster_x=cluster_x, cluster_y=cluster_y, method=method,
                               vmin=vmin, vmax=vmax, cmap=cmap, **kwargs_heatmap)
         plt.tight_layout()
