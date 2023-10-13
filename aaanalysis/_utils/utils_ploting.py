@@ -3,6 +3,7 @@ This is a script for internal plotting utility functions used in the backend.
 """
 import seaborn as sns
 import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 
 
 # Helper functions
@@ -18,6 +19,7 @@ def _get_color_map(labels, color):
 
 
 def _get_positions_lengths_colors(labels, color_map):
+    """Get the positions """
     positions, lengths, colors = [], [], []
     current_label, start_pos = labels[0], 0
     for i, label in enumerate(labels + [None]):
@@ -81,7 +83,7 @@ def _add_bar_labels(ax=None, bar_labels_align=None, position=None, bar_width=Non
                 transform=ax.transData, clip_on=False)
 
 
-def _add_text_labels(ax=None, position=None, bar_width=None, bar_spacing=None):
+def _add_text_labels(ax=None, position=None, bar_width=None, bar_spacing=None, nx=None, ny=None):
     """Add text labels next to the bars."""
     # Obtain tick labels and locations based on the specified position
     if position in ['left', 'right']:
@@ -91,49 +93,62 @@ def _add_text_labels(ax=None, position=None, bar_width=None, bar_spacing=None):
     else:  # ['top', 'bottom']
         tick_labels = [item.get_text() for item in ax.get_xticklabels()]
         tick_locs = ax.get_xticks()
+
         ax.xaxis.set_visible(False)  # Hide the original x-axis
     _bar_spacing = bar_spacing * 1.5
     for idx, label in enumerate(tick_labels):
         if position == 'left':
             ax.text(-_bar_spacing - bar_width, tick_locs[idx], label, ha='right', va='center')
         elif position == 'right':
-            ax.text(1 + _bar_spacing + bar_width, tick_locs[idx], label, ha='left', va='center')
+            ax.text(nx + _bar_spacing + bar_width, tick_locs[idx], label, ha='left', va='center')
         elif position == 'top':
-            ax.text(tick_locs[idx], 1 + _bar_spacing + bar_width, label, ha='center', va='bottom')
+            ax.text(tick_locs[idx], - _bar_spacing - bar_width, label, ha='left', va='bottom', rotation=45)
         elif position == 'bottom':
-            ax.text(tick_locs[idx], -_bar_spacing - bar_width, label, ha='center', va='top')
+            ax.text(tick_locs[idx], ny + _bar_spacing + bar_width, label, ha='right', va='top', rotation=45)
 
-
+# TODO add annotations for label groups
+# TODO enable placement of multiple bars (without and with ticks)
+# TODO seperate spacing between bar and tick labels (important for multiple bars)
 # Main function
-def plot_add_bars(ax=None, labels=None, position='left', bar_spacing=0.05, colors='tab:gray', bar_labels=None,
-                  bar_labels_align='horizontal', bar_width=0.1, set_tick_labels=False):
+def plot_add_bars(ax=None, labels=None, bar_position='left', bar_spacing=0.05, colors='tab:gray',
+                  bar_labels=None, bar_labels_align='horizontal', bar_width=0.1, set_tick_labels=False):
     """
     Add colored bars along a specified axis of the plot based on label grouping.
 
     Parameters:
         ax (matplotlib.axes._axes.Axes): The axes to which bars will be added.
         labels (list or array-like): Labels determining bar grouping and coloring.
-        position (str): The position to add the bars ('left', 'right', 'top', 'bottom').
+        bar_position (str): The position to add the bars ('left', 'right', 'top', 'bottom').
         bar_spacing (float): Spacing between plot and added bars.
         colors (str or list): Either a matplotlib color string, or a list of colors for each unique label.
         bar_labels (list, optional): Labels for the bars.
         bar_labels_align (str): Text alignment for bar labels, either 'horizontal' or other valid matplotlib alignment.
-        bar_width (float): Width of the bars.
+        bar_width (float): The width of the bars, expressed in the units of the opposite axis's elements.
+            Specifically, when adding a vertical bar (with position 'left' or 'right'), `bar_width` denotes
+            the horizontal extent of the bar, interpreted in terms of the spacing between adjacent elements on the x-axis.
+            Conversely, when adding a horizontal bar (with position 'top' or 'bottom'), `bar_width` represents the vertical
+             extent, mapped onto the y-axis spacing.
         set_tick_labels (bool) : Whether to adjust tick labels.
 
     Note:
         This function adds colored bars in correspondence with the provided `labels` to visualize groupings in plots.
     """
-
+    # Get the number of plotted items
+    nx, ny = max(plt.xlim()), max(plt.ylim())
+    num_plotted_items = ny if bar_position in ['left', 'right'] else nx
     if not isinstance(labels, list):
         labels = list(labels)
+        # Check if labels match the shape of the data
+    if len(labels) != num_plotted_items:
+        raise ValueError(f"Mismatch: The number of labels ({len(labels)}) must match to number of plotted items ({num_plotted_items}).")
     single_color = isinstance(colors, str) or (isinstance(colors, (list, tuple)) and len(colors) == 1)
     color_map, _ = _get_color_map(labels, colors)
     positions, lengths, colors = _get_positions_lengths_colors(labels, color_map)
-    args_get = dict(position=position, bar_width=bar_width, barspacing=bar_spacing)
+    args_get = dict(position=bar_position, bar_width=bar_width, barspacing=bar_spacing)
     if bar_labels is not None:
         _add_bar_labels(ax=ax, bar_labels_align=bar_labels_align,
-                        labels=labels, positions=positions, lengths=lengths, bar_labels=bar_labels, **args_get)
+                        labels=labels, positions=positions, lengths=lengths,
+                        bar_labels=bar_labels, **args_get)
     # Adding bars
     args = dict(transform=ax.transData, clip_on=False)
     for pos, length, bar_color in zip(positions, lengths, colors):
@@ -144,7 +159,7 @@ def plot_add_bars(ax=None, labels=None, position='left', bar_spacing=0.05, color
                                         facecolor=bar_color, edgecolor=edgecolor, linewidth=0.5,
                                         **args))
     if set_tick_labels:
-        _add_text_labels(ax=ax, position=position, bar_width=bar_width, bar_spacing=bar_spacing)
+        _add_text_labels(ax=ax, position=bar_position, bar_width=bar_width, bar_spacing=bar_spacing, nx=nx, ny=ny)
 
 
 def plot_gco(option='font.size', show_options=False):

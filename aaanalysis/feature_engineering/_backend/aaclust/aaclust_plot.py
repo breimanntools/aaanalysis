@@ -173,7 +173,7 @@ def plot_correlation(df_corr=None, labels_sorted=None, cluster_x=True, cluster_y
     cbar.ax.tick_params(axis='y', width=lw, length=6, color='black', labelsize=fs-1)
     # Add bars for highlighting clustering
     if bar_position is not None:
-        ut.plot_add_bars(ax=ax, labels=labels_sorted, position=bar_position,
+        ut.plot_add_bars(ax=ax, labels=labels_sorted, bar_position=bar_position,
                          bar_spacing=bar_spacing, bar_width=bar_width,
                          set_tick_labels=bar_set_tick_labels, colors=bar_colors)
     plt.tight_layout()
