@@ -119,7 +119,7 @@ def plot_settings(font_scale: float = 1,
         >>> data = {'Classes': ['Class A', 'Class B', 'Class C'], 'Values': [23, 27, 43]}
         >>> colors = aa.plot_get_clist()
         >>> aa.plot_settings()
-        >>> sns.barplot(data=data, x='Classes', y='Values', palette=colors)
+        >>> sns.barplot(data=data, x='Classes', y='Values', palette=colors, hue="Classes", legend=False)
         >>> sns.despine()
         >>> plt.title("Adjusted")
         >>> plt.tight_layout()
@@ -178,7 +178,8 @@ def plot_settings(font_scale: float = 1,
     # Font settings
     plt.rcParams["font.family"] = "sans-serif"
     plt.rcParams["font.sans-serif"] = font
-    font_settings = {'family': 'sans-serif', "weight": "bold"} if weight_bold else {'family': 'sans-serif'}
+    _weight = "bold" if weight_bold else "normal"
+    font_settings = {'family': 'sans-serif', "weight": _weight}
     mpl.rc('font', **font_settings)
 
     # Grid
@@ -192,6 +193,8 @@ def plot_settings(font_scale: float = 1,
         plt.rcParams["axes.labelweight"] = "bold"
         plt.rcParams["axes.titleweight"] = "bold"
     else:
+        plt.rcParams["axes.labelweight"] = "normal"
+        plt.rcParams["axes.titleweight"] = "normal"
         plt.rcParams["axes.linewidth"] = 1
         plt.rcParams["xtick.major.width"] = 0.8
         plt.rcParams["xtick.minor.width"] = 0.6

@@ -34,7 +34,7 @@ def plot_get_clist(n_colors: int = 3) -> List[str]:
         >>> colors = aa.plot_get_clist(n_colors=3)
         >>> data = {'Classes': ['Class A', 'Class B', 'Class C'], 'Values': [10, 23, 33]}
         >>> aa.plot_settings()
-        >>> sns.barplot(data=data, x='Classes', y='Values', palette=colors)
+        >>> sns.barplot(data=data, x='Classes', y='Values', palette=colors, hue="Classes", legend=False)
         >>> plt.show()
 
     See Also

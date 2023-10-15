@@ -16,7 +16,7 @@ from ._utils.check_data import (check_X, check_X_unique_samples, check_labels, c
                                 check_col_in_df)
 from ._utils.check_models import check_mode_class, check_model_kwargs
 from ._utils.check_type import (check_number_range, check_number_val, check_str, check_bool,
-                                check_dict, check_tuple, check_list_like,
+                                check_dict, check_tuple, check_list_like, check_str_in_list,
                                 check_ax)
 
 from ._utils.utils_cpp import (check_color, check_y_categorical, check_labels_, check_ylim,

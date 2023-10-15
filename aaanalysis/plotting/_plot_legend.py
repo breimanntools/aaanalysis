@@ -175,7 +175,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
                 list_cat: Optional[List[str]] = None,
                 labels: Optional[List[str]] = None,
                 # Position and Layout
-                loc: str = "upper left",
+                loc: Union[str, int] = "upper left",
                 loc_out: bool = False,
                 y: Optional[Union[int, float]] = None,
                 x: Optional[Union[int, float]] = None,
@@ -281,7 +281,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
         >>> data = {'Classes': ['A', 'B', 'C'], 'Values': [23, 27, 43]}
         >>> colors = aa.plot_get_clist()
         >>> aa.plot_settings()
-        >>> sns.barplot(x='Classes', y='Values', data=data, palette=colors, hatch=["/", ".", "."])
+        >>> sns.barplot(x='Classes', y='Values', data=data, palette=colors, hatch=["/", ".", "."], hue="Classes", legend=False)
         >>> sns.despine()
         >>> dict_color = {"Group 1": "black", "Group 2": "black"}
         >>> aa.plot_legend(dict_color=dict_color, ncol=2, y=1.1, hatch=["/", "."])
