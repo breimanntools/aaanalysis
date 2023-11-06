@@ -98,8 +98,18 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.dPULearn.html">aaanalysis.dPULearn</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#explainable-ai">Explainable AI</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#perturbation">Perturbation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#explainable-ai">Explainable AI</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.TreeModel.html">aaanalysis.TreeModel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.ShapModel.html">aaanalysis.ShapModel</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#perturbation">Perturbation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.AAMut.html">aaanalysis.AAMut</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.AAMutPlot.html">aaanalysis.AAMutPlot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.SeqMut.html">aaanalysis.SeqMut</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.SeqMutPlot.html">aaanalysis.SeqMutPlot</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#plot-utilities">Plot Utilities</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_get_clist.html">aaanalysis.plot_get_clist</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/aaanalysis.plot_get_cmap.html">aaanalysis.plot_get_cmap</a></li>
@@ -195,10 +205,36 @@ Python toolkit, which can be imported by:</p>
 </table>
 </section>
 <section id="explainable-ai">
-<h2>Explainable AI<a class="headerlink" href="#explainable-ai" title="Permalink to this heading"></a></h2>
+<span id="explainable-ai-api"></span><h2>Explainable AI<a class="headerlink" href="#explainable-ai" title="Permalink to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.TreeModel.html#aaanalysis.TreeModel" title="aaanalysis.TreeModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.TreeModel</span></code></a>([model])</p></td>
+<td><p>A wrapper for Tree based prediction models and Tree explainable_ai from SHAP package to explain prediction (typically binary classification) results at global and individual level</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.ShapModel.html#aaanalysis.ShapModel" title="aaanalysis.ShapModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.ShapModel</span></code></a>([model])</p></td>
+<td><p>A wrapper for Tree explainable_ai from SHAP package</p></td>
+</tr>
+</tbody>
+</table>
 </section>
 <section id="perturbation">
-<h2>Perturbation<a class="headerlink" href="#perturbation" title="Permalink to this heading"></a></h2>
+<span id="perturbation-api"></span><h2>Perturbation<a class="headerlink" href="#perturbation" title="Permalink to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.AAMut.html#aaanalysis.AAMut" title="aaanalysis.AAMut"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.AAMut</span></code></a>([verbose, df_scales])</p></td>
+<td><p>A class for analyzing the impact of amino acid substitutions on various property scales.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.AAMutPlot.html#aaanalysis.AAMutPlot" title="aaanalysis.AAMutPlot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.AAMutPlot</span></code></a>([verbose, df_scales])</p></td>
+<td><p>Plot results of AAMut.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/aaanalysis.SeqMut.html#aaanalysis.SeqMut" title="aaanalysis.SeqMut"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.SeqMut</span></code></a>([verbose, df_scales])</p></td>
+<td><p>Perform amino acid substitution for given sequence.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/aaanalysis.SeqMutPlot.html#aaanalysis.SeqMutPlot" title="aaanalysis.SeqMutPlot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">aaanalysis.SeqMutPlot</span></code></a>([verbose, df_scales])</p></td>
+<td><p>Plot SeqMut results.</p></td>
+</tr>
+</tbody>
+</table>
 </section>
 <section id="plot-utilities">
 <span id="plot-api"></span><h2>Plot Utilities<a class="headerlink" href="#plot-utilities" title="Permalink to this heading"></a></h2>

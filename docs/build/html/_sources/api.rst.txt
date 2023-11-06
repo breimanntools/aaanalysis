@@ -47,14 +47,27 @@ PU Learning
 
     aaanalysis.dPULearn
 
-
+.. _explainable_ai_api:
 
 Explainable AI
 --------------
+.. autosummary::
+    :toctree: generated/
 
+    aaanalysis.TreeModel
+    aaanalysis.ShapModel
+
+.. _perturbation_api:
 
 Perturbation
 ------------
+.. autosummary::
+    :toctree: generated/
+
+    aaanalysis.AAMut
+    aaanalysis.AAMutPlot
+    aaanalysis.SeqMut
+    aaanalysis.SeqMutPlot
 
 .. _plot_api:
 
