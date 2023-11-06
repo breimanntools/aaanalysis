@@ -96,6 +96,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#documentation-style">Documentation Style</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#documentation-layers">Documentation Layers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#building-the-docs">Building the Docs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-new-pypi-package-version">Building new PyPi package version</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#test-with-chatgpt">Test with ChatGPT</a><ul>
@@ -392,6 +393,23 @@ make<span class="w"> </span>html
 <ul class="simple">
 <li><p>Open <cite>_build/html/index.html</cite> in a browser.</p></li>
 </ul>
+</section>
+<section id="building-new-pypi-package-version">
+<h3>Building new PyPi package version<a class="headerlink" href="#building-new-pypi-package-version" title="Permalink to this heading"></a></h3>
+<p>To create a new version of the AAanalysis package for PyPi using Poetry, perform the following steps:</p>
+<ol class="arabic simple">
+<li><p>Ensure Poetry is installed: Run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">poetry</span></code> if you haven’t installed Poetry.</p></li>
+<li><p>Update version: Update the <cite>version number</cite> (<strong>MAJOR.MINOR.PATCH</strong>) in the ‘pyproject.toml’ file, where:
+- <strong>MAJOR</strong> version is incremented for incompatible API changes,
+- <strong>MINOR</strong> version is incremented for functionality in a backward-compatible manner, and
+- <strong>PATCH</strong> version is incremented for backward-compatible bug fixes.</p></li>
+<li><p>Build the package: Navigate to your project’s root directory and execute <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">build</span></code> to create the distribution
+files in the <code class="docutils literal notranslate"><span class="pre">dist</span></code> folder.</p></li>
+<li><p>Publish to PyPI: Upload the final version to PyPI with <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">publish</span></code>.
+You will need to input your PyPI username and API token.</p></li>
+<li><p>Verify the upload: Check that your package is correctly listed on PyPI or TestPyPI, ensuring the information and
+files are accurate.</p></li>
+</ol>
 </section>
 </section>
 <section id="test-with-chatgpt">

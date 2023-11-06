@@ -290,6 +290,27 @@ To generate the documentation locally:
 
 - Open `_build/html/index.html` in a browser.
 
+Building new PyPi package version
+---------------------------------
+
+To create a new version of the AAanalysis package for PyPi using Poetry, perform the following steps:
+
+1. Ensure Poetry is installed: Run ``pip install poetry`` if you haven't installed Poetry.
+
+2. Update version: Update the `version number` (**MAJOR.MINOR.PATCH**) in the 'pyproject.toml' file, where:
+   - **MAJOR** version is incremented for incompatible API changes,
+   - **MINOR** version is incremented for functionality in a backward-compatible manner, and
+   - **PATCH** version is incremented for backward-compatible bug fixes.
+
+3. Build the package: Navigate to your project's root directory and execute ``poetry build`` to create the distribution
+   files in the ``dist`` folder.
+
+4. Publish to PyPI: Upload the final version to PyPI with ``poetry publish``.
+   You will need to input your PyPI username and API token.
+
+5. Verify the upload: Check that your package is correctly listed on PyPI or TestPyPI, ensuring the information and
+   files are accurate.
+
 
 Test with ChatGPT
 =================
