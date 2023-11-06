@@ -298,6 +298,7 @@ To create a new version of the AAanalysis package for PyPi using Poetry, perform
 1. Ensure Poetry is installed: Run ``pip install poetry`` if you haven't installed Poetry.
 
 2. Update version: Update the `version number` (**MAJOR.MINOR.PATCH**) in the 'pyproject.toml' file, where:
+
    - **MAJOR** version is incremented for incompatible API changes,
    - **MINOR** version is incremented for functionality in a backward-compatible manner, and
    - **PATCH** version is incremented for backward-compatible bug fixes.
