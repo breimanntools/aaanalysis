@@ -1,5 +1,5 @@
 """
-This is a script for the interface of the AAclust class, a clustering wrapper object to obtain redundancy-reduced
+This is a script for the frontend of the AAclust class, a clustering wrapper object to obtain redundancy-reduced
 scale subsets.
 """
 import numpy as np
@@ -9,7 +9,6 @@ from sklearn.base import ClusterMixin
 from sklearn.exceptions import ConvergenceWarning
 import warnings
 import pandas as pd
-
 
 from aaanalysis.template_classes import Wrapper
 import aaanalysis.utils as ut
@@ -102,7 +101,7 @@ class AAclust(Wrapper):
     model_kwargs
         Keyword arguments to pass to the selected clustering model.
     verbose
-        If ``True``, verbose outputs are enabled.
+        If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if 'None'.
 
     Attributes
     ----------
@@ -167,7 +166,8 @@ class AAclust(Wrapper):
             min_th: float = 0.3,
             merge: bool = True,
             metric: str = "euclidean",
-            names: Optional[List[str]] = None) -> "AAclust":
+            names: Optional[List[str]] = None
+            ) -> "AAclust":
         """
         Applies AAclust algorithm to feature matrix (``X``).
 

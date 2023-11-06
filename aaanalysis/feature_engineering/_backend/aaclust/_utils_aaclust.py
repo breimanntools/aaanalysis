@@ -1,5 +1,5 @@
 """
-This is a script for utility functions for AAclust object and backend .
+This is a script for utility functions for AAclust object and backend.
 """
 import numpy as np
 from collections import OrderedDict

@@ -96,9 +96,15 @@ def generate_table_rst():
     tables_dict = {"t0_mapper": overview_table_rst}
     for index, row in df_mapper.iterrows():
         table_name = row[COL_MAP_TABLE]
-        df = pd.read_excel(FOLDER_TABLES + _f_xlsx(on=True, file=table_name))
+        try:
+            df = pd.read_excel(FOLDER_TABLES + _f_xlsx(on=True, file=table_name))
+        except TypeError:
+            raise ValueError(f"Error encountered for {table_name}`")
         # Check the references for each table
         if table_name not in EXCLUDE_FROM_REF_CHECK:
+            if COL_REF not in df:
+                raise ValueError(f"'{COL_REF}' is not included in {table_name}."
+                                 f" Either included {COL_REF} or include table in EXCLUDE_FROM_REF_CHECK list")
             table_refs = df[COL_REF].tolist()
             _check_references(table_name=table_name, table_refs=table_refs, list_refs=list_refs)
         table_rst = _convert_excel_to_rst(df)

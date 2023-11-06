@@ -62,7 +62,7 @@ def check_periodicpattern(seq=None, terminus=None, step1=None, step2=None, start
 
 
 # Pattern helper functions
-def get_pattern_pos(steps=None, repeat=2, len_max=12):
+def _get_pattern_pos(steps=None, repeat=2, len_max=12):
     """Get all possible positions from steps with number of repeats and maximum length using
     itertools: https://docs.python.org/3/library/itertools.html"""
     list_steps = itertools.product(steps, repeat=repeat)    # Cartesian product of all step combinations
@@ -84,7 +84,7 @@ def get_list_pattern_pos(steps=None, n_min=2, n_max=4, len_max=15):
     """Get list of pattern positions using get_pattern_pos"""
     list_pattern_pos = []
     for n in range(n_min, n_max+1):
-        list_pattern_pos.extend(get_pattern_pos(steps=steps, repeat=n, len_max=len_max))
+        list_pattern_pos.extend(_get_pattern_pos(steps=steps, repeat=n, len_max=len_max))
     list_pattern_pos = sorted(list_pattern_pos)
     return list_pattern_pos
 
@@ -206,19 +206,7 @@ class SplitRange:
     # Segment methods
     @staticmethod
     def segment(seq=None, n_split_min=1, n_split_max=15):
-        """Get range of all possible Segment splits for given sequences.
-        Output matches with SequenceFeature.labels_segment.
-
-        Parameters
-        ----------
-        seq: seq: sequence (e.g., amino acids sequence for protein)
-        n_split_min: integer indicating minimum Segment size
-        n_split_max: integer indicating maximum Segment size
-
-        Returns
-        -------
-        seq_splits: list of sequence Segment splits
-        """
+        """Get range of all possible Segment splits for given sequences."""
         sp = Split()
         f = sp.segment  # Unbound function for higher performance
         seq_splits = []
@@ -230,18 +218,7 @@ class SplitRange:
 
     @staticmethod
     def labels_segment(n_split_min=1, n_split_max=15):
-        """Get labels for range of Segment splits.
-        Output matches with SequenceFeature.segment.
-
-        Parameters
-        ----------
-        n_split_min: integer indicating minimum Segment size
-        n_split_max: integer indicating maximum Segment size
-
-        Returns
-        -------
-        labels: list of labels of Segment splits
-        """
+        """Get labels for range of Segment splits."""
         labels = []
         for n_split in range(n_split_min, n_split_max+1):
             for i_th in range(1, n_split+1):
@@ -252,21 +229,7 @@ class SplitRange:
     # Pattern methods
     @staticmethod
     def pattern(seq=None, steps=None, n_min=2, n_max=4, len_max=15):
-        """Get range of all possible Pattern splits for given sequence.
-        Output matches with SequenceFeature.labels_pattern.
-
-        Parameters
-        ----------
-        seq: sequence (e.g., amino acids sequence for protein)
-        steps: list of integer indicating possible step sizes
-        n_min: integer indicating minimum of elements in Pattern split
-        n_min: integer indicating maximum of elements in Pattern split
-        len_max: maximum of sequence length for splitting
-
-        Returns
-        -------
-        seq_splits: list of sequence Pattern splits
-        """
+        """Get range of all possible Pattern splits for given sequence."""
         steps = check_steps(steps=steps)
         list_pattern_pos = get_list_pattern_pos(steps=steps, n_min=n_min, n_max=n_max, len_max=len_max)
         sp = Split()
@@ -280,20 +243,7 @@ class SplitRange:
 
     @staticmethod
     def labels_pattern(steps=None, n_min=2, n_max=4, len_max=15):
-        """Get labels for range of Pattern splits.
-        Output matches with SequenceFeature.pattern.
-
-        Parameters
-        ----------
-        steps: list of integer indicating possible step sizes
-        n_min: integer indicating minimum of elements in Pattern split
-        n_min: integer indicating maximum of elements in Pattern split
-        len_max: maximum of sequence length for splitting
-
-        Returns
-        -------
-        labels: list of labels of Pattern splits
-        """
+        """Get labels for range of Pattern splits."""
         steps = check_steps(steps=steps)
         list_pattern_pos = get_list_pattern_pos(steps=steps, n_min=n_min, n_max=n_max, len_max=len_max)
         labels = []
@@ -306,17 +256,7 @@ class SplitRange:
     # Periodic pattern methods
     @staticmethod
     def periodicpattern(seq=None, steps=None):
-        """Get range of all possible PeriodicPattern splits for given sequence.
-        Output matches with SequenceFeature.labels_periodicpattern.
-
-        Parameters
-        ----------
-        seq: sequence (e.g., amino acids sequence for protein)
-        steps: list of integer indicating possible step sizes
-
-        Returns
-        -------
-        seq_splits: list of sequence PeriodicPattern splits"""
+        """Get range of all possible PeriodicPattern splits for given sequence"""
         steps = check_steps(steps=steps)
         sp = Split()
         f = sp.periodicpattern  # Unbound function for higher performance
@@ -330,17 +270,7 @@ class SplitRange:
 
     @staticmethod
     def labels_periodicpattern(steps=None):
-        """Get labels of all possible PeriodicPattern splits.
-        Output matches with SequenceFeature.periodicpattern.
-
-        Parameters
-        ----------
-        steps: list of integer indicating possible step sizes
-
-        Returns
-        -------
-        labels: list of labels of Pattern splits
-        """
+        """Get labels of all possible PeriodicPattern splits."""
         steps = check_steps(steps=steps)
         labels = []
         for terminus in ['N', 'C']:

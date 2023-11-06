@@ -70,11 +70,12 @@ def _get_parts_from_df(df=None, entry=None):
 
 
 class _PartsCreator:
-    """Class for creating all sequence features necessary for CPP analysis:
-        a) Target Middle Domain (TMD) or transmembrane domain for intramembrane proteases (IMP) substrates,
-            whose length can vary between the protein sequences.
-        b) Juxta Middle Domain (JMD) or juxtamembrane domain for IMP substrates,
-            which flank the TMD N- and C-terminal with defined length.
+    """
+    Class for creating all sequence features necessary for CPP analysis:
+    a) Target Middle Domain (TMD) or transmembrane domain for intramembrane proteases (IMP) substrates,
+        whose length can vary between the protein sequences.
+    b) Juxta Middle Domain (JMD) or juxtamembrane domain for IMP substrates,
+        which flank the TMD N- and C-terminal with defined length.
     These sequence features can be derived from the total sequence, the TMD start and stop position,
         and the length of the JMD and the extended region (given for one side).
 
@@ -134,13 +135,14 @@ class _PartsCreator:
 
 # II Main Functions
 class Parts:
-    """Class for retrieving all sequence features necessary for CPP analysis:
-        a) Target Middle Domain (TMD) or transmembrane domain for intramembrane proteases (IMP) substrates,
-            whose length can vary between the protein sequences.
-        b) Juxta Middle Domain (JMD) or juxtamembrane domain for IMP substrates,
-            which flank the TMD N- and C-terminal with defined length.
-        c) Extended TMD (TMD-E), which is an uncertainty region flanking the TMD (a shorter JMD version)
-            or the TM-Helix anchoring region for IMP substrates with defined length.
+    """
+    Class for retrieving all sequence features necessary for CPP analysis:
+    a) Target Middle Domain (TMD) or transmembrane domain for intramembrane proteases (IMP) substrates,
+        whose length can vary between the protein sequences.
+    b) Juxta Middle Domain (JMD) or juxtamembrane domain for IMP substrates,
+        which flank the TMD N- and C-terminal with defined length.
+    c) Extended TMD (TMD-E), which is an uncertainty region flanking the TMD (a shorter JMD version)
+        or the TM-Helix anchoring region for IMP substrates with defined length.
     Notes
     -----
     TMD, JMD-N, JMD-C can be created and used to create a part sequence dictionary with further features
@@ -189,7 +191,6 @@ class Parts:
             tmd_seq, jmd_n_seq, jmd_c_seq = _get_parts_from_df(df=df, entry=entry)
         check_parts_exist(tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
         # Parts can be sequences or lists with positions
-        # TODO
         ut.check_args_len(jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, ext_len=ext_len, accept_tmd_none=True)
         dict_part_seq = _get_dict_part_seq_from_seq(tmd=tmd_seq, jmd_n=jmd_n_seq, jmd_c=jmd_c_seq, ext_len=ext_len)
         return dict_part_seq

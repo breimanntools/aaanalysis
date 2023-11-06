@@ -1,33 +1,89 @@
 """
-This is a script for ...
+This is a script for the frontend of the CPP class, a sequence-based feature engineering object.
 """
 import pandas as pd
+from typing import Optional, Dict, Union, List, Tuple, Type
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
 from aaanalysis.template_classes import Tool
 
-from ._backend.cpp.feature import SequenceFeature
-from ._backend.cpp._feature_stat import SequenceFeatureStatistics
+# Import supportive class (exception for importing from same sub-package)
+from ._sequence_feature import SequenceFeature
+from ._backend.cpp._utils_cpp import get_feat_matrix
+from ._backend.cpp.cpp_run import pre_filtering_info, pre_filtering, filtering, add_stat
+from ._backend.cpp.cpp_methods import (get_positions,
+                                       get_dif)
+
 
 # I Helper Functions
+# Check for add methods
+def check_ref_group(ref_group=0, labels=None):
+    """Check if ref group class lable"""
+    if ref_group not in labels:
+        raise ValueError(f"'ref_group' ({ref_group}) not class label: {set(labels)}.")
 
 
-# Filtering functions
-def _filtering_info(df=None, df_scales=None, check_cat=True):
-    """Get datasets structures for filtering, two dictionaries with feature to scale category resp.
-    feature positions and one data sets frame with paired pearson correlations of all scales"""
-    if check_cat:
-        dict_c = dict(zip(df[ut.COL_FEATURE], df["category"]))
-    else:
-        dict_c = dict()
-    dict_p = dict(zip(df[ut.COL_FEATURE], [set(x) for x in df["positions"]]))
-    df_cor = df_scales.corr()
-    return dict_c, dict_p, df_cor
+def check_sample_in_df_seq(sample_name=None, df_seq=None):
+    """Check if sample name in df_seq"""
+    list_names = list(df_seq[ut.COL_NAME])
+    if sample_name not in list_names:
+        error = f"'sample_name' ('{sample_name}') not in '{ut.COL_NAME}' of 'df_seq'." \
+                f"\nValid names are: {list_names}"
+        raise ValueError(error)
+
+# Adder methods for CPP analysis (used in run method)
+def _add_stat(df_feat=None, df_parts=None, df_scales=None, labels=None, parametric=False, accept_gaps=False):
+        """
+        Add summary statistics for each feature to DataFrame.
+
+        Notes
+        -----
+        P-values are calculated Mann-Whitney U test (non-parametric) or T-test (parametric) as implemented in SciPy.
+        For multiple hypothesis correction, the Benjamini-Hochberg FDR correction is applied on all given features
+        as implemented in SciPy.
+        """
+        # Add feature statistics
+        features = list(df_feat[ut.COL_FEATURE])
+        X = get_feat_matrix(features=features,
+                            df_parts=df_parts,
+                            df_scales=df_scales,
+                            accept_gaps=accept_gaps)
+        df_feat = add_stat(df=df_feat, X=X, y=labels, parametric=parametric)
+        return df_feat
+
+def _add_scale_info(df_feat=None, df_cat=None):
+    """Add scale information to DataFrame (scale categories, sub categories, and scale names)."""
+    # Add scale categories
+    df_cat = df_cat.copy()
+    i = df_feat.columns.get_loc(ut.COL_FEATURE)
+    for col in [ut.COL_SCALE_DES, ut.COL_SCALE_NAME, ut.COL_SUBCAT, ut.COL_CAT]:
+        if col in list(df_feat):
+            df_feat.drop(col, inplace=True, axis=1)
+        dict_cat = dict(zip(df_cat[ut.COL_SCALE_ID], df_cat[col]))
+        vals = [dict_cat[s.split("-")[2]] for s in df_feat[ut.COL_FEATURE]]
+        df_feat.insert(i + 1, col, vals)
+    return df_feat
+
+
+# Common interface
+doc_param_len_pos = \
+"""\
+start
+    Position label of first amino acid position (starting at N-terminus, >=0).
+tmd_len
+    Length of TMD (>0).
+jmd_n_len
+    Length of JMD-N (>=0).
+jmd_c_len
+    Length of JMD-C (>=0).
+ext_len
+    Length of TMD-extending part (starting from C and N terminal part of TMD, >=0).\
+"""
 
 
 # TODO simplify checks & interface (end-to-end check with tests & docu)
-
+# TODO  TODO add link to explanation for TMD, JMDs
 # II Main Functions
 class CPP(Tool):
     """
@@ -35,45 +91,55 @@ class CPP(Tool):
 
     Parameters
     ----------
-    df_scales : :class:`pandas.DataFrame`
-        DataFrame with amino acid scales.
-    df_cat : :class:`pandas.DataFrame`, default = aa.load_categories
-        DataFrame with default categories for physicochemical amino acid scales.
-    df_parts : :class:`pandas.DataFrame`
+    df_parts
         DataFrame with sequence parts.
-    split_kws : dict, default = SequenceFeature.get_split_kws
+    split_kws
         Nested dictionary with parameter dictionary for each chosen split_type.
-    accept_gaps : bool, default = False
-        Whether to accept missing values by enabling omitting for computations (if True).
+        Default from :meth:`SequenceFeature.get_split_kws`
+    df_scales
+        DataFrame with amino acid scales. Default from :meth:`load_scales` with 'name'='scales_cat'.
+    df_cat
+        DataFrame with default categories for physicochemical amino acid scales.
+        Default from :meth:`load_categories`
+    accept_gaps
+        Whether to accept missing values by enabling omitting for computations (if ``True``).
+    verbose
+        If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if ``None``.
 
-    verbose : bool, default = True
-        Whether to print progress information about the algorithm (if True).
-
-    Notes
-    -----
-    The CPP.run() method performs all steps of the CPP algorithm.
-
+    Attributes
+    ----------
+    df_parts
+        DataFrame with sequence parts.
+    split_kws
+        Nested dictionary with parameter dictionary for each chosen split_type.
+    df_scales
+        DataFrame with amino acid scales.
+    df_cat
+        DataFrame with default categories for physicochemical amino acid scales.
     """
     def __init__(self,
-                 df_scales=None,
-                 df_cat=None,
-                 df_parts=None,
-                 split_kws=None,
-                 accept_gaps=False,
-                 verbose=None):
+                 df_parts: pd.DataFrame = None,
+                 split_kws : Optional[dict] = None,
+                 df_scales : Optional[pd.DataFrame] = None,
+                 df_cat : Optional[pd.DataFrame] = None,
+                 accept_gaps : bool = False,
+                 verbose: Optional[bool] = None):
         # Load default scales if not specified
-        sf = SequenceFeature()
-        if df_cat is None:
-            df_cat = aa.load_scales(name=ut.STR_SCALE_CAT)
+        if split_kws is None:
+            sf = SequenceFeature()
+            split_kws = sf.get_split_kws()
         if df_scales is None:
             df_scales = aa.load_scales()
-        if split_kws is None:
-            split_kws = sf.get_split_kws()
+        if df_cat is None:
+            df_cat = aa.load_scales(name=ut.STR_SCALE_CAT)
+        # Check input
+        verbose = ut.check_verbose(verbose)
         ut.check_df_parts(df_parts=df_parts, verbose=verbose)
         df_parts = ut.check_df_scales(df_scales=df_scales, df_parts=df_parts, accept_gaps=accept_gaps)
         df_cat, df_scales = ut.check_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
         ut.check_split_kws(split_kws=split_kws)
-        self._verbose = ut.check_verbose(verbose)
+        # Internal attributes
+        self._verbose = verbose
         self._accept_gaps = accept_gaps
         # Feature components: Scales + Part + Split
         self.df_cat = df_cat.copy()
@@ -81,135 +147,25 @@ class CPP(Tool):
         self.df_parts = df_parts.copy()
         self.split_kws = split_kws
 
-    # Adder methods for CPP analysis (used in run method)
-    def _add_scale_info(self, df_feat=None):
-        """
-        Add scale information to DataFrame. Scale information are–from general to specific–scale categories,
-        sub categories, and scale names.
-
-        Parameters
-        ----------
-        df_feat: :class:`pandas.DataFrame`
-            Feature DataFrame to add scale categories.
-
-        Returns
-        -------
-        df_feat: :class:`pandas.DataFrame`
-            Feature DataFrame including scale categories.
-        """
-        # Check input
-        df_feat = ut.check_df_feat(df_feat=df_feat)
-
-        # Add scale categories
-        df_cat = self.df_cat.copy()
-        i = df_feat.columns.get_loc(ut.COL_FEATURE)
-        for col in [ut.COL_SCALE_DES, ut.COL_SCALE_NAME, ut.COL_SUBCAT, ut.COL_CAT]:
-            if col in list(df_feat):
-                df_feat.drop(col, inplace=True, axis=1)
-            dict_cat = dict(zip(df_cat[ut.COL_SCALE_ID], df_cat[col]))
-            vals = [dict_cat[s.split("-")[2]] for s in df_feat[ut.COL_FEATURE]]
-            df_feat.insert(i + 1, col, vals)
-        return df_feat
-
-    def _add_stat(self, df_feat=None, labels=None, parametric=False, accept_gaps=False):
-        """
-        Add summary statistics for each feature to DataFrame.
-
-        Parameters
-        ----------
-        df_feat: :class:`pandas.DataFrame`
-            Feature DataFrame to add statistics.
-        labels: array-like, shape (n_samples)
-            Class labels for samples in df_parts attribute.
-        parametric: bool, default = False
-            Whether to use parametric (T-test) or non-parametric (U-test) test for p-value computation.
-        accept_gaps: bool, default = False
-            Whether to accept missing values by enabling omitting for computations (if True).
-
-        Returns
-        -------
-        df_feat: :class:`pandas.DataFrame`
-            Feature DataFrame including statistics for comparing two given groups.
-
-        Notes
-        -----
-        P-values are calculated Mann-Whitney U test (non-parametric) or T-test (parametric) as implemented in SciPy.
-
-        For multiple hypothesis correction, the Benjamini-Hochberg FDR correction is applied on all given features
-        as implemented in SciPy.
-        """
-        # Check input
-        df_feat = ut.check_df_feat(df_feat=df_feat)
-        ut.check_labels_(labels=labels, df=self.df_parts, name_df="df_parts")
-        ut.check_bool(name="parametric", val=parametric)
-
-        # Add feature statistics
-        features = list(df_feat[ut.COL_FEATURE])
-        sf = SequenceFeature()
-        sfs = SequenceFeatureStatistics()
-        X = sf.feat_matrix(df_parts=self.df_parts,
-                           features=features,
-                           df_scales=self.df_scales,
-                           accept_gaps=accept_gaps)
-        df_feat = sfs.add_stat(df=df_feat, X=X, y=labels, parametric=parametric)
-        return df_feat
-
-    @staticmethod
-    def _add_positions(df_feat=None, tmd_len=20, jmd_n_len=10, jmd_c_len=10, ext_len=4, start=1):
-        """Add sequence positions to DataFrame."""
-        # Check input (length checked by SequenceFeaturePositions)
-        df_feat = ut.check_df_feat(df_feat=df_feat)
-        # Add positions of features
-        features = df_feat[ut.COL_FEATURE].to_list()
-        sf = SequenceFeature()
-        feat_positions = sf.add_position(features=features, tmd_len=tmd_len, start=start,
-                                         jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len)
-        df_feat[ut.COL_POSITION] = feat_positions
-        return df_feat
-
-    # Filtering methods
-    @staticmethod
-    def _pre_filtering(features=None, abs_mean_dif=None, std_test=None, max_std_test=0.2, n=10000):
-        """CPP pre-filtering based on thresholds."""
-        df = pd.DataFrame(zip(features, abs_mean_dif, std_test),
-                          columns=[ut.COL_FEATURE, ut.COL_ABS_MEAN_DIF, ut.COL_STD_TEST])
-        df = df[df[ut.COL_STD_TEST] <= max_std_test]
-        df = df.sort_values(by=ut.COL_ABS_MEAN_DIF, ascending=False).head(n)
-        return df
-
-    def _filtering(self, df=None, max_overlap=0.5, max_cor=0.5, n_filter=100, check_cat=True):
-        """CPP filtering algorithm based on redundancy reduction in descending order of absolute AUC."""
-        dict_c, dict_p, df_cor = _filtering_info(df=df, df_scales=self.df_scales, check_cat=check_cat)
-        df = df.sort_values(by=[ut.COL_ABS_AUC, ut.COL_ABS_MEAN_DIF], ascending=False).copy().reset_index(drop=True)
-        list_feat = list(df[ut.COL_FEATURE])
-        list_top_feat = [list_feat.pop(0)]  # List with best feature
-        for feat in list_feat:
-            add_flag = True
-            # Stop condition for limit
-            if len(list_top_feat) == n_filter:
-                break
-            # Compare features with all top features (added if low overlap & weak correlation or different category)
-            for top_feat in list_top_feat:
-                if not check_cat or dict_c[feat] == dict_c[top_feat]:
-                    # Remove if feat positions high overlap or subset
-                    pos, top_pos = dict_p[feat], dict_p[top_feat]
-                    overlap = len(top_pos.intersection(pos))/len(top_pos.union(pos))
-                    if overlap >= max_overlap or pos.issubset(top_pos):
-                        # Remove if high pearson correlation
-                        scale, top_scale = feat.split("-")[2], top_feat.split("-")[2]
-                        cor = df_cor[top_scale][scale]
-                        if cor > max_cor:
-                            add_flag = False
-            if add_flag:
-                list_top_feat.append(feat)
-        df_top_feat = df[df[ut.COL_FEATURE].isin(list_top_feat)]
-        return df_top_feat
-
     # Main method
-    def run(self, labels=None, parametric=False, n_filter=100,
-            tmd_len=20, jmd_n_len=10, jmd_c_len=10, ext_len=4, start=1,
-            check_cat=True, n_pre_filter=None, pct_pre_filter=5, max_std_test=0.2, max_overlap=0.5, max_cor=0.5,
-            n_processes=None):
+    @ut.doc_params(doc_param_len_pos=doc_param_len_pos)
+    def run(self,
+            labels: ut.ArrayLike1D = None,
+            n_filter: int = 100,
+            n_pre_filter: Optional[int] = None,
+            pct_pre_filter: int = 5,
+            max_std_test: float = 0.2,
+            max_overlap: float = 0.5,
+            max_cor: float = 0.5,
+            check_cat: bool = True,
+            parametric: bool = False,
+            start: int = 1,
+            tmd_len: int = 20,
+            jmd_n_len: int = 10,
+            jmd_c_len: int = 10,
+            ext_len: int = 4,
+            n_processes : Optional[int] = None
+            ) -> pd.DataFrame:
         """
         Perform CPP pipeline by creation and two-step filtering of features. CPP aims to
         identify a collection of non-redundant features that are most discriminant between
@@ -217,41 +173,31 @@ class CPP(Tool):
 
         Parameters
         ----------
-        labels : array-like, shape (n_samples)
+        labels : `array-like, shape (n_samples, )`
             Class labels for samples in sequence DataFrame (test=1, reference=0).
-        parametric : bool, default = False
-            Whether to use parametric (T-test) or non-parametric (U-test) test for p-value computation.
-        n_filter : int, default = 100
+        n_filter
             Number of features to be filtered/selected by CPP algorithm.
-        n_pre_filter : int, optional
+        n_pre_filter
             Number of feature to be pre-filtered by CPP algorithm. If None, a percentage of all features is used.
-        tmd_len : int, >0
-            Length of TMD used for positions. TODO add link to explanation
-        start : int, >=0
-            Position label of first amino acid position (starting at N-terminus).
-        jmd_n_len : int, >=0, default = 10
-            Length of JMD-N.
-        jmd_c_len : int, >=0, default = 10
-            Length of JMD-C.
-        ext_len : int, >=0, default = 4
-            Length of TMD-extending part (starting from C and N terminal part of TMD).
-            Should be longer than jmd_n_len and jmd_c_len
-        check_cat : bool, default = True
-            Whether to check for redundancy within scale categories.
-        pct_pre_filter : int, default = 5
+        pct_pre_filter
             Percentage of all features that should remain after the pre-filtering step.
-        max_std_test : float [0-1], default = 0.2
-            Maximum standard deviation within the test group used as threshold for pre-filtering.
-        max_overlap : float [0-1], default = 0.5
-            Maximum positional overlap of features used as threshold for filtering.
-        max_cor : float [0-1], default = 0.5
-            Maximum Pearson correlation of features used as threshold for filtering.
-        n_processes : int, default = None
+        max_std_test
+            Maximum standard deviation [0-1] within the test group used as threshold for pre-filtering.
+        max_overlap
+            Maximum positional overlap [0-1] of features used as threshold for filtering.
+        max_cor
+            Maximum Pearson correlation [0-1] of features used as threshold for filtering.
+        check_cat
+            Whether to check for redundancy within scale categories.
+        parametric
+            Whether to use parametric (T-test) or non-parametric (Mann-Whitney-U-test) test for p-value computation.
+        {doc_param_len_pos}
+        n_processes
             Number of CPUs used for multiprocessing. If None, number will be optimized automatically.
 
         Returns
         -------
-        df_feat : :class:`pandas.DataFrame`, shape (n_feature, n_feature_information)
+        df_feat
             DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
 
         Notes
@@ -285,48 +231,134 @@ class CPP(Tool):
         if self._verbose:
             sf = SequenceFeature()
             n_feat = len(sf.get_features(**args, list_parts=list(self.df_parts)))
-            print(f"1. CPP creates {n_feat} features for {len(self.df_parts)} samples")
+            ut.print_out(f"1. CPP creates {n_feat} features for {len(self.df_parts)} samples")
             ut.print_start_progress()
         # Pre-filtering: Select best n % of feature (filter_pct) based std(test set) and mean_dif
-        sfs = SequenceFeatureStatistics()
-        abs_mean_dif, std_test, features = sfs.pre_filtering_info(**args,
-                                                                  df_parts=self.df_parts,
-                                                                  y=labels,
-                                                                  accept_gaps=self._accept_gaps,
-                                                                  verbose=self._verbose,
-                                                                  n_processes=n_processes)
+        abs_mean_dif, std_test, features = pre_filtering_info(**args,
+                                                              df_parts=self.df_parts,
+                                                              y=labels,
+                                                              accept_gaps=self._accept_gaps,
+                                                              verbose=self._verbose,
+                                                              n_processes=n_processes)
         if n_pre_filter is None:
             n_pre_filter = int(len(features) * (pct_pre_filter / 100))
+            n_pre_filter = n_filter if n_pre_filter < n_filter else n_pre_filter
         if self._verbose:
             ut.print_finished_progress()
-            print(f"2. CPP pre-filters {n_pre_filter} features ({pct_pre_filter}%) with highest '{ut.COL_ABS_MEAN_DIF}'"
-                  f" and 'max_std_test' <= {max_std_test}")
-        df = self._pre_filtering(features=features,
-                                 abs_mean_dif=abs_mean_dif,
-                                 std_test=std_test,
-                                 n=n_pre_filter,
-                                 max_std_test=max_std_test)
+            ut.print_out(f"2. CPP pre-filters {n_pre_filter} features ({pct_pre_filter}%) with highest '{ut.COL_ABS_MEAN_DIF}'"
+                         f" and 'max_std_test' <= {max_std_test}")
+        df = pre_filtering(features=features,
+                           abs_mean_dif=abs_mean_dif,
+                           std_test=std_test,
+                           n=n_pre_filter,
+                           max_std_test=max_std_test)
+        # Add feature information
+        df = _add_stat(df_feat=df, df_scales=self.df_scales, df_parts=self.df_parts,
+                       labels=labels, parametric=parametric, accept_gaps=self._accept_gaps)
+        df = self.add_positions(df_feat=df, start=start,
+                                tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len)
+        df = _add_scale_info(df_feat=df, df_cat=self.df_cat)
         # Filtering using CPP algorithm
-        df = self._add_stat(df_feat=df, labels=labels, parametric=parametric, accept_gaps=self._accept_gaps)
         if self._verbose:
-            print(f"3. CPP filtering algorithm")
-        df = self._add_positions(df_feat=df, tmd_len=tmd_len, start=start)
-        df = self._add_scale_info(df_feat=df)
-        df_feat = self._filtering(df=df, n_filter=n_filter, check_cat=check_cat, max_overlap=max_overlap, max_cor=max_cor)
+            ut.print_out(f"3. CPP filtering algorithm")
+        df_feat = filtering(df=df, df_scales=self.df_scales,
+                            n_filter=n_filter, check_cat=check_cat,
+                            max_overlap=max_overlap, max_cor=max_cor)
         df_feat.reset_index(drop=True, inplace=True)
         if self._verbose:
-            print(f"4. CPP returns df with {len(df_feat)} unique features including general information and statistics")
+            ut.print_out(f"4. CPP returns df with {len(df_feat)} unique features including general information and statistics")
         return df_feat
 
+    # Feature information methods (can be included to df_feat for individual sequences)
+    # TODO add sequence positions
+    @staticmethod
+    @ut.doc_params(doc_param_len_pos=doc_param_len_pos)
+    def add_positions(df_feat: pd.DataFrame = None,
+                      start: int = 1,
+                      tmd_len: int = 20,
+                      jmd_n_len: int = 10,
+                      jmd_c_len: int = 10,
+                      ext_len: int = 4
+                      ) -> pd.DataFrame:
+        """Create list with positions for given feature names
+
+        Parameters
+        ----------
+        df_feat
+            Feature DataFrame, output of CPP.run(), to add sample difference.
+        {doc_param_len_pos}
+
+        Returns
+        -------
+        df_feat
+            Feature DataFrame with positions for each feature in feat_names
+
+        Notes
+        -----
+        * The sum of length parameters define the total number of positions (``jmd_n_len`` + ``tmd_len`` + ``jmd_c_len``).
+        * ``ext_len`` < ``jmd_m_len`` and ``ext_len`` < ``jmd_c_len``
+        """
+        # Check input
+        df_feat = ut.check_df_feat(df_feat=df_feat)
+        features = list(df_feat["feature"])
+        features = ut.check_features(features=features)
+        ut.check_number_range(name="tmd_len", val=tmd_len, just_int=True, min_val=1)
+        args = dict(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len, start=start)
+        for name in args:
+            ut.check_number_range(name=name, val=args[name], just_int=True, min_val=0)
+        # Get feature position
+        feat_positions = get_positions(features=features, start=start,
+                                        tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
+                                        ext_len=ext_len)
+        df_feat[ut.COL_POSITION] = feat_positions
+        return df_feat
+
+    def add_dif(self,
+                df_feat: pd.DataFrame = None,
+                labels: ut.ArrayLike1D = None,
+                list_names: List[str] = None,
+                sample_name: str = None,
+                ref_group: int = 0
+                ) -> pd.DataFrame:
+        """
+        Add feature value difference between sample and reference group to DataFrame.
+
+        Parameters
+        ----------
+        df_feat
+            Feature DataFrame (CPP output) to add sample difference.
+        labels: `array-like, shape (n_samples, )`
+            Class labels for samples in sequence DataFrame.
+        ref_group
+            Class label of reference group.
+        list_names
+            List of names matching to `df_parts`.
+        sample_name
+            Name of sample for which the feature value difference to a given reference group should be computed.
+
+        Returns
+        -------
+        df_feat
+            Feature DataFrame with feature value difference.
+        """
+        # Check input
+        df_feat = ut.check_df_feat(df_feat=df_feat)
+        features = list(df_feat["feature"])
+        features = ut.check_features(features=features)
+        check_ref_group(ref_group=ref_group, labels=labels)
+        # Add sample difference to reference group
+        feat_dif = get_dif(features=features,
+                           df_parts=self.df_parts,
+                           df_scales=self.df_scales,
+                           accept_gaps=self._accept_gaps,
+                           list_names=list_names,
+                           sample_name=sample_name,
+                           labels=labels,
+                           ref_group=ref_group)
+        df_feat[f"dif_{sample_name}"] = feat_dif
+        return df_feat
+
+
     # TODO get evaluation for any dataset for compelete
-    """
-    @staticmethod
-    def eval(df_feat=None, features=None):
-    """
-    # TODO filter based on correlation of features
-    """
-    @staticmethod
-    def filter_corr(df_parts=None, df_feat=None, max_corr=None):
-    """
-    def eval(self):
+    def eval(self, df_feat=None, features=None):
         pass
