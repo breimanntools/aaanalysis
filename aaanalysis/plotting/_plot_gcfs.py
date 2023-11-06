@@ -31,7 +31,7 @@ def plot_gcfs(option='font.size'):
 
     See Also
     --------
-    * Our `Plotting Prelude <plotting_prelude.html>`_.
+    - Our `Plotting Prelude <plotting_prelude.html>`_.
     """
     allowed_options = ["font.size", "axes.linewidth"]
     if option not in allowed_options:

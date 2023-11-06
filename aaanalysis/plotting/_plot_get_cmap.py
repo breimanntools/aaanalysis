@@ -93,11 +93,11 @@ def plot_get_cmap(name: str = "CPP",
 
     See Also
     --------
-    * Our `Plotting Prelude <plotting_prelude.html>`_.
-    * `Matplotlib color names <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
-    * :func:`seaborn.color_palette` function to generate a color palette in seaborn.
-    * :func:`seaborn.light_palette function` to generate a lighter color palettes.
-    * The `SHAP <shap:mod:shap>`_ package.
+    - `Plotting Prelude <plotting_prelude.html>`_.
+    - `Matplotlib color names <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
+    - :func:`seaborn.color_palette` function to generate a color palette in seaborn.
+    - :func:`seaborn.light_palette function` to generate a lighter color palettes.
+    - The `SHAP <shap:mod:shap>`_ package.
     """
     # Check input
     list_names = [ut.STR_CMAP_CPP, ut.STR_CMAP_SHAP]

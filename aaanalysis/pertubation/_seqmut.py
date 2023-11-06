@@ -1,6 +1,6 @@
 """
-This is a script for the frontend of the AAmut class for analysing the effect of amino acid changes
-for given property scales."""
+This is a script for the frontend of the SeqMut class
+"""
 import aaanalysis.utils as ut
 
 
@@ -11,7 +11,7 @@ import aaanalysis.utils as ut
 # II Main Functions
 class SeqMut:
     """
-    Analyse the effect of amino acid changes for given property scales.
+    Perform amino acid substitution for given sequence.
     """
     def __init__(self, verbose=False, df_scales=None):
         self.verbose = verbose

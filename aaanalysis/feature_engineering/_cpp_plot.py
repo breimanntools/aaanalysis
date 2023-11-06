@@ -208,7 +208,7 @@ def _set_size_to_optimized_value(seq_size=None, tmd_jmd_fontsize=None, opt_size=
 # II Main Functions
 class CPPPlot:
     """
-    Create and filter features that are most discriminant between two sets of sequences.
+    Plot CPP results at global or individual sample level as ranking plot, profile, or map (heatmap, feature map).
 
     Parameters
     ----------
@@ -225,7 +225,14 @@ class CPPPlot:
         Whether to print progress information about the algorithm (if True).
 
     """
-    def __init__(self, df_cat=None, accept_gaps=False, jmd_n_len=10, jmd_c_len=10, ext_len=4, verbose=True):
+    def __init__(self,
+                 df_cat=None,
+                 accept_gaps=False,
+                 jmd_n_len=10,
+                 jmd_c_len=10,
+                 ext_len=4,
+                 verbose=True
+                 ):
         # Load default scales if not specified
 
         ut.check_bool(name="verbose", val=verbose)
@@ -242,6 +249,10 @@ class CPPPlot:
         self.ax_seq = None
 
     # Plotting methods
+    def ranking(self):
+        """"""
+        pass
+
     def profile(self, df_feat=None, y="category", val_col="mean_dif", val_type="count", normalize=False,
                 figsize=(7, 5), title=None, title_kws=None,
                 dict_color=None, edge_color="none", bar_width=0.75,

@@ -1,5 +1,7 @@
 """
-This is a script for the processing SHAP values, primarily for the combination of SHAP with CPP
+This is a script for the processing SHAP values, primarily for the combination of SHAP with CPP.
+SHAP models are not included due to instability of SHAP package development. ShapModel should solely work with
+SHAP value matrix.
 """
 import time
 import pandas as pd
@@ -60,8 +62,8 @@ class ShapModel:
         ut.check_str(name="name_feat_impact", val=name_feat_impact)
         ut.check_str(name="col_shap", val=col_shap)
         df_feat = ut.check_df_feat(df_feat=df_feat)
-        ut.check_col_in_df(df=df_feat, name_df="df_feat", col=col_shap, col_type=[float, int])
-        ut.check_col_in_df(df=df_feat, name_df="df_feat", col=name_feat_impact, error_if_exists=True)
+        #ut.check_col_in_df(df=df_feat, name_df="df_feat", col=col_shap, col_type=[float, int])
+        #ut.check_col_in_df(df=df_feat, name_df="df_feat", col=name_feat_impact, error_if_exists=True)
 
         # Compute feature impact (accepting missing values)
         shap_values = np.array(df_feat[col_shap])

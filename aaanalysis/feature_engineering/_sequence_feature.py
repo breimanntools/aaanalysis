@@ -4,6 +4,7 @@ Script for SequenceFeature() object that combines scales, splits, and parts to c
 """
 import math
 import warnings
+import pandas as pd
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
@@ -105,14 +106,10 @@ class SequenceFeature:
 
     Notes
     -----
-    Part: Feature Component
-        A continuous subset of a sequence like a protein domain (e.g, transmembrane domain of membrane proteins).
-
-    Split: Feature Component
-        Principle to obtain a distinct subset of amino acids from a sequence part like a segment or a pattern.
-
-    Scale: Feature Component
-        A physicochemical scale assigning  each amino acid a numerical value between 0 and 1.
+    Feature Components:
+    * Part: A continuous subset of sequence, such as a protein domain (e.g, transmembrane domain of membrane proteins).
+    * Split: Continuous or discontinuous subset of a sequence part, such as a segment or a pattern.
+    * Scale: A physicochemical scale assigning each amino acid a numerical value (typically min-max-normalized [0-1]).
 
     Feature: Part + Split + Scale
         Physicochemical property (expressed as numerical scale) present at distinct amino acid
@@ -130,7 +127,13 @@ class SequenceFeature:
 
     # Part and Split methods
     @staticmethod
-    def get_df_parts(df_seq=None, list_parts=None, jmd_n_len=None, jmd_c_len=None, ext_len=None, all_parts=False):
+    def get_df_parts(df_seq=None,
+                     list_parts=None,
+                     jmd_n_len=None,
+                     jmd_c_len=None,
+                     ext_len=None,
+                     all_parts=False
+                     ) -> pd.DataFrame:
         """Create DataFrane with sequence parts.
 
         Parameters
@@ -177,8 +180,14 @@ class SequenceFeature:
         return df_parts
 
     @staticmethod
-    def get_split_kws(n_split_min=1, n_split_max=15, steps_pattern=None, n_min=2, n_max=4, len_max=15,
-                      steps_periodicpattern=None, split_types=None):
+    def get_split_kws(n_split_min=1,
+                      n_split_max=15,
+                      steps_pattern=None,
+                      n_min=2,
+                      n_max=4,
+                      len_max=15,
+                      steps_periodicpattern=None,
+                      split_types=None):
         """Create dictionary with kwargs for three split types: Segment, Pattern, PeriodicPattern
 
         Parameters
@@ -244,8 +253,14 @@ class SequenceFeature:
 
     # Feature methods
     @staticmethod
-    def feat_matrix(features=None, df_parts=None, df_scales=None, accept_gaps=False, n_jobs=None, verbose=False,
-                    return_labels=False):
+    def feat_matrix(features=None,
+                    df_parts=None,
+                    df_scales=None,
+                    accept_gaps=False,
+                    n_jobs=None,
+                    verbose=False,
+                    return_labels=False
+                    ):
         """Create feature matrix for given feature ids and sequence parts.
 
         Parameters
@@ -303,7 +318,12 @@ class SequenceFeature:
                 print("Only feat_matrix (without labels) will be returned")
             return _feat_matrix  # X
 
-    def get_features(self, list_parts=None, split_kws=None, df_scales=None, all_parts=False):
+    def get_features(self,
+                     list_parts=None,
+                     split_kws=None,
+                     df_scales=None,
+                     all_parts=False
+                     ):
         """Create list of all feature ids for given Parts, Splits, and Scales
 
         Parameters
@@ -337,7 +357,14 @@ class SequenceFeature:
         return features
 
     @staticmethod
-    def get_feat_names(features=None, df_cat=None, tmd_len=20, jmd_c_len=10, jmd_n_len=10, ext_len=0, start=1):
+    def get_feat_names(features=None,
+                       df_cat=None,
+                       tmd_len=20,
+                       jmd_c_len=10,
+                       jmd_n_len=10,
+                       ext_len=0,
+                       start=1
+                       ):
         """Convert feature ids (PART-SPLIT-SCALE) into feature names (scale name [positions]).
 
         Parameters

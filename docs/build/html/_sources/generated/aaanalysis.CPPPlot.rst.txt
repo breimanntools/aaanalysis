@@ -16,6 +16,7 @@
       ~CPPPlot.__init__
       ~CPPPlot.heatmap
       ~CPPPlot.profile
+      ~CPPPlot.ranking
       ~CPPPlot.update_seq_size
    
    

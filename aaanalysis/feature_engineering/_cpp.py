@@ -202,9 +202,8 @@ class CPP(Tool):
 
         Notes
         -----
-        The feature DataFrame contains the following eleven columns, including the unique
-        feature id (1), scale information (2-4), statistical results used for filtering and
-        ranking (5-10), and feature positions (11):
+        The feature DataFrame contains the following 11 columns, including the unique feature id (1),
+        scale information (2-4), statistical results for filtering and ranking (5-10), and feature positions (11):
 
         1. features: Feature ID (PART-SPLIT-SCALE)
         2. category: Scale category
@@ -217,6 +216,7 @@ class CPP(Tool):
         9. p_val: Non-parametric (mann_whitney) or parametric (ttest_indep) statistic
         10. p_val_fdr_bh: Benjamini-Hochberg FDR corrected p-values
         11. positions: Feature positions for default settings
+
         """
         # Check input
         ut.check_labels_(labels=labels, df=self.df_parts, name_df="df_parts")
@@ -295,8 +295,8 @@ class CPP(Tool):
 
         Notes
         -----
-        * The sum of length parameters define the total number of positions (``jmd_n_len`` + ``tmd_len`` + ``jmd_c_len``).
-        * ``ext_len`` < ``jmd_m_len`` and ``ext_len`` < ``jmd_c_len``
+        - The sum of length parameters define the total number of positions (``jmd_n_len`` + ``tmd_len`` + ``jmd_c_len``).
+        - ``ext_len`` < ``jmd_m_len`` and ``ext_len`` < ``jmd_c_len``
         """
         # Check input
         df_feat = ut.check_df_feat(df_feat=df_feat)

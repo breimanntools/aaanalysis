@@ -1,5 +1,6 @@
 """
-This is a script for the processing SHAP values, primarily for the combination of SHAP with CPP
+This is a script for the frontend of the TreeModel class used to obtain feature importance reproducibly.
+To this end, random forest models are trained over multiple rounds with their results being averaged.
 """
 import time
 import pandas as pd

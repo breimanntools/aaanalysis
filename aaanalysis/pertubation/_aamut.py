@@ -11,7 +11,7 @@ import aaanalysis.utils as ut
 # II Main Functions
 class AAMut:
     """
-    Analyse the effect of amino acid changes for given property scales.
+    A class for analyzing the impact of amino acid substitutions on various property scales.
     """
     def __init__(self, verbose=False, df_scales=None):
         self.verbose = verbose
