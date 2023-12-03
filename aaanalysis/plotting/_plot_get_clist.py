@@ -39,9 +39,9 @@ def plot_get_clist(n_colors: int = 3) -> List[str]:
 
     See Also
     --------
-    - The example notebooks in `Plotting Prelude <plotting_prelude.html>`_.
-    - `Matplotlib color names <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
-    - :func:`seaborn.color_palette` function to generate a color palette in seaborn.
+    * The example notebooks in `Plotting Prelude <plotting_prelude.html>`_.
+    * `Matplotlib color names <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
+    * :func:`seaborn.color_palette` function to generate a color palette in seaborn.
     """
     # Check input
     ut.check_number_range(name="n_colors", val=n_colors, min_val=2, max_val=9, just_int=True)

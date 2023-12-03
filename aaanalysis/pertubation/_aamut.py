@@ -1,5 +1,5 @@
 """
-This is a script for the frontend of the AAmut class for analysing the effect of amino acid changes
+This is a script for the frontend of the AAMut class for analysing the effect of amino acid changes
 for given property scales."""
 import aaanalysis.utils as ut
 

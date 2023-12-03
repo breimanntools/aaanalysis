@@ -276,7 +276,7 @@ class AAclust(Wrapper):
         self.labels_medoids_ = medoid_labels
         self.is_medoid_ = np.array([i in medoid_ind for i in range(0, len(labels))])
         if names is not None:
-            self.medoid_names_ =  [names[i] for i in medoid_ind]
+            self.medoid_names_ = [names[i] for i in medoid_ind]
         return self
 
     @ut.catch_runtime_warnings()

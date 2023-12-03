@@ -18,3 +18,5 @@ class SeqMutPlot:
         self.df_scales = df_scales
 
     # Main method
+    def mutation_landscape(self):
+        """"""

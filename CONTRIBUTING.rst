@@ -153,7 +153,7 @@ We utilize `pytest <https://docs.pytest.org/en/7.4.x/>`_ and `hypothesis <https:
 
 .. code-block:: bash
 
-  pytest
+  pytest "Name of directory/file/code to be tested"
 
 This will execute all the test cases in the tests/ directory. Check out our
 `README on testing <https://github.com/breimanntools/aaanalysis/blob/master/tests/README_TESTING>`_. See further
@@ -176,6 +176,30 @@ Preview Changes
 
 To preview documentation changes in pull requests, follow the "docs/readthedocs.org" check link under "All checks have passed".
 
+GitHub Push
+-----------
+
+Before pushing code changes to GitHub, test your changes and updated any relevant documentation.
+It's recommended to work on a separate branch for your changes. Follow these steps for pushing to GitHub:
+
+1. **Create a Branch**: If not already done, create a new branch:
+
+   .. code-block:: bash
+
+       git checkout -b your-branch-name
+
+2. **Stage, Commit, and Push**: Stage your changes, commit with a clear message, and push to the branch:
+
+   .. code-block:: bash
+
+       git add .
+       git commit -m "Describe your changes"
+       git push origin your-branch-name
+
+3. **Open a Pull Request**: Visit the GitHub repository to create a pull request for your branch.
+
+
+For more detailed instructions, see the official `GitHub documentation <https://docs.github.com/en>`_.
 
 Documentation
 =============
@@ -309,7 +333,7 @@ To create a new version of the AAanalysis package for PyPi using Poetry, perform
 4. **Publish to PyPI**: Upload the final version to PyPI with ``poetry publish``.
    You will need to input your PyPI username and API token.
 
-5. **Verify the Upload**: Check that your package is correctly listed on PyPI or TestPyPI, ensuring the information and
+5. **Verify the Upload**: Check that your package is correctly listed on PyPI, ensuring the information and
    files are accurate.
 
 

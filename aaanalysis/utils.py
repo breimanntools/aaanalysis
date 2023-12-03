@@ -50,7 +50,9 @@ FOLDER_DATA = _folder_path(FOLDER_PROJECT, '_data')
 URL_DATA = "https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data/"
 
 
-# I Constants
+# Constants
+FONT_AA = "DejaVu Sans Mono"
+
 # Default scale datasets for protein analysis
 STR_SCALES = "scales"   # Min-max normalized scales (from AAontology)
 STR_SCALES_RAW = "scales_raw"   # Raw scales (from AAontology)
@@ -109,10 +111,24 @@ COL_PVAL_FDR = "p_val_fdr_bh"
 COL_POSITION = "positions"
 
 # Columns for df_feat after processing with explainable AI methods
-COL_FEAT_IMPORTANCE = "feat_importance"
-COO_FEAT_IMP_STD = "feat_importance_std"
+COL_FEAT_IMPORT = "feat_importance"
+COL_FEAT_IMP_STD = "feat_importance_std"
 COL_FEAT_IMPACT = "feat_impact"
 
+# Labels
+LABEL_FEAT_VAL = "Feature value"
+LABEL_HIST_COUNT = "Number of proteins"
+LABEL_HIST_DEN = "Relative density"
+
+LABEL_FEAT_IMPORT_CUM = "Cumulative feature importance\n(normalized) [%]"
+LABEL_FEAT_IMPACT_CUM = "Cumulative feature impact\n(normalized) [%]"
+LABEL_CBAR_FEAT_IMPACT_CUM = "Cumulative feature impact"
+
+LABEL_FEAT_IMPORT = "Importance [%]"
+LABEL_FEAT_IMPACT = "Impact [%]"
+LABEL_FEAT_RANKING = "Feature ranking"
+LABEL_SCALE_CAT = "Scale category"
+LABEL_MEAN_DIF = "Mean difference"
 
 # Column name datasets (DOM_GSEC)
 
@@ -152,9 +168,10 @@ STR_CMAP_SHAP = "SHAP"
 STR_DICT_COLOR = "DICT_COLOR"
 STR_DICT_CAT = "DICT_CAT"
 
-# II Helper functions
+# I Helper functions
 
-# III MAIN FUNCTIONS
+
+# II Main functions
 # Caching for data loading for better performance (data loaded ones)
 @lru_cache(maxsize=None)
 def read_excel_cached(name, index_col=None):
@@ -162,11 +179,13 @@ def read_excel_cached(name, index_col=None):
     df = pd.read_excel(name, index_col=index_col)
     return df.copy()
 
+
 @lru_cache(maxsize=None)
 def read_csv_cached(name, sep=None):
     """Load cached dataframe to save loading time"""
     df = pd.read_csv(name, sep=sep)
     return df.copy()
+
 
 # Main check functions
 def check_verbose(verbose):

@@ -88,6 +88,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#pull-requests">Pull Requests</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#preview-changes">Preview Changes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#github-push">GitHub Push</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#documentation">Documentation</a><ul>
@@ -272,7 +273,7 @@ after pulling updates from the repository.</p></li>
 <section id="run-unit-tests">
 <h4>Run Unit Tests<a class="headerlink" href="#run-unit-tests" title="Permalink to this heading"></a></h4>
 <p>We utilize <a class="reference external" href="https://docs.pytest.org/en/7.4.x/">pytest</a> and <a class="reference external" href="https://hypothesis.readthedocs.io/en/latest/">hypothesis</a>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span><span class="s2">&quot;Name of directory/file/code to be tested&quot;</span>
 </pre></div>
 </div>
 <p>This will execute all the test cases in the tests/ directory. Check out our
@@ -293,6 +294,27 @@ useful commands in our <a class="reference external" href="https://github.com/br
 <section id="preview-changes">
 <h3>Preview Changes<a class="headerlink" href="#preview-changes" title="Permalink to this heading"></a></h3>
 <p>To preview documentation changes in pull requests, follow the “docs/readthedocs.org” check link under “All checks have passed”.</p>
+</section>
+<section id="github-push">
+<h3>GitHub Push<a class="headerlink" href="#github-push" title="Permalink to this heading"></a></h3>
+<p>Before pushing code changes to GitHub, test your changes and updated any relevant documentation.
+It’s recommended to work on a separate branch for your changes. Follow these steps for pushing to GitHub:</p>
+<ol class="arabic">
+<li><p><strong>Create a Branch</strong>: If not already done, create a new branch:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>your-branch-name
+</pre></div>
+</div>
+</li>
+<li><p><strong>Stage, Commit, and Push</strong>: Stage your changes, commit with a clear message, and push to the branch:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>add<span class="w"> </span>.
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Describe your changes&quot;</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>your-branch-name
+</pre></div>
+</div>
+</li>
+<li><p><strong>Open a Pull Request</strong>: Visit the GitHub repository to create a pull request for your branch.</p></li>
+</ol>
+<p>For more detailed instructions, see the official <a class="reference external" href="https://docs.github.com/en">GitHub documentation</a>.</p>
 </section>
 </section>
 <section id="documentation">
@@ -398,16 +420,19 @@ make<span class="w"> </span>html
 <h3>Building new PyPi package version<a class="headerlink" href="#building-new-pypi-package-version" title="Permalink to this heading"></a></h3>
 <p>To create a new version of the AAanalysis package for PyPi using Poetry, perform the following steps:</p>
 <ol class="arabic simple">
-<li><p>Ensure Poetry is installed: Run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">poetry</span></code> if you haven’t installed Poetry.</p></li>
-<li><p>Update version: Update the <cite>version number</cite> (<strong>MAJOR.MINOR.PATCH</strong>) in the ‘pyproject.toml’ file, where:
-- <strong>MAJOR</strong> version is incremented for incompatible API changes,
-- <strong>MINOR</strong> version is incremented for functionality in a backward-compatible manner, and
-- <strong>PATCH</strong> version is incremented for backward-compatible bug fixes.</p></li>
-<li><p>Build the package: Navigate to your project’s root directory and execute <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">build</span></code> to create the distribution
+<li><p><strong>Ensure Poetry is installed</strong>: Run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">poetry</span></code> if you haven’t installed Poetry.</p></li>
+<li><p><strong>Update Version</strong>: Update the <cite>version number</cite> (<strong>MAJOR.MINOR.PATCH</strong>) in the ‘pyproject.toml’ file, where:</p>
+<ul class="simple">
+<li><p><strong>MAJOR</strong> version is incremented for incompatible API changes,</p></li>
+<li><p><strong>MINOR</strong> version is incremented for functionality in a backward-compatible manner, and</p></li>
+<li><p><strong>PATCH</strong> version is incremented for backward-compatible bug fixes.</p></li>
+</ul>
+</li>
+<li><p><strong>Build the Package</strong>: Navigate to your project’s root directory and execute <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">build</span></code> to create the distribution
 files in the <code class="docutils literal notranslate"><span class="pre">dist</span></code> folder.</p></li>
-<li><p>Publish to PyPI: Upload the final version to PyPI with <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">publish</span></code>.
+<li><p><strong>Publish to PyPI</strong>: Upload the final version to PyPI with <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">publish</span></code>.
 You will need to input your PyPI username and API token.</p></li>
-<li><p>Verify the upload: Check that your package is correctly listed on PyPI or TestPyPI, ensuring the information and
+<li><p><strong>Verify the Upload</strong>: Check that your package is correctly listed on PyPI, ensuring the information and
 files are accurate.</p></li>
 </ol>
 </section>

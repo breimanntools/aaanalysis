@@ -14,6 +14,7 @@
    .. autosummary::
    
       ~SeqMutPlot.__init__
+      ~SeqMutPlot.mutation_landscape
    
    
 

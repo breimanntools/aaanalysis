@@ -1,16 +1,17 @@
 """
-Script for SequenceFeature() object that combines scales, splits, and parts to create
-    feature names, feature values, or a feature matrix for ML or CPP pipelines.
+This is a script for the frontend of the SequenceFeature() object, a supportive class for the CPP feature engineering.
 """
 import math
 import warnings
 import pandas as pd
+from typing import List, Optional
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
-from ._backend.cpp.sequence_feature import (get_df_parts, get_split_kws,
-                                            get_features, feat_matrix, get_feat_names)
+from ._backend.cpp._utils_cpp import get_df_parts_, get_positions_, get_amino_acids_, get_feature_matrix_, get_df_pos_
+from ._backend.cpp.sequence_feature import (get_split_kws_,
+                                            get_features_, feature_matrix_, get_feature_names_)
 
 
 # I Helper Functions
@@ -100,6 +101,28 @@ def check_parts_in_df_parts(df_parts=None, part=None):
         raise ValueError("'part' ({}) must be in columns of 'df_parts': {}".format(part, list(df_parts)))
 
 
+# Check functions feature difference
+def check_ref_group(ref_group=0, labels=None):
+    """Check if ref group class lable"""
+    if ref_group not in labels:
+        raise ValueError(f"'ref_group' ({ref_group}) not class label: {set(labels)}.")
+
+
+# Common interface
+doc_param_len_pos = \
+"""\
+start
+    Position label of first amino acid position (starting at N-terminus, >=0).
+tmd_len
+    Length of TMD (>0).
+jmd_n_len
+    Length of JMD-N (>=0).
+jmd_c_len
+    Length of JMD-C (>=0).\
+"""
+
+
+# TODO fisih, check input, common interface + docstring, testing
 # II Main Functions
 class SequenceFeature:
     """Retrieve and create sequence feature components (Part, Split, and Scale).
@@ -131,8 +154,7 @@ class SequenceFeature:
                      list_parts=None,
                      jmd_n_len=None,
                      jmd_c_len=None,
-                     ext_len=None,
-                     all_parts=False
+                     all_parts=True
                      ) -> pd.DataFrame:
         """Create DataFrane with sequence parts.
 
@@ -147,8 +169,6 @@ class SequenceFeature:
             Length of JMD-N in number of amino acids. If None, 'jmd_n' column must be given in df_seq.
         jmd_c_len: int, default = None, optional
             Length of JMD-N in number of amino acids. If None, 'jmd_c' column must be given in df_seq.
-        ext_len: int, default = 4
-            Lenght of N- resp. C-terminal extra part of TMD.
         all_parts: bool, default = False
             Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.
 
@@ -171,12 +191,13 @@ class SequenceFeature:
         >>> df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=["tmd_e", "tmd_jmd"], jmd_n_len=10, jmd_c_len=10)
         """
         # Check input
-        ut.check_args_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len, accept_tmd_none=True)
+        # TODO check if cols values for tmd, jmd_n, jmd_c and start/stop are okay
+        ut.check_args_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_tmd_none=True)
         df_seq = ut.check_df_seq(df_seq=df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         list_parts = ut.check_list_parts(list_parts=list_parts, all_parts=all_parts)
         # Create df parts
-        df_parts = get_df_parts(df_seq=df_seq, list_parts=list_parts,
-                                jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len)
+        df_parts = get_df_parts_(df_seq=df_seq, list_parts=list_parts,
+                                 jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         return df_parts
 
     @staticmethod
@@ -239,28 +260,27 @@ class SequenceFeature:
         args_list = dict(steps_pattern=steps_pattern, steps_periodicpattern=steps_periodicpattern)
         check_split_list_args(kwargs_list=args_list)
         # Create kws for splits
-        split_kws = get_split_kws(n_split_min=n_split_min,
-                                  n_split_max=n_split_max,
-                                  steps_pattern=steps_pattern,
-                                  n_min=n_min,
-                                  n_max=n_max,
-                                  len_max=len_max,
-                                  steps_periodicpattern=steps_periodicpattern,
-                                  split_types=split_types)
+        split_kws = get_split_kws_(n_split_min=n_split_min,
+                                   n_split_max=n_split_max,
+                                   steps_pattern=steps_pattern,
+                                   n_min=n_min,
+                                   n_max=n_max,
+                                   len_max=len_max,
+                                   steps_periodicpattern=steps_periodicpattern,
+                                   split_types=split_types)
         # Post check
         ut.check_split_kws(split_kws=split_kws)
         return split_kws
 
     # Feature methods
     @staticmethod
-    def feat_matrix(features=None,
-                    df_parts=None,
-                    df_scales=None,
-                    accept_gaps=False,
-                    n_jobs=None,
-                    verbose=False,
-                    return_labels=False
-                    ):
+    def feature_matrix(features=None,
+                       df_parts=None,
+                       df_scales=None,
+                       accept_gaps=False,
+                       n_jobs=None,
+                       verbose=False,
+                       ):
         """Create feature matrix for given feature ids and sequence parts.
 
         Parameters
@@ -297,26 +317,19 @@ class SequenceFeature:
             n_feat = len(features)
             n_samples = len(df_parts)
             n_vals = n_feat * n_samples
-            print(f"Feature matrix for {n_feat} features and {n_samples} samples will be created")
+            ut.print_out(f"Feature matrix for {n_feat} features and {n_samples} samples will be created")
             if n_vals > 1000 * 1000:
                 warning = f"Feature matrix with n={n_vals}>=10^6 values will be created, which will take some time.\n" \
                           "It is recommended to create a feature matrix for a pre-selected number features " \
                           "so that 10^6 values are not exceeded."
                 warnings.warn(warning)
         # Create feature matrix using parallel processing
-        _feat_matrix, labels = feat_matrix(features=features,
-                                           df_parts=df_parts,
-                                           df_scales=df_scales,
-                                           accept_gaps=accept_gaps,
-                                           n_jobs=n_jobs)
-        if return_labels:
-            if verbose:
-                print("Tuple of (feat_matrix, labels) will be returned")
-            return _feat_matrix, labels  # X, y
-        else:
-            if verbose:
-                print("Only feat_matrix (without labels) will be returned")
-            return _feat_matrix  # X
+        feat_matrix = get_feature_matrix_(features=features,
+                                          df_parts=df_parts,
+                                          df_scales=df_scales,
+                                          accept_gaps=accept_gaps,
+                                          n_jobs=n_jobs)
+        return feat_matrix
 
     def get_features(self,
                      list_parts=None,
@@ -353,37 +366,27 @@ class SequenceFeature:
         if split_kws is None:
             split_kws = self.get_split_kws()
         # Get features
-        features = get_features(list_parts=list_parts, split_kws=split_kws, df_scales=df_scales)
+        features = get_features_(list_parts=list_parts, split_kws=split_kws, df_scales=df_scales)
         return features
 
     @staticmethod
-    def get_feat_names(features=None,
-                       df_cat=None,
-                       tmd_len=20,
-                       jmd_c_len=10,
-                       jmd_n_len=10,
-                       ext_len=0,
-                       start=1
-                       ):
+    @ut.doc_params(doc_param_len_pos=doc_param_len_pos)
+    def get_feature_names(features=None,
+                          df_cat=None,
+                          start=1,
+                          tmd_len=20,
+                          jmd_c_len=10,
+                          jmd_n_len=10,
+                          ):
         """Convert feature ids (PART-SPLIT-SCALE) into feature names (scale name [positions]).
 
         Parameters
         ----------
-        features: str, list of strings, pd.Series
-            Ids of features for which feature names should be created.
+        features
+            List of feature ids.
         df_cat: :class:`pandas.DataFrame`, default = SequenceFeature.load_categories
             DataFrame with default categories for physicochemical amino acid scales
-        tmd_len: int, >0
-            Length of TMD.
-        jmd_n_len: int, >0
-            Length of JMD-N.
-        jmd_c_len: int, >0
-            Length of JMD-C.
-        ext_len:int, >0
-            Length of TMD-extending part (starting from C and N terminal part of TMD).
-            Conditions: ext_len<jmd_m_len and ext_len<jmd_c_len
-        start: int, >=0
-            Position label of first amino acid position (starting at N-terminus).
+        {doc_param_len_pos}
 
         Returns
         -------
@@ -398,16 +401,132 @@ class SequenceFeature:
             - PeriodicPattern: [first..step1/step2..last]
         """
         # Check input
+
         features = ut.check_features(features=features)
         ut.check_df_cat(df_cat=df_cat)
         if df_cat is None:
             df_cat = aa.load_scales(name=ut.STR_SCALE_CAT)
         # Get feature names
-        feat_names = get_feat_names(features=features,
-                                    df_cat=df_cat,
-                                    tmd_len=tmd_len,
-                                    jmd_c_len=jmd_c_len,
-                                    jmd_n_len=jmd_n_len,
-                                    ext_len=ext_len,
-                                    start=start)
+        feat_names = get_feature_names_(features=features,
+                                        df_cat=df_cat,
+                                        start=start,
+                                        tmd_len=tmd_len,
+                                        jmd_c_len=jmd_c_len,
+                                        jmd_n_len=jmd_n_len)
         return feat_names
+
+    @staticmethod
+    @ut.doc_params(doc_param_len_pos=doc_param_len_pos)
+    def get_positions(features: ut.ArrayLike1D = None,
+                      start: int = 1,
+                      tmd_len: int = 20,
+                      jmd_n_len: int = 10,
+                      jmd_c_len: int = 10,
+                      ) -> ut.ArrayLike1D:
+        """Create list with positions for given feature names
+
+        Parameters
+        ----------
+        features
+            List of feature ids.
+        {doc_param_len_pos}
+
+        Returns
+        -------
+        df_feat
+          Feature DataFrame with positions for each feature in feat_names
+
+
+        """
+        # Check input
+        features = ut.check_features(features=features)
+        ut.check_number_range(name="tmd_len", val=tmd_len, just_int=True, min_val=1)
+        args_len = dict(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
+        for name in args_len:
+            ut.check_number_range(name=name, val=args_len[name], just_int=True, min_val=0)
+        # Get feature position
+        feat_positions = get_positions_(features=features, tmd_len=tmd_len, **args_len)
+        return feat_positions
+
+    @staticmethod
+    def get_amino_acids(features: ut.ArrayLike1D = None,
+                        tmd_seq: str = "",
+                        jmd_n_seq: str = "",
+                        jmd_c_seq: str = ""
+                        ):
+
+        """"""
+        # Check input
+        features = ut.check_features(features=features)
+        ut.check_str(name="tmd_seq", val=tmd_seq)
+        ut.check_str(name="jmd_n_seq", val=jmd_n_seq)
+        ut.check_str(name="jmd_c_seq", val=jmd_c_seq)
+        # Get feature amino acids
+        feat_amino_acids = get_amino_acids_(features=features, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
+        return feat_amino_acids
+
+    def get_dif(self,
+                features: ut.ArrayLike1D = None,
+                df_scales: Optional[pd.DataFrame] = None,
+                df_parts: pd.DataFrame = None,
+                labels: ut.ArrayLike1D = None,
+                ref_group: int = 0,
+                list_names: List[str] = None,
+                sample_name: str = None,
+                accept_gaps: bool = False,
+                ) -> ut.ArrayLike1D:
+        """
+        Add feature value difference between sample and reference group to DataFrame.
+
+        Parameters
+        ----------
+        features: str, list of strings, pd.Series
+            Ids of features for which matrix of feature values should be created.
+        df_parts: :class:`pandas.DataFrame`
+            DataFrame with sequence parts.
+        df_scales: :class:`pandas.DataFrame`, optional
+            DataFrame with default amino acid scales.
+        accept_gaps: bool, default = False
+            Whether to accept missing values by enabling omitting for computations (if True).
+        labels: `array-like, shape (n_samples, )`
+            Class labels for samples in sequence DataFrame.
+        ref_group
+            Class label of reference group.
+        list_names
+            List of names matching to `df_parts`.
+        sample_name
+            Name of sample for which the feature value difference to a given reference group should be computed.
+
+        Returns
+        -------
+        feat_dif
+            Array with feature value difference.
+        """
+        # Check input
+        if df_scales is None:
+            df_scales = aa.load_scales()
+        ut.check_df_scales(df_scales=df_scales)
+        ut.check_df_parts(df_parts=df_parts)
+        features = ut.check_features(features=features, parts=df_parts, df_scales=df_scales)
+        check_df_scales_matches_df_parts(df_scales=df_scales, df_parts=df_parts, accept_gaps=accept_gaps)
+        check_ref_group(ref_group=ref_group, labels=labels)
+        list_names = ut.check_list_like(name="list_names", val=list_names, convert=True)
+        # Get sample difference to reference group
+        X = self.feature_matrix(features=features,
+                                df_parts=df_parts,
+                                df_scales=df_scales,
+                                accept_gaps=accept_gaps)
+        mask = [x == ref_group for x in labels]
+        i = list_names.index(sample_name)
+        feat_dif = X[i] - X[mask].mean(axis=0)
+        return feat_dif
+
+    @staticmethod
+    def get_df_positions(df_feat=None, y="category", value_type="count",
+                         col_value=None, start=None, stop=None, normalize=False):
+        """"""
+        df_pos = get_df_pos_(df_feat=df_feat, y=y, value_type=value_type, col_value=col_value,
+                             start=start, stop=stop)
+        if normalize:
+            df_pos = df_pos / abs(df_pos).sum().sum() * 100
+        return df_pos

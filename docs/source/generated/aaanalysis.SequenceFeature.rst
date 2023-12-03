@@ -14,10 +14,14 @@
    .. autosummary::
    
       ~SequenceFeature.__init__
-      ~SequenceFeature.feat_matrix
+      ~SequenceFeature.feature_matrix
+      ~SequenceFeature.get_amino_acids
       ~SequenceFeature.get_df_parts
-      ~SequenceFeature.get_feat_names
+      ~SequenceFeature.get_df_positions
+      ~SequenceFeature.get_dif
+      ~SequenceFeature.get_feature_names
       ~SequenceFeature.get_features
+      ~SequenceFeature.get_positions
       ~SequenceFeature.get_split_kws
    
    

@@ -23,8 +23,8 @@ def _get_cpp_cmap(n_colors=100, facecolor_dark=False):
 def _get_shap_cmap(n_colors=100, facecolor_dark=True):
     """Generate a diverging color map for feature values."""
     n = 20 # TODO check if 5 is better for CPP-SHAP heatmap
-    cmap_low = sns.light_palette(ut.COLOR_SHAP_NEG, input="hex", reverse=True, n_colors=int(n_colors/2)+n)
-    cmap_high = sns.light_palette(ut.COLOR_SHAP_POS, input="hex", n_colors=int(n_colors/2)+n)
+    cmap_low = sns.light_palette(ut.COLOR_SHAP_NEG, input="hex", reverse=True, n_colors=int(n_colors / 2) + n)
+    cmap_high = sns.light_palette(ut.COLOR_SHAP_POS, input="hex", n_colors=int(n_colors / 2) + n)
     c_middle = [(0, 0, 0)] if facecolor_dark else [cmap_low[-1]]
     add_to_end = (n_colors+1)%2 # Must be added to keep list size consistent
     cmap = cmap_low[0:-n] + c_middle + cmap_high[n+add_to_end:]
@@ -93,11 +93,11 @@ def plot_get_cmap(name: str = "CPP",
 
     See Also
     --------
-    - `Plotting Prelude <plotting_prelude.html>`_.
-    - `Matplotlib color names <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
-    - :func:`seaborn.color_palette` function to generate a color palette in seaborn.
-    - :func:`seaborn.light_palette function` to generate a lighter color palettes.
-    - The `SHAP <shap:mod:shap>`_ package.
+    * `Plotting Prelude <plotting_prelude.html>`_.
+    * `Matplotlib color names <https://matplotlib.org/stable/gallery/color/named_colors.html>`_
+    * :func:`seaborn.color_palette` function to generate a color palette in seaborn.
+    * :func:`seaborn.light_palette function` to generate a lighter color palettes.
+    * The `SHAP <shap:mod:shap>`_ package.
     """
     # Check input
     list_names = [ut.STR_CMAP_CPP, ut.STR_CMAP_SHAP]

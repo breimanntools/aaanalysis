@@ -1,10 +1,12 @@
 """
-Script for Part objects used to retrieve sequence parts for given sequences.
+Script for (backend class) Part object used to retrieve sequence parts for given sequences.
 """
 import aaanalysis.utils as ut
-
+import aaanalysis as aa
 
 # I Helper Functions
+# TODO refactor check function into frontend
+
 # Checking functions
 def check_input_part_creation(seq=None, tmd_start=None, tmd_stop=None):
     """Check if input for part creation is given"""
@@ -30,7 +32,7 @@ def _retrieve_string_starting_at_end(seq, start=None, end=None):
     return seq
 
 
-def _get_dict_part_seq_from_seq(tmd=None, jmd_n=None, jmd_c=None, ext_len=0):
+def _get_dict_part_seq_from_seq(tmd=None, jmd_n=None, jmd_c=None):
     """Get dictionary for part to sequence
 
     Parameters
@@ -38,17 +40,20 @@ def _get_dict_part_seq_from_seq(tmd=None, jmd_n=None, jmd_c=None, ext_len=0):
     tmd: sequence of TMD
     jmd_n: sequence of JMD-N
     jmd_c: sequence of JMD-C
-    ext_len: length of extending part (starting from C and N terminal part of TMD)
 
     Returns
     -------
     dict_part_seq: dictionary for each sequence part
     """
+    # Length of extending part (starting from C and N terminal part of TMD)
+    ext_len = aa.options["ext_len"]
     tmd_n = tmd[0:round(len(tmd) / 2)]
     tmd_c = tmd[round(len(tmd) / 2):]
+    # Historical feature parts (can be set via aa.options["ext_len"] = 4
     ext_n = _retrieve_string_starting_at_end(jmd_n, start=0, end=ext_len)  # helix_stop motif for TMDs
     ext_c = jmd_c[0:ext_len]  # anchor for TMDs
     tmd_e = ext_n + tmd + ext_c
+    #
     part_seq_dict = {'tmd': tmd, 'tmd_e': tmd_e,
                      'tmd_n': tmd_n, 'tmd_c': tmd_c,
                      'jmd_n': jmd_n, 'jmd_c': jmd_c,
@@ -90,8 +95,8 @@ class _PartsCreator:
     def __init__(self, seq=None, tmd_start=None, tmd_stop=None, jmd_n_len=10, jmd_c_len=10):
         check_input_part_creation(seq=seq, tmd_start=tmd_start, tmd_stop=tmd_stop)
         self._seq = seq
-        self._tmd_start = tmd_start
-        self._tmd_stop = tmd_stop
+        self._tmd_start = int(tmd_start)
+        self._tmd_stop = int(tmd_stop)
         self._jmd_n_len = jmd_n_len
         self._jmd_c_len = jmd_c_len
         self._n_terminus_len = self._tmd_start - 1
@@ -171,7 +176,7 @@ class Parts:
         return parts
 
     @staticmethod
-    def get_dict_part_seq(df=None, entry=None, tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, ext_len=None):
+    def get_dict_part_seq(df=None, entry=None, tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None):
         """Get dictionary for part to sequence either (a) form df using entry or (b) from sequence.
 
         Parameters
@@ -181,7 +186,6 @@ class Parts:
         tmd_seq: sequence of TMD
         jmd_n_seq: sequence of JMD-N
         jmd_c_seq: sequence of JMD-C
-        ext_len: length of extending part (starting from C and N terminal part of TMD)
 
         Returns
         -------
@@ -191,6 +195,6 @@ class Parts:
             tmd_seq, jmd_n_seq, jmd_c_seq = _get_parts_from_df(df=df, entry=entry)
         check_parts_exist(tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
         # Parts can be sequences or lists with positions
-        ut.check_args_len(jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, ext_len=ext_len, accept_tmd_none=True)
-        dict_part_seq = _get_dict_part_seq_from_seq(tmd=tmd_seq, jmd_n=jmd_n_seq, jmd_c=jmd_c_seq, ext_len=ext_len)
+        ut.check_args_len(jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, accept_tmd_none=True)
+        dict_part_seq = _get_dict_part_seq_from_seq(tmd=tmd_seq, jmd_n=jmd_n_seq, jmd_c=jmd_c_seq)
         return dict_part_seq

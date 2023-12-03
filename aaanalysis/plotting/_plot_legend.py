@@ -305,7 +305,6 @@ def plot_legend(ax: Optional[plt.Axes] = None,
     ut.check_ax(ax=ax, accept_none=True)
     if ax is None:
         ax = plt.gca()
-
     ut.check_dict(name="dict_color", val=dict_color, accept_none=False)
     list_cat = check_list_cat(dict_color=dict_color, list_cat=list_cat)
     labels = check_labels(list_cat=list_cat, labels=labels)

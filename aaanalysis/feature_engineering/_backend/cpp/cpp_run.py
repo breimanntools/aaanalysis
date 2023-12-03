@@ -104,6 +104,7 @@ def _pre_filtering_info(list_scales, dict_all_scales, labels_ps, splittings, acc
         std_test[start:end] = np.std(X[mask_1], axis=0)
     return abs_mean_dif, std_test, feat_names
 
+
 def _filtering_info(df=None, df_scales=None, check_cat=True):
     """Get datasets structures for filtering, two dictionaries with feature to scale category resp.
     feature positions and one data sets frame with paired pearson correlations of all scales"""
@@ -119,8 +120,8 @@ def _filtering_info(df=None, df_scales=None, check_cat=True):
 # Summary and test statistics for feature matrix based on classification by labels
 def _mean_dif(X=None, y=None):
     """ Get mean difference for values in X (feature matrix) based on y (labels)"""
-    mask_0 = [True if x == 0 else False for x in y]
-    mask_1 = [True if x == 1 else False for x in y]
+    mask_0 = [x == 0 for x in y]
+    mask_1 = [x == 1 for x in y]
     mean_difs = np.mean(X[mask_1], axis=0) - np.mean(X[mask_0], axis=0)
     return mean_difs
 

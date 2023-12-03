@@ -14,6 +14,8 @@
    .. autosummary::
    
       ~CPPPlot.__init__
+      ~CPPPlot.feature
+      ~CPPPlot.feature_map
       ~CPPPlot.heatmap
       ~CPPPlot.profile
       ~CPPPlot.ranking

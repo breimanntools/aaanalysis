@@ -7,6 +7,7 @@ from sklearn.metrics import silhouette_score, calinski_harabasz_score
 
 from ._utils_aaclust import _compute_centers
 
+
 # I Helper Functions
 def bic_score(X, labels=None):
     """Computes the Bayesian Information Criterion (BIC) metric for given clusters."""
@@ -44,6 +45,7 @@ def bic_score(X, labels=None):
     bic_components = size_clusters * (log_size_clusters - log_n_samples) - 0.5 * size_clusters * n_features * log_bcv - 0.5 * (size_clusters - 1) * n_features
     bic = np.sum(bic_components) - const_term
     return bic
+
 
 # II Main function
 def evaluate_clustering(X, labels=None):

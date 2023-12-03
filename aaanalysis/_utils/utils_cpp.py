@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 
+import aaanalysis as aa
 import aaanalysis._utils.check_type as ut_check
 
 # Settings
@@ -48,10 +49,10 @@ def check_color(name=None, val=None, accept_none=False):
 def check_y_categorical(df=None, y=None):
     """Check if y in df"""
     list_cat_columns = [col for col, data_type in zip(list(df), df.dtypes)
-                        if data_type != float and "position" not in col and col != "feature"]
+                        if data_type != float and "position" not in col]# and col != "feature"]
     if y not in list_cat_columns:
-        raise ValueError("'y' should be one of following columns with categorical values "
-                         "of 'df': {}".format(list_cat_columns))
+        raise ValueError(f"'y' ({y}) should be one of following columns with categorical values "
+                         f"of 'df': {list_cat_columns}")
 
 
 def check_labels_(labels=None, df=None, name_df=None):
@@ -68,13 +69,13 @@ def check_labels_(labels=None, df=None, name_df=None):
             raise ValueError(f"'labels' does not match with '{name_df}'")
 
 
-def check_ylim(df=None, ylim=None, val_col=None, retrieve_plot=False, scaling_factor=1.1):
+def check_ylim(df=None, ylim=None, col_value=None, retrieve_plot=False, scaling_factor=1.1):
     """"""
     if ylim is not None:
         ut_check.check_tuple(name="ylim", val=ylim, n=2)
         ut_check.check_number_val(name="ylim:min", val=ylim[0], just_int=False)
         ut_check.check_number_val(name="ylim:max", val=ylim[1], just_int=False)
-        max_val = round(max(df[val_col]), 3)
+        max_val = round(max(df[col_value]), 3)
         max_y = ylim[1]
         if max_val >= max_y:
             error = "Maximum of 'ylim' ({}) must be higher than maximum" \
@@ -100,9 +101,10 @@ def _check_seq(seq, len_, name_seq, name_len):
                 raise ValueError(f"The length of {name_seq} ({len(seq)}) should be >= {name_len} ({len_}).")
         return len(seq)
 
+
 def _check_ext_len(jmd_n_len=None, jmd_c_len=None, ext_len=None):
     """"""
-    if ext_len is not None:
+    if ext_len is not None and ext_len != 0:
         if jmd_n_len is None:
             raise ValueError(f"'jmd_n_len' should not be None if 'ext_len' ({ext_len}) is given")
         if jmd_c_len is None:
@@ -112,15 +114,17 @@ def _check_ext_len(jmd_n_len=None, jmd_c_len=None, ext_len=None):
         if jmd_c_len is not None and ext_len > jmd_c_len:
             raise ValueError(f"'ext_len' ({ext_len}) must be <= length of jmd_c ({jmd_c_len})")
 
-def check_args_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None, ext_len=None,
+
+def check_args_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None,
                    tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, accept_tmd_none=False):
     """Check length parameters and if they are matching with sequences if provided"""
+    ext_len = aa.options["ext_len"]
     # Check lengths
     tmd_seq_given = tmd_seq is not None or accept_tmd_none  # If tmd_seq is given, tmd_len can be None
     ut_check.check_number_range(name="tmd_len", val=tmd_len, accept_none=tmd_seq_given, min_val=1, just_int=True)
-    ut_check.check_number_range(name="jmd_n_len", val=jmd_n_len, accept_none=True, min_val=1, just_int=True)
-    ut_check.check_number_range(name="jmd_c_len", val=jmd_c_len, accept_none=True, min_val=1, just_int=True)
-    ut_check.check_number_range(name="ext_len", val=ext_len, accept_none=True, just_int=True)
+    ut_check.check_number_range(name="jmd_n_len", val=jmd_n_len, accept_none=True, min_val=0, just_int=True)
+    ut_check.check_number_range(name="jmd_c_len", val=jmd_c_len, accept_none=True, min_val=0, just_int=True)
+    ut_check.check_number_range(name="ext_len", val=ext_len, min_val=0, accept_none=True, just_int=True)
     # Check if lengths and sequences match (any sequence is excepted, strings, lists, arrays)
     tmd_len = _check_seq(tmd_seq, tmd_len, "tmd_seq", "tmd_len")
     jmd_n_len = _check_seq(jmd_n_seq, jmd_n_len, "jmd_n_seq", "jmd_n_len")
@@ -258,8 +262,7 @@ def check_split(split=None):
             split_kwargs = dict(terminus=terminus, list_pos=list_pos)
         else:
             raise ValueError
-        tuple_split = (split_type, split_kwargs)
-        return tuple_split
+        return split_type, split_kwargs
     except:
         error = "Wrong split annotation for '{}'. Splits should be denoted as follows:".format(split, SPLIT_DESCRIPTION)
         raise ValueError(error)

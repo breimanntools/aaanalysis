@@ -4,6 +4,7 @@ from inspect import isclass
 
 # Helper functions
 
+
 # Main functions
 def check_mode_class(model_class=None):
     """"""
@@ -14,6 +15,7 @@ def check_mode_class(model_class=None):
     if not callable(getattr(model_class, "__call__", None)):
         raise ValueError(f"'{model_class}' is not a callable model.")
     return model_class
+
 
 def check_model_kwargs(model_class=None, model_kwargs=None, param_to_check="n_clusters", method_to_check=None):
     """
@@ -35,3 +37,5 @@ def check_model_kwargs(model_class=None, model_kwargs=None, param_to_check="n_cl
     if len(invalid_kwargs):
         raise ValueError(f"'model_kwargs' contains invalid arguments: {invalid_kwargs}")
     return model_kwargs
+
+

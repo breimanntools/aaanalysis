@@ -14,8 +14,6 @@
    .. autosummary::
    
       ~CPP.__init__
-      ~CPP.add_dif
-      ~CPP.add_positions
       ~CPP.eval
       ~CPP.run
    

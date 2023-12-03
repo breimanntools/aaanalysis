@@ -10,8 +10,6 @@ import warnings
 import aaanalysis.utils as ut
 
 # Settings
-pd.set_option('expand_frame_repr', False)  # Single line print for pd.Dataframe
-
 LIST_METRICS = ['euclidean', 'manhattan', 'cosine']
 
 # TODO better example in fit

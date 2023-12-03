@@ -87,6 +87,7 @@ palette
     Colormap for the labels. If `None`, a default colormap is used.\
 """
 
+
 # TODO add check functions finish other methods, testing, compression
 # II Main Functions
 class AAclustPlot:
@@ -123,7 +124,7 @@ class AAclustPlot:
     def eval(data_eval: ut.ArrayLike2D,
              names: Optional[List[str]] = None,
              dict_xlims: Optional[Union[None, dict]] = None,
-             figsize: Optional[Tuple[int, int]] = (7, 6)
+             figsize: Tuple[int, int] = (7, 6)
              ) -> Tuple[plt.Figure, plt.Axes]:
         """
         Evaluates and plots ``n_clusters`` and clustering metrics ``BIC``, ``CH``, and ``SC`` for the provided data.
@@ -151,8 +152,6 @@ class AAclustPlot:
 
         Returns
         -------
-        fig
-            Figure object containing the plots.
         axes
             Axes object(s) containing four subplots.
 
@@ -186,12 +185,12 @@ class AAclustPlot:
                labels: ut.ArrayLike1D = None,
                component_x: Optional[int] = 1,
                component_y: Optional[int] = 2,
-               ax : Optional[plt.Axes] = None,
-               figsize: Optional[Tuple[int, int]] = (7, 6),
-               dot_alpha: Optional[float] = 0.75,
-               dot_size: Optional[int] = 100,
-               legend : Optional[bool] =True,
-               palette : Optional[mpl.colors.ListedColormap] = None,
+               ax: Optional[plt.Axes] = None,
+               figsize: Tuple[int, int] = (7, 6),
+               dot_alpha: float = 0.75,
+               dot_size: int = 100,
+               legend: bool = True,
+               palette: Optional[mpl.colors.ListedColormap] = None,
                ) -> Tuple[plt.Axes, pd.DataFrame]:
         """PCA plot of clustering with centers highlighted
 
@@ -245,7 +244,7 @@ class AAclustPlot:
                 component_y: Optional[int] = 2,
                 metric: Optional[str] = "euclidean",
                 ax: Optional[plt.Axes] = None,
-                figsize: Optional[Tuple[int, int]] = (7, 6),
+                figsize: Tuple[int, int] = (7, 6),
                 dot_alpha: Optional[float] = 0.75,
                 dot_size: Optional[int] = 100,
                 legend: Optional[bool] = True,
@@ -352,7 +351,7 @@ class AAclustPlot:
 
         Returns
         -------
-        ax : matplotlib.axes._axes.Axes
+        ax
             Axes object with the correlation heatmap.
 
         Notes

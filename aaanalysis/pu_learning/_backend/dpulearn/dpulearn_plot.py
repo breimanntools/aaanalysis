@@ -9,9 +9,6 @@ import matplotlib.pyplot as plt
 
 import aaanalysis.utils as ut
 
-# Settings
-pd.set_option('expand_frame_repr', False)  # Single line print for pd.Dataframe
-
 
 # I Helper Functions
 
@@ -61,6 +58,7 @@ def _plot_pca(df_pred=None, filter_classes=None, x=None, y=None,  others=True, h
     # Highlight mean values
     if highlight_mean:
         df = df_pred[df_pred[ut.COL_CLASS] == ut.CLASS_SUBEXPERT].copy()
+        # TODO check for axis!
         mean_x = df[x].mean()
         mean_y = df[y].mean()
         color = dict_color[ut.CLASS_SUBEXPERT]
@@ -71,16 +69,4 @@ def _plot_pca(df_pred=None, filter_classes=None, x=None, y=None,  others=True, h
         plt.text(x_max, mean_y, f"mean {y.split(' ')[0]}", va="bottom", ha="right", color=color)
     return plt.gcf()
 
-# III Test/Caller Functions
 
-
-# IV Main
-def main():
-    t0 = time.time()
-
-    t1 = time.time()
-    print("Time:", t1 - t0)
-
-
-if __name__ == "__main__":
-    main()

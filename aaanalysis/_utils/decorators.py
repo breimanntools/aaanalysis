@@ -3,41 +3,53 @@ This a script for general decorators used in AAanalysis
 """
 import warnings
 import traceback
+import inspect
 from sklearn.exceptions import ConvergenceWarning
 import functools
 import re
 
 
+# Helper functions
+
+
 # Document common interfaces
+import re
+from functools import wraps
+
+
+# TODO remove since signature is not shown in runtime if used!!
+# TODO use runtime decorator only for internal methods since they destroy the signature for some IDEs
 def doc_params(**kwargs):
-    """Decorator to add parameter descriptions to the docstring.
-
-    Usage
-    -----
-    @_doc_params(arg1=desc1, arg2=desc2, ...)
-    def func():
-        '''Description {arg1} {arg2}.'''
-    """
-
     def decorator(func):
-        doc = func.__doc__
+        # If the docstring is None (e.g., if -OO was passed to the interpreter), return the unchanged function
+        if func.__doc__ is None:
+            return func
+
+        # Wraps is used to copy metadata from the original function to the wrapper function
+        @wraps(func)
+        def wrapper(*args, **wrapper_kwargs):
+            return func(*args, **wrapper_kwargs)
+
         # Regular expression to find replacement fields and their indentation
-        pattern = re.compile(r'(?P<indent> *){(?P<key>\w+)}\n')
+        pattern = re.compile(r'(?P<indent>\s*)\{(?P<key>\w+)\}')
+
         # Function to adjust indentation
         def adjust_indent(match):
             key = match.group('key')
             indent = match.group('indent')
-            try:
-                # Add the indent to all lines in the replacement string
-                replacement = kwargs[key].replace('\n', '\n' + indent)
-                return indent + replacement + '\n'
-            except KeyError:
+            if key in kwargs:
+                # Split the replacement string into lines and indent each one
+                replacement_lines = kwargs[key].strip().split('\n')
+                indented_replacement = '\n'.join(indent + line for line in replacement_lines)
+                return indented_replacement
+            else:
                 # Key not provided in kwargs, keep original
                 return match.group(0)
+
         # Replace all matching strings in doc
-        func.__doc__ = pattern.sub(adjust_indent, doc)
-        #print(func.__doc__)  # Debugging line
-        return func
+        wrapper.__doc__ = pattern.sub(adjust_indent, wrapper.__doc__)
+
+        return wrapper
 
     return decorator
 
@@ -70,6 +82,7 @@ class CatchRuntimeWarnings:
     def get_warnings(self):
         return self._warn_list
 
+
 def catch_runtime_warnings():
     """Decorator to catch RuntimeWarnings and store them in a list.
 
@@ -100,6 +113,7 @@ class ClusteringConvergenceException(Exception):
         super().__init__(message)
         self.distinct_clusters = distinct_clusters
 
+
 def catch_convergence_warning():
     """Decorator to catch ConvergenceWarnings and raise custom exceptions.
 
@@ -128,9 +142,11 @@ def catch_convergence_warning():
 
     return decorator
 
+
 # Catch invalid division (could be added to AAclust().comp_medoids())
 class InvalidDivisionException(Exception):
     pass
+
 
 def catch_invalid_divide_warning():
     """Decorator to catch specific RuntimeWarnings related to invalid division

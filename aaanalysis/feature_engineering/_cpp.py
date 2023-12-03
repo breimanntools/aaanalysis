@@ -10,10 +10,8 @@ from aaanalysis.template_classes import Tool
 
 # Import supportive class (exception for importing from same sub-package)
 from ._sequence_feature import SequenceFeature
-from ._backend.cpp._utils_cpp import get_feat_matrix
+from ._backend.cpp._utils_cpp import get_feature_matrix_, get_positions_
 from ._backend.cpp.cpp_run import pre_filtering_info, pre_filtering, filtering, add_stat
-from ._backend.cpp.cpp_methods import (get_positions,
-                                       get_dif)
 
 
 # I Helper Functions
@@ -32,6 +30,7 @@ def check_sample_in_df_seq(sample_name=None, df_seq=None):
                 f"\nValid names are: {list_names}"
         raise ValueError(error)
 
+
 # Adder methods for CPP analysis (used in run method)
 def _add_stat(df_feat=None, df_parts=None, df_scales=None, labels=None, parametric=False, accept_gaps=False):
         """
@@ -45,12 +44,13 @@ def _add_stat(df_feat=None, df_parts=None, df_scales=None, labels=None, parametr
         """
         # Add feature statistics
         features = list(df_feat[ut.COL_FEATURE])
-        X = get_feat_matrix(features=features,
-                            df_parts=df_parts,
-                            df_scales=df_scales,
-                            accept_gaps=accept_gaps)
+        X = get_feature_matrix_(features=features,
+                                df_parts=df_parts,
+                                df_scales=df_scales,
+                                accept_gaps=accept_gaps)
         df_feat = add_stat(df=df_feat, X=X, y=labels, parametric=parametric)
         return df_feat
+
 
 def _add_scale_info(df_feat=None, df_cat=None):
     """Add scale information to DataFrame (scale categories, sub categories, and scale names)."""
@@ -64,22 +64,6 @@ def _add_scale_info(df_feat=None, df_cat=None):
         vals = [dict_cat[s.split("-")[2]] for s in df_feat[ut.COL_FEATURE]]
         df_feat.insert(i + 1, col, vals)
     return df_feat
-
-
-# Common interface
-doc_param_len_pos = \
-"""\
-start
-    Position label of first amino acid position (starting at N-terminus, >=0).
-tmd_len
-    Length of TMD (>0).
-jmd_n_len
-    Length of JMD-N (>=0).
-jmd_c_len
-    Length of JMD-C (>=0).
-ext_len
-    Length of TMD-extending part (starting from C and N terminal part of TMD, >=0).\
-"""
 
 
 # TODO simplify checks & interface (end-to-end check with tests & docu)
@@ -119,10 +103,10 @@ class CPP(Tool):
     """
     def __init__(self,
                  df_parts: pd.DataFrame = None,
-                 split_kws : Optional[dict] = None,
-                 df_scales : Optional[pd.DataFrame] = None,
-                 df_cat : Optional[pd.DataFrame] = None,
-                 accept_gaps : bool = False,
+                 split_kws: Optional[dict] = None,
+                 df_scales: Optional[pd.DataFrame] = None,
+                 df_cat: Optional[pd.DataFrame] = None,
+                 accept_gaps: bool = False,
                  verbose: Optional[bool] = None):
         # Load default scales if not specified
         if split_kws is None:
@@ -148,7 +132,6 @@ class CPP(Tool):
         self.split_kws = split_kws
 
     # Main method
-    @ut.doc_params(doc_param_len_pos=doc_param_len_pos)
     def run(self,
             labels: ut.ArrayLike1D = None,
             n_filter: int = 100,
@@ -163,8 +146,7 @@ class CPP(Tool):
             tmd_len: int = 20,
             jmd_n_len: int = 10,
             jmd_c_len: int = 10,
-            ext_len: int = 4,
-            n_processes : Optional[int] = None
+            n_processes: Optional[int] = None
             ) -> pd.DataFrame:
         """
         Perform CPP pipeline by creation and two-step filtering of features. CPP aims to
@@ -191,7 +173,15 @@ class CPP(Tool):
             Whether to check for redundancy within scale categories.
         parametric
             Whether to use parametric (T-test) or non-parametric (Mann-Whitney-U-test) test for p-value computation.
-        {doc_param_len_pos}
+        start
+            Position label of first amino acid position (starting at N-terminus, >=0).
+        tmd_len
+            Length of TMD (>0).
+        jmd_n_len
+            Length of JMD-N (>=0).
+        jmd_c_len
+            Length of JMD-C (>=0).
+
         n_processes
             Number of CPUs used for multiprocessing. If None, number will be optimized automatically.
 
@@ -220,7 +210,7 @@ class CPP(Tool):
         """
         # Check input
         ut.check_labels_(labels=labels, df=self.df_parts, name_df="df_parts")
-        ut.check_args_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len)
+        ut.check_args_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
         ut.check_number_range(name="n_pre_filter", val=n_pre_filter, min_val=1, accept_none=True, just_int=True)
         ut.check_number_range(name="pct_pre_filter", val=pct_pre_filter, min_val=5, max_val=100, just_int=True)
@@ -255,8 +245,9 @@ class CPP(Tool):
         # Add feature information
         df = _add_stat(df_feat=df, df_scales=self.df_scales, df_parts=self.df_parts,
                        labels=labels, parametric=parametric, accept_gaps=self._accept_gaps)
-        df = self.add_positions(df_feat=df, start=start,
-                                tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len)
+        feat_positions = get_positions_(features=features, start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len,
+                                        jmd_c_len=jmd_c_len)
+        df[ut.COL_POSITION] = feat_positions
         df = _add_scale_info(df_feat=df, df_cat=self.df_cat)
         # Filtering using CPP algorithm
         if self._verbose:
@@ -268,96 +259,6 @@ class CPP(Tool):
         if self._verbose:
             ut.print_out(f"4. CPP returns df with {len(df_feat)} unique features including general information and statistics")
         return df_feat
-
-    # Feature information methods (can be included to df_feat for individual sequences)
-    # TODO add sequence positions
-    @staticmethod
-    @ut.doc_params(doc_param_len_pos=doc_param_len_pos)
-    def add_positions(df_feat: pd.DataFrame = None,
-                      start: int = 1,
-                      tmd_len: int = 20,
-                      jmd_n_len: int = 10,
-                      jmd_c_len: int = 10,
-                      ext_len: int = 4
-                      ) -> pd.DataFrame:
-        """Create list with positions for given feature names
-
-        Parameters
-        ----------
-        df_feat
-            Feature DataFrame, output of CPP.run(), to add sample difference.
-        {doc_param_len_pos}
-
-        Returns
-        -------
-        df_feat
-            Feature DataFrame with positions for each feature in feat_names
-
-        Notes
-        -----
-        - The sum of length parameters define the total number of positions (``jmd_n_len`` + ``tmd_len`` + ``jmd_c_len``).
-        - ``ext_len`` < ``jmd_m_len`` and ``ext_len`` < ``jmd_c_len``
-        """
-        # Check input
-        df_feat = ut.check_df_feat(df_feat=df_feat)
-        features = list(df_feat["feature"])
-        features = ut.check_features(features=features)
-        ut.check_number_range(name="tmd_len", val=tmd_len, just_int=True, min_val=1)
-        args = dict(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len, start=start)
-        for name in args:
-            ut.check_number_range(name=name, val=args[name], just_int=True, min_val=0)
-        # Get feature position
-        feat_positions = get_positions(features=features, start=start,
-                                        tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
-                                        ext_len=ext_len)
-        df_feat[ut.COL_POSITION] = feat_positions
-        return df_feat
-
-    def add_dif(self,
-                df_feat: pd.DataFrame = None,
-                labels: ut.ArrayLike1D = None,
-                list_names: List[str] = None,
-                sample_name: str = None,
-                ref_group: int = 0
-                ) -> pd.DataFrame:
-        """
-        Add feature value difference between sample and reference group to DataFrame.
-
-        Parameters
-        ----------
-        df_feat
-            Feature DataFrame (CPP output) to add sample difference.
-        labels: `array-like, shape (n_samples, )`
-            Class labels for samples in sequence DataFrame.
-        ref_group
-            Class label of reference group.
-        list_names
-            List of names matching to `df_parts`.
-        sample_name
-            Name of sample for which the feature value difference to a given reference group should be computed.
-
-        Returns
-        -------
-        df_feat
-            Feature DataFrame with feature value difference.
-        """
-        # Check input
-        df_feat = ut.check_df_feat(df_feat=df_feat)
-        features = list(df_feat["feature"])
-        features = ut.check_features(features=features)
-        check_ref_group(ref_group=ref_group, labels=labels)
-        # Add sample difference to reference group
-        feat_dif = get_dif(features=features,
-                           df_parts=self.df_parts,
-                           df_scales=self.df_scales,
-                           accept_gaps=self._accept_gaps,
-                           list_names=list_names,
-                           sample_name=sample_name,
-                           labels=labels,
-                           ref_group=ref_group)
-        df_feat[f"dif_{sample_name}"] = feat_dif
-        return df_feat
-
 
     # TODO get evaluation for any dataset for compelete
     def eval(self, df_feat=None, features=None):

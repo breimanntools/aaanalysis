@@ -38,7 +38,7 @@ def plot_get_cdict(name: str = "DICT_COLOR") -> dict:
 
     See Also
     --------
-    - Our `Plotting Prelude <plotting_prelude.html>`_.
+    * Our `Plotting Prelude <plotting_prelude.html>`_.
     """
     list_names = [ut.STR_DICT_COLOR, ut.STR_DICT_CAT]
     if name not in list_names:

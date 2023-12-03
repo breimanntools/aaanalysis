@@ -1,5 +1,5 @@
 """
-Script with Split objects used to fragment sequence parts into distinct segments or patterns.
+Script for (backend class) Split objects used to fragment sequence parts into distinct segments or patterns.
 """
 import numpy as np
 import itertools
@@ -9,6 +9,7 @@ import aaanalysis.utils as ut
 
 # I Helper Functions
 # Check functions
+# TODO refactor check function into frontend
 def check_seq(seq=None):
     """Check if seq is not None"""
     if seq is None:
