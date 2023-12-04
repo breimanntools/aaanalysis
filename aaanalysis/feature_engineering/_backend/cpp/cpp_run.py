@@ -11,6 +11,7 @@ from statsmodels.stats.multitest import multipletests
 
 from ._split import SplitRange
 import aaanalysis.utils as ut
+from ._utils_cpp import get_vf_scale
 
 
 # I Helper functions
@@ -94,7 +95,7 @@ def _pre_filtering_info(list_scales, dict_all_scales, labels_ps, splittings, acc
         # Feature names
         feat_names[start:end] = ["{}-{}".format(ps, scale) for ps in labels_ps]
         # Feature matrix
-        vf_scale = ut.get_vf_scale(dict_scale=dict_scale, accept_gaps=accept_gaps)
+        vf_scale = get_vf_scale(dict_scale=dict_scale, accept_gaps=accept_gaps)
         # TODO check missing values in ML
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)    # Filter numpy warning: "Mean of emtpy slice"

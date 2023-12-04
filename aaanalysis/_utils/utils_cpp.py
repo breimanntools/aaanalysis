@@ -30,7 +30,7 @@ SPLIT_DESCRIPTION = "\n a) {}(i-th,n_split)" \
                     "\nwhere all numbers should be non-negative integers, and N/C means N or C."\
     .format(STR_SEGMENT, STR_PATTERN, STR_PERIODIC_PATTERN)
 
-# TODO to CPP backend
+# TODO to CPP backend (after testing of CPP is finished)
 # II Main Functions
 # General check functions
 def check_color(name=None, val=None, accept_none=False):
@@ -267,29 +267,3 @@ def check_split(split=None):
     except:
         error = "Wrong split annotation for '{}'. Splits should be denoted as follows:".format(split, SPLIT_DESCRIPTION)
         raise ValueError(error)
-
-
-# Scale functions
-def get_dict_all_scales(df_scales=None):
-    """Get nested dictionary where each scale is a key for an amino acid scale value dictionary"""
-    dict_all_scales = {col: dict(zip(df_scales.index.to_list(), df_scales[col])) for col in list(df_scales)}
-    return dict_all_scales
-
-
-def get_vf_scale(dict_scale=None, accept_gaps=False):
-    """Vectorized function to calculate the mean for a feature"""
-    if not accept_gaps:
-        # Vectorized scale function
-        vf_scale = np.vectorize(lambda x: np.mean([dict_scale[a] for a in x]))
-    else:
-        # Except NaN derived from 'X' in sequence if not just 'X' in sequence (3x slower)
-        def get_mean_excepting_nan(x):
-            vals = np.array([dict_scale.get(a, np.NaN) for a in x])
-            # TODO!! check if working with nan possible
-            #if np.isnan(vals).all():
-            #    raise ValueError(f"Not all values in sequence split ('{x}') should result in NaN")
-            return vals
-        vf_scale = np.vectorize(lambda x: np.nanmean(get_mean_excepting_nan(x)))
-    return vf_scale
-
-

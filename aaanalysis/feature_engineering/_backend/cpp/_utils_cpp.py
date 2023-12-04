@@ -24,6 +24,23 @@ def check_dict_part_pos(dict_part_pos=None):
         raise ValueError(error)
 
 
+def get_vf_scale(dict_scale=None, accept_gaps=False):
+    """Vectorized function to calculate the mean for a feature"""
+    if not accept_gaps:
+        # Vectorized scale function
+        vf_scale = np.vectorize(lambda x: np.mean([dict_scale[a] for a in x]))
+    else:
+        # Except NaN derived from 'X' in sequence if not just 'X' in sequence (3x slower)
+        def get_mean_excepting_nan(x):
+            vals = np.array([dict_scale.get(a, np.NaN) for a in x])
+            # TODO!! check if working with nan possible
+            #if np.isnan(vals).all():
+            #    raise ValueError(f"Not all values in sequence split ('{x}') should result in NaN")
+            return vals
+        vf_scale = np.vectorize(lambda x: np.nanmean(get_mean_excepting_nan(x)))
+    return vf_scale
+
+
 # Get positions
 def _get_dict_part_pos(tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1):
     """Get dictionary for part to positions."""
@@ -57,7 +74,6 @@ def _get_positions(dict_part_pos=None, features=None, as_str=True):
         list_pos.append(pos)
     return list_pos
 
-
 # Get df positions
 def _get_df_pos_long(df=None, y="category", col_value=None):
     """Get """
@@ -75,6 +91,12 @@ def _get_df_pos_long(df=None, y="category", col_value=None):
 
 
 # Get feature matrix
+def _get_dict_all_scales(df_scales=None):
+    """Get nested dictionary where each scale is a key for an amino acid scale value dictionary"""
+    dict_all_scales = {col: dict(zip(df_scales.index.to_list(), df_scales[col])) for col in list(df_scales)}
+    return dict_all_scales
+
+
 def _feature_value(df_parts=None, split=None, dict_scale=None, accept_gaps=False):
     """Helper function to create feature values for feature matrix"""
     sp = Split()
@@ -84,7 +106,7 @@ def _feature_value(df_parts=None, split=None, dict_scale=None, accept_gaps=False
     # Vectorize split function using anonymous function
     vf_split = np.vectorize(lambda x: f_split(seq=x, **split_kwargs))
     # Get vectorized scale function
-    vf_scale = ut.get_vf_scale(dict_scale=dict_scale, accept_gaps=accept_gaps)
+    vf_scale = get_vf_scale(dict_scale=dict_scale, accept_gaps=accept_gaps)
     # Combine part split and scale to get feature values
     part_split = vf_split(df_parts)
     feature_value = np.round(vf_scale(part_split), 5)  # feature values
@@ -159,7 +181,7 @@ def get_feature_matrix_(features=None, df_parts=None, df_scales=None, accept_gap
     """Create feature matrix for given feature ids and sequence parts."""
     # Create feature matrix using parallel processing
     features = ut.check_list_like(name="features", val=features, convert=True, accept_str=True)
-    dict_all_scales = ut.get_dict_all_scales(df_scales=df_scales)
+    dict_all_scales = _get_dict_all_scales(df_scales=df_scales)
     n_processes = min([os.cpu_count(), len(features)]) if n_jobs is None else n_jobs
     features = features.to_list() if isinstance(features, pd.Series) else features
     feat_chunks = np.array_split(features, n_processes)
@@ -196,5 +218,3 @@ def get_df_pos_(df_feat=None, y="category", value_type="count", col_value=None, 
     df_pos = pd.DataFrame(dict_pos_val)
     df_pos = df_pos.T[list_y_cat].T     # Filter and order categories
     return df_pos
-
-

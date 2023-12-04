@@ -71,7 +71,6 @@ def post_check_n_clusters(n_clusters_actual=None, n_clusters=None):
                       f"during AAclust algorithm.", ConvergenceWarning)
 
 
-# TODO place decorators in inner functions to maintain calling signature
 # II Main Functions
 class AAclust(Wrapper):
     """
@@ -177,7 +176,7 @@ class AAclust(Wrapper):
         merge
             If ``True``, the optional merging step is performed.
         metric
-            Metric used as similarity measure for optional cluster merging and obtained medoids:
+            Similarity measure for optional cluster merging and obtained medoids:
 
              - ``correlation``: Pearson correlation (maximum)
              - ``euclidean``: Euclidean distance (minimum)
@@ -194,14 +193,12 @@ class AAclust(Wrapper):
 
         Notes
         -----
-        - Sets all attributes of the :class:`aanalysis.AAclust` class.
-
-        - The AAclust algorithm consists of three main steps:
+        * Sets all attributes of the :class:`aanalysis.AAclust` class.
+        * The AAclust algorithm consists of three main steps:
             1. Estimate the lower bound of k.
             2. Refine k (recursively) using the chosen quality metric.
             3. Optionally, merge smaller clusters as directed by the ``merge_metric``.
-
-        - A representative scale (medoid) closest to each cluster center is selected for redundancy reduction.
+        * A representative scale (medoid) closest to each cluster center is selected for redundancy reduction.
 
         See Also
         --------

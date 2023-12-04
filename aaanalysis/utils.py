@@ -22,7 +22,6 @@ from ._utils.check_type import (check_number_range, check_number_val, check_str,
 from ._utils.utils_cpp import (check_color, check_y_categorical, check_labels_, check_ylim,
                                check_args_len, check_args_len, check_list_parts,
                                check_split_kws, check_split,
-                               get_dict_all_scales, get_vf_scale,
                                STR_SEGMENT, STR_PATTERN, STR_PERIODIC_PATTERN, STR_AA_GAP,
                                LIST_PARTS, LIST_ALL_PARTS, SPLIT_DESCRIPTION)
 
