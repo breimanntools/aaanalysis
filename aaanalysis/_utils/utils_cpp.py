@@ -154,6 +154,7 @@ def check_list_parts(list_parts=None, all_parts=False):
 
 
 # Split check functions
+# TODO check if can be simplified
 def check_split_kws(split_kws=None, accept_none=True):
     """Check if argument dictionary for splits is a valid input"""
     # Split dictionary with data types

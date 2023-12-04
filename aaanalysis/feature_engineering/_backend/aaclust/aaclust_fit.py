@@ -90,6 +90,8 @@ def _estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.
     n_clusters = nclust_mincor[1][0] if len(nclust_mincor) > 1 else nclust_mincor[0][0]  # Otherwise, only existing one
     return n_clusters
 
+
+@ut.catch_runtime_warnings()
 def estimate_lower_bound_n_clusters(X, model=None, model_kwargs=None, min_th=0.6, on_center=True):
     """Wrapper for _estimate_lower_bound_n_clusters to catch convergence warnings"""
     try:
@@ -127,6 +129,7 @@ def _optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_
     return n_clusters
 
 
+@ut.catch_runtime_warnings()
 def optimize_n_clusters(X, model=None, model_kwargs=None, n_clusters=None, min_th=0.5, on_center=True):
     """Wrapper for _optimize_n_clusters to catch convergence warnings"""
     try:

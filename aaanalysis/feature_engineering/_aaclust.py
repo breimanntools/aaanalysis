@@ -70,20 +70,8 @@ def post_check_n_clusters(n_clusters_actual=None, n_clusters=None):
         warnings.warn(f"'n_clusters' was reduced from {n_clusters} to {n_clusters_actual} "
                       f"during AAclust algorithm.", ConvergenceWarning)
 
-# Common interface
-doc_param_X = \
-"""\
-X : `array-like, shape (n_samples, n_features)`
-    Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.\
-"""
 
-doc_param_labels = \
-"""\
-labels : `array-like, shape (n_samples, )`
-    Cluster labels for each sample in ``X``.\
-"""
-
-
+# TODO place decorators in inner functions to maintain calling signature
 # II Main Functions
 class AAclust(Wrapper):
     """
@@ -157,8 +145,6 @@ class AAclust(Wrapper):
         self.is_medoid_: Optional[ut.ArrayLike1D] = None
         self.medoid_names_: Optional[List[str]] = None
 
-    @ut.catch_runtime_warnings()
-    @ut.doc_params(doc_param_X=doc_param_X)
     def fit(self,
             X: ut.ArrayLike2D,
             n_clusters: Optional[int] = None,
@@ -179,7 +165,8 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        {doc_param_X}
+        X : `array-like, shape (n_samples, n_features)`
+            Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
         n_clusters
             Pre-defined number of clusters. If provided, k is not optimized. Must be 0 > n_clusters > n_samples.
         min_th
@@ -279,9 +266,6 @@ class AAclust(Wrapper):
             self.medoid_names_ = [names[i] for i in medoid_ind]
         return self
 
-    @ut.catch_runtime_warnings()
-    @ut.doc_params(doc_param_X=doc_param_X,
-                   doc_param_labels=doc_param_labels)
     def eval(self,
              X: ut.ArrayLike2D,
              labels: Optional[ut.ArrayLike1D] = None
@@ -302,8 +286,10 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        {doc_param_X}
-        {doc_param_labels}
+        X : `array-like, shape (n_samples, n_features)`
+            Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
+        labels : `array-like, shape (n_samples, )`
+            Cluster labels for each sample in ``X``.
 
         Returns
         -------
@@ -348,8 +334,6 @@ class AAclust(Wrapper):
         return n_clusters, bic, ch, sc
 
     @staticmethod
-    @ut.doc_params(doc_param_X=doc_param_X,
-                   doc_param_labels=doc_param_labels)
     def name_clusters(X: ut.ArrayLike2D,
                       labels: ut.ArrayLike1D = None,
                       names: List[str] = None,
@@ -363,8 +347,10 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        {doc_param_X}
-        {doc_param_labels}
+        X : `array-like, shape (n_samples, n_features)`
+            Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
+        labels : `array-like, shape (n_samples, )`
+            Cluster labels for each sample in ``X``.
         names
             List of sample names corresponding to ``X``.
         shorten_names
@@ -388,8 +374,6 @@ class AAclust(Wrapper):
         return cluster_names
 
     @staticmethod
-    @ut.doc_params(doc_param_X=doc_param_X,
-                   doc_param_labels=doc_param_labels)
     def comp_centers(X: ut.ArrayLike2D,
                      labels: ut.ArrayLike1D = None
                      ) -> Tuple[ut.ArrayLike1D, ut.ArrayLike1D]:
@@ -398,8 +382,10 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        {doc_param_X}
-        {doc_param_labels}
+        X : `array-like, shape (n_samples, n_features)`
+            Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
+        labels : `array-like, shape (n_samples, )`
+            Cluster labels for each sample in ``X``.
 
         Returns
         -------
@@ -418,8 +404,6 @@ class AAclust(Wrapper):
         return centers, labels_centers
 
     @staticmethod
-    @ut.doc_params(doc_param_X=doc_param_X,
-                   doc_param_labels=doc_param_labels)
     def comp_medoids(X: ut.ArrayLike2D,
                      labels: ut.ArrayLike1D = None,
                      metric: str = "correlation"
@@ -429,8 +413,10 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        {doc_param_X}
-        {doc_param_labels}
+        X : `array-like, shape (n_samples, n_features)`
+            Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
+        labels : `array-like, shape (n_samples, )`
+            Cluster labels for each sample in ``X``.
         metric
             Metric used as similarity measure to obtain medoids:
 
@@ -457,8 +443,6 @@ class AAclust(Wrapper):
         return medoids, labels_medoids
 
     @staticmethod
-    @ut.doc_params(doc_param_X=doc_param_X,
-                   doc_param_labels=doc_param_labels)
     def comp_correlation(X: ut.ArrayLike2D,
                          labels: ut.ArrayLike1D = None,
                          X_ref: Optional[ut.ArrayLike2D] = None,
@@ -471,8 +455,10 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        {doc_param_X}
-        {doc_param_labels}
+        X : `array-like, shape (n_samples, n_features)`
+            Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
+        labels : `array-like, shape (n_samples, )`
+            Cluster labels for each sample in ``X``.
         X_ref : `array-like, shape (n_samples, n_features)`
             Feature matrix of reference data. If given, samples of ``X`` are compared with samples of ``X_ref``.
         labels_ref  : `array-like, shape (n_samples_ref, )`

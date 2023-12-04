@@ -5,6 +5,7 @@ import numpy as np
 from scipy.spatial import distance
 from sklearn.metrics import silhouette_score, calinski_harabasz_score
 
+import aaanalysis.utils as ut
 from ._utils_aaclust import _compute_centers
 
 
@@ -48,6 +49,7 @@ def bic_score(X, labels=None):
 
 
 # II Main function
+@ut.catch_runtime_warnings()
 def evaluate_clustering(X, labels=None):
     """Evaluate clustering results using BIC, CH, SC scores"""
     # Bayesian Information Criterion

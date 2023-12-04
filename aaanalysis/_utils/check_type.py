@@ -32,7 +32,6 @@ def check_number_range(name=None, val=None, min_val=0, max_val=None, accept_none
         raise ValueError("'just_int' must be specified")
     valid_types = (int,) if just_int else (float, int)
     type_description = "int" if just_int else "float or int n, with"
-
     # Verify the value's type and range
     if not isinstance(val, valid_types) or val < min_val or (max_val is not None and val > max_val):
         range_desc = f"n>={min_val}" if max_val is None else f"{min_val}<=n<={max_val}"

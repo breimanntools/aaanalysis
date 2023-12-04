@@ -58,36 +58,6 @@ def check_dict_xlims(dict_xlims=None):
             raise ValueError(f"'dict_xlims:min' ({xmin}) should be < 'dict_xlims:max' ({xmax}) for '{key}'.")
 
 
-# Common interface
-doc_param_center_medoid_data = \
-"""\
-X : array-like of shape (n_samples, n_features)
-    Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.\
-labels : array-like of shape (n_samples,)
-    Cluster labels for each sample in ``X``. If `None`, no grouping is used.
-component_x
-    Index of the PCA component for the x-axis.
-component_y
-    Index of the PCA component for the y-axis.\
-"""
-
-doc_param_center_medoid_fig = \
-"""\
-ax
-    Pre-defined Axes object to plot on. If `None`, a new Axes object is created.
-figsize
-    Figure size (width, height) in inches.
-dot_alpha
-    Alpha value of the plotted dots.
-dot_size
-    Size of the plotted dots.
-legend
-    Whether to show the legend.
-palette
-    Colormap for the labels. If `None`, a default colormap is used.\
-"""
-
-
 # TODO add check functions finish other methods, testing, compression
 # II Main Functions
 class AAclustPlot:
@@ -178,8 +148,6 @@ class AAclustPlot:
         return fig, axes
 
     # TODO check functions, docstring, testing
-    @ut.doc_params(doc_param_center_medoid_data=doc_param_center_medoid_data,
-                   doc_param_center_medoid_fig=doc_param_center_medoid_fig)
     def center(self,
                X: ut.ArrayLike2D,
                labels: ut.ArrayLike1D = None,
@@ -196,8 +164,26 @@ class AAclustPlot:
 
         Parameters
         ----------
-        {doc_param_center_medoid_data}
-        {doc_param_center_medoid_fig}
+        X : array-like of shape (n_samples, n_features)
+            Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.\
+        labels : array-like of shape (n_samples,)
+            Cluster labels for each sample in ``X``. If `None`, no grouping is used.
+        component_x
+            Index of the PCA component for the x-axis.
+        component_y
+            Index of the PCA component for the y-axis.
+        ax
+            Pre-defined Axes object to plot on. If `None`, a new Axes object is created.
+        figsize
+            Figure size (width, height) in inches.
+        dot_alpha
+            Alpha value of the plotted dots.
+        dot_size
+            Size of the plotted dots.
+        legend
+            Whether to show the legend.
+        palette
+            Colormap for the labels. If `None`, a default colormap is used.
 
         Returns
         -------
@@ -235,8 +221,6 @@ class AAclustPlot:
         return ax, df_components
 
     # TODO check functions, docstring, testing
-    @ut.doc_params(doc_param_center_medoid_data=doc_param_center_medoid_data,
-                   doc_param_center_medoid_fig=doc_param_center_medoid_fig)
     def medoids(self,
                 X: ut.ArrayLike2D,
                 labels: ut.ArrayLike1D = None,
@@ -255,10 +239,28 @@ class AAclustPlot:
 
         Parameters
         ----------
-        {doc_param_center_medoid_data}
+        X : array-like of shape (n_samples, n_features)
+            Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.\
+        labels : array-like of shape (n_samples,)
+            Cluster labels for each sample in ``X``. If `None`, no grouping is used.
+        component_x
+            Index of the PCA component for the x-axis.
+        component_y
+            Index of the PCA component for the y-axis.
         metric
             The distance metric for calculating medoid. Any metric from `scipy.spatial.distance` can be used.
-        {doc_param_center_medoid_fig}
+        ax
+            Pre-defined Axes object to plot on. If `None`, a new Axes object is created.
+        figsize
+            Figure size (width, height) in inches.
+        dot_alpha
+            Alpha value of the plotted dots.
+        dot_size
+            Size of the plotted dots.
+        legend
+            Whether to show the legend.
+        palette
+            Colormap for the labels. If `None`, a default colormap is used.
         return_data : bool, optional, default=False
             If `True`, returns PCA components DataFrame. If `False`, returns the Axes object.
 

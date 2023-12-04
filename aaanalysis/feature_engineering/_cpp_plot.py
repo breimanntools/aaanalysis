@@ -370,7 +370,7 @@ class CPPPlot:
                 add_legend_cat=False,
                 legend_kws=None):
         """
-        Plot feature profile for given features from 'df_feat'.
+        Plot CPP profile for given features from 'df_feat'.
 
         Parameters
         ----------
@@ -543,7 +543,7 @@ class CPPPlot:
                 cbar_pct=True,
                 ):
         """
-        Plot a featuremap of the selected value column with scale information (y-axis) versus sequence position (x-axis).
+        Plot CPP heatmap of the selected value column with scale information (y-axis) versus sequence position (x-axis).
 
         This is a wrapper function for :func:`seaborn.heatmap`, designed to highlight differences between two sets
         of sequences at the positional level (e.g., amino acid level for protein sequences).
@@ -631,9 +631,8 @@ class CPPPlot:
 
         Warnings
         --------
-        - 'cmap_n_colors' is effective only if 'vmin' and 'vmax' align with the data.
-
-        - 'tmd_seq_color' and 'jmd_seq_color' are applicable only when 'tmd_seq', 'jmd_n_seq', and 'jmd_c_seq' are provided.
+        * 'cmap_n_colors' is effective only if 'vmin' and 'vmax' align with the data.
+        * 'tmd_seq_color' and 'jmd_seq_color' are applicable only when 'tmd_seq', 'jmd_n_seq', and 'jmd_c_seq' are provided.
 
         See Also
         --------

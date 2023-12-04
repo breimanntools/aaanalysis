@@ -1,57 +1,14 @@
 """
-This a script for general decorators used in AAanalysis
+This a script for general decorators used in AAanalysis.
+# Dev: use runtime decorator only for internal methods since they destroy the signature for some IDEs
 """
 import warnings
 import traceback
-import inspect
 from sklearn.exceptions import ConvergenceWarning
 import functools
 import re
 
-
 # Helper functions
-
-
-# Document common interfaces
-import re
-from functools import wraps
-
-
-# TODO remove since signature is not shown in runtime if used!!
-# TODO use runtime decorator only for internal methods since they destroy the signature for some IDEs
-def doc_params(**kwargs):
-    def decorator(func):
-        # If the docstring is None (e.g., if -OO was passed to the interpreter), return the unchanged function
-        if func.__doc__ is None:
-            return func
-
-        # Wraps is used to copy metadata from the original function to the wrapper function
-        @wraps(func)
-        def wrapper(*args, **wrapper_kwargs):
-            return func(*args, **wrapper_kwargs)
-
-        # Regular expression to find replacement fields and their indentation
-        pattern = re.compile(r'(?P<indent>\s*)\{(?P<key>\w+)\}')
-
-        # Function to adjust indentation
-        def adjust_indent(match):
-            key = match.group('key')
-            indent = match.group('indent')
-            if key in kwargs:
-                # Split the replacement string into lines and indent each one
-                replacement_lines = kwargs[key].strip().split('\n')
-                indented_replacement = '\n'.join(indent + line for line in replacement_lines)
-                return indented_replacement
-            else:
-                # Key not provided in kwargs, keep original
-                return match.group(0)
-
-        # Replace all matching strings in doc
-        wrapper.__doc__ = pattern.sub(adjust_indent, wrapper.__doc__)
-
-        return wrapper
-
-    return decorator
 
 
 # Catch Runtime
@@ -167,5 +124,3 @@ def catch_invalid_divide_warning():
             return result
         return wrapper
     return decorator
-
-

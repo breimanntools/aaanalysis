@@ -1,6 +1,7 @@
 """
 This is a script for the frontend of the CPP class, a sequence-based feature engineering object.
 """
+import numpy as np
 import pandas as pd
 from typing import Optional, Dict, Union, List, Tuple, Type
 
@@ -218,9 +219,10 @@ class CPP(Tool):
         ut.check_number_range(name="max_overlap", val=max_overlap, min_val=0.0, max_val=1.0, just_int=False)
         # Settings and creation of objects
         args = dict(split_kws=self.split_kws, df_scales=self.df_scales)
+        sf = SequenceFeature()
+        n_feat = len(sf.get_features(**args, list_parts=list(self.df_parts)))
+        n_filter = n_feat if n_feat < n_filter else n_filter
         if self._verbose:
-            sf = SequenceFeature()
-            n_feat = len(sf.get_features(**args, list_parts=list(self.df_parts)))
             ut.print_out(f"1. CPP creates {n_feat} features for {len(self.df_parts)} samples")
             ut.print_start_progress()
         # Pre-filtering: Select best n % of feature (filter_pct) based std(test set) and mean_dif
@@ -230,11 +232,13 @@ class CPP(Tool):
                                                               accept_gaps=self._accept_gaps,
                                                               verbose=self._verbose,
                                                               n_processes=n_processes)
+        n_feat = int(len(features))
         if n_pre_filter is None:
-            n_pre_filter = int(len(features) * (pct_pre_filter / 100))
+            n_pre_filter = int(n_feat * (pct_pre_filter / 100))
             n_pre_filter = n_filter if n_pre_filter < n_filter else n_pre_filter
         if self._verbose:
             ut.print_finished_progress()
+            pct_pre_filter = np.round((n_pre_filter/n_feat*100), 2)
             ut.print_out(f"2. CPP pre-filters {n_pre_filter} features ({pct_pre_filter}%) with highest '{ut.COL_ABS_MEAN_DIF}'"
                          f" and 'max_std_test' <= {max_std_test}")
         df = pre_filtering(features=features,
@@ -242,6 +246,7 @@ class CPP(Tool):
                            std_test=std_test,
                            n=n_pre_filter,
                            max_std_test=max_std_test)
+        features = df[ut.COL_FEATURE].to_list()
         # Add feature information
         df = _add_stat(df_feat=df, df_scales=self.df_scales, df_parts=self.df_parts,
                        labels=labels, parametric=parametric, accept_gaps=self._accept_gaps)

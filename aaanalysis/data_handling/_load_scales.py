@@ -22,7 +22,7 @@ def check_top60_n(name=None, top60_n=None):
     matching_scale_sets = [ut.STR_SCALES, ut.STR_SCALE_CAT, ut.STR_SCALES_RAW]
     if name not in matching_scale_sets:
         raise ValueError(f"'name' ('{name}') is not valid for 'top60_n' ({top60_n})."
-                         f" Choose one of following: {ut.NAMES_SCALE_SETS}")
+                         f" Choose one of following: {matching_scale_sets}")
 
 
 # Helper functions for load_scales
@@ -155,4 +155,11 @@ def load_scales(name: str = "scales",
     if name in [ut.STR_SCALES, ut.STR_SCALES_RAW]:
         selected_scales = [x for x in list(df) if x in list(df_cat[ut.COL_SCALE_ID])]
         df = df[selected_scales]
+    # Adjust data type of column values
+    name_all_float = ["scales", "scales_raw", "scales_pc"]
+    name_all_int = ["top60"]
+    if name in name_all_float:
+        df = df.astype(float)
+    elif name in name_all_int:
+        df = df.astype(int)
     return df

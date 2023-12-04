@@ -30,8 +30,7 @@ from ._utils.new_types import ArrayLike1D, ArrayLike2D
 
 from ._utils.decorators import (catch_runtime_warnings, CatchRuntimeWarnings,
                                 catch_convergence_warning, ClusteringConvergenceException,
-                                catch_invalid_divide_warning,
-                                doc_params)
+                                catch_invalid_divide_warning)
 
 from ._utils.utils_output import (print_out, print_start_progress, print_progress, print_finished_progress)
 from ._utils.utils_ploting import plot_gco, plot_add_bars

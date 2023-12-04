@@ -108,21 +108,8 @@ def check_ref_group(ref_group=0, labels=None):
         raise ValueError(f"'ref_group' ({ref_group}) not class label: {set(labels)}.")
 
 
-# Common interface
-doc_param_len_pos = \
-"""\
-start
-    Position label of first amino acid position (starting at N-terminus, >=0).
-tmd_len
-    Length of TMD (>0).
-jmd_n_len
-    Length of JMD-N (>=0).
-jmd_c_len
-    Length of JMD-C (>=0).\
-"""
-
-
-# TODO fisih, check input, common interface + docstring, testing
+# TODO finsih, check input, common interface + docstring, testing
+# TODO update docstring, e.g., give default parts in docstring
 # II Main Functions
 class SequenceFeature:
     """Retrieve and create sequence feature components (Part, Split, and Scale).
@@ -370,7 +357,6 @@ class SequenceFeature:
         return features
 
     @staticmethod
-    @ut.doc_params(doc_param_len_pos=doc_param_len_pos)
     def get_feature_names(features=None,
                           df_cat=None,
                           start=1,
@@ -386,7 +372,14 @@ class SequenceFeature:
             List of feature ids.
         df_cat: :class:`pandas.DataFrame`, default = SequenceFeature.load_categories
             DataFrame with default categories for physicochemical amino acid scales
-        {doc_param_len_pos}
+        start
+            Position label of first amino acid position (starting at N-terminus, >=0).
+        tmd_len
+            Length of TMD (>0).
+        jmd_n_len
+            Length of JMD-N (>=0).
+        jmd_c_len
+            Length of JMD-C (>=0).
 
         Returns
         -------
@@ -416,7 +409,6 @@ class SequenceFeature:
         return feat_names
 
     @staticmethod
-    @ut.doc_params(doc_param_len_pos=doc_param_len_pos)
     def get_positions(features: ut.ArrayLike1D = None,
                       start: int = 1,
                       tmd_len: int = 20,
@@ -429,7 +421,15 @@ class SequenceFeature:
         ----------
         features
             List of feature ids.
-        {doc_param_len_pos}
+        start
+            Position label of first amino acid position (starting at N-terminus, >=0).
+        tmd_len
+            Length of TMD (>0).
+        jmd_n_len
+            Length of JMD-N (>=0).
+        jmd_c_len
+            Length of JMD-C (>=0).
+
 
         Returns
         -------

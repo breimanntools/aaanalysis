@@ -66,7 +66,7 @@ class TestLoadDataset:
         """Test the 'n' parameter for limiting rows."""
         max_n = aa.load_dataset(name="SEQ_LOCATION")["label"].value_counts().min()
         if max_n < n:
-            with pytest.raises(ValueError):
+            with pytest.warns(UserWarning):
                 df = aa.load_dataset(name="SEQ_LOCATION", n=n)
 
     @given(negative_n=some.integers(min_value=-100, max_value=-1))
