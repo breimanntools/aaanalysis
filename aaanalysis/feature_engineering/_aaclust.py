@@ -82,15 +82,6 @@ class AAclust(Wrapper):
     AAclust optimizes the value of k by utilizing Pearson correlation and then selects a representative sample ('medoid')
     for each cluster closest to the center, resulting in a redundancy-reduced sample set. See [Breimann23a]_.
 
-    Parameters
-    ----------
-    model_class
-        A clustering model class with ``n_clusters`` parameter. This class will be instantiated by the ``fit`` method.
-    model_kwargs
-        Keyword arguments to pass to the selected clustering model.
-    verbose
-        If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if 'None'.
-
     Attributes
     ----------
     model : object
@@ -125,6 +116,16 @@ class AAclust(Wrapper):
                  model_class: Type[ClusterMixin] = KMeans,
                  model_kwargs: Optional[Dict] = None,
                  verbose: Optional[bool] = None):
+        """
+        Parameters
+        ----------
+        model_class
+            A clustering model class with ``n_clusters`` parameter. This class will be instantiated by the ``fit`` method.
+        model_kwargs
+            Keyword arguments to pass to the selected clustering model.
+        verbose
+            If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if 'None'.
+        """
         # Model parameters
         model_class = ut.check_mode_class(model_class=model_class)
         if model_kwargs is None and model_class is KMeans:

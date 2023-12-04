@@ -74,23 +74,6 @@ class CPP(Tool):
     """
     Create and filter features that are most discriminant between two sets of sequences.
 
-    Parameters
-    ----------
-    df_parts
-        DataFrame with sequence parts.
-    split_kws
-        Nested dictionary with parameter dictionary for each chosen split_type.
-        Default from :meth:`SequenceFeature.get_split_kws`
-    df_scales
-        DataFrame with amino acid scales. Default from :meth:`load_scales` with 'name'='scales_cat'.
-    df_cat
-        DataFrame with default categories for physicochemical amino acid scales.
-        Default from :meth:`load_categories`
-    accept_gaps
-        Whether to accept missing values by enabling omitting for computations (if ``True``).
-    verbose
-        If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if ``None``.
-
     Attributes
     ----------
     df_parts
@@ -109,6 +92,24 @@ class CPP(Tool):
                  df_cat: Optional[pd.DataFrame] = None,
                  accept_gaps: bool = False,
                  verbose: Optional[bool] = None):
+        """
+        Parameters
+        ----------
+        df_parts
+            DataFrame with sequence parts.
+        split_kws
+            Nested dictionary with parameter dictionary for each chosen split_type.
+            Default from :meth:`SequenceFeature.get_split_kws`
+        df_scales
+            DataFrame with amino acid scales. Default from :meth:`load_scales` with 'name'='scales_cat'.
+        df_cat
+            DataFrame with default categories for physicochemical amino acid scales.
+            Default from :meth:`load_categories`
+        accept_gaps
+            Whether to accept missing values by enabling omitting for computations (if ``True``).
+        verbose
+            If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if ``None``.
+        """
         # Load default scales if not specified
         if split_kws is None:
             sf = SequenceFeature()

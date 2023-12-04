@@ -191,18 +191,6 @@ class dPULearn:
     the feature space. Alternatively, reliable negatives can also be identified using distance metrics like
     Euclidean, Manhattan, or Cosine distance if specified.
 
-    Parameters
-    ----------
-    verbose : bool, default=False
-        Enable verbose output.
-    n_components : float or int, default=0.80
-        Number of components to cover a maximum percentage of total variance when PCA is applied.
-    pca_kwargs : dict, default=None
-        Additional keyword arguments to pass to PCA.
-    metric : {'euclidean', 'manhattan', 'cosine'} or None, default=None
-        The distance metric to use. If None, PCA-based identification is used.
-        If a metric is specified, distance-based identification is performed.
-
     Attributes
     ----------
     labels_ : array-like, shape (n_samples,)
@@ -210,14 +198,27 @@ class dPULearn:
 
     Notes
     -----
-    - The method is inspired by deterministic PU learning techniques and follows
+    * The method is inspired by deterministic PU learning techniques and follows
         an information-theoretic PU learning approach.
-    - If `metric` is specified, distance-based identification of reliable negatives is performed.
+    * If `metric` is specified, distance-based identification of reliable negatives is performed.
         Otherwise, PCA-based identification is used.
-    - Cosine metric is recommended in high-dimensional spaces.
+    * Cosine metric is recommended in high-dimensional spaces.
 
     """
     def __init__(self, verbose=False, n_components=0.80, pca_kwargs=None, metric=None):
+        """
+        Parameters
+        ----------
+        verbose : bool, default=False
+            Enable verbose output.
+        n_components : float or int, default=0.80
+            Number of components to cover a maximum percentage of total variance when PCA is applied.
+        pca_kwargs : dict, default=None
+            Additional keyword arguments to pass to PCA.
+        metric : {'euclidean', 'manhattan', 'cosine'} or None, default=None
+            The distance metric to use. If None, PCA-based identification is used.
+            If a metric is specified, distance-based identification is performed.
+        """
         self.verbose = verbose
         # Arguments for Principal Component Analysis (PCA)-based identification
         self.n_components = n_components

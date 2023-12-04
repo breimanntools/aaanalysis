@@ -177,22 +177,6 @@ class CPPPlot:
     """
     Plot CPP results at global or individual sample level as ranking plot, profile, or map (heatmap, feature map).
 
-    Parameters
-    ----------
-    df_scales
-        DataFrame with amino acid scales. Default from :meth:`load_scales` with 'name'='scales_cat'.
-    df_cat
-        DataFrame with default categories for physicochemical amino acid scales.
-        Default from :meth:`load_categories`
-    jmd_n_len
-        Length of JMD-N (>=0).
-    jmd_c_len
-        Length of JMD-C (>=0).
-    accept_gaps
-        Whether to accept missing values by enabling omitting for computations (if ``True``).
-    verbose
-        If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if ``None``.
-
     """
     def __init__(self,
                  df_scales: Optional[pd.DataFrame] = None,
@@ -202,6 +186,23 @@ class CPPPlot:
                  verbose: bool = True,
                  accept_gaps: bool = False,
                  ):
+        """
+        Parameters
+        ----------
+        df_scales
+            DataFrame with amino acid scales. Default from :meth:`load_scales` with 'name'='scales_cat'.
+        df_cat
+            DataFrame with default categories for physicochemical amino acid scales.
+            Default from :meth:`load_categories`
+        jmd_n_len
+            Length of JMD-N (>=0).
+        jmd_c_len
+            Length of JMD-C (>=0).
+        accept_gaps
+            Whether to accept missing values by enabling omitting for computations (if ``True``).
+        verbose
+            If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if ``None``.
+        """
         # Check input parameters
         # TODO check dfs
         ut.check_number_range(name="jmd_n_len", val=jmd_n_len, min_val=0, accept_none=False, just_int=True)

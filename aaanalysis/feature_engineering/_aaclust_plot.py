@@ -66,13 +66,6 @@ class AAclustPlot:
     Dimensionality reduction is performed for visualization using decomposition models such as
     Principal Component Analysis (PCA).
 
-    Parameters
-    ----------
-    model_class
-        A decomposition model class with ``n_components`` parameter.
-    model_kwargs
-        Keyword arguments to pass to the selected decomposition model.
-
     See Also
     --------
     * Scikit-learn `decomposition model classes <https://scikit-learn.org/stable/modules/classes.html#module-sklearn.decomposition>`_.
@@ -80,6 +73,14 @@ class AAclustPlot:
     def __init__(self,
                  model_class: Type[TransformerMixin] = PCA,
                  model_kwargs: Optional[Dict] = None):
+        """
+        Parameters
+        ----------
+        model_class
+            A decomposition model class with ``n_components`` parameter.
+        model_kwargs
+            Keyword arguments to pass to the selected decomposition model.
+        """
         # Model parameters
         model_class = ut.check_mode_class(model_class=model_class)
         model_kwargs = ut.check_model_kwargs(model_class=model_class,
