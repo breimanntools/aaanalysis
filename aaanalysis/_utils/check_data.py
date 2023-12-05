@@ -4,6 +4,7 @@ This is a script for data checking utility functions.
 import pandas as pd
 import numpy as np
 from sklearn.utils import check_array
+from .check_type import check_number_val
 
 # Helper functions
 def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan=False):
@@ -61,7 +62,6 @@ def check_labels(labels=None):
         raise ValueError(f"'labels' should not be None.")
     # Convert labels to a numpy array if it's not already
     labels = np.asarray(labels)
-
     unique_labels = set(labels)
     if len(unique_labels) == 1:
        raise ValueError(f"'labels' should contain more than one different value ({unique_labels}).")

@@ -89,7 +89,7 @@ class AAclust(Wrapper):
         Number of clusters obtained by AAclust.
     labels_ : `array-like, shape (n_samples, )`
         Cluster labels in the order of samples in ``X``.
-    centers_ : `array-like, shape (n_clusters, n_features)`
+    centers_ : array-like, shape (n_clusters, n_features)
         Average scale values corresponding to each cluster.
     labels_centers_ : `array-like, shape (n_clusters, )`
         Cluster labels for each cluster center.
@@ -100,7 +100,7 @@ class AAclust(Wrapper):
     is_medoid_ : `array-like, shape (n_samples, )`
         Array indicating samples being medoids (1) or not (0). Same order as ``labels_``.
     medoid_names_ : list
-        Names of the medoids. Set if ``names`` is provided to ``fit``.
+        Names of the medoids. Set if ``names`` is provided to ``.fit``.
 
     Notes
     -----
@@ -119,7 +119,7 @@ class AAclust(Wrapper):
         Parameters
         ----------
         model_class
-            A clustering model class with ``n_clusters`` parameter. This class will be instantiated by the ``fit`` method.
+            A clustering model class with ``n_clusters`` parameter. This class will be instantiated by the ``.fit`` method.
         model_kwargs
             Keyword arguments to pass to the selected clustering model.
         verbose
@@ -176,7 +176,7 @@ class AAclust(Wrapper):
         merge
             If ``True``, the optional merging step is performed.
         metric
-            Similarity measure for optional cluster merging and obtained medoids:
+            Similarity measure used for optional cluster merging and obtaining medoids:
 
              - ``correlation``: Pearson correlation (maximum)
              - ``euclidean``: Euclidean distance (minimum)
@@ -197,7 +197,7 @@ class AAclust(Wrapper):
         * The AAclust algorithm consists of three main steps:
             1. Estimate the lower bound of k.
             2. Refine k (recursively) using the chosen quality metric.
-            3. Optionally, merge smaller clusters as directed by the ``merge_metric``.
+            3. Optionally, merge smaller clusters as directed by the merge ``metric``.
         * A representative scale (medoid) closest to each cluster center is selected for redundancy reduction.
 
         See Also
@@ -280,7 +280,6 @@ class AAclust(Wrapper):
               The CH value ranges from 0 to positive infinity. A higher CH score suggests better-defined clustering.
             - ``SC`` (Silhouette Coefficient): Evaluates the proximity of each data point in one cluster to the points in the neighboring clusters.
               The SC score lies between -1 and 1. A value closer to 1 implies better clustering.
-
 
         Parameters
         ----------
@@ -416,7 +415,7 @@ class AAclust(Wrapper):
         labels : `array-like, shape (n_samples, )`
             Cluster labels for each sample in ``X``.
         metric
-            Metric used as similarity measure to obtain medoids:
+            Similarity measure used to obtain medoids:
 
              - ``correlation``: Pearson correlation (maximum)
              - ``euclidean``: Euclidean distance (minimum)
@@ -468,7 +467,7 @@ class AAclust(Wrapper):
 
         Returns
         -------
-        df_corr : pd.DataFrame
+        df_corr
             DataFrame with correlation either for each pair in ``X`` of shape (n_samples, n_samples) or
             for each pair between ``X`` and ``X_ref`` of shape (n_samples, n_samples_ref).
         labels_sorted: `array-like, shape (n_samples_ref, )`
@@ -503,8 +502,8 @@ class AAclust(Wrapper):
         return df_corr, labels_sorted
 
     @staticmethod
-    def comp_coverage(names : [List[str]] =None,
-                      names_ref : [List[str]] =None
+    def comp_coverage(names : List[str] =None,
+                      names_ref : List[str] =None
                       ) -> float :
         """
         Computes the percentage of unique names from ``names`` that are present in ``names_ref``.

@@ -1,11 +1,9 @@
 """
 This is a script for the backend of the AAclustPlot object for all plotting functions.
 """
-import time
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import numpy as np
 import matplotlib.ticker as mticker
 from sklearn.decomposition import PCA
 from scipy.cluster.hierarchy import linkage, leaves_list
@@ -149,32 +147,38 @@ def plot_center_or_medoid(X=None, labels=None,
     return ax, df_components
 
 
-def plot_correlation(df_corr=None, labels_sorted=None, cluster_x=True, cluster_y=False, method="average",
-                     bar_position="left", bar_width=0.1, bar_spacing=0.1, bar_colors="gray", bar_set_tick_labels=False,
+def plot_correlation(df_corr=None, labels=None, pairwise=False, cluster_x=True, method="average",
+                     bar_position="left", bar_colors="gray",
+                     bar_width_x=0.1, bar_spacing_x=0.1, bar_width_y=0.1, bar_spacing_y=0.1,
+                     xtick_label_rotation=45, ytick_label_rotation=0,
                      vmin=-1, vmax=1, cmap="viridis", **kwargs_heatmap):
     """Plots heatmap for clustering results with rows (y-axis) corresponding to scales and columns (x-axis) to clusters."""
     # Adjust order of df_corr
     if cluster_x:
         df_corr = _get_clustered_order(df_corr, method=method)
-    if cluster_y:
-        df_corr = _get_clustered_order(df_corr.T, method=method).T
     # Plot heatmap
     _kwargs_heatmap = {"cmap": cmap, "vmin": vmin, "vmax": vmax,
                        "cbar_kws": {"label": "Pearson correlation"},
                        **kwargs_heatmap}
     ax = sns.heatmap(data=df_corr, **_kwargs_heatmap)
     # Adjust ticks
-    ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
-    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=xtick_label_rotation, ha="right")
+    ax.set_yticklabels(ax.get_yticklabels(), rotation=ytick_label_rotation)
     # Customizing color bart tick lines
     cbar = ax.collections[0].colorbar
     lw = ut.plot_gco(option="axes.linewidth")
     fs = ut.plot_gco(option="font.size")
     cbar.ax.tick_params(axis='y', width=lw, length=6, color='black', labelsize=fs-1)
     # Add bars for highlighting clustering
+    y_labels = labels
+    x_labels = labels if pairwise else list(df_corr)
     if bar_position is not None:
-        ut.plot_add_bars(ax=ax, labels=labels_sorted, bar_position=bar_position,
-                         bar_spacing=bar_spacing, bar_width=bar_width,
-                         set_tick_labels=bar_set_tick_labels, colors=bar_colors)
+        for pos in bar_position:
+            _labels = x_labels if pos in ["top", "bottom"] else y_labels
+            _bar_width = bar_width_x if pos in ["top", "bottom"] else bar_width_y
+            _bar_spacing = bar_spacing_x if pos in ["top", "bottom"] else bar_spacing_y
+            ut.plot_add_bars(ax=ax, labels=_labels, bar_position=pos, set_tick_labels=True,
+                             bar_spacing=_bar_spacing, bar_width=_bar_width, colors=bar_colors,
+                             xtick_label_rotation=xtick_label_rotation, ytick_label_rotation=ytick_label_rotation)
     plt.tight_layout()
     return ax

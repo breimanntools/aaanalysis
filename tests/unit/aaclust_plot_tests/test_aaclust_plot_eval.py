@@ -1,5 +1,5 @@
 """
-This is a script for testing the  aa.AAclustPlot().eval function.
+This is a script for testing the  aa.AAclustPlot().eval() method.
 """
 import hypothesis.strategies as some
 from hypothesis import given, settings

@@ -134,11 +134,13 @@
 <p>Retrieve and create sequence feature components (Part, Split, and Scale).</p>
 <div class="admonition-notes admonition">
 <p class="admonition-title">Notes</p>
-<p>Feature Components:
-* Part: A continuous subset of sequence, such as a protein domain (e.g, transmembrane domain of membrane proteins).
-* Split: Continuous or discontinuous subset of a sequence part, such as a segment or a pattern.
-* Scale: A physicochemical scale assigning each amino acid a numerical value (typically min-max-normalized [0-1]).</p>
 <dl class="simple">
+<dt>Feature Components:</dt><dd><ul class="simple">
+<li><p>Part: A continuous subset of sequence, such as a protein domain (e.g, transmembrane domain of membrane proteins).</p></li>
+<li><p>Split: Continuous or discontinuous subset of a sequence part, such as a segment or a pattern.</p></li>
+<li><p>Scale: A physicochemical scale assigning each amino acid a numerical value (typically min-max-normalized [0-1]).</p></li>
+</ul>
+</dd>
 <dt>Feature: Part + Split + Scale</dt><dd><p>Physicochemical property (expressed as numerical scale) present at distinct amino acid
 positions within a protein sequence. The positions are obtained by splitting sequence parts
 into segments or patterns.</p>

@@ -11,15 +11,17 @@ import numpy as np
 from .config import options
 
 # Import utility functions explicitly
-from ._utils.check_data import (check_X, check_X_unique_samples, check_labels, check_match_X_labels,
-                                check_array_like, check_superset_subset,
-                                check_col_in_df)
-from ._utils.check_models import check_mode_class, check_model_kwargs
 from ._utils.check_type import (check_number_range, check_number_val, check_str, check_bool,
                                 check_dict, check_tuple, check_list_like, check_str_in_list,
                                 check_ax)
+from ._utils.check_data import (check_X, check_X_unique_samples,
+                                check_labels, check_match_X_labels,
+                                check_array_like, check_superset_subset,
+                                check_col_in_df)
+from ._utils.check_models import check_mode_class, check_model_kwargs
+from ._utils.check_plots import (check_vmin_vmax, check_color, check_cmap, check_ylim)
 
-from ._utils.utils_cpp import (check_color, check_y_categorical, check_labels_, check_ylim,
+from ._utils.utils_cpp import (check_y_categorical, check_labels_,
                                check_args_len, check_args_len, check_list_parts,
                                check_split_kws, check_split,
                                STR_SEGMENT, STR_PATTERN, STR_PERIODIC_PATTERN, STR_AA_GAP,
@@ -264,8 +266,8 @@ def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
                 f"'jmd_n_len' and 'jmd_c_len' should be None."
         raise ValueError(error)
     if not parts_in_df and seq_info_in_df and (jmd_c_len is None or jmd_n_len is None):
-        error = "If part columns ({}) are not in 'df_seq' but sequence information ({}), " \
-                "\n'jmd_n_len' and 'jmd_c_len' should be given (not None).".format(COLS_PARTS, COLS_SEQ_TMD_POS_KEY)
+        error = f"If part columns ({COLS_PARTS}) are not in 'df_seq' but sequence information ({COLS_SEQ_TMD_POS_KEY}), " \
+                "\n'jmd_n_len' and 'jmd_c_len' should be given (not None)."
         raise ValueError(error)
     return df_seq
 
@@ -294,7 +296,7 @@ def check_df_parts(df_parts=None, verbose=True):
         cols_wrong_type = [col for col in dict_dtype if dict_dtype[col] not in [object, str]]
         if len(cols_wrong_type) > 0:
             error = "'df_parts' should contain sequences with type string." \
-                    "\n  Following columns contain no values with type string: {}".format(cols_wrong_type)
+                    f"\n  Following columns contain no values with type string: {cols_wrong_type}"
             raise ValueError(error)
 
 
@@ -329,7 +331,7 @@ def check_df_cat(df_cat=None, df_scales=None, accept_none=True, verbose=True):
             print(f"Warning: {str_warning}")
     return df_cat, df_scales
 
-
+# TODO check
 def check_df_scales(df_scales=None, df_parts=None, accept_none=False, accept_gaps=False):
     """Check if df_scales is a valid input and matching to df_parts"""
     check_bool(name="accept_gaps", val=accept_gaps)
@@ -347,14 +349,14 @@ def check_df_scales(df_scales=None, df_parts=None, accept_none=False, accept_gap
     dict_dtype = dict(df_scales.dtypes)
     cols_wrong_type = [col for col in dict_dtype if dict_dtype[col] not in [np.number, int, float]]
     if len(cols_wrong_type) > 0:
-        error = "'df_scales' should contain numbers." \
-                "\n  Following columns contain no numerical values: {}".format(cols_wrong_type)
+        error = "'df_scales' should only contain numbers." \
+                f"\n  Following columns contain no numerical values: {cols_wrong_type}"
         raise ValueError(error)
     # Check if NaN in df
     cols_nans = [x for x in list(df_scales) if df_scales[x].isnull().any()]
     if len(cols_nans) > 0:
         error = "'df_scales' should not contain NaN." \
-                "\n  Following columns contain NaN: {}".format(cols_nans)
+                f"\n  Following columns contain NaN: {cols_nans}"
         raise ValueError(error)
     if df_parts is not None:
         f = lambda x: set(x)

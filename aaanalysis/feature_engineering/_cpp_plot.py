@@ -118,15 +118,6 @@ def check_parameters(func=None, name_called_func=None, e=None):
     return str_error
 
 
-# Check heatmap plotting
-def check_vmin_vmax(vmin=None, vmax=None):
-    """Check if number of cmap colors is valid with given value range"""
-    ut.check_number_val(name="vmin", val=vmin, accept_none=True, just_int=False)
-    ut.check_number_val(name="vmax", val=vmax, accept_none=True, just_int=False)
-    if vmin is not None and vmax is not None and vmin >= vmax:
-        raise ValueError(f"'vmin' ({vmin}) < 'vmax' ({vmax}) not fulfilled.")
-
-
 # Check barplot and profile
 def check_grid_axis(grid_axis=None):
     """"""
@@ -686,7 +677,7 @@ class CPPPlot:
         ut.check_y_categorical(df=df_feat, y=y)
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat)
         check_value_type(value_type=value_type, count_in=False)
-        check_vmin_vmax(vmin=vmin, vmax=vmax)
+        ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
         check_figsize(figsize=figsize)
         dict_color = check_dict_color(dict_color=dict_color, df_cat=self._df_cat)
 
@@ -764,7 +755,7 @@ class CPPPlot:
         ut.check_y_categorical(df=df_feat, y=y)
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat)
         check_value_type(value_type=value_type, count_in=False)
-        check_vmin_vmax(vmin=vmin, vmax=vmax)
+        ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
         check_figsize(figsize=figsize)
         dict_color = check_dict_color(dict_color=dict_color, df_cat=self._df_cat)
         # Get df positions

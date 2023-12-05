@@ -58,6 +58,55 @@ def check_dict_xlims(dict_xlims=None):
             raise ValueError(f"'dict_xlims:min' ({xmin}) should be < 'dict_xlims:max' ({xmax}) for '{key}'.")
 
 
+# Check correlation plot
+def check_match_df_corr_labels(df_corr=None, labels=None):
+    """"""
+    if df_corr is None or not isinstance(df_corr, pd.DataFrame):
+        raise ValueError(f"Type of 'df_seq' ({type(df_corr)}) must be pd.DataFrame")
+    labels = ut.check_labels(labels=labels)
+    n_samples, n_clusters = df_corr.shape
+    if n_samples != len(labels):
+        raise ValueError(f"Number of 'labels' ({len(labels)}) must match with n_samples in 'df_corr' ({n_samples})")
+    return labels
+
+def check_method(method=None):
+    """"""
+    valid_methods = ["single", "complete", "average", "weighted", "centroid", "median", "ward"]
+    if method not in valid_methods:
+        raise ValueError(f"'method' ({method}) should be one of following: {valid_methods}")
+
+def check_bar_position(bar_position=None):
+    """"""
+    bar_position = ut.check_list_like(name="bar_position", val=bar_position, convert=True, accept_str=True)
+    valid_positions = ['left', 'right', 'top', 'bottom']
+    wrong_positions = [x for x in bar_position if x not in valid_positions]
+    if len(wrong_positions) > 0:
+        raise ValueError(f"Wrong 'bar_position' ({wrong_positions}). They should be as follows: {valid_positions}")
+    return bar_position
+
+def check_bar_colors(bar_colors=None):
+    """"""
+    if isinstance(bar_colors, str):
+        ut.check_color(name='bar_colors', val=bar_colors, accept_none=False)
+        bar_colors = [bar_colors]
+    elif isinstance(bar_colors, list):
+        for color in bar_colors:
+            ut.check_color(name="element from 'bar_colors'", val=color, accept_none=False)
+    else:
+        raise ValueError("'bar_colors' should be string or list")
+    return bar_colors
+
+
+def check_match_bar_colors_labels(bar_colors=None, labels=None):
+    """"""
+    n_clusters = len(set(labels)) # Number of unique labels
+    if len(bar_colors) == 1:
+        bar_colors = bar_colors * n_clusters
+    if len(bar_colors) < n_clusters:
+        n_colors = len(bar_colors)
+        raise ValueError(f"Length of 'bar_colors' (n={n_colors}) must be >= n_clusters (n={n_clusters})")
+    return bar_colors[0:n_clusters]
+
 # TODO add check functions finish other methods, testing, compression
 # II Main Functions
 class AAclustPlot:
@@ -104,7 +153,7 @@ class AAclustPlot:
 
         Parameters
         ----------
-        data_eval : `array-like, shape (n_samples, n_features)`
+        data_eval : array-like, shape (n_samples, n_features)
             Evaluation matrix or DataFrame. `Rows` correspond to scale sets and `columns` to the following
             four evaluation measures:
 
@@ -128,7 +177,7 @@ class AAclustPlot:
 
         Notes
         -----
-        - The data is ranked in ascending order of the average ranking of the scale sets.
+        * The data is ranked in ascending order of the average ranking of the scale sets.
 
         See Also
         --------
@@ -165,16 +214,16 @@ class AAclustPlot:
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.\
-        labels : array-like of shape (n_samples,)
-            Cluster labels for each sample in ``X``. If `None`, no grouping is used.
+        X : `array-like of shape (n_samples, n_features)`
+            Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
+        labels : `array-like of shape (n_samples,)`
+            Cluster labels for each sample in ``X``. If ``None``, no grouping is used.
         component_x
             Index of the PCA component for the x-axis.
         component_y
             Index of the PCA component for the y-axis.
         ax
-            Pre-defined Axes object to plot on. If `None`, a new Axes object is created.
+            Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
         figsize
             Figure size (width, height) in inches.
         dot_alpha
@@ -184,7 +233,7 @@ class AAclustPlot:
         legend
             Whether to show the legend.
         palette
-            Colormap for the labels. If `None`, a default colormap is used.
+            Colormap for the labels. If ``None``, a default colormap is used.
 
         Returns
         -------
@@ -195,12 +244,12 @@ class AAclustPlot:
 
         Notes
         -----
-        - Ensure `X` and `labels` are in the same order to avoid mislabeling.
+        * Ensure `X` and `labels` are in the same order to avoid mislabeling.
 
         See Also
         --------
-        - See the :ref:`tutorial <palette_tutorial>` for more information.
-        - See colormaps from matplotlib in :class:`matplotlib.colors.ListedColormap`.
+        * See the :ref:`tutorial <palette_tutorial>` for more information.
+        * See colormaps from matplotlib in :class:`matplotlib.colors.ListedColormap`.
         """
         # Check input
         X = ut.check_X(X=X)
@@ -212,7 +261,7 @@ class AAclustPlot:
         ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
         ut.check_number_range(name="dot_alpha", val=dot_alpha, accept_none=False, min_val=0, max_val=1, just_int=False)
         ut.check_number_range(name="dot_size", val=dot_size, accept_none=False, min_val=1, just_int=True)
-        # Create plot
+        # Plotting
         ax, df_components = plot_center_or_medoid(X, labels=labels, plot_centers=True,
                                                   component_x=component_x, component_y=component_y,
                                                   model_class=self.model_class, model_kwargs=self.model_kwargs,
@@ -240,10 +289,10 @@ class AAclustPlot:
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.\
-        labels : array-like of shape (n_samples,)
-            Cluster labels for each sample in ``X``. If `None`, no grouping is used.
+        X : `array-like of shape (n_samples, n_features)`
+            Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
+        labels : `array-like of shape (n_samples,)`
+            Cluster labels for each sample in ``X``. If ``None``, no grouping is used.
         component_x
             Index of the PCA component for the x-axis.
         component_y
@@ -251,7 +300,7 @@ class AAclustPlot:
         metric
             The distance metric for calculating medoid. Any metric from `scipy.spatial.distance` can be used.
         ax
-            Pre-defined Axes object to plot on. If `None`, a new Axes object is created.
+            Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
         figsize
             Figure size (width, height) in inches.
         dot_alpha
@@ -261,9 +310,9 @@ class AAclustPlot:
         legend
             Whether to show the legend.
         palette
-            Colormap for the labels. If `None`, a default colormap is used.
-        return_data : bool, optional, default=False
-            If `True`, returns PCA components DataFrame. If `False`, returns the Axes object.
+            Colormap for the labels. If ``None``, a default colormap is used.
+        return_data
+            If ``True``, returns PCA components DataFrame. If ``False``, returns the Axes object.
 
         Returns
         -------
@@ -274,7 +323,7 @@ class AAclustPlot:
 
         Notes
         -----
-        - Ensure `X` and `labels` are in the same order to avoid mislabeling.
+        * Ensure `X` and `labels` are in the same order to avoid mislabeling.
         """
         # Check input
         X = ut.check_X(X=X)
@@ -299,18 +348,20 @@ class AAclustPlot:
         return ax
 
 
-    # TODO check functions, docstring, testing
+    # TODO testing
     @staticmethod
     def correlation(df_corr: Optional[pd.DataFrame] = None,
-                    labels: Optional[List[str]] = None,
-                    bar_position: str = "left",
-                    bar_width: float = 0.1,
-                    bar_spacing: float = 0.1,
+                    labels: ut.ArrayLike1D = None,
+                    cluster_x: bool = True,
+                    method: str = "average",
+                    xtick_label_rotation: int = 45,
+                    ytick_label_rotation: int = 0,
+                    bar_position: Union[str, List[str]] = "left",
                     bar_colors: Union[str, List[str]] = "gray",
-                    bar_set_tick_labels: bool = True,
-                    cluster_x : bool = True,
-                    cluster_y : bool = False,
-                    method : str = "average",
+                    bar_width_x: float = 0.1,
+                    bar_spacing_x: float = 0.1,
+                    bar_width_y: float = 0.1,
+                    bar_spacing_y: float = 0.1,
                     vmin: float = -1,
                     vmax: float = 1,
                     cmap: str = "viridis",
@@ -324,25 +375,29 @@ class AAclustPlot:
         df_corr : `array-like, shape (n_samples, n_clusters)`
             DataFrame with correlation matrix. `Rows` typically correspond to scales and `columns` to clusters.
         labels
-            Labels determining the grouping and coloring of the side color bar.
-            It should be of the same length as `df_corr` columns/rows.
-            Defaults to None.
-        bar_position
-            Position of the colored sidebar (``left``, ``right``, ``top``, or ``down``). If ``None``, no sidebar is added.
-        bar_width
-            Width of the sidebar.
-        bar_spacing
-            Space between the heatmap and the side color bar.
-        bar_colors
-            Either a single color or a list of colors for each unique label in `labels`.
-        bar_set_tick_labels
-            Add text labels next to the bars without padding.
+            Cluster labels determining the grouping and coloring of the side color bar.
+            It should have the same length as number of rows in ``df_corr`` (n_samples).
         cluster_x:
-            If True, x-axis (samples) are clustered.
-        cluster_y:
-            If True, y-axis (clusters) are clustered.
+            If ``True``, x-axis (`clusters`) values are clustered.
         method:
             Linkage method from :func:`scipy.cluster.hierarchy.linkage` used for clustering.
+            Options are ``single``, ``complete``, ``average``, ``weighted``, ``centroid``, ``median``, and ``ward``.
+        xtick_label_rotation
+            Rotation of x-tick labels (names of `clusters`).
+        ytick_label_rotation
+            Rotation of y-tick labels (names of `samples`).
+        bar_position
+            Position of the colored sidebar (``left``, ``right``, ``top``, or ``down``). If ``None``, no sidebar is added.
+        bar_colors
+            Either a single color or a list of colors for each unique label in ``labels``.
+        bar_width_x
+            Width of the x-axis sidebar, must be > 0.
+        bar_spacing_x
+            Space between the heatmap and the colored x-axis sidebar, must be > 0.
+        bar_width_y
+            Width of the y-axis sidebar, must be > 0.
+        bar_spacing_y
+            Space between the heatmap and the colored y-axis sidebar, must be > 0.
         vmin
             Minimum value of the color scale in :func:`seaborn.heatmap`.
         vmax
@@ -359,20 +414,39 @@ class AAclustPlot:
 
         Notes
         -----
-        - Ensure `labels` and `df_corr` are in the same order to avoid mislabeling.
-        - `bar_tick_labels=True` will remove tick labels and set them as text for optimal spacing
+        * Ensure ``labels`` and ``df_corr`` are in the same order to avoid mislabeling.
+        * ``bar_tick_labels=True`` will remove tick labels and set them as text for optimal spacing
           so that they can not be adjusted or retrieved afterward (e.g., via `ax.get_xticklabels()`).
 
         See Also
         --------
-        :func:`seaborn.heatmap`: Seaborn function for creating heatmaps.
-
+        * :func:`seaborn.heatmap`: Seaborn function for creating heatmaps.
         """
-        ax = plot_correlation(df_corr=df_corr, labels_sorted=labels,
-                              bar_position=bar_position,
-                              bar_width=bar_width, bar_spacing=bar_spacing, bar_colors=bar_colors,
-                              bar_set_tick_labels=bar_set_tick_labels,
-                              cluster_x=cluster_x, cluster_y=cluster_y, method=method,
+        # Check input
+        labels = check_match_df_corr_labels(df_corr=df_corr, labels=labels)
+        ut.check_bool(name="cluster_x", val=cluster_x)
+        check_method(method=method)
+        ut.check_number_val(name="xtick_label_rotation", val=xtick_label_rotation, just_int=True, accept_none=True)
+        ut.check_number_val(name="ytick_label_rotation", val=ytick_label_rotation, just_int=True, accept_none=True)
+        bar_position = check_bar_position(bar_position=bar_position)
+        bar_colors = check_bar_colors(bar_colors=bar_colors)
+        bar_colors = check_match_bar_colors_labels(bar_colors=bar_colors, labels=labels)
+        dict_float_args = dict(bar_width_x=bar_width_x, bar_spacing_x=bar_spacing_x,
+                               bar_width_y=bar_width_y, bar_spacing_y=bar_spacing_y)
+        for name in dict_float_args:
+            ut.check_number_range(name=name, val=dict_float_args[name], min_val=0, accept_none=False, just_int=False)
+        ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
+        ut.check_cmap(name="cmap", val=cmap, accept_none=False)
+        # Plotting
+        pairwise = [str(x) for x in list(df_corr)] == [str(x) for x in list(df_corr.T)]
+        if pairwise:
+            cluster_x = False
+        ax = plot_correlation(df_corr=df_corr.copy(), labels=labels, pairwise=pairwise,
+                              cluster_x=cluster_x, method=method,
+                              xtick_label_rotation=xtick_label_rotation, ytick_label_rotation=ytick_label_rotation,
+                              bar_position=bar_position, bar_colors=bar_colors,
+                              bar_width_x=bar_width_x, bar_spacing_x=bar_spacing_x,
+                              bar_width_y=bar_width_y, bar_spacing_y=bar_spacing_y,
                               vmin=vmin, vmax=vmax, cmap=cmap, **kwargs_heatmap)
         plt.tight_layout()
         return ax

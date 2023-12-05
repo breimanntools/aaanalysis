@@ -117,9 +117,9 @@ class SequenceFeature:
     Notes
     -----
     Feature Components:
-    * Part: A continuous subset of sequence, such as a protein domain (e.g, transmembrane domain of membrane proteins).
-    * Split: Continuous or discontinuous subset of a sequence part, such as a segment or a pattern.
-    * Scale: A physicochemical scale assigning each amino acid a numerical value (typically min-max-normalized [0-1]).
+        - Part: A continuous subset of sequence, such as a protein domain (e.g, transmembrane domain of membrane proteins).
+        - Split: Continuous or discontinuous subset of a sequence part, such as a segment or a pattern.
+        - Scale: A physicochemical scale assigning each amino acid a numerical value (typically min-max-normalized [0-1]).
 
     Feature: Part + Split + Scale
         Physicochemical property (expressed as numerical scale) present at distinct amino acid
