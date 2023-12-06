@@ -17,7 +17,7 @@ from ._utils.check_type import (check_number_range, check_number_val, check_str,
 from ._utils.check_data import (check_X, check_X_unique_samples,
                                 check_labels, check_match_X_labels,
                                 check_array_like, check_superset_subset,
-                                check_col_in_df)
+                                check_df)
 from ._utils.check_models import check_mode_class, check_model_kwargs
 from ._utils.check_plots import (check_vmin_vmax, check_color, check_cmap, check_ylim)
 
@@ -197,6 +197,7 @@ def check_verbose(verbose):
     return verbose
 
 
+# TODO add to aaclust_utils
 def check_metric(metric=None):
     """"""
     if metric not in LIST_METRICS:

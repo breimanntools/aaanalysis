@@ -5,15 +5,16 @@ import seaborn as sns
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 
-
 # Helper functions
 def _get_color_map(labels, color):
+    """Get color map"""
     unique_labels = sorted(set(labels))
-    if isinstance(color, list):
-        if len(color) != len(unique_labels):
-            raise ValueError("If color is a list, it must have the same length as the number of unique labels.")
+    if isinstance(color, list) and len(color) != 1:
+        if len(color) < len(unique_labels):
+            color *= len(unique_labels)
         color_map = {label: color[i] for i, label in enumerate(unique_labels)}
     else:
+        color = color[0] if isinstance(color, list) else color
         color_map = {label: color for label in unique_labels}
     return color_map, unique_labels
 
@@ -97,26 +98,26 @@ def _add_text_labels(ax=None, position=None, bar_width=None, bar_spacing=None, l
         tick_labels = [item.get_text() for item in ax.get_xticklabels()]
         tick_locs = ax.get_xticks()
         ax.xaxis.set_visible(False)  # Hide the original x-axis
-    _bar_spacing = bar_spacing * label_spacing_factor
+    label_spacing = bar_spacing * label_spacing_factor
     for idx, label in enumerate(tick_labels):
         if position == 'left':
-            ax.text(-_bar_spacing - bar_width, tick_locs[idx], label,
+            ax.text(-label_spacing - bar_width, tick_locs[idx], label,
                     ha='right', va='center', rotation=ytick_label_rotation)
         elif position == 'right':
-            ax.text(nx + _bar_spacing + bar_width, tick_locs[idx], label,
+            ax.text(nx + label_spacing + bar_width, tick_locs[idx], label,
                     ha='left', va='center', rotation=ytick_label_rotation)
         elif position == 'top':
-            ax.text(tick_locs[idx], - _bar_spacing - bar_width, label,
+            ax.text(tick_locs[idx], - label_spacing - bar_width, label,
                     ha='left', va='bottom', rotation=xtick_label_rotation)
         elif position == 'bottom':
-            ax.text(tick_locs[idx], ny + _bar_spacing + bar_width, label,
+            ax.text(tick_locs[idx], ny + label_spacing + bar_width, label,
                     ha='right', va='top', rotation=xtick_label_rotation)
 
 # TODO use for CPP plots
 # Main function
 def plot_add_bars(ax=None, labels=None, colors='tab:gray', bar_position='left',
-                  bar_spacing=0.05, label_spacing_factor=1.5, bar_labels=None, bar_labels_align='horizontal',
-                  bar_width=0.1, set_tick_labels=True,
+                  bar_spacing=0.05,  bar_width=0.1, bar_labels=None, label_spacing_factor=1.5,
+                  bar_labels_align='horizontal', set_tick_labels=True,
                   xtick_label_rotation=45, ytick_label_rotation=0):
     """
     Add colored bars along a specified axis of the plot based on label grouping.
@@ -151,7 +152,7 @@ def plot_add_bars(ax=None, labels=None, colors='tab:gray', bar_position='left',
         # Check if labels match the shape of the data
     if len(labels) != num_plotted_items:
         raise ValueError(f"Mismatch: The number of labels ({len(labels)}) must match to number of plotted items ({num_plotted_items}).")
-    single_color = isinstance(colors, str) or (isinstance(colors, (list, tuple)) and len(colors) == 1)
+    single_color = isinstance(colors, str) or (isinstance(colors, (list, tuple)) and len(set(colors)) == 1)
     color_map, _ = _get_color_map(labels, colors)
     positions, lengths, colors = _get_positions_lengths_colors(labels, color_map)
     args_pos = dict(position=bar_position, bar_width=bar_width, bar_spacing=bar_spacing)

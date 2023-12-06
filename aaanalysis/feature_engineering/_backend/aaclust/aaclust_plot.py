@@ -46,7 +46,7 @@ def _get_components(X, model_class=None, n_components=2, model_kwargs=None):
 
 
 def _get_clustered_order(df, method='average'):
-    linked = linkage(df.corr(), method=method)
+    linked = linkage(df.corr().fillna(0), method=method)
     new_order = leaves_list(linked)
     return df.iloc[:, new_order]
 
@@ -179,6 +179,7 @@ def plot_correlation(df_corr=None, labels=None, pairwise=False, cluster_x=True, 
             _bar_spacing = bar_spacing_x if pos in ["top", "bottom"] else bar_spacing_y
             ut.plot_add_bars(ax=ax, labels=_labels, bar_position=pos, set_tick_labels=True,
                              bar_spacing=_bar_spacing, bar_width=_bar_width, colors=bar_colors,
-                             xtick_label_rotation=xtick_label_rotation, ytick_label_rotation=ytick_label_rotation)
+                             xtick_label_rotation=xtick_label_rotation,
+                             ytick_label_rotation=ytick_label_rotation)
     plt.tight_layout()
     return ax

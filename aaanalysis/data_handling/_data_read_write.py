@@ -14,6 +14,7 @@ import aaanalysis.utils as ut
 # I Helper Functions
 # TODO add more parsers for often used data formats in computational biology (make overview)
 
+
 # II Main Functions
 def read_fasta():
     """"""
@@ -22,8 +23,15 @@ def read_fasta():
 
 def to_fasta(df=None, fasta_name=None, col_id=None, col_seq=None, cols_info=None):
         """"""
-        ut.check_col_in_df(df=df, name_df="df", cols=[col_id, col_seq], accept_none=False)
-        ut.check_col_in_df(df=df, name_df="df", cols=cols_info, accept_none=True)
+        # Check input
+        ut.check_str(name="col_id", val=col_id, accept_none=False)
+        ut.check_str(name="col_seq", val=col_seq, accept_none=False)
+        cols_info = ut.check_list_like(name="cols_info", val=cols_info, accept_str=True, accept_none=True)
+        cols_requiered = [col_id, col_seq]
+        if cols_info is not None:
+            cols_requiered += cols_info
+        ut.check_df(df=df, name="df", cols_requiered=cols_requiered, accept_none=False, accept_nan=False)
+        # Create faste
         if ".fasta" not in fasta_name:
             fasta_name += ".fasta"
         fasta = open(fasta_name, "w")

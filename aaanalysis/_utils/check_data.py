@@ -4,7 +4,7 @@ This is a script for data checking utility functions.
 import pandas as pd
 import numpy as np
 from sklearn.utils import check_array
-from .check_type import check_number_val
+import aaanalysis._utils.check_type as check_type
 
 # Helper functions
 def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan=False):
@@ -86,48 +86,37 @@ def check_superset_subset(subset=None, superset=None, name_subset=None, name_sup
 
 
 # df checking functions
-def check_df(name="df", df=None, cols_req=None, accept_none=False, accept_nan=True, all_positive=False):
+def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_positive=False,
+             cols_requiered=None, cols_forbidden=None, cols_nan_check=None):
     """"""
-    df = df.copy()
-    if not accept_none and df is None:
-        raise ValueError(f"'{name}' should not be None")
+    # Check DataFrame and values
+    if df is None:
+        if accept_none:
+            return
+        else:
+            raise ValueError(f"'{name}' should not be None")
     if not isinstance(df, pd.DataFrame):
         raise ValueError(f"'{name}' ({type(df)}) should be DataFrame")
     if not accept_nan and df.isna().any().any():
         raise ValueError(f"'{name}' contains NaN values, which are not allowed")
-    if cols_req is not None:
-        missing_cols = set(cols_req) - set(df.columns)
-        if missing_cols:
-            raise ValueError(f"'{name}' is missing required columns: {cols_req}")
-    if all_positive:
+    if check_all_positive:
         numeric_df = df.select_dtypes(include=['float', 'int'])
         if numeric_df.min().min() <= 0:
             raise ValueError(f"'{name}' should not contain non-positive values.")
-    return df.copy()
 
-
-def check_col_in_df(df=None, name_df=None, cols=None, accept_nan=False, error_if_exists=False, accept_none=False):
-    """
-    Check if the column or columns exists in the DataFrame, if the values have the correct type, and if NaNs are allowed.
-    """
-    # Check if the column already exists and raise error if error_if_exists is True
-    if error_if_exists and (cols in df.columns):
-        raise ValueError(f"Column '{cols}' already exists in '{name_df}'")
-    if cols is None:
-        if not accept_none:
-            raise ValueError(f"'cols' should not be None.")
-        return None
-    # Check if the column exists in the DataFrame
-    if isinstance(cols, str):
-        if cols not in df.columns:
-            raise ValueError(f"'{cols}' must be a column in '{name_df}': {list(df.columns)}")
-    else:
-        wrong_columns = [c for c in cols if c not in df.columns]
-        if len(wrong_columns) > 0:
-            raise ValueError(f"Following columns are not in '{name_df}': {wrong_columns}")
-
-    # Check if NaNs are present when they are not accepted
-    if not accept_nan:
-        if df[cols].isna().sum().sum() > 0:
-            raise ValueError(f"NaN values are not allowed in '{cols}'.")
-
+    # Check columns
+    args = dict(accept_str=True, accept_none=True)
+    cols_requiered = check_type.check_list_like(name='cols_requiered', val=cols_requiered, **args)
+    cols_forbidden = check_type.check_list_like(name='cols_forbidden', val=cols_forbidden, **args)
+    cols_nan_check = check_type.check_list_like(name='cols_nan_check', val=cols_nan_check, **args)
+    if cols_requiered is not None:
+        missing_cols = [col for col in cols_requiered if col not in df.columns]
+        if len(missing_cols) > 0:
+            raise ValueError(f"'{name}' is missing required columns: {missing_cols}")
+    if cols_forbidden is not None:
+        forbidden_cols = [col for col in cols_forbidden if col in df.columns]
+        if len(forbidden_cols) > 0:
+            raise ValueError(f"'{name}' is contains forbidden columns: {forbidden_cols}")
+    if cols_nan_check is not None:
+        if df[cols_nan_check].isna().sum().sum() > 0:
+            raise ValueError(f"NaN values are not allowed in '{cols_nan_check}'.")
