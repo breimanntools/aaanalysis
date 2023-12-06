@@ -9,7 +9,7 @@ class TestPlotGetCList:
     """Test plot_get_clist function"""
 
     # Positive testing
-    @given(n_colors=st.integers(min_value=2, max_value=9))
+    @given(n_colors=st.integers(min_value=2, max_value=20))
     def test_valid_n_colors(self, n_colors):
         colors = aa.plot_get_clist(n_colors=n_colors)
         assert len(colors) == n_colors

@@ -3,11 +3,22 @@ This is a script for plot checking utility functions.
 """
 import pandas as pd
 import numpy as np
+import re
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
 import aaanalysis._utils.check_type as ut_check
+
+
 # Helper functions
+def is_valid_hex_color(val):
+    """Check if a value is a valid hex color."""
+    return isinstance(val, str) and re.match(r'^#[0-9A-Fa-f]{6}$', val)
+
+def is_valid_rgb_tuple(val):
+    """Check if a value is a valid RGB tuple."""
+    return (isinstance(val, tuple) and len(val) == 3 and
+            all(isinstance(c, (int, float)) and 0 <= c <= 255 for c in val))
 
 
 # Check min and max values
@@ -27,7 +38,10 @@ def check_color(name=None, val=None, accept_none=False):
     all_colors = base_colors + tableau_colors + css4_colors
     if accept_none:
         all_colors.append("none")
-    if val not in all_colors:
+    # Check if valid hex or RGB tuple
+    if is_valid_hex_color(val) or is_valid_rgb_tuple(val):
+        return
+    elif val not in all_colors:
         error = f"'{name}' ('{val}') is not a valid color. Chose from following: {all_colors}"
         raise ValueError(error)
 
@@ -40,6 +54,16 @@ def check_cmap(name=None, val=None, accept_none=False):
     elif val not in valid_cmaps:
         error = f"'{name}' ('{val}') is not a valid cmap. Chose from following: {valid_cmaps}"
         raise ValueError(error)
+
+
+def check_palette(name=None, val=None, accept_none=False):
+    """Check if color palette is valid"""
+    if isinstance(val, str):
+        check_cmap(name=name, val=val, accept_none=accept_none)
+    elif isinstance(val, list):
+        for v in val:
+            check_color(name=name, val=v, accept_none=accept_none)
+
 
 # CPP plots
 def check_ylim(df=None, ylim=None, col_value=None, retrieve_plot=False, scaling_factor=1.1):

@@ -103,6 +103,7 @@ def plot_eval(df_eval=None, dict_xlims=None, figsize=None, colors=None):
     return fig, axes
 
 
+@ut.catch_runtime_warnings()
 def plot_center_or_medoid(X=None, labels=None,
                           plot_centers=True, metric="correlation",
                           component_x=1, component_y=1,

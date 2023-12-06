@@ -14,7 +14,7 @@ def call_aaclust_plot_correlation(df_corr=None, **kwargs):
     df_corr = df_corr.fillna(1)
     n_samples, n_clusters = df_corr.shape
     labels = [i % n_clusters for i in range(n_samples)]
-    # If not all values are the same
+    # Check if not all values are the same
     all_vals = df_corr.to_numpy().flatten()[1:].tolist()
     if not df_corr.isna().any().any() and len(set(all_vals)) != 1:
         assert isinstance(aac_plot.correlation(df_corr=df_corr, labels=labels, **kwargs), plt.Axes)

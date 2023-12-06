@@ -79,7 +79,7 @@ def check_dict(name=None, val=None, accept_none=False):
         raise ValueError(error)
 
 
-def check_tuple(name=None, val=None, n=None, check_n=True, accept_none=False):
+def check_tuple(name=None, val=None, n=None, check_n_number=True, accept_none=False):
     """"""
     if val is None:
         if not accept_none:
@@ -87,8 +87,11 @@ def check_tuple(name=None, val=None, n=None, check_n=True, accept_none=False):
         return None
     if not isinstance(val, tuple):
         raise ValueError(f"'{name}' ({val}) should be a tuple.")
-    if check_n and n is not None and len(val) != n:
+    if n is not None and len(val) != n:
         raise ValueError(f"'{name}' ({val}) should be a tuple with {n} elements.")
+    if n is not None and check_n_number:
+        for v in val:
+            check_number_val(name=name, val=v, just_int=False, accept_none=False)
 
 
 def check_list_like(name=None, val=None, accept_none=False, convert=True, accept_str=False):

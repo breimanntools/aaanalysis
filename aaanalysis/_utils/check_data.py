@@ -36,6 +36,8 @@ def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan
 def check_X(X, min_n_samples=3, min_n_features=2, ensure_2d=True, allow_nan=False):
     """Check the feature matrix X is valid."""
     X = check_array_like(name="X", val=X, dtype="float", ensure_2d=ensure_2d, allow_nan=allow_nan)
+    if np.isinf(X).any():
+        raise ValueError(f"'X' should not contain infinite values")
     n_samples, n_features = X.shape
     if n_samples < min_n_samples:
         raise ValueError(f"n_samples ({n_samples} in 'X') should be >= {min_n_samples}."
@@ -91,10 +93,10 @@ def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_p
     """"""
     # Check DataFrame and values
     if df is None:
-        if accept_none:
-            return
-        else:
+        if not accept_none:
             raise ValueError(f"'{name}' should not be None")
+        else:
+            return None
     if not isinstance(df, pd.DataFrame):
         raise ValueError(f"'{name}' ({type(df)}) should be DataFrame")
     if not accept_nan and df.isna().any().any():

@@ -121,7 +121,7 @@ def check_match_bar_colors_labels(bar_colors=None, labels=None):
         warnings.warn(f"Length of 'bar_colors' (n={n_colors}) should be >= n_clusters (n={n_clusters})")
     return bar_colors[0:n_clusters]
 
-# TODO add check functions finish other methods, testing, compression
+
 # II Main Functions
 class AAclustPlot:
     """Plot results of AAclust analysis.
@@ -211,12 +211,11 @@ class AAclustPlot:
                               colors=colors)
         return fig, axes
 
-    # TODO check functions, docstring, testing
     def center(self,
                X: ut.ArrayLike2D,
                labels: ut.ArrayLike1D = None,
-               component_x: Optional[int] = 1,
-               component_y: Optional[int] = 2,
+               component_x: int = 1,
+               component_y: int = 2,
                ax: Optional[plt.Axes] = None,
                figsize: Tuple[int, int] = (7, 6),
                dot_alpha: float = 0.75,
@@ -233,9 +232,9 @@ class AAclustPlot:
         labels : `array-like of shape (n_samples,)`
             Cluster labels for each sample in ``X``. If ``None``, no grouping is used.
         component_x
-            Index of the PCA component for the x-axis.
+            Index of the PCA component for the x-axis. Must be >= 1.
         component_y
-            Index of the PCA component for the y-axis.
+            Index of the PCA component for the y-axis. Must be >= 1.
         ax
             Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
         figsize
@@ -247,7 +246,7 @@ class AAclustPlot:
         legend
             Whether to show the legend.
         palette
-            Colormap for the labels. If ``None``, a default colormap is used.
+            Colormap for the labels or list of colors. If ``None``, a default colormap is used.
 
         Returns
         -------
@@ -272,9 +271,12 @@ class AAclustPlot:
         ut.check_match_X_labels(X=X, labels=labels)
         ut.check_number_range(name="component_x", val=component_x, accept_none=False, min_val=1, just_int=True)
         ut.check_number_range(name="component_y", val=component_y, accept_none=False, min_val=1, just_int=True)
-        ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
+        ut.check_ax(ax=ax, accept_none=True)
+        ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True, check_n_number=True)
         ut.check_number_range(name="dot_alpha", val=dot_alpha, accept_none=False, min_val=0, max_val=1, just_int=False)
         ut.check_number_range(name="dot_size", val=dot_size, accept_none=False, min_val=1, just_int=True)
+        ut.check_bool(name="legend", val=legend)
+        ut.check_palette(name="palette", val=palette, accept_none=True)
         # Plotting
         ax, df_components = plot_center_or_medoid(X, labels=labels, plot_centers=True,
                                                   component_x=component_x, component_y=component_y,
@@ -284,20 +286,19 @@ class AAclustPlot:
                                                   legend=legend, palette=palette)
         return ax, df_components
 
-    # TODO check functions, docstring, testing
+
     def medoids(self,
                 X: ut.ArrayLike2D,
                 labels: ut.ArrayLike1D = None,
-                component_x: Optional[int] = 1,
-                component_y: Optional[int] = 2,
-                metric: Optional[str] = "euclidean",
+                component_x: int = 1,
+                component_y: int = 2,
+                metric: str = "euclidean",
                 ax: Optional[plt.Axes] = None,
                 figsize: Tuple[int, int] = (7, 6),
-                dot_alpha: Optional[float] = 0.75,
-                dot_size: Optional[int] = 100,
-                legend: Optional[bool] = True,
+                dot_alpha: float = 0.75,
+                dot_size: int = 100,
+                legend: bool = True,
                 palette: Optional[mpl.colors.ListedColormap] = None,
-                return_data : Optional[bool] = False
                 ) -> Tuple[plt.Axes, pd.DataFrame]:
         """PCA plot of clustering with medoids highlighted
 
@@ -308,9 +309,9 @@ class AAclustPlot:
         labels : `array-like of shape (n_samples,)`
             Cluster labels for each sample in ``X``. If ``None``, no grouping is used.
         component_x
-            Index of the PCA component for the x-axis.
+            Index of the PCA component for the x-axis. Must be >= 1.
         component_y
-            Index of the PCA component for the y-axis.
+            Index of the PCA component for the y-axis. Must be >= 1.
         metric
             The distance metric for calculating medoid. Any metric from `scipy.spatial.distance` can be used.
         ax
@@ -324,9 +325,7 @@ class AAclustPlot:
         legend
             Whether to show the legend.
         palette
-            Colormap for the labels. If ``None``, a default colormap is used.
-        return_data
-            If ``True``, returns PCA components DataFrame. If ``False``, returns the Axes object.
+            Colormap for the labels or list of colors. If ``None``, a default colormap is used.
 
         Returns
         -------
@@ -338,6 +337,11 @@ class AAclustPlot:
         Notes
         -----
         * Ensure `X` and `labels` are in the same order to avoid mislabeling.
+
+        See Also
+        --------
+        * See the :ref:`tutorial <palette_tutorial>` for more information.
+        * See colormaps from matplotlib in :class:`matplotlib.colors.ListedColormap`.
         """
         # Check input
         X = ut.check_X(X=X)
@@ -346,10 +350,13 @@ class AAclustPlot:
         ut.check_match_X_labels(X=X, labels=labels)
         ut.check_number_range(name="component_x", val=component_x, accept_none=False, min_val=1, just_int=True)
         ut.check_number_range(name="component_y", val=component_y, accept_none=False, min_val=1, just_int=True)
-        ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
+        ut.check_metric(metric=metric)
+        ut.check_ax(ax=ax, accept_none=True)
+        ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True, check_n_number=True)
         ut.check_number_range(name="dot_alpha", val=dot_alpha, accept_none=False, min_val=0, max_val=1, just_int=False)
         ut.check_number_range(name="dot_size", val=dot_size, accept_none=False, min_val=1, just_int=True)
-        ut.check_metric(metric=metric)
+        ut.check_bool(name="legend", val=legend)
+        ut.check_palette(name="palette", val=palette, accept_none=True)
         # Create plot
         ax, df_components = plot_center_or_medoid(X, labels=labels, plot_centers=False, metric=metric,
                                                   component_x=component_x, component_y=component_y,
@@ -357,10 +364,7 @@ class AAclustPlot:
                                                   ax=ax, figsize=figsize,
                                                   dot_size=dot_size, dot_alpha=dot_alpha,
                                                   legend=legend, palette=palette)
-        if return_data:
-           return df_components
-        return ax
-
+        return ax, df_components
 
     @staticmethod
     def correlation(df_corr: pd.DataFrame = None,

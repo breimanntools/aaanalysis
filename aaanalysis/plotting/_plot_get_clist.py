@@ -3,21 +3,21 @@ Plotting utility function to obtain AAanalysis color list.
 """
 from typing import List
 from aaanalysis import utils as ut
-
+import seaborn as sns
 
 
 # II Main function
 def plot_get_clist(n_colors: int = 3) -> List[str]:
     """
-    Returns list of 2 to 9 colors.
+    Returns manually curated list of 2 to 9 colors.
 
-    This fuctions returns one of eight different colorl lists optimized
-    for appealing visualization of categories.
+    This fuctions returns one of eight different color lists optimized for appealing visualization of categories.
+    If more than 9 n_colors are selected, :func:`seaborn.color_palette` with 'husl' palette will be used.
 
     Parameters
     ----------
     n_colors
-        Number of colors. Must be between 2 and 9.
+        Number of colors. Must be greater 2.
     Returns
     -------
     list
@@ -44,7 +44,7 @@ def plot_get_clist(n_colors: int = 3) -> List[str]:
     * :func:`seaborn.color_palette` function to generate a color palette in seaborn.
     """
     # Check input
-    ut.check_number_range(name="n_colors", val=n_colors, min_val=2, max_val=9, just_int=True)
+    ut.check_number_range(name="n_colors", val=n_colors, min_val=2, just_int=True)
 
     # Base lists
     list_colors_3_to_4 = ["tab:gray", "tab:blue", "tab:red", "tab:orange"]
@@ -68,4 +68,7 @@ def plot_get_clist(n_colors: int = 3) -> List[str]:
     # 8-9 classes (colors from scale categories)
     elif n_colors in [8, 9]:
         return list_colors_8_to_9[0:n_colors]
+    else:
+        return sns.color_palette(palette="husl", n_colors=n_colors)
+
 
