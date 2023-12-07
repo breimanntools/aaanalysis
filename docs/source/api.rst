@@ -24,6 +24,7 @@ Data Handling
 
     aaanalysis.load_dataset
     aaanalysis.load_scales
+    aaanalysis.load_features
 
 .. _feature_engineering_api:
 
