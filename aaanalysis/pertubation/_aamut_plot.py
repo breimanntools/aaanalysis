@@ -14,7 +14,7 @@ class AAMutPlot:
     Plot results of AAMut.
     """
     def __init__(self, verbose=False, df_scales=None):
-        self.verbose = verbose
+        self._verbose = ut.check_verbose(verbose)
         self.df_scales = df_scales
 
     # Main method

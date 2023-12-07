@@ -50,6 +50,6 @@ def to_fasta(df=None, fasta_name=None, col_id=None, col_seq=None, cols_info=None
 
 
 
-def to_df_scales(df=None):
+def to_df_seq(df=None):
     """"""
     # TODO implement parser from df to df_seq (remove not necessary columns and adjust naming)

@@ -1,5 +1,7 @@
 """
-This is a script for ...
+This is a script for the frontend of the NumericalFeature class, a supportive class for the CPP feature engineering,
+including scale and feature filtering methods.
+
 """
 import time
 import pandas as pd
@@ -18,4 +20,5 @@ class NumericalFeature:
     def filter_correlation(self):
         """"""
 
-
+    def scale_coverage(self):
+        """"""

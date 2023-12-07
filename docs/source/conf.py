@@ -13,8 +13,9 @@ sys.path.append(os.path.abspath('.'))
 
 # Create notebooks rst and table rst first
 from create_tables_doc import generate_table_rst
-from create_notebooks_docs import export_notebooks_to_rst
-processed_notebooks = export_notebooks_to_rst()
+from create_notebooks_docs import export_example_notebooks_to_rst, export_tutorial_notebooks_to_rst
+export_tutorial_notebooks_to_rst()
+export_example_notebooks_to_rst()
 generate_table_rst()
 
 # -- Path and Platform setup --------------------------------------------------
@@ -36,7 +37,7 @@ todo_include_todos = False
 
 # -- General configuration ---------------------------------------------------
 templates_path = ['_templates']
-exclude_patterns = ['index/tables_template.rst', '**.ipynb_checkpoints']
+exclude_patterns = ['index/tables_template.rst', '**.ipynb_checkpoints', 'generated/examples/*']
 source_suffix = ['.rst', '.md', '.ipynb']
 master_doc = 'index'
 

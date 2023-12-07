@@ -1,5 +1,5 @@
 """
-This is a script for the frontend of the SequenceFeature() object, a supportive class for the CPP feature engineering.
+This is a script for the frontend of the SequenceFeature class, a supportive class for the CPP feature engineering.
 """
 import math
 import warnings

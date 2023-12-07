@@ -124,7 +124,7 @@ def load_dataset(name: str = "Overview",
                  non_canonical_aa: Literal["remove", "keep", "gap"] = "remove",
                  min_len: Optional[int] = None,
                  max_len: Optional[int] = None,
-                 aa_window_size: Optional[int] = 9,
+                 aa_window_size: int = 9,
                  ) -> DataFrame:
     """
     Loads protein benchmarking datasets.
@@ -170,15 +170,14 @@ def load_dataset(name: str = "Overview",
     - 'tmd_start', 'tmd_stop': Start and stop positions of TMD (present only at the domain level).
     - 'jmd_n', 'tmd', 'jmd_c': Sequences for JMD_N, TMD, and JMD_C respectively.
 
-    Examples
-    --------
-    import aaanalysis as aa
-    df_seq = aa.load_dataset(name="SEQ_AMYLO", n=100)
-
     See Also
     --------
     * Overview of all benchmarks in :ref:`t1_overview_benchmarks`.
     * Step-by-step guide in the `Data Loading Tutorial <tutorial2a_data_loader.html>`_.
+
+    Examples
+    --------
+    .. include:: examples/load_dataset.rst
     """
 
     check_name_of_dataset(name=name, folder_in=FOLDER_BENCHMARKS)

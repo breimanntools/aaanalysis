@@ -1,12 +1,14 @@
 """
-This is a script for deterministic Positive-Unlabeled (PU) Learning (dPULearn) class
+This is a script for the frontend of the dPULearn class, used for deterministic Positive-Unlabeled (PU) Learning.
 """
+from typing import Optional, Literal, Dict, Union, List, Tuple, Type
 import numpy as np
 import pandas as pd
 from sklearn.metrics import pairwise_distances
 from sklearn.decomposition import PCA
 import math
 import warnings
+
 import aaanalysis.utils as ut
 
 # Settings
@@ -193,7 +195,7 @@ class dPULearn:
 
     Attributes
     ----------
-    labels_ : array-like, shape (n_samples,)
+    labels_ : `array-like, shape (n_samples,)`
         Labels of each datapoint.
 
     Notes
@@ -205,21 +207,26 @@ class dPULearn:
     * Cosine metric is recommended in high-dimensional spaces.
 
     """
-    def __init__(self, verbose=False, n_components=0.80, pca_kwargs=None, metric=None):
+    def __init__(self,
+                 verbose: bool =False,
+                 n_components: int = 0.80,
+                 pca_kwargs: Optional[dict] = None,
+                 metric: Optional[Literal["euclidean", "manhattan", "cosine", "None"]] = None
+                 ):
         """
         Parameters
         ----------
-        verbose : bool, default=False
+        verbose
             Enable verbose output.
-        n_components : float or int, default=0.80
+        n_components
             Number of components to cover a maximum percentage of total variance when PCA is applied.
-        pca_kwargs : dict, default=None
+        pca_kwargs
             Additional keyword arguments to pass to PCA.
-        metric : {'euclidean', 'manhattan', 'cosine'} or None, default=None
-            The distance metric to use. If None, PCA-based identification is used.
-            If a metric is specified, distance-based identification is performed.
+        metric
+            The distance metric to use. If ``None``, PCA-based identification is used. Distance-based identification
+            is performed if metric is one of the following: {'euclidean', 'manhattan', 'cosine'}
         """
-        self.verbose = verbose
+        self._verbose = ut.check_verbose(verbose)
         # Arguments for Principal Component Analysis (PCA)-based identification
         self.n_components = n_components
         if pca_kwargs is None:
@@ -286,7 +293,7 @@ class dPULearn:
         """
         ut.check_X(X=X, y=labels, y_name="label")
         df_seq = _check_df_seq(df_seq=df_seq, col_class=col_class)
-        labels = _check_labels(labels=labels, verbose=self.verbose, label_pos=label_pos)
+        labels = _check_labels(labels=labels, verbose=self._verbose, label_pos=label_pos)
         label_neg = _get_label_neg(labels=labels)
         _check_n_neg(labels=labels, n_neg=n_neg, label_neg=label_neg, label_pos=label_pos)
         # Compute average distance for threshold-based filtering (Yang et al., 2012, 2014; Nan et al. 2017)

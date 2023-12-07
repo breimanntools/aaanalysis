@@ -8,7 +8,7 @@ into the documentation using their saved state, eliminating the necessity for fu
 Procedure:
 1. Ensure the Jupyter tutorials you want to include in the documentation are fully executed and saved with their outputs.
 2. Run this script to convert these tutorials into RST format. (automatically in conf.py)
-3. Include the generated RST files in the Sphinx documentation's toctree.
+3. Include the generated RST files in the Sphinx documentation's toctree (Notebooks from examples are excluded).
 
 Before running this script, ensure the project is in 'editable' mode to maintain consistency across documentation:
 - If using `poetry`:
@@ -31,8 +31,11 @@ from nbconvert.preprocessors import Preprocessor
 SEP = os.sep
 FOLDER_PROJECT = str(Path(__file__).parent.parent.parent) + SEP
 FOLDER_SOURCE = os.path.dirname(os.path.abspath(__file__)) + SEP
-FOLDER_NOTEBOOKS = FOLDER_PROJECT + "tutorials" + SEP
+FOLDER_TUTORIALS = FOLDER_PROJECT + "tutorials" + SEP
 FOLDER_GENERATED_RST = FOLDER_SOURCE + "generated" + SEP  # Saving .rst directly in 'generated'
+FOLDER_EXAMPLES = FOLDER_PROJECT + "examples" + SEP
+FOLDER_EXAMPLES_RST = FOLDER_GENERATED_RST + "examples" + SEP
+
 LIST_EXCLUDE = []
 
 
@@ -66,11 +69,11 @@ class CustomPreprocessor(Preprocessor):
 
 
 # Main function
-def export_notebooks_to_rst():
+def export_tutorial_notebooks_to_rst():
     """Export Jupyter tutorials to RST without execution."""
-    for filename in os.listdir(FOLDER_NOTEBOOKS):
+    for filename in os.listdir(FOLDER_TUTORIALS):
         if filename.endswith('.ipynb') and filename not in LIST_EXCLUDE:
-            full_path = os.path.join(FOLDER_NOTEBOOKS, filename)
+            full_path = os.path.join(FOLDER_TUTORIALS, filename)
             # Load the notebook
             with open(full_path, 'r') as f:
                 notebook = nbformat.read(f, as_version=4)
@@ -83,3 +86,18 @@ def export_notebooks_to_rst():
             writer.write(output, resources, notebook_name=filename.replace('.ipynb', ''))
 
 
+def export_example_notebooks_to_rst():
+    """Export Jupyter examples to RST without execution."""
+    for filename in os.listdir(FOLDER_EXAMPLES):
+        if filename.endswith('.ipynb') and filename not in LIST_EXCLUDE:
+            full_path = os.path.join(FOLDER_EXAMPLES, filename)
+            # Load the notebook
+            with open(full_path, 'r') as f:
+                notebook = nbformat.read(f, as_version=4)
+            # Convert to notebook to RST
+            custom_preprocessor = CustomPreprocessor()
+            rst_exporter = nbconvert.RSTExporter(preprocessors=[custom_preprocessor])
+            output, resources = rst_exporter.from_notebook_node(notebook)
+            # Write the RST and any accompanying files (like images)
+            writer = FilesWriter(build_directory=FOLDER_EXAMPLES_RST)
+            writer.write(output, resources, notebook_name=filename.replace('.ipynb', ''))

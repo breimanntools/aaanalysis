@@ -8,7 +8,7 @@ import aaanalysis as aa
 import aaanalysis._utils.check_type as ut_check
 
 # Settings
-
+# TODO move to feature engineering
 # Default Split names
 STR_SEGMENT = "Segment"
 STR_PATTERN = "Pattern"
