@@ -83,5 +83,6 @@ Plot Utilities
     aaanalysis.plot_settings
     aaanalysis.plot_gcfs
     aaanalysis.plot_legend
+    aaanalysis.display_df
 
 

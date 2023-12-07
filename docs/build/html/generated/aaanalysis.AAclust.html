@@ -164,7 +164,7 @@ for each cluster closest to the center, resulting in a redundancy-reduced sample
 <dd><p>Cluster labels in the order of samples in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>array-like, shape (n_samples, )</cite></p>
+<dd class="field-odd"><p><cite>array-like, shape (n_samples,)</cite></p>
 </dd>
 </dl>
 </dd></dl>
@@ -186,7 +186,7 @@ for each cluster closest to the center, resulting in a redundancy-reduced sample
 <dd><p>Cluster labels for each cluster center.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>array-like, shape (n_clusters, )</cite></p>
+<dd class="field-odd"><p><cite>array-like, shape (n_clusters,)</cite></p>
 </dd>
 </dl>
 </dd></dl>
@@ -208,7 +208,7 @@ for each cluster closest to the center, resulting in a redundancy-reduced sample
 <dd><p>Cluster labels for each medoid.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>array-like, shape (n_clusters, )</cite></p>
+<dd class="field-odd"><p><cite>array-like, shape (n_clusters,)</cite></p>
 </dd>
 </dl>
 </dd></dl>
@@ -430,7 +430,7 @@ or the cluster contains one sample, its name is set to ‘Unclassified’.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<cite>array-like, shape (n_samples, n_features)</cite>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
-<li><p><strong>labels</strong> (<cite>array-like, shape (n_samples, )</cite>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>labels</strong> (<cite>array-like, shape (n_samples,)</cite>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
 <li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – List of sample names corresponding to <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
 <li><p><strong>shorten_names</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code> shorten version of the names will be used.</p></li>
 </ul>
@@ -452,7 +452,7 @@ or the cluster contains one sample, its name is set to ‘Unclassified’.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<cite>array-like, shape (n_samples, n_features)</cite>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
-<li><p><strong>labels</strong> (<cite>array-like, shape (n_samples, )</cite>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>labels</strong> (<cite>array-like, shape (n_samples,)</cite>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -488,8 +488,8 @@ or the cluster contains one sample, its name is set to ‘Unclassified’.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>medoids</strong> (<cite>array-like, shape (n_clusters, )</cite>) – The medoid for each cluster.</p></li>
-<li><p><strong>labels_medoids</strong> (<cite>array-like, shape (n_clusters, )</cite>) – The labels corresponding to each medoid.</p></li>
+<li><p><strong>medoids</strong> (<cite>array-like, shape (n_clusters,)</cite>) – The medoid for each cluster.</p></li>
+<li><p><strong>labels_medoids</strong> (<cite>array-like, shape (n_clusters,)</cite>) – The labels corresponding to each medoid.</p></li>
 </ul>
 </p>
 </dd>
@@ -504,9 +504,9 @@ or the cluster contains one sample, its name is set to ‘Unclassified’.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<cite>array-like, shape (n_samples, n_features)</cite>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
-<li><p><strong>labels</strong> (<cite>array-like, shape (n_samples, )</cite>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>labels</strong> (<cite>array-like, shape (n_samples,)</cite>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
 <li><p><strong>X_ref</strong> (<cite>array-like, shape (n_samples, n_features)</cite>) – Feature matrix of reference data. If given, samples of <code class="docutils literal notranslate"><span class="pre">X</span></code> are compared with samples of <code class="docutils literal notranslate"><span class="pre">X_ref</span></code>.</p></li>
-<li><p><strong>labels_ref</strong> (<cite>array-like, shape (n_samples_ref, )</cite>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X_ref</span></code>.</p></li>
+<li><p><strong>labels_ref</strong> (<cite>array-like, shape (n_samples_ref,)</cite>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X_ref</span></code>.</p></li>
 <li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – List of sample names corresponding to <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
 <li><p><strong>names_ref</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – List of sample names corresponding to <code class="docutils literal notranslate"><span class="pre">X_ref</span></code>.</p></li>
 </ul>
@@ -515,7 +515,7 @@ or the cluster contains one sample, its name is set to ‘Unclassified’.</p>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>df_corr</em> – DataFrame with correlation either for each pair in <code class="docutils literal notranslate"><span class="pre">X</span></code> of shape (n_samples, n_samples) or
 for each pair between <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">X_ref</span></code> of shape (n_samples, n_samples_ref).</p></li>
-<li><p><strong>labels_sorted</strong> (<cite>array-like, shape (n_samples_ref, )</cite>) – Cluster labels for each sample and sorted as in <cite>df_corr</cite>.</p></li>
+<li><p><strong>labels_sorted</strong> (<cite>array-like, shape (n_samples_ref,)</cite>) – Cluster labels for each sample and sorted as in <cite>df_corr</cite>.</p></li>
 </ul>
 </p>
 </dd>
