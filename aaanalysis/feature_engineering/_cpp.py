@@ -3,7 +3,7 @@ This is a script for the frontend of the CPP class, a sequence-based feature eng
 """
 import numpy as np
 import pandas as pd
-from typing import Optional, Dict, Union, List, Tuple, Type
+from typing import Optional
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
@@ -11,7 +11,7 @@ from aaanalysis.template_classes import Tool
 
 # Import supportive class (exception for importing from same sub-package)
 from ._sequence_feature import SequenceFeature
-from ._backend.cpp._check_feature import check_split_kws
+from ._backend.check_feature import check_split_kws
 from ._backend.cpp._utils_feature import get_positions_, add_scale_info_
 from ._backend.cpp.cpp_run import pre_filtering_info, pre_filtering, filtering, add_stat
 

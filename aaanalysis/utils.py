@@ -131,6 +131,18 @@ COL_FEAT_IMPORT = "feat_importance"
 COL_FEAT_IMP_STD = "feat_importance_std"
 COL_FEAT_IMPACT = "feat_impact"
 
+COLS_CPP_SCALES = [COL_CAT, COL_SUBCAT, COL_SCALE_NAME]
+COLS_CPP_VALUES = [COL_ABS_AUC, COL_ABS_MEAN_DIF, COL_MEAN_DIF, COL_STD_TEST, COL_STD_REF,
+                   COL_FEAT_IMPORT, COL_FEAT_IMP_STD, COL_FEAT_IMPACT]
+DICT_VALUE_TYPE = {COL_ABS_AUC: "mean",
+                   COL_ABS_MEAN_DIF: "mean",
+                   COL_MEAN_DIF: "mean",
+                   COL_STD_TEST: "mean",
+                   COL_STD_REF: "mean",
+                   COL_FEAT_IMPORT: "sum",
+                   COL_FEAT_IMP_STD: "mean",
+                   COL_FEAT_IMPACT: "sum"}
+
 # Labels
 LABEL_FEAT_VAL = "Feature value"
 LABEL_HIST_COUNT = "Number of proteins"

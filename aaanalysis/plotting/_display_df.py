@@ -11,7 +11,9 @@ from aaanalysis import utils as ut
 def _adjust_df(df=None, char_limit = 50):
     """"""
     df = df.copy()
-    df.index = [x+1 for x in df.index]
+    list_index = df.index
+    if sum([type(i) is not int for i in list_index]) == 0:
+        df.index = [x+1 for x in df.index]
     if char_limit is not None:
         f = lambda x: str(x)[:int(char_limit/2)] + '...' + str(x)[-int(char_limit/2):]
         df = df.map(lambda x: f(x) if isinstance(x, str) and len(str(x)) > char_limit else x)

@@ -13,7 +13,7 @@ import warnings
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
-from ._backend.aaclust._check_aaclust import check_metric
+from ._backend.check_aaclust import check_metric
 from ._backend.aaclust.aaclust_plot import plot_eval, plot_center_or_medoid, plot_correlation
 
 

@@ -3,7 +3,7 @@ This is a script for the frontend of the AAclust class, a clustering wrapper obj
 scale subsets.
 """
 import numpy as np
-from typing import Optional, Dict, Union, List, Tuple, Type
+from typing import Optional, Dict, List, Tuple, Type
 from sklearn.cluster import KMeans
 from sklearn.base import ClusterMixin
 from sklearn.exceptions import ConvergenceWarning
@@ -13,7 +13,7 @@ import pandas as pd
 from aaanalysis.template_classes import Wrapper
 import aaanalysis.utils as ut
 
-from ._backend.aaclust._check_aaclust import check_metric
+from ._backend.check_aaclust import check_metric
 from ._backend.aaclust.aaclust_fit import estimate_lower_bound_n_clusters, optimize_n_clusters, merge_clusters
 from ._backend.aaclust.aaclust_eval import evaluate_clustering
 from ._backend.aaclust.aaclust_methods import (compute_centers,
