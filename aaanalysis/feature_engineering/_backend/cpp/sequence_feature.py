@@ -1,9 +1,13 @@
 """
 This is a script for the backend of the SequenceFeature() object, a supportive class for the CPP feature engineering.
 """
+import pandas as pd
+import numpy as np
+
 import aaanalysis.utils as ut
 from ._split import SplitRange
-from ._utils_cpp import get_positions_, get_feature_matrix_
+from ._utils_feature_stat import add_stat_
+from ._utils_feature import get_positions_, get_feature_matrix_, get_amino_acids_, add_scale_info_
 
 
 # I Helper Functions
@@ -23,21 +27,10 @@ def get_split_kws_(n_split_min=1, n_split_max=15, steps_pattern=None, n_min=2, n
                  ut.STR_PATTERN: dict(steps=steps_pattern, n_min=n_min, n_max=n_max, len_max=len_max),
                  ut.STR_PERIODIC_PATTERN: dict(steps=steps_periodicpattern)}
     split_kws = {x: split_kws[x] for x in split_types}
-    ut.check_split_kws(split_kws=split_kws)
     return split_kws
 
 
 # Features
-def feature_matrix_(features=None, df_parts=None, df_scales=None, accept_gaps=False, n_jobs=None):
-    """Create feature matrix for given feature ids and sequence parts."""
-    # Create feature matrix using parallel processing
-    feat_matrix = get_feature_matrix_(features=features,
-                                      df_parts=df_parts,
-                                      df_scales=df_scales,
-                                      accept_gaps=accept_gaps,
-                                      n_jobs=n_jobs)
-
-
 def get_features_(list_parts=None, split_kws=None, df_scales=None):
     """Create list of all feature ids for given Parts, Splits, and Scales"""
     scales = list(df_scales)
@@ -52,7 +45,6 @@ def get_features_(list_parts=None, split_kws=None, df_scales=None):
 
 def get_feature_names_(features=None, df_cat=None, tmd_len=20, jmd_c_len=10, jmd_n_len=10, start=1):
     """Convert feature ids (PART-SPLIT-SCALE) into feature names (scale name [positions])."""
-    # Get feature names
     feat_positions = get_positions_(features=features, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                     start=start)
     dict_scales = dict(zip(df_cat[ut.COL_SCALE_ID], df_cat[ut.COL_SUBCAT]))
@@ -69,3 +61,29 @@ def get_feature_names_(features=None, df_cat=None, tmd_len=20, jmd_c_len=10, jmd
     return feat_names
 
 
+def get_df_feat_(features=None, df_parts=None, labels=None, df_scales=None, df_cat=None, accept_gaps=False,
+                 parametric=False, start=1, tmd_len=20, jmd_c_len=10, jmd_n_len=10):
+    """Create df feature for comparing groups and or samples"""
+    X = get_feature_matrix_(features=features, df_parts=df_parts, df_scales=df_scales, accept_gaps=accept_gaps)
+    mask_ref = [x == 0 for x in labels]
+    mask_test = [x == 1 for x in labels]
+    mean_dif = X[mask_test].mean(axis=0) - X[mask_ref].mean(axis=0)
+    abs_mean_dif = abs(mean_dif)
+    std_test = X[mask_test].std(axis=0)
+    df = pd.DataFrame(zip(features, abs_mean_dif, std_test),
+                      columns=[ut.COL_FEATURE, ut.COL_ABS_MEAN_DIF, ut.COL_STD_TEST])
+    df = add_stat_(df=df, X=X, y=labels, parametric=parametric)
+    df = add_scale_info_(df_feat=df, df_cat=df_cat)
+    df[ut.COL_POSITION] = get_positions_(features=features, start=start, jmd_n_len=jmd_n_len, tmd_len=tmd_len,
+                                         jmd_c_len=jmd_c_len)
+    if sum(mask_test) == 1:
+        position = np.where(labels == 1)[0][0]
+        jmd_n_seq, tmd_seq, jmd_c_seq = df_parts[[ut.COL_JMD_N, ut.COL_TMD, ut.COL_JMD_C]].iloc[position].values
+        df[ut.COL_AA_TEST] = get_amino_acids_(features=features, jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq,
+                                              jmd_c_seq=jmd_c_seq)
+    if sum(mask_ref) == 1:
+        position = np.where(labels == 0)[0][0]
+        jmd_n_seq, tmd_seq, jmd_c_seq = df_parts[[ut.COL_JMD_N, ut.COL_TMD, ut.COL_JMD_C]].iloc[position].values
+        df[ut.COL_AA_REF] = get_amino_acids_(features=features, jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq,
+                                             jmd_c_seq=jmd_c_seq)
+    return df

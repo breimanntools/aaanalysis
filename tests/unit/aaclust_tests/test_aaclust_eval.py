@@ -94,7 +94,9 @@ class TestAAclustEvaluateComplex:
         is_invalid = check_invalid_conditions(X, labels=labels)
         if is_invalid:
             with pytest.raises(ValueError):
-                aa.AAclust().eval(X, labels)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    aa.AAclust().eval(X, labels)
         else:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)

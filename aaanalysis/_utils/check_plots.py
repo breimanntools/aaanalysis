@@ -83,3 +83,11 @@ def check_ylim(df=None, ylim=None, col_value=None, retrieve_plot=False, scaling_
             ylim = plt.ylim()
             ylim = (ylim[0] * scaling_factor, ylim[1] * scaling_factor)
     return ylim
+
+def check_y_categorical(df=None, y=None):
+    """Check if y in df"""
+    list_cat_columns = [col for col, data_type in zip(list(df), df.dtypes)
+                        if data_type != float and "position" not in col]# and col != "feature"]
+    if y not in list_cat_columns:
+        raise ValueError(f"'y' ({y}) should be one of following columns with categorical values "
+                         f"of 'df': {list_cat_columns}")

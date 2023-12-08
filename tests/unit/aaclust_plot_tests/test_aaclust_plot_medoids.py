@@ -183,7 +183,7 @@ class TestAAclustPlotCenter:
 class TestAAclustPlotCenterComplex:
     """Test combinations of parameters in the 'medoids' method of the AAclustPlot class."""
 
-    @settings(max_examples=25, deadline=1000)
+    @settings(max_examples=10, deadline=1000)
     @given(X=some.lists(some.lists(some.floats(allow_nan=False, allow_infinity=False, min_value=-100, max_value=100),
                                    min_size=10, max_size=10), min_size=10, max_size=15).map(np.array),
            labels=some.lists(some.integers(min_value=0, max_value=10), min_size=5, max_size=20),

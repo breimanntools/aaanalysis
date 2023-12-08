@@ -12,7 +12,7 @@ import matplotlib as mpl
 import aaanalysis as aa
 import aaanalysis.utils as ut
 from ._utils_cpp_plot import add_part_seq, add_feature_title, get_color_dif
-from ._utils_cpp import get_feature_matrix_, get_positions_
+from ._utils_feature import get_feature_matrix_, get_positions_
 
 
 # I Helper Functions

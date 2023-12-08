@@ -13,6 +13,7 @@ import warnings
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
+from ._backend.aaclust._check_aaclust import check_metric
 from ._backend.aaclust.aaclust_plot import plot_eval, plot_center_or_medoid, plot_correlation
 
 
@@ -350,7 +351,7 @@ class AAclustPlot:
         ut.check_match_X_labels(X=X, labels=labels)
         ut.check_number_range(name="component_x", val=component_x, accept_none=False, min_val=1, just_int=True)
         ut.check_number_range(name="component_y", val=component_y, accept_none=False, min_val=1, just_int=True)
-        ut.check_metric(metric=metric)
+        check_metric(metric=metric)
         ut.check_ax(ax=ax, accept_none=True)
         ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True, check_n_number=True)
         ut.check_number_range(name="dot_alpha", val=dot_alpha, accept_none=False, min_val=0, max_val=1, just_int=False)

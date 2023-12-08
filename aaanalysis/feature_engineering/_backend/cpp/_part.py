@@ -195,6 +195,6 @@ class Parts:
             tmd_seq, jmd_n_seq, jmd_c_seq = _get_parts_from_df(df=df, entry=entry)
         check_parts_exist(tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
         # Parts can be sequences or lists with positions
-        ut.check_args_len(jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, accept_tmd_none=True)
+        ut.check_parts_len(jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, accept_tmd_none=True)
         dict_part_seq = _get_dict_part_seq_from_seq(tmd=tmd_seq, jmd_n=jmd_n_seq, jmd_c=jmd_c_seq)
         return dict_part_seq

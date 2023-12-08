@@ -58,7 +58,7 @@ def check_X_unique_samples(X, min_n_unique_samples=3):
                          f"\nX = {X}")
     return X
 
-def check_labels(labels=None):
+def check_labels(labels=None, vals_requiered=None, len_requiered=None):
     """"""
     if labels is None:
         raise ValueError(f"'labels' should not be None.")
@@ -70,6 +70,12 @@ def check_labels(labels=None):
     wrong_types = [l for l in unique_labels if not np.issubdtype(type(l), np.integer)]
     if wrong_types:
         raise ValueError(f"Labels in 'labels' should be type int, but contain: {set(map(type, wrong_types))}")
+    if vals_requiered is not None:
+        missing_vals = [x for x in vals_requiered if x not in labels]
+        if len(missing_vals) > 0:
+            raise ValueError(f"'labels' ({unique_labels}) does not contain requiered value: {missing_vals}")
+    if len_requiered is not None and len(labels) != len_requiered:
+        raise ValueError(f"'labels' (n={len(labels)}) should contain {len_requiered} values.")
     return labels
 
 

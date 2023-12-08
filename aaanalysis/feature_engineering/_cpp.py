@@ -11,7 +11,8 @@ from aaanalysis.template_classes import Tool
 
 # Import supportive class (exception for importing from same sub-package)
 from ._sequence_feature import SequenceFeature
-from ._backend.cpp._utils_cpp import get_feature_matrix_, get_positions_
+from ._backend.cpp._check_feature import check_split_kws
+from ._backend.cpp._utils_feature import get_positions_, add_scale_info_
 from ._backend.cpp.cpp_run import pre_filtering_info, pre_filtering, filtering, add_stat
 
 
@@ -30,42 +31,6 @@ def check_sample_in_df_seq(sample_name=None, df_seq=None):
         error = f"'sample_name' ('{sample_name}') not in '{ut.COL_NAME}' of 'df_seq'." \
                 f"\nValid names are: {list_names}"
         raise ValueError(error)
-
-
-# Adder methods for CPP analysis (used in run method)
-def _add_stat(df_feat=None, df_parts=None, df_scales=None, labels=None, parametric=False, accept_gaps=False):
-        """
-        Add summary statistics for each feature to DataFrame.
-
-        Notes
-        -----
-        P-values are calculated Mann-Whitney U test (non-parametric) or T-test (parametric) as implemented in SciPy.
-        For multiple hypothesis correction, the Benjamini-Hochberg FDR correction is applied on all given features
-        as implemented in SciPy.
-        """
-        # Add feature statistics
-        features = list(df_feat[ut.COL_FEATURE])
-        X = get_feature_matrix_(features=features,
-                                df_parts=df_parts,
-                                df_scales=df_scales,
-                                accept_gaps=accept_gaps)
-        df_feat = add_stat(df=df_feat, X=X, y=labels, parametric=parametric)
-        return df_feat
-
-
-def _add_scale_info(df_feat=None, df_cat=None):
-    """Add scale information to DataFrame (scale categories, sub categories, and scale names)."""
-    # Add scale categories
-    df_cat = df_cat.copy()
-    i = df_feat.columns.get_loc(ut.COL_FEATURE)
-    for col in [ut.COL_SCALE_DES, ut.COL_SCALE_NAME, ut.COL_SUBCAT, ut.COL_CAT]:
-        if col in list(df_feat):
-            df_feat.drop(col, inplace=True, axis=1)
-        dict_cat = dict(zip(df_cat[ut.COL_SCALE_ID], df_cat[col]))
-        vals = [dict_cat[s.split("-")[2]] for s in df_feat[ut.COL_FEATURE]]
-        df_feat.insert(i + 1, col, vals)
-    return df_feat
-
 
 # TODO simplify checks & interface (end-to-end check with tests & docu)
 # TODO  TODO add link to explanation for TMD, JMDs
@@ -101,10 +66,11 @@ class CPP(Tool):
             Nested dictionary with parameter dictionary for each chosen split_type.
             Default from :meth:`SequenceFeature.get_split_kws`
         df_scales
-            DataFrame with amino acid scales. Default from :meth:`load_scales` with 'name'='scales_cat'.
+            DataFrame with amino acid scales. Default from :meth:`aaanalysis.load_scales`
+            with 'name'='scales_cat'.
         df_cat
             DataFrame with default categories for physicochemical amino acid scales.
-            Default from :meth:`load_categories`
+            Default from :meth:`aaanalysis.load_categories`
         accept_gaps
             Whether to accept missing values by enabling omitting for computations (if ``True``).
         verbose
@@ -123,7 +89,7 @@ class CPP(Tool):
         ut.check_df_parts(df_parts=df_parts, verbose=verbose)
         df_parts = ut.check_df_scales(df_scales=df_scales, df_parts=df_parts, accept_gaps=accept_gaps)
         df_cat, df_scales = ut.check_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
-        ut.check_split_kws(split_kws=split_kws)
+        check_split_kws(split_kws=split_kws)
         # Internal attributes
         self._verbose = verbose
         self._accept_gaps = accept_gaps
@@ -157,7 +123,7 @@ class CPP(Tool):
 
         Parameters
         ----------
-        labels : `array-like, shape (n_samples, )`
+        labels : `array-like, shape (n_samples,)`
             Class labels for samples in sequence DataFrame (test=1, reference=0).
         n_filter
             Number of features to be filtered/selected by CPP algorithm.
@@ -190,7 +156,7 @@ class CPP(Tool):
         Returns
         -------
         df_feat
-            DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
+            Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
 
         Notes
         -----
@@ -211,8 +177,8 @@ class CPP(Tool):
 
         """
         # Check input
-        ut.check_labels_(labels=labels, df=self.df_parts, name_df="df_parts")
-        ut.check_args_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+        labels = ut.check_labels(labels=labels, vals_requiered=[0, 1], len_requiered=len(self.df_parts))
+        ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
         ut.check_number_range(name="n_pre_filter", val=n_pre_filter, min_val=1, accept_none=True, just_int=True)
         ut.check_number_range(name="pct_pre_filter", val=pct_pre_filter, min_val=5, max_val=100, just_int=True)
@@ -249,12 +215,12 @@ class CPP(Tool):
                            max_std_test=max_std_test)
         features = df[ut.COL_FEATURE].to_list()
         # Add feature information
-        df = _add_stat(df_feat=df, df_scales=self.df_scales, df_parts=self.df_parts,
-                       labels=labels, parametric=parametric, accept_gaps=self._accept_gaps)
+        df = add_stat(df_feat=df, df_scales=self.df_scales, df_parts=self.df_parts,
+                      labels=labels, parametric=parametric, accept_gaps=self._accept_gaps)
         feat_positions = get_positions_(features=features, start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len,
                                         jmd_c_len=jmd_c_len)
         df[ut.COL_POSITION] = feat_positions
-        df = _add_scale_info(df_feat=df, df_cat=self.df_cat)
+        df = add_scale_info_(df_feat=df, df_cat=self.df_cat)
         # Filtering using CPP algorithm
         if self._verbose:
             ut.print_out(f"3. CPP filtering algorithm")

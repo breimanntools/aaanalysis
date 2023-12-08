@@ -19,13 +19,8 @@ from ._utils.check_data import (check_X, check_X_unique_samples,
                                 check_array_like, check_superset_subset,
                                 check_df)
 from ._utils.check_models import check_mode_class, check_model_kwargs
-from ._utils.check_plots import (check_vmin_vmax, check_color, check_cmap, check_palette, check_ylim)
-
-from ._utils.utils_cpp import (check_y_categorical, check_labels_,
-                               check_args_len, check_args_len, check_list_parts,
-                               check_split_kws, check_split,
-                               STR_SEGMENT, STR_PATTERN, STR_PERIODIC_PATTERN, STR_AA_GAP,
-                               LIST_PARTS, LIST_ALL_PARTS, SPLIT_DESCRIPTION)
+from ._utils.check_plots import (check_vmin_vmax, check_color, check_cmap, check_palette,
+                                 check_ylim, check_y_categorical)
 
 from ._utils.new_types import ArrayLike1D, ArrayLike2D
 
@@ -52,8 +47,24 @@ URL_DATA = "https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/d
 
 # Constants
 FONT_AA = "DejaVu Sans Mono"
+STR_AA_GAP = "-"
 
-# Default scale datasets for protein analysis
+# Part names
+LIST_ALL_PARTS = ["tmd", "tmd_e", "tmd_n", "tmd_c", "jmd_n", "jmd_c", "ext_c", "ext_n",
+                  "tmd_jmd", "jmd_n_tmd_n", "tmd_c_jmd_c", "ext_n_tmd_n", "tmd_c_ext_c"]
+LIST_PARTS = ["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
+
+# Split names
+STR_SEGMENT = "Segment"
+STR_PATTERN = "Pattern"
+STR_PERIODIC_PATTERN = "PeriodicPattern"
+SPLIT_DESCRIPTION = f"\n a) {STR_SEGMENT}(i-th,n_split)" \
+                    f"\n b) {STR_PATTERN}(N/C,p1,p2,...,pn)" \
+                    f"\n c) {STR_PERIODIC_PATTERN}(N/C,i+step1/step2,start)" \
+                    f"\nwith i-th<=n_split, and p1<p2<...<pn," \
+                    f"\nwhere all numbers should be non-negative integers, and N/C means N or C."
+
+# Scale dataset names
 STR_SCALES = "scales"   # Min-max normalized scales (from AAontology)
 STR_SCALES_RAW = "scales_raw"   # Raw scales (from AAontology)
 STR_SCALES_PC = "scales_pc"     # AAclust pc-based scales (pc: principal component)
@@ -80,7 +91,10 @@ COL_ENTRY = "entry"     # ACC, protein entry, uniprot id
 COL_NAME = "name"       # Entry name, Protein name, Uniprot Name
 COL_LABEL = "label"
 COL_SEQ = "sequence"
-COLS_PARTS = ["jmd_n", "tmd", "jmd_c"]
+COL_JMD_N = "jmd_n"
+COL_TMD = "tmd"
+COL_JMD_C = "jmd_c"
+COLS_PARTS = [COL_JMD_N, COL_TMD, COL_JMD_C]
 COL_TMD_START = "tmd_start"
 COL_TMD_STOP = "tmd_stop"
 COLS_SEQ_KEY = [COL_ENTRY, COL_SEQ, COL_LABEL]
@@ -109,6 +123,8 @@ COL_STD_REF = "std_ref"
 COL_PVAL_MW = "p_val_mann_whitney"
 COL_PVAL_FDR = "p_val_fdr_bh"
 COL_POSITION = "positions"
+COL_AA_TEST = "amino_acids_test"
+COL_AA_REF = "amino_acids_ref"
 
 # Columns for df_feat after processing with explainable AI methods
 COL_FEAT_IMPORT = "feat_importance"
@@ -129,12 +145,6 @@ LABEL_FEAT_IMPACT = "Impact [%]"
 LABEL_FEAT_RANKING = "Feature ranking"
 LABEL_SCALE_CAT = "Scale category"
 LABEL_MEAN_DIF = "Mean difference"
-
-# Column name datasets (DOM_GSEC)
-
-
-# Column names cpp features
-
 
 # Standard colors
 COLOR_SHAP_POS = '#FF0D57'  # (255, 13, 87)
@@ -168,6 +178,7 @@ STR_CMAP_SHAP = "SHAP"
 STR_DICT_COLOR = "DICT_COLOR"
 STR_DICT_CAT = "DICT_CAT"
 
+
 # I Helper functions
 
 
@@ -197,17 +208,131 @@ def check_verbose(verbose):
     return verbose
 
 
-# TODO add to aaclust_utils
-def check_metric(metric=None):
+# TODO check each of this checking function (make simpler)
+# Check CPP feature information
+def _check_seq(seq, len_, name_seq, name_len):
+    """Check sequence with should be rather flexible to except various types,
+    such as strings, lists, or numpy arrays"""
+    if seq is None:
+        return len_
+    else:
+        # Waring sequence length doesn't match the corresponding length parameter
+        if len_ is not None and len(seq) < len_:
+            raise ValueError(f"The length of {name_seq} ({len(seq)}) should be >= {name_len} ({len_}).")
+        return len(seq)
+
+
+def _check_ext_len(jmd_n_len=None, jmd_c_len=None, ext_len=None):
     """"""
-    if metric not in LIST_METRICS:
-        error = f"'metric' should be None or one of following: {LIST_METRICS}"
+    if ext_len is not None and ext_len != 0:
+        if jmd_n_len is None:
+            raise ValueError(f"'jmd_n_len' should not be None if 'ext_len' ({ext_len}) is given")
+        if jmd_c_len is None:
+            raise ValueError(f"'jmd_c_len' should not be None if 'ext_len' ({ext_len}) is given")
+        if jmd_n_len is not None and ext_len > jmd_n_len:
+            raise ValueError(f"'ext_len' ({ext_len}) must be <= length of jmd_n ({jmd_n_len})")
+        if jmd_c_len is not None and ext_len > jmd_c_len:
+            raise ValueError(f"'ext_len' ({ext_len}) must be <= length of jmd_c ({jmd_c_len})")
+
+
+def check_parts_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None,
+                    tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, accept_tmd_none=False):
+    """Check length parameters and if they are matching with sequences if provided"""
+    ext_len = options["ext_len"]
+    # Check lengths
+    tmd_seq_given = tmd_seq is not None or accept_tmd_none  # If tmd_seq is given, tmd_len can be None
+    check_number_range(name="tmd_len", val=tmd_len, accept_none=tmd_seq_given, min_val=1, just_int=True)
+    check_number_range(name="jmd_n_len", val=jmd_n_len, accept_none=True, min_val=0, just_int=True)
+    check_number_range(name="jmd_c_len", val=jmd_c_len, accept_none=True, min_val=0, just_int=True)
+    check_number_range(name="ext_len", val=ext_len, min_val=0, accept_none=True, just_int=True)
+    # Check if lengths and sequences match (any sequence is excepted, strings, lists, arrays)
+    tmd_len = _check_seq(tmd_seq, tmd_len, "tmd_seq", "tmd_len")
+    jmd_n_len = _check_seq(jmd_n_seq, jmd_n_len, "jmd_n_seq", "jmd_n_len")
+    jmd_c_len = _check_seq(jmd_c_seq, jmd_c_len, "jmd_c_seq", "jmd_c_len")
+    # Check if lengths are matching
+    _check_ext_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len)
+    args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+    return args_len
+
+
+def check_list_parts(list_parts=None, all_parts=False):
+    """Check if parts from list_parts are columns of df_seq"""
+    if list_parts is None:
+        list_parts = LIST_ALL_PARTS if all_parts else LIST_PARTS
+    if type(list_parts) is str:
+        list_parts = [list_parts]
+    if type(list_parts) != list:
+        raise ValueError(f"'list_parts' must be list with selection of following parts: {LIST_ALL_PARTS}")
+    # Check for invalid parts
+    wrong_parts = [x for x in list_parts if x not in LIST_ALL_PARTS]
+    if len(wrong_parts) > 0:
+        str_part = "part" if len(wrong_parts) == 1 else "parts"
+        error = f"{wrong_parts} not valid {str_part}.\n  Select from following parts: {LIST_ALL_PARTS}"
+        raise ValueError(error)
+    return list_parts
+
+
+
+
+
+def check_split(split=None):
+    """Check split and convert split name to split type and split arguments"""
+    if type(split) is not str:
+        raise ValueError("'split' must have type 'str'")
+    split = split.replace(" ", "")  # remove whitespace
+    try:
+        # Check Segment
+        if STR_SEGMENT in split:
+            split_type = STR_SEGMENT
+            i_th, n_split = [int(x) for x in split.split("(")[1].replace(")", "").split(",")]
+            # Check if values non-negative integers
+            for name, val in zip(["i_th", "n_split"], [i_th, n_split]):
+                check_number_range(name=name, val=val, just_int=True)
+            # Check if i-th and n_split are valid
+            if i_th > n_split:
+                raise ValueError
+            split_kwargs = dict(i_th=i_th, n_split=n_split)
+        # Check PeriodicPattern
+        elif STR_PERIODIC_PATTERN in split:
+            split_type = STR_PERIODIC_PATTERN
+            start = split.split("i+")[1].replace(")", "").split(",")
+            step1, step2 = [int(x) for x in start.pop(0).split("/")]
+            start = int(start[0])
+            # Check if values non-negative integers
+            for name, val in zip(["start", "step1", "step2"], [start, step1, step2]):
+                check_number_range(name=name, val=val, just_int=True)
+            # Check if terminus valid
+            terminus = split.split("i+")[0].split("(")[1].replace(",", "")
+            if terminus not in ["N", "C"]:
+                raise ValueError
+            split_kwargs = dict(terminus=terminus, step1=step1, step2=step2, start=start)
+        # Check pattern
+        elif STR_PATTERN in split:
+            split_type = STR_PATTERN
+            list_pos = split.split("(")[1].replace(")", "").split(",")
+            terminus = list_pos.pop(0)
+            # Check if values non-negative integers
+            list_pos = [int(x) for x in list_pos]
+            for val in list_pos:
+                name = "pos" + str(val)
+                check_number_range(name=name, val=val, just_int=True)
+            # Check if terminus valid
+            if terminus not in ["N", "C"]:
+                raise ValueError
+            # Check if arguments are in order
+            if not sorted(list_pos) == list_pos:
+                raise ValueError
+            split_kwargs = dict(terminus=terminus, list_pos=list_pos)
+        else:
+            raise ValueError
+        return split_type, split_kwargs
+    except:
+        error = "Wrong split annotation for '{}'. Splits should be denoted as follows:".format(split, SPLIT_DESCRIPTION)
         raise ValueError(error)
 
 
-# TODO check each of this checking function (make simpler)
 # Check key dataframes using constants and general checking functions
-# df_seq, df_parts, df_cat, df_scales, df_feat, and features
+# df_seq, df_parts, df_scales, df_cat, df_feat, and features
 def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     """Get features from df"""
     # TODO check
@@ -302,37 +427,6 @@ def check_df_parts(df_parts=None, verbose=True):
 
 
 # Scale check functions
-def check_df_cat(df_cat=None, df_scales=None, accept_none=True, verbose=True):
-    """Check if df_cat is a valid input"""
-    if accept_none and df_cat is None:
-        return None     # Skip check
-    if not isinstance(df_cat, pd.DataFrame):
-        raise ValueError("'df_cat' should be type pd.DataFrame (not {})".format(type(df_cat)))
-    # Check columns
-    for col in [COL_SCALE_ID, COL_CAT, COL_SUBCAT]:
-        if col not in df_cat:
-            raise ValueError(f"'{col}' not in 'df_cat'")
-    # Check scales from df_cat and df_scales do match
-    if df_scales is not None:
-        scales_cat = list(df_cat[COL_SCALE_ID])
-        scales = list(df_scales)
-        overlap_scales = [x for x in scales if x in scales_cat]
-        difference_scales = list(set(scales).difference(set(scales_cat)))
-        # Adjust df_cat and df_scales
-        df_cat = df_cat[df_cat[COL_SCALE_ID].isin(overlap_scales)]
-        df_scales = df_scales[overlap_scales]
-        if verbose and len(difference_scales) > 0:
-            str_warning = f"Scales from 'df_scales' and 'df_cat' do not overlap completely."
-            missing_scales_in_df_scales = [x for x in scales_cat if x not in scales]
-            missing_scales_in_df_cat = [x for x in scales if x not in scales_cat]
-            if len(missing_scales_in_df_scales) > 0:
-                str_warning += f"\n Following scale ids are missing in 'df_scales': {missing_scales_in_df_scales}"
-            else:
-                str_warning += f"\n Following scale ids are missing in 'df_cat': {missing_scales_in_df_cat}"
-            print(f"Warning: {str_warning}")
-    return df_cat, df_scales
-
-# TODO check
 def check_df_scales(df_scales=None, df_parts=None, accept_none=False, accept_gaps=False):
     """Check if df_scales is a valid input and matching to df_parts"""
     check_bool(name="accept_gaps", val=accept_gaps)
@@ -379,6 +473,37 @@ def check_df_scales(df_scales=None, df_parts=None, accept_none=False, accept_gap
     return df_parts
 
 
+def check_df_cat(df_cat=None, df_scales=None, accept_none=True, verbose=True):
+    """Check if df_cat is a valid input"""
+    if accept_none and df_cat is None:
+        return None     # Skip check
+    if not isinstance(df_cat, pd.DataFrame):
+        raise ValueError("'df_cat' should be type pd.DataFrame (not {})".format(type(df_cat)))
+    # Check columns
+    for col in [COL_SCALE_ID, COL_CAT, COL_SUBCAT]:
+        if col not in df_cat:
+            raise ValueError(f"'{col}' not in 'df_cat'")
+    # Check scales from df_cat and df_scales do match
+    if df_scales is not None:
+        scales_cat = list(df_cat[COL_SCALE_ID])
+        scales = list(df_scales)
+        overlap_scales = [x for x in scales if x in scales_cat]
+        difference_scales = list(set(scales).difference(set(scales_cat)))
+        # Adjust df_cat and df_scales
+        df_cat = df_cat[df_cat[COL_SCALE_ID].isin(overlap_scales)]
+        df_scales = df_scales[overlap_scales]
+        if verbose and len(difference_scales) > 0:
+            str_warning = f"Scales from 'df_scales' and 'df_cat' do not overlap completely."
+            missing_scales_in_df_scales = [x for x in scales_cat if x not in scales]
+            missing_scales_in_df_cat = [x for x in scales if x not in scales_cat]
+            if len(missing_scales_in_df_scales) > 0:
+                str_warning += f"\n Following scale ids are missing in 'df_scales': {missing_scales_in_df_scales}"
+            else:
+                str_warning += f"\n Following scale ids are missing in 'df_cat': {missing_scales_in_df_cat}"
+            print(f"Warning: {str_warning}")
+    return df_cat, df_scales
+
+# TODO check
 def check_df_feat(df_feat=None, df_cat=None):
     """Check if df not empty pd.DataFrame"""
     # Check df

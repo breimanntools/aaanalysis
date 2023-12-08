@@ -13,12 +13,14 @@ import pandas as pd
 from aaanalysis.template_classes import Wrapper
 import aaanalysis.utils as ut
 
+from ._backend.aaclust._check_aaclust import check_metric
 from ._backend.aaclust.aaclust_fit import estimate_lower_bound_n_clusters, optimize_n_clusters, merge_clusters
 from ._backend.aaclust.aaclust_eval import evaluate_clustering
 from ._backend.aaclust.aaclust_methods import (compute_centers,
                                                compute_medoids,
                                                name_clusters,
                                                compute_correlation)
+
 
 # I Helper Functions
 # Check parameter matching functions
@@ -87,15 +89,15 @@ class AAclust(Wrapper):
         The instantiated clustering model object after calling the ``fit`` method.
     n_clusters : int
         Number of clusters obtained by AAclust.
-    labels_ : `array-like, shape (n_samples, )`
+    labels_ : `array-like, shape (n_samples,)`
         Cluster labels in the order of samples in ``X``.
     centers_ : array-like, shape (n_clusters, n_features)
         Average scale values corresponding to each cluster.
-    labels_centers_ : `array-like, shape (n_clusters, )`
+    labels_centers_ : `array-like, shape (n_clusters,)`
         Cluster labels for each cluster center.
     medoids_ : `array-like, shape (n_clusters, n_features)`
         Representative samples, one for each cluster.
-    labels_medoids_ :  `array-like, shape (n_clusters, )`
+    labels_medoids_ :  `array-like, shape (n_clusters,)`
         Cluster labels for each medoid.
     is_medoid_ : `array-like, shape (n_samples, )`
         Array indicating samples being medoids (1) or not (0). Same order as ``labels_``.
@@ -214,7 +216,7 @@ class AAclust(Wrapper):
         names = ut.check_list_like(name="names", val=names, accept_none=True)
         ut.check_number_range(name="mint_th", val=min_th, min_val=0, max_val=1, just_int=False, accept_none=False)
         ut.check_number_range(name="n_clusters", val=n_clusters, min_val=1, just_int=True, accept_none=True)
-        ut.check_metric(metric=metric)
+        check_metric(metric=metric)
         ut.check_bool(name="on_center", val=on_center)
 
         check_match_X_n_clusters(X=X, n_clusters=n_clusters, accept_none=True)
@@ -346,7 +348,7 @@ class AAclust(Wrapper):
         ----------
         X : `array-like, shape (n_samples, n_features)`
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
-        labels : `array-like, shape (n_samples, )`
+        labels : `array-like, shape (n_samples,)`
             Cluster labels for each sample in ``X``.
         names
             List of sample names corresponding to ``X``.
@@ -381,7 +383,7 @@ class AAclust(Wrapper):
         ----------
         X : `array-like, shape (n_samples, n_features)`
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
-        labels : `array-like, shape (n_samples, )`
+        labels : `array-like, shape (n_samples,)`
             Cluster labels for each sample in ``X``.
 
         Returns
@@ -424,9 +426,9 @@ class AAclust(Wrapper):
 
         Returns
         -------
-        medoids : `array-like, shape (n_clusters, )`
+        medoids : `array-like, shape (n_clusters,)`
             The medoid for each cluster.
-        labels_medoids : `array-like, shape (n_clusters, )`
+        labels_medoids : `array-like, shape (n_clusters,)`
             The labels corresponding to each medoid.
         """
         # Check input
@@ -434,7 +436,7 @@ class AAclust(Wrapper):
         ut.check_X_unique_samples(X=X)
         labels = ut.check_labels(labels=labels)
         ut.check_match_X_labels(X=X, labels=labels)
-        ut.check_metric(metric=metric)
+        check_metric(metric=metric)
         # Get cluster medoids
         medoids, labels_medoids, _ = compute_medoids(X, labels=labels, metric=metric)
         return medoids, labels_medoids
@@ -454,11 +456,11 @@ class AAclust(Wrapper):
         ----------
         X : `array-like, shape (n_samples, n_features)`
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
-        labels : `array-like, shape (n_samples, )`
+        labels : `array-like, shape (n_samples,)`
             Cluster labels for each sample in ``X``.
         X_ref : `array-like, shape (n_samples, n_features)`
             Feature matrix of reference data. If given, samples of ``X`` are compared with samples of ``X_ref``.
-        labels_ref  : `array-like, shape (n_samples_ref, )`
+        labels_ref  : `array-like, shape (n_samples_ref,)`
             Cluster labels for each sample in ``X_ref``.
         names
             List of sample names corresponding to ``X``.
@@ -470,7 +472,7 @@ class AAclust(Wrapper):
         df_corr
             DataFrame with correlation either for each pair in ``X`` of shape (n_samples, n_samples) or
             for each pair between ``X`` and ``X_ref`` of shape (n_samples, n_samples_ref).
-        labels_sorted: `array-like, shape (n_samples_ref, )`
+        labels_sorted: `array-like, shape (n_samples_ref,)`
             Cluster labels for each sample and sorted as in `df_corr`.
 
         Notes

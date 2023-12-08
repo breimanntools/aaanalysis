@@ -1,27 +1,22 @@
 """
 This is a script for the frontend of the SequenceFeature class, a supportive class for the CPP feature engineering.
 """
+from typing import List, Optional
 import math
 import warnings
 import pandas as pd
-from typing import List, Optional
+import numpy as np
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
-from ._backend.cpp._utils_cpp import get_df_parts_, get_positions_, get_amino_acids_, get_feature_matrix_, get_df_pos_
-from ._backend.cpp.sequence_feature import (get_split_kws_,
-                                            get_features_, feature_matrix_, get_feature_names_)
+from ._backend.cpp._utils_feature import (get_df_parts_, get_positions_, get_amino_acids_,
+                                          get_feature_matrix_, get_df_pos_)
+from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_, get_df_feat_)
+from ._backend.cpp._check_feature import check_split_kws
 
 
 # I Helper Functions
-# Check load functions
-def check_clustered(complete=False, clust_th=0.7):
-    """Check input for loading functions"""
-    if not complete and clust_th not in [0.9, 0.7, 0.5, 0.3]:
-        raise ValueError("'clust_th' should be 0.3, 0.5, 0.7, or 0.9")
-
-
 # Check functions get_split_kws
 def check_split_types(split_types=None):
     """Check split_type"""
@@ -108,11 +103,13 @@ def check_ref_group(ref_group=0, labels=None):
         raise ValueError(f"'ref_group' ({ref_group}) not class label: {set(labels)}.")
 
 
-# TODO finsih, check input, common interface + docstring, testing
+# TODO finsih, check input, docstring, testing
 # TODO update docstring, e.g., give default parts in docstring
+# TODO all check functions in frontend
 # II Main Functions
 class SequenceFeature:
-    """Retrieve and create sequence feature components (Part, Split, and Scale).
+    """
+    Retrieve and create sequence feature components (Part, Split, and Scale).
 
     Notes
     -----
@@ -179,7 +176,7 @@ class SequenceFeature:
         """
         # Check input
         # TODO check if cols values for tmd, jmd_n, jmd_c and start/stop are okay
-        ut.check_args_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_tmd_none=True)
+        ut.check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_tmd_none=True)
         df_seq = ut.check_df_seq(df_seq=df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         list_parts = ut.check_list_parts(list_parts=list_parts, all_parts=all_parts)
         # Create df parts
@@ -256,10 +253,87 @@ class SequenceFeature:
                                    steps_periodicpattern=steps_periodicpattern,
                                    split_types=split_types)
         # Post check
-        ut.check_split_kws(split_kws=split_kws)
+        check_split_kws(split_kws=split_kws)
         return split_kws
 
     # Feature methods
+    @staticmethod
+    def get_df_feat(features: ut.ArrayLike1D = None,
+                    df_parts: pd.DataFrame = None,
+                    labels: ut.ArrayLike1D = None,
+                    df_scales: Optional[pd.DataFrame] = None,
+                    df_cat: Optional[pd.DataFrame] = None,
+                    accept_gaps: bool = False,
+                    parametric: bool = False,
+                    start: int = 1,
+                    tmd_len: int = 20,
+                    jmd_c_len: int = 10,
+                    jmd_n_len: int = 10,
+                    ) -> pd.DataFrame:
+        """
+        Create feature DataFrame for given features.
+
+        Depending on the provided labels, the DataFrame is created for one of the three following cases:
+
+            1. Group vs group comparison
+            2. Sample vs group comparison
+            3. Sample vs sample comparison
+
+        For the group vs group comparison, the general feature position will be provided, while the amino acid segments
+        and patterns for the respective sample from the test dataset (label = 1) will be given.
+
+        Parameters
+        ----------
+        features : `array-like, shape (n_features,)`
+            Ids of features for which ``df_feat`` should be created.
+        df_parts
+            DataFrame with sequence parts.
+        labels: `array-like, shape (n_samples,)`
+            Class labels for samples in ``df_parts``. Should be 1 (test set) and 0 (reference set).
+        df_scales
+            DataFrame with amino acid scales. Default from :meth:`aaanalysis.load_scales`
+            with 'name'='scales_cat'.
+        df_cat
+            DataFrame with default categories for physicochemical amino acid scales.
+            Default from :meth:`aaanalysis.load_categories`
+        accept_gaps
+            Whether to accept missing values by enabling omitting for computations (if True).
+        start
+            Position label of first amino acid position (starting at N-terminus). Should contain two unique label values.
+        tmd_len
+            Length of TMD (>0).
+        jmd_n_len
+            Length of JMD-N (>=0).
+        jmd_c_len
+            Length of JMD-C (>=0).
+
+        Returns
+        -------
+        df_feat
+            Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
+
+        See Also
+        --------
+        * The :meth:`aaanalysis.CPP.run` method for creating and filtering CPP features for discriminating between
+          two groups of sequences.
+        """
+        # TODO finish checking and docu
+        # Check input
+        if df_scales is None:
+            df_scales = aa.load_scales()
+        if df_cat is None:
+            df_cat = aa.load_scales(name="scales_cat")
+        labels = ut.check_labels(labels=labels, vals_requiered=[0, 1])
+        ut.check_df_scales(df_scales=df_scales)
+        ut.check_df_parts(df_parts=df_parts)
+        features = ut.check_features(features=features, parts=df_parts, df_scales=df_scales)
+        check_df_scales_matches_df_parts(df_scales=df_scales, df_parts=df_parts, accept_gaps=accept_gaps)
+        # Get sample difference to reference group
+        df_feat = get_df_feat_(features=features, df_parts=df_parts, labels=labels, df_scales=df_scales, df_cat=df_cat,
+                               accept_gaps=accept_gaps, parametric=parametric,
+                               start=start, jmd_n_len=jmd_n_len, tmd_len=tmd_len, jmd_c_len=jmd_c_len)
+        return df_feat
+
     @staticmethod
     def feature_matrix(features=None,
                        df_parts=None,
@@ -324,7 +398,7 @@ class SequenceFeature:
                      df_scales=None,
                      all_parts=False
                      ):
-        """Create list of all feature ids for given Parts, Splits, and Scales
+        """Create list of all feature ids for given Parts, Splits, and Scales.
 
         Parameters
         ----------
@@ -345,7 +419,7 @@ class SequenceFeature:
         """
         # Check input
         list_parts = ut.check_list_parts(list_parts=list_parts, all_parts=all_parts)
-        ut.check_split_kws(split_kws=split_kws)
+        check_split_kws(split_kws=split_kws)
         ut.check_df_scales(df_scales=df_scales, accept_none=True)
         # Load defaults
         if df_scales is None:
@@ -373,7 +447,7 @@ class SequenceFeature:
         df_cat: :class:`pandas.DataFrame`, default = SequenceFeature.load_categories
             DataFrame with default categories for physicochemical amino acid scales
         start
-            Position label of first amino acid position (starting at N-terminus, >=0).
+            Position label of first amino acid position (starting at N-terminus).
         tmd_len
             Length of TMD (>0).
         jmd_n_len
@@ -415,7 +489,7 @@ class SequenceFeature:
                       jmd_n_len: int = 10,
                       jmd_c_len: int = 10,
                       ) -> ut.ArrayLike1D:
-        """Create list with positions for given feature names
+        """Create for features list of corresponding positions.
 
         Parameters
         ----------
@@ -433,20 +507,22 @@ class SequenceFeature:
 
         Returns
         -------
-        df_feat
-          Feature DataFrame with positions for each feature in feat_names
-
+        feat_positions
+          List of positions for each feature.
 
         """
         # Check input
         features = ut.check_features(features=features)
+        ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
         ut.check_number_range(name="tmd_len", val=tmd_len, just_int=True, min_val=1)
-        args_len = dict(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
-        for name in args_len:
-            ut.check_number_range(name=name, val=args_len[name], just_int=True, min_val=0)
+        ut.check_number_range(name="jmd_n_len", val=jmd_n_len, just_int=True, min_val=0)
+        ut.check_number_range(name="jmd_c_len", val=jmd_c_len, just_int=True, min_val=0)
         # Get feature position
-        feat_positions = get_positions_(features=features, tmd_len=tmd_len, **args_len)
+        feat_positions = get_positions_(features=features, tmd_len=tmd_len,
+                                        jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
         return feat_positions
+
+
 
     @staticmethod
     def get_amino_acids(features: ut.ArrayLike1D = None,
@@ -455,7 +531,10 @@ class SequenceFeature:
                         jmd_c_seq: str = ""
                         ):
 
-        """"""
+        """
+        Create for features list of corresponding amino acids segments/patterns from 'jmd-n', 'tmd', and 'jmd-c' sequence.
+
+        """
         # Check input
         features = ut.check_features(features=features)
         ut.check_str(name="tmd_seq", val=tmd_seq)
@@ -465,62 +544,8 @@ class SequenceFeature:
         feat_amino_acids = get_amino_acids_(features=features, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
         return feat_amino_acids
 
-    def get_dif(self,
-                features: ut.ArrayLike1D = None,
-                df_scales: Optional[pd.DataFrame] = None,
-                df_parts: pd.DataFrame = None,
-                labels: ut.ArrayLike1D = None,
-                ref_group: int = 0,
-                list_names: List[str] = None,
-                sample_name: str = None,
-                accept_gaps: bool = False,
-                ) -> ut.ArrayLike1D:
-        """
-        Add feature value difference between sample and reference group to DataFrame.
 
-        Parameters
-        ----------
-        features: str, list of strings, pd.Series
-            Ids of features for which matrix of feature values should be created.
-        df_parts: :class:`pandas.DataFrame`
-            DataFrame with sequence parts.
-        df_scales: :class:`pandas.DataFrame`, optional
-            DataFrame with default amino acid scales.
-        accept_gaps: bool, default = False
-            Whether to accept missing values by enabling omitting for computations (if True).
-        labels: `array-like, shape (n_samples, )`
-            Class labels for samples in sequence DataFrame.
-        ref_group
-            Class label of reference group.
-        list_names
-            List of names matching to `df_parts`.
-        sample_name
-            Name of sample for which the feature value difference to a given reference group should be computed.
-
-        Returns
-        -------
-        feat_dif
-            Array with feature value difference.
-        """
-        # Check input
-        if df_scales is None:
-            df_scales = aa.load_scales()
-        ut.check_df_scales(df_scales=df_scales)
-        ut.check_df_parts(df_parts=df_parts)
-        features = ut.check_features(features=features, parts=df_parts, df_scales=df_scales)
-        check_df_scales_matches_df_parts(df_scales=df_scales, df_parts=df_parts, accept_gaps=accept_gaps)
-        check_ref_group(ref_group=ref_group, labels=labels)
-        list_names = ut.check_list_like(name="list_names", val=list_names, convert=True)
-        # Get sample difference to reference group
-        X = self.feature_matrix(features=features,
-                                df_parts=df_parts,
-                                df_scales=df_scales,
-                                accept_gaps=accept_gaps)
-        mask = [x == ref_group for x in labels]
-        i = list_names.index(sample_name)
-        feat_dif = X[i] - X[mask].mean(axis=0)
-        return feat_dif
-
+    # TODO change against concrete function (is more inner function)
     @staticmethod
     def get_df_positions(df_feat=None, y="category", value_type="count",
                          col_value=None, start=None, stop=None, normalize=False):

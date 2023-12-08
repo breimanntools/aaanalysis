@@ -1,4 +1,4 @@
-from .data_handling import load_dataset, load_scales, to_fasta
+from .data_handling import load_dataset, load_scales, load_features, to_fasta
 from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, CPP, CPPPlot
 from .pu_learning import dPULearn
 from .explainable_ai import TreeModel, ShapModel
@@ -11,6 +11,7 @@ from .config import options
 __all__ = [
     "load_dataset",
     "load_scales",
+    "load_features",
     "to_fasta",
     "AAclust",
     "AAclustPlot",

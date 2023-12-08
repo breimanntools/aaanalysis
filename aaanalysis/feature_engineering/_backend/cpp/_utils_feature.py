@@ -1,19 +1,19 @@
 """
-This is a script for utility functions for CPP and SequenceFeature objects and backend.
+This is a script for utility feature functions for CPP and SequenceFeature objects and backend.
 """
 import os
 import numpy as np
 from itertools import repeat
 import multiprocessing as mp
-
 import pandas as pd
 
-from aaanalysis.feature_engineering._backend.cpp._part import Parts
-from aaanalysis.feature_engineering._backend.cpp._split import Split
+from ._part import Parts
+from ._split import Split
 import aaanalysis.utils as ut
 
 
 # I Helper Functions
+# TODO move all checks to frontend
 def check_dict_part_pos(dict_part_pos=None):
     """Check if dict_part_pos is valid"""
     list_parts = list(dict_part_pos.keys())
@@ -59,8 +59,6 @@ def _get_dict_part_pos(tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1):
 def _get_positions(dict_part_pos=None, features=None, as_str=True):
     """Get list of positions for given feature names."""
     check_dict_part_pos(dict_part_pos=dict_part_pos)
-    # TODO move checks to interface
-    features = ut.check_features(features=features, parts=list(dict_part_pos.keys()))
     sp = Split(type_str=False)
     list_pos = []
     for feat_id in features:
@@ -217,3 +215,17 @@ def get_df_pos_(df_feat=None, y="category", value_type="count", col_value=None, 
     df_pos = pd.DataFrame(dict_pos_val)
     df_pos = df_pos.T[list_y_cat].T     # Filter and order categories
     return df_pos
+
+
+def add_scale_info_(df_feat=None, df_cat=None):
+    """Add scale information to DataFrame (scale categories, sub categories, and scale names)."""
+    # Add scale categories
+    df_cat = df_cat.copy()
+    i = df_feat.columns.get_loc(ut.COL_FEATURE)
+    for col in [ut.COL_SCALE_DES, ut.COL_SCALE_NAME, ut.COL_SUBCAT, ut.COL_CAT]:
+        if col in list(df_feat):
+            df_feat.drop(col, inplace=True, axis=1)
+        dict_cat = dict(zip(df_cat[ut.COL_SCALE_ID], df_cat[col]))
+        vals = [dict_cat[s.split("-")[2]] for s in df_feat[ut.COL_FEATURE]]
+        df_feat.insert(i + 1, col, vals)
+    return df_feat

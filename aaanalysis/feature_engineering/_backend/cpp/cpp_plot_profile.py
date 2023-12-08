@@ -11,9 +11,6 @@ from ._utils_cpp_plot_elements import PlotElements
 from ._utils_cpp_plot_positions import PlotPositions
 
 
-# Constants
-
-
 # I Helper Functions
 # Plotting functions
 def _plot_cpp_shap_profile(ax=None, df_pos=None, ylim=None, plot_args=None):

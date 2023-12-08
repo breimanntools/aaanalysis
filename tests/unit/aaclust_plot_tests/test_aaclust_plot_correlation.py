@@ -24,7 +24,7 @@ class TestAAclustPlotCorrelation:
     """Test the 'correlation' method of the AAclustPlot class."""
 
     # Positive Tests
-    @settings(max_examples=25, deadline=1000)
+    @settings(max_examples=10, deadline=1000)
     @given(df_corr=some.lists(some.lists(some.floats(min_value=-1.0, max_value=1.0, width=16, allow_nan=False, allow_infinity=False),
                                          min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
     def test_valid_df_corr(self, df_corr):

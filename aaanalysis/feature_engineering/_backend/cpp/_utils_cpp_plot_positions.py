@@ -12,7 +12,7 @@ import matplotlib as mpl
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
-from ._utils_cpp import get_positions_, get_df_pos_
+from ._utils_feature import get_positions_, get_df_pos_
 from ._utils_cpp_plot import get_optimal_fontsize, get_new_axis
 
 
