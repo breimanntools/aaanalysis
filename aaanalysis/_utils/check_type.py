@@ -41,15 +41,17 @@ def check_number_range(name=None, val=None, min_val=0, max_val=None, accept_none
         raise ValueError(error)
 
 
-def check_str(name=None, val=None, accept_none=False):
+def check_str(name=None, val=None, accept_none=False, return_empty_string=False):
     """Check type string"""
     if val is None:
         if not accept_none:
             raise ValueError(f"'{name}' should not be None.")
-        return None
+        elif return_empty_string:
+            val = ""
+        return val
     if not isinstance(val, str):
         raise ValueError(f"'{name}' ('{val}') should be string.")
-
+    return val
 
 def check_str_in_list(name=None, val=None, list_options=None, accept_none=False):
     """Check if val is one of the given options"""

@@ -178,7 +178,7 @@ class CPP(Tool):
         """
         # Check input
         labels = ut.check_labels(labels=labels, vals_requiered=[0, 1], len_requiered=len(self.df_parts))
-        ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+        args_len, _ = ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
         ut.check_number_range(name="n_pre_filter", val=n_pre_filter, min_val=1, accept_none=True, just_int=True)
         ut.check_number_range(name="pct_pre_filter", val=pct_pre_filter, min_val=5, max_val=100, just_int=True)
@@ -217,8 +217,7 @@ class CPP(Tool):
         # Add feature information
         df = add_stat(df_feat=df, df_scales=self.df_scales, df_parts=self.df_parts,
                       labels=labels, parametric=parametric, accept_gaps=self._accept_gaps)
-        feat_positions = get_positions_(features=features, start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len,
-                                        jmd_c_len=jmd_c_len)
+        feat_positions = get_positions_(features=features, start=start, **args_len)
         df[ut.COL_POSITION] = feat_positions
         df = add_scale_info_(df_feat=df, df_cat=self.df_cat)
         # Filtering using CPP algorithm

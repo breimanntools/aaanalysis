@@ -252,6 +252,7 @@ class CPPPlot:
 
         # Check input
         # TODO check input, add docstring, typing
+        #feature = ut.check_list_like(name="feature", val=feature, convert=True, accept_str=True)
         check_names_to_show(df_seq=df_seq, names_to_show=names_to_show)
         # Plot feature
         ax = plot_feature(ax=ax, figsize=figsize,
@@ -443,11 +444,9 @@ class CPPPlot:
 
         """
         # Group arguments
-        args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
         # TODO CHECK
-        args_len = ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
-                                      jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
-        tmd_len, jmd_n_len, jmd_c_len = args_len["tmd_len"], args_len["jmd_n_len"], args_len["jmd_c_len"]
+        args_len, args_seq = ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                                                jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
         args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
 
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
@@ -480,9 +479,8 @@ class CPPPlot:
                           col_value=col_value, value_type=value_type, normalize=normalize,
                           dict_color=dict_color,
                           edge_color=edge_color, bar_width=bar_width,
-                          add_jmd_tmd=add_jmd_tmd, tmd_len=tmd_len,
-                          jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
-                          start=start, jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
+                          add_jmd_tmd=add_jmd_tmd,
+                          start=start, **args_len, **args_seq,
                           tmd_color=tmd_color, jmd_color=jmd_color, tmd_seq_color=tmd_seq_color,
                           jmd_seq_color=jmd_seq_color,
                           seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd,
@@ -655,11 +653,10 @@ class CPPPlot:
 
         """
         # Group arguments
-        args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
         args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
         # TODO CHECK
-        args_len = ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len, **args_seq)
-        tmd_len, jmd_n_len, jmd_c_len = args_len["tmd_len"], args_len["jmd_n_len"], args_len["jmd_c_len"]
+        args_len, args_seq = ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                                                tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
@@ -687,8 +684,7 @@ class CPPPlot:
                           dict_color=dict_color, vmin=vmin, vmax=vmax, grid_on=grid_on,
                           cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws,
                           facecolor_dark=facecolor_dark, add_jmd_tmd=add_jmd_tmd,
-                          tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start,
-                          tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq,
+                          start=start, *+args_len, **args_seq,
                           tmd_color=tmd_color, jmd_color=jmd_color, tmd_seq_color=tmd_seq_color,
                           jmd_seq_color=jmd_seq_color,
                           seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd,
@@ -745,6 +741,7 @@ class CPPPlot:
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
         # Checking input
         # Args checked by Matplotlib: title, cmap, cbar_kws, legend_kws
+        args_len, _ = ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
         ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
         ut.check_number_range(name="cmap_n_colors", val=cmap_n_colors, min_val=1, accept_none=True, just_int=True)
@@ -764,7 +761,7 @@ class CPPPlot:
                               dict_color=dict_color, vmin=vmin, vmax=vmax, grid_on=grid_on,
                               cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws,
                               facecolor_dark=facecolor_dark,
-                              tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len, start=start,
+                              start=start, **args_len,
                               tmd_color=tmd_color, jmd_color=jmd_color, tmd_seq_color=tmd_seq_color,
                               jmd_seq_color=jmd_seq_color,
                               seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd,

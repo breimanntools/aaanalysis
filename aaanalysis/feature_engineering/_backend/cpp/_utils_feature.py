@@ -7,23 +7,12 @@ from itertools import repeat
 import multiprocessing as mp
 import pandas as pd
 
-from ._part import Parts
+from ._part import create_parts
 from ._split import Split
 import aaanalysis.utils as ut
 
 
 # I Helper Functions
-# TODO move all checks to frontend
-def check_dict_part_pos(dict_part_pos=None):
-    """Check if dict_part_pos is valid"""
-    list_parts = list(dict_part_pos.keys())
-    wrong_parts = [x for x in list_parts if x not in ut.LIST_ALL_PARTS]
-    if len(wrong_parts) > 0:
-        error = f"Following parts from 'dict_part_pos' are not valid: {wrong_parts}." \
-                f"\n Parts should be as follows: {ut.LIST_ALL_PARTS}"
-        raise ValueError(error)
-
-
 def get_vf_scale(dict_scale=None, accept_gaps=False):
     """Vectorized function to calculate the mean for a feature"""
     if not accept_gaps:
@@ -41,10 +30,35 @@ def get_vf_scale(dict_scale=None, accept_gaps=False):
     return vf_scale
 
 
+def _get_split_info(split=None):
+    """"""
+    split = split.replace(" ", "")  # remove whitespace
+    # Check Segment
+    if ut.STR_SEGMENT in split:
+        split_type = ut.STR_SEGMENT
+        i_th, n_split = [int(x) for x in split.split("(")[1].replace(")", "").split(",")]
+        split_kwargs = dict(i_th=i_th, n_split=n_split)
+    # Check PeriodicPattern
+    elif ut.STR_PERIODIC_PATTERN in split:
+        split_type = ut.STR_PERIODIC_PATTERN
+        start = split.split("i+")[1].replace(")", "").split(",")
+        step1, step2 = [int(x) for x in start.pop(0).split("/")]
+        start = int(start[0])
+        terminus = split.split("i+")[0].split("(")[1].replace(",", "")
+        split_kwargs = dict(terminus=terminus, step1=step1, step2=step2, start=start)
+    # Check pattern
+    else:
+        split_type = ut.STR_PATTERN
+        list_pos = split.split("(")[1].replace(")", "").split(",")
+        terminus = list_pos.pop(0)
+        list_pos = [int(x) for x in list_pos]
+        split_kwargs = dict(terminus=terminus, list_pos=list_pos)
+    return split_type, split_kwargs
+
+
 # Get positions
 def _get_dict_part_pos(tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1):
     """Get dictionary for part to positions."""
-    pa = Parts()
     jmd_n = list(range(0, jmd_n_len))
     tmd = list(range(jmd_n_len, tmd_len+jmd_n_len))
     jmd_c = list(range(jmd_n_len + tmd_len, jmd_n_len + tmd_len + jmd_c_len))
@@ -52,24 +66,24 @@ def _get_dict_part_pos(tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1):
     jmd_n = [i + start for i in jmd_n]
     tmd = [i + start for i in tmd]
     jmd_c = [i + start for i in jmd_c]
-    dict_part_pos = pa.get_dict_part_seq(tmd_seq=tmd, jmd_n_seq=jmd_n, jmd_c_seq=jmd_c)
+    dict_part_pos = ut.get_dict_part_seq(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c)
     return dict_part_pos
 
 
 def _get_positions(dict_part_pos=None, features=None, as_str=True):
     """Get list of positions for given feature names."""
-    check_dict_part_pos(dict_part_pos=dict_part_pos)
     sp = Split(type_str=False)
     list_pos = []
     for feat_id in features:
         part, split, scale = feat_id.split("-")
-        split_type, split_kwargs = ut.check_split(split=split)
+        split_type, split_kwargs = _get_split_info(split=split)
         f_split = getattr(sp, split_type.lower())
         pos = sorted(f_split(seq=dict_part_pos[part.lower()], **split_kwargs))
         if as_str:
             pos = str(pos).replace("[", "").replace("]", "").replace(" ", "")
         list_pos.append(pos)
     return list_pos
+
 
 # Get df positions
 def _get_df_pos_long(df=None, y="category", col_value=None):
@@ -98,7 +112,7 @@ def _feature_value(df_parts=None, split=None, dict_scale=None, accept_gaps=False
     """Helper function to create feature values for feature matrix"""
     sp = Split()
     # Get vectorized split function
-    split_type, split_kwargs = ut.check_split(split=split)
+    split_type, split_kwargs = _get_split_info(split=split)
     f_split = getattr(sp, split_type.lower())
     # Vectorize split function using anonymous function
     vf_split = np.vectorize(lambda x: f_split(seq=x, **split_kwargs))
@@ -126,7 +140,7 @@ def _feature_matrix(feat_names, dict_all_scales, df_parts, accept_gaps):
 # II Main Functions
 def get_list_parts(features=None):
     """Get list of parts to cover all features"""
-    features = ut.check_list_like(name="features", val=features, convert=True, accept_str=True)
+    features = [features] if type(features) is str else features
     # Features are PART-SPLIT-SCALE combinations
     list_parts = list(set([x.split("-")[0].lower() for x in features]))
     return list_parts
@@ -135,17 +149,16 @@ def get_list_parts(features=None):
 def get_df_parts_(df_seq=None, list_parts=None, jmd_n_len=None, jmd_c_len=None):
     """Create DataFrame with sequence parts"""
     seq_info_in_df = set(ut.COLS_SEQ_TMD_POS_KEY).issubset(set(df_seq))
-    pa = Parts()
     dict_parts = {}
     for i, row in df_seq.iterrows():
         entry = row[ut.COL_ENTRY]
         if jmd_c_len is not None and jmd_n_len is not None and seq_info_in_df:
-            seq, start, stop = row[ut.COLS_SEQ_TMD_POS_KEY].values
-            parts = pa.create_parts(seq=seq, tmd_start=start, tmd_stop=stop, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
-            jmd_n, tmd, jmd_c = parts.jmd_n, parts.tmd, parts.jmd_c
+            seq, tmd_start, tmd_stop = row[ut.COLS_SEQ_TMD_POS_KEY].values
+            jmd_n, tmd, jmd_c = create_parts(seq=seq, tmd_start=tmd_start, tmd_stop=tmd_stop,
+                                             jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         else:
             jmd_n, tmd, jmd_c = row[ut.COLS_PARTS].values
-        dict_part_seq = pa.get_dict_part_seq(tmd_seq=tmd, jmd_n_seq=jmd_n, jmd_c_seq=jmd_c)
+        dict_part_seq = ut.get_dict_part_seq(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c)
         dict_part_seq = {part: dict_part_seq[part] for part in list_parts}
         dict_parts[entry] = dict_part_seq
     df_parts = pd.DataFrame.from_dict(dict_parts).T
@@ -156,7 +169,7 @@ def get_df_parts_(df_seq=None, list_parts=None, jmd_n_len=None, jmd_c_len=None):
 
 def get_positions_(features=None, start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10):
     """Create list with positions for given feature names"""
-    features = ut.check_list_like(name="features", val=features, convert=True, accept_str=True)
+    features = [features] if type(features) is str else features
     dict_part_pos = _get_dict_part_pos(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
     feat_positions = _get_positions(dict_part_pos=dict_part_pos, features=features)
     return feat_positions
@@ -164,7 +177,7 @@ def get_positions_(features=None, start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=1
 
 def get_amino_acids_(features=None, tmd_seq="", jmd_n_seq="", jmd_c_seq=""):
     """"""
-    features = ut.check_list_like(name="features", val=features, convert=True, accept_str=True)
+    features = [features] if type(features) is str else features
     pos = get_positions_(features=features, tmd_len=len(tmd_seq), jmd_n_len=len(jmd_n_seq),
                          jmd_c_len=len(jmd_c_seq), start=0)
     seq = jmd_n_seq + tmd_seq + jmd_c_seq
@@ -177,7 +190,7 @@ def get_amino_acids_(features=None, tmd_seq="", jmd_n_seq="", jmd_c_seq=""):
 def get_feature_matrix_(features=None, df_parts=None, df_scales=None, accept_gaps=False, n_jobs=None):
     """Create feature matrix for given feature ids and sequence parts."""
     # Create feature matrix using parallel processing
-    features = ut.check_list_like(name="features", val=features, convert=True, accept_str=True)
+    features = [features] if type(features) is str else features
     dict_all_scales = _get_dict_all_scales(df_scales=df_scales)
     n_processes = min([os.cpu_count(), len(features)]) if n_jobs is None else n_jobs
     features = features.to_list() if isinstance(features, pd.Series) else features

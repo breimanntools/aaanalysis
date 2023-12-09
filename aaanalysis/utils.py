@@ -7,6 +7,7 @@ import platform
 from functools import lru_cache
 import pandas as pd
 import numpy as np
+import warnings
 
 from .config import options
 
@@ -58,11 +59,12 @@ LIST_PARTS = ["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
 STR_SEGMENT = "Segment"
 STR_PATTERN = "Pattern"
 STR_PERIODIC_PATTERN = "PeriodicPattern"
+LIST_SPLIT_TYPES = [STR_SEGMENT, STR_PATTERN, STR_PERIODIC_PATTERN]
 SPLIT_DESCRIPTION = f"\n a) {STR_SEGMENT}(i-th,n_split)" \
                     f"\n b) {STR_PATTERN}(N/C,p1,p2,...,pn)" \
                     f"\n c) {STR_PERIODIC_PATTERN}(N/C,i+step1/step2,start)" \
                     f"\nwith i-th<=n_split, and p1<p2<...<pn," \
-                    f"\nwhere all numbers should be non-negative integers, and N/C means N or C."
+                    f" where all numbers should be non-negative integers, and N/C means 'N' or 'C'."
 
 # Scale dataset names
 STR_SCALES = "scales"   # Min-max normalized scales (from AAontology)
@@ -131,9 +133,9 @@ COL_FEAT_IMPORT = "feat_importance"
 COL_FEAT_IMP_STD = "feat_importance_std"
 COL_FEAT_IMPACT = "feat_impact"
 
-COLS_CPP_SCALES = [COL_CAT, COL_SUBCAT, COL_SCALE_NAME]
-COLS_CPP_VALUES = [COL_ABS_AUC, COL_ABS_MEAN_DIF, COL_MEAN_DIF, COL_STD_TEST, COL_STD_REF,
-                   COL_FEAT_IMPORT, COL_FEAT_IMP_STD, COL_FEAT_IMPACT]
+COLS_FEAT_SCALES = [COL_CAT, COL_SUBCAT, COL_SCALE_NAME]
+COLS_FEAT_STAT = [COL_ABS_AUC, COL_ABS_MEAN_DIF, COL_MEAN_DIF, COL_STD_TEST, COL_STD_REF]
+COLS_FEAT_WEIGHT = [COL_FEAT_IMPORT, COL_FEAT_IMP_STD, COL_FEAT_IMPACT]
 DICT_VALUE_TYPE = {COL_ABS_AUC: "mean",
                    COL_ABS_MEAN_DIF: "mean",
                    COL_MEAN_DIF: "mean",
@@ -192,6 +194,34 @@ STR_DICT_CAT = "DICT_CAT"
 
 
 # I Helper functions
+def _retrieve_string_starting_at_end(seq, start=None, end=None):
+    """Reverse_string_start_end"""
+    def reverse_string(s):
+        return s[::-1]
+    reversed_seq = reverse_string(seq)
+    reversed_seq_part = reversed_seq[start:end]
+    seq = reverse_string(reversed_seq_part)
+    return seq
+
+
+def get_dict_part_seq(tmd=None, jmd_n=None, jmd_c=None):
+    """Get dictionary for part to sequence"""
+    # Length of extending part (starting from C and N terminal part of TMD)
+    ext_len = options["ext_len"]
+    tmd_n = tmd[0:round(len(tmd) / 2)]
+    tmd_c = tmd[round(len(tmd) / 2):]
+    # Historical feature parts (can be set via aa.options["ext_len"] = 4
+    ext_n = _retrieve_string_starting_at_end(jmd_n, start=0, end=ext_len)  # helix_stop motif for TMDs
+    ext_c = jmd_c[0:ext_len]  # anchor for TMDs
+    tmd_e = ext_n + tmd + ext_c
+    part_seq_dict = {'tmd': tmd, 'tmd_e': tmd_e,
+                     'tmd_n': tmd_n, 'tmd_c': tmd_c,
+                     'jmd_n': jmd_n, 'jmd_c': jmd_c,
+                     'ext_n': ext_n, 'ext_c': ext_c,
+                     'tmd_jmd': jmd_n + tmd + jmd_c,
+                     'jmd_n_tmd_n': jmd_n + tmd_n, 'tmd_c_jmd_c': tmd_c + jmd_c,
+                     'ext_n_tmd_n': ext_n + tmd_n, 'tmd_c_ext_c': tmd_c + ext_c}
+    return part_seq_dict
 
 
 # II Main functions
@@ -220,51 +250,35 @@ def check_verbose(verbose):
     return verbose
 
 
-# TODO check each of this checking function (make simpler)
-# Check CPP feature information
-def _check_seq(seq, len_, name_seq, name_len):
-    """Check sequence with should be rather flexible to except various types,
-    such as strings, lists, or numpy arrays"""
-    if seq is None:
-        return len_
-    else:
-        # Waring sequence length doesn't match the corresponding length parameter
-        if len_ is not None and len(seq) < len_:
-            raise ValueError(f"The length of {name_seq} ({len(seq)}) should be >= {name_len} ({len_}).")
-        return len(seq)
-
-
-def _check_ext_len(jmd_n_len=None, jmd_c_len=None, ext_len=None):
-    """"""
-    if ext_len is not None and ext_len != 0:
-        if jmd_n_len is None:
-            raise ValueError(f"'jmd_n_len' should not be None if 'ext_len' ({ext_len}) is given")
-        if jmd_c_len is None:
-            raise ValueError(f"'jmd_c_len' should not be None if 'ext_len' ({ext_len}) is given")
-        if jmd_n_len is not None and ext_len > jmd_n_len:
-            raise ValueError(f"'ext_len' ({ext_len}) must be <= length of jmd_n ({jmd_n_len})")
-        if jmd_c_len is not None and ext_len > jmd_c_len:
-            raise ValueError(f"'ext_len' ({ext_len}) must be <= length of jmd_c ({jmd_c_len})")
-
-
-def check_parts_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None,
-                    tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, accept_tmd_none=False):
+# Check parts
+def check_parts_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None, accept_none_len=False,
+                    tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None):
     """Check length parameters and if they are matching with sequences if provided"""
-    ext_len = options["ext_len"]
+    tmd_seq = check_str(name="tmd_seq", val=tmd_seq, accept_none=True, return_empty_string=True)
+    jmd_n_seq = check_str(name="jmd_n_seq", val=jmd_n_seq, accept_none=True, return_empty_string=True)
+    jmd_c_seq = check_str(name="jmd_c_seq", val=jmd_c_seq, accept_none=True, return_empty_string=True)
+    # If sequences is not None, set length to sequence length
+    if len(jmd_n_seq + tmd_seq + jmd_c_seq) > 0:
+        tmd_len, jmd_n_len, jmd_c_len = len(tmd_seq), len(jmd_n_seq), len(jmd_c_seq)
+    else:
+        tmd_seq = jmd_n_seq = jmd_c_seq = None
     # Check lengths
-    tmd_seq_given = tmd_seq is not None or accept_tmd_none  # If tmd_seq is given, tmd_len can be None
-    check_number_range(name="tmd_len", val=tmd_len, accept_none=tmd_seq_given, min_val=1, just_int=True)
-    check_number_range(name="jmd_n_len", val=jmd_n_len, accept_none=True, min_val=0, just_int=True)
-    check_number_range(name="jmd_c_len", val=jmd_c_len, accept_none=True, min_val=0, just_int=True)
+    ext_len = options["ext_len"]
+    check_number_range(name="tmd_len", val=tmd_len, accept_none=accept_none_len, min_val=1, just_int=True)
+    check_number_range(name="jmd_n_len", val=jmd_n_len, accept_none=accept_none_len, min_val=0, just_int=True)
+    check_number_range(name="jmd_c_len", val=jmd_c_len, accept_none=accept_none_len, min_val=0, just_int=True)
     check_number_range(name="ext_len", val=ext_len, min_val=0, accept_none=True, just_int=True)
-    # Check if lengths and sequences match (any sequence is excepted, strings, lists, arrays)
-    tmd_len = _check_seq(tmd_seq, tmd_len, "tmd_seq", "tmd_len")
-    jmd_n_len = _check_seq(jmd_n_seq, jmd_n_len, "jmd_n_seq", "jmd_n_len")
-    jmd_c_len = _check_seq(jmd_c_seq, jmd_c_len, "jmd_c_seq", "jmd_c_len")
-    # Check if lengths are matching
-    _check_ext_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, ext_len=ext_len)
+    # Check len_ext
+    if ext_len is not None and ext_len != 0:
+        # Check if ext_len exceeds either jmd_n_len or jmd_c_len
+        if ext_len > jmd_n_len:
+            raise ValueError(f"'ext_len' ({ext_len}) must be <= length of jmd_n ({jmd_n_len})")
+        if ext_len > jmd_c_len:
+            raise ValueError(f"'ext_len' ({ext_len}) must be <= length of jmd_c ({jmd_c_len})")
+    # Create output dictionaries
     args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
-    return args_len
+    args_seq = dict(tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
+    return args_len, args_seq
 
 
 def check_list_parts(list_parts=None, all_parts=False):
@@ -284,70 +298,172 @@ def check_list_parts(list_parts=None, all_parts=False):
     return list_parts
 
 
-
-
-
-def check_split(split=None):
-    """Check split and convert split name to split type and split arguments"""
-    if type(split) is not str:
-        raise ValueError("'split' must have type 'str'")
-    split = split.replace(" ", "")  # remove whitespace
-    try:
-        # Check Segment
-        if STR_SEGMENT in split:
-            split_type = STR_SEGMENT
-            i_th, n_split = [int(x) for x in split.split("(")[1].replace(")", "").split(",")]
-            # Check if values non-negative integers
-            for name, val in zip(["i_th", "n_split"], [i_th, n_split]):
-                check_number_range(name=name, val=val, just_int=True)
-            # Check if i-th and n_split are valid
-            if i_th > n_split:
-                raise ValueError
-            split_kwargs = dict(i_th=i_th, n_split=n_split)
-        # Check PeriodicPattern
-        elif STR_PERIODIC_PATTERN in split:
-            split_type = STR_PERIODIC_PATTERN
-            start = split.split("i+")[1].replace(")", "").split(",")
-            step1, step2 = [int(x) for x in start.pop(0).split("/")]
-            start = int(start[0])
-            # Check if values non-negative integers
-            for name, val in zip(["start", "step1", "step2"], [start, step1, step2]):
-                check_number_range(name=name, val=val, just_int=True)
-            # Check if terminus valid
-            terminus = split.split("i+")[0].split("(")[1].replace(",", "")
-            if terminus not in ["N", "C"]:
-                raise ValueError
-            split_kwargs = dict(terminus=terminus, step1=step1, step2=step2, start=start)
-        # Check pattern
-        elif STR_PATTERN in split:
-            split_type = STR_PATTERN
-            list_pos = split.split("(")[1].replace(")", "").split(",")
-            terminus = list_pos.pop(0)
-            # Check if values non-negative integers
-            list_pos = [int(x) for x in list_pos]
-            for val in list_pos:
-                name = "pos" + str(val)
-                check_number_range(name=name, val=val, just_int=True)
-            # Check if terminus valid
-            if terminus not in ["N", "C"]:
-                raise ValueError
-            # Check if arguments are in order
-            if not sorted(list_pos) == list_pos:
-                raise ValueError
-            split_kwargs = dict(terminus=terminus, list_pos=list_pos)
-        else:
-            raise ValueError
-        return split_type, split_kwargs
-    except:
-        error = "Wrong split annotation for '{}'. Splits should be denoted as follows:".format(split, SPLIT_DESCRIPTION)
+# Check features
+def _check_part(part=None, feature=None, list_parts=None):
+    """Check if feature PART is valid"""
+    list_parts = check_list_like(name="list_parts", val=list_parts, accept_str=True)
+    list_parts = [x.lower() for x in list_parts]
+    part = part.replace(" ", "")  # remove whitespace
+    error = f"Wrong 'PART' for '{feature}'. Features should be 'PART-SPLIT-SCALE', with parts from: {list_parts}."
+    if part.lower() in LIST_ALL_PARTS:
+        error += f"\n Or include '{part.lower()}' in parts."
+    if part.lower() not in list_parts:
         raise ValueError(error)
 
 
+def _check_split(split=None, feature=None):
+    """Check feature SPLIT has valid form"""
+    split = split.replace(" ", "")  # remove whitespace
+    error = f"Wrong 'SPLIT' for '{feature}'. Features should be 'PART-SPLIT-SCALE', with splits denoted as follows: {SPLIT_DESCRIPTION}"
+    # Check Segment
+    if STR_SEGMENT in split:
+        try:
+            i_th, n_split = [int(x) for x in split.split("(")[1].replace(")", "").split(",")]
+        except:
+            error += "\n Error: Wrong Segment."
+            raise ValueError(error)
+        # Check if values non-negative integers
+        for name, val in zip(["i_th", "n_split"], [i_th, n_split]):
+            check_number_range(name=name, val=val, just_int=True)
+        # Check if i-th and n_split are valid
+        if i_th > n_split:
+            error += "\n Error: i-th segment should be smaller than 'n_splits'."
+            raise ValueError(error)
+    # Check PeriodicPattern
+    elif STR_PERIODIC_PATTERN in split:
+        try:
+            start = split.split("i+")[1].replace(")", "").split(",")
+            step1, step2 = [int(x) for x in start.pop(0).split("/")]
+            start = int(start[0])
+        except:
+            error += "\n Error: Wrong PeriodicPattern."
+            raise ValueError(error)
+        # Check if values non-negative integers
+        for name, val in zip(["start", "step1", "step2"], [start, step1, step2]):
+            check_number_range(name=name, val=val, min_val=1, just_int=True)
+        # Check if terminus valid
+        terminus = split.split("i+")[0].split("(")[1].replace(",", "")
+        if terminus not in ["N", "C"]:
+            error += "\n Error: Terminus should be 'N' or 'C'."
+            raise ValueError(error)
+    # Check pattern (must be after PeriodicPattern due to string matching)
+    elif STR_PATTERN in split:
+        try:
+            list_pos = split.split("(")[1].replace(")", "").split(",")
+            terminus = list_pos.pop(0)
+            list_pos = [int(x) for x in list_pos]
+        except:
+            error += "\n Error: Wrong Pattern."
+            raise ValueError(error)
+        # Check if contain at least one position
+        if len(list_pos) < 1:
+            error += "\n Error: Steps should contain at least 1 element."
+            raise ValueError(error)
+        # Check if values non-negative integers
+        for val in list_pos:
+            name = "pos" + str(val)
+            check_number_range(name=name, val=val, min_val=1, just_int=True)
+        # Check if terminus valid
+        if terminus not in ["N", "C"]:
+            error += "\n Error: Terminus should be 'N' or 'C'."
+            raise ValueError(error)
+        # Check if arguments are in order
+        if not sorted(list_pos) == list_pos:
+            error += "\n Error: Positions are in wrong order."
+            raise ValueError(error)
+    else:
+        raise ValueError(error)
+
+def _check_scale(scale=None, feature=None, list_scales=None):
+    """"""
+    list_scales = check_list_like(name="list_scales", val=list_scales, accept_str=True)
+    if list_scales is not None:
+        error = f"Wrong 'SCALE' for '{feature}'. Features should be 'PART-SPLIT-SCALE', with scales from: {LIST_ALL_PARTS}"
+        if scale not in list_scales:
+            raise ValueError(error)
+
+
+def check_features(features=None, list_parts=None, list_scales=None):
+    """Check if feature names are valid for list of parts  and df_scales
+    """
+    features = check_list_like(name="features", val=features, accept_none=False, accept_str=True, convert=True)
+    list_parts = check_list_parts(list_parts=list_parts, all_parts=True)
+    # Check elements of features list
+    features_wrong_n_components = [x for x in features if type(x) is not str or len(x.split("-")) != 3]
+    if len(features_wrong_n_components) > 0:
+        error = (f"Following elements from 'features' are not valid: {features_wrong_n_components}"
+                 f"\n  Form of features should be 'PART-SPLIT-SCALE'")
+        raise ValueError(error)
+    # Check part, split, and scale
+    for feature in features:
+        part, split, scale = feature.split("-")
+        _check_part(part=part, feature=feature, list_parts=list_parts)
+        _check_split(split=split, feature=feature)
+        _check_scale(scale=scale, feature=feature, list_scales=list_scales)
+    return features
+
+
+# Check matching features with parts
+def _get_min_pos_split(split=None):
+    """"""
+    if STR_SEGMENT in split:
+        n_min = int(split.split(",")[1].replace(")", ""))
+    elif STR_PERIODIC_PATTERN in split:
+        n_min = int(split.split(",")[-1].replace(")", ""))
+    elif STR_PERIODIC_PATTERN:
+        n_min = int(split.split(",")[1].replace(")", ""))
+    else:
+        raise ValueError(f"Wrong 'split' ({split})")
+    return n_min
+
+
+def check_match_features_seq_parts(features=None, tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None,
+                                   tmd_len=20, jmd_n_len=10, jmd_c_len=10):
+    """Check if sequence lengths do match with length requirements of features"""
+    # Check match of part length and features
+    if None in [tmd_seq, jmd_n_seq, jmd_c_seq] or len(jmd_n_seq + tmd_seq + jmd_c_seq) == 0:
+        dict_part_seq = get_dict_part_seq(tmd=list(range(0, tmd_len)),
+                                          jmd_c=list(range(0, jmd_c_len)),
+                                          jmd_n=list(range(0, jmd_n_len)))
+        for feature in features:
+            part, split, scale = feature.split("-")
+            n_min = _get_min_pos_split(split=split)
+            seq = dict_part_seq[part.lower()]
+            if len(seq) < n_min:
+                raise ValueError(f"Sequence length (n={len(seq)}) too short for '{feature}' feature (n_min={n_min})")
+    # Check match of sequence part length and features
+    else:
+        dict_part_seq = get_dict_part_seq(tmd=tmd_seq, jmd_c=jmd_c_seq, jmd_n=jmd_n_seq)
+        for feature in features:
+            part, split, scale = feature.split("-")
+            n_min = _get_min_pos_split(split=split)
+            seq = dict_part_seq[part.lower()]
+            if len(seq) < n_min:
+                raise ValueError(
+                    f"Sequence 'part' ({seq}, n={len(seq)}) too short for '{feature}' feature (n_min={n_min})")
+
+
+def check_match_features_df_parts(features=None, df_parts=None):
+    """Check if df_parts does match with length requirements of features"""
+    for feature in features:
+        part, split, scale = feature.split("-")
+        n_min = _get_min_pos_split(split=split)
+        if any(df_parts[part.lower()].map(len) < n_min):
+            mask =  df_parts[part.lower()].map(len) < n_min
+            list_seq = df_parts[mask][part.lower()].to_list()
+            if len(list_seq) == 1:
+                seq = list_seq[0]
+                raise ValueError(f"Sequence 'part' ('{seq}', n={len(seq)}) is too short for '{feature}' feature (n_min={n_min})")
+            else:
+                raise ValueError(
+                    f"For '{feature}' feature (n_min={n_min}), following sequence 'parts' are too short: {list_seq}")
+
+
+# TODO check each of this checking function (make simpler)
 # Check key dataframes using constants and general checking functions
 # df_seq, df_parts, df_scales, df_cat, df_feat, and features
 def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     """Get features from df"""
-    # TODO check
     if df_seq is None or not isinstance(df_seq, pd.DataFrame):
         raise ValueError("Type of 'df_seq' ({}) must be pd.DataFrame".format(type(df_seq)))
     if COL_ENTRY not in list(df_seq):
@@ -413,10 +529,9 @@ def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
 def check_df_parts(df_parts=None, verbose=True):
     """Check if df_parts is a valid input"""
     if df_parts is None:
-        warning = "Warning 'df_part' should just be None if you want to use CPP for plotting of already existing features"
+        warning = "'df_part' should just be None if you want to use CPP for plotting of already existing features"
         if verbose:
-            print(warning)
-        #raise ValueError("'df_part' should not be None")
+            warnings.warn(warning)
     else:
         if not isinstance(df_parts, pd.DataFrame):
             raise ValueError(f"'df_parts' ({type(df_parts)}) must be type pd.DataFrame")
@@ -515,79 +630,22 @@ def check_df_cat(df_cat=None, df_scales=None, accept_none=True, verbose=True):
             print(f"Warning: {str_warning}")
     return df_cat, df_scales
 
-# TODO check
-def check_df_feat(df_feat=None, df_cat=None):
+def check_df_feat(df_feat=None, df_cat=None, list_parts=None):
     """Check if df not empty pd.DataFrame"""
     # Check df
-    if not isinstance(df_feat, pd.DataFrame):
-        raise ValueError(f"'df_feat' should be type pd.DataFrame (not {type(df_feat)})")
+    cols_feat = COLS_FEAT_SCALES + COLS_FEAT_STAT + [COL_FEATURE]
+    check_df(df=df_feat, name="df_feat", cols_requiered=cols_feat)
     if len(df_feat) == 0 or len(list(df_feat)) == 0:
         raise ValueError("'df_feat' should be not empty")
-    # Check if feature column in df_feat
-    if COL_FEATURE not in df_feat:
-        raise ValueError(f"'{COL_FEATURE}' must be column in 'df_feat'")
-    list_feat = list(df_feat[COL_FEATURE])
-    for feat in list_feat:
-        if feat.count("-") != 2:
-            raise ValueError(f"'{feat}' is no valid feature")
+    # Check features
+    features = list(df_feat[COL_FEATURE])
+    check_features(features=features, list_parts=list_parts)
     # Check if df_feat matches df_cat
     if df_cat is not None:
-        scales = set([x.split("-")[2] for x in list_feat])
+        scales = set([x.split("-")[2] for x in features])
         list_scales = list(df_cat[COL_SCALE_ID])
         missing_scales = [x for x in scales if x not in list_scales]
         if len(missing_scales) > 0:
             raise ValueError(f"Following scales occur in 'df_feat' but not in 'df_cat': {missing_scales}")
     return df_feat.copy()
 
-
-def check_features(features=None, parts=None, df_scales=None):
-    """Check if feature names are valid for df_parts and df_scales
-
-    Parameters
-    ----------
-    features: str, list of strings, pd.Series
-    parts: list or DataFrame with parts, optional
-    df_scales: DataFrame with scales, optional
-    """
-    if isinstance(features, str):
-        features = [features]
-    if isinstance(features, pd.Series):
-        features = list(features)
-    # Check type of features list
-    if features is None or type(features) is not list:
-        error = f"'features' ({type(features)}) should be given as list" \
-                f" of feature names with following form:\n  PART-SPLIT-SCALE"
-        raise ValueError(error)
-    # Check elements of features list
-    feat_with_wrong_n_components = [x for x in features if type(x) is not str or len(x.split("-")) != 3]
-    if len(feat_with_wrong_n_components) > 0:
-        error = "Following elements from 'features' are not valid: {}" \
-                "\n  Form of feature names should be PART-SPLIT-SCALE ".format(feat_with_wrong_n_components)
-        raise ValueError(error)
-    # Check splits
-    list_splits = list(set([x.split("-")[1] for x in features]))
-    for split in list_splits:
-        check_split(split=split)
-    # Check parts
-    list_parts = list(set([x.split("-")[0] for x in features]))
-    if parts is None:
-        wrong_parts = [x.lower() for x in list_parts if x.lower() not in LIST_ALL_PARTS]
-        if len(wrong_parts) > 0:
-            error = f"Following parts from 'features' are not valid {wrong_parts}. " \
-                    f"Chose from following: {LIST_ALL_PARTS}"
-            raise ValueError(error)
-    if parts is not None:
-        if isinstance(parts, pd.DataFrame):
-            parts = list(parts)
-        if not isinstance(parts, list):
-            parts = list(parts)
-        missing_parts = [x.lower() for x in list_parts if x.lower() not in parts]
-        if len(missing_parts) > 0:
-            raise ValueError("Following parts from 'features' are not in 'df_parts: {}".format(missing_parts))
-    # Check scales
-    if df_scales is not None:
-        list_scales = list(set([x.split("-")[2] for x in features]))
-        missing_scales = [x for x in list_scales if x not in list(df_scales)]
-        if len(missing_scales) > 0:
-            raise ValueError("Following scales from 'features' are not in 'df_scales: {}".format(missing_scales))
-    return features

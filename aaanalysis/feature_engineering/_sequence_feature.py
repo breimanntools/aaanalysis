@@ -2,7 +2,6 @@
 This is a script for the frontend of the SequenceFeature class, a supportive class for the CPP feature engineering.
 """
 from typing import Optional, Union, List
-import math
 import warnings
 import pandas as pd
 
@@ -60,33 +59,7 @@ def _get_missing_elements(df_parts=None, scale_elements=None, accept_gaps=False)
     return missing_elements
 
 
-def check_dict_scale(dict_scale=None, df_parts=None, accept_gaps=False):
-    """Check if dict_scale is dictionary with numerical values"""
-    if not isinstance(dict_scale, dict):
-        raise ValueError("'dict_scale' must be a dictionary with values of type float or int")
-    if accept_gaps:
-        f = lambda key: type(dict_scale[key]) not in [float, int]
-    else:
-        f = lambda key: type(dict_scale[key]) not in [float, int] or math.isnan(dict_scale[key])
-    wrong_type = [(key, dict_scale[key]) for key in dict_scale if f(key)]
-    if len(wrong_type) > 0:
-        error = "'dict_scale' must be a dictionary with values of type float or int." \
-                "\n Following key-value pairs are not accepted: {}".format(wrong_type)
-        raise ValueError(error)
-    # Check matching of scale to sequences of df_parts
-    args = dict(df_parts=df_parts, scale_elements=list(dict_scale.keys()), accept_gaps=accept_gaps)
-    missing_elements = _get_missing_elements(**args)
-    if len(missing_elements) > 0:
-        raise ValueError(f"Scale does not match for following sequence element: {missing_elements}")
-
-
 # Check matching functions
-# TODO
-def check_match_features_parts(features=None, tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None):
-    """"""
-    list_parts = list(set([f.split("-")[0] for f in features]))
-
-
 def check_match_df_scales_df_parts(df_scales=None, df_parts=None, accept_gaps=False):
     """Check if df_scales has values for all Letters in sequences from df_parts"""
     args = dict(df_parts=df_parts, scale_elements=list(df_scales.index), accept_gaps=accept_gaps)
@@ -155,11 +128,11 @@ class SequenceFeature:
 
     # Part and Split methods
     @staticmethod
-    def get_df_parts(df_seq=None,
-                     list_parts=None,
-                     jmd_n_len=None,
-                     jmd_c_len=None,
-                     all_parts=True
+    def get_df_parts(df_seq: pd.DataFrame = None,
+                     list_parts: Optional[Union[str, List[str]]] = None,
+                     all_parts = True,
+                     jmd_n_len: Optional[int] = None,
+                     jmd_c_len: Optional[int] = None,
                      ) -> pd.DataFrame:
         """Create DataFrane with sequence parts.
 
@@ -192,8 +165,7 @@ class SequenceFeature:
 
         """
         # Check input
-        # TODO check if cols values for tmd, jmd_n, jmd_c and start/stop are okay
-        ut.check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_tmd_none=True)
+        ut.check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_none_len=True)
         df_seq = ut.check_df_seq(df_seq=df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         list_parts = ut.check_list_parts(list_parts=list_parts, all_parts=all_parts)
         # Create df parts
@@ -202,25 +174,27 @@ class SequenceFeature:
         return df_parts
 
     @staticmethod
-    def get_split_kws(n_split_min=1,
-                      n_split_max=15,
-                      steps_pattern=None,
-                      n_min=2,
-                      n_max=4,
-                      len_max=15,
-                      steps_periodicpattern=None,
-                      split_types=None
+    def get_split_kws(split_types: Union[str, List[str]] = None,
+                      n_split_min: int = 1,
+                      n_split_max: int = 15,
+                      steps_pattern: int = None,
+                      n_min: int = 2,
+                      n_max: int = 4,
+                      len_max: int = 15,
+                      steps_periodicpattern: int = None,
                       ) -> dict:
         """Create dictionary with kwargs for three split types: Segment, Pattern, PeriodicPattern
 
         Parameters
         ----------
+        split_types: list of strings, default = [``Segment``, ``Pattern``, ``PeriodicPattern``]
+            Split types for which parameter dictionary should be generated.
         n_split_min: int, default = 1
-            Number greater 0 to specify the greatest Segment (e.g., 1/1 TMD alias whole TMD sequence).
+            Number to specify the greatest ``Segment``. Should be > 0.
         n_split_max: int, default = 15,
-            Number greater n_split_min to specfiy the smallest Segment (e.g., 1/15 TMD).
+            Number to specify the smallest ``Segment``. Should be > ``n_split_min``.
         steps_pattern: list of integers, default = [3, 4, 6, 7, 8]
-            Possible steps sizes for Pattern.
+            Possible steps sizes for ``Pattern``.
         n_min: int, default = 2
             Minimum number of steps for Pattern.
         n_max: int, default = 4
@@ -229,23 +203,23 @@ class SequenceFeature:
             Maximum length in amino acid position for Pattern by varying start position.
         steps_periodicpattern: list of integers, default = [3, 4]
             Step sizes for PeriodicPattern.
-        split_types: list of strings, default = ["Segment", "Pattern" "PeriodicPattern"]
-            Split types for which paramter dictionary should be generated.
+
 
         Returns
         -------
         split_kws: dict
             Nested dictionary with parameters for chosen split_types:
 
-            a) Segment: {n_split_min:1, n_split_max=15}
-            b) Pattern: {steps=[3, 4], n_min=2, n_max=4, len_max=15}
-            c) PeriodicPattern: {steps=[3, 4]}
+            - Segment: {n_split_min:1, n_split_max=15}
+            - Pattern: {steps=[3, 4], n_min=2, n_max=4, len_max=15}
+            - PeriodicPattern: {steps=[3, 4]}
 
         Examples
         --------
         .. include:: examples/sf_get_split_kws.rst
         """
         # Check input
+        # TODO Simplify by using check_split_kws HERE
         split_types = check_split_types(split_types=split_types)
         args_int = dict(n_split_min=n_split_min, n_split_max=n_split_max, n_min=n_min, n_max=n_max, len_max=len_max)
         check_split_int_args(kwargs_int=args_int)
@@ -325,16 +299,21 @@ class SequenceFeature:
         * The :meth:`aaanalysis.CPP.run` method for creating and filtering CPP features for discriminating between
           two groups of sequences.
         """
-        # TODO finish checking and docu
-        # Check input
+        # Load defaults
         if df_scales is None:
             df_scales = aa.load_scales()
         if df_cat is None:
             df_cat = aa.load_scales(name="scales_cat")
-        labels = ut.check_labels(labels=labels, vals_requiered=[0, 1])
-        ut.check_df_scales(df_scales=df_scales)
+        # Check input
         ut.check_df_parts(df_parts=df_parts)
-        features = ut.check_features(features=features, parts=df_parts, df_scales=df_scales)
+        ut.check_df_scales(df_scales=df_scales)
+        features = ut.check_features(features=features, list_parts=list(df_parts), list_scales=list(df_scales))
+        labels = ut.check_labels(labels=labels, vals_requiered=[0, 1])
+        ut.check_bool(name="accept_gaps", val=accept_gaps)
+        ut.check_bool(name="parametric", val=parametric)
+        ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
+        args_len, _ = ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+        ut.check_match_features_df_parts(features=features, df_parts=df_parts)
         check_match_df_scales_df_parts(df_scales=df_scales, df_parts=df_parts, accept_gaps=accept_gaps)
         # User warning
         if self.verbose:
@@ -358,9 +337,9 @@ class SequenceFeature:
         ----------
         features : `array-like, shape (n_features,)`
             Ids of features for which matrix of feature values should be created.
-        df_parts: :class:`pandas.DataFrame`
+        df_parts
             DataFrame with sequence parts.
-        df_scales: :class:`pandas.DataFrame`, optional
+        df_scales
             DataFrame with default amino acid scales.
         accept_gaps: bool, default ``False``
             Whether to accept missing values by enabling omitting for computations (if ``True``).
@@ -372,14 +351,17 @@ class SequenceFeature:
         feat_matrix: array-like or sparse matrix, shape (n_samples, n_features)
             Feature values of samples.
         """
-        # Check input
-        ut.check_number_range(name="j_jobs", val=n_jobs, accept_none=True, min_val=1, just_int=True)
+        # Load defaults
         if df_scales is None:
             df_scales = aa.load_scales()
+        # Check input
         ut.check_df_scales(df_scales=df_scales)
         ut.check_df_parts(df_parts=df_parts)
-        features = ut.check_features(features=features, parts=df_parts, df_scales=df_scales)
+        features = ut.check_features(features=features, list_parts=list(df_parts), list_scales=list(df_scales))
+        ut.check_match_features_df_parts(features=features, df_parts=df_parts)
+        ut.check_bool(name="accept_gaps", val=accept_gaps)
         check_match_df_scales_df_parts(df_scales=df_scales, df_parts=df_parts, accept_gaps=accept_gaps)
+        ut.check_number_range(name="j_jobs", val=n_jobs, accept_none=True, min_val=1, just_int=True)
         # User warning
         if self.verbose:
             warn_creation_of_feature_matrix(features=features, df_parts=df_parts)
@@ -393,9 +375,9 @@ class SequenceFeature:
 
     def get_features(self,
                      list_parts: List[str] = None,
+                     all_parts: bool = False,
                      split_kws: dict = None,
                      df_scales: Optional[pd.DataFrame] = None,
-                     all_parts: bool = False
                      ) -> List[str]:
         """Create list of all feature ids for given Parts, Splits, and Scales.
 
@@ -405,7 +387,7 @@ class SequenceFeature:
             Names of sequence parts which should be created (e.g., 'tmd').
         split_kws: dict, default = SequenceFeature.get_split_kws
             Nested dictionary with parameter dictionary for each chosen split_type.
-        df_scales: :class:`pandas.DataFrame`, default = SequenceFeature.load_scales
+        df_scales
             DataFrame with default amino acid scales.
         all_parts: bool, default = False
             Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.
@@ -416,15 +398,15 @@ class SequenceFeature:
             Ids of all possible features for combination of Parts, Splits, and Scales with form: PART-SPLIT-SCALE
 
         """
-        # Check input
-        list_parts = ut.check_list_parts(list_parts=list_parts, all_parts=all_parts)
-        check_split_kws(split_kws=split_kws)
-        ut.check_df_scales(df_scales=df_scales, accept_none=True)
         # Load defaults
         if df_scales is None:
             df_scales = aa.load_scales()
         if split_kws is None:
             split_kws = self.get_split_kws()
+        # Check input
+        list_parts = ut.check_list_parts(list_parts=list_parts, all_parts=all_parts)
+        check_split_kws(split_kws=split_kws)
+        ut.check_df_scales(df_scales=df_scales, accept_none=True)
         # Get features
         features = get_features_(list_parts=list_parts, split_kws=split_kws, df_scales=df_scales)
         return features
@@ -443,7 +425,7 @@ class SequenceFeature:
         ----------
         features : `array-like, shape (n_features,)`
             List of feature ids.
-        df_cat: :class:`pandas.DataFrame`, default = SequenceFeature.load_categories
+        df_cat
             DataFrame with default categories for physicochemical amino acid scales
         start
             Position label of first amino acid position (starting at N-terminus).
@@ -466,12 +448,15 @@ class SequenceFeature:
             - Pattern: [all positions]
             - PeriodicPattern: [first..step1/step2..last]
         """
-        # Check input
-
-        features = ut.check_features(features=features)
-        ut.check_df_cat(df_cat=df_cat)
+        # Load defaults
         if df_cat is None:
             df_cat = aa.load_scales(name=ut.STR_SCALE_CAT)
+        # Check input
+        features = ut.check_features(features=features)
+        ut.check_df_cat(df_cat=df_cat)
+        ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
+        args_len, _ = ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+        ut.check_match_features_seq_parts(features=features, **args_len)
         # Get feature names
         feat_names = get_feature_names_(features=features,
                                         df_cat=df_cat,
@@ -514,23 +499,23 @@ class SequenceFeature:
 
         Returns
         -------
-        feat_positions
-          List of positions for each feature.
+        list_pos | list_aa
+            List of positions or amino acids for each feature.
 
         """
         # Check input
         features = ut.check_features(features=features)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
-        ut.check_number_range(name="tmd_len", val=tmd_len, just_int=True, min_val=1)
-        ut.check_number_range(name="jmd_n_len", val=jmd_n_len, just_int=True, min_val=0)
-        ut.check_number_range(name="jmd_c_len", val=jmd_c_len, just_int=True, min_val=0)
-        ut.check_str(name="tmd_seq", val=tmd_seq, accept_none=True)
-        ut.check_str(name="jmd_n_seq", val=jmd_n_seq, accept_none=True)
-        ut.check_str(name="jmd_c_seq", val=jmd_c_seq, accept_none=True)
+        args_len, args_seq = ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
+                                                tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
+        ut.check_match_features_seq_parts(features=features, **args_seq, **args_len)
         # Get feature position
-        feat_positions = get_positions_(features=features, tmd_len=tmd_len,
-                                        jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
-        return feat_positions
+        if args_seq["tmd_seq"] is not None:
+            list_aa = get_amino_acids_(features=features, **args_seq)
+            return list_aa
+        else:
+            list_pos = get_positions_(features=features, start=start, **args_len)
+            return list_pos
 
     # TODO change against concrete function
     @staticmethod
@@ -545,13 +530,19 @@ class SequenceFeature:
                    normalize=False):
         """
         Create DataFrame of aggregated (mean or sum) feature values per residue position and scale.
-
-
         """
-        if col_value not in ut.COLS_CPP_VALUES:
-            raise ValueError(f"'col_value' {col_value} should be one of the following: {ut.COLS_CPP_VALUES}")
-        if col_scale not in ut.COLS_CPP_SCALES:
-            raise ValueError(f"'col_scale' {col_scale} should be one of the following: {ut.COLS_CPP_SCALES}")
+        # Check input
+        ut.check_list_parts(list_parts=list_parts)
+        ut.check_df_feat(df_feat=df_feat, list_parts=list_parts)
+        if col_scale not in ut.COLS_FEAT_SCALES:
+            raise ValueError(f"'col_scale' {col_scale} should be one of the following: {ut.COLS_FEAT_SCALES}")
+        cols_feat = ut.COLS_FEAT_STAT + ut.COLS_FEAT_WEIGHT
+        if col_value not in cols_feat:
+            raise ValueError(f"'col_value' {col_value} should be one of the following: {cols_feat}")
+        ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
+        args_len, _ = ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+        ut.check_match_features_seq_parts(features=df_feat[ut.COL_FEATURE], **args_len)
+        # Get df pos
         stop = start + jmd_n_len + tmd_len + jmd_c_len - 1
         value_type = ut.DICT_VALUE_TYPE[col_value]
         df_pos = get_df_pos_(df_feat=df_feat, y=col_scale, value_type=value_type, col_value=col_value,

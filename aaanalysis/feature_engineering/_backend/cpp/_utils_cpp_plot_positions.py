@@ -17,30 +17,6 @@ from ._utils_cpp_plot import get_optimal_fontsize, get_new_axis
 
 
 # I Helper Functions
-def check_positions(df=None):
-    """Check if 'positions' in df"""
-    if ut.COL_POSITION not in list(df):
-        raise ValueError("'positions' must be a column in 'df'")
-
-
-def check_value_type(value_type=None):
-    """Check if value_type 'count', 'mean', or 'sum'"""
-    list_value_type = ["count", "mean", "sum", "std"]
-    if value_type not in list_value_type:
-        raise ValueError(f"'value_type' ('{value_type}') must be one of following {list_value_type}")
-
-
-def check_col_value(df=None, col_value=None, value_type=None):
-    """Check if col_value in df"""
-    list_num_columns = [col for col, data_type in zip(list(df), df.dtypes) if data_type == float]
-    list_value_type = ["mean", "sum", "std"]
-    if col_value is not None and col_value not in list_num_columns:
-        raise ValueError("'col_value' ('{}') must be one of following columns with numerical values"
-                         " of 'df': {}".format(col_value, list_num_columns))
-    if col_value is not None and value_type is None:
-        raise ValueError("If 'col_value' is given, 'value_type' must be one of following: {}".format(list_value_type))
-
-
 # Positions
 def _get_df_pos_sign(df_feat=None, count=True, col_value=None, y="category", value_type="count",
                      start=None, stop=None, normalize_for_pos=False):
@@ -196,10 +172,6 @@ class PlotPositions:
     def get_df_pos(self, df_feat=None, df_cat=None, y="category", value_type="count",
                    col_value="mean_dif", normalize=False):
         """Get df_pos with values (e.g., counts or mean auc) for each feature (y) and positions (x)"""
-        # TODO put into frontend
-        ut.check_y_categorical(df=df_feat, y=y)
-        check_positions(df=df_feat)
-        check_col_value(df=df_feat, col_value=col_value, value_type=value_type)
         # TODO simplify
         # Adjust feature positionsR
         features = df_feat[ut.COL_FEATURE].to_list()

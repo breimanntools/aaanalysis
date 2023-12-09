@@ -12,16 +12,20 @@ import aaanalysis.utils as ut
 # TODO refactor check function into frontend
 def check_seq(seq=None):
     """Check if seq is not None"""
+    # TODO remove after testing
     if seq is None:
-        raise ValueError("'seq' should not be None")
+        raise ValueError(f"'seq' ({seq}) should not be None")
+    if len(seq) == 0:
+        raise ValueError(f"'seq' ({seq}) should not be empty string or list")
 
 
 def check_steps(steps=None):
     """Check steps and set to default if None"""
+    # TODO remove after testing
     if steps is None:
         steps = [3, 4]
     if type(steps) is not list or len(steps) < 2:
-        raise ValueError("'steps' must be a list with more than 2 elements")
+        raise ValueError("'steps' must be a list with >= 2 elements")
     return steps
 
 
@@ -43,14 +47,14 @@ def check_pattern(seq=None, terminus=None, list_pos=None):
         raise ValueError("'terminus' must be either 'N' or 'C'")
     # Check if minimum one position is specified
     if type(list_pos) is not list:
-        raise ValueError("'list_pos' must have type list")
+        raise ValueError(f"'list_pos' ({list_pos}) must have type list")
     if len(list_pos) < 0:
-        raise ValueError("'list_pos' must contain at least one element")
+        raise ValueError(f"'list_pos' ({list_pos}) must contain at least one element")
     # Check if arguments are in order
     if not sorted(list_pos) == list_pos:
-        raise ValueError("Pattern position should be given in ascending order")
+        raise ValueError(f"Pattern position ({list_pos})should be given in ascending order")
     if max(list_pos) > len(seq):
-        raise ValueError("Maximum pattern position should not exceed sequence length")
+        raise ValueError(f"Maximum pattern position ({list_pos}) should not exceed sequence length ({len(seq)})")
 
 
 def check_periodicpattern(seq=None, terminus=None, step1=None, step2=None, start=1):
@@ -64,8 +68,7 @@ def check_periodicpattern(seq=None, terminus=None, step1=None, step2=None, start
 
 # Pattern helper functions
 def _get_pattern_pos(steps=None, repeat=2, len_max=12):
-    """Get all possible positions from steps with number of repeats and maximum length using
-    itertools: https://docs.python.org/3/library/itertools.html"""
+    """Get all possible positions from steps with number of repeats and maximum length using itertools"""
     list_steps = itertools.product(steps, repeat=repeat)    # Cartesian product of all step combinations
     list_pos = [np.cumsum(s) for s in list_steps]       # Positions from steps
     # Get all possible pattern positions
@@ -172,7 +175,7 @@ class Split:
 
         Notes
         -----
-        PeriodicPatterns are denoted as 'Periodic_Pattern(N/C,i+step1/step2,start)',
+        PeriodicPatterns are denoted as 'periodicpattern(N/C,i+step1/step2,start)',
             where N or C specifies whether the pattern starts at the N- or C-terminus of the sequence,
             i+step1/step2 defines the alternating g step sizes, and start gives the start position beginning at 0.
 
