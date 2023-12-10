@@ -16,14 +16,14 @@ from ._utils_cpp_plot_positions import PlotPositions
 def _plot_cpp_shap_profile(ax=None, df_pos=None, ylim=None, plot_args=None):
     """"""
     df_bar = df_pos.T
-    df = pd.concat([df_bar[df_bar < 0].sum(axis=1), df_bar[df_bar > 0].sum(axis=1)]).to_frame(name="y")
+    df = pd.concat([df_bar[df_bar < 0].sum(axis=1), df_bar[df_bar > 0].sum(axis=1)]).to_frame(name="col_cat")
     df_pos = df_bar[df_bar > 0]
     df_pos = df_pos.sum(axis=1)
     df_neg = df_bar[df_bar < 0]
     df_neg = df_neg.sum(axis=1)
     ax = df_pos.plot(ax=ax, color=ut.COLOR_SHAP_POS, **plot_args)
     ax = df_neg.plot(ax=ax, color=ut.COLOR_SHAP_NEG, **plot_args)
-    ylim = ut.check_ylim(df=df, col_value="y", ylim=ylim, retrieve_plot=True)
+    ylim = ut.check_ylim(df=df, col_value="col_cat", ylim=ylim, retrieve_plot=True)
     plt.ylim(ylim)
     return ax
 
@@ -35,12 +35,12 @@ def _plot_cpp_profile(ax=None, df_pos=None, dict_color=None, add_legend=True, co
     handles, labels = pe.get_legend_handles_labels(dict_color=dict_color, list_cat=list(df_pos.index))
     df_bar = df_pos.T[labels]
     # TODO df_bar only valid for y = "categories"
-    df = pd.concat([df_bar[df_bar < 0].sum(axis=1), df_bar[df_bar > 0].sum(axis=1)]).to_frame(name="y")
+    df = pd.concat([df_bar[df_bar < 0].sum(axis=1), df_bar[df_bar > 0].sum(axis=1)]).to_frame(name="col_cat")
     color = dict_color if add_legend else color
     if not add_legend:
         df_bar = df_bar.sum(axis=1)
     ax = df_bar.plot(ax=ax, color=color, **plot_args)
-    ylim = ut.check_ylim(df=df, col_value="y", ylim=ylim)
+    ylim = ut.check_ylim(df=df, col_value="col_cat", ylim=ylim)
     plt.ylim(ylim)
     # Set legend
     if add_legend:
@@ -122,9 +122,9 @@ def plot_profile(figsize=(7, 5), ax=None, df_feat=None, df_cat=None,
     args_part_color = dict(tmd_color=tmd_color, jmd_color=jmd_color)
     args_seq_color = dict(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
     # Get df positions
-    y = "scale_name" if shap_plot else "category"   # Column name in df_feat for grouping.
+    col_cat = "scale_name" if shap_plot else "category"   # Column name in df_feat for grouping.
     pp = PlotPositions(**args_len, start=start)
-    df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat.copy(), y=y,
+    df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat.copy(), col_cat=col_cat,
                            col_value=col_value, value_type=value_type,
                            normalize=normalize)
     # Plotting

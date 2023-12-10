@@ -11,19 +11,19 @@ from aaanalysis.template_classes import Tool
 
 # Import supportive class (exception for importing from same sub-package)
 from ._sequence_feature import SequenceFeature
-from ._backend.check_feature import check_split_kws
+from ._backend.check_feature import (check_split_kws,
+                                     check_parts_len, check_match_features_seq_parts,
+                                     check_df_seq,
+                                     check_df_parts, check_match_df_parts_features, check_match_df_parts_list_parts,
+                                     check_df_scales, check_match_df_scales_features,
+                                     check_df_cat, check_match_df_cat_features,
+                                     check_match_df_parts_df_scales, check_match_df_scales_df_cat)
 from ._backend.cpp._utils_feature import get_positions_, add_scale_info_
 from ._backend.cpp.cpp_run import pre_filtering_info, pre_filtering, filtering, add_stat
 
 
 # I Helper Functions
 # Check for add methods
-def check_ref_group(ref_group=0, labels=None):
-    """Check if ref group class lable"""
-    if ref_group not in labels:
-        raise ValueError(f"'ref_group' ({ref_group}) not class label: {set(labels)}.")
-
-
 def check_sample_in_df_seq(sample_name=None, df_seq=None):
     """Check if sample name in df_seq"""
     list_names = list(df_seq[ut.COL_NAME])
@@ -76,22 +76,24 @@ class CPP(Tool):
         verbose
             If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if ``None``.
         """
-        # Load default scales if not specified
+        # Load defaults
         if split_kws is None:
             sf = SequenceFeature()
             split_kws = sf.get_split_kws()
         if df_scales is None:
-            df_scales = aa.load_scales()
+            df_scales = aa.load_scales(name=ut.STR_SCALES)
         if df_cat is None:
             df_cat = aa.load_scales(name=ut.STR_SCALE_CAT)
         # Check input
-        verbose = ut.check_verbose(verbose)
-        ut.check_df_parts(df_parts=df_parts, verbose=verbose)
-        df_parts = ut.check_df_scales(df_scales=df_scales, df_parts=df_parts, accept_gaps=accept_gaps)
-        df_cat, df_scales = ut.check_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
+        check_df_parts(df_parts=df_parts)
         check_split_kws(split_kws=split_kws)
+        check_df_scales(df_scales=df_scales)
+        check_df_cat(df_cat=df_cat)
+        ut.check_bool(name="accept_gaps", val=accept_gaps)
+        df_parts = check_match_df_parts_df_scales(df_parts=df_parts, df_scales=df_scales, accept_gaps=accept_gaps)
+        df_scales, df_cat = check_match_df_scales_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
         # Internal attributes
-        self._verbose = verbose
+        self._verbose = ut.check_verbose(verbose)
         self._accept_gaps = accept_gaps
         # Feature components: Scales + Part + Split
         self.df_cat = df_cat.copy()
@@ -178,12 +180,16 @@ class CPP(Tool):
         """
         # Check input
         labels = ut.check_labels(labels=labels, vals_requiered=[0, 1], len_requiered=len(self.df_parts))
-        args_len, _ = ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
         ut.check_number_range(name="n_pre_filter", val=n_pre_filter, min_val=1, accept_none=True, just_int=True)
         ut.check_number_range(name="pct_pre_filter", val=pct_pre_filter, min_val=5, max_val=100, just_int=True)
         ut.check_number_range(name="max_std_test", val=max_std_test, min_val=0.0, max_val=1.0, just_int=False)
         ut.check_number_range(name="max_overlap", val=max_overlap, min_val=0.0, max_val=1.0, just_int=False)
+        ut.check_number_range(name="max_cor", val=max_cor, min_val=0.0, max_val=1.0, just_int=False)
+        ut.check_bool(name="check_cat", val=check_cat)
+        ut.check_bool(name="parametric", val=parametric)
+        args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+        ut.check_number_range(name="n_process", val=n_processes, min_val=1, accept_none=True, just_int=True)
         # Settings and creation of objects
         args = dict(split_kws=self.split_kws, df_scales=self.df_scales)
         sf = SequenceFeature()
@@ -231,6 +237,7 @@ class CPP(Tool):
             ut.print_out(f"4. CPP returns df with {len(df_feat)} unique features including general information and statistics")
         return df_feat
 
-    # TODO get evaluation for any dataset for compelete
-    def eval(self, df_feat=None, features=None):
+    # TODO get evaluation for any dataset for complete
+    def eval(self, list_df_feat=None):
+        """"""
         pass

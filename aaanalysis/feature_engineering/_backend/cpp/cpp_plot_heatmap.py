@@ -124,10 +124,10 @@ def _set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws=None,
 
 
 # Add importance map (for feature map)
-def _add_importance_map(ax=None, df_feat=None, df_cat=None, start=None, args_len=None, y=None):
+def _add_importance_map(ax=None, df_feat=None, df_cat=None, start=None, args_len=None, col_cat=None):
     """"""
     pp = PlotPositions(**args_len, start=start)
-    df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat, y=y,
+    df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat, col_cat=col_cat,
                            col_value=ut.COL_FEAT_IMPORT, value_type="sum",
                            normalize=True)
     _df = pd.melt(df_pos.reset_index(), id_vars="index")
@@ -183,10 +183,10 @@ def _plot_inner_heatmap(ax=None, figsize=(8, 8), df_pos=None, vmin=None, vmax=No
 
 # TODO adjust and integrate into _cpp_plot.heatmap
 # Outer plotting function
-def plot_heatmap(df_feat=None, df_cat=None, y="subcategory", col_value="mean_dif", value_type="mean", normalize=False,
+def plot_heatmap(df_feat=None, df_cat=None, col_cat="subcategory", col_value="mean_dif", value_type="mean", normalize=False,
                  figsize=(8, 5), ax=None, dict_color=None,
                  vmin=None, vmax=None, grid_on=True,
-                 cmap="RdBu_r", cmap_n_colors=None, cbar_kws=None, cbar_ax=None, #cbar_ax_pos=(0.5, 0.01, 0.2, 0.015),
+                 cmap="RdBu_r", cmap_n_colors=None, cbar_kws=None, cbar_ax=None,  #cbar_ax_pos=(0.5, 0.01, 0.2, 0.015),
                  facecolor_dark=False, add_jmd_tmd=True,
                  tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1,
                  tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, linecolor=None, add_importance_map=False,
@@ -203,7 +203,7 @@ def plot_heatmap(df_feat=None, df_cat=None, y="subcategory", col_value="mean_dif
     args_seq_color = dict(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
     # Get df positions
     pp = PlotPositions(**args_len, start=start)
-    df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat.copy(), y=y,
+    df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat.copy(), col_cat=col_cat,
                            col_value=col_value, value_type=value_type,
                            normalize=normalize)
     # Get cbar args
@@ -240,11 +240,11 @@ def plot_heatmap(df_feat=None, df_cat=None, y="subcategory", col_value="mean_dif
                       weight="normal", fontsize=fontsize_labels)
     # Add scale classification
     if add_legend_cat:
-        ax = pe.add_legend_cat(ax=ax, df_pos=df_pos, df_cat=df_cat, y=y, dict_color=dict_color,
+        ax = pe.add_legend_cat(ax=ax, df_pos=df_pos, df_cat=df_cat, y=col_cat, dict_color=dict_color,
                                legend_kws=legend_kws)
     # Add importance map
     if add_importance_map:
-        _add_importance_map(ax=ax, df_feat=df_feat, df_cat=df_cat, start=start, args_len=args_len, y=y)
+        _add_importance_map(ax=ax, df_feat=df_feat, df_cat=df_cat, start=start, args_len=args_len, col_cat=col_cat)
     # Set current axis to main axis object depending on tmd sequence given or not
     plt.sca(plt.gcf().axes[0])
     ax = plt.gca()

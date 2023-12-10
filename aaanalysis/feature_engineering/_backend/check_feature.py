@@ -1,77 +1,31 @@
 """
 This is a script for the common SequenceFeature and CPP checking functions
 """
+import pandas as pd
+import numpy as np
+import warnings
+
 import aaanalysis.utils as ut
+from .cpp._utils_feature import get_parts
+
 
 # Helper functions
-# TODO remove from _part
-def check_input_part_creation(seq=None, tmd_start=None, tmd_stop=None):
-    """Check if input for part creation is given"""
-    if None in [seq, tmd_start, tmd_stop]:
-        raise ValueError("'seq', 'tmd_start', 'tmd_stop' must be given (should not be None).")
-
-
-def check_parts_exist(tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None):
-    """Check if parts are given"""
-    list_parts = [tmd_seq, jmd_n_seq, jmd_c_seq]
-    if None in list_parts:
-        raise ValueError("'tmd', 'jmd_n', and 'jmd_c' must be given (should not be None)")
-
-
-# TODO remove from _split
-def check_seq(seq=None):
-    """Check if seq is not None"""
-    if seq is None:
-        raise ValueError("'seq' should not be None")
-
-
-def check_steps(steps=None):
-    """Check steps and set to default if None"""
-    if steps is None:
-        steps = [3, 4]
-    if type(steps) is not list or len(steps) < 2:
-        raise ValueError("'steps' must be a list with more than 2 elements")
-    return steps
-
-
-def check_segment(seq=None, i_th=1, n_split=2):
-    """Check arguments for segment split method"""
-    check_seq(seq=seq)
-    if type(i_th) != int or type(n_split) != int:
-        raise ValueError("'i_th' and 'n_split' must be int")
-    if len(seq) < n_split:
-        error = f"'n_split' ('{n_split}') should not be higher than length of sequence ('{seq}',len={len(seq)})"
-        raise ValueError(error)
-
-
-def check_pattern(seq=None, terminus=None, list_pos=None):
-    """Check arguments for pattern split method"""
-    check_seq(seq=seq)
-    # Check terminus
-    if terminus not in ["N", "C"]:
-        raise ValueError("'terminus' must be either 'N' or 'C'")
-    # Check if minimum one position is specified
-    if type(list_pos) is not list:
-        raise ValueError(f"'list_pos' ({list_pos}) must have type list")
-    if len(list_pos) < 0:
-        raise ValueError(f"'list_pos' ({list_pos}) must contain at least one element")
-    # Check if arguments are in order
-    if not sorted(list_pos) == list_pos:
-        raise ValueError(f"Pattern position ({list_pos})should be given in ascending order")
-    if max(list_pos) > len(seq):
-        raise ValueError(f"Maximum pattern position ({list_pos}) should not exceed sequence length ({len(seq)})")
-
-
-def check_periodicpattern(seq=None, terminus=None, step1=None, step2=None, start=1):
-    """Check arguments for periodicpattern split method"""
-    check_seq(seq=seq)
-    if terminus not in ["N", "C"]:
-        raise ValueError("'terminus' must be either 'N' or 'C'")
-    if type(step1) != int or type(step2) != int or type(start) != int:
-        raise ValueError("'step1', 'step2', and 'start' must be type int")
+def _get_min_pos_split(split=None):
+    """"""
+    if ut.STR_SEGMENT in split:
+        n_min = int(split.split(",")[1].replace(")", ""))
+    elif ut.STR_PERIODIC_PATTERN in split:
+        n_min = int(split.split(",")[-1].replace(")", ""))
+    elif ut.STR_PATTERN:
+        n_min = int(split.split(",")[-1].replace(")", ""))
+    else:
+        raise ValueError(f"Wrong 'split' ({split})")
+    return n_min
 
 
 # II Main Functions
+# Check splits
+# TODO check if can be simplified
 def check_split_kws(split_kws=None, accept_none=True):
     """Check if argument dictionary for splits is a valid input"""
     # Split dictionary with data types
@@ -127,3 +81,275 @@ def check_split_kws(split_kws=None, accept_none=True):
         periodicpattern_args = split_kws[ut.STR_PERIODIC_PATTERN]
         if periodicpattern_args["steps"] != sorted(periodicpattern_args["steps"]):
             raise ValueError(f"For '{ut.STR_PERIODIC_PATTERN}', 'steps' should be ordered in ascending order.")
+
+
+# Check parts
+def check_parts_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None, accept_none_len=False,
+                    tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None):
+    """Check length parameters and if they are matching with sequences if provided"""
+    tmd_seq = ut.check_str(name="tmd_seq", val=tmd_seq, accept_none=True, return_empty_string=True)
+    jmd_n_seq = ut.check_str(name="jmd_n_seq", val=jmd_n_seq, accept_none=True, return_empty_string=True)
+    jmd_c_seq = ut.check_str(name="jmd_c_seq", val=jmd_c_seq, accept_none=True, return_empty_string=True)
+    # If sequences is not None, set length to sequence length
+    if len(jmd_n_seq + tmd_seq + jmd_c_seq) > 0:
+        tmd_len, jmd_n_len, jmd_c_len = len(tmd_seq), len(jmd_n_seq), len(jmd_c_seq)
+    else:
+        tmd_seq = jmd_n_seq = jmd_c_seq = None
+    # Check lengths
+    ext_len = ut.options["ext_len"]
+    ut.check_number_range(name="tmd_len", val=tmd_len, accept_none=accept_none_len, min_val=1, just_int=True)
+    ut.check_number_range(name="jmd_n_len", val=jmd_n_len, accept_none=accept_none_len, min_val=0, just_int=True)
+    ut.check_number_range(name="jmd_c_len", val=jmd_c_len, accept_none=accept_none_len, min_val=0, just_int=True)
+    ut.check_number_range(name="ext_len", val=ext_len, min_val=0, accept_none=True, just_int=True)
+    # Check len_ext
+    if ext_len is not None and ext_len != 0:
+        # Check if ext_len exceeds either jmd_n_len or jmd_c_len
+        if ext_len > jmd_n_len:
+            raise ValueError(f"'ext_len' ({ext_len}) must be <= length of jmd_n ({jmd_n_len})")
+        if ext_len > jmd_c_len:
+            raise ValueError(f"'ext_len' ({ext_len}) must be <= length of jmd_c ({jmd_c_len})")
+    # Create out.dictionaries
+    args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+    args_seq = dict(tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
+    return args_len, args_seq
+
+
+def check_match_features_seq_parts(features=None, tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None,
+                                   tmd_len=20, jmd_n_len=10, jmd_c_len=10):
+    """Check if sequence lengths do match with length requirements of features"""
+    # Check match of part length and features
+    if None in [tmd_seq, jmd_n_seq, jmd_c_seq] or len(jmd_n_seq + tmd_seq + jmd_c_seq) == 0:
+        jmd_n, tmd, jmd_c = get_parts(start=1, jmd_n_len=jmd_n_len, tmd_len=tmd_len, jmd_c_len=jmd_c_len)
+        dict_part_seq = ut.get_dict_part_seq(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c)
+        for feature in features:
+            part, split, scale = feature.split("-")
+            n_min = _get_min_pos_split(split=split)
+            seq = dict_part_seq[part.lower()]
+            if len(seq) < n_min:
+                raise ValueError(f"Sequence length (n={len(seq)}) too short for '{feature}' feature (n_min={n_min})")
+    # Check match of sequence part length and features
+    else:
+        dict_part_seq = ut.get_dict_part_seq(tmd=tmd_seq, jmd_c=jmd_c_seq, jmd_n=jmd_n_seq)
+        for feature in features:
+            part, split, scale = feature.split("-")
+            n_min = _get_min_pos_split(split=split)
+            seq = dict_part_seq[part.lower()]
+            if len(seq) < n_min:
+                raise ValueError(
+                    f"Sequence 'part' ({seq}, n={len(seq)}) too short for '{feature}' feature (n_min={n_min})")
+
+# Check df_seq
+# TODO check if can be simplified
+def check_df_seq(df_seq=None, jmd_n_len=None, jmd_c_len=None):
+    """Check columns from df_seq"""
+    ut.check_df(name="df_seq", df=df_seq, cols_requiered=[ut.COL_ENTRY])
+    seq_in_df = ut.COL_SEQ in set(df_seq)
+    seq_pos_in_df = set(ut.COLS_SEQ_POS).issubset(set(df_seq))
+    seq_parts_in_df = set(ut.COLS_SEQ_PARTS).issubset(set(df_seq))
+    if "start" in list(df_seq):
+        raise ValueError(f"'df_seq' should not contain 'start' in columns. Change column to '{ut.COL_TMD_START}'.")
+    if "stop" in list(df_seq):
+        raise ValueError(f"'df_seq' should not contain 'stop' in columns. Change column to '{ut.COL_TMD_STOP}'.")
+    if not (seq_in_df or seq_pos_in_df or seq_parts_in_df):
+        raise ValueError(f"'df_seq' should contain ['{ut.COL_SEQ}'] and {ut.COLS_SEQ_POS}, or {ut.COLS_SEQ_PARTS}")
+    # Check data type in part or sequence columns
+    else:
+        if seq_pos_in_df or seq_in_df:
+            error = f"Sequence column ('{ut.COL_SEQ}') should only contain strings"
+            dict_wrong_seq = {ut.COL_SEQ: [x for x in df_seq[ut.COL_SEQ].values if type(x) != str]}
+        else:
+            error = f"Part columns ('{ut.COLS_SEQ_PARTS}') should only contain strings"
+            dict_wrong_seq = {part: [x for x in df_seq[part].values if type(x) != str] for part in ut.COLS_SEQ_PARTS}
+        # Filter empty lists
+        dict_wrong_seq = {part: dict_wrong_seq[part] for part in dict_wrong_seq if len(dict_wrong_seq[part]) > 0}
+        n_wrong_entries = sum([len(dict_wrong_seq[part]) for part in dict_wrong_seq])
+        if n_wrong_entries > 0:
+            error += f"\n   but following non-strings exist in given columns: {dict_wrong_seq}"
+            raise ValueError(error)
+    # Check if only sequence given -> Convert sequence to tmd
+    if seq_in_df and not seq_parts_in_df:
+        if seq_pos_in_df:
+            for entry, start, stop in zip(df_seq[ut.COL_ENTRY], df_seq[ut.COL_TMD_START], df_seq[ut.COL_TMD_STOP]):
+                ut.check_number_range(name=f"tmd_start [{entry}]", val=start, just_int=True)
+                ut.check_number_range(name=f"tmd_start [{entry}]", val=stop, just_int=True)
+            tmd_start = [int(x) for x in df_seq[ut.COL_TMD_START]]
+            tmd_stop = [int(x) for x in df_seq[ut.COL_TMD_STOP]]
+        else:
+            tmd_start = 1 if jmd_n_len is None else 1 + jmd_n_len
+            tmd_stop = [len(x)-1 for x in df_seq[ut.COL_SEQ]]
+            if jmd_c_len is not None:
+                tmd_stop = [x - jmd_c_len for x in tmd_stop]
+        df_seq[ut.COL_TMD_START] = tmd_start
+        df_seq[ut.COL_TMD_STOP] = tmd_stop
+        seq_pos_in_df = set(ut.COLS_SEQ_POS).issubset(set(df_seq))
+    # Check parameter combinations
+    if [jmd_n_len, jmd_c_len].count(None) == 1:
+        raise ValueError("'jmd_n_len' and 'jmd_c_len' should both be given (not None) or None")
+    if not seq_parts_in_df and seq_pos_in_df and jmd_n_len is None and jmd_c_len is None:
+        error = f"'jmd_n_len' and 'jmd_c_len' should not be None if " \
+                f"sequence information ({ut.COLS_SEQ_POS}) are given."
+        raise ValueError(error)
+    if not seq_pos_in_df and jmd_n_len is not None and jmd_c_len is not None:
+        error = f"If not all sequence information ({ut.COLS_SEQ_POS}) are given," \
+                f"'jmd_n_len' and 'jmd_c_len' should be None."
+        raise ValueError(error)
+    if not seq_parts_in_df and seq_pos_in_df and (jmd_c_len is None or jmd_n_len is None):
+        error = f"If part columns ({ut.COLS_SEQ_PARTS}) are not in 'df_seq' but sequence information ({ut.COLS_SEQ_POS}), " \
+                "\n'jmd_n_len' and 'jmd_c_len' should be given (not None)."
+        raise ValueError(error)
+    return df_seq
+
+
+# Check df_parts
+def check_df_parts(df_parts=None, accept_none=False):
+    """Check if df_parts is a valid input"""
+    ut.check_df(name="df_parts", df=df_parts, accept_none=accept_none)
+    if df_parts is None and accept_none:
+        return # Skip check
+    if len(list(df_parts)) == 0 or len(df_parts) == 0:
+        raise ValueError("'df_parts' should not be empty pd.DataFrame")
+    ut.check_list_parts(list_parts=list(df_parts))
+    # Check if columns are unique
+    if len(list(df_parts)) != len(set(df_parts)):
+        raise ValueError("Column names in 'df_parts' must be unique. Drop duplicates!")
+    # Check if index is unique
+    if len(list(df_parts.index)) != len(set(df_parts.index)):
+        raise ValueError("Index in 'df_parts' must be unique. Drop duplicates!")
+    # Check if columns contain strings
+    dict_dtype = dict(df_parts.dtypes)
+    cols_wrong_type = [col for col in dict_dtype if dict_dtype[col] not in [object, str]]
+    if len(cols_wrong_type) > 0:
+        error = "'df_parts' should contain sequences with type string." \
+                f"\n  Following columns contain no values with type string: {cols_wrong_type}"
+        raise ValueError(error)
+
+
+def check_match_df_parts_features(df_parts=None, features=None):
+    """Check if df_parts does match with length requirements of features"""
+    if df_parts is None:
+        return # Skip check
+    for feature in features:
+        part, split, scale = feature.split("-")
+        n_min = _get_min_pos_split(split=split)
+        if any(df_parts[part.lower()].map(len) < n_min):
+            mask = df_parts[part.lower()].map(len) < n_min
+            list_seq = df_parts[mask][part.lower()].to_list()
+            if len(list_seq) == 1:
+                seq = list_seq[0]
+                raise ValueError(f"Sequence 'part' ('{seq}', n={len(seq)}) is too short for '{feature}' feature (n_min={n_min})")
+            else:
+                raise ValueError(
+                    f"For '{feature}' feature (n_min={n_min}), following sequence 'parts' are too short: {list_seq}")
+
+
+def check_match_df_parts_list_parts(df_parts=None, list_parts=None):
+    """"""
+    if list_parts is not None and df_parts is not None:
+        list_parts = ut.check_list_like(name="list_parts", val=list_parts, accept_str=True, convert=True)
+        missing_parts = [part.lower() for part in list_parts if part.lower() is not list(df_parts)]
+        raise ValueError(f"'part' ({missing_parts}) must be in columns of 'df_parts': {list(df_parts)}")
+
+
+# Check df_scales & df_cat
+# TODO check if can be simplified
+def check_df_scales(df_scales=None, accept_none=False):
+    """Check if df_scales is a valid input and matching to df_parts"""
+    ut.check_df(name="df_scales", df=df_scales, accept_none=accept_none)
+    if df_scales is None and accept_none:
+        return  # Skip check
+    # Check if columns are unique
+    if len(list(df_scales)) != len(set(df_scales)):
+        raise ValueError("Column names in 'df_scales' must be unique. Drop duplicates!")
+    # Check if index is unique
+    if len(list(df_scales.index)) != len(set(df_scales.index)):
+        raise ValueError("Index in 'df_scales' must be unique. Drop duplicates!")
+    # Check if columns contain number
+    dict_dtype = dict(df_scales.dtypes)
+    cols_wrong_type = [col for col in dict_dtype if dict_dtype[col] not in [np.number, int, float]]
+    if len(cols_wrong_type) > 0:
+        error = "'df_scales' should only contain numbers." \
+                f"\n  Following columns contain no numerical values: {cols_wrong_type}"
+        raise ValueError(error)
+    # Check if NaN in df
+    cols_nans = [x for x in list(df_scales) if df_scales[x].isnull().any()]
+    if len(cols_nans) > 0:
+        error = "'df_scales' should not contain NaN." \
+                f"\n  Following columns contain NaN: {cols_nans}"
+        raise ValueError(error)
+
+
+def check_match_df_scales_features(df_scales=None, features=None):
+    """Check if scale ids from df_scales does match with features"""
+    if df_scales is None:
+        return # Skip check
+    scales_feat = [x.split("-")[2] for x in features]
+    scales = list(df_scales)
+    missing_scales_in_df_scales = [x for x in scales_feat if x not in scales]
+    if len(missing_scales_in_df_scales) > 0:
+        raise ValueError(f"Following scale ids are missing in 'df_scales': {missing_scales_in_df_scales}")
+
+
+# Check df_cat
+def check_df_cat(df_cat=None, accept_none=True):
+    """"""
+    if df_cat is None and accept_none:
+        return # Skip check
+    cols_cat = [ut.COL_SCALE_ID, ut.COL_CAT, ut.COL_SUBCAT]
+    ut.check_df(name="df_cat", df=df_cat, cols_requiered=cols_cat, accept_none=accept_none)
+
+
+def check_match_df_cat_features(df_cat=None, features=None):
+    """Check if scale ids from df_cat does match with features"""
+    if df_cat is None:
+        return # Skip check
+    scales_feat = [x.split("-")[2] for x in features]
+    scales_cat = list(df_cat[ut.COL_SCALE_ID])
+    missing_scales_in_df_cat = [x for x in scales_feat if x not in scales_cat]
+    if len(missing_scales_in_df_cat) > 0:
+        raise ValueError(f"Following scale ids are missing in 'df_cat': {missing_scales_in_df_cat}")
+
+
+# Check matching of df_scales with df_parts and df_scales
+def check_match_df_parts_df_scales(df_parts=None, df_scales=None, accept_gaps=False):
+    """Check if characters from df_parts match with scales from df_scales"""
+    if df_parts is not None and df_scales is not None:
+        f = lambda x: set(x)
+        vf = np.vectorize(f)
+        char_parts = set().union(*vf(df_parts.values).flatten())
+        char_scales = list(set(df_scales.index))
+        if accept_gaps:
+            char_scales.append(ut.STR_AA_GAP)
+        missing_char = [x for x in char_parts if x not in char_scales]
+        # Replace gaps by default amino acid gap
+        if accept_gaps:
+            for col in list(df_parts):
+                for mc in missing_char:
+                    df_parts[col] = df_parts[col].str.replace(mc, ut.STR_AA_GAP)
+        elif len(missing_char) > 0:
+            error = f"Not all characters in sequences from 'df_parts' are covered!"\
+                    f"\n  Following characters are missing in 'df_scales': {missing_char}." \
+                    f"\n  Consider enabling 'accept_gaps'"
+            raise ValueError(error)
+    return df_parts
+
+
+def check_match_df_scales_df_cat(df_cat=None, df_scales=None, verbose=True):
+    """Check if scale ids matches from df_cat and df_scales"""
+    if df_scales is not None and df_cat is not None:
+        scales_cat = list(df_cat[ut.COL_SCALE_ID])
+        scales = list(df_scales)
+        overlap_scales = [x for x in scales if x in scales_cat]
+        difference_scales = list(set(scales).difference(set(scales_cat)))
+        # Adjust df_cat and df_scales
+        df_cat = df_cat[df_cat[ut.COL_SCALE_ID].isin(overlap_scales)]
+        df_scales = df_scales[overlap_scales]
+        if verbose and len(difference_scales) > 0:
+            str_warning = f"Scales from 'df_scales' and 'df_cat' do not overlap completely."
+            missing_scales_in_df_scales = [x for x in scales_cat if x not in scales]
+            missing_scales_in_df_cat = [x for x in scales if x not in scales_cat]
+            if len(missing_scales_in_df_scales) > 0:
+                str_warning += f"\n Following scale ids are missing in 'df_scales': {missing_scales_in_df_scales}"
+            else:
+                str_warning += f"\n Following scale ids are missing in 'df_cat': {missing_scales_in_df_cat}"
+            warnings.warn(str_warning)
+    return df_scales, df_cat

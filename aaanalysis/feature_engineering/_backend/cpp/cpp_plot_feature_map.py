@@ -120,7 +120,7 @@ def plot_feature_map(df_feat=None, df_cat=None, y="subcategory", col_value="mean
     fig = plt.gcf()
     cbar_ax = fig.add_axes(cbar_ax_pos)
     ax = plot_heatmap(df_feat=df_feat, df_cat=df_cat, ax=axes[0],
-                      y=y, col_value=col_value, value_type=value_type, normalize=normalize,
+                      col_cat=y, col_value=col_value, value_type=value_type, normalize=normalize,
                       figsize=figsize, dict_color=dict_color,
                       vmin=vmin, vmax=vmax, grid_on=grid_on,
                       facecolor_dark=facecolor_dark, add_jmd_tmd=add_jmd_tmd,
@@ -131,7 +131,7 @@ def plot_feature_map(df_feat=None, df_cat=None, y="subcategory", col_value="mean
                       seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd, xticks_pos=xticks_pos,
                       xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length,
                       ytick_size=ytick_size, add_legend_cat=add_legend_cat, legend_kws=legend_kws,
-                      cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws, cbar_ax=cbar_ax, #cbar_ax_pos=cbar_pos,
+                      cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws, cbar_ax=cbar_ax,  #cbar_ax_pos=cbar_pos,
                       cbar_pct=cbar_pct)
     # Add importance map
     _add_importance_map_legend(fontsize=fontsize_text,

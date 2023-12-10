@@ -10,15 +10,6 @@ import aaanalysis.utils as ut
 # I Helper Functions
 # Check functions
 # TODO refactor check function into frontend
-def check_seq(seq=None):
-    """Check if seq is not None"""
-    # TODO remove after testing
-    if seq is None:
-        raise ValueError(f"'seq' ({seq}) should not be None")
-    if len(seq) == 0:
-        raise ValueError(f"'seq' ({seq}) should not be empty string or list")
-
-
 def check_steps(steps=None):
     """Check steps and set to default if None"""
     # TODO remove after testing
@@ -28,42 +19,6 @@ def check_steps(steps=None):
         raise ValueError("'steps' must be a list with >= 2 elements")
     return steps
 
-
-def check_segment(seq=None, i_th=1, n_split=2):
-    """Check arguments for segment split method"""
-    check_seq(seq=seq)
-    if type(i_th) != int or type(n_split) != int:
-        raise ValueError("'i_th' and 'n_split' must be int")
-    if len(seq) < n_split:
-        error = f"'n_split' ('{n_split}') should not be higher than length of sequence ('{seq}',len={len(seq)})"
-        raise ValueError(error)
-
-
-def check_pattern(seq=None, terminus=None, list_pos=None):
-    """Check arguments for pattern split method"""
-    check_seq(seq=seq)
-    # Check terminus
-    if terminus not in ["N", "C"]:
-        raise ValueError("'terminus' must be either 'N' or 'C'")
-    # Check if minimum one position is specified
-    if type(list_pos) is not list:
-        raise ValueError(f"'list_pos' ({list_pos}) must have type list")
-    if len(list_pos) < 0:
-        raise ValueError(f"'list_pos' ({list_pos}) must contain at least one element")
-    # Check if arguments are in order
-    if not sorted(list_pos) == list_pos:
-        raise ValueError(f"Pattern position ({list_pos})should be given in ascending order")
-    if max(list_pos) > len(seq):
-        raise ValueError(f"Maximum pattern position ({list_pos}) should not exceed sequence length ({len(seq)})")
-
-
-def check_periodicpattern(seq=None, terminus=None, step1=None, step2=None, start=1):
-    """Check arguments for periodicpattern split method"""
-    check_seq(seq=seq)
-    if terminus not in ["N", "C"]:
-        raise ValueError("'terminus' must be either 'N' or 'C'")
-    if type(step1) != int or type(step2) != int or type(start) != int:
-        raise ValueError("'step1', 'step2', and 'start' must be type int")
 
 
 # Pattern helper functions
@@ -120,7 +75,6 @@ class Split:
         -----
         Segments are denoted as 'Segment(i-th,n_split)'
         """
-        check_segment(seq=seq, i_th=i_th, n_split=n_split)
         len_segment = len(seq) / n_split
         start = int(len_segment * (i_th - 1))   # Start at 0 for i_th = 1
         end = int(len_segment * i_th)
@@ -148,7 +102,6 @@ class Split:
             and pn denotes the n-th position from list_pos.
         """
         list_pos = [int(x) for x in list_pos if x is not None]
-        check_pattern(seq=seq, terminus=terminus, list_pos=list_pos)
         if terminus == "C":
             seq = seq[::-1]
         if self.type_str:
@@ -185,7 +138,6 @@ class Split:
             be reversed. For IMP substrates, the periodic pattern is representing a face of the
             helical transmembrane domain given for step1, step2 in {3, 4} and start >= step1.
         """
-        check_periodicpattern(seq=seq, terminus=terminus, step1=step1, step2=step2, start=start)
         if terminus == "C":
             seq = seq[::-1]
         pos = start

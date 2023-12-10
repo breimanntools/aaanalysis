@@ -19,6 +19,7 @@ from ._utils_feature import get_feature_matrix_, get_positions_
 # Adjust df_feat
 def adjust_df_feat(df_feat=None, col_dif=None, xlim_dif=None, feature_val_in_percent=True):
     """"""
+    df_feat = df_feat.copy()
     if feature_val_in_percent:
         if max(df_feat[col_dif]) - min(df_feat[col_dif]) < 1:
             df_feat[col_dif] *= 100
@@ -216,6 +217,7 @@ def plot_ranking(figsize=(7, 5), df_feat=None, top_n=25, df_scales=None, labels=
                  col_rank=ut.COL_FEAT_IMPORT, xlim_dif=(-17.5, 17.5),
                  col_dif=ut.COL_MEAN_DIF, xlim_rank=(0, 8)):
     """"""
+    df_feat = df_feat.copy()
     # Adjust df_feat
     df_feat = df_feat.copy().reset_index(drop=True).head(top_n)
     df_feat, xlim_dif = adjust_df_feat(df_feat=df_feat, col_dif=col_dif, xlim_dif=xlim_dif,

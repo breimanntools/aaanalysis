@@ -37,6 +37,7 @@ def _check_df_seq(df_seq=None, col_class="class"):
     return df_seq
 
 
+# TODO delete
 def _check_labels(labels=None, verbose=False, label_pos=None):
     # Check if labels is an array or list
     if not isinstance(labels, (list, np.ndarray)):
@@ -292,6 +293,7 @@ class dPULearn:
 
         """
         ut.check_X(X=X, y=labels, y_name="label")
+        ut.check_labels(labels=labels)
         df_seq = _check_df_seq(df_seq=df_seq, col_class=col_class)
         labels = _check_labels(labels=labels, verbose=self._verbose, label_pos=label_pos)
         label_neg = _get_label_neg(labels=labels)

@@ -86,12 +86,12 @@ def _get_positions(dict_part_pos=None, features=None, as_str=True):
 
 
 # Get df positions
-def _get_df_pos_long(df=None, y="category", col_value=None):
+def _get_df_pos_long(df=None, col_cat="category", col_value=None):
     """Get """
     if col_value is None:
-        df_feat = df[[ut.COL_FEATURE, y]].set_index(ut.COL_FEATURE)
+        df_feat = df[[ut.COL_FEATURE, col_cat]].set_index(ut.COL_FEATURE)
     else:
-        df_feat = df[[ut.COL_FEATURE, y, col_value]].set_index(ut.COL_FEATURE)
+        df_feat = df[[ut.COL_FEATURE, col_cat, col_value]].set_index(ut.COL_FEATURE)
     # Columns = scale categories, rows = features
     df_pos_long = pd.DataFrame(df[ut.COL_POSITION].str.split(",").tolist())
     df_pos_long.index = df[ut.COL_FEATURE]
@@ -138,6 +138,14 @@ def _feature_matrix(feat_names, dict_all_scales, df_parts, accept_gaps):
 
 
 # II Main Functions
+def get_parts(start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10):
+    """"""
+    jmd_n = list(range(start, jmd_n_len + start))
+    tmd = list(range(jmd_n_len + start, jmd_n_len + tmd_len + start))
+    jmd_c = list(range(jmd_n_len + tmd_len + start, jmd_n_len + tmd_len + jmd_c_len + start))
+    return jmd_n, tmd, jmd_c
+
+
 def get_list_parts(features=None):
     """Get list of parts to cover all features"""
     features = [features] if type(features) is str else features
@@ -148,16 +156,16 @@ def get_list_parts(features=None):
 
 def get_df_parts_(df_seq=None, list_parts=None, jmd_n_len=None, jmd_c_len=None):
     """Create DataFrame with sequence parts"""
-    seq_info_in_df = set(ut.COLS_SEQ_TMD_POS_KEY).issubset(set(df_seq))
+    seq_info_in_df = set(ut.COLS_SEQ_POS).issubset(set(df_seq))
     dict_parts = {}
     for i, row in df_seq.iterrows():
         entry = row[ut.COL_ENTRY]
         if jmd_c_len is not None and jmd_n_len is not None and seq_info_in_df:
-            seq, tmd_start, tmd_stop = row[ut.COLS_SEQ_TMD_POS_KEY].values
+            seq, tmd_start, tmd_stop = row[ut.COLS_SEQ_POS].values
             jmd_n, tmd, jmd_c = create_parts(seq=seq, tmd_start=tmd_start, tmd_stop=tmd_stop,
                                              jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         else:
-            jmd_n, tmd, jmd_c = row[ut.COLS_PARTS].values
+            jmd_n, tmd, jmd_c = row[ut.COLS_SEQ_PARTS].values
         dict_part_seq = ut.get_dict_part_seq(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c)
         dict_part_seq = {part: dict_part_seq[part] for part in list_parts}
         dict_parts[entry] = dict_part_seq
@@ -202,31 +210,48 @@ def get_feature_matrix_(features=None, df_parts=None, df_scales=None, accept_gap
     return feat_matrix
 
 
-def get_df_pos_(df_feat=None, y="category", value_type="count", col_value=None, start=None, stop=None):
-    """Get df with counts for each combination of column values and positions"""
-    list_y_cat = sorted(set(df_feat[y]))
+def get_df_pos_(df_feat=None, col_cat="category", col_value=None, value_type="count", start=None, stop=None):
+    """Get df with aggregated values for each combination of column values and positions"""
+    df_feat = df_feat.copy()
+    list_y_cat = sorted(set(df_feat[col_cat]))
     normalize_for_pos = value_type != "mean"
     if normalize_for_pos:
         df_feat[col_value] = df_feat[col_value] / [len(x.split(",")) for x in df_feat[ut.COL_POSITION]]
     # Get df with features for each position
-    df_pos_long = _get_df_pos_long(df=df_feat, y=y, col_value=col_value)
+    df_pos_long = _get_df_pos_long(df=df_feat, col_cat=col_cat, col_value=col_value)
     # Get dict with values of categories for each position
     dict_pos_val = {p: [] for p in range(start, stop+1)}
     dict_cat_val = {c: 0 for c in list_y_cat}
     for p in dict_pos_val:
         if value_type == "count":
-            dict_val = dict(df_pos_long[df_pos_long[ut.COL_POSITION] == p][y].value_counts())
+            dict_val = dict(df_pos_long[df_pos_long[ut.COL_POSITION] == p][col_cat].value_counts())
         elif value_type == "mean":
-            # TODO check for axis
-            dict_val = dict(df_pos_long[df_pos_long[ut.COL_POSITION] == p].groupby(y).mean()[col_value])
+            dict_val = dict(df_pos_long[df_pos_long[ut.COL_POSITION] == p].groupby(col_cat).mean()[col_value])
         elif value_type == "sum":
-            dict_val = dict(df_pos_long[df_pos_long[ut.COL_POSITION] == p].groupby(y).sum()[col_value])
+            dict_val = dict(df_pos_long[df_pos_long[ut.COL_POSITION] == p].groupby(col_cat).sum()[col_value])
         else:
-            dict_val = dict(df_pos_long[df_pos_long[ut.COL_POSITION] == p].groupby(y).std()[col_value])
+            dict_val = dict(df_pos_long[df_pos_long[ut.COL_POSITION] == p].groupby(col_cat).std()[col_value])
         dict_pos_val[p] = {**dict_cat_val, **dict_val}
     # Get df with values (e.g., counts) of each category and each position
     df_pos = pd.DataFrame(dict_pos_val)
     df_pos = df_pos.T[list_y_cat].T     # Filter and order categories
+    return df_pos
+
+
+def get_df_pos_parts_(df_pos=None, value_type="sum", start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10, list_parts=None):
+    """Get df with aggregated values for each combination of column values and sequence parts."""
+    jmd_n, tmd, jmd_c = get_parts(start=start, jmd_n_len=jmd_n_len, tmd_len=tmd_len, jmd_c_len=jmd_c_len)
+    dict_part_pos = ut.get_dict_part_seq(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c)
+    if value_type == "sum":
+        list_df = [df_pos[dict_part_pos[part]].sum(axis=1) for part in list_parts]
+    elif value_type == "mean":
+        list_df = [df_pos[dict_part_pos[part]].mean(axis=1) for part in list_parts]
+    elif value_type == "count":
+        list_df = [df_pos[dict_part_pos[part]].value_counts() for part in list_parts]
+    else:
+        list_df = [df_pos[dict_part_pos[part]].std(axis=1) for part in list_parts]
+    df_pos = pd.concat(list_df, axis=1)
+    df_pos.columns = list_parts
     return df_pos
 
 

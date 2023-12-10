@@ -62,6 +62,7 @@ class ShapModel:
         ut.check_str(name="name_feat_impact", val=name_feat_impact)
         ut.check_str(name="col_shap", val=col_shap)
         df_feat = ut.check_df_feat(df_feat=df_feat)
+        #ut.check_df(name="df_feat", df=df_feat, cols_requiered=[col_shap])
         #ut.check_col_in_df(df=df_feat, name_df="df_feat", col=col_shap, col_type=[float, int])
         #ut.check_col_in_df(df=df_feat, name_df="df_feat", col=name_feat_impact, error_if_exists=True)
 

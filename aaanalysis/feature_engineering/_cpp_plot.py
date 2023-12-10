@@ -11,6 +11,13 @@ import matplotlib as mpl
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
+from ._backend.check_feature import (check_split_kws,
+                                     check_parts_len, check_match_features_seq_parts,
+                                     check_df_seq,
+                                     check_df_parts, check_match_df_parts_features, check_match_df_parts_list_parts,
+                                     check_df_scales, check_match_df_scales_features,
+                                     check_df_cat, check_match_df_cat_features,
+                                     check_match_df_parts_df_scales, check_match_df_scales_df_cat)
 from ._backend.cpp._utils_cpp_plot import get_optimal_fontsize
 
 from ._backend.cpp.cpp_plot_feature import plot_feature
@@ -103,21 +110,6 @@ def check_dict_color(dict_color=None, df_cat=None):
     return dict_color
 
 
-# TODO delete since in utily (model check)
-def check_parameters(func=None, name_called_func=None, e=None):
-    """Check parameters string from error message of third party packages"""
-    list_arg_str = ["property ", "attribute ", "argument ", "parameter "]
-    str_error = ""
-    for arg_str in list_arg_str:
-        if arg_str in str(e):
-            error_arg = str(e).split(arg_str)[1]
-            str_error += "Error due to {} parameter. ".format(error_arg)
-            break
-    args = [x for x in inspect.getfullargspec(func).args if x != "self"]
-    str_error += "Arguments are allowed from {} and as follows: {}".format(name_called_func, args)
-    return str_error
-
-
 # Check barplot and profile
 def check_grid_axis(grid_axis=None):
     """"""
@@ -194,16 +186,17 @@ class CPPPlot:
         verbose
             If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if ``None``.
         """
-        # Check input parameters
-        # TODO check dfs
-        ut.check_number_range(name="jmd_n_len", val=jmd_n_len, min_val=0, accept_none=False, just_int=True)
-        ut.check_number_range(name="jmd_c_len", val=jmd_c_len, min_val=0, accept_none=False, just_int=True)
-        ut.check_bool(name="accept_gaps", val=accept_gaps)
-        # Load default scales if not specified
+        # Load defaults
         if df_scales is None:
             df_scales = aa.load_scales(name=ut.STR_SCALES)
         if df_cat is None:
             df_cat = aa.load_scales(name=ut.STR_SCALE_CAT)
+        # Check input
+        check_df_scales(df_scales=df_scales)
+        check_df_cat(df_cat=df_cat)
+        check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_none_len=True)
+        ut.check_bool(name="accept_gaps", val=accept_gaps)
+        df_scales, df_cat = check_match_df_scales_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
         # General settings
         self._verbose = ut.check_verbose(verbose)
         self._accept_gaps = accept_gaps
@@ -445,7 +438,7 @@ class CPPPlot:
         """
         # Group arguments
         # TODO CHECK
-        args_len, args_seq = ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+        args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
                                                 jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
         args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
 
@@ -466,7 +459,6 @@ class CPPPlot:
         ut.check_color(name="edge_color", val=edge_color, accept_none=True)
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
         ut.check_df(df=df_feat, name="df_feat", cols_requiered=col_value, cols_nan_check=col_value)
-        #ut.check_y_categorical(df=df_feat, y=y) # TODO check if y should be removed
         df_feat = ut.check_df_feat(df_feat=df_feat)
         check_value_type(value_type=value_type, count_in=True)
         check_args_ytick(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
@@ -655,7 +647,7 @@ class CPPPlot:
         # Group arguments
         args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
         # TODO CHECK
-        args_len, args_seq = ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+        args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
                                                 tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
@@ -679,7 +671,7 @@ class CPPPlot:
         dict_color = check_dict_color(dict_color=dict_color, df_cat=self._df_cat)
 
         # Get df positions
-        ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat, y=y, col_value=col_value, value_type=value_type,
+        ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat, col_cat=y, col_value=col_value, value_type=value_type,
                           normalize=normalize, figsize=figsize,
                           dict_color=dict_color, vmin=vmin, vmax=vmax, grid_on=grid_on,
                           cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws,
@@ -741,7 +733,7 @@ class CPPPlot:
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
         # Checking input
         # Args checked by Matplotlib: title, cmap, cbar_kws, legend_kws
-        args_len, _ = ut.check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
+        args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
         ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
         ut.check_number_range(name="cmap_n_colors", val=cmap_n_colors, min_val=1, accept_none=True, just_int=True)

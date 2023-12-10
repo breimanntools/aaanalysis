@@ -18,10 +18,10 @@ from ._utils_cpp_plot import get_optimal_fontsize, get_new_axis
 
 # I Helper Functions
 # Positions
-def _get_df_pos_sign(df_feat=None, count=True, col_value=None, y="category", value_type="count",
+def _get_df_pos_sign(df_feat=None, count=True, col_cat="category", col_value=None, value_type="count",
                      start=None, stop=None, normalize_for_pos=False):
     """Get position DataFrame for positive and negative values"""
-    kwargs = dict(y=y, col_value=col_value, value_type=value_type,
+    kwargs = dict(col_cat=col_cat, col_value=col_value, value_type=value_type,
                   start=start, stop=stop,
                   normalize_for_pos=normalize_for_pos)
     list_df = []
@@ -169,11 +169,12 @@ class PlotPositions:
 
     # Main methods
     # TODO check df_pos and simplify
-    def get_df_pos(self, df_feat=None, df_cat=None, y="category", value_type="count",
-                   col_value="mean_dif", normalize=False):
+    def get_df_pos(self, df_feat=None, df_cat=None, col_cat="category", col_value="mean_dif",
+                   value_type="count", normalize=False):
         """Get df_pos with values (e.g., counts or mean auc) for each feature (y) and positions (x)"""
         # TODO simplify
-        # Adjust feature positionsR
+        df_feat = df_feat.copy()
+        # Adjust feature positions
         features = df_feat[ut.COL_FEATURE].to_list()
         feat_positions = get_positions_(features=features,
                                         start=self.start, tmd_len=self.tmd_len, jmd_n_len=self.jmd_n_len,
@@ -181,7 +182,7 @@ class PlotPositions:
         df_feat[ut.COL_POSITION] = feat_positions
         # Get dataframe with
         # TODO check if right
-        kwargs = dict(y=y, col_value=col_value, value_type=value_type, start=self.start, stop=self.stop)
+        kwargs = dict(col_cat=col_cat, col_value=col_value, value_type=value_type, start=self.start, stop=self.stop)
         if value_type == "count":
             if col_value is None:
                 df_pos = get_df_pos_(df_feat=df_feat, **kwargs)
@@ -192,7 +193,7 @@ class PlotPositions:
         if normalize:
             df_pos = df_pos / abs(df_pos).sum().sum() * 100
         # Sort according to given categories
-        list_cat = list(df_cat[y].drop_duplicates())
+        list_cat = list(df_cat[col_cat].drop_duplicates())
         list_col = list(df_pos.T)
         sorted_col = [x for x in list_cat if x in list_col]
         df_pos = df_pos.T[sorted_col].T

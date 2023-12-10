@@ -17,7 +17,7 @@ class TestLoadDataset:
         all_data_set_names = aa.load_dataset()["Dataset"].to_list()
         for name in all_data_set_names:
             df = aa.load_dataset(name=name)
-            assert set(ut.COLS_SEQ_KEY).issubset(set(df))
+            assert set(ut.COLS_SEQ_INFO).issubset(set(df))
 
     @given(n=some.integers(min_value=1, max_value=100))
     def test_load_dataset_n_value(self, n):

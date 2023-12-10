@@ -96,7 +96,7 @@ def check_tuple(name=None, val=None, n=None, check_n_number=True, accept_none=Fa
             check_number_val(name=name, val=v, just_int=False, accept_none=False)
 
 
-def check_list_like(name=None, val=None, accept_none=False, convert=True, accept_str=False):
+def check_list_like(name=None, val=None, accept_none=False, convert=True, accept_str=False, check_all_non_neg_int=False):
     """"""
     if val is None:
         if not accept_none:
@@ -114,6 +114,10 @@ def check_list_like(name=None, val=None, accept_none=False, convert=True, accept
         if isinstance(val, np.ndarray) and val.ndim != 1:
             raise ValueError(f"'{name}' is a multi-dimensional numpy array and cannot be considered as a list.")
         val = list(val)
+    if check_all_non_neg_int:
+        if any([type(i) != int or i < 0 for i in val]):
+            raise ValueError(f"'name' should only contain non-negative integers")
+
     return val
 
 
