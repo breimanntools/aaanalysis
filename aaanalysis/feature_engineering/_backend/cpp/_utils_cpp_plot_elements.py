@@ -95,7 +95,7 @@ class PlotElements:
     # Autosize labels
     @staticmethod
     def optimize_label_size(ax=None, df_pos=None, label_term=True):
-        """Auto scaling of size of sequence characters"""
+        """Autoscaling of size of sequence characters"""
         max_len_label = max([len(x) for x in df_pos.index])
         n_pos = len(list(df_pos))
         if label_term:

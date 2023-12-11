@@ -9,9 +9,9 @@ import numpy as np
 
 import aaanalysis.utils as ut
 
+from .utils_feature import get_list_parts, get_df_parts_, get_feature_matrix_, get_amino_acids_
 from ._utils_cpp_plot_elements import PlotElements
 from ._utils_cpp_plot import get_color_dif
-from ._utils_feature import get_list_parts, get_df_parts_, get_feature_matrix_, get_amino_acids_
 
 COL_FEAT_VAL = "feature_values"
 

@@ -6,10 +6,10 @@ import multiprocessing as mp
 from itertools import repeat
 import warnings
 
-from ._split import SplitRange
 import aaanalysis.utils as ut
-from ._utils_feature import get_vf_scale, get_feature_matrix_
+from .utils_feature import get_vf_scale, get_feature_matrix_
 from ._utils_feature_stat import add_stat_
+from ._split import SplitRange
 
 
 # I Helper functions
@@ -33,7 +33,6 @@ def _get_splits(df_parts=None, split_type=None, split_type_args=None):
         for j, seq in enumerate(df_parts[p]):
             part_splits[j, i*len(labels_s):(i+1)*len(labels_s)] = f_splitr(seq)
     return part_splits, labels_ps
-
 
 
 # Pre-filtering and filtering
@@ -62,6 +61,7 @@ def _splitting(df_parts=None, split_kws=None):
         list_labels_ps.extend(labels_ps)
     splittings = np.concatenate(list_parts_splits, axis=1)
     return splittings, list_labels_ps
+
 
 def _pre_filtering_info(list_scales, dict_all_scales, labels_ps, splittings, accept_gaps, mask_0, mask_1, verbose):
     """Compute abs(mean_dif) and std(test) to rank features, where mean_dif is the difference

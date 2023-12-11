@@ -18,7 +18,7 @@ from ._backend.check_feature import (check_split_kws,
                                      check_df_scales, check_match_df_scales_features,
                                      check_df_cat, check_match_df_cat_features,
                                      check_match_df_parts_df_scales, check_match_df_scales_df_cat)
-from ._backend.cpp._utils_feature import get_positions_, add_scale_info_
+from ._backend.cpp.utils_feature import get_positions_, add_scale_info_
 from ._backend.cpp.cpp_run import pre_filtering_info, pre_filtering, filtering, add_stat
 
 

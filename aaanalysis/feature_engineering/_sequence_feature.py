@@ -15,8 +15,8 @@ from ._backend.check_feature import (check_split_kws,
                                      check_df_scales, check_match_df_scales_features,
                                      check_df_cat, check_match_df_cat_features,
                                      check_match_df_parts_df_scales, check_match_df_scales_df_cat)
-from ._backend.cpp._utils_feature import (get_df_parts_, get_positions_, get_amino_acids_,
-                                          get_feature_matrix_, get_df_pos_, get_df_pos_parts_)
+from ._backend.cpp.utils_feature import (get_df_parts_, get_positions_, get_amino_acids_,
+                                         get_feature_matrix_, get_df_pos_, get_df_pos_parts_)
 from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_, get_df_feat_)
 
 

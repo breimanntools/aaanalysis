@@ -16,9 +16,7 @@ import aaanalysis.utils as ut
 from ._backend.check_aaclust import check_metric
 from ._backend.aaclust.aaclust_fit import estimate_lower_bound_n_clusters, optimize_n_clusters, merge_clusters
 from ._backend.aaclust.aaclust_eval import evaluate_clustering
-from ._backend.aaclust.aaclust_methods import (compute_centers,
-                                               compute_medoids,
-                                               name_clusters,
+from ._backend.aaclust.aaclust_methods import (compute_centers, compute_medoids, name_clusters,
                                                compute_correlation)
 
 
@@ -43,6 +41,7 @@ def check_match_X_n_clusters(X=None, n_clusters=None, accept_none=True):
         raise ValueError(f"n_samples={n_samples} (in 'X') should be >= 'n_clusters' ({n_clusters})")
     if n_unique_samples < n_clusters:
         raise ValueError(f"'n_clusters' ({n_clusters}) should be >= n_unique_samples={n_unique_samples} (in 'X').")
+
 
 def check_X_X_ref(X=None, X_ref=None):
     """"""
