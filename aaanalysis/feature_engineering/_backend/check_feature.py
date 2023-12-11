@@ -6,21 +6,39 @@ import numpy as np
 import warnings
 
 import aaanalysis.utils as ut
-from .cpp._utils_feature import get_parts
+from .cpp.utils_feature import get_parts
 
 
 # Helper functions
-def _get_min_pos_split(split=None):
-    """"""
+def _get_max_pos_split(split=None):
+    """Get maximum position requiered for split"""
     if ut.STR_SEGMENT in split:
-        n_min = int(split.split(",")[1].replace(")", ""))
+        n_max = int(split.split(",")[1].replace(")", ""))
     elif ut.STR_PERIODIC_PATTERN in split:
-        n_min = int(split.split(",")[-1].replace(")", ""))
+        n_max = int(split.split(",")[-1].replace(")", ""))
     elif ut.STR_PATTERN:
-        n_min = int(split.split(",")[-1].replace(")", ""))
+        n_max = int(split.split(",")[-1].replace(")", ""))
     else:
         raise ValueError(f"Wrong 'split' ({split})")
-    return n_min
+    return n_max
+
+
+def _get_max_pos_split_kws(split_kws=None):
+    """Get maximum position requiered for splits basd on split_kws"""
+    list_n_max = []
+    if ut.STR_SEGMENT in split_kws:
+        n_max = split_kws[ut.STR_SEGMENT]["n_split_max"]
+        list_n_max.append(n_max)
+    if ut.STR_PATTERN in split_kws:
+        n_max = split_kws[ut.STR_PATTERN]["len_max"]
+        list_n_max.append(n_max)
+    if ut.STR_PERIODIC_PATTERN in split_kws:
+        n_max = split_kws[ut.STR_PERIODIC_PATTERN]["steps"][0]
+        list_n_max.append(n_max)
+    if len(list_n_max) == 0:
+        raise ValueError(f"Wrong 'split_kws' ({split_kws})")
+    n_max = max(list_n_max)
+    return n_max
 
 
 # II Main Functions
@@ -123,20 +141,20 @@ def check_match_features_seq_parts(features=None, tmd_seq=None, jmd_n_seq=None, 
         dict_part_seq = ut.get_dict_part_seq(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c)
         for feature in features:
             part, split, scale = feature.split("-")
-            n_min = _get_min_pos_split(split=split)
+            n_max = _get_max_pos_split(split=split)
             seq = dict_part_seq[part.lower()]
-            if len(seq) < n_min:
-                raise ValueError(f"Sequence length (n={len(seq)}) too short for '{feature}' feature (n_min={n_min})")
+            if len(seq) < n_max:
+                raise ValueError(f"Sequence length (n={len(seq)}) too short for '{feature}' feature (n_max={n_max})")
     # Check match of sequence part length and features
     else:
         dict_part_seq = ut.get_dict_part_seq(tmd=tmd_seq, jmd_c=jmd_c_seq, jmd_n=jmd_n_seq)
         for feature in features:
             part, split, scale = feature.split("-")
-            n_min = _get_min_pos_split(split=split)
+            n_max = _get_max_pos_split(split=split)
             seq = dict_part_seq[part.lower()]
-            if len(seq) < n_min:
+            if len(seq) < n_max:
                 raise ValueError(
-                    f"Sequence 'part' ({seq}, n={len(seq)}) too short for '{feature}' feature (n_min={n_min})")
+                    f"Sequence 'part' ({seq}, n={len(seq)}) too short for '{feature}' feature (n_max={n_max})")
 
 # Check df_seq
 # TODO check if can be simplified
@@ -230,16 +248,18 @@ def check_match_df_parts_features(df_parts=None, features=None):
         return # Skip check
     for feature in features:
         part, split, scale = feature.split("-")
-        n_min = _get_min_pos_split(split=split)
+        n_min = _get_max_pos_split(split=split)
         if any(df_parts[part.lower()].map(len) < n_min):
             mask = df_parts[part.lower()].map(len) < n_min
             list_seq = df_parts[mask][part.lower()].to_list()
             if len(list_seq) == 1:
                 seq = list_seq[0]
-                raise ValueError(f"Sequence 'part' ('{seq}', n={len(seq)}) is too short for '{feature}' feature (n_min={n_min})")
+                raise ValueError(f"Sequence 'part' ('{seq}', n={len(seq)}) is too short"
+                                 f"\n  for '{feature}' feature (n_min={n_min})")
             else:
                 raise ValueError(
-                    f"For '{feature}' feature (n_min={n_min}), following sequence 'parts' are too short: {list_seq}")
+                    f"For '{feature}' feature (n_min={n_min}),"
+                    f"\n  following sequence 'parts' are too short: {list_seq}")
 
 
 def check_match_df_parts_list_parts(df_parts=None, list_parts=None):
@@ -248,6 +268,25 @@ def check_match_df_parts_list_parts(df_parts=None, list_parts=None):
         list_parts = ut.check_list_like(name="list_parts", val=list_parts, accept_str=True, convert=True)
         missing_parts = [part.lower() for part in list_parts if part.lower() is not list(df_parts)]
         raise ValueError(f"'part' ({missing_parts}) must be in columns of 'df_parts': {list(df_parts)}")
+
+
+def check_match_df_parts_split_kws(df_parts=None, split_kws=None):
+    """"""
+    n_max = _get_max_pos_split_kws(split_kws=split_kws)
+    for part in list(df_parts):
+        if any(df_parts[part.lower()].map(len) < n_max):
+            mask = df_parts[part.lower()].map(len) < n_max
+            list_seq = df_parts[mask][part.lower()].to_list()
+            if len(list_seq) == 1:
+                seq = list_seq[0]
+                raise ValueError(
+                    f"'{part}' part contains too short sequence ('{seq}', n={len(seq)})"
+                    f"\n  for '{split_kws}' split_kws (n_max={n_max})")
+            else:
+                seq = list_seq[0]
+                raise ValueError(
+                    f"For split_kws (n_max={n_max}): '{split_kws}',"
+                    f"\n  following '{part}' part contains too short sequences (e.g., '{seq}', n={len(seq)}).")
 
 
 # Check df_scales & df_cat

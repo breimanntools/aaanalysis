@@ -12,10 +12,10 @@ import matplotlib as mpl
 import aaanalysis
 import aaanalysis.utils as ut
 
-from ._utils_cpp_plot import add_feature_title
+from .utils_cpp_plot import add_feature_title
+from .cpp_plot_heatmap import plot_heatmap
 from ._utils_cpp_plot_elements import PlotElements
 from ._utils_cpp_plot_positions import PlotPositions
-from .cpp_plot_heatmap import plot_heatmap
 
 
 # I Helper Functions

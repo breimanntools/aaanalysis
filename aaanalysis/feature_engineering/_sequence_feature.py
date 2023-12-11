@@ -47,7 +47,6 @@ def warn_creation_of_feature_matrix(features=None, df_parts=None, name="Feature 
 
 # TODO testing
 # TODO update docstring, e.g., give default parts in docstring
-# TODO all check functions in frontend (check_steps)
 # II Main Functions
 class SequenceFeature:
     """
@@ -91,7 +90,7 @@ class SequenceFeature:
     @staticmethod
     def get_df_parts(df_seq: pd.DataFrame = None,
                      list_parts: Optional[Union[str, List[str]]] = None,
-                     all_parts: bool = True,
+                     all_parts: bool = False,
                      jmd_n_len: Optional[int] = None,
                      jmd_c_len: Optional[int] = None,
                      ) -> pd.DataFrame:
@@ -129,7 +128,7 @@ class SequenceFeature:
         check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_none_len=True)
         df_seq = check_df_seq(df_seq=df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         ut.check_bool(name="all_parts", val=all_parts)
-        list_parts = ut.check_list_parts(list_parts=list_parts, all_parts=all_parts)
+        list_parts = ut.check_list_parts(list_parts=list_parts, all_parts=all_parts, accept_none=True)
         # Create df parts
         df_parts = get_df_parts_(df_seq=df_seq, list_parts=list_parts, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         return df_parts
@@ -342,7 +341,7 @@ class SequenceFeature:
         return feat_matrix
 
     def get_features(self,
-                     list_parts: List[str] = None,
+                     list_parts: Optional[List[str]] = None,
                      all_parts: bool = False,
                      split_kws: dict = None,
                      df_scales: Optional[pd.DataFrame] = None,
@@ -351,7 +350,7 @@ class SequenceFeature:
 
         Parameters
         ----------
-        list_parts: list of strings (n>=1 parts), default = ["tmd_e", "jmd_n_tmd_n", "tmd_c_jmd_c"]
+        list_parts: list of strings (n>=1 parts), default = ["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
             Names of sequence parts which should be created (e.g., 'tmd').
         split_kws: dict, default = SequenceFeature.get_split_kws
             Nested dictionary with parameter dictionary for each chosen split_type.
@@ -502,7 +501,7 @@ class SequenceFeature:
         Create DataFrame of aggregated (mean or sum) feature values per residue position and scale.
         """
         # Check input
-        list_parts = ut.check_list_parts(list_parts=list_parts, return_default=False)
+        list_parts = ut.check_list_parts(list_parts=list_parts, return_default=False, accept_none=True)
         ut.check_df_feat(df_feat=df_feat)   # Do not check for list_parts since df_pos can be obtained for any part
         ut.check_col_cat(col_cat=col_cat)
         ut.check_col_value(col_value=col_value)

@@ -45,8 +45,17 @@ to get this:
     plt.show()
 
 
+.. parsed-literal::
 
-.. image:: NOTEBOOK_2_output_5_0.png
+    /tmp/ipykernel_9030/648201286.py:5: FutureWarning: 
+    
+    Passing `palette` without assigning `hue` is deprecated and will be removed in v0.14.0. Assign the `x` variable to `hue` and set `legend=False` for the same effect.
+    
+      sns.barplot(x='Classes', y='Values', data=data, palette=colors)
+
+
+
+.. image:: NOTEBOOK_2_output_5_1.png
 
 
 The settings can be easily adjusted. Use our customized sets of 2 to 9
@@ -67,8 +76,17 @@ colors for an appealing comparison of categorical data via
     plt.show()
 
 
+.. parsed-literal::
 
-.. image:: NOTEBOOK_3_output_7_0.png
+    /tmp/ipykernel_9030/349019778.py:6: FutureWarning: 
+    
+    Passing `palette` without assigning `hue` is deprecated and will be removed in v0.14.0. Assign the `x` variable to `hue` and set `legend=False` for the same effect.
+    
+      sns.barplot(x='Classes', y='Values', data=data, palette=colors)
+
+
+
+.. image:: NOTEBOOK_3_output_7_1.png
 
 
 You can easily increase the fontsize of the labels in matching to the
@@ -79,7 +97,11 @@ other elements and create an independent legend like this:
     data = {'Classes': ['Class A', 'Class B', 'Class C', "Class D", "Class E"], 'Values': [23, 27, 43, 9, 14]}
     colors = aa.plot_get_clist(n_colors=5)
     aa.plot_settings(no_ticks_x=True, short_ticks_y=True)
-    sns.barplot(x='Classes', y='Values', data=data, palette=colors, hatch=["/", "/", "/", ".", "."])
+    ax = sns.barplot(x='Classes', y='Values', hue="Classes", data=data, palette=colors)
+    # Set different hatches for each bar
+    hatches = ["/", "/", "/", ".", "."]
+    for bar, hatch in zip(ax.patches, hatches):
+        bar.set_hatch(hatch)
     sns.despine()
     
     fontsize = aa.plot_gcfs()

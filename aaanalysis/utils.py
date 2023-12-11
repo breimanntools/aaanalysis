@@ -250,16 +250,20 @@ def check_verbose(verbose):
 
 
 # Check parts
-def check_list_parts(list_parts=None, all_parts=False, accept_none=True, return_default=True):
+def check_list_parts(list_parts=None, return_default=True, all_parts=False, accept_none=False):
     """Check if parts from list_parts are columns of df_seq"""
     try:
-        list_parts = check_list_like(name="list_parts", val=list_parts, accept_none=accept_none, accept_str=True)
+        list_parts = check_list_like(name="list_parts", val=list_parts, accept_none=True, accept_str=True)
     except ValueError:
         raise ValueError(f"'list_parts' must be list with selection of following parts: {LIST_ALL_PARTS}")
-    if return_default:
-        list_parts = LIST_ALL_PARTS if all_parts else LIST_PARTS
     if list_parts is None:
-        return  # skip further checks
+        if return_default:
+            list_parts = LIST_ALL_PARTS if all_parts else LIST_PARTS
+            return list_parts
+        elif accept_none:
+            return  # skip further checks
+        else:
+            raise ValueError(f"'list_parts' must be list with selection of following parts: {LIST_ALL_PARTS}")
     # Check for invalid parts
     wrong_parts = [x for x in list_parts if x not in LIST_ALL_PARTS]
     if len(wrong_parts) > 0:
@@ -359,7 +363,7 @@ def check_features(features=None, list_parts=None, list_scales=None):
     """Check if feature names are valid for list of parts  and df_scales
     """
     features = check_list_like(name="features", val=features, accept_none=False, accept_str=True, convert=True)
-    list_parts = check_list_parts(list_parts=list_parts, all_parts=True)
+    list_parts = check_list_parts(list_parts=list_parts, all_parts=True, return_default=True)
     # Check elements of features list
     features_wrong_n_components = [x for x in features if type(x) is not str or len(x.split("-")) != 3]
     if len(features_wrong_n_components) > 0:

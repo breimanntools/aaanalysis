@@ -5,9 +5,9 @@ import pandas as pd
 import numpy as np
 
 import aaanalysis.utils as ut
+from .utils_feature import get_positions_, get_feature_matrix_, get_amino_acids_, add_scale_info_
 from ._split import SplitRange
 from ._utils_feature_stat import add_stat_
-from ._utils_feature import get_positions_, get_feature_matrix_, get_amino_acids_, add_scale_info_
 
 
 # I Helper Functions

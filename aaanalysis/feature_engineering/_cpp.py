@@ -14,7 +14,8 @@ from ._sequence_feature import SequenceFeature
 from ._backend.check_feature import (check_split_kws,
                                      check_parts_len, check_match_features_seq_parts,
                                      check_df_seq,
-                                     check_df_parts, check_match_df_parts_features, check_match_df_parts_list_parts,
+                                     check_df_parts, check_match_df_parts_features,
+                                     check_match_df_parts_list_parts, check_match_df_parts_split_kws,
                                      check_df_scales, check_match_df_scales_features,
                                      check_df_cat, check_match_df_cat_features,
                                      check_match_df_parts_df_scales, check_match_df_scales_df_cat)
@@ -32,6 +33,7 @@ def check_sample_in_df_seq(sample_name=None, df_seq=None):
                 f"\nValid names are: {list_names}"
         raise ValueError(error)
 
+# TODO all check functions in frontend (check_steps)
 # TODO simplify checks & interface (end-to-end check with tests & docu)
 # TODO  TODO add link to explanation for TMD, JMDs
 # II Main Functions
@@ -92,6 +94,7 @@ class CPP(Tool):
         ut.check_bool(name="accept_gaps", val=accept_gaps)
         df_parts = check_match_df_parts_df_scales(df_parts=df_parts, df_scales=df_scales, accept_gaps=accept_gaps)
         df_scales, df_cat = check_match_df_scales_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
+        check_match_df_parts_split_kws(df_parts=df_parts, split_kws=split_kws)
         # Internal attributes
         self._verbose = ut.check_verbose(verbose)
         self._accept_gaps = accept_gaps
