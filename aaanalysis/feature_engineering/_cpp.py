@@ -133,7 +133,7 @@ class CPP(Tool):
         n_filter
             Number of features to be filtered/selected by CPP algorithm.
         n_pre_filter
-            Number of feature to be pre-filtered by CPP algorithm. If None, a percentage of all features is used.
+            Number of feature to be pre-filtered by CPP algorithm. If ``None``, a percentage of all features is used.
         pct_pre_filter
             Percentage of all features that should remain after the pre-filtering step.
         max_std_test
@@ -156,7 +156,7 @@ class CPP(Tool):
             Length of JMD-C (>=0).
 
         n_processes
-            Number of CPUs used for multiprocessing. If None, number will be optimized automatically.
+            Number of CPUs used for multiprocessing. If ``None``, number will be optimized automatically.
 
         Returns
         -------
@@ -235,7 +235,9 @@ class CPP(Tool):
         df_feat = filtering(df=df, df_scales=self.df_scales,
                             n_filter=n_filter, check_cat=check_cat,
                             max_overlap=max_overlap, max_cor=max_cor)
+        # Adjust df_feat
         df_feat.reset_index(drop=True, inplace=True)
+        df_feat[ut.COLS_FEAT_STAT] = df_feat[ut.COLS_FEAT_STAT].round(3)
         if self._verbose:
             ut.print_out(f"4. CPP returns df with {len(df_feat)} unique features including general information and statistics")
         return df_feat

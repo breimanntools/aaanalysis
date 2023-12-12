@@ -38,24 +38,15 @@ to get this:
     
     colors = aa.plot_get_clist()
     aa.plot_settings()
-    sns.barplot(x='Classes', y='Values', data=data, palette=colors)
+    sns.barplot(x='Classes', y='Values', data=data, hue="Classes", palette=colors)
     sns.despine()
     plt.title("Adjusted by AAanalysis")
     plt.tight_layout()
     plt.show()
 
 
-.. parsed-literal::
 
-    /tmp/ipykernel_9030/648201286.py:5: FutureWarning: 
-    
-    Passing `palette` without assigning `hue` is deprecated and will be removed in v0.14.0. Assign the `x` variable to `hue` and set `legend=False` for the same effect.
-    
-      sns.barplot(x='Classes', y='Values', data=data, palette=colors)
-
-
-
-.. image:: NOTEBOOK_2_output_5_1.png
+.. image:: NOTEBOOK_2_output_5_0.png
 
 
 The settings can be easily adjusted. Use our customized sets of 2 to 9
@@ -69,24 +60,15 @@ colors for an appealing comparison of categorical data via
     colors = aa.plot_get_clist(n_colors=5)
     aa.plot_settings(no_ticks_x=True, short_ticks_y=True, grid=True, grid_axis="y")
     
-    sns.barplot(x='Classes', y='Values', data=data, palette=colors)
+    sns.barplot(x='Classes', y='Values', hue="Classes", data=data, palette=colors)
     sns.despine()
     plt.title("Adjusted by AAanalysis (grid, no x ticks)")
     plt.tight_layout()
     plt.show()
 
 
-.. parsed-literal::
 
-    /tmp/ipykernel_9030/349019778.py:6: FutureWarning: 
-    
-    Passing `palette` without assigning `hue` is deprecated and will be removed in v0.14.0. Assign the `x` variable to `hue` and set `legend=False` for the same effect.
-    
-      sns.barplot(x='Classes', y='Values', data=data, palette=colors)
-
-
-
-.. image:: NOTEBOOK_3_output_7_1.png
+.. image:: NOTEBOOK_3_output_7_0.png
 
 
 You can easily increase the fontsize of the labels in matching to the

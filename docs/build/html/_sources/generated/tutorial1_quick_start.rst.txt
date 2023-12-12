@@ -2,8 +2,8 @@ Quick Start with AAanalysis
 ===========================
 
 **AAanalysis** is a Python framework for sequence-based protein
-prediction, centered around the ``CPP`` model for interpretable feature
-engineering.
+prediction, centered around the *Comparative Physical Profiling (CPP)*
+algorithm for interpretable feature engineering.
 
 First, import some third-party packages and ``aanalsis``:
 
@@ -25,7 +25,7 @@ We can load a dataset of amino acid scales and an example dataset for
     df_scales = aa.load_scales()
     df_seq = aa.load_dataset(name="DOM_GSEC", n=50)
 
-Starting the **Feature Engineering**, we first utilize the ``AAclust``
+Starting the **Feature Engineering**, we can utilize the ``AAclust``
 model for pre-selecting a redundancy-reduced set of amino acid scales:
 
 .. code:: ipython3
@@ -35,11 +35,11 @@ model for pre-selecting a redundancy-reduced set of amino acid scales:
     scales = aac.fit(X, names=list(df_scales), n_clusters=100).medoid_names_ 
     df_scales = df_scales[scales]
 
-We can now use the *Comparative Physical Profiling (CPP)* algorithm,
-which aims at identifying a set of features most discriminant between
-two sets of sequences. Its core idea is the CPP feature concept, defined
-as a combination of *Parts*, *Splits*, and *Scales*. Parts and Splits
-can be obtained using ``SequenceFeature``:
+We can now use the ``CPP`` algorithm, which aims at identifying a set of
+features most discriminant between two sets of sequences. Its core idea
+is the CPP feature concept, defined as a combination of *Parts*,
+*Splits*, and *Scales*. Parts and Splits can be obtained using
+``SequenceFeature``:
 
 .. code:: ipython3
 
@@ -47,11 +47,10 @@ can be obtained using ``SequenceFeature``:
     df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=["tmd"])
     split_kws = sf.get_split_kws(n_split_max=1, split_types=["Segment"])
 
-Running the CPP algorithm creates all ``Part-Split-Split`` combinations
-and filters a selected maximum of non-redundant features. As a baseline
-approach, we use CPP without filtering (``max_cor=1``) to compute the
-average values for the 100 selected scales over the entire TMD
-sequences:
+Running CPP creates all ``Part-Split-Scale`` combinations and filters a
+selected maximum of non-redundant features. As a baseline approach, we
+use CPP without filtering (``max_cor=1``) to compute the average values
+for the 100 selected scales over the entire TMD sequences:
 
 .. code:: ipython3
 

@@ -156,11 +156,11 @@ def get_list_parts(features=None):
 
 def get_df_parts_(df_seq=None, list_parts=None, jmd_n_len=None, jmd_c_len=None):
     """Create DataFrame with sequence parts"""
-    seq_info_in_df = set(ut.COLS_SEQ_POS).issubset(set(df_seq))
+    pos_based = set(ut.COLS_SEQ_POS).issubset(set(df_seq))
     dict_parts = {}
     for i, row in df_seq.iterrows():
         entry = row[ut.COL_ENTRY]
-        if jmd_c_len is not None and jmd_n_len is not None and seq_info_in_df:
+        if jmd_c_len is not None and jmd_n_len is not None and pos_based:
             seq, tmd_start, tmd_stop = row[ut.COLS_SEQ_POS].values
             jmd_n, tmd, jmd_c = create_parts(seq=seq, tmd_start=tmd_start, tmd_stop=tmd_stop,
                                              jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
@@ -172,6 +172,12 @@ def get_df_parts_(df_seq=None, list_parts=None, jmd_n_len=None, jmd_c_len=None):
     df_parts = pd.DataFrame.from_dict(dict_parts).T
     # DEV: the following line sorts index if list_parts contains just one element
     # df_parts = pd.DataFrame.from_dict(dict_parts, orient="index")
+    return df_parts
+
+
+def remove_entries_with_gaps_(df_parts=None):
+    """Remove rows where any cell contains '-'"""
+    df_parts = df_parts[~df_parts.map(lambda x: '-' in str(x)).any(axis=1)]
     return df_parts
 
 

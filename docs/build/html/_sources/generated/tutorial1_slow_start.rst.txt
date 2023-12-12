@@ -2,10 +2,11 @@ Slow Start with AAanalysis
 ==========================
 
 Dive into the powerful capabilities of **AAanalysis**—a Python framework
-dedicated to sequence-based, alignment-free protein prediction. In this
-tutorial, we’ll focus on extracting interpretable features from protein
-sequences using the ``AAclust`` and ``CPP`` models and how they can be
-harnessed for binary classification tasks.
+for sequence-based (i.e., alignment-free) and interpretable protein
+prediction. In this tutorial, we’ll focus on extracting physicochemical
+features from protein sequences using the *Comparative Physical
+Profiling (CPP)* algorithm and how these features can be harnessed for
+binary classification tasks.
 
 What You Will Learn:
 --------------------
@@ -51,9 +52,8 @@ substrates and non-substrates:
 2. Feature Engineering
 ----------------------
 
-The centerpiece of AAanalysis is the Comparative Physicochemical
-Profiling (``CPP``) model, which is supported by ``AAclust`` for the
-pre-selection of amino acid scales.
+The centerpiece of AAanalysis is the ``CPP`` model, which is supported
+by ``AAclust`` for the pre-selection of amino acid scales.
 
 AAclust
 ~~~~~~~

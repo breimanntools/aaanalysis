@@ -361,7 +361,7 @@ class CPPPlot:
         Parameters
         ----------
         df_feat : class:`pandas.DataFrame`, optional, default=None
-            Dataframe containing the features to be plotted. If None, default features from the instance will be used.
+            Dataframe containing the features to be plotted. If ``None``, default features from the instance will be used.
 
         col_value : str, default='mean_dif'
             Column name in df_feat which contains the values to be plotted.
@@ -587,9 +587,9 @@ class CPPPlot:
         jmd_seq_color : str, default = 'white'
             Color of JMD-N and JMD-C sequence.
         seq_size : float, optional
-            Font size of all sequence parts in points. If None, optimized automatically.
+            Font size of all sequence parts in points. If ``None``, optimized automatically.
         fontsize_tmd_jmd : float, optional
-            Font size of 'TMD', 'JMD-N' and 'JMD-C'  label in points. If None, optimized automatically.
+            Font size of 'TMD', 'JMD-N' and 'JMD-C'  label in points. If ``None``, optimized automatically.
         xtick_size : float, default = 11.0
             Size of x ticks in points. Passed as 'size' argument to :meth:`matplotlib.axes.Axes.set_xticklabels`.
         xtick_width : float, default = 2.0
@@ -598,7 +598,7 @@ class CPPPlot:
             Length of x ticks in points. Passed as 'length' argument to :meth:`matplotlib.axes.Axes.tick_params`.
         ytick_size : float, optional
             Size of scale information as y ticks in points. Passed to :meth:`matplotlib.axes.Axes.tick_params`.
-            If None, optimized automatically.
+            If ``None``, optimized automatically.
         add_legend_cat : bool, default = True,
             Whether to add legend for categories under plot and classification of scales at y-axis.
         legend_kws : dict, optional

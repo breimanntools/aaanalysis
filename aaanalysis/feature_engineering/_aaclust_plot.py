@@ -178,10 +178,10 @@ class AAclustPlot:
             - ``SC``: Silhouette Coefficient.
 
         names
-            Names of scale sets from ``data``. If None, names are internally generated as 'Set 1', 'Set 2' etc.
+            Scale set names from ``data``. If ``None``, names are internally generated as 'Set 1', 'Set 2' etc.
         dict_xlims
             A dictionary containing x-axis limits (``xmin``, ``xmax``) for selected evaluation measure metric subplots.
-            Keys should be names of the ``evaluation measures`` (e.g., 'BIC'). If None, x-axis are auto-scaled.
+            Keys should be names of the ``evaluation measures`` (e.g., 'BIC'). If ``None``, x-axis are auto-scaled.
         figsize
             Width and height of the figure in inches.
 

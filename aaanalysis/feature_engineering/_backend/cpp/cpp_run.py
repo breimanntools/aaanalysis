@@ -120,9 +120,9 @@ def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None, y=None, ac
     accept_gaps: bool, default = False
         Whether to accept missing values by enabling omitting for computations (if True).
     verbose: bool, default = True
-        Whether to print progress information about the algorithm (if True).
+        Whether to show progress information about the algorithm (if True).
     n_processes: integer default = None
-        Number of CPUs used for multiprocessing. If None, number will be optimized automatically
+        Number of CPUs used for multiprocessing. If ``None``, number will be optimized automatically
 
     Returns
     -------

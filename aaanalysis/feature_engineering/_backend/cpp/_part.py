@@ -7,13 +7,7 @@ import aaanalysis.utils as ut
 # II Main Functions
 class Parts:
     """
-    Class for creating all sequence features necessary for CPP analysis:
-    a) Target Middle Domain (TMD) or transmembrane domain for intramembrane proteases (IMP) substrates,
-        whose length can vary between the protein sequences.
-    b) Juxta Middle Domain (JMD) or juxtamembrane domain for IMP substrates,
-        which flank the TMD N- and C-terminal with defined length.
-    These sequence features can be derived from the total sequence, the TMD start and stop position,
-        and the length of the JMD and the extended region (given for one side).
+    Class for creating all sequence parts.
 
     Parameters
     ----------

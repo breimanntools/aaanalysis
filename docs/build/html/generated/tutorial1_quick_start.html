@@ -6,12 +6,12 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="generated/tutorial1_quick_start.html" />
 <meta property="og:site_name" content="AAanalysis" />
-<meta property="og:description" content="AAanalysis is a Python framework for sequence-based protein prediction, centered around the CPP model for interpretable feature engineering. First, import some third-party packages and aanalsis: We..." />
+<meta property="og:description" content="AAanalysis is a Python framework for sequence-based protein prediction, centered around the Comparative Physical Profiling (CPP) algorithm for interpretable feature engineering. First, import some ..." />
 <meta property="og:image:width" content="1146" />
 <meta property="og:image:height" content="600" />
-<meta property="og:image" content="/_images/social_previews/summary_generated_tutorial1_quick_start_e2d4253e.png" />
-<meta property="og:image:alt" content="AAanalysis is a Python framework for sequence-based protein prediction, centered around the CPP model for interpretable feature engineering. First, import so..." />
-<meta name="description" content="AAanalysis is a Python framework for sequence-based protein prediction, centered around the CPP model for interpretable feature engineering. First, import some third-party packages and aanalsis: We..." />
+<meta property="og:image" content="/_images/social_previews/summary_generated_tutorial1_quick_start_294312f1.png" />
+<meta property="og:image:alt" content="AAanalysis is a Python framework for sequence-based protein prediction, centered around the Comparative Physical Profiling (CPP) algorithm for interpretable..." />
+<meta name="description" content="AAanalysis is a Python framework for sequence-based protein prediction, centered around the Comparative Physical Profiling (CPP) algorithm for interpretable feature engineering. First, import some ..." />
 <meta name="twitter:card" content="summary_large_image" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -127,8 +127,8 @@
   <section id="quick-start-with-aaanalysis">
 <h1>Quick Start with AAanalysis<a class="headerlink" href="#quick-start-with-aaanalysis" title="Permalink to this heading"></a></h1>
 <p><strong>AAanalysis</strong> is a Python framework for sequence-based protein
-prediction, centered around the <code class="docutils literal notranslate"><span class="pre">CPP</span></code> model for interpretable feature
-engineering.</p>
+prediction, centered around the <em>Comparative Physical Profiling (CPP)</em>
+algorithm for interpretable feature engineering.</p>
 <p>First, import some third-party packages and <code class="docutils literal notranslate"><span class="pre">aanalsis</span></code>:</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
@@ -145,7 +145,7 @@ engineering.</p>
 <span class="n">df_seq</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;DOM_GSEC&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Starting the <strong>Feature Engineering</strong>, we first utilize the <code class="docutils literal notranslate"><span class="pre">AAclust</span></code>
+<p>Starting the <strong>Feature Engineering</strong>, we can utilize the <code class="docutils literal notranslate"><span class="pre">AAclust</span></code>
 model for pre-selecting a redundancy-reduced set of amino acid scales:</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">aac</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclust</span><span class="p">()</span>
 <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df_scales</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
@@ -153,21 +153,20 @@ model for pre-selecting a redundancy-reduced set of amino acid scales:</p>
 <span class="n">df_scales</span> <span class="o">=</span> <span class="n">df_scales</span><span class="p">[</span><span class="n">scales</span><span class="p">]</span>
 </pre></div>
 </div>
-<p>We can now use the <em>Comparative Physical Profiling (CPP)</em> algorithm,
-which aims at identifying a set of features most discriminant between
-two sets of sequences. Its core idea is the CPP feature concept, defined
-as a combination of <em>Parts</em>, <em>Splits</em>, and <em>Scales</em>. Parts and Splits
-can be obtained using <code class="docutils literal notranslate"><span class="pre">SequenceFeature</span></code>:</p>
+<p>We can now use the <code class="docutils literal notranslate"><span class="pre">CPP</span></code> algorithm, which aims at identifying a set of
+features most discriminant between two sets of sequences. Its core idea
+is the CPP feature concept, defined as a combination of <em>Parts</em>,
+<em>Splits</em>, and <em>Scales</em>. Parts and Splits can be obtained using
+<code class="docutils literal notranslate"><span class="pre">SequenceFeature</span></code>:</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sf</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">SequenceFeature</span><span class="p">()</span>
 <span class="n">df_parts</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">get_df_parts</span><span class="p">(</span><span class="n">df_seq</span><span class="o">=</span><span class="n">df_seq</span><span class="p">,</span> <span class="n">list_parts</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tmd&quot;</span><span class="p">])</span>
 <span class="n">split_kws</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">get_split_kws</span><span class="p">(</span><span class="n">n_split_max</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">split_types</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Segment&quot;</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>Running the CPP algorithm creates all <code class="docutils literal notranslate"><span class="pre">Part-Split-Split</span></code> combinations
-and filters a selected maximum of non-redundant features. As a baseline
-approach, we use CPP without filtering (<code class="docutils literal notranslate"><span class="pre">max_cor=1</span></code>) to compute the
-average values for the 100 selected scales over the entire TMD
-sequences:</p>
+<p>Running CPP creates all <code class="docutils literal notranslate"><span class="pre">Part-Split-Scale</span></code> combinations and filters a
+selected maximum of non-redundant features. As a baseline approach, we
+use CPP without filtering (<code class="docutils literal notranslate"><span class="pre">max_cor=1</span></code>) to compute the average values
+for the 100 selected scales over the entire TMD sequences:</p>
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Small set of CPP features (100 features are created)</span>
 <span class="n">y</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">df_seq</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">])</span>
 <span class="n">cpp</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">CPP</span><span class="p">(</span><span class="n">df_scales</span><span class="o">=</span><span class="n">df_scales</span><span class="p">,</span> <span class="n">df_parts</span><span class="o">=</span><span class="n">df_parts</span><span class="p">,</span> <span class="n">split_kws</span><span class="o">=</span><span class="n">split_kws</span><span class="p">)</span>

@@ -88,7 +88,7 @@ def plot_get_cmap(name: str = "CPP",
         >>> colors = aa.plot_get_cmap(name="CPP", n_colors=3)
         >>> data = {'Classes': ['Class A', 'Class B', 'Class C',], 'Values': [14, 23, 33]}
         >>> aa.plot_settings()
-        >>> sns.barplot(data=data, x='Classes', y='Values', palette=colors, hue="Classes", legend=False)
+        >>> sns.barplot(data=data, x='Classes', y='Values', palette=colors, hue="Classes")
         >>> plt.show()
 
     See Also

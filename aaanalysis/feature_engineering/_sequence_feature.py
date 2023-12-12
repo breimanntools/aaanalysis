@@ -11,11 +11,16 @@ import aaanalysis.utils as ut
 from ._backend.check_feature import (check_split_kws,
                                      check_parts_len, check_match_features_seq_parts,
                                      check_df_seq,
-                                     check_df_parts, check_match_df_parts_features, check_match_df_parts_list_parts,
-                                     check_df_scales, check_match_df_scales_features,
-                                     check_df_cat, check_match_df_cat_features,
-                                     check_match_df_parts_df_scales, check_match_df_scales_df_cat)
-from ._backend.cpp.utils_feature import (get_df_parts_, get_positions_, get_amino_acids_,
+                                     check_match_df_seq_jmd_len,
+                                     check_df_parts,
+                                     check_match_df_parts_features, check_match_df_parts_list_parts,
+                                     check_match_df_parts_df_scales,
+                                     check_df_scales,
+                                     check_match_df_scales_features,check_match_df_scales_df_cat,
+                                     check_df_cat,
+                                     check_match_df_cat_features)
+from ._backend.cpp.utils_feature import (get_df_parts_, remove_entries_with_gaps_,
+                                         get_positions_, get_amino_acids_,
                                          get_feature_matrix_, get_df_pos_, get_df_pos_parts_)
 from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_, get_df_feat_)
 
@@ -46,20 +51,29 @@ def warn_creation_of_feature_matrix(features=None, df_parts=None, name="Feature 
 
 
 # TODO testing
-# TODO update docstring, e.g., give default parts in docstring
+# TODO update docstring
 # II Main Functions
 class SequenceFeature:
     """
-    Retrieve and create sequence feature components (Part, Split, and Scale).
+    Retrieve and create sequence feature components (``Part``, ``Split``, and  ``Scale``).
 
     Notes
     -----
     Feature Components:
-        - Part: A continuous subset of sequence, such as a protein domain
-          (e.g, transmembrane domain of membrane proteins).
-        - Split: Continuous or discontinuous subset of a sequence part, such as a segment or a pattern.
-        - Scale: A physicochemical scale assigning to each amino acid a numerical value
-          (typically min-max-normalized [0-1]).
+
+        - ``Part``: A continuous subset of a sequence, such as a protein domain.
+        - ``Split``: Continuous or discontinuous subset of a ``Part``, such as a segment or a pattern.
+        - ``Scale``: A physicochemical scale, i.e., a set of numerical values (typically [0-1]) assigned to amino acids.
+
+    Main Parts:
+        We define three main parts from which each other part can be derived from:
+
+        - ``TMD (target middle domain)``: Protein domain of interest with varying length,
+           such as the transmembrane domain (TMD) of γ-secretase substrates (see [Breimann23a]_).
+        - ``JMD-N (juxta middle domain N-terminal)``: Protein domain/region directly N-terminally next to the TMD,
+          typically set to a fixed length (e.g., 10 for γ-secretase substrates).
+        - ``JMD-C (juxta middle domain C-terminal)``: Protein domain/region directly C-terminally next to the TMD,
+          typically set to a fixed length (e.g., 10 for γ-secretase substrates).
 
     Feature: Part + Split + Scale
         Physicochemical property (expressed as numerical scale) present at distinct amino acid
@@ -70,9 +84,25 @@ class SequenceFeature:
         For a given sequence, a feature value is the average of a physicochemical scale over
         all amino acids obtained by splitting a sequence part.
 
-    List of valid sequence parts:
-        ['tmd', 'tmd_e', 'tmd_n', 'tmd_c', 'jmd_n', 'jmd_c', 'ext_c', 'ext_n',
-        'tmd_jmd', 'jmd_n_tmd_n', 'tmd_c_jmd_c', 'ext_n_tmd_n', 'tmd_c_ext_c']
+    Valid sequence parts:
+
+        - ``tmd``: Target Middle Domain (TMD).
+        - ``tmd_e``: TMD extended N- and C-terminally by a number of residues, defined by the ``ext_len`` configuration option.
+        - ``tmd_n``: N-terminal half of the TMD.
+        - ``tmd_c``: C-terminal half of the TMD.
+        - ``jmd_n``: N-terminal Juxt Middle Domain (JMD).
+        - ``jmd_c``: C-terminal JMD.
+        - ``ext_c``: Extended C-terminal region.
+        - ``ext_n``: Extended N-terminal region.
+        - ``tmd_jmd``: Combination of JMD-N, TMD, and JMD-C.
+        - ``jmd_n_tmd_n``: Combination of JMD-N and N-terminal half of TMD.
+        - ``tmd_c_jmd_c``: Combination of C-terminal half of TMD and JMD-C.
+        - ``ext_n_tmd_n``: Extended N-terminal region and N-terminal half of TMD.
+        - ``tmd_c_ext_c``: C-terminal half of TMD and extended C-terminal region.
+
+    Default parts:
+        The following three parts are provided by default: ``tmd``, ``jmd_n_tmd_n``, ``tmd_c_jmd_c``.
+
     """
 
     def __init__(self,
@@ -87,28 +117,46 @@ class SequenceFeature:
         self.verbose = ut.check_verbose(verbose)
 
     # Part and Split methods
-    @staticmethod
-    def get_df_parts(df_seq: pd.DataFrame = None,
+    def get_df_parts(self,
+                     df_seq: pd.DataFrame = None,
                      list_parts: Optional[Union[str, List[str]]] = None,
                      all_parts: bool = False,
-                     jmd_n_len: Optional[int] = None,
-                     jmd_c_len: Optional[int] = None,
+                     jmd_n_len: Union[int, None] = 10,
+                     jmd_c_len: Union[int, None] = 10,
+                     remove_entries_with_gaps: bool = False
                      ) -> pd.DataFrame:
         """Create DataFrane with sequence parts.
 
         Parameters
         ----------
         df_seq
-            DataFrame with sequence information comprising either sequence ('sequence', 'tmd_start', 'tmd_stop')
-            or sequence part ('jmd_n', 'tmd', 'jmd_c') columns.
-        list_parts: list of string, len>=1
-            Names of sequence parts which should be created (e.g., 'tmd').
-        jmd_n_len: int, default = None, optional
-            Length of JMD-N in number of amino acids. If None, 'jmd_n' column must be given in df_seq.
-        jmd_c_len: int, default = None, optional
-            Length of JMD-N in number of amino acids. If None, 'jmd_c' column must be given in df_seq.
-        all_parts: bool, default = False
-            Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.
+            DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
+            in one of four distinct formats, differentiated by their respective columns:
+
+            - Position-based format:
+                'sequence': The complete amino acid sequence.
+                'tmd_start': Starting positions of the TMD in the sequence.
+                'tmd_stop': Ending positions of the TMD in the sequence.
+            - Part-based format:
+                'jmd_n': Amino acid sequence for JMD-N.
+                'tmd': Amino acid sequence for TMD.
+                'jmd_c': Amino acid sequence for JMD-C.
+            - Sequence-based format:
+                Only 'sequence' column.
+            - Sequence-TMD-based format:
+                'sequence' and 'tmd' columns.
+
+        list_parts: list of string, default = {``tmd``, ``jmd_n_tmd_n``, ``tmd_c_jmd_c``}
+            Names of sequence parts that should be obtained for sequences from ``df_seq``.
+        jmd_n_len: int, default = 10
+            Length of JMD-N in number of amino acids. If ``None``, ``jmd_n`` and ``jmd_c`` should be given.
+        jmd_c_len: int, default = 10
+            Length of JMD-N in number of amino acids. If ``None``, ``jmd_n`` and ``jmd_c`` should be given.
+        all_parts: bool, default = ``False``
+            Whether to create DataFrame with all possible sequence parts (if ``True``) or parts given by list_parts.
+        remove_entries_with_gaps: bool, default = ``False``
+            Whether to exclude entries containing missing residues in their sequence parts (if ``True``),
+            usually resulting from sequences being too short.
 
         Returns
         -------
@@ -117,7 +165,13 @@ class SequenceFeature:
 
         Notes
         -----
-        List of valid sequence parts can be found in :class: ´aaanalysis.SequenceFeature´.
+        * See :class: ´aaanalysis.SequenceFeature´ for definition of parts, and lists of all existing and default parts.
+        * ``jmd_n_len`` and ``jmd_c_len`` must be both given, except for the part-based format.
+
+        Warnings
+        --------
+        * Amino acid gaps might be introduced to meet specified length requirements. Concerning entries can be removed
+          by setting ``remove_entries_with_gaps=True``.
 
         Examples
         --------
@@ -126,11 +180,21 @@ class SequenceFeature:
         """
         # Check input
         check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_none_len=True)
-        df_seq = check_df_seq(df_seq=df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+        check_df_seq(df_seq=df_seq)
         ut.check_bool(name="all_parts", val=all_parts)
         list_parts = ut.check_list_parts(list_parts=list_parts, all_parts=all_parts, accept_none=True)
+        df_seq = check_match_df_seq_jmd_len(df_seq=df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         # Create df parts
         df_parts = get_df_parts_(df_seq=df_seq, list_parts=list_parts, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+        if remove_entries_with_gaps:
+            n_before = len(df_parts)
+            df_parts = remove_entries_with_gaps_(df_parts=df_parts)
+            n_removed = n_before - len(df_parts)
+            if n_removed > 0 and self.verbose:
+                warnings.warn(f"{n_removed} entries have been removed from 'df_seq' due to introduced gaps.")
+        if len(df_parts) == 0:
+            raise ValueError(f"All entries have been removed from 'df_seq'. "
+                             f"Reduce 'jmd_n_len' ({jmd_n_len}) and 'jmd_c_len' ({jmd_c_len}) settings.")
         return df_parts
 
     @staticmethod
@@ -310,11 +374,11 @@ class SequenceFeature:
         accept_gaps: bool, default ``False``
             Whether to accept missing values by enabling omitting for computations (if ``True``).
         n_jobs
-            The number of jobs to run in parallel. If None, it will be set to the maximum.
+            The number of jobs to run in parallel. If ``None``, it will be set to the maximum.
 
         Returns
         -------
-        feat_matrix: array-like or sparse matrix, shape (n_samples, n_features)
+        feat_matrix: `array-like , shape (n_samples, n_features)`
             Feature values of samples.
         """
         # Load defaults

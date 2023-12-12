@@ -2,13 +2,13 @@
 This is a script for protein benchmark loading function. Please define new loading functions by their loaded data
 by introducing a new data table in docs/source/index/tables_templates.rst.
 """
+from typing import Optional, Literal, Union
 import os
 import pandas as pd
 import numpy as np
 import re
 import warnings
 from pandas import DataFrame
-from typing import Optional, Literal
 import aaanalysis.utils as ut
 
 # Constants
@@ -124,7 +124,7 @@ def load_dataset(name: str = "Overview",
                  non_canonical_aa: Literal["remove", "keep", "gap"] = "remove",
                  min_len: Optional[int] = None,
                  max_len: Optional[int] = None,
-                 aa_window_size: int = 9,
+                 aa_window_size: Union[int, None] = 9,
                  ) -> DataFrame:
     """
     Loads protein benchmarking datasets.
@@ -137,7 +137,7 @@ def load_dataset(name: str = "Overview",
     name
         The name of the loaded dataset, from the 'Dataset' column in the overview table.
     n
-        Number of proteins per class, selected by index. If None, the whole dataset will be returned.
+        Number of proteins per class, selected by index. If ``None``, the whole dataset will be returned.
     random
         If True, ``n`` randomly selected proteins per class will be chosen.
     non_canonical_aa
@@ -152,7 +152,7 @@ def load_dataset(name: str = "Overview",
     max_len
         Maximum length of sequences for filtering, disabled by default.
     aa_window_size
-        Length of amino acid window, only used for the amino acid dataset level (``name='AA_'``) and if ``n`` is given.
+        Length of amino acid window, only used for the amino acid dataset level (``name='AA_'``). Disabled if ``None``.
 
     Returns
     -------
