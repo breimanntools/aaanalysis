@@ -44,7 +44,7 @@ def check_model_kwargs(model_class=None, model_kwargs=None, param_to_check="n_cl
     # Check if model_kwargs contain invalid parameters for the model
     invalid_kwargs = [x for x in model_kwargs if x not in valid_args]
     if len(invalid_kwargs):
-        raise ValueError(f"'model_kwargs' contains invalid arguments: {invalid_kwargs}")
+        raise ValueError(f"'model_kwargs' (for '{model_class}') contains invalid arguments: {invalid_kwargs}")
     return model_kwargs
 
 

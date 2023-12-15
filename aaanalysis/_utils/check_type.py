@@ -24,7 +24,8 @@ def check_number_val(name=None, val=None, accept_none=False, just_int=False):
         raise ValueError(f"'{name}' should be {type_description}, but got {type(val).__name__}.")
 
 
-def check_number_range(name=None, val=None, min_val=0, max_val=None, accept_none=False, just_int=None):
+def check_number_range(name=None, val=None, min_val=0, max_val=None, exclusive_limits=False,
+                       accept_none=False, just_int=None):
     """Check if value of given name is within defined range"""
     if val is None:
         if not accept_none:
@@ -42,9 +43,14 @@ def check_number_range(name=None, val=None, min_val=0, max_val=None, accept_none
     type_description = "an integer" if just_int else "a float or an integer"
     if not isinstance(val, valid_types):
         raise ValueError(f"'{name}' should be {type_description}, but got {type(val).__name__}.")
-    if val < min_val or (max_val is not None and val > max_val):
-        range_desc = f"n >= {min_val}" if max_val is None else f"{min_val} <= n <= {max_val}"
-        raise ValueError(f"'{name}' should be {type_description} with {range_desc}, but got {val}.")
+    if exclusive_limits:
+        if val <= min_val or (max_val is not None and val >= max_val):
+            range_desc = f"n > {min_val}" if max_val is None else f"{min_val} < n < {max_val}"
+            raise ValueError(f"'{name}' should be {type_description} with {range_desc}, but got {val}.")
+    else:
+        if val < min_val or (max_val is not None and val > max_val):
+            range_desc = f"n >= {min_val}" if max_val is None else f"{min_val} <= n <= {max_val}"
+            raise ValueError(f"'{name}' should be {type_description} with {range_desc}, but got {val}.")
     return val
 
 

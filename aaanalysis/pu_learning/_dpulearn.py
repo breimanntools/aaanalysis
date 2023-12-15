@@ -13,6 +13,7 @@ import aaanalysis.utils as ut
 
 # Settings
 LIST_METRICS = ['euclidean', 'manhattan', 'cosine']
+COL_SELECTION_VIA = "selection_via"
 
 
 # I Helper Functions
@@ -25,36 +26,65 @@ def _check_metric(metric=None):
 
 def _check_n_unl_to_neg(labels=None, n_unl_to_neg=None, label_unl=None):
     """Validate that there are enough unlabeled samples in the dataset."""
-    n_unl = sum([x == label_unl for x in labels])
+    n_unl = np.sum(labels == label_unl)
     if n_unl < n_unl_to_neg:
         raise ValueError(f"Number of unlabeled labels ({n_unl}) must be higher than 'n_unl_to_neg' ({n_unl_to_neg})")
+
+
+def _check_n_components(n_components=1):
+    """Check if n_components valid for sklearn PCA object"""
+    try:
+        # Check number of PCs
+        if type(n_components) is int:
+            ut.check_number_range(name="n_components", val=n_components, min_val=1, just_int=True)
+        # Check percentage of covered explained variance
+        else:
+            ut.check_number_range(name="n_components", val=n_components, min_val=0, max_val=1.0, just_int=False,
+                                  exclusive_limits=True)
+    except ValueError:
+        raise ValueError(f"'n_components' ({n_components}) should be either "
+                         f"\n  an integer >= 1 (number of principal components) or"
+                         f"\n  a float with 0.0 < 'n_components' < 1.0 (percentage of covered variance)")
+
+
+def _check_match_X_n_components(X=None, n_components=1):
+    """Check if n_components matches to dimensions of X"""
+    n_samples, n_features = X.shape
+    if min(n_features, n_samples) <= n_components:
+        raise ValueError(f"'n_components' ({n_components}) should be < min(n_features, n_samples) from 'X' ({n_features})")
 
 
 # II Main Functions
 def _get_neg_via_distance(X=None, labels=None, metric="euclidean", n_unl_to_neg=None,
                           label_neg=0, label_pos=1):
     """Identify distant samples from positive mean as reliable negatives based on a specified distance metric."""
+    col_dif = f'{metric}_dif'
+    col_dif_abs = f"{metric}_abs_dif"
     mask_pos = labels == label_pos
     mask_unl = labels != label_pos
-    # Compute the average distances to the positive datapoints
-    avg_dist = pairwise_distances(X[mask_pos], X, metric=metric).mean(axis=0)
+    # Compute the distances to the average value of the positive datapoints
+    dif_to_pos_mean = pairwise_distances(X[mask_pos], X, metric=metric).mean(axis=0)
+    abs_dif_to_pos_mean = np.abs(dif_to_pos_mean)
+    # Create a DataFrame with the distances
+    df_pu = pd.DataFrame({col_dif: dif_to_pos_mean, col_dif_abs: abs_dif_to_pos_mean})
     # Select negatives based on largest average distance to positives
-    top_indices = np.argsort(avg_dist[mask_unl])[::-1][:n_unl_to_neg]
+    top_indices = df_pu[mask_unl].sort_values(by=col_dif_abs).tail(n_unl_to_neg).index
     new_labels = labels.copy()
     new_labels[top_indices] = label_neg
-    return new_labels
+    # Adjust df distance
+    df_pu = df_pu.round(4)
+    df_pu.insert(0, COL_SELECTION_VIA, [metric if l == 0 else None for l in new_labels])
+    return new_labels, df_pu
 
 
 def _get_neg_via_pca(X=None, labels=None, n_components=0.8, n_unl_to_neg=None,
                      label_neg=0, label_pos=1, **pca_kwargs):
     """Identify distant samples from positive mean as reliable negatives in PCA-compressed feature spaces."""
-    col_selected = ["Selected_by_PC"]
     # Principal component analysis
     pca = PCA(n_components=n_components, **pca_kwargs)
     pca.fit(X.T)
     list_exp_var = pca.explained_variance_ratio_
     columns_pca = [f"PC{n+1} ({round(exp_var*100, 1)}%)" for n, exp_var in enumerate(list_exp_var)]
-
     # Determine number of negatives based on explained variance
     _list_n_neg = [math.ceil(n_unl_to_neg * x / sum(list_exp_var)) for x in list_exp_var]
     _list_n_cumsum = np.cumsum(np.array(_list_n_neg))
@@ -62,31 +92,30 @@ def _get_neg_via_pca(X=None, labels=None, n_components=0.8, n_unl_to_neg=None,
     if sum(list_n_neg) != n_unl_to_neg:
         list_n_neg.append(n_unl_to_neg - sum(list_n_neg))
     columns_pca = columns_pca[:len(list_n_neg)]
-
-    # Create df_pc based on PCA components
-    df_pc = pd.DataFrame(pca.components_.T[:, :len(columns_pca)], columns=columns_pca)
-    df_pc[col_selected] = None  # New column to store the PC information
+    # Create df_pu based on PCA components
+    df_pu = pd.DataFrame(pca.components_.T[:, :len(columns_pca)], columns=columns_pca)
     # Get mean of positive data for each component
     mask_pos = labels == label_pos
     mask_unl = labels != label_pos
-    pc_means = df_pc[mask_pos].mean(axis=0)
+    pc_means = df_pu[mask_pos].mean(axis=0)
     # Select negatives based on absolute difference to mean of positives for each component
+    df_pu.insert(0, COL_SELECTION_VIA, None)  # New column to store the PC information
     new_labels = labels.copy()
     for col_pc, mean_pc, n in zip(columns_pca, pc_means, list_n_neg):
-        col_dif = f"{col_pc}_abs_dif"
+        col_abs_dif = f"{col_pc}_abs_dif"
         # Calculate absolute difference to the mean for each sample in the component
-        df_pc[col_dif] = np.abs(df_pc[col_pc] - mean_pc)
+        df_pu[col_abs_dif] = np.abs(df_pu[col_pc] - mean_pc)
         # Sort and take top n indices
-        top_indices = df_pc[mask_unl].sort_values(by=col_dif).tail(n).index
+        top_indices = df_pu[mask_unl].sort_values(by=col_abs_dif).tail(n).index
         # Update labels and masks
         new_labels[top_indices] = label_neg
         mask_unl[top_indices] = False
         # Record the PC by which the negatives are selected
-        df_pc.loc[top_indices, col_selected] = col_pc.split(' ')[0]
+        df_pu.loc[top_indices, COL_SELECTION_VIA] = col_pc.split(' ')[0]
     # Adjust df
-    cols = [x for x in list(df_pc) if x != col_selected]
-    df_pc[cols] = df_pc[cols].round(4)
-    return new_labels, df_pc
+    cols = [x for x in list(df_pu) if x != COL_SELECTION_VIA]
+    df_pu[cols] = df_pu[cols].round(4)
+    return new_labels, df_pu
 
 
 # TODO refactor, test, document
@@ -99,7 +128,7 @@ class dPULearn:
     informative principal components (PCs), it then iteratively identifies reliable negatives (0) from the set of
     unlabeled samples (2). These reliable negatives are those that are most distant from the positive samples (1) in
     the feature space. Alternatively, reliable negatives can also be identified using distance metrics like
-    Euclidean, Manhattan, or Cosine distance if specified.
+    ``euclidean``, ``manhattan``, or ``cosine`` distance if specified.
 
     Attributes
     ----------
@@ -117,7 +146,6 @@ class dPULearn:
     def __init__(self,
                  verbose: Optional[bool] = None,
                  pca_kwargs: Optional[dict] = None,
-                 metric: Optional[Literal["euclidean", "manhattan", "cosine", "None"]] = None
                  ):
         """
         Parameters
@@ -126,24 +154,13 @@ class dPULearn:
             Enable verbose output.
         pca_kwargs
             Additional keyword arguments for Principal Component Analysis (PCA) model.
-        metric
-            The distance metric to use. If ``None``, PCA-based identification is used. Distance-based identification
-            is performed if metric is one of the following: {'euclidean', 'manhattan', 'cosine'}
-
-        Notes
-        -----
-        * If ``metric`` is specified, distance-based identification of reliable negatives is performed.
-          Otherwise, PCA-based identification is used.
-        * Cosine metric is recommended in high-dimensional spaces.
-
         """
         self._verbose = ut.check_verbose(verbose)
         if pca_kwargs is None:
             pca_kwargs = dict()
+        ut.check_model_kwargs(model_class=PCA, model_kwargs=pca_kwargs, param_to_check=None)
         self.pca_kwargs = pca_kwargs
         # Arguments for distance-based identification
-        _check_metric(metric=metric)
-        self.metric = metric
         # Output parameters (will be set during model fitting)
         self.labels_ = None
 
@@ -152,6 +169,7 @@ class dPULearn:
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D = None,
             n_unl_to_neg: int = 1,
+            metric: Optional[Literal["euclidean", "manhattan", "cosine"]] = None,
             n_components: Union[float, int] = 0.80,
             ) -> pd.DataFrame:
         """
@@ -169,22 +187,46 @@ class dPULearn:
             Dataset labels of samples in ``X``. Should be either 1 (positive) or 2 (unlabeled).
         n_unl_to_neg : int, default=1
             Number of negative samples (0) to be reliably identified from unlabeled samples (2).
-        n_components
-            Number of principal components or the percentage of total variance to be covered when PCA is applied.
+            Should be < n unlabeled samples.
+        metric : str or None, dfault=None
+            The distance metric to use. If ``None``, PCA-based identification is performed. For distance-based
+            identification one of the following measures can be selected:
+            - ``euclidean``: Euclidean distance (minimum)
+            - ``manhattan``: Manhattan distance (minimum)
+            - ``cosine``: Cosine distance (minimum)
+
+        n_components : int or float, default=0.80
+            Number of principal components (a) or the percentage of total variance to be covered (b) when PCA is applied.
+            - In case (a): it should be an integer >= 1.
+            - In case (b): it should be a float with  0.0 < ``n_components`` < 1.0.
 
         Returns
         -------
         df_pu : pd.DataFrame
-            A DataFrame with the PCA-transformed features of 'X'. It includes additional columns:
+            A DataFrame with the PCA-transformed features of 'X' containing the following groups of columns:
 
-            - 'Selected_by_PC': Indicates the principal component by which an unlabeled sample is identified as a negative.
-            - '_abs_dif': Absolute difference columns for each principal component, representing the
-              deviation of each sample from the mean of positives.
+            - 'selection_via': Column indicating how reliable negatives were identified (either giving the distance metric
+               or the i-th PC based on which the respective sample was selected).
+            - 'PCi': Value columns for the i-th principal component (PC).
+            - 'PCi_abs_dif': Absolute difference columns for each PC, representing the absolute deviation of each sample
+              from the mean of positives.
+
+            For distance-based identification, 'PCi' will be replaced by the name of the selected metric.
 
         Notes
         -----
-        * If a distance metric is specified during class initialization, distance-based identification is
-          used instead of PCA.
+        * If a distance metric is specified, dPUlearn performs distance-based instead of PCA-based identification.
+        * For distance-based identification, the choice of the distance metric should consider the dimensionality
+          of the feature space. Dimensionality is defined by the number of features (n_features) relative to the number of samples
+          (n_samples) in `X`. A low-dimensional space typically has fewer features than samples (n_features < n_samples),
+          while a high-dimensional space may have a feature count approaching or exceeding the sample count
+          (n_features ≈ n_samples or n_features > n_samples). While the choice of metric is application-specific, general
+          guidelines are as follows:
+
+          - ``euclidean``: Effective in low-dimensional spaces or when direct distances are meaningful.
+          - ``manhattan``: Useful when differences along individual dimensions are important, or in the presence of outliers.
+          - ``cosine``: Recommended for high-dimensional spaces (e.g., n_features > 10 x n_samples), as it evaluates
+            the angle between data points rather than their magnitude.
 
         Examples
         --------
@@ -193,20 +235,29 @@ class dPULearn:
         ut.check_X(X=X)
         ut.check_labels(labels=labels, vals_requiered=[1, 2], allow_other_vals=False)
         ut.check_number_range(name="n_unl_to_neg", val=n_unl_to_neg, min_val=1, just_int=True)
-        ut.check_number_range(name="n_components", val=n_components, min_val=0, just_int=False)
         _check_n_unl_to_neg(labels=labels, n_unl_to_neg=n_unl_to_neg, label_unl=2)
+        _check_metric(metric=metric)
+        _check_n_components(n_components=n_components)
         ut.check_match_X_labels(X=X, labels=labels)
+        _check_match_X_n_components(X=X, n_components=n_components)
         # Compute average distance for threshold-based filtering (Yang et al., 2012, 2014; Nan et al. 2017)
         args = dict(X=X, labels=labels, n_unl_to_neg=n_unl_to_neg, label_neg=0)
-        if self.metric is not None:
-            new_labels, df_pu = _get_neg_via_distance(**args, metric=self.metric)
+        if metric is not None:
+            new_labels, df_pu = _get_neg_via_distance(**args, metric=metric)
         # Identify most far away negatives in PCA compressed feature space
         else:
             new_labels, df_pu = _get_neg_via_pca(**args, n_components=n_components, **self.pca_kwargs)
         # Set new labels
-        self.labels_ = new_labels
+        self.labels_ = np.asarray(new_labels)
         return df_pu
 
-    def eval(self):
-        """"""  # TODO add evaluation function
+    def eval(self,
+             X: ut.ArrayLike2D,
+             labels: ut.ArrayLike1D = None,
+             list_df_pu: List[pd.DataFrame] = None,
+             X_neg: Optional[ut.ArrayLike2D] = None
+             ) -> pd.DataFrame:
+        """Compare different dPULearn results regarding the homogeneity within the reliably identified negatives (0),
+        and the differences with the groups of positives (1), unlabeled samples (2), and a ground-truth negative group
+        if provided by ``X_neg``."""
         # TODO check overlap, check homogeneity of samples compared to other sample

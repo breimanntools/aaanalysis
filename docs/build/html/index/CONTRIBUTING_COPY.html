@@ -494,14 +494,26 @@ Reminder: In Normal Cases, it&#39;s crucial to test parameters individually.
 similar. Repeat as necessary and compile the results. Once done, provide the script to ChatGPT for further refinement.</p>
 <section id="test-guided-development-tgd">
 <h3>Test Guided Development (TGD)<a class="headerlink" href="#test-guided-development-tgd" title="Permalink to this heading"></a></h3>
-<p>Leverage ChatGPT-provided testing scripts to refine your code and its interface. If ChatGPT struggles or produces
-erroneous tests, it often indicates ambiguities or complexities in your function’s naming or logic. Address these
-insights to ensure intuitive and robust code design through the TGD approach. You can provide the complete function or
-only its <strong>signature &amp; docstring</strong>:</p>
-<p><strong>Signature &amp; Docstring</strong>: Focus on interface testing by providing the function’s signature and docstring,
-aiming to ensure alignment with its external behavior and documentation.</p>
-<p><strong>Complete Function</strong>: Submit the entire function code for deeper test generation, targeting comprehensive
-coverage that accounts for internal logic and intricacies.</p>
+<p>Leverage ChatGPT to generate testing scripts and refine your code’s functionality and its interface. If ChatGPT
+struggles or produces erroneous tests, it often indicates ambiguities or complexities in your function’s logic,
+variable naming, or documentation gaps, especially regarding edge cases. Address these insights to ensure intuitive
+and robust code design through the TGD approach.</p>
+<p><strong>Essential Strategies for Effective TGD</strong>:</p>
+<ol class="arabic simple">
+<li><p><strong>Isolated Functionality Testing</strong>: Test one function or method at a time, adhering to unit testing principles.
+Provide an entire and well-documented function. The better the docstring, the more comprehensive our automatically
+generated tests will be.</p></li>
+<li><p><strong>Isolated Test Sessions</strong>: Start each test scenario in a new ChatGPT session to maintain clarity and
+prevent context overlap, ensuring focused and relevant test generation.</p></li>
+<li><p><strong>Consistent Template Usage</strong>: Align your test creation with existing templates for similar functionalities,
+utilizing them as a structured guide to maintain consistency in your test design.</p></li>
+<li><p><strong>Initial Test Baseline</strong>: Aim for an initial set of tests where about 25% pass, providing a foundational baseline
+that identifies primary areas for iterative improvement in both tests and code.</p></li>
+<li><p><strong>Iterative Refinement and Simplification</strong>: Use ChatGPT-generated tests to iteratively refine your code, especially
+if repeated test failures indicate areas needing clarification or simplification in your function’s design.</p></li>
+</ol>
+<p>Through an iterative TGD process, you can systematically uncover and address any subtleties or complexities in your
+code, paving the way for a more robust and user-friendly application.</p>
 </section>
 </section>
 </section>

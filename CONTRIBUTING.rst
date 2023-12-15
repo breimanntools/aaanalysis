@@ -397,13 +397,28 @@ similar. Repeat as necessary and compile the results. Once done, provide the scr
 
 Test Guided Development (TGD)
 -----------------------------
-Leverage ChatGPT-provided testing scripts to refine your code and its interface. If ChatGPT struggles or produces
-erroneous tests, it often indicates ambiguities or complexities in your function's naming or logic. Address these
-insights to ensure intuitive and robust code design through the TGD approach. You can provide the complete function or
-only its **signature & docstring**:
+Leverage ChatGPT to generate testing scripts and refine your code's functionality and its interface. If ChatGPT
+struggles or produces erroneous tests, it often indicates ambiguities or complexities in your function's logic,
+variable naming, or documentation gaps, especially regarding edge cases. Address these insights to ensure intuitive
+and robust code design through the TGD approach.
 
-**Signature & Docstring**: Focus on interface testing by providing the function's signature and docstring,
-aiming to ensure alignment with its external behavior and documentation.
+**Essential Strategies for Effective TGD**:
 
-**Complete Function**: Submit the entire function code for deeper test generation, targeting comprehensive
-coverage that accounts for internal logic and intricacies.
+1. **Isolated Functionality Testing**: Test one function or method at a time, adhering to unit testing principles.
+   Provide an entire and well-documented function. The better the docstring, the more comprehensive our automatically
+   generated tests will be.
+
+2. **Isolated Test Sessions**: Start each test scenario in a new ChatGPT session to maintain clarity and
+   prevent context overlap, ensuring focused and relevant test generation.
+
+3. **Consistent Template Usage**: Align your test creation with existing templates for similar functionalities,
+   utilizing them as a structured guide to maintain consistency in your test design.
+
+4. **Initial Test Baseline**: Aim for an initial set of tests where about 25% pass, providing a foundational baseline
+   that identifies primary areas for iterative improvement in both tests and code.
+
+5. **Iterative Refinement and Simplification**: Use ChatGPT-generated tests to iteratively refine your code, especially
+   if repeated test failures indicate areas needing clarification or simplification in your function's design.
+
+Through an iterative TGD process, you can systematically uncover and address any subtleties or complexities in your
+code, paving the way for a more robust and user-friendly application.

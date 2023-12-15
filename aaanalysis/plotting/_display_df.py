@@ -24,7 +24,7 @@ def display_df(df: pd.DataFrame = None,
                fontsize: int = 12,
                max_width_pct: int = 100,
                max_height: int = 300,
-               char_limit: Optional[int] = None,
+               char_limit: int = 25,
                show_shape=False,
                ):
     """Display DataFrame with specific style as HTML output for jupyter notebooks.
