@@ -11,11 +11,11 @@ import aaanalysis._utils.check_type as ut_check
 
 
 # Helper functions
-def is_valid_hex_color(val):
+def _is_valid_hex_color(val):
     """Check if a value is a valid hex color."""
     return isinstance(val, str) and re.match(r'^#[0-9A-Fa-f]{6}$', val)
 
-def is_valid_rgb_tuple(val):
+def _is_valid_rgb_tuple(val):
     """Check if a value is a valid RGB tuple."""
     return (isinstance(val, tuple) and len(val) == 3 and
             all(isinstance(c, (int, float)) and 0 <= c <= 255 for c in val))
@@ -23,7 +23,7 @@ def is_valid_rgb_tuple(val):
 
 # Check min and max values
 def check_vmin_vmax(vmin=None, vmax=None):
-    """Check if number of cmap colors is valid with given value range"""
+    """Check if vmin and vmax are valid numbers and vmin is less than vmax."""
     ut_check.check_number_val(name="vmin", val=vmin, accept_none=True, just_int=False)
     ut_check.check_number_val(name="vmax", val=vmax, accept_none=True, just_int=False)
     if vmin is not None and vmax is not None and vmin >= vmax:
@@ -31,7 +31,7 @@ def check_vmin_vmax(vmin=None, vmax=None):
 
 
 def check_color(name=None, val=None, accept_none=False):
-    """Check if color valid for matplotlib"""
+    """Check if the provided value is a valid color for matplotlib."""
     base_colors = list(mcolors.BASE_COLORS.keys())
     tableau_colors = list(mcolors.TABLEAU_COLORS.keys())
     css4_colors = list(mcolors.CSS4_COLORS.keys())
@@ -39,7 +39,7 @@ def check_color(name=None, val=None, accept_none=False):
     if accept_none:
         all_colors.append("none")
     # Check if valid hex or RGB tuple
-    if is_valid_hex_color(val) or is_valid_rgb_tuple(val):
+    if _is_valid_hex_color(val) or _is_valid_rgb_tuple(val):
         return
     elif val not in all_colors:
         error = f"'{name}' ('{val}') is not a valid color. Chose from following: {all_colors}"
@@ -47,7 +47,7 @@ def check_color(name=None, val=None, accept_none=False):
 
 
 def check_cmap(name=None, val=None, accept_none=False):
-    """Check if cmap is valid for matplotlib"""
+    """Check if cmap is a valid colormap for matplotlib."""
     valid_cmaps = plt.colormaps()
     if accept_none and val is None:
         pass
@@ -57,7 +57,7 @@ def check_cmap(name=None, val=None, accept_none=False):
 
 
 def check_palette(name=None, val=None, accept_none=False):
-    """Check if color palette is valid"""
+    """Check if the provided value is a valid color palette."""
     if isinstance(val, str):
         check_cmap(name=name, val=val, accept_none=accept_none)
     elif isinstance(val, list):
@@ -67,7 +67,7 @@ def check_palette(name=None, val=None, accept_none=False):
 
 # CPP plots
 def check_ylim(df=None, ylim=None, col_value=None, retrieve_plot=False, scaling_factor=1.1):
-    """"""
+    """Check if ylim is valid and appropriate for the given dataframe and column."""
     if ylim is not None:
         ut_check.check_tuple(name="ylim", val=ylim, n=2)
         ut_check.check_number_val(name="ylim:min", val=ylim[0], just_int=False)
@@ -85,7 +85,7 @@ def check_ylim(df=None, ylim=None, col_value=None, retrieve_plot=False, scaling_
     return ylim
 
 def check_y_categorical(df=None, y=None):
-    """Check if y in df"""
+    """Check if the y column in the dataframe is categorical."""
     list_cat_columns = [col for col, data_type in zip(list(df), df.dtypes)
                         if data_type != float and "position" not in col]# and col != "feature"]
     if y not in list_cat_columns:

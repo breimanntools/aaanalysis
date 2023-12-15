@@ -7,7 +7,7 @@ from inspect import isclass
 
 # Main functions
 def check_mode_class(model_class=None):
-    """"""
+    """Check if the provided object is a class and callable, typically used for validating model classes."""
     # Check if model_class is actually a class and not an instance
     if not isclass(model_class):
         raise ValueError(f"'{model_class}' is not a model class. Please provide a valid model class.")
@@ -19,8 +19,17 @@ def check_mode_class(model_class=None):
 
 def check_model_kwargs(model_class=None, model_kwargs=None, param_to_check="n_clusters", method_to_check=None):
     """
-    Check if the provided model has 'n_clusters' as a parameter.
-    Filter the model_kwargs to only include keys that are valid parameters for the model.
+    Check if the provided model class contains specific parameters and methods. Filters 'model_kwargs' to include only
+    valid parameters for the model class.
+
+    Parameters:
+        model_class: The class of the model to check.
+        model_kwargs: A dictionary of keyword arguments for the model.
+        param_to_check: A specific parameter to check in the model class.
+        method_to_check: A specific method to check in the model class.
+
+    Returns:
+        model_kwargs: A filtered dictionary of model_kwargs containing only valid parameters for the model class.
     """
     model_kwargs = model_kwargs or {}
     if model_class is None:

@@ -43,10 +43,8 @@ class CatchRuntimeWarnings:
 def catch_runtime_warnings():
     """Decorator to catch RuntimeWarnings and store them in a list.
 
-    Returns
-    -------
-    decorated_func : method
-        The decorated function.
+    Returns:
+        decorated_func: The decorated function
     """
     def decorator(func):
         @functools.wraps(func)
@@ -74,10 +72,8 @@ class ClusteringConvergenceException(Exception):
 def catch_convergence_warning():
     """Decorator to catch ConvergenceWarnings and raise custom exceptions.
 
-    Returns
-    -------
-    decorated_func : method
-        The decorated function.
+    Returns:
+        decorated_func: The decorated function.
     """
     def decorator(func):
         @functools.wraps(func)
@@ -109,10 +105,8 @@ def catch_invalid_divide_warning():
     """Decorator to catch specific RuntimeWarnings related to invalid division
        and raise custom exceptions.
 
-    Returns
-    -------
-    decorated_func : method
-        The decorated function.
+    Returns:
+        decorated_func: The decorated function.
     """
     def decorator(func):
         @functools.wraps(func)

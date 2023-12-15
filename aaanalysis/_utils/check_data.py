@@ -8,11 +8,7 @@ import aaanalysis._utils.check_type as check_type
 
 # Helper functions
 def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan=False):
-    """
-    Check if the provided value matches the specified dtype.
-    If dtype is None, checks for general array-likeness.
-    If dtype is 'int', 'float', or 'any', checks for specific types.
-    """
+    """Check if the provided value is array-like and matches the specified dtype."""
     if name is None:
         raise ValueError(f"'{name}' should not be None.")
     # Utilize Scikit-learn's check_array for robust checking
@@ -58,8 +54,8 @@ def check_X_unique_samples(X, min_n_unique_samples=3):
                          f"\nX = {X}")
     return X
 
-def check_labels(labels=None, vals_requiered=None, len_requiered=None):
-    """"""
+def check_labels(labels=None, vals_requiered=None, len_requiered=None, allow_other_vals=True):
+    """Check the provided labels against various criteria like type, required values, and length."""
     if labels is None:
         raise ValueError(f"'labels' should not be None.")
     # Convert labels to a numpy array if it's not already
@@ -67,27 +63,32 @@ def check_labels(labels=None, vals_requiered=None, len_requiered=None):
     unique_labels = set(labels)
     if len(unique_labels) == 1:
        raise ValueError(f"'labels' should contain more than one different value ({unique_labels}).")
-    wrong_types = [l for l in unique_labels if not np.issubdtype(type(l), np.integer)]
+    integer_types = (int, np.int_, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64)
+    wrong_types = [l for l in unique_labels if not isinstance(l, integer_types)]
     if wrong_types:
         raise ValueError(f"Labels in 'labels' should be type int, but contain: {set(map(type, wrong_types))}")
     if vals_requiered is not None:
         missing_vals = [x for x in vals_requiered if x not in labels]
         if len(missing_vals) > 0:
-            raise ValueError(f"'labels' ({unique_labels}) does not contain requiered value: {missing_vals}")
+            raise ValueError(f"'labels' ({unique_labels}) does not contain requiered values: {missing_vals}")
+        if not allow_other_vals:
+            wrong_vals = [x for x in labels if x not in vals_requiered]
+            if len(wrong_vals) > 0:
+                raise ValueError(f"'labels' ({unique_labels}) does contain wrong values: {wrong_vals}")
     if len_requiered is not None and len(labels) != len_requiered:
         raise ValueError(f"'labels' (n={len(labels)}) should contain {len_requiered} values.")
     return labels
 
 
 def check_match_X_labels(X=None, X_name="X", labels=None, labels_name="labels"):
-    """"""
+    """Check if the number of samples in X matches the number of labels."""
     n_samples, n_features = X.shape
     if n_samples != len(labels):
         raise ValueError(f"n_samples does not match for '{X_name}' ({len(X)}) and '{labels_name}' ({len(labels)}).")
 
 # Check sets
 def check_superset_subset(subset=None, superset=None, name_subset=None, name_superset=None):
-    """"""
+    """Check if all elements of the subset are contained in the superset."""
     wrong_elements = [x for x in subset if x not in superset]
     if len(wrong_elements) != 0:
         raise ValueError(f"'{name_superset}' does not contain the following elements of '{name_subset}': {wrong_elements}")
@@ -96,7 +97,7 @@ def check_superset_subset(subset=None, superset=None, name_subset=None, name_sup
 # df checking functions
 def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_positive=False,
              cols_requiered=None, cols_forbidden=None, cols_nan_check=None):
-    """"""
+    """Check if the provided DataFrame meets various criteria such as NaN values, required/forbidden columns, etc."""
     # Check DataFrame and values
     if df is None:
         if not accept_none:
