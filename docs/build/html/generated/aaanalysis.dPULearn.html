@@ -8,7 +8,7 @@
 <meta property="og:site_name" content="AAanalysis" />
 <meta property="og:image:width" content="1146" />
 <meta property="og:image:height" content="600" />
-<meta property="og:image" content="/_images/social_previews/summary_generated_aaanalysis.dPULearn_44ddb18b.png" />
+<meta property="og:image" content="/None" />
 <meta property="og:image:alt" content="" />
 <meta name="twitter:card" content="summary_large_image" />
 
@@ -39,7 +39,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="aaanalysis.TreeModel" href="aaanalysis.TreeModel.html" />
+    <link rel="next" title="aaanalysis.dPULearnPlot" href="aaanalysis.dPULearnPlot.html" />
     <link rel="prev" title="aaanalysis.CPPPlot" href="aaanalysis.CPPPlot.html" /> 
 </head>
 
@@ -83,11 +83,13 @@
 <li class="toctree-l2"><a class="reference internal" href="../api.html#feature-engineering">Feature Engineering</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="../api.html#pu-learning">PU Learning</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href="#">aaanalysis.dPULearn</a></li>
+<li class="toctree-l3"><a class="reference internal" href="aaanalysis.dPULearnPlot.html">aaanalysis.dPULearnPlot</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#explainable-ai">Explainable AI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#perturbation">Perturbation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../api.html#plot-utilities">Plot Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#metric-utilities">Metric Utilities</a></li>
 </ul>
 </li>
 </ul>
@@ -125,15 +127,19 @@
 <h1>aaanalysis.dPULearn<a class="headerlink" href="#aaanalysis-dpulearn" title="Permalink to this heading"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="aaanalysis.dPULearn">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">dPULearn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L122-L278"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">dPULearn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L124-L343"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Deterministic Positive-Unlabeled (dPULearn) model introduced in <a class="reference internal" href="../index/references.html#breimann24c" id="id1"><span>[Breimann24c]</span></a>.</p>
-<p>dPULearn offers a deterministic approach for Positive-Unlabeled (PU) learning. The model primarily employs
-Principal Component Analysis (PCA) to reduce the dimensionality of the feature space. Based on the most
-informative principal components (PCs), it then iteratively identifies reliable negatives (0) from the set of
-unlabeled samples (2). These reliable negatives are those that are most distant from the positive samples (1) in
-the feature space. Alternatively, reliable negatives can also be identified using distance metrics like
-<code class="docutils literal notranslate"><span class="pre">euclidean</span></code>, <code class="docutils literal notranslate"><span class="pre">manhattan</span></code>, or <code class="docutils literal notranslate"><span class="pre">cosine</span></code> distance if specified.</p>
+<p>The dPULearn model offers a deterministic approach to Positive-Unlabeled (PU) learning, featuring two distinct
+identification approaches:</p>
+<ul class="simple">
+<li><p><strong>PCA-based identification</strong>: This is the primary method where Principal Component Analysis (PCA) is utilized
+to reduce the dimensionality of the feature space. Based on the most informative principal components (PCs),
+the model iteratively identifies reliable negatives (0) from the set of unlabeled samples (2). These reliable
+negatives are those that are most distant from the positive samples (1) in the feature space.</p></li>
+<li><p><strong>Distance-based identification</strong>: As a simple alternative, reliable negatives can also be identified using
+similarity measures like <code class="docutils literal notranslate"><span class="pre">euclidean</span></code>, <code class="docutils literal notranslate"><span class="pre">manhattan</span></code>, or <code class="docutils literal notranslate"><span class="pre">cosine</span></code> distance.</p></li>
+</ul>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="aaanalysis.dPULearn.labels_">
 <span class="sig-name descname"><span class="pre">labels_</span></span><a class="headerlink" href="#aaanalysis.dPULearn.labels_" title="Permalink to this definition"></a></dt>
@@ -141,6 +147,28 @@ the feature space. Alternatively, reliable negatives can also be identified usin
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>array-like, shape (n_samples,)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="aaanalysis.dPULearn.df_pu_">
+<span class="sig-name descname"><span class="pre">df_pu_</span></span><a class="headerlink" href="#aaanalysis.dPULearn.df_pu_" title="Permalink to this definition"></a></dt>
+<dd><p>A DataFrame with the PCA-transformed features of ‘X’ containing the following groups of columns:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>‘selection_via’: Column indicating how reliable negatives were identified (either giving the distance metric</dt><dd><p>or the i-th PC based on which the respective sample was selected).</p>
+</dd>
+</dl>
+</li>
+<li><p>‘PCi’: Value columns for the i-th principal component (PC).</p></li>
+<li><p>‘PCi_abs_dif’: Absolute difference columns for each PC, representing the absolute deviation of each sample
+from the mean of positives.</p></li>
+</ul>
+<p>For distance-based identification, ‘PCi’ columns are replaced with the results for the selected metric.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
 </dd>
 </dl>
 </dd></dl>
@@ -174,12 +202,12 @@ refer to the PU Learning section in the Usage Principles documentation: <cite>us
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.dPULearn.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L151-L170"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L166-L186"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn.__init__" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>]) – Enable verbose output.</p></li>
-<li><p><strong>pca_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>]) – Additional keyword arguments for Principal Component Analysis (PCA) model.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em>) – Enable verbose output.</p></li>
+<li><p><strong>pca_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional keyword arguments for Principal Component Analysis (PCA) model.</p></li>
 </ul>
 </dd>
 </dl>
@@ -196,7 +224,7 @@ refer to the PU Learning section in the Usage Principles documentation: <cite>us
 </dl>
 </p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.dPULearn.eval" title="aaanalysis.dPULearn.eval"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval</span></code></a>(X[, labels, list_df_pu, X_neg])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.dPULearn.eval" title="aaanalysis.dPULearn.eval"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval</span></code></a>(X[, list_labels, list_names, X_neg])</p></td>
 <td><p>Compare different dPULearn results regarding the homogeneity within the reliably identified negatives (0), and the differences with the groups of positives (1), unlabeled samples (2), and a ground-truth negative group if provided by <code class="docutils literal notranslate"><span class="pre">X_neg</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.dPULearn.fit" title="aaanalysis.dPULearn.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(X[, labels, n_unl_to_neg, metric, ...])</p></td>
@@ -206,7 +234,7 @@ refer to the PU Learning section in the Usage Principles documentation: <cite>us
 </table>
 <dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.dPULearn.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_unl_to_neg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.8</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L173-L262"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn.fit" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_unl_to_neg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.8</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L189-L272"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn.fit" title="Permalink to this definition"></a></dt>
 <dd><p>Fit the dPULearn model to identify reliable negative samples (0) from unlabeled samples (2)
 based on the distance to positive samples (1).</p>
 <p>Use the <code class="docutils literal notranslate"><span class="pre">dPUlearn.labels_</span></code> attribute to retrieve the output labels of samples in <code class="docutils literal notranslate"><span class="pre">X</span></code>
@@ -214,11 +242,11 @@ with identified negative samples labeled by 0.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix where <cite>n_samples</cite> is the number of samples and <cite>n_features</cite> is the number of features.</p></li>
+<li><p><strong>X</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix. <cite>Rows</cite> typically correspond to proteins and <cite>columns</cite> to features.</p></li>
 <li><p><strong>labels</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em>) – Dataset labels of samples in <code class="docutils literal notranslate"><span class="pre">X</span></code>. Should be either 1 (positive) or 2 (unlabeled).</p></li>
 <li><p><strong>n_unl_to_neg</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=1</em>) – Number of negative samples (0) to be reliably identified from unlabeled samples (2).
 Should be &lt; n unlabeled samples.</p></li>
-<li><p><strong>metric</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em> or </em><em>None</em><em>, </em><em>dfault=None</em>) – The distance metric to use. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, PCA-based identification is performed. For distance-based
+<li><p><strong>metric</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em> or </em><em>None</em><em>, </em><em>optional</em>) – The distance metric to use. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, PCA-based identification is performed. For distance-based
 identification one of the following measures can be selected:
 - <code class="docutils literal notranslate"><span class="pre">euclidean</span></code>: Euclidean distance (minimum)
 - <code class="docutils literal notranslate"><span class="pre">manhattan</span></code>: Manhattan distance (minimum)
@@ -229,22 +257,10 @@ identification one of the following measures can be selected:
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><p><strong>df_pu</strong> – A DataFrame with the PCA-transformed features of ‘X’ containing the following groups of columns:</p>
-<ul class="simple">
-<li><dl class="simple">
-<dt>’selection_via’: Column indicating how reliable negatives were identified (either giving the distance metric</dt><dd><p>or the i-th PC based on which the respective sample was selected).</p>
-</dd>
-</dl>
-</li>
-<li><p>’PCi’: Value columns for the i-th principal component (PC).</p></li>
-<li><p>’PCi_abs_dif’: Absolute difference columns for each PC, representing the absolute deviation of each sample
-from the mean of positives.</p></li>
-</ul>
-<p>For distance-based identification, ‘PCi’ will be replaced by the name of the selected metric.</p>
-</p>
+<dd class="field-even"><p>The fitted instance of the dPULearn class, allowing direct attribute access.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>pd.DataFrame</p>
+<dd class="field-odd"><p><a class="reference internal" href="#aaanalysis.dPULearn" title="aaanalysis.dPULearn">dPULearn</a></p>
 </dd>
 </dl>
 <div class="admonition-notes admonition">
@@ -20605,26 +20621,36 @@ for details the three different pairwise distance measures.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.dPULearn.eval">
-<span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_df_pu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_neg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L264-L278"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn.eval" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_neg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L275-L343"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn.eval" title="Permalink to this definition"></a></dt>
 <dd><p>Compare different dPULearn results regarding the homogeneity within the reliably identified negatives (0),
 and the differences with the groups of positives (1), unlabeled samples (2), and a ground-truth negative group
 if provided by <code class="docutils literal notranslate"><span class="pre">X_neg</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix. <cite>Rows</cite> typically correspond to proteins and <cite>columns</cite> to features.</p></li>
+<li><p><strong>list_labels</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_datasets</em><em>,</em><em>)</em>) – List of dataset labels for samples in <code class="docutils literal notranslate"><span class="pre">X</span></code> obtained by the <a class="reference internal" href="#aaanalysis.dPULearn.fit" title="aaanalysis.dPULearn.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">dPULearn.fit()</span></code></a> method.
+Label values should be either 0 (identified negative), 1 (positive) or 2 (unlabeled).</p></li>
+<li><p><strong>list_names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em>, </em><em>optional</em>) – List of dataset names corresponding to <code class="docutils literal notranslate"><span class="pre">list_labels</span></code>.</p></li>
+<li><p><strong>X_neg</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em><em>, </em><em>optional</em>) – Feature matrix where <cite>n_samples</cite> is the number of samples and <cite>n_features</cite> is the number of features.
+Samples should be ground-truth negative samples, and features must correspond to <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>df_eval</strong> – Evaluation results for each DataFrame from <code class="docutils literal notranslate"><span class="pre">list_df_pu</span></code> comprising the following columns:
+- ‘’:
+- ‘’</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DataFrame</p>
+</dd>
+</dl>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <ul class="simple">
 <li><p>See <cite>usage_principles/pu_learning</cite> for details on different evaluation strategies,</p></li>
 </ul>
 </div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<code class="xref py py-func docutils literal notranslate"><span class="pre">NewType()</span></code>(<code class="docutils literal notranslate"><span class="pre">ArrayLike2D</span></code>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]]], <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.26)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>, <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a>])) – </p></li>
-<li><p><strong>labels</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<code class="xref py py-func docutils literal notranslate"><span class="pre">NewType()</span></code>(<code class="docutils literal notranslate"><span class="pre">ArrayLike1D</span></code>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]], <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.26)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>, <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.Series.html#pandas.Series" title="(in pandas v2.1.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code></a>])]) – </p></li>
-<li><p><strong>list_df_pu</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a>]]) – </p></li>
-<li><p><strong>X_neg</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<code class="xref py py-func docutils literal notranslate"><span class="pre">NewType()</span></code>(<code class="docutils literal notranslate"><span class="pre">ArrayLike2D</span></code>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Sequence" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Union" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]]], <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.26)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></a>, <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.1.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a>])]) – </p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 </dd></dl>
@@ -20636,7 +20662,7 @@ if provided by <code class="docutils literal notranslate"><span class="pre">X_ne
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="aaanalysis.CPPPlot.html" class="btn btn-neutral float-left" title="aaanalysis.CPPPlot" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="aaanalysis.TreeModel.html" class="btn btn-neutral float-right" title="aaanalysis.TreeModel" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="aaanalysis.dPULearnPlot.html" class="btn btn-neutral float-right" title="aaanalysis.dPULearnPlot" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

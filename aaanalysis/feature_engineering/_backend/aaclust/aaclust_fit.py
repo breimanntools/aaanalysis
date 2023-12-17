@@ -42,7 +42,7 @@ def get_min_cor(X, labels=None, on_center=True):
         return f(X)
     # Minimum correlations for each cluster (with center or all scales)
     unique_labels = list(OrderedDict.fromkeys(labels))
-    list_masks = [[True if i == label else False for i in labels] for label in unique_labels]
+    list_masks = [[i == label for i in labels] for label in unique_labels]
     list_min_cor = [f(X[mask]) for mask in list_masks]
     # Minimum for all clusters
     min_cor = min(list_min_cor)

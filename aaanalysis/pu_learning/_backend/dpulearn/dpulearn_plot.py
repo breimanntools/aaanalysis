@@ -14,6 +14,33 @@ import aaanalysis.utils as ut
 
 
 # II Main Functions
+def plot_eval(df_eval=None, dict_xlims=None, figsize=None, colors=None):
+    """Plot evaluation of AAclust clustering results"""
+    df_eval = df_eval.sort_values(by=ut.COL_RANK, ascending=True)
+    # Plotting
+    fig, axes = plt.subplots(1, 4, sharey=True, figsize=figsize)
+    for i, col in enumerate(ut.COLS_EVAL_AACLUST):
+        ax = axes[i]
+        sns.barplot(ax=ax, data=df_eval, y=df_eval.index, x=col, color=colors[i])
+        # Customize subplots
+        ax.set_ylabel("")
+        ax.set_xlabel(col)
+        # Adjust spines
+        ax = _adjust_spines(ax=ax)
+        # Manual xlims, if needed
+        if dict_xlims and col in dict_xlims:
+            ax.set_xlim(dict_xlims[col])
+        if i == 0:
+            ax.set_title("Clustering", weight="bold")
+        elif i == 2:
+            ax.set_title("Quality measures", weight="bold")
+        ax.tick_params(axis='y', which='both', left=False)
+        _x_ticks_0(ax=ax)
+    plt.tight_layout()
+    plt.subplots_adjust(wspace=0.25, hspace=0)
+    return fig, axes
+
+
 def _plot_pca(df_pred=None, filter_classes=None, x=None, y=None,  others=True, highlight_rel=True,
               figsize=(6, 6), highlight_mean=True, list_classes=None, dict_color=None):
     """"""

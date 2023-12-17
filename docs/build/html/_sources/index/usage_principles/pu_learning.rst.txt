@@ -44,25 +44,26 @@ The availability of a minority ground-truth negative dataset can significantly a
 This step involves analyzing the characteristics of the negatives identified by the PU learning model using
 distinct statistical measures:
 
-- **Assessing Homogeneity in Identified Negatives**: Examine the extent to which identified negatives are similar
+- **Homogeneity in Identified Negatives**: Examine the extent to which identified negatives are similar
   to each other, which can indicate potential biases or lack of diversity in the training data. This can be achieved
   by using:
 
-  - *Coefficient of Variation (CV)*: Evaluates the variability within the identified negatives,
-    with high CV indicating more diversity and low CV indicating homogeneity
-  - *Entropy*: Measures the diversity within the identified negatives, where higher entropy signifies greater
+  - *Coefficient of Variation (CV)* [0, ∞): Evaluates the variability within the identified negatives,
+    with high CV (> 1) indicating more diversity and low CV (< 1) indicating homogeneity
+  - *Entropy* [0, 1]: Measures the diversity within the identified negatives, where higher entropy signifies greater
     variability and lower entropy indicates homogeneity
 
-- **Data Distribution Alignment**: Determine the similarity between the identified negatives and the other data
-  classes, which is especially useful if a minority ground-truth dataset of negatives exists.
-  To this end, various statistical measures can be used:
+- **Distribution Alignment**: Determine the similarity between the identified negatives and the other data classes,
+  by assessing the alignment of their distributions. This is especially useful if a minority ground-truth dataset
+  of negatives exists. To this end, various statistical measures can be used:
 
   - *Area Under the Curve (AUC)*: Assess the difference between two datasets, with a higher AUC indicating
-    a higher discrimination.
+    a higher discrimination. We use an adjusted AUC [-0.5, 0.5] such that 0 indicates no differences and the
+    sign indicates which dataset comprises higher values.
+  - *Kullback-Leibler Divergence* [0, ∞): Measures the divergence between the distributions of identified negatives
+    and unlabeled data, with lower values (near 0) indicating better alignment.
   - *Mann-Whitney U Test*: Non-parametric test to compare distributions, useful for assessing if the identified negatives
     differ significantly from the positive or unlabeled data.
-  - *Kullback-Leibler Divergence*: Measures the divergence between the distributions of identified negatives
-    and unlabeled data, with lower values indicating better alignment.
 
 - **Assessing Reproducibility**: To evaluate the reproducibility of a PU learning algorithm, perform the method multiple
   times and compare the overlap in the resulting sets of identified negatives.

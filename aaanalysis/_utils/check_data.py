@@ -54,7 +54,8 @@ def check_X_unique_samples(X, min_n_unique_samples=3):
                          f"\nX = {X}")
     return X
 
-def check_labels(labels=None, vals_requiered=None, len_requiered=None, allow_other_vals=True):
+def check_labels(labels=None, vals_requiered=None, len_requiered=None, allow_other_vals=True,
+                 len_per_group_requiered=None):
     """Check the provided labels against various criteria like type, required values, and length."""
     if labels is None:
         raise ValueError(f"'labels' should not be None.")
@@ -77,14 +78,29 @@ def check_labels(labels=None, vals_requiered=None, len_requiered=None, allow_oth
                 raise ValueError(f"'labels' ({unique_labels}) does contain wrong values: {wrong_vals}")
     if len_requiered is not None and len(labels) != len_requiered:
         raise ValueError(f"'labels' (n={len(labels)}) should contain {len_requiered} values.")
+    # Check for minimum length per group
+    if len_per_group_requiered is not None:
+        label_counts = {label: np.sum(labels == label) for label in unique_labels}
+        underrepresented_labels = {label: count for label, count in label_counts.items() if
+                                   count < len_per_group_requiered}
+        if underrepresented_labels:
+            raise ValueError(
+                f"Each label should have at least {len_per_group_requiered} occurrences. "
+                f"Underrepresented labels: {underrepresented_labels}")
     return labels
 
 
-def check_match_X_labels(X=None, X_name="X", labels=None, labels_name="labels"):
+def check_match_X_labels(X=None, X_name="X", labels=None, labels_name="labels", check_variability=False):
     """Check if the number of samples in X matches the number of labels."""
     n_samples, n_features = X.shape
     if n_samples != len(labels):
         raise ValueError(f"n_samples does not match for '{X_name}' ({len(X)}) and '{labels_name}' ({len(labels)}).")
+    if check_variability:
+        unique_labels = np.unique(labels)
+        for label in unique_labels:
+            group_X = X[labels == label]
+            if not np.all(np.var(group_X, axis=0) != 0):
+                raise ValueError(f"Variance in 'X' for '{label}' labels is too low to compute KDL")
 
 # Check sets
 def check_superset_subset(subset=None, superset=None, name_subset=None, name_superset=None):

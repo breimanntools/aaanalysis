@@ -389,7 +389,7 @@ or any custom testing template.
     - In Normal Cases, one function = one parameter tested.
     - Total: at least 30 unique tests, 150+ lines of code.
 
-    Reminder: In Normal Cases, it's crucial to test parameters individually.
+    Reminder: In Normal Cases, it's crucial to test parameters individually. Create the Python code for all cases!
     "
 
 ChatGPT has a token limit, which may truncate responses. To continue, simply ask **continue processing** or something

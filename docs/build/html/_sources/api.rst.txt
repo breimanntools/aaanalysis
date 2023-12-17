@@ -47,6 +47,7 @@ PU Learning
     :toctree: generated/
 
     aaanalysis.dPULearn
+    aaanalysis.dPULearnPlot
 
 .. _explainable_ai_api:
 
@@ -85,4 +86,14 @@ Plot Utilities
     aaanalysis.plot_legend
     aaanalysis.display_df
 
+.. _metric_api:
+
+Metric Utilities
+----------------
+.. autosummary::
+    :toctree: generated/
+
+    aaanalysis.comp_auc_adjusted
+    aaanalysis.comp_bic_score
+    aaanalysis.comp_kld
 

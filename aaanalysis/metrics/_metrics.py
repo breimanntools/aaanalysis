@@ -1,0 +1,165 @@
+"""
+This is a script for special statistical measures not available or adjusted from popular python data analysis packages
+such as scikit-learn, scipy, or statsmodels.
+
+Developer note: Measures are implemented in aanalysis.utils.metrics to access them within the aanalysis package.
+"""
+import numpy as np
+
+from aaanalysis.utils import auc_adjusted_, kullback_leibler_divergence_, bic_score_
+import aaanalysis.utils as ut
+
+# Helper functions
+def _check_n_classes_n_samples(X=None, labels=None):
+    """Check matching X and labels"""
+    n_classes = len(set(labels))
+    n_samples, n_features = X.shape
+    if n_classes >= n_samples:
+        raise ValueError(f"Number of classes in 'labels' ({n_classes}) must be smaller than n_samples ({n_samples})")
+    if n_features == 0:
+        raise ValueError(f"'n_features' should not be 0")
+
+
+# Adjusted Area Under the Curve (AUC)
+def comp_auc_adjusted(X : ut.ArrayLike2D = None,
+                      labels : ut.ArrayLike1D =None
+                      ) -> ut.ArrayLike1D:
+    """
+    Compute the adjusted Area Under the (receiver operating characteristic) Curve (AUC) for each feature
+    in the dataset X, comparing two groups specified by the labels.
+
+    This adjusted AUC is based on the non-parametric measure of the difference between two groups,
+    as introduced in [Breimann24c]_. The adjustment of AUC subtracts 0.5, so it ranges between -0.5 and 0.5.
+    An AUC of 0 indicates an equal distribution between the two groups. This measure is useful for ranking features
+    based on their ability to distinguish between the two groups.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        Feature matrix. 'Rows' typically correspond to proteins and 'columns' to features.
+    labels : array-like, shape (n_samples,)
+        Dataset labels of samples in X. Should contain only two different integer label values, representing
+        two distinct groups (e.g., treatment and reference).
+
+    Returns
+    -------
+    auc : array-like, shape (n_features,)
+        Adjusted Area Under the Curve (AUC) values for each feature, ranging from [-0.5, 0.5].
+        A value of 0 indicates equal distributions between the two groups for that feature.
+    """
+    # Check input
+    ut.check_X(X=X)
+    ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
+    ut.check_labels(labels=labels)
+    ut.check_match_X_labels(X=X, labels=labels)
+    # Compute adjusted AUC
+    auc = auc_adjusted_(X=X, labels=labels)
+    return auc
+
+
+# BIC score
+def comp_bic_score(X : ut.ArrayLike2D = None,
+                   labels : ut.ArrayLike1D =None
+                   ) -> float:
+    """
+    Computes an adjusted Bayesian Information Criterion (BIC) [-∞, ∞] for a given set of clusters in the dataset `X`.
+
+    The BIC is a clustering model selection criterion that balances the model complexity against the
+    likelihood of the data distribution. Unlike the traditional BIC where lower values are better, this adjusted BIC,
+    as described in [Breimann24b], is modified to align with other clustering evaluation measures like the
+    Silhouette coefficient and the Calinski-Harabasz score. In this adjusted version, higher values indicate
+    better clustering.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Feature matrix. 'Rows' typically correspond to proteins and 'columns' to features.
+    labels : array-like of shape (n_samples,)
+        Predicted labels for each sample. Each label corresponds to a cluster.
+
+    Returns
+    -------
+    bic : float
+        The Bayesian Information Criterion value. A lower BIC value indicates a better model fit to the data.
+
+    Notes
+    -----
+    *  An `epsilon` value (1e-10) is utilized to prevent division by zero in the computation.
+
+    See Also
+    --------
+    * The Silhouette coefficient [-1, 1] can be computed by :func:`sklearn.metrics.silhouette_score`.
+    * The Calinski Harabasz score [0, ∞] can be obtained using :func:`sklearn.metrics.calinski_harabasz_score`.
+    * Clustering evaluation can be performed using :meth:`AAclust.eval`.
+    """
+    # Check input
+    ut.check_X(X=X)
+    ut.check_X_unique_samples(X=X)
+    ut.check_labels(labels=labels)
+    ut.check_match_X_labels(X=X, labels=labels)
+    _check_n_classes_n_samples(X=X, labels=labels)
+    # Compute bic
+    bic = bic_score_(X, labels=labels)
+    return bic
+
+
+# Kullback-Leibler Divergence
+def comp_kld(X : ut.ArrayLike2D = None,
+             labels : ut.ArrayLike1D =None,
+             label_test : int = 1,
+             label_ref : int = 0
+             ) -> ut.ArrayLike1D:
+    """
+    Calculate the Kullback-Leibler Divergence (KLD) for each feature in X, comparing
+    the distributions between two subgroups specified by ``label_test`` and ``label_ref`` in labels.
+
+    The KLD measures how one probability distribution diverges from a second,
+    expected probability distribution. Higher KLD values indicate more divergence.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
+    labels : array-like, shape (n_samples,)
+        Labels for each sample in ``X``. Should contain only integer label values and at least 2 per class.
+    label_test : int, default=1
+        The label value in ``labels`` representing the test group for KLD calculation.
+    label_ref : int, default=0
+        The label value in ``labels`` representing the reference group for KLD calculation.
+
+    Returns
+    -------
+    kld : array-like, shape (n_features,)
+        Array of Kullback-Leibler Divergence values for each feature in ``X``. Each value represents
+        the divergence of the test group distribution from the reference group distribution for that feature.
+
+    Notes
+    -----
+    * For valid KLD calculations, the input matrix `X` must meet certain conditions:
+
+      - Ensure adequate variability of features in ``X`` to avoid computational problems like singular
+        covariance matrices in Gaussian KDE.
+      - Avoid rows in ``X`` lying in a lower-dimensional subspace; consider dimensionality reduction if necessary.
+
+    See Also
+    --------
+    * :func:`scipy.stats.gaussian_kde` function representing a kernel-density estimate using Gaussian kernels.
+      It is used for estimating the probability density function of a random variable (i.e., feature in ``X``),
+      which is a crucial step in the computation of Kullback-Leibler Divergence (KLD).
+    * :func:`scipy.stats.entropy` function for computing the Shannon entropy. In the context of KLD,
+      it is used to measure the divergence between two probability distributions, typically derived
+      from kernel-density estimates of different data groups.
+    """
+    # Check input
+    ut.check_X(X=X)
+    ut.check_X_unique_samples(X=X, min_n_unique_samples=3)
+    ut.check_number_val(name="label_test", val=label_test, just_int=True, accept_none=False)
+    ut.check_number_val(name="label_ref", val=label_ref, just_int=True, accept_none=False)
+    ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref], len_per_group_requiered=2)
+    ut.check_match_X_labels(X=X, labels=labels, check_variability=True)
+    # Compute tge Kullback-Leibler divergence
+    try:
+        kld = kullback_leibler_divergence_(X=X, labels=labels, label_test=label_test, label_ref=label_ref)
+    except Exception as e:
+        raise ValueError(f"Following error occurred during the computation of Kullback-Leibler Divergence: {e}")
+    return kld

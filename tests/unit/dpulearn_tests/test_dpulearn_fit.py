@@ -37,7 +37,7 @@ class TestdPULearnFit:
     """Test dPULearn.fit() method for each parameter individually."""
 
     # Positive tests
-    @settings(deadline=200, max_examples=20)
+    @settings(deadline=200, max_examples=100)
     @given(X=npst.arrays(dtype=np.float64,
                          shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=some.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
@@ -47,36 +47,47 @@ class TestdPULearnFit:
         size = X.shape[0]
         if size >= 2:
             labels = create_labels(X.shape[0])
-            valid_labels = sum([x for x in labels if x in [1, 2]]) == 2
+            valid_labels = sum([x for x in set(labels) if x in [1, 2]]) == 2
             is_invalid =  check_invalid_conditions(X=X, labels=labels)
             if not is_invalid and valid_labels:
-                df_pu = dpul.fit(X, labels)
+                df_pu = dpul.fit(X, labels).df_pu_
                 assert isinstance(df_pu, pd.DataFrame)
 
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=1000, max_examples=100)
     @given(labels=npst.arrays(dtype=np.int32, shape=(100,)))
     def test_labels_parameter(self, labels):
         """Test the 'labels' parameter with valid inputs."""
         X = np.random.rand(100, 5)  # Assuming 100 samples, 5 features
         dpul = aa.dPULearn()
         is_invalid =  check_invalid_conditions(X=X, labels=labels)
-        valid_labels = sum([x for x in labels if x in [1, 2]]) == 2
+        valid_labels = sum([x for x in set(labels) if x in [1, 2]]) == 2
         if not is_invalid and valid_labels:
-            df_pu = dpul.fit(X, labels)
+            df_pu = dpul.fit(X, labels).df_pu_
             assert isinstance(df_pu, pd.DataFrame)
 
-    @settings(deadline=1000, max_examples=10)
+    def test_labels(self):
+        """Test the 'labels' parameter with valid inputs."""
+        X = np.random.rand(100, 5)  # Assuming 100 samples, 5 features
+        labels = np.asarray([1]* 50 + [2]* 50)
+        dpul = aa.dPULearn()
+        is_invalid =  check_invalid_conditions(X=X, labels=labels)
+        valid_labels = sum([x for x in set(labels) if x in [1, 2]]) == 2
+        if not is_invalid and valid_labels:
+            df_pu = dpul.fit(X, labels).df_pu_
+            assert isinstance(df_pu, pd.DataFrame)
+
+    @settings(deadline=1000, max_examples=100)
     @given(n_unl_to_neg=some.integers(min_value=1))
     def test_n_unl_to_neg_parameter(self, n_unl_to_neg):
         """Test the 'n_unl_to_neg' parameter with valid inputs."""
         X = np.random.rand(100, 5)
         labels = create_labels(100)
         dpul = aa.dPULearn()
-        n_unl = sum(labels == 2)
+        n_unl = sum([x == 2 for x in labels])
         is_invalid =  check_invalid_conditions(X=X, labels=labels)
-        valid_labels = sum([x for x in labels if x in [1, 2]]) == 2
+        valid_labels = sum([x for x in set(labels) if x in [1, 2]]) == 2
         if not is_invalid and valid_labels and n_unl > n_unl_to_neg :
-            df_pu = dpul.fit(X, labels, n_unl_to_neg=n_unl_to_neg)
+            df_pu = dpul.fit(X, labels, n_unl_to_neg=n_unl_to_neg).df_pu_
             assert isinstance(df_pu, pd.DataFrame)
     
     @settings(deadline=1000, max_examples=4)
@@ -88,10 +99,10 @@ class TestdPULearnFit:
         dpul = aa.dPULearn()
         is_invalid =  check_invalid_conditions(X=X, labels=labels)
         if not is_invalid:
-            df_pu = dpul.fit(X, labels, metric=metric)
+            df_pu = dpul.fit(X, labels, metric=metric).df_pu_
             assert isinstance(df_pu, pd.DataFrame)
     
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=1000, max_examples=100)
     @given(n_components=some.one_of(some.floats(min_value=0.1, max_value=1.0), some.integers(min_value=1)))
     def test_n_components_parameter(self, n_components):
         """Test the 'n_components' parameter with valid inputs."""
@@ -102,7 +113,7 @@ class TestdPULearnFit:
         is_invalid =  check_invalid_conditions(X=X, labels=labels)
         if not is_invalid:
             if n_components < min(n_features, n_samples) and n_components not in [0.0, 1.0]:
-                df_pu = dpul.fit(X, labels, n_components=n_components)
+                df_pu = dpul.fit(X, labels, n_components=n_components).df_pu_
                 assert isinstance(df_pu, pd.DataFrame)
 
     # Negative tests
@@ -141,7 +152,7 @@ class TestdPULearnFit:
             with pytest.raises(ValueError):
                 dpul.fit(X, labels)
 
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=1000, max_examples=100)
     @given(n_unl_to_neg=some.integers(max_value=0))
     def test_n_unl_to_neg_invalid(self, n_unl_to_neg):
         """Test the 'n_unl_to_neg' parameter with invalid inputs."""
@@ -175,7 +186,8 @@ class TestdPULearnFit:
         labels = create_labels(100)
         dpul = aa.dPULearn()
         is_invalid =  check_invalid_conditions(X=X, labels=labels)
-        if is_invalid:
+        valid_labels = sum([x for x in set(labels) if x in [1, 2]]) == 2
+        if is_invalid and valid_labels:
             with pytest.raises(ValueError):
                 dpul.fit(X, labels, n_components=n_components)
 
@@ -194,12 +206,13 @@ class TestdPULearnFitComplex:
         dpul = aa.dPULearn()
         n_samples, n_features = X.shape
         is_invalid = check_invalid_conditions(X=X, labels=labels)
-        if not is_invalid and n_components < min(n_features, n_samples):
+        valid_labels = sum([x for x in set(labels) if x in [1, 2]]) == 2
+        if not is_invalid and n_components < min(n_features, n_samples) and valid_labels:
             if X.shape[0] != labels.size:
                 with pytest.raises(ValueError):
                     dpul.fit(X, labels, n_unl_to_neg, n_components)
             else:
-                df_pu = dpul.fit(X, labels, n_unl_to_neg, n_components)
+                df_pu = dpul.fit(X, labels, n_unl_to_neg, n_components).df_pu_
                 assert isinstance(df_pu, pd.DataFrame)
 
     @settings(deadline=1000, max_examples=10)

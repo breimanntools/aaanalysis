@@ -1,5 +1,6 @@
 """
-This is a script for the plotting class of dPULearn.
+This is a script for the frontend of the dPULearnPlot class for plotting results for the identification of
+reliable negatives from unlabeled data using dPULearn.
 """
 import time
 import pandas as pd
@@ -16,12 +17,10 @@ class dPULearnPlot:
         pass
 
     @staticmethod
-    def eval():
+    def eval(df_eval=None):
         """Plot eval output of dPULearn (n per component)"""
 
     @staticmethod
-    def components(df_seq=None, x="PC1", y="PC2", show_mean_x=False, show_mean_y=False):
+    def components(df_pu=None, x="PC1", y="PC2", show_mean_x=False, show_mean_y=False):
         """Plot PC map for PC analysis """
-
-
 

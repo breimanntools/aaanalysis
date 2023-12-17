@@ -44,8 +44,8 @@ def _p_correction(p_vals=None, p_cor="fdr_bh"):
 
 def _mean_stat(X=None, y=None, parametric=False, p_cor=None):
     """Statistical comparison of central tendency between two groups for each feature"""
-    mask_0 = [True if x == 0 else False for x in y]
-    mask_1 = [True if x == 1 else False for x in y]
+    mask_0 = [x == 0 for x in y]
+    mask_1 = [x == 1 for x in y]
     if parametric:
         p_vals = stats.ttest_ind(X[mask_1], X[mask_0], nan_policy="omit")[1]
         p_str = "p_val_ttest_indep"
@@ -65,7 +65,7 @@ def add_stat_(df=None, X=None, y=None, parametric=False):
     """Add summary statistics of feature matrix (X) for given labels (y) to df"""
     df = df.copy()
     columns_input = list(df)
-    df[ut.COL_ABS_AUC] = abs(ut.auc_adjusted(X=X, y=y))
+    df[ut.COL_ABS_AUC] = abs(ut.auc_adjusted_(X=X, labels=y))
     df[ut.COL_MEAN_DIF] = _mean_dif(X=X, y=y)
     if ut.COL_ABS_MEAN_DIF not in list(df):
         df[ut.COL_ABS_MEAN_DIF] = abs(_mean_dif(X=X, y=y))

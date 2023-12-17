@@ -170,9 +170,9 @@ class dPULearn:
         """
         Parameters
         ----------
-        verbose
+        verbose : bool, optional
             Enable verbose output.
-        pca_kwargs
+        pca_kwargs : dict, optional
             Additional keyword arguments for Principal Component Analysis (PCA) model.
         """
         self._verbose = ut.check_verbose(verbose)
@@ -203,13 +203,13 @@ class dPULearn:
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
+            Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
         labels : array-like, shape (n_samples,)
             Dataset labels of samples in ``X``. Should be either 1 (positive) or 2 (unlabeled).
         n_unl_to_neg : int, default=1
             Number of negative samples (0) to be reliably identified from unlabeled samples (2).
             Should be < n unlabeled samples.
-        metric : str or None, dfault=None
+        metric : str or None, optional
             The distance metric to use. If ``None``, PCA-based identification is performed. For distance-based
             identification one of the following measures can be selected:
             - ``euclidean``: Euclidean distance (minimum)
@@ -268,11 +268,14 @@ class dPULearn:
             new_labels, df_pu = _get_neg_via_pca(**args, n_components=n_components, **self.pca_kwargs)
         # Set new labels
         self.labels_ = np.asarray(new_labels)
+        self.df_pu_ = df_pu
         return self
 
+    # TODO add bool for disabeling KDE
     @staticmethod
     def eval(X: ut.ArrayLike2D,
              list_labels: ut.ArrayLike1D = None,
+             list_names: Optional[List[str]] = None,
              X_neg: Optional[ut.ArrayLike2D] = None
              ) -> pd.DataFrame:
         """Compare different dPULearn results regarding the homogeneity within the reliably identified negatives (0),
@@ -282,11 +285,13 @@ class dPULearn:
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
-        list_labels : array-like, shape (n_samples,)
+            Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
+        list_labels : array-like, shape (n_datasets,)
             List of dataset labels for samples in ``X`` obtained by the :meth:`dPULearn.fit` method.
             Label values should be either 0 (identified negative), 1 (positive) or 2 (unlabeled).
-        X_neg : array-like, shape (n_samples, n_features)
+        list_names : list, optional
+            List of dataset names corresponding to ``list_labels``.
+        X_neg : array-like, shape (n_samples, n_features), optional
             Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
             Samples should be ground-truth negative samples, and features must correspond to ``X``.
 
@@ -302,30 +307,37 @@ class dPULearn:
         --------
         * See `usage_principles/pu_learning` for details on different evaluation strategies,
         """
-        # TODO check homogeneity of samples compared to other sample
         # Check input
         # Compute
+        unl_in = False
         list_evals = []
         for labels in list_labels:
             # Evaluate homogeneity
             n_rel_neg = sum(labels == 0)
-            cv_val, entropy_val = eval_homogeneity(X)
-            # Evaluate distribution alignment with positives and unlabeled
-            alignment_evals = eval_distribution_alignment(X, labels)
-            list_eval = [n_rel_neg, cv_val, entropy_val] + alignment_evals
+            avg_std, avg_iqr = eval_homogeneity(X=X, labels=labels)
+            # Evaluate distribution alignment with positives
+            avg_auc_abs, avg_kld = eval_distribution_alignment(X=X, labels=labels, label_test=0, label_ref=1)
+            list_eval = [n_rel_neg, avg_std, avg_iqr, avg_auc_abs, avg_kld]
+            # Evaluate distribution alignment with unlabeled
+            if 2 in labels:
+                avg_auc_abs, avg_kld = eval_distribution_alignment(X=X, labels=labels, label_test=0, label_ref=2)
+                list_eval += [avg_auc_abs, avg_kld]
+                unl_in = True
             # Evaluate distribution alignment with ground-truth negatives, if provided
             if X_neg is not None:
-                alignment_evals_neg = eval_distribution_alignment_X_neg(X, labels, X_neg)
-                list_eval += alignment_evals_neg
+                avg_auc_abs, avg_kld = eval_distribution_alignment_X_neg(X=X, labels=labels, X_neg=X_neg)
+                list_eval += [avg_auc_abs, avg_kld]
             list_evals.append(list_eval)
         # Define column names based on the evaluations performed
-        column_names = ["n_rel_neg", "avg_cv", "avg_entropy",
-                        "avg_abs_auc_pos", "avg_kld_pos", "avg_abs_auc_unl", "avg_kld_unl"]
-        #column_names = ["n_rel_neg", "avg_cv", "avg_entropy", "avg_abs_auc_pos",
-        #                "avg_abs_auc_unl"]
+        cols_eval = ["n_rel_neg", "avg_std", "avg_iqr", "avg_abs_auc_pos", "avg_kld_pos"]
+        if unl_in:
+            cols_eval += ["avg_abs_auc_unl", "avg_kld_unl"]
         # Add additional columns for ground-truth negatives if X_neg is provided
         if X_neg is not None:
-            column_names += ["avg_abs_auc_neg", "avg_kld_neg"]
+            cols_eval += ["avg_abs_auc_neg", "avg_kld_neg"]
         # Create the DataFrame
-        df_eval = pd.DataFrame(list_evals, columns=column_names)
+        df_eval = pd.DataFrame(list_evals, columns=cols_eval)
+        df_eval[cols_eval] = df_eval.round(4)
+        if list_labels is not None:
+            df_eval.insert(0,"name", list_names)
         return df_eval

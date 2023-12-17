@@ -30,15 +30,16 @@ def _cluster_medoid(X, metric="correlation"):
 def _compute_centers(X, labels=None):
     """Obtain cluster centers and their labels"""
     labels_centers = list(OrderedDict.fromkeys(labels))
-    list_masks = [[True if i == label else False for i in labels] for label in labels_centers]
+    list_masks = [[i == label for i in labels] for label in labels_centers]
     centers = np.concatenate([_cluster_center(X[mask]) for mask in list_masks]).round(3)
     labels_centers = np.array(labels_centers)
     return centers, labels_centers
 
+
 def _compute_medoids(X, labels=None, metric="correlation"):
     """Obtain cluster medoids and their labels"""
     unique_labels = list(OrderedDict.fromkeys(labels))
-    list_masks = [[True if i == label else False for i in labels] for label in unique_labels]
+    list_masks = [[i == label for i in labels] for label in unique_labels]
     # Calculating medoid for each mask using specified metric
     list_ind_max = [_cluster_medoid(X[mask], metric=metric) for mask in list_masks]
     indices = np.array(range(0, len(labels)))
