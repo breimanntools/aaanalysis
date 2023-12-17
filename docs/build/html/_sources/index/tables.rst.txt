@@ -214,7 +214,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 63
      - nan
      - Prediction of gamma-secretase substrates
-     - :ref:`Breimann23c <Breimann23c>`
+     - :ref:`Breimann24c <Breimann24c>`
      - 1 (substrate), 0 (non-substrate)
    * - Domain
      - DOM_GSEC_PU
@@ -224,7 +224,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 0
      - nan
      - Prediction of gamma-secretase substrates (PU dataset)
-     - :ref:`Breimann23c <Breimann23c>`
+     - :ref:`Breimann24c <Breimann24c>`
      - 1 (substrate), 2 (unknown substrate status)
 
 
@@ -246,7 +246,7 @@ Various amino acid scale datasets are provided.
    * - scales
      - Amino acid scales (min-max normalized)
      - 586
-     - :ref:`Breimann23b <Breimann23b>`
+     - :ref:`Breimann24b <Breimann24b>`
    * - scales_raw
      - Amino acid scales (raw values)
      - 586
@@ -254,28 +254,28 @@ Various amino acid scale datasets are provided.
    * - scales_cat
      - Classification of scales (AAontology)
      - 586
-     - :ref:`Breimann23b <Breimann23b>`
+     - :ref:`Breimann24b <Breimann24b>`
    * - scales_pc
      - Principal component (PC) compressed scales
      - 20
-     - :ref:`Breimann23a <Breimann23a>`
+     - :ref:`Breimann24a <Breimann24a>`
    * - top60
      - Top 60 scale subsets (AAclust) 
      - 60
-     - :ref:`Breimann23a <Breimann23a>`
+     - :ref:`Breimann24a <Breimann24a>`
    * - top60_eval
      - Evaluation of top 60 scale subsets
      - 60
-     - :ref:`Breimann23a <Breimann23a>`
+     - :ref:`Breimann24a <Breimann24a>`
 
 
 AAontology
 ----------
-AAontology ([Breimann23b]_) provides a two-tiered system for amino acid classification, designed to enhance the interpretability of
+AAontology ([Breimann24b]_) provides a two-tiered system for amino acid classification, designed to enhance the interpretability of
 sequence-based protein predictions. It encompasses 586 physicochemical scales, which are systematically arranged
 into ``67 subcategories`` and further grouped into ``8 categories``. Every scale, subcategory, and main category
 is clearly defined and supported by key references. The scales were grouped into their respective subcategories
-using a combination of AAclust ([Breimann23a]_) clustering and assessments of biological similarity. Those scales that couldn't
+using a combination of AAclust ([Breimann24a]_) clustering and assessments of biological similarity. Those scales that couldn't
 be allocated to a specific subcategory are labeled as 'unclassified'.
 
 .. _t3a_aaontology_categories:

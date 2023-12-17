@@ -2,7 +2,6 @@
 This is a script for utility feature statistics functions for CPP and SequenceFeature objects and backend.
 """
 import numpy as np
-from sklearn.metrics import roc_auc_score
 from scipy import stats
 from statsmodels.stats.multitest import multipletests
 
@@ -25,15 +24,6 @@ def _std(X=None, y=None, group=1):
     group_std = np.std(X[mask], axis=0)
     return group_std
 
-
-def _auc(X=None, y=None):
-    """Get adjusted Area Under the Receiver Operating Characteristic Curve (ROC AUC)
-    comparing, for each feature, groups (given by y (labels)) by feature values in X (feature matrix).
-    """
-    # Multiprocessing for AUC computation
-    auc = np.apply_along_axis((lambda x: roc_auc_score(y, x) - 0.5), 0, X)
-    auc = np.round(auc, 3)
-    return auc
 
 def _p_correction(p_vals=None, p_cor="fdr_bh"):
     """Correct p-values"""
@@ -75,7 +65,7 @@ def add_stat_(df=None, X=None, y=None, parametric=False):
     """Add summary statistics of feature matrix (X) for given labels (y) to df"""
     df = df.copy()
     columns_input = list(df)
-    df[ut.COL_ABS_AUC] = abs(_auc(X=X, y=y))
+    df[ut.COL_ABS_AUC] = abs(ut.auc_adjusted(X=X, y=y))
     df[ut.COL_MEAN_DIF] = _mean_dif(X=X, y=y)
     if ut.COL_ABS_MEAN_DIF not in list(df):
         df[ut.COL_ABS_MEAN_DIF] = abs(_mean_dif(X=X, y=y))

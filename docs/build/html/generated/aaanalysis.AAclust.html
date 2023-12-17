@@ -135,7 +135,7 @@
 <p>AAclust uses clustering models that require a pre-defined number of clusters (k, set by <code class="docutils literal notranslate"><span class="pre">n_clusters</span></code>),
 such as k-means or other <a class="reference external" href="https://scikit-learn.org/stable/modules/clustering.html">scikit-learn clustering models</a>.
 AAclust optimizes the value of k by utilizing Pearson correlation and then selects a representative sample (‘medoid’)
-for each cluster closest to the center, resulting in a redundancy-reduced sample set. See <a class="reference internal" href="../index/references.html#breimann23a" id="id1"><span>[Breimann23a]</span></a>.</p>
+for each cluster closest to the center, resulting in a redundancy-reduced sample set. See <a class="reference internal" href="../index/references.html#breimann24a" id="id1"><span>[Breimann24a]</span></a>.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="aaanalysis.AAclust.model">
 <span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#aaanalysis.AAclust.model" title="Permalink to this definition"></a></dt>
@@ -313,7 +313,7 @@ for each cluster closest to the center, resulting in a redundancy-reduced sample
 clusters by maximizing the within-cluster Pearson correlation beyond the <code class="docutils literal notranslate"><span class="pre">min_th</span></code> threshold. The quality of
 clustering is either based on the minimum Pearson correlation of all members (<code class="docutils literal notranslate"><span class="pre">on_center=False</span></code>) or between
 the cluster center and its members (<code class="docutils literal notranslate"><span class="pre">on_center=True</span></code>), using either the ‘min_cor_all’ or ‘min_cor_center’
-function, respectively, as described in <a class="reference internal" href="../index/references.html#breimann23a" id="id2"><span>[Breimann23a]</span></a>.</p>
+function, respectively, as described in <a class="reference internal" href="../index/references.html#breimann24a" id="id2"><span>[Breimann24a]</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -409,7 +409,7 @@ The SC score lies between -1 and 1. A value closer to 1 implies better clusterin
 <p class="admonition-title">Notes</p>
 <p>BIC was adapted form this <a class="reference external" href="https://stats.stackexchange.com/questions/90769/using-bic-to-estimate-the-number-of-k-in-kmeans">StackExchange discussion</a>
 and modified to align with the SC and CH score so that higher values signify better clustering,
-contrary to conventional BIC implementation favoring lower values. See <a class="reference internal" href="../index/references.html#breimann23a" id="id3"><span>[Breimann23a]</span></a>.</p>
+contrary to conventional BIC implementation favoring lower values. See <a class="reference internal" href="../index/references.html#breimann24a" id="id3"><span>[Breimann24a]</span></a>.</p>
 </div>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>

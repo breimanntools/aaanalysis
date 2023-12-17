@@ -60,9 +60,9 @@ def load_scales(name: str = "scales",
 
     The amino acid scales (``name='scales_raw'``) encompass all scales from AAindex ([Kawashima08]_) along with two
     additional data sources. These scales were min-max normalized (``name='scales'``) and organized in a two-level
-    classification called AAontology (``name='scales_cat'``), as detailed in [Breimann23b]_. The first 20 principal
+    classification called AAontology (``name='scales_cat'``), as detailed in [Breimann24b]_. The first 20 principal
     components (PCs) of all compressed scales are provided (``name='scales_pc'``) and were used for an in-depth analysis
-    of redundancy-reduced scale subsets obtained by :class:`AAclust` ([Breimann23a]_). The top 60 scale sets from
+    of redundancy-reduced scale subsets obtained by :class:`AAclust` ([Breimann24a]_). The top 60 scale sets from
     this analysis are available either collectively (``name='top60'``) or individually (``top60_n='1-60'``),
     accompanied by their evaluations in the ``'top60_eval'`` dataset.
 

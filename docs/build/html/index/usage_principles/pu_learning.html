@@ -6,12 +6,12 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="index/usage_principles/pu_learning.html" />
 <meta property="og:site_name" content="AAanalysis" />
-<meta property="og:description" content="Unbalanced and small datasets are everywhere in life science …. In a standard binary classification setup, data with positive (1) and negative (0) labels are provided, which can be used for trainin..." />
+<meta property="og:description" content="In the life sciences, the prevalence of unbalanced and small datasets often leads to challenges in machine learning, particularly when dealing with a rare class of interest. Typically, binary class..." />
 <meta property="og:image:width" content="1146" />
 <meta property="og:image:height" content="600" />
-<meta property="og:image" content="/_images/social_previews/summary_index_usage_principles_pu_learning_9a1def62.png" />
-<meta property="og:image:alt" content="Unbalanced and small datasets are everywhere in life science …. In a standard binary classification setup, data with positive (1) and negative (0) labels are..." />
-<meta name="description" content="Unbalanced and small datasets are everywhere in life science …. In a standard binary classification setup, data with positive (1) and negative (0) labels are provided, which can be used for trainin..." />
+<meta property="og:image" content="/_images/social_previews/summary_index_usage_principles_pu_learning_fc1a081b.png" />
+<meta property="og:image:alt" content="In the life sciences, the prevalence of unbalanced and small datasets often leads to challenges in machine learning, particularly when dealing with a rare cl..." />
+<meta name="description" content="In the life sciences, the prevalence of unbalanced and small datasets often leads to challenges in machine learning, particularly when dealing with a rare class of interest. Typically, binary class..." />
 <meta name="twitter:card" content="summary_large_image" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -77,6 +77,8 @@
 <li class="toctree-l2"><a class="reference internal" href="feature_identification.html">Identifying Physicochemical Signatures using CPP</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Learning from unbalanced and small data</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#what-is-pu-learning">What is PU learning?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#challenges-and-potential-biases-in-pu-learning">Challenges and Potential Biases in PU Learning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#evaluation-strategies-for-pu-learning">Evaluation Strategies for PU Learning</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="xai.html">Explainable AI at Sequence Level</a></li>
@@ -124,18 +126,92 @@
              
   <section id="learning-from-unbalanced-and-small-data">
 <h1>Learning from unbalanced and small data<a class="headerlink" href="#learning-from-unbalanced-and-small-data" title="Permalink to this heading"></a></h1>
-<p>Unbalanced and small datasets are everywhere in life science ….</p>
-<p>In a standard binary classification setup, data with positive (1) and negative (0) labels are provided, which can be
-used for training by machine learning models. If only a view samples of the negative class exist, data augmentation
-techniques (e.g., SMOTE) can be used to extend the negative dataset by artificially generated sequences. Such approaches
-are very popular for deep learning-based image recognition, but not feasible for protein sequence prediction tasks
-because slight amino acid mutations (sequence alterations or perturbations) can already have dramatic biological effects.
-Alternatively, negatives samples can be identified from unlabeled samples (2), which often exist in great quantities.
-These unlabeled samples should be biologically as similar as possible to the positive class, beside not containing
-the features distinguishing the positive from the negative class. For example, .</p>
+<p>In the life sciences, the prevalence of unbalanced and small datasets often leads to challenges in machine learning,
+particularly when dealing with a rare class of interest. Typically, binary classification involves labeled positive
+and negative data. However, in scenarios where negative samples are scarce, conventional data augmentation methods
+like SMOTE may fall short due to generating artificial samples. This issue is especially pertinent in fields like
+protein sequence prediction, where even minor alterations can lead to significant biological implications.
+A practical solution is to harness the abundance of unlabeled data to identify negative samples, a strategy
+that becomes essential when obtaining a balanced dataset is challenging.</p>
 <section id="what-is-pu-learning">
 <h2>What is PU learning?<a class="headerlink" href="#what-is-pu-learning" title="Permalink to this heading"></a></h2>
-<p>Positive Unlabeled (PU) learning is a subfield of machine learning …</p>
+<p>Positive-Unlabeled (PU) learning, a subfield of machine learning, is tailored for situations with only positive and
+unlabeled data. It is gaining relevance in bioinformatics and similar fields, where negative data often remain
+unlabeled and undiscovered. PU learning algorithms aim to identify negative data from unlabeled data based on statistical
+comparison with the positive data, coupled with iterative learning strategies. This approach adeptly handles the
+inherent data asymmetry in applications where labeled negatives are unattainable.</p>
+</section>
+<section id="challenges-and-potential-biases-in-pu-learning">
+<h2>Challenges and Potential Biases in PU Learning<a class="headerlink" href="#challenges-and-potential-biases-in-pu-learning" title="Permalink to this heading"></a></h2>
+<p>PU learning faces specific challenges, that can be summarized as follows:</p>
+<ul class="simple">
+<li><p><strong>Homogeneity in Identified Negatives</strong>: Similarity among identified negatives can indicate algorithm bias or
+training data diversity issues, potentially leading to overfitting.</p></li>
+<li><p><strong>Biased Negative Selection</strong>: Selection methods for negatives can significantly influence model performance.</p></li>
+<li><p><strong>Overfitting to Positive Data</strong>: Training predominantly on positive data risks failing to accurately identify true negatives.</p></li>
+<li><p><strong>Assumptions in Class Distribution</strong>: Incorrect assumptions about class distribution can result in misclassification.</p></li>
+<li><p><strong>Data Quality</strong>: The quality and representativeness of data are critical for model accuracy.</p></li>
+</ul>
+<p>To enhance model robustness and accuracy, it is crucial to ensure a high diversity among identified negatives. This
+diversity promotes better generalization, as models learn to recognize a broader spectrum of negative features.
+Additionally, negatives near the decision boundary are particularly valuable for the model’s ability to distinguish
+between positives and negatives. Addressing these challenges requires careful algorithm selection, data preprocessing,
+and diverse evaluation strategies.</p>
+</section>
+<section id="evaluation-strategies-for-pu-learning">
+<h2>Evaluation Strategies for PU Learning<a class="headerlink" href="#evaluation-strategies-for-pu-learning" title="Permalink to this heading"></a></h2>
+<p>Evaluating PU learning models in the absence of ground truth can be performed in two steps. First, the population
+of identified negatives can be assessed regarding their statistical properties and compared against the other data
+classes. Second, the prediction performance of the machine learning models trained on the obtained dataset can be assessed.
+The availability of a minority ground-truth negative dataset can significantly aid this process.</p>
+<p><strong>1. Statistical Evaluation of Identified Negatives</strong>
+This step involves analyzing the characteristics of the negatives identified by the PU learning model using
+distinct statistical measures:</p>
+<ul class="simple">
+<li><p><strong>Assessing Homogeneity in Identified Negatives</strong>: Examine the extent to which identified negatives are similar
+to each other, which can indicate potential biases or lack of diversity in the training data. This can be achieved
+by using:</p>
+<ul>
+<li><p><em>Coefficient of Variation (CV)</em>: Evaluates the variability within the identified negatives,
+with high CV indicating more diversity and low CV indicating homogeneity</p></li>
+<li><p><em>Entropy</em>: Measures the diversity within the identified negatives, where higher entropy signifies greater
+variability and lower entropy indicates homogeneity</p></li>
+</ul>
+</li>
+<li><p><strong>Data Distribution Alignment</strong>: Determine the similarity between the identified negatives and the other data
+classes, which is especially useful if a minority ground-truth dataset of negatives exists.
+To this end, various statistical measures can be used:</p>
+<ul>
+<li><p><em>Area Under the Curve (AUC)</em>: Assess the difference between two datasets, with a higher AUC indicating
+a higher discrimination.</p></li>
+<li><p><em>Mann-Whitney U Test</em>: Non-parametric test to compare distributions, useful for assessing if the identified negatives
+differ significantly from the positive or unlabeled data.</p></li>
+<li><p><em>Kullback-Leibler Divergence</em>: Measures the divergence between the distributions of identified negatives
+and unlabeled data, with lower values indicating better alignment.</p></li>
+</ul>
+</li>
+<li><p><strong>Assessing Reproducibility</strong>: To evaluate the reproducibility of a PU learning algorithm, perform the method multiple
+times and compare the overlap in the resulting sets of identified negatives.</p></li>
+</ul>
+<p><strong>2. Machine Learning Model Evaluation Strategies</strong>
+Once the negatives are identified, the following strategies can be employed to evaluate the trained models using
+standard evaluation measures such as accuracy or balanced accuracy (preferred if dataset is still unbalanced):</p>
+<ul class="simple">
+<li><p><strong>Proxy Ground Truth</strong>: Utilize a small, accurately labeled dataset as a proxy for ground truth to provide
+a limited yet insightful evaluation. If a minority ground truth negative dataset is available, you can train only
+using the known positive and identified negative samples, and evaluate on the ground truth negative data.</p></li>
+<li><p><strong>Consistency and Stability</strong>: Assess the model’s consistency across multiple runs or data subsets,
+indicating reliability.</p></li>
+<li><p><strong>Confidence Analysis</strong>: Evaluate the model’s prediction confidence scores. High confidence may indicate effectiveness,
+but beware of overfitting or bias.</p></li>
+<li><p><strong>External Validation</strong>: Use external knowledge or domain expertise to validate model predictions,
+ensuring they align with real-world scenarios.</p></li>
+<li><p><strong>Ablation and Sensitivity Analysis</strong>: Conduct ablation studies to understand model dependencies, and test the
+model’s robustness to data perturbations. You can assess the impact of removing or altering features or parameters,
+indicating model robustness.</p></li>
+</ul>
+<p>Combining these strategies offers a comprehensive view of a PU learning model’s performance, especially in scenarios
+lacking complete ground truth data.</p>
 </section>
 </section>
 

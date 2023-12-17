@@ -125,9 +125,9 @@
 <h1>aaanalysis.dPULearn<a class="headerlink" href="#aaanalysis-dpulearn" title="Permalink to this heading"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="aaanalysis.dPULearn">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">dPULearn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L122-L263"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">dPULearn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L122-L278"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Deterministic Positive-Unlabeled (dPULearn) model.</p>
+<p>Deterministic Positive-Unlabeled (dPULearn) model introduced in <a class="reference internal" href="../index/references.html#breimann24c" id="id1"><span>[Breimann24c]</span></a>.</p>
 <p>dPULearn offers a deterministic approach for Positive-Unlabeled (PU) learning. The model primarily employs
 Principal Component Analysis (PCA) to reduce the dimensionality of the feature space. Based on the most
 informative principal components (PCs), it then iteratively identifies reliable negatives (0) from the set of
@@ -154,6 +154,13 @@ the feature space. Alternatively, reliable negatives can also be identified usin
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <ul class="simple">
+<li><p>For a detailed discussion on Positive-Unlabeled (PU) learning, its challenges, and evaluation strategies,
+refer to the PU Learning section in the Usage Principles documentation: <cite>usage_principles/pu_learning</cite>.</p></li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
 <li><p>See <code class="xref py py-func docutils literal notranslate"><span class="pre">sklearn.decomposition.PCA()</span></code>.</p></li>
 </ul>
 </div>
@@ -167,7 +174,7 @@ the feature space. Alternatively, reliable negatives can also be identified usin
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.dPULearn.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L146-L165"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L151-L170"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn.__init__" title="Permalink to this definition"></a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -199,7 +206,7 @@ the feature space. Alternatively, reliable negatives can also be identified usin
 </table>
 <dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.dPULearn.fit">
-<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_unl_to_neg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.8</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L168-L252"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn.fit" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_unl_to_neg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.8</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L173-L262"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn.fit" title="Permalink to this definition"></a></dt>
 <dd><p>Fit the dPULearn model to identify reliable negative samples (0) from unlabeled samples (2)
 based on the distance to positive samples (1).</p>
 <p>Use the <code class="docutils literal notranslate"><span class="pre">dPUlearn.labels_</span></code> attribute to retrieve the output labels of samples in <code class="docutils literal notranslate"><span class="pre">X</span></code>
@@ -244,19 +251,26 @@ from the mean of positives.</p></li>
 <p class="admonition-title">Notes</p>
 <ul class="simple">
 <li><p>If a distance metric is specified, dPUlearn performs distance-based instead of PCA-based identification.</p></li>
-<li><p>For distance-based identification, the choice of the distance metric should consider the dimensionality
-of the feature space. Dimensionality is defined by the number of features (n_features) relative to the number of samples
-(n_samples) in <cite>X</cite>. A low-dimensional space typically has fewer features than samples (n_features &lt; n_samples),
-while a high-dimensional space may have a feature count approaching or exceeding the sample count
-(n_features ≈ n_samples or n_features &gt; n_samples). While the choice of metric is application-specific, general
-guidelines are as follows:</p>
+<li><p>When selecting a distance metric for distance-based identification, consider the dimensionality of the
+feature space, determined by the ratio of the number of features (n_features) to the number of samples
+(n_samples) in <cite>X</cite>. In a low-dimensional space, there are fewer features than samples (n_features &lt; n_samples),
+whereas a high-dimensional space has significantly more features than samples (n_features &gt;&gt; n_samples).
+The choice of metric depends on the specific application, with the following general guidelines:</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">euclidean</span></code>: Effective in low-dimensional spaces or when direct distances are meaningful.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">manhattan</span></code>: Useful when differences along individual dimensions are important, or in the presence of outliers.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">cosine</span></code>: Recommended for high-dimensional spaces (e.g., n_features &gt; 10 x n_samples), as it evaluates
-the angle between data points rather than their magnitude.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cosine</span></code>: Recommended for high-dimensional spaces (e.g., n_features &gt;&gt; n_samples), as it evaluates
+the direction of feature vectors between data points rather than the magnitude of their differences.</p></li>
 </ul>
 </li>
+</ul>
+</div>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>See <a class="reference external" href="https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics.pairwise">scikit-learn</a>
+for details the three different pairwise distance measures.</p></li>
+<li><p>See <a class="reference internal" href="../index/references.html#hastie09" id="id2"><span>[Hastie09]</span></a> for a detailed explanation on feature space and high-dimensional problems.</p></li>
 </ul>
 </div>
 <div class="admonition-examples admonition">
@@ -20591,10 +20605,16 @@ the angle between data points rather than their magnitude.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.dPULearn.eval">
-<span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_df_pu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_neg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L254-L263"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn.eval" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_df_pu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_neg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L264-L278"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn.eval" title="Permalink to this definition"></a></dt>
 <dd><p>Compare different dPULearn results regarding the homogeneity within the reliably identified negatives (0),
 and the differences with the groups of positives (1), unlabeled samples (2), and a ground-truth negative group
 if provided by <code class="docutils literal notranslate"><span class="pre">X_neg</span></code>.</p>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p>See <cite>usage_principles/pu_learning</cite> for details on different evaluation strategies,</p></li>
+</ul>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

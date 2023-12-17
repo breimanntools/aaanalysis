@@ -9,7 +9,9 @@ from sklearn.decomposition import PCA
 import math
 
 import aaanalysis.utils as ut
-
+from ._backend.dpulearn.dpulearn_eval import (eval_homogeneity,
+                                              eval_distribution_alignment,
+                                              eval_distribution_alignment_X_neg)
 
 # Settings
 LIST_METRICS = ['euclidean', 'manhattan', 'cosine']
@@ -121,23 +123,41 @@ def _get_neg_via_pca(X=None, labels=None, n_components=0.8, n_unl_to_neg=None,
 # TODO refactor, test, document
 class dPULearn:
     """
-    Deterministic Positive-Unlabeled (dPULearn) model.
+    Deterministic Positive-Unlabeled (dPULearn) model introduced in [Breimann24c]_.
 
-    dPULearn offers a deterministic approach for Positive-Unlabeled (PU) learning. The model primarily employs
-    Principal Component Analysis (PCA) to reduce the dimensionality of the feature space. Based on the most
-    informative principal components (PCs), it then iteratively identifies reliable negatives (0) from the set of
-    unlabeled samples (2). These reliable negatives are those that are most distant from the positive samples (1) in
-    the feature space. Alternatively, reliable negatives can also be identified using distance metrics like
-    ``euclidean``, ``manhattan``, or ``cosine`` distance if specified.
+    The dPULearn model offers a deterministic approach to Positive-Unlabeled (PU) learning, featuring two distinct
+    identification approaches:
+
+    - **PCA-based identification**: This is the primary method where Principal Component Analysis (PCA) is utilized
+      to reduce the dimensionality of the feature space. Based on the most informative principal components (PCs),
+      the model iteratively identifies reliable negatives (0) from the set of unlabeled samples (2). These reliable
+      negatives are those that are most distant from the positive samples (1) in the feature space.
+    - **Distance-based identification**: As a simple alternative, reliable negatives can also be identified using
+      similarity measures like ``euclidean``, ``manhattan``, or ``cosine`` distance.
 
     Attributes
     ----------
     labels_ : array-like, shape (n_samples,)
         New dataset labels of samples in ``X`` with identified negative samples labeled by 0.
+    df_pu_ : pd.DataFrame
+        A DataFrame with the PCA-transformed features of 'X' containing the following groups of columns:
+
+        - 'selection_via': Column indicating how reliable negatives were identified (either giving the distance metric
+           or the i-th PC based on which the respective sample was selected).
+        - 'PCi': Value columns for the i-th principal component (PC).
+        - 'PCi_abs_dif': Absolute difference columns for each PC, representing the absolute deviation of each sample
+          from the mean of positives.
+
+        For distance-based identification, 'PCi' columns are replaced with the results for the selected metric.
 
     Notes
     -----
     * The method is inspired by deterministic PU learning techniques and follows an information-theoretic PU learning approach.
+
+    See Also
+    --------
+    * For a detailed discussion on Positive-Unlabeled (PU) learning, its challenges, and evaluation strategies,
+      refer to the PU Learning section in the Usage Principles documentation: `usage_principles/pu_learning`.
 
     See Also
     --------
@@ -163,6 +183,7 @@ class dPULearn:
         # Arguments for distance-based identification
         # Output parameters (will be set during model fitting)
         self.labels_ = None
+        self.df_pu_ = None
 
     # Main method
     def fit(self,
@@ -171,7 +192,7 @@ class dPULearn:
             n_unl_to_neg: int = 1,
             metric: Optional[Literal["euclidean", "manhattan", "cosine"]] = None,
             n_components: Union[float, int] = 0.80,
-            ) -> pd.DataFrame:
+            ) -> "dPULearn":
         """
         Fit the dPULearn model to identify reliable negative samples (0) from unlabeled samples (2)
         based on the distance to positive samples (1).
@@ -202,36 +223,34 @@ class dPULearn:
 
         Returns
         -------
-        df_pu : pd.DataFrame
-            A DataFrame with the PCA-transformed features of 'X' containing the following groups of columns:
-
-            - 'selection_via': Column indicating how reliable negatives were identified (either giving the distance metric
-               or the i-th PC based on which the respective sample was selected).
-            - 'PCi': Value columns for the i-th principal component (PC).
-            - 'PCi_abs_dif': Absolute difference columns for each PC, representing the absolute deviation of each sample
-              from the mean of positives.
-
-            For distance-based identification, 'PCi' will be replaced by the name of the selected metric.
+        dPULearn
+            The fitted instance of the dPULearn class, allowing direct attribute access.
 
         Notes
         -----
         * If a distance metric is specified, dPUlearn performs distance-based instead of PCA-based identification.
-        * For distance-based identification, the choice of the distance metric should consider the dimensionality
-          of the feature space. Dimensionality is defined by the number of features (n_features) relative to the number of samples
-          (n_samples) in `X`. A low-dimensional space typically has fewer features than samples (n_features < n_samples),
-          while a high-dimensional space may have a feature count approaching or exceeding the sample count
-          (n_features ≈ n_samples or n_features > n_samples). While the choice of metric is application-specific, general
-          guidelines are as follows:
+        * When selecting a distance metric for distance-based identification, consider the dimensionality of the
+          feature space, determined by the ratio of the number of features (n_features) to the number of samples
+          (n_samples) in `X`. In a low-dimensional space, there are fewer features than samples (n_features < n_samples),
+          whereas a high-dimensional space has significantly more features than samples (n_features >> n_samples).
+          The choice of metric depends on the specific application, with the following general guidelines:
 
           - ``euclidean``: Effective in low-dimensional spaces or when direct distances are meaningful.
           - ``manhattan``: Useful when differences along individual dimensions are important, or in the presence of outliers.
-          - ``cosine``: Recommended for high-dimensional spaces (e.g., n_features > 10 x n_samples), as it evaluates
-            the angle between data points rather than their magnitude.
+          - ``cosine``: Recommended for high-dimensional spaces (e.g., n_features >> n_samples), as it evaluates
+            the direction of feature vectors between data points rather than the magnitude of their differences.
+
+        See Also
+        --------
+        * See `scikit-learn <https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics.pairwise>`_
+          for details the three different pairwise distance measures.
+        * See [Hastie09]_ for a detailed explanation on feature space and high-dimensional problems.
 
         Examples
         --------
         .. include:: examples/dpulearn_fit.rst
         """
+        # Check input
         ut.check_X(X=X)
         ut.check_labels(labels=labels, vals_requiered=[1, 2], allow_other_vals=False)
         ut.check_number_range(name="n_unl_to_neg", val=n_unl_to_neg, min_val=1, just_int=True)
@@ -249,15 +268,64 @@ class dPULearn:
             new_labels, df_pu = _get_neg_via_pca(**args, n_components=n_components, **self.pca_kwargs)
         # Set new labels
         self.labels_ = np.asarray(new_labels)
-        return df_pu
+        return self
 
-    def eval(self,
-             X: ut.ArrayLike2D,
-             labels: ut.ArrayLike1D = None,
-             list_df_pu: List[pd.DataFrame] = None,
+    @staticmethod
+    def eval(X: ut.ArrayLike2D,
+             list_labels: ut.ArrayLike1D = None,
              X_neg: Optional[ut.ArrayLike2D] = None
              ) -> pd.DataFrame:
         """Compare different dPULearn results regarding the homogeneity within the reliably identified negatives (0),
         and the differences with the groups of positives (1), unlabeled samples (2), and a ground-truth negative group
-        if provided by ``X_neg``."""
-        # TODO check overlap, check homogeneity of samples compared to other sample
+        if provided by ``X_neg``.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
+        list_labels : array-like, shape (n_samples,)
+            List of dataset labels for samples in ``X`` obtained by the :meth:`dPULearn.fit` method.
+            Label values should be either 0 (identified negative), 1 (positive) or 2 (unlabeled).
+        X_neg : array-like, shape (n_samples, n_features)
+            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
+            Samples should be ground-truth negative samples, and features must correspond to ``X``.
+
+        Returns
+        -------
+        df_eval : DataFrame
+            Evaluation results for each DataFrame from ``list_df_pu`` comprising the following columns:
+            - '':
+            - ''
+
+
+        See Also
+        --------
+        * See `usage_principles/pu_learning` for details on different evaluation strategies,
+        """
+        # TODO check homogeneity of samples compared to other sample
+        # Check input
+        # Compute
+        list_evals = []
+        for labels in list_labels:
+            # Evaluate homogeneity
+            n_rel_neg = sum(labels == 0)
+            cv_val, entropy_val = eval_homogeneity(X)
+            # Evaluate distribution alignment with positives and unlabeled
+            alignment_evals = eval_distribution_alignment(X, labels)
+            list_eval = [n_rel_neg, cv_val, entropy_val] + alignment_evals
+            # Evaluate distribution alignment with ground-truth negatives, if provided
+            if X_neg is not None:
+                alignment_evals_neg = eval_distribution_alignment_X_neg(X, labels, X_neg)
+                list_eval += alignment_evals_neg
+            list_evals.append(list_eval)
+        # Define column names based on the evaluations performed
+        column_names = ["n_rel_neg", "avg_cv", "avg_entropy",
+                        "avg_abs_auc_pos", "avg_kld_pos", "avg_abs_auc_unl", "avg_kld_unl"]
+        #column_names = ["n_rel_neg", "avg_cv", "avg_entropy", "avg_abs_auc_pos",
+        #                "avg_abs_auc_unl"]
+        # Add additional columns for ground-truth negatives if X_neg is provided
+        if X_neg is not None:
+            column_names += ["avg_abs_auc_neg", "avg_kld_neg"]
+        # Create the DataFrame
+        df_eval = pd.DataFrame(list_evals, columns=column_names)
+        return df_eval

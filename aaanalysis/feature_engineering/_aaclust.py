@@ -80,7 +80,7 @@ class AAclust(Wrapper):
     AAclust uses clustering models that require a pre-defined number of clusters (k, set by ``n_clusters``),
     such as k-means or other `scikit-learn clustering models <https://scikit-learn.org/stable/modules/clustering.html>`_.
     AAclust optimizes the value of k by utilizing Pearson correlation and then selects a representative sample ('medoid')
-    for each cluster closest to the center, resulting in a redundancy-reduced sample set. See [Breimann23a]_.
+    for each cluster closest to the center, resulting in a redundancy-reduced sample set. See [Breimann24a]_.
 
     Attributes
     ----------
@@ -162,7 +162,7 @@ class AAclust(Wrapper):
         clusters by maximizing the within-cluster Pearson correlation beyond the ``min_th`` threshold. The quality of
         clustering is either based on the minimum Pearson correlation of all members (``on_center=False``) or between
         the cluster center and its members (``on_center=True``), using either the 'min_cor_all' or 'min_cor_center'
-        function, respectively, as described in [Breimann23a]_.
+        function, respectively, as described in [Breimann24a]_.
 
         Parameters
         ----------
@@ -304,7 +304,7 @@ class AAclust(Wrapper):
         -----
         BIC was adapted form this `StackExchange discussion <https://stats.stackexchange.com/questions/90769/using-bic-to-estimate-the-number-of-k-in-kmeans>`_
         and modified to align with the SC and CH score so that higher values signify better clustering,
-        contrary to conventional BIC implementation favoring lower values. See [Breimann23a]_.
+        contrary to conventional BIC implementation favoring lower values. See [Breimann24a]_.
 
         See Also
         --------

@@ -69,7 +69,7 @@ class SequenceFeature:
         We define three main parts from which each other part can be derived from:
 
         - ``TMD (target middle domain)``: Protein domain of interest with varying length,
-           such as the transmembrane domain (TMD) of γ-secretase substrates (see [Breimann23a]_).
+           such as the transmembrane domain (TMD) of γ-secretase substrates (see [Breimann24a]_).
         - ``JMD-N (juxta middle domain N-terminal)``: Protein domain/region directly N-terminally next to the TMD,
           typically set to a fixed length (e.g., 10 for γ-secretase substrates).
         - ``JMD-C (juxta middle domain C-terminal)``: Protein domain/region directly C-terminally next to the TMD,
