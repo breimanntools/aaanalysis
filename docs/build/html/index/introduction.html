@@ -6,12 +6,12 @@
 <meta property="og:type" content="website" />
 <meta property="og:url" content="index/introduction.html" />
 <meta property="og:site_name" content="AAanalysis" />
-<meta property="og:description" content="AAanalysis(Amino Acid analysis) is a Python framework for interpretable sequence-based protein prediction. It was developed to compare two sets of protein sequences using amino acids scales, but ca..." />
+<meta property="og:description" content="AAanalysis is a Python framework designed for scientists and researchers focusing on interpretable sequence-based protein prediction. Ideal for comparing protein sequences using amino acid scales, ..." />
 <meta property="og:image:width" content="1146" />
 <meta property="og:image:height" content="600" />
-<meta property="og:image" content="/_images/social_previews/summary_index_introduction_334fc2dc.png" />
-<meta property="og:image:alt" content="AAanalysis(Amino Acid analysis) is a Python framework for interpretable sequence-based protein prediction. It was developed to compare two sets of protein se..." />
-<meta name="description" content="AAanalysis(Amino Acid analysis) is a Python framework for interpretable sequence-based protein prediction. It was developed to compare two sets of protein sequences using amino acids scales, but ca..." />
+<meta property="og:image" content="/None" />
+<meta property="og:image:alt" content="AAanalysis is a Python framework designed for scientists and researchers focusing on interpretable sequence-based protein prediction. Ideal for comparing pro..." />
+<meta name="description" content="AAanalysis is a Python framework designed for scientists and researchers focusing on interpretable sequence-based protein prediction. Ideal for comparing protein sequences using amino acid scales, ..." />
 <meta name="twitter:card" content="summary_large_image" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -71,8 +71,10 @@
               <p class="caption" role="heading"><span class="caption-text">OVERVIEW</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#workflow">Workflow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#overview-of-documentation">Overview of documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#purpose-and-audience">Purpose and Audience</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#overview-of-documentation">Overview of Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aaanalysis-workflow">AAanalysis Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-flow-and-entry-points">Data Flow and Entry Points</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="usage_principles.html">Usage Principles</a></li>
@@ -117,21 +119,48 @@
              
   <section id="introduction">
 <h1>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h1>
-<p><strong>AAanalysis</strong> (Amino Acid analysis) is a Python framework for interpretable sequence-based protein prediction.
-It was developed to compare two sets of protein sequences using amino acids scales, but can be generally used
-for any (biological) sequence which can be represented by numerical values.</p>
-<section id="workflow">
-<h2>Workflow<a class="headerlink" href="#workflow" title="Permalink to this heading"></a></h2>
-<p>A typical workflow involves the following algorithms:</p>
-<ul class="simple">
-<li><p><strong>AAclust</strong>: k-optimized clustering wrapper framework to select redundancy-reduced sets of numerical scales (e.g., amino acid scales)</p></li>
-<li><p><strong>CPP</strong>: Comparative Physicochemical Profiling, a feature engineering algorithm comparing two sets of protein sequences to identify the set of most distinctive features.</p></li>
-<li><p><strong>dPULearn</strong>: deterministic Positive-Unlabeled (PU) Learning algorithm to enable training on unbalanced and small datasets.</p></li>
-</ul>
+<p><strong>AAanalysis</strong> is a Python framework designed for scientists and researchers focusing on interpretable sequence-based
+protein prediction. Ideal for comparing protein sequences using amino acid scales, this toolkit is versatile enough
+for any sequence analysis representable by numerical values.</p>
+<section id="purpose-and-audience">
+<h2>Purpose and Audience<a class="headerlink" href="#purpose-and-audience" title="Permalink to this heading"></a></h2>
+<p>Designed for biologists and computational biologists, AAanalysis streamlines the process of analyzing and comparing
+protein sequences. By leveraging this framework, physicochemical signatures can be uncovered that are key to understanding
+biological interactions and functions.</p>
 </section>
 <section id="overview-of-documentation">
-<h2>Overview of documentation<a class="headerlink" href="#overview-of-documentation" title="Permalink to this heading"></a></h2>
-<p>See examples and practical usage in our <a class="reference internal" href="../tutorials.html#tutorials"><span class="std std-ref">tutorials</span></a>.</p>
+<h2>Overview of Documentation<a class="headerlink" href="#overview-of-documentation" title="Permalink to this heading"></a></h2>
+<p>Begin with AAanalysis by visiting our <a class="reference external" href="https://scikit-learn.org/stable/developers/contributing.html#contributing" title="(in scikit-learn v1.3)"><span class="xref std std-ref">contributing page</span></a> for installation instructions
+and information on contribution. Delve into the guiding principles and design philosophy of our key algorithms in the
+<a class="reference internal" href="usage_principles.html#usage-principles"><span class="std std-ref">usage principles section</span></a>. To get hands-on experience, explore our <a class="reference internal" href="../tutorials.html#tutorials"><span class="std std-ref">tutorials</span></a>.
+In addition to our detailed <a class="reference internal" href="../api.html#api"><span class="std std-ref">API documentation</span></a>, we compiled various <a class="reference internal" href="tables.html#tables"><span class="std std-ref">overview tables</span></a>
+providing in-depth resources, including <strong>AAontology</strong>—our unique two-level classification of amino acid scales—and
+various benchmark protein datasets.</p>
+</section>
+<section id="aaanalysis-workflow">
+<h2>AAanalysis Workflow<a class="headerlink" href="#aaanalysis-workflow" title="Permalink to this heading"></a></h2>
+<p>Our typical workflow comprises the following key algorithms:</p>
+<ul class="simple">
+<li><p><strong>AAclust</strong>: A k-optimized clustering wrapper that selects redundancy-reduced sets of numerical scales, such as amino acid scales.</p></li>
+<li><p><strong>CPP</strong>: Comparative Physicochemical Profiling, an interpretable feature engineering algorithm comparing two sets of
+protein sequences to identify the set of most distinctive features.</p></li>
+<li><p><strong>dPULearn</strong>: A deterministic Positive-Unlabeled (PU) Learning algorithm tailored for training on unbalanced and
+small datasets, enhancing predictive accuracy.</p></li>
+</ul>
+</section>
+<section id="data-flow-and-entry-points">
+<h2>Data Flow and Entry Points<a class="headerlink" href="#data-flow-and-entry-points" title="Permalink to this heading"></a></h2>
+<p><strong>Data Flow</strong>:
+AAanalysis provides a handful of DataFrames for seamless data management. Starting with amino acid scale information
+(<strong>df_scales</strong>, <strong>df_cat</strong>) and protein sequences (<strong>df_seq</strong>), it enables segmentation into parts (<strong>df_parts</strong>)
+and accommodates user-defined splitting (<strong>split_kws</strong>). Our CPP algorithm then utilizes these to generate
+physicochemical features (<strong>df_feat</strong>) by comparing protein sequence sets.</p>
+<p>See the primary data flow within the AAanalysis toolkit in this diagram:</p>
+<img alt="../_images/components.png" src="../_images/components.png" />
+<p><strong>Entry Points</strong>:
+Our toolkit bridges seamlessly with external libraries, enhancing its versatility and integration capabilities
+in diverse research environments.</p>
+<p>[Link to entry point diagram]</p>
 </section>
 </section>
 

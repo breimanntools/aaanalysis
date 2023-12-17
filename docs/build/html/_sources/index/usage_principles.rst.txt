@@ -24,7 +24,6 @@ To get started with AAanalysis, import it as follows:
 .. toctree::
    :maxdepth: 1
 
-   usage_principles/data_flow_entry_points
    usage_principles/aaontology
    usage_principles/feature_identification
    usage_principles/pu_learning
