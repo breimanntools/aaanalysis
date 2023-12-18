@@ -26,7 +26,7 @@ def plot_eval(df_eval=None, dict_xlims=None, figsize=None, colors=None):
         ax.set_ylabel("")
         ax.set_xlabel(col)
         # Adjust spines
-        ax = _adjust_spines(ax=ax)
+        #ax = _adjust_spines(ax=ax)
         # Manual xlims, if needed
         if dict_xlims and col in dict_xlims:
             ax.set_xlim(dict_xlims[col])
@@ -35,15 +35,14 @@ def plot_eval(df_eval=None, dict_xlims=None, figsize=None, colors=None):
         elif i == 2:
             ax.set_title("Quality measures", weight="bold")
         ax.tick_params(axis='y', which='both', left=False)
-        _x_ticks_0(ax=ax)
+        #_x_ticks_0(ax=ax)
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.25, hspace=0)
     return fig, axes
 
-
+"""
 def _plot_pca(df_pred=None, filter_classes=None, x=None, y=None,  others=True, highlight_rel=True,
               figsize=(6, 6), highlight_mean=True, list_classes=None, dict_color=None):
-    """"""
     if dict_color is None:
         pass
     plt.figure(figsize=figsize)
@@ -95,5 +94,5 @@ def _plot_pca(df_pred=None, filter_classes=None, x=None, y=None,  others=True, h
         plt.text(mean_x, y_max, f" mean {x.split(' ')[0]}", va="top", ha="left", color=color)
         plt.text(x_max, mean_y, f"mean {y.split(' ')[0]}", va="bottom", ha="right", color=color)
     return plt.gcf()
-
+"""
 

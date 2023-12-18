@@ -1,3 +1,5 @@
+.. _usage_principles_pu_learning:
+
 Learning from Unbalanced and Small Data
 =======================================
 In the life sciences, the prevalence of unbalanced and small datasets often leads to challenges in machine learning,

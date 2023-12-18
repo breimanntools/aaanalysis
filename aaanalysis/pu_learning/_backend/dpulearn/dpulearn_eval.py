@@ -1,5 +1,5 @@
 """
-This is a script for backend of the dPULearn.eval method.
+This is a script for the backend of the dPULearn.eval() method.
 """
 import numpy as np
 
@@ -16,7 +16,7 @@ def _comp_std(X):
 
 def _comp_iqr(X):
     """
-    Calculate the average inter quantile range (IQR) of the given X.
+    Calculate the average interquartile range (IQR) of the given X.
     """
     q1 = np.percentile(X, 25, axis=0)
     q2 = np.percentile(X, 75, axis=0)
@@ -61,15 +61,15 @@ def eval_homogeneity(X=None, labels=None, label_test=0):
     return avg_std, avg_iqr
 
 
-def eval_distribution_alignment(X=None, labels=None, label_test=0, label_ref=1):
+def eval_distribution_alignment(X=None, labels=None, label_test=0, label_ref=1, comp_kld=True):
     """Compute the similarity between identified negatives and the other dataset classes (positives, unlabeled)"""
     # Perform tests
     avg_auc_abs = _comp_auc(X=X, labels=labels, label_test=label_test, label_ref=label_ref)
-    avg_kld = _comp_kld(X=X, labels=labels, label_test=label_test, label_ref=label_ref)
+    avg_kld = _comp_kld(X=X, labels=labels, label_test=label_test, label_ref=label_ref) if comp_kld else None
     return avg_auc_abs, avg_kld
 
 
-def eval_distribution_alignment_X_neg(X=None, labels=None, X_neg=None):
+def eval_distribution_alignment_X_neg(X=None, labels=None, X_neg=None, comp_kld=True):
     """Compute the similarity between identified negatives and ground-truth negatives"""
     label_test = 0
     label_ref = 1  # temporary label for ground-truth negatives for comparison
@@ -80,5 +80,5 @@ def eval_distribution_alignment_X_neg(X=None, labels=None, X_neg=None):
     labels_combined = np.array([label_test] * len(X_test) + [label_ref] * len(X_neg))
     # Perform tests
     avg_auc = _comp_auc(X=X_combined, labels=labels_combined, label_test=label_test, label_ref=label_ref)
-    avg_kld = _comp_kld(X=X_combined, labels=labels_combined, label_test=label_test, label_ref=label_ref)
+    avg_kld = _comp_kld(X=X_combined, labels=labels_combined, label_test=label_test, label_ref=label_ref) if comp_kld else None
     return avg_auc, avg_kld

@@ -4,18 +4,16 @@ This is a script for the frontend of the dPULearn class, used for deterministic 
 from typing import Optional, Literal, Dict, Union, List, Tuple, Type
 import numpy as np
 import pandas as pd
-from sklearn.metrics import pairwise_distances
 from sklearn.decomposition import PCA
-import math
 
 import aaanalysis.utils as ut
+from ._backend.dpulearn.dpulearn_fit import (get_neg_via_distance, get_neg_via_pca)
 from ._backend.dpulearn.dpulearn_eval import (eval_homogeneity,
                                               eval_distribution_alignment,
                                               eval_distribution_alignment_X_neg)
 
 # Settings
 LIST_METRICS = ['euclidean', 'manhattan', 'cosine']
-COL_SELECTION_VIA = "selection_via"
 
 
 # I Helper Functions
@@ -57,71 +55,7 @@ def _check_match_X_n_components(X=None, n_components=1):
 
 
 # II Main Functions
-# TODO into backend
-def _get_neg_via_distance(X=None, labels=None, metric="euclidean", n_unl_to_neg=None,
-                          label_neg=0, label_pos=1):
-    """Identify distant samples from positive mean as reliable negatives based on a specified distance metric."""
-    col_dif = f'{metric}_dif'
-    col_dif_abs = f"{metric}_abs_dif"
-    mask_pos = labels == label_pos
-    mask_unl = labels != label_pos
-    # Compute the distances to the average value of the positive datapoints
-    dif_to_pos_mean = pairwise_distances(X[mask_pos], X, metric=metric).mean(axis=0)
-    abs_dif_to_pos_mean = np.abs(dif_to_pos_mean)
-    # Create a DataFrame with the distances
-    df_pu = pd.DataFrame({col_dif: dif_to_pos_mean, col_dif_abs: abs_dif_to_pos_mean})
-    # Select negatives based on largest average distance to positives
-    top_indices = df_pu[mask_unl].sort_values(by=col_dif_abs).tail(n_unl_to_neg).index
-    new_labels = labels.copy()
-    new_labels[top_indices] = label_neg
-    # Adjust df distance
-    df_pu = df_pu.round(4)
-    df_pu.insert(0, COL_SELECTION_VIA, [metric if l == 0 else None for l in new_labels])
-    return new_labels, df_pu
-
-
-def _get_neg_via_pca(X=None, labels=None, n_components=0.8, n_unl_to_neg=None,
-                     label_neg=0, label_pos=1, **pca_kwargs):
-    """Identify distant samples from positive mean as reliable negatives in PCA-compressed feature spaces."""
-    # Principal component analysis
-    pca = PCA(n_components=n_components, **pca_kwargs)
-    pca.fit(X.T)
-    list_exp_var = pca.explained_variance_ratio_
-    columns_pca = [f"PC{n+1} ({round(exp_var*100, 1)}%)" for n, exp_var in enumerate(list_exp_var)]
-    # Determine number of negatives based on explained variance
-    _list_n_neg = [math.ceil(n_unl_to_neg * x / sum(list_exp_var)) for x in list_exp_var]
-    _list_n_cumsum = np.cumsum(np.array(_list_n_neg))
-    list_n_neg = [n for n, cs in zip(_list_n_neg, _list_n_cumsum) if cs <= n_unl_to_neg]
-    if sum(list_n_neg) != n_unl_to_neg:
-        list_n_neg.append(n_unl_to_neg - sum(list_n_neg))
-    columns_pca = columns_pca[:len(list_n_neg)]
-    # Create df_pu based on PCA components
-    df_pu = pd.DataFrame(pca.components_.T[:, :len(columns_pca)], columns=columns_pca)
-    # Get mean of positive data for each component
-    mask_pos = labels == label_pos
-    mask_unl = labels != label_pos
-    pc_means = df_pu[mask_pos].mean(axis=0)
-    # Select negatives based on absolute difference to mean of positives for each component
-    df_pu.insert(0, COL_SELECTION_VIA, None)  # New column to store the PC information
-    new_labels = labels.copy()
-    for col_pc, mean_pc, n in zip(columns_pca, pc_means, list_n_neg):
-        col_abs_dif = f"{col_pc}_abs_dif"
-        # Calculate absolute difference to the mean for each sample in the component
-        df_pu[col_abs_dif] = np.abs(df_pu[col_pc] - mean_pc)
-        # Sort and take top n indices
-        top_indices = df_pu[mask_unl].sort_values(by=col_abs_dif).tail(n).index
-        # Update labels and masks
-        new_labels[top_indices] = label_neg
-        mask_unl[top_indices] = False
-        # Record the PC by which the negatives are selected
-        df_pu.loc[top_indices, COL_SELECTION_VIA] = col_pc.split(' ')[0]
-    # Adjust df
-    cols = [x for x in list(df_pu) if x != COL_SELECTION_VIA]
-    df_pu[cols] = df_pu[cols].round(4)
-    return new_labels, df_pu
-
-
-# TODO refactor, test, document
+# TODO add create upset data for simple comparison (see dev_dpulearn)
 class dPULearn:
     """
     Deterministic Positive-Unlabeled (dPULearn) model introduced in [Breimann24c]_.
@@ -131,8 +65,8 @@ class dPULearn:
 
     - **PCA-based identification**: This is the primary method where Principal Component Analysis (PCA) is utilized
       to reduce the dimensionality of the feature space. Based on the most informative principal components (PCs),
-      the model iteratively identifies reliable negatives (0) from the set of unlabeled samples (2). These reliable
-      negatives are those that are most distant from the positive samples (1) in the feature space.
+      the model iteratively identifies reliable negatives (labeled by 0) from the set of unlabeled samples (2).
+      These reliable negatives are those that are most distant from the positive samples (1) in the feature space.
     - **Distance-based identification**: As a simple alternative, reliable negatives can also be identified using
       similarity measures like ``euclidean``, ``manhattan``, or ``cosine`` distance.
 
@@ -195,11 +129,11 @@ class dPULearn:
             n_components: Union[float, int] = 0.80,
             ) -> "dPULearn":
         """
-        Fit the dPULearn model to identify reliable negative samples (0) from unlabeled samples (2)
+        Fit the dPULearn model to identify reliable negative samples (labeled by 0) from unlabeled samples (2)
         based on the distance to positive samples (1).
 
         Use the ``dPUlearn.labels_`` attribute to retrieve the output labels of samples in ``X``
-        with identified negative samples labeled by 0.
+        including identified negatives.
 
         Parameters
         ----------
@@ -213,12 +147,14 @@ class dPULearn:
         metric : str or None, optional
             The distance metric to use. If ``None``, PCA-based identification is performed. For distance-based
             identification one of the following measures can be selected:
+
             - ``euclidean``: Euclidean distance (minimum)
             - ``manhattan``: Manhattan distance (minimum)
             - ``cosine``: Cosine distance (minimum)
 
         n_components : int or float, default=0.80
             Number of principal components (a) or the percentage of total variance to be covered (b) when PCA is applied.
+
             - In case (a): it should be an integer >= 1.
             - In case (b): it should be a float with  0.0 < ``n_components`` < 1.0.
 
@@ -263,21 +199,22 @@ class dPULearn:
         # Compute average distance for threshold-based filtering (Yang et al., 2012, 2014; Nan et al. 2017)
         args = dict(X=X, labels=labels, n_unl_to_neg=n_unl_to_neg, label_neg=0)
         if metric is not None:
-            new_labels, df_pu = _get_neg_via_distance(**args, metric=metric)
+            new_labels, df_pu = get_neg_via_distance(**args, metric=metric)
         # Identify most far away negatives in PCA compressed feature space
         else:
-            new_labels, df_pu = _get_neg_via_pca(**args, n_components=n_components, **self.pca_kwargs)
+            new_labels, df_pu = get_neg_via_pca(**args, n_components=n_components, **self.pca_kwargs)
         # Set new labels
         self.labels_ = np.asarray(new_labels)
         self.df_pu_ = df_pu
         return self
 
-    # TODO add bool for disabeling KDE
+    # TODO check, test
     @staticmethod
     def eval(X: ut.ArrayLike2D,
              list_labels: ut.ArrayLike1D = None,
              list_names: Optional[List[str]] = None,
-             X_neg: Optional[ut.ArrayLike2D] = None
+             X_neg: Optional[ut.ArrayLike2D] = None,
+             comp_kld: bool = True,
              ) -> pd.DataFrame:
         """Compare different dPULearn results regarding the homogeneity within the reliably identified negatives (0),
         and the differences with the groups of positives (1), unlabeled samples (2), and a ground-truth negative group
@@ -295,20 +232,35 @@ class dPULearn:
         X_neg : array-like, shape (n_samples, n_features), optional
             Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
             Samples should be ground-truth negative samples, and features must correspond to ``X``.
+        comp_kld : bool, default=True
+            Whether to compute Kullback-Leibler Divergence (KLD) to assess the distribution alignment between
+            identified negatives and other data groups. Disable (``False``) if ``X`` is sparse or has low co-variance.
 
         Returns
         -------
         df_eval : DataFrame
-            Evaluation results for each DataFrame from ``list_df_pu`` comprising the following columns:
-            - '':
-            - ''
+            Evaluation results for each set of identified negatives from ``list_labels``. For each set, statistical
+            measures were averaged across all features. The DataFrame comprises the following columns:
 
+            - 'name': Name of the dataset if ``list_names`` is provided.
+            - 'n_rel_neg': Number of identified negatives.
+            - 'avg_std': Average standard deviation (STD) assessing homogeneity of identified negatives.
+              Lower values indicate greater homogeneity.
+            - 'avg_iqr': Average interquartile range (IQR) assessing homogeneity of identified negatives.
+              Lower values suggest greater homogeneity.
+            - 'avg_abs_auc_DATASET': Average absolute area under the curve (AUC) assessing the similarity between the
+               set of identified negatives with other groups (positives, unlabeled, ground-truth negatives).
+               Separate columns are provided for each comparison. Lower values indicate greater similarity.
+            - 'avg_kld_DATASET': Average Kullback-Leibler Divergence (KLD) assessing the distribution alignment
+               between the set of identified negatives and the other groups. Lower values indicate greater similarity.
+               These columns are omitted if ``kld`` is set to ``False``.
 
         See Also
         --------
-        * See `usage_principles/pu_learning` for details on different evaluation strategies,
+        * See :ref:`usage_principles_pu_learning` for details on different evaluation strategies,
         """
         # Check input
+
         # Compute
         unl_in = False
         list_evals = []
@@ -317,28 +269,35 @@ class dPULearn:
             n_rel_neg = sum(labels == 0)
             avg_std, avg_iqr = eval_homogeneity(X=X, labels=labels)
             # Evaluate distribution alignment with positives
-            avg_auc_abs, avg_kld = eval_distribution_alignment(X=X, labels=labels, label_test=0, label_ref=1)
+            args = dict(X=X, labels=labels, comp_kld=comp_kld)
+            avg_auc_abs, avg_kld = eval_distribution_alignment(**args, label_test=0, label_ref=1)
             list_eval = [n_rel_neg, avg_std, avg_iqr, avg_auc_abs, avg_kld]
             # Evaluate distribution alignment with unlabeled
             if 2 in labels:
-                avg_auc_abs, avg_kld = eval_distribution_alignment(X=X, labels=labels, label_test=0, label_ref=2)
+                avg_auc_abs, avg_kld = eval_distribution_alignment(**args, label_test=0, label_ref=2)
                 list_eval += [avg_auc_abs, avg_kld]
                 unl_in = True
             # Evaluate distribution alignment with ground-truth negatives, if provided
             if X_neg is not None:
-                avg_auc_abs, avg_kld = eval_distribution_alignment_X_neg(X=X, labels=labels, X_neg=X_neg)
+                avg_auc_abs, avg_kld = eval_distribution_alignment_X_neg(**args, X_neg=X_neg)
                 list_eval += [avg_auc_abs, avg_kld]
+            # Remove kld if disabled
+            list_eval = [x for x in list_eval if x is not None]
             list_evals.append(list_eval)
         # Define column names based on the evaluations performed
-        cols_eval = ["n_rel_neg", "avg_std", "avg_iqr", "avg_abs_auc_pos", "avg_kld_pos"]
+        cols_eval = ["n_rel_neg", "avg_std", "avg_iqr", "avg_abs_auc_pos"]
+        if comp_kld:
+            cols_eval.append("avg_kld_pos")
         if unl_in:
-            cols_eval += ["avg_abs_auc_unl", "avg_kld_unl"]
-        # Add additional columns for ground-truth negatives if X_neg is provided
+            cols_eval.append("avg_abs_auc_unl")
+            if comp_kld:
+                cols_eval.append("avg_kld_unl")
         if X_neg is not None:
-            cols_eval += ["avg_abs_auc_neg", "avg_kld_neg"]
+            cols_eval.append("avg_kld_neg")
+            if comp_kld:
+                cols_eval.append("avg_kld_neg")
         # Create the DataFrame
-        df_eval = pd.DataFrame(list_evals, columns=cols_eval)
-        df_eval[cols_eval] = df_eval.round(4)
+        df_eval = pd.DataFrame(list_evals, columns=cols_eval).round(4)
         if list_labels is not None:
             df_eval.insert(0,"name", list_names)
         return df_eval
