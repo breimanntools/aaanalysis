@@ -1,4 +1,4 @@
-Learning from unbalanced and small data
+Learning from Unbalanced and Small Data
 =======================================
 In the life sciences, the prevalence of unbalanced and small datasets often leads to challenges in machine learning,
 particularly when dealing with a rare class of interest. Typically, binary classification involves labeled positive
@@ -40,50 +40,55 @@ of identified negatives can be assessed regarding their statistical properties a
 classes. Second, the prediction performance of the machine learning models trained on the obtained dataset can be assessed.
 The availability of a minority ground-truth negative dataset can significantly aid this process.
 
-**1. Statistical Evaluation of Identified Negatives**
+1. Statistical Evaluation of Identified Negatives
+#################################################
 This step involves analyzing the characteristics of the negatives identified by the PU learning model using
 distinct statistical measures:
 
-- **Homogeneity in Identified Negatives**: Examine the extent to which identified negatives are similar
-  to each other, which can indicate potential biases or lack of diversity in the training data. This can be achieved
-  by using:
+**Homogeneity in Identified Negatives**: Examine the extent to which identified negatives are similar to each other, which can indicate potential biases
+or lack of diversity in the training data, by using:
 
-  - *Coefficient of Variation (CV)* [0, ∞): Evaluates the variability within the identified negatives,
-    with high CV (> 1) indicating more diversity and low CV (< 1) indicating homogeneity
-  - *Entropy* [0, 1]: Measures the diversity within the identified negatives, where higher entropy signifies greater
-    variability and lower entropy indicates homogeneity
+- *Standard Deviation (STD)*: Measures variability within the identified negatives, ideal for normally distributed data.
+  A higher STD suggests more diversity, and a lower one indicates homogeneity. While sensitive to outliers, this
+  sensitivity can be informative based on your data's nature.
+- *Inter Quantile Range (IQR)*: Assesses the spread of the middle 50% of the identified negatives, offering robustness
+  against outliers and suitability for both normally and non-normally distributed variables.  Higher IQR values signal
+  more diversity, focusing on the dataset's central tendency rather than extremes
 
-- **Distribution Alignment**: Determine the similarity between the identified negatives and the other data classes,
-  by assessing the alignment of their distributions. This is especially useful if a minority ground-truth dataset
-  of negatives exists. To this end, various statistical measures can be used:
+Using both STD and IQR offers a balanced view of data variability, blending STD's sensitivity to overall spread with
+IQR's robustness to outliers, thereby enriching the reliability of homogeneity assessments
 
-  - *Area Under the Curve (AUC)*: Assess the difference between two datasets, with a higher AUC indicating
-    a higher discrimination. We use an adjusted AUC [-0.5, 0.5] such that 0 indicates no differences and the
-    sign indicates which dataset comprises higher values.
-  - *Kullback-Leibler Divergence* [0, ∞): Measures the divergence between the distributions of identified negatives
-    and unlabeled data, with lower values (near 0) indicating better alignment.
-  - *Mann-Whitney U Test*: Non-parametric test to compare distributions, useful for assessing if the identified negatives
-    differ significantly from the positive or unlabeled data.
+**Distribution Alignment**: Determine the similarity between the identified negatives and the other data classes,
+by assessing the alignment of their distributions. This analysis is crucial when ground-truth negative data is available.
+Key statistical measures include:
 
-- **Assessing Reproducibility**: To evaluate the reproducibility of a PU learning algorithm, perform the method multiple
-  times and compare the overlap in the resulting sets of identified negatives.
+- *Area Under the Curve (AUC)*: Assess the difference between two datasets, with a higher AUC indicating
+  a greater discrimination. We adjusted the AUC between [-0.5, 0.5] so that a value of 0 implies no difference,
+  while the sign indicates which dataset has higher values.
+- *Kullback-Leibler Divergence (KLD)* [0, ∞): Measures the divergence between the distributions of two datasets, with
+  values near 0 indicating better alignment.
 
-**2. Machine Learning Model Evaluation Strategies**
+Using AUC and KLD together enriches distribution alignment analysis since AUC quantifies comparative discrimination,
+while KLD directly measures distribution divergence.
+
+**Assessing Reproducibility**: To evaluate the reproducibility of a PU learning algorithm, perform the method multiple
+times and compare the overlap in the resulting sets of identified negatives.
+
+2. Machine Learning Model Evaluation Strategies
+###############################################
 Once the negatives are identified, the following strategies can be employed to evaluate the trained models using
 standard evaluation measures such as accuracy or balanced accuracy (preferred if dataset is still unbalanced):
 
-- **Proxy Ground Truth**: Utilize a small, accurately labeled dataset as a proxy for ground truth to provide
-  a limited yet insightful evaluation. If a minority ground truth negative dataset is available, you can train only
-  using the known positive and identified negative samples, and evaluate on the ground truth negative data.
-- **Consistency and Stability**: Assess the model’s consistency across multiple runs or data subsets,
-  indicating reliability.
-- **Confidence Analysis**: Evaluate the model's prediction confidence scores. High confidence may indicate effectiveness,
-  but beware of overfitting or bias.
-- **External Validation**: Use external knowledge or domain expertise to validate model predictions,
-  ensuring they align with real-world scenarios.
-- **Ablation and Sensitivity Analysis**: Conduct ablation studies to understand model dependencies, and test the
-  model's robustness to data perturbations. You can assess the impact of removing or altering features or parameters,
-  indicating model robustness.
+- **Confidence Analysis and Ground Truth**: Assess the model's prediction confidence. High confidence suggests
+  effectiveness, but be cautious of overfitting or bias. When available, use a minority ground-truth negative dataset
+  for training with known positives and identified negatives, and evaluate against this ground truth.
+- **External Validation**: Use external knowledge or domain expertise to validate model predictions and identified
+  negatives, ensuring they align with real-world scenarios.
+- **Consistency and Stability**: Evaluate the model's reliability by checking its consistency across multiple
+  runs or subsets of data.
+- **Ablation and Sensitivity Analysis**: Perform ablation studies to determine the model's dependence on specific
+  features or parameters, and test its resilience to data variations. This includes assessing the effects of removing
+  or modifying features or parameters to gauge model robustness.
 
-Combining these strategies offers a comprehensive view of a PU learning model’s performance, especially in scenarios
-lacking complete ground truth data.
+These strategies collectively provide a thorough evaluation of PU learning models, particularly valuable in settings
+lacking full ground-truth data.
