@@ -7,6 +7,8 @@
     - You can use Traffic analytics (https://docs.readthedocs.io/en/stable/analytics.html) for doc traffic.
     - Check URLs with LinkChecker (bash: linkchecker ./docs/_build/html/index.html).
 
+.. _contributing:
+
 ============
 Contributing
 ============

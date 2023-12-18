@@ -4,11 +4,19 @@ Introduction
 protein prediction. Ideal for comparing protein sequences using amino acid scales, this toolkit is versatile enough
 for any sequence analysis representable by numerical values.
 
+Key Algorithms
+--------------
+- **AAclust**: A k-optimized clustering wrapper that selects redundancy-reduced sets of numerical scales,
+  such as amino acid scales.
+- **CPP**: Comparative Physicochemical Profiling, an interpretable feature engineering algorithm comparing two sets of
+  protein sequences to identify the set of most distinctive features.
+- **dPULearn**: A deterministic Positive-Unlabeled (PU) Learning algorithm tailored for training on unbalanced and
+  small datasets, enhancing predictive accuracy.
+
 Purpose and Audience
 --------------------
-Designed for biologists and computational biologists, AAanalysis streamlines the process of analyzing and comparing
-protein sequences. By leveraging this framework, physicochemical signatures can be uncovered that are key to understanding
-biological interactions and functions.
+Designed for (computational) biologists, AAanalysis facilitates the analysis and comparison of protein sequences.
+It enables the discovery of physicochemical signatures that underlie biological interactions and functions.
 
 Overview of Documentation
 -------------------------
@@ -18,16 +26,6 @@ and information on contribution. Delve into the guiding principles and design ph
 In addition to our detailed :ref:`API documentation <api>`, we compiled various :ref:`overview tables <tables>`
 providing in-depth resources, including **AAontology**—our unique two-level classification of amino acid scales—and
 various benchmark protein datasets.
-
-AAanalysis Workflow
--------------------
-Our typical workflow comprises the following key algorithms:
-
-- **AAclust**: A k-optimized clustering wrapper that selects redundancy-reduced sets of numerical scales, such as amino acid scales.
-- **CPP**: Comparative Physicochemical Profiling, an interpretable feature engineering algorithm comparing two sets of
-  protein sequences to identify the set of most distinctive features.
-- **dPULearn**: A deterministic Positive-Unlabeled (PU) Learning algorithm tailored for training on unbalanced and
-  small datasets, enhancing predictive accuracy.
 
 Data Flow and Entry Points
 --------------------------

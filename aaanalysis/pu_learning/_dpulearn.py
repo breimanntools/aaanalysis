@@ -57,6 +57,7 @@ def _check_match_X_n_components(X=None, n_components=1):
 
 
 # II Main Functions
+# TODO into backend
 def _get_neg_via_distance(X=None, labels=None, metric="euclidean", n_unl_to_neg=None,
                           label_neg=0, label_pos=1):
     """Identify distant samples from positive mean as reliable negatives based on a specified distance metric."""
