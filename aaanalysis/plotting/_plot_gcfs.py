@@ -6,7 +6,7 @@ import seaborn as sns
 # Main function
 def plot_gcfs(option: str = 'font.size') -> int:
     """
-    Gets current font size (or axes linewdith).
+    Gets current font size (or axes linewidth).
 
     This font size can be set by :func:`plot_settings` function.
 

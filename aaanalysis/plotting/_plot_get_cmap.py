@@ -92,7 +92,7 @@ def plot_get_cmap(name: str = "CPP",
 
     Examples
     --------
-    .. include:: examples/plot_cmap.rst
+    .. include:: examples/plot_get_cmap.rst
     """
     # Check input
     list_names = [ut.STR_CMAP_CPP, ut.STR_CMAP_SHAP]

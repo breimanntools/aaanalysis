@@ -112,7 +112,7 @@ class TestAAclustEvaluateComplex:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
                 df_eval = aa.AAclust().eval(X, list_labels=labels)
-                names, n_clusters, BIC, CH, SC = df_eval[["n_clusters", "BIC", "CH", "SC"]].values[0]
+                n_clusters, BIC, CH, SC = df_eval[["n_clusters", "BIC", "CH", "SC"]].values[0]
                 assert n_clusters > 0
                 assert -np.inf <= BIC <= np.inf
                 assert 0 <= CH

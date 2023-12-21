@@ -171,7 +171,7 @@ def _create_marker(color, label, marker, marker_size, lw, edgecolor, linestyle, 
 # II Main function
 def plot_legend(ax: Optional[plt.Axes] = None,
                 # Categories and colors
-                dict_color: Optional[Dict[str, str]] = None,
+                dict_color: Dict[str, str] = None,
                 list_cat: Optional[List[str]] = None,
                 labels: Optional[List[str]] = None,
                 # Position and Layout
@@ -183,114 +183,97 @@ def plot_legend(ax: Optional[plt.Axes] = None,
                 labelspacing: Union[int, float] = 0.2,
                 columnspacing: Union[int, float] = 1.0,
                 handletextpad: Union[int, float] = 0.8,
-                handlelength: Union[int, float] = 2,
+                handlelength: Union[int, float] = 2.0,
                 # Font and Style
                 fontsize: Optional[Union[int, float]] = None,
                 fontsize_title: Optional[Union[int, float]] = None,
-                weight: str = "normal",
-                fontsize_weight: str = "normal",
-                # Line, Marker, and Area
+                weight_font: str = "normal",
+                weight_title: str = "normal",
+                # Marker, Lines, and Area
                 marker: Optional[Union[str, int, list]] = None,
                 marker_size: Union[int, float, List[Union[int, float]]] = 10,
                 lw: Union[int, float] = 0,
                 linestyle: Optional[Union[str, list]] = None,
-                edgecolor: str = None,
+                edgecolor: Optional[str] = None,
                 hatch: Optional[Union[str, List[str]]] = None,
                 hatchcolor: str = "white",
                 # Title
-                title: str = None,
+                title: Optional[str] = None,
                 title_align_left: bool = True,
                 **kwargs
                 ) -> Union[plt.Axes, Tuple[List, List[str]]]:
     """
-    Sets an independntly customizable plot legend.
+    Sets an independently customizable plot legend.
 
-    Legends can be flexbily adjusted based categories and colors provided in ``dict_color`` dictionary.
-    This functions comprises the most convinient settings for ``func:`matplotlib.pyplot.legend``.
+    Legends can be flexibly adjusted based categories and colors provided in ``dict_color`` dictionary.
+    This functions comprises the most convenient settings for ``func:`matplotlib.pyplot.legend``.
 
     Parameters
     ----------
-    ax
+    ax : plt.Axes, optional
         The axes to attach the legend to. If not provided, the current axes will be used.
-    dict_color
+    dict_color : dict, optional
         A dictionary mapping categories to colors.
-    list_cat
+    list_cat : list of strings, optional
         List of categories to include in the legend (keys of ``dict_color``).
-    labels
-        Labels for legend items corresponding to given categories.
-    loc
+    labels : list of strings, optional
+        Legend labels corresponding to given categories.
+    loc : int or str
         Location for the legend.
-    loc_out
+    loc_out : bool, default=False
         If ``True``, sets automatically ``x=0`` and ``y=-0.25`` if they are ``None``.
-    y
+    y : int or float, optional
         The y-coordinate for the legend's anchor point.
-    x
+    x : int or float, optional
         The x-coordinate for the legend's anchor point.
-    ncol
+    ncol : int, default=1
         Number of columns in the legend, at least 1.
-    labelspacing
+    labelspacing : int or float, default=0.2
         Vertical spacing between legend items.
-    columnspacing
+    columnspacing : int or float, default=1.0
         Horizontal spacing between legend columns.
-    handletextpad
-        Horizontal spacing bewtween legend handle (marker) and label.
-    handlelength
+    handletextpad : int or float, default=0.8
+        Horizontal spacing between legend handle (marker) and label.
+    handlelength : int or float, default=2.0
         Length of legend handle.
-    fontsize
+    fontsize : int or float, optional
         Font size for the legend text.
-    fontsize_title
+    fontsize_title : inf or float, optional
         Font size for the legend title.
-    weight
+    weight_font : str, default='normal'
         Weight of the font.
-    fontsize_weight
+    weight_title : str, default='normal'
         Font weight for the legend title.
-    marker
-        Marker for legend items. Lines ('-') only visiable if ``lw>0``.
-    marker_size
+    marker : str, int, or list, optional
+        Handle marker for legend items. Lines ('-') only visible if ``lw>0``.
+    marker_size : int, float, or list, optional
         Marker size for legend items.
-    lw
+    lw : int or float, default=0
         Line width for legend items. If negative, corners are rounded.
-    linestyle
+    linestyle : str or list, optional
         Style of line. Only applied to lines (``marker='-'``).
-    edgecolor
+    edgecolor : str, optional
         Edge color of legend items. Not applicable to lines.
-    hatch
+    hatch : str or list, optional
         Filling pattern for default marker. Only applicable when ``marker=None``.
-    hatchcolor
+    hatchcolor : str, default='white'
         Hatch color of legend items. Only applicable when ``marker=None``.
-    title
-        Title for the legend.
-    title_align_left
+    title : str, optional
+        Legend title.
+    title_align_left : bool, default=True
         Whether to align the title to the left.
     **kwargs
-        Furhter key word arguments for :attr:`matplotlib.axes.Axes.legend`.
+        Further key word arguments for :attr:`matplotlib.axes.Axes.legend`.
 
     Returns
     -------
     ax
         Axes on which legend is applied to.
 
-    Examples
-    --------
-    .. plot::
-        :include-source:
-
-        >>> import matplotlib.pyplot as plt
-        >>> import seaborn as sns
-        >>> import aaanalysis as aa
-        >>> data = {'Classes': ['A', 'B', 'C'], 'Values': [23, 27, 43]}
-        >>> colors = aa.plot_get_clist()
-        >>> aa.plot_settings()
-        >>> sns.barplot(x='Classes', y='Values', data=data, palette=colors, hatch=["/", ".", "."], hue="Classes", legend=False)
-        >>> sns.despine()
-        >>> dict_color = {"Group 1": "black", "Group 2": "black"}
-        >>> aa.plot_legend(dict_color=dict_color, ncol=2, y=1.1, hatch=["/", "."])
-        >>> plt.tight_layout()
-        >>> plt.show()
-
     Notes
     -----
-    Markers can be None (default), lines ('-') or one of the `matplotlib markers <https://matplotlib.org/stable/api/markers_api.html>`_.
+    Markers can be None (default), lines ('-') or one of the `matplotlib markers
+    <https://matplotlib.org/stable/api/markers_api.html>`_.
 
     See Also
     --------
@@ -300,6 +283,10 @@ def plot_legend(ax: Optional[plt.Axes] = None,
     * :class:`matplotlib.lines.Line2D` for available marker shapes and line properties.
     * :class:`matplotlib.axes.Axes`, which is the core object in matplotlib.
     * :func:`matplotlib.pyplot.gca` to get the current Axes instance.
+
+    Examples
+    --------
+    .. include:: examples/plot_legend.rst
     """
     # Check input
     ut.check_ax(ax=ax, accept_none=True)
@@ -335,11 +322,11 @@ def plot_legend(ax: Optional[plt.Axes] = None,
     # Update legend arguments
     args = dict(loc=loc, ncol=ncol, fontsize=fontsize, labelspacing=labelspacing, columnspacing=columnspacing,
                 handletextpad=handletextpad, handlelength=handlelength, borderpad=0, title=title,
-                edgecolor=edgecolor, prop={"weight": weight, "size": fontsize})
+                edgecolor=edgecolor, prop={"weight": weight_font, "size": fontsize})
     args.update(kwargs)
 
     if fontsize_title:
-        args["title_fontproperties"] = {"weight": fontsize_weight, "size": fontsize_title}
+        args["title_fontproperties"] = {"weight": weight_title, "size": fontsize_title}
 
     if loc_out:
         x, y = x or 0, y or -0.25
@@ -355,4 +342,3 @@ def plot_legend(ax: Optional[plt.Axes] = None,
     if title_align_left:
         legend._legend_box.align = "left"
     return ax
-

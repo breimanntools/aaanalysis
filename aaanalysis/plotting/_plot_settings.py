@@ -2,11 +2,13 @@
 Plotting utility functions for AAanalysis to create publication ready figures. Can
 be used for any Python project independently of AAanalysis.
 """
+from typing import Union
 import seaborn as sns
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import aaanalysis.utils as ut
 import warnings
+
 
 LIST_FONTS = ['Arial', 'Avant Garde',
               'Bitstream Vera Sans', 'Computer Modern Sans Serif',
@@ -39,7 +41,7 @@ def set_tick_size(axis=None, major_size=None, minor_size=None):
 
 
 # II Main functions
-def plot_settings(font_scale: float = 1,
+def plot_settings(font_scale: Union[int, float] = 1,
                   font: str = "Arial",
                   weight_bold: bool = True,
                   adjust_only_font: bool = False,
@@ -52,7 +54,8 @@ def plot_settings(font_scale: float = 1,
                   short_ticks_x: bool = False,
                   no_ticks_y: bool = False,
                   short_ticks_y: bool = False,
-                  show_options: bool = False) -> None:
+                  show_options: bool = False
+                  ) -> None:
     """
     Configures general plot settings.
 
@@ -62,74 +65,44 @@ def plot_settings(font_scale: float = 1,
 
     Parameters
     ----------
-    font_scale
+    font_scale : int or float, default=1
        Scaling factor to scale the size of font elements. Consistent with :func:`seaborn.set_context`.
-    font
+    font : str, default='Arial'
        Name of text font. Common options are 'Arial', 'Verdana', 'Helvetica', or 'DejaVu Sans' (Matplotlib default).
-    weight_bold
+    weight_bold : bool, default=True
        If ``True``, font and line elements are bold.
-    adjust_only_font
+    adjust_only_font : bool, default=False
        If ``True``, only the font style will be adjusted, leaving other elements unchanged.
-    adjust_further_elements
+    adjust_further_elements : bool, default=True
        If ``True``, makes additional visual and layout adjustments to the plot (errorbars, legend).
-    grid
+    grid : bool, default=False
        If ``True``, display the grid in plots.
-    grid_axis
+    grid_axis : {'y', 'x', 'both'}, default='y'
        Choose the axis ('y', 'x', 'both') to apply the grid to.
-    no_ticks
+    no_ticks : bool, default=False
        If ``True``, remove all tick marks on both x and y axes.
-    short_ticks
+    short_ticks : bool, default=False
        If ``True``, display short tick marks on both x and y axes. Is ignored if ``no_ticks=True``.
-    no_ticks_x
+    no_ticks_x : bool, default=False
        If ``True``, remove tick marks on the x-axis.
-    short_ticks_x
+    short_ticks_x : bool, default=False
        If ``True``, display short tick marks on the x-axis. Is ignored if ``no_ticks=True``.
-    no_ticks_y
+    no_ticks_y : bool, default=False
        If ``True``, remove tick marks on the y-axis.
-    short_ticks_y
+    short_ticks_y : bool, default=False
        If ``True``, display short tick marks on the y-axis. Is ignored if ``no_ticks=True``.
-    show_options
+    show_options : bool, default=False
        If ``True``, show all plot runtime configurations of matplotlib.
-
-    Examples
-    --------
-    Create default seaborn plot:
-
-    .. plot::
-        :include-source:
-
-        >>> import matplotlib.pyplot as plt
-        >>> import seaborn as sns
-        >>> import aaanalysis as aa
-        >>> data = {'Classes': ['Class A', 'Class B', 'Class C'], 'Values': [23, 27, 43]}
-        >>> sns.barplot(x='Classes', y='Values', data=data)
-        >>> sns.despine()
-        >>> plt.title("Seaborn default")
-        >>> plt.tight_layout()
-        >>> plt.show()
-
-    Adjust polts with AAanalysis:
-
-    .. plot::
-        :include-source:
-
-        >>> import matplotlib.pyplot as plt
-        >>> import seaborn as sns
-        >>> import aaanalysis as aa
-        >>> data = {'Classes': ['Class A', 'Class B', 'Class C'], 'Values': [23, 27, 43]}
-        >>> colors = aa.plot_get_clist()
-        >>> aa.plot_settings()
-        >>> sns.barplot(data=data, x='Classes', y='Values', palette=colors, hue="Classes")
-        >>> sns.despine()
-        >>> plt.title("Adjusted")
-        >>> plt.tight_layout()
-        >>> plt.show()
 
     See Also
     --------
     * More examples in `Plotting Prelude <plotting_prelude.html>`_.
     * :func:`seaborn.set_context`, where ``font_scale`` is utilized.
     * :data:`matplotlib.rcParams`, which manages the global settings in :mod:`matplotlib`.
+
+    Examples
+    --------
+    .. include:: examples/plot_settings.rst
     """
     # Check input
     ut.check_number_range(name="font_scale", val=font_scale, min_val=0, just_int=False)

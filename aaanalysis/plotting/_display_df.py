@@ -32,17 +32,17 @@ def display_df(df: pd.DataFrame = None,
 
     Parameters
     ----------
-    df
+    df : pd.DataFrame
         DataFrame to be displayed as HTML output.
-    fontsize
+    fontsize : int, default=12
         Relative font size in points of table font.
-    max_width_pct
+    max_width_pct: int, default=100
         Maximum width in percentage of main page for table.
-    max_height
+    max_height : int, default=300
        Maximum height in pixels of table.
-    char_limit
+    char_limit : int, default=25
         Maximum number of characters to display in a cell.
-    show_shape
+    show_shape : bool, default=False
         If ``True``, shape of ``df`` is printed.
     """
     # Check input

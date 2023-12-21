@@ -15,12 +15,13 @@ def plot_get_clist(n_colors: int = 3) -> List[str]:
 
     Parameters
     ----------
-    n_colors
+    n_colors : int, default=3
         Number of colors. Must be greater 2.
+
     Returns
     -------
     list
-        List with colors given as matplotlib color names.
+        Color list given as matplotlib color names.
 
     See Also
     --------
