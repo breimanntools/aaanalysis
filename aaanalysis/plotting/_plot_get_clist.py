@@ -1,5 +1,6 @@
 """
-Plotting utility function to obtain AAanalysis color list.
+This is a script for frontend of plotting utility function to obtain AAanalysis color list.
+The backend is in general utility module to provide function to remaining AAanalysis modules.
 """
 from typing import List
 from aaanalysis import utils as ut
@@ -36,7 +37,7 @@ def plot_get_clist(n_colors: int = 3) -> List[str]:
     # Check input
     ut.check_number_range(name="n_colors", val=n_colors, min_val=2, just_int=True)
     # Base lists
-    colors = ut.plot_get_clist(n_colors=n_colors)
+    colors = ut.plot_get_clist_(n_colors=n_colors)
     return colors
 
 

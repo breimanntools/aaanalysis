@@ -67,7 +67,7 @@ The font type and style can be adjusted by the ``font`` and
 
 .. code:: ipython2
 
-    aa.plot_settings(font="DejaVu Sans", weight_bold=False)
+    aa.plot_settings(font="Times New Roman", weight_bold=False)
     sns.barplot(x="Classes", y="Values", data=data, palette=colors, hue="Classes")
     sns.despine()
     plt.tight_layout()
@@ -83,7 +83,7 @@ If you only want to change the ``font`` type, you can set
 
 .. code:: ipython2
 
-    aa.plot_settings(adjust_only_font=True, font="DejaVu Sans")
+    aa.plot_settings(adjust_only_font=True, font="Arial")
     sns.barplot(x="Classes", y="Values", data=data, palette=colors, hue="Classes")
     sns.despine()
     plt.tight_layout()
@@ -99,8 +99,9 @@ Grid can be enabled by ``grid=True`` and the ``grid-axis`` can be ‘x’,
 
 .. code:: ipython2
 
-    aa.plot_settings(grid=True, grid_axis="both")
-    sns.barplot(x="Classes", y="Values", data=data, palette=colors, hue="Classes")
+    aa.plot_settings(grid=True, grid_axis="y")
+    sns.barplot(x="Classes", y="Values", data=data, palette=colors, 
+                hue="Classes")
     sns.despine()
     plt.tight_layout()
     plt.show()

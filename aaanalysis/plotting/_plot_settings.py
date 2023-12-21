@@ -10,7 +10,7 @@ import aaanalysis.utils as ut
 import warnings
 
 
-LIST_FONTS = ['Arial', 'DejaVu Sans', 'Geneva', 'Verdana']
+LIST_FONTS = ['Arial', 'Courier New', 'DejaVu Sans', 'Times New Roman', 'Verdana']
 
 
 # I Helper functions
@@ -63,7 +63,7 @@ def plot_settings(font_scale: Union[int, float] = 1,
     ----------
     font_scale : int or float, default=1
        Scaling factor to scale the size of font elements. Consistent with :func:`seaborn.set_context`.
-    font : {'Arial', 'DejaVu Sans', 'Geneva', 'Verdana'}, default='Arial'
+    font : {'Arial', 'Courier New', 'DejaVu Sans', 'Times New Roman', 'Verdana'}, default='Arial'
        Name of text font. Common options are 'Arial' or 'DejaVu Sans' (Matplotlib default).
     weight_bold : bool, default=True
        If ``True``, font and line elements are bold.
@@ -89,6 +89,10 @@ def plot_settings(font_scale: Union[int, float] = 1,
        If ``True``, display short tick marks on the y-axis. Is ignored if ``no_ticks=True``.
     show_options : bool, default=False
        If ``True``, show all plot runtime configurations of matplotlib.
+
+    Notes
+    -----
+    * ``grid_axis`` work only for axis with numerical values.
 
     See Also
     --------

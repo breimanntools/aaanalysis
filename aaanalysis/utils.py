@@ -6,12 +6,14 @@ import os
 import platform
 from functools import lru_cache
 import pandas as pd
+import seaborn as sns
 import numpy as np
 import warnings
 
 from .config import options
 
 # Import utility functions explicitly (can be imported from this utils file from other modules)
+# Checking functions
 from ._utils.check_type import (check_number_range, check_number_val, check_str, check_bool,
                                 check_dict, check_tuple, check_list_like, check_ax)
 from ._utils.check_data import (check_X, check_X_unique_samples,
@@ -23,13 +25,17 @@ from ._utils.check_models import check_mode_class, check_model_kwargs
 from ._utils.check_plots import (check_vmin_vmax, check_color, check_cmap, check_palette,
                                  check_ylim, check_y_categorical)
 
+# Special functions
 from ._utils.new_types import ArrayLike1D, ArrayLike2D
 from ._utils.decorators import (catch_runtime_warnings, CatchRuntimeWarnings,
                                 catch_convergence_warning, ClusteringConvergenceException,
                                 catch_invalid_divide_warning)
+from ._utils.plotting import (plot_gco, plot_get_clist_, plot_legend_)
+
+# Utility functions
 from ._utils.utils_metrics import (auc_adjusted_, kullback_leibler_divergence_, bic_score_)
 from ._utils.utils_output import (print_out, print_start_progress, print_progress, print_finished_progress)
-from ._utils.utils_ploting import plot_gco, plot_get_clist, plot_add_bars
+from ._utils.utils_ploting import plot_add_bars
 
 
 # Folder structure
@@ -202,11 +208,14 @@ DICT_COLOR_CAT = {"ASA/Volume": "tab:blue",
                   "Shape": "tab:cyan",
                   "Structure-Activity": "tab:brown"}
 
+
+
 # Parameter options for cmaps and color dicts
 STR_CMAP_CPP = "CPP"
 STR_CMAP_SHAP = "SHAP"
 STR_DICT_COLOR = "DICT_COLOR"
 STR_DICT_CAT = "DICT_CAT"
+
 
 
 # I Helper functions
@@ -239,6 +248,33 @@ def get_dict_part_seq(tmd=None, jmd_n=None, jmd_c=None):
                      'ext_n_tmd_n': ext_n + tmd_n, 'tmd_c_ext_c': tmd_c + ext_c}
     return part_seq_dict
 
+
+def _get_cpp_cmap(n_colors=100, facecolor_dark=None):
+    """Generate a diverging color map for CPP feature values."""
+    n = 5
+    cmap = sns.color_palette(palette="RdBu_r", n_colors=n_colors + n * 2)
+    cmap_low, cmap_high = cmap[0:int((n_colors + n * 2) / 2)], cmap[int((n_colors + n * 2) / 2):]
+    if facecolor_dark is None:
+        c_middle = [cmap_low[-1]]
+    else:
+        c_middle = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
+    add_to_end = 1  # Must be added to keep list size consistent
+    cmap = cmap_low[0:-n] + c_middle + cmap_high[n+add_to_end:]
+    return cmap
+
+
+def _get_shap_cmap(n_colors=100, facecolor_dark=True):
+    """Generate a diverging color map for feature values."""
+    n = 20 # TODO check if 5 is better for CPP-SHAP heatmap
+    cmap_low = sns.light_palette(COLOR_SHAP_NEG, input="hex", reverse=True, n_colors=int(n_colors / 2) + n)
+    cmap_high = sns.light_palette(COLOR_SHAP_POS, input="hex", n_colors=int(n_colors / 2) + n)
+    if facecolor_dark is None:
+        c_middle = [cmap_low[-1]]
+    else:
+        c_middle = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
+    add_to_end = (n_colors+1)%2 # Must be added to keep list size consistent
+    cmap = cmap_low[0:-n] + c_middle + cmap_high[n+add_to_end:]
+    return cmap
 
 # II Main functions
 # Caching for data loading for better performance (data loaded ones)
@@ -276,6 +312,28 @@ def check_verbose(verbose):
     else:
         check_bool(name="verbose", val=verbose)
     return verbose
+
+
+# Plotting utilities
+# DEV: Exceptionally placed here due to dependency on constants
+def plot_get_cdict_(name=STR_DICT_COLOR):
+    """Return DICT_COLOR or DICT_COLOR_CAT"""
+    if name == STR_DICT_COLOR:
+        return DICT_COLOR
+    elif name == STR_DICT_CAT:
+        return DICT_COLOR_CAT
+    else:
+        raise ValueError(f"'name' must be '{STR_DICT_COLOR}' or '{STR_DICT_CAT}'")
+
+
+def plot_get_cmap_(name="CPP", n_colors=101, facecolor_dark=None):
+    """Get color map for CPP or CPP-SHAP plots"""
+    if name == STR_CMAP_CPP:
+        return _get_cpp_cmap(n_colors=n_colors, facecolor_dark=facecolor_dark)
+    elif name == STR_CMAP_SHAP:
+        return _get_shap_cmap(n_colors=n_colors, facecolor_dark=facecolor_dark)
+    else:
+        raise ValueError(f"'name' must be '{STR_CMAP_CPP}' or '{STR_CMAP_SHAP}'")
 
 
 # Check df_seq

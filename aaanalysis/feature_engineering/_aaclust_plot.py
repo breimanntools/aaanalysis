@@ -189,7 +189,7 @@ class AAclustPlot:
         check_dict_xlims(dict_xlims=dict_xlims)
         ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
         # Plotting
-        colors = ut.plot_get_clist(n_colors=4)
+        colors = ut.plot_get_clist_(n_colors=4)
         fig, axes = plot_eval(df_eval=df_eval,
                               dict_xlims=dict_xlims,
                               figsize=figsize,

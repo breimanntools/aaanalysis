@@ -1,8 +1,8 @@
 """
-This is a script for setting plot legend.
+This is a script for frontend of the setting plot legend.
+The backend is in general utility module to provide function to remaining AAanalysis modules.
 """
 from typing import Optional, List, Dict, Union, Tuple
-import matplotlib as mpl
 from matplotlib import pyplot as plt
 from aaanalysis import utils as ut
 import matplotlib.lines as mlines
@@ -98,7 +98,7 @@ def check_marker(marker=None, list_cat=None, lw=0):
 
 
 def check_marker_size(marker_size=None, list_cat=None):
-    """"""
+    """Check size of markers"""
     # Check if marker_size is valid
     if isinstance(marker_size, (int, float)):
         ut.check_number_range(name='marker_size', val=marker_size, min_val=0, accept_none=True, just_int=False)
@@ -138,34 +138,6 @@ def check_linestyle(linestyle=None, list_cat=None, marker=None):
     # Create list_marker_linestyle list
     list_marker_linestyle = [linestyle] * len(list_cat) if not isinstance(linestyle, list) else linestyle
     return list_marker_linestyle
-
-
-# Helper function
-def _create_marker(color, label, marker, marker_size, lw, edgecolor, linestyle, hatch, hatchcolor):
-    """Create custom marker based on input."""
-    # Default marker (matching to plot)
-    if marker is None:
-        return mpl.patches.Patch(facecolor=color,
-                                 label=label,
-                                 lw=lw,
-                                 hatch=hatch,
-                                 edgecolor=hatchcolor)
-    # If marker is '-', treat it as a line
-    if marker == "-":
-         return plt.Line2D(xdata=[0, 1], ydata=[0, 1],
-                           color=color,
-                           linestyle=linestyle,
-                           lw=lw,
-                           label=label)
-    # Creates marker element without line (lw=0)
-    return plt.Line2D(xdata=[0], ydata=[0],
-                      marker=marker,
-                      label=label,
-                      markerfacecolor=color,
-                      color=edgecolor,
-                      markersize=marker_size,
-                      lw=0,
-                      markeredgewidth=lw)
 
 
 # II Main function
@@ -314,31 +286,13 @@ def plot_legend(ax: Optional[plt.Axes] = None,
     hatch = check_hatches(marker=marker, hatch=hatch, list_cat=list_cat)
     linestyle = check_linestyle(linestyle=linestyle, list_cat=list_cat, marker=marker)
     marker_size = check_marker_size(marker_size, list_cat=list_cat)
-
-    # Remove existing legend
-    if ax.get_legend() is not None and len(ax.get_legend().get_lines()) > 0:
-        ax.legend_.remove()
-
-    # Update legend arguments
-    args = dict(loc=loc, ncol=ncol, fontsize=fontsize, labelspacing=labelspacing, columnspacing=columnspacing,
-                handletextpad=handletextpad, handlelength=handlelength, borderpad=0, title=title,
-                edgecolor=edgecolor, prop={"weight": weight_font, "size": fontsize})
-    args.update(kwargs)
-
-    if fontsize_title:
-        args["title_fontproperties"] = {"weight": weight_title, "size": fontsize_title}
-
-    if loc_out:
-        x, y = x or 0, y or -0.25
-    if x or y:
-        args["bbox_to_anchor"] = (x or 0, y or 1)
-
-    # Create handles and legend
-    handles = [_create_marker(dict_color[cat], labels[i], marker[i], marker_size[i],
-                              lw, edgecolor, linestyle[i], hatch[i], hatchcolor)
-               for i, cat in enumerate(list_cat)]
-
-    legend = ax.legend(handles=handles, labels=labels, **args)
-    if title_align_left:
-        legend._legend_box.align = "left"
+    # Create new legend
+    ax = ut.plot_legend_(ax=ax, dict_color=dict_color, list_cat=list_cat, labels=labels,
+                         loc=loc, loc_out=loc_out, y=y, x=x, ncol=ncol,
+                         labelspacing=labelspacing, columnspacing=columnspacing,
+                         handletextpad=handletextpad, handlelength=handlelength,
+                         fontsize=fontsize, fontsize_title=fontsize_title,
+                         weight_font=weight_font, weight_title=weight_title,
+                         marker=marker, marker_size=marker_size, lw=lw, linestyle=linestyle, edgecolor=edgecolor,
+                         hatch=hatch, hatchcolor=hatchcolor, title=title, title_align_left=title_align_left, **kwargs)
     return ax

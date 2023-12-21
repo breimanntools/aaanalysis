@@ -49,7 +49,7 @@ class dPULearnPlot:
         ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
         """
         # Plotting
-        colors = ut.plot_get_clist(n_colors=4) if colors is None else colors
+        colors = ut.plot_get_clist_(n_colors=4) if colors is None else colors
         fig, axes = plot_eval(df_eval=df_eval, colors=colors)
         return fig, axes
 
