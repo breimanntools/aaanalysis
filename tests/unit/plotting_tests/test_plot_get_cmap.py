@@ -30,6 +30,8 @@ class TestPlotGetCMap:
         light_colors = aa.plot_get_cmap(name=ut.STR_CMAP_CPP, facecolor_dark=False)
         dark_colors = aa.plot_get_cmap(name=ut.STR_CMAP_CPP, facecolor_dark=True)
         assert light_colors != dark_colors
+        middle_colors = aa.plot_get_cmap(name=ut.STR_CMAP_CPP, facecolor_dark=None)
+        assert light_colors != middle_colors
 
     def test_return_type_cpp(self):
         colors = aa.plot_get_cmap(name=ut.STR_CMAP_CPP)
@@ -60,8 +62,9 @@ class TestPlotGetCMap:
 
     @given(facecolor_dark=st.one_of(st.text(), st.integers(), st.floats(), st.lists(st.booleans())))
     def test_invalid_facecolor_dark_type(self, facecolor_dark):
-        with pytest.raises(ValueError):
-            aa.plot_get_cmap(name=ut.STR_CMAP_CPP, facecolor_dark=facecolor_dark)
+        if facecolor_dark not in [True, False, None]:
+            with pytest.raises(ValueError):
+                aa.plot_get_cmap(name=ut.STR_CMAP_CPP, facecolor_dark=facecolor_dark)
 
     @given(n_colors=st.integers(min_value=-1000, max_value=2))
     def test_invalid_n_colors_for_shap(self, n_colors):

@@ -13,8 +13,7 @@ from .config import options
 
 # Import utility functions explicitly (can be imported from this utils file from other modules)
 from ._utils.check_type import (check_number_range, check_number_val, check_str, check_bool,
-                                check_dict, check_tuple, check_list_like, check_str_in_list,
-                                check_ax)
+                                check_dict, check_tuple, check_list_like, check_ax)
 from ._utils.check_data import (check_X, check_X_unique_samples,
                                 check_labels, check_match_X_labels, check_match_X_list_labels,
                                 check_match_list_labels_names_datasets,

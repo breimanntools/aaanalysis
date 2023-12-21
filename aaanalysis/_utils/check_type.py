@@ -64,21 +64,12 @@ def check_str(name=None, val=None, accept_none=False, return_empty_string=False)
         raise ValueError(f"'{name}' ('{val}') should be string.")
     return val
 
-# TODO check if used
-def check_str_in_list(name=None, val=None, list_options=None, accept_none=False):
-    """Check if val is one of the given options."""
-    if list_options is None or not list_options:
-        raise ValueError("list_options must be provided and not empty.")
+def check_bool(name=None, val=None, accept_none=False):
+    """Check if the provided value is a boolean."""
     if val is None:
         if not accept_none:
             raise ValueError(f"'{name}' should not be None.")
         return None
-    if not isinstance(val, str) or val not in list_options:
-        raise ValueError(f"'{name}' ('{val}') should be one of the following: {list_options}")
-
-
-def check_bool(name=None, val=None):
-    """Check if the provided value is a boolean."""
     if not isinstance(val, bool):
         raise ValueError(f"'{name}' ({val}) should be bool.")
 

@@ -1,20 +1,22 @@
 """
 Plotting utility function to obtain AAanalysis color maps.
 """
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Optional
 import seaborn as sns
 from aaanalysis import utils as ut
 
 
 # Helper functions
-# Get color maps
-def _get_cpp_cmap(n_colors=100, facecolor_dark=False):
+def _get_cpp_cmap(n_colors=100, facecolor_dark=None):
     """Generate a diverging color map for CPP feature values."""
     ut.check_number_range(name="n_colors", val=n_colors, min_val=2, just_int=True)
     n = 5
     cmap = sns.color_palette(palette="RdBu_r", n_colors=n_colors + n * 2)
     cmap_low, cmap_high = cmap[0:int((n_colors + n * 2) / 2)], cmap[int((n_colors + n * 2) / 2):]
-    c_middle = [(0, 0, 0)] if facecolor_dark else [cmap_low[-1]]
+    if facecolor_dark is None:
+        c_middle = [cmap_low[-1]]
+    else:
+        c_middle = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
     add_to_end = 1  # Must be added to keep list size consistent
     cmap = cmap_low[0:-n] + c_middle + cmap_high[n+add_to_end:]
     return cmap
@@ -25,7 +27,10 @@ def _get_shap_cmap(n_colors=100, facecolor_dark=True):
     n = 20 # TODO check if 5 is better for CPP-SHAP heatmap
     cmap_low = sns.light_palette(ut.COLOR_SHAP_NEG, input="hex", reverse=True, n_colors=int(n_colors / 2) + n)
     cmap_high = sns.light_palette(ut.COLOR_SHAP_POS, input="hex", n_colors=int(n_colors / 2) + n)
-    c_middle = [(0, 0, 0)] if facecolor_dark else [cmap_low[-1]]
+    if facecolor_dark is None:
+        c_middle = [cmap_low[-1]]
+    else:
+        c_middle = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
     add_to_end = (n_colors+1)%2 # Must be added to keep list size consistent
     cmap = cmap_low[0:-n] + c_middle + cmap_high[n+add_to_end:]
     return cmap
@@ -54,42 +59,28 @@ def _get_cmap_with_gap(n_colors=100, pct_gap=10, pct_center=None,
 # II Main function
 def plot_get_cmap(name: str = "CPP",
                   n_colors: int = 101,
-                  facecolor_dark: bool = False
+                  facecolor_dark: Optional[bool] = None
                   ) -> Union[List[Tuple[float, float, float]], List[str]]:
     """
     Returns color map specified for AAanalysis.
 
     Parameters
     ----------
-    name
+    name : {'CPP', 'SHAP'}, default='CPP'
         The name of the AAanalysis color palettes.
 
          - ``CPP``: Continuous color map for CPP plots.
          - ``SHAP``: Continuous color map for CPP-SHP plots.
 
-    n_colors
+    n_colors : int, default=101
         Number of colors. Must be at least 3.
-    facecolor_dark
-        Whether central color in is black (if ``True``) or white.
+    facecolor_dark : bool, optional
+        Whether central color in is black (if ``True``), white (if ``False``), or middle of cmap (if ``None``).
 
     Returns
     -------
-    list
+    cmap
         List with colors given as RGB tuples.
-
-    Examples
-    --------
-    .. plot::
-        :include-source:
-
-        >>> import matplotlib.pyplot as plt
-        >>> import seaborn as sns
-        >>> import aaanalysis as aa
-        >>> colors = aa.plot_get_cmap(name="CPP", n_colors=3)
-        >>> data = {'Classes': ['Class A', 'Class B', 'Class C',], 'Values': [14, 23, 33]}
-        >>> aa.plot_settings()
-        >>> sns.barplot(data=data, x='Classes', y='Values', palette=colors, hue="Classes")
-        >>> plt.show()
 
     See Also
     --------
@@ -98,12 +89,16 @@ def plot_get_cmap(name: str = "CPP",
     * :func:`seaborn.color_palette` function to generate a color palette in seaborn.
     * :func:`seaborn.light_palette function` to generate a lighter color palettes.
     * The `SHAP <shap:mod:shap>`_ package.
+
+    Examples
+    --------
+    .. include:: examples/plot_cmap.rst
     """
     # Check input
     list_names = [ut.STR_CMAP_CPP, ut.STR_CMAP_SHAP]
     if name not in list_names:
         raise ValueError(f"'name' must be one of following: {list_names}")
-    ut.check_bool(name="facecolor_dark", val=facecolor_dark)
+    ut.check_bool(name="facecolor_dark", val=facecolor_dark, accept_none=True)
 
     # Get color maps
     if name == ut.STR_CMAP_SHAP:
