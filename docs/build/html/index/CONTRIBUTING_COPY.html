@@ -444,7 +444,7 @@ and <code class="docutils literal notranslate"><span class="pre">END</span> <spa
 utilize <a class="reference external" href="https://github.com/breimanntools/aaanalysis/blob/master/tests/unit/data_loader_tests/test_load_dataset.py">our</a>
 or any custom testing template.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&quot;
-Generate test functions for a given TARGET FUNCTION using the style of the provided TESTING TEMPLATE.
+Generate test functions for a given TARGET FUNCTION using the style of the provided TESTING TEMPLATE. Please take your time to ensure thoroughness and accuracy.
 
 Inputs:
 TARGET FUNCTION:
@@ -478,15 +478,15 @@ Requirements:
 3. General Guidelines:
 - Use Hypothesis for property-based testing, but test parameters individually for the Normal Cases Test Class .
 - Tests should be clear, concise, and non-redundant.
-- Do not leave any placeholders like &quot;TODO&quot;, &quot;Fill this&quot;, &quot;Add ...&quot; incomplete.
-- Expose potential issues in the TARGET FUNCTION.
+- Code must be complete, without placeholders like &#39;TODO&#39;, &#39;Fill this&#39;, or &#39;Add ...&#39;.
+- Explain potential issues in the TARGET FUNCTION.
 
 Output Expectations:
 - Two test classes: one for normal cases (individual parameters) and one for complex cases (combinations).
 - In Normal Cases, one function = one parameter tested.
-- Total: at least 30 unique tests, 150+ lines of code.
+- Aim for at least 30 unique tests, totaling 150+ lines of code.
 
-Reminder: In Normal Cases, it&#39;s crucial to test parameters individually. Create the Python code for all cases!
+Reminder: In Normal Cases, it&#39;s crucial to test parameters individually. Carefully create the Python code for all cases!
 &quot;
 </pre></div>
 </div>

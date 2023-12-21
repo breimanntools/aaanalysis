@@ -349,7 +349,7 @@ or any custom testing template.
 .. code-block:: none
 
     "
-    Generate test functions for a given TARGET FUNCTION using the style of the provided TESTING TEMPLATE.
+    Generate test functions for a given TARGET FUNCTION using the style of the provided TESTING TEMPLATE. Please take your time to ensure thoroughness and accuracy.
 
     Inputs:
     TARGET FUNCTION:
@@ -383,15 +383,15 @@ or any custom testing template.
     3. General Guidelines:
     - Use Hypothesis for property-based testing, but test parameters individually for the Normal Cases Test Class .
     - Tests should be clear, concise, and non-redundant.
-    - Do not leave any placeholders like "TODO", "Fill this", "Add ..." incomplete.
-    - Expose potential issues in the TARGET FUNCTION.
+    - Code must be complete, without placeholders like 'TODO', 'Fill this', or 'Add ...'.
+    - Explain potential issues in the TARGET FUNCTION.
 
     Output Expectations:
     - Two test classes: one for normal cases (individual parameters) and one for complex cases (combinations).
     - In Normal Cases, one function = one parameter tested.
-    - Total: at least 30 unique tests, 150+ lines of code.
+    - Aim for at least 30 unique tests, totaling 150+ lines of code.
 
-    Reminder: In Normal Cases, it's crucial to test parameters individually. Create the Python code for all cases!
+    Reminder: In Normal Cases, it's crucial to test parameters individually. Carefully create the Python code for all cases!
     "
 
 ChatGPT has a token limit, which may truncate responses. To continue, simply ask **continue processing** or something
