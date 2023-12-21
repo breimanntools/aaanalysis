@@ -25,7 +25,7 @@ def plot_get_cdict(name: str = "DICT_COLOR") -> dict:
 
     Examples
     --------
-    .. include:: examples/plot_cdict.rst
+    .. include:: examples/plot_get_cdict.rst
     """
     list_names = [ut.STR_DICT_COLOR, ut.STR_DICT_CAT]
     if name not in list_names:

@@ -24,7 +24,8 @@ For ‘CPP plots’, we recommend using a white facecolor using
 .. code:: ipython2
 
     colors = aa.plot_get_cmap(name="CPP", n_colors=3, facecolor_dark=False)
-    sns.barplot(data=data, x='Classes', y='Values', palette=colors, hue="Classes")
+    sns.barplot(data=data, x='Classes', y='Values', palette=colors, hue="Classes",
+                edgecolor="black")
     plt.show()
 
 

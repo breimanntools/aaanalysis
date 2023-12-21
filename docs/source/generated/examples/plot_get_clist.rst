@@ -1,4 +1,4 @@
-You can retrieve a list of n colors by using the ‘n_colors’ parameter:
+You can retrieve a list of n colors by using the ``n_colors`` parameter:
 
 .. code:: ipython2
 
@@ -49,7 +49,7 @@ We assembled 8 different color lists for 2 to 9 colors:
 
 
 For more than 9 colors, we provide the ‘husl’ default color palette of
-the :func:``seaborn.color_palette`` fuction:
+the :func:``seaborn.color_palette`` function:
 
 .. code:: ipython2
 

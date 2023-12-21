@@ -10,11 +10,7 @@ import aaanalysis.utils as ut
 import warnings
 
 
-LIST_FONTS = ['Arial', 'Avant Garde',
-              'Bitstream Vera Sans', 'Computer Modern Sans Serif',
-              'DejaVu Sans', 'Geneva',
-              'Helvetica', 'Lucid',
-              'Lucida Grande', 'Verdana']
+LIST_FONTS = ['Arial', 'DejaVu Sans', 'Geneva', 'Verdana']
 
 
 # I Helper functions
@@ -67,8 +63,8 @@ def plot_settings(font_scale: Union[int, float] = 1,
     ----------
     font_scale : int or float, default=1
        Scaling factor to scale the size of font elements. Consistent with :func:`seaborn.set_context`.
-    font : str, default='Arial'
-       Name of text font. Common options are 'Arial', 'Verdana', 'Helvetica', or 'DejaVu Sans' (Matplotlib default).
+    font : {'Arial', 'DejaVu Sans', 'Geneva', 'Verdana'}, default='Arial'
+       Name of text font. Common options are 'Arial' or 'DejaVu Sans' (Matplotlib default).
     weight_bold : bool, default=True
        If ``True``, font and line elements are bold.
     adjust_only_font : bool, default=False
