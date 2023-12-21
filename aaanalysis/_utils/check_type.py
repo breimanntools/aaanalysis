@@ -108,7 +108,8 @@ def check_tuple(name=None, val=None, n=None, check_n_number=True, accept_none=Fa
             check_number_val(name=name, val=v, just_int=False, accept_none=False)
 
 
-def check_list_like(name=None, val=None, accept_none=False, convert=True, accept_str=False, check_all_non_neg_int=False):
+def check_list_like(name=None, val=None, accept_none=False, convert=True, accept_str=False,
+                    check_all_non_neg_int=False, check_all_str_or_convertible=False):
     """Check if the value is list-like, optionally converting it to a list, and performing additional checks."""
     if val is None:
         if not accept_none:
@@ -129,6 +130,13 @@ def check_list_like(name=None, val=None, accept_none=False, convert=True, accept
     if check_all_non_neg_int:
         if any(type(i) != int or i < 0 for i in val):
             raise ValueError(f"'{name}' should only contain non-negative integers.")
+    if check_all_str_or_convertible:
+        wrong_elements = [x for x in val if not isinstance(x, (str, int, float, np.number))]
+        if len(wrong_elements) > 0:
+            raise ValueError(f"The following elements in '{name}' are not strings or"
+                             f" reasonably convertible: {wrong_elements}")
+        else:
+            val = [str(x) for x in val]
     return val
 
 
@@ -140,4 +148,3 @@ def check_ax(ax=None, accept_none=False):
         return None
     if not isinstance(ax, matplotlib.axes.Axes):
         raise ValueError(f"'ax' (type={type(ax)}) should be mpl.axes.Axes or None.")
-

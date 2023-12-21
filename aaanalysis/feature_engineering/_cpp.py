@@ -13,7 +13,6 @@ from aaanalysis.template_classes import Tool
 from ._sequence_feature import SequenceFeature
 from ._backend.check_feature import (check_split_kws,
                                      check_parts_len, check_match_features_seq_parts,
-                                     check_df_seq,
                                      check_df_parts, check_match_df_parts_features,
                                      check_match_df_parts_list_parts, check_match_df_parts_split_kws,
                                      check_df_scales, check_match_df_scales_features,
@@ -128,7 +127,7 @@ class CPP(Tool):
 
         Parameters
         ----------
-        labels : `array-like, shape (n_samples,)`
+        labels : array-like, shape (n_samples,)
             Class labels for samples in sequence DataFrame (test=1, reference=0).
         n_filter
             Number of features to be filtered/selected by CPP algorithm.

@@ -157,59 +157,6 @@ def check_match_features_seq_parts(features=None, tmd_seq=None, jmd_n_seq=None, 
                     f"Sequence 'part' ({seq}, n={len(seq)}) too short for '{feature}' feature (n_max={n_max})")
 
 # Check df_seq
-def check_df_seq(df_seq=None):
-    """Check columns from df_seq is valid regarding four distinct formats, differentiated by their respective columns:
-        a) Position-based format: ['sequence', 'tmd_start', 'tmd_stop']
-        b) Part-based format: ['jmd_n', 'tmd', 'jmd_c']
-        c) Sequence-based format: ['sequence']
-        d) Sequence-TMD-based format: ['sequence', 'tmd']
-    """
-    ut.check_df(name="df_seq", df=df_seq, cols_requiered=[ut.COL_ENTRY])
-    pos_based = set(ut.COLS_SEQ_POS).issubset(set(df_seq))
-    part_based = set(ut.COLS_SEQ_PARTS).issubset(set(df_seq))
-    seq_based = ut.COL_SEQ in list(df_seq)
-    seq_tmd_based = set(ut.COLS_SEQ_TMD).issubset(set(df_seq))
-    if not (seq_based or pos_based or part_based or seq_tmd_based):
-        raise ValueError(f"'df_seq' should contain one of the following sets of columns:"
-                         f" a) {ut.COLS_SEQ_POS} (Position-based format)"
-                         f" b) {ut.COLS_SEQ_PARTS} (Part-based format)"
-                         f" c) {[ut.COL_SEQ]} (Sequence-based format)"
-                         f" d) {ut.COLS_SEQ_TMD} (Sequence-TMD-based format)")
-    # Check tmd_start & tmd_stop columns
-    if "start" in list(df_seq):
-        raise ValueError(f"'df_seq' should not contain 'tmd_start' in columns. Change column to '{ut.COL_TMD_START}'.")
-    if "stop" in list(df_seq):
-        raise ValueError(f"'df_seq' should not contain 'tmd_stop' in columns. Change column to '{ut.COL_TMD_STOP}'.")
-    # Check if different formats are valid
-    if pos_based:
-        for entry, tmd_start, tmd_stop in zip(df_seq[ut.COL_ENTRY], df_seq[ut.COL_TMD_START], df_seq[ut.COL_TMD_STOP]):
-            ut.check_number_range(name=f"'tmd_start'={tmd_start} (entry: '{entry}')", val=tmd_start, just_int=True)
-            ut.check_number_range(name=f"'tmd_stop'={tmd_stop} (entry: '{entry}')", val=tmd_stop, just_int=True)
-    if part_based:
-        for col in ut.COLS_SEQ_PARTS:
-            if not all(isinstance(x, str) for x in df_seq[col]):
-                raise ValueError(f"'{col}' should only contain strings.")
-    if seq_based:
-        if not all(isinstance(x, str) for x in df_seq[ut.COL_SEQ]):
-            raise ValueError(f"'{ut.COL_SEQ}' should only contain strings.")
-    if seq_tmd_based:
-        if any([tmd not in seq for tmd, seq in zip(df_seq[ut.COL_TMD], df_seq[ut.COL_SEQ])]):
-            raise ValueError(f"Parts in '{ut.COL_TMD}' should be contained in '{ut.COL_SEQ}'")
-    # Check matching of parts with 'sequence', 'tmd_start', and 'tmd_stop'
-    if part_based and pos_based:
-        for i, row in df_seq.iterrows():
-            entry = row[ut.COL_ENTRY]
-            jmd_n, tmd, jmd_c = row[ut.COL_JMD_N], row[ut.COL_TMD], row[ut.COL_JMD_C]
-            tmd_jmd = jmd_n + tmd + jmd_c
-            seq, start, stop = row[ut.COL_SEQ], row[ut.COL_TMD_START], row[ut.COL_TMD_STOP]
-            if tmd_jmd not in seq:
-                raise ValueError(f"For '{entry}' entry, '{ut.COL_JMD_N}', '{ut.COL_TMD}', and '{ut.COL_JMD_C}' "
-                                 f"do not match with '{ut.COL_SEQ}'")
-            if seq[start-1:stop] != tmd:
-                raise ValueError(f"For '{entry}' entry, '{ut.COL_TMD_START}' and '{ut.COL_TMD_STOP}' "
-                                 f"do not match with '{ut.COL_TMD}'")
-
-
 def _get_tmd_positions(row):
     """"""
     tmd, seq = row[ut.COL_TMD], row[ut.COL_SEQ]

@@ -10,7 +10,6 @@ import matplotlib as mpl
 import numpy as np
 import warnings
 
-import aaanalysis as aa
 import aaanalysis.utils as ut
 
 from ._backend.check_aaclust import check_metric
@@ -18,28 +17,15 @@ from ._backend.aaclust.aaclust_plot import plot_eval, plot_center_or_medoid, plo
 
 
 # I Helper Functions
-def check_match_data_names(data=None, names=None):
+def check_match_df_eval_names(df_eval=None, names=None):
     """"""
-    n_samples = len(data)
+    n_samples = len(df_eval)
     if names is not None:
         if len(names) != n_samples:
             raise ValueError(f"n_samples does not match for 'data' ({n_samples}) and 'names' ({len(names)}).")
     else:
         names = [f"Set {i}" for i in range(1, n_samples + 1)]
-    if not isinstance(data, pd.DataFrame):
-        data = ut.check_array_like(name=data, val=data)
-        n_samples, n_features = data.shape
-        # Check matching number of features
-        if n_features != 4:
-            raise ValueError(f"'data' should contain the following four columns: {ut.COLS_EVAL_AACLUST}")
-        df_eval = pd.DataFrame(data, columns=ut.COLS_EVAL_AACLUST, index=names)
-    else:
-        df_eval = data
-        # Check data for missing columns
-        missing_cols = [x for x in ut.COLS_EVAL_AACLUST if x not in list(df_eval)]
-        if len(missing_cols) > 0:
-            raise ValueError(f"'data' must contain the following columns: {missing_cols}")
-        df_eval.index = names
+    df_eval.index = names
     return df_eval
 
 
@@ -156,38 +142,38 @@ class AAclustPlot:
         self.model_kwargs = model_kwargs
 
     @staticmethod
-    def eval(data_eval: ut.ArrayLike2D,
-             names: Optional[List[str]] = None,
+    def eval(df_eval: pd.DataFrame = None,
              dict_xlims: Optional[Union[None, dict]] = None,
-             figsize: Tuple[int, int] = (7, 6)
+             figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
              ) -> Tuple[plt.Figure, plt.Axes]:
         """
-        Evaluates and plots ``n_clusters`` and clustering metrics ``BIC``, ``CH``, and ``SC`` for the provided data.
+        Plots evaluation of ``n_clusters`` and clustering metrics ``BIC``, ``CH``, and ``SC`` from ``df_seq``.
 
         The clustering evaluation metrics (BIC, CH, and SC) are ranked by the average of their independent rankings.
 
         Parameters
         ----------
-        data_eval : array-like, shape (n_samples, n_features)
-            Evaluation matrix or DataFrame. `Rows` correspond to scale sets and `columns` to the following
-            four evaluation measures:
+        df_eval : DataFrame, shape (n_datasets, n_metrics)
+            DataFrame with evaluation measures for scale sets. Each `row` corresponds to a specific scale set
+            and `columns` are as follows:
 
-            - ``n_clusters``: Number of clusters.
-            - ``BIC``: Bayesian Information Criterion.
-            - ``CH``: Calinski-Harabasz Index.
-            - ``SC``: Silhouette Coefficient.
+            - 'name': Name of clustering datasets.
+            - 'n_clusters': Number of clusters.
+            - 'BIC': Bayesian Information Criterion.
+            - 'CH': Calinski-Harabasz Index.
+            - 'SC': Silhouette Coefficient.
 
-        names
-            Scale set names from ``data``. If ``None``, names are internally generated as 'Set 1', 'Set 2' etc.
-        dict_xlims
+        dict_xlims : dict, optional
             A dictionary containing x-axis limits (``xmin``, ``xmax``) for selected evaluation measure metric subplots.
             Keys should be names of the ``evaluation measures`` (e.g., 'BIC'). If ``None``, x-axis are auto-scaled.
-        figsize
+        figsize : tuple, default=(7, 6)
             Width and height of the figure in inches.
 
         Returns
         -------
-        axes
+        fig : plt.Figure
+            Figure object for evaluation plot
+        axes : plt.Axes
             Axes object(s) containing four subplots.
 
         Notes
@@ -199,13 +185,11 @@ class AAclustPlot:
         * :meth:`AAclust.eval` for details on evaluation measures.
         """
         # Check input
-        ut.check_array_like(name="data", val=data_eval)
-        ut.check_list_like(name="names", val=names, accept_none=True)
-        df_eval = check_match_data_names(data=data_eval, names=names)
+        ut.check_df(name="df_eval", df=df_eval, cols_requiered=ut.COLS_EVAL_AACLUST, accept_none=False, accept_nan=False)
         check_dict_xlims(dict_xlims=dict_xlims)
         ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
         # Plotting
-        colors = aa.plot_get_clist(n_colors=4)
+        colors = ut.plot_get_clist(n_colors=4)
         fig, axes = plot_eval(df_eval=df_eval,
                               dict_xlims=dict_xlims,
                               figsize=figsize,
@@ -218,7 +202,7 @@ class AAclustPlot:
                component_x: int = 1,
                component_y: int = 2,
                ax: Optional[plt.Axes] = None,
-               figsize: Tuple[int, int] = (7, 6),
+               figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
                dot_alpha: float = 0.75,
                dot_size: int = 100,
                legend: bool = True,
@@ -228,9 +212,9 @@ class AAclustPlot:
 
         Parameters
         ----------
-        X : `array-like of shape (n_samples, n_features)`
+        X : array-like of shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
-        labels : `array-like of shape (n_samples,)`
+        labels : array-like of shape (n_samples,)
             Cluster labels for each sample in ``X``. If ``None``, no grouping is used.
         component_x
             Index of the PCA component for the x-axis. Must be >= 1.
@@ -238,7 +222,7 @@ class AAclustPlot:
             Index of the PCA component for the y-axis. Must be >= 1.
         ax
             Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
-        figsize
+        figsize : tuple, default=(7,6)
             Figure size (width, height) in inches.
         dot_alpha
             Alpha value of the plotted dots.
@@ -246,7 +230,7 @@ class AAclustPlot:
             Size of the plotted dots.
         legend
             Whether to show the legend.
-        palette
+        palette : list, default
             Colormap for the labels or list of colors. If ``None``, a default colormap is used.
 
         Returns
@@ -295,7 +279,7 @@ class AAclustPlot:
                 component_y: int = 2,
                 metric: str = "euclidean",
                 ax: Optional[plt.Axes] = None,
-                figsize: Tuple[int, int] = (7, 6),
+                figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
                 dot_alpha: float = 0.75,
                 dot_size: int = 100,
                 legend: bool = True,
@@ -305,34 +289,40 @@ class AAclustPlot:
 
         Parameters
         ----------
-        X : `array-like of shape (n_samples, n_features)`
+        X : array-like of shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
-        labels : `array-like of shape (n_samples,)`
+        labels : array-like of shape (n_samples,)
             Cluster labels for each sample in ``X``. If ``None``, no grouping is used.
-        component_x
+        component_x : int, default=1
             Index of the PCA component for the x-axis. Must be >= 1.
-        component_y
+        component_y : int, default=1
             Index of the PCA component for the y-axis. Must be >= 1.
-        metric
-            The distance metric for calculating medoid. Any metric from `scipy.spatial.distance` can be used.
-        ax
+        metric : {'correlation', 'euclidean', 'manhattan', 'cosine'}, default='euclidean'
+            The distance metric for calculating medoid.
+
+            - ``correlation``: Pearson correlation (maximum)
+            - ``euclidean``: Euclidean distance (minimum)
+            - ``manhattan``: Manhattan distance (minimum)
+            - ``cosine``: Cosine distance (minimum)
+
+        ax : plt.Axes, optional
             Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
-        figsize
+        figsize : tuple, default=(7, 6)
             Figure size (width, height) in inches.
-        dot_alpha
+        dot_alpha : float, default=0.75
             Alpha value of the plotted dots.
-        dot_size
+        dot_size : int, default=100
             Size of the plotted dots.
-        legend
+        legend : bool, default=True
             Whether to show the legend.
-        palette
+        palette : TODO
             Colormap for the labels or list of colors. If ``None``, a default colormap is used.
 
         Returns
         -------
-        ax
-            Axes object with the PCA plot.
-        df_components
+        ax : plt.Axes
+            PCA plot axes object.
+        df_components : pd.DataFrame
             DataFrame with the PCA components.
 
         Notes
@@ -382,7 +372,7 @@ class AAclustPlot:
                     bar_spacing_y: float = 0.1,
                     vmin: float = -1,
                     vmax: float = 1,
-                    cmap: str = "viridis",
+                    cmap: str = "twilight_shifted",
                     **kwargs_heatmap
                     ) -> plt.Axes:
         """
@@ -392,7 +382,7 @@ class AAclustPlot:
         ----------
         df_corr
             DataFrame with correlation matrix. `Rows` typically correspond to scales and `columns` to clusters.
-        labels : `array-like of shape (n_samples,)`
+        labels : array-like of shape (n_samples,)
             Cluster labels determining the grouping and coloring of the side color bar.
             It should have the same length as number of rows in ``df_corr`` (n_samples).
         cluster_x

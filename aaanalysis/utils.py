@@ -16,7 +16,8 @@ from ._utils.check_type import (check_number_range, check_number_val, check_str,
                                 check_dict, check_tuple, check_list_like, check_str_in_list,
                                 check_ax)
 from ._utils.check_data import (check_X, check_X_unique_samples,
-                                check_labels, check_match_X_labels,
+                                check_labels, check_match_X_labels, check_match_X_list_labels,
+                                check_match_list_labels_names_datasets,
                                 check_array_like, check_superset_subset,
                                 check_df)
 from ._utils.check_models import check_mode_class, check_model_kwargs
@@ -29,7 +30,7 @@ from ._utils.decorators import (catch_runtime_warnings, CatchRuntimeWarnings,
                                 catch_invalid_divide_warning)
 from ._utils.utils_metrics import (auc_adjusted_, kullback_leibler_divergence_, bic_score_)
 from ._utils.utils_output import (print_out, print_start_progress, print_progress, print_finished_progress)
-from ._utils.utils_ploting import plot_gco, plot_add_bars
+from ._utils.utils_ploting import plot_gco, plot_get_clist, plot_add_bars
 
 
 # Folder structure
@@ -75,16 +76,6 @@ STR_TOP60_EVAL = "top60_eval"  # AAclustTop60 evaluation
 NAMES_SCALE_SETS = [STR_SCALES, STR_SCALES_RAW, STR_SCALE_CAT,
                     STR_SCALES_PC, STR_TOP60, STR_TOP60_EVAL]
 
-# AAclust
-METRIC_CORRELATION = "correlation"
-LIST_METRICS = [METRIC_CORRELATION, "manhattan",  "euclidean", "cosine"]
-STR_UNCLASSIFIED = "Unclassified"
-COL_N_CLUST = "n_clusters"
-COL_BIC = "BIC"
-COL_CH = "CH"
-COL_SC = "SC"
-COL_RANK = "rank"
-COLS_EVAL_AACLUST = [COL_N_CLUST, COL_BIC, COL_CH, COL_SC]
 
 # Column names for primary df
 # df_seq
@@ -111,7 +102,6 @@ COL_CAT = "category"
 COL_SUBCAT = "subcategory"
 COL_SCALE_NAME = "scale_name"
 COL_SCALE_DES = "scale_description"
-
 
 # Columns for df_feat
 COL_FEATURE = "feature"
@@ -143,6 +133,34 @@ DICT_VALUE_TYPE = {COL_ABS_AUC: "mean",
                    COL_FEAT_IMPORT: "sum",
                    COL_FEAT_IMP_STD: "mean",
                    COL_FEAT_IMPACT: "sum"}
+
+
+# Columns of df_eval
+# AAclust (evaluation)
+METRIC_CORRELATION = "correlation"
+LIST_METRICS = [METRIC_CORRELATION, "manhattan",  "euclidean", "cosine"]
+STR_UNCLASSIFIED = "Unclassified"
+COL_N_CLUST = "n_clusters"
+COL_BIC = "BIC"
+COL_CH = "CH"
+COL_SC = "SC"
+COL_RANK = "rank"
+COLS_EVAL_AACLUST = [COL_N_CLUST, COL_BIC, COL_CH, COL_SC]
+
+# dPULearn (evaluation)
+COL_N_REL_NEG = "n_rel_neg"
+COL_AVG_STD = "avg_STD"
+COL_AVG_IQR = "avg_IQR"
+COL_AVG_ABS_AUC_POS = "avg_abs_AUC_pos"
+COL_AVG_KLD_POS = "avg_KLD_pos"
+COL_AVG_ABS_AUC_UNL = "avg_abs_AUC_unl"
+COL_AVG_KLD_UNL = "avg_KLD_unl"
+COL_AVG_ABS_AUC_NEG = "avg_abs_AUC_neg"
+COL_AVG_KLD_NEG = "avg_KLD_neg"
+COLS_EVAL_DPULEARN = [COL_N_REL_NEG, COL_AVG_STD, COL_AVG_IQR, COL_AVG_ABS_AUC_POS,
+                      COL_AVG_KLD_POS,
+                      COL_AVG_ABS_AUC_UNL, COL_AVG_KLD_UNL,
+                      COL_AVG_ABS_AUC_NEG, COL_AVG_KLD_NEG]
 
 # Labels
 LABEL_FEAT_VAL = "Feature value"
@@ -239,6 +257,16 @@ def read_csv_cached(name, sep=None):
     return df.copy()
 
 
+# Adjust df_eval
+def add_names_to_df_eval(df_eval=None, names_datasets=None):
+    """Add names column to df_eval"""
+    if names_datasets is None:
+        n_datasets = len(df_eval)
+        names_datasets = [f"Set {i}" for i in range(1, n_datasets + 1)]
+    df_eval.insert(0, COL_NAME, names_datasets)
+    return df_eval
+
+
 # Main check functions
 # Check system level (option) parameters
 def check_verbose(verbose):
@@ -249,6 +277,65 @@ def check_verbose(verbose):
     else:
         check_bool(name="verbose", val=verbose)
     return verbose
+
+
+# Check df_seq
+def check_df_seq(df_seq=None, accept_none=False):
+    """Check columns from df_seq is valid regarding four distinct formats, differentiated by their respective columns:
+        a) Position-based format: ['sequence', 'tmd_start', 'tmd_stop']
+        b) Part-based format: ['jmd_n', 'tmd', 'jmd_c']
+        c) Sequence-based format: ['sequence']
+        d) Sequence-TMD-based format: ['sequence', 'tmd']
+    """
+    if df_seq is None:
+        if accept_none:
+            return None
+        else:
+            raise ValueError("'df_seq' should not be None")
+    check_df(name="df_seq", df=df_seq, cols_requiered=[COL_ENTRY])
+    pos_based = set(COLS_SEQ_POS).issubset(set(df_seq))
+    part_based = set(COLS_SEQ_PARTS).issubset(set(df_seq))
+    seq_based = COL_SEQ in list(df_seq)
+    seq_tmd_based = set(COLS_SEQ_TMD).issubset(set(df_seq))
+    if not (seq_based or pos_based or part_based or seq_tmd_based):
+        raise ValueError(f"'df_seq' should contain one of the following sets of columns:"
+                         f" a) {COLS_SEQ_POS} (Position-based format)"
+                         f" b) {COLS_SEQ_PARTS} (Part-based format)"
+                         f" c) {[COL_SEQ]} (Sequence-based format)"
+                         f" d) {COLS_SEQ_TMD} (Sequence-TMD-based format)")
+    # Check tmd_start & tmd_stop columns
+    if "start" in list(df_seq):
+        raise ValueError(f"'df_seq' should not contain 'tmd_start' in columns. Change column to '{COL_TMD_START}'.")
+    if "stop" in list(df_seq):
+        raise ValueError(f"'df_seq' should not contain 'tmd_stop' in columns. Change column to '{COL_TMD_STOP}'.")
+    # Check if different formats are valid
+    if pos_based:
+        for entry, tmd_start, tmd_stop in zip(df_seq[COL_ENTRY], df_seq[COL_TMD_START], df_seq[COL_TMD_STOP]):
+            check_number_range(name=f"'tmd_start'={tmd_start} (entry: '{entry}')", val=tmd_start, just_int=True)
+            check_number_range(name=f"'tmd_stop'={tmd_stop} (entry: '{entry}')", val=tmd_stop, just_int=True)
+    if part_based:
+        for col in COLS_SEQ_PARTS:
+            if not all(isinstance(x, str) for x in df_seq[col]):
+                raise ValueError(f"'{col}' should only contain strings.")
+    if seq_based:
+        if not all(isinstance(x, str) for x in df_seq[COL_SEQ]):
+            raise ValueError(f"'{COL_SEQ}' should only contain strings.")
+    if seq_tmd_based:
+        if any([tmd not in seq for tmd, seq in zip(df_seq[COL_TMD], df_seq[COL_SEQ])]):
+            raise ValueError(f"Parts in '{COL_TMD}' should be contained in '{COL_SEQ}'")
+    # Check matching of parts with 'sequence', 'tmd_start', and 'tmd_stop'
+    if part_based and pos_based:
+        for i, row in df_seq.iterrows():
+            entry = row[COL_ENTRY]
+            jmd_n, tmd, jmd_c = row[COL_JMD_N], row[COL_TMD], row[COL_JMD_C]
+            tmd_jmd = jmd_n + tmd + jmd_c
+            seq, start, stop = row[COL_SEQ], row[COL_TMD_START], row[COL_TMD_STOP]
+            if tmd_jmd not in seq:
+                raise ValueError(f"For '{entry}' entry, '{COL_JMD_N}', '{COL_TMD}', and '{COL_JMD_C}' "
+                                 f"do not match with '{COL_SEQ}'")
+            if seq[start-1:stop] != tmd:
+                raise ValueError(f"For '{entry}' entry, '{COL_TMD_START}' and '{COL_TMD_STOP}' "
+                                 f"do not match with '{COL_TMD}'")
 
 
 # Check parts

@@ -10,7 +10,6 @@ import aaanalysis.utils as ut
 
 from ._backend.check_feature import (check_split_kws,
                                      check_parts_len, check_match_features_seq_parts,
-                                     check_df_seq,
                                      check_match_df_seq_jmd_len,
                                      check_df_parts,
                                      check_match_df_parts_features, check_match_df_parts_list_parts,
@@ -129,7 +128,7 @@ class SequenceFeature:
 
         Parameters
         ----------
-        df_seq
+        df_seq : DataFrame, shape (n_samples, n_seq_info)
             DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
             in one of four distinct formats, differentiated by their respective columns:
 
@@ -146,15 +145,15 @@ class SequenceFeature:
             - Sequence-TMD-based format:
                 'sequence' and 'tmd' columns.
 
-        list_parts: list of string, default = {``tmd``, ``jmd_n_tmd_n``, ``tmd_c_jmd_c``}
+        list_parts: list of strings, default={``tmd``, ``jmd_n_tmd_n``, ``tmd_c_jmd_c``}
             Names of sequence parts that should be obtained for sequences from ``df_seq``.
-        jmd_n_len: int, default = 10
+        jmd_n_len: int, default=10
             Length of JMD-N in number of amino acids. If ``None``, ``jmd_n`` and ``jmd_c`` should be given.
-        jmd_c_len: int, default = 10
+        jmd_c_len: int, default=10
             Length of JMD-N in number of amino acids. If ``None``, ``jmd_n`` and ``jmd_c`` should be given.
-        all_parts: bool, default = ``False``
+        all_parts: bool, default=False
             Whether to create DataFrame with all possible sequence parts (if ``True``) or parts given by list_parts.
-        remove_entries_with_gaps: bool, default = ``False``
+        remove_entries_with_gaps: bool, default=False
             Whether to exclude entries containing missing residues in their sequence parts (if ``True``),
             usually resulting from sequences being too short.
 
@@ -176,11 +175,10 @@ class SequenceFeature:
         Examples
         --------
         .. include:: examples/sf_get_df_parts.rst
-
         """
         # Check input
         check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_none_len=True)
-        check_df_seq(df_seq=df_seq)
+        ut.check_df_seq(df_seq=df_seq)
         ut.check_bool(name="all_parts", val=all_parts)
         list_parts = ut.check_list_parts(list_parts=list_parts, all_parts=all_parts, accept_none=True)
         df_seq = check_match_df_seq_jmd_len(df_seq=df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
@@ -211,21 +209,21 @@ class SequenceFeature:
 
         Parameters
         ----------
-        split_types: list of strings, default = [``Segment``, ``Pattern``, ``PeriodicPattern``]
+        split_types: list of strings, default=[``Segment``, ``Pattern``, ``PeriodicPattern``]
             Split types for which parameter dictionary should be generated.
-        n_split_min: int, default = 1
+        n_split_min: int, default=1
             Number to specify the greatest ``Segment``. Should be > 0.
-        n_split_max: int, default = 15,
+        n_split_max: int, default=15,
             Number to specify the smallest ``Segment``. Should be > ``n_split_min``.
-        steps_pattern: list of integers, default = [3, 4, 6, 7, 8]
+        steps_pattern: list of integers, default=[3, 4, 6, 7, 8]
             Possible steps sizes for ``Pattern``.
-        n_min: int, default = 2
+        n_min: int, default=2
             Minimum number of steps for Pattern.
-        n_max: int, default = 4
+        n_max: int, default=4
             Maximum number of steps for Pattern.
-        len_max: int, default = 10
+        len_max: int, default=10
             Maximum length in amino acid position for Pattern by varying start position.
-        steps_periodicpattern: list of integers, default = [3, 4]
+        steps_periodicpattern: list of integers, default=[3, 4]
             Step sizes for PeriodicPattern.
 
 
@@ -292,11 +290,11 @@ class SequenceFeature:
 
         Parameters
         ----------
-        features : `array-like, shape (n_features,)`
+        features : array-like, shape (n_features,)
             Ids of features for which ``df_feat`` should be created.
         df_parts
             DataFrame with sequence parts.
-        labels: `array-like, shape (n_samples,)`
+        labels: array-like, shape (n_samples,)
             Class labels for samples in ``df_parts``. Should be 1 (test set) and 0 (reference set).
         df_scales
             DataFrame with amino acid scales. Default from :meth:`aaanalysis.load_scales` with 'name'='scales_cat'.
@@ -365,9 +363,9 @@ class SequenceFeature:
 
         Parameters
         ----------
-        features : `array-like, shape (n_features,)`
+        features : array-like, shape (n_features,)
             Ids of features for which matrix of feature values should be created.
-        df_parts
+        df_parts : DataFrame, shape ()
             DataFrame with sequence parts.
         df_scales
             DataFrame with default amino acid scales.
@@ -378,7 +376,7 @@ class SequenceFeature:
 
         Returns
         -------
-        feat_matrix: `array-like , shape (n_samples, n_features)`
+        feat_matrix: array-like , shape (n_samples, n_features)
             Feature values of samples.
         """
         # Load defaults
@@ -414,14 +412,15 @@ class SequenceFeature:
 
         Parameters
         ----------
-        list_parts: list of strings (n>=1 parts), default = ["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
+        list_parts: list of strings (n>=1 parts), default=["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
             Names of sequence parts which should be created (e.g., 'tmd').
-        split_kws: dict, default = SequenceFeature.get_split_kws
-            Nested dictionary with parameter dictionary for each chosen split_type.
-        df_scales
-            DataFrame with default amino acid scales.
-        all_parts: bool, default = False
+        all_parts: bool, default=False
             Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.
+
+        split_kws: dict, default=SequenceFeature.get_split_kws
+            Nested dictionary with parameter dictionary for each chosen split_type.
+        df_scales : pd.DataFrame,
+            DataFrame with default amino acid scales.
 
         Returns
         -------
@@ -455,7 +454,7 @@ class SequenceFeature:
 
         Parameters
         ----------
-        features : `array-like, shape (n_features,)`
+        features : array-like, shape (n_features,)
             List of feature ids.
         df_cat
             DataFrame with default categories for physicochemical amino acid scales
@@ -513,7 +512,7 @@ class SequenceFeature:
 
         Parameters
         ----------
-        features : `array-like, shape (n_features,)`
+        features : array-like, shape (n_features,)
             List of feature ids.
         start
             Position label of first amino acid position (starting at N-terminus, >=0).

@@ -1,6 +1,7 @@
 """
 This is a script for testing the AAclust.evaluate() functions.
 """
+import pandas as pd
 from hypothesis import given, settings
 import hypothesis.strategies as some
 from hypothesis.extra import numpy as npst
@@ -35,8 +36,18 @@ class TestAAclustEvaluate:
     def test_X(self):
         """Test the 'X' parameter."""
         X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
-        labels = np.array([1, 2, 1])
-        assert isinstance(aa.AAclust().eval(X, labels), tuple)
+        list_labels = [1, 2, 1]
+        df_eval = aa.AAclust().eval(X, list_labels=list_labels)
+        assert isinstance(df_eval, pd.DataFrame)
+        df_eval = aa.AAclust().eval(X, list_labels=np.asarray(list_labels))
+        assert isinstance(df_eval, pd.DataFrame)
+        df_eval = aa.AAclust().eval(X, list_labels=[list_labels])
+        assert isinstance(df_eval, pd.DataFrame)
+        list_labels = [[1, 2, 1], [2, 2, 1]]
+        df_eval = aa.AAclust().eval(X, list_labels=list_labels)
+        assert isinstance(df_eval, pd.DataFrame)
+        df_eval = aa.AAclust().eval(X, list_labels=np.asarray(list_labels))
+        assert isinstance(df_eval, pd.DataFrame)
 
     def test_invalid_X(self):
         """Test with an invalid 'X' value."""
@@ -48,14 +59,14 @@ class TestAAclustEvaluate:
         """Test the 'labels' parameter."""
         X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
         labels = np.array([1, 2, 1])
-        assert isinstance(aa.AAclust().eval(X, labels), tuple)
+        assert isinstance(aa.AAclust().eval(X, list_labels=labels), pd.DataFrame)
 
     def test_invalid_labels_dtype(self):
         """Test with invalid 'labels' datatype."""
         X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
         labels = np.array([1.5, 2.5, 1.5])  # Floating point labels, should be int
         with pytest.raises(ValueError):
-            aa.AAclust().eval(X, labels)
+            aa.AAclust().eval(X, list_labels=labels)
 
     def test_labels_none(self):
         """Test with 'labels' parameter set to None."""
@@ -73,12 +84,12 @@ class TestAAclustEvaluate:
         is_invalid = check_invalid_conditions(X, labels=labels)
         if is_invalid:
             with pytest.raises(ValueError):
-                aa.AAclust().eval(X, labels)
+                aa.AAclust().eval(X, list_labels=labels)
         else:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
-                result = aa.AAclust().eval(X, labels)
-                assert isinstance(result, tuple)
+                result = aa.AAclust().eval(X, list_labels=labels)
+                assert isinstance(result, pd.DataFrame)
 
 
 class TestAAclustEvaluateComplex:
@@ -96,11 +107,12 @@ class TestAAclustEvaluateComplex:
             with pytest.raises(ValueError):
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", RuntimeWarning)
-                    aa.AAclust().eval(X, labels)
+                    aa.AAclust().eval(X, list_labels=labels)
         else:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
-                n_clusters, BIC, CH, SC = aa.AAclust().eval(X, labels)
+                df_eval = aa.AAclust().eval(X, list_labels=labels)
+                names, n_clusters, BIC, CH, SC = df_eval[["n_clusters", "BIC", "CH", "SC"]].values[0]
                 assert n_clusters > 0
                 assert -np.inf <= BIC <= np.inf
                 assert 0 <= CH
@@ -116,11 +128,11 @@ class TestAAclustEvaluateComplex:
         is_invalid = check_invalid_conditions(X, labels=labels)
         if is_invalid:
             with pytest.raises(ValueError):
-                aa.AAclust().eval(X, labels)
+                aa.AAclust().eval(X, list_labels=labels)
         else:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
-                assert isinstance(aa.AAclust().eval(X, labels), tuple)
+                assert isinstance(aa.AAclust().eval(X, list_labels=labels), pd.DataFrame)
 
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=1, max_side=2),
                          elements=some.floats(allow_nan=False, allow_infinity=False)))

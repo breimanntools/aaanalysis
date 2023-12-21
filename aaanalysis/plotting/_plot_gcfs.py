@@ -4,39 +4,34 @@ This is a script for getting current font size of figures.
 import seaborn as sns
 
 # Main function
-def plot_gcfs(option='font.size'):
+def plot_gcfs(option: str = 'font.size') -> int:
     """
     Gets current font size (or axes linewdith).
 
     This font size can be set by :func:`plot_settings` function.
 
-    Examples
-    --------
-    Here are the default colors used in CPP and CPP-SHAP plots:
+    Parameters
+    ----------
+    option : str, default='font.size'
+        Figure setting to get default value from. Either 'font.size' or 'axes.linewidth'
 
-    .. plot::
-        :include-source:
-
-        >>> import matplotlib.pyplot as plt
-        >>> import seaborn as sns
-        >>> import aaanalysis as aa
-        >>> data = {'Classes': ['Class A', 'Class B', 'Class C'], 'Values': [23, 27, 43]}
-        >>> colors = aa.plot_get_clist()
-        >>> aa.plot_settings()
-        >>> sns.barplot(y='Classes', x='Values', data=data, palette=colors, hue="Classes", legend=False)
-        >>> sns.despine()
-        >>> plt.title("Two points bigger title", size=aa.plot_gcfs()+2)
-        >>> plt.tight_layout()
-        >>> plt.show()
+    Returns
+    -------
+    option_value : int
+        Numerical value for selected option.
 
     See Also
     --------
     * Our `Plotting Prelude <plotting_prelude.html>`_.
+
+    Examples
+    --------
+    .. include:: examples/plot_gcfs.rst
     """
     allowed_options = ["font.size", "axes.linewidth"]
     if option not in allowed_options:
-        return ValueError(f"'option' should be one of following: {allowed_options}")
+        raise ValueError(f"'option' should be one of following: {allowed_options}")
     # Get the current plotting context
     current_context = sns.plotting_context()
-    option_value = current_context[option]  # Typically font_size
+    option_value = current_context[option]
     return option_value

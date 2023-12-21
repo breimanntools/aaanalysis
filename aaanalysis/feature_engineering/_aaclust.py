@@ -88,17 +88,17 @@ class AAclust(Wrapper):
         The instantiated clustering model object after calling the ``fit`` method.
     n_clusters : int
         Number of clusters obtained by AAclust.
-    labels_ : `array-like, shape (n_samples,)`
+    labels_ : array-like, shape (n_samples,)
         Cluster labels in the order of samples in ``X``.
     centers_ : array-like, shape (n_clusters, n_features)
         Average scale values corresponding to each cluster.
-    labels_centers_ : `array-like, shape (n_clusters,)`
+    labels_centers_ : array-like, shape (n_clusters,)
         Cluster labels for each cluster center.
-    medoids_ : `array-like, shape (n_clusters, n_features)`
+    medoids_ : array-like, shape (n_clusters, n_features)
         Representative samples, one for each cluster.
-    labels_medoids_ :  `array-like, shape (n_clusters,)`
+    labels_medoids_ :  array-like, shape (n_clusters,)
         Cluster labels for each medoid.
-    is_medoid_ : `array-like, shape (n_samples, )`
+    is_medoid_ : array-like, shape (n_samples, )
         Array indicating samples being medoids (1) or not (0). Same order as ``labels_``.
     medoid_names_ : list
         Names of the medoids. Set if ``names`` is provided to ``.fit``.
@@ -119,11 +119,11 @@ class AAclust(Wrapper):
         """
         Parameters
         ----------
-        model_class
+        model_class : Type[ClusterMixin], default=KMeans
             A clustering model class with ``n_clusters`` parameter. This class will be instantiated by the ``.fit`` method.
-        model_kwargs
+        model_kwargs : dict, optional
             Keyword arguments to pass to the selected clustering model.
-        verbose
+        verbose : bool, optional
             If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if 'None'.
         """
         # Model parameters
@@ -166,17 +166,17 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        X : `array-like, shape (n_samples, n_features)`
+        X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
-        n_clusters
+        n_clusters : int, optional
             Pre-defined number of clusters. If provided, k is not optimized. Must be 0 > n_clusters > n_samples.
-        min_th
+        min_th : float, default=0.3
             Pearson correlation threshold for clustering (between 0 and 1).
-        on_center
+        on_center : bool, default=True
             If ``True``, ``min_th`` is applied to the cluster center. Otherwise, to all cluster members.
-        merge
+        merge : bool, default=True
             If ``True``, the optional merging step is performed.
-        metric
+        metric : {'correlation', 'euclidean', 'manhattan', 'cosine'}, default='euclidean'
             Similarity measure used for optional cluster merging and obtaining medoids:
 
              - ``correlation``: Pearson correlation (maximum)
@@ -184,7 +184,7 @@ class AAclust(Wrapper):
              - ``manhattan``: Manhattan distance (minimum)
              - ``cosine``: Cosine distance (minimum)
 
-        names
+        names : list of strings
             List of sample names. If provided, sets :attr:`AAclust.medoid_names_` attribute.
 
         Returns
@@ -267,12 +267,13 @@ class AAclust(Wrapper):
 
     def eval(self,
              X: ut.ArrayLike2D,
-             labels: Optional[ut.ArrayLike1D] = None
-             ) -> Tuple[int, float, float, float]:
+             list_labels: ut.ArrayLike2D = None,
+             names_datasets: Optional[List[str]] = None,
+             ) -> pd.DataFrame:
         """
-        Evaluates the quality of clustering using three established measures.
+        Evaluates the quality of different clustering results.
 
-        Clustering quality is quantified using:
+        The following established clustering measures are used:
 
             - ``BIC`` (Bayesian Information Criterion): Reflects the goodness of fit for the clustering while accounting for
               the number of clusters and parameters. The BIC value can range from negative infinity to positive infinity.
@@ -284,24 +285,29 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        X : `array-like, shape (n_samples, n_features)`
+        X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
-        labels : `array-like, shape (n_samples, )`
-            Cluster labels for each sample in ``X``.
+        list_labels : array-like, shape (n_datasets, n_samples)
+            List of arrays with cluster labels for samples in ``X`` obtained by the :meth:`AAclust.fit` method.
+            Unique label values indicate clusters.
+        names_datasets : list, optional
+            List of dataset names corresponding to ``list_labels``.
 
         Returns
         -------
-        n_clusters : int
-            Number of clusters, equal to number of medoids.
-        BIC : float
-            BIC value for clustering (-inf to inf).
-        CH : float
-            CH value for clustering (0 to inf).
-        SC : float
-            SC value for clustering (-1 to 1).
+        df_eval : DataFrame
+            Evaluation results for each set of clustering labels from ``list_labels``.
 
         Notes
         -----
+        ``df_eval`` includes the following columns:
+
+        - 'names': Names (string) of evaluated datasets.
+        - 'n_clusters': Number (integer) of clusters, equal to number of medoids.
+        - 'BIC': BIC value (float) for clustering (-inf to inf).
+        - 'CH': CH value (float) for clustering (0 to inf).
+        - 'SC': SC value (float) for clustering (-1 to 1).
+
         BIC was adapted form this `StackExchange discussion <https://stats.stackexchange.com/questions/90769/using-bic-to-estimate-the-number-of-k-in-kmeans>`_
         and modified to align with the SC and CH score so that higher values signify better clustering,
         contrary to conventional BIC implementation favoring lower values. See [Breimann24a]_.
@@ -314,22 +320,16 @@ class AAclust(Wrapper):
         # Check input
         X = ut.check_X(X=X)
         ut.check_X_unique_samples(X=X)
-        if labels is None:
-            labels = self.labels_
-        labels = ut.check_labels(labels=labels)
-        ut.check_match_X_labels(X=X, labels=labels)
+        list_labels = ut.check_array_like(name="list_labels", val=list_labels, ensure_2d=True, convert_2d=True)
+        ut.check_match_X_list_labels(X=X, list_labels=list_labels)
+        ut.check_match_list_labels_names_datasets(list_labels=list_labels, names_datasets=names_datasets)
         # Get number of clusters (number of medoids) and evaluation measures
-        n_clusters = len(set(labels))
-        bic, ch, sc = evaluate_clustering(X, labels=labels)
-        if np.isnan(ch):
-            ch = 0
-            if self._verbose:
-                warnings.warn("CH was set to 0 because sklearn.metric.calinski_harabasz_score returned NaN.", RuntimeWarning)
-        if np.isnan(sc):
-            sc = -1
-            if self._verbose:
-                warnings.warn("SC was set to -1 because sklearn.metric.silhouette_score returned NaN.", RuntimeWarning)
-        return n_clusters, bic, ch, sc
+        df_eval, warn_ch, warn_sc = evaluate_clustering(X, list_labels=list_labels, names_datasets=names_datasets)
+        if warn_ch and self._verbose:
+            warnings.warn("CH was set to 0 because sklearn.metric.calinski_harabasz_score returned NaN.", RuntimeWarning)
+        if warn_sc and self._verbose:
+            warnings.warn("SC was set to -1 because sklearn.metric.silhouette_score returned NaN.", RuntimeWarning)
+        return df_eval
 
     @staticmethod
     def name_clusters(X: ut.ArrayLike2D,
@@ -345,18 +345,18 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        X : `array-like, shape (n_samples, n_features)`
+        X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
-        labels : `array-like, shape (n_samples,)`
+        labels : array-like, shape (n_samples,)
             Cluster labels for each sample in ``X``.
-        names
+        names : list of strings
             List of sample names corresponding to ``X``.
-        shorten_names
+        shorten_names : bool, default=True
             If ``True`` shorten version of the names will be used.
 
         Returns
         -------
-        cluster_names : list
+        cluster_names : list of strings
             A list of renamed clusters based on names.
         """
         # Check input
@@ -380,16 +380,16 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        X : `array-like, shape (n_samples, n_features)`
+        X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
-        labels : `array-like, shape (n_samples,)`
+        labels : array-like, shape (n_samples,)
             Cluster labels for each sample in ``X``.
 
         Returns
         -------
-        centers : `array-like, shape (n_clusters, )`
+        centers : array-like, shape (n_clusters, )
             The computed center for each cluster.
-        labels_centers : `array-like, shape (n_clusters, )`
+        labels_centers : array-like, shape (n_clusters, )
             The labels associated with each computed center.
         """
         # Check input
@@ -411,11 +411,11 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        X : `array-like, shape (n_samples, n_features)`
+        X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
-        labels : `array-like, shape (n_samples, )`
+        labels : array-like, shape (n_samples,)
             Cluster labels for each sample in ``X``.
-        metric
+        metric : {'correlation', 'euclidean', 'manhattan', 'cosine'}, default='correlation'
             Similarity measure used to obtain medoids:
 
              - ``correlation``: Pearson correlation (maximum)
@@ -425,9 +425,9 @@ class AAclust(Wrapper):
 
         Returns
         -------
-        medoids : `array-like, shape (n_clusters,)`
+        medoids : array-like, shape (n_clusters,)
             The medoid for each cluster.
-        labels_medoids : `array-like, shape (n_clusters,)`
+        labels_medoids : array-like, shape (n_clusters,)
             The labels corresponding to each medoid.
         """
         # Check input
@@ -453,25 +453,25 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        X : `array-like, shape (n_samples, n_features)`
+        X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
-        labels : `array-like, shape (n_samples,)`
+        labels : array-like, shape (n_samples,)
             Cluster labels for each sample in ``X``.
-        X_ref : `array-like, shape (n_samples, n_features)`
+        X_ref : array-like, shape (n_samples, n_features)
             Feature matrix of reference data. If given, samples of ``X`` are compared with samples of ``X_ref``.
-        labels_ref  : `array-like, shape (n_samples_ref,)`
+        labels_ref  : array-like, shape (n_samples_ref,)
             Cluster labels for each sample in ``X_ref``.
-        names
+        names : list of strings, optional
             List of sample names corresponding to ``X``.
-        names_ref
+        names_ref : list of strings, optional
             List of sample names corresponding to ``X_ref``.
 
         Returns
         -------
-        df_corr
+        df_corr : DataFrame
             DataFrame with correlation either for each pair in ``X`` of shape (n_samples, n_samples) or
             for each pair between ``X`` and ``X_ref`` of shape (n_samples, n_samples_ref).
-        labels_sorted: `array-like, shape (n_samples_ref,)`
+        labels_sorted: array-like, shape (n_samples_ref,)
             Cluster labels for each sample and sorted as in `df_corr`.
 
         Notes
@@ -503,8 +503,8 @@ class AAclust(Wrapper):
         return df_corr, labels_sorted
 
     @staticmethod
-    def comp_coverage(names : List[str] =None,
-                      names_ref : List[str] =None
+    def comp_coverage(names : List[str] = None,
+                      names_ref : List[str] = None
                       ) -> float :
         """
         Computes the percentage of unique names from ``names`` that are present in ``names_ref``.
@@ -515,9 +515,9 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        names
+        names, list of strings
             List of sample names. Should be subset of ``names_ref``.
-        names_ref
+        names_ref, list of strings
             List of reference sample names. Should be superset of ``names``.
 
         Returns

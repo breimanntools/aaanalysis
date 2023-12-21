@@ -27,7 +27,8 @@ def display_df(df: pd.DataFrame = None,
                char_limit: int = 25,
                show_shape=False,
                ):
-    """Display DataFrame with specific style as HTML output for jupyter notebooks.
+    """
+    Display DataFrame with specific style as HTML output for jupyter notebooks.
 
     Parameters
     ----------

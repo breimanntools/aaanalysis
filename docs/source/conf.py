@@ -134,6 +134,7 @@ intersphinx_mapping = {
     'seaborn': ('https://seaborn.pydata.org/', None),
     'statsmodels': ('https://www.statsmodels.org/stable/', None),
     'shap': ('https://shap.readthedocs.io/en/latest/', None),
+    'upsetplot': ('https://upsetplot.readthedocs.io/en/stable/', None),
 }
 
 # -- Options for HTML output -------------------------------------------------

@@ -534,6 +534,6 @@ prediction performance:
 
 
 
-.. image:: NOTEBOOK_1_output_13_2.png
+.. image:: tutorial1_quick_start_1_output_13_2.png
 
 

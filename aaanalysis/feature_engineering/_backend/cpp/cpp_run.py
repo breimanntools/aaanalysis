@@ -111,17 +111,17 @@ def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None, y=None, ac
     ----------
     df_parts: :class:`pandas.DataFrame`
         DataFrame with sequence parts.
-    split_kws: dict, default = SequenceFeature.get_split_kws
+    split_kws: dict, default=SequenceFeature.get_split_kws
         Nested dictionary with parameter dictionary for each chosen split_type.
-    df_scales: :class:`pandas.DataFrame`, default = SequenceFeature.load_scales
+    df_scales: :class:`pandas.DataFrame`, default=SequenceFeature.load_scales
         DataFrame with default amino acid scales.
     y: array-like, shape (n_samples)
         Class labels for samples in df_parts.
-    accept_gaps: bool, default = False
+    accept_gaps: bool, default=False
         Whether to accept missing values by enabling omitting for computations (if True).
-    verbose: bool, default = True
+    verbose: bool, default=True
         Whether to show progress information about the algorithm (if True).
-    n_processes: integer default = None
+    n_processes: integer default=None
         Number of CPUs used for multiprocessing. If ``None``, number will be optimized automatically
 
     Returns

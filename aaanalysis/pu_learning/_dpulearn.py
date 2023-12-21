@@ -7,10 +7,9 @@ import pandas as pd
 from sklearn.decomposition import PCA
 
 import aaanalysis.utils as ut
-from ._backend.dpulearn.dpulearn_fit import (get_neg_via_distance, get_neg_via_pca)
-from ._backend.dpulearn.dpulearn_eval import (eval_homogeneity,
-                                              eval_distribution_alignment,
-                                              eval_distribution_alignment_X_neg)
+from ._backend.dpulearn.dpul_fit import (get_neg_via_distance, get_neg_via_pca)
+from ._backend.dpulearn.dpul_eval import eval_identified_negatives
+from ._backend.dpulearn.dpul_compare_sets_neg import compare_sets_negatives_
 
 # Settings
 LIST_METRICS = ['euclidean', 'manhattan', 'cosine']
@@ -18,20 +17,20 @@ LIST_METRICS = ['euclidean', 'manhattan', 'cosine']
 
 # I Helper Functions
 # Check functions
-def _check_metric(metric=None):
+def check_metric(metric=None):
     """Validate provided metric"""
     if metric is not None and metric not in LIST_METRICS:
         raise ValueError(f"'metric' ({metric}) should be None or one of following: {LIST_METRICS}")
 
 
-def _check_n_unl_to_neg(labels=None, n_unl_to_neg=None, label_unl=None):
+def check_n_unl_to_neg(labels=None, n_unl_to_neg=None, label_unl=None):
     """Validate that there are enough unlabeled samples in the dataset."""
     n_unl = np.sum(labels == label_unl)
     if n_unl < n_unl_to_neg:
         raise ValueError(f"Number of unlabeled labels ({n_unl}) must be higher than 'n_unl_to_neg' ({n_unl_to_neg})")
 
 
-def _check_n_components(n_components=1):
+def check_n_components(n_components=1):
     """Check if n_components valid for sklearn PCA object"""
     try:
         # Check number of PCs
@@ -47,15 +46,24 @@ def _check_n_components(n_components=1):
                          f"\n  a float with 0.0 < 'n_components' < 1.0 (percentage of covered variance)")
 
 
-def _check_match_X_n_components(X=None, n_components=1):
+def check_match_X_n_components(X=None, n_components=1):
     """Check if n_components matches to dimensions of X"""
     n_samples, n_features = X.shape
     if min(n_features, n_samples) <= n_components:
         raise ValueError(f"'n_components' ({n_components}) should be < min(n_features, n_samples) from 'X' ({n_features})")
 
 
+def check_match_list_labels_df_seq(list_labels=None, df_seq=None):
+    """Check if length of labels in list_labels and df_seq matches"""
+    if df_seq is None:
+        return None # Skip check
+    n_samples = len(list_labels[0])
+    if n_samples != len(df_seq):
+        raise ValueError(f"Number of samples (n={n_samples}) in 'list_labels' does not match with "
+                         f"samples in 'df_seq' (n={len(df_seq)})")
+
+
 # II Main Functions
-# TODO add create upset data for simple comparison (see dev_dpulearn)
 class dPULearn:
     """
     Deterministic Positive-Unlabeled (dPULearn) model introduced in [Breimann24c]_.
@@ -99,8 +107,8 @@ class dPULearn:
     * See :func:`sklearn.decomposition.PCA`.
     """
     def __init__(self,
-                 verbose: Optional[bool] = None,
                  pca_kwargs: Optional[dict] = None,
+                 verbose: Optional[bool] = None,
                  ):
         """
         Parameters
@@ -110,12 +118,11 @@ class dPULearn:
         pca_kwargs : dict, optional
             Additional keyword arguments for Principal Component Analysis (PCA) model.
         """
-        self._verbose = ut.check_verbose(verbose)
         if pca_kwargs is None:
             pca_kwargs = dict()
         ut.check_model_kwargs(model_class=PCA, model_kwargs=pca_kwargs, param_to_check=None)
         self.pca_kwargs = pca_kwargs
-        # Arguments for distance-based identification
+        self._verbose = ut.check_verbose(verbose)
         # Output parameters (will be set during model fitting)
         self.labels_ = None
         self.df_pu_ = None
@@ -188,14 +195,14 @@ class dPULearn:
         .. include:: examples/dpulearn_fit.rst
         """
         # Check input
-        ut.check_X(X=X)
+        X= ut.check_X(X=X)
         ut.check_labels(labels=labels, vals_requiered=[1, 2], allow_other_vals=False)
         ut.check_number_range(name="n_unl_to_neg", val=n_unl_to_neg, min_val=1, just_int=True)
-        _check_n_unl_to_neg(labels=labels, n_unl_to_neg=n_unl_to_neg, label_unl=2)
-        _check_metric(metric=metric)
-        _check_n_components(n_components=n_components)
+        check_n_unl_to_neg(labels=labels, n_unl_to_neg=n_unl_to_neg, label_unl=2)
+        check_metric(metric=metric)
+        check_n_components(n_components=n_components)
         ut.check_match_X_labels(X=X, labels=labels)
-        _check_match_X_n_components(X=X, n_components=n_components)
+        check_match_X_n_components(X=X, n_components=n_components)
         # Compute average distance for threshold-based filtering (Yang et al., 2012, 2014; Nan et al. 2017)
         args = dict(X=X, labels=labels, n_unl_to_neg=n_unl_to_neg, label_neg=0)
         if metric is not None:
@@ -208,26 +215,29 @@ class dPULearn:
         self.df_pu_ = df_pu
         return self
 
-    # TODO check, test
+    # TODO test, examples
     @staticmethod
     def eval(X: ut.ArrayLike2D,
-             list_labels: ut.ArrayLike1D = None,
-             list_names: Optional[List[str]] = None,
+             list_labels: ut.ArrayLike2D = None,
+             names_datasets: Optional[List[str]] = None,
              X_neg: Optional[ut.ArrayLike2D] = None,
              comp_kld: bool = True,
              ) -> pd.DataFrame:
-        """Compare different dPULearn results regarding the homogeneity within the reliably identified negatives (0),
-        and the differences with the groups of positives (1), unlabeled samples (2), and a ground-truth negative group
+        """
+        Evaluates the quality of different sets of identified negatives.
+
+        The quality is assessed regarding the homogeneity within the reliably identified negatives (0), and the
+        differences with the groups of positives (1), unlabeled samples (2), and a ground-truth negative group
         if provided by ``X_neg``.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
-        list_labels : array-like, shape (n_datasets,)
-            List of dataset labels for samples in ``X`` obtained by the :meth:`dPULearn.fit` method.
+        list_labels : array-like, shape (n_datasets, n_samples)
+            List of arrays with dataset labels for samples in ``X`` obtained by the :meth:`dPULearn.fit` method.
             Label values should be either 0 (identified negative), 1 (positive) or 2 (unlabeled).
-        list_names : list, optional
+        names_datasets : list, optional
             List of dataset names corresponding to ``list_labels``.
         X_neg : array-like, shape (n_samples, n_features), optional
             Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
@@ -240,64 +250,96 @@ class dPULearn:
         -------
         df_eval : DataFrame
             Evaluation results for each set of identified negatives from ``list_labels``. For each set, statistical
-            measures were averaged across all features. The DataFrame comprises the following columns:
+            measures were averaged across all features.
 
-            - 'name': Name of the dataset if ``list_names`` is provided.
-            - 'n_rel_neg': Number of identified negatives.
-            - 'avg_std': Average standard deviation (STD) assessing homogeneity of identified negatives.
-              Lower values indicate greater homogeneity.
-            - 'avg_iqr': Average interquartile range (IQR) assessing homogeneity of identified negatives.
-              Lower values suggest greater homogeneity.
-            - 'avg_abs_auc_DATASET': Average absolute area under the curve (AUC) assessing the similarity between the
-               set of identified negatives with other groups (positives, unlabeled, ground-truth negatives).
-               Separate columns are provided for each comparison. Lower values indicate greater similarity.
-            - 'avg_kld_DATASET': Average Kullback-Leibler Divergence (KLD) assessing the distribution alignment
-               between the set of identified negatives and the other groups. Lower values indicate greater similarity.
-               These columns are omitted if ``kld`` is set to ``False``.
+        Notes
+        -----
+        ``df_eval`` includes the following columns:
+
+        - 'name': Name of the dataset if ``names`` is provided.
+        - 'n_rel_neg': Number of identified negatives.
+        - 'avg_std': Average standard deviation (STD) assessing homogeneity of identified negatives.
+          Lower values indicate greater homogeneity.
+        - 'avg_iqr': Average interquartile range (IQR) assessing homogeneity of identified negatives.
+          Lower values suggest greater homogeneity.
+        - 'avg_abs_auc_DATASET': Average absolute area under the curve (AUC) assessing the similarity between the
+          set of identified negatives with other groups (positives, unlabeled, ground-truth negatives).
+          Separate columns are provided for each comparison. Lower values indicate greater similarity.
+        - 'avg_kld_DATASET': Average Kullback-Leibler Divergence (KLD) assessing the distribution alignment
+          between the set of identified negatives and the other groups. Lower values indicate greater similarity.
+          These columns are omitted if ``kld`` is set to ``False``.
 
         See Also
         --------
         * See :ref:`usage_principles_pu_learning` for details on different evaluation strategies,
         """
         # Check input
-
-        # Compute
-        unl_in = False
-        list_evals = []
-        for labels in list_labels:
-            # Evaluate homogeneity
-            n_rel_neg = sum(labels == 0)
-            avg_std, avg_iqr = eval_homogeneity(X=X, labels=labels)
-            # Evaluate distribution alignment with positives
-            args = dict(X=X, labels=labels, comp_kld=comp_kld)
-            avg_auc_abs, avg_kld = eval_distribution_alignment(**args, label_test=0, label_ref=1)
-            list_eval = [n_rel_neg, avg_std, avg_iqr, avg_auc_abs, avg_kld]
-            # Evaluate distribution alignment with unlabeled
-            if 2 in labels:
-                avg_auc_abs, avg_kld = eval_distribution_alignment(**args, label_test=0, label_ref=2)
-                list_eval += [avg_auc_abs, avg_kld]
-                unl_in = True
-            # Evaluate distribution alignment with ground-truth negatives, if provided
-            if X_neg is not None:
-                avg_auc_abs, avg_kld = eval_distribution_alignment_X_neg(**args, X_neg=X_neg)
-                list_eval += [avg_auc_abs, avg_kld]
-            # Remove kld if disabled
-            list_eval = [x for x in list_eval if x is not None]
-            list_evals.append(list_eval)
-        # Define column names based on the evaluations performed
-        cols_eval = ["n_rel_neg", "avg_std", "avg_iqr", "avg_abs_auc_pos"]
-        if comp_kld:
-            cols_eval.append("avg_kld_pos")
-        if unl_in:
-            cols_eval.append("avg_abs_auc_unl")
-            if comp_kld:
-                cols_eval.append("avg_kld_unl")
-        if X_neg is not None:
-            cols_eval.append("avg_kld_neg")
-            if comp_kld:
-                cols_eval.append("avg_kld_neg")
-        # Create the DataFrame
-        df_eval = pd.DataFrame(list_evals, columns=cols_eval).round(4)
-        if list_labels is not None:
-            df_eval.insert(0,"name", list_names)
+        X= ut.check_X(X=X)
+        X_neg = ut.check_X(X=X_neg, X_name="X_neg", accept_none=True)
+        ut.check_bool(name="comp_kld", val=comp_kld)
+        list_labels = ut.check_array_like(name="list_labels", val=list_labels, ensure_2d=True, convert_2d=True)
+        names_datasets = ut.check_list_like(name="names", val=names_datasets, accept_none=True, accept_str=True,
+                                            check_all_str_or_convertible=True)
+        ut.check_match_X_list_labels(X=X, list_labels=list_labels, comp_kld=comp_kld, vals_requiered=[0])
+        ut.check_match_list_labels_names_datasets(list_labels=list_labels, names_datasets=names_datasets)
+        # Evaluation for homogeneity within negatives and alignment of distribution with other datasets
+        df_eval = eval_identified_negatives(X=X, list_labels=list_labels, names_datasets=names_datasets,
+                                            X_neg=X_neg, comp_kld=comp_kld)
         return df_eval
+
+    # TODO test, examples
+    @staticmethod
+    def compare_sets_negatives(list_labels: ut.ArrayLike1D = None,
+                               names: Optional[List[str]] = None,
+                               df_seq: Optional[pd.DataFrame] = None,
+                               return_upset_data: bool = False
+                               ) -> pd.DataFrame:
+        """
+        Create DataFrame for comparing sets of identified negatives.
+
+        Optionally, data format can be created for Upset Plots, which are useful for visualizing the intersection
+        and unique elements across these sets.
+
+        Parameters
+        ----------
+        list_labels : array-like, shape (n_datasets,)
+            List of dataset labels for samples in ``X`` obtained by the :meth:`dPULearn.fit` method.
+            Label values should be either 0 (identified negative), 1 (positive) or 2 (unlabeled).
+        names : list, optional
+            List of dataset names corresponding to ``list_labels``.
+        df_seq : DataFrame, shape (n_samples, n_seq_infp), optional
+            DataFrame with sequence information for entries corresponding to 'labels' of ``list_labels``.
+        return_upset_data : bool, default=False
+            Whether to return a DataFrame for Upset Plot (if ``True``) or for a general comparison of sets of negatives.
+
+        Returns
+        -------
+        pd.DataFrame
+            - If ``return_upset_data`` is ``False``, returns a DataFrame (`df_neg_comp`) that combines ``df_seq``
+              (if provided) with a comparison of the negative sets for a general analysis.
+            - If ``return_upset_data`` is ``True``, returns a DataFrame (`upset_data`) formatted for generating  Upset
+              Plots, containing group size information for the intersection and unique elements across the label sets.
+
+        See Also
+        --------
+        * :meth:`dPULearn.fit` for details on how labels are generated.
+        * :meth:`SequenceFeature.get_df_parts` for details on format of ``df_seq``.
+        * Upset Plot documentation: :func:`upsetplot.plot`.
+
+        """
+        # Check input
+        list_labels = ut.check_list_like(name="list_labels", val=list_labels, accept_none=False, accept_str=False)
+        names = ut.check_list_like(name="names", val=names, accept_none=True,
+                                               accept_str=True, check_all_str_or_convertible=True)
+        ut.check_df_seq(df_seq=df_seq, accept_none=True)
+        ut.check_bool(name="return_upset_data", val=return_upset_data)
+        ut.check_match_list_labels_names_datasets(list_labels=list_labels, names_datasets=names)
+        check_match_list_labels_df_seq(list_labels=list_labels, df_seq=df_seq)
+        # Comparison of identified sets of negatives
+        args = dict(list_labels=list_labels, names=names,
+                    df_seq=df_seq, return_upset_data=return_upset_data)
+        if return_upset_data:
+            upset_data = compare_sets_negatives_(**args)
+            return upset_data
+        df_neg_comp = compare_sets_negatives_(**args)
+        return df_neg_comp

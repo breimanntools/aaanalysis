@@ -182,3 +182,33 @@ def plot_gco(option='font.size', show_options=False):
         print(current_context)
     option_value = current_context[option]  # Typically font_size
     return option_value
+
+
+def plot_get_clist(n_colors=3):
+    """Returns manually curated list of 2 to 9 colors."""
+    # Base lists
+    list_colors_3_to_4 = ["tab:gray", "tab:blue", "tab:red", "tab:orange"]
+    list_colors_5_to_6 = ["tab:blue", "tab:cyan", "tab:gray","tab:red",
+                          "tab:orange", "tab:brown"]
+    list_colors_8_to_9 = ["tab:blue", "tab:orange", "tab:green", "tab:red",
+                          "tab:gray", "gold", "tab:cyan", "tab:brown",
+                          "tab:purple"]
+    # Two classes
+    if n_colors == 2:
+        return ["tab:blue", "tab:red"]
+    # Control/base + 2-3 classes
+    elif n_colors in [3, 4]:
+        return list_colors_3_to_4[0:n_colors]
+    # 5-7 classes (gray in middle as visual "breather")
+    elif n_colors in [5, 6]:
+        return list_colors_5_to_6[0:n_colors]
+    elif n_colors == 7:
+        return ["tab:blue", "tab:cyan", "tab:purple", "tab:gray",
+                "tab:red", "tab:orange", "tab:brown"]
+    # 8-9 classes (colors from scale categories)
+    elif n_colors in [8, 9]:
+        return list_colors_8_to_9[0:n_colors]
+    else:
+        return sns.color_palette(palette="husl", n_colors=n_colors)
+
+

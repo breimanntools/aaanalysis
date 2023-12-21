@@ -5,7 +5,6 @@ import time
 import pandas as pd
 import numpy as np
 
-import aaanalysis as aa
 import aaanalysis.utils as ut
 
 LIST_DATASETS_WITH_FEATURES = ["DOM_GSEC"]

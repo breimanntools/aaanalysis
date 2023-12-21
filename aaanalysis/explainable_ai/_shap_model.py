@@ -39,9 +39,9 @@ class ShapModel:
         ----------
         df_feat: :class:`pandas.DataFrame`
             Feature DataFrame to which the feature impact will be added.
-        col_shap: str, default = 'shap_value'
+        col_shap: str, default='shap_value'
             Column name of `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ values in the feature DataFrame.
-        name_feat_impact: str, default = 'feat_impact'
+        name_feat_impact: str, default='feat_impact'
             Column name of feature impact or feature importance that will be added to the feature DataFrame.
 
         Returns

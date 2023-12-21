@@ -7,11 +7,34 @@ from sklearn.utils import check_array
 import aaanalysis._utils.check_type as check_type
 
 # Helper functions
-def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan=False):
+def _convert_2d(val=None, name=None):
+    """Convert array like data to 2d array"""
+    if isinstance(val, list):
+        # Convert 1D list to 2D list
+        if all(not isinstance(i, list) for i in val):
+            val = [val]
+        # For nested lists, ensure they are 2D (list of lists with equal lengths)
+        else:
+            try:
+                val = np.array(val)  # Convert nested list to numpy array
+                if val.ndim != 2:
+                    raise ValueError
+            except ValueError:
+                raise ValueError(f"'{name}' should be a 2D list or array.")
+    elif hasattr(val, 'ndim') and val.ndim == 1:
+        val = [val]
+    return val
+
+# Check array like
+def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan=False,
+                     convert_2d=False, accept_none=False):
     """Check if the provided value is array-like and matches the specified dtype."""
-    if name is None:
-        raise ValueError(f"'{name}' should not be None.")
-    # Utilize Scikit-learn's check_array for robust checking
+    if val is None:
+        if accept_none:
+            return None # skip tests
+        else:
+            raise ValueError(f"'{name}' should not be None.")
+    # Type checking
     if dtype == 'int':
         expected_dtype = 'int'
     elif dtype == 'float':
@@ -20,6 +43,10 @@ def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan
         expected_dtype = None
     else:
         raise ValueError(f"'dtype' ({dtype}) not recognized.")
+    # Convert a 1D list or array to a 2D array
+    if convert_2d:
+        val = _convert_2d(val=val, name=name)
+    # Utilize Scikit-learn's check_array for robust checking
     try:
         val = check_array(val, dtype=expected_dtype, ensure_2d=ensure_2d, force_all_finite=not allow_nan)
     except Exception as e:
@@ -29,8 +56,13 @@ def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan
 
 
 # Check feature matrix and labels
-def check_X(X, min_n_samples=3, min_n_features=2, ensure_2d=True, allow_nan=False):
+def check_X(X, X_name="X", min_n_samples=3, min_n_features=2, ensure_2d=True, allow_nan=False, accept_none=False):
     """Check the feature matrix X is valid."""
+    if X is None:
+        if not accept_none:
+            raise ValueError(f"'{X_name}' should not be None")
+        else:
+            return None
     X = check_array_like(name="X", val=X, dtype="float", ensure_2d=ensure_2d, allow_nan=allow_nan)
     if np.isinf(X).any():
         raise ValueError(f"'X' should not contain infinite values")
@@ -61,6 +93,9 @@ def check_labels(labels=None, vals_requiered=None, len_requiered=None, allow_oth
         raise ValueError(f"'labels' should not be None.")
     # Convert labels to a numpy array if it's not already
     labels = np.asarray(labels)
+    # Ensure labels is at least 1-dimensional
+    if labels.ndim == 0:
+        labels = np.array([labels.item()])  # Convert 0-d array to 1-d array
     unique_labels = set(labels)
     if len(unique_labels) == 1:
        raise ValueError(f"'labels' should contain more than one different value ({unique_labels}).")
@@ -90,17 +125,35 @@ def check_labels(labels=None, vals_requiered=None, len_requiered=None, allow_oth
     return labels
 
 
-def check_match_X_labels(X=None, X_name="X", labels=None, labels_name="labels", check_variability=False):
+def check_match_X_labels(X=None, X_name="X", labels=None, labels_name="labels", check_variability_for_kld=False):
     """Check if the number of samples in X matches the number of labels."""
     n_samples, n_features = X.shape
     if n_samples != len(labels):
         raise ValueError(f"n_samples does not match for '{X_name}' ({len(X)}) and '{labels_name}' ({len(labels)}).")
-    if check_variability:
+    if check_variability_for_kld:
         unique_labels = np.unique(labels)
         for label in unique_labels:
             group_X = X[labels == label]
             if not np.all(np.var(group_X, axis=0) != 0):
-                raise ValueError(f"Variance in 'X' for '{label}' labels is too low to compute KDL")
+                raise ValueError(f"Variance in 'X' for '{label}' from '{labels_name}' is too low to compute KDL")
+
+
+def check_match_X_list_labels(X=None, list_labels=None, comp_kld=False, vals_requiered=None):
+    """Check if each label set is matching with X"""
+    for i, labels in enumerate(list_labels):
+        check_labels(labels=labels, vals_requiered=vals_requiered)
+        check_match_X_labels(X=X, labels=labels, labels_name=f"list_labels (set {i+1}",
+                             check_variability_for_kld=comp_kld)
+
+
+def check_match_list_labels_names_datasets(list_labels=None, names_datasets=None):
+    """Check if length of list_labels and names match"""
+    if names_datasets is None:
+        return None # Skip check
+    if len(list_labels) != len(names_datasets):
+        raise ValueError(f"Length of 'list_labels' ({len(list_labels)}) and 'names' ({len(names_datasets)} does not match) ")
+
+
 
 # Check sets
 def check_superset_subset(subset=None, superset=None, name_subset=None, name_superset=None):
@@ -128,7 +181,6 @@ def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_p
         numeric_df = df.select_dtypes(include=['float', 'int'])
         if numeric_df.min().min() <= 0:
             raise ValueError(f"'{name}' should not contain non-positive values.")
-
     # Check columns
     args = dict(accept_str=True, accept_none=True)
     cols_requiered = check_type.check_list_like(name='cols_requiered', val=cols_requiered, **args)

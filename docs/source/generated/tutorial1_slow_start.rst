@@ -595,7 +595,7 @@ but improve prediction performance:
 
 
 
-.. image:: NOTEBOOK_1_output_13_2.png
+.. image:: tutorial1_slow_start_1_output_13_2.png
 
 
 4. Explainable AI

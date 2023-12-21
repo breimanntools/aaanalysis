@@ -408,7 +408,7 @@ The protein sequences can have varying length:
 
 
 
-.. image:: NOTEBOOK_1_output_9_0.png
+.. image:: tutorial2a_data_loader_1_output_9_0.png
 
 
 Which can be easily filtered using ``min_len`` and ``max_len``
@@ -426,7 +426,7 @@ parameters:
 
 
 
-.. image:: NOTEBOOK_2_output_11_0.png
+.. image:: tutorial2a_data_loader_2_output_11_0.png
 
 
 Loading of protein benchmarks: Amino acid window size

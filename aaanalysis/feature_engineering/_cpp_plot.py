@@ -13,7 +13,6 @@ import aaanalysis.utils as ut
 
 from ._backend.check_feature import (check_split_kws,
                                      check_parts_len, check_match_features_seq_parts,
-                                     check_df_seq,
                                      check_df_parts, check_match_df_parts_features, check_match_df_parts_list_parts,
                                      check_df_scales, check_match_df_scales_features,
                                      check_df_cat, check_match_df_cat_features,
@@ -212,7 +211,7 @@ class CPPPlot:
     # Plotting methods for single feature
     def feature(self,
                 ax: Optional[plt.Axes] = None,
-                figsize: Tuple[int, int] = (5.6, 4.8),
+                figsize: Tuple[Union[int, float], Union[int, float]] = (5.6, 4.8),
                 feature=str,
                 df_seq=None,
                 labels=None,
@@ -239,7 +238,7 @@ class CPPPlot:
         -------
         ax
             Pre-defined Axes object to plot on. If `None`, a new Axes object is created.
-        figsize
+        figsize : tuple, default=(5.6, 4.8)
             Figure size (width, height) in inches.
         """
 
@@ -264,7 +263,7 @@ class CPPPlot:
     # Plotting methods for group and single level
     def ranking(self,
                 ax=None,
-                figsize=(7, 5),
+                figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
                 df_feat=None,
                 df_parts=None,
                 tmd_len=20,
@@ -534,13 +533,13 @@ class CPPPlot:
         ----------
         df_feat : :class:`~pandas.DataFrame`, shape (n_feature, n_feature_information)
             DataFrame containing unique identifiers, scale information, statistics, and positions for each feature.
-        y : {'category', 'subcategory', 'scale_name'}, str, default = 'subcategory'
+        y : {'category', 'subcategory', 'scale_name'}, str, default='subcategory'
             Name of the column in the feature DataFrame representing scale information (shown on the y-axis).
-        col_value : {'mean_dif', 'feat_impact', 'abs_auc', 'std_test', ...}, str, default = 'mean_dif'
+        col_value : {'mean_dif', 'feat_impact', 'abs_auc', 'std_test', ...}, default='mean_dif'
             Name of the column in the feature DataFrame containing numerical values to display.
-        value_type : {'mean', 'sum', 'std'}, str, default = 'mean'
+        value_type : {'mean', 'sum', 'std'}, default='mean'
             Method to aggregate numerical values from 'col_value'.
-        normalize : {True, False, 'positions', 'positions_only'}, bool/str, default = False
+        normalize : {True, False, 'positions', 'positions_only'}, default=False
             Specifies normalization for numerical values in 'col_value':
 
             - False: Set value at all positions of a feature without further normalization.
@@ -550,11 +549,11 @@ class CPPPlot:
             - 'positions': Value/number of positions set at each position of a feature and normalized across features.
               Recommended when aiming to emphasize features with fewer positions using 'col_value'='feat_impact' and 'value_type'='mean'.
 
-        figsize : tuple(float, float), default = (10,7)
+        figsize : tuple(float, float), default=(10,7)
             Width and height of the figure in inches passed to :func:`matplotlib.pyplot.figure`.
         vmin, vmax : float, optional
             Values to anchor the colormap, otherwise, inferred from data and other keyword arguments.
-        cmap : matplotlib colormap name or object, or list of colors, default = 'seismic'
+        cmap : matplotlib colormap name or object, or list of colors, default='seismic'
             Name of color map assigning data values to color space. If 'SHAP', colors from
             `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ will be used (recommended for feature impact).
         cmap_n_colors : int, optional
@@ -563,7 +562,7 @@ class CPPPlot:
             Map of colors for scale categories classifying scales shown on y-axis.
         cbar_kws : dict of key, value mappings, optional
             Keyword arguments for :meth:`matplotlib.figure.Figure.colorbar`.
-        add_jmd_tmd : bool, default = True
+        add_jmd_tmd : bool, default=True
             Whether to add colored bar under heatmap indicating sequence parts (JMD-N, TMD, JMD-C).
         tmd_len : int, >0
             Length of TMD to be depiceted.
@@ -578,28 +577,28 @@ class CPPPlot:
         jmd_c_seq : str, optional
             Sequence of JMD_C. 'jmd_c_len' is set to length of JMD_C if sequence for TMD, JMD-N and JMD-C are given.
             Recommended if feature impact or mean difference should be depicted for one sample.
-        tmd_color : str, default = 'mediumspringgreen'
+        tmd_color : str, default='mediumspringgreen'
             Color of TMD bar.
-        jmd_color : str, default = 'blue'
+        jmd_color : str, default='blue'
             Color of JMD-N and JMD-C bar.
-        tmd_seq_color : str, default = 'black'
+        tmd_seq_color : str, default='black'
             Color of TMD sequence.
-        jmd_seq_color : str, default = 'white'
+        jmd_seq_color : str, default='white'
             Color of JMD-N and JMD-C sequence.
         seq_size : float, optional
             Font size of all sequence parts in points. If ``None``, optimized automatically.
         fontsize_tmd_jmd : float, optional
             Font size of 'TMD', 'JMD-N' and 'JMD-C'  label in points. If ``None``, optimized automatically.
-        xtick_size : float, default = 11.0
+        xtick_size : float, default=11.0
             Size of x ticks in points. Passed as 'size' argument to :meth:`matplotlib.axes.Axes.set_xticklabels`.
-        xtick_width : float, default = 2.0
+        xtick_width : float, default=2.0
             Widht of x ticks in points. Passed as 'width' argument to :meth:`matplotlib.axes.Axes.tick_params`.
-        xtick_length : float, default = 5.0,
+        xtick_length : float, default=5.0,
             Length of x ticks in points. Passed as 'length' argument to :meth:`matplotlib.axes.Axes.tick_params`.
         ytick_size : float, optional
             Size of scale information as y ticks in points. Passed to :meth:`matplotlib.axes.Axes.tick_params`.
             If ``None``, optimized automatically.
-        add_legend_cat : bool, default = True,
+        add_legend_cat : bool, default=True,
             Whether to add legend for categories under plot and classification of scales at y-axis.
         legend_kws : dict, optional
             Keyword arguments passed to :meth:`matplotlib.axes.Axes.legend`

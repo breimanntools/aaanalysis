@@ -48,7 +48,7 @@ def comp_auc_adjusted(X : ut.ArrayLike2D = None,
         A value of 0 indicates equal distributions between the two groups for that feature.
     """
     # Check input
-    ut.check_X(X=X)
+    X = ut.check_X(X=X)
     ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
     ut.check_labels(labels=labels)
     ut.check_match_X_labels(X=X, labels=labels)
@@ -93,7 +93,7 @@ def comp_bic_score(X : ut.ArrayLike2D = None,
     * Clustering evaluation can be performed using :meth:`AAclust.eval`.
     """
     # Check input
-    ut.check_X(X=X)
+    X = ut.check_X(X=X)
     ut.check_X_unique_samples(X=X)
     ut.check_labels(labels=labels)
     ut.check_match_X_labels(X=X, labels=labels)
@@ -151,12 +151,12 @@ def comp_kld(X : ut.ArrayLike2D = None,
       from kernel-density estimates of different data groups.
     """
     # Check input
-    ut.check_X(X=X)
+    X = ut.check_X(X=X)
     ut.check_X_unique_samples(X=X, min_n_unique_samples=3)
     ut.check_number_val(name="label_test", val=label_test, just_int=True, accept_none=False)
     ut.check_number_val(name="label_ref", val=label_ref, just_int=True, accept_none=False)
     ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref], len_per_group_requiered=2)
-    ut.check_match_X_labels(X=X, labels=labels, check_variability=True)
+    ut.check_match_X_labels(X=X, labels=labels, check_variability_for_kld=True)
     # Compute tge Kullback-Leibler divergence
     try:
         kld = kullback_leibler_divergence_(X=X, labels=labels, label_test=label_test, label_ref=label_ref)

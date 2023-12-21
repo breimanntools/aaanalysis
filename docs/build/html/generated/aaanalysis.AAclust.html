@@ -165,7 +165,7 @@ for each cluster closest to the center, resulting in a redundancy-reduced sample
 <dd><p>Cluster labels in the order of samples in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>array-like, shape (n_samples,)</cite></p>
+<dd class="field-odd"><p>array-like, shape (n_samples,)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -187,7 +187,7 @@ for each cluster closest to the center, resulting in a redundancy-reduced sample
 <dd><p>Cluster labels for each cluster center.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>array-like, shape (n_clusters,)</cite></p>
+<dd class="field-odd"><p>array-like, shape (n_clusters,)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -198,7 +198,7 @@ for each cluster closest to the center, resulting in a redundancy-reduced sample
 <dd><p>Representative samples, one for each cluster.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>array-like, shape (n_clusters, n_features)</cite></p>
+<dd class="field-odd"><p>array-like, shape (n_clusters, n_features)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -209,7 +209,7 @@ for each cluster closest to the center, resulting in a redundancy-reduced sample
 <dd><p>Cluster labels for each medoid.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>array-like, shape (n_clusters,)</cite></p>
+<dd class="field-odd"><p>array-like, shape (n_clusters,)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -220,7 +220,7 @@ for each cluster closest to the center, resulting in a redundancy-reduced sample
 <dd><p>Array indicating samples being medoids (1) or not (0). Same order as <code class="docutils literal notranslate"><span class="pre">labels_</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><cite>array-like, shape (n_samples, )</cite></p>
+<dd class="field-odd"><p>array-like, shape (n_samples, )</p>
 </dd>
 </dl>
 </dd></dl>
@@ -264,9 +264,9 @@ for each cluster closest to the center, resulting in a redundancy-reduced sample
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model_class</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Type" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code></a>[<a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.base.ClusterMixin.html#sklearn.base.ClusterMixin" title="(in scikit-learn v1.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClusterMixin</span></code></a>]) – A clustering model class with <code class="docutils literal notranslate"><span class="pre">n_clusters</span></code> parameter. This class will be instantiated by the <code class="docutils literal notranslate"><span class="pre">.fit</span></code> method.</p></li>
-<li><p><strong>model_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></a>]) – Keyword arguments to pass to the selected clustering model.</p></li>
-<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>]) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, verbose outputs are enabled. Global ‘verbose’ setting is used if ‘None’.</p></li>
+<li><p><strong>model_class</strong> (<em>Type</em><em>[</em><em>ClusterMixin</em><em>]</em><em>, </em><em>default=KMeans</em>) – A clustering model class with <code class="docutils literal notranslate"><span class="pre">n_clusters</span></code> parameter. This class will be instantiated by the <code class="docutils literal notranslate"><span class="pre">.fit</span></code> method.</p></li>
+<li><p><strong>model_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><em>dict</em></a><em>, </em><em>optional</em>) – Keyword arguments to pass to the selected clustering model.</p></li>
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, verbose outputs are enabled. Global ‘verbose’ setting is used if ‘None’.</p></li>
 </ul>
 </dd>
 </dl>
@@ -295,8 +295,8 @@ for each cluster closest to the center, resulting in a redundancy-reduced sample
 <tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.AAclust.comp_medoids" title="aaanalysis.AAclust.comp_medoids"><code class="xref py py-obj docutils literal notranslate"><span class="pre">comp_medoids</span></code></a>(X[, labels, metric])</p></td>
 <td><p>Computes the medoid of each cluster based on the given labels.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.AAclust.eval" title="aaanalysis.AAclust.eval"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval</span></code></a>(X[, labels])</p></td>
-<td><p>Evaluates the quality of clustering using three established measures.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.AAclust.eval" title="aaanalysis.AAclust.eval"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval</span></code></a>(X[, list_labels, names_datasets])</p></td>
+<td><p>Evaluates the quality of different clustering results.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.AAclust.fit" title="aaanalysis.AAclust.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(X[, n_clusters, on_center, min_th, ...])</p></td>
 <td><p>Applies AAclust algorithm to feature matrix (<code class="docutils literal notranslate"><span class="pre">X</span></code>).</p></td>
@@ -318,12 +318,12 @@ function, respectively, as described in <a class="reference internal" href="../i
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<cite>array-like, shape (n_samples, n_features)</cite>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
-<li><p><strong>n_clusters</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]) – Pre-defined number of clusters. If provided, k is not optimized. Must be 0 &gt; n_clusters &gt; n_samples.</p></li>
-<li><p><strong>min_th</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>) – Pearson correlation threshold for clustering (between 0 and 1).</p></li>
-<li><p><strong>on_center</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">min_th</span></code> is applied to the cluster center. Otherwise, to all cluster members.</p></li>
-<li><p><strong>merge</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the optional merging step is performed.</p></li>
-<li><p><strong>metric</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – <p>Similarity measure used for optional cluster merging and obtaining medoids:</p>
+<li><p><strong>X</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
+<li><p><strong>n_clusters</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>optional</em>) – Pre-defined number of clusters. If provided, k is not optimized. Must be 0 &gt; n_clusters &gt; n_samples.</p></li>
+<li><p><strong>min_th</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em>, </em><em>default=0.3</em>) – Pearson correlation threshold for clustering (between 0 and 1).</p></li>
+<li><p><strong>on_center</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>default=True</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">min_th</span></code> is applied to the cluster center. Otherwise, to all cluster members.</p></li>
+<li><p><strong>merge</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>default=True</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the optional merging step is performed.</p></li>
+<li><p><strong>metric</strong> (<em>{'correlation'</em><em>, </em><em>'euclidean'</em><em>, </em><em>'manhattan'</em><em>, </em><em>'cosine'}</em><em>, </em><em>default='euclidean'</em>) – <p>Similarity measure used for optional cluster merging and obtaining medoids:</p>
 <blockquote>
 <div><ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">correlation</span></code>: Pearson correlation (maximum)</p></li>
@@ -333,7 +333,7 @@ function, respectively, as described in <a class="reference internal" href="../i
 </ul>
 </div></blockquote>
 </p></li>
-<li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – List of sample names. If provided, sets <a class="reference internal" href="#aaanalysis.AAclust.medoid_names_" title="aaanalysis.AAclust.medoid_names_"><code class="xref py py-attr docutils literal notranslate"><span class="pre">AAclust.medoid_names_</span></code></a> attribute.</p></li>
+<li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><em>strings</em>) – List of sample names. If provided, sets <a class="reference internal" href="#aaanalysis.AAclust.medoid_names_" title="aaanalysis.AAclust.medoid_names_"><code class="xref py py-attr docutils literal notranslate"><span class="pre">AAclust.medoid_names_</span></code></a> attribute.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -375,9 +375,9 @@ function, respectively, as described in <a class="reference internal" href="../i
 
 <dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.AAclust.eval">
-<span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/feature_engineering/_aaclust.py#L268-L332"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust.eval" title="Permalink to this definition"></a></dt>
-<dd><p>Evaluates the quality of clustering using three established measures.</p>
-<p>Clustering quality is quantified using:</p>
+<span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names_datasets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/feature_engineering/_aaclust.py#L268-L332"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclust.eval" title="Permalink to this definition"></a></dt>
+<dd><p>Evaluates the quality of different clustering results.</p>
+<p>The following established clustering measures are used:</p>
 <blockquote>
 <div><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">BIC</span></code> (Bayesian Information Criterion): Reflects the goodness of fit for the clustering while accounting for
@@ -392,22 +392,29 @@ The SC score lies between -1 and 1. A value closer to 1 implies better clusterin
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<cite>array-like, shape (n_samples, n_features)</cite>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
-<li><p><strong>labels</strong> (<cite>array-like, shape (n_samples, )</cite>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>X</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
+<li><p><strong>list_labels</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_datasets</em><em>, </em><em>n_samples</em><em>)</em>) – List of arrays with cluster labels for samples in <code class="docutils literal notranslate"><span class="pre">X</span></code> obtained by the <a class="reference internal" href="#aaanalysis.AAclust.fit" title="aaanalysis.AAclust.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">AAclust.fit()</span></code></a> method.
+Unique label values indicate clusters.</p></li>
+<li><p><strong>names_datasets</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em>, </em><em>optional</em>) – List of dataset names corresponding to <code class="docutils literal notranslate"><span class="pre">list_labels</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><strong>n_clusters</strong> (<em>int</em>) – Number of clusters, equal to number of medoids.</p></li>
-<li><p><strong>BIC</strong> (<em>float</em>) – BIC value for clustering (-inf to inf).</p></li>
-<li><p><strong>CH</strong> (<em>float</em>) – CH value for clustering (0 to inf).</p></li>
-<li><p><strong>SC</strong> (<em>float</em>) – SC value for clustering (-1 to 1).</p></li>
-</ul>
-</p>
+<dd class="field-even"><p><strong>df_eval</strong> – Evaluation results for each set of clustering labels from <code class="docutils literal notranslate"><span class="pre">list_labels</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DataFrame</p>
 </dd>
 </dl>
 <div class="admonition-notes admonition">
 <p class="admonition-title">Notes</p>
+<p><code class="docutils literal notranslate"><span class="pre">df_eval</span></code> includes the following columns:</p>
+<ul class="simple">
+<li><p>‘names’: Names (string) of evaluated datasets.</p></li>
+<li><p>‘n_clusters’: Number (integer) of clusters, equal to number of medoids.</p></li>
+<li><p>‘BIC’: BIC value (float) for clustering (-inf to inf).</p></li>
+<li><p>‘CH’: CH value (float) for clustering (0 to inf).</p></li>
+<li><p>‘SC’: SC value (float) for clustering (-1 to 1).</p></li>
+</ul>
 <p>BIC was adapted form this <a class="reference external" href="https://stats.stackexchange.com/questions/90769/using-bic-to-estimate-the-number-of-k-in-kmeans">StackExchange discussion</a>
 and modified to align with the SC and CH score so that higher values signify better clustering,
 contrary to conventional BIC implementation favoring lower values. See <a class="reference internal" href="../index/references.html#breimann24a" id="id3"><span>[Breimann24a]</span></a>.</p>
@@ -430,17 +437,17 @@ or the cluster contains one sample, its name is set to ‘Unclassified’.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<cite>array-like, shape (n_samples, n_features)</cite>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
-<li><p><strong>labels</strong> (<cite>array-like, shape (n_samples,)</cite>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
-<li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – List of sample names corresponding to <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
-<li><p><strong>shorten_names</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code> shorten version of the names will be used.</p></li>
+<li><p><strong>X</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
+<li><p><strong>labels</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><em>strings</em>) – List of sample names corresponding to <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>shorten_names</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>default=True</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code> shorten version of the names will be used.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>cluster_names</strong> – A list of renamed clusters based on names.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)">list</a></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)">list</a> of strings</p>
 </dd>
 </dl>
 </dd></dl>
@@ -452,14 +459,14 @@ or the cluster contains one sample, its name is set to ‘Unclassified’.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<cite>array-like, shape (n_samples, n_features)</cite>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
-<li><p><strong>labels</strong> (<cite>array-like, shape (n_samples,)</cite>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>X</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
+<li><p><strong>labels</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>centers</strong> (<cite>array-like, shape (n_clusters, )</cite>) – The computed center for each cluster.</p></li>
-<li><p><strong>labels_centers</strong> (<cite>array-like, shape (n_clusters, )</cite>) – The labels associated with each computed center.</p></li>
+<li><p><strong>centers</strong> (<em>array-like, shape (n_clusters, )</em>) – The computed center for each cluster.</p></li>
+<li><p><strong>labels_centers</strong> (<em>array-like, shape (n_clusters, )</em>) – The labels associated with each computed center.</p></li>
 </ul>
 </p>
 </dd>
@@ -473,9 +480,9 @@ or the cluster contains one sample, its name is set to ‘Unclassified’.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<cite>array-like, shape (n_samples, n_features)</cite>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
-<li><p><strong>labels</strong> (<cite>array-like, shape (n_samples, )</cite>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
-<li><p><strong>metric</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – <p>Similarity measure used to obtain medoids:</p>
+<li><p><strong>X</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
+<li><p><strong>labels</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>metric</strong> (<em>{'correlation'</em><em>, </em><em>'euclidean'</em><em>, </em><em>'manhattan'</em><em>, </em><em>'cosine'}</em><em>, </em><em>default='correlation'</em>) – <p>Similarity measure used to obtain medoids:</p>
 <blockquote>
 <div><ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">correlation</span></code>: Pearson correlation (maximum)</p></li>
@@ -489,8 +496,8 @@ or the cluster contains one sample, its name is set to ‘Unclassified’.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>medoids</strong> (<cite>array-like, shape (n_clusters,)</cite>) – The medoid for each cluster.</p></li>
-<li><p><strong>labels_medoids</strong> (<cite>array-like, shape (n_clusters,)</cite>) – The labels corresponding to each medoid.</p></li>
+<li><p><strong>medoids</strong> (<em>array-like, shape (n_clusters,)</em>) – The medoid for each cluster.</p></li>
+<li><p><strong>labels_medoids</strong> (<em>array-like, shape (n_clusters,)</em>) – The labels corresponding to each medoid.</p></li>
 </ul>
 </p>
 </dd>
@@ -504,19 +511,19 @@ or the cluster contains one sample, its name is set to ‘Unclassified’.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<cite>array-like, shape (n_samples, n_features)</cite>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
-<li><p><strong>labels</strong> (<cite>array-like, shape (n_samples,)</cite>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
-<li><p><strong>X_ref</strong> (<cite>array-like, shape (n_samples, n_features)</cite>) – Feature matrix of reference data. If given, samples of <code class="docutils literal notranslate"><span class="pre">X</span></code> are compared with samples of <code class="docutils literal notranslate"><span class="pre">X_ref</span></code>.</p></li>
-<li><p><strong>labels_ref</strong> (<cite>array-like, shape (n_samples_ref,)</cite>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X_ref</span></code>.</p></li>
-<li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – List of sample names corresponding to <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
-<li><p><strong>names_ref</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – List of sample names corresponding to <code class="docutils literal notranslate"><span class="pre">X_ref</span></code>.</p></li>
+<li><p><strong>X</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
+<li><p><strong>labels</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>X_ref</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix of reference data. If given, samples of <code class="docutils literal notranslate"><span class="pre">X</span></code> are compared with samples of <code class="docutils literal notranslate"><span class="pre">X_ref</span></code>.</p></li>
+<li><p><strong>labels_ref</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples_ref</em><em>,</em><em>)</em>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X_ref</span></code>.</p></li>
+<li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><em>strings</em><em>, </em><em>optional</em>) – List of sample names corresponding to <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>names_ref</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><em>strings</em><em>, </em><em>optional</em>) – List of sample names corresponding to <code class="docutils literal notranslate"><span class="pre">X_ref</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><em>df_corr</em> – DataFrame with correlation either for each pair in <code class="docutils literal notranslate"><span class="pre">X</span></code> of shape (n_samples, n_samples) or
+<li><p><strong>df_corr</strong> (<em>DataFrame</em>) – DataFrame with correlation either for each pair in <code class="docutils literal notranslate"><span class="pre">X</span></code> of shape (n_samples, n_samples) or
 for each pair between <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">X_ref</span></code> of shape (n_samples, n_samples_ref).</p></li>
-<li><p><strong>labels_sorted</strong> (<cite>array-like, shape (n_samples_ref,)</cite>) – Cluster labels for each sample and sorted as in <cite>df_corr</cite>.</p></li>
+<li><p><strong>labels_sorted</strong> (<em>array-like, shape (n_samples_ref,)</em>) – Cluster labels for each sample and sorted as in <cite>df_corr</cite>.</p></li>
 </ul>
 </p>
 </dd>
@@ -548,7 +555,9 @@ are considered only once, regardless of repetition.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – List of sample names. Should be subset of <code class="docutils literal notranslate"><span class="pre">names_ref</span></code>.</p></li>
+<li><p><strong>strings</strong> (<em>list of</em>) – List of sample names. Should be subset of <code class="docutils literal notranslate"><span class="pre">names_ref</span></code>.</p></li>
 <li><p><strong>names_ref</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – List of reference sample names. Should be superset of <code class="docutils literal notranslate"><span class="pre">names</span></code>.</p></li>
+<li><p><strong>strings</strong> – List of reference sample names. Should be superset of <code class="docutils literal notranslate"><span class="pre">names</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

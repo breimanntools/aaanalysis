@@ -83,7 +83,7 @@ def plot_eval(df_eval=None, dict_xlims=None, figsize=None, colors=None):
     fig, axes = plt.subplots(1, 4, sharey=True, figsize=figsize)
     for i, col in enumerate(ut.COLS_EVAL_AACLUST):
         ax = axes[i]
-        sns.barplot(ax=ax, data=df_eval, y=df_eval.index, x=col, color=colors[i])
+        sns.barplot(ax=ax, data=df_eval, y=ut.COL_NAME, x=col, color=colors[i])
         # Customize subplots
         ax.set_ylabel("")
         ax.set_xlabel(col)
