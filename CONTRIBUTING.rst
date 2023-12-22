@@ -354,16 +354,16 @@ or any custom testing template.
     Inputs:
     TARGET FUNCTION:
     - START OF CODE
-    -------------------------------------
+    -----------------------------------------
     [your code here]
-    -------------------------------------
+    -----------------------------------------
     - END OF CODE
 
     TESTING TEMPLATE:
     - START OF CODE
-    -------------------------------------
+    -----------------------------------------
     your code
-    -------------------------------------
+    -----------------------------------------
     - END OF CODE
 
     **Key Directive**: For the Normal Cases Test Class, EACH function MUST test ONLY ONE individual parameter of the TARGET FUNCTION using Hypothesis for property-based testing. This is crucial.
@@ -391,7 +391,7 @@ or any custom testing template.
     - In Normal Cases, one function = one parameter tested.
     - Aim for at least 30 unique tests, totaling 150+ lines of code.
 
-    Reminder: In Normal Cases, it's crucial to test parameters individually. Carefully create the Python code for all cases!
+    Reminder: In Normal Cases, it's crucial to test parameters individually. Take your time and carefully create the Python code for all cases!
     "
 
 ChatGPT has a token limit, which may truncate responses. To continue, simply ask **continue processing** or something

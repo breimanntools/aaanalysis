@@ -80,7 +80,6 @@ class dPULearnPlot:
         * :meth:`dPULearn.eval` for details on evaluation measures.
         * :func:`comp_auc_adjusted` and :func:`comp_kld`.
         """
-        # TODO finish check, test, examples
         # Check input
         cols_requiered = ut.COLS_EVAL_DPULEARN_SIMILARITY + [x for x in ut.COLS_EVAL_DPULEARN_DISSIMILARITY
                                                              if "KLD" not in x]
