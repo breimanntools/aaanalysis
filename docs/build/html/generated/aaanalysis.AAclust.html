@@ -333,7 +333,7 @@ function, respectively, as described in <a class="reference internal" href="../i
 </ul>
 </div></blockquote>
 </p></li>
-<li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><em>strings</em>) – List of sample names. If provided, sets <a class="reference internal" href="#aaanalysis.AAclust.medoid_names_" title="aaanalysis.AAclust.medoid_names_"><code class="xref py py-attr docutils literal notranslate"><span class="pre">AAclust.medoid_names_</span></code></a> attribute.</p></li>
+<li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – List of sample names. If provided, sets <a class="reference internal" href="#aaanalysis.AAclust.medoid_names_" title="aaanalysis.AAclust.medoid_names_"><code class="xref py py-attr docutils literal notranslate"><span class="pre">AAclust.medoid_names_</span></code></a> attribute.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -439,7 +439,7 @@ or the cluster contains one sample, its name is set to ‘Unclassified’.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>X</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
 <li><p><strong>labels</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
-<li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><em>strings</em>) – List of sample names corresponding to <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – List of sample names corresponding to <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
 <li><p><strong>shorten_names</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>default=True</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code> shorten version of the names will be used.</p></li>
 </ul>
 </dd>
@@ -447,7 +447,7 @@ or the cluster contains one sample, its name is set to ‘Unclassified’.</p>
 <dd class="field-even"><p><strong>cluster_names</strong> – A list of renamed clusters based on names.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)">list</a> of strings</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)">list</a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)">str</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -465,8 +465,8 @@ or the cluster contains one sample, its name is set to ‘Unclassified’.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>centers</strong> (<em>array-like, shape (n_clusters, )</em>) – The computed center for each cluster.</p></li>
-<li><p><strong>labels_centers</strong> (<em>array-like, shape (n_clusters, )</em>) – The labels associated with each computed center.</p></li>
+<li><p><strong>centers</strong> (<em>array-like, shape (n_clusters,)</em>) – The computed center for each cluster.</p></li>
+<li><p><strong>labels_centers</strong> (<em>array-like, shape (n_clusters,)</em>) – The labels associated with each computed center.</p></li>
 </ul>
 </p>
 </dd>
@@ -515,8 +515,8 @@ or the cluster contains one sample, its name is set to ‘Unclassified’.</p>
 <li><p><strong>labels</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
 <li><p><strong>X_ref</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix of reference data. If given, samples of <code class="docutils literal notranslate"><span class="pre">X</span></code> are compared with samples of <code class="docutils literal notranslate"><span class="pre">X_ref</span></code>.</p></li>
 <li><p><strong>labels_ref</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples_ref</em><em>,</em><em>)</em>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X_ref</span></code>.</p></li>
-<li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><em>strings</em><em>, </em><em>optional</em>) – List of sample names corresponding to <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
-<li><p><strong>names_ref</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><em>strings</em><em>, </em><em>optional</em>) – List of sample names corresponding to <code class="docutils literal notranslate"><span class="pre">X_ref</span></code>.</p></li>
+<li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – List of sample names corresponding to <code class="docutils literal notranslate"><span class="pre">X</span></code>.</p></li>
+<li><p><strong>names_ref</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>optional</em>) – List of sample names corresponding to <code class="docutils literal notranslate"><span class="pre">X_ref</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -555,9 +555,9 @@ are considered only once, regardless of repetition.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – List of sample names. Should be subset of <code class="docutils literal notranslate"><span class="pre">names_ref</span></code>.</p></li>
-<li><p><strong>strings</strong> (<em>list of</em>) – List of sample names. Should be subset of <code class="docutils literal notranslate"><span class="pre">names_ref</span></code>.</p></li>
+<li><p><strong>str</strong> (<em>list of</em>) – List of sample names. Should be subset of <code class="docutils literal notranslate"><span class="pre">names_ref</span></code>.</p></li>
 <li><p><strong>names_ref</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]) – List of reference sample names. Should be superset of <code class="docutils literal notranslate"><span class="pre">names</span></code>.</p></li>
-<li><p><strong>strings</strong> – List of reference sample names. Should be superset of <code class="docutils literal notranslate"><span class="pre">names</span></code>.</p></li>
+<li><p><strong>str</strong> – List of reference sample names. Should be superset of <code class="docutils literal notranslate"><span class="pre">names</span></code>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

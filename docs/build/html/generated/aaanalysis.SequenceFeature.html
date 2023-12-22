@@ -276,7 +276,7 @@ in one of four distinct formats, differentiated by their respective columns:</p>
 </li>
 </ul>
 </p></li>
-<li><p><strong>list_parts</strong> (list of strings, default={<code class="docutils literal notranslate"><span class="pre">tmd</span></code>, <code class="docutils literal notranslate"><span class="pre">jmd_n_tmd_n</span></code>, <code class="docutils literal notranslate"><span class="pre">tmd_c_jmd_c</span></code>}) – Names of sequence parts that should be obtained for sequences from <code class="docutils literal notranslate"><span class="pre">df_seq</span></code>.</p></li>
+<li><p><strong>list_parts</strong> (list of str, default={<code class="docutils literal notranslate"><span class="pre">tmd</span></code>, <code class="docutils literal notranslate"><span class="pre">jmd_n_tmd_n</span></code>, <code class="docutils literal notranslate"><span class="pre">tmd_c_jmd_c</span></code>}) – Names of sequence parts that should be obtained for sequences from <code class="docutils literal notranslate"><span class="pre">df_seq</span></code>.</p></li>
 <li><p><strong>jmd_n_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=10</em>) – Length of JMD-N in number of amino acids. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, <code class="docutils literal notranslate"><span class="pre">jmd_n</span></code> and <code class="docutils literal notranslate"><span class="pre">jmd_c</span></code> should be given.</p></li>
 <li><p><strong>jmd_c_len</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=10</em>) – Length of JMD-N in number of amino acids. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, <code class="docutils literal notranslate"><span class="pre">jmd_n</span></code> and <code class="docutils literal notranslate"><span class="pre">jmd_c</span></code> should be given.</p></li>
 <li><p><strong>all_parts</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>default=False</em>) – Whether to create DataFrame with all possible sequence parts (if <code class="docutils literal notranslate"><span class="pre">True</span></code>) or parts given by list_parts.</p></li>
@@ -383,7 +383,7 @@ by setting <code class="docutils literal notranslate"><span class="pre">remove_e
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>split_types</strong> (list of strings, default=[<code class="docutils literal notranslate"><span class="pre">Segment</span></code>, <code class="docutils literal notranslate"><span class="pre">Pattern</span></code>, <code class="docutils literal notranslate"><span class="pre">PeriodicPattern</span></code>]) – Split types for which parameter dictionary should be generated.</p></li>
+<li><p><strong>split_types</strong> (list of str, default=[<code class="docutils literal notranslate"><span class="pre">Segment</span></code>, <code class="docutils literal notranslate"><span class="pre">Pattern</span></code>, <code class="docutils literal notranslate"><span class="pre">PeriodicPattern</span></code>]) – Split types for which parameter dictionary should be generated.</p></li>
 <li><p><strong>n_split_min</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=1</em>) – Number to specify the greatest <code class="docutils literal notranslate"><span class="pre">Segment</span></code>. Should be &gt; 0.</p></li>
 <li><p><strong>n_split_max</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=15</em><em>,</em>) – Number to specify the smallest <code class="docutils literal notranslate"><span class="pre">Segment</span></code>. Should be &gt; <code class="docutils literal notranslate"><span class="pre">n_split_min</span></code>.</p></li>
 <li><p><strong>steps_pattern</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><em>integers</em><em>, </em><em>default=</em><em>[</em><em>3</em><em>, </em><em>4</em><em>, </em><em>6</em><em>, </em><em>7</em><em>, </em><em>8</em><em>]</em>) – Possible steps sizes for <code class="docutils literal notranslate"><span class="pre">Pattern</span></code>.</p></li>
@@ -533,7 +533,7 @@ two groups of sequences.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>list_parts</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><em>strings</em><em> (</em><em>n&gt;=1 parts</em><em>)</em><em>, </em><em>default=</em><em>[</em><em>&quot;tmd&quot;</em><em>, </em><em>&quot;jmd_n_tmd_n&quot;</em><em>, </em><em>&quot;tmd_c_jmd_c&quot;</em><em>]</em>) – Names of sequence parts which should be created (e.g., ‘tmd’).</p></li>
+<li><p><strong>list_parts</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em> (</em><em>n&gt;=1 parts</em><em>)</em><em>, </em><em>default=</em><em>[</em><em>&quot;tmd&quot;</em><em>, </em><em>&quot;jmd_n_tmd_n&quot;</em><em>, </em><em>&quot;tmd_c_jmd_c&quot;</em><em>]</em>) – Names of sequence parts which should be created (e.g., ‘tmd’).</p></li>
 <li><p><strong>all_parts</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>default=False</em>) – Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.</p></li>
 <li><p><strong>split_kws</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><em>dict</em></a><em>, </em><em>default=SequenceFeature.get_split_kws</em>) – Nested dictionary with parameter dictionary for each chosen split_type.</p></li>
 <li><p><strong>df_scales</strong> (<em>pd.DataFrame</em><em>,</em>) – DataFrame with default amino acid scales.</p></li>
@@ -543,7 +543,7 @@ two groups of sequences.</p></li>
 <dd class="field-even"><p><strong>features</strong> – Ids of all possible features for combination of Parts, Splits, and Scales with form: PART-SPLIT-SCALE</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)">list</a> of strings</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)">list</a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)">str</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -567,7 +567,7 @@ two groups of sequences.</p></li>
 <dd class="field-even"><p><strong>feat_names</strong> – Names of features.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)">list</a> of strings</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)">list</a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)">str</a></p>
 </dd>
 </dl>
 <div class="admonition-notes admonition">

@@ -20633,8 +20633,8 @@ for details the three different pairwise distance measures.</p></li>
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">eval</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names_datasets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_neg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comp_kld</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L219-L288"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn.eval" title="Permalink to this definition"></a></dt>
 <dd><p>Evaluates the quality of different sets of identified negatives.</p>
 <p>The quality is assessed regarding the homogeneity within the reliably identified negatives (0), and the
-differences with the groups of positives (1), unlabeled samples (2), and a ground-truth negative group
-if provided by <code class="docutils literal notranslate"><span class="pre">X_neg</span></code>.</p>
+dissimilarity with the groups of positives (‘pos’), unlabeled samples (‘unl’), and a ground-truth negative
+(‘neg’) group if provided by <code class="docutils literal notranslate"><span class="pre">X_neg</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -20660,7 +20660,7 @@ measures were averaged across all features.</p>
 <p class="admonition-title">Notes</p>
 <p><code class="docutils literal notranslate"><span class="pre">df_eval</span></code> includes the following columns:</p>
 <ul class="simple">
-<li><p>‘name’: Name of the dataset if <code class="docutils literal notranslate"><span class="pre">names</span></code> is provided.</p></li>
+<li><p>‘name’: Name of the dataset if <code class="docutils literal notranslate"><span class="pre">names</span></code> is provided (typically named by identification approach).</p></li>
 <li><p>‘n_rel_neg’: Number of identified negatives.</p></li>
 <li><p>‘avg_std’: Average standard deviation (STD) assessing homogeneity of identified negatives.
 Lower values indicate greater homogeneity.</p></li>
@@ -20700,9 +20700,9 @@ Label values should be either 0 (identified negative), 1 (positive) or 2 (unlabe
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p>If <code class="docutils literal notranslate"><span class="pre">return_upset_data</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>, returns a DataFrame (<cite>df_neg_comp</cite>) that combines <code class="docutils literal notranslate"><span class="pre">df_seq</span></code>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">return_upset_data=False</span></code>, returns a DataFrame (<cite>df_neg_comp</cite>) that combines <code class="docutils literal notranslate"><span class="pre">df_seq</span></code>
 (if provided) with a comparison of the negative sets for a general analysis.</p></li>
-<li><p>If <code class="docutils literal notranslate"><span class="pre">return_upset_data</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, returns a DataFrame (<cite>upset_data</cite>) formatted for generating  Upset
+<li><p>If <code class="docutils literal notranslate"><span class="pre">return_upset_data=True</span></code>, returns a DataFrame (<cite>upset_data</cite>) formatted for generating  Upset
 Plots, containing group size information for the intersection and unique elements across the label sets.</p></li>
 </ul>
 </p>
