@@ -11,6 +11,7 @@ from scipy.cluster.hierarchy import linkage, leaves_list
 import aaanalysis.utils as ut
 from ._utils_aaclust import _compute_medoids, _compute_centers
 
+# TODO add some (used for dPULearn eval plot) to plotting utility
 # I Helper Functions
 # Computation helper functions
 def _get_mean_rank(data):
@@ -51,29 +52,6 @@ def _get_clustered_order(df, method='average'):
     return df.iloc[:, new_order]
 
 
-# Plotting helper functions
-def _adjust_spines(ax=None):
-    """Adjust spines to be in middle if data range from <0 to >0"""
-    min_val, max_val = ax.get_xlim()
-    if max_val > 0 and min_val >= 0:
-        sns.despine(ax=ax)
-    else:
-        sns.despine(ax=ax, left=True)
-        current_lw = ax.spines['bottom'].get_linewidth()
-        ax.axvline(0, color='black', linewidth=current_lw)
-        val = max([abs(min_val), abs(max_val)])
-        ax.set_xlim(-val, val)
-    return ax
-
-
-def _x_ticks_0(ax):
-    """Apply custom formatting for x-axis ticks."""
-    def custom_x_ticks(x, pos):
-        """Format x-axis ticks."""
-        return f'{x:.2f}' if x else f'{x:.0f}'
-    ax.xaxis.set_major_formatter(mticker.FuncFormatter(custom_x_ticks))
-
-
 # II Main Functions
 def plot_eval(df_eval=None, dict_xlims=None, figsize=None, colors=None):
     """Plot evaluation of AAclust clustering results"""
@@ -88,7 +66,7 @@ def plot_eval(df_eval=None, dict_xlims=None, figsize=None, colors=None):
         ax.set_ylabel("")
         ax.set_xlabel(col)
         # Adjust spines
-        ax = _adjust_spines(ax=ax)
+        ax = ut.adjust_spines(ax=ax)
         # Manual xlims, if needed
         if dict_xlims and col in dict_xlims:
             ax.set_xlim(dict_xlims[col])
@@ -97,7 +75,7 @@ def plot_eval(df_eval=None, dict_xlims=None, figsize=None, colors=None):
         elif i == 2:
             ax.set_title("Quality measures", weight="bold")
         ax.tick_params(axis='y', which='both', left=False)
-        _x_ticks_0(ax=ax)
+        ut.x_ticks_0(ax=ax)
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.25, hspace=0)
     return fig, axes

@@ -22,7 +22,8 @@ from ._utils.check_data import (check_X, check_X_unique_samples,
                                 check_array_like, check_superset_subset,
                                 check_df)
 from ._utils.check_models import check_mode_class, check_model_kwargs
-from ._utils.check_plots import (check_vmin_vmax, check_color, check_cmap, check_palette,
+from ._utils.check_plots import (check_vmin_vmax, check_color, check_list_colors,
+                                 check_cmap, check_palette,
                                  check_ylim, check_y_categorical)
 
 # Special functions
@@ -35,7 +36,8 @@ from ._utils.plotting import (plot_gco, plot_get_clist_, plot_legend_)
 # Utility functions
 from ._utils.utils_metrics import (auc_adjusted_, kullback_leibler_divergence_, bic_score_)
 from ._utils.utils_output import (print_out, print_start_progress, print_progress, print_finished_progress)
-from ._utils.utils_ploting import plot_add_bars
+from ._utils.utils_plot_elements import plot_add_bars
+from ._utils.utils_plot_eval import adjust_spines, x_ticks_0
 
 
 # Folder structure
@@ -162,10 +164,11 @@ COL_AVG_ABS_AUC_UNL = "avg_abs_AUC_unl"
 COL_AVG_KLD_UNL = "avg_KLD_unl"
 COL_AVG_ABS_AUC_NEG = "avg_abs_AUC_neg"
 COL_AVG_KLD_NEG = "avg_KLD_neg"
-COLS_EVAL_DPULEARN = [COL_N_REL_NEG, COL_AVG_STD, COL_AVG_IQR, COL_AVG_ABS_AUC_POS,
-                      COL_AVG_KLD_POS,
-                      COL_AVG_ABS_AUC_UNL, COL_AVG_KLD_UNL,
-                      COL_AVG_ABS_AUC_NEG, COL_AVG_KLD_NEG]
+COLS_EVAL_DPULEARN_SIMILARITY = [COL_AVG_STD, COL_AVG_IQR]
+COLS_EVAL_DPULEARN_DISSIMILARITY = [COL_AVG_ABS_AUC_POS, COL_AVG_KLD_POS,
+                                    COL_AVG_ABS_AUC_UNL, COL_AVG_KLD_UNL,
+                                    COL_AVG_ABS_AUC_NEG, COL_AVG_KLD_NEG]
+COLS_EVAL_DPULEARN = [COL_N_REL_NEG] + COLS_EVAL_DPULEARN_SIMILARITY + COLS_EVAL_DPULEARN_DISSIMILARITY
 
 # Labels
 LABEL_FEAT_VAL = "Feature value"
@@ -190,6 +193,10 @@ COLOR_FEAT_NEG = '#326599'  # (50, 101, 133) Mean difference
 COLOR_FEAT_IMP = '#7F7F7F'  # (127, 127, 127) feature importance
 COLOR_TMD = '#00FA9A'       # (0, 250, 154)
 COLOR_JMD = '#0000FF'       # (0, 0, 255)
+COLOR_POS =  "#389d2b"    # (56, 157, 43)
+COLOR_UNL = "tab:gray"
+COLOR_NEG = "#ad4570"   # (173,69,112)
+COLOR_REL_NEG = "#ad9745" # (173, 151, 69)
 
 DICT_COLOR = {"SHAP_POS": COLOR_SHAP_POS,
               "SHAP_NEG": COLOR_SHAP_NEG,
@@ -197,7 +204,12 @@ DICT_COLOR = {"SHAP_POS": COLOR_SHAP_POS,
               "FEAT_NEG": COLOR_FEAT_NEG,
               "FEAT_IMP": COLOR_FEAT_IMP,
               "TMD": COLOR_TMD,
-              "JMD": COLOR_JMD}
+              "JMD": COLOR_JMD,
+              "SAMPLES_POS": COLOR_POS,
+              "SAMPLES_UNL": COLOR_UNL,
+              "SAMPLES_NEG": COLOR_NEG,
+              "SAMPLES_REL_NEG": COLOR_REL_NEG
+              }
 
 DICT_COLOR_CAT = {"ASA/Volume": "tab:blue",
                   "Composition": "tab:orange",

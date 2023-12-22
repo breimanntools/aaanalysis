@@ -227,8 +227,8 @@ class dPULearn:
         Evaluates the quality of different sets of identified negatives.
 
         The quality is assessed regarding the homogeneity within the reliably identified negatives (0), and the
-        differences with the groups of positives (1), unlabeled samples (2), and a ground-truth negative group
-        if provided by ``X_neg``.
+        dissimilarity with the groups of positives ('pos'), unlabeled samples ('unl'), and a ground-truth negative
+        ('neg') group if provided by ``X_neg``.
 
         Parameters
         ----------
@@ -256,7 +256,7 @@ class dPULearn:
         -----
         ``df_eval`` includes the following columns:
 
-        - 'name': Name of the dataset if ``names`` is provided.
+        - 'name': Name of the dataset if ``names`` is provided (typically named by identification approach).
         - 'n_rel_neg': Number of identified negatives.
         - 'avg_std': Average standard deviation (STD) assessing homogeneity of identified negatives.
           Lower values indicate greater homogeneity.
@@ -315,9 +315,9 @@ class dPULearn:
         Returns
         -------
         pd.DataFrame
-            - If ``return_upset_data`` is ``False``, returns a DataFrame (`df_neg_comp`) that combines ``df_seq``
+            - If ``return_upset_data=False``, returns a DataFrame (`df_neg_comp`) that combines ``df_seq``
               (if provided) with a comparison of the negative sets for a general analysis.
-            - If ``return_upset_data`` is ``True``, returns a DataFrame (`upset_data`) formatted for generating  Upset
+            - If ``return_upset_data=True``, returns a DataFrame (`upset_data`) formatted for generating  Upset
               Plots, containing group size information for the intersection and unique elements across the label sets.
 
         See Also

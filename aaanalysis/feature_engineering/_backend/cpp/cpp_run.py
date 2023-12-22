@@ -130,7 +130,7 @@ def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None, y=None, ac
         Absolute mean differences of feature values between samples of two groups.
     std_test: array-like, shape (n_features)
         Standard deviations of feature values in test group.
-    feat_names: list of strings
+    feat_names: list of str
         Names of all possible features for combination of Parts, Splits, and Scales.
     """
     # Input (df_parts, split_kws, df_scales, y) checked in main method (CPP.run())

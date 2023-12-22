@@ -145,7 +145,7 @@ class SequenceFeature:
             - Sequence-TMD-based format:
                 'sequence' and 'tmd' columns.
 
-        list_parts: list of strings, default={``tmd``, ``jmd_n_tmd_n``, ``tmd_c_jmd_c``}
+        list_parts: list of str, default={``tmd``, ``jmd_n_tmd_n``, ``tmd_c_jmd_c``}
             Names of sequence parts that should be obtained for sequences from ``df_seq``.
         jmd_n_len: int, default=10
             Length of JMD-N in number of amino acids. If ``None``, ``jmd_n`` and ``jmd_c`` should be given.
@@ -209,7 +209,7 @@ class SequenceFeature:
 
         Parameters
         ----------
-        split_types: list of strings, default=[``Segment``, ``Pattern``, ``PeriodicPattern``]
+        split_types: list of str, default=[``Segment``, ``Pattern``, ``PeriodicPattern``]
             Split types for which parameter dictionary should be generated.
         n_split_min: int, default=1
             Number to specify the greatest ``Segment``. Should be > 0.
@@ -412,7 +412,7 @@ class SequenceFeature:
 
         Parameters
         ----------
-        list_parts: list of strings (n>=1 parts), default=["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
+        list_parts: list of str (n>=1 parts), default=["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
             Names of sequence parts which should be created (e.g., 'tmd').
         all_parts: bool, default=False
             Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.
@@ -424,7 +424,7 @@ class SequenceFeature:
 
         Returns
         -------
-        features: list of strings
+        features: list of str
             Ids of all possible features for combination of Parts, Splits, and Scales with form: PART-SPLIT-SCALE
 
         """
@@ -469,7 +469,7 @@ class SequenceFeature:
 
         Returns
         -------
-        feat_names: list of strings
+        feat_names: list of str
             Names of features.
 
         Notes

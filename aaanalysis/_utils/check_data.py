@@ -8,11 +8,23 @@ import aaanalysis._utils.check_type as check_type
 
 # Helper functions
 def _convert_2d(val=None, name=None):
-    """Convert array like data to 2d array"""
+    """
+    Convert array-like data to 2D array. Handles lists of arrays, lists of lists, and 1D lists.
+    """
+    str_error = f"'{name}' should be a 2D list or 2D array with rows having the same number of columns."
     if isinstance(val, list):
+        # Check if List with arrays and return if yes
+        if all(isinstance(i, np.ndarray) for i in val):
+            try:
+                val = np.asarray(val)
+            except ValueError:
+                raise ValueError(str_error)
         # Convert 1D list to 2D list
-        if all(not isinstance(i, list) for i in val):
-            val = [val]
+        elif all(not isinstance(i, list) for i in val):
+            try:
+                val = np.asarray([val])
+            except ValueError:
+                raise ValueError(str_error)
         # For nested lists, ensure they are 2D (list of lists with equal lengths)
         else:
             try:
@@ -20,10 +32,14 @@ def _convert_2d(val=None, name=None):
                 if val.ndim != 2:
                     raise ValueError
             except ValueError:
-                raise ValueError(f"'{name}' should be a 2D list or array.")
+                raise ValueError(str_error)
     elif hasattr(val, 'ndim') and val.ndim == 1:
-        val = [val]
+        try:
+            val = np.asarray([val])
+        except ValueError:
+            raise ValueError(str_error)
     return val
+
 
 # Check array like
 def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan=False,

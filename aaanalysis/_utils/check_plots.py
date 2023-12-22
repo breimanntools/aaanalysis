@@ -46,6 +46,17 @@ def check_color(name=None, val=None, accept_none=False):
         raise ValueError(error)
 
 
+def check_list_colors(name=None, val=None, accept_none=False, min_n=None):
+    """Check if color list is valid"""
+    if accept_none and val is None:
+        return None # Skip check
+    val = ut_check.check_list_like(name=name, val=val, accept_none=accept_none, accept_str=True)
+    for l in val:
+        check_color(name=name, val=l, accept_none=accept_none)
+    if min_n is not None and len(val) > min_n:
+        raise ValueError(f"{name} should contain at least {min_n} colors")
+
+
 def check_cmap(name=None, val=None, accept_none=False):
     """Check if cmap is a valid colormap for matplotlib."""
     valid_cmaps = plt.colormaps()

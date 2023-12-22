@@ -174,7 +174,7 @@ class AAclustPlot:
         fig : plt.Figure
             Figure object for evaluation plot
         axes : plt.Axes
-            Axes object(s) containing four subplots.
+            Axes object(s) containing evaluation subplots.
 
         Notes
         -----

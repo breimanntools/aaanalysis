@@ -11,34 +11,70 @@ import aaanalysis.utils as ut
 
 
 # I Helper Functions
+def _plot_neg_homogeneity(ax=None, df_eval=None, col=None, colors=None, val_name="Value"):
+    """"""
+    sns.barplot(ax=ax, data=df_eval, y=ut.COL_NAME, x=col, color=colors[0])
+    # Adding the numbers to the end of the bars
+    for p in ax.patches:
+        val = p.get_width()
+        val = '{:.3f}'.format(val) if val < 1 else int(val)
+        ax.text(p.get_width() * 0.97, p.get_y() + p.get_height() / 2, val, ha='right', va='center')
+    # Customize subplots
+    ax.set_ylabel("")
+    ax.set_xlabel(val_name)
+    # Adjust spines
+    ax = ut.adjust_spines(ax=ax)
+    ut.x_ticks_0(ax=ax)
+    ax.tick_params(axis='y', which='both', left=False)
+
+
+def _plot_dist_dissimilarity(ax=None, df_eval=None, cols=None, colors=None, val_name="Value"):
+    """Plot how strong the distributions of identified negatives and the other groups differ"""
+    df_auc = df_eval[[ut.COL_NAME] + cols]
+    df_auc = df_auc.melt(id_vars=ut.COL_NAME, value_vars=cols, var_name="Reference", value_name=val_name)
+    dict_color = dict(zip(cols, colors[1:len(cols) + 1]))
+    ax = sns.barplot(ax=ax, data=df_auc, y=ut.COL_NAME, x=val_name,
+                     palette=dict_color, hue="Reference", legend=False, edgecolor="white")
+    # Customize subplots
+    ax.set_ylabel("")
+    ax.set_xlabel(val_name)
+    # Adjust spines
+    ax = ut.adjust_spines(ax=ax)
+    ut.x_ticks_0(ax=ax)
+    ax.tick_params(axis='y', which='both', left=False)
+    return ax
 
 
 # II Main Functions
-def plot_eval(df_eval=None, dict_xlims=None, figsize=None, colors=None):
+def plot_eval(df_eval=None, figsize=None, colors=None, legend=True, legend_y=-0.175):
     """Plot evaluation of AAclust clustering results"""
-    print(df_eval)
     # Plotting
     cols_eval = [x for x in ut.COLS_EVAL_DPULEARN if x in list(df_eval)]
-    cols_homogeneity = cols_eval[0:3]
+    cols_homogeneity = cols_eval[1:3]
     cols_auc = [c for c in cols_eval if "AUC" in c]
     cols_kld = [c for c in cols_eval if "KLD" in c]
-    ncols = 4 if len(cols_kld) != 0 else 5
+    kld_in = len(cols_kld) != 0
+    ncols = 3 if not kld_in else 4
     fig, axes = plt.subplots(1, ncols, sharey=True, figsize=figsize)
+    # Show Homogeneity
     for i, col in enumerate(cols_homogeneity):
         ax = axes[i]
-        sns.barplot(ax=ax, data=df_eval, y=df_eval.index, x=col, color=colors[i])
-        # Customize subplots
-        ax.set_ylabel("")
-        ax.set_xlabel(col)
-        # Adjust spines
-        #ax = _adjust_spines(ax=ax)
-        # Manual xlims, if needed
-        if dict_xlims and col in dict_xlims:
-            ax.set_xlim(dict_xlims[col])
-        if i == 1:
-            ax.set_title("Homogeneity", weight="bold")
-        ax.tick_params(axis='y', which='both', left=False)
-        #_x_ticks_0(ax=ax)
+        _plot_neg_homogeneity(ax=ax, df_eval=df_eval, col=col, colors=colors, val_name=col.replace("_", " "))
+        if i == 0:
+            ax.set_title("Homogeneity", weight="bold", ha="left")
+    # Plot distribution dissimilarity
+    ax = _plot_dist_dissimilarity(ax=axes[2], df_eval=df_eval, cols=cols_auc, colors=colors,  val_name="avg AUC")
+    if kld_in:
+        _plot_dist_dissimilarity(ax=axes[3], df_eval=df_eval, cols=cols_kld, colors=colors, val_name="avg KLD")
+        ax.set_title("Dissimilarity", weight="bold", ha="left")
+    else:
+        ax.set_title("Dissimilarity", weight="bold")
+    if legend:
+        labels = [x.split("_")[3].capitalize() for x in cols_auc]
+        dict_color = dict(zip(labels, colors[1:len(labels) + 1]))
+        ut.plot_legend_(ax=ax, dict_color=dict_color,
+                        title="Reference datasets", y=legend_y, handletextpad=0.1)
+    # Adjust plot
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.25, hspace=0)
     return fig, axes

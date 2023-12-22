@@ -184,7 +184,7 @@ class AAclust(Wrapper):
              - ``manhattan``: Manhattan distance (minimum)
              - ``cosine``: Cosine distance (minimum)
 
-        names : list of strings
+        names : list of str
             List of sample names. If provided, sets :attr:`AAclust.medoid_names_` attribute.
 
         Returns
@@ -349,14 +349,14 @@ class AAclust(Wrapper):
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
         labels : array-like, shape (n_samples,)
             Cluster labels for each sample in ``X``.
-        names : list of strings
+        names : list of str
             List of sample names corresponding to ``X``.
         shorten_names : bool, default=True
             If ``True`` shorten version of the names will be used.
 
         Returns
         -------
-        cluster_names : list of strings
+        cluster_names : list of str
             A list of renamed clusters based on names.
         """
         # Check input
@@ -387,9 +387,9 @@ class AAclust(Wrapper):
 
         Returns
         -------
-        centers : array-like, shape (n_clusters, )
+        centers : array-like, shape (n_clusters,)
             The computed center for each cluster.
-        labels_centers : array-like, shape (n_clusters, )
+        labels_centers : array-like, shape (n_clusters,)
             The labels associated with each computed center.
         """
         # Check input
@@ -461,9 +461,9 @@ class AAclust(Wrapper):
             Feature matrix of reference data. If given, samples of ``X`` are compared with samples of ``X_ref``.
         labels_ref  : array-like, shape (n_samples_ref,)
             Cluster labels for each sample in ``X_ref``.
-        names : list of strings, optional
+        names : list of str, optional
             List of sample names corresponding to ``X``.
-        names_ref : list of strings, optional
+        names_ref : list of str, optional
             List of sample names corresponding to ``X_ref``.
 
         Returns
@@ -515,9 +515,9 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        names, list of strings
+        names, list of str
             List of sample names. Should be subset of ``names_ref``.
-        names_ref, list of strings
+        names_ref, list of str
             List of reference sample names. Should be superset of ``names``.
 
         Returns
