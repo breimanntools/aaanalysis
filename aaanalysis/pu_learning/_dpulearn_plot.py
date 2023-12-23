@@ -44,17 +44,19 @@ class dPULearnPlot:
         ----------
         df_eval : DataFrame, shape (n_datasets, n_metrics)
             DataFrame with evaluation measures for sets of identified negatives. Each `row` corresponds to a specific
-            datas set including identified negatives. Requiered 'columns' are:
+            dataset including identified negatives. Requiered 'columns' are:
 
             - 'name': Name of datasets containing identified negatives (typically named by identification approach).
             - 'avg_STD': Average standard deviation (STD) assessing homogeneity of identified negatives.
             - 'avg_IQR': Average interquartile range (IQR) assessing homogeneity of identified negatives.
-            - 'avg_abs_AUC_DATASET': Average absolute area under the curve (AUC) assessing the similarity between the
-              set of identified negatives with other groups (positives, unlabeled, ground-truth negatives).
-            - 'avg_KLD_DATASET': Average Kullback-Leibler Divergence (KLD) assessing the distribution alignment
-              between the set of identified negatives and the other groups.
+            - 'avg_abs_AUC_DATASET': Average absolute area under the curve (AUC), which assesses the similarity between the
+              set of identified negatives and other datasets. 'DATASET' must be 'pos' (positive samples) and 'unl'
+              (unlabeled samples), as well as, optionally, 'neg' (ground-truth negative samples).
 
-            DATASET can be 'pos', 'unl', or 'neg'.
+            Optional columns include:
+
+            - 'avg_KLD_DATASET': The average Kullback-Leibler Divergence (KLD), which measures the distribution alignment
+              between the set of identified negatives and other datasets ('pos', 'unl', or 'neg').
 
         figsize : tuple, default=(6, 4)
             Width and height of the figure in inches.
@@ -70,8 +72,8 @@ class dPULearnPlot:
         -------
         fig : plt.Figure
             Figure object for evaluation plot
-        axes : plt.Axes
-            Axes object(s) containing evaluation subplots.
+        axes : array of plt.Axes
+            An array of Axes objects, each representing a subplot within the figure. .
 
         Notes
         -----
@@ -81,10 +83,13 @@ class dPULearnPlot:
         --------
         * :meth:`dPULearn.eval` for details on evaluation measures.
         * :func:`comp_auc_adjusted` and :func:`comp_kld`.
+
+        Examples
+        --------
+        .. include:: examples/dpul_plot_eval.rst
         """
         # Check input
-        cols_requiered = [ut.COL_NAME] + ut.COLS_EVAL_DPULEARN_SIMILARITY
-        cols_requiered += [x for x in ut.COLS_EVAL_DPULEARN_DISSIMILARITY if not ("KLD" in x or "neg" in x)]
+        cols_requiered = [ut.COL_NAME, ut.COL_AVG_STD, ut.COL_AVG_IQR, ut.COL_AVG_ABS_AUC_POS, ut.COL_AVG_ABS_AUC_UNL]
         ut.check_df(name="df_eval", df=df_eval, cols_requiered=cols_requiered, accept_none=False, accept_nan=False)
         ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
         ut.check_bool(name="legend", val=legend)

@@ -1,168 +1,170 @@
-import pandas as pd
-import matplotlib.pyplot as plt
+import hypothesis.strategies as some
 from hypothesis import given, settings
-import hypothesis.strategies as st
 import pytest
+from matplotlib import pyplot as plt
+import pandas as pd
 import numpy as np
 import aaanalysis as aa
+import random
+
+# Sample columns for testing
+COLS_EVAL_REQUIERED = ['name', 'avg_STD', 'avg_IQR', 'avg_abs_AUC_pos', 'avg_abs_AUC_unl']
+COLS_EVAL = COLS_EVAL_REQUIERED + ["avg_abs_AUC_neg", "avg_KLD_pos", "avg_KLD_unl", "avg_KLD_neg"]
+VALID_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w', 'tab:blue', 'tab:orange', 'tab:green', 'tab:red',
+                'tab:purple', 'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive']
+
+def _create_sample_df_eval(n_rows=5, just_ned=True, random_order=False):
+    cols = COLS_EVAL_REQUIERED if just_ned else COLS_EVAL
+    # Generate random data
+    data_matrix = [[random.uniform(0, 1) for _ in cols] for _ in range(n_rows)]
+    df_eval = pd.DataFrame(data_matrix, columns=cols)
+    if random_order:
+        shuffled_cols = random.sample(cols, len(cols))
+        df_eval = df_eval[shuffled_cols]
+    return df_eval
 
 
-# Helper function for creating a DataFrame for testing
-COLS_REQUIRED = ['name', 'avg_STD', 'avg_IQR'] + ['avg_abs_AUC_pos', 'avg_KLD_pos', "avg_abs_AUC_unl", "avg_KLD_unl"]
-COLS_REQUIRED_NEG = COLS_REQUIRED + ["avg_abs_AUC_neg", "avg_KLD_neg"]
-
-def create_df_eval(n_rows, n_cols, columns):
-    return pd.DataFrame(np.random.randn(n_rows, n_cols), columns=columns)
-
-"""
-# Test class for normal cases
 class TestdPULearnPlotEval:
-    # Constants for DataFrame column names
+    """Test aa.dPULearnPlot.eval() function for individual parameters."""
 
-    # Test df_eval parameter
-    def test_df_eval(self):
-        for i in range(2, 20):
-            df_eval = create_df_eval(5, len(COLS_REQUIRED), COLS_REQUIRED)
-            fig, axes = aa.dPULearnPlot.eval(df_eval)
+    # Positive tests
+    @settings(max_examples=10, deadline=2000)
+    @given(n_samples=some.integers(min_value=2, max_value=10))
+    def test_df_eval_valid(self, n_samples):
+        df_eval = _create_sample_df_eval(n_rows=n_samples)
+        fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval)
+        assert isinstance(fig, plt.Figure)
+        assert isinstance(axes, np.ndarray)
+        assert isinstance(axes[0], plt.Axes)
+        plt.close(fig)
+        df_eval = _create_sample_df_eval(n_rows=n_samples, just_ned=False)
+        fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval)
+        assert isinstance(fig, plt.Figure)
+        assert isinstance(axes, np.ndarray)
+        assert isinstance(axes[0], plt.Axes)
+        plt.close(fig)
+        df_eval = _create_sample_df_eval(n_rows=n_samples, just_ned=False, random_order=True)
+        fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval)
+        assert isinstance(fig, plt.Figure)
+        assert isinstance(axes, np.ndarray)
+        assert isinstance(axes[0], plt.Axes)
+        plt.close(fig)
 
+    @settings(max_examples=10, deadline=2000)
+    @given(figsize=some.tuples(some.floats(min_value=4, max_value=20), some.floats(min_value=4, max_value=20)))
+    def test_figsize_valid(self, figsize):
+        df_eval = _create_sample_df_eval()
+        fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval, figsize=figsize)
+        assert fig.get_size_inches()[0] == figsize[0]
+        assert fig.get_size_inches()[1] == figsize[1]
+        plt.close(fig)
+
+    def test_legend_valid(self):
+        df_eval = _create_sample_df_eval()
+        for legend in [True, False]:
+            fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval, legend=legend)
             assert isinstance(fig, plt.Figure)
-            assert isinstance(axes, plt.Axes)
-            df_eval = create_df_eval(5, len(COLS_REQUIRED_NEG), COLS_REQUIRED_NEG)
-            fig, axes = aa.dPULearnPlot.eval(df_eval)
+            assert isinstance(axes, np.ndarray)
+            assert isinstance(axes[0], plt.Axes)
+            plt.close(fig)
+
+
+    @settings(max_examples=10, deadline=2000)
+    @given(legend_y=some.floats(min_value=-1, max_value=1))
+    def test_legend_y_valid(self, legend_y):
+        df_eval = _create_sample_df_eval()
+        fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval, legend_y=legend_y)
+        assert isinstance(fig, plt.Figure)
+        assert isinstance(axes, np.ndarray)
+        assert isinstance(axes[0], plt.Axes)
+        plt.close(fig)
+
+    def test_colors_valid(self):
+        # Test 15 random color lists
+        for i in range(15):
+            df_eval = _create_sample_df_eval()
+            colors = random.sample(VALID_COLORS, 4)
+            fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval, colors=colors)
             assert isinstance(fig, plt.Figure)
-            assert isinstance(axes, plt.Axes)
+            assert isinstance(axes, np.ndarray)
+            assert isinstance(axes[0], plt.Axes)
+            plt.close(fig)
 
-    # Test figsize parameter
-    @settings(max_examples=10, deadline=200)
-    @given(figsize=st.tuples(st.floats(min_value=4, max_value=20), st.floats(min_value=4, max_value=20)))
-    def test_figsize(self, figsize):
-        df_eval = create_df_eval(5, len(COLS_REQUIRED), COLS_REQUIRED)
-        fig, _ = aa.dPULearnPlot.eval(df_eval, figsize=figsize)
-        assert fig.get_size_inches() == figsize
-
-    # Test legend parameter
-    @settings(max_examples=10, deadline=200)
-    @given(legend=st.booleans())
-    def test_legend(self, legend):
-        df_eval = create_df_eval(5, len(COLS_REQUIRED), COLS_REQUIRED)
-        fig, axes = aa.dPULearnPlot.eval(df_eval, legend=legend)
-        assert isinstance(fig, plt.Figure)
-        assert isinstance(axes, plt.Axes)
-        
-        
-    # Test legend_y parameter
-    @settings(max_examples=10, deadline=200)
-    @given(legend_y=st.floats())
-    def test_legend_y(self, legend_y):
-        df_eval = create_df_eval(5, len(COLS_REQUIRED), COLS_REQUIRED)
-        fig, axes = aa.dPULearnPlot.eval(df_eval, legend_y=legend_y)
-        assert isinstance(fig, plt.Figure)
-        assert isinstance(axes, plt.Axes)
-
-    # Test colors parameter
-    @settings(max_examples=10, deadline=200)
-    @given(colors=st.lists(st.text(), min_size=4))
-    def test_colors(self, colors):
-        df_eval = create_df_eval(5, len(COLS_REQUIRED), COLS_REQUIRED)
-        fig, axes = aa.dPULearnPlot.eval(df_eval, colors=colors)
-        assert isinstance(fig, plt.Figure)
-        assert isinstance(axes, plt.Axes)
-
-    # Negative tests
-    @settings(max_examples=10, deadline=200)
-    def test_invalid_df_eval(self):
+    # Negative tests for each parameter
+    def test_df_eval_invalid(self):
+        with pytest.raises(ValueError):
+            aa.dPULearnPlot.eval(df_eval="invalid")
         with pytest.raises(ValueError):
             aa.dPULearnPlot.eval(df_eval=None)
-
-
-    @settings(max_examples=10, deadline=200)
-    def test_invalid_figsize_(self):
-        df_eval = create_df_eval(5, len(COLS_REQUIRED), COLS_REQUIRED)
+        df_eval = _create_sample_df_eval()
+        df_eval.columns = [c.upper() for c in list(df_eval)]
         with pytest.raises(ValueError):
-            aa.dPULearnPlot.eval(df_eval, figsize=(-5, -5))
-
-    @given(figsize=st.one_of(st.tuples(st.floats(max_value=0), st.floats(min_value=1)),
-                             st.tuples(st.floats(min_value=1), st.floats(max_value=0))))
-    def test_invalid_figsize(self, figsize):
-        df_eval = pd.DataFrame(np.random.randn(5, len(COLS_REQUIRED)), columns=COLS_REQUIRED)
+            aa.dPULearnPlot.eval(df_eval=df_eval)
+        df_eval.columns = ["name" for i in list(df_eval)]
         with pytest.raises(ValueError):
-            aa.dPULearnPlot.eval(df_eval, figsize=figsize)
+            aa.dPULearnPlot.eval(df_eval=df_eval)
 
-    @settings(max_examples=10, deadline=200)
-    @given(legend_y=st.one_of(st.text(), st.none()))
-    def test_invalid_legend_y(self, legend_y):
-        df_eval = pd.DataFrame(np.random.randn(5, len(COLS_REQUIRED)), columns=COLS_REQUIRED)
-        with pytest.raises(TypeError):
-            aa.dPULearnPlot.eval(df_eval, legend_y=legend_y)
-
-    @settings(max_examples=10, deadline=200)
-    @given(colors=st.lists(st.integers(), min_size=4))
-    def test_invalid_colors(self, colors):
-        df_eval = pd.DataFrame(np.random.randn(5, len(COLS_REQUIRED)), columns=COLS_REQUIRED)
-        with pytest.raises(TypeError):
-            aa.dPULearnPlot.eval(df_eval, colors=colors)
-
-    @settings(max_examples=10, deadline=200)
-    def test_missing_required_columns(self):
-        df_eval = pd.DataFrame(np.random.randn(5, 3), columns=['col1', 'col2', 'col3'])
+    def test_figsize_invalid(self):
+        df_eval = _create_sample_df_eval()
         with pytest.raises(ValueError):
-            aa.dPULearnPlot.eval(df_eval)
+            aa.dPULearnPlot.eval(df_eval=df_eval, figsize=(0, 4))
+
+    def test_legend_y_invalid(self):
+        df_eval = _create_sample_df_eval()
+        with pytest.raises(ValueError):
+            aa.dPULearnPlot.eval(df_eval=df_eval, legend_y="invalid")
+
+    def test_colors_invalid(self):
+        df_eval = _create_sample_df_eval()
+        with pytest.raises(ValueError):
+            aa.dPULearnPlot.eval(df_eval=df_eval, colors="invalid")
+        colors = random.sample(VALID_COLORS, 2)
+        with pytest.raises(ValueError):
+            aa.dPULearnPlot.eval(df_eval=df_eval, colors=colors)
+        colors = [None] * 4
+        with pytest.raises(ValueError):
+            aa.dPULearnPlot.eval(df_eval=df_eval, colors=colors)
 
 
-# Test class for complex cases
 class TestdPULearnPlotEvalComplex:
-    
-    # Test with valid combinations of parameters
-    def test_valid_combinations(self):
-        df_eval = create_df_eval(5, 5, COLS_REQUIRED)
-        figsize = (10, 8)
-        colors = ['red', 'green', 'blue', 'yellow']
-        fig, axes = aa.dPULearnPlot.eval(df_eval, figsize=figsize, colors=colors)
+    """Test aa.dPULearnPlot.eval() function for combinations of parameters."""
+
+    def test_valid_combination(self):
+        df_eval = _create_sample_df_eval()
+        figsize = (8, 6)
+        legend = True
+        legend_y = -0.2
+        colors = ['blue', 'green', 'red', 'yellow']
+        fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval, figsize=figsize, legend=legend, legend_y=legend_y, colors=colors)
         assert isinstance(fig, plt.Figure)
-        assert isinstance(axes, plt.Axes)
+        assert isinstance(axes, np.ndarray)
+        assert isinstance(axes[0], plt.Axes)
+        plt.close(fig)
 
-    # Negative tests for invalid combinations
-    @settings(max_examples=10, deadline=200)
-    def test_invalid_combinations(self):
-        with pytest.raises(ValueError):
-            df_eval = pd.DataFrame({'wrong_column': [1, 2, 3]})
-            aa.dPULearnPlot.eval(df_eval)
-            
-            
-    # Complex test: Valid combinations with varying data sizes and formats
-    @settings(max_examples=10, deadline=200)
-    @given(n_rows=st.integers(min_value=1, max_value=10),
-           figsize=st.tuples(st.floats(min_value=4, max_value=20), st.floats(min_value=4, max_value=20)),
-           legend=st.booleans(), legend_y=st.floats(min_value=-1, max_value=1),
-           colors=st.lists(st.sampled_from(['red', 'green', 'blue', 'yellow']), min_size=4))
-    def test_valid_combinations_varied(self, n_rows, figsize, legend, legend_y, colors):
-        df_eval = pd.DataFrame(np.random.randn(n_rows, len(COLS_REQUIRED)), columns=COLS_REQUIRED)
-        fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval, figsize=figsize, legend=legend, legend_y=legend_y,
-                                      colors=colors)
+    def test_valid_combination_diff_legend_pos(self):
+        """Test with a valid combination of parameters and different legend positions."""
+        df_eval = _create_sample_df_eval()
+        figsize = (8, 6)
+        legend = True
+        legend_y = 0.5  # Different from the usual -0.2
+        colors = ['blue', 'green', 'red', 'yellow']
+        fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval, figsize=figsize, legend=legend, legend_y=legend_y, colors=colors)
         assert isinstance(fig, plt.Figure)
-        assert isinstance(axes, plt.Axes)
+        assert isinstance(axes, np.ndarray)
+        assert isinstance(axes[0], plt.Axes)
+        plt.close(fig)
 
-    # Complex test: Invalid combinations with mismatched data and parameters
-    @settings(max_examples=10, deadline=200)
-    def test_invalid_combinations_mismatched(self):
-        df_eval = pd.DataFrame(np.random.randn(5, 2),
-                               columns=['avg_std', 'avg_iqr'])  # Missing some required columns
+    def test_invalid_combination(self):
+        df_eval = _create_sample_df_eval()
         with pytest.raises(ValueError):
-            aa.dPULearnPlot.eval(df_eval, figsize=(10, -5), colors=['red', 123])
+            aa.dPULearnPlot.eval(df_eval=df_eval, figsize=(0, 4), legend=123, legend_y='invalid')
 
-    # Complex test: Handling of NaN and Inf values in df_eval
-    @settings(max_examples=10, deadline=200)
-    @given(data=st.lists(st.lists(st.floats(allow_nan=True, allow_infinity=True)), min_size=1, max_size=10))
-    def test_nan_inf_in_df_eval(self, data):
+    def test_invalid_color_list(self):
+        """Test with an invalid color list."""
+        df_eval = _create_sample_df_eval()
+        figsize = (8, 6)
+        legend = True
+        legend_y = -0.2
+        colors = ['blue']  # Only one color for multiple data categories
         with pytest.raises(ValueError):
-            aa.dPULearnPlot.eval(df_eval=data)
-
-    # Complex test: Extreme values for legend_y and figsize
-    @settings(max_examples=10, deadline=200)
-    def test_extreme_values_for_parameters(self):
-        df_eval = pd.DataFrame(np.random.randn(5, len(COLS_REQUIRED)), columns=COLS_REQUIRED)
-        extreme_figsize = (100, 100)  # Unusually large figsize
-        extreme_legend_y = 100  # Unusually large legend_y
-        with pytest.raises(Exception):  # Expect some form of exception due to extreme values
-            aa.dPULearnPlot.eval(df_eval, figsize=extreme_figsize, legend_y=extreme_legend_y)
-"""
+            aa.dPULearnPlot.eval(df_eval=df_eval, figsize=figsize, legend=legend, legend_y=legend_y, colors=colors)

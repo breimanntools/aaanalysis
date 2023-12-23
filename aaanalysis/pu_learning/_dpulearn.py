@@ -102,10 +102,6 @@ class dPULearn:
 
         For distance-based identification, 'PCi' columns are replaced with the results for the selected metric.
 
-    Notes
-    -----
-    * The method is inspired by deterministic PU learning techniques and follows an information-theoretic PU learning approach.
-
     See Also
     --------
     * For a detailed discussion on Positive-Unlabeled (PU) learning, its challenges, and evaluation strategies,
