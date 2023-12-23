@@ -88,8 +88,6 @@ def _eval_distribution_alignment_X_neg(X=None, labels=None, X_neg=None, comp_kld
 @ut.catch_runtime_warnings()
 def eval_identified_negatives(X=None, list_labels=None, names_datasets=None, X_neg=None, comp_kld=True):
     """Evaluate set of identified negatives for homogeneity and alignment with other datasets"""
-    if names_datasets is None:
-        names_datasets = [f"Set {i}" for i in range(1, len())]
     unl_in = False
     list_evals = []
     for labels in list_labels:

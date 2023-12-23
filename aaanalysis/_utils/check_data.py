@@ -66,7 +66,8 @@ def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan
     try:
         val = check_array(val, dtype=expected_dtype, ensure_2d=ensure_2d, force_all_finite=not allow_nan)
     except Exception as e:
-        raise ValueError(f"'{name}' should be array-like with {dtype} values."
+        dtype = "any type" if dtype is None else dtype
+        raise ValueError(f"'{name}' should be array-like with '{dtype}' values."
                          f"\nscikit message:\n\t{e}")
     return val
 
@@ -151,14 +152,14 @@ def check_match_X_labels(X=None, X_name="X", labels=None, labels_name="labels", 
         for label in unique_labels:
             group_X = X[labels == label]
             if not np.all(np.var(group_X, axis=0) != 0):
-                raise ValueError(f"Variance in 'X' for '{label}' from '{labels_name}' is too low to compute KDL")
+                raise ValueError(f"Variance in 'X' for label '{label}' from '{labels_name}' is too low to compute KDL")
 
 
 def check_match_X_list_labels(X=None, list_labels=None, comp_kld=False, vals_requiered=None):
     """Check if each label set is matching with X"""
     for i, labels in enumerate(list_labels):
         check_labels(labels=labels, vals_requiered=vals_requiered)
-        check_match_X_labels(X=X, labels=labels, labels_name=f"list_labels (set {i+1}",
+        check_match_X_labels(X=X, labels=labels, labels_name=f"list_labels (set {i+1})",
                              check_variability_for_kld=comp_kld)
 
 

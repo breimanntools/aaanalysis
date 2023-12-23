@@ -62,6 +62,15 @@ def check_match_list_labels_df_seq(list_labels=None, df_seq=None):
         raise ValueError(f"Number of samples (n={n_samples}) in 'list_labels' does not match with "
                          f"samples in 'df_seq' (n={len(df_seq)})")
 
+def check_match_X_X_neg(X=None, X_neg=None):
+    """Check if number of features matches in both feature matrices"""
+    if X_neg is None:
+        return # Skip test
+    n_features = X.shape[1]
+    n_features_neg =  X_neg.shape[1]
+    if n_features != n_features_neg:
+        raise ValueError(f"'n_features' does not match between 'X' (n={n_features}) and 'X_neg' (n={n_features_neg})")
+
 
 # II Main Functions
 class dPULearn:
@@ -192,7 +201,7 @@ class dPULearn:
 
         Examples
         --------
-        .. include:: examples/dpulearn_fit.rst
+        .. include:: examples/dpul_fit.rst
         """
         # Check input
         X= ut.check_X(X=X)
@@ -215,20 +224,22 @@ class dPULearn:
         self.df_pu_ = df_pu
         return self
 
-    # TODO test, examples
     @staticmethod
     def eval(X: ut.ArrayLike2D,
              list_labels: ut.ArrayLike2D = None,
              names_datasets: Optional[List[str]] = None,
              X_neg: Optional[ut.ArrayLike2D] = None,
-             comp_kld: bool = True,
+             comp_kld: bool = False,
              ) -> pd.DataFrame:
         """
         Evaluates the quality of different sets of identified negatives.
 
-        The quality is assessed regarding the homogeneity within the reliably identified negatives (0), and the
-        dissimilarity with the groups of positives ('pos'), unlabeled samples ('unl'), and a ground-truth negative
-        ('neg') group if provided by ``X_neg``.
+        The quality is assessed regarding two quality groups:
+
+        - **Homogeneity** within the reliably identified negatives (0)
+        - **Dissimilarity** between the reliably identified negatives and the groups
+          of positive samples ('pos'), unlabeled samples ('unl'), and a ground-truth negative
+          ('neg') sample group if provided by ``X_neg``
 
         Parameters
         ----------
@@ -239,10 +250,10 @@ class dPULearn:
             Label values should be either 0 (identified negative), 1 (positive) or 2 (unlabeled).
         names_datasets : list, optional
             List of dataset names corresponding to ``list_labels``.
-        X_neg : array-like, shape (n_samples, n_features), optional
-            Feature matrix where `n_samples` is the number of samples and `n_features` is the number of features.
-            Samples should be ground-truth negative samples, and features must correspond to ``X``.
-        comp_kld : bool, default=True
+        X_neg : array-like, shape (n_samples_neg, n_features), optional
+            Feature matrix where `n_samples_neg` is the number ground-truth negative samples
+            and `n_features` is the number of features. Features must correspond to ``X``.
+        comp_kld : bool, default=False
             Whether to compute Kullback-Leibler Divergence (KLD) to assess the distribution alignment between
             identified negatives and other data groups. Disable (``False``) if ``X`` is sparse or has low co-variance.
 
@@ -262,36 +273,41 @@ class dPULearn:
           Lower values indicate greater homogeneity.
         - 'avg_iqr': Average interquartile range (IQR) assessing homogeneity of identified negatives.
           Lower values suggest greater homogeneity.
-        - 'avg_abs_auc_DATASET': Average absolute area under the curve (AUC) assessing the similarity between the
+        - 'avg_abs_auc_DATASET': Average absolute area under the curve (AUC) assessing the dissimilarity between the
           set of identified negatives with other groups (positives, unlabeled, ground-truth negatives).
-          Separate columns are provided for each comparison. Lower values indicate greater similarity.
-        - 'avg_kld_DATASET': Average Kullback-Leibler Divergence (KLD) assessing the distribution alignment
-          between the set of identified negatives and the other groups. Lower values indicate greater similarity.
+          Separate columns are provided for each comparison. Higher values indicate greater dissimilarity.
+        - 'avg_kld_DATASET': Average Kullback-Leibler Divergence (KLD) assessing the dissimilarity of distributions
+          between the set of identified negatives and the other groups. Higher values indicate greater dissimilarity.
           These columns are omitted if ``kld`` is set to ``False``.
 
         See Also
         --------
-        * See :ref:`usage_principles_pu_learning` for details on different evaluation strategies,
+        * See :ref:`usage_principles_pu_learning` for details on different evaluation strategies.
+
+        Examples
+        --------
+        .. include:: examples/dpul_eval.rst
         """
         # Check input
         X= ut.check_X(X=X)
-        X_neg = ut.check_X(X=X_neg, X_name="X_neg", accept_none=True)
+        X_neg = ut.check_X(X=X_neg, X_name="X_neg", accept_none=True, min_n_samples=2)
         ut.check_bool(name="comp_kld", val=comp_kld)
         list_labels = ut.check_array_like(name="list_labels", val=list_labels, ensure_2d=True, convert_2d=True)
         names_datasets = ut.check_list_like(name="names", val=names_datasets, accept_none=True, accept_str=True,
                                             check_all_str_or_convertible=True)
         ut.check_match_X_list_labels(X=X, list_labels=list_labels, comp_kld=comp_kld, vals_requiered=[0])
         ut.check_match_list_labels_names_datasets(list_labels=list_labels, names_datasets=names_datasets)
+        check_match_X_X_neg(X=X, X_neg=X_neg)
         # Evaluation for homogeneity within negatives and alignment of distribution with other datasets
         df_eval = eval_identified_negatives(X=X, list_labels=list_labels, names_datasets=names_datasets,
                                             X_neg=X_neg, comp_kld=comp_kld)
         return df_eval
 
-    # TODO test, examples
     @staticmethod
     def compare_sets_negatives(list_labels: ut.ArrayLike1D = None,
                                names: Optional[List[str]] = None,
                                df_seq: Optional[pd.DataFrame] = None,
+                               remove_non_neg : bool = True,
                                return_upset_data: bool = False
                                ) -> pd.DataFrame:
         """
@@ -304,21 +320,25 @@ class dPULearn:
         ----------
         list_labels : array-like, shape (n_datasets,)
             List of dataset labels for samples in ``X`` obtained by the :meth:`dPULearn.fit` method.
-            Label values should be either 0 (identified negative), 1 (positive) or 2 (unlabeled).
+            Label values should be either 0 (identified negative), 1 (positive) or 2 (unlabeled). Must contain 0.
         names : list, optional
             List of dataset names corresponding to ``list_labels``.
-        df_seq : DataFrame, shape (n_samples, n_seq_infp), optional
+        df_seq : DataFrame, shape (n_samples, n_seq_info), optional
             DataFrame with sequence information for entries corresponding to 'labels' of ``list_labels``.
+        remove_non_neg : bool, default=True
+            If ``True``, all rows are removed that do not contain identified negatives in any provided dataset.
         return_upset_data : bool, default=False
             Whether to return a DataFrame for Upset Plot (if ``True``) or for a general comparison of sets of negatives.
 
         Returns
         -------
-        pd.DataFrame
-            - If ``return_upset_data=False``, returns a DataFrame (`df_neg_comp`) that combines ``df_seq``
-              (if provided) with a comparison of the negative sets for a general analysis.
-            - If ``return_upset_data=True``, returns a DataFrame (`upset_data`) formatted for generating  Upset
-              Plots, containing group size information for the intersection and unique elements across the label sets.
+        pd.DataFrame or pd.Series
+            - If ``return_upset_data=False`` (default):
+              Returns a pd.DataFrame (`df_neg_comp`) that combines ``df_seq`` (if provided) with a comparison of the
+              negative sets for a general analysis.
+            - If ``return_upset_data=True``:
+              Returns a pd.Series DataFrame (`upset_data`) formatted for generating  Upset Plots, containing group
+              size information for the intersection and unique elements across the label sets.
 
         See Also
         --------
@@ -326,18 +346,22 @@ class dPULearn:
         * :meth:`SequenceFeature.get_df_parts` for details on format of ``df_seq``.
         * Upset Plot documentation: :func:`upsetplot.plot`.
 
+        Examples
+        --------
+        .. include:: examples/dpul_compare_sets_negatives.rst
         """
         # Check input
-        list_labels = ut.check_list_like(name="list_labels", val=list_labels, accept_none=False, accept_str=False)
+        list_labels = ut.check_array_like(name="list_labels", val=list_labels,
+                                          ensure_2d=True, convert_2d=True)
         names = ut.check_list_like(name="names", val=names, accept_none=True,
-                                               accept_str=True, check_all_str_or_convertible=True)
+                                   accept_str=True, check_all_str_or_convertible=True)
         ut.check_df_seq(df_seq=df_seq, accept_none=True)
         ut.check_bool(name="return_upset_data", val=return_upset_data)
         ut.check_match_list_labels_names_datasets(list_labels=list_labels, names_datasets=names)
         check_match_list_labels_df_seq(list_labels=list_labels, df_seq=df_seq)
         # Comparison of identified sets of negatives
         args = dict(list_labels=list_labels, names=names,
-                    df_seq=df_seq, return_upset_data=return_upset_data)
+                    df_seq=df_seq, return_upset_data=return_upset_data, remove_non_neg=remove_non_neg)
         if return_upset_data:
             upset_data = compare_sets_negatives_(**args)
             return upset_data

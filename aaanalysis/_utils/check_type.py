@@ -100,7 +100,7 @@ def check_tuple(name=None, val=None, n=None, check_n_number=True, accept_none=Fa
 
 
 def check_list_like(name=None, val=None, accept_none=False, convert=True, accept_str=False,
-                    check_all_non_neg_int=False, check_all_str_or_convertible=False):
+                    check_all_non_neg_int=False, check_all_non_none=True, check_all_str_or_convertible=False):
     """Check if the value is list-like, optionally converting it to a list, and performing additional checks."""
     if val is None:
         if not accept_none:
@@ -118,6 +118,10 @@ def check_list_like(name=None, val=None, accept_none=False, convert=True, accept
         if isinstance(val, np.ndarray) and val.ndim != 1:
             raise ValueError(f"'{name}' is a multi-dimensional numpy array and cannot be considered as a list.")
         val = list(val) if isinstance(val, (np.ndarray, pd.Series)) else val
+    if check_all_non_none:
+        n_none = len([x for x in val if x is None])
+        if n_none > 0:
+            raise ValueError(f"'name' should not contain 'None' (n={n_none})")
     if check_all_non_neg_int:
         if any(type(i) != int or i < 0 for i in val):
             raise ValueError(f"'{name}' should only contain non-negative integers.")

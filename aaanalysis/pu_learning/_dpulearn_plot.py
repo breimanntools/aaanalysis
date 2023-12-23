@@ -47,12 +47,14 @@ class dPULearnPlot:
             datas set including identified negatives. Requiered 'columns' are:
 
             - 'name': Name of datasets containing identified negatives (typically named by identification approach).
-            - 'avg_std': Average standard deviation (STD) assessing homogeneity of identified negatives.
-            - 'avg_iqr': Average interquartile range (IQR) assessing homogeneity of identified negatives.
-            - 'avg_abs_auc_DATASET': Average absolute area under the curve (AUC) assessing the similarity between the
+            - 'avg_STD': Average standard deviation (STD) assessing homogeneity of identified negatives.
+            - 'avg_IQR': Average interquartile range (IQR) assessing homogeneity of identified negatives.
+            - 'avg_abs_AUC_DATASET': Average absolute area under the curve (AUC) assessing the similarity between the
               set of identified negatives with other groups (positives, unlabeled, ground-truth negatives).
-            - 'avg_kld_DATASET': Average Kullback-Leibler Divergence (KLD) assessing the distribution alignment
+            - 'avg_KLD_DATASET': Average Kullback-Leibler Divergence (KLD) assessing the distribution alignment
               between the set of identified negatives and the other groups.
+
+            DATASET can be 'pos', 'unl', or 'neg'.
 
         figsize : tuple, default=(6, 4)
             Width and height of the figure in inches.
@@ -81,8 +83,8 @@ class dPULearnPlot:
         * :func:`comp_auc_adjusted` and :func:`comp_kld`.
         """
         # Check input
-        cols_requiered = ut.COLS_EVAL_DPULEARN_SIMILARITY + [x for x in ut.COLS_EVAL_DPULEARN_DISSIMILARITY
-                                                             if "KLD" not in x]
+        cols_requiered = [ut.COL_NAME] + ut.COLS_EVAL_DPULEARN_SIMILARITY
+        cols_requiered += [x for x in ut.COLS_EVAL_DPULEARN_DISSIMILARITY if not ("KLD" in x or "neg" in x)]
         ut.check_df(name="df_eval", df=df_eval, cols_requiered=cols_requiered, accept_none=False, accept_nan=False)
         ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
         ut.check_bool(name="legend", val=legend)
