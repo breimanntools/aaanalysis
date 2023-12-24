@@ -71,7 +71,7 @@ class TestPlotSettings:
 class TestPlotSettingsComplexCases:
 
     @given(st.floats(min_value=0, allow_nan=False, allow_infinity=False),
-           st.sampled_from(["Arial", "Verdana", "Helvetica", "DejaVu Sans"]),
+           st.sampled_from(['Arial', 'Courier New', 'DejaVu Sans', 'Times New Roman', 'Verdana']),
            st.booleans(),
            st.booleans(),
            st.booleans(),

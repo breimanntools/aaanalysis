@@ -91,7 +91,7 @@ class dPULearn:
     ----------
     labels_ : array-like, shape (n_samples,)
         New dataset labels of samples in ``X`` with identified negative samples labeled by 0.
-    df_pu_ : pd.DataFrame
+    df_pu_ : pd.DataFrame, shape (n_samples, pca_features)
         A DataFrame with the PCA-transformed features of 'X' containing the following groups of columns:
 
         - 'selection_via': Column indicating how reliable negatives were identified (either giving the distance metric

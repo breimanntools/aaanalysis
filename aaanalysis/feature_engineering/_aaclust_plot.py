@@ -173,8 +173,8 @@ class AAclustPlot:
         -------
         fig : plt.Figure
             Figure object for evaluation plot
-        axes : plt.Axes
-            Axes object(s) containing evaluation subplots.
+        axes : plt.Axes (TODO check if not array of ..)
+            The axes object(s) containing evaluation subplots.
 
         Notes
         -----

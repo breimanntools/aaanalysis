@@ -5,7 +5,6 @@ its respective features:
 .. code:: ipython2
 
     import matplotlib.pyplot as plt
-    
     import aaanalysis as aa
     aa.options["verbose"] = False
     # Dataset with positive (γ-secretase substrates)

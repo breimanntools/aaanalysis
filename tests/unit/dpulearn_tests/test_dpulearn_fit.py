@@ -61,6 +61,8 @@ class TestdPULearnFit:
         dpul = aa.dPULearn()
         is_invalid =  check_invalid_conditions(X=X, labels=labels)
         valid_labels = sum([x for x in set(labels) if x in [1, 2]]) == 2
+        if len(set(labels)) < 2:
+            valid_labels = False
         if not is_invalid and valid_labels:
             df_pu = dpul.fit(X, labels).df_pu_
             assert isinstance(df_pu, pd.DataFrame)

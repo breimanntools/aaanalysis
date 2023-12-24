@@ -48,7 +48,6 @@ def _plot_dist_dissimilarity(ax=None, df_eval=None, cols=None, colors=None, val_
 # II Main Functions
 def plot_eval(df_eval=None, figsize=None, colors=None, legend=True, legend_y=-0.175):
     """Plot evaluation of AAclust clustering results"""
-    # Plotting
     cols_eval = [x for x in ut.COLS_EVAL_DPULEARN if x in list(df_eval)]
     cols_homogeneity = cols_eval[1:3]
     cols_auc = [c for c in cols_eval if "AUC" in c]
@@ -79,59 +78,50 @@ def plot_eval(df_eval=None, figsize=None, colors=None, legend=True, legend_y=-0.
     plt.subplots_adjust(wspace=0.25, hspace=0)
     return fig, axes
 
-"""
-def _plot_pca(df_pred=None, filter_classes=None, x=None, y=None,  others=True, highlight_rel=True,
-              figsize=(6, 6), highlight_mean=True, list_classes=None, dict_color=None):
-    if dict_color is None:
-        pass
+
+def plot_pca(df_pu=None, labels=None, figsize=(6, 6),
+             pc_x=1, pc_y=2, show_pos_mean_x=False, show_pos_mean_y=False,
+             names=None, colors=None,
+             legend=True, legend_y=-0.175, args_scatter=None):
+    """Generates a PCA plot based on provided parameters."""
     plt.figure(figsize=figsize)
-    # Filtering
-    x_min, x_max = df_pred[x].min(), df_pred[x].max()
-    y_min, y_max = df_pred[y].min(), df_pred[y].max()
-    df_pred = df_pred.copy()
-    if filter_classes is not None:
-        mask = [x in filter_classes for x in df_pred[ut.COL_CLASS]]
-        df_pred = df_pred[mask]
-    df_pred[ut.COL_CLASS] = [ut.CLASS_NONSUB_PRED if ut.CLASS_NONSUB_PRED in x else x for x in df_pred[ut.COL_CLASS]]
+    cols_pc = [x for x in list(df_pu) if "abs" not in x and "PC" in x]
+    label_x = [x for x in cols_pc if f'PC{pc_x}' in x][0]
+    label_y = [y for y in cols_pc if f'PC{pc_y}' in y][0]
+    # Map colors to labels
+    dict_color = {label: color for label, color in zip(sorted(set(labels)), colors)}
+    fs = ut.plot_gco(option="font.size")
     # Plotting
-    ut.plot_settings()
-    if list_classes is None:
-        list_classes = [] if not others else [ut.CLASS_OTHERS]
-        list_classes.extend([ut.CLASS_NONSUB_PRED, ut.CLASS_NONSUB, ut.CLASS_SUBEXPERT])
-    if not highlight_rel:
-        dict_color[ut.CLASS_NONSUB_PRED] = ut.COLOR_OTHERS
-    for c in list_classes:
-        d = df_pred[df_pred[ut.COL_CLASS] == c].copy()
-        ax = sns.scatterplot(data=d, x=x, y=y, color=dict_color[c],
-                             legend=False, alpha=1)
-        f_min = lambda i: i - abs(i*0.1)
-        f_max = lambda i: i + abs(i*0.1)
-        plt.ylim(f_min(y_min), f_max(y_max))
-        plt.xlim(f_min(x_min), f_max(x_max))
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore")
-            f = lambda x: [f'{i:.2f}' for i in x]
-            ax.set_yticklabels(f(ax.get_yticks()), size=ut.LEGEND_FONTSIZE-2)
-            ax.set_xticklabels(f(ax.get_xticks()), size=ut.LEGEND_FONTSIZE-2)
-    if not highlight_rel:
-        list_classes.remove(ut.CLASS_NONSUB_PRED)
-    list_cat = [x for x in ut.LIST_CLASSES if x in list_classes]
-    ax = ut.set_legend_handles_labels(ax=plt.gca(), dict_color=dict_color, list_cat=list_cat,
-                                      ncol=2, fontsize=ut.LEGEND_FONTSIZE)
+    for label in reversed(sorted((set(labels)))):
+        subset = df_pu[labels == label]
+        plt.scatter(subset[label_x], subset[label_y], color=dict_color[label], label=label, **args_scatter)
+
+    # Handling mean lines for positive samples
+    if show_pos_mean_x or show_pos_mean_y:
+        pos_samples = df_pu[labels == 1]  # Assuming label '1' is for positive samples
+        mean_x = pos_samples[label_x].mean() if show_pos_mean_x else None
+        mean_y = pos_samples[label_y].mean() if show_pos_mean_y else None
+        lw = ut.plot_gco(option="lines.linewidth")
+        args = dict(ha='right', fontsize=fs-4, color=colors[1])
+        if mean_x is not None:
+            str_mean_x = fr"$\bar{{x}}_{{\text{{{label_x.split(' ')[0]}}}}}$"
+            plt.axvline(mean_x, color='black', linestyle='--', linewidth=lw)
+            plt.text(mean_x, plt.gca().get_ylim()[1], str_mean_x,  va="top", **args)
+
+        if mean_y is not None:
+            str_mean_y = fr"$\bar{{x}}_{{\text{{{label_y.split(' ')[0]}}}}}$"
+            plt.axhline(mean_y, color='black', linestyle='--', linewidth=lw)
+            plt.text(plt.gca().get_xlim()[1], mean_y, str_mean_y, va="bottom", **args)
+
+    # Legend settings
+    if legend:
+        dict_color = {label: color for label, color in zip(names, colors)}
+        ut.plot_legend_(ax=plt.gca(),  dict_color=dict_color, title="Datasets",
+                        ncol=1, y=legend_y, handletextpad=0.1, fontsize=fs-2, fontsize_title=fs-2, weight_title="bold")
+    # Labels
+    plt.xlabel(label_x)
+    plt.ylabel(label_y)
     sns.despine()
     plt.tight_layout()
-    # Highlight mean values
-    if highlight_mean:
-        df = df_pred[df_pred[ut.COL_CLASS] == ut.CLASS_SUBEXPERT].copy()
-        # TODO check for axis!
-        mean_x = df[x].mean()
-        mean_y = df[y].mean()
-        color = dict_color[ut.CLASS_SUBEXPERT]
-        plt.axhline(mean_y, color="black", linestyle="--", linewidth=1.75)
-        plt.axvline(mean_x, color="black", linestyle="--", linewidth=1.75)
-        x_max, y_max = ax.get_xlim()[1], ax.get_ylim()[1]
-        plt.text(mean_x, y_max, f" mean {x.split(' ')[0]}", va="top", ha="left", color=color)
-        plt.text(x_max, mean_y, f"mean {y.split(' ')[0]}", va="bottom", ha="right", color=color)
-    return plt.gcf()
-"""
-
+    ax = plt.gca()
+    return ax

@@ -111,8 +111,8 @@ def plot_legend(ax: Optional[plt.Axes] = None,
 
     Returns
     -------
-    ax
-        Axes on which legend is applied to.
+    ax : plt.Axes
+        The axes object on which legend is applied to.
 
     Notes
     -----

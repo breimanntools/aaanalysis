@@ -43,6 +43,7 @@ def check_number_range(name=None, val=None, min_val=0, max_val=None, exclusive_l
     type_description = "an integer" if just_int else "a float or an integer"
     if not isinstance(val, valid_types):
         raise ValueError(f"'{name}' should be {type_description}, but got {type(val).__name__}.")
+    # Min and max values are excluded from allowed values
     if exclusive_limits:
         if val <= min_val or (max_val is not None and val >= max_val):
             range_desc = f"n > {min_val}" if max_val is None else f"{min_val} < n < {max_val}"

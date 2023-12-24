@@ -11,11 +11,23 @@ from typing import Optional, Dict, Union, List, Tuple, Type
 
 
 import aaanalysis.utils as ut
-from ._backend.dpulearn.dpul_plot import (plot_eval)
+from ._backend.dpulearn.dpul_plot import (plot_eval, plot_pca)
 # TODO visualize loadings as feature plot (long-term)
 
 
 # I Helper Functions
+def check_match_df_pu_labels(df_pu=None, labels=None):
+    """Check length match df_pu and labels"""
+    n_samples = len(df_pu)
+    if n_samples != len(labels):
+        raise ValueError(f"Number of samples from 'df_pu' (n={n_samples}) does not match with 'labels' (n={len(labels)})")
+
+
+def check_match_names_colors(names=None, colors=None):
+    """Check if length matches of names and colors"""
+    if len(names) != len(colors):
+        raise ValueError(f"Length of 'names' (n={len(names)}) and 'colors' (n={len(colors)}) does not match.")
+
 
 # II Main Functions
 class dPULearnPlot:
@@ -73,7 +85,7 @@ class dPULearnPlot:
         fig : plt.Figure
             Figure object for evaluation plot
         axes : array of plt.Axes
-            An array of Axes objects, each representing a subplot within the figure. .
+            Array of Axes objects, each representing a subplot within the figure. .
 
         Notes
         -----
@@ -102,8 +114,99 @@ class dPULearnPlot:
         return fig, axes
 
     @staticmethod
-    def components(df_pu=None, x="PC1", y="PC2", show_mean_x=False, show_mean_y=False):
-        """Plot PC map for PC analysis """
-        # TODO finish program, refactor, check, test, examples
+    def pca(df_pu: pd.DataFrame = None,
+            labels=None,
+            figsize: Tuple[Union[int, float], Union[int, float]] = (6, 6),
+            pc_x : int = 1,
+            pc_y : int = 2,
+            show_pos_mean_x=True,
+            show_pos_mean_y=True,
+            colors: Optional[List[str]] = None,
+            names: Optional[List[str]] = None,
+            legend : bool = True,
+            legend_y : float = -0.175,
+            args_scatter : Optional[dict] = None,
+            ) -> plt.Axes:
+        """
+        Principal component analysis (PCA) plot for set of identified negatives.
 
+        This method visualizes the differences between the set of identified negatives (labeled by 0) and the
+        positive (1) and the unlabeled (2) sample groups. The selected principal components (PCs) represent
+        a lower-dimensional feature space. Optionally, the average PC value for the positive samples can be shown,
+        which was used for ``PCA-based identification`` of negatives.
+
+        Parameters
+        ----------
+        df_pu : pd.DataFrame, shape (n_samples, pca_features)
+            A DataFrame with the PCA-transformed features obtained from ``dPULearn.df_pu_``.
+        figsize : tuple, default=(6, 6)
+            Width and height of the figure in inches.
+        labels : array-like, shape (n_samples,)
+            Dataset labels of samples in ``df_pu``. Labels should contain 0 (identified negative) and 1 (positive).
+            Unlabeled samples (2) can also be provided.
+        pc_x : str, default='PC1'
+            The name of the principal component (PC) to show at the x-axis.
+        pc_y : str, default='PC2'
+            The name of the principal component (PC) to show at the y-axis.
+        show_pos_mean_x : bool, default False
+            If ``True``, the mean of the x-axis PC values across the positive sample group is shown on the plot.
+        show_pos_mean_y : bool, default False
+            If ``True``, the mean of the y-axis PC values across the positive sample group is shown on the plot.
+        colors : list of str, optional
+            List of colors for identified negatives (0), positive samples (1), and unlabeled samples (2).
+        names : list of str, optional
+            List of dataset names for identified negatives, positive samples, and unlabeled samples.
+        legend : bool, default=True
+            If ``True``, legend is set under dissimilarity measures.
+        legend_y : float, default=-0.175
+            Legend position regarding the plot y-axis applied if ``legend=True``.
+        args_scatter : dict, optional
+            Dictionary with kwargs for adjusting scatter plot.
+
+        Returns
+        -------
+        ax : plt.Axes
+            PCA plot axes object.
+
+        See Also
+        -------
+        * :class:`dPULearn` for details on the data structure of ``df_pu``.
+        * :func:`matplotlib.pyplot.scatter` for scatter plot arguments.
+        """
+        # Check input
+        ut.check_df(name="df_pu", df=df_pu, cols_requiered=[ut.COL_SELECTION_VIA], accept_none=True, accept_nan=True)
+        n_pc = len([x for x in list(df_pu) if "PC" in x and not "abs_dif" in x])
+        if n_pc < 2:
+            raise ValueError(f"'df_pu' should contain at least two PCs (n={n_pc}).")
+        ut.check_labels(labels=labels) # Pre-check if proper format
+        vals_requiered = [0, 1] if 2 not in set(labels) else [0, 1, 2]
+        ut.check_labels(labels=labels, vals_requiered=vals_requiered, allow_other_vals=False)
+        ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
+        ut.check_number_range(name="pc_x", val=pc_x, min_val=1, max_val=n_pc, just_int=True)
+        ut.check_number_range(name="pc_y", val=pc_y, min_val=1, max_val=n_pc, just_int=True)
+        ut.check_bool(name="show_pos_mean_x", val=show_pos_mean_x)
+        ut.check_bool(name="show_pos_mean_y", val=show_pos_mean_y)
+        ut.check_bool(name="legend", val=legend)
+        ut.check_number_val(name="legend_y", val=legend_y)
+        ut.check_dict(name="args_scatter", val=args_scatter, accept_none=True)
+        ut.check_list_colors(name="colors", val=colors, accept_none=True, min_n=2, max_n=3)
+        names = ut.check_list_like(name="names", val=names, accept_none=True, check_all_str_or_convertible=True)
+        check_match_df_pu_labels(df_pu=df_pu, labels=labels)
+        # Set defaults colors and names
+        if names is None:
+            names = ["Identified negatives", "Positives", "Unlabeled"]
+        if colors is None:
+            colors = [ut.COLOR_REL_NEG, ut.COLOR_POS, ut.COLOR_UNL]
+        check_match_names_colors(names=names, colors=colors)
+        # Adjust args_scatter
+        _args_scatter = dict(linewidth=0.5, edgecolor="white")
+        if args_scatter is not None:
+            _args_scatter.update(args_scatter)
+        # Plotting
+        ax = plot_pca(df_pu=df_pu, labels=labels,
+                      figsize=figsize, pc_x=pc_x, pc_y=pc_y,
+                      show_pos_mean_x=show_pos_mean_x, show_pos_mean_y=show_pos_mean_y,
+                      names=names, colors=colors,
+                      legend=legend, legend_y=legend_y, args_scatter=_args_scatter)
+        return ax
 

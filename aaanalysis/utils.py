@@ -155,6 +155,7 @@ COL_RANK = "rank"
 COLS_EVAL_AACLUST = [COL_N_CLUST, COL_BIC, COL_CH, COL_SC]
 
 # dPULearn (evaluation)
+COL_SELECTION_VIA = "selection_via"
 COL_N_REL_NEG = "n_rel_neg"
 COL_AVG_STD = "avg_STD"
 COL_AVG_IQR = "avg_IQR"

@@ -176,7 +176,11 @@ def plot_gco(option='font.size', show_options=False):
     current_context = sns.plotting_context()
     if show_options:
         print(current_context)
-    option_value = current_context[option]  # Typically font_size
+    try:
+        option_value = current_context[option]  # Typically font_size
+    except KeyError:
+        options = list(current_context.keys())
+        raise ValueError(f"Option not valid, select from the following: {options}")
     return option_value
 
 # DEV: plot_get_cdict and plot_get_cmap are implemented in main utils

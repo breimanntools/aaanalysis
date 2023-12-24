@@ -14,8 +14,8 @@
    .. autosummary::
    
       ~dPULearnPlot.__init__
-      ~dPULearnPlot.components
       ~dPULearnPlot.eval
+      ~dPULearnPlot.pca
    
    
 

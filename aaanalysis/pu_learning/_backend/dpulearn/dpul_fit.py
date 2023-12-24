@@ -7,8 +7,7 @@ from sklearn.metrics import pairwise_distances
 import math
 from sklearn.decomposition import PCA
 
-# Constants
-COL_SELECTION_VIA = "selection_via"
+import aaanalysis.utils as ut
 
 # II Main Functions
 def get_neg_via_distance(X=None, labels=None, metric="euclidean", n_unl_to_neg=None,
@@ -29,7 +28,7 @@ def get_neg_via_distance(X=None, labels=None, metric="euclidean", n_unl_to_neg=N
     new_labels[top_indices] = label_neg
     # Adjust df distance
     df_pu = df_pu.round(4)
-    df_pu.insert(0, COL_SELECTION_VIA, [metric if l == 0 else None for l in new_labels])
+    df_pu.insert(0, ut.COL_SELECTION_VIA, [metric if l == 0 else None for l in new_labels])
     return new_labels, df_pu
 
 
@@ -55,7 +54,7 @@ def get_neg_via_pca(X=None, labels=None, n_components=0.8, n_unl_to_neg=None,
     mask_unl = labels != label_pos
     pc_means = df_pu[mask_pos].mean(axis=0)
     # Select negatives based on absolute difference to mean of positives for each component
-    df_pu.insert(0, COL_SELECTION_VIA, None)  # New column to store the PC information
+    df_pu.insert(0, ut.COL_SELECTION_VIA, None)  # New column to store the PC information
     new_labels = labels.copy()
     for col_pc, mean_pc, n in zip(columns_pca, pc_means, list_n_neg):
         col_abs_dif = f"{col_pc}_abs_dif"
@@ -67,9 +66,9 @@ def get_neg_via_pca(X=None, labels=None, n_components=0.8, n_unl_to_neg=None,
         new_labels[top_indices] = label_neg
         mask_unl[top_indices] = False
         # Record the PC by which the negatives are selected
-        df_pu.loc[top_indices, COL_SELECTION_VIA] = col_pc.split(' ')[0]
+        df_pu.loc[top_indices, ut.COL_SELECTION_VIA] = col_pc.split(' ')[0]
     # Adjust df
-    cols = [x for x in list(df_pu) if x != COL_SELECTION_VIA]
+    cols = [x for x in list(df_pu) if x != ut.COL_SELECTION_VIA]
     df_pu[cols] = df_pu[cols].round(4)
     return new_labels, df_pu
 
