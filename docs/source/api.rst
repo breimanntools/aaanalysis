@@ -45,7 +45,6 @@ PU Learning
 -----------
 .. autosummary::
     :toctree: generated/
-    :template: class.rst
 
     aaanalysis.dPULearn
     aaanalysis.dPULearnPlot

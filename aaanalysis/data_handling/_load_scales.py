@@ -74,7 +74,7 @@ def load_scales(name: str = "scales",
         - ``scales_raw``: All amino acid scales.
         - ``scales``:  Min-max normlized raw scales.
         - ``scales_cat``: Two-level classification (AAontology).
-        - ``scales_pc``: First 20 PC of compressed scales.
+        - ``scales_pc``: First 20 PCs of compressed scales.
         - ``top60``:  Selection of 60 best performing scale sets.
         - ``top60_eval``: Evaluation of 60 best performing scale sets.
 
@@ -94,21 +94,15 @@ def load_scales(name: str = "scales",
 
     Notes
     -----
-    - ``df_cat`` includes the following columns:
+    * ``df_cat`` includes the following columns:
 
-        * 'scale_id': ID of scale (from AAindex or following the same naming convention).
-        * 'category': Category of scale (defined in AAontology).
-        * 'subcategory': Subcategory of scale (AAontology).
-        * 'scale_name': Name of scale derived from scale description.
-        * 'scale_description': Description of scale (derived from AAindex).
+        - 'scale_id': ID of scale (from AAindex or following the same naming convention).
+        - 'category': Category of scale (defined in AAontology).
+        - 'subcategory': Subcategory of scale (AAontology).
+        - 'scale_name': Name of scale derived from scale description.
+        - 'scale_description': Description of scale (derived from AAindex).
 
-    - Scales under the 'Others' category are considered unclassified.
-
-    Examples
-    --------
-    >>> import aaanalysis as aa
-    >>> df_scales = aa.load_scales()
-    >>> df_cat = aa.load_scales(name="scales_cat")
+    * Scales under the 'Others' category are considered unclassified.
 
     See Also
     --------
@@ -116,6 +110,10 @@ def load_scales(name: str = "scales",
     * AAontology: :ref:`t3a_aaontology_categories` and :ref:`t3b_aaontology_subcategories` tables.
     * Step-by-step guide in the `Scale Loading Tutorial <tutorial2b_scales_loader.html>`_.
     * :class:`AAclust` for customizing redundancy-reduced scale sets.
+
+    Examples
+    --------
+    .. include:: examples/load_scales.rst
     """
     check_name_of_scale(name=name)
     ut.check_bool(name="just_aaindex", val=just_aaindex)

@@ -327,9 +327,9 @@ class SequenceFeature:
         """
         # Load defaults
         if df_scales is None:
-            df_scales = aa.load_scales()
+            df_scales = ut.load_default_scales()
         if df_cat is None:
-            df_cat = aa.load_scales(name="scales_cat")
+            df_cat = ut.load_default_scales(scale_cat=True)
         # Check input
         check_df_parts(df_parts=df_parts)
         check_df_scales(df_scales=df_scales)
@@ -381,7 +381,7 @@ class SequenceFeature:
         """
         # Load defaults
         if df_scales is None:
-            df_scales = aa.load_scales()
+            df_scales = ut.load_default_scales()
         # Check input
         check_df_scales(df_scales=df_scales)
         check_df_parts(df_parts=df_parts)
@@ -430,7 +430,7 @@ class SequenceFeature:
         """
         # Load defaults
         if df_scales is None:
-            df_scales = aa.load_scales()
+            df_scales = ut.load_default_scales()
         if split_kws is None:
             split_kws = self.get_split_kws()
         # Check input
@@ -481,7 +481,7 @@ class SequenceFeature:
         """
         # Load defaults
         if df_cat is None:
-            df_cat = aa.load_scales(name=ut.STR_SCALE_CAT)
+            df_cat = ut.load_default_scales(scale_cat=True)
         # Check input
         features = ut.check_features(features=features)
         check_df_cat(df_cat=df_cat)

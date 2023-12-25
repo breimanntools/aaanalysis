@@ -82,9 +82,9 @@ class CPP(Tool):
             sf = SequenceFeature()
             split_kws = sf.get_split_kws()
         if df_scales is None:
-            df_scales = aa.load_scales(name=ut.STR_SCALES)
+            df_scales = ut.load_default_scales()
         if df_cat is None:
-            df_cat = aa.load_scales(name=ut.STR_SCALE_CAT)
+            df_cat = ut.load_default_scales(scale_cat=True)
         # Check input
         check_df_parts(df_parts=df_parts)
         check_split_kws(split_kws=split_kws)

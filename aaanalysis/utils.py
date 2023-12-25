@@ -305,6 +305,16 @@ def read_csv_cached(name, sep=None):
     return df.copy()
 
 
+def load_default_scales(scale_cat=False):
+    """Load default scales sets or categories"""
+    if scale_cat:
+        df_cat = read_excel_cached(FOLDER_DATA + f"{STR_SCALE_CAT}.xlsx")
+        return df_cat
+    else:
+        df_scales = read_excel_cached(FOLDER_DATA + f"{STR_SCALES}.xlsx", index_col=0)
+        return df_scales
+
+
 # Adjust df_eval
 def add_names_to_df_eval(df_eval=None, names_datasets=None):
     """Add names column to df_eval"""

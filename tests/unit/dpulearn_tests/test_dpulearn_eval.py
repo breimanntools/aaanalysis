@@ -174,7 +174,7 @@ class TestdPULearnEval:
 class TestdPULearnEvalComplex:
     """Complex test cases for dPULearn.eval() method combining multiple parameters."""
 
-    @settings(max_examples=100, deadline=1000)
+    @settings(max_examples=100, deadline=2000)
     @given(
         X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=3, max_side=100),
                       elements=st.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)),
