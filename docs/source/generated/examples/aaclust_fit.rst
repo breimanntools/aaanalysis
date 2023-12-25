@@ -692,13 +692,13 @@ can be adjusted using the ``min_th`` and ``on_center`` parameters:
 
 
 The third and optional merging step can be adjusted using the ``metric``
-paramter and disabled setting ``merge=False``. The attributes can be
+parameter and disabled setting ``merge=False``. The attributes can be
 directly retrieved since the ``AAclust.fit()`` method returns the fitted
 clustering model:
 
 .. code:: ipython2
 
-    # over 500 scales
+    # Load over 500 scales
     X = aa.load_scales().T
     n_with_merging_euclidean = aac.fit(X).n_clusters
     n_with_merging_cosine = aac.fit(X, metric="cosine").n_clusters

@@ -14,11 +14,11 @@ model that uses the ``n_clusters`` parameter:
     aac = aa.AAclust(model_class=SpectralClustering)
 
 The hierarchical agglomerative clustering model utilizes four different
-distance measures, which can be provided to ``AAclust``\ by its
+linkage measures, which can be provided to ``AAclust``\ by its
 ``model_kwargs`` parameter:
 
 .. code:: ipython2
 
     # AAclust using AgglomerativeClustering with Euclidean distance
-    aac = aa.AAclust(model_class=AgglomerativeClustering, model_kwargs=dict(metric='euclidean'))
-    # Other recommended metrics are 'manhattan', 'cosine'
+    aac = aa.AAclust(model_class=AgglomerativeClustering, model_kwargs=dict(linkage='average'))
+    # Other linkage methods are 'ward', 'complete', and 'single' 

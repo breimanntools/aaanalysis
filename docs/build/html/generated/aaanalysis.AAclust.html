@@ -286,11 +286,11 @@ model that uses the <code class="docutils literal notranslate"><span class="pre"
 </pre></div>
 </div>
 <p>The hierarchical agglomerative clustering model utilizes four different
-distance measures, which can be provided to <code class="docutils literal notranslate"><span class="pre">AAclust</span></code>by its
+linkage measures, which can be provided to <code class="docutils literal notranslate"><span class="pre">AAclust</span></code>by its
 <code class="docutils literal notranslate"><span class="pre">model_kwargs</span></code> parameter:</p>
 <div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="c1"># AAclust using AgglomerativeClustering with Euclidean distance</span>
-<span class="n">aac</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclust</span><span class="p">(</span><span class="n">model_class</span><span class="o">=</span><span class="n">AgglomerativeClustering</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="s1">&#39;euclidean&#39;</span><span class="p">))</span>
-<span class="c1"># Other recommended metrics are &#39;manhattan&#39;, &#39;cosine&#39;</span>
+<span class="n">aac</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclust</span><span class="p">(</span><span class="n">model_class</span><span class="o">=</span><span class="n">AgglomerativeClustering</span><span class="p">,</span> <span class="n">model_kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">linkage</span><span class="o">=</span><span class="s1">&#39;average&#39;</span><span class="p">))</span>
+<span class="c1"># Other linkage methods are &#39;ward&#39;, &#39;complete&#39;, and &#39;single&#39;</span>
 </pre></div>
 </div>
 </div>
@@ -1054,10 +1054,10 @@ can be adjusted using the <code class="docutils literal notranslate"><span class
 </pre></div>
 </div>
 <p>The third and optional merging step can be adjusted using the <code class="docutils literal notranslate"><span class="pre">metric</span></code>
-paramter and disabled setting <code class="docutils literal notranslate"><span class="pre">merge=False</span></code>. The attributes can be
+parameter and disabled setting <code class="docutils literal notranslate"><span class="pre">merge=False</span></code>. The attributes can be
 directly retrieved since the <code class="docutils literal notranslate"><span class="pre">AAclust.fit()</span></code> method returns the fitted
 clustering model:</p>
-<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="c1"># over 500 scales</span>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load over 500 scales</span>
 <span class="n">X</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_scales</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
 <span class="n">n_with_merging_euclidean</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">n_clusters</span>
 <span class="n">n_with_merging_cosine</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;cosine&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">n_clusters</span>
@@ -1130,7 +1130,179 @@ contrary to conventional BIC implementation favoring lower values. See <a class=
 </div>
 <div class="admonition-examples admonition">
 <p class="admonition-title">Examples</p>
+<p>Different clustering results can be evaluated and compared using the
+<code class="docutils literal notranslate"><span class="pre">AAclust.eval()</span></code> method. We perform five clusterings with
+<code class="docutils literal notranslate"><span class="pre">n_clusters</span></code> for 5, 10, 25, 50, and 100 utilizing a Python
+comprehension list:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
+<span class="n">aa</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s2">&quot;verbose&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_scales</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
+<span class="n">aac</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclust</span><span class="p">()</span>
+<span class="n">list_labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">aac</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">labels_</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">100</span><span class="p">]]</span>
+<span class="n">df_eval</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">list_labels</span><span class="o">=</span><span class="n">list_labels</span><span class="p">)</span>
+<span class="n">aa</span><span class="o">.</span><span class="n">display_df</span><span class="p">(</span><span class="n">df_eval</span><span class="p">)</span>
+</pre></div>
 </div>
+<style type="text/css">
+#T_6a472 thead th {
+  background-color: white;
+  color: black;
+}
+#T_6a472 tbody tr:nth-child(odd) {
+  background-color: #f2f2f2;
+}
+#T_6a472 tbody tr:nth-child(even) {
+  background-color: white;
+}
+#T_6a472 th {
+  padding: 5px;
+  white-space: nowrap;
+}
+#T_6a472  td {
+  padding: 5px;
+  white-space: nowrap;
+}
+#T_6a472 table {
+  font-size: 12px;
+}
+</style>
+<table id="T_6a472" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
+  <thead>
+    <tr>
+      <th class="blank level0" >&nbsp;</th>
+      <th id="T_6a472_level0_col0" class="col_heading level0 col0" >name</th>
+      <th id="T_6a472_level0_col1" class="col_heading level0 col1" >n_clusters</th>
+      <th id="T_6a472_level0_col2" class="col_heading level0 col2" >BIC</th>
+      <th id="T_6a472_level0_col3" class="col_heading level0 col3" >CH</th>
+      <th id="T_6a472_level0_col4" class="col_heading level0 col4" >SC</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th id="T_6a472_level0_row0" class="row_heading level0 row0" >1</th>
+      <td id="T_6a472_row0_col0" class="data row0 col0" >Set 1</td>
+      <td id="T_6a472_row0_col1" class="data row0 col1" >5</td>
+      <td id="T_6a472_row0_col2" class="data row0 col2" >-235.010922</td>
+      <td id="T_6a472_row0_col3" class="data row0 col3" >119.193092</td>
+      <td id="T_6a472_row0_col4" class="data row0 col4" >0.187077</td>
+    </tr>
+    <tr>
+      <th id="T_6a472_level0_row1" class="row_heading level0 row1" >2</th>
+      <td id="T_6a472_row1_col0" class="data row1 col0" >Set 2</td>
+      <td id="T_6a472_row1_col1" class="data row1 col1" >10</td>
+      <td id="T_6a472_row1_col2" class="data row1 col2" >503.637472</td>
+      <td id="T_6a472_row1_col3" class="data row1 col3" >85.200434</td>
+      <td id="T_6a472_row1_col4" class="data row1 col4" >0.186997</td>
+    </tr>
+    <tr>
+      <th id="T_6a472_level0_row2" class="row_heading level0 row2" >3</th>
+      <td id="T_6a472_row2_col0" class="data row2 col0" >Set 3</td>
+      <td id="T_6a472_row2_col1" class="data row2 col1" >25</td>
+      <td id="T_6a472_row2_col2" class="data row2 col2" >893.834929</td>
+      <td id="T_6a472_row2_col3" class="data row2 col3" >52.008981</td>
+      <td id="T_6a472_row2_col4" class="data row2 col4" >0.171144</td>
+    </tr>
+    <tr>
+      <th id="T_6a472_level0_row3" class="row_heading level0 row3" >4</th>
+      <td id="T_6a472_row3_col0" class="data row3 col0" >Set 4</td>
+      <td id="T_6a472_row3_col1" class="data row3 col1" >50</td>
+      <td id="T_6a472_row3_col2" class="data row3 col2" >279.310802</td>
+      <td id="T_6a472_row3_col3" class="data row3 col3" >34.231471</td>
+      <td id="T_6a472_row3_col4" class="data row3 col4" >0.139191</td>
+    </tr>
+    <tr>
+      <th id="T_6a472_level0_row4" class="row_heading level0 row4" >5</th>
+      <td id="T_6a472_row4_col0" class="data row4 col0" >Set 5</td>
+      <td id="T_6a472_row4_col1" class="data row4 col1" >100</td>
+      <td id="T_6a472_row4_col2" class="data row4 col2" >-1485.636265</td>
+      <td id="T_6a472_row4_col3" class="data row4 col3" >23.665256</td>
+      <td id="T_6a472_row4_col4" class="data row4 col4" >0.150045</td>
+    </tr>
+  </tbody>
+</table><p>The name of the scale sets can be provided using the <code class="docutils literal notranslate"><span class="pre">names_datasets</span></code>
+parameter, which must match with the number of evaluated cluster sets:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Clustering </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)]</span>
+<span class="n">df_eval</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">list_labels</span><span class="o">=</span><span class="n">list_labels</span><span class="p">,</span> <span class="n">names_datasets</span><span class="o">=</span><span class="n">names</span><span class="p">)</span>
+<span class="n">aa</span><span class="o">.</span><span class="n">display_df</span><span class="p">(</span><span class="n">df_eval</span><span class="p">)</span>
+</pre></div>
+</div>
+<style type="text/css">
+#T_54308 thead th {
+  background-color: white;
+  color: black;
+}
+#T_54308 tbody tr:nth-child(odd) {
+  background-color: #f2f2f2;
+}
+#T_54308 tbody tr:nth-child(even) {
+  background-color: white;
+}
+#T_54308 th {
+  padding: 5px;
+  white-space: nowrap;
+}
+#T_54308  td {
+  padding: 5px;
+  white-space: nowrap;
+}
+#T_54308 table {
+  font-size: 12px;
+}
+</style>
+<table id="T_54308" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
+  <thead>
+    <tr>
+      <th class="blank level0" >&nbsp;</th>
+      <th id="T_54308_level0_col0" class="col_heading level0 col0" >name</th>
+      <th id="T_54308_level0_col1" class="col_heading level0 col1" >n_clusters</th>
+      <th id="T_54308_level0_col2" class="col_heading level0 col2" >BIC</th>
+      <th id="T_54308_level0_col3" class="col_heading level0 col3" >CH</th>
+      <th id="T_54308_level0_col4" class="col_heading level0 col4" >SC</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th id="T_54308_level0_row0" class="row_heading level0 row0" >1</th>
+      <td id="T_54308_row0_col0" class="data row0 col0" >Clustering 1</td>
+      <td id="T_54308_row0_col1" class="data row0 col1" >5</td>
+      <td id="T_54308_row0_col2" class="data row0 col2" >-235.010922</td>
+      <td id="T_54308_row0_col3" class="data row0 col3" >119.193092</td>
+      <td id="T_54308_row0_col4" class="data row0 col4" >0.187077</td>
+    </tr>
+    <tr>
+      <th id="T_54308_level0_row1" class="row_heading level0 row1" >2</th>
+      <td id="T_54308_row1_col0" class="data row1 col0" >Clustering 2</td>
+      <td id="T_54308_row1_col1" class="data row1 col1" >10</td>
+      <td id="T_54308_row1_col2" class="data row1 col2" >503.637472</td>
+      <td id="T_54308_row1_col3" class="data row1 col3" >85.200434</td>
+      <td id="T_54308_row1_col4" class="data row1 col4" >0.186997</td>
+    </tr>
+    <tr>
+      <th id="T_54308_level0_row2" class="row_heading level0 row2" >3</th>
+      <td id="T_54308_row2_col0" class="data row2 col0" >Clustering 3</td>
+      <td id="T_54308_row2_col1" class="data row2 col1" >25</td>
+      <td id="T_54308_row2_col2" class="data row2 col2" >893.834929</td>
+      <td id="T_54308_row2_col3" class="data row2 col3" >52.008981</td>
+      <td id="T_54308_row2_col4" class="data row2 col4" >0.171144</td>
+    </tr>
+    <tr>
+      <th id="T_54308_level0_row3" class="row_heading level0 row3" >4</th>
+      <td id="T_54308_row3_col0" class="data row3 col0" >Clustering 4</td>
+      <td id="T_54308_row3_col1" class="data row3 col1" >50</td>
+      <td id="T_54308_row3_col2" class="data row3 col2" >279.310802</td>
+      <td id="T_54308_row3_col3" class="data row3 col3" >34.231471</td>
+      <td id="T_54308_row3_col4" class="data row3 col4" >0.139191</td>
+    </tr>
+    <tr>
+      <th id="T_54308_level0_row4" class="row_heading level0 row4" >5</th>
+      <td id="T_54308_row4_col0" class="data row4 col0" >Clustering 5</td>
+      <td id="T_54308_row4_col1" class="data row4 col1" >100</td>
+      <td id="T_54308_row4_col2" class="data row4 col2" >-1485.636265</td>
+      <td id="T_54308_row4_col3" class="data row4 col3" >23.665256</td>
+      <td id="T_54308_row4_col4" class="data row4 col4" >0.150045</td>
+    </tr>
+  </tbody>
+</table></div>
 </dd></dl>
 
 <dl class="py method">
@@ -1157,6 +1329,40 @@ or the cluster contains one sample, its name is set to ‘Unclassified’.</p>
 </dl>
 <div class="admonition-examples admonition">
 <p class="admonition-title">Examples</p>
+<p>We first create an example dataset of 100 scales and obtain their
+<code class="docutils literal notranslate"><span class="pre">AAontolgy</span></code> subcategory names to showcase the automatic cluster naming
+by <code class="docutils literal notranslate"><span class="pre">AAclust.name_clusters()</span></code> method:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
+<span class="c1"># Create example dataset comprising 100 scales</span>
+<span class="n">df_scales</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_scales</span><span class="p">()</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">df_scales</span><span class="o">.</span><span class="n">T</span>
+<span class="n">df_cat</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_scales</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;scales_cat&quot;</span><span class="p">)</span>
+<span class="n">dict_scale_name</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">df_cat</span><span class="p">[</span><span class="s2">&quot;scale_id&quot;</span><span class="p">],</span> <span class="n">df_cat</span><span class="p">[</span><span class="s2">&quot;subcategory&quot;</span><span class="p">]))</span>
+<span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">dict_scale_name</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">df_scales</span><span class="p">)]</span>
+<span class="c1"># Fit AAclust model and obtain clustering label for 10 clusters</span>
+<span class="n">aac</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclust</span><span class="p">()</span>
+<span class="n">aac</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">labels</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">labels_</span>
+</pre></div>
+</div>
+<p>We can now provide the feature matrix <code class="docutils literal notranslate"><span class="pre">X</span></code>, <code class="docutils literal notranslate"><span class="pre">names</span></code>, and <code class="docutils literal notranslate"><span class="pre">labels</span></code>
+to the <code class="docutils literal notranslate"><span class="pre">AAclust.name_clusters()</span></code> method:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">cluster_names</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">name_clusters</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Name of clusters: &quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">cluster_names</span><span class="p">))))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Name</span> <span class="n">of</span> <span class="n">clusters</span><span class="p">:</span>  <span class="p">[</span><span class="s1">&#39;AA composition&#39;</span><span class="p">,</span> <span class="s1">&#39;Accessible surface area&#39;</span><span class="p">,</span> <span class="s1">&#39;Free energy&#39;</span><span class="p">,</span> <span class="s1">&#39;Hydrophobicity&#39;</span><span class="p">,</span> <span class="s1">&#39;MPs&#39;</span><span class="p">,</span> <span class="s1">&#39;Non-bonded energy&#39;</span><span class="p">,</span> <span class="s1">&#39;Volume&#39;</span><span class="p">,</span> <span class="s1">&#39;α-helix&#39;</span><span class="p">,</span> <span class="s1">&#39;β-strand&#39;</span><span class="p">,</span> <span class="s1">&#39;β-turn&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>These names are automatically shorten, which can be disabled by setting
+<code class="docutils literal notranslate"><span class="pre">shorten_names=False</span></code>:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">cluster_names</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">name_clusters</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">,</span> <span class="n">shorten_names</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Longer names: &quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">cluster_names</span><span class="p">))))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Longer</span> <span class="n">names</span><span class="p">:</span>  <span class="p">[</span><span class="s1">&#39;AA composition&#39;</span><span class="p">,</span> <span class="s1">&#39;Accessible surface area (ASA)&#39;</span><span class="p">,</span> <span class="s1">&#39;Free energy (unfolding)&#39;</span><span class="p">,</span> <span class="s1">&#39;Hydrophobicity&#39;</span><span class="p">,</span> <span class="s1">&#39;Non-bonded energy&#39;</span><span class="p">,</span> <span class="s1">&#39;Volume&#39;</span><span class="p">,</span> <span class="s1">&#39;α-helix&#39;</span><span class="p">,</span> <span class="s1">&#39;β-strand&#39;</span><span class="p">,</span> <span class="s1">&#39;β-turn&#39;</span><span class="p">,</span> <span class="s1">&#39;β-turn (N-term)&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
 </div>
 </dd></dl>
 

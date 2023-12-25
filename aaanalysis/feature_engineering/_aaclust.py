@@ -566,7 +566,3 @@ class AAclust(Wrapper):
         n_unique_ref = len(set(names_ref))
         coverage = round(n_unique_names/n_unique_ref*100, 2)
         return coverage
-
-
-
-
