@@ -9,7 +9,6 @@ from aaanalysis import utils as ut
 
 # Helper functions
 def _adjust_df(df=None, char_limit = 50):
-    """"""
     df = df.copy()
     list_index = df.index
     if sum([type(i) is not int for i in list_index]) == 0:
@@ -18,6 +17,7 @@ def _adjust_df(df=None, char_limit = 50):
         f = lambda x: str(x)[:int(char_limit/2)] + '...' + str(x)[-int(char_limit/2):]
         df = df.map(lambda x: f(x) if isinstance(x, str) and len(str(x)) > char_limit else x)
     return df
+
 
 # Main functions
 def display_df(df: pd.DataFrame = None,

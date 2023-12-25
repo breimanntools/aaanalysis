@@ -16,7 +16,6 @@ LIST_FONTS = ['Arial', 'Courier New', 'DejaVu Sans', 'Times New Roman', 'Verdana
 # I Helper functions
 # Check plot_settings
 def check_font(font="Arial"):
-    """"""
     if font not in LIST_FONTS:
         error_message = f"'font' ({font}) not in recommended fonts: {LIST_FONTS}. Set font manually by:" \
                         f"\n\tplt.rcParams['font.sans-serif'] = '{font}'"

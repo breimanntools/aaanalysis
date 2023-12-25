@@ -39,7 +39,7 @@ def check_invalid_conditions(X, labels, min_samples=3, check_unique=True, check_
         conditions = [
             (np.any(np.isinf(X)) or np.any(np.isnan(X)), "X contains NaN or Inf"),
             (n_samples < min_samples, f"n_samples={n_samples} should be >= {min_samples}"),
-            (n_features < 2, f"n_features={n_features} should be >= 2"),
+            (n_features < 1, f"n_features={n_features} should be >= 2"),
             (len(labels) != n_samples, "Length of labels should match n_samples."),
         ]
         if check_unique:

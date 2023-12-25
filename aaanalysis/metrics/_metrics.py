@@ -46,10 +46,14 @@ def comp_auc_adjusted(X : ut.ArrayLike2D = None,
     auc : array-like, shape (n_features,)
         Adjusted Area Under the Curve (AUC) values for each feature, ranging from [-0.5, 0.5].
         A value of 0 indicates equal distributions between the two groups for that feature.
+
+    Examples
+    --------
+    .. include:: examples/comp_auc_adjusted.rst
     """
     # Check input
-    X = ut.check_X(X=X)
-    ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
+    X = ut.check_X(X=X, min_n_features=1)
+    ut.check_X_unique_samples(X=X, min_n_unique_samples=1)
     ut.check_labels(labels=labels)
     ut.check_match_X_labels(X=X, labels=labels)
     # Compute adjusted AUC
@@ -91,9 +95,13 @@ def comp_bic_score(X : ut.ArrayLike2D = None,
     * The Silhouette coefficient [-1, 1] can be computed by :func:`sklearn.metrics.silhouette_score`.
     * The Calinski Harabasz score [0, ∞] can be obtained using :func:`sklearn.metrics.calinski_harabasz_score`.
     * Clustering evaluation can be performed using :meth:`AAclust.eval`.
+
+    Examples
+    --------
+    .. include:: examples/comp_bic_score.rst
     """
     # Check input
-    X = ut.check_X(X=X)
+    X = ut.check_X(X=X, min_n_features=1)
     ut.check_X_unique_samples(X=X)
     ut.check_labels(labels=labels)
     ut.check_match_X_labels(X=X, labels=labels)
@@ -149,9 +157,13 @@ def comp_kld(X : ut.ArrayLike2D = None,
     * :func:`scipy.stats.entropy` function for computing the Shannon entropy. In the context of KLD,
       it is used to measure the divergence between two probability distributions, typically derived
       from kernel-density estimates of different data groups.
+
+    Examples
+    --------
+    .. include:: examples/comp_kld.rst
     """
     # Check input
-    X = ut.check_X(X=X)
+    X = ut.check_X(X=X, min_n_features=1)
     ut.check_X_unique_samples(X=X, min_n_unique_samples=3)
     ut.check_number_val(name="label_test", val=label_test, just_int=True, accept_none=False)
     ut.check_number_val(name="label_ref", val=label_ref, just_int=True, accept_none=False)
