@@ -82,7 +82,7 @@ def plot_eval(df_eval=None, figsize=None, colors=None, legend=True, legend_y=-0.
 def plot_pca(df_pu=None, labels=None, figsize=(6, 6),
              pc_x=1, pc_y=2, show_pos_mean_x=False, show_pos_mean_y=False,
              names=None, colors=None,
-             legend=True, legend_y=-0.175, args_scatter=None):
+             legend=True, legend_y=-0.15, args_scatter=None):
     """Generates a PCA plot based on provided parameters."""
     plt.figure(figsize=figsize)
     cols_pc = [x for x in list(df_pu) if "abs" not in x and "PC" in x]
@@ -95,14 +95,13 @@ def plot_pca(df_pu=None, labels=None, figsize=(6, 6),
     for label in reversed(sorted((set(labels)))):
         subset = df_pu[labels == label]
         plt.scatter(subset[label_x], subset[label_y], color=dict_color[label], label=label, **args_scatter)
-
     # Handling mean lines for positive samples
     if show_pos_mean_x or show_pos_mean_y:
         pos_samples = df_pu[labels == 1]  # Assuming label '1' is for positive samples
         mean_x = pos_samples[label_x].mean() if show_pos_mean_x else None
         mean_y = pos_samples[label_y].mean() if show_pos_mean_y else None
         lw = ut.plot_gco(option="lines.linewidth")
-        args = dict(ha='right', fontsize=fs-4, color=colors[1])
+        args = dict(ha='right', fontsize=fs, color=colors[1])
         if mean_x is not None:
             str_mean_x = fr"$\bar{{x}}_{{\text{{{label_x.split(' ')[0]}}}}}$"
             plt.axvline(mean_x, color='black', linestyle='--', linewidth=lw)
@@ -117,7 +116,7 @@ def plot_pca(df_pu=None, labels=None, figsize=(6, 6),
     if legend:
         dict_color = {label: color for label, color in zip(names, colors)}
         ut.plot_legend_(ax=plt.gca(),  dict_color=dict_color, title="Datasets",
-                        ncol=1, y=legend_y, handletextpad=0.1, fontsize=fs-2, fontsize_title=fs-2, weight_title="bold")
+                        ncol=1, y=legend_y, handletextpad=0.4, fontsize=fs, fontsize_title=fs-1, weight_title="bold")
     # Labels
     plt.xlabel(label_x)
     plt.ylabel(label_y)

@@ -136,7 +136,7 @@ class dPULearn:
     def fit(self,
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D = None,
-            n_unl_to_neg: int = 1,
+            n_unl_to_neg: int = None,
             metric: Optional[Literal["euclidean", "manhattan", "cosine"]] = None,
             n_components: Union[float, int] = 0.80,
             ) -> "dPULearn":

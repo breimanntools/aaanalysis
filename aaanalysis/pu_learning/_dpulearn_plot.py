@@ -16,6 +16,38 @@ from ._backend.dpulearn.dpul_plot import (plot_eval, plot_pca)
 
 
 # I Helper Functions
+def _adjust_plot_args(names=None, colors=None, args_scatter=None, default_names=None, default_colors=None):
+    """Adjust names, colors, and args_scatter arguments"""
+    # Set default names if not provided
+    if names is None:
+        names = default_names
+    # Extract and adjust colors from args_scatter
+    if args_scatter is not None and ("color" in args_scatter or "c" in args_scatter):
+        if "color" in args_scatter:
+            extracted_colors = args_scatter.pop('color', None)
+        else:
+            extracted_colors = args_scatter.pop("c", None)
+        if isinstance(extracted_colors, str):
+            colors = [extracted_colors] * len(names)
+        elif extracted_colors is not None:
+            colors = extracted_colors
+    # Set default colors if not provided
+    if colors is None:
+        colors = default_colors
+    # Validate the match between names and colors
+    check_match_names_colors(names=names, colors=colors)
+    # Adjust args_scatter with default and additional arguments
+    _args_scatter = dict(linewidth=0.5, edgecolor="white")
+    if args_scatter is not None:
+        # Avoid aliases in args_scatter
+        for arg in ["edgecolors", "linewidths"]:
+            if arg in args_scatter:
+                _args_scatter.pop(arg.replace("s", ""), None)
+        _args_scatter.update(args_scatter)
+    return names, colors, _args_scatter
+
+
+# Check functions
 def check_match_df_pu_labels(df_pu=None, labels=None):
     """Check length match df_pu and labels"""
     n_samples = len(df_pu)
@@ -116,7 +148,7 @@ class dPULearnPlot:
     @staticmethod
     def pca(df_pu: pd.DataFrame = None,
             labels=None,
-            figsize: Tuple[Union[int, float], Union[int, float]] = (6, 6),
+            figsize: Tuple[Union[int, float], Union[int, float]] = (5, 5),
             pc_x : int = 1,
             pc_y : int = 2,
             show_pos_mean_x=True,
@@ -124,7 +156,7 @@ class dPULearnPlot:
             colors: Optional[List[str]] = None,
             names: Optional[List[str]] = None,
             legend : bool = True,
-            legend_y : float = -0.175,
+            legend_y : float = -0.15,
             args_scatter : Optional[dict] = None,
             ) -> plt.Axes:
         """
@@ -172,6 +204,10 @@ class dPULearnPlot:
         -------
         * :class:`dPULearn` for details on the data structure of ``df_pu``.
         * :func:`matplotlib.pyplot.scatter` for scatter plot arguments.
+
+        Examples
+        --------
+        .. include:: examples/dpul_plot_pca.rst
         """
         # Check input
         ut.check_df(name="df_pu", df=df_pu, cols_requiered=[ut.COL_SELECTION_VIA], accept_none=True, accept_nan=True)
@@ -180,7 +216,7 @@ class dPULearnPlot:
             raise ValueError(f"'df_pu' should contain at least two PCs (n={n_pc}).")
         ut.check_labels(labels=labels) # Pre-check if proper format
         vals_requiered = [0, 1] if 2 not in set(labels) else [0, 1, 2]
-        ut.check_labels(labels=labels, vals_requiered=vals_requiered, allow_other_vals=False)
+        labels = ut.check_labels(labels=labels, vals_requiered=vals_requiered, allow_other_vals=False)
         ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
         ut.check_number_range(name="pc_x", val=pc_x, min_val=1, max_val=n_pc, just_int=True)
         ut.check_number_range(name="pc_y", val=pc_y, min_val=1, max_val=n_pc, just_int=True)
@@ -193,20 +229,21 @@ class dPULearnPlot:
         names = ut.check_list_like(name="names", val=names, accept_none=True, check_all_str_or_convertible=True)
         check_match_df_pu_labels(df_pu=df_pu, labels=labels)
         # Set defaults colors and names
-        if names is None:
-            names = ["Identified negatives", "Positives", "Unlabeled"]
-        if colors is None:
-            colors = [ut.COLOR_REL_NEG, ut.COLOR_POS, ut.COLOR_UNL]
-        check_match_names_colors(names=names, colors=colors)
-        # Adjust args_scatter
-        _args_scatter = dict(linewidth=0.5, edgecolor="white")
-        if args_scatter is not None:
-            _args_scatter.update(args_scatter)
+        default_names =  ["Identified negatives", "Positives", "Unlabeled"]
+        default_colors = [ut.COLOR_REL_NEG, ut.COLOR_POS, ut.COLOR_UNL]
+        names, colors, _args_scatter = _adjust_plot_args(names=names, colors=colors,
+                                                         args_scatter=args_scatter,
+                                                         default_names=default_names,
+                                                         default_colors=default_colors)
         # Plotting
-        ax = plot_pca(df_pu=df_pu, labels=labels,
-                      figsize=figsize, pc_x=pc_x, pc_y=pc_y,
-                      show_pos_mean_x=show_pos_mean_x, show_pos_mean_y=show_pos_mean_y,
-                      names=names, colors=colors,
-                      legend=legend, legend_y=legend_y, args_scatter=_args_scatter)
+        try:
+            ax = plot_pca(df_pu=df_pu, labels=labels,
+                          figsize=figsize, pc_x=pc_x, pc_y=pc_y,
+                          show_pos_mean_x=show_pos_mean_x, show_pos_mean_y=show_pos_mean_y,
+                          names=names, colors=colors,
+                          legend=legend, legend_y=legend_y, args_scatter=_args_scatter)
+        except Exception as e:
+            str_error = f"Following error occurred due to plt.scatter() function: {e}"
+            raise ValueError(str_error)
         return ax
 

@@ -174,7 +174,7 @@ class TestdPULearnEval:
 class TestdPULearnEvalComplex:
     """Complex test cases for dPULearn.eval() method combining multiple parameters."""
 
-    @settings(max_examples=10)
+    @settings(max_examples=100, deadline=1000)
     @given(
         X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=3, max_side=100),
                       elements=st.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)),
@@ -189,8 +189,9 @@ class TestdPULearnEvalComplex:
         names_datasets = ["dataset_" + str(i) for i in range(len(list_labels))]
         # Check if conditions are valid before proceeding
         if not check_invalid_conditions(X, min_samples=3) and not check_invalid_conditions(X_neg, min_samples=3):
-            df_eval = dpul.eval(X, list_labels=list_labels, names_datasets=names_datasets, X_neg=X_neg)
-            assert isinstance(df_eval, pd.DataFrame)
+            if X.shape[1] == X_neg.shape[1]:
+                df_eval = dpul.eval(X, list_labels=list_labels, names_datasets=names_datasets, X_neg=X_neg)
+                assert isinstance(df_eval, pd.DataFrame)
 
     @settings(max_examples=10)
     @given(

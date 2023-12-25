@@ -101,9 +101,10 @@ class TestdPULearnFit:
         dpul = aa.dPULearn()
         is_invalid =  check_invalid_conditions(X=X, labels=labels)
         if not is_invalid:
-            df_pu = dpul.fit(X, labels, metric=metric).df_pu_
-            assert isinstance(df_pu, pd.DataFrame)
-    
+            for n in [5, 25, 39]:
+                df_pu = dpul.fit(X, labels, metric=metric, n_unl_to_neg=n).df_pu_
+                assert isinstance(df_pu, pd.DataFrame)
+
     @settings(deadline=1000, max_examples=100)
     @given(n_components=some.one_of(some.floats(min_value=0.1, max_value=1.0), some.integers(min_value=1)))
     def test_n_components_parameter(self, n_components):
@@ -113,10 +114,11 @@ class TestdPULearnFit:
         dpul = aa.dPULearn()
         n_samples, n_features = X.shape
         is_invalid =  check_invalid_conditions(X=X, labels=labels)
-        if not is_invalid:
-            if n_components < min(n_features, n_samples) and n_components not in [0.0, 1.0]:
-                df_pu = dpul.fit(X, labels, n_components=n_components).df_pu_
-                assert isinstance(df_pu, pd.DataFrame)
+        for i in [5, 26, 39]:
+            if not is_invalid:
+                if n_components < min(n_features, n_samples) and n_components not in [0.0, 1.0]:
+                    df_pu = dpul.fit(X, labels, n_components=n_components, n_unl_to_neg=i).df_pu_
+                    assert isinstance(df_pu, pd.DataFrame)
 
     # Negative tests
     @settings(deadline=1000, max_examples=10)

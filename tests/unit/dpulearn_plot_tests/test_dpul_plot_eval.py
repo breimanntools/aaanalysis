@@ -13,6 +13,7 @@ COLS_EVAL = COLS_EVAL_REQUIERED + ["avg_abs_AUC_neg", "avg_KLD_pos", "avg_KLD_un
 VALID_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w', 'tab:blue', 'tab:orange', 'tab:green', 'tab:red',
                 'tab:purple', 'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive']
 
+
 def _create_sample_df_eval(n_rows=5, just_ned=True, random_order=False):
     cols = COLS_EVAL_REQUIERED if just_ned else COLS_EVAL
     # Generate random data

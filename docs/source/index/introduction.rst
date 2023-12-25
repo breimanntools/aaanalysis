@@ -6,12 +6,12 @@ for any sequence analysis representable by numerical values.
 
 Key Algorithms
 --------------
-- **AAclust**: A k-optimized clustering wrapper that selects redundancy-reduced sets of numerical scales,
-  such as amino acid scales.
 - **CPP**: Comparative Physicochemical Profiling, an interpretable feature engineering algorithm comparing two sets of
   protein sequences to identify the set of most distinctive features.
 - **dPULearn**: A deterministic Positive-Unlabeled (PU) Learning algorithm tailored for training on unbalanced and
   small datasets, enhancing predictive accuracy.
+- **AAclust**: A k-optimized clustering wrapper that selects redundancy-reduced sets of numerical scales,
+  such as amino acid scales.
 
 Purpose and Audience
 --------------------
