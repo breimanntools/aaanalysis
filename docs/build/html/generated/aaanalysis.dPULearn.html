@@ -195,41 +195,6 @@ refer to the PU Learning section in the Usage Principles documentation: <cite>us
 </dd>
 </dl>
 <dl class="py method">
-<dt class="sig sig-object py" id="aaanalysis.dPULearn.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pca_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L114-L133"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn.__init__" title="Permalink to this definition"></a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>optional</em>) – Enable verbose output.</p></li>
-<li><p><strong>pca_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><em>dict</em></a><em>, </em><em>optional</em>) – Additional keyword arguments for Principal Component Analysis (PCA) model.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<p class="rubric">Methods</p>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.dPULearn.__init__" title="aaanalysis.dPULearn.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([pca_kwargs, verbose])</p></td>
-<td><p><dl class="field-list simple">
-<dt class="field-odd">type verbose<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.12)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>]</p>
-</dd>
-</dl>
-</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.dPULearn.compare_sets_negatives" title="aaanalysis.dPULearn.compare_sets_negatives"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compare_sets_negatives</span></code></a>([list_labels, names, ...])</p></td>
-<td><p>Create DataFrame for comparing sets of identified negatives.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#aaanalysis.dPULearn.eval" title="aaanalysis.dPULearn.eval"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval</span></code></a>(X[, list_labels, names_datasets, ...])</p></td>
-<td><p>Evaluates the quality of different sets of identified negatives.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#aaanalysis.dPULearn.fit" title="aaanalysis.dPULearn.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(X[, labels, n_unl_to_neg, metric, ...])</p></td>
-<td><p>Fit the dPULearn model to identify reliable negative samples (labeled by 0) from unlabeled samples (2) based on the distance to positive samples (1).</p></td>
-</tr>
-</tbody>
-</table>
-<dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.dPULearn.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_unl_to_neg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.8</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/pu_learning/_dpulearn.py#L136-L221"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.dPULearn.fit" title="Permalink to this definition"></a></dt>
 <dd><p>Fit the dPULearn model to identify reliable negative samples (labeled by 0) from unlabeled samples (2)
