@@ -125,6 +125,10 @@ class AAclust(Wrapper):
             Keyword arguments to pass to the selected clustering model.
         verbose : bool, optional
             If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if 'None'.
+
+        Examples
+        --------
+        .. include:: examples/aaclust.rst
         """
         # Model parameters
         model_class = ut.check_mode_class(model_class=model_class)
@@ -197,7 +201,7 @@ class AAclust(Wrapper):
         * Sets all attributes of the :class:`aanalysis.AAclust` class.
         * The AAclust algorithm consists of three main steps:
             1. Estimate the lower bound of k.
-            2. Refine k (recursively) using the chosen quality metric.
+            2. Refine k (recursively) using the chosen quality measure.
             3. Optionally, merge smaller clusters as directed by the merge ``metric``.
         * A representative scale (medoid) closest to each cluster center is selected for redundancy reduction.
 
@@ -208,6 +212,10 @@ class AAclust(Wrapper):
         Warnings
         --------
         * All RuntimeWarnings during the AAclust algorithm are caught and bundled into one RuntimeWarning.
+
+        Examples
+        --------
+        .. include:: examples/aaclust_fit.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -316,6 +324,10 @@ class AAclust(Wrapper):
         --------
         * :func:`sklearn.metrics.calinski_harabasz_score`.
         * :func:`sklearn.metrics.silhouette_score`.
+
+        Examples
+        --------
+        .. include:: examples/aaclust_eval.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -358,6 +370,10 @@ class AAclust(Wrapper):
         -------
         cluster_names : list of str
             A list of renamed clusters based on names.
+
+        Examples
+        --------
+        .. include:: examples/aaclust_name_clusters.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -391,6 +407,10 @@ class AAclust(Wrapper):
             The computed center for each cluster.
         labels_centers : array-like, shape (n_clusters,)
             The labels associated with each computed center.
+
+        Examples
+        --------
+        .. include:: examples/aaclust_comp_centers.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -429,6 +449,10 @@ class AAclust(Wrapper):
             The medoid for each cluster.
         labels_medoids : array-like, shape (n_clusters,)
             The labels corresponding to each medoid.
+
+        Examples
+        --------
+        .. include:: examples/aaclust_comp_medoids.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -483,6 +507,10 @@ class AAclust(Wrapper):
         See Also
         --------
         * :meth:`pandas.DataFrame.corr` used to compute the correlation.
+
+        Examples
+        --------
+        .. include:: examples/aaclust_comp_correlation.rst
         """
         # Check input
         X = ut.check_X(X=X, min_n_samples=2)
@@ -524,6 +552,10 @@ class AAclust(Wrapper):
         -------
         coverage : float
             Percentage of unique names from ``names`` that are found in ``names_ref``.
+
+        Examples
+        --------
+        .. include:: examples/aaclust_comp_coverage.rst
         """
         names = ut.check_list_like(name="names", val=names, accept_none=False)
         names_ref = ut.check_list_like(name="names_ref", val=names_ref, accept_none=False)
