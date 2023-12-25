@@ -88,7 +88,7 @@ def compute_medoids(X, labels=None, metric="correlation"):
 
 
 def name_clusters(X, labels=None, names=None, shorten_names=True):
-    """"""
+    """Create ordered list of cluster names"""
     medoids, medoid_labels, medoid_ind = compute_medoids(X, labels=labels)
     dict_medoids = dict(zip(medoid_labels, medoid_ind))
     # Get cluster labels sorted in descending order of frequency

@@ -1,5 +1,5 @@
 Different clustering results can be evaluated and compared using the
-``AAclust.eval()`` method. We perform five clusterings with
+``AAclust().eval()`` method. We perform five clusterings with
 ``n_clusters`` for 5, 10, 25, 50, and 100 utilizing a Python
 comprehension list:
 

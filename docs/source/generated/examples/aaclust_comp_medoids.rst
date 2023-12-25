@@ -1,0 +1,230 @@
+The representative samples for each cluster (called ‘medoids’) can be
+obtained using the ``AAclust().comp_cmedoids()`` method:
+
+.. code:: ipython2
+
+    import aaanalysis as aa
+    import pandas as pd
+    # Create example dataset comprising 100 scales
+    df_scales = aa.load_scales().T.sample(100).T
+    X = df_scales.T
+    # Fit AAclust model and obtain clustering centers for 5 clusters
+    aac = aa.AAclust()
+    labels = aac.fit(X, n_clusters=5).labels_
+    centers, labels_centers = aac.comp_medoids(X=X, labels=labels)
+    # Create DataFrame with cluster centers
+    columns = [f"Cluster {i}" for i in labels_centers]
+    df_medoids = pd.DataFrame(centers.T, columns=columns, index=df_scales.index)
+    aa.display_df(df_medoids)
+
+
+
+.. raw:: html
+
+    <style type="text/css">
+    #T_bf505 thead th {
+      background-color: white;
+      color: black;
+    }
+    #T_bf505 tbody tr:nth-child(odd) {
+      background-color: #f2f2f2;
+    }
+    #T_bf505 tbody tr:nth-child(even) {
+      background-color: white;
+    }
+    #T_bf505 th {
+      padding: 5px;
+      white-space: nowrap;
+    }
+    #T_bf505  td {
+      padding: 5px;
+      white-space: nowrap;
+    }
+    #T_bf505 table {
+      font-size: 12px;
+    }
+    </style>
+    <table id="T_bf505" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
+      <thead>
+        <tr>
+          <th class="blank level0" >&nbsp;</th>
+          <th id="T_bf505_level0_col0" class="col_heading level0 col0" >Cluster 3</th>
+          <th id="T_bf505_level0_col1" class="col_heading level0 col1" >Cluster 4</th>
+          <th id="T_bf505_level0_col2" class="col_heading level0 col2" >Cluster 1</th>
+          <th id="T_bf505_level0_col3" class="col_heading level0 col3" >Cluster 0</th>
+          <th id="T_bf505_level0_col4" class="col_heading level0 col4" >Cluster 2</th>
+        </tr>
+        <tr>
+          <th class="index_name level0" >AA</th>
+          <th class="blank col0" >&nbsp;</th>
+          <th class="blank col1" >&nbsp;</th>
+          <th class="blank col2" >&nbsp;</th>
+          <th class="blank col3" >&nbsp;</th>
+          <th class="blank col4" >&nbsp;</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th id="T_bf505_level0_row0" class="row_heading level0 row0" >A</th>
+          <td id="T_bf505_row0_col0" class="data row0 col0" >0.210000</td>
+          <td id="T_bf505_row0_col1" class="data row0 col1" >0.943000</td>
+          <td id="T_bf505_row0_col2" class="data row0 col2" >0.500000</td>
+          <td id="T_bf505_row0_col3" class="data row0 col3" >0.476000</td>
+          <td id="T_bf505_row0_col4" class="data row0 col4" >0.147000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row1" class="row_heading level0 row1" >C</th>
+          <td id="T_bf505_row1_col0" class="data row1 col0" >0.000000</td>
+          <td id="T_bf505_row1_col1" class="data row1 col1" >0.000000</td>
+          <td id="T_bf505_row1_col2" class="data row1 col2" >0.029000</td>
+          <td id="T_bf505_row1_col3" class="data row1 col3" >0.936000</td>
+          <td id="T_bf505_row1_col4" class="data row1 col4" >0.300000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row2" class="row_heading level0 row2" >D</th>
+          <td id="T_bf505_row2_col0" class="data row2 col0" >0.448000</td>
+          <td id="T_bf505_row2_col1" class="data row2 col1" >0.648000</td>
+          <td id="T_bf505_row2_col2" class="data row2 col2" >0.786000</td>
+          <td id="T_bf505_row2_col3" class="data row2 col3" >0.191000</td>
+          <td id="T_bf505_row2_col4" class="data row2 col4" >0.339000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row3" class="row_heading level0 row3" >E</th>
+          <td id="T_bf505_row3_col0" class="data row3 col0" >0.029000</td>
+          <td id="T_bf505_row3_col1" class="data row3 col1" >0.716000</td>
+          <td id="T_bf505_row3_col2" class="data row3 col2" >0.871000</td>
+          <td id="T_bf505_row3_col3" class="data row3 col3" >0.106000</td>
+          <td id="T_bf505_row3_col4" class="data row3 col4" >0.518000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row4" class="row_heading level0 row4" >F</th>
+          <td id="T_bf505_row4_col0" class="data row4 col0" >0.057000</td>
+          <td id="T_bf505_row4_col1" class="data row4 col1" >0.307000</td>
+          <td id="T_bf505_row4_col2" class="data row4 col2" >0.057000</td>
+          <td id="T_bf505_row4_col3" class="data row4 col3" >1.000000</td>
+          <td id="T_bf505_row4_col4" class="data row4 col4" >0.800000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row5" class="row_heading level0 row5" >G</th>
+          <td id="T_bf505_row5_col0" class="data row5 col0" >0.914000</td>
+          <td id="T_bf505_row5_col1" class="data row5 col1" >1.000000</td>
+          <td id="T_bf505_row5_col2" class="data row5 col2" >0.671000</td>
+          <td id="T_bf505_row5_col3" class="data row5 col3" >0.388000</td>
+          <td id="T_bf505_row5_col4" class="data row5 col4" >0.000000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row6" class="row_heading level0 row6" >H</th>
+          <td id="T_bf505_row6_col0" class="data row6 col0" >0.600000</td>
+          <td id="T_bf505_row6_col1" class="data row6 col1" >0.182000</td>
+          <td id="T_bf505_row6_col2" class="data row6 col2" >0.486000</td>
+          <td id="T_bf505_row6_col3" class="data row6 col3" >0.579000</td>
+          <td id="T_bf505_row6_col4" class="data row6 col4" >0.589000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row7" class="row_heading level0 row7" >I</th>
+          <td id="T_bf505_row7_col0" class="data row7 col0" >0.133000</td>
+          <td id="T_bf505_row7_col1" class="data row7 col1" >0.727000</td>
+          <td id="T_bf505_row7_col2" class="data row7 col2" >0.071000</td>
+          <td id="T_bf505_row7_col3" class="data row7 col3" >0.885000</td>
+          <td id="T_bf505_row7_col4" class="data row7 col4" >0.598000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row8" class="row_heading level0 row8" >K</th>
+          <td id="T_bf505_row8_col0" class="data row8 col0" >0.371000</td>
+          <td id="T_bf505_row8_col1" class="data row8 col1" >0.625000</td>
+          <td id="T_bf505_row8_col2" class="data row8 col2" >1.000000</td>
+          <td id="T_bf505_row8_col3" class="data row8 col3" >0.000000</td>
+          <td id="T_bf505_row8_col4" class="data row8 col4" >0.613000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row9" class="row_heading level0 row9" >L</th>
+          <td id="T_bf505_row9_col0" class="data row9 col0" >0.257000</td>
+          <td id="T_bf505_row9_col1" class="data row9 col1" >0.773000</td>
+          <td id="T_bf505_row9_col2" class="data row9 col2" >0.000000</td>
+          <td id="T_bf505_row9_col3" class="data row9 col3" >0.867000</td>
+          <td id="T_bf505_row9_col4" class="data row9 col4" >0.593000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row10" class="row_heading level0 row10" >M</th>
+          <td id="T_bf505_row10_col0" class="data row10 col0" >0.057000</td>
+          <td id="T_bf505_row10_col1" class="data row10 col1" >0.193000</td>
+          <td id="T_bf505_row10_col2" class="data row10 col2" >0.114000</td>
+          <td id="T_bf505_row10_col3" class="data row10 col3" >0.803000</td>
+          <td id="T_bf505_row10_col4" class="data row10 col4" >0.610000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row11" class="row_heading level0 row11" >N</th>
+          <td id="T_bf505_row11_col0" class="data row11 col0" >0.886000</td>
+          <td id="T_bf505_row11_col1" class="data row11 col1" >0.432000</td>
+          <td id="T_bf505_row11_col2" class="data row11 col2" >0.729000</td>
+          <td id="T_bf505_row11_col3" class="data row11 col3" >0.203000</td>
+          <td id="T_bf505_row11_col4" class="data row11 col4" >0.402000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row12" class="row_heading level0 row12" >P</th>
+          <td id="T_bf505_row12_col0" class="data row12 col0" >1.000000</td>
+          <td id="T_bf505_row12_col1" class="data row12 col1" >0.409000</td>
+          <td id="T_bf505_row12_col2" class="data row12 col2" >0.829000</td>
+          <td id="T_bf505_row12_col3" class="data row12 col3" >0.367000</td>
+          <td id="T_bf505_row12_col4" class="data row12 col4" >0.367000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row13" class="row_heading level0 row13" >Q</th>
+          <td id="T_bf505_row13_col0" class="data row13 col0" >0.400000</td>
+          <td id="T_bf505_row13_col1" class="data row13 col1" >0.250000</td>
+          <td id="T_bf505_row13_col2" class="data row13 col2" >0.729000</td>
+          <td id="T_bf505_row13_col3" class="data row13 col3" >0.206000</td>
+          <td id="T_bf505_row13_col4" class="data row13 col4" >0.553000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row14" class="row_heading level0 row14" >R</th>
+          <td id="T_bf505_row14_col0" class="data row14 col0" >0.333000</td>
+          <td id="T_bf505_row14_col1" class="data row14 col1" >0.455000</td>
+          <td id="T_bf505_row14_col2" class="data row14 col2" >0.671000</td>
+          <td id="T_bf505_row14_col3" class="data row14 col3" >0.215000</td>
+          <td id="T_bf505_row14_col4" class="data row14 col4" >0.792000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row15" class="row_heading level0 row15" >S</th>
+          <td id="T_bf505_row15_col0" class="data row15 col0" >0.686000</td>
+          <td id="T_bf505_row15_col1" class="data row15 col1" >0.386000</td>
+          <td id="T_bf505_row15_col2" class="data row15 col2" >0.686000</td>
+          <td id="T_bf505_row15_col3" class="data row15 col3" >0.215000</td>
+          <td id="T_bf505_row15_col4" class="data row15 col4" >0.191000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row16" class="row_heading level0 row16" >T</th>
+          <td id="T_bf505_row16_col0" class="data row16 col0" >0.610000</td>
+          <td id="T_bf505_row16_col1" class="data row16 col1" >0.580000</td>
+          <td id="T_bf505_row16_col2" class="data row16 col2" >0.557000</td>
+          <td id="T_bf505_row16_col3" class="data row16 col3" >0.312000</td>
+          <td id="T_bf505_row16_col4" class="data row16 col4" >0.325000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row17" class="row_heading level0 row17" >V</th>
+          <td id="T_bf505_row17_col0" class="data row17 col0" >0.114000</td>
+          <td id="T_bf505_row17_col1" class="data row17 col1" >0.864000</td>
+          <td id="T_bf505_row17_col2" class="data row17 col2" >0.129000</td>
+          <td id="T_bf505_row17_col3" class="data row17 col3" >0.800000</td>
+          <td id="T_bf505_row17_col4" class="data row17 col4" >0.440000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row18" class="row_heading level0 row18" >W</th>
+          <td id="T_bf505_row18_col0" class="data row18 col0" >0.562000</td>
+          <td id="T_bf505_row18_col1" class="data row18 col1" >0.080000</td>
+          <td id="T_bf505_row18_col2" class="data row18 col2" >0.200000</td>
+          <td id="T_bf505_row18_col3" class="data row18 col3" >0.867000</td>
+          <td id="T_bf505_row18_col4" class="data row18 col4" >1.000000</td>
+        </tr>
+        <tr>
+          <th id="T_bf505_level0_row19" class="row_heading level0 row19" >Y</th>
+          <td id="T_bf505_row19_col0" class="data row19 col0" >0.390000</td>
+          <td id="T_bf505_row19_col1" class="data row19 col1" >0.443000</td>
+          <td id="T_bf505_row19_col2" class="data row19 col2" >0.214000</td>
+          <td id="T_bf505_row19_col3" class="data row19 col3" >0.588000</td>
+          <td id="T_bf505_row19_col4" class="data row19 col4" >0.801000</td>
+        </tr>
+      </tbody>
+    </table>
+
+
