@@ -12,16 +12,15 @@ from pandas import DataFrame
 import aaanalysis.utils as ut
 
 # Constants
-STR_AA_GAP = "-"
-LIST_CANONICAL_AA = ['N', 'A', 'I', 'V', 'K', 'Q', 'R', 'M', 'H', 'F', 'E', 'D', 'C', 'G', 'L', 'T', 'S', 'Y', 'W', 'P']
 FOLDER_BENCHMARKS = ut.FOLDER_DATA + "benchmarks" + ut.SEP
+LIST_CANONICAL_AA = ['N', 'A', 'I', 'V', 'K', 'Q', 'R', 'M', 'H', 'F', 'E', 'D', 'C', 'G', 'L', 'T', 'S', 'Y', 'W', 'P']
 LIST_NON_CANONICAL_OPTIONS = ["remove", "keep", "gap"]
 
 
 # I Helper Functions
 # Check functions
 def check_name_of_dataset(name="Overview", folder_in=None):
-    """"""
+    """Check if name of dataset is valid"""
     if name == "Overview":
         return
     list_datasets = [x.split(".")[0] for x in os.listdir(folder_in)
@@ -78,7 +77,7 @@ def _is_aa_level(name=None):
 
 
 def _adjust_non_canonical_aa(df=None, non_canonical_aa="remove"):
-    """"""
+    """Adjust non-canonical amino acids"""
     if non_canonical_aa == "keep":
         return df
     # Get all non-canonical amino acids
@@ -90,7 +89,7 @@ def _adjust_non_canonical_aa(df=None, non_canonical_aa="remove"):
         pattern = '|'.join(list_non_canonical_aa)  # Joining list into a single regex pattern
         df = df[~df[ut.COL_SEQ].str.contains(pattern, regex=True)]
     else:
-        df[ut.COL_SEQ] = [re.sub(f'[{"".join(list_non_canonical_aa)}]', STR_AA_GAP, x) for x in df[ut.COL_SEQ]]
+        df[ut.COL_SEQ] = [re.sub(f'[{"".join(list_non_canonical_aa)}]', ut.STR_AA_GAP, x) for x in df[ut.COL_SEQ]]
     return df
 
 
@@ -134,24 +133,24 @@ def load_dataset(name: str = "Overview",
 
     Parameters
     ----------
-    name
+    name : str, default='Overview'
         The name of the loaded dataset, from the 'Dataset' column in the overview table.
-    n
+    n : int, optional
         Number of proteins per class, selected by index. If ``None``, the whole dataset will be returned.
-    random
+    random : bool, default=False
         If True, ``n`` randomly selected proteins per class will be chosen.
-    non_canonical_aa
+    non_canonical_aa : {'remove', 'keep', 'gap'}, default='remove'
         Options for handling non-canonical amino acids:
 
         - ``remove``: Remove sequences containing non-canonical amino acids.
         - ``keep``: Don't remove sequences containing non-canonical amino acids.
         - ``gap``: Non-canonical amino acids are replaced by the gap symbol ('X').
 
-    min_len
-        Minimum length of sequences for filtering, disabled by default.
-    max_len
-        Maximum length of sequences for filtering, disabled by default.
-    aa_window_size
+    min_len : int, optional
+        Minimum length of sequences for filtering.
+    max_len : int, optional
+        Maximum length of sequences for filtering.
+    aa_window_size : int, default=9
         Length of amino acid window, only used for the amino acid dataset level (``name='AA_'``). Disabled if ``None``.
 
     Returns

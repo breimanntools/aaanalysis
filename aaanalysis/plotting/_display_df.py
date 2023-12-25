@@ -26,6 +26,8 @@ def display_df(df: pd.DataFrame = None,
                max_height: int = 300,
                char_limit: int = 25,
                show_shape=False,
+               n_rows: Optional[int] = None,
+               n_cols: Optional[int] = None,
                ):
     """
     Display DataFrame with specific style as HTML output for jupyter notebooks.
@@ -44,6 +46,10 @@ def display_df(df: pd.DataFrame = None,
         Maximum number of characters to display in a cell.
     show_shape : bool, default=False
         If ``True``, shape of ``df`` is printed.
+    n_rows : int, optional
+        Number of rows.
+    n_cols : int, optional
+        Number of rows.
     """
     # Check input
     ut.check_df(name="df", df=df, accept_none=False)
@@ -51,6 +57,14 @@ def display_df(df: pd.DataFrame = None,
     ut.check_number_range(name="max_width_pct", val=max_width_pct, min_val=1, max_val=100, accept_none=False, just_int=True)
     ut.check_number_range(name="max_height", val=max_height, min_val=1, accept_none=False, just_int=True)
     ut.check_number_range(name="char_limit", val=char_limit, min_val=1, accept_none=True, just_int=True)
+    ut.check_number_range(name="n_rows", val=n_rows, min_val=1, max_val=len(df), accept_none=True, just_int=True)
+    ut.check_number_range(name="n_cols", val=n_cols, min_val=1, max_val=len(df.T), accept_none=True, just_int=True)
+    # Filtering
+    df = df.copy()
+    if n_rows is not None:
+        df = df.head(n_rows)
+    if n_cols is not None:
+        df = df.T.head(n_cols).T
     # Style dataframe
     df = _adjust_df(df=df, char_limit=char_limit)
     styled_df = (

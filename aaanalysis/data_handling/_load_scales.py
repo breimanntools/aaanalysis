@@ -2,7 +2,7 @@
 This is a script for scale loading function. Please define new loading functions by their loaded data by introducing
  a new data table in docs/source/index/tables_templates.rst.
 """
-from typing import Optional
+from typing import Optional, Union
 from pandas import DataFrame
 from aaanalysis import utils as ut
 
@@ -18,11 +18,16 @@ def check_top60_n(name=None, top60_n=None):
     """Check if name is valid and top60_n is between 1 and 60"""
     if top60_n is None:
         return
+    if isinstance(top60_n, str):
+        if "AAC" not in top60_n:
+            raise ValueError(f"'top60_n' ('{top60_n}') should be int or 'AAC' id")
+        top60_n = int(top60_n.replace("AAC", ""))
     ut.check_number_range(name="top60_n", val=top60_n, min_val=1, max_val=60, just_int=True)
     matching_scale_sets = [ut.STR_SCALES, ut.STR_SCALE_CAT, ut.STR_SCALES_RAW]
     if name not in matching_scale_sets:
         raise ValueError(f"'name' ('{name}') is not valid for 'top60_n' ({top60_n})."
                          f" Choose one of following: {matching_scale_sets}")
+    return top60_n
 
 
 # Helper functions for load_scales
@@ -41,7 +46,7 @@ def _filter_scales(df_cat=None, unclassified_out=False, just_aaindex=False):
 
 
 def _get_selected_scales(top60_n=None):
-    """"""
+    """Get selected top scale set"""
     df_eval = ut.read_excel_cached(ut.FOLDER_DATA + f"{ut.STR_TOP60}.xlsx").drop("top60_id", axis=1)
     # Find the names of the index where the value is not 0
     _df = df_eval.iloc[top60_n - 1]
@@ -53,7 +58,7 @@ def _get_selected_scales(top60_n=None):
 def load_scales(name: str = "scales",
                 just_aaindex: bool = False,
                 unclassified_out: bool = False,
-                top60_n: Optional[int] = None
+                top60_n: Optional[Union[int, str]] = None
                 ) -> DataFrame:
     """
     Loads amino acid scales or their classification (AAontology).
@@ -68,7 +73,7 @@ def load_scales(name: str = "scales",
 
     Parameters
     ----------
-    name
+    name : str, default='scales'
         Name of the loaded dataset:
 
         - ``scales_raw``: All amino acid scales.
@@ -80,12 +85,13 @@ def load_scales(name: str = "scales",
 
         Or Number between 1 and 60 to select the i-th top60 dataset.
 
-    just_aaindex
-        If True, returns only scales from AAindex. Relevant only for 'scales', 'scales_raw', or 'scales_cat'.
-    unclassified_out
+    just_aaindex : bool, default=False
+        If ``True``, returns only scales from AAindex. Relevant only for 'scales', 'scales_raw', or 'scales_cat'.
+    unclassified_out : bool, default=False
         Determines exclusion of unclassified scales. Relevant only for 'scales', 'scales_raw', or 'scales_cat'.
-    top60_n
+    top60_n : int or str, optional
          Select the n-th scale set from top60 sets and return it for 'scales', 'scales_raw', or 'scales_cat'.
+         Allowed strings are AAclust ids (e.g., 'AAC01').
 
     Returns
     -------
@@ -118,7 +124,7 @@ def load_scales(name: str = "scales",
     check_name_of_scale(name=name)
     ut.check_bool(name="just_aaindex", val=just_aaindex)
     ut.check_bool(name="unclassified_in", val=unclassified_out)
-    check_top60_n(name=name, top60_n=top60_n)
+    top60_n = check_top60_n(name=name, top60_n=top60_n)
 
     # Load and filter top60 scales
     if top60_n is not None:
@@ -154,8 +160,8 @@ def load_scales(name: str = "scales",
         selected_scales = [x for x in list(df) if x in list(df_cat[ut.COL_SCALE_ID])]
         df = df[selected_scales]
     # Adjust data type of column values
-    name_all_float = ["scales", "scales_raw", "scales_pc"]
-    name_all_int = ["top60"]
+    name_all_float = [ut.STR_SCALES, ut.STR_SCALES_RAW, ut.STR_SCALES_PC]
+    name_all_int = [ut.STR_TOP60]
     if name in name_all_float:
         df = df.astype(float)
     elif name in name_all_int:
