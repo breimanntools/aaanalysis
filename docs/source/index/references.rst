@@ -23,8 +23,8 @@
 References
 ==========
 
-Algorithms
-----------
+AAanalysis Algorithms
+---------------------
 .. [Breimann24a] Breimann et al. (2024a),
    *AAclust: k-optimized clustering for selecting redundancy-reduced sets of amino acid scales*,
    .. # Link if available

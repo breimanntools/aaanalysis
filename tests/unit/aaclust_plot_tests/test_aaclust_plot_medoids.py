@@ -144,7 +144,7 @@ class TestAAclustPlotCenter:
             assert isinstance(ax, plt.Axes) and isinstance(df_components, pd.DataFrame)
             plt.close()
 
-    def test_invalid_labels_non_integer(self, labels):
+    def test_invalid_labels_non_integer(self):
         """Test with non-integer labels."""
         labels = ["s", "d", "e"]
         X = np.random.rand(len(labels), 5)

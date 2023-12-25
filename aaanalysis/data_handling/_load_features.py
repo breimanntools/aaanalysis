@@ -36,6 +36,7 @@ def load_features(name="DOM_GSEC"):
         including their feature importance.
 
     Examples
+    --------
     .. include:: examples/load_features.rst
     """
     # Check input

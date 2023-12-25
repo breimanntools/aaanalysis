@@ -9,7 +9,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
-import aaanalysis as aa
 import aaanalysis.utils as ut
 
 from .utils_feature import get_positions_, get_df_pos_

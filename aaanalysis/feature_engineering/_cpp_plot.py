@@ -8,7 +8,6 @@ import seaborn as sns
 import inspect
 import matplotlib as mpl
 
-import aaanalysis as aa
 import aaanalysis.utils as ut
 
 from ._backend.check_feature import (check_split_kws,

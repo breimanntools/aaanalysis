@@ -18,6 +18,8 @@ from ._utils_feature_stat import add_stat_
 def get_split_kws_(n_split_min=1, n_split_max=15, steps_pattern=None, n_min=2, n_max=4, len_max=15,
                    steps_periodicpattern=None, split_types=None):
     """Get split kws for CPP class"""
+    if split_types is None:
+        split_types = ut.LIST_SPLIT_TYPES
     if steps_pattern is None:
         # Differences between interacting amino acids in helix (without gaps) include 6, 7 ,8 to include gaps
         steps_pattern = [3, 4]

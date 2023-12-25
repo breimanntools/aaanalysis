@@ -23,7 +23,7 @@ from ._backend.aaclust.aaclust_methods import (compute_centers, compute_medoids,
 # I Helper Functions
 # Check parameter matching functions
 def check_match_X_names(X=None, names=None, accept_none=True):
-    """"""
+    """Verify that the number of samples in 'X' matches the length of 'names'."""
     if accept_none and names is None:
         return
     n_samples, n_features = X.shape
@@ -32,7 +32,7 @@ def check_match_X_names(X=None, names=None, accept_none=True):
 
 
 def check_match_X_n_clusters(X=None, n_clusters=None, accept_none=True):
-    """"""
+    """Ensure the number of samples and unique samples in 'X' are greater than or equal to 'n_clusters'."""
     if accept_none and n_clusters is None:
         return
     n_samples, n_features = X.shape
@@ -44,7 +44,7 @@ def check_match_X_n_clusters(X=None, n_clusters=None, accept_none=True):
 
 
 def check_X_X_ref(X=None, X_ref=None):
-    """"""
+    """Check that the number of features in 'X' matches the number of features in 'X_ref'."""
     n_samples, n_features = X.shape
     n_samples_ref, n_features_ref = X_ref.shape
     if n_features != n_features_ref:
@@ -52,7 +52,7 @@ def check_X_X_ref(X=None, X_ref=None):
 
 
 def check_labels_cor(labels=None, labels_name="labels"):
-    """"""
+    """Validate that 'labels' contains only integer values and is not None."""
     if labels is None:
         raise ValueError(f"'{labels_name}' should not be None.")
     # Convert labels to a numpy array if it's not already
@@ -184,7 +184,7 @@ class AAclust(Wrapper):
              - ``manhattan``: Manhattan distance (minimum)
              - ``cosine``: Cosine distance (minimum)
 
-        names : list of str
+        names : list of str, optional
             List of sample names. If provided, sets :attr:`AAclust.medoid_names_` attribute.
 
         Returns

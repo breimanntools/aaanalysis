@@ -9,7 +9,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
-import aaanalysis as aa
 import aaanalysis.utils as ut
 from .utils_feature import get_feature_matrix_, get_positions_
 from .utils_cpp_plot import add_part_seq, add_feature_title, get_color_dif

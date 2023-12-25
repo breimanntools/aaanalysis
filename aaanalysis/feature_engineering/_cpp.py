@@ -5,12 +5,11 @@ import numpy as np
 import pandas as pd
 from typing import Optional
 
-import aaanalysis as aa
 import aaanalysis.utils as ut
 from aaanalysis.template_classes import Tool
 
 # Import supportive class (exception for importing from same sub-package)
-from ._sequence_feature import SequenceFeature
+from ._backend.cpp.sequence_feature import get_features_, get_split_kws_
 from ._backend.check_feature import (check_split_kws,
                                      check_parts_len, check_match_features_seq_parts,
                                      check_df_parts, check_match_df_parts_features,
@@ -79,8 +78,7 @@ class CPP(Tool):
         """
         # Load defaults
         if split_kws is None:
-            sf = SequenceFeature()
-            split_kws = sf.get_split_kws()
+            split_kws = get_split_kws_()
         if df_scales is None:
             df_scales = ut.load_default_scales()
         if df_cat is None:
@@ -194,8 +192,7 @@ class CPP(Tool):
         ut.check_number_range(name="n_process", val=n_processes, min_val=1, accept_none=True, just_int=True)
         # Settings and creation of objects
         args = dict(split_kws=self.split_kws, df_scales=self.df_scales)
-        sf = SequenceFeature()
-        n_feat = len(sf.get_features(**args, list_parts=list(self.df_parts)))
+        n_feat = len(get_features_(**args, list_parts=list(self.df_parts)))
         n_filter = n_feat if n_feat < n_filter else n_filter
         if self._verbose:
             ut.print_out(f"1. CPP creates {n_feat} features for {len(self.df_parts)} samples")
