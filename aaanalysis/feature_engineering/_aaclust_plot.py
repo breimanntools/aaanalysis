@@ -173,7 +173,7 @@ class AAclustPlot:
     @staticmethod
     def eval(df_eval: pd.DataFrame = None,
              dict_xlims: Optional[Union[None, dict]] = None,
-             figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
+             figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
              ) -> Tuple[plt.Figure, plt.Axes]:
         """
         Plots evaluation of ``n_clusters`` and clustering metrics ``BIC``, ``CH``, and ``SC`` from ``df_seq``.

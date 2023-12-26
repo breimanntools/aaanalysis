@@ -28,5 +28,8 @@ def x_ticks_0(ax):
     """Apply custom formatting for x-axis ticks."""
     def custom_x_ticks(x, pos):
         """Format x-axis ticks."""
-        return f'{x:.2f}' if x else f'{x:.0f}'
+        if x % 1 == 0:  # Check if number is an integer
+            return f'{int(x)}'  # Format as integer
+        else:
+            return f'{x:.2f}'  # Format as float with two decimal places
     ax.xaxis.set_major_formatter(mticker.FuncFormatter(custom_x_ticks))

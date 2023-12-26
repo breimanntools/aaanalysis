@@ -1,4 +1,4 @@
-To showcase the ``AAclustPlot().eval()`` method, we create an example
+To demonstrate the ``AAclustPlot().eval()`` method, we create an example
 dataset:
 
 .. code:: ipython2
@@ -12,7 +12,7 @@ dataset:
     X = df_scales.T
     # Fit AAclust model and retrieve labels for evaluation
     aac = aa.AAclust()
-    list_labels = [aac.fit(X, n_clusters=n).labels_ for n in [5, 10, 25, 50, 100]]
+    list_labels = [aac.fit(X, n_clusters=n).labels_ for n in [3, 5, 10, 25, 50, 100, 150, 200]]
     df_eval = aac.eval(X, list_labels=list_labels)
 
 And can visualize now all results of the \`df_eval`\`. The clustering
@@ -35,7 +35,7 @@ You can adjust the x-axis limits of the three quality measures using the
 
 .. code:: ipython2
 
-    dict_xlims = dict(n_clusters=(0, 100), BIC=(-1500, 1500), CH=(0, 200), SC=(0, 0.3))
+    dict_xlims = dict(n_clusters=(0, 250), BIC=(-7500, 7500), CH=(0, 200), SC=(0, 0.4))
     aac_plot.eval(df_eval=df_eval, dict_xlims=dict_xlims)
     plt.show()
 

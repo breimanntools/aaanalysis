@@ -114,11 +114,20 @@ does not need to be provided. The clusters can be colored using the
 
 .. code:: ipython2
 
+    # Plot correlation without cluster names
     df_corr, labels_sorted = aac.comp_correlation(X=X, labels=labels, X_ref=X_ref, labels_ref=labels_ref)
-    # Plot correlation
     n_clusters = len(set(labels_sorted))
     colors = aa.plot_get_clist(n_colors=n_clusters)
     aac_plot.correlation(df_corr=df_corr, labels=labels_sorted, xtick_label_rotation=0,
+                         bar_colors=colors, bar_position=["left", "bottom"], bar_width_x=1, bar_width_y=0.2)
+    plt.tight_layout()
+    plt.show()
+    # Plot correlation with cluster names
+    df_corr, labels_sorted = aac.comp_correlation(X=X, labels=labels, X_ref=X_ref, labels_ref=labels_ref, 
+                                                  names=names, names_ref=names_ref)
+    n_clusters = len(set(labels_sorted))
+    colors = aa.plot_get_clist(n_colors=n_clusters)
+    aac_plot.correlation(df_corr=df_corr, labels=labels_sorted, xtick_label_rotation=45, labels_ref=labels_ref,
                          bar_colors=colors, bar_position=["left", "bottom"], bar_width_x=1, bar_width_y=0.2)
     plt.tight_layout()
     plt.show()
@@ -126,6 +135,10 @@ does not need to be provided. The clusters can be colored using the
 
 
 .. image:: examples/aac_plot_correlation_6_output_13_0.png
+
+
+
+.. image:: examples/aac_plot_correlation_7_output_13_1.png
 
 
 While ``vmin``, ``vmax``, anx ``cmap`` can be directly adjusted, further
@@ -143,5 +156,5 @@ the ``kwargs_heatmap`` argument:
 
 
 
-.. image:: examples/aac_plot_correlation_7_output_15_0.png
+.. image:: examples/aac_plot_correlation_8_output_15_0.png
 
