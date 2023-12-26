@@ -71,7 +71,7 @@ dPULearn. This becomes more clear using boolean masks and the
     # Filter only positives and negatives selected based on PC1
     mask1 = [x in ["PC2", None] for x in df_pu["selection_via"]]
     mask = [m1 and m2 for m1, m2 in zip(mask1, mask2)]
-    dpul_plot.pca(df_pu=df_pu[mask], labels=labels[mask], show_pos_mean_x=False)
+    dpul_plot.pca(df_pu=df_pu[mask], labels=labels[mask], show_pos_mean_x=False, legend=False)
     plt.tight_layout()
     plt.show()
 
@@ -98,7 +98,7 @@ integers numbers to the ``pc_x`` and ``pc_y`` parameters:
     mask1 = [x in ["PC4", None] for x in df_pu["selection_via"]]
     mask2 = [x in [0, 1] for x in labels]
     mask = [m1 and m2 for m1, m2 in zip(mask1, mask2)]
-    dpul_plot.pca(df_pu=df_pu[mask], labels=labels[mask], pc_x=3, pc_y=4, show_pos_mean_x=False)
+    dpul_plot.pca(df_pu=df_pu[mask], labels=labels[mask], pc_x=3, pc_y=4, show_pos_mean_x=False, legend=False)
     plt.tight_layout()
     plt.show()
 

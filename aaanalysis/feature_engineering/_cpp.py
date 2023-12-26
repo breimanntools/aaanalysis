@@ -60,20 +60,19 @@ class CPP(Tool):
         """
         Parameters
         ----------
-        df_parts
+        df_parts : pd.DataFrame, shape(n_samples,n_parts)
             DataFrame with sequence parts.
-        split_kws
+        split_kws : dict, optional
             Nested dictionary with parameter dictionary for each chosen split_type.
             Default from :meth:`SequenceFeature.get_split_kws`
-        df_scales
-            DataFrame with amino acid scales. Default from :meth:`aaanalysis.load_scales`
-            with 'name'='scales_cat'.
-        df_cat
-            DataFrame with default categories for physicochemical amino acid scales.
-            Default from :meth:`aaanalysis.load_categories`
-        accept_gaps
+        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales)
+            DataFrame with amino acid scales. Default from :meth:`load_scales` with ``name='scales'``.
+        df_cat : pd.DataFrame, shape (n_scales, n_scales_info)
+            DataFrame with default categories for amino acid scales.
+            Default from :meth:`load_scales` with ``name='scales_cat'`.
+        accept_gaps : bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
-        verbose
+        verbose : bool, optional
             If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if ``None``.
         """
         # Load defaults

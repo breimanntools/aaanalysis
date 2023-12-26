@@ -126,7 +126,7 @@ class SequenceFeature:
 
         Parameters
         ----------
-        df_seq : DataFrame, shape (n_samples, n_seq_info)
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
             DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
             in one of four distinct formats, differentiated by their respective columns:
 
@@ -158,7 +158,7 @@ class SequenceFeature:
         Returns
         -------
         df_parts: pd.DataFrame
-            Sequence parts DataFrames.
+            Sequence parts DataFrame.
 
         Notes
         -----
@@ -201,9 +201,14 @@ class SequenceFeature:
                       n_min: int = 2,
                       n_max: int = 4,
                       len_max: int = 15,
-                      steps_periodicpattern: int = None,
+                      steps_periodicpattern: List[int] = None,
                       ) -> dict:
-        """Create dictionary with kwargs for three split types: Segment, Pattern, PeriodicPattern
+        """
+        Create dictionary with kwargs for three split types:
+
+            - ``Segment``: continuous sub-sequence.
+            - ``Pattern``: non-periodic discontinuous sub-sequence
+            - ``PeriodicPattern``: periodic discontinuous sub-sequence.
 
         Parameters
         ----------
@@ -290,36 +295,36 @@ class SequenceFeature:
         ----------
         features : array-like, shape (n_features,)
             Ids of features for which ``df_feat`` should be created.
-        df_parts
+        df_parts : pd.DataFrame, shape (n_samples, n_parts)
             DataFrame with sequence parts.
         labels: array-like, shape (n_samples,)
             Class labels for samples in ``df_parts``. Should be 1 (test set) and 0 (reference set).
-        df_scales
-            DataFrame with amino acid scales. Default from :meth:`aaanalysis.load_scales` with 'name'='scales_cat'.
-        df_cat
+        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales)
+            DataFrame with amino acid scales. Default from :meth:`.load_scales` with 'name'='scales'.
+        df_cat : pd.DataFrame, shape (n_scales, n_scale_info)
             DataFrame with default categories for physicochemical amino acid scales.
             Default from :meth:`aaanalysis.load_categories`
-        start
+        start : int, default=1
             Position label of first amino acid position (starting at N-terminus). Should contain two unique label values.
-        tmd_len
+        tmd_len : int, default=20
             Length of TMD (>0).
-        jmd_n_len
+        jmd_n_len : int, default=10
             Length of JMD-N (>=0).
-        jmd_c_len
+        jmd_c_len : int, default=10
             Length of JMD-C (>=0).
-        accept_gaps
+        accept_gaps : bool, default=False
             Whether to accept missing values by enabling omitting for computations (if True).
-        parametric
+        parametric : bool, default=False
             Whether to use parametric (T-test) or non-parametric (Mann-Whitney-U-test) test for p-value computation.
 
         Returns
         -------
-        df_feat
+        df_feat : pd.DataFrame
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
 
         See Also
         --------
-        * The :meth:`aaanalysis.CPP.run` method for creating and filtering CPP features for discriminating between
+        * The :meth:`CPP.run` method for creating and filtering CPP features for discriminating between
           two groups of sequences.
 
         """
@@ -357,19 +362,20 @@ class SequenceFeature:
                        accept_gaps: bool = False,
                        n_jobs: Optional[int] = None,
                        ) -> ut.ArrayLike2D:
-        """Create feature matrix for given feature ids and sequence parts.
+        """
+        Create feature matrix for given feature ids and sequence parts.
 
         Parameters
         ----------
         features : array-like, shape (n_features,)
             Ids of features for which matrix of feature values should be created.
-        df_parts : DataFrame, shape ()
+        df_parts : pd.DataFrame, shape (n_samples, n_parts)
             DataFrame with sequence parts.
-        df_scales
-            DataFrame with default amino acid scales.
-        accept_gaps: bool, default ``False``
+        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales)
+            DataFrame with amino acid scales. Default from :meth:`aaanalysis.load_scales` with 'name'='scales_cat'.
+        accept_gaps: bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
-        n_jobs
+        n_jobs : int, optional
             The number of jobs to run in parallel. If ``None``, it will be set to the maximum.
 
         Returns
@@ -403,21 +409,22 @@ class SequenceFeature:
     def get_features(self,
                      list_parts: Optional[List[str]] = None,
                      all_parts: bool = False,
-                     split_kws: dict = None,
+                     split_kws: Optional[dict] = None,
                      df_scales: Optional[pd.DataFrame] = None,
                      ) -> List[str]:
-        """Create list of all feature ids for given Parts, Splits, and Scales.
+        """
+        Create list of all feature ids for given Parts, Splits, and Scales.
 
         Parameters
         ----------
         list_parts: list of str (n>=1 parts), default=["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
-            Names of sequence parts which should be created (e.g., 'tmd').
+            Names of sequence parts which should be created (e.g., 'tmd'). Length should be >= 1.
         all_parts: bool, default=False
-            Whether to create DataFrame with all possible sequence parts (if True) or parts given by list_parts.
-
-        split_kws: dict, default=SequenceFeature.get_split_kws
+            Whether to create DataFrame with all possible sequence parts (if ``True``) or parts given by list_parts.
+        split_kws : dict, optional
             Nested dictionary with parameter dictionary for each chosen split_type.
-        df_scales : pd.DataFrame,
+            Default from :meth:`SequenceFeature.get_split_kws`
+        df_scales : pd.DataFrame, shape(n_amino_acids, n_scales)
             DataFrame with default amino acid scales.
 
         Returns
