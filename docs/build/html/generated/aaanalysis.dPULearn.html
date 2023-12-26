@@ -23155,7 +23155,7 @@ identified negatives and other data groups. Disable (<code class="docutils liter
 measures were averaged across all features.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>DataFrame</p>
+<dd class="field-odd"><p>pd.DataFrame</p>
 </dd>
 </dl>
 <div class="admonition-notes admonition">
@@ -23529,7 +23529,7 @@ and unique elements across these sets.</p>
 <li><p><strong>list_labels</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_datasets</em><em>,</em><em>)</em>) – List of dataset labels for samples in <code class="docutils literal notranslate"><span class="pre">X</span></code> obtained by the <a class="reference internal" href="#aaanalysis.dPULearn.fit" title="aaanalysis.dPULearn.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">dPULearn.fit()</span></code></a> method.
 Label values should be either 0 (identified negative), 1 (positive) or 2 (unlabeled). Must contain 0.</p></li>
 <li><p><strong>names</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em>, </em><em>optional</em>) – List of dataset names corresponding to <code class="docutils literal notranslate"><span class="pre">list_labels</span></code>.</p></li>
-<li><p><strong>df_seq</strong> (<em>DataFrame</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_seq_info</em><em>)</em><em>, </em><em>optional</em>) – DataFrame with sequence information for entries corresponding to ‘labels’ of <code class="docutils literal notranslate"><span class="pre">list_labels</span></code>.</p></li>
+<li><p><strong>df_seq</strong> (<em>pd.DataFrame</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_seq_info</em><em>)</em><em>, </em><em>optional</em>) – DataFrame with sequence information for entries corresponding to ‘labels’ of <code class="docutils literal notranslate"><span class="pre">list_labels</span></code>.</p></li>
 <li><p><strong>remove_non_neg</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>default=True</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, all rows are removed that do not contain identified negatives in any provided dataset.</p></li>
 <li><p><strong>return_upset_data</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>default=False</em>) – Whether to return a DataFrame for Upset Plot (if <code class="docutils literal notranslate"><span class="pre">True</span></code>) or for a general comparison of sets of negatives.</p></li>
 </ul>

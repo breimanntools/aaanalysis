@@ -217,7 +217,7 @@ parameters:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>df_eval</strong> (<em>DataFrame</em><em>, </em><em>shape</em><em> (</em><em>n_datasets</em><em>, </em><em>n_metrics</em><em>)</em>) – <p>DataFrame with evaluation measures for scale sets. Each <cite>row</cite> corresponds to a specific scale set
+<li><p><strong>df_eval</strong> (<em>pd.DataFrame</em><em>, </em><em>shape</em><em> (</em><em>n_datasets</em><em>, </em><em>n_metrics</em><em>)</em>) – <p>DataFrame with evaluation measures for scale sets. Each <cite>row</cite> corresponds to a specific scale set
 and <cite>columns</cite> are as follows:</p>
 <ul>
 <li><p>’name’: Name of clustering datasets.</p></li>
@@ -296,8 +296,8 @@ three quality measures (BIC, SC, and CH):</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
-<li><p><strong>labels</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, no grouping is used.</p></li>
+<li><p><strong>X</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
+<li><p><strong>labels</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, no grouping is used.</p></li>
 <li><p><strong>component_x</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=1</em>) – Index of the PCA component for the x-axis. Must be &gt;= 1.</p></li>
 <li><p><strong>component_y</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=2</em>) – Index of the PCA component for the y-axis. Must be &gt;= 1.</p></li>
 <li><p><strong>ax</strong> (<em>plt.Axes</em><em>, </em><em>optional</em>) – Pre-defined Axes object to plot on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new Axes object is created.</p></li>
@@ -497,8 +497,8 @@ providing either a list of colors or a color map:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
-<li><p><strong>labels</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, no grouping is used.</p></li>
+<li><p><strong>X</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>, </em><em>n_features</em><em>)</em>) – Feature matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to amino acids.</p></li>
+<li><p><strong>labels</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em>) – Cluster labels for each sample in <code class="docutils literal notranslate"><span class="pre">X</span></code>. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, no grouping is used.</p></li>
 <li><p><strong>component_x</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=1</em>) – Index of the PCA component for the x-axis. Must be &gt;= 1.</p></li>
 <li><p><strong>component_y</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=1</em>) – Index of the PCA component for the y-axis. Must be &gt;= 1.</p></li>
 <li><p><strong>metric</strong> (<em>{'correlation'</em><em>, </em><em>'euclidean'</em><em>, </em><em>'manhattan'</em><em>, </em><em>'cosine'}</em><em>, </em><em>default='euclidean'</em>) – <p>The distance metric for calculating medoid.</p>
@@ -705,7 +705,7 @@ providing either a list of colors or a color map:</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>df_corr</strong> (<em>pd.DataFrame</em>) – DataFrame with correlation matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to clusters.</p></li>
-<li><p><strong>labels</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em>) – Cluster labels determining the grouping and coloring of the side color bar.
+<li><p><strong>labels</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em>) – Cluster labels determining the grouping and coloring of the side color bar.
 It should have the same length as number of rows in <code class="docutils literal notranslate"><span class="pre">df_corr</span></code> (n_samples).</p></li>
 <li><p><strong>labels_ref</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n_clusters</em><em>,</em><em>)</em><em>, </em><em>optional</em>) – Cluster labels comprising unique values from ‘labels’. Length must match with ‘n_clusters’ in <code class="docutils literal notranslate"><span class="pre">df_corr</span></code>.</p></li>
 <li><p><strong>cluster_x</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, x-axis (<cite>clusters</cite>) values are clustered. Disabled for pairwise correlation.</p></li>

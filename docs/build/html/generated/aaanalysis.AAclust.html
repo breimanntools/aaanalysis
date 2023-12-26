@@ -723,7 +723,7 @@ Unique label values indicate clusters.</p></li>
 <dd class="field-even"><p><strong>df_eval</strong> – Evaluation results for each set of clustering labels from <code class="docutils literal notranslate"><span class="pre">list_labels</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>DataFrame</p>
+<dd class="field-odd"><p>pd.DataFrame</p>
 </dd>
 </dl>
 <div class="admonition-notes admonition">
@@ -1504,7 +1504,7 @@ obtained using the <code class="docutils literal notranslate"><span class="pre">
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>df_corr</strong> (<em>DataFrame</em>) – DataFrame with correlation either for each pair in <code class="docutils literal notranslate"><span class="pre">X</span></code> of shape (n_samples, n_samples) or
+<li><p><strong>df_corr</strong> (<em>pd.DataFrame, shape (n_samples, n_samples or n_samples_ref)</em>) – DataFrame with correlation either for each pair in <code class="docutils literal notranslate"><span class="pre">X</span></code> of shape (n_samples, n_samples) or
 for each pair between <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">X_ref</span></code> of shape (n_samples, n_samples_ref).</p></li>
 <li><p><strong>labels_sorted</strong> (<em>array-like, shape (n_samples_ref,)</em>) – Cluster labels for each sample and sorted as in <cite>df_corr</cite>.</p></li>
 </ul>

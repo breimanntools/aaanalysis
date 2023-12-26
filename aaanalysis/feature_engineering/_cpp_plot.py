@@ -1,5 +1,5 @@
 """
-This is a script for ...
+This is a script for the frontend of the CPPPlot class.
 """
 from typing import Optional, Dict, Union, List, Tuple, Type
 import pandas as pd
@@ -235,8 +235,8 @@ class CPPPlot:
 
         Returns
         -------
-        ax
-            Pre-defined Axes object to plot on. If `None`, a new Axes object is created.
+        ax : plt.Axes
+            Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
         figsize : tuple, default=(5.6, 4.8)
             Figure size (width, height) in inches.
         """
@@ -360,11 +360,10 @@ class CPPPlot:
         ----------
         df_feat : class:`pandas.DataFrame`, optional, default=None
             Dataframe containing the features to be plotted. If ``None``, default features from the instance will be used.
-
-        col_value : str, default='mean_dif'
-            Column name in df_feat which contains the values to be plotted.
+        col_value : {'abs_auc', 'mean_dif', 'std_test', 'feat_importance', 'feat_impact', ...}, default='mean_dif'
+            Column name in ``df_feat`` containing the numerical values to be plotted.
         value_type : str, default='count'
-            Type of value. Available options are specified by the `check_value_type` function.
+            Type of value. Available options are specified by the ``check_value_type`` function.
         normalize : bool, default=False
             If True, the feature values will be normalized.
         figsize : tuple, default=(7, 5)
@@ -530,21 +529,19 @@ class CPPPlot:
 
         Parameters
         ----------
-        df_feat : :class:`~pandas.DataFrame`, shape (n_feature, n_feature_information)
+        df_feat : pd.DataFrame, shape (n_feature, n_feature_information)
             DataFrame containing unique identifiers, scale information, statistics, and positions for each feature.
-        y : {'category', 'subcategory', 'scale_name'}, str, default='subcategory'
-            Name of the column in the feature DataFrame representing scale information (shown on the y-axis).
-        col_value : {'mean_dif', 'feat_impact', 'abs_auc', 'std_test', ...}, default='mean_dif'
-            Name of the column in the feature DataFrame containing numerical values to display.
+        y : {'category', 'subcategory', 'scale_name'}, default='subcategory'
+            Column name in ``df_feat`` representing scale information (shown on the y-axis).
+        col_value : {'abs_auc', 'mean_dif', 'std_test', 'feat_importance', 'feat_impact', ...}, default='mean_dif'
+            Column name in ``df_feat`` containing numerical values to display.
         value_type : {'mean', 'sum', 'std'}, default='mean'
-            Method to aggregate numerical values from 'col_value'.
+            Method to aggregate numerical values from ``col_value``.
         normalize : {True, False, 'positions', 'positions_only'}, default=False
-            Specifies normalization for numerical values in 'col_value':
+            Specifies normalization for numerical values in ``col_value``:
 
             - False: Set value at all positions of a feature without further normalization.
-
             - True: Set value at all positions of a feature and normalize across all features.
-
             - 'positions': Value/number of positions set at each position of a feature and normalized across features.
               Recommended when aiming to emphasize features with fewer positions using 'col_value'='feat_impact' and 'value_type'='mean'.
 
@@ -563,10 +560,10 @@ class CPPPlot:
             Keyword arguments for :meth:`matplotlib.figure.Figure.colorbar`.
         add_jmd_tmd : bool, default=True
             Whether to add colored bar under heatmap indicating sequence parts (JMD-N, TMD, JMD-C).
-        tmd_len : int, >0
-            Length of TMD to be depiceted.
-        start : int, >=0
-            Position label of first amino acid position (starting at N-terminus).
+        tmd_len : int, default=20
+            Length of TMD to be depicted (>0).
+        start : int, default=1
+            Position label of first amino acid position (starting at N-terminus, >=1).
         tmd_seq : str, optional
             Sequence of TMD. 'tmd_len' is set to length of TMD if sequence for TMD, JMD-N and JMD-C are given.
             Recommended if feature impact or mean difference should be depicted for one sample.
@@ -591,7 +588,7 @@ class CPPPlot:
         xtick_size : float, default=11.0
             Size of x ticks in points. Passed as 'size' argument to :meth:`matplotlib.axes.Axes.set_xticklabels`.
         xtick_width : float, default=2.0
-            Widht of x ticks in points. Passed as 'width' argument to :meth:`matplotlib.axes.Axes.tick_params`.
+            Width of x ticks in points. Passed as 'width' argument to :meth:`matplotlib.axes.Axes.tick_params`.
         xtick_length : float, default=5.0,
             Length of x ticks in points. Passed as 'length' argument to :meth:`matplotlib.axes.Axes.tick_params`.
         ytick_size : float, optional
@@ -600,47 +597,22 @@ class CPPPlot:
         add_legend_cat : bool, default=True,
             Whether to add legend for categories under plot and classification of scales at y-axis.
         legend_kws : dict, optional
-            Keyword arguments passed to :meth:`matplotlib.axes.Axes.legend`
-        kwargs : other keyword arguments
-            All other keyword arguments passed to :meth:`matplotlib.axes.Axes.pcolormesh`.
+            Keyword arguments passed to :meth:`matplotlib.axes.Axes.legend`.
 
         Returns
         -------
         ax : matplotlib Axes
-        Axes object containing the heatmap.
+            Axes object containing the heatmap.
 
-        Warnings
-        --------
-        * 'cmap_n_colors' is effective only if 'vmin' and 'vmax' align with the data.
-        * 'tmd_seq_color' and 'jmd_seq_color' are applicable only when 'tmd_seq', 'jmd_n_seq', and 'jmd_c_seq' are provided.
+        Notes
+        -----
+        * ``cmap_n_colors`` is effective only if ``vmin`` and ``vmax`` align with the data.
+        * ``tmd_seq_color`` and ``jmd_seq_color`` are applicable only when ``tmd_seq``, ``jmd_n_seq``,
+           and ``jmd_c_seq`` are provided.
 
         See Also
         --------
-        seaborn.heatmap
-            Plotting heatmap using seaborn.
-            See `Seaborn documentation <https://seaborn.pydata.org/generated/seaborn.heatmap.html>`_ for more details.
-
-        Examples
-        --------
-
-        Plot CPP feature heatmap:
-
-        .. plot::
-            :context: close-figs
-
-            >>> import matplotlib.pyplot as plt
-            >>> import aaanalysis as aa
-            >>> sf = aa.SequenceFeature()
-            >>> df_seq = aa.load_dataset(name='SEQ_DISULFIDE', min_len=100)
-            >>> labels = list(df_seq["label"])
-            >>> df_parts = sf.get_df_parts(df_seq=df_seq, jmd_n_len=10, jmd_c_len=10)
-            >>> #split_kws = sf.get_split_kws(n_split_min=1, n_split_max=3, split_types=["Segment", "PeriodicPattern"])
-            >>> #df_scales = aa.load_scales(unclassified_in=False).sample(n=10, axis=1)
-            >>> #cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales)
-            >>> #df_feat = cpp.run(labels=labels)
-            >>> #cpp.plot_heatmap(df_feat=df_feat)
-            >>> #plt.tight_layout()
-
+        * :meth:`seaborn.heatmap` method for seaborn heatmap.
         """
         # Group arguments
         args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)

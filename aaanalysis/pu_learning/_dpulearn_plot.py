@@ -86,7 +86,7 @@ class dPULearnPlot:
 
         Parameters
         ----------
-        df_eval : DataFrame, shape (n_datasets, n_metrics)
+        df_eval : pd.DataFrame, shape (n_datasets, n_metrics)
             DataFrame with evaluation measures for sets of identified negatives. Each `row` corresponds to a specific
             dataset including identified negatives. Requiered 'columns' are:
 

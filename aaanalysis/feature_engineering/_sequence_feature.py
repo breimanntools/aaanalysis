@@ -5,9 +5,7 @@ from typing import Optional, Union, List
 import warnings
 import pandas as pd
 
-import aaanalysis as aa
 import aaanalysis.utils as ut
-
 from ._backend.check_feature import (check_split_kws,
                                      check_parts_len, check_match_features_seq_parts,
                                      check_match_df_seq_jmd_len,
@@ -128,21 +126,7 @@ class SequenceFeature:
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
             DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
-            in one of four distinct formats, differentiated by their respective columns:
-
-            - Position-based format:
-                'sequence': The complete amino acid sequence.
-                'tmd_start': Starting positions of the TMD in the sequence.
-                'tmd_stop': Ending positions of the TMD in the sequence.
-            - Part-based format:
-                'jmd_n': Amino acid sequence for JMD-N.
-                'tmd': Amino acid sequence for TMD.
-                'jmd_c': Amino acid sequence for JMD-C.
-            - Sequence-based format:
-                Only 'sequence' column.
-            - Sequence-TMD-based format:
-                'sequence' and 'tmd' columns.
-
+            in a distinct ``Position-based``, ``Part-based``, ``Sequence-based``, or ``Sequence-TMD-based`` format.
         list_parts: list of str, default={``tmd``, ``jmd_n_tmd_n``, ``tmd_c_jmd_c``}
             Names of sequence parts that should be obtained for sequences from ``df_seq``.
         jmd_n_len: int, default=10
@@ -157,18 +141,27 @@ class SequenceFeature:
 
         Returns
         -------
-        df_parts: pd.DataFrame
+        df_parts: pd.DataFrame, shape (n_samples, n_parts)
             Sequence parts DataFrame.
 
         Notes
         -----
         * See :class: ´aaanalysis.SequenceFeature´ for definition of parts, and lists of all existing and default parts.
         * ``jmd_n_len`` and ``jmd_c_len`` must be both given, except for the part-based format.
+        * Formats for ``df_seq`` are differentiated by their respective columns:
 
-        Warnings
-        --------
-        * Amino acid gaps might be introduced to meet specified length requirements. Concerning entries can be removed
-          by setting ``remove_entries_with_gaps=True``.
+            - ``Position-based format``:
+                'sequence': The complete amino acid sequence.
+                'tmd_start': Starting positions of the TMD in the sequence.
+                'tmd_stop': Ending positions of the TMD in the sequence.
+            - ``Part-based format``:
+                'jmd_n': Amino acid sequence for JMD-N.
+                'tmd': Amino acid sequence for TMD.
+                'jmd_c': Amino acid sequence for JMD-C.
+            - ``Sequence-based format``:
+                Only 'sequence' column.
+            - ``Sequence-TMD-based format``:
+                'sequence' and 'tmd' columns.
 
         Examples
         --------
@@ -300,10 +293,10 @@ class SequenceFeature:
         labels: array-like, shape (n_samples,)
             Class labels for samples in ``df_parts``. Should be 1 (test set) and 0 (reference set).
         df_scales : pd.DataFrame, shape (n_amino_acids, n_scales)
-            DataFrame with amino acid scales. Default from :meth:`.load_scales` with 'name'='scales'.
-        df_cat : pd.DataFrame, shape (n_scales, n_scale_info)
-            DataFrame with default categories for physicochemical amino acid scales.
-            Default from :meth:`aaanalysis.load_categories`
+            DataFrame with amino acid scales. Default from :meth:`load_scales` with ``name='scales'``.
+        df_cat : pd.DataFrame, shape (n_scales, n_scales_info)
+            DataFrame with categories for physicochemical amino acid scales.
+            Default from :meth:`load_scales` with ``name='scales_cat'``.
         start : int, default=1
             Position label of first amino acid position (starting at N-terminus). Should contain two unique label values.
         tmd_len : int, default=20
@@ -319,7 +312,7 @@ class SequenceFeature:
 
         Returns
         -------
-        df_feat : pd.DataFrame
+        df_feat : pd.DataFrame, shape (n_features, n_features_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
 
         See Also
@@ -327,6 +320,9 @@ class SequenceFeature:
         * The :meth:`CPP.run` method for creating and filtering CPP features for discriminating between
           two groups of sequences.
 
+        Examples
+        --------
+        .. include:: examples/sf_get_df_feat.rst
         """
         # Load defaults
         if df_scales is None:
@@ -372,7 +368,7 @@ class SequenceFeature:
         df_parts : pd.DataFrame, shape (n_samples, n_parts)
             DataFrame with sequence parts.
         df_scales : pd.DataFrame, shape (n_amino_acids, n_scales)
-            DataFrame with amino acid scales. Default from :meth:`aaanalysis.load_scales` with 'name'='scales_cat'.
+            DataFrame with amino acid scales. Default from :meth:`load_scales` with ``name='scales'``.
         accept_gaps: bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
         n_jobs : int, optional
@@ -382,6 +378,10 @@ class SequenceFeature:
         -------
         feat_matrix: array-like , shape (n_samples, n_features)
             Feature values of samples.
+
+        Examples
+        --------
+        .. include:: examples/sf_feature_matrix.rst
         """
         # Load defaults
         if df_scales is None:
@@ -417,21 +417,23 @@ class SequenceFeature:
 
         Parameters
         ----------
-        list_parts: list of str (n>=1 parts), default=["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
+        list_parts: list of str, default=["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
             Names of sequence parts which should be created (e.g., 'tmd'). Length should be >= 1.
         all_parts: bool, default=False
             Whether to create DataFrame with all possible sequence parts (if ``True``) or parts given by list_parts.
         split_kws : dict, optional
-            Nested dictionary with parameter dictionary for each chosen split_type.
-            Default from :meth:`SequenceFeature.get_split_kws`
-        df_scales : pd.DataFrame, shape(n_amino_acids, n_scales)
-            DataFrame with default amino acid scales.
+            Dictionary with parameter dictionary for each chosen split_type. Default from :meth:`SequenceFeature.get_split_kws`.
+        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales)
+            DataFrame with amino acid scales. Default from :meth:`load_scales` with ``name='scales'``.
 
         Returns
         -------
         features: list of str
             Ids of all possible features for combination of Parts, Splits, and Scales with form: PART-SPLIT-SCALE
 
+        Examples
+        --------
+        .. include:: examples/sf_get_features.rst
         """
         # Load defaults
         if df_scales is None:
@@ -461,15 +463,16 @@ class SequenceFeature:
         ----------
         features : array-like, shape (n_features,)
             List of feature ids.
-        df_cat
-            DataFrame with default categories for physicochemical amino acid scales
-        start
+        df_cat : pd.DataFrame, shape (n_scales, n_scales_info)
+            DataFrame with categories for physicochemical amino acid scales.
+            Default from :meth:`load_scales` with ``name='scales_cat'``.
+        start : int, default=1
             Position label of first amino acid position (starting at N-terminus).
-        tmd_len
+        tmd_len : int, default=20
             Length of TMD (>0).
-        jmd_n_len
+        jmd_n_len : int, default=10
             Length of JMD-N (>=0).
-        jmd_c_len
+        jmd_c_len : int, default=10
             Length of JMD-C (>=0).
 
         Returns
@@ -480,9 +483,14 @@ class SequenceFeature:
         Notes
         -----
         Positions are given depending on the three split types:
+
             - Segment: [first...last]
             - Pattern: [all positions]
             - PeriodicPattern: [first..step1/step2..last]
+
+        Examples
+        --------
+        .. include:: examples/sf_get_feature_names.rst
         """
         # Load defaults
         if df_cat is None:
@@ -519,26 +527,29 @@ class SequenceFeature:
         ----------
         features : array-like, shape (n_features,)
             List of feature ids.
-        start
+        start : int, default=1
             Position label of first amino acid position (starting at N-terminus, >=0).
-        tmd_len
+        tmd_len : int, default=20
             Length of TMD (>0).
-        jmd_n_len
+        jmd_n_len : int, default=10
             Length of JMD-N (>=0).
-        jmd_c_len
+        jmd_c_len : int, default=10
             Length of JMD-C (>=0).
-        tmd_seq
+        tmd_seq : str, optional
             Sequence of TMD. If given, respective amino acid segments/patterns will be returned instead of positions.
-        jmd_n_seq
+        jmd_n_seq : str, optional
             Sequence of JMD-N. If given, respective amino acid segments/patterns will be returned instead of positions.
-        jmd_c_seq
+        jmd_c_seq : str, optional
             Sequence of JMD-C. If given, respective amino acid segments/patterns will be returned instead of positions.
 
         Returns
         -------
-        list_pos | list_aa
+        list_pos or list_aa
             List of positions or amino acids for each feature.
 
+        Examples
+        --------
+        .. include:: examples/sf_get_feature_positions.rst
         """
         # Check input
         features = ut.check_features(features=features)
@@ -563,10 +574,40 @@ class SequenceFeature:
                    jmd_n_len: int = 10,
                    jmd_c_len: int = 10,
                    list_parts: Optional[Union[str, List[str]]] = None,
-                   normalize=False
+                   normalize : bool = False,
                    ) -> pd.DataFrame:
         """
         Create DataFrame of aggregated (mean or sum) feature values per residue position and scale.
+
+        Parameters
+        ----------
+        df_feat : pd.DataFrame, shape (n_features, n_features_info)
+            Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
+        col_value : {'abs_auc', 'mean_dif', 'std_test', 'feat_importance', 'feat_impact', ...}, default='mean_dif'
+            Column name in ``df_feat`` containing numerical values to aggregate.
+        col_cat : {'category', 'subcategory', 'scale_name'}, default='category'
+            Column name in ``df_feat`` for categorizing the numerical values during aggregation.
+        start : int, default=1
+            Position label of first amino acid position (starting at N-terminus, >=0).
+        tmd_len : int, default=20
+            Length of TMD (>0).
+        jmd_n_len : int, default=10
+            Length of JMD-N (>=0).
+        jmd_c_len : int, default=10
+            Length of JMD-C (>=0).
+        list_parts: str or list of str, optional
+            Specific sequence parts to consider for numerical value aggregation.
+        normalize : bool, default=False
+            If ``True``, normalizes aggregated numerical values to a total of 100%.
+
+        Returns
+        -------
+        df_pos : pd.DataFrame, shape (n_categories, n_positions)
+            DataFrame with aggregated numerical values per position.
+
+        Examples
+        --------
+        .. include:: examples/sf_get_df_pos.rst
         """
         # Check input
         list_parts = ut.check_list_parts(list_parts=list_parts, return_default=False, accept_none=True)

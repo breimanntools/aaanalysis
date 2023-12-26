@@ -48,7 +48,7 @@ class CPP(Tool):
     df_scales
         DataFrame with amino acid scales.
     df_cat
-        DataFrame with default categories for physicochemical amino acid scales.
+        DataFrame with categories for physicochemical amino acid scales.
     """
     def __init__(self,
                  df_parts: pd.DataFrame = None,
@@ -60,16 +60,15 @@ class CPP(Tool):
         """
         Parameters
         ----------
-        df_parts : pd.DataFrame, shape(n_samples,n_parts)
+        df_parts : pd.DataFrame, shape (n_samples, n_parts)
             DataFrame with sequence parts.
         split_kws : dict, optional
-            Nested dictionary with parameter dictionary for each chosen split_type.
-            Default from :meth:`SequenceFeature.get_split_kws`
+            Dictionary with parameter dictionary for each chosen split_type. Default from :meth:`SequenceFeature.get_split_kws`.
         df_scales : pd.DataFrame, shape (n_amino_acids, n_scales)
             DataFrame with amino acid scales. Default from :meth:`load_scales` with ``name='scales'``.
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info)
-            DataFrame with default categories for amino acid scales.
-            Default from :meth:`load_scales` with ``name='scales_cat'`.
+            DataFrame with categories for physicochemical amino acid scales.
+            Default from :meth:`load_scales` with ``name='scales_cat'``.
         accept_gaps : bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
         verbose : bool, optional
@@ -126,37 +125,36 @@ class CPP(Tool):
         ----------
         labels : array-like, shape (n_samples,)
             Class labels for samples in sequence DataFrame (test=1, reference=0).
-        n_filter
+        n_filter : int, default=100
             Number of features to be filtered/selected by CPP algorithm.
-        n_pre_filter
+        n_pre_filter : int, optional
             Number of feature to be pre-filtered by CPP algorithm. If ``None``, a percentage of all features is used.
-        pct_pre_filter
+        pct_pre_filter : int, default=5
             Percentage of all features that should remain after the pre-filtering step.
-        max_std_test
+        max_std_test : float, default=0.2
             Maximum standard deviation [0-1] within the test group used as threshold for pre-filtering.
-        max_overlap
+        max_overlap : float, default=0.5
             Maximum positional overlap [0-1] of features used as threshold for filtering.
-        max_cor
+        max_cor : float, default=0.5
             Maximum Pearson correlation [0-1] of features used as threshold for filtering.
-        check_cat
+        check_cat : bool, default=True
             Whether to check for redundancy within scale categories.
-        parametric
+        parametric : bool, default=False
             Whether to use parametric (T-test) or non-parametric (Mann-Whitney-U-test) test for p-value computation.
-        start
+        start : int, default=1
             Position label of first amino acid position (starting at N-terminus, >=0).
-        tmd_len
+        tmd_len : int, default=20
             Length of TMD (>0).
-        jmd_n_len
+        jmd_n_len : int, default=10
             Length of JMD-N (>=0).
-        jmd_c_len
+        jmd_c_len : int, default=10
             Length of JMD-C (>=0).
-
-        n_processes
+        n_processes : int, optional
             Number of CPUs used for multiprocessing. If ``None``, number will be optimized automatically.
 
         Returns
         -------
-        df_feat
+        df_feat : pd.DataFrame, shape (n_features, n_features_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
 
         Notes

@@ -303,7 +303,7 @@ class AAclust(Wrapper):
 
         Returns
         -------
-        df_eval : DataFrame
+        df_eval : pd.DataFrame
             Evaluation results for each set of clustering labels from ``list_labels``.
 
         Notes
@@ -492,7 +492,7 @@ class AAclust(Wrapper):
 
         Returns
         -------
-        df_corr : DataFrame
+        df_corr : pd.DataFrame, shape (n_samples, n_samples or n_samples_ref)
             DataFrame with correlation either for each pair in ``X`` of shape (n_samples, n_samples) or
             for each pair between ``X`` and ``X_ref`` of shape (n_samples, n_samples_ref).
         labels_sorted: array-like, shape (n_samples_ref,)

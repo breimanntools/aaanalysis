@@ -255,7 +255,7 @@ class dPULearn:
 
         Returns
         -------
-        df_eval : DataFrame
+        df_eval : pd.DataFrame
             Evaluation results for each set of identified negatives from ``list_labels``. For each set, statistical
             measures were averaged across all features.
 
@@ -319,7 +319,7 @@ class dPULearn:
             Label values should be either 0 (identified negative), 1 (positive) or 2 (unlabeled). Must contain 0.
         names : list, optional
             List of dataset names corresponding to ``list_labels``.
-        df_seq : DataFrame, shape (n_samples, n_seq_info), optional
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
             DataFrame with sequence information for entries corresponding to 'labels' of ``list_labels``.
         remove_non_neg : bool, default=True
             If ``True``, all rows are removed that do not contain identified negatives in any provided dataset.

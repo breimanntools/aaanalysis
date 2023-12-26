@@ -182,7 +182,7 @@ class AAclustPlot:
 
         Parameters
         ----------
-        df_eval : DataFrame, shape (n_datasets, n_metrics)
+        df_eval : pd.DataFrame, shape (n_datasets, n_metrics)
             DataFrame with evaluation measures for scale sets. Each `row` corresponds to a specific scale set
             and `columns` are as follows:
 
@@ -245,9 +245,9 @@ class AAclustPlot:
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
-        labels : array-like of shape (n_samples,)
+        labels : array-like, shape (n_samples,)
             Cluster labels for each sample in ``X``. If ``None``, no grouping is used.
         component_x : int, default=1
             Index of the PCA component for the x-axis. Must be >= 1.
@@ -326,9 +326,9 @@ class AAclustPlot:
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
-        labels : array-like of shape (n_samples,)
+        labels : array-like, shape (n_samples,)
             Cluster labels for each sample in ``X``. If ``None``, no grouping is used.
         component_x : int, default=1
             Index of the PCA component for the x-axis. Must be >= 1.
@@ -424,7 +424,7 @@ class AAclustPlot:
         ----------
         df_corr : pd.DataFrame
             DataFrame with correlation matrix. `Rows` typically correspond to scales and `columns` to clusters.
-        labels : array-like of shape (n_samples,)
+        labels : array-like, shape (n_samples,)
             Cluster labels determining the grouping and coloring of the side color bar.
             It should have the same length as number of rows in ``df_corr`` (n_samples).
         labels_ref  : array-like, shape (n_clusters,), optional

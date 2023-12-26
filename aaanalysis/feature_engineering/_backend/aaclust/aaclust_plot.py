@@ -29,8 +29,8 @@ def _get_components(X, model_class=None, n_components=2, model_kwargs=None):
     Apply dimensionality reduction on X using the specified mode.
 
     Returns:
-        df_components : DataFrame of shape (n_samples, n_components)
-            The reduced components labeled "PC1", "PC2", etc.
+    df_components : DataFrame, shape (n_samples, n_components)
+        The reduced components labeled "PC1", "PC2", etc.
     """
     model_kwargs["n_components"] = n_components
     # Initialize and fit the model

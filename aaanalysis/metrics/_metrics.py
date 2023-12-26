@@ -76,9 +76,9 @@ def comp_bic_score(X : ut.ArrayLike2D = None,
 
     Parameters
     ----------
-    X : array-like of shape (n_samples, n_features)
+    X : array-like, shape (n_samples, n_features)
         Feature matrix. 'Rows' typically correspond to proteins and 'columns' to features.
-    labels : array-like of shape (n_samples,)
+    labels : array-like, shape (n_samples,)
         Predicted labels for each sample. Each label corresponds to a cluster.
 
     Returns
