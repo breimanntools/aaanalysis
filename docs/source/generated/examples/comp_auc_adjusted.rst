@@ -23,7 +23,7 @@ group ``labels`` to the ``comp_auc_adjusted`` function:
     aa.plot_settings()
     sns.histplot(group_blue, color="blue", kde=True, label='Group 1', alpha=0.5)
     sns.histplot(group_red, color="red", kde=True, label='Group 2', alpha=0.5)
-    plt.title(f"AUC = {auc_score} (All blue values are smaller)")
+    plt.title(f"AUC* = {auc_score} (All blue values are smaller)")
     sns.despine()
     plt.show()
 
@@ -47,7 +47,7 @@ The greater the overlap between both distributions, the closer the
     aa.plot_settings()
     sns.histplot(group_blue, color="blue", kde=True, label='Group 1', alpha=0.5)
     sns.histplot(group_red, color="red", kde=True, label='Group 2', alpha=0.5)
-    plt.title(f"AUC = {auc_score} (Most blue values are smaller)")
+    plt.title(f"AUC* = {auc_score} (Most blue values are smaller)")
     sns.despine()
     plt.show()
 
@@ -70,7 +70,7 @@ A ``auc_score`` of 0 indicates a perfect overlap:
     aa.plot_settings()
     sns.histplot(group_blue, color="blue", kde=True, label='Group 1', alpha=0.5)
     sns.histplot(group_red, color="red", kde=True, label='Group 2', alpha=0.5)
-    plt.title(f"AUC = {auc_score} (Distributions are almost identical)")
+    plt.title(f"AUC* = {auc_score} (Distributions are almost identical)")
     sns.despine()
     plt.show()
 
@@ -94,7 +94,7 @@ than the values of the reference group, the ``auc_score`` is 0.5:
     aa.plot_settings()
     sns.histplot(group_blue, color="blue", kde=True, label='Group 1', alpha=0.5)
     sns.histplot(group_red, color="red", kde=True, label='Group 2', alpha=0.5)
-    plt.title(f"AUC = {auc_score} (All blue values are greater)")
+    plt.title(f"AUC* = {auc_score} (All blue values are greater)")
     sns.despine()
     plt.show()
 

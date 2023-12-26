@@ -28,6 +28,7 @@ def display_df(df: pd.DataFrame = None,
                show_shape=False,
                n_rows: Optional[int] = None,
                n_cols: Optional[int] = None,
+               n_round=3,
                ):
     """
     Display DataFrame with specific style as HTML output for jupyter notebooks.
@@ -50,6 +51,8 @@ def display_df(df: pd.DataFrame = None,
         Number of rows.
     n_cols : int, optional
         Number of rows.
+    n_round : int, default=3
+        Rounding to a variable number of decimal places.
     """
     # Check input
     ut.check_df(name="df", df=df, accept_none=False)
@@ -65,6 +68,8 @@ def display_df(df: pd.DataFrame = None,
         df = df.head(n_rows)
     if n_cols is not None:
         df = df.T.head(n_cols).T
+    if n_round is not None:
+        df = df.round(n_round)
     # Style dataframe
     df = _adjust_df(df=df, char_limit=char_limit)
     styled_df = (

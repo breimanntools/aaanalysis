@@ -11,7 +11,7 @@ unlabeled (2) data samples and the identified negatives (0):
     # Three different sets of labels 
     list_labels = [[1, 1, 2, 0, 0], [1, 1, 0, 2, 0], [1, 1, 0, 0, 2]]
 
-Use the ``dPULearn.eval()`` method to obtain the evaluation for each
+Use the ``dPULearn().eval()`` method to obtain the evaluation for each
 label set:
 
 .. code:: ipython2
@@ -25,67 +25,67 @@ label set:
 .. raw:: html
 
     <style type="text/css">
-    #T_28951 thead th {
+    #T_8ada0 thead th {
       background-color: white;
       color: black;
     }
-    #T_28951 tbody tr:nth-child(odd) {
+    #T_8ada0 tbody tr:nth-child(odd) {
       background-color: #f2f2f2;
     }
-    #T_28951 tbody tr:nth-child(even) {
+    #T_8ada0 tbody tr:nth-child(even) {
       background-color: white;
     }
-    #T_28951 th {
+    #T_8ada0 th {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_28951  td {
+    #T_8ada0  td {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_28951 table {
+    #T_8ada0 table {
       font-size: 12px;
     }
     </style>
-    <table id="T_28951" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
+    <table id="T_8ada0" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
       <thead>
         <tr>
           <th class="blank level0" >&nbsp;</th>
-          <th id="T_28951_level0_col0" class="col_heading level0 col0" >name</th>
-          <th id="T_28951_level0_col1" class="col_heading level0 col1" >n_rel_neg</th>
-          <th id="T_28951_level0_col2" class="col_heading level0 col2" >avg_STD</th>
-          <th id="T_28951_level0_col3" class="col_heading level0 col3" >avg_IQR</th>
-          <th id="T_28951_level0_col4" class="col_heading level0 col4" >avg_abs_AUC_pos</th>
-          <th id="T_28951_level0_col5" class="col_heading level0 col5" >avg_abs_AUC_unl</th>
+          <th id="T_8ada0_level0_col0" class="col_heading level0 col0" >name</th>
+          <th id="T_8ada0_level0_col1" class="col_heading level0 col1" >n_rel_neg</th>
+          <th id="T_8ada0_level0_col2" class="col_heading level0 col2" >avg_STD</th>
+          <th id="T_8ada0_level0_col3" class="col_heading level0 col3" >avg_IQR</th>
+          <th id="T_8ada0_level0_col4" class="col_heading level0 col4" >avg_abs_AUC_pos</th>
+          <th id="T_8ada0_level0_col5" class="col_heading level0 col5" >avg_abs_AUC_unl</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <th id="T_28951_level0_row0" class="row_heading level0 row0" >1</th>
-          <td id="T_28951_row0_col0" class="data row0 col0" >Set 1</td>
-          <td id="T_28951_row0_col1" class="data row0 col1" >2</td>
-          <td id="T_28951_row0_col2" class="data row0 col2" >0.175000</td>
-          <td id="T_28951_row0_col3" class="data row0 col3" >0.175000</td>
-          <td id="T_28951_row0_col4" class="data row0 col4" >0.437500</td>
-          <td id="T_28951_row0_col5" class="data row0 col5" >0.250000</td>
+          <th id="T_8ada0_level0_row0" class="row_heading level0 row0" >1</th>
+          <td id="T_8ada0_row0_col0" class="data row0 col0" >Set 1</td>
+          <td id="T_8ada0_row0_col1" class="data row0 col1" >2</td>
+          <td id="T_8ada0_row0_col2" class="data row0 col2" >0.175000</td>
+          <td id="T_8ada0_row0_col3" class="data row0 col3" >0.175000</td>
+          <td id="T_8ada0_row0_col4" class="data row0 col4" >0.438000</td>
+          <td id="T_8ada0_row0_col5" class="data row0 col5" >0.250000</td>
         </tr>
         <tr>
-          <th id="T_28951_level0_row1" class="row_heading level0 row1" >2</th>
-          <td id="T_28951_row1_col0" class="data row1 col0" >Set 2</td>
-          <td id="T_28951_row1_col1" class="data row1 col1" >2</td>
-          <td id="T_28951_row1_col2" class="data row1 col2" >0.187500</td>
-          <td id="T_28951_row1_col3" class="data row1 col3" >0.187500</td>
-          <td id="T_28951_row1_col4" class="data row1 col4" >0.500000</td>
-          <td id="T_28951_row1_col5" class="data row1 col5" >0.250000</td>
+          <th id="T_8ada0_level0_row1" class="row_heading level0 row1" >2</th>
+          <td id="T_8ada0_row1_col0" class="data row1 col0" >Set 2</td>
+          <td id="T_8ada0_row1_col1" class="data row1 col1" >2</td>
+          <td id="T_8ada0_row1_col2" class="data row1 col2" >0.188000</td>
+          <td id="T_8ada0_row1_col3" class="data row1 col3" >0.188000</td>
+          <td id="T_8ada0_row1_col4" class="data row1 col4" >0.500000</td>
+          <td id="T_8ada0_row1_col5" class="data row1 col5" >0.250000</td>
         </tr>
         <tr>
-          <th id="T_28951_level0_row2" class="row_heading level0 row2" >3</th>
-          <td id="T_28951_row2_col0" class="data row2 col0" >Set 3</td>
-          <td id="T_28951_row2_col1" class="data row2 col1" >2</td>
-          <td id="T_28951_row2_col2" class="data row2 col2" >0.037500</td>
-          <td id="T_28951_row2_col3" class="data row2 col3" >0.037500</td>
-          <td id="T_28951_row2_col4" class="data row2 col4" >0.437500</td>
-          <td id="T_28951_row2_col5" class="data row2 col5" >0.500000</td>
+          <th id="T_8ada0_level0_row2" class="row_heading level0 row2" >3</th>
+          <td id="T_8ada0_row2_col0" class="data row2 col0" >Set 3</td>
+          <td id="T_8ada0_row2_col1" class="data row2 col1" >2</td>
+          <td id="T_8ada0_row2_col2" class="data row2 col2" >0.038000</td>
+          <td id="T_8ada0_row2_col3" class="data row2 col3" >0.038000</td>
+          <td id="T_8ada0_row2_col4" class="data row2 col4" >0.438000</td>
+          <td id="T_8ada0_row2_col5" class="data row2 col5" >0.500000</td>
         </tr>
       </tbody>
     </table>
@@ -108,67 +108,67 @@ for Euclidean distance-based. This can be achieved by setting
 .. raw:: html
 
     <style type="text/css">
-    #T_0eddb thead th {
+    #T_108e1 thead th {
       background-color: white;
       color: black;
     }
-    #T_0eddb tbody tr:nth-child(odd) {
+    #T_108e1 tbody tr:nth-child(odd) {
       background-color: #f2f2f2;
     }
-    #T_0eddb tbody tr:nth-child(even) {
+    #T_108e1 tbody tr:nth-child(even) {
       background-color: white;
     }
-    #T_0eddb th {
+    #T_108e1 th {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_0eddb  td {
+    #T_108e1  td {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_0eddb table {
+    #T_108e1 table {
       font-size: 12px;
     }
     </style>
-    <table id="T_0eddb" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
+    <table id="T_108e1" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
       <thead>
         <tr>
           <th class="blank level0" >&nbsp;</th>
-          <th id="T_0eddb_level0_col0" class="col_heading level0 col0" >name</th>
-          <th id="T_0eddb_level0_col1" class="col_heading level0 col1" >n_rel_neg</th>
-          <th id="T_0eddb_level0_col2" class="col_heading level0 col2" >avg_STD</th>
-          <th id="T_0eddb_level0_col3" class="col_heading level0 col3" >avg_IQR</th>
-          <th id="T_0eddb_level0_col4" class="col_heading level0 col4" >avg_abs_AUC_pos</th>
-          <th id="T_0eddb_level0_col5" class="col_heading level0 col5" >avg_abs_AUC_unl</th>
+          <th id="T_108e1_level0_col0" class="col_heading level0 col0" >name</th>
+          <th id="T_108e1_level0_col1" class="col_heading level0 col1" >n_rel_neg</th>
+          <th id="T_108e1_level0_col2" class="col_heading level0 col2" >avg_STD</th>
+          <th id="T_108e1_level0_col3" class="col_heading level0 col3" >avg_IQR</th>
+          <th id="T_108e1_level0_col4" class="col_heading level0 col4" >avg_abs_AUC_pos</th>
+          <th id="T_108e1_level0_col5" class="col_heading level0 col5" >avg_abs_AUC_unl</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <th id="T_0eddb_level0_row0" class="row_heading level0 row0" >1</th>
-          <td id="T_0eddb_row0_col0" class="data row0 col0" >Dataset 1</td>
-          <td id="T_0eddb_row0_col1" class="data row0 col1" >2</td>
-          <td id="T_0eddb_row0_col2" class="data row0 col2" >0.175000</td>
-          <td id="T_0eddb_row0_col3" class="data row0 col3" >0.175000</td>
-          <td id="T_0eddb_row0_col4" class="data row0 col4" >0.437500</td>
-          <td id="T_0eddb_row0_col5" class="data row0 col5" >0.250000</td>
+          <th id="T_108e1_level0_row0" class="row_heading level0 row0" >1</th>
+          <td id="T_108e1_row0_col0" class="data row0 col0" >Dataset 1</td>
+          <td id="T_108e1_row0_col1" class="data row0 col1" >2</td>
+          <td id="T_108e1_row0_col2" class="data row0 col2" >0.175000</td>
+          <td id="T_108e1_row0_col3" class="data row0 col3" >0.175000</td>
+          <td id="T_108e1_row0_col4" class="data row0 col4" >0.438000</td>
+          <td id="T_108e1_row0_col5" class="data row0 col5" >0.250000</td>
         </tr>
         <tr>
-          <th id="T_0eddb_level0_row1" class="row_heading level0 row1" >2</th>
-          <td id="T_0eddb_row1_col0" class="data row1 col0" >Dataset 2</td>
-          <td id="T_0eddb_row1_col1" class="data row1 col1" >2</td>
-          <td id="T_0eddb_row1_col2" class="data row1 col2" >0.187500</td>
-          <td id="T_0eddb_row1_col3" class="data row1 col3" >0.187500</td>
-          <td id="T_0eddb_row1_col4" class="data row1 col4" >0.500000</td>
-          <td id="T_0eddb_row1_col5" class="data row1 col5" >0.250000</td>
+          <th id="T_108e1_level0_row1" class="row_heading level0 row1" >2</th>
+          <td id="T_108e1_row1_col0" class="data row1 col0" >Dataset 2</td>
+          <td id="T_108e1_row1_col1" class="data row1 col1" >2</td>
+          <td id="T_108e1_row1_col2" class="data row1 col2" >0.188000</td>
+          <td id="T_108e1_row1_col3" class="data row1 col3" >0.188000</td>
+          <td id="T_108e1_row1_col4" class="data row1 col4" >0.500000</td>
+          <td id="T_108e1_row1_col5" class="data row1 col5" >0.250000</td>
         </tr>
         <tr>
-          <th id="T_0eddb_level0_row2" class="row_heading level0 row2" >3</th>
-          <td id="T_0eddb_row2_col0" class="data row2 col0" >Dataset 3</td>
-          <td id="T_0eddb_row2_col1" class="data row2 col1" >2</td>
-          <td id="T_0eddb_row2_col2" class="data row2 col2" >0.037500</td>
-          <td id="T_0eddb_row2_col3" class="data row2 col3" >0.037500</td>
-          <td id="T_0eddb_row2_col4" class="data row2 col4" >0.437500</td>
-          <td id="T_0eddb_row2_col5" class="data row2 col5" >0.500000</td>
+          <th id="T_108e1_level0_row2" class="row_heading level0 row2" >3</th>
+          <td id="T_108e1_row2_col0" class="data row2 col0" >Dataset 3</td>
+          <td id="T_108e1_row2_col1" class="data row2 col1" >2</td>
+          <td id="T_108e1_row2_col2" class="data row2 col2" >0.038000</td>
+          <td id="T_108e1_row2_col3" class="data row2 col3" >0.038000</td>
+          <td id="T_108e1_row2_col4" class="data row2 col4" >0.438000</td>
+          <td id="T_108e1_row2_col5" class="data row2 col5" >0.500000</td>
         </tr>
       </tbody>
     </table>
@@ -199,71 +199,71 @@ identified negatives:
 .. raw:: html
 
     <style type="text/css">
-    #T_d8be1 thead th {
+    #T_af0e3 thead th {
       background-color: white;
       color: black;
     }
-    #T_d8be1 tbody tr:nth-child(odd) {
+    #T_af0e3 tbody tr:nth-child(odd) {
       background-color: #f2f2f2;
     }
-    #T_d8be1 tbody tr:nth-child(even) {
+    #T_af0e3 tbody tr:nth-child(even) {
       background-color: white;
     }
-    #T_d8be1 th {
+    #T_af0e3 th {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_d8be1  td {
+    #T_af0e3  td {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_d8be1 table {
+    #T_af0e3 table {
       font-size: 12px;
     }
     </style>
-    <table id="T_d8be1" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
+    <table id="T_af0e3" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
       <thead>
         <tr>
           <th class="blank level0" >&nbsp;</th>
-          <th id="T_d8be1_level0_col0" class="col_heading level0 col0" >name</th>
-          <th id="T_d8be1_level0_col1" class="col_heading level0 col1" >n_rel_neg</th>
-          <th id="T_d8be1_level0_col2" class="col_heading level0 col2" >avg_STD</th>
-          <th id="T_d8be1_level0_col3" class="col_heading level0 col3" >avg_IQR</th>
-          <th id="T_d8be1_level0_col4" class="col_heading level0 col4" >avg_abs_AUC_pos</th>
-          <th id="T_d8be1_level0_col5" class="col_heading level0 col5" >avg_abs_AUC_unl</th>
-          <th id="T_d8be1_level0_col6" class="col_heading level0 col6" >avg_abs_AUC_neg</th>
+          <th id="T_af0e3_level0_col0" class="col_heading level0 col0" >name</th>
+          <th id="T_af0e3_level0_col1" class="col_heading level0 col1" >n_rel_neg</th>
+          <th id="T_af0e3_level0_col2" class="col_heading level0 col2" >avg_STD</th>
+          <th id="T_af0e3_level0_col3" class="col_heading level0 col3" >avg_IQR</th>
+          <th id="T_af0e3_level0_col4" class="col_heading level0 col4" >avg_abs_AUC_pos</th>
+          <th id="T_af0e3_level0_col5" class="col_heading level0 col5" >avg_abs_AUC_unl</th>
+          <th id="T_af0e3_level0_col6" class="col_heading level0 col6" >avg_abs_AUC_neg</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <th id="T_d8be1_level0_row0" class="row_heading level0 row0" >1</th>
-          <td id="T_d8be1_row0_col0" class="data row0 col0" >Dataset 1</td>
-          <td id="T_d8be1_row0_col1" class="data row0 col1" >2</td>
-          <td id="T_d8be1_row0_col2" class="data row0 col2" >0.175000</td>
-          <td id="T_d8be1_row0_col3" class="data row0 col3" >0.175000</td>
-          <td id="T_d8be1_row0_col4" class="data row0 col4" >0.437500</td>
-          <td id="T_d8be1_row0_col5" class="data row0 col5" >0.250000</td>
-          <td id="T_d8be1_row0_col6" class="data row0 col6" >0.187500</td>
+          <th id="T_af0e3_level0_row0" class="row_heading level0 row0" >1</th>
+          <td id="T_af0e3_row0_col0" class="data row0 col0" >Dataset 1</td>
+          <td id="T_af0e3_row0_col1" class="data row0 col1" >2</td>
+          <td id="T_af0e3_row0_col2" class="data row0 col2" >0.175000</td>
+          <td id="T_af0e3_row0_col3" class="data row0 col3" >0.175000</td>
+          <td id="T_af0e3_row0_col4" class="data row0 col4" >0.438000</td>
+          <td id="T_af0e3_row0_col5" class="data row0 col5" >0.250000</td>
+          <td id="T_af0e3_row0_col6" class="data row0 col6" >0.188000</td>
         </tr>
         <tr>
-          <th id="T_d8be1_level0_row1" class="row_heading level0 row1" >2</th>
-          <td id="T_d8be1_row1_col0" class="data row1 col0" >Dataset 2</td>
-          <td id="T_d8be1_row1_col1" class="data row1 col1" >2</td>
-          <td id="T_d8be1_row1_col2" class="data row1 col2" >0.187500</td>
-          <td id="T_d8be1_row1_col3" class="data row1 col3" >0.187500</td>
-          <td id="T_d8be1_row1_col4" class="data row1 col4" >0.500000</td>
-          <td id="T_d8be1_row1_col5" class="data row1 col5" >0.250000</td>
-          <td id="T_d8be1_row1_col6" class="data row1 col6" >0.187500</td>
+          <th id="T_af0e3_level0_row1" class="row_heading level0 row1" >2</th>
+          <td id="T_af0e3_row1_col0" class="data row1 col0" >Dataset 2</td>
+          <td id="T_af0e3_row1_col1" class="data row1 col1" >2</td>
+          <td id="T_af0e3_row1_col2" class="data row1 col2" >0.188000</td>
+          <td id="T_af0e3_row1_col3" class="data row1 col3" >0.188000</td>
+          <td id="T_af0e3_row1_col4" class="data row1 col4" >0.500000</td>
+          <td id="T_af0e3_row1_col5" class="data row1 col5" >0.250000</td>
+          <td id="T_af0e3_row1_col6" class="data row1 col6" >0.188000</td>
         </tr>
         <tr>
-          <th id="T_d8be1_level0_row2" class="row_heading level0 row2" >3</th>
-          <td id="T_d8be1_row2_col0" class="data row2 col0" >Dataset 3</td>
-          <td id="T_d8be1_row2_col1" class="data row2 col1" >2</td>
-          <td id="T_d8be1_row2_col2" class="data row2 col2" >0.037500</td>
-          <td id="T_d8be1_row2_col3" class="data row2 col3" >0.037500</td>
-          <td id="T_d8be1_row2_col4" class="data row2 col4" >0.437500</td>
-          <td id="T_d8be1_row2_col5" class="data row2 col5" >0.500000</td>
-          <td id="T_d8be1_row2_col6" class="data row2 col6" >0.500000</td>
+          <th id="T_af0e3_level0_row2" class="row_heading level0 row2" >3</th>
+          <td id="T_af0e3_row2_col0" class="data row2 col0" >Dataset 3</td>
+          <td id="T_af0e3_row2_col1" class="data row2 col1" >2</td>
+          <td id="T_af0e3_row2_col2" class="data row2 col2" >0.038000</td>
+          <td id="T_af0e3_row2_col3" class="data row2 col3" >0.038000</td>
+          <td id="T_af0e3_row2_col4" class="data row2 col4" >0.438000</td>
+          <td id="T_af0e3_row2_col5" class="data row2 col5" >0.500000</td>
+          <td id="T_af0e3_row2_col6" class="data row2 col6" >0.500000</td>
         </tr>
       </tbody>
     </table>
@@ -287,83 +287,83 @@ distributions between the identified negatives and the other groups:
 .. raw:: html
 
     <style type="text/css">
-    #T_6bb29 thead th {
+    #T_ecd7a thead th {
       background-color: white;
       color: black;
     }
-    #T_6bb29 tbody tr:nth-child(odd) {
+    #T_ecd7a tbody tr:nth-child(odd) {
       background-color: #f2f2f2;
     }
-    #T_6bb29 tbody tr:nth-child(even) {
+    #T_ecd7a tbody tr:nth-child(even) {
       background-color: white;
     }
-    #T_6bb29 th {
+    #T_ecd7a th {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_6bb29  td {
+    #T_ecd7a  td {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_6bb29 table {
+    #T_ecd7a table {
       font-size: 12px;
     }
     </style>
-    <table id="T_6bb29" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
+    <table id="T_ecd7a" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
       <thead>
         <tr>
           <th class="blank level0" >&nbsp;</th>
-          <th id="T_6bb29_level0_col0" class="col_heading level0 col0" >name</th>
-          <th id="T_6bb29_level0_col1" class="col_heading level0 col1" >n_rel_neg</th>
-          <th id="T_6bb29_level0_col2" class="col_heading level0 col2" >avg_STD</th>
-          <th id="T_6bb29_level0_col3" class="col_heading level0 col3" >avg_IQR</th>
-          <th id="T_6bb29_level0_col4" class="col_heading level0 col4" >avg_abs_AUC_pos</th>
-          <th id="T_6bb29_level0_col5" class="col_heading level0 col5" >avg_KLD_pos</th>
-          <th id="T_6bb29_level0_col6" class="col_heading level0 col6" >avg_abs_AUC_unl</th>
-          <th id="T_6bb29_level0_col7" class="col_heading level0 col7" >avg_KLD_unl</th>
-          <th id="T_6bb29_level0_col8" class="col_heading level0 col8" >avg_abs_AUC_neg</th>
-          <th id="T_6bb29_level0_col9" class="col_heading level0 col9" >avg_KLD_neg</th>
+          <th id="T_ecd7a_level0_col0" class="col_heading level0 col0" >name</th>
+          <th id="T_ecd7a_level0_col1" class="col_heading level0 col1" >n_rel_neg</th>
+          <th id="T_ecd7a_level0_col2" class="col_heading level0 col2" >avg_STD</th>
+          <th id="T_ecd7a_level0_col3" class="col_heading level0 col3" >avg_IQR</th>
+          <th id="T_ecd7a_level0_col4" class="col_heading level0 col4" >avg_abs_AUC_pos</th>
+          <th id="T_ecd7a_level0_col5" class="col_heading level0 col5" >avg_KLD_pos</th>
+          <th id="T_ecd7a_level0_col6" class="col_heading level0 col6" >avg_abs_AUC_unl</th>
+          <th id="T_ecd7a_level0_col7" class="col_heading level0 col7" >avg_KLD_unl</th>
+          <th id="T_ecd7a_level0_col8" class="col_heading level0 col8" >avg_abs_AUC_neg</th>
+          <th id="T_ecd7a_level0_col9" class="col_heading level0 col9" >avg_KLD_neg</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <th id="T_6bb29_level0_row0" class="row_heading level0 row0" >1</th>
-          <td id="T_6bb29_row0_col0" class="data row0 col0" >Dataset 1</td>
-          <td id="T_6bb29_row0_col1" class="data row0 col1" >2</td>
-          <td id="T_6bb29_row0_col2" class="data row0 col2" >0.175000</td>
-          <td id="T_6bb29_row0_col3" class="data row0 col3" >0.175000</td>
-          <td id="T_6bb29_row0_col4" class="data row0 col4" >0.437500</td>
-          <td id="T_6bb29_row0_col5" class="data row0 col5" >1.414400</td>
-          <td id="T_6bb29_row0_col6" class="data row0 col6" >0.125000</td>
-          <td id="T_6bb29_row0_col7" class="data row0 col7" >0.003100</td>
-          <td id="T_6bb29_row0_col8" class="data row0 col8" >0.187500</td>
-          <td id="T_6bb29_row0_col9" class="data row0 col9" >0.181300</td>
+          <th id="T_ecd7a_level0_row0" class="row_heading level0 row0" >1</th>
+          <td id="T_ecd7a_row0_col0" class="data row0 col0" >Dataset 1</td>
+          <td id="T_ecd7a_row0_col1" class="data row0 col1" >2</td>
+          <td id="T_ecd7a_row0_col2" class="data row0 col2" >0.175000</td>
+          <td id="T_ecd7a_row0_col3" class="data row0 col3" >0.175000</td>
+          <td id="T_ecd7a_row0_col4" class="data row0 col4" >0.438000</td>
+          <td id="T_ecd7a_row0_col5" class="data row0 col5" >1.414000</td>
+          <td id="T_ecd7a_row0_col6" class="data row0 col6" >0.125000</td>
+          <td id="T_ecd7a_row0_col7" class="data row0 col7" >0.003000</td>
+          <td id="T_ecd7a_row0_col8" class="data row0 col8" >0.188000</td>
+          <td id="T_ecd7a_row0_col9" class="data row0 col9" >0.181000</td>
         </tr>
         <tr>
-          <th id="T_6bb29_level0_row1" class="row_heading level0 row1" >2</th>
-          <td id="T_6bb29_row1_col0" class="data row1 col0" >Dataset 2</td>
-          <td id="T_6bb29_row1_col1" class="data row1 col1" >2</td>
-          <td id="T_6bb29_row1_col2" class="data row1 col2" >0.187500</td>
-          <td id="T_6bb29_row1_col3" class="data row1 col3" >0.187500</td>
-          <td id="T_6bb29_row1_col4" class="data row1 col4" >0.500000</td>
-          <td id="T_6bb29_row1_col5" class="data row1 col5" >1.366900</td>
-          <td id="T_6bb29_row1_col6" class="data row1 col6" >0.125000</td>
-          <td id="T_6bb29_row1_col7" class="data row1 col7" >0.003300</td>
-          <td id="T_6bb29_row1_col8" class="data row1 col8" >0.187500</td>
-          <td id="T_6bb29_row1_col9" class="data row1 col9" >0.104100</td>
+          <th id="T_ecd7a_level0_row1" class="row_heading level0 row1" >2</th>
+          <td id="T_ecd7a_row1_col0" class="data row1 col0" >Dataset 2</td>
+          <td id="T_ecd7a_row1_col1" class="data row1 col1" >2</td>
+          <td id="T_ecd7a_row1_col2" class="data row1 col2" >0.188000</td>
+          <td id="T_ecd7a_row1_col3" class="data row1 col3" >0.188000</td>
+          <td id="T_ecd7a_row1_col4" class="data row1 col4" >0.500000</td>
+          <td id="T_ecd7a_row1_col5" class="data row1 col5" >1.367000</td>
+          <td id="T_ecd7a_row1_col6" class="data row1 col6" >0.125000</td>
+          <td id="T_ecd7a_row1_col7" class="data row1 col7" >0.003000</td>
+          <td id="T_ecd7a_row1_col8" class="data row1 col8" >0.188000</td>
+          <td id="T_ecd7a_row1_col9" class="data row1 col9" >0.104000</td>
         </tr>
         <tr>
-          <th id="T_6bb29_level0_row2" class="row_heading level0 row2" >3</th>
-          <td id="T_6bb29_row2_col0" class="data row2 col0" >Dataset 3</td>
-          <td id="T_6bb29_row2_col1" class="data row2 col1" >2</td>
-          <td id="T_6bb29_row2_col2" class="data row2 col2" >0.037500</td>
-          <td id="T_6bb29_row2_col3" class="data row2 col3" >0.037500</td>
-          <td id="T_6bb29_row2_col4" class="data row2 col4" >0.437500</td>
-          <td id="T_6bb29_row2_col5" class="data row2 col5" >1.016800</td>
-          <td id="T_6bb29_row2_col6" class="data row2 col6" >0.500000</td>
-          <td id="T_6bb29_row2_col7" class="data row2 col7" >30.317900</td>
-          <td id="T_6bb29_row2_col8" class="data row2 col8" >0.500000</td>
-          <td id="T_6bb29_row2_col9" class="data row2 col9" >12.020200</td>
+          <th id="T_ecd7a_level0_row2" class="row_heading level0 row2" >3</th>
+          <td id="T_ecd7a_row2_col0" class="data row2 col0" >Dataset 3</td>
+          <td id="T_ecd7a_row2_col1" class="data row2 col1" >2</td>
+          <td id="T_ecd7a_row2_col2" class="data row2 col2" >0.038000</td>
+          <td id="T_ecd7a_row2_col3" class="data row2 col3" >0.038000</td>
+          <td id="T_ecd7a_row2_col4" class="data row2 col4" >0.438000</td>
+          <td id="T_ecd7a_row2_col5" class="data row2 col5" >1.017000</td>
+          <td id="T_ecd7a_row2_col6" class="data row2 col6" >0.500000</td>
+          <td id="T_ecd7a_row2_col7" class="data row2 col7" >30.318000</td>
+          <td id="T_ecd7a_row2_col8" class="data row2 col8" >0.500000</td>
+          <td id="T_ecd7a_row2_col9" class="data row2 col9" >12.020000</td>
         </tr>
       </tbody>
     </table>

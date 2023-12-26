@@ -1,5 +1,5 @@
-To get insights into the identification process by ``dPULearn.fit``, you
-can create a Principal Component Analysis (PCA) plot for identified
+To get insights into the identification process by ``dPULearn().fit``,
+you can create a Principal Component Analysis (PCA) plot for identified
 negative, positive, and unlabeled dataset groups. To this end, we load
 an example dataset and perform a ``PCA-based identification`` of
 negatives:

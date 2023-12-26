@@ -75,7 +75,8 @@ def plot_eval(df_eval=None, dict_xlims=None, figsize=None, colors=None):
         elif i == 2:
             ax.set_title("Quality measures", weight="bold")
         ax.tick_params(axis='y', which='both', left=False)
-        ut.x_ticks_0(ax=ax)
+        if i != 0:
+            ut.x_ticks_0(ax=ax)
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.25, hspace=0)
     return fig, axes
@@ -121,7 +122,7 @@ def plot_center_or_medoid(X=None, labels=None,
     plt.xlabel(df_components.columns[component_x - 1])
     plt.ylabel(df_components.columns[component_y - 1])
     if legend:
-        plt.legend(title="clusters", bbox_to_anchor=(0.95, 1), loc='upper left')
+        plt.legend(title="clusters", bbox_to_anchor=(1, 0.95), loc='upper left')
     plt.tight_layout()
     return ax, df_components
 

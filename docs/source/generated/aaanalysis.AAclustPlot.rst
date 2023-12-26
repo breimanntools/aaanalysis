@@ -14,7 +14,7 @@
    .. autosummary::
    
       ~AAclustPlot.__init__
-      ~AAclustPlot.center
+      ~AAclustPlot.centers
       ~AAclustPlot.correlation
       ~AAclustPlot.eval
       ~AAclustPlot.medoids

@@ -1,6 +1,6 @@
 We first create an example dataset of 100 scales and obtain their
 ``AAontolgy`` subcategory names to showcase the automatic cluster naming
-by ``AAclust.name_clusters()`` method:
+by ``AAclust().name_clusters()`` method:
 
 .. code:: ipython2
 
@@ -17,7 +17,7 @@ by ``AAclust.name_clusters()`` method:
     labels = aac.labels_
 
 We can now provide the feature matrix ``X``, ``names``, and ``labels``
-to the ``AAclust.name_clusters()`` method:
+to the ``AAclust().name_clusters()`` method:
 
 .. code:: ipython2
 
@@ -27,7 +27,7 @@ to the ``AAclust.name_clusters()`` method:
 
 .. parsed-literal::
 
-    Name of clusters:  ['AA composition', 'Accessible surface area', 'Free energy', 'Hydrophobicity', 'MPs', 'Non-bonded energy', 'Volume', 'α-helix', 'β-strand', 'β-turn']
+    Name of clusters:  ['AA composition', 'Buried', 'Free energy', 'Hydrophilicity', 'Hydrophobicity', 'MPs', 'Membrane proteins', 'Side chain length', 'α-helix', 'β-turn']
 
 
 These names are automatically shorten, which can be disabled by setting
@@ -41,5 +41,5 @@ These names are automatically shorten, which can be disabled by setting
 
 .. parsed-literal::
 
-    Longer names:  ['AA composition', 'Accessible surface area (ASA)', 'Free energy (unfolding)', 'Hydrophobicity', 'Non-bonded energy', 'Volume', 'α-helix', 'β-strand', 'β-turn', 'β-turn (N-term)']
+    Longer names:  ['AA composition', 'Buried', 'Free energy (unfolding)', 'Hydrophilicity', 'MPs (anchor)', 'Membrane proteins (MPs)', 'Side chain length', 'Stability', 'α-helix', 'β-turn']
 

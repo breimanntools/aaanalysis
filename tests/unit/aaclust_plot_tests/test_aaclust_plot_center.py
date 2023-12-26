@@ -21,7 +21,7 @@ def call_aaclust_plot_center(X=None, labels=None, **kwargs):
     # Check if at least 3 unique values exist and non is nan
     all_vals = X.flatten()[1:].tolist()
     if not np.isnan(X).any() and len(set(all_vals)) > 2 and not np.asarray_chkfinite(X).any():
-        ax, df_components = aac_plot.center(X, labels=labels, **kwargs)
+        ax, df_components = aac_plot.centers(X, labels=labels, **kwargs)
         assert isinstance(ax, plt.Axes) and isinstance(df_components, pd.DataFrame)
         plt.close()
 
@@ -132,7 +132,7 @@ class TestAAclustPlotCenter:
             with pytest.raises(ValueError):
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", RuntimeWarning)
-                    aac_plot.center(X, labels=labels)
+                    aac_plot.centers(X, labels=labels)
 
     def test_invalid_labels_empty(self):
         """Test with empty labels."""
@@ -141,7 +141,7 @@ class TestAAclustPlotCenter:
         with pytest.raises(ValueError):
             aac_plot = aa.AAclustPlot()
             # Check if at least 3 unique values exist and non is nan
-            ax, df_components = aac_plot.center(X, labels=labels)
+            ax, df_components = aac_plot.centers(X, labels=labels)
             assert isinstance(ax, plt.Axes) and isinstance(df_components, pd.DataFrame)
             plt.close()
 
@@ -152,7 +152,7 @@ class TestAAclustPlotCenter:
         with pytest.raises(ValueError):
             aac_plot = aa.AAclustPlot()
             # Check if at least 3 unique values exist and non is nan
-            ax, df_components = aac_plot.center(X, labels=labels)
+            ax, df_components = aac_plot.centers(X, labels=labels)
             assert isinstance(ax, plt.Axes) and isinstance(df_components, pd.DataFrame)
             plt.close()
 
@@ -164,7 +164,7 @@ class TestAAclustPlotCenter:
         labels = [1, 4, 2, 4, 3]
         with pytest.raises(ValueError):
             aac_plot = aa.AAclustPlot()
-            ax, df_components = aac_plot.center(X, labels=labels, component_x=component_x)
+            ax, df_components = aac_plot.centers(X, labels=labels, component_x=component_x)
             assert isinstance(ax, plt.Axes) and isinstance(df_components, pd.DataFrame)
             plt.close()
 
@@ -176,7 +176,7 @@ class TestAAclustPlotCenter:
         labels = [1, 4, 2, 4, 3]
         with pytest.raises(ValueError):
             aac_plot = aa.AAclustPlot()
-            ax, df_components = aac_plot.center(X, labels=labels, component_y=component_y)
+            ax, df_components = aac_plot.centers(X, labels=labels, component_y=component_y)
             assert isinstance(ax, plt.Axes) and isinstance(df_components, pd.DataFrame)
             plt.close()
 

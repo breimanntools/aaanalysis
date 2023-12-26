@@ -18,7 +18,7 @@ from ._backend.aaclust.aaclust_plot import plot_eval, plot_center_or_medoid, plo
 
 # I Helper Functions
 def check_match_df_eval_names(df_eval=None, names=None):
-    """"""
+    """Validate the match between the number of samples in df_eval and the length of names"""
     n_samples = len(df_eval)
     if names is not None:
         if len(names) != n_samples:
@@ -30,7 +30,7 @@ def check_match_df_eval_names(df_eval=None, names=None):
 
 
 def check_dict_xlims(dict_xlims=None):
-    """"""
+    """Validate the structure and content of dict_xlims to ensure it contains the correct keys and value formats."""
     if dict_xlims is None:
         return
     ut.check_dict(name="dict_xlims", val=dict_xlims)
@@ -49,7 +49,7 @@ def check_dict_xlims(dict_xlims=None):
 
 # Check correlation plot
 def check_match_df_corr_labels(df_corr=None, labels=None):
-    """"""
+    """Ensure the number of labels matches the number of samples in df_corr"""
     labels = ut.check_labels(labels=labels)
     n_samples, n_clusters = df_corr.shape
     if n_samples != len(labels):
@@ -58,14 +58,14 @@ def check_match_df_corr_labels(df_corr=None, labels=None):
 
 
 def check_method(method=None):
-    """"""
+    """Validate the method parameter against a list of valid hierarchical clustering methods"""
     valid_methods = ["single", "complete", "average", "weighted", "centroid", "median", "ward"]
     if method not in valid_methods:
         raise ValueError(f"'method' ({method}) should be one of following: {valid_methods}")
 
 
 def check_match_df_corr_clust_x(df_corr=None, cluster_x=None):
-    """"""
+    """Ensure df_corr has variability and no missing values if cluster_x is enabled"""
     all_vals = df_corr.to_numpy().flatten()[1:].tolist()
     if cluster_x:
         if len(set(all_vals)) == 1:
@@ -75,7 +75,7 @@ def check_match_df_corr_clust_x(df_corr=None, cluster_x=None):
 
 
 def check_bar_position(bar_position=None):
-    """"""
+    """Validate and standardize bar_position to be one of the valid positions like 'left', 'right', 'top', or 'bottom'"""
     bar_position = ut.check_list_like(name="bar_position", val=bar_position, convert=True, accept_str=True)
     valid_positions = ['left', 'right', 'top', 'bottom']
     wrong_positions = [x for x in bar_position if x not in valid_positions]
@@ -85,7 +85,7 @@ def check_bar_position(bar_position=None):
 
 
 def check_bar_colors(bar_colors=None):
-    """"""
+    """Validate and standardize bar_colors to be either a single color or a list of valid colors."""
     if isinstance(bar_colors, str):
         ut.check_color(name='bar_colors', val=bar_colors, accept_none=False)
         bar_colors = [bar_colors]
@@ -98,7 +98,7 @@ def check_bar_colors(bar_colors=None):
 
 
 def check_match_bar_colors_labels(bar_colors=None, labels=None):
-    """"""
+    """Adjust bar_colors to match the number of unique labels and warn if there are insufficient colors provided"""
     n_clusters = len(set(labels)) # Number of unique labels
     if len(bar_colors) == 1:
         bar_colors = bar_colors * n_clusters
@@ -126,10 +126,14 @@ class AAclustPlot:
         """
         Parameters
         ----------
-        model_class
+        model_class : Type[TransformerMixin], default=PCA
             A decomposition model class with ``n_components`` parameter.
-        model_kwargs
+        model_kwargs : dict, optional
             Keyword arguments to pass to the selected decomposition model.
+
+        Examples
+        --------
+        .. include:: examples/aac_plot.rst
         """
         # Model parameters
         model_class = ut.check_mode_class(model_class=model_class)
@@ -173,8 +177,8 @@ class AAclustPlot:
         -------
         fig : plt.Figure
             Figure object for evaluation plot
-        axes : plt.Axes (TODO check if not array of ..)
-            The axes object(s) containing evaluation subplots.
+        axes : array of plt.Axes
+            Array of Axes objects, each representing a subplot within the figure. .
 
         Notes
         -----
@@ -183,6 +187,10 @@ class AAclustPlot:
         See Also
         --------
         * :meth:`AAclust.eval` for details on evaluation measures.
+
+        Examples
+        --------
+        .. include:: examples/aac_plot_eval.rst
         """
         # Check input
         ut.check_df(name="df_eval", df=df_eval, cols_requiered=ut.COLS_EVAL_AACLUST, accept_none=False, accept_nan=False)
@@ -196,18 +204,18 @@ class AAclustPlot:
                               colors=colors)
         return fig, axes
 
-    def center(self,
-               X: ut.ArrayLike2D,
-               labels: ut.ArrayLike1D = None,
-               component_x: int = 1,
-               component_y: int = 2,
-               ax: Optional[plt.Axes] = None,
-               figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
-               dot_alpha: float = 0.75,
-               dot_size: int = 100,
-               legend: bool = True,
-               palette: Optional[mpl.colors.ListedColormap] = None,
-               ) -> Tuple[plt.Axes, pd.DataFrame]:
+    def centers(self,
+                X: ut.ArrayLike2D,
+                labels: ut.ArrayLike1D = None,
+                component_x: int = 1,
+                component_y: int = 2,
+                ax: Optional[plt.Axes] = None,
+                figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
+                dot_alpha: float = 0.75,
+                dot_size: int = 100,
+                legend: bool = True,
+                palette: Optional[mpl.colors.ListedColormap] = None,
+                ) -> Tuple[plt.Axes, pd.DataFrame]:
         """PCA plot of clustering with centers highlighted
 
         Parameters
@@ -216,28 +224,28 @@ class AAclustPlot:
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
         labels : array-like of shape (n_samples,)
             Cluster labels for each sample in ``X``. If ``None``, no grouping is used.
-        component_x
+        component_x : int, default=1
             Index of the PCA component for the x-axis. Must be >= 1.
-        component_y
+        component_y : int, default=2
             Index of the PCA component for the y-axis. Must be >= 1.
-        ax
+        ax : plt.Axes, optional
             Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
         figsize : tuple, default=(7,6)
             Figure size (width, height) in inches.
-        dot_alpha
+        dot_alpha : float, default=0.75
             Alpha value of the plotted dots.
-        dot_size
+        dot_size : int, default=100
             Size of the plotted dots.
-        legend
+        legend : bool, default=True
             Whether to show the legend.
-        palette : list, default
+        palette : list, optional
             Colormap for the labels or list of colors. If ``None``, a default colormap is used.
 
         Returns
         -------
-        ax
-            Axes object with the PCA plot.
-        df_components
+        ax : plt.Axes
+            PCA plot axes object.
+        df_components : pd.DataFrame
             DataFrame with the PCA components.
 
         Notes
@@ -248,6 +256,10 @@ class AAclustPlot:
         --------
         * See the :ref:`tutorial <palette_tutorial>` for more information.
         * See colormaps from matplotlib in :class:`matplotlib.colors.ListedColormap`.
+
+        Examples
+        --------
+        .. include:: examples/aac_plot_centers.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -315,7 +327,7 @@ class AAclustPlot:
             Size of the plotted dots.
         legend : bool, default=True
             Whether to show the legend.
-        palette : TODO
+        palette : list, optional
             Colormap for the labels or list of colors. If ``None``, a default colormap is used.
 
         Returns
@@ -333,6 +345,10 @@ class AAclustPlot:
         --------
         * See the :ref:`tutorial <palette_tutorial>` for more information.
         * See colormaps from matplotlib in :class:`matplotlib.colors.ListedColormap`.
+
+        Examples
+        --------
+        .. include:: examples/aac_plot_medoids.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -370,8 +386,8 @@ class AAclustPlot:
                     bar_spacing_x: float = 0.1,
                     bar_width_y: float = 0.1,
                     bar_spacing_y: float = 0.1,
-                    vmin: float = -1,
-                    vmax: float = 1,
+                    vmin: float = -1.0,
+                    vmax: float = 1.0,
                     cmap: str = "twilight_shifted",
                     **kwargs_heatmap
                     ) -> plt.Axes:
@@ -380,44 +396,43 @@ class AAclustPlot:
 
         Parameters
         ----------
-        df_corr
+        df_corr : pd.DataFrame
             DataFrame with correlation matrix. `Rows` typically correspond to scales and `columns` to clusters.
         labels : array-like of shape (n_samples,)
             Cluster labels determining the grouping and coloring of the side color bar.
             It should have the same length as number of rows in ``df_corr`` (n_samples).
-        cluster_x
+        cluster_x : bool, default=False
             If ``True``, x-axis (`clusters`) values are clustered.
-        method
+        method : {'single', 'complete', 'average', 'weighted', 'centroid', 'median', 'ward'}, default='average'
             Linkage method from :func:`scipy.cluster.hierarchy.linkage` used for clustering.
-            Options are ``single``, ``complete``, ``average``, ``weighted``, ``centroid``, ``median``, and ``ward``.
-        xtick_label_rotation
+        xtick_label_rotation : int, default=45
             Rotation of x-tick labels (names of `clusters`).
-        ytick_label_rotation
+        ytick_label_rotation : int, default=0
             Rotation of y-tick labels (names of `samples`).
-        bar_position
+        bar_position : str or list of str, default='left'
             Position of the colored sidebar (``left``, ``right``, ``top``, or ``down``). If ``None``, no sidebar is added.
-        bar_colors
+        bar_colors : str or list of str, default='tab:gray'
             Either a single color or a list of colors for each unique label in ``labels``.
-        bar_width_x
+        bar_width_x : float, default=0.1
             Width of the x-axis sidebar, must be >= 0.
-        bar_spacing_x
+        bar_spacing_x : float, default=0.1
             Space between the heatmap and the colored x-axis sidebar, must be >= 0.
-        bar_width_y
+        bar_width_y : float, default=0,1
             Width of the y-axis sidebar, must be >= 0.
-        bar_spacing_y
+        bar_spacing_y : float, default=0.1
             Space between the heatmap and the colored y-axis sidebar, must be >= 0.
-        vmin
+        vmin : float, default=-1.0
             Minimum value of the color scale in :func:`seaborn.heatmap`.
-        vmax
+        vmax : float, default=1.0
             Maximum value of the color scale in :func:`seaborn.heatmap`.
-        cmap
+        cmap : str, default='twilight_shifted'
             Colormap to be used for the :func:`seaborn.heatmap`.
         **kwargs_heatmap
             Additional keyword arguments passed to :func:`seaborn.heatmap`.
 
         Returns
         -------
-        ax
+        ax : plt.Axes
             Axes object with the correlation heatmap.
 
         Notes
@@ -429,6 +444,10 @@ class AAclustPlot:
         See Also
         --------
         * :func:`seaborn.heatmap`: Seaborn function for creating heatmaps.
+
+        Examples
+        --------
+        .. include:: examples/aac_plot_correlation.rst
         """
         # Check input
         ut.check_df(name="df_corr", df=df_corr, accept_none=False, accept_nan=False)

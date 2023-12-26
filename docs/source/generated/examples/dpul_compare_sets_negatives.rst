@@ -1,4 +1,4 @@
-The ``dPULearn.compare_sets_negatives`` method facilitates the
+The ``dPULearn().compare_sets_negatives()`` method facilitates the
 comparison of identified negative samples across datasets. Providing
 identified negatives represented by ‘0’ in the ``list_labels`` input, it
 returns a DataFrame (typically named ``df_neg_comp``) where each row is
@@ -19,55 +19,55 @@ dataset:
 .. raw:: html
 
     <style type="text/css">
-    #T_eceeb thead th {
+    #T_66229 thead th {
       background-color: white;
       color: black;
     }
-    #T_eceeb tbody tr:nth-child(odd) {
+    #T_66229 tbody tr:nth-child(odd) {
       background-color: #f2f2f2;
     }
-    #T_eceeb tbody tr:nth-child(even) {
+    #T_66229 tbody tr:nth-child(even) {
       background-color: white;
     }
-    #T_eceeb th {
+    #T_66229 th {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_eceeb  td {
+    #T_66229  td {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_eceeb table {
+    #T_66229 table {
       font-size: 12px;
     }
     </style>
-    <table id="T_eceeb" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
+    <table id="T_66229" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
       <thead>
         <tr>
           <th class="blank level0" >&nbsp;</th>
-          <th id="T_eceeb_level0_col0" class="col_heading level0 col0" >Set 1</th>
-          <th id="T_eceeb_level0_col1" class="col_heading level0 col1" >Set 2</th>
-          <th id="T_eceeb_level0_col2" class="col_heading level0 col2" >Set 3</th>
+          <th id="T_66229_level0_col0" class="col_heading level0 col0" >Set 1</th>
+          <th id="T_66229_level0_col1" class="col_heading level0 col1" >Set 2</th>
+          <th id="T_66229_level0_col2" class="col_heading level0 col2" >Set 3</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <th id="T_eceeb_level0_row0" class="row_heading level0 row0" >3</th>
-          <td id="T_eceeb_row0_col0" class="data row0 col0" >True</td>
-          <td id="T_eceeb_row0_col1" class="data row0 col1" >True</td>
-          <td id="T_eceeb_row0_col2" class="data row0 col2" >False</td>
+          <th id="T_66229_level0_row0" class="row_heading level0 row0" >3</th>
+          <td id="T_66229_row0_col0" class="data row0 col0" >True</td>
+          <td id="T_66229_row0_col1" class="data row0 col1" >True</td>
+          <td id="T_66229_row0_col2" class="data row0 col2" >False</td>
         </tr>
         <tr>
-          <th id="T_eceeb_level0_row1" class="row_heading level0 row1" >4</th>
-          <td id="T_eceeb_row1_col0" class="data row1 col0" >True</td>
-          <td id="T_eceeb_row1_col1" class="data row1 col1" >False</td>
-          <td id="T_eceeb_row1_col2" class="data row1 col2" >True</td>
+          <th id="T_66229_level0_row1" class="row_heading level0 row1" >4</th>
+          <td id="T_66229_row1_col0" class="data row1 col0" >True</td>
+          <td id="T_66229_row1_col1" class="data row1 col1" >False</td>
+          <td id="T_66229_row1_col2" class="data row1 col2" >True</td>
         </tr>
         <tr>
-          <th id="T_eceeb_level0_row2" class="row_heading level0 row2" >5</th>
-          <td id="T_eceeb_row2_col0" class="data row2 col0" >False</td>
-          <td id="T_eceeb_row2_col1" class="data row2 col1" >True</td>
-          <td id="T_eceeb_row2_col2" class="data row2 col2" >True</td>
+          <th id="T_66229_level0_row2" class="row_heading level0 row2" >5</th>
+          <td id="T_66229_row2_col0" class="data row2 col0" >False</td>
+          <td id="T_66229_row2_col1" class="data row2 col1" >True</td>
+          <td id="T_66229_row2_col2" class="data row2 col2" >True</td>
         </tr>
       </tbody>
     </table>
@@ -87,67 +87,67 @@ returned. To return all rows, set ``remove_non_neg=False``:
 .. raw:: html
 
     <style type="text/css">
-    #T_12ac1 thead th {
+    #T_1383d thead th {
       background-color: white;
       color: black;
     }
-    #T_12ac1 tbody tr:nth-child(odd) {
+    #T_1383d tbody tr:nth-child(odd) {
       background-color: #f2f2f2;
     }
-    #T_12ac1 tbody tr:nth-child(even) {
+    #T_1383d tbody tr:nth-child(even) {
       background-color: white;
     }
-    #T_12ac1 th {
+    #T_1383d th {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_12ac1  td {
+    #T_1383d  td {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_12ac1 table {
+    #T_1383d table {
       font-size: 12px;
     }
     </style>
-    <table id="T_12ac1" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
+    <table id="T_1383d" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
       <thead>
         <tr>
           <th class="blank level0" >&nbsp;</th>
-          <th id="T_12ac1_level0_col0" class="col_heading level0 col0" >Set 1</th>
-          <th id="T_12ac1_level0_col1" class="col_heading level0 col1" >Set 2</th>
-          <th id="T_12ac1_level0_col2" class="col_heading level0 col2" >Set 3</th>
+          <th id="T_1383d_level0_col0" class="col_heading level0 col0" >Set 1</th>
+          <th id="T_1383d_level0_col1" class="col_heading level0 col1" >Set 2</th>
+          <th id="T_1383d_level0_col2" class="col_heading level0 col2" >Set 3</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <th id="T_12ac1_level0_row0" class="row_heading level0 row0" >1</th>
-          <td id="T_12ac1_row0_col0" class="data row0 col0" >False</td>
-          <td id="T_12ac1_row0_col1" class="data row0 col1" >False</td>
-          <td id="T_12ac1_row0_col2" class="data row0 col2" >False</td>
+          <th id="T_1383d_level0_row0" class="row_heading level0 row0" >1</th>
+          <td id="T_1383d_row0_col0" class="data row0 col0" >False</td>
+          <td id="T_1383d_row0_col1" class="data row0 col1" >False</td>
+          <td id="T_1383d_row0_col2" class="data row0 col2" >False</td>
         </tr>
         <tr>
-          <th id="T_12ac1_level0_row1" class="row_heading level0 row1" >2</th>
-          <td id="T_12ac1_row1_col0" class="data row1 col0" >False</td>
-          <td id="T_12ac1_row1_col1" class="data row1 col1" >False</td>
-          <td id="T_12ac1_row1_col2" class="data row1 col2" >False</td>
+          <th id="T_1383d_level0_row1" class="row_heading level0 row1" >2</th>
+          <td id="T_1383d_row1_col0" class="data row1 col0" >False</td>
+          <td id="T_1383d_row1_col1" class="data row1 col1" >False</td>
+          <td id="T_1383d_row1_col2" class="data row1 col2" >False</td>
         </tr>
         <tr>
-          <th id="T_12ac1_level0_row2" class="row_heading level0 row2" >3</th>
-          <td id="T_12ac1_row2_col0" class="data row2 col0" >True</td>
-          <td id="T_12ac1_row2_col1" class="data row2 col1" >True</td>
-          <td id="T_12ac1_row2_col2" class="data row2 col2" >False</td>
+          <th id="T_1383d_level0_row2" class="row_heading level0 row2" >3</th>
+          <td id="T_1383d_row2_col0" class="data row2 col0" >True</td>
+          <td id="T_1383d_row2_col1" class="data row2 col1" >True</td>
+          <td id="T_1383d_row2_col2" class="data row2 col2" >False</td>
         </tr>
         <tr>
-          <th id="T_12ac1_level0_row3" class="row_heading level0 row3" >4</th>
-          <td id="T_12ac1_row3_col0" class="data row3 col0" >True</td>
-          <td id="T_12ac1_row3_col1" class="data row3 col1" >False</td>
-          <td id="T_12ac1_row3_col2" class="data row3 col2" >True</td>
+          <th id="T_1383d_level0_row3" class="row_heading level0 row3" >4</th>
+          <td id="T_1383d_row3_col0" class="data row3 col0" >True</td>
+          <td id="T_1383d_row3_col1" class="data row3 col1" >False</td>
+          <td id="T_1383d_row3_col2" class="data row3 col2" >True</td>
         </tr>
         <tr>
-          <th id="T_12ac1_level0_row4" class="row_heading level0 row4" >5</th>
-          <td id="T_12ac1_row4_col0" class="data row4 col0" >False</td>
-          <td id="T_12ac1_row4_col1" class="data row4 col1" >True</td>
-          <td id="T_12ac1_row4_col2" class="data row4 col2" >True</td>
+          <th id="T_1383d_level0_row4" class="row_heading level0 row4" >5</th>
+          <td id="T_1383d_row4_col0" class="data row4 col0" >False</td>
+          <td id="T_1383d_row4_col1" class="data row4 col1" >True</td>
+          <td id="T_1383d_row4_col2" class="data row4 col2" >True</td>
         </tr>
       </tbody>
     </table>
@@ -167,55 +167,55 @@ Names of the datasets can be provided by the ``names`` argument:
 .. raw:: html
 
     <style type="text/css">
-    #T_3ce19 thead th {
+    #T_9822c thead th {
       background-color: white;
       color: black;
     }
-    #T_3ce19 tbody tr:nth-child(odd) {
+    #T_9822c tbody tr:nth-child(odd) {
       background-color: #f2f2f2;
     }
-    #T_3ce19 tbody tr:nth-child(even) {
+    #T_9822c tbody tr:nth-child(even) {
       background-color: white;
     }
-    #T_3ce19 th {
+    #T_9822c th {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_3ce19  td {
+    #T_9822c  td {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_3ce19 table {
+    #T_9822c table {
       font-size: 12px;
     }
     </style>
-    <table id="T_3ce19" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
+    <table id="T_9822c" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
       <thead>
         <tr>
           <th class="blank level0" >&nbsp;</th>
-          <th id="T_3ce19_level0_col0" class="col_heading level0 col0" >Dataset 1</th>
-          <th id="T_3ce19_level0_col1" class="col_heading level0 col1" >Dataset 2</th>
-          <th id="T_3ce19_level0_col2" class="col_heading level0 col2" >Dataset 3</th>
+          <th id="T_9822c_level0_col0" class="col_heading level0 col0" >Dataset 1</th>
+          <th id="T_9822c_level0_col1" class="col_heading level0 col1" >Dataset 2</th>
+          <th id="T_9822c_level0_col2" class="col_heading level0 col2" >Dataset 3</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <th id="T_3ce19_level0_row0" class="row_heading level0 row0" >3</th>
-          <td id="T_3ce19_row0_col0" class="data row0 col0" >True</td>
-          <td id="T_3ce19_row0_col1" class="data row0 col1" >True</td>
-          <td id="T_3ce19_row0_col2" class="data row0 col2" >False</td>
+          <th id="T_9822c_level0_row0" class="row_heading level0 row0" >3</th>
+          <td id="T_9822c_row0_col0" class="data row0 col0" >True</td>
+          <td id="T_9822c_row0_col1" class="data row0 col1" >True</td>
+          <td id="T_9822c_row0_col2" class="data row0 col2" >False</td>
         </tr>
         <tr>
-          <th id="T_3ce19_level0_row1" class="row_heading level0 row1" >4</th>
-          <td id="T_3ce19_row1_col0" class="data row1 col0" >True</td>
-          <td id="T_3ce19_row1_col1" class="data row1 col1" >False</td>
-          <td id="T_3ce19_row1_col2" class="data row1 col2" >True</td>
+          <th id="T_9822c_level0_row1" class="row_heading level0 row1" >4</th>
+          <td id="T_9822c_row1_col0" class="data row1 col0" >True</td>
+          <td id="T_9822c_row1_col1" class="data row1 col1" >False</td>
+          <td id="T_9822c_row1_col2" class="data row1 col2" >True</td>
         </tr>
         <tr>
-          <th id="T_3ce19_level0_row2" class="row_heading level0 row2" >5</th>
-          <td id="T_3ce19_row2_col0" class="data row2 col0" >False</td>
-          <td id="T_3ce19_row2_col1" class="data row2 col1" >True</td>
-          <td id="T_3ce19_row2_col2" class="data row2 col2" >True</td>
+          <th id="T_9822c_level0_row2" class="row_heading level0 row2" >5</th>
+          <td id="T_9822c_row2_col0" class="data row2 col0" >False</td>
+          <td id="T_9822c_row2_col1" class="data row2 col1" >True</td>
+          <td id="T_9822c_row2_col2" class="data row2 col2" >True</td>
         </tr>
       </tbody>
     </table>
@@ -238,63 +238,63 @@ A DataFrame with sequence information (``df_seq``) and an requiered
 .. raw:: html
 
     <style type="text/css">
-    #T_aa59d thead th {
+    #T_b22c9 thead th {
       background-color: white;
       color: black;
     }
-    #T_aa59d tbody tr:nth-child(odd) {
+    #T_b22c9 tbody tr:nth-child(odd) {
       background-color: #f2f2f2;
     }
-    #T_aa59d tbody tr:nth-child(even) {
+    #T_b22c9 tbody tr:nth-child(even) {
       background-color: white;
     }
-    #T_aa59d th {
+    #T_b22c9 th {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_aa59d  td {
+    #T_b22c9  td {
       padding: 5px;
       white-space: nowrap;
     }
-    #T_aa59d table {
+    #T_b22c9 table {
       font-size: 12px;
     }
     </style>
-    <table id="T_aa59d" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
+    <table id="T_b22c9" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
       <thead>
         <tr>
           <th class="blank level0" >&nbsp;</th>
-          <th id="T_aa59d_level0_col0" class="col_heading level0 col0" >entry</th>
-          <th id="T_aa59d_level0_col1" class="col_heading level0 col1" >sequence</th>
-          <th id="T_aa59d_level0_col2" class="col_heading level0 col2" >Set 1</th>
-          <th id="T_aa59d_level0_col3" class="col_heading level0 col3" >Set 2</th>
-          <th id="T_aa59d_level0_col4" class="col_heading level0 col4" >Set 3</th>
+          <th id="T_b22c9_level0_col0" class="col_heading level0 col0" >entry</th>
+          <th id="T_b22c9_level0_col1" class="col_heading level0 col1" >sequence</th>
+          <th id="T_b22c9_level0_col2" class="col_heading level0 col2" >Set 1</th>
+          <th id="T_b22c9_level0_col3" class="col_heading level0 col3" >Set 2</th>
+          <th id="T_b22c9_level0_col4" class="col_heading level0 col4" >Set 3</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <th id="T_aa59d_level0_row0" class="row_heading level0 row0" >3</th>
-          <td id="T_aa59d_row0_col0" class="data row0 col0" >entry3</td>
-          <td id="T_aa59d_row0_col1" class="data row0 col1" >CC</td>
-          <td id="T_aa59d_row0_col2" class="data row0 col2" >True</td>
-          <td id="T_aa59d_row0_col3" class="data row0 col3" >True</td>
-          <td id="T_aa59d_row0_col4" class="data row0 col4" >False</td>
+          <th id="T_b22c9_level0_row0" class="row_heading level0 row0" >3</th>
+          <td id="T_b22c9_row0_col0" class="data row0 col0" >entry3</td>
+          <td id="T_b22c9_row0_col1" class="data row0 col1" >CC</td>
+          <td id="T_b22c9_row0_col2" class="data row0 col2" >True</td>
+          <td id="T_b22c9_row0_col3" class="data row0 col3" >True</td>
+          <td id="T_b22c9_row0_col4" class="data row0 col4" >False</td>
         </tr>
         <tr>
-          <th id="T_aa59d_level0_row1" class="row_heading level0 row1" >4</th>
-          <td id="T_aa59d_row1_col0" class="data row1 col0" >entry4</td>
-          <td id="T_aa59d_row1_col1" class="data row1 col1" >DD</td>
-          <td id="T_aa59d_row1_col2" class="data row1 col2" >True</td>
-          <td id="T_aa59d_row1_col3" class="data row1 col3" >False</td>
-          <td id="T_aa59d_row1_col4" class="data row1 col4" >True</td>
+          <th id="T_b22c9_level0_row1" class="row_heading level0 row1" >4</th>
+          <td id="T_b22c9_row1_col0" class="data row1 col0" >entry4</td>
+          <td id="T_b22c9_row1_col1" class="data row1 col1" >DD</td>
+          <td id="T_b22c9_row1_col2" class="data row1 col2" >True</td>
+          <td id="T_b22c9_row1_col3" class="data row1 col3" >False</td>
+          <td id="T_b22c9_row1_col4" class="data row1 col4" >True</td>
         </tr>
         <tr>
-          <th id="T_aa59d_level0_row2" class="row_heading level0 row2" >5</th>
-          <td id="T_aa59d_row2_col0" class="data row2 col0" >entry5</td>
-          <td id="T_aa59d_row2_col1" class="data row2 col1" >EE</td>
-          <td id="T_aa59d_row2_col2" class="data row2 col2" >False</td>
-          <td id="T_aa59d_row2_col3" class="data row2 col3" >True</td>
-          <td id="T_aa59d_row2_col4" class="data row2 col4" >True</td>
+          <th id="T_b22c9_level0_row2" class="row_heading level0 row2" >5</th>
+          <td id="T_b22c9_row2_col0" class="data row2 col0" >entry5</td>
+          <td id="T_b22c9_row2_col1" class="data row2 col1" >EE</td>
+          <td id="T_b22c9_row2_col2" class="data row2 col2" >False</td>
+          <td id="T_b22c9_row2_col3" class="data row2 col3" >True</td>
+          <td id="T_b22c9_row2_col4" class="data row2 col4" >True</td>
         </tr>
       </tbody>
     </table>
