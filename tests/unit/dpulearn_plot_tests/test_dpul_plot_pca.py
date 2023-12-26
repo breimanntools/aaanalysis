@@ -187,7 +187,7 @@ class TestdPULearnPlotPCA:
             df_pu = _create_sample_df_pu(n_samples=n_samples, n_pcs=n_pc, include_abs_diff=True, n_neg=n_neg,
                                          random_order=True)
             labels = _create_labels(labels_selection_via=df_pu["selection_via"])
-            ax = aa.dPULearnPlot.pca(df_pu, args_scatter=args_scatter, labels=labels)
+            ax = aa.dPULearnPlot.pca(df_pu, kwargs_scatterplot=args_scatter, labels=labels)
             assert isinstance(ax, plt.Axes)
             plt.close()
 
@@ -253,7 +253,7 @@ class TestdPULearnPlotPCA:
         labels = _create_labels(labels_selection_via=df_pu["selection_via"])
         args_scatter = {"invalid_param": "invalid_value"}
         with pytest.raises(ValueError):
-            aa.dPULearnPlot.pca(df_pu=df_pu, labels=labels, args_scatter=args_scatter)
+            aa.dPULearnPlot.pca(df_pu=df_pu, labels=labels, kwargs_scatterplot=args_scatter)
 
 class TestdPULearnPlotPCAComplex:
     """Complex tests for the dPULearnPlot.pca() function."""
@@ -286,6 +286,6 @@ class TestdPULearnPlotPCAComplex:
             # Suppress specific matplotlib UserWarnings about missing glyphs
             warnings.filterwarnings("ignore", category=UserWarning)
 
-            ax = aa.dPULearnPlot.pca(df_pu, labels=labels, figsize=figsize, pc_x=pc_x, pc_y=pc_y, show_pos_mean_x=show_pos_mean_x, show_pos_mean_y=show_pos_mean_y, names=names, colors=colors, legend=legend, legend_y=legend_y, args_scatter=args_scatter)
+            ax = aa.dPULearnPlot.pca(df_pu, labels=labels, figsize=figsize, pc_x=pc_x, pc_y=pc_y, show_pos_mean_x=show_pos_mean_x, show_pos_mean_y=show_pos_mean_y, names=names, colors=colors, legend=legend, legend_y=legend_y, kwargs_scatterplot=args_scatter)
             assert isinstance(ax, plt.Axes)
             plt.close()

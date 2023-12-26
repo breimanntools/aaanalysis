@@ -62,6 +62,9 @@ def display_df(df: pd.DataFrame = None,
     ut.check_number_range(name="char_limit", val=char_limit, min_val=1, accept_none=True, just_int=True)
     ut.check_number_range(name="n_rows", val=n_rows, min_val=1, max_val=len(df), accept_none=True, just_int=True)
     ut.check_number_range(name="n_cols", val=n_cols, min_val=1, max_val=len(df.T), accept_none=True, just_int=True)
+    # Show shape before filtering
+    if show_shape:
+        print(f"DataFrame shape: {df.shape}")
     # Filtering
     df = df.copy()
     if n_rows is not None:
@@ -87,6 +90,4 @@ def display_df(df: pd.DataFrame = None,
             {'selector': 'table', 'props': [('font-size', f'{fontsize}px')]},
         ])
     )
-    if show_shape:
-        print(f"DataFrame shape: {df.shape}")
     display(HTML(styled_df.to_html()))

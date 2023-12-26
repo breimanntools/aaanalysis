@@ -122,7 +122,7 @@ def plot_center_or_medoid(X=None, labels=None,
     plt.xlabel(df_components.columns[component_x - 1])
     plt.ylabel(df_components.columns[component_y - 1])
     if legend:
-        plt.legend(title="clusters", bbox_to_anchor=(1, 0.95), loc='upper left')
+        ax.legend(title="clusters", bbox_to_anchor=(1, 0.95), loc='upper left')
     plt.tight_layout()
     return ax, df_components
 
@@ -130,25 +130,27 @@ def plot_center_or_medoid(X=None, labels=None,
 def plot_correlation(df_corr=None, labels=None, pairwise=False, cluster_x=True, method="average",
                      bar_position="left", bar_colors="gray",
                      bar_width_x=0.1, bar_spacing_x=0.1, bar_width_y=0.1, bar_spacing_y=0.1,
-                     xtick_label_rotation=45, ytick_label_rotation=0,
-                     vmin=-1, vmax=1, cmap="viridis", **kwargs_heatmap):
+                     xtick_label_rotation=90, ytick_label_rotation=0,
+                     vmin=-1, vmax=1, cmap="viridis", kwargs_heatmap=None):
     """Plots heatmap for clustering results with rows (y-axis) corresponding to scales and columns (x-axis) to clusters."""
     # Adjust order of df_corr
     if cluster_x:
         df_corr = _get_clustered_order(df_corr, method=method)
     # Plot heatmap
     _kwargs_heatmap = {"cmap": cmap, "vmin": vmin, "vmax": vmax,
-                       "cbar_kws": {"label": "Pearson correlation"},
-                       **kwargs_heatmap}
+                       "cbar_kws": {"label": "Pearson correlation"}}
+    if kwargs_heatmap is not None:
+        _kwargs_heatmap.update(kwargs_heatmap)
     ax = sns.heatmap(data=df_corr, **_kwargs_heatmap)
     # Adjust ticks
     ax.set_xticklabels(ax.get_xticklabels(), rotation=xtick_label_rotation, ha="right")
     ax.set_yticklabels(ax.get_yticklabels(), rotation=ytick_label_rotation)
     # Customizing color bart tick lines
-    cbar = ax.collections[0].colorbar
-    lw = ut.plot_gco(option="axes.linewidth")
-    fs = ut.plot_gco(option="font.size")
-    cbar.ax.tick_params(axis='y', width=lw, length=6, color='black', labelsize=fs-1)
+    if 'cbar' not in _kwargs_heatmap:
+        cbar = ax.collections[0].colorbar
+        lw = ut.plot_gco(option="axes.linewidth")
+        fs = ut.plot_gco(option="font.size")
+        cbar.ax.tick_params(axis='y', width=lw, length=6, color='black', labelsize=fs-1)
     # Add bars for highlighting clustering
     y_labels = labels
     x_labels = labels if pairwise else list(df_corr)

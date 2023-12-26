@@ -157,7 +157,7 @@ class dPULearnPlot:
             names: Optional[List[str]] = None,
             legend : bool = True,
             legend_y : float = -0.15,
-            args_scatter : Optional[dict] = None,
+            kwargs_scatterplot : Optional[dict] = None,
             ) -> plt.Axes:
         """
         Principal component analysis (PCA) plot for set of identified negatives.
@@ -192,8 +192,8 @@ class dPULearnPlot:
             If ``True``, legend is set under dissimilarity measures.
         legend_y : float, default=-0.175
             Legend position regarding the plot y-axis applied if ``legend=True``.
-        args_scatter : dict, optional
-            Dictionary with kwargs for adjusting scatter plot.
+        kwargs_scatterplot : dict, optional
+            Dictionary with keyword arguments for adjusting scatter plot (:func:`matplotlib.pyplot.scatter`).
 
         Returns
         -------
@@ -224,15 +224,15 @@ class dPULearnPlot:
         ut.check_bool(name="show_pos_mean_y", val=show_pos_mean_y)
         ut.check_bool(name="legend", val=legend)
         ut.check_number_val(name="legend_y", val=legend_y)
-        ut.check_dict(name="args_scatter", val=args_scatter, accept_none=True)
         ut.check_list_colors(name="colors", val=colors, accept_none=True, min_n=2, max_n=3)
         names = ut.check_list_like(name="names", val=names, accept_none=True, check_all_str_or_convertible=True)
+        ut.check_dict(name="kwargs_scatterplot", val=kwargs_scatterplot, accept_none=True)
         check_match_df_pu_labels(df_pu=df_pu, labels=labels)
         # Set defaults colors and names
         default_names =  ["Identified negatives", "Positives", "Unlabeled"]
         default_colors = [ut.COLOR_REL_NEG, ut.COLOR_POS, ut.COLOR_UNL]
         names, colors, _args_scatter = _adjust_plot_args(names=names, colors=colors,
-                                                         args_scatter=args_scatter,
+                                                         args_scatter=kwargs_scatterplot,
                                                          default_names=default_names,
                                                          default_colors=default_colors)
         # Plotting

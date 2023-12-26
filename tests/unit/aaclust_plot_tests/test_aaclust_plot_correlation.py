@@ -158,6 +158,11 @@ class TestAAclustPlotCorrelation:
         """Test 'cmap' with valid colormap strings."""
         call_aaclust_plot_correlation(df_corr=df_corr, cmap=cmap)
 
+    def test_kwargs_heatmap(self):
+        """Test valid kwargs_heatmap"""
+        df_corr = pd.DataFrame(np.random.rand(3, 3))
+        call_aaclust_plot_correlation(df_corr=df_corr, kwargs_heatmap=dict(linecolor="black"))
+
     # Negative Tests
     def test_invalid_df_corr_type(self):
         aac_plot = aa.AAclustPlot()
@@ -217,3 +222,9 @@ class TestAAclustPlotCorrelation:
         df_corr = pd.DataFrame(np.random.rand(3, 3))
         with pytest.raises(ValueError):
             aac_plot.correlation(df_corr=df_corr, labels=[1, 2, 3], cmap="invalid_cmap")
+
+    def test_invalid_kwargs_heatmap(self):
+        aac_plot = aa.AAclustPlot()
+        df_corr = pd.DataFrame(np.random.rand(3, 3))
+        with pytest.raises(ValueError):
+            aac_plot.correlation(df_corr=df_corr, labels=[1, 2, 3], kwargs_heatmap=dict(invalid=None))

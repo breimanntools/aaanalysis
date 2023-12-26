@@ -130,7 +130,7 @@
 <h1>aaanalysis.AAclustPlot<a class="headerlink" href="#aaanalysis-aaclustplot" title="Permalink to this heading"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="aaanalysis.AAclustPlot">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">AAclustPlot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_class=&lt;class</span> <span class="pre">'sklearn.decomposition._pca.PCA'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_kwargs=None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/feature_engineering/_aaclust_plot.py#L113-L483"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclustPlot" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">aaanalysis.</span></span><span class="sig-name descname"><span class="pre">AAclustPlot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_class=&lt;class</span> <span class="pre">'sklearn.decomposition._pca.PCA'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_kwargs=None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/feature_engineering/_aaclust_plot.py#L113-L488"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclustPlot" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Plot results of AAclust analysis.</p>
 <p>Dimensionality reduction is performed for visualization using decomposition models such as
@@ -289,7 +289,7 @@ three quality measures (BIC, SC, and CH):</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.AAclustPlot.centers">
-<span class="sig-name descname"><span class="pre">centers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(7,</span> <span class="pre">6)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dot_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.75</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dot_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">palette</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/feature_engineering/_aaclust_plot.py#L207-L284"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclustPlot.centers" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">centers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(7,</span> <span class="pre">6)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dot_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dot_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.75</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">palette</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/feature_engineering/_aaclust_plot.py#L207-L284"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclustPlot.centers" title="Permalink to this definition"></a></dt>
 <dd><p>PCA plot of clustering with centers highlighted</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -300,9 +300,9 @@ three quality measures (BIC, SC, and CH):</p>
 <li><p><strong>component_y</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=2</em>) – Index of the PCA component for the y-axis. Must be &gt;= 1.</p></li>
 <li><p><strong>ax</strong> (<em>plt.Axes</em><em>, </em><em>optional</em>) – Pre-defined Axes object to plot on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new Axes object is created.</p></li>
 <li><p><strong>figsize</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><em>tuple</em></a><em>, </em><em>default=</em><em>(</em><em>7</em><em>,</em><em>6</em><em>)</em>) – Figure size (width, height) in inches.</p></li>
-<li><p><strong>dot_alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em>, </em><em>default=0.75</em>) – Alpha value of the plotted dots.</p></li>
-<li><p><strong>dot_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=100</em>) – Size of the plotted dots.</p></li>
 <li><p><strong>legend</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>default=True</em>) – Whether to show the legend.</p></li>
+<li><p><strong>dot_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=100</em>) – Size of the plotted dots.</p></li>
+<li><p><strong>dot_alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em>, </em><em>default=0.75</em>) – Alpha value of the plotted dots.</p></li>
 <li><p><strong>palette</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em>, </em><em>optional</em>) – Colormap for the labels or list of colors. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a default colormap is used.</p></li>
 </ul>
 </dd>
@@ -329,7 +329,9 @@ three quality measures (BIC, SC, and CH):</p>
 </div>
 <div class="admonition-examples admonition">
 <p class="admonition-title">Examples</p>
-<p>We first create an example dataset:</p>
+<p>We first create an example dataset for the <code class="docutils literal notranslate"><span class="pre">AAclustPlot().centers()</span></code>
+method, which visualizes cluster ‘centers’ as obtained by the
+<code class="docutils literal notranslate"><span class="pre">AAclust().comp_centers()</span></code> method:</p>
 <div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="kn">import</span> <span class="n">PCA</span><span class="p">,</span> <span class="n">KernelPCA</span><span class="p">,</span> <span class="n">FastICA</span><span class="p">,</span> <span class="n">TruncatedSVD</span><span class="p">,</span> <span class="n">NMF</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
@@ -340,28 +342,155 @@ three quality measures (BIC, SC, and CH):</p>
 <span class="c1"># Fit AAclust model retrieve labels to compute centers</span>
 <span class="n">aac</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclust</span><span class="p">()</span>
 <span class="n">labels</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">labels_</span>
-<span class="n">centers</span><span class="p">,</span> <span class="n">labels_centers</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">comp_centers</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>All data points are visualized in the PCA plot including the cluster
 centers highlighted by an ‘x’:</p>
 <div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">aac_plot</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclustPlot</span><span class="p">(</span><span class="n">model_class</span><span class="o">=</span><span class="n">PCA</span><span class="p">)</span>
 <span class="n">aa</span><span class="o">.</span><span class="n">plot_settings</span><span class="p">()</span>
-<span class="n">aac_plot</span><span class="o">.</span><span class="n">centers</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">,</span> <span class="n">df_components</span> <span class="o">=</span> <span class="n">aac_plot</span><span class="o">.</span><span class="n">centers</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="c1"># DataFrame for respective components are returned</span>
+<span class="n">aa</span><span class="o">.</span><span class="n">display_df</span><span class="p">(</span><span class="n">df_components</span><span class="p">,</span> <span class="n">n_rows</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">show_shape</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/aac_plot_centers_1_output_3_0.png" src="../_images/aac_plot_centers_1_output_3_0.png" />
-<p>Compression of different Transformer models can be compared:</p>
-<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">list_models</span> <span class="o">=</span> <span class="p">[</span><span class="n">KernelPCA</span><span class="p">,</span> <span class="n">FastICA</span><span class="p">,</span> <span class="n">TruncatedSVD</span><span class="p">,</span> <span class="n">NMF</span><span class="p">]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DataFrame</span> <span class="n">shape</span><span class="p">:</span> <span class="p">(</span><span class="mi">586</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
+<style type="text/css">
+#T_ee03f thead th {
+  background-color: white;
+  color: black;
+}
+#T_ee03f tbody tr:nth-child(odd) {
+  background-color: #f2f2f2;
+}
+#T_ee03f tbody tr:nth-child(even) {
+  background-color: white;
+}
+#T_ee03f th {
+  padding: 5px;
+  white-space: nowrap;
+}
+#T_ee03f  td {
+  padding: 5px;
+  white-space: nowrap;
+}
+#T_ee03f table {
+  font-size: 12px;
+}
+</style>
+<table id="T_ee03f" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
+  <thead>
+    <tr>
+      <th class="blank level0" >&nbsp;</th>
+      <th id="T_ee03f_level0_col0" class="col_heading level0 col0" >PC1 (33.6%)</th>
+      <th id="T_ee03f_level0_col1" class="col_heading level0 col1" >PC2 (17.7%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th id="T_ee03f_level0_row0" class="row_heading level0 row0" >1</th>
+      <td id="T_ee03f_row0_col0" class="data row0 col0" >-0.181000</td>
+      <td id="T_ee03f_row0_col1" class="data row0 col1" >0.579000</td>
+    </tr>
+    <tr>
+      <th id="T_ee03f_level0_row1" class="row_heading level0 row1" >2</th>
+      <td id="T_ee03f_row1_col0" class="data row1 col0" >0.824000</td>
+      <td id="T_ee03f_row1_col1" class="data row1 col1" >-0.592000</td>
+    </tr>
+    <tr>
+      <th id="T_ee03f_level0_row2" class="row_heading level0 row2" >3</th>
+      <td id="T_ee03f_row2_col0" class="data row2 col0" >0.724000</td>
+      <td id="T_ee03f_row2_col1" class="data row2 col1" >-0.838000</td>
+    </tr>
+    <tr>
+      <th id="T_ee03f_level0_row3" class="row_heading level0 row3" >4</th>
+      <td id="T_ee03f_row3_col0" class="data row3 col0" >0.861000</td>
+      <td id="T_ee03f_row3_col1" class="data row3 col1" >-0.746000</td>
+    </tr>
+    <tr>
+      <th id="T_ee03f_level0_row4" class="row_heading level0 row4" >5</th>
+      <td id="T_ee03f_row4_col0" class="data row4 col0" >0.645000</td>
+      <td id="T_ee03f_row4_col1" class="data row4 col1" >0.481000</td>
+    </tr>
+    <tr>
+      <th id="T_ee03f_level0_row5" class="row_heading level0 row5" >6</th>
+      <td id="T_ee03f_row5_col0" class="data row5 col0" >1.266000</td>
+      <td id="T_ee03f_row5_col1" class="data row5 col1" >-0.149000</td>
+    </tr>
+    <tr>
+      <th id="T_ee03f_level0_row6" class="row_heading level0 row6" >7</th>
+      <td id="T_ee03f_row6_col0" class="data row6 col0" >-0.753000</td>
+      <td id="T_ee03f_row6_col1" class="data row6 col1" >0.413000</td>
+    </tr>
+    <tr>
+      <th id="T_ee03f_level0_row7" class="row_heading level0 row7" >8</th>
+      <td id="T_ee03f_row7_col0" class="data row7 col0" >-1.074000</td>
+      <td id="T_ee03f_row7_col1" class="data row7 col1" >0.348000</td>
+    </tr>
+    <tr>
+      <th id="T_ee03f_level0_row8" class="row_heading level0 row8" >9</th>
+      <td id="T_ee03f_row8_col0" class="data row8 col0" >0.501000</td>
+      <td id="T_ee03f_row8_col1" class="data row8 col1" >0.262000</td>
+    </tr>
+    <tr>
+      <th id="T_ee03f_level0_row9" class="row_heading level0 row9" >10</th>
+      <td id="T_ee03f_row9_col0" class="data row9 col0" >1.304000</td>
+      <td id="T_ee03f_row9_col1" class="data row9 col1" >-0.139000</td>
+    </tr>
+  </tbody>
+</table><p>Select other PCs using the <code class="docutils literal notranslate"><span class="pre">component_x</span></code> and <code class="docutils literal notranslate"><span class="pre">component_y</span></code>
+parameters:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">aac_plot</span><span class="o">.</span><span class="n">centers</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">component_x</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">component_y</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_centers_2_output_5_0.png" src="../_images/aac_plot_centers_2_output_5_0.png" />
+<p>To compare the feature space compression of different Transformer models
+in a single plot, you can use the <code class="docutils literal notranslate"><span class="pre">ax</span></code> and <code class="docutils literal notranslate"><span class="pre">legend</span></code> parameters:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">list_models</span> <span class="o">=</span> <span class="p">[</span><span class="n">KernelPCA</span><span class="p">,</span> <span class="n">FastICA</span><span class="p">,</span> <span class="n">TruncatedSVD</span><span class="p">,</span> <span class="n">NMF</span><span class="p">]</span>
+<span class="n">model_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;KernelPCA&quot;</span><span class="p">,</span> <span class="s2">&quot;FastICA&quot;</span><span class="p">,</span> <span class="s2">&quot;TruncatedSVD&quot;</span><span class="p">,</span> <span class="s2">&quot;NMF&quot;</span><span class="p">]</span>
+<span class="n">dict_models</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">model_names</span><span class="p">,</span> <span class="n">list_models</span><span class="p">))</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">14</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">model_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dict_models</span><span class="p">):</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="n">aac_plot</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclustPlot</span><span class="p">(</span><span class="n">model_class</span><span class="o">=</span><span class="n">dict_models</span><span class="p">[</span><span class="n">model_name</span><span class="p">])</span>
+    <span class="c1"># Set legend only for first subplot</span>
+    <span class="n">aac_plot</span><span class="o">.</span><span class="n">centers</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_centers_3_output_7_0.png" src="../_images/aac_plot_centers_3_output_7_0.png" />
+<p>Adjust the style of the scatter plot using the <code class="docutils literal notranslate"><span class="pre">dot_size</span></code> and
+<code class="docutils literal notranslate"><span class="pre">dot_alpha</span></code> arguments to change the size of the dots and their
+transparency:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">aac_plot</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclustPlot</span><span class="p">(</span><span class="n">model_class</span><span class="o">=</span><span class="n">PCA</span><span class="p">)</span>
+<span class="n">aac_plot</span><span class="o">.</span><span class="n">centers</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">dot_size</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">dot_alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_centers_4_output_9_0.png" src="../_images/aac_plot_centers_4_output_9_0.png" />
+<p>The cluster colors can be adjusted by the <code class="docutils literal notranslate"><span class="pre">palette</span></code> argument by
+providing either a list of colors or a color map:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">colors</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">plot_get_clist</span><span class="p">(</span><span class="n">n_colors</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">aac_plot</span><span class="o">.</span><span class="n">centers</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="n">colors</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">aac_plot</span><span class="o">.</span><span class="n">centers</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_centers_5_output_11_0.png" src="../_images/aac_plot_centers_5_output_11_0.png" />
+<img alt="../_images/aac_plot_centers_6_output_11_1.png" src="../_images/aac_plot_centers_6_output_11_1.png" />
 </div>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.AAclustPlot.medoids">
-<span class="sig-name descname"><span class="pre">medoids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'euclidean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(7,</span> <span class="pre">6)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dot_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.75</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dot_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">palette</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/feature_engineering/_aaclust_plot.py#L287-L374"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclustPlot.medoids" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">medoids</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">component_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'euclidean'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(7,</span> <span class="pre">6)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dot_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dot_alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.75</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">palette</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/feature_engineering/_aaclust_plot.py#L287-L374"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclustPlot.medoids" title="Permalink to this definition"></a></dt>
 <dd><p>PCA plot of clustering with medoids highlighted</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -380,9 +509,9 @@ centers highlighted by an ‘x’:</p>
 </p></li>
 <li><p><strong>ax</strong> (<em>plt.Axes</em><em>, </em><em>optional</em>) – Pre-defined Axes object to plot on. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a new Axes object is created.</p></li>
 <li><p><strong>figsize</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><em>tuple</em></a><em>, </em><em>default=</em><em>(</em><em>7</em><em>, </em><em>6</em><em>)</em>) – Figure size (width, height) in inches.</p></li>
-<li><p><strong>dot_alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em>, </em><em>default=0.75</em>) – Alpha value of the plotted dots.</p></li>
-<li><p><strong>dot_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=100</em>) – Size of the plotted dots.</p></li>
 <li><p><strong>legend</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>default=True</em>) – Whether to show the legend.</p></li>
+<li><p><strong>dot_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=100</em>) – Size of the plotted dots.</p></li>
+<li><p><strong>dot_alpha</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em>, </em><em>default=0.75</em>) – Alpha value of the plotted dots.</p></li>
 <li><p><strong>palette</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em>, </em><em>optional</em>) – Colormap for the labels or list of colors. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, a default colormap is used.</p></li>
 </ul>
 </dd>
@@ -409,12 +538,166 @@ centers highlighted by an ‘x’:</p>
 </div>
 <div class="admonition-examples admonition">
 <p class="admonition-title">Examples</p>
+<p>We first create an example dataset for the <code class="docutils literal notranslate"><span class="pre">AAclustPlot().medoids()</span></code>,
+which visualizes ‘medoids’ as obtained by the
+<code class="docutils literal notranslate"><span class="pre">AAclust().comp_medoids()</span></code> method:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="kn">import</span> <span class="n">PCA</span><span class="p">,</span> <span class="n">KernelPCA</span><span class="p">,</span> <span class="n">FastICA</span><span class="p">,</span> <span class="n">TruncatedSVD</span><span class="p">,</span> <span class="n">NMF</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
+<span class="n">aa</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s2">&quot;verbose&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="c1"># Obtain example scale dataset</span>
+<span class="n">df_scales</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_scales</span><span class="p">()</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">df_scales</span><span class="o">.</span><span class="n">T</span>
+<span class="c1"># Fit AAclust model retrieve labels to compute centers</span>
+<span class="n">aac</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclust</span><span class="p">()</span>
+<span class="n">labels</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">labels_</span>
+</pre></div>
+</div>
+<p>All data points are visualized in the PCA plot including the cluster
+representative samples (‘medoids’) highlighted by a bigger dot:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">aac_plot</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclustPlot</span><span class="p">(</span><span class="n">model_class</span><span class="o">=</span><span class="n">PCA</span><span class="p">)</span>
+<span class="n">aa</span><span class="o">.</span><span class="n">plot_settings</span><span class="p">()</span>
+<span class="n">ax</span><span class="p">,</span> <span class="n">df_components</span> <span class="o">=</span> <span class="n">aac_plot</span><span class="o">.</span><span class="n">medoids</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="c1"># DataFrame for respective components are returned</span>
+<span class="n">aa</span><span class="o">.</span><span class="n">display_df</span><span class="p">(</span><span class="n">df_components</span><span class="p">,</span> <span class="n">n_rows</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">show_shape</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_medoids_1_output_3_0.png" src="../_images/aac_plot_medoids_1_output_3_0.png" />
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DataFrame</span> <span class="n">shape</span><span class="p">:</span> <span class="p">(</span><span class="mi">586</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<style type="text/css">
+#T_280f0 thead th {
+  background-color: white;
+  color: black;
+}
+#T_280f0 tbody tr:nth-child(odd) {
+  background-color: #f2f2f2;
+}
+#T_280f0 tbody tr:nth-child(even) {
+  background-color: white;
+}
+#T_280f0 th {
+  padding: 5px;
+  white-space: nowrap;
+}
+#T_280f0  td {
+  padding: 5px;
+  white-space: nowrap;
+}
+#T_280f0 table {
+  font-size: 12px;
+}
+</style>
+<table id="T_280f0" style='display:block; max-height: 300px; max-width: 100%; overflow-x: auto; overflow-y: auto;'>
+  <thead>
+    <tr>
+      <th class="blank level0" >&nbsp;</th>
+      <th id="T_280f0_level0_col0" class="col_heading level0 col0" >PC1 (33.6%)</th>
+      <th id="T_280f0_level0_col1" class="col_heading level0 col1" >PC2 (17.7%)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th id="T_280f0_level0_row0" class="row_heading level0 row0" >1</th>
+      <td id="T_280f0_row0_col0" class="data row0 col0" >-0.181000</td>
+      <td id="T_280f0_row0_col1" class="data row0 col1" >0.580000</td>
+    </tr>
+    <tr>
+      <th id="T_280f0_level0_row1" class="row_heading level0 row1" >2</th>
+      <td id="T_280f0_row1_col0" class="data row1 col0" >0.824000</td>
+      <td id="T_280f0_row1_col1" class="data row1 col1" >-0.592000</td>
+    </tr>
+    <tr>
+      <th id="T_280f0_level0_row2" class="row_heading level0 row2" >3</th>
+      <td id="T_280f0_row2_col0" class="data row2 col0" >0.724000</td>
+      <td id="T_280f0_row2_col1" class="data row2 col1" >-0.838000</td>
+    </tr>
+    <tr>
+      <th id="T_280f0_level0_row3" class="row_heading level0 row3" >4</th>
+      <td id="T_280f0_row3_col0" class="data row3 col0" >0.861000</td>
+      <td id="T_280f0_row3_col1" class="data row3 col1" >-0.746000</td>
+    </tr>
+    <tr>
+      <th id="T_280f0_level0_row4" class="row_heading level0 row4" >5</th>
+      <td id="T_280f0_row4_col0" class="data row4 col0" >0.645000</td>
+      <td id="T_280f0_row4_col1" class="data row4 col1" >0.481000</td>
+    </tr>
+    <tr>
+      <th id="T_280f0_level0_row5" class="row_heading level0 row5" >6</th>
+      <td id="T_280f0_row5_col0" class="data row5 col0" >1.266000</td>
+      <td id="T_280f0_row5_col1" class="data row5 col1" >-0.149000</td>
+    </tr>
+    <tr>
+      <th id="T_280f0_level0_row6" class="row_heading level0 row6" >7</th>
+      <td id="T_280f0_row6_col0" class="data row6 col0" >-0.753000</td>
+      <td id="T_280f0_row6_col1" class="data row6 col1" >0.413000</td>
+    </tr>
+    <tr>
+      <th id="T_280f0_level0_row7" class="row_heading level0 row7" >8</th>
+      <td id="T_280f0_row7_col0" class="data row7 col0" >-1.074000</td>
+      <td id="T_280f0_row7_col1" class="data row7 col1" >0.348000</td>
+    </tr>
+    <tr>
+      <th id="T_280f0_level0_row8" class="row_heading level0 row8" >9</th>
+      <td id="T_280f0_row8_col0" class="data row8 col0" >0.501000</td>
+      <td id="T_280f0_row8_col1" class="data row8 col1" >0.262000</td>
+    </tr>
+    <tr>
+      <th id="T_280f0_level0_row9" class="row_heading level0 row9" >10</th>
+      <td id="T_280f0_row9_col0" class="data row9 col0" >1.304000</td>
+      <td id="T_280f0_row9_col1" class="data row9 col1" >-0.139000</td>
+    </tr>
+  </tbody>
+</table><p>Select other PCs using the <code class="docutils literal notranslate"><span class="pre">component_x</span></code> and <code class="docutils literal notranslate"><span class="pre">component_y</span></code>
+parameters:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">aac_plot</span><span class="o">.</span><span class="n">medoids</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">component_x</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">component_y</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_medoids_2_output_5_0.png" src="../_images/aac_plot_medoids_2_output_5_0.png" />
+<p>Medoids can be obtained using different kinds of <code class="docutils literal notranslate"><span class="pre">metric</span></code>. To compare
+them in a single plot, you can use the <code class="docutils literal notranslate"><span class="pre">ax</span></code> and <code class="docutils literal notranslate"><span class="pre">legend</span></code> parameters:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">list_metrics</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;correlation&quot;</span><span class="p">,</span> <span class="s2">&quot;euclidean&quot;</span><span class="p">,</span> <span class="s2">&quot;manhattan&quot;</span><span class="p">,</span> <span class="s2">&quot;cosine&quot;</span><span class="p">]</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">14</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">metric</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">list_metrics</span><span class="p">):</span>
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="c1"># Set legend only for first subplot</span>
+    <span class="n">aac_plot</span><span class="o">.</span><span class="n">medoids</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_medoids_3_output_7_0.png" src="../_images/aac_plot_medoids_3_output_7_0.png" />
+<p>Adjust the style of the scatter plot using the <code class="docutils literal notranslate"><span class="pre">dot_size</span></code> and
+<code class="docutils literal notranslate"><span class="pre">dot_alpha</span></code> arguments to change the size of the dots and their
+transparency:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">aac_plot</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclustPlot</span><span class="p">(</span><span class="n">model_class</span><span class="o">=</span><span class="n">PCA</span><span class="p">)</span>
+<span class="n">aac_plot</span><span class="o">.</span><span class="n">medoids</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">dot_size</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">dot_alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_medoids_4_output_9_0.png" src="../_images/aac_plot_medoids_4_output_9_0.png" />
+<p>The cluster colors can be adjusted by the <code class="docutils literal notranslate"><span class="pre">palette</span></code> argument by
+providing either a list of colors or a color map:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">colors</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">plot_get_clist</span><span class="p">(</span><span class="n">n_colors</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">aac_plot</span><span class="o">.</span><span class="n">medoids</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="n">colors</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">aac_plot</span><span class="o">.</span><span class="n">medoids</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">palette</span><span class="o">=</span><span class="s2">&quot;viridis&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_medoids_5_output_11_0.png" src="../_images/aac_plot_medoids_5_output_11_0.png" />
+<img alt="../_images/aac_plot_medoids_6_output_11_1.png" src="../_images/aac_plot_medoids_6_output_11_1.png" />
 </div>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="aaanalysis.AAclustPlot.correlation">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">correlation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_corr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'average'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtick_label_rotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">45</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ytick_label_rotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_position</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'left'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tab:gray'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_width_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_spacing_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_width_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_spacing_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'twilight_shifted'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs_heatmap</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/feature_engineering/_aaclust_plot.py#L376-L483"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclustPlot.correlation" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">correlation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_corr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cluster_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'average'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xtick_label_rotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">90</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ytick_label_rotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_position</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'left'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'tab:gray'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_width_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_spacing_x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_width_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bar_spacing_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'viridis'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs_heatmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/feature_engineering/_aaclust_plot.py#L376-L488"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#aaanalysis.AAclustPlot.correlation" title="Permalink to this definition"></a></dt>
 <dd><p>Heatmap for correlation matrix with colored sidebar to label clusters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -422,9 +705,9 @@ centers highlighted by an ‘x’:</p>
 <li><p><strong>df_corr</strong> (<em>pd.DataFrame</em>) – DataFrame with correlation matrix. <cite>Rows</cite> typically correspond to scales and <cite>columns</cite> to clusters.</p></li>
 <li><p><strong>labels</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_samples</em><em>,</em><em>)</em>) – Cluster labels determining the grouping and coloring of the side color bar.
 It should have the same length as number of rows in <code class="docutils literal notranslate"><span class="pre">df_corr</span></code> (n_samples).</p></li>
-<li><p><strong>cluster_x</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, x-axis (<cite>clusters</cite>) values are clustered.</p></li>
+<li><p><strong>cluster_x</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a><em>, </em><em>default=False</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, x-axis (<cite>clusters</cite>) values are clustered. Disabled for pairwise correlation.</p></li>
 <li><p><strong>method</strong> (<em>{'single'</em><em>, </em><em>'complete'</em><em>, </em><em>'average'</em><em>, </em><em>'weighted'</em><em>, </em><em>'centroid'</em><em>, </em><em>'median'</em><em>, </em><em>'ward'}</em><em>, </em><em>default='average'</em>) – Linkage method from <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.linkage.html#scipy.cluster.hierarchy.linkage" title="(in SciPy v1.11.4)"><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.cluster.hierarchy.linkage()</span></code></a> used for clustering.</p></li>
-<li><p><strong>xtick_label_rotation</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=45</em>) – Rotation of x-tick labels (names of <cite>clusters</cite>).</p></li>
+<li><p><strong>xtick_label_rotation</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=90</em>) – Rotation of x-tick labels (names of <cite>clusters</cite>).</p></li>
 <li><p><strong>ytick_label_rotation</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><em>default=0</em>) – Rotation of y-tick labels (names of <cite>samples</cite>).</p></li>
 <li><p><strong>bar_position</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>default='left'</em>) – Position of the colored sidebar (<code class="docutils literal notranslate"><span class="pre">left</span></code>, <code class="docutils literal notranslate"><span class="pre">right</span></code>, <code class="docutils literal notranslate"><span class="pre">top</span></code>, or <code class="docutils literal notranslate"><span class="pre">down</span></code>). If <code class="docutils literal notranslate"><span class="pre">None</span></code>, no sidebar is added.</p></li>
 <li><p><strong>bar_colors</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em> of </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>default='tab:gray'</em>) – Either a single color or a list of colors for each unique label in <code class="docutils literal notranslate"><span class="pre">labels</span></code>.</p></li>
@@ -434,8 +717,8 @@ It should have the same length as number of rows in <code class="docutils litera
 <li><p><strong>bar_spacing_y</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em>, </em><em>default=0.1</em>) – Space between the heatmap and the colored y-axis sidebar, must be &gt;= 0.</p></li>
 <li><p><strong>vmin</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em>, </em><em>default=-1.0</em>) – Minimum value of the color scale in <a class="reference external" href="https://seaborn.pydata.org/generated/seaborn.heatmap.html#seaborn.heatmap" title="(in seaborn v0.13.0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">seaborn.heatmap()</span></code></a>.</p></li>
 <li><p><strong>vmax</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a><em>, </em><em>default=1.0</em>) – Maximum value of the color scale in <a class="reference external" href="https://seaborn.pydata.org/generated/seaborn.heatmap.html#seaborn.heatmap" title="(in seaborn v0.13.0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">seaborn.heatmap()</span></code></a>.</p></li>
-<li><p><strong>cmap</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>default='twilight_shifted'</em>) – Colormap to be used for the <a class="reference external" href="https://seaborn.pydata.org/generated/seaborn.heatmap.html#seaborn.heatmap" title="(in seaborn v0.13.0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">seaborn.heatmap()</span></code></a>.</p></li>
-<li><p><strong>**kwargs_heatmap</strong> – Additional keyword arguments passed to <a class="reference external" href="https://seaborn.pydata.org/generated/seaborn.heatmap.html#seaborn.heatmap" title="(in seaborn v0.13.0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">seaborn.heatmap()</span></code></a>.</p></li>
+<li><p><strong>cmap</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>, </em><em>default='viridis'</em>) – Colormap to be used for the <a class="reference external" href="https://seaborn.pydata.org/generated/seaborn.heatmap.html#seaborn.heatmap" title="(in seaborn v0.13.0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">seaborn.heatmap()</span></code></a>.</p></li>
+<li><p><strong>kwargs_heatmap</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><em>dict</em></a><em>, </em><em>optional</em>) – Dictionary with keyword arguments for adjusting heatmap (<a class="reference external" href="https://seaborn.pydata.org/generated/seaborn.heatmap.html#seaborn.heatmap" title="(in seaborn v0.13.0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">seaborn.heatmap()</span></code></a>).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -461,6 +744,104 @@ so that they can not be adjusted or retrieved afterward (e.g., via <cite>ax.get_
 </div>
 <div class="admonition-examples admonition">
 <p class="admonition-title">Examples</p>
+<p>To showcase the <code class="docutils literal notranslate"><span class="pre">AAclustPlot().correlation()</span></code> method, we create an
+example dataset and obtained a DataFrame with pairwise correlations
+(<code class="docutils literal notranslate"><span class="pre">df_corr</span></code>) using the <code class="docutils literal notranslate"><span class="pre">AAclust().correlation()</span></code> method:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">aaanalysis</span> <span class="k">as</span> <span class="nn">aa</span>
+<span class="n">aa</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s2">&quot;verbose&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="c1"># Obtain example scale dataset</span>
+<span class="n">df_scales</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_scales</span><span class="p">(</span><span class="n">unclassified_out</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+<span class="n">df_cat</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">load_scales</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;scales_cat&quot;</span><span class="p">)</span>
+<span class="n">dict_scale_name</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">df_cat</span><span class="p">[</span><span class="s2">&quot;scale_id&quot;</span><span class="p">],</span> <span class="n">df_cat</span><span class="p">[</span><span class="s2">&quot;subcategory&quot;</span><span class="p">]))</span>
+<span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">dict_scale_name</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">df_scales</span><span class="p">)]</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">df_scales</span><span class="o">.</span><span class="n">T</span>
+<span class="c1"># Fit AAclust model and retrieve labels, cluster names, and df_corr</span>
+<span class="n">aac</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclust</span><span class="p">()</span>
+<span class="n">labels</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">labels_</span>
+<span class="n">df_corr</span><span class="p">,</span> <span class="n">labels_sorted</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">comp_correlation</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The pair-wise Pearson correlation can now be visualized using the
+<code class="docutils literal notranslate"><span class="pre">AAclustPlot().correlation()</span></code> method. Provide the labels sorted as in
+<code class="docutils literal notranslate"><span class="pre">df_corr</span></code>.</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">aac_plot</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">AAclustPlot</span><span class="p">()</span>
+<span class="n">aa</span><span class="o">.</span><span class="n">plot_settings</span><span class="p">(</span><span class="n">font_scale</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">weight_bold</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">no_ticks</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">aac_plot</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span><span class="n">df_corr</span><span class="o">=</span><span class="n">df_corr</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels_sorted</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_correlation_1_output_3_0.png" src="../_images/aac_plot_correlation_1_output_3_0.png" />
+<p>Gray bars indicate the clusters. To change their position or provide
+multiple bars, use the <code class="docutils literal notranslate"><span class="pre">bar_position</span></code> parameter and adjust their width
+and spacing by using <code class="docutils literal notranslate"><span class="pre">bar_width_x</span></code>, <code class="docutils literal notranslate"><span class="pre">bar_width_y</span></code>,
+<code class="docutils literal notranslate"><span class="pre">bar_spacing_x</span></code>, and <code class="docutils literal notranslate"><span class="pre">bar_spacing_y</span></code></p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">aac_plot</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span><span class="n">df_corr</span><span class="o">=</span><span class="n">df_corr</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels_sorted</span><span class="p">,</span> <span class="n">bar_position</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="s2">&quot;top&quot;</span><span class="p">],</span>
+                     <span class="n">bar_width_x</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bar_width_y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">bar_spacing_x</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bar_spacing_y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_correlation_2_output_5_0.png" src="../_images/aac_plot_correlation_2_output_5_0.png" />
+<p>To obtain the correlation between each scale (y-axis) and the medoids
+(x-axis), we obtain the medoids using the <code class="docutils literal notranslate"><span class="pre">AAclust().comp_medoids()</span></code>
+and <code class="docutils literal notranslate"><span class="pre">AAclust().comp_correlation()</span></code> methods.</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">X_ref</span><span class="p">,</span> <span class="n">labels_ref</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">comp_medoids</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+<span class="c1"># Creat correlation DataFrane between scales and medoids</span>
+<span class="n">df_corr</span><span class="p">,</span> <span class="n">labels_sorted</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">comp_correlation</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">X_ref</span><span class="o">=</span><span class="n">X_ref</span><span class="p">,</span> <span class="n">labels_ref</span><span class="o">=</span><span class="n">labels_ref</span><span class="p">)</span>
+<span class="c1"># Plot correlation</span>
+<span class="n">aac_plot</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span><span class="n">df_corr</span><span class="o">=</span><span class="n">df_corr</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels_sorted</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_correlation_3_output_7_0.png" src="../_images/aac_plot_correlation_3_output_7_0.png" />
+<p>We can re-clustered the x-axis values be setting <code class="docutils literal notranslate"><span class="pre">cluster_x=True</span></code>. The
+<code class="docutils literal notranslate"><span class="pre">scipy.cluster.hierarchy.linkage</span></code> method is internally used, for which
+the linkage method can be selected by the <code class="docutils literal notranslate"><span class="pre">method</span></code> parameter
+(default=<code class="docutils literal notranslate"><span class="pre">average</span></code>):</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="n">aac_plot</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span><span class="n">df_corr</span><span class="o">=</span><span class="n">df_corr</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels_sorted</span><span class="p">,</span> <span class="n">cluster_x</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;ward&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_correlation_4_output_9_0.png" src="../_images/aac_plot_correlation_4_output_9_0.png" />
+<p>To show the respective scale and cluster names, provide them to the
+<code class="docutils literal notranslate"><span class="pre">AAclust().comp_correlation()</span></code> method and use the
+<code class="docutils literal notranslate"><span class="pre">xtick_label_rotation</span></code> parameter to rotate the x-ticks:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Creat correlation DataFrane between scales and medoids</span>
+<span class="n">cluster_names</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">name_clusters</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">)</span>
+<span class="n">dict_cluster</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">cluster_names</span><span class="p">))</span>
+<span class="n">names_ref</span> <span class="o">=</span> <span class="p">[</span><span class="n">dict_cluster</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">labels_ref</span><span class="p">]</span>
+<span class="n">df_corr</span><span class="p">,</span> <span class="n">labels_sorted</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">comp_correlation</span><span class="p">(</span><span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">X_ref</span><span class="o">=</span><span class="n">X_ref</span><span class="p">,</span> <span class="n">labels_ref</span><span class="o">=</span><span class="n">labels_ref</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">,</span> <span class="n">names_ref</span><span class="o">=</span><span class="n">names_ref</span><span class="p">)</span>
+<span class="c1"># Plot correlation</span>
+<span class="n">aac_plot</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span><span class="n">df_corr</span><span class="o">=</span><span class="n">df_corr</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels_sorted</span><span class="p">,</span> <span class="n">xtick_label_rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_correlation_5_output_11_0.png" src="../_images/aac_plot_correlation_5_output_11_0.png" />
+<p>The clusters can be colored using the <code class="docutils literal notranslate"><span class="pre">bar_colors</span></code> parameter:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot correlation</span>
+<span class="n">n_clusters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">labels_sorted</span><span class="p">))</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="n">aa</span><span class="o">.</span><span class="n">plot_get_clist</span><span class="p">(</span><span class="n">n_colors</span><span class="o">=</span><span class="n">n_clusters</span><span class="p">)</span>
+<span class="n">aac_plot</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span><span class="n">df_corr</span><span class="o">=</span><span class="n">df_corr</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels_sorted</span><span class="p">,</span> <span class="n">xtick_label_rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span>
+                     <span class="n">bar_colors</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span> <span class="n">bar_position</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="s2">&quot;bottom&quot;</span><span class="p">],</span> <span class="n">bar_width_x</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bar_width_y</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_correlation_6_output_13_0.png" src="../_images/aac_plot_correlation_6_output_13_0.png" />
+<p>While <code class="docutils literal notranslate"><span class="pre">vmin</span></code>, <code class="docutils literal notranslate"><span class="pre">vmax</span></code>, anx <code class="docutils literal notranslate"><span class="pre">cmap</span></code> can be directly adjusted, further
+keyword arguments for the <code class="docutils literal notranslate"><span class="pre">sns.heatmap()</span></code> function can be provided by
+the <code class="docutils literal notranslate"><span class="pre">kwargs_heatmap</span></code> argument:</p>
+<div class="highlight-ipython2 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Plot correlation</span>
+<span class="n">aac_plot</span><span class="o">.</span><span class="n">correlation</span><span class="p">(</span><span class="n">df_corr</span><span class="o">=</span><span class="n">df_corr</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels_sorted</span><span class="p">,</span> <span class="n">xtick_label_rotation</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span>
+                     <span class="n">vmin</span><span class="o">=-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;cividis&quot;</span><span class="p">,</span> <span class="n">kwargs_heatmap</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">linecolor</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/aac_plot_correlation_7_output_15_0.png" src="../_images/aac_plot_correlation_7_output_15_0.png" />
 </div>
 </dd></dl>
 

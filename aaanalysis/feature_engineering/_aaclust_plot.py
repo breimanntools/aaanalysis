@@ -211,9 +211,9 @@ class AAclustPlot:
                 component_y: int = 2,
                 ax: Optional[plt.Axes] = None,
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
-                dot_alpha: float = 0.75,
-                dot_size: int = 100,
                 legend: bool = True,
+                dot_size: int = 100,
+                dot_alpha: float = 0.75,
                 palette: Optional[mpl.colors.ListedColormap] = None,
                 ) -> Tuple[plt.Axes, pd.DataFrame]:
         """PCA plot of clustering with centers highlighted
@@ -232,12 +232,12 @@ class AAclustPlot:
             Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
         figsize : tuple, default=(7,6)
             Figure size (width, height) in inches.
-        dot_alpha : float, default=0.75
-            Alpha value of the plotted dots.
-        dot_size : int, default=100
-            Size of the plotted dots.
         legend : bool, default=True
             Whether to show the legend.
+        dot_size : int, default=100
+            Size of the plotted dots.
+        dot_alpha : float, default=0.75
+            Alpha value of the plotted dots.
         palette : list, optional
             Colormap for the labels or list of colors. If ``None``, a default colormap is used.
 
@@ -292,9 +292,9 @@ class AAclustPlot:
                 metric: str = "euclidean",
                 ax: Optional[plt.Axes] = None,
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
-                dot_alpha: float = 0.75,
-                dot_size: int = 100,
                 legend: bool = True,
+                dot_size: int = 100,
+                dot_alpha: float = 0.75,
                 palette: Optional[mpl.colors.ListedColormap] = None,
                 ) -> Tuple[plt.Axes, pd.DataFrame]:
         """PCA plot of clustering with medoids highlighted
@@ -321,12 +321,12 @@ class AAclustPlot:
             Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
         figsize : tuple, default=(7, 6)
             Figure size (width, height) in inches.
-        dot_alpha : float, default=0.75
-            Alpha value of the plotted dots.
-        dot_size : int, default=100
-            Size of the plotted dots.
         legend : bool, default=True
             Whether to show the legend.
+        dot_size : int, default=100
+            Size of the plotted dots.
+        dot_alpha : float, default=0.75
+            Alpha value of the plotted dots.
         palette : list, optional
             Colormap for the labels or list of colors. If ``None``, a default colormap is used.
 
@@ -378,7 +378,7 @@ class AAclustPlot:
                     labels: ut.ArrayLike1D = None,
                     cluster_x: bool = False,
                     method: str = "average",
-                    xtick_label_rotation: int = 45,
+                    xtick_label_rotation: int = 90,
                     ytick_label_rotation: int = 0,
                     bar_position: Union[str, List[str]] = "left",
                     bar_colors: Union[str, List[str]] = "tab:gray",
@@ -388,8 +388,8 @@ class AAclustPlot:
                     bar_spacing_y: float = 0.1,
                     vmin: float = -1.0,
                     vmax: float = 1.0,
-                    cmap: str = "twilight_shifted",
-                    **kwargs_heatmap
+                    cmap: str = "viridis",
+                    kwargs_heatmap : Optional[dict] = None
                     ) -> plt.Axes:
         """
         Heatmap for correlation matrix with colored sidebar to label clusters.
@@ -402,10 +402,10 @@ class AAclustPlot:
             Cluster labels determining the grouping and coloring of the side color bar.
             It should have the same length as number of rows in ``df_corr`` (n_samples).
         cluster_x : bool, default=False
-            If ``True``, x-axis (`clusters`) values are clustered.
+            If ``True``, x-axis (`clusters`) values are clustered. Disabled for pairwise correlation.
         method : {'single', 'complete', 'average', 'weighted', 'centroid', 'median', 'ward'}, default='average'
             Linkage method from :func:`scipy.cluster.hierarchy.linkage` used for clustering.
-        xtick_label_rotation : int, default=45
+        xtick_label_rotation : int, default=90
             Rotation of x-tick labels (names of `clusters`).
         ytick_label_rotation : int, default=0
             Rotation of y-tick labels (names of `samples`).
@@ -425,10 +425,10 @@ class AAclustPlot:
             Minimum value of the color scale in :func:`seaborn.heatmap`.
         vmax : float, default=1.0
             Maximum value of the color scale in :func:`seaborn.heatmap`.
-        cmap : str, default='twilight_shifted'
+        cmap : str, default='viridis'
             Colormap to be used for the :func:`seaborn.heatmap`.
-        **kwargs_heatmap
-            Additional keyword arguments passed to :func:`seaborn.heatmap`.
+        kwargs_heatmap : dict, optional
+            Dictionary with keyword arguments for adjusting heatmap (:func:`seaborn.heatmap`).
 
         Returns
         -------
@@ -466,18 +466,23 @@ class AAclustPlot:
             ut.check_number_range(name=name, val=dict_float_args[name], min_val=0, accept_none=False, just_int=False)
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
         ut.check_cmap(name="cmap", val=cmap, accept_none=False)
+        ut.check_dict(name="kwargs_heatmap", val=kwargs_heatmap, accept_none=True)
         # Plotting
         pairwise = [str(x) for x in list(df_corr)] == [str(x) for x in list(df_corr.T)]
         if pairwise:
             cluster_x = False
-        ax = plot_correlation(df_corr=df_corr.copy(), labels=labels, pairwise=pairwise,
-                              cluster_x=cluster_x, method=method,
-                              xtick_label_rotation=xtick_label_rotation,
-                              ytick_label_rotation=ytick_label_rotation,
-                              bar_position=bar_position, bar_colors=bar_colors,
-                              bar_width_x=bar_width_x, bar_spacing_x=bar_spacing_x,
-                              bar_width_y=bar_width_y, bar_spacing_y=bar_spacing_y,
-                              vmin=vmin, vmax=vmax, cmap=cmap,
-                              **kwargs_heatmap)
+        try:
+            ax = plot_correlation(df_corr=df_corr.copy(), labels=labels, pairwise=pairwise,
+                                  cluster_x=cluster_x, method=method,
+                                  xtick_label_rotation=xtick_label_rotation,
+                                  ytick_label_rotation=ytick_label_rotation,
+                                  bar_position=bar_position, bar_colors=bar_colors,
+                                  bar_width_x=bar_width_x, bar_spacing_x=bar_spacing_x,
+                                  bar_width_y=bar_width_y, bar_spacing_y=bar_spacing_y,
+                                  vmin=vmin, vmax=vmax, cmap=cmap,
+                                  kwargs_heatmap=kwargs_heatmap)
+        except Exception as e:
+            str_error = f"Following error occurred due to sns.heatmap() function: {e}"
+            raise ValueError(str_error)
         plt.tight_layout()
         return ax

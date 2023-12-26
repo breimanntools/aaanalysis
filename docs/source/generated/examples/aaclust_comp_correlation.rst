@@ -8,7 +8,7 @@ dataset:
     import matplotlib.pyplot as plt
     aa.options["verbose"] = False
     # Obtain example scale dataset 
-    df_scales = aa.load_scales().T.sample(100).T
+    df_scales = aa.load_scales(unclassified_out=True).T.sample(50).T
     df_cat = aa.load_scales(name="scales_cat")
     dict_scale_name = dict(zip(df_cat["scale_id"], df_cat["subcategory"]))
     names = [dict_scale_name[s] for s in list(df_scales)]
@@ -58,7 +58,7 @@ reference scales using the ``names`` and ``names_ref`` parameters:
     # Obtain names of clusters
     cluster_names = aac.name_clusters(X, labels=labels, names=names, shorten_names=False)
     dict_cluster = dict(zip(labels, names))
-    names_ref = [dict_cluster[i] for i in sorted(set(labels))]
+    names_ref = [dict_cluster[i] for i in labels_ref]
     # Creat correlation DataFrane including names
     df_corr, _ = aac.comp_correlation(X=X, labels=labels, X_ref=X_ref, labels_ref=labels_ref, names=names, names_ref=names_ref)
     # Visualize correlation between scales and cluster centers
@@ -68,4 +68,5 @@ reference scales using the ``names`` and ``names_ref`` parameters:
 
 
 .. image:: examples/aaclust_comp_correlation_3_output_7_0.png
+
 
