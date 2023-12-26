@@ -103,11 +103,11 @@ def check_X_unique_samples(X, min_n_unique_samples=3):
                          f"\nX = {X}")
     return X
 
-def check_labels(labels=None, vals_requiered=None, len_requiered=None, allow_other_vals=True,
+def check_labels(labels=None, name="labels", vals_requiered=None, len_requiered=None, allow_other_vals=True,
                  len_per_group_requiered=None):
     """Check the provided labels against various criteria like type, required values, and length."""
     if labels is None:
-        raise ValueError(f"'labels' should not be None.")
+        raise ValueError(f"'{name}' should not be None.")
     # Convert labels to a numpy array if it's not already
     labels = np.asarray(labels)
     # Ensure labels is at least 1-dimensional
@@ -115,21 +115,21 @@ def check_labels(labels=None, vals_requiered=None, len_requiered=None, allow_oth
         labels = np.array([labels.item()])  # Convert 0-d array to 1-d array
     unique_labels = set(labels)
     if len(unique_labels) == 1:
-       raise ValueError(f"'labels' should contain more than one different value ({unique_labels}).")
+       raise ValueError(f"'{name}' should contain more than one different value ({unique_labels}).")
     integer_types = (int, np.int_, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64)
     wrong_types = [l for l in unique_labels if not isinstance(l, integer_types)]
     if wrong_types:
-        raise ValueError(f"Labels in 'labels' should be type int, but contain: {set(map(type, wrong_types))}")
+        raise ValueError(f"Labels in '{name}' should be type int, but contain: {set(map(type, wrong_types))}")
     if vals_requiered is not None:
         missing_vals = [x for x in vals_requiered if x not in labels]
         if len(missing_vals) > 0:
-            raise ValueError(f"'labels' ({unique_labels}) does not contain requiered values: {missing_vals}")
+            raise ValueError(f"'{name}' ({unique_labels}) does not contain requiered values: {missing_vals}")
         if not allow_other_vals:
             wrong_vals = [x for x in labels if x not in vals_requiered]
             if len(wrong_vals) > 0:
-                raise ValueError(f"'labels' ({unique_labels}) does contain wrong values: {wrong_vals}")
+                raise ValueError(f"'{name}' ({unique_labels}) does contain wrong values: {wrong_vals}")
     if len_requiered is not None and len(labels) != len_requiered:
-        raise ValueError(f"'labels' (n={len(labels)}) should contain {len_requiered} values.")
+        raise ValueError(f"'{name}' (n={len(labels)}) should contain {len_requiered} values.")
     # Check for minimum length per group
     if len_per_group_requiered is not None:
         label_counts = {label: np.sum(labels == label) for label in unique_labels}

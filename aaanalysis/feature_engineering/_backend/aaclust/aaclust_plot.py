@@ -127,7 +127,7 @@ def plot_center_or_medoid(X=None, labels=None,
     return ax, df_components
 
 
-def plot_correlation(df_corr=None, labels=None, pairwise=False, cluster_x=True, method="average",
+def plot_correlation(df_corr=None, labels=None, labels_ref=None, cluster_x=True, method="average",
                      bar_position="left", bar_colors="gray",
                      bar_width_x=0.1, bar_spacing_x=0.1, bar_width_y=0.1, bar_spacing_y=0.1,
                      xtick_label_rotation=90, ytick_label_rotation=0,
@@ -152,8 +152,11 @@ def plot_correlation(df_corr=None, labels=None, pairwise=False, cluster_x=True, 
         fs = ut.plot_gco(option="font.size")
         cbar.ax.tick_params(axis='y', width=lw, length=6, color='black', labelsize=fs-1)
     # Add bars for highlighting clustering
+    labels_are_sorted = list(labels) == sorted(labels)
     y_labels = labels
-    x_labels = labels if pairwise else list(df_corr)
+    x_labels = labels if labels_ref is None else labels_ref
+    if labels_are_sorted:
+        x_labels = list(sorted(x_labels))
     if bar_position is not None:
         for pos in bar_position:
             _labels = x_labels if pos in ["top", "bottom"] else y_labels

@@ -15,7 +15,7 @@ example dataset and obtained a DataFrame with pairwise correlations
     X = df_scales.T
     # Fit AAclust model and retrieve labels, cluster names, and df_corr
     aac = aa.AAclust()
-    labels = aac.fit(X, n_clusters=10).labels_
+    labels = aac.fit(X, n_clusters=8).labels_
     df_corr, labels_sorted = aac.comp_correlation(X=X, labels=labels)
 
 The pair-wise Pearson correlation can now be visualized using the
@@ -85,9 +85,11 @@ the linkage method can be selected by the ``method`` parameter
 .. image:: examples/aac_plot_correlation_4_output_9_0.png
 
 
-To show the respective scale and cluster names, provide them to the
-``AAclust().comp_correlation()`` method and use the
-``xtick_label_rotation`` parameter to rotate the x-ticks:
+To show the names of scales (y-axis) and cluster (x-axis), provide them
+to the ``AAclust().comp_correlation()`` method. The cluster labels
+(``labels_ref``) must be given to the ``AAclustPlot().correlation()``
+method. The ``xtick_label_rotation`` parameter can be used to rotate the
+x-ticks:
 
 .. code:: ipython2
 
@@ -97,7 +99,7 @@ To show the respective scale and cluster names, provide them to the
     names_ref = [dict_cluster[i] for i in labels_ref]
     df_corr, labels_sorted = aac.comp_correlation(X=X, labels=labels, X_ref=X_ref, labels_ref=labels_ref, names=names, names_ref=names_ref)
     # Plot correlation
-    aac_plot.correlation(df_corr=df_corr, labels=labels_sorted, xtick_label_rotation=45)
+    aac_plot.correlation(df_corr=df_corr, labels=labels_sorted, labels_ref=labels_ref, xtick_label_rotation=45)
     plt.tight_layout()
     plt.show()
 
@@ -106,14 +108,17 @@ To show the respective scale and cluster names, provide them to the
 .. image:: examples/aac_plot_correlation_5_output_11_0.png
 
 
-The clusters can be colored using the ``bar_colors`` parameter:
+If the columns of ``df_corr`` contain the cluster labels, ``labels_ref``
+does not need to be provided. The clusters can be colored using the
+``bar_colors`` parameter.
 
 .. code:: ipython2
 
+    df_corr, labels_sorted = aac.comp_correlation(X=X, labels=labels, X_ref=X_ref, labels_ref=labels_ref)
     # Plot correlation
     n_clusters = len(set(labels_sorted))
     colors = aa.plot_get_clist(n_colors=n_clusters)
-    aac_plot.correlation(df_corr=df_corr, labels=labels_sorted, xtick_label_rotation=45,
+    aac_plot.correlation(df_corr=df_corr, labels=labels_sorted, xtick_label_rotation=0,
                          bar_colors=colors, bar_position=["left", "bottom"], bar_width_x=1, bar_width_y=0.2)
     plt.tight_layout()
     plt.show()
@@ -129,8 +134,9 @@ the ``kwargs_heatmap`` argument:
 
 .. code:: ipython2
 
+    df_corr, labels_sorted = aac.comp_correlation(X=X, labels=labels, X_ref=X_ref, labels_ref=labels_ref, names=names, names_ref=names_ref)
     # Plot correlation
-    aac_plot.correlation(df_corr=df_corr, labels=labels_sorted, xtick_label_rotation=45,
+    aac_plot.correlation(df_corr=df_corr, labels=labels_sorted, labels_ref=labels_ref, xtick_label_rotation=45,
                          vmin=-0.5, vmax=0.5, cmap="cividis", kwargs_heatmap=dict(linecolor="black"))
     plt.tight_layout()
     plt.show()

@@ -56,6 +56,28 @@ def check_match_df_corr_labels(df_corr=None, labels=None):
         raise ValueError(f"Number of 'labels' ({len(labels)}) must match with n_samples in 'df_corr' ({n_samples})")
     return labels
 
+def check_match_df_corr_labels_ref(df_corr=None, labels_ref=None, labels=None, pairwise=False, verbose=False):
+    """Ensure the number of labels matches the number of samples in df_corr"""
+    str_add = ""
+    if labels_ref is None:
+        if pairwise:
+            return # Skip check
+        columns = list(df_corr)
+        if sum([isinstance(i, str) for i in columns]) != 0:
+            raise ValueError("'labels_ref' must be provided if columns in 'df_corr' and strings.")
+        labels_ref = list(df_corr)
+        str_add = "(obtained from 'df_corr' columns if not given)"
+    if set(labels) != set(labels_ref) and verbose:
+        warnings.warn(f"'labels' and 'labels_ref' {str_add} does not match. Provide 'labels_ref' or adjust 'df_corr' columns."
+                      f"\n 'labels': {set(labels)},"
+                      f"\n 'labels_ref': {set(labels_ref)}")
+
+    labels_ref = ut.check_labels(labels=labels_ref, name="labels_ref")
+    n_samples, n_clusters = df_corr.shape
+    if n_clusters != len(labels_ref):
+        raise ValueError(f"Number of 'labels_ref' ({len(labels_ref)}) must match with n_clusters in 'df_corr' ({n_samples})")
+    return labels_ref
+
 
 def check_method(method=None):
     """Validate the method parameter against a list of valid hierarchical clustering methods"""
@@ -122,7 +144,8 @@ class AAclustPlot:
     """
     def __init__(self,
                  model_class: Type[TransformerMixin] = PCA,
-                 model_kwargs: Optional[Dict] = None):
+                 model_kwargs: Optional[Dict] = None,
+                 verbose: Optional[bool] = None):
         """
         Parameters
         ----------
@@ -130,6 +153,8 @@ class AAclustPlot:
             A decomposition model class with ``n_components`` parameter.
         model_kwargs : dict, optional
             Keyword arguments to pass to the selected decomposition model.
+        verbose : bool, optional
+            If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if 'None'.
 
         Examples
         --------
@@ -141,7 +166,7 @@ class AAclustPlot:
                                              model_kwargs=model_kwargs,
                                              param_to_check="n_components",
                                              method_to_check="transform")
-
+        self.verbose = ut.check_verbose(verbose)
         self.model_class = model_class
         self.model_kwargs = model_kwargs
 
@@ -373,9 +398,10 @@ class AAclustPlot:
                                                   legend=legend, palette=palette)
         return ax, df_components
 
-    @staticmethod
-    def correlation(df_corr: pd.DataFrame = None,
+    def correlation(self,
+                    df_corr: pd.DataFrame = None,
                     labels: ut.ArrayLike1D = None,
+                    labels_ref: Optional[ut.ArrayLike1D] = None,
                     cluster_x: bool = False,
                     method: str = "average",
                     xtick_label_rotation: int = 90,
@@ -401,6 +427,8 @@ class AAclustPlot:
         labels : array-like of shape (n_samples,)
             Cluster labels determining the grouping and coloring of the side color bar.
             It should have the same length as number of rows in ``df_corr`` (n_samples).
+        labels_ref  : array-like, shape (n_clusters,), optional
+            Cluster labels comprising unique values from 'labels'. Length must match with 'n_clusters' in ``df_corr``.
         cluster_x : bool, default=False
             If ``True``, x-axis (`clusters`) values are clustered. Disabled for pairwise correlation.
         method : {'single', 'complete', 'average', 'weighted', 'centroid', 'median', 'ward'}, default='average'
@@ -452,6 +480,9 @@ class AAclustPlot:
         # Check input
         ut.check_df(name="df_corr", df=df_corr, accept_none=False, accept_nan=False)
         labels = check_match_df_corr_labels(df_corr=df_corr, labels=labels)
+        pairwise = [str(x) for x in list(df_corr)] == [str(x) for x in list(df_corr.T)]
+        labels_ref = check_match_df_corr_labels_ref(df_corr=df_corr, labels_ref=labels_ref, labels=labels,
+                                                    pairwise=pairwise, verbose=self.verbose)
         ut.check_bool(name="cluster_x", val=cluster_x)
         check_match_df_corr_clust_x(df_corr=df_corr, cluster_x=cluster_x)
         check_method(method=method)
@@ -468,11 +499,10 @@ class AAclustPlot:
         ut.check_cmap(name="cmap", val=cmap, accept_none=False)
         ut.check_dict(name="kwargs_heatmap", val=kwargs_heatmap, accept_none=True)
         # Plotting
-        pairwise = [str(x) for x in list(df_corr)] == [str(x) for x in list(df_corr.T)]
         if pairwise:
             cluster_x = False
         try:
-            ax = plot_correlation(df_corr=df_corr.copy(), labels=labels, pairwise=pairwise,
+            ax = plot_correlation(df_corr=df_corr.copy(), labels=labels, labels_ref=labels_ref,
                                   cluster_x=cluster_x, method=method,
                                   xtick_label_rotation=xtick_label_rotation,
                                   ytick_label_rotation=ytick_label_rotation,

@@ -68,17 +68,8 @@ dPULearn. This becomes more clear using boolean masks and the
     dpul_plot.pca(df_pu=df_pu[mask], labels=labels[mask], show_pos_mean_y=False)
     plt.tight_layout()
     plt.show()
-
-
-
-.. image:: examples/dpul_plot_pca_3_output_7_0.png
-
-
-.. code:: ipython2
-
     # Filter only positives and negatives selected based on PC1
     mask1 = [x in ["PC2", None] for x in df_pu["selection_via"]]
-    mask2 = [x in [0, 1] for x in labels]
     mask = [m1 and m2 for m1, m2 in zip(mask1, mask2)]
     dpul_plot.pca(df_pu=df_pu[mask], labels=labels[mask], show_pos_mean_x=False)
     plt.tight_layout()
@@ -86,24 +77,38 @@ dPULearn. This becomes more clear using boolean masks and the
 
 
 
-.. image:: examples/dpul_plot_pca_4_output_8_0.png
+.. image:: examples/dpul_plot_pca_3_output_7_0.png
+
+
+
+.. image:: examples/dpul_plot_pca_4_output_7_1.png
 
 
 You can change the PCs to be shown on the x- and y-axis by providing
-integers numbers to the ``pc_x`` and ``pc_y`` paramters:
+integers numbers to the ``pc_x`` and ``pc_y`` parameters:
 
 .. code:: ipython2
 
-    mask1 = [x in ["PC3", "PC4", None] for x in df_pu["selection_via"]]
+    mask1 = [x in ["PC3", None] for x in df_pu["selection_via"]]
     mask2 = [x in [0, 1] for x in labels]
     mask = [m1 and m2 for m1, m2 in zip(mask1, mask2)]
-    dpul_plot.pca(df_pu=df_pu[mask], labels=labels[mask], pc_x=3, pc_y=4)
+    dpul_plot.pca(df_pu=df_pu[mask], labels=labels[mask], pc_x=3, pc_y=4, show_pos_mean_y=False)
+    plt.tight_layout()
+    plt.show()
+    mask1 = [x in ["PC4", None] for x in df_pu["selection_via"]]
+    mask2 = [x in [0, 1] for x in labels]
+    mask = [m1 and m2 for m1, m2 in zip(mask1, mask2)]
+    dpul_plot.pca(df_pu=df_pu[mask], labels=labels[mask], pc_x=3, pc_y=4, show_pos_mean_x=False)
     plt.tight_layout()
     plt.show()
 
 
 
-.. image:: examples/dpul_plot_pca_5_output_10_0.png
+.. image:: examples/dpul_plot_pca_5_output_9_0.png
+
+
+
+.. image:: examples/dpul_plot_pca_6_output_9_1.png
 
 
 Adjustment of ``colors`` and ``names`` must be aligned:
@@ -118,7 +123,7 @@ Adjustment of ``colors`` and ``names`` must be aligned:
 
 
 
-.. image:: examples/dpul_plot_pca_6_output_12_0.png
+.. image:: examples/dpul_plot_pca_7_output_11_0.png
 
 
 The legend can be shifted along the y-axis using ``legend_y``
@@ -132,7 +137,7 @@ The legend can be shifted along the y-axis using ``legend_y``
 
 
 
-.. image:: examples/dpul_plot_pca_7_output_14_0.png
+.. image:: examples/dpul_plot_pca_8_output_13_0.png
 
 
 The scatter plot using the ``args_scatter`` parameter, which is a key
@@ -141,13 +146,13 @@ word argument dictionary passed to the internally called the
 
 .. code:: ipython2
 
-    dpul_plot.pca(df_pu=df_pu, labels=labels, args_scatter={"s": 25, "edgecolor": "black"})
+    dpul_plot.pca(df_pu=df_pu, labels=labels, kwargs_scatterplot={"s": 25, "edgecolor": "black"})
     plt.tight_layout()
     plt.show()
 
 
 
-.. image:: examples/dpul_plot_pca_8_output_16_0.png
+.. image:: examples/dpul_plot_pca_9_output_15_0.png
 
 
 To change the legend, just disable it (setting ``legend=False``) and
@@ -164,5 +169,5 @@ re-create it using the ``aa.plot_legend()`` function:
 
 
 
-.. image:: examples/dpul_plot_pca_9_output_18_0.png
+.. image:: examples/dpul_plot_pca_10_output_17_0.png
 

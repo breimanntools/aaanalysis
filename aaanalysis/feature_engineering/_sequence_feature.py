@@ -48,9 +48,7 @@ def warn_creation_of_feature_matrix(features=None, df_parts=None, name="Feature 
                   "so that 10^6 values are not exceeded."
         warnings.warn(warning)
 
-
-# TODO testing
-# TODO update docstring
+# TODO update docstring, testing, examples
 # II Main Functions
 class SequenceFeature:
     """
@@ -110,7 +108,7 @@ class SequenceFeature:
         """
         Parameters
         ----------
-        verbose
+        verbose : bool, optional
             If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if 'None'.
         """
         self.verbose = ut.check_verbose(verbose)
@@ -159,8 +157,8 @@ class SequenceFeature:
 
         Returns
         -------
-        df_parts: :class:`pandas.DataFrame`
-            DataFrame with sequence parts.
+        df_parts: pd.DataFrame
+            Sequence parts DataFrames.
 
         Notes
         -----
