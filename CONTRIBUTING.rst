@@ -342,9 +342,8 @@ To create a new version of the AAanalysis package for PyPi using Poetry, perform
 Test with ChatGPT
 =================
 To optimize testing, use ChatGPT with the template below and fill in the blank spaces between ``START OF CODE``
-and ``END OF CODE``. For testing templates,
-utilize `our <https://github.com/breimanntools/aaanalysis/blob/master/tests/unit/data_loader_tests/test_load_dataset.py>`_
-or any custom testing template.
+and ``END OF CODE``. Examples of testing templates can be found here:
+`AAanalysis unit tests <https://github.com/breimanntools/aaanalysis/blob/master/tests/unit/>`_.
 
 .. code-block:: none
 
@@ -362,7 +361,7 @@ or any custom testing template.
     TESTING TEMPLATE:
     - START OF CODE
     -----------------------------------------
-    your code
+    [your code]
     -----------------------------------------
     - END OF CODE
 
