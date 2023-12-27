@@ -11,7 +11,6 @@ import pytest
 class TestNameClusters:
     """Test name_clusters function of the TARGET FUNCTION"""
 
-
     def test_valid_X(self):
         """Test a valid 'X' parameter."""
         X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
@@ -107,7 +106,8 @@ class TestNameClustersComplex:
         names = ['scale'+str(i) for i in range(X.shape[0])]
         n_samples, n_feature = X.shape
         n_unique_samples = len(set(map(tuple, X)))
-        if n_samples < 2 or n_feature < 2 or n_unique_samples < 3 or len(labels) != n_samples:
+        n_unique_labels = len(set(labels))
+        if n_samples < 2 or n_feature < 2 or n_unique_samples < 3 or len(labels) != n_samples or n_unique_samples < 2:
             with pytest.raises(ValueError):
                 warnings.simplefilter("ignore", RuntimeWarning)
                 aa.AAclust().name_clusters(X, labels, names)

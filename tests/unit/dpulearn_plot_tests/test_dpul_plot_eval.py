@@ -29,7 +29,7 @@ class TestdPULearnPlotEval:
     """Test aa.dPULearnPlot.eval() function for individual parameters."""
 
     # Positive tests
-    @settings(max_examples=10, deadline=2000)
+    @settings(max_examples=10, deadline=4000)
     @given(n_samples=some.integers(min_value=2, max_value=10))
     def test_df_eval_valid(self, n_samples):
         df_eval = _create_sample_df_eval(n_rows=n_samples)

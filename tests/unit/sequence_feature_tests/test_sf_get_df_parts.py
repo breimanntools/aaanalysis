@@ -14,6 +14,52 @@ import random
 class TestGetDfParts:
     """Test get_df_parts function of the SequenceFeature class."""
 
+    def test_default_format(self):
+        """Test all valid formats"""
+        sf = aa.SequenceFeature()
+        df_seq = aa.load_dataset(name="DOM_GSEC")
+        list_parts = ["jmd_n", "tmd", "jmd_c"]
+        df_parts = sf.get_df_parts(df_seq=df_seq, jmd_c_len=10, jmd_n_len=10, list_parts=list_parts).reset_index(drop=True)
+        default_true = (df_seq[list_parts] == df_parts[list_parts]).all().all()
+        assert default_true
+
+    def test_pos_based_format(self):
+        sf = aa.SequenceFeature()
+        df_seq = aa.load_dataset(name="DOM_GSEC")
+        list_parts = ["jmd_n", "tmd", "jmd_c"]
+        cols_position_based = ["entry", "sequence", "tmd_start", "tmd_stop"]
+        df_parts = sf.get_df_parts(df_seq=df_seq[cols_position_based], list_parts=list_parts).reset_index(drop=True)
+        pos_based_true = (df_seq[list_parts] == df_parts[list_parts]).all().all()
+        assert pos_based_true
+
+    def test_part_based_format(self):
+        sf = aa.SequenceFeature()
+        df_seq = aa.load_dataset(name="DOM_GSEC")
+        list_parts = ["jmd_n", "tmd", "jmd_c"]
+        cols_part_based = ["entry", "jmd_n", "tmd", "jmd_c"]
+        df_parts = sf.get_df_parts(df_seq=df_seq[cols_part_based], list_parts=list_parts).reset_index(drop=True)
+        part_based_true = (df_seq[list_parts] == df_parts[list_parts]).all().all()
+        assert part_based_true
+
+    def test_seq_tmd_based_format(self):
+        sf = aa.SequenceFeature()
+        df_seq = aa.load_dataset(name="DOM_GSEC")
+        list_parts = ["jmd_n", "tmd", "jmd_c"]
+        cols_sequence_tmd_based = ["entry", "sequence", "tmd"]
+        df_parts = sf.get_df_parts(df_seq=df_seq[cols_sequence_tmd_based], list_parts=list_parts).reset_index(drop=True)
+        seq_tmd_based_true = (df_seq[list_parts] == df_parts[list_parts]).all().all()
+        assert seq_tmd_based_true
+
+    def test_seq_based_format(self):
+        sf = aa.SequenceFeature()
+        df_seq = aa.load_dataset(name="DOM_GSEC")
+        list_parts = ["jmd_n", "tmd", "jmd_c"]
+        cols_sequence_based = ["entry", "sequence"]
+        df_parts = sf.get_df_parts(df_seq=df_seq[cols_sequence_based], list_parts=list_parts).reset_index(drop=True)
+        seq = df_parts["jmd_n"] + df_parts["tmd"] + df_parts["jmd_c"]
+        seq_based_true = (df_seq["sequence"] == seq).all()
+        assert seq_based_true
+
     def test_valid_df_seq(self):
         """Test a valid 'df_seq' parameter."""
         sf = aa.SequenceFeature()

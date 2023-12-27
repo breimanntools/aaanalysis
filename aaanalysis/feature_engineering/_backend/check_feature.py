@@ -167,12 +167,13 @@ def check_match_features_seq_parts(features=None, tmd_seq=None, jmd_n_seq=None, 
 
 # Check df_seq
 def _get_tmd_positions(row):
-    """"""
+    """Get position of tmd from sequence"""
     tmd, seq = row[ut.COL_TMD], row[ut.COL_SEQ]
     tmd_start = seq.find(tmd)
     tmd_stop = tmd_start + len(tmd) if tmd_start != -1 else -1
     if tmd_start == -1 or tmd_start == tmd_stop:
         raise ValueError(f"'{ut.COL_TMD}' is not contained in '{ut.COL_SEQ}' for '{row[ut.COL_ENTRY]}' entry")
+    tmd_start += 1
     return pd.Series([tmd_start, tmd_stop])
 
 

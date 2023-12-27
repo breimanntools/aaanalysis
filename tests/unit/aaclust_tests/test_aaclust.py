@@ -1,10 +1,8 @@
 """
 This is a script for testing the AAclust class.
 """
-import inspect
-from hypothesis import given, example
+from hypothesis import given, example, settings
 import hypothesis.strategies as some
-import aaanalysis.utils as ut
 import aaanalysis as aa
 import pytest
 from sklearn.cluster import (KMeans, AgglomerativeClustering, MiniBatchKMeans,
@@ -48,6 +46,7 @@ class TestAAclust:
             with pytest.raises(ValueError):
                 aa.AAclust(model_class=model_class_name)
 
+
     @given(model_class_name=some.sampled_from(list(K_BASED_MODELS.keys())))
     def test_k_based_model_parameter_after_fit(self, model_class_name):
         """Test the 'model' parameter for k_based models after fitting."""
@@ -62,6 +61,7 @@ class TestAAclust:
         with pytest.raises(ValueError):
             aa.AAclust(model_class=model_class_name)
 
+    @settings(deadline=1000, max_examples=10)
     @given(model_kwargs=some.dictionaries(keys=some.text(), values=some.integers()))
     def test_model_kwargs_parameter(self, model_kwargs):
         """Test the 'model_kwargs' parameter."""

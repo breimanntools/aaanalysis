@@ -38,6 +38,7 @@ class TestAAclust:
         """
         Test initialization of the AAclust class without any arguments.
         """
+        aa.options["verbose"] = True
         aac = aa.AAclust()
         assert aac.model_class == KMeans
         assert aac._model_kwargs == dict(n_init="auto")

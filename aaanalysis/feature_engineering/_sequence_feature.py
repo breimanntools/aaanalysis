@@ -10,7 +10,7 @@ from ._backend.check_feature import (check_split_kws,
                                      check_parts_len, check_match_features_seq_parts,
                                      check_match_df_seq_jmd_len,
                                      check_df_parts,
-                                     check_match_df_parts_features, check_match_df_parts_list_parts,
+                                     check_match_df_parts_features,
                                      check_match_df_parts_df_scales,
                                      check_df_scales,
                                      check_match_df_scales_features,check_match_df_scales_df_cat,
@@ -77,7 +77,7 @@ class SequenceFeature:
         We define three main parts from which each other part can be derived from:
 
         - ``TMD (target middle domain)``: Protein domain of interest with varying length,
-           such as the transmembrane domain (TMD) of γ-secretase substrates (see [Breimann24a]_).
+           such as the transmembrane domain (TMD) of γ-secretase substrates (see [Breimann24c]_).
         - ``JMD-N (juxta middle domain N-terminal)``: Protein domain/region directly N-terminally next to the TMD,
           typically set to a fixed length (e.g., 10 for γ-secretase substrates).
         - ``JMD-C (juxta middle domain C-terminal)``: Protein domain/region directly C-terminally next to the TMD,
@@ -133,7 +133,8 @@ class SequenceFeature:
                      jmd_c_len: Union[int, None] = 10,
                      remove_entries_with_gaps: bool = False
                      ) -> pd.DataFrame:
-        """Create DataFrane with sequence parts.
+        """
+        Create DataFrane with selected sequence parts.
 
         Parameters
         ----------
@@ -171,10 +172,10 @@ class SequenceFeature:
                 'jmd_n': Amino acid sequence for JMD-N.
                 'tmd': Amino acid sequence for TMD.
                 'jmd_c': Amino acid sequence for JMD-C.
-            - ``Sequence-based format``:
-                Only 'sequence' column.
             - ``Sequence-TMD-based format``:
                 'sequence' and 'tmd' columns.
+            - ``Sequence-based format``:
+                Only 'sequence' column.
 
         Examples
         --------
