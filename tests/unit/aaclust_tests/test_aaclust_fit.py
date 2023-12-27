@@ -6,12 +6,13 @@ import hypothesis.strategies as some
 from hypothesis.extra import numpy as npst
 import numpy as np
 from sklearn.cluster import AgglomerativeClustering, KMeans
-import aaanalysis as aa
-import aaanalysis.utils as ut
-
 import pytest
 from sklearn.exceptions import ConvergenceWarning
 import warnings
+
+import aaanalysis as aa
+
+aa.options["verbose"] = True
 
 # Helper function
 def check_invalid_conditions(X):

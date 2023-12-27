@@ -1,10 +1,9 @@
-"""This is a script to test the get_df_parts() method of the SequenceFeature class."""
+"""This is a script to test the SequenceFeature().get_df_parts() method ."""
 import pandas as pd
 import numpy as np
 from hypothesis import given, settings
 import hypothesis.strategies as some
-from typing import List, Optional
-import aaanalysis as aa  # Modify the import based on the actual module name.
+import aaanalysis as aa
 import pytest
 import random
 

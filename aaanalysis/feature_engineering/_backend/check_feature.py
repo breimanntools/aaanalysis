@@ -83,22 +83,31 @@ def check_split_kws(split_kws=None, accept_none=True):
     # Check Segment
     if ut.STR_SEGMENT in split_kws:
         segment_args = split_kws[ut.STR_SEGMENT]
-        if segment_args["n_split_min"] > segment_args["n_split_max"]:
-            raise ValueError(f"For '{ut.STR_SEGMENT}', 'n_split_min' should be smaller or equal to 'n_split_max'")
+        n_split_min, n_split_max = segment_args["n_split_min"], segment_args["n_split_max"]
+        if n_split_min > n_split_max:
+            raise ValueError(f"For '{ut.STR_SEGMENT}', 'n_split_min' ({n_split_min}) should be smaller "
+                             f"or equal to 'n_split_max' ({n_split_max})")
     # Check Pattern
     if ut.STR_PATTERN in split_kws:
         pattern_args = split_kws[ut.STR_PATTERN]
-        if pattern_args["n_min"] > pattern_args["n_max"]:
-            raise ValueError(f"For '{ut.STR_PATTERN}', 'n_min' should be smaller or equal to 'n_max'")
-        if pattern_args["steps"] != sorted(pattern_args["steps"]):
-            raise ValueError(f"For '{ut.STR_PATTERN}', 'steps' should be ordered in ascending order.")
-        if pattern_args["steps"][0] >= pattern_args["len_max"]:
-            raise ValueError(f"For '{ut.STR_PATTERN}', 'len_max' should be greater than the smallest step in 'steps'.")
+        n_min, n_max = pattern_args["n_min"], pattern_args["n_max"]
+        steps_pattern, len_max = pattern_args["steps"], pattern_args["len_max"]
+        if n_min > n_max:
+            raise ValueError(f"For '{ut.STR_PATTERN}', 'n_min' ({n_min}) should be smaller or equal to 'n_max' ({n_max})")
+        if not isinstance(steps_pattern, list) or len(steps_pattern) == 0:
+            raise ValueError("'steps_pattern' should be non-empty list of integers")
+        if steps_pattern != sorted(steps_pattern):
+            raise ValueError(f"For '{ut.STR_PATTERN}', 'steps_pattern' ({steps_pattern}) should be ordered in ascending order.")
+        if steps_pattern[0] >= len_max:
+            raise ValueError(f"For '{ut.STR_PATTERN}', 'len_max' ({len_max}) should be greater than the smallest step "
+                             f"in 'steps_pattern' ({steps_pattern}).")
     # Check PeriodicPattern
     if ut.STR_PERIODIC_PATTERN in split_kws:
         periodicpattern_args = split_kws[ut.STR_PERIODIC_PATTERN]
-        if periodicpattern_args["steps"] != sorted(periodicpattern_args["steps"]):
-            raise ValueError(f"For '{ut.STR_PERIODIC_PATTERN}', 'steps' should be ordered in ascending order.")
+        steps_periodicpattern = periodicpattern_args["steps"]
+        if steps_periodicpattern != sorted(steps_periodicpattern):
+            raise ValueError(f"For '{ut.STR_PERIODIC_PATTERN}', 'steps_periodicpattern' ({steps_periodicpattern}) "
+                             f"should be ordered in ascending order.")
 
 
 # Check parts

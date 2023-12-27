@@ -34,6 +34,19 @@ def check_split_types(split_types=None):
     return split_types
 
 
+def check_steps(steps=None, steps_name="steps_pattern", verbose=True):
+    """Sort steps and warn if empty list"""
+    if steps is None:
+        return steps # Skip tests
+    steps = list(sorted(steps))
+    # Set to None if empty
+    if len(steps) == 0:
+        steps = None
+        if verbose:
+            warnings.warn(f"'{steps_name}' should not be empty list")
+    return steps
+
+
 def warn_creation_of_feature_matrix(features=None, df_parts=None, name="Feature matrix"):
     """Warn if feature matrix gets too large"""
     n_feat = len(features)
@@ -186,11 +199,11 @@ class SequenceFeature:
                              f"Reduce 'jmd_n_len' ({jmd_n_len}) and 'jmd_c_len' ({jmd_c_len}) settings.")
         return df_parts
 
-    @staticmethod
-    def get_split_kws(split_types: Union[str, List[str]] = None,
+    def get_split_kws(self,
+                      split_types: Union[str, List[str]] = None,
                       n_split_min: int = 1,
                       n_split_max: int = 15,
-                      steps_pattern: int = None,
+                      steps_pattern: List[int] = None,
                       n_min: int = 2,
                       n_max: int = 4,
                       len_max: int = 15,
@@ -211,17 +224,16 @@ class SequenceFeature:
             Number to specify the greatest ``Segment``. Should be > 0.
         n_split_max: int, default=15,
             Number to specify the smallest ``Segment``. Should be > ``n_split_min``.
-        steps_pattern: list of integers, default=[3, 4, 6, 7, 8]
-            Possible steps sizes for ``Pattern``.
+        steps_pattern: list of int, default=[3, 4, 6, 7, 8]
+            Possible steps sizes for ``Pattern``. Should not be empty if ``Pattern`` split_type is used.
         n_min: int, default=2
-            Minimum number of steps for Pattern.
+            Minimum number of steps for Pattern. Should be <= ``n_max``.
         n_max: int, default=4
-            Maximum number of steps for Pattern.
+            Maximum number of steps for Pattern. Should be >= ``n_min``.
         len_max: int, default=10
-            Maximum length in amino acid position for Pattern by varying start position.
-        steps_periodicpattern: list of integers, default=[3, 4]
-            Step sizes for PeriodicPattern.
-
+            Maximum length in amino acid position for Pattern by varying start position. Should be > min(``steps_pattern``).
+        steps_periodicpattern: list of int, default=[3, 4]
+            Step sizes for PeriodicPattern. Should not be empty if ``PeriodicPattern`` split_type is used.
 
         Returns
         -------
@@ -240,11 +252,14 @@ class SequenceFeature:
         split_types = check_split_types(split_types=split_types)
         args_int = dict(n_split_min=n_split_min, n_split_max=n_split_max, n_min=n_min, n_max=n_max, len_max=len_max)
         for name in args_int:
-            ut.check_number_range(name=name, val=args_int[name], just_int=False)
-        ut.check_list_like(name="steps_pattern", val=steps_pattern,
-                           accept_none=True, check_all_non_neg_int=True)
-        ut.check_list_like(name="steps_periodicpattern", val=steps_periodicpattern,
-                           accept_none=True, check_all_non_neg_int=True)
+            ut.check_number_range(name=name, val=args_int[name], just_int=False, min_val=1)
+        steps_pattern = ut.check_list_like(name="steps_pattern", val=steps_pattern,
+                                           accept_none=True, check_all_non_neg_int=True)
+        steps_periodicpattern = ut.check_list_like(name="steps_periodicpattern", val=steps_periodicpattern,
+                                                   accept_none=True, check_all_non_neg_int=True)
+        steps_pattern = check_steps(steps=steps_pattern, steps_name="steps_pattern", verbose=self.verbose)
+        steps_periodicpattern = check_steps(steps=steps_periodicpattern, steps_name="steps_periodicpattern",
+                                            verbose=self.verbose)
         # Create kws for splits
         split_kws = get_split_kws_(n_split_min=n_split_min,
                                    n_split_max=n_split_max,
