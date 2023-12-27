@@ -4,8 +4,7 @@
 /recipe/
 /tutorials/.ipynb_checkpoints/
 /dist/
-/docs/build/doctrees/
-/docs/build/html/
+/docs/build/
 
 # IDEs & Editors
 ## PyCharm
