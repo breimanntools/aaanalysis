@@ -77,11 +77,11 @@ class SequenceFeature:
         We define three main parts from which each other part can be derived from:
 
         - ``TMD (target middle domain)``: Protein domain of interest with varying length,
-           such as the transmembrane domain (TMD) of γ-secretase substrates (see [Breimann24c]_).
-        - ``JMD-N (juxta middle domain N-terminal)``: Protein domain/region directly N-terminally next to the TMD,
-          typically set to a fixed length (e.g., 10 for γ-secretase substrates).
-        - ``JMD-C (juxta middle domain C-terminal)``: Protein domain/region directly C-terminally next to the TMD,
-          typically set to a fixed length (e.g., 10 for γ-secretase substrates).
+          such as the transmembrane domain (TMD) of γ-secretase substrates (see [Breimann24c]_).
+        - ``JMD-N (juxta middle domain N-terminal)``: Protein domain or sequence region directly N-terminally next
+          to the TMD, typically set to a fixed length (e.g., 10 for γ-secretase substrates).
+        - ``JMD-C (juxta middle domain C-terminal)``: Protein domain or sequence region directly C-terminally next
+          to the TMD, typically set to a fixed length (e.g., 10 for γ-secretase substrates).
 
     Feature: Part + Split + Scale
         Physicochemical property (expressed as numerical scale) present at distinct amino acid
@@ -162,20 +162,22 @@ class SequenceFeature:
         -----
         * See :class: ´aaanalysis.SequenceFeature´ for definition of parts, and lists of all existing and default parts.
         * ``jmd_n_len`` and ``jmd_c_len`` must be both given, except for the part-based format.
-        * Formats for ``df_seq`` are differentiated by their respective columns:
 
-            - ``Position-based format``:
-                'sequence': The complete amino acid sequence.
-                'tmd_start': Starting positions of the TMD in the sequence.
-                'tmd_stop': Ending positions of the TMD in the sequence.
-            - ``Part-based format``:
-                'jmd_n': Amino acid sequence for JMD-N.
-                'tmd': Amino acid sequence for TMD.
-                'jmd_c': Amino acid sequence for JMD-C.
-            - ``Sequence-TMD-based format``:
-                'sequence' and 'tmd' columns.
-            - ``Sequence-based format``:
-                Only 'sequence' column.
+        Formats for ``df_seq`` are differentiated by their respective columns:
+
+            * ``Position-based format``:
+                - 'sequence': The complete amino acid sequence.
+                - 'tmd_start': Starting positions of the TMD in the sequence.
+                - 'tmd_stop': Ending positions of the TMD in the sequence.
+
+            * ``Part-based format``:
+                - 'jmd_n': Amino acid sequence for JMD-N.
+                - 'tmd': Amino acid sequence for TMD.
+                - 'jmd_c': Amino acid sequence for JMD-C.
+
+            * ``Sequence-TMD-based format``: 'sequence' and 'tmd' columns.
+
+            * ``Sequence-based format``:  Only the 'sequence' column.
 
         Examples
         --------
