@@ -7,13 +7,15 @@ import pandas as pd
 
 import aaanalysis.utils as ut
 from ._backend.check_feature import (check_split_kws,
-                                     check_parts_len, check_match_features_seq_parts,
+                                     check_parts_len,
+                                     check_match_features_seq_parts,
                                      check_match_df_seq_jmd_len,
                                      check_df_parts,
                                      check_match_df_parts_features,
                                      check_match_df_parts_df_scales,
                                      check_df_scales,
-                                     check_match_df_scales_features,check_match_df_scales_df_cat,
+                                     check_match_df_scales_features,
+                                     check_match_df_scales_df_cat,
                                      check_df_cat,
                                      check_match_df_cat_features)
 from ._backend.cpp.utils_feature import (get_df_parts_, remove_entries_with_gaps_,
@@ -98,7 +100,6 @@ class SequenceFeature:
     Notes
     -----
     Feature Components:
-
         - ``Part``: A continuous subset of a sequence, such as a protein domain.
         - ``Split``: Continuous or discontinuous subset of a ``Part``, such as a segment or a pattern.
         - ``Scale``: A physicochemical scale, i.e., a set of numerical values (typically [0-1]) assigned to amino acids.
@@ -123,7 +124,6 @@ class SequenceFeature:
         all amino acids obtained by splitting a sequence part.
 
     Valid sequence parts:
-
         - ``tmd``: Target Middle Domain (TMD).
         - ``tmd_e``: TMD extended N- and C-terminally by a number of residues, defined by the ``ext_len`` configuration option.
         - ``tmd_n``: N-terminal half of the TMD.
@@ -535,15 +535,16 @@ class SequenceFeature:
                           df_cat: Optional[pd.DataFrame] = None,
                           start: int = 1,
                           tmd_len: int = 20,
-                          jmd_c_len: int = 10,
                           jmd_n_len: int = 10,
+                          jmd_c_len: int = 10,
                           ) -> List[str]:
-        """Convert feature ids (PART-SPLIT-SCALE) into feature names (scale name [positions]).
+        """
+        Convert feature ids (PART-SPLIT-SCALE) into feature names (scale name [positions]).
 
         Parameters
         ----------
         features : array-like, shape (n_features,)
-            List of feature ids.
+            List of feature ids (>0).
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
             DataFrame with categories for physicochemical amino acid scales.
             Default from :meth:`load_scales` with ``name='scales_cat'``.
@@ -563,7 +564,8 @@ class SequenceFeature:
 
         Notes
         -----
-        Positions are given depending on the three split types:
+        * Length parameters (``tmd_len``, ``jmd_n_len``, ``jmd_c_len``) must match with ids in ``features``.
+        * Positions are given depending on the three split types:
 
             - Segment: [first...last]
             - Pattern: [all positions]
@@ -602,7 +604,8 @@ class SequenceFeature:
                               jmd_n_seq: Optional[str] = None,
                               jmd_c_seq: Optional[str] = None,
                               ) -> ut.ArrayLike1D:
-        """Create for features a list of corresponding positions.
+        """
+        Create for features a list of corresponding positions.
 
         Parameters
         ----------
@@ -627,6 +630,11 @@ class SequenceFeature:
         -------
         list_pos or list_aa
             List of positions or amino acids for each feature.
+
+        Notes
+        -----
+        * Length parameters (``tmd_len``, ``jmd_n_len``, ``jmd_c_len``) must match with ids in ``features``.
+        * Length of sequence (``tmd_seq``, ``jmd_n_seq``, ``jmd_c_seq``) must match with ids in ``features``.
 
         Examples
         --------
@@ -685,6 +693,10 @@ class SequenceFeature:
         -------
         df_pos : pd.DataFrame, shape (n_categories, n_positions)
             DataFrame with aggregated numerical values per position.
+
+        Notes
+        -----
+        * Length parameters (``tmd_len``, ``jmd_n_len``, ``jmd_c_len``) must match with feature ids in ``df_feat``.
 
         Examples
         --------

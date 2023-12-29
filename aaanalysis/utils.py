@@ -542,6 +542,8 @@ def check_features(features=None, list_parts=None, list_scales=None):
                  f"\n  Form of features should be 'PART-SPLIT-SCALE'")
         raise ValueError(error)
     # Check part, split, and scale
+    if len(features) == 0:
+        raise ValueError("'features' should not be empty.")
     for feature in features:
         part, split, scale = feature.split("-")
         _check_part(part=part, feature=feature, list_parts=list_parts)
