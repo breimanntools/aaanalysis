@@ -34,12 +34,8 @@ def _comp_auc(X=None, labels=None, label_test=0, label_ref=1):
     X = X.copy()
     # Create a mask for the test and reference labels
     mask = np.asarray([l in [label_test, label_ref] for l in labels])
-    # Filter X and labels
-    X_filtered = X[mask]
-    labels_filtered = labels[mask]
-    # Convert labels to binary format (0 or 1)
-    labels_binary = np.where(labels_filtered == label_test, 0, 1)
-    auc_abs_vals = abs(ut.auc_adjusted_(X=X_filtered, labels=labels_binary))
+    # Compute AUC
+    auc_abs_vals = abs(ut.auc_adjusted_(X=X[mask], labels=labels[mask], label_test=label_test))
     # Compute the average AUC
     avg_auc_abs = np.mean(auc_abs_vals)
     return avg_auc_abs

@@ -207,6 +207,8 @@ class CPP(Tool):
         abs_mean_dif, std_test, features = pre_filtering_info(**args,
                                                               df_parts=self.df_parts,
                                                               labels=labels,
+                                                              label_test=label_test,
+                                                              label_ref=label_ref,
                                                               accept_gaps=self._accept_gaps,
                                                               verbose=self._verbose,
                                                               n_processes=n_processes)
@@ -227,7 +229,8 @@ class CPP(Tool):
         features = df[ut.COL_FEATURE].to_list()
         # Add feature information
         df = add_stat(df_feat=df, df_scales=self.df_scales, df_parts=self.df_parts,
-                      labels=labels, parametric=parametric, accept_gaps=self._accept_gaps)
+                      labels=labels, parametric=parametric, accept_gaps=self._accept_gaps,
+                      label_test=label_test, label_ref=label_ref)
         feat_positions = get_positions_(features=features, start=start, **args_len)
         df[ut.COL_POSITION] = feat_positions
         df = add_scale_info_(df_feat=df, df_cat=self.df_cat)

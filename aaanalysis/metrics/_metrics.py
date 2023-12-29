@@ -20,7 +20,7 @@ def _check_n_classes_n_samples(X=None, labels=None):
         raise ValueError(f"'n_features' should not be 0")
 
 
-# Adjusted Area Under the Curve (AUC)
+# Adjusted Area Under the Curve (AUC*)
 def comp_auc_adjusted(X : ut.ArrayLike2D = None,
                       labels : ut.ArrayLike1D = None,
                       label_test: int = 1,
@@ -50,7 +50,7 @@ def comp_auc_adjusted(X : ut.ArrayLike2D = None,
     Returns
     -------
     auc : array-like, shape (n_features,)
-        Adjusted Area Under the Curve (AUC) values for each feature, ranging from [-0.5, 0.5].
+        Adjusted Area Under the Curve (AUC*) values for each feature, ranging from [-0.5, 0.5].
         A value of 0 indicates equal distributions between the two groups for that feature.
 
     Examples
@@ -62,11 +62,10 @@ def comp_auc_adjusted(X : ut.ArrayLike2D = None,
     ut.check_X_unique_samples(X=X, min_n_unique_samples=1)
     ut.check_number_val(name="label_test", val=label_test, just_int=True, accept_none=False)
     ut.check_number_val(name="label_ref", val=label_ref, just_int=True, accept_none=False)
-    ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
-                    len_per_group_requiered=2, allow_other_vals=False)
+    ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref], allow_other_vals=False)
     ut.check_match_X_labels(X=X, labels=labels)
     # Compute adjusted AUC
-    auc = auc_adjusted_(X=X, labels=labels)
+    auc = auc_adjusted_(X=X, labels=labels, label_test=label_test)
     return auc
 
 
@@ -177,7 +176,7 @@ def comp_kld(X : ut.ArrayLike2D = None,
     ut.check_number_val(name="label_test", val=label_test, just_int=True, accept_none=False)
     ut.check_number_val(name="label_ref", val=label_ref, just_int=True, accept_none=False)
     ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
-                    len_per_group_requiered=2, allow_other_vals=False)
+                    n_per_group_requiered=2, allow_other_vals=False)
     ut.check_match_X_labels(X=X, labels=labels, check_variability_for_kld=True)
     # Compute tge Kullback-Leibler divergence
     try:

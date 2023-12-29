@@ -520,7 +520,7 @@ def _check_split(split=None, feature=None):
 
 
 def _check_scale(scale=None, feature=None, list_scales=None):
-    """"""
+    """Check if scale in feature is valid"""
     list_scales = check_list_like(name="list_scales", val=list_scales, accept_none=True, accept_str=True)
     if list_scales is not None:
         error = f"Wrong 'SCALE' for '{feature}'. Features should be 'PART-SPLIT-SCALE', with scales from: {LIST_ALL_PARTS}"
@@ -529,8 +529,7 @@ def _check_scale(scale=None, feature=None, list_scales=None):
 
 
 def check_features(features=None, list_parts=None, list_scales=None):
-    """Check if feature names are valid for list of parts  and df_scales
-    """
+    """Check if feature names are valid for list of parts  and df_scales"""
     features = check_list_like(name="features", val=features, accept_none=False, accept_str=True, convert=True)
     list_parts = check_list_parts(list_parts=list_parts, all_parts=True, return_default=True)
     # Check elements of features list

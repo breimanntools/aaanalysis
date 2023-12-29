@@ -104,7 +104,7 @@ def _filtering_info(df=None, df_scales=None, check_cat=True):
 # II Main functions
 # Filtering methods
 def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None, labels=None, label_test=1, label_ref=0,
-                       accept_gaps=False, verbose=True, n_processes=None, ):
+                       accept_gaps=False, verbose=True, n_processes=None):
     """Get n best features in descending order based on the abs(mean(group1) - mean(group0),
     where group 1 is the target group
 
@@ -201,7 +201,8 @@ def filtering(df=None, df_scales=None, max_overlap=0.5, max_cor=0.5, n_filter=10
 
 
 # Adder methods for CPP analysis (used in run method)
-def add_stat(df_feat=None, df_parts=None, df_scales=None, labels=None, parametric=False, accept_gaps=False):
+def add_stat(df_feat=None, df_parts=None, df_scales=None, labels=None, parametric=False, accept_gaps=False,
+             label_test=1, label_ref=0):
         """
         Add summary statistics for each feature to DataFrame.
 
@@ -217,5 +218,6 @@ def add_stat(df_feat=None, df_parts=None, df_scales=None, labels=None, parametri
                                 df_parts=df_parts,
                                 df_scales=df_scales,
                                 accept_gaps=accept_gaps)
-        df_feat = add_stat_(df=df_feat, X=X, y=labels, parametric=parametric)
+        df_feat = add_stat_(df=df_feat, X=X, labels=labels, parametric=parametric,
+                            label_test=label_test, label_ref=label_ref)
         return df_feat

@@ -345,7 +345,12 @@ class SequenceFeature:
         df_parts : pd.DataFrame, shape (n_samples, n_parts)
             DataFrame with sequence parts. Must cover all parts in ``features``.
         labels: array-like, shape (n_samples,)
-            Class labels for samples in ``df_parts``. Should be 1 (test set) and 0 (reference set).
+            Class labels for samples in ``df_parts``. Should contain only two different integer label values,
+            representing test and reference group (typically, 1 and 0).
+        label_test : int, default=1,
+            Class label of test group in ``labels``.
+        label_ref : int, default=0,
+            Class label of reference group in ``labels``.
         df_scales : pd.DataFrame, shape (n_amino_acids, n_scales)
             DataFrame with amino acid scales. Default from :meth:`load_scales` with ``name='scales'``.
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info)

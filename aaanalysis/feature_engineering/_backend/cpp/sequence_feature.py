@@ -77,7 +77,7 @@ def get_df_feat_(features=None, df_parts=None, labels=None,
     std_test = X[mask_test].std(axis=0)
     df = pd.DataFrame(zip(features, abs_mean_dif, std_test),
                       columns=[ut.COL_FEATURE, ut.COL_ABS_MEAN_DIF, ut.COL_STD_TEST])
-    df = add_stat_(df=df, X=X, y=labels, parametric=parametric)
+    df = add_stat_(df=df, X=X, labels=labels, parametric=parametric, label_test=label_test, label_ref=label_ref)
     df = add_scale_info_(df_feat=df, df_cat=df_cat)
     df[ut.COL_POSITION] = get_positions_(features=features, start=start, jmd_n_len=jmd_n_len, tmd_len=tmd_len,
                                          jmd_c_len=jmd_c_len)

@@ -9,11 +9,13 @@ from scipy.spatial import distance
 
 
 # AUC adjusted
-def auc_adjusted_(X=None, labels=None):
+def auc_adjusted_(X=None, labels=None, label_test=1):
     """Get adjusted Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     comparing, for each feature, groups (given by y (labels)) by feature values in X (feature matrix).
     """
-    auc = np.apply_along_axis((lambda x: roc_auc_score(labels, x) - 0.5), 0, X)
+    # Convert labels to binary format (1 or 0)
+    labels_binary = [1 if y == label_test else 0 for y in labels]
+    auc = np.apply_along_axis((lambda x: roc_auc_score(labels_binary, x) - 0.5), 0, X)
     auc = np.round(auc, 3)
     return auc
 

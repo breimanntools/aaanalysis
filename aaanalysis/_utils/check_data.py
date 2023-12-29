@@ -106,7 +106,7 @@ def check_X_unique_samples(X, min_n_unique_samples=3):
 
 
 def check_labels(labels=None, name="labels", vals_requiered=None, len_requiered=None, allow_other_vals=True,
-                 len_per_group_requiered=None):
+                 n_per_group_requiered=None):
     """Check the provided labels against various criteria like type, required values, and length."""
     if labels is None:
         raise ValueError(f"'{name}' should not be None.")
@@ -133,13 +133,13 @@ def check_labels(labels=None, name="labels", vals_requiered=None, len_requiered=
     if len_requiered is not None and len(labels) != len_requiered:
         raise ValueError(f"'{name}' (n={len(labels)}) should contain {len_requiered} values.")
     # Check for minimum length per group
-    if len_per_group_requiered is not None:
+    if n_per_group_requiered is not None:
         label_counts = {label: np.sum(labels == label) for label in unique_labels}
         underrepresented_labels = {label: count for label, count in label_counts.items() if
-                                   count < len_per_group_requiered}
+                                   count < n_per_group_requiered}
         if underrepresented_labels:
             raise ValueError(
-                f"Each label should have at least {len_per_group_requiered} occurrences. "
+                f"Each label should have at least {n_per_group_requiered} occurrences. "
                 f"Underrepresented labels: {underrepresented_labels}")
     return labels
 
