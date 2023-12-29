@@ -27,12 +27,12 @@ def comp_auc_adjusted(X : ut.ArrayLike2D = None,
                       label_ref: int = 0,
                       ) -> ut.ArrayLike1D:
     """
-    Compute the adjusted Area Under the (receiver operating characteristic) Curve (denoted 'AUC*') for
+    Compute an adjusted Area Under the (receiver operating characteristic) Curve (AUC) for
     each feature in the dataset X, comparing two groups specified by the labels.
 
-    This adjusted AUC is based on the non-parametric measure of the difference between two groups,
+    This adjusted AUC (denoted 'AUC*') is based on the non-parametric measure of the difference between two groups,
     as introduced in [Breimann24c]_. The adjustment of AUC subtracts 0.5, so it ranges between -0.5 and 0.5.
-    An AUC of 0 indicates an equal distribution between the two groups. This measure is useful for ranking features
+    An AUC* of 0 indicates an equal distribution between the two groups. This measure is useful for ranking features
     based on their ability to distinguish between the two groups.
 
     Parameters
@@ -50,7 +50,7 @@ def comp_auc_adjusted(X : ut.ArrayLike2D = None,
     Returns
     -------
     auc : array-like, shape (n_features,)
-        Adjusted Area Under the Curve (AUC*) values for each feature, ranging from [-0.5, 0.5].
+        Array with AUC* values for each feature, ranging from [-0.5, 0.5].
         A value of 0 indicates equal distributions between the two groups for that feature.
 
     Examples

@@ -64,9 +64,9 @@ class CPP(Tool):
             DataFrame with sequence parts.
         split_kws : dict, optional
             Dictionary with parameter dictionary for each chosen split_type. Default from :meth:`SequenceFeature.get_split_kws`.
-        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales)
+        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales), optional
             DataFrame with amino acid scales. Default from :meth:`load_scales` with ``name='scales'``.
-        df_cat : pd.DataFrame, shape (n_scales, n_scales_info)
+        df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
             DataFrame with categories for physicochemical amino acid scales.
             Default from :meth:`load_scales` with ``name='scales_cat'``.
         accept_gaps : bool, default=False

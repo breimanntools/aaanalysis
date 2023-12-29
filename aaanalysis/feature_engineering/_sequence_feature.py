@@ -351,9 +351,9 @@ class SequenceFeature:
             Class label of test group in ``labels``.
         label_ref : int, default=0,
             Class label of reference group in ``labels``.
-        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales)
+        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales), optional
             DataFrame with amino acid scales. Default from :meth:`load_scales` with ``name='scales'``.
-        df_cat : pd.DataFrame, shape (n_scales, n_scales_info)
+        df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
             DataFrame with categories for physicochemical amino acid scales.
             Default from :meth:`load_scales` with ``name='scales_cat'``.
         start : int, default=1
@@ -364,10 +364,10 @@ class SequenceFeature:
             Length of JMD-N (>=0).
         jmd_c_len : int, default=10
             Length of JMD-C (>=0).
-        accept_gaps : bool, default=False
-            Whether to accept missing values by enabling omitting for computations (if True).
         parametric : bool, default=False
             Whether to use parametric (T-test) or non-parametric (Mann-Whitney-U-test) test for p-value computation.
+        accept_gaps : bool, default=False
+            Whether to accept missing values by enabling omitting for computations (if True).
         n_jobs : int, default=1
             The number of jobs to run in parallel. If ``None``, it will be set to the maximum.
 
@@ -406,10 +406,11 @@ class SequenceFeature:
                                  len_requiered=len(df_parts), allow_other_vals=False)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
-        ut.check_bool(name="accept_gaps", val=accept_gaps)
         ut.check_bool(name="parametric", val=parametric)
+        ut.check_bool(name="accept_gaps", val=accept_gaps)
         check_match_df_parts_features(df_parts=df_parts, features=features)
         check_match_df_scales_features(df_scales=df_scales, features=features)
+        check_match_features_seq_parts(features=features, **args_len)
         check_match_df_scales_df_cat(df_scales=df_scales, df_cat=df_cat, verbose=self.verbose)
         df_parts = check_match_df_parts_df_scales(df_scales=df_scales, df_parts=df_parts, accept_gaps=accept_gaps)
         check_match_labels_label_test_label_ref(labels=labels, label_test=label_test, label_ref=label_ref)
@@ -443,7 +444,7 @@ class SequenceFeature:
             Ids of features for which matrix of feature values should be created.
         df_parts : pd.DataFrame, shape (n_samples, n_parts)
             DataFrame with sequence parts.
-        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales)
+        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales), optional
             DataFrame with amino acid scales. Default from :meth:`load_scales` with ``name='scales'``.
         accept_gaps: bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
@@ -503,7 +504,7 @@ class SequenceFeature:
             Whether to create DataFrame with all possible sequence parts (if ``True``) or parts given by list_parts.
         split_kws : dict, optional
             Dictionary with parameter dictionary for each chosen split_type. Default from :meth:`SequenceFeature.get_split_kws`.
-        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales)
+        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales), optional
             DataFrame with amino acid scales. Default from :meth:`load_scales` with ``name='scales'``.
 
         Returns
@@ -543,7 +544,7 @@ class SequenceFeature:
         ----------
         features : array-like, shape (n_features,)
             List of feature ids.
-        df_cat : pd.DataFrame, shape (n_scales, n_scales_info)
+        df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
             DataFrame with categories for physicochemical amino acid scales.
             Default from :meth:`load_scales` with ``name='scales_cat'``.
         start : int, default=1
