@@ -433,6 +433,9 @@ def check_list_parts(list_parts=None, return_default=True, all_parts=False, acce
             return  # skip further checks
         else:
             raise ValueError(f"'list_parts' must be list with selection of following parts: {LIST_ALL_PARTS}")
+    # Check if empty list
+    if len(list_parts) == 0:
+        raise ValueError(f"'list_parts' should not be empty list.")
     # Check for invalid parts
     wrong_parts = [x for x in list_parts if x not in LIST_ALL_PARTS]
     if len(wrong_parts) > 0:

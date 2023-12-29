@@ -170,8 +170,8 @@ class CPPPlot:
         """
         Parameters
         ----------
-        df_scales
-            DataFrame with amino acid scales. Default from :meth:`load_scales` with 'name'='scales_cat'.
+        df_scales : pd.DataFrame, shape (n_features, n_scales), optional
+            DataFrame with scales (features are typically amino acids). Default from :meth:`load_scales` with ``
         df_cat
             DataFrame with default categories for physicochemical amino acid scales.
             Default from :meth:`load_categories`

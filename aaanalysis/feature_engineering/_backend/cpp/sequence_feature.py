@@ -33,15 +33,15 @@ def get_split_kws_(n_split_min=1, n_split_max=15, steps_pattern=None, n_min=2, n
 
 
 # Features
-def get_features_(list_parts=None, split_kws=None, df_scales=None):
+def get_features_(list_parts=None, split_kws=None, list_scales=None):
     """Create list of all feature ids for given Parts, Splits, and Scales"""
-    scales = list(df_scales)
     spr = SplitRange()
     features = []
     for split_type in split_kws:
         args = split_kws[split_type]
         labels_s = getattr(spr, "labels_" + split_type.lower())(**args)
-        features.extend(["{}-{}-{}".format(p.upper(), s, sc) for p in list_parts for s in labels_s for sc in scales])
+        features.extend(["{}-{}-{}".format(p.upper(), s, sc) for p in list_parts for s in labels_s
+                         for sc in list_scales])
     return features
 
 

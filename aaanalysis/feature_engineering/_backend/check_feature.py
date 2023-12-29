@@ -301,7 +301,6 @@ def check_match_df_parts_split_kws(df_parts=None, split_kws=None):
 
 
 # Check df_scales & df_cat
-# TODO check if can be simplified
 def check_df_scales(df_scales=None, accept_none=False):
     """Check if df_scales is a valid input and matching to df_parts"""
     ut.check_df(name="df_scales", df=df_scales, accept_none=accept_none)

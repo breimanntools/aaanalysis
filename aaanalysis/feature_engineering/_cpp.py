@@ -64,8 +64,8 @@ class CPP(Tool):
             DataFrame with sequence parts.
         split_kws : dict, optional
             Dictionary with parameter dictionary for each chosen split_type. Default from :meth:`SequenceFeature.get_split_kws`.
-        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales), optional
-            DataFrame with amino acid scales. Default from :meth:`load_scales` with ``name='scales'``.
+        df_scales : pd.DataFrame, shape (n_features, n_scales), optional
+            DataFrame with scales (features are typically amino acids). Default from :meth:`load_scales` with ``name='scales'``.
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
             DataFrame with categories for physicochemical amino acid scales.
             Default from :meth:`load_scales` with ``name='scales_cat'``.
@@ -197,15 +197,17 @@ class CPP(Tool):
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         ut.check_number_range(name="n_process", val=n_processes, min_val=1, accept_none=True, just_int=True)
         # Settings and creation of objects
-        args = dict(split_kws=self.split_kws, df_scales=self.df_scales)
-        n_feat = len(get_features_(**args, list_parts=list(self.df_parts)))
+        n_feat = len(get_features_(list_parts=list(self.df_parts),
+                                   split_kws=self.split_kws,
+                                   list_scales=list(self.df_scales)))
         n_filter = n_feat if n_feat < n_filter else n_filter
         if self._verbose:
             ut.print_out(f"1. CPP creates {n_feat} features for {len(self.df_parts)} samples")
             ut.print_start_progress()
         # Pre-filtering: Select best n % of feature (filter_pct) based std(test set) and mean_dif
-        abs_mean_dif, std_test, features = pre_filtering_info(**args,
-                                                              df_parts=self.df_parts,
+        abs_mean_dif, std_test, features = pre_filtering_info(df_parts=self.df_parts,
+                                                              split_kws=self.split_kws,
+                                                              df_scales=self.df_scales,
                                                               labels=labels,
                                                               label_test=label_test,
                                                               label_ref=label_ref,

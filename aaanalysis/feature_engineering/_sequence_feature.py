@@ -109,9 +109,9 @@ class SequenceFeature:
         - ``TMD (target middle domain)``: Protein domain of interest with varying length,
           such as the transmembrane domain (TMD) of γ-secretase substrates (see [Breimann24c]_).
         - ``JMD-N (juxta middle domain N-terminal)``: Protein domain or sequence region directly N-terminally next
-          to the TMD, typically set to a fixed length (e.g., 10 for γ-secretase substrates).
+          to the TMD, typically set to a fixed length (10 by default).
         - ``JMD-C (juxta middle domain C-terminal)``: Protein domain or sequence region directly C-terminally next
-          to the TMD, typically set to a fixed length (e.g., 10 for γ-secretase substrates).
+          to the TMD, typically set to a fixed length (10 by default).
 
     Feature: Part + Split + Scale
         Physicochemical property (expressed as numerical scale) present at distinct amino acid
@@ -351,8 +351,8 @@ class SequenceFeature:
             Class label of test group in ``labels``.
         label_ref : int, default=0,
             Class label of reference group in ``labels``.
-        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales), optional
-            DataFrame with amino acid scales. Default from :meth:`load_scales` with ``name='scales'``.
+        df_scales : pd.DataFrame, shape (n_features, n_scales), optional
+            DataFrame with scales (features are typically amino acids). Default from :meth:`load_scales` with ``
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
             DataFrame with categories for physicochemical amino acid scales.
             Default from :meth:`load_scales` with ``name='scales_cat'``.
@@ -444,8 +444,8 @@ class SequenceFeature:
             Ids of features for which matrix of feature values should be created.
         df_parts : pd.DataFrame, shape (n_samples, n_parts)
             DataFrame with sequence parts.
-        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales), optional
-            DataFrame with amino acid scales. Default from :meth:`load_scales` with ``name='scales'``.
+        df_scales : pd.DataFrame, shape (n_features, n_scales), optional
+            DataFrame with scales (features are typically amino acids). Default from :meth:`load_scales` with ``name='scales'``.
         accept_gaps: bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
         n_jobs : int, default=1
@@ -491,7 +491,7 @@ class SequenceFeature:
                      list_parts: Optional[List[str]] = None,
                      all_parts: bool = False,
                      split_kws: Optional[dict] = None,
-                     df_scales: Optional[pd.DataFrame] = None,
+                     list_scales: Optional[List[str]] = None,
                      ) -> List[str]:
         """
         Create list of all feature ids for given Parts, Splits, and Scales.
@@ -504,8 +504,8 @@ class SequenceFeature:
             Whether to create DataFrame with all possible sequence parts (if ``True``) or parts given by list_parts.
         split_kws : dict, optional
             Dictionary with parameter dictionary for each chosen split_type. Default from :meth:`SequenceFeature.get_split_kws`.
-        df_scales : pd.DataFrame, shape (n_amino_acids, n_scales), optional
-            DataFrame with amino acid scales. Default from :meth:`load_scales` with ``name='scales'``.
+        list_scales : list of str, optional
+            Names of scales. Default scales from :meth:`load_scales` with ``name='scales'``.
 
         Returns
         -------
@@ -517,17 +517,17 @@ class SequenceFeature:
         .. include:: examples/sf_get_features.rst
         """
         # Load defaults
-        if df_scales is None:
-            df_scales = ut.load_default_scales()
+        if list_scales is None:
+            list_scales = list(ut.load_default_scales())
         if split_kws is None:
             split_kws = self.get_split_kws()
         # Check input
         ut.check_bool(name="all_parts", val=all_parts)
         list_parts = ut.check_list_parts(list_parts=list_parts, all_parts=all_parts)
         check_split_kws(split_kws=split_kws)
-        check_df_scales(df_scales=df_scales, accept_none=True)
+        list_scales = ut.check_list_like(name="list_scales", val=list_scales, accept_none=False)
         # Get features
-        features = get_features_(list_parts=list_parts, split_kws=split_kws, df_scales=df_scales)
+        features = get_features_(list_parts=list_parts, split_kws=split_kws, list_scales=list_scales)
         return features
 
     @staticmethod
