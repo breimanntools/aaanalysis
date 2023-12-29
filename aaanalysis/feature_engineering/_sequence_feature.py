@@ -91,7 +91,6 @@ def check_match_df_parts_label_test_label_ref(df_parts=None, labels=None, label_
                              f"\n Add them to the current parts of 'df_parts': {list_parts}")
 
 
-# TODO update docstring, testing, examples
 # II Main Functions
 class SequenceFeature:
     """
@@ -357,7 +356,7 @@ class SequenceFeature:
             DataFrame with categories for physicochemical amino acid scales.
             Default from :meth:`load_scales` with ``name='scales_cat'``.
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus). Should contain two unique label values.
+            Position label of first amino acid position (starting at N-terminus).
         tmd_len : int, default=20
             Length of TMD (>0).
         jmd_n_len : int, default=10
@@ -605,14 +604,14 @@ class SequenceFeature:
                               jmd_c_seq: Optional[str] = None,
                               ) -> ut.ArrayLike1D:
         """
-        Create for features a list of corresponding positions.
+        Create for features a list of corresponding positions or amino acids.
 
         Parameters
         ----------
         features : array-like, shape (n_features,)
             List of feature ids.
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus, >=0).
+            Position label of first amino acid position (starting at N-terminus).
         tmd_len : int, default=20
             Length of TMD (>0).
         jmd_n_len : int, default=10
@@ -672,12 +671,13 @@ class SequenceFeature:
         ----------
         df_feat : pd.DataFrame, shape (n_features, n_features_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
-        col_value : {'abs_auc', 'mean_dif', 'std_test', 'feat_importance', 'feat_impact', ...}, default='mean_dif'
-            Column name in ``df_feat`` containing numerical values to aggregate.
+        col_value : {'abs_auc', 'abs_mean_dif', 'mean_dif', 'std_test', 'std_ref'}, default='mean_dif'
+            Column name in ``df_feat`` containing numerical values to aggregate. If feature importance and impact
+            are obtained, columns can also include {'feat_importance', 'feat_impact'}.
         col_cat : {'category', 'subcategory', 'scale_name'}, default='category'
             Column name in ``df_feat`` for categorizing the numerical values during aggregation.
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus, >=0).
+            Position label of first amino acid position (starting at N-terminus).
         tmd_len : int, default=20
             Length of TMD (>0).
         jmd_n_len : int, default=10

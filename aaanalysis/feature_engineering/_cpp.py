@@ -148,7 +148,7 @@ class CPP(Tool):
         parametric : bool, default=False
             Whether to use parametric (T-test) or non-parametric (Mann-Whitney-U-test) test for p-value computation.
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus, >=0).
+            Position label of first amino acid position (starting at N-terminus).
         tmd_len : int, default=20
             Length of TMD (>0).
         jmd_n_len : int, default=10

@@ -422,7 +422,8 @@ def check_df_seq(df_seq=None, accept_none=False):
 def check_list_parts(list_parts=None, return_default=True, all_parts=False, accept_none=False):
     """Check if parts from list_parts are columns of df_seq"""
     try:
-        list_parts = check_list_like(name="list_parts", val=list_parts, accept_none=True, accept_str=True)
+        list_parts = check_list_like(name="list_parts", val=list_parts, accept_none=True,
+                                     accept_str=True, convert=True)
     except ValueError:
         raise ValueError(f"'list_parts' must be list with selection of following parts: {LIST_ALL_PARTS}")
     if list_parts is None:

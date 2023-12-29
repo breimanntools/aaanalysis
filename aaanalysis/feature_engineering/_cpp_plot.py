@@ -379,7 +379,7 @@ class CPPPlot:
         tmd_len : int, default=20
             Length of the TMD.
         start : int, default=1
-            Start position.
+            Position label of first amino acid position (starting at N-terminus).
         jmd_n_seq : str, optional
             JMD N-terminal sequence.
         tmd_seq : str, optional
@@ -563,7 +563,7 @@ class CPPPlot:
         tmd_len : int, default=20
             Length of TMD to be depicted (>0).
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus, >=1).
+            Position label of first amino acid position (starting at N-terminus).
         tmd_seq : str, optional
             Sequence of TMD. 'tmd_len' is set to length of TMD if sequence for TMD, JMD-N and JMD-C are given.
             Recommended if feature impact or mean difference should be depicted for one sample.

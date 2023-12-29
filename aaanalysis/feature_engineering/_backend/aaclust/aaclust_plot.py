@@ -4,18 +4,15 @@ This is a script for the backend of the AAclustPlot object for all plotting func
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import matplotlib.ticker as mticker
 from sklearn.decomposition import PCA
 from scipy.cluster.hierarchy import linkage, leaves_list
 
 import aaanalysis.utils as ut
 from ._utils_aaclust import _compute_medoids, _compute_centers
 
-# TODO add some (used for dPULearn eval plot) to plotting utility
 # I Helper Functions
 # Computation helper functions
 def _get_mean_rank(data):
-    """"""
     _df = data.copy()
     _df['BIC_rank'] = _df[ut.COL_BIC].rank(ascending=False)
     _df['CH_rank'] = _df[ut.COL_CH].rank(ascending=False)
