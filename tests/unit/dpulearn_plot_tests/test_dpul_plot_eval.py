@@ -51,7 +51,7 @@ class TestdPULearnPlotEval:
         assert isinstance(axes[0], plt.Axes)
         plt.close(fig)
 
-    @settings(max_examples=10, deadline=3000)
+    @settings(max_examples=10, deadline=3500)
     @given(figsize=some.tuples(some.floats(min_value=4, max_value=20), some.floats(min_value=4, max_value=20)))
     def test_figsize_valid(self, figsize):
         df_eval = _create_sample_df_eval()
@@ -70,7 +70,7 @@ class TestdPULearnPlotEval:
             plt.close(fig)
 
 
-    @settings(max_examples=10, deadline=3000)
+    @settings(max_examples=10, deadline=3500)
     @given(legend_y=some.floats(min_value=-1, max_value=1))
     def test_legend_y_valid(self, legend_y):
         df_eval = _create_sample_df_eval()

@@ -154,6 +154,10 @@ class TestGetDfFeat:
         sf = aa.SequenceFeature()
         with pytest.raises(Exception):
             sf.get_df_feat(features=None, df_parts=df_parts, labels=labels)
+        with pytest.raises(Exception):
+            sf.get_df_feat(features=[], df_parts=df_parts, labels=labels)
+        with pytest.raises(Exception):
+            sf.get_df_feat(features="asdf", df_parts=df_parts, labels=labels)
 
     def test_invalid_df_parts(self):
         """Test with invalid 'df_parts' DataFrame inputs."""

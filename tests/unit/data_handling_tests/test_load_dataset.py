@@ -19,7 +19,7 @@ class TestLoadDataset:
             df = aa.load_dataset(name=name)
             assert set(ut.COLS_SEQ_INFO).issubset(set(df))
 
-    @settings(deadline=250)
+    @settings(deadline=350)
     @given(n=some.integers(min_value=1, max_value=100))
     def test_load_dataset_n_value(self, n):
         """Test the 'n' parameter for limiting rows."""

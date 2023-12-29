@@ -454,7 +454,7 @@ class SequenceFeature:
         Returns
         -------
         feat_matrix: array-like , shape (n_samples, n_features)
-            Feature values of samples.
+            Feature values for samples.
 
         Notes
         -----

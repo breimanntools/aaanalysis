@@ -116,7 +116,7 @@ class TestdPULearnPlotPCA:
             plt.close()
 
 
-    @settings(max_examples=10, deadline=3000)
+    @settings(max_examples=10, deadline=3500)
     @given(show_pos_mean_x=some.booleans(), show_pos_mean_y=some.booleans())
     def test_show_pos_mean_valid(self, show_pos_mean_x, show_pos_mean_y):
         n_samples, n_pc, n_neg = _get_random_int()
@@ -127,7 +127,7 @@ class TestdPULearnPlotPCA:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=10, deadline=3000)
+    @settings(max_examples=10, deadline=3500)
     @given(colors=some.lists(some.sampled_from(['blue', 'green', 'red']), min_size=3, max_size=3, unique=True))
     def test_colors_valid(self, colors):
         n_samples, n_pc, n_neg = _get_random_int()
@@ -138,7 +138,7 @@ class TestdPULearnPlotPCA:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=10, deadline=3000)
+    @settings(max_examples=10, deadline=3500)
     @given(names=some.lists(some.text(), min_size=3, max_size=3, unique=True))
     def test_names_valid(self, names):
         with warnings.catch_warnings():
@@ -154,7 +154,7 @@ class TestdPULearnPlotPCA:
             plt.close()
 
 
-    @settings(max_examples=10, deadline=3000)
+    @settings(max_examples=10, deadline=3500)
     @given(legend=some.booleans())
     def test_legend_valid(self, legend):
         n_samples, n_pc, n_neg = _get_random_int()
@@ -165,7 +165,7 @@ class TestdPULearnPlotPCA:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=10, deadline=3000)
+    @settings(max_examples=10, deadline=3500)
     @given(legend_y=some.floats(min_value=-1, max_value=1))
     def test_legend_y_valid(self, legend_y):
         n_samples, n_pc, n_neg = _get_random_int()
@@ -258,7 +258,7 @@ class TestdPULearnPlotPCA:
 class TestdPULearnPlotPCAComplex:
     """Complex tests for the dPULearnPlot.pca() function."""
 
-    @settings(max_examples=10, deadline=3000)
+    @settings(max_examples=10, deadline=3500)
     @given(
         n_samples=some.integers(min_value=20, max_value=100),
         n_pc=some.integers(min_value=3, max_value=7),

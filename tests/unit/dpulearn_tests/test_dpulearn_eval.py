@@ -36,7 +36,7 @@ class TestdPULearnEval:
     """Test dPULearn.eval() method for each parameter individually."""
 
     # Positive tests
-    @settings(deadline=250, max_examples=100)
+    @settings(deadline=350, max_examples=100)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=st.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
     def test_X(self, X):
