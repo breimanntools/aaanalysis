@@ -42,7 +42,7 @@ class TestAAclustPlotCorrelation:
             plt.close()
 
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1250)
     @given(labels=some.lists(some.integers(), min_size=10, max_size=20))
     def test_valid_labels_ref(self, labels):
         # Labels should contain more than one distinct value

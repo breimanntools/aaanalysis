@@ -13,6 +13,12 @@ import aaanalysis.utils as ut
 
 
 # I Helper Functions
+def post_check_vf_scale(feature_values=None):
+    """Check if feature_values/X does contain nans due to gaps"""
+    if np.isnan(feature_values).any():
+        raise ValueError("Some input sequences result in NaN feature values most likely due to gaps ('-').")
+
+
 def get_vf_scale(dict_scale=None, accept_gaps=False):
     """Vectorized function to calculate the mean for a feature"""
     if not accept_gaps:
@@ -22,16 +28,13 @@ def get_vf_scale(dict_scale=None, accept_gaps=False):
         # Except NaN derived from 'X' in sequence if not just 'X' in sequence (3x slower)
         def get_mean_excepting_nan(x):
             vals = np.array([dict_scale.get(a, np.NaN) for a in x])
-            # TODO!! check if working with nan possible
-            #if np.isnan(vals).all():
-            #    raise ValueError(f"Not all values in sequence split ('{x}') should result in NaN")
             return vals
         vf_scale = np.vectorize(lambda x: np.nanmean(get_mean_excepting_nan(x)))
     return vf_scale
 
 
 def _get_split_info(split=None):
-    """"""
+    """Parse split information"""
     split = split.replace(" ", "")  # remove whitespace
     # Check Segment
     if ut.STR_SEGMENT in split:
@@ -121,13 +124,15 @@ def _feature_value(df_parts=None, split=None, dict_scale=None, accept_gaps=False
     # Combine part split and scale to get feature values
     part_split = vf_split(df_parts)
     feature_value = np.round(vf_scale(part_split), 5)  # feature values
+    if accept_gaps:
+        post_check_vf_scale(feature_values=feature_value)
     return feature_value
 
 
-def _feature_matrix(feat_names, dict_all_scales, df_parts, accept_gaps):
+def _feature_matrix(features, dict_all_scales, df_parts, accept_gaps):
     """Helper function to create feature matrix via multiple processing"""
-    X = np.empty([len(df_parts), len(feat_names)])
-    for i, feat_name in enumerate(feat_names):
+    X = np.empty([len(df_parts), len(features)])
+    for i, feat_name in enumerate(features):
         part, split, scale = feat_name.split("-")
         dict_scale = dict_all_scales[scale]
         X[:, i] = _feature_value(split=split,
@@ -190,7 +195,7 @@ def get_positions_(features=None, start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=1
 
 
 def get_amino_acids_(features=None, tmd_seq="", jmd_n_seq="", jmd_c_seq=""):
-    """"""
+    """Create amino acid segments/patterns for features"""
     features = [features] if type(features) is str else features
     pos = get_positions_(features=features, tmd_len=len(tmd_seq), jmd_n_len=len(jmd_n_seq),
                          jmd_c_len=len(jmd_c_seq), start=0)
@@ -203,16 +208,22 @@ def get_amino_acids_(features=None, tmd_seq="", jmd_n_seq="", jmd_c_seq=""):
 
 def get_feature_matrix_(features=None, df_parts=None, df_scales=None, accept_gaps=False, n_jobs=None):
     """Create feature matrix for given feature ids and sequence parts."""
-    # Create feature matrix using parallel processing
     features = [features] if type(features) is str else features
     dict_all_scales = _get_dict_all_scales(df_scales=df_scales)
-    n_processes = min([os.cpu_count(), len(features)]) if n_jobs is None else n_jobs
+    # Convert features to list if needed
     features = features.to_list() if isinstance(features, pd.Series) else features
-    feat_chunks = np.array_split(features, n_processes)
-    args = zip(feat_chunks, repeat(dict_all_scales), repeat(df_parts), repeat(accept_gaps))
-    with mp.get_context("spawn").Pool(processes=n_processes) as pool:
-        result = pool.starmap(_feature_matrix, args)
-    feat_matrix = np.concatenate(result, axis=1)
+    # Feature creation
+    if n_jobs == 1:
+        # Run in a single process
+        feat_matrix = _feature_matrix(features, dict_all_scales, df_parts, accept_gaps)
+    else:
+        # Run in multiple processes
+        n_processes = min([os.cpu_count(), len(features)]) if n_jobs is None else n_jobs
+        feat_chunks = np.array_split(features, n_processes)
+        args = zip(feat_chunks, repeat(dict_all_scales), repeat(df_parts), repeat(accept_gaps))
+        with mp.get_context("spawn").Pool(processes=n_processes) as pool:
+            result = pool.starmap(_feature_matrix, args)
+        feat_matrix = np.concatenate(result, axis=1)
     return feat_matrix
 
 

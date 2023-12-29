@@ -63,12 +63,15 @@ def get_feature_names_(features=None, df_cat=None, tmd_len=20, jmd_c_len=10, jmd
     return feat_names
 
 
-def get_df_feat_(features=None, df_parts=None, labels=None, df_scales=None, df_cat=None, accept_gaps=False,
-                 parametric=False, start=1, tmd_len=20, jmd_c_len=10, jmd_n_len=10):
+def get_df_feat_(features=None, df_parts=None, labels=None,
+                 label_test=1, label_ref=0, df_scales=None, df_cat=None,
+                 accept_gaps=False, parametric=False,
+                 start=1, tmd_len=20, jmd_c_len=10, jmd_n_len=10, n_jobs=1):
     """Create df feature for comparing groups and or samples"""
-    X = get_feature_matrix_(features=features, df_parts=df_parts, df_scales=df_scales, accept_gaps=accept_gaps)
-    mask_ref = [x == 0 for x in labels]
-    mask_test = [x == 1 for x in labels]
+    X = get_feature_matrix_(features=features, df_parts=df_parts, df_scales=df_scales,
+                            accept_gaps=accept_gaps, n_jobs=n_jobs)
+    mask_test = [x == label_test for x in labels]
+    mask_ref = [x == label_ref for x in labels]
     mean_dif = X[mask_test].mean(axis=0) - X[mask_ref].mean(axis=0)
     abs_mean_dif = abs(mean_dif)
     std_test = X[mask_test].std(axis=0)
@@ -79,12 +82,12 @@ def get_df_feat_(features=None, df_parts=None, labels=None, df_scales=None, df_c
     df[ut.COL_POSITION] = get_positions_(features=features, start=start, jmd_n_len=jmd_n_len, tmd_len=tmd_len,
                                          jmd_c_len=jmd_c_len)
     if sum(mask_test) == 1:
-        position = np.where(labels == 1)[0][0]
+        position = np.where(labels == label_test)[0][0]
         jmd_n_seq, tmd_seq, jmd_c_seq = df_parts[[ut.COL_JMD_N, ut.COL_TMD, ut.COL_JMD_C]].iloc[position].values
         df[ut.COL_AA_TEST] = get_amino_acids_(features=features, jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq,
                                               jmd_c_seq=jmd_c_seq)
     if sum(mask_ref) == 1:
-        position = np.where(labels == 0)[0][0]
+        position = np.where(labels == label_ref)[0][0]
         jmd_n_seq, tmd_seq, jmd_c_seq = df_parts[[ut.COL_JMD_N, ut.COL_TMD, ut.COL_JMD_C]].iloc[position].values
         df[ut.COL_AA_REF] = get_amino_acids_(features=features, jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq,
                                              jmd_c_seq=jmd_c_seq)

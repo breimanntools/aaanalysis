@@ -103,6 +103,8 @@ def check_X_unique_samples(X, min_n_unique_samples=3):
                          f"\nX = {X}")
     return X
 
+
+
 def check_labels(labels=None, name="labels", vals_requiered=None, len_requiered=None, allow_other_vals=True,
                  len_per_group_requiered=None):
     """Check the provided labels against various criteria like type, required values, and length."""

@@ -7,7 +7,7 @@ from itertools import repeat
 import warnings
 
 import aaanalysis.utils as ut
-from .utils_feature import get_vf_scale, get_feature_matrix_
+from .utils_feature import get_vf_scale, get_feature_matrix_, post_check_vf_scale
 from ._utils_feature_stat import add_stat_
 from ._split import SplitRange
 
@@ -78,10 +78,11 @@ def _pre_filtering_info(list_scales, dict_all_scales, labels_ps, splittings, acc
         feat_names[start:end] = ["{}-{}".format(ps, scale) for ps in labels_ps]
         # Feature matrix
         vf_scale = get_vf_scale(dict_scale=dict_scale, accept_gaps=accept_gaps)
-        # TODO check missing values in ML
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)    # Filter numpy warning: "Mean of emtpy slice"
             X = np.round(vf_scale(splittings), 5)
+        if accept_gaps:
+            post_check_vf_scale(feature_values=X)
         # Ranking infos
         abs_mean_dif[start:end] = abs(np.mean(X[mask_1], axis=0) - np.mean(X[mask_0], axis=0))
         std_test[start:end] = np.std(X[mask_1], axis=0)
@@ -102,8 +103,8 @@ def _filtering_info(df=None, df_scales=None, check_cat=True):
 
 # II Main functions
 # Filtering methods
-def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None, y=None, accept_gaps=False, verbose=True,
-                       n_processes=None):
+def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None, labels=None, label_test=1, label_ref=0,
+                       accept_gaps=False, verbose=True, n_processes=None, ):
     """Get n best features in descending order based on the abs(mean(group1) - mean(group0),
     where group 1 is the target group
 
@@ -115,8 +116,12 @@ def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None, y=None, ac
         Nested dictionary with parameter dictionary for each chosen split_type.
     df_scales: :class:`pandas.DataFrame`, default=SequenceFeature.load_scales
         DataFrame with default amino acid scales.
-    y: array-like, shape (n_samples)
+    labels: array-like, shape (n_samples)
         Class labels for samples in df_parts.
+    label_test : int, default=1,
+        Class label of test group in ``labels``.
+    label_ref : int, default=0,
+        Class label of reference group in ``labels``.
     accept_gaps: bool, default=False
         Whether to accept missing values by enabling omitting for computations (if True).
     verbose: bool, default=True
@@ -134,25 +139,27 @@ def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None, y=None, ac
         Names of all possible features for combination of Parts, Splits, and Scales.
     """
     # Input (df_parts, split_kws, df_scales, y) checked in main method (CPP.run())
-    mask_0 = [x == 0 for x in y]
-    mask_1 = [x == 1 for x in y]
+    mask_ref = [x == label_ref for x in labels]
+    mask_test = [x == label_test for x in labels]
     splittings, labels_ps = _splitting(split_kws=split_kws, df_parts=df_parts)
     list_scales = list(df_scales)
     dict_all_scales = {col: dict(zip(df_scales.index.to_list(), df_scales[col])) for col in list_scales}
-    if n_processes is None or n_processes != 1:
-        # Multiprocessing for filtering of features
+    # Feature filtering
+    if n_processes == 1:
+        # Run in a single process
+        args = [list_scales, dict_all_scales, labels_ps, splittings, accept_gaps, mask_ref, mask_test, verbose]
+        abs_mean_dif, std_test, feat_names = _pre_filtering_info(*args)
+    else:
+        # Run in multiple processes
         n_processes = min([os.cpu_count(), len(list_scales)])
         scale_chunks = np.array_split(list_scales, n_processes)
         args = zip(scale_chunks, repeat(dict_all_scales), repeat(labels_ps), repeat(splittings), repeat(accept_gaps),
-                   repeat(mask_0), repeat(mask_1), repeat(verbose))
+                   repeat(mask_ref), repeat(mask_test), repeat(verbose))
         with mp.get_context("spawn").Pool(processes=n_processes) as pool:
             result = pool.starmap(_pre_filtering_info, args)
         abs_mean_dif = np.concatenate([x[0] for x in result])
         std_test = np.concatenate([x[1] for x in result])
         feat_names = np.concatenate([x[2] for x in result])
-    else:
-        args = [list_scales, dict_all_scales, labels_ps, splittings, accept_gaps, mask_0, mask_1, verbose]
-        abs_mean_dif, std_test, feat_names = _pre_filtering_info(*args)
     return abs_mean_dif, std_test, feat_names
 
 def pre_filtering(features=None, abs_mean_dif=None, std_test=None, max_std_test=0.2, n=10000):

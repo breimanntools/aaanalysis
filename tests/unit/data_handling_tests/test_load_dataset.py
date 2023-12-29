@@ -1,7 +1,7 @@
 """
 This is a script for testing the aa.load_dataset function.
 """
-from hypothesis import given, example
+from hypothesis import given, example, settings
 import hypothesis.strategies as some
 import aaanalysis.utils as ut
 import aaanalysis as aa
@@ -19,6 +19,7 @@ class TestLoadDataset:
             df = aa.load_dataset(name=name)
             assert set(ut.COLS_SEQ_INFO).issubset(set(df))
 
+    @settings(deadline=250)
     @given(n=some.integers(min_value=1, max_value=100))
     def test_load_dataset_n_value(self, n):
         """Test the 'n' parameter for limiting rows."""

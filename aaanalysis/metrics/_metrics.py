@@ -22,11 +22,13 @@ def _check_n_classes_n_samples(X=None, labels=None):
 
 # Adjusted Area Under the Curve (AUC)
 def comp_auc_adjusted(X : ut.ArrayLike2D = None,
-                      labels : ut.ArrayLike1D =None
+                      labels : ut.ArrayLike1D = None,
+                      label_test: int = 1,
+                      label_ref: int = 0,
                       ) -> ut.ArrayLike1D:
     """
-    Compute the adjusted Area Under the (receiver operating characteristic) Curve (AUC) for each feature
-    in the dataset X, comparing two groups specified by the labels.
+    Compute the adjusted Area Under the (receiver operating characteristic) Curve (denoted 'AUC*') for
+    each feature in the dataset X, comparing two groups specified by the labels.
 
     This adjusted AUC is based on the non-parametric measure of the difference between two groups,
     as introduced in [Breimann24c]_. The adjustment of AUC subtracts 0.5, so it ranges between -0.5 and 0.5.
@@ -38,8 +40,12 @@ def comp_auc_adjusted(X : ut.ArrayLike2D = None,
     X : array-like, shape (n_samples, n_features)
         Feature matrix. 'Rows' typically correspond to proteins and 'columns' to features.
     labels : array-like, shape (n_samples,)
-        Dataset labels of samples in X. Should contain only two different integer label values, representing
-        two distinct groups (e.g., treatment and reference).
+        Dataset labels of samples in X. Should contain only two different integer label values,
+        representing test and reference group (typically, 1 and 0).
+    label_test : int, default=1,
+        Class label of test group in ``labels``.
+    label_ref : int, default=0,
+        Class label of reference group in ``labels``.
 
     Returns
     -------
@@ -54,7 +60,10 @@ def comp_auc_adjusted(X : ut.ArrayLike2D = None,
     # Check input
     X = ut.check_X(X=X, min_n_features=1)
     ut.check_X_unique_samples(X=X, min_n_unique_samples=1)
-    ut.check_labels(labels=labels)
+    ut.check_number_val(name="label_test", val=label_test, just_int=True, accept_none=False)
+    ut.check_number_val(name="label_ref", val=label_ref, just_int=True, accept_none=False)
+    ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
+                    len_per_group_requiered=2, allow_other_vals=False)
     ut.check_match_X_labels(X=X, labels=labels)
     # Compute adjusted AUC
     auc = auc_adjusted_(X=X, labels=labels)
@@ -130,10 +139,10 @@ def comp_kld(X : ut.ArrayLike2D = None,
         Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
     labels : array-like, shape (n_samples,)
         Labels for each sample in ``X``. Should contain only integer label values and at least 2 per class.
-    label_test : int, default=1
-        The label value in ``labels`` representing the test group for KLD calculation.
-    label_ref : int, default=0
-        The label value in ``labels`` representing the reference group for KLD calculation.
+    label_test : int, default=1,
+        Class label of test group in ``labels``.
+    label_ref : int, default=0,
+        Class label of reference group in ``labels``.
 
     Returns
     -------
@@ -167,7 +176,8 @@ def comp_kld(X : ut.ArrayLike2D = None,
     ut.check_X_unique_samples(X=X, min_n_unique_samples=3)
     ut.check_number_val(name="label_test", val=label_test, just_int=True, accept_none=False)
     ut.check_number_val(name="label_ref", val=label_ref, just_int=True, accept_none=False)
-    ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref], len_per_group_requiered=2)
+    ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
+                    len_per_group_requiered=2, allow_other_vals=False)
     ut.check_match_X_labels(X=X, labels=labels, check_variability_for_kld=True)
     # Compute tge Kullback-Leibler divergence
     try:

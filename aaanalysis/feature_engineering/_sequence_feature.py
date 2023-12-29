@@ -59,6 +59,36 @@ def warn_creation_of_feature_matrix(features=None, df_parts=None, name="Feature 
                   "so that 10^6 values are not exceeded."
         warnings.warn(warning)
 
+
+def check_match_labels_label_test_label_ref(labels=None, label_test=1, label_ref=0):
+    """Check if labels only contains label_test and label_ref"""
+    wrong_labels = [x for x in labels if x not in [label_ref, label_test]]
+    unique_wrong_labels = list(set(wrong_labels))
+    n_wrong_labels = len(unique_wrong_labels)
+    if n_wrong_labels > 0:
+        raise ValueError(f"'labels' contains {n_wrong_labels} wrong labels: {unique_wrong_labels}")
+
+
+def check_match_df_parts_label_test_label_ref(df_parts=None, labels=None, label_test=1, label_ref=0):
+    """Check if 'jmd_n', 'tmd', and 'jmd_c' in df_parts if amino acid for label_test or label_ref should be retrieved"""
+    list_parts = list(df_parts)
+    requiered_parts = ["jmd_n", "tmd", "jmd_c"]
+    mask_test = [x == label_test for x in labels]
+    mask_ref = [x == label_ref for x in labels]
+    if sum(mask_test) == 1:
+        missing_parts = [x for x in requiered_parts if x not in list_parts]
+        if len(missing_parts) > 0:
+            raise ValueError(f"'df_parts' misses '{missing_parts}' parts necessary to retrieve amino acid positions"
+                             f" for 'label_test' ({label_test}) if only one sample of it occurs in 'labels'."
+                             f"\n Add them to the current parts of 'df_parts': {list_parts}")
+    if sum(mask_ref) == 1:
+        missing_parts = [x for x in requiered_parts if x not in list_parts]
+        if len(missing_parts) > 0:
+            raise ValueError(f"'df_parts' misses '{missing_parts}' parts necessary to retrieve amino acid positions"
+                             f" for 'label_ref' ({label_ref}) if only one sample of it occurs in 'labels'."
+                             f"\n Add them to the current parts of 'df_parts': {list_parts}")
+
+
 # TODO update docstring, testing, examples
 # II Main Functions
 class SequenceFeature:
@@ -166,20 +196,20 @@ class SequenceFeature:
         Formats for ``df_seq`` are differentiated by their respective columns:
 
         ``Position-based format``
-        - 'sequence': The complete amino acid sequence.
-        - 'tmd_start': Starting positions of the TMD in the sequence.
-        - 'tmd_stop': Ending positions of the TMD in the sequence.
+            - 'sequence': The complete amino acid sequence.
+            - 'tmd_start': Starting positions of the TMD in the sequence.
+            - 'tmd_stop': Ending positions of the TMD in the sequence.
 
         ``Part-based format``
-        - 'jmd_n': Amino acid sequence for JMD-N.
-        - 'tmd': Amino acid sequence for TMD.
-        - 'jmd_c': Amino acid sequence for JMD-C.
+            - 'jmd_n': Amino acid sequence for JMD-N.
+            - 'tmd': Amino acid sequence for TMD.
+            - 'jmd_c': Amino acid sequence for JMD-C.
 
         ``Sequence-TMD-based format``
-        - 'sequence' and 'tmd' columns.
+            - 'sequence' and 'tmd' columns.
 
         ``Sequence-based format``
-        - Only the 'sequence' column.
+            - Only the 'sequence' column.
 
         Examples
         --------
@@ -283,6 +313,8 @@ class SequenceFeature:
                     features: ut.ArrayLike1D = None,
                     df_parts: pd.DataFrame = None,
                     labels: ut.ArrayLike1D = None,
+                    label_test : int = 1,
+                    label_ref : int = 0,
                     df_scales: Optional[pd.DataFrame] = None,
                     df_cat: Optional[pd.DataFrame] = None,
                     start: int = 1,
@@ -291,6 +323,7 @@ class SequenceFeature:
                     jmd_n_len: int = 10,
                     accept_gaps: bool = False,
                     parametric: bool = False,
+                    n_jobs: Union[int, None] = 1,
                     ) -> pd.DataFrame:
         """
         Create feature DataFrame for given features.
@@ -301,15 +334,16 @@ class SequenceFeature:
             2. Sample vs group comparison
             3. Sample vs sample comparison
 
-        For the group vs group comparison, the general feature position will be provided, while the amino acid segments
-        and patterns for the respective sample from the test dataset (label = 1) will be given.
+        * For the group vs group comparison, the general feature position will be provided.
+        * For sample vs group or sample vs sample comparison, the amino acid segments
+          and patterns for the respective sample from the test dataset (label = 1) will be given.
 
         Parameters
         ----------
         features : array-like, shape (n_features,)
             Ids of features for which ``df_feat`` should be created.
         df_parts : pd.DataFrame, shape (n_samples, n_parts)
-            DataFrame with sequence parts.
+            DataFrame with sequence parts. Must cover all parts in ``features``.
         labels: array-like, shape (n_samples,)
             Class labels for samples in ``df_parts``. Should be 1 (test set) and 0 (reference set).
         df_scales : pd.DataFrame, shape (n_amino_acids, n_scales)
@@ -329,11 +363,19 @@ class SequenceFeature:
             Whether to accept missing values by enabling omitting for computations (if True).
         parametric : bool, default=False
             Whether to use parametric (T-test) or non-parametric (Mann-Whitney-U-test) test for p-value computation.
+        n_jobs : int, default=1
+            The number of jobs to run in parallel. If ``None``, it will be set to the maximum.
 
         Returns
         -------
         df_feat : pd.DataFrame, shape (n_features, n_features_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
+
+        Notes
+        -----
+        * Use parallel processing only for high number of features (>~1000 features per core)
+        * For sample vs group or sample vs sample comparison, ``df_parts`` must comprise ``jmd_n``, ``tmd``, and
+          ``jmd_c`` sequence parts as well as all parts in features.
 
         See Also
         --------
@@ -353,7 +395,10 @@ class SequenceFeature:
         check_df_parts(df_parts=df_parts)
         check_df_scales(df_scales=df_scales)
         features = ut.check_features(features=features, list_parts=list(df_parts), list_scales=list(df_scales))
-        labels = ut.check_labels(labels=labels, vals_requiered=[0, 1])
+        ut.check_number_val(name="label_test", val=label_test, just_int=True)
+        ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
+        labels = ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
+                                 len_requiered=len(df_parts), allow_other_vals=False)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         ut.check_bool(name="accept_gaps", val=accept_gaps)
@@ -362,13 +407,19 @@ class SequenceFeature:
         check_match_df_scales_features(df_scales=df_scales, features=features)
         check_match_df_scales_df_cat(df_scales=df_scales, df_cat=df_cat, verbose=self.verbose)
         df_parts = check_match_df_parts_df_scales(df_scales=df_scales, df_parts=df_parts, accept_gaps=accept_gaps)
+        check_match_labels_label_test_label_ref(labels=labels, label_test=label_test, label_ref=label_ref)
+        check_match_df_parts_label_test_label_ref(df_parts=df_parts, labels=labels,
+                                                  label_test=label_test, label_ref=label_ref)
         # User warning
         if self.verbose:
             warn_creation_of_feature_matrix(features=features, df_parts=df_parts, name="df_feat")
         # Get sample difference to reference group
-        df_feat = get_df_feat_(features=features, df_parts=df_parts, labels=labels, df_scales=df_scales, df_cat=df_cat,
+        df_feat = get_df_feat_(features=features, df_parts=df_parts, labels=labels,
+                               label_test=label_test, label_ref=label_ref,
+                               df_scales=df_scales, df_cat=df_cat,
                                accept_gaps=accept_gaps, parametric=parametric,
-                               start=start, jmd_n_len=jmd_n_len, tmd_len=tmd_len, jmd_c_len=jmd_c_len)
+                               start=start, jmd_n_len=jmd_n_len, tmd_len=tmd_len, jmd_c_len=jmd_c_len,
+                               n_jobs=n_jobs)
         return df_feat
 
     def feature_matrix(self,
@@ -376,7 +427,7 @@ class SequenceFeature:
                        df_parts: pd.DataFrame = None,
                        df_scales: Optional[pd.DataFrame] = None,
                        accept_gaps: bool = False,
-                       n_jobs: Optional[int] = None,
+                       n_jobs: Union[int, None] = 1,
                        ) -> ut.ArrayLike2D:
         """
         Create feature matrix for given feature ids and sequence parts.
@@ -391,13 +442,17 @@ class SequenceFeature:
             DataFrame with amino acid scales. Default from :meth:`load_scales` with ``name='scales'``.
         accept_gaps: bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
-        n_jobs : int, optional
+        n_jobs : int, default=1
             The number of jobs to run in parallel. If ``None``, it will be set to the maximum.
 
         Returns
         -------
         feat_matrix: array-like , shape (n_samples, n_features)
             Feature values of samples.
+
+        Notes
+        -----
+        * Use parallel processing only for high number of features (>~1000 features per core)
 
         Examples
         --------

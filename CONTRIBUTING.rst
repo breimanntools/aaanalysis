@@ -393,8 +393,8 @@ and ``END OF CODE``. Examples of testing templates can be found here:
     Reminder: In Normal Cases, it's crucial to test parameters individually. Take your time and carefully create the Python code for all cases!
     "
 
-ChatGPT has a token limit, which may truncate responses. To continue, simply ask **continue processing** or something
-similar. Repeat as necessary and compile the results. Once done, provide the script to ChatGPT for further refinement.
+ChatGPT has a token limit, which may truncate responses. To continue, simply ask 'continue processing' or something
+similar. Repeat as necessary and compile the results.
 
 We recommend the following workflow:
 

@@ -102,6 +102,8 @@ class CPP(Tool):
     # Main method
     def run(self,
             labels: ut.ArrayLike1D = None,
+            label_test : int = 1,
+            label_ref : int = 0,
             n_filter: int = 100,
             n_pre_filter: Optional[int] = None,
             pct_pre_filter: int = 5,
@@ -125,6 +127,10 @@ class CPP(Tool):
         ----------
         labels : array-like, shape (n_samples,)
             Class labels for samples in sequence DataFrame (test=1, reference=0).
+        label_test : int, default=1,
+            Class label of test group in ``labels``.
+        label_ref : int, default=0,
+            Class label of reference group in ``labels``.
         n_filter : int, default=100
             Number of features to be filtered/selected by CPP algorithm.
         n_pre_filter : int, optional
@@ -176,7 +182,10 @@ class CPP(Tool):
 
         """
         # Check input
-        labels = ut.check_labels(labels=labels, vals_requiered=[0, 1], len_requiered=len(self.df_parts))
+        ut.check_number_val(name="label_test", val=label_test, just_int=True)
+        ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
+        labels = ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
+                                 len_requiered=len(self.df_parts), allow_other_vals=False)
         ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
         ut.check_number_range(name="n_pre_filter", val=n_pre_filter, min_val=1, accept_none=True, just_int=True)
         ut.check_number_range(name="pct_pre_filter", val=pct_pre_filter, min_val=5, max_val=100, just_int=True)
@@ -197,7 +206,7 @@ class CPP(Tool):
         # Pre-filtering: Select best n % of feature (filter_pct) based std(test set) and mean_dif
         abs_mean_dif, std_test, features = pre_filtering_info(**args,
                                                               df_parts=self.df_parts,
-                                                              y=labels,
+                                                              labels=labels,
                                                               accept_gaps=self._accept_gaps,
                                                               verbose=self._verbose,
                                                               n_processes=n_processes)
