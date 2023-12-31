@@ -1,5 +1,5 @@
 """
-This is a script for testing the AAclust class.
+This is a script for testing the initialization of the AAclust class.
 """
 from hypothesis import given, example, settings
 import hypothesis.strategies as some

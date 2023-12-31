@@ -36,16 +36,16 @@ def check_split_types(split_types=None):
     return split_types
 
 
-def check_steps(steps=None, steps_name="steps_pattern", verbose=True):
+def check_steps(steps=None, steps_name="steps_pattern", len_min=2, fixed_len=False):
     """Sort steps and warn if empty list"""
     if steps is None:
         return steps # Skip tests
     steps = list(sorted(steps))
-    # Set to None if empty
-    if len(steps) == 0:
-        steps = None
-        if verbose:
-            warnings.warn(f"'{steps_name}' should not be empty list")
+    if len(steps) < len_min:
+        if fixed_len:
+            raise ValueError(f"'{steps_name}' ({steps}) should contain exactly {len_min} non-negative integers.")
+        else:
+            raise ValueError(f"'{steps_name}' ({steps}) should contain >= {len_min} non-negative integers.")
     return steps
 
 
@@ -233,15 +233,15 @@ class SequenceFeature:
                              f"Reduce 'jmd_n_len' ({jmd_n_len}) and 'jmd_c_len' ({jmd_c_len}) settings.")
         return df_parts
 
-    def get_split_kws(self,
-                      split_types: Union[str, List[str]] = None,
+    @staticmethod
+    def get_split_kws(split_types: Union[str, List[str]] = None,
                       n_split_min: int = 1,
                       n_split_max: int = 15,
-                      steps_pattern: List[int] = None,
+                      steps_pattern: Optional[List[int]] = None,
                       n_min: int = 2,
                       n_max: int = 4,
                       len_max: int = 15,
-                      steps_periodicpattern: List[int] = None,
+                      steps_periodicpattern: Optional[List[int]] = None,
                       ) -> dict:
         """
         Create dictionary with kwargs for three split types:
@@ -258,16 +258,19 @@ class SequenceFeature:
             Number to specify the greatest ``Segment``. Should be > 0.
         n_split_max: int, default=15,
             Number to specify the smallest ``Segment``. Should be > ``n_split_min``.
-        steps_pattern: list of int, default=[3, 4, 6, 7, 8]
-            Possible steps sizes for ``Pattern``. Should not be empty if ``Pattern`` split_type is used.
+        steps_pattern: list of int, default=[3, 4], optional
+            Possible steps sizes for ``Pattern``. Should contain at least 1 non-negative integers
+            if ``Pattern`` split_type is used. If ``None``, default is used.
         n_min: int, default=2
-            Minimum number of steps for Pattern. Should be <= ``n_max``.
+            Minimum number of steps for ``Pattern``. Should be <= ``n_max``.
         n_max: int, default=4
-            Maximum number of steps for Pattern. Should be >= ``n_min``.
+            Maximum number of steps for ``Pattern``. Should be >= ``n_min``.
         len_max: int, default=10
-            Maximum length in amino acid position for Pattern by varying start position. Should be > min(``steps_pattern``).
-        steps_periodicpattern: list of int, default=[3, 4]
-            Step sizes for PeriodicPattern. Should not be empty if ``PeriodicPattern`` split_type is used.
+            Maximum length in amino acid position for ``Pattern`` by varying start position.
+            Should be > min(``steps_pattern``).
+        steps_periodicpattern: list of int, default=[3, 4], optional
+            Size of odd and even steps for ``PeriodicPattern``. Should contain two non-negative integers if
+            ``PeriodicPattern`` split_type is used. If ``None``, default is used.
 
         Returns
         -------
@@ -291,9 +294,9 @@ class SequenceFeature:
                                            accept_none=True, check_all_non_neg_int=True)
         steps_periodicpattern = ut.check_list_like(name="steps_periodicpattern", val=steps_periodicpattern,
                                                    accept_none=True, check_all_non_neg_int=True)
-        steps_pattern = check_steps(steps=steps_pattern, steps_name="steps_pattern", verbose=self.verbose)
+        steps_pattern = check_steps(steps=steps_pattern, steps_name="steps_pattern", len_min=1, fixed_len=False)
         steps_periodicpattern = check_steps(steps=steps_periodicpattern, steps_name="steps_periodicpattern",
-                                            verbose=self.verbose)
+                                            len_min=2, fixed_len=True)
         # Create kws for splits
         split_kws = get_split_kws_(n_split_min=n_split_min,
                                    n_split_max=n_split_max,

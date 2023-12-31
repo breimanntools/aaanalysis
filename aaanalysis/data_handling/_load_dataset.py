@@ -18,6 +18,7 @@ LIST_NON_CANONICAL_OPTIONS = ["remove", "keep", "gap"]
 
 
 # I Helper Functions
+# TODO add df_cat_pc explaining PCs using loadings (if loadings ready)
 # Check functions
 def check_name_of_dataset(name="Overview", folder_in=None):
     """Check if name of dataset is valid"""
@@ -178,7 +179,6 @@ def load_dataset(name: str = "Overview",
     --------
     .. include:: examples/load_dataset.rst
     """
-
     check_name_of_dataset(name=name, folder_in=FOLDER_BENCHMARKS)
     ut.check_number_range(name="n", val=n, min_val=1, accept_none=True, just_int=True)
     check_non_canonical_aa(non_canonical_aa=non_canonical_aa)
@@ -186,7 +186,7 @@ def load_dataset(name: str = "Overview",
     check_aa_window_size(aa_window_size=aa_window_size)
     # Load overview table
     if name == "Overview":
-        return ut.read_excel_cached(FOLDER_BENCHMARKS + "Overview.xlsx")
+        return ut.read_excel_cached(FOLDER_BENCHMARKS + "Overview.xlsx").copy()
     df = ut.read_csv_cached(FOLDER_BENCHMARKS + name + ".tsv", sep="\t")
     # Filter data
     if min_len is not None:
@@ -205,7 +205,7 @@ def load_dataset(name: str = "Overview",
     if _is_aa_level(name=name):
         # Special case that unfiltered df_seq is returned
         if aa_window_size is None:
-            return df_seq.reset_index(drop=True)
+            return df_seq.reset_index(drop=True).copy()
         df_seq = _get_aa_window(df_seq=df_seq, aa_window_size=aa_window_size)
     # Select balanced groups
     if n is not None:
@@ -218,5 +218,5 @@ def load_dataset(name: str = "Overview",
     # Adjust index and column values
     df_seq = df_seq.reset_index(drop=True)
     df_seq[ut.COL_LABEL] = df_seq[ut.COL_LABEL].astype(int)
-    return df_seq
+    return df_seq.copy()
 

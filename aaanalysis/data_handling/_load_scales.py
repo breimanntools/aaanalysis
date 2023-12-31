@@ -121,6 +121,7 @@ def load_scales(name: str = "scales",
     --------
     .. include:: examples/load_scales.rst
     """
+    # DEV: every returned must be copied to avoid in-place mutation for newly loaded dataframes
     check_name_of_scale(name=name)
     ut.check_bool(name="just_aaindex", val=just_aaindex)
     ut.check_bool(name="unclassified_in", val=unclassified_out)
@@ -132,11 +133,11 @@ def load_scales(name: str = "scales",
         if name == ut.STR_SCALE_CAT:
             df_cat = ut.read_excel_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.xlsx")
             df_cat = df_cat[df_cat[ut.COL_SCALE_ID].isin(selected_scales)].reset_index(drop=True)
-            return df_cat
+            return df_cat.copy()
         elif name in [ut.STR_SCALES, ut.STR_SCALES_RAW]:
             df = ut.read_excel_cached(ut.FOLDER_DATA + name + ".xlsx", index_col=0)
             df = df[selected_scales]
-            return df
+            return df.copy()
         else:
             raise ValueError(f"Wrong 'name' ('{name}') for 'top60_n")
 
@@ -146,13 +147,13 @@ def load_scales(name: str = "scales",
             df_cat = ut.read_excel_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.xlsx")
             return df_cat
         df = ut.read_excel_cached(ut.FOLDER_DATA + name + ".xlsx", index_col=0)
-        return df
+        return df.copy()
 
     # Load and filter scale categories
     df_cat = ut.read_excel_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.xlsx")
     df_cat = _filter_scales(df_cat=df_cat, unclassified_out=unclassified_out, just_aaindex=just_aaindex)
     if name == ut.STR_SCALE_CAT:
-        return df_cat.reset_index(drop=True)
+        return df_cat.reset_index(drop=True).copy()
 
     # Load and filter scales
     df = ut.read_excel_cached(ut.FOLDER_DATA + name + ".xlsx", index_col=0)
@@ -166,4 +167,4 @@ def load_scales(name: str = "scales",
         df = df.astype(float)
     elif name in name_all_int:
         df = df.astype(int)
-    return df
+    return df.copy()

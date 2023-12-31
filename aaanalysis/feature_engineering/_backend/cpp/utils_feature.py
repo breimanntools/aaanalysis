@@ -13,6 +13,7 @@ import aaanalysis.utils as ut
 
 
 # I Helper Functions
+# DEV: Run exceptionally in backend because error might only be caused internally
 def post_check_vf_scale(feature_values=None):
     """Check if feature_values/X does contain nans due to gaps"""
     if np.isnan(feature_values).any():
@@ -143,8 +144,8 @@ def _feature_matrix(features, dict_all_scales, df_parts, accept_gaps):
 
 
 # II Main Functions
-def get_parts(start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10):
-    """"""
+def get_part_positions(start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10):
+    """Get part positions"""
     jmd_n = list(range(start, jmd_n_len + start))
     tmd = list(range(jmd_n_len + start, jmd_n_len + tmd_len + start))
     jmd_c = list(range(jmd_n_len + tmd_len + start, jmd_n_len + tmd_len + jmd_c_len + start))
@@ -257,7 +258,7 @@ def get_df_pos_(df_feat=None, col_cat="category", col_value=None, value_type="co
 
 def get_df_pos_parts_(df_pos=None, value_type="sum", start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10, list_parts=None):
     """Get df with aggregated values for each combination of column values and sequence parts."""
-    jmd_n, tmd, jmd_c = get_parts(start=start, jmd_n_len=jmd_n_len, tmd_len=tmd_len, jmd_c_len=jmd_c_len)
+    jmd_n, tmd, jmd_c = get_part_positions(start=start, jmd_n_len=jmd_n_len, tmd_len=tmd_len, jmd_c_len=jmd_c_len)
     dict_part_pos = ut.get_dict_part_seq(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c)
     if value_type == "sum":
         list_df = [df_pos[dict_part_pos[part]].sum(axis=1) for part in list_parts]

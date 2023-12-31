@@ -31,8 +31,6 @@ def check_sample_in_df_seq(sample_name=None, df_seq=None):
                 f"\nValid names are: {list_names}"
         raise ValueError(error)
 
-# TODO all check functions in frontend (check_steps)
-# TODO simplify checks & interface (end-to-end check with tests & docu)
 # II Main Functions
 class CPP(Tool):
     """
@@ -48,6 +46,8 @@ class CPP(Tool):
         DataFrame with amino acid scales.
     df_cat
         DataFrame with categories for physicochemical amino acid scales.
+
+
 
     See Also
     --------
@@ -79,6 +79,14 @@ class CPP(Tool):
             Whether to accept missing values by enabling omitting for computations (if ``True``).
         verbose : bool, optional
             If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if ``None``.
+
+        Notes
+        -----
+        * All scales from ``df_scales`` must be contained in ``df_cat``
+
+        Examples
+        --------
+        .. include:: examples/cpp.rst
         """
         # Load defaults
         if split_kws is None:
@@ -88,16 +96,17 @@ class CPP(Tool):
         if df_cat is None:
             df_cat = ut.load_default_scales(scale_cat=True)
         # Check input
+        verbose = ut.check_verbose(verbose)
         check_df_parts(df_parts=df_parts)
         check_split_kws(split_kws=split_kws)
         check_df_scales(df_scales=df_scales)
         check_df_cat(df_cat=df_cat)
         ut.check_bool(name="accept_gaps", val=accept_gaps)
         df_parts = check_match_df_parts_df_scales(df_parts=df_parts, df_scales=df_scales, accept_gaps=accept_gaps)
-        df_scales, df_cat = check_match_df_scales_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
         check_match_df_parts_split_kws(df_parts=df_parts, split_kws=split_kws)
+        df_scales, df_cat = check_match_df_scales_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
         # Internal attributes
-        self._verbose = ut.check_verbose(verbose)
+        self._verbose = verbose
         self._accept_gaps = accept_gaps
         # Feature components: Scales + Part + Split
         self.df_cat = df_cat.copy()

@@ -6,7 +6,7 @@ import numpy as np
 import warnings
 
 import aaanalysis.utils as ut
-from .cpp.utils_feature import get_parts
+from .cpp.utils_feature import get_part_positions
 
 
 # Helper functions
@@ -43,10 +43,9 @@ def _get_max_pos_split_kws(split_kws=None):
 
 # II Main Functions
 # Check splits
-# TODO check if can be simplified
 def check_split_kws(split_kws=None, accept_none=True):
     """Check if argument dictionary for splits is a valid input"""
-    # Split dictionary with data types
+    # Define the expected structure and types for split_kws
     split_kws_types = {ut.STR_SEGMENT: dict(n_split_min=int, n_split_max=int),
                        ut.STR_PATTERN: dict(steps=list, n_min=int, n_max=int, len_max=int),
                        ut.STR_PERIODIC_PATTERN: dict(steps=list)}
@@ -54,28 +53,31 @@ def check_split_kws(split_kws=None, accept_none=True):
         return None     # Skip check
     if not isinstance(split_kws, dict):
         raise ValueError(f"'split_kws' should be type dict (not {split_kws})")
-    # Check if split_kws contains wrong split_types
-    wrong_split_types = [x for x in split_kws if x not in ut.LIST_SPLIT_TYPES]
-    if len(wrong_split_types) > 0:
-        error = f"Following keys are invalid: {wrong_split_types}." \
-                "\n  'split_kws' should have following structure: {split_kws_types}."
-        raise ValueError(error)
     if len(split_kws) == 0:
         raise ValueError("'split_kws' should be not empty")
-    # Check if arguments are valid and have valid type
+    # Check if split_kws contains wrong split_types
+    invalid_split_types = [x for x in split_kws if x not in ut.LIST_SPLIT_TYPES]
+    if len(invalid_split_types) > 0:
+        error = f"Following 'split_types' are invalid: {invalid_split_types}." \
+                f"\n  'split_kws' should have following structure: {split_kws_types}."
+        raise ValueError(error)
+    # Validate split types and argument structure
     for split_type in split_kws:
+        expected_args = split_kws_types[split_type]
+        missing_args = [arg for arg in expected_args if arg not in split_kws[split_type]]
+        if missing_args:
+            raise ValueError(f"Missing required arguments for '{split_type}': {missing_args}")
         for arg in split_kws[split_type]:
             if arg not in split_kws_types[split_type]:
                 error = f"'{arg}' arg in '{split_type}' of 'split_kws' is invalid." \
-                        "\n  'split_kws' should have following structure: {split_kws_types}."
+                        f"\n  'split_kws' should have following structure: {split_kws_types}."
                 raise ValueError(error)
             arg_val = split_kws[split_type][arg]
-            arg_type = type(arg_val)
-            target_arg_type = split_kws_types[split_type][arg]
-            if target_arg_type != arg_type:
-                error = f"Type of '{arg}':'{arg_val}' ({arg_type}) should be {target_arg_type}"
+            expected_arg_type = split_kws_types[split_type][arg]
+            if not isinstance(arg_val, expected_arg_type):
+                error = f"Type of '{arg}':'{arg_val}' ('{type(arg_val)}') should be '{expected_arg_type}'"
                 raise ValueError(error)
-            if arg_type is list:
+            if isinstance(arg_val, list):
                 wrong_type = [x for x in arg_val if type(x) is not int]
                 if len(wrong_type) > 0:
                     error = f"All list elements ({arg_val}) of '{arg}' should have type int."
@@ -84,6 +86,8 @@ def check_split_kws(split_kws=None, accept_none=True):
     if ut.STR_SEGMENT in split_kws:
         segment_args = split_kws[ut.STR_SEGMENT]
         n_split_min, n_split_max = segment_args["n_split_min"], segment_args["n_split_max"]
+        ut.check_number_range(name=f"{ut.STR_SEGMENT}[n_split_min]", val=n_split_min, just_int=True, min_val=1)
+        ut.check_number_range(name=f"{ut.STR_SEGMENT}[n_split_max]", val=n_split_max, just_int=True, min_val=1)
         if n_split_min > n_split_max:
             raise ValueError(f"For '{ut.STR_SEGMENT}', 'n_split_min' ({n_split_min}) should be smaller "
                              f"or equal to 'n_split_max' ({n_split_max})")
@@ -92,22 +96,37 @@ def check_split_kws(split_kws=None, accept_none=True):
         pattern_args = split_kws[ut.STR_PATTERN]
         n_min, n_max = pattern_args["n_min"], pattern_args["n_max"]
         steps_pattern, len_max = pattern_args["steps"], pattern_args["len_max"]
+        ut.check_number_range(name=f"{ut.STR_PATTERN}[n_min]", val=n_min, just_int=True, min_val=1)
+        ut.check_number_range(name=f"{ut.STR_PATTERN}[n_max]", val=n_max, just_int=True, min_val=1)
+        ut.check_number_range(name=f"{ut.STR_PATTERN}[len_max]", val=n_max, just_int=True, min_val=1)
         if n_min > n_max:
             raise ValueError(f"For '{ut.STR_PATTERN}', 'n_min' ({n_min}) should be smaller or equal to 'n_max' ({n_max})")
-        if not isinstance(steps_pattern, list) or len(steps_pattern) == 0:
-            raise ValueError("'steps_pattern' should be non-empty list of integers")
+        if not isinstance(steps_pattern, list) or len(steps_pattern) < 1:
+            raise ValueError(f"'steps_pattern' ({steps_pattern}) should be non-empty list of with at"
+                             f" least 1 non-negative integers")
         if steps_pattern != sorted(steps_pattern):
             raise ValueError(f"For '{ut.STR_PATTERN}', 'steps_pattern' ({steps_pattern}) should be ordered in ascending order.")
         if steps_pattern[0] >= len_max:
             raise ValueError(f"For '{ut.STR_PATTERN}', 'len_max' ({len_max}) should be greater than the smallest step "
                              f"in 'steps_pattern' ({steps_pattern}).")
+        for i, step in enumerate(steps_pattern):
+            ut.check_number_range(name=f"{ut.STR_PATTERN}[steps_pattern](step{i+1})", val=step, just_int=True,
+                                  min_val=1)
     # Check PeriodicPattern
     if ut.STR_PERIODIC_PATTERN in split_kws:
         periodicpattern_args = split_kws[ut.STR_PERIODIC_PATTERN]
         steps_periodicpattern = periodicpattern_args["steps"]
+        if not isinstance(steps_periodicpattern, list) or len(steps_periodicpattern) != 2:
+            raise ValueError(f"'steps_periodicpattern' ({steps_periodicpattern}) should be list of"
+                             f" with exactly 2 non-negative integers")
         if steps_periodicpattern != sorted(steps_periodicpattern):
             raise ValueError(f"For '{ut.STR_PERIODIC_PATTERN}', 'steps_periodicpattern' ({steps_periodicpattern}) "
                              f"should be ordered in ascending order.")
+        step1, step2 = steps_periodicpattern
+        ut.check_number_range(name=f"{ut.STR_PERIODIC_PATTERN}[steps_periodicpattern](step1)",
+                              val=step1, just_int=True, min_val=1)
+        ut.check_number_range(name=f"{ut.STR_PERIODIC_PATTERN}[steps_periodicpattern](step2)",
+                              val=step2, just_int=True, min_val=1)
 
 
 # Check parts
@@ -146,7 +165,7 @@ def check_match_features_seq_parts(features=None, tmd_seq=None, jmd_n_seq=None, 
     """Check if sequence lengths do match with length requirements of features"""
     # Check match of part length and features
     if None in [tmd_seq, jmd_n_seq, jmd_c_seq] or len(jmd_n_seq + tmd_seq + jmd_c_seq) == 0:
-        jmd_n, tmd, jmd_c = get_parts(start=1, jmd_n_len=jmd_n_len, tmd_len=tmd_len, jmd_c_len=jmd_c_len)
+        jmd_n, tmd, jmd_c = get_part_positions(start=1, jmd_n_len=jmd_n_len, tmd_len=tmd_len, jmd_c_len=jmd_c_len)
         dict_part_seq = ut.get_dict_part_seq(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c)
         for feature in features:
             part, split, scale = feature.split("-")
@@ -282,7 +301,7 @@ def check_match_df_parts_list_parts(df_parts=None, list_parts=None):
 
 
 def check_match_df_parts_split_kws(df_parts=None, split_kws=None):
-    """"""
+    """Check if df_parts and split_kws match regarding the sequence size"""
     n_max = _get_max_pos_split_kws(split_kws=split_kws)
     for part in list(df_parts):
         if any(df_parts[part.lower()].map(len) < n_max):
@@ -340,7 +359,7 @@ def check_match_df_scales_features(df_scales=None, features=None):
 
 # Check df_cat
 def check_df_cat(df_cat=None, accept_none=True):
-    """"""
+    """Check if df_cat is valid"""
     if df_cat is None and accept_none:
         return # Skip check
     cols_cat = [ut.COL_SCALE_ID, ut.COL_CAT, ut.COL_SUBCAT]
@@ -392,13 +411,13 @@ def check_match_df_scales_df_cat(df_cat=None, df_scales=None, verbose=True):
         # Adjust df_cat and df_scales
         df_cat = df_cat[df_cat[ut.COL_SCALE_ID].isin(overlap_scales)]
         df_scales = df_scales[overlap_scales]
-        if verbose and len(difference_scales) > 0:
-            str_warning = f"Scales from 'df_scales' and 'df_cat' do not overlap completely."
+        if len(difference_scales) > 0:
             missing_scales_in_df_scales = [x for x in scales_cat if x not in scales]
             missing_scales_in_df_cat = [x for x in scales if x not in scales_cat]
-            if len(missing_scales_in_df_scales) > 0:
-                str_warning += f"\n Following scale ids are missing in 'df_scales': {missing_scales_in_df_scales}"
-            else:
-                str_warning += f"\n Following scale ids are missing in 'df_cat': {missing_scales_in_df_cat}"
-            warnings.warn(str_warning)
+            # Error since all scale ids must be covered by df_cat
+            if missing_scales_in_df_cat:
+                raise ValueError(f"Following scale ids from 'df_scales' are missing in 'df_cat': {missing_scales_in_df_cat}")
+            # Only warning (excepted)
+            if verbose and len(missing_scales_in_df_scales) > 0:
+                warnings.warn(f"Following scale ids from 'df_cat' are missing in 'df_scales': {missing_scales_in_df_scales}")
     return df_scales, df_cat

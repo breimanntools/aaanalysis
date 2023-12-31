@@ -36,7 +36,7 @@ class TestGetSplitKws:
         assert isinstance(result, dict)
 
     @settings(max_examples=10)
-    @given(steps_pattern=st.lists(st.integers(min_value=0), min_size=0, max_size=8))
+    @given(steps_pattern=st.lists(st.integers(min_value=1), min_size=1, max_size=8))
     def test_steps_pattern(self, steps_pattern):
         """Test 'steps_pattern' with various list sizes."""
         sf = aa.SequenceFeature()
@@ -72,12 +72,13 @@ class TestGetSplitKws:
         assert isinstance(result, dict)
 
     @settings(max_examples=10)
-    @given(steps_periodicpattern=st.lists(st.integers(min_value=0), min_size=0, max_size=10))
+    @given(steps_periodicpattern=st.lists(st.integers(min_value=1), min_size=2, max_size=2))
     def test_steps_periodicpattern(self, steps_periodicpattern):
         """Test 'steps_periodicpattern' with various list sizes."""
         sf = aa.SequenceFeature()
-        result = sf.get_split_kws(steps_periodicpattern=steps_periodicpattern)
-        assert isinstance(result, dict)
+        if len(steps_periodicpattern) == 2:
+            result = sf.get_split_kws(steps_periodicpattern=steps_periodicpattern)
+            assert isinstance(result, dict)
 
     # Negative tests for each parameter
     def test_invalid_split_types(self):
@@ -109,6 +110,14 @@ class TestGetSplitKws:
             sf.get_split_kws(steps_pattern=-1)
         with pytest.raises(ValueError):
             sf.get_split_kws(steps_pattern=["a", "b", "c"])
+        with pytest.raises(ValueError):
+            sf.get_split_kws(steps_pattern=[0])
+        with pytest.raises(ValueError):
+            sf.get_split_kws(steps_pattern=[-4, 10])
+        with pytest.raises(ValueError):
+            sf.get_split_kws(steps_pattern=[])
+        with pytest.raises(ValueError):
+            sf.get_split_kws(steps_pattern=[3, None])
 
     def test_invalid_n_min_max(self):
         """Test invalid 'n_min' and 'n_max' values."""
@@ -133,6 +142,17 @@ class TestGetSplitKws:
             sf.get_split_kws(steps_periodicpattern=-1)
         with pytest.raises(ValueError):
             sf.get_split_kws(steps_periodicpattern=["a", "b", "c"])
+        with pytest.raises(ValueError):
+            sf.get_split_kws(steps_periodicpattern=[0])
+        with pytest.raises(ValueError):
+            sf.get_split_kws(steps_periodicpattern=[-4, 10])
+        with pytest.raises(ValueError):
+            sf.get_split_kws(steps_periodicpattern=[3, 4, 5])
+        with pytest.raises(ValueError):
+            sf.get_split_kws(steps_periodicpattern=[])
+        with pytest.raises(ValueError):
+            sf.get_split_kws(steps_periodicpattern=[3, None])
+
 
 class TestGetSplitKwsComplex:
     """Test complex combinations of parameters in get_split_kws."""
@@ -142,11 +162,11 @@ class TestGetSplitKwsComplex:
         split_types=st.sampled_from([None, "Segment", "Pattern", "PeriodicPattern", ["Segment", "Pattern"], ["Pattern", "PeriodicPattern"], ["Segment", "PeriodicPattern"]]),
         n_split_min=st.integers(min_value=1, max_value=14),
         n_split_max=st.integers(min_value=2, max_value=15),
-        steps_pattern=st.lists(st.integers(min_value=0), min_size=0, max_size=8),
+        steps_pattern=st.lists(st.integers(min_value=1), min_size=1, max_size=8),
         n_min=st.integers(min_value=1, max_value=4),
         n_max=st.integers(min_value=2, max_value=4),
         len_max=st.integers(min_value=4, max_value=15),
-        steps_periodicpattern=st.lists(st.integers(min_value=0), min_size=0, max_size=10)
+        steps_periodicpattern=st.lists(st.integers(min_value=1), min_size=2, max_size=2)
     )
     def test_valid_combinations(self, split_types, n_split_min, n_split_max, steps_pattern, n_min, n_max, len_max, steps_periodicpattern):
         """Test valid combinations of parameters."""
@@ -157,11 +177,11 @@ class TestGetSplitKwsComplex:
             n_min, n_max = n_max, n_min  # Ensure n_min <= n_max
         if steps_pattern and len_max <= min(steps_pattern):
             len_max = min(steps_pattern) + 1  # Ensure len_max > min(steps_pattern)
-
-        result = sf.get_split_kws(split_types=split_types, n_split_min=n_split_min, n_split_max=n_split_max,
-                                  steps_pattern=steps_pattern, n_min=n_min, n_max=n_max,
-                                  len_max=len_max, steps_periodicpattern=steps_periodicpattern)
-        assert isinstance(result, dict)
+        if len(steps_pattern) > 1 and len(steps_periodicpattern) == 2:
+            result = sf.get_split_kws(split_types=split_types, n_split_min=n_split_min, n_split_max=n_split_max,
+                                      steps_pattern=steps_pattern, n_min=n_min, n_max=n_max,
+                                      len_max=len_max, steps_periodicpattern=steps_periodicpattern)
+            assert isinstance(result, dict)
 
     @settings(max_examples=5)
     @given(
@@ -181,11 +201,11 @@ class TestGetSplitKwsComplex:
             n_split_min, n_split_max = n_split_max, n_split_min  # Ensure min <= max
         if n_min > n_max:
             n_min, n_max = n_max, n_min  # Ensure n_min <= n_max
-
-        result = sf.get_split_kws(split_types=split_types, n_split_min=n_split_min, n_split_max=n_split_max,
-                                  steps_pattern=steps_pattern, n_min=n_min, n_max=n_max,
-                                  len_max=len_max, steps_periodicpattern=steps_periodicpattern)
-        assert isinstance(result, dict)
+        if len(steps_pattern) > 1 and len(steps_periodicpattern) == 2:
+            result = sf.get_split_kws(split_types=split_types, n_split_min=n_split_min, n_split_max=n_split_max,
+                                      steps_pattern=steps_pattern, n_min=n_min, n_max=n_max,
+                                      len_max=len_max, steps_periodicpattern=steps_periodicpattern)
+            assert isinstance(result, dict)
 
     @settings(max_examples=5)
     @given(
@@ -201,10 +221,11 @@ class TestGetSplitKwsComplex:
     def test_random_combinations(self, split_types, n_split_min, n_split_max, steps_pattern, n_min, n_max, len_max, steps_periodicpattern):
         """Test random valid combinations of parameters."""
         sf = aa.SequenceFeature()
-        result = sf.get_split_kws(split_types=split_types, n_split_min=n_split_min, n_split_max=n_split_max,
-                                  steps_pattern=steps_pattern, n_min=n_min, n_max=n_max,
-                                  len_max=len_max, steps_periodicpattern=steps_periodicpattern)
-        assert isinstance(result, dict)
+        if len(steps_pattern) > 1 and len(steps_periodicpattern) == 2:
+            result = sf.get_split_kws(split_types=split_types, n_split_min=n_split_min, n_split_max=n_split_max,
+                                      steps_pattern=steps_pattern, n_min=n_min, n_max=n_max,
+                                      len_max=len_max, steps_periodicpattern=steps_periodicpattern)
+            assert isinstance(result, dict)
 
     # Negative complex cases
     def test_invalid_combinations(self):

@@ -7,20 +7,6 @@ import itertools
 import aaanalysis.utils as ut
 
 
-# I Helper Functions
-# Check functions
-# TODO refactor check function into frontend
-def check_steps(steps=None):
-    """Check steps and set to default if None"""
-    # TODO remove after testing
-    if steps is None:
-        steps = [3, 4]
-    if type(steps) is not list or len(steps) < 2:
-        raise ValueError("'steps' must be a list with >= 2 elements")
-    return steps
-
-
-
 # Pattern helper functions
 def _get_pattern_pos(steps=None, repeat=2, len_max=12):
     """Get all possible positions from steps with number of repeats and maximum length using itertools"""
@@ -186,7 +172,6 @@ class SplitRange:
     @staticmethod
     def pattern(seq=None, steps=None, n_min=2, n_max=4, len_max=15):
         """Get range of all possible Pattern splits for given sequence."""
-        steps = check_steps(steps=steps)
         list_pattern_pos = get_list_pattern_pos(steps=steps, n_min=n_min, n_max=n_max, len_max=len_max)
         sp = Split()
         f = sp.pattern  # Unbound function for higher performance
@@ -200,7 +185,6 @@ class SplitRange:
     @staticmethod
     def labels_pattern(steps=None, n_min=2, n_max=4, len_max=15):
         """Get labels for range of Pattern splits."""
-        steps = check_steps(steps=steps)
         list_pattern_pos = get_list_pattern_pos(steps=steps, n_min=n_min, n_max=n_max, len_max=len_max)
         labels = []
         for terminus in ['N', 'C']:
@@ -213,7 +197,6 @@ class SplitRange:
     @staticmethod
     def periodicpattern(seq=None, steps=None):
         """Get range of all possible PeriodicPattern splits for given sequence"""
-        steps = check_steps(steps=steps)
         sp = Split()
         f = sp.periodicpattern  # Unbound function for higher performance
         seq_splits = []
@@ -227,7 +210,6 @@ class SplitRange:
     @staticmethod
     def labels_periodicpattern(steps=None):
         """Get labels of all possible PeriodicPattern splits."""
-        steps = check_steps(steps=steps)
         labels = []
         for terminus in ['N', 'C']:
             for step1, step2 in itertools.product(steps, repeat=2):
