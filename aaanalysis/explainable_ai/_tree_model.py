@@ -20,7 +20,7 @@ import aaanalysis.utils as ut
 class TreeModel:
     """A wrapper for Tree based prediction models and Tree explainable_ai from SHAP package to
     explain prediction (typically binary classification) results at global and individual level"""
-    def __init__(self, model=None):
+    def __init__(self, model_class=None):
         """"""
 
     def fit(self, n_epochs=10, rcf=True, return_models=False):

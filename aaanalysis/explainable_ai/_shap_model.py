@@ -20,7 +20,7 @@ import aaanalysis.utils as ut
 # II Main Functions
 class ShapModel:
     """A wrapper for Tree explainable_ai from SHAP package"""
-    def __init__(self, model=None):
+    def __init__(self, model_class=None):
         """"""
 
     def fit(self, n_epochs=10, return_models=False):

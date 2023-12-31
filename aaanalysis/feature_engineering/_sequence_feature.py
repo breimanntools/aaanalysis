@@ -189,7 +189,7 @@ class SequenceFeature:
 
         Notes
         -----
-        * See :class: ´aaanalysis.SequenceFeature´ for definition of parts, and lists of all existing and default parts.
+        * See :class:`aaanalysis.SequenceFeature` for definition of parts, and lists of all existing and default parts.
         * ``jmd_n_len`` and ``jmd_c_len`` must be both given, except for the part-based format.
 
         Formats for ``df_seq`` are differentiated by their respective columns:

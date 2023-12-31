@@ -33,11 +33,10 @@ def check_sample_in_df_seq(sample_name=None, df_seq=None):
 
 # TODO all check functions in frontend (check_steps)
 # TODO simplify checks & interface (end-to-end check with tests & docu)
-# TODO  TODO add link to explanation for TMD, JMDs
 # II Main Functions
 class CPP(Tool):
     """
-    Create and filter features that are most discriminant between two sets of sequences.
+    Class ot create and filter features that are most discriminant between two sets of sequences.
 
     Attributes
     ----------
@@ -49,6 +48,13 @@ class CPP(Tool):
         DataFrame with amino acid scales.
     df_cat
         DataFrame with categories for physicochemical amino acid scales.
+
+    See Also
+    --------
+    * :class:`aaanalysis.SequenceFeature` for definition of sequence parts.
+    * :meth:`aaanalysis.SequenceFeature.split_kws` for definition of split key word arguments.
+    * :func:`aaanalysis.load_scales` for definition of amino acid scales and their categories.
+
     """
     def __init__(self,
                  df_parts: pd.DataFrame = None,
@@ -119,9 +125,11 @@ class CPP(Tool):
             n_processes: Optional[int] = None
             ) -> pd.DataFrame:
         """
-        Perform CPP pipeline by creation and two-step filtering of features. CPP aims to
-        identify a collection of non-redundant features that are most discriminant between
-        a test and a reference group of sequences.
+        Perform Comparative Physicochemical Profiling (CPP) algorithm: creation and two-step filtering of
+        interpretable sequence-based features.
+
+        CPP aims at identifying a collection of non-redundant features that are most discriminant between
+        the test and reference group of sequences, as introduced in [Breimann24c]_.
 
         Parameters
         ----------
@@ -165,21 +173,26 @@ class CPP(Tool):
 
         Notes
         -----
-        The feature DataFrame contains the following 11 columns, including the unique feature id (1),
-        scale information (2-4), statistical results for filtering and ranking (5-10), and feature positions (11):
+        ``df_feat`` contains the following 13 columns, including the unique feature id (1), scale information (2-5),
+         statistical results for filtering and ranking (6-12), and feature positions (13):
 
-        1. features: Feature ID (PART-SPLIT-SCALE)
-        2. category: Scale category
-        3. subcategory: Sub category of scales
-        4. scale_name: Name of scales
-        5. abs_auc: Absolute adjusted AUC [-0.5 to 0.5]
-        6. abs_mean_dif: Absolute mean differences between test and reference group [0 to 1]
-        7. std_test: Standard deviation in test group
-        8. std_ref: Standard deviation in reference group
-        9. p_val: Non-parametric (mann_whitney) or parametric (ttest_indep) statistic
-        10. p_val_fdr_bh: Benjamini-Hochberg FDR corrected p-values
-        11. positions: Feature positions for default settings
+            1. 'features': Feature ID (PART-SPLIT-SCALE)
+            2. 'category': Scale category
+            3. 'subcategory': Sub category of scales
+            4. 'scale_name': Name of scales
+            5. 'scale_description': Description of the scale
+            6. 'abs_auc': Absolute adjusted AUC [-0.5 to 0.5]
+            7. 'abs_mean_dif': Absolute mean differences between test and reference group [0 to 1]
+            8. 'mean_dif': Mean differences between test and reference group [-1 to 1]
+            9. 'std_test': Standard deviation in test group
+            10. 'std_ref': Standard deviation in reference group
+            11. 'p_val': Non-parametric (mann_whitney) or parametric (ttest_indep) statistic
+            12. 'p_val_fdr_bh': Benjamini-Hochberg FDR corrected p-values
+            13. 'positions': Feature positions for default settings
 
+        Examples
+        --------
+        .. include:: examples/cpp_run.rst
         """
         # Check input
         ut.check_number_val(name="label_test", val=label_test, just_int=True)
@@ -250,6 +263,13 @@ class CPP(Tool):
         return df_feat
 
     # TODO get evaluation for any dataset for complete
-    def eval(self, list_df_feat=None):
+    def eval(self,
+             list_df_feat: pd.DataFrame = None,
+             labels: ut.ArrayLike1D = None,
+             label_test : int = 1,):
         """"""
-        pass
+        # Check input
+
+        # Evaluation
+        df_eval = None
+        return df_eval
