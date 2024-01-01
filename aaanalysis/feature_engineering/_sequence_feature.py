@@ -177,7 +177,7 @@ class SequenceFeature:
         jmd_c_len: int, default=10
             Length of JMD-N in number of amino acids. If ``None``, ``jmd_n`` and ``jmd_c`` should be given.
         all_parts: bool, default=False
-            Whether to create DataFrame with all possible sequence parts (if ``True``) or parts given by list_parts.
+            Whether to create DataFrame with all possible sequence parts (if ``True``) or parts given by ``list_parts``.
         remove_entries_with_gaps: bool, default=False
             Whether to exclude entries containing missing residues in their sequence parts (if ``True``),
             usually resulting from sequences being too short.
@@ -190,6 +190,8 @@ class SequenceFeature:
         Notes
         -----
         * See :class:`aaanalysis.SequenceFeature` for definition of parts, and lists of all existing and default parts.
+        * If ``ext_len`` in aaanalysis.options is not set to > 0, following parts containing extended tmd are not
+          considered for ``all_parts=True``: ['tmd_e', 'ext_c', 'ext_n', 'ext_n_tmd_n', 'tmd_c_ext_c'].
         * ``jmd_n_len`` and ``jmd_c_len`` must be both given, except for the part-based format.
 
         Formats for ``df_seq`` are differentiated by their respective columns:
@@ -375,7 +377,7 @@ class SequenceFeature:
 
         Returns
         -------
-        df_feat : pd.DataFrame, shape (n_features, n_features_info)
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
 
         Notes
@@ -503,7 +505,7 @@ class SequenceFeature:
         list_parts: list of str, default=["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
             Names of sequence parts which should be created (e.g., 'tmd'). Length should be >= 1.
         all_parts: bool, default=False
-            Whether to create DataFrame with all possible sequence parts (if ``True``) or parts given by list_parts.
+            Whether to create DataFrame with all possible sequence parts (if ``True``) or parts given by ``list_parts``.
         split_kws : dict, optional
             Dictionary with parameter dictionary for each chosen split_type. Default from :meth:`SequenceFeature.get_split_kws`.
         list_scales : list of str, optional
@@ -513,6 +515,11 @@ class SequenceFeature:
         -------
         features: list of str
             Ids of all possible features for combination of Parts, Splits, and Scales with form: PART-SPLIT-SCALE
+
+        Notes
+        -----
+        * If ``ext_len`` in aaanalysis.options is not set to > 0, following parts containing extended tmd are not
+          considered for ``all_parts=True``: ['tmd_e', 'ext_c', 'ext_n', 'ext_n_tmd_n', 'tmd_c_ext_c'].
 
         Examples
         --------
@@ -672,7 +679,7 @@ class SequenceFeature:
 
         Parameters
         ----------
-        df_feat : pd.DataFrame, shape (n_features, n_features_info)
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
         col_value : {'abs_auc', 'abs_mean_dif', 'mean_dif', 'std_test', 'std_ref'}, default='mean_dif'
             Column name in ``df_feat`` containing numerical values to aggregate. If feature importance and impact

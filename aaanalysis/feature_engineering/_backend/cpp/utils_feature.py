@@ -219,10 +219,10 @@ def get_feature_matrix_(features=None, df_parts=None, df_scales=None, accept_gap
         feat_matrix = _feature_matrix(features, dict_all_scales, df_parts, accept_gaps)
     else:
         # Run in multiple processes
-        n_processes = min([os.cpu_count(), len(features)]) if n_jobs is None else n_jobs
-        feat_chunks = np.array_split(features, n_processes)
+        n_jobs = min([os.cpu_count(), len(features)]) if n_jobs is None else n_jobs
+        feat_chunks = np.array_split(features, n_jobs)
         args = zip(feat_chunks, repeat(dict_all_scales), repeat(df_parts), repeat(accept_gaps))
-        with mp.get_context("spawn").Pool(processes=n_processes) as pool:
+        with mp.get_context("spawn").Pool(processes=n_jobs) as pool:
             result = pool.starmap(_feature_matrix, args)
         feat_matrix = np.concatenate(result, axis=1)
     return feat_matrix

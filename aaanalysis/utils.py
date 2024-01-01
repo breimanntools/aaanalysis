@@ -429,6 +429,9 @@ def check_list_parts(list_parts=None, return_default=True, all_parts=False, acce
     if list_parts is None:
         if return_default:
             list_parts = LIST_ALL_PARTS if all_parts else LIST_PARTS
+            # Remove ext parts if ext is 0
+            if options["ext_len"] == 0:
+                list_parts = [l for l in list_parts if "ext" not in l and l != "tmd_e"]
             return list_parts
         elif accept_none:
             return  # skip further checks

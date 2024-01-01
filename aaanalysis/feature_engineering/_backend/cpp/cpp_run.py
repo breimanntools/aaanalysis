@@ -96,7 +96,7 @@ def _filtering_info(df=None, df_scales=None, check_cat=True):
 # II Main functions
 # Filtering methods
 def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None, labels=None, label_test=1, label_ref=0,
-                       accept_gaps=False, verbose=True, n_processes=None):
+                       accept_gaps=False, verbose=True, n_jobs=None):
     """Get n best features in descending order based on the abs(mean(group1) - mean(group0),
     where group 1 is the target group"""
     # Input (df_parts, split_kws, df_scales, y) checked in main method (CPP.run())
@@ -106,17 +106,17 @@ def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None, labels=Non
     list_scales = list(df_scales)
     dict_all_scales = {col: dict(zip(df_scales.index.to_list(), df_scales[col])) for col in list_scales}
     # Feature filtering
-    if n_processes == 1:
+    if n_jobs == 1:
         # Run in a single process
         args = [list_scales, dict_all_scales, labels_ps, splittings, accept_gaps, mask_ref, mask_test, verbose]
         abs_mean_dif, std_test, feat_names = _pre_filtering_info(*args)
     else:
         # Run in multiple processes
-        n_processes = min([os.cpu_count(), len(list_scales)])
-        scale_chunks = np.array_split(list_scales, n_processes)
+        n_jobs = min([os.cpu_count(), len(list_scales)])
+        scale_chunks = np.array_split(list_scales, n_jobs)
         args = zip(scale_chunks, repeat(dict_all_scales), repeat(labels_ps), repeat(splittings), repeat(accept_gaps),
                    repeat(mask_ref), repeat(mask_test), repeat(verbose))
-        with mp.get_context("spawn").Pool(processes=n_processes) as pool:
+        with mp.get_context("spawn").Pool(processes=n_jobs) as pool:
             result = pool.starmap(_pre_filtering_info, args)
         abs_mean_dif = np.concatenate([x[0] for x in result])
         std_test = np.concatenate([x[1] for x in result])
@@ -145,6 +145,7 @@ def filtering(df=None, df_scales=None, max_overlap=0.5, max_cor=0.5, n_filter=10
             break
         # Compare features with all top features (added if low overlap & weak correlation or different category)
         for top_feat in list_top_feat:
+            # If check_cat is False, the categories are not compared and only the position and correlation are checked
             if not check_cat or dict_c[feat] == dict_c[top_feat]:
                 # Remove if feat positions high overlap or subset
                 pos, top_pos = dict_p[feat], dict_p[top_feat]

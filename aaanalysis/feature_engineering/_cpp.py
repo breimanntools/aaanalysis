@@ -3,7 +3,7 @@ This is a script for the frontend of the CPP class, a sequence-based feature eng
 """
 import numpy as np
 import pandas as pd
-from typing import Optional
+from typing import Optional, List
 
 import aaanalysis.utils as ut
 from aaanalysis.template_classes import Tool
@@ -11,18 +11,23 @@ from aaanalysis.template_classes import Tool
 # Import supportive class (exception for importing from same sub-package)
 from ._backend.cpp.sequence_feature import get_features_, get_split_kws_
 from ._backend.check_feature import (check_split_kws,
-                                     check_parts_len, check_match_features_seq_parts,
-                                     check_df_parts, check_match_df_parts_features,
-                                     check_match_df_parts_list_parts, check_match_df_parts_split_kws,
-                                     check_df_scales, check_match_df_scales_features,
-                                     check_df_cat, check_match_df_cat_features,
-                                     check_match_df_parts_df_scales, check_match_df_scales_df_cat)
+                                     check_parts_len,
+                                     check_match_features_seq_parts,
+                                     check_df_parts,
+                                     check_match_df_parts_features,
+                                     check_match_df_parts_list_parts,
+                                     check_match_df_parts_split_kws,
+                                     check_df_scales,
+                                     check_match_df_scales_features,
+                                     check_df_cat,
+                                     check_match_df_cat_features,
+                                     check_match_df_parts_df_scales,
+                                     check_match_df_scales_df_cat)
 from ._backend.cpp.utils_feature import get_positions_, add_scale_info_
 from ._backend.cpp.cpp_run import pre_filtering_info, pre_filtering, filtering, add_stat
 
 
 # I Helper Functions
-# Check for add methods
 def check_sample_in_df_seq(sample_name=None, df_seq=None):
     """Check if sample name in df_seq"""
     list_names = list(df_seq[ut.COL_NAME])
@@ -30,6 +35,7 @@ def check_sample_in_df_seq(sample_name=None, df_seq=None):
         error = f"'sample_name' ('{sample_name}') not in '{ut.COL_NAME}' of 'df_seq'." \
                 f"\nValid names are: {list_names}"
         raise ValueError(error)
+
 
 # II Main Functions
 class CPP(Tool):
@@ -39,21 +45,19 @@ class CPP(Tool):
     Attributes
     ----------
     df_parts
-        DataFrame with sequence parts.
+        DataFrame with sequence ``Parts``.
     split_kws
-        Nested dictionary with parameter dictionary for each chosen split_type.
+        Nested dictionary defining ``Splits`` with parameter dictionary for each chosen split_type.
     df_scales
-        DataFrame with amino acid scales.
+        DataFrame with amino acid ``Scales``.
     df_cat
-        DataFrame with categories for physicochemical amino acid scales.
-
-
+        DataFrame with categories for physicochemical amino acid ``Scales``.
 
     See Also
     --------
-    * :class:`aaanalysis.SequenceFeature` for definition of sequence parts.
-    * :meth:`aaanalysis.SequenceFeature.split_kws` for definition of split key word arguments.
-    * :func:`aaanalysis.load_scales` for definition of amino acid scales and their categories.
+    * :class:`aaanalysis.SequenceFeature` for definition of sequence ``Parts``.
+    * :meth:`aaanalysis.SequenceFeature.split_kws` for definition of ``Splits`` key word arguments.
+    * :func:`aaanalysis.load_scales` for definition of amino acid ``Scales`` and their categories.
 
     """
     def __init__(self,
@@ -131,7 +135,7 @@ class CPP(Tool):
             tmd_len: int = 20,
             jmd_n_len: int = 10,
             jmd_c_len: int = 10,
-            n_processes: Optional[int] = None
+            n_jobs: Optional[int] = None
             ) -> pd.DataFrame:
         """
         Perform Comparative Physicochemical Profiling (CPP) algorithm: creation and two-step filtering of
@@ -155,13 +159,13 @@ class CPP(Tool):
         pct_pre_filter : int, default=5
             Percentage of all features that should remain after the pre-filtering step.
         max_std_test : float, default=0.2
-            Maximum standard deviation [0-1] within the test group used as threshold for pre-filtering.
+            Maximum standard deviation [>0-<1] within the test group used as threshold for pre-filtering.
         max_overlap : float, default=0.5
             Maximum positional overlap [0-1] of features used as threshold for filtering.
         max_cor : float, default=0.5
-            Maximum Pearson correlation [0-1] of features used as threshold for filtering.
+            Maximum Pearson correlation [0-1] of feature scales used as threshold for filtering.
         check_cat : bool, default=True
-            Whether to check for redundancy within scale categories.
+            Whether to check for redundancy within scale categories during filtering.
         parametric : bool, default=False
             Whether to use parametric (T-test) or non-parametric (Mann-Whitney-U-test) test for p-value computation.
         start : int, default=1
@@ -172,25 +176,28 @@ class CPP(Tool):
             Length of JMD-N (>=0).
         jmd_c_len : int, default=10
             Length of JMD-C (>=0).
-        n_processes : int, optional
+        n_jobs : int, optional
             Number of CPUs used for multiprocessing. If ``None``, number will be optimized automatically.
 
         Returns
         -------
-        df_feat : pd.DataFrame, shape (n_features, n_features_info)
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
 
         Notes
         -----
-        ``df_feat`` contains the following 13 columns, including the unique feature id (1), scale information (2-5),
-         statistical results for filtering and ranking (6-12), and feature positions (13):
+        * Pre-filtering can be adjusted by the following parameters: {'n_pre_filter', 'pct_pre_filter', 'max_std_test'}.
+        * Filtering can be adjusted by the following parameters: {'n_filter', 'max_overlap', 'max_cor', 'check_cat'}.
+        * ``check_cat`` (not introduced in [Breimann24c]_) was included to provide higher filtering flexibility.
+        * ``df_feat`` contains the following 13 columns, including the unique feature id (1), scale information (2-5),
+           statistical results for filtering and ranking (6-12), and feature positions (13):
 
             1. 'features': Feature ID (PART-SPLIT-SCALE)
             2. 'category': Scale category
             3. 'subcategory': Sub category of scales
             4. 'scale_name': Name of scales
             5. 'scale_description': Description of the scale
-            6. 'abs_auc': Absolute adjusted AUC [-0.5 to 0.5]
+            6. 'abs_auc': Absolute adjusted AUC (area under the curve) [-0.5 to 0.5]
             7. 'abs_mean_dif': Absolute mean differences between test and reference group [0 to 1]
             8. 'mean_dif': Mean differences between test and reference group [-1 to 1]
             9. 'std_test': Standard deviation in test group
@@ -198,6 +205,10 @@ class CPP(Tool):
             11. 'p_val': Non-parametric (mann_whitney) or parametric (ttest_indep) statistic
             12. 'p_val_fdr_bh': Benjamini-Hochberg FDR corrected p-values
             13. 'positions': Feature positions for default settings
+
+        See Also
+        --------
+        * :func:`aaanalysis.comp_auc_adjusted` for details on 'abs_auc'.
 
         Examples
         --------
@@ -211,13 +222,15 @@ class CPP(Tool):
         ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
         ut.check_number_range(name="n_pre_filter", val=n_pre_filter, min_val=1, accept_none=True, just_int=True)
         ut.check_number_range(name="pct_pre_filter", val=pct_pre_filter, min_val=5, max_val=100, just_int=True)
-        ut.check_number_range(name="max_std_test", val=max_std_test, min_val=0.0, max_val=1.0, just_int=False)
+        ut.check_number_range(name="max_std_test", val=max_std_test, min_val=0.0, max_val=1.0,
+                              just_int=False, exclusive_limits=True)
         ut.check_number_range(name="max_overlap", val=max_overlap, min_val=0.0, max_val=1.0, just_int=False)
         ut.check_number_range(name="max_cor", val=max_cor, min_val=0.0, max_val=1.0, just_int=False)
         ut.check_bool(name="check_cat", val=check_cat)
         ut.check_bool(name="parametric", val=parametric)
+        ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
-        ut.check_number_range(name="n_process", val=n_processes, min_val=1, accept_none=True, just_int=True)
+        ut.check_number_range(name="n_process", val=n_jobs, min_val=1, accept_none=True, just_int=True)
         # Settings and creation of objects
         n_feat = len(get_features_(list_parts=list(self.df_parts),
                                    split_kws=self.split_kws,
@@ -235,7 +248,7 @@ class CPP(Tool):
                                                               label_ref=label_ref,
                                                               accept_gaps=self._accept_gaps,
                                                               verbose=self._verbose,
-                                                              n_processes=n_processes)
+                                                              n_jobs=n_jobs)
         n_feat = int(len(features))
         if n_pre_filter is None:
             n_pre_filter = int(n_feat * (pct_pre_filter / 100))
@@ -275,10 +288,61 @@ class CPP(Tool):
     def eval(self,
              list_df_feat: pd.DataFrame = None,
              labels: ut.ArrayLike1D = None,
-             label_test : int = 1,):
-        """"""
+             label_test : int = 1,
+             names_feature_sets: Optional[List[str]] = None,
+             ) -> pd.DataFrame:
+        """
+        Evaluate the quality of different sets of identified CPP features.
+
+        The quality is assessed regarding three quality groups:
+
+        - **Categories** of scales across all features.
+        - **CPP statistics** comparing the test against reference dataset aggregated across all features.
+        - **Homogeneity** among  all identified features assessed by optimized number of clusters
+          based on pair-wise Pearson correlation between features.
+
+        Parameters
+        ----------
+        list_df_feat : list of pd.DataFrames
+            List of DataFrames each of shape (n_features, n_feature_info)
+        labels : array-like, shape (n_samples,)
+            Class labels for samples in sequence DataFrame (test=1, reference=0).
+        label_test : int, default=1,
+            Class label of test group in ``labels``.
+        names_feature_sets : list of str, optional
+            List of names for feature sets corresponding to ``list_df_feat``.
+
+        Returns
+        -------
+        df_eval : pd.DataFrame
+            Evaluation results for each set of identified features. For each set, statistical
+            measures were averaged across all features.
+
+        Notes
+        -----
+        ``df_eval`` includes the following columns:
+
+        - 'name': Name of the feature set, typically based on CPP run settings, if ``names`` is provided.
+        - 'n_features': Number of features per scale category given as list. Categories are ordered as follows:
+          ['ASA/Volume', 'Composition', 'Conformation', 'Energy', 'Others', 'Polarity', 'Shape', 'Structure-Activity']
+        - 'avg_abs_auc': Absolute AUC averaged across all features.
+        - 'avg_mean_dif': Two mean differences averaged across all features separately for features with positive
+          and negative 'mean_dif'.
+        - 'avg_std_test' Mean standard deviation averaged across all features.
+        - 'n_clusters': Number of clusters obtained across all features
+
+        See Also
+        --------
+        * :ref:`usage_principles_aaontology` for details on scale categories.
+        * :meth:`aaanalysis.CPP.run` for details on CPP statistical measures.
+        * :func:`aaanalysis.comp_auc_adjusted` for details on 'abs_auc'.
+
+        Examples
+        --------
+        .. include:: examples/cpp_eval.rst
+        """
         # Check input
 
         # Evaluation
-        df_eval = None
+        df_eval = pd.DataFrame()
         return df_eval

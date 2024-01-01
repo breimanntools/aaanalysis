@@ -278,7 +278,7 @@ class dPULearn:
 
         See Also
         --------
-        * See :ref:`usage_principles_pu_learning` for details on different evaluation strategies.
+        * :ref:`usage_principles_pu_learning` for details on different evaluation strategies.
 
         Examples
         --------

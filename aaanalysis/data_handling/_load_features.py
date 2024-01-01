@@ -31,7 +31,7 @@ def load_features(name="DOM_GSEC"):
 
     Returns
     -------
-    df_feat : pd.DataFrame, shape (n_features, n_features_info)
+    df_feat : pd.DataFrame, shape (n_features, n_feature_info)
         A DataFrame with features and their statistical measures as provided :meth:`aaanalysis.CPP.run` method,
         including their feature importance.
 
