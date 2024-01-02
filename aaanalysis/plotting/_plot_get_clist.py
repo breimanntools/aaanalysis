@@ -9,10 +9,10 @@ from aaanalysis import utils as ut
 # II Main function
 def plot_get_clist(n_colors: int = 3) -> List[str]:
     """
-    Returns manually curated list of 2 to 9 colors.
+    Get a manually curated list of 2 to 9 colors or 'husl' palette for more than 9 colors.
 
     This functions returns one of eight different color lists optimized for appealing visualization of categories.
-    If more than 9 n_colors are selected, :func:`seaborn.color_palette` with 'husl' palette will be used.
+    If more than 9 colors are selected, :func:`seaborn.color_palette` with 'husl' palette will be used.
 
     Parameters
     ----------

@@ -61,7 +61,7 @@ def load_scales(name: str = "scales",
                 top60_n: Optional[Union[int, str]] = None
                 ) -> DataFrame:
     """
-    Loads amino acid scales or their classification (AAontology).
+    Load amino acid scales or their classification (AAontology).
 
     The amino acid scales (``name='scales_raw'``) encompass all scales from AAindex ([Kawashima08]_) along with two
     additional data sources. These scales were min-max normalized (``name='scales'``) and organized in a two-level

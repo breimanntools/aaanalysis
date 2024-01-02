@@ -20,9 +20,12 @@ def check_name(name=None):
 # II Main Functions
 def load_features(name="DOM_GSEC"):
     """
-    Load feature sets for protein benchmarking datasets from :func:`aaanalysis.load_dataset`.
+    Load feature sets for protein benchmarking datasets.
 
-    Features are only provided for in-depth analyzed datasets, which are as follows: 'DOM_GSEC' ([Breimann24a]_).
+    Features are only provided for in-depth analyzed datasets available from the :func:`aaanalysis.load_dataset`
+    function. These are as follows:
+
+        - 'DOM_GSEC' ([Breimann24c]_)
 
     Parameters
     ----------

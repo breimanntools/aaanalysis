@@ -156,7 +156,10 @@ def check_names_to_show(df_seq=None, names_to_show=None):
 # II Main Functions
 class CPPPlot:
     """
-    Plot CPP results at global or individual sample level as ranking plot, profile, or map (heatmap, feature map).
+    Plotting class for ``CPP`` (Comparative Physicochemical Profiling).
+
+    This plotting class visualizes the results of the result of the :class:`aaanalysis.CPP` class. The CPP results
+    can be visualized at global or individual sample level as ranking plot, profile, or map (heatmap, feature map).
 
     """
     def __init__(self,

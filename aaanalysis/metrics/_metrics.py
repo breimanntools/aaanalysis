@@ -27,11 +27,11 @@ def comp_auc_adjusted(X : ut.ArrayLike2D = None,
                       label_ref: int = 0,
                       ) -> ut.ArrayLike1D:
     """
-    Compute an adjusted Area Under the (receiver operating characteristic) Curve (AUC) for
-    each feature in the dataset X, comparing two groups specified by the labels.
+    Compute an adjusted Area Under the Curve (AUC) [-0.5, 0.5] assessing the similarity between two groups.
 
-    This adjusted AUC (denoted 'AUC*') is based on the non-parametric measure of the difference between two groups,
-    as introduced in [Breimann24c]_. The adjustment of AUC subtracts 0.5, so it ranges between -0.5 and 0.5.
+    Introduced in [Breimann24c]_, this adjusted AUC (denoted 'AUC*') is computed for each feature in the
+    dataset ``X``, comparing two groups specified by the labels. It is based on the non-parametric measure of the
+    difference between two groups. The adjustment of AUC subtracts 0.5, so it ranges between -0.5 and 0.5.
     An AUC* of 0 indicates an equal distribution between the two groups. This measure is useful for ranking features
     based on their ability to distinguish between the two groups.
 
@@ -74,11 +74,12 @@ def comp_bic_score(X : ut.ArrayLike2D = None,
                    labels : ut.ArrayLike1D =None
                    ) -> float:
     """
-    Computes an adjusted Bayesian Information Criterion (BIC) [-∞, ∞] for a given set of clusters in the dataset `X`.
+    Compute an adjusted Bayesian Information Criterion (BIC) (-∞, ∞) for assessing clustering quality.
 
+    Described in [Breimann24b], this adjusted BIC is computed for a given set of clusters in the dataset ``X``.
     The BIC is a clustering model selection criterion that balances the model complexity against the
     likelihood of the data distribution. Unlike the traditional BIC where lower values are better, this adjusted BIC,
-    as described in [Breimann24b], is modified to align with other clustering evaluation measures like the
+    is modified to align with other clustering evaluation measures like the
     Silhouette coefficient and the Calinski-Harabasz score. In this adjusted version, higher values indicate
     better clustering.
 
@@ -126,11 +127,12 @@ def comp_kld(X : ut.ArrayLike2D = None,
              label_ref : int = 0
              ) -> ut.ArrayLike1D:
     """
-    Calculate the Kullback-Leibler Divergence (KLD) for each feature in X, comparing
-    the distributions between two subgroups specified by ``label_test`` and ``label_ref`` in labels.
+    Compute the Kullback-Leibler Divergence (KLD) [0, ∞) for assessing the similarity between two groups.
 
-    The KLD measures how one probability distribution diverges from a second,
-    expected probability distribution. Higher KLD values indicate more divergence.
+    The KLD is calculated for each feature in ``X``, comparing the distributions between two subgroups specified
+    by ``label_test`` and ``label_ref`` in labels. Generally, the KLD measures how one probability distribution
+    diverges from a second, expected probability distribution. Higher KLD values indicate more divergence. The observed
+    upper limit lies around 200 indicating complete divergence of two non-overlapping distributions.
 
     Parameters
     ----------

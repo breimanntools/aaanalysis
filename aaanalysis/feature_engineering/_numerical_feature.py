@@ -13,7 +13,13 @@ import numpy as np
 
 # II Main Functions
 class NumericalFeature:
-    """"""
+    """
+    Utility feature engineering class to process and filter numerical data structures such as amino acid scales or
+    a feature matrix.
+
+    Different post-processing/filtering steps are provided, as introduced in [Breimann24c]_.
+
+    """
 
     def comp_correlation(self):
         """"""

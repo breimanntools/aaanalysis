@@ -75,12 +75,14 @@ def post_check_n_clusters(n_clusters_actual=None, n_clusters=None):
 # II Main Functions
 class AAclust(Wrapper):
     """
-    A k-optimized clustering wrapper for selecting redundancy-reduced sets of numerical scales.
+    Amino Acid clustering (AAclust) class: A k-optimized clustering wrapper for selecting redundancy-reduced sets
+    of numerical scales.
 
-    AAclust uses clustering models that require a pre-defined number of clusters (k, set by ``n_clusters``),
-    such as k-means or other `scikit-learn clustering models <https://scikit-learn.org/stable/modules/clustering.html>`_.
-    AAclust optimizes the value of k by utilizing Pearson correlation and then selects a representative sample ('medoid')
-    for each cluster closest to the center, resulting in a redundancy-reduced sample set. See [Breimann24a]_.
+    Introduced in [Breimann24a]_, AAclust uses clustering models that require a pre-defined number of clusters
+    (k, set by ``n_clusters``), such as k-means or other `scikit-learn clustering models
+    <https://scikit-learn.org/stable/modules/clustering.html>`_. AAclust optimizes the value of k by utilizing Pearson
+    correlation and then selects a representative sample ('medoid') for each cluster closest to the center,
+    resulting in a redundancy-reduced sample set.
 
     Attributes
     ----------

@@ -94,7 +94,11 @@ def check_match_df_parts_label_test_label_ref(df_parts=None, labels=None, label_
 # II Main Functions
 class SequenceFeature:
     """
-    Retrieve and create sequence feature components (``Part``, ``Split``, and  ``Scale``).
+    Utility feature engineering class using sequences to create feature components (``Parts``, ``Splits``,
+    and  ``Scales``) and data structures (e.g., feature matrix).
+
+    Introduced in [Breimann24c]_, the three feature components  are the primary input for the :class:`aaanalysis.CPP`
+    class and define Comparative Physicochemical Profiling (CPP) features.
 
     Notes
     -----

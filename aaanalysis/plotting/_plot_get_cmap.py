@@ -12,7 +12,7 @@ def plot_get_cmap(name: str = "CPP",
                   facecolor_dark: Optional[bool] = None
                   ) -> Union[List[Tuple[float, float, float]], List[str]]:
     """
-    Returns color map specified for AAanalysis.
+    Get color maps specified for AAanalysis.
 
     Parameters
     ----------

@@ -133,8 +133,10 @@ def check_match_bar_colors_labels(bar_colors=None, labels=None):
 
 # II Main Functions
 class AAclustPlot:
-    """Plot results of AAclust analysis.
+    """
+    Plotting class for ``AAclust`` (Amino Acid clustering).
 
+    This plotting class visualizes the result of the :class:`aaanalysis.AAclust` class, introduced in [Breimann24a]_.
     Dimensionality reduction is performed for visualization using decomposition models such as
     Principal Component Analysis (PCA).
 
