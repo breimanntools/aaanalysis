@@ -19,7 +19,11 @@ import aaanalysis.utils as ut
 
 # II Main Functions
 class ShapModel:
-    """A wrapper for Tree explainable_ai from SHAP package"""
+    """
+    SHAP (SHapley Additive exPlanations) Model class: A wrapper for SHAP Tree explainers to obtain feature impact.
+
+    `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ is an explainable Artificial Intelligence (AI) framework.
+    """
     def __init__(self, model_class=None):
         """"""
 

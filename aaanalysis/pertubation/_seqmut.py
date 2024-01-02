@@ -11,7 +11,8 @@ import aaanalysis.utils as ut
 # II Main Functions
 class SeqMut:
     """
-    Perform amino acid substitution for given sequence.
+    UNDER CONSTRUCTION - Sequence Mutator (SeqMut) class for analyzing the impact of amino acid substitutions
+    in protein sequences.
     """
     def __init__(self, verbose=False, df_scales=None):
         self._verbose = ut.check_verbose(verbose)

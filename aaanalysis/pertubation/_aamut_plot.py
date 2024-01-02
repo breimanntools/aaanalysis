@@ -11,7 +11,8 @@ import aaanalysis.utils as ut
 # II Main Functions
 class AAMutPlot:
     """
-    Plot results of AAMut.
+    UNDER CONSTRUCTION - Plotting class for ``AAMut`` (Amino Acid Mutate).
+
     """
     def __init__(self, verbose=False, df_scales=None):
         self._verbose = ut.check_verbose(verbose)

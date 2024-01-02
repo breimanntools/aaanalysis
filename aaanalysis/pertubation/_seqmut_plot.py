@@ -11,7 +11,7 @@ import aaanalysis.utils as ut
 # II Main Functions
 class SeqMutPlot:
     """
-    Plot SeqMut results.
+    UNDER CONSTRUCTION - Plotting class for ``SeqMut`` (Sequence Mutator).
     """
     def __init__(self, verbose=False, df_scales=None):
         self._verbose = ut.check_verbose(verbose)

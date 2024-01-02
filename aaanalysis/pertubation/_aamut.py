@@ -11,7 +11,8 @@ import aaanalysis.utils as ut
 # II Main Functions
 class AAMut:
     """
-    A class for analyzing the impact of amino acid substitutions on various property scales.
+    UNDER CONSTRUCTION - Amino Acid Mutator (AAMut) class for analyzing the impact of amino acid substitutions
+    on amino acid scales.
     """
     def __init__(self, verbose=False, df_scales=None):
         self._verbose = ut.check_verbose(verbose)

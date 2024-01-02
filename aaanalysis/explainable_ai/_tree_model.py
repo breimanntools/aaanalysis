@@ -18,8 +18,9 @@ import aaanalysis.utils as ut
 
 # II Main Functions
 class TreeModel:
-    """A wrapper for Tree based prediction models and Tree explainable_ai from SHAP package to
-    explain prediction (typically binary classification) results at global and individual level"""
+    """
+    Tree Model class: A wrapper for tree-based prediction models to obtain feature importance.
+    """
     def __init__(self, model_class=None):
         """"""
 
