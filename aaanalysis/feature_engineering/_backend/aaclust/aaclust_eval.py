@@ -40,6 +40,6 @@ def evaluate_clustering(X, list_labels=None, names_datasets=None):
         list_evals.append([n_clusters, bic, ch, sc])
     # Create the DataFrame
     df_eval = pd.DataFrame(list_evals, columns=ut.COLS_EVAL_AACLUST)
-    df_eval = ut.add_names_to_df_eval(df_eval=df_eval, names_datasets=names_datasets)
+    df_eval = ut.add_names_to_df_eval(df_eval=df_eval, names=names_datasets)
     return df_eval, warn_ch, warn_sc
 

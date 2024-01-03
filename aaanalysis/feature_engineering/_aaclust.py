@@ -177,7 +177,7 @@ class AAclust(Wrapper):
         n_clusters : int, optional
             Pre-defined number of clusters. If provided, k is not optimized. Must be 0 > n_clusters > n_samples.
         min_th : float, default=0.3
-            Pearson correlation threshold for clustering (between 0 and 1).
+            Pearson correlation threshold for clustering optimization (between 0 and 1).
         on_center : bool, default=True
             If ``True``, ``min_th`` is applied to the cluster center. Otherwise, to all cluster members.
         merge : bool, default=True
@@ -223,16 +223,13 @@ class AAclust(Wrapper):
         X = ut.check_X(X=X)
         ut.check_X_unique_samples(X=X)
         names = ut.check_list_like(name="names", val=names, accept_none=True)
-        ut.check_number_range(name="mint_th", val=min_th, min_val=0, max_val=1, just_int=False, accept_none=False)
+        ut.check_number_range(name="min_th", val=min_th, min_val=0, max_val=1, just_int=False)
         ut.check_number_range(name="n_clusters", val=n_clusters, min_val=1, just_int=True, accept_none=True)
         check_metric(metric=metric)
         ut.check_bool(name="on_center", val=on_center)
-
         check_match_X_n_clusters(X=X, n_clusters=n_clusters, accept_none=True)
         check_match_X_names(X=X, names=names, accept_none=True)
-
         args = dict(model=self.model_class, model_kwargs=self._model_kwargs, min_th=min_th, on_center=on_center)
-
         # Clustering using given clustering models
         if n_clusters is not None:
             self.model = self.model_class(n_clusters=n_clusters, **self._model_kwargs)
@@ -336,6 +333,8 @@ class AAclust(Wrapper):
         ut.check_X_unique_samples(X=X)
         list_labels = ut.check_array_like(name="list_labels", val=list_labels, ensure_2d=True, convert_2d=True)
         ut.check_match_X_list_labels(X=X, list_labels=list_labels)
+        names_datasets = ut.check_list_like(name="names_datasets", val=names_datasets, accept_none=True, accept_str=True,
+                                            check_all_str_or_convertible=True)
         ut.check_match_list_labels_names_datasets(list_labels=list_labels, names_datasets=names_datasets)
         # Get number of clusters (number of medoids) and evaluation measures
         df_eval, warn_ch, warn_sc = evaluate_clustering(X, list_labels=list_labels, names_datasets=names_datasets)

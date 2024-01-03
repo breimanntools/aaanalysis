@@ -35,7 +35,7 @@ class TestCompareSetsNegatives:
     def test_names_valid(self, num_names):
         names = _create_names(num_names)
         list_labels = _create_list_labels(100, num_names)
-        result = aa.dPULearn.compare_sets_negatives(list_labels=list_labels, names=names)
+        result = aa.dPULearn.compare_sets_negatives(list_labels=list_labels, names_datasets=names)
         assert isinstance(result, pd.DataFrame)
 
     def test_df_seq_valid(self):
@@ -71,9 +71,9 @@ class TestCompareSetsNegatives:
         names = _create_names(num_names)
         list_labels = _create_list_labels(100, num_names+1)
         with pytest.raises(ValueError):
-            aa.dPULearn.compare_sets_negatives(list_labels=list_labels, names=names)
+            aa.dPULearn.compare_sets_negatives(list_labels=list_labels, names_datasets=names)
         with pytest.raises(ValueError):
-            aa.dPULearn.compare_sets_negatives(list_labels=list_labels, names="wrong")
+            aa.dPULearn.compare_sets_negatives(list_labels=list_labels, names_datasets="wrong")
 
     def test_df_seq_invalid(self):
         df_seq = pd.DataFrame({'invalid_column': ['a', 'b', 'c']})  # Non-numeric DataFrame
@@ -102,7 +102,7 @@ class TestCompareSetsNegativesComplex:
         df_seq = aa.load_dataset(name=random_dataset_name, n=50)
         list_labels = _create_list_labels(len(df_seq), num_labels)
         names = _create_names(num_labels)
-        result = aa.dPULearn.compare_sets_negatives(list_labels=list_labels, names=names, 
+        result = aa.dPULearn.compare_sets_negatives(list_labels=list_labels, names_datasets=names,
                                                     df_seq=df_seq, return_upset_data=return_upset_data)
         assert isinstance(result, pd.DataFrame) or isinstance(result, pd.Series)
 
@@ -114,7 +114,7 @@ class TestCompareSetsNegativesComplex:
         list_labels = _create_list_labels(size, num_labels)
         names = _create_names(num_labels + 1)  # One extra name to create a mismatch
         with pytest.raises(ValueError):
-            aa.dPULearn.compare_sets_negatives(list_labels=list_labels, names=names)
+            aa.dPULearn.compare_sets_negatives(list_labels=list_labels, names_datasets=names)
 
     @settings(max_examples=5)
     @given(size=st.integers(min_value=1, max_value=100),

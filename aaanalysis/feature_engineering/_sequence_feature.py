@@ -94,7 +94,7 @@ def check_match_df_parts_label_test_label_ref(df_parts=None, labels=None, label_
 # II Main Functions
 class SequenceFeature:
     """
-    Utility feature engineering class using sequences to create feature components (``Parts``, ``Splits``,
+    Utility feature engineering class using sequences to create ``CPP`` feature components (``Parts``, ``Splits``,
     and  ``Scales``) and data structures (e.g., feature matrix).
 
     Introduced in [Breimann24c]_, the three feature components  are the primary input for the :class:`aaanalysis.CPP`
@@ -686,8 +686,8 @@ class SequenceFeature:
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
         col_value : {'abs_auc', 'abs_mean_dif', 'mean_dif', 'std_test', 'std_ref'}, default='mean_dif'
-            Column name in ``df_feat`` containing numerical values to aggregate. If feature importance and impact
-            are obtained, columns can also include {'feat_importance', 'feat_impact'}.
+            Column name in ``df_feat`` containing numerical values to ``average``. If feature importance and impact
+            are provided as {'feat_importance', 'feat_impact'} columns, their ``sum`` of values is computed.
         col_cat : {'category', 'subcategory', 'scale_name'}, default='category'
             Column name in ``df_feat`` for categorizing the numerical values during aggregation.
         start : int, default=1

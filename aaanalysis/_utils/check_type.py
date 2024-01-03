@@ -100,7 +100,7 @@ def check_tuple(name=None, val=None, n=None, check_n_number=True, accept_none=Fa
             check_number_val(name=name, val=v, just_int=False, accept_none=False)
 
 
-def check_list_like(name=None, val=None, accept_none=False, convert=True, accept_str=False,
+def check_list_like(name=None, val=None, accept_none=False, convert=True, accept_str=False, min_len=None,
                     check_all_non_neg_int=False, check_all_non_none=True, check_all_str_or_convertible=False):
     """Check if the value is list-like, optionally converting it to a list, and performing additional checks."""
     if val is None:
@@ -122,7 +122,7 @@ def check_list_like(name=None, val=None, accept_none=False, convert=True, accept
     if check_all_non_none:
         n_none = len([x for x in val if x is None])
         if n_none > 0:
-            raise ValueError(f"'name' should not contain 'None' (n={n_none})")
+            raise ValueError(f"'{name}' should not contain 'None' (n={n_none})")
     if check_all_non_neg_int:
         if any(type(i) != int or i < 0 for i in val):
             raise ValueError(f"'{name}' should only contain non-negative integers.")
@@ -133,6 +133,8 @@ def check_list_like(name=None, val=None, accept_none=False, convert=True, accept
                              f" reasonably convertible: {wrong_elements}")
         else:
             val = [str(x) for x in val]
+    if min_len is not None and len(val) < min_len:
+        raise ValueError(f"'{name}' should not contain at least {min_len} elements")
     return val
 
 

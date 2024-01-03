@@ -29,6 +29,12 @@ from ._backend.cpp.cpp_plot_feature_map import plot_feature_map
 # TODO plot_functions test & refactor (end-to-end)
 # TODO remove decorators for redundant signatures (not compiled at reading time -> IDE docuemntation problems)
 
+# TODO simplify interface (delete old profile)
+# TODO add importance plot for heatmap
+# TODO merge (grid_axis=None -> grid=False,)
+# TODO normalize=True/False (always normalize for positions)
+
+
 # I Helper Functions
 def check_value_type(value_type=None, count_in=True):
     """Check if value type is valid"""
@@ -147,12 +153,6 @@ def check_names_to_show(df_seq=None, names_to_show=None):
                          f"column of 'df_seq': {missing_names}")
 
 
-# Plotting functions
-# TODO simplify interface (delete old profile)
-# TODO add importance plot for heatmap
-# TODO merge (grid_axis=None -> grid=False,)
-# TODO normalize=True/False (always normalize for positions)
-
 # II Main Functions
 class CPPPlot:
     """
@@ -231,7 +231,8 @@ class CPPPlot:
                 alpha_hist=0.1,
                 alpha_dif=0.2,
                 ) -> plt.Axes:
-        """Plot distributions of feature values for test and reference datasets highlighting their mean difference.
+        """
+        Plot distributions of feature values for test and reference datasets highlighting their mean difference.
 
         Parameters
         ----------
@@ -748,3 +749,7 @@ class CPPPlot:
         seq_size = get_optimal_fontsize(ax, sorted_labels)
         for l in sorted_labels:
             l.set_fontsize(seq_size)
+
+    def eval(self):
+        """"""
+

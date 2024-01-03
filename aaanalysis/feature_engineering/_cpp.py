@@ -3,7 +3,7 @@ This is a script for the frontend of the CPP class, a sequence-based feature eng
 """
 import numpy as np
 import pandas as pd
-from typing import Optional, List
+from typing import Optional, List, Union
 
 import aaanalysis.utils as ut
 from aaanalysis.template_classes import Tool
@@ -25,7 +25,7 @@ from ._backend.check_feature import (check_split_kws,
                                      check_match_df_scales_df_cat)
 from ._backend.cpp.utils_feature import get_positions_, add_scale_info_
 from ._backend.cpp.cpp_run import pre_filtering_info, pre_filtering, filtering, add_stat
-
+from ._backend.cpp.cpp_eval import evaluate_features
 
 # I Helper Functions
 def check_sample_in_df_seq(sample_name=None, df_seq=None):
@@ -35,6 +35,21 @@ def check_sample_in_df_seq(sample_name=None, df_seq=None):
         error = f"'sample_name' ('{sample_name}') not in '{ut.COL_NAME}' of 'df_seq'." \
                 f"\nValid names are: {list_names}"
         raise ValueError(error)
+
+
+def check_match_list_df_feat_list_df_parts(list_df_feat=None, list_df_parts=None):
+    """Check if all elements in list are valid feature DataFrames"""
+    for df_feat, df_parts in zip(list_df_feat, list_df_parts):
+        ut.check_df_feat(df_feat=df_feat, list_parts=list(df_parts))
+
+
+def check_match_list_df_feat_names_feature_sets(list_df_feat=None, names_feature_sets=None):
+    """Check if length of list_df_feat and names match"""
+    if names_feature_sets is None:
+        return None # Skip check
+    if len(list_df_feat) != len(names_feature_sets):
+        raise ValueError(f"Length of 'list_df_feat' ({len(list_df_feat)}) and 'names_feature_sets'"
+                         f" ({len(names_feature_sets)} does not match) ")
 
 
 # II Main Functions
@@ -234,7 +249,7 @@ class CPP(Tool):
         ut.check_bool(name="parametric", val=parametric)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
-        ut.check_number_range(name="n_process", val=n_jobs, min_val=1, accept_none=True, just_int=True)
+        ut.check_number_range(name="n_jobs", val=n_jobs, min_val=1, accept_none=True, just_int=True)
         # Settings and creation of objects
         n_feat = len(get_features_(list_parts=list(self.df_parts),
                                    split_kws=self.split_kws,
@@ -288,12 +303,15 @@ class CPP(Tool):
             ut.print_out(f"4. CPP returns df with {len(df_feat)} unique features including general information and statistics")
         return df_feat
 
-    # TODO get evaluation for any dataset for complete
     def eval(self,
-             list_df_feat: pd.DataFrame = None,
+             list_df_feat: List[pd.DataFrame] = None,
              labels: ut.ArrayLike1D = None,
              label_test : int = 1,
+             label_ref : int = 0,
+             min_th: float = 0.0,
              names_feature_sets: Optional[List[str]] = None,
+             list_df_parts : Optional[List[pd.DataFrame]] = None,
+             n_jobs: Union[int, None] = 1,
              ) -> pd.DataFrame:
         """
         Evaluate the quality of different sets of identified CPP features.
@@ -308,13 +326,21 @@ class CPP(Tool):
         Parameters
         ----------
         list_df_feat : list of pd.DataFrames
-            List of DataFrames each of shape (n_features, n_feature_info)
+            List of feature DataFrames each of shape (n_features, n_feature_info)
         labels : array-like, shape (n_samples,)
             Class labels for samples in sequence DataFrame (test=1, reference=0).
         label_test : int, default=1,
             Class label of test group in ``labels``.
+        label_ref : int, default=0,
+            Class label of reference group in ``labels``.
+        min_th : float, default=0.0
+            Pearson correlation threshold for clustering optimization (between -1 and 1).
         names_feature_sets : list of str, optional
             List of names for feature sets corresponding to ``list_df_feat``.
+        list_df_parts : list of pd.DataFrames, optional
+            List of part DataFrames each of shape (n_samples, n_parts). Must match with ``list_df_feat``.
+        n_jobs : int, default=1
+            Number of CPUs used for multiprocessing. If ``None``, number will be optimized automatically.
 
         Returns
         -------
@@ -324,29 +350,58 @@ class CPP(Tool):
 
         Notes
         -----
-        ``df_eval`` includes the following columns:
+        * ``df_eval`` includes the following columns (upper-case indicates direct reference to ``df_feat`` columns):
 
-        - 'name': Name of the feature set, typically based on CPP run settings, if ``names`` is provided.
-        - 'n_features': Number of features per scale category given as list. Categories are ordered as follows:
-          ['ASA/Volume', 'Composition', 'Conformation', 'Energy', 'Others', 'Polarity', 'Shape', 'Structure-Activity']
-        - 'avg_abs_auc': Absolute AUC averaged across all features.
-        - 'avg_mean_dif': Two mean differences averaged across all features separately for features with positive
-          and negative 'mean_dif'.
-        - 'avg_std_test' Mean standard deviation averaged across all features.
-        - 'n_clusters': Number of clusters obtained across all features
+            - 'name': Name of the feature set, typically based on CPP run settings, if ``names`` is provided.
+            - 'n_features': Number of features per scale category given as list. Categories are ordered as follows:
+              ['ASA/Volume', 'Composition', 'Conformation', 'Energy', 'Others', 'Polarity', 'Shape', 'Structure-Activity']
+            - 'avg_ABS_AUC': Absolute AUC averaged across all features.
+            - 'max_ABS_AUC': Maximum AUC among all features (i.e., feature with the best discrimination).
+            - 'avg_MEAN_DIF': Two mean differences averaged across all features separately for features with positive
+              and negative 'mean_dif'.
+            - 'avg_STD_TEST' Mean standard deviation averaged across all features.
+            - 'n_clusters': Optimal number of clusters [2,100].
+            - 'avg_n_feat_per_clust': Average number of features per cluster.
+            - 'std_n_feat_per_clust': Standard deviation of feature number per cluster.
+
+        * 'n_clusters' is optimized for a KMeans clustering model based on the minimum pair-wise Pearson correlation
+          value across all clusters, which has to exceed the minimum correlation threshold ``min_th``.
 
         See Also
         --------
         * :ref:`usage_principles_aaontology` for details on scale categories.
         * :meth:`aaanalysis.CPP.run` for details on CPP statistical measures.
         * :func:`aaanalysis.comp_auc_adjusted` for details on 'abs_auc'.
+        * :class:`sklearn.cluster.KMeans` for employed clustering model.
+        * :class:`aaanalysis.AAclust` ([Breimann24a]_) for details on cluster optimization using Pearson correlation.
 
         Examples
         --------
         .. include:: examples/cpp_eval.rst
         """
         # Check input
-
+        ut.check_number_val(name="label_test", val=label_test, just_int=True)
+        ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
+        labels = ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
+                                 len_requiered=len(self.df_parts), allow_other_vals=False)
+        ut.check_number_range(name="min_th", val=min_th, min_val=-1, max_val=1, just_int=False)
+        list_df_feat = ut.check_list_like(name="list_df_feat", val=list_df_feat, min_len=2)
+        names_feature_sets = ut.check_list_like(name="names_feature_sets", val=names_feature_sets, accept_none=True,
+                                            accept_str=True, check_all_str_or_convertible=True)
+        ut.check_number_range(name="n_jobs", val=n_jobs, min_val=1, accept_none=True, just_int=True)
+        check_match_list_df_feat_names_feature_sets(list_df_feat=list_df_feat,
+                                                    names_feature_sets=names_feature_sets)
+        ut.check_list_like(name="list_df_parts", val=list_df_parts, accept_none=True)
+        mask_test = [x == label_test for x in labels]
+        if list_df_parts is None:
+            list_df_parts = [self.df_parts[mask_test]] * len(list_df_feat)
+        check_match_list_df_feat_list_df_parts(list_df_feat=list_df_feat, list_df_parts=list_df_parts)
         # Evaluation
-        df_eval = pd.DataFrame()
+        df_eval = evaluate_features(list_df_feat=list_df_feat,
+                                    names_feature_sets=names_feature_sets,
+                                    list_df_parts=list_df_parts,
+                                    df_scales=self.df_scales,
+                                    accept_gaps=self._accept_gaps,
+                                    n_jobs=n_jobs,
+                                    min_th=min_th)
         return df_eval

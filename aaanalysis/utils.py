@@ -154,6 +154,19 @@ COL_SC = "SC"
 COL_RANK = "rank"
 COLS_EVAL_AACLUST = [COL_N_CLUST, COL_BIC, COL_CH, COL_SC]
 
+# CPP evaluation
+COL_N_FEAT = "n_features"
+COL_AVG_ABS_AUC = "avg_ABS_AUC"
+COL_MAX_ABS_AUC = "max_ABS_AUC"
+COL_AVG_MEAN_DIF = "avg_MEAN_DIF"
+COL_AVG_STD_TEST = "avg_STD_TEST"
+# COL_N_CLUST = "n_clusters"
+COL_AVG_N_FEAT_PER_CLUST = "avg_n_feat_per_clust"
+COL_STD_N_FEAT_PER_CLUST = "std_n_feat_per_clust"
+COL_EVAL_CPP = [COL_N_FEAT,
+                COL_AVG_ABS_AUC, COL_AVG_MEAN_DIF, COL_AVG_STD_TEST,
+                COL_N_CLUST, COL_AVG_N_FEAT_PER_CLUST, COL_STD_N_FEAT_PER_CLUST]
+
 # dPULearn (evaluation)
 COL_SELECTION_VIA = "selection_via"
 COL_N_REL_NEG = "n_rel_neg"
@@ -221,6 +234,8 @@ DICT_COLOR_CAT = {"ASA/Volume": "tab:blue",
                   "Shape": "tab:cyan",
                   "Structure-Activity": "tab:brown"}
 
+COLS_CAT = ['ASA/Volume', 'Composition', 'Conformation', 'Energy',
+            'Others', 'Polarity', 'Shape', 'Structure-Activity']
 
 
 # Parameter options for cmaps and color dicts
@@ -316,12 +331,12 @@ def load_default_scales(scale_cat=False):
 
 
 # Adjust df_eval
-def add_names_to_df_eval(df_eval=None, names_datasets=None):
+def add_names_to_df_eval(df_eval=None, names=None):
     """Add names column to df_eval"""
-    if names_datasets is None:
+    if names is None:
         n_datasets = len(df_eval)
-        names_datasets = [f"Set {i}" for i in range(1, n_datasets + 1)]
-    df_eval.insert(0, COL_NAME, names_datasets)
+        names = [f"Set {i}" for i in range(1, n_datasets + 1)]
+    df_eval.insert(0, COL_NAME, names)
     return df_eval
 
 
@@ -564,8 +579,11 @@ def check_df_feat(df_feat=None, df_cat=None, list_parts=None):
     check_df(df=df_feat, name="df_feat", cols_requiered=cols_feat)
     if len(df_feat) == 0 or len(list(df_feat)) == 0:
         raise ValueError("'df_feat' should be not empty")
+    duplicated_columns = df_feat.columns[df_feat.columns.duplicated()]
+    if len(duplicated_columns) > 0:
+        raise ValueError(f"'df_feat' should not contain duplicated columns: {duplicated_columns}")
     # Check features
-    features = list(df_feat[COL_FEATURE])
+    features = list(df_feat[COL_FEATURE]) #.values.tolist()
     check_features(features=features, list_parts=list_parts)
     # Check if df_feat matches df_cat
     if df_cat is not None:

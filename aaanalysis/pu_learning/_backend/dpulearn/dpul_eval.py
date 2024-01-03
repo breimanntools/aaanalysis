@@ -120,5 +120,5 @@ def eval_identified_negatives(X=None, list_labels=None, names_datasets=None, X_n
             cols_eval.append(ut.COL_AVG_KLD_NEG)
     # Create the DataFrame
     df_eval = pd.DataFrame(list_evals, columns=cols_eval).round(4)
-    df_eval = ut.add_names_to_df_eval(df_eval=df_eval, names_datasets=names_datasets)
+    df_eval = ut.add_names_to_df_eval(df_eval=df_eval, names=names_datasets)
     return df_eval

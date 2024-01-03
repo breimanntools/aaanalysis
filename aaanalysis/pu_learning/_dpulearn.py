@@ -289,7 +289,7 @@ class dPULearn:
         X_neg = ut.check_X(X=X_neg, X_name="X_neg", accept_none=True, min_n_samples=2)
         ut.check_bool(name="comp_kld", val=comp_kld)
         list_labels = ut.check_array_like(name="list_labels", val=list_labels, ensure_2d=True, convert_2d=True)
-        names_datasets = ut.check_list_like(name="names", val=names_datasets, accept_none=True, accept_str=True,
+        names_datasets = ut.check_list_like(name="names_datasets", val=names_datasets, accept_none=True, accept_str=True,
                                             check_all_str_or_convertible=True)
         ut.check_match_X_list_labels(X=X, list_labels=list_labels, comp_kld=comp_kld, vals_requiered=[0])
         ut.check_match_list_labels_names_datasets(list_labels=list_labels, names_datasets=names_datasets)
@@ -301,7 +301,7 @@ class dPULearn:
 
     @staticmethod
     def compare_sets_negatives(list_labels: ut.ArrayLike1D = None,
-                               names: Optional[List[str]] = None,
+                               names_datasets: Optional[List[str]] = None,
                                df_seq: Optional[pd.DataFrame] = None,
                                remove_non_neg : bool = True,
                                return_upset_data: bool = False
@@ -317,7 +317,7 @@ class dPULearn:
         list_labels : array-like, shape (n_datasets,)
             List of dataset labels for samples in ``X`` obtained by the :meth:`dPULearn.fit` method.
             Label values should be either 0 (identified negative), 1 (positive) or 2 (unlabeled). Must contain 0.
-        names : list, optional
+        names_datasets : list, optional
             List of dataset names corresponding to ``list_labels``.
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
             DataFrame with sequence information for entries corresponding to 'labels' of ``list_labels``.
@@ -349,14 +349,14 @@ class dPULearn:
         # Check input
         list_labels = ut.check_array_like(name="list_labels", val=list_labels,
                                           ensure_2d=True, convert_2d=True)
-        names = ut.check_list_like(name="names", val=names, accept_none=True,
-                                   accept_str=True, check_all_str_or_convertible=True)
+        names_datasets = ut.check_list_like(name="names_datasets", val=names_datasets, accept_none=True,
+                                            accept_str=True, check_all_str_or_convertible=True)
         ut.check_df_seq(df_seq=df_seq, accept_none=True)
         ut.check_bool(name="return_upset_data", val=return_upset_data)
-        ut.check_match_list_labels_names_datasets(list_labels=list_labels, names_datasets=names)
+        ut.check_match_list_labels_names_datasets(list_labels=list_labels, names_datasets=names_datasets)
         check_match_list_labels_df_seq(list_labels=list_labels, df_seq=df_seq)
         # Comparison of identified sets of negatives
-        args = dict(list_labels=list_labels, names=names,
+        args = dict(list_labels=list_labels, names=names_datasets,
                     df_seq=df_seq, return_upset_data=return_upset_data, remove_non_neg=remove_non_neg)
         if return_upset_data:
             upset_data = compare_sets_negatives_(**args)

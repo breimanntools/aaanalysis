@@ -11,7 +11,7 @@ import aaanalysis.utils as ut
 # II Main Functions
 class AAMutPlot:
     """
-    UNDER CONSTRUCTION - Plotting class for ``AAMut`` (Amino Acid Mutate).
+    UNDER CONSTRUCTION - Plotting class for ``AAMut`` (Amino Acid Mutator).
 
     """
     def __init__(self, verbose=False, df_scales=None):

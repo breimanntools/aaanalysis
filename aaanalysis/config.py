@@ -12,6 +12,7 @@ from typing import Dict, Any
 
 # System level options
 verbose = True
+random_state = 42
 ext_len = 0
 
 
@@ -21,6 +22,7 @@ class Settings:
         self._settings: Dict[str, Any] = {
             'verbose': verbose,
             'ext_len': ext_len,
+            'random_state': random_state,
         }
 
     def __getitem__(self, key: str) -> Any:

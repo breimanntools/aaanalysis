@@ -170,7 +170,8 @@ def check_match_list_labels_names_datasets(list_labels=None, names_datasets=None
     if names_datasets is None:
         return None # Skip check
     if len(list_labels) != len(names_datasets):
-        raise ValueError(f"Length of 'list_labels' ({len(list_labels)}) and 'names' ({len(names_datasets)} does not match) ")
+        raise ValueError(f"Length of 'list_labels' ({len(list_labels)}) and 'names_datasets'"
+                         f" ({len(names_datasets)} does not match) ")
 
 
 
