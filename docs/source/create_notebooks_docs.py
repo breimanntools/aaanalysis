@@ -97,17 +97,23 @@ def export_tutorial_notebooks_to_rst():
 
 def export_example_notebooks_to_rst():
     """Export Jupyter examples to RST without execution."""
-    for filename in os.listdir(FOLDER_EXAMPLES):
-        if filename.endswith('.ipynb') and filename not in LIST_EXCLUDE:
-            notebook_name = filename.replace('.ipynb', '')
-            full_path = os.path.join(FOLDER_EXAMPLES, filename)
-            # Load the notebook
-            with open(full_path, 'r') as f:
-                notebook = nbformat.read(f, as_version=4)
-            # Convert to notebook to RST
-            custom_preprocessor = CustomPreprocessor(notebook_name=notebook_name, in_examples=True)
-            rst_exporter = nbconvert.RSTExporter(preprocessors=[custom_preprocessor])
-            output, resources = rst_exporter.from_notebook_node(notebook)
-            # Write the RST and any accompanying files (like images)
-            writer = FilesWriter(build_directory=FOLDER_EXAMPLES_RST)
-            writer.write(output, resources, notebook_name=filename.replace('.ipynb', ''))
+    for root, dirs, files in os.walk(FOLDER_EXAMPLES):
+        for filename in files:
+            if filename.endswith('.ipynb') and filename not in LIST_EXCLUDE:
+                notebook_name = filename.replace('.ipynb', '')
+                full_path = os.path.join(root, filename)
+                #print(f"Processing file: {full_path}")  # Debug print
+                try:
+                    # Load the notebook
+                    with open(full_path, 'r') as f:
+                        notebook = nbformat.read(f, as_version=4)
+                    # Convert to notebook to RST
+                    custom_preprocessor = CustomPreprocessor(notebook_name=notebook_name, in_examples=True)
+                    rst_exporter = nbconvert.RSTExporter(preprocessors=[custom_preprocessor])
+                    output, resources = rst_exporter.from_notebook_node(notebook)
+                    # Write the RST and any accompanying files (like images)
+                    writer = FilesWriter(build_directory=FOLDER_EXAMPLES_RST)
+                    writer.write(output, resources, notebook_name=notebook_name)
+                except FileNotFoundError as e:
+                    print(f"Error processing file: {full_path}. Error: {e}")
+
