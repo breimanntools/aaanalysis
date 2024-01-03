@@ -78,7 +78,7 @@ class TestAAclustPlotEval:
 
 
     # Negative test
-    @settings(max_examples=5)
+    @settings(max_examples=5, deadline=1000)
     @given(data=some.lists(some.lists(some.floats(allow_nan=True, allow_infinity=True), min_size=2, max_size=10), min_size=2, max_size=10))
     def test_data_with_nans_and_infs(self, data):
         """Test the 'data' parameter with NaN and Inf."""

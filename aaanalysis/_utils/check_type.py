@@ -146,3 +146,12 @@ def check_ax(ax=None, accept_none=False):
         return None
     if not isinstance(ax, matplotlib.axes.Axes):
         raise ValueError(f"'ax' (type={type(ax)}) should be mpl.axes.Axes or None.")
+
+
+def check_figsize(figsize=None, accept_none=False):
+    """Check size of figure"""
+    if accept_none and figsize is None:
+        return None # skip check
+    check_tuple(name="figsize", val=figsize, n=2)
+    check_number_range(name="figsize:width", val=figsize[0], min_val=1, just_int=False)
+    check_number_range(name="figsize:height", val=figsize[1], min_val=1, just_int=False)

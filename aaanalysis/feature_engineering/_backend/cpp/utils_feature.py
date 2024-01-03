@@ -14,6 +14,14 @@ import aaanalysis.utils as ut
 
 # I Helper Functions
 # DEV: Run exceptionally in backend because error might only be caused internally
+def pre_check_vf_scale(part_split=None):
+    """Check for the presence of a specific gap string in the sequence."""
+    # Join the elements of part_split into a single string
+    combined_string = "".join(part_split)
+    # Check if ut.STR_AA_GAP is in the combined string
+    if ut.STR_AA_GAP in combined_string:
+        raise ValueError("Some input sequences contain gaps ('-').")
+
 def post_check_vf_scale(feature_values=None):
     """Check if feature_values/X does contain nans due to gaps"""
     if np.isnan(feature_values).any():
@@ -124,6 +132,8 @@ def _feature_value(df_parts=None, split=None, dict_scale=None, accept_gaps=False
     vf_scale = get_vf_scale(dict_scale=dict_scale, accept_gaps=accept_gaps)
     # Combine part split and scale to get feature values
     part_split = vf_split(df_parts)
+    if not accept_gaps:
+        pre_check_vf_scale(part_split=part_split)
     feature_value = np.round(vf_scale(part_split), 5)  # feature values
     if accept_gaps:
         post_check_vf_scale(feature_values=feature_value)

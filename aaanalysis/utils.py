@@ -15,7 +15,8 @@ from .config import options
 # Import utility functions explicitly (can be imported from this utils file from other modules)
 # Checking functions
 from ._utils.check_type import (check_number_range, check_number_val, check_str, check_bool,
-                                check_dict, check_tuple, check_list_like, check_ax)
+                                check_dict, check_tuple, check_list_like,
+                                check_ax, check_figsize)
 from ._utils.check_data import (check_X, check_X_unique_samples,
                                 check_labels, check_match_X_labels, check_match_X_list_labels,
                                 check_match_list_labels_names_datasets,
@@ -472,7 +473,7 @@ def _check_part(part=None, feature=None, list_parts=None):
     part = part.replace(" ", "")  # remove whitespace
     error = f"Wrong 'PART' for '{feature}'. Features should be 'PART-SPLIT-SCALE', with parts from: {list_parts}."
     if part.lower() in LIST_ALL_PARTS:
-        error += f"\n Or include '{part.lower()}' in parts."
+        error += f"\n Or include '{part.lower()}' in parts or set 'ext_len' option > 0."
     if part.lower() not in list_parts:
         raise ValueError(error)
 

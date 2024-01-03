@@ -119,7 +119,7 @@ class dPULearn:
         Parameters
         ----------
         verbose : bool, optional
-            Enable verbose output.
+            If ``True``, verbose outputs are enabled. Global ``verbose`` setting is used if ´´None``.
         pca_kwargs : dict, optional
             Additional keyword arguments for Principal Component Analysis (PCA) model.
         """

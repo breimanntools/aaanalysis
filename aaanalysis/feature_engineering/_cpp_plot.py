@@ -4,20 +4,24 @@ This is a script for the frontend of the CPPPlot class.
 from typing import Optional, Dict, Union, List, Tuple, Type
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-import inspect
-import matplotlib as mpl
 
 import aaanalysis.utils as ut
 
 from ._backend.check_feature import (check_split_kws,
-                                     check_parts_len, check_match_features_seq_parts,
-                                     check_df_parts, check_match_df_parts_features, check_match_df_parts_list_parts,
-                                     check_df_scales, check_match_df_scales_features,
-                                     check_df_cat, check_match_df_cat_features,
-                                     check_match_df_parts_df_scales, check_match_df_scales_df_cat)
+                                     check_parts_len,
+                                     check_match_features_seq_parts,
+                                     check_df_parts,
+                                     check_match_df_parts_features,
+                                     check_match_df_parts_list_parts,
+                                     check_df_scales,
+                                     check_match_df_scales_features,
+                                     check_df_cat,
+                                     check_match_df_cat_features,
+                                     check_match_df_parts_df_scales,
+                                     check_match_df_scales_df_cat)
 from ._backend.cpp.utils_cpp_plot import get_optimal_fontsize
 
+from ._backend.cpp.cpp_plot_eval import plot_eval
 from ._backend.cpp.cpp_plot_feature import plot_feature
 from ._backend.cpp.cpp_plot_ranking import plot_ranking
 from ._backend.cpp.cpp_plot_profile import plot_profile
@@ -36,6 +40,7 @@ from ._backend.cpp.cpp_plot_feature_map import plot_feature_map
 
 
 # I Helper Functions
+# Check input data
 def check_value_type(value_type=None, count_in=True):
     """Check if value type is valid"""
     list_value_type = ["count", "sum", "mean"]
@@ -89,14 +94,6 @@ def check_seq_color(tmd_seq_color=None, jmd_seq_color=None):
     args_seq_color = dict(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
     return args_seq_color
 
-
-def check_figsize(figsize=None):
-    """"""
-    ut.check_tuple(name="figsize", val=figsize, n=2)
-    ut.check_number_range(name="figsize:width", val=figsize[0], min_val=1, just_int=False)
-    ut.check_number_range(name="figsize:height", val=figsize[1], min_val=1, just_int=False)
-
-
 def check_dict_color(dict_color=None, df_cat=None):
     """Check if color dictionary is matching to DataFrame with categories"""
     list_cats = list(sorted(set(df_cat[ut.COL_CAT])))
@@ -141,11 +138,12 @@ def check_ylabel_fontweight(ylabel_fontweight=None, accept_none=True):
         raise ValueError(error)
 
 
-def check_names_to_show(df_seq=None, names_to_show=None):
-    """"""
+def check_match_df_seq_names_to_show(df_seq=None, names_to_show=None):
+    """Check if """
     if names_to_show is None:
-        return []
-    names_to_show = ut.check_list_like(name="name_to_show", val=names_to_show, accept_str=True)
+        return # Skip check
+    if ut.COL_NAME not in df_seq:
+        raise ValueError(f"'df_seq' must contain '{ut.COL_NAME}' column if 'names_to_show' ({names_to_show}) is not none")
     list_names = df_seq[ut.COL_NAME].to_list()
     missing_names = [x for x in names_to_show if x not in list_names]
     if len(missing_names) > 0:
@@ -167,24 +165,23 @@ class CPPPlot:
                  df_cat: Optional[pd.DataFrame] = None,
                  jmd_n_len: int = 10,
                  jmd_c_len: int = 10,
-                 verbose: bool = True,
                  accept_gaps: bool = False,
-                 ):
+                 verbose: Optional[bool] = None):
         """
         Parameters
         ----------
         df_scales : pd.DataFrame, shape (n_features, n_scales), optional
             DataFrame with scales (features are typically amino acids). Default from :meth:`load_scales` with ``
-        df_cat
-            DataFrame with default categories for physicochemical amino acid scales.
-            Default from :meth:`load_categories`
-        jmd_n_len
+        df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
+            DataFrame with categories for physicochemical amino acid scales.
+            Default from :meth:`load_scales` with ``name='scales_cat'``.
+        jmd_n_len : int, default=10
             Length of JMD-N (>=0).
-        jmd_c_len
+        jmd_c_len: int, default=10
             Length of JMD-C (>=0).
-        accept_gaps
+        accept_gaps: bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
-        verbose
+        verbose: bool, optional
             If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if ``None``.
         """
         # Load defaults
@@ -193,92 +190,235 @@ class CPPPlot:
         if df_cat is None:
             df_cat = ut.load_default_scales(scale_cat=True)
         # Check input
+        verbose = ut.check_verbose(verbose)
         check_df_scales(df_scales=df_scales)
         check_df_cat(df_cat=df_cat)
         check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_none_len=True)
         ut.check_bool(name="accept_gaps", val=accept_gaps)
         df_scales, df_cat = check_match_df_scales_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
         # General settings
-        self._verbose = ut.check_verbose(verbose)
+        self._verbose = verbose
         self._accept_gaps = accept_gaps
         # Set data parameters
         self._df_cat = df_cat
         self._df_scales = df_scales
-        # Set consistent length of JMD_N, JMD_C, TMD flanking amino acids (TMD-E)
+        # Set consistent length of JMD-N and JMD-C
         self._jmd_n_len = jmd_n_len
         self._jmd_c_len = jmd_c_len
         # Axes dict for plotting
         self.ax_seq = None
 
-    # Plotting methods for single feature
-    def feature(self,
-                ax: Optional[plt.Axes] = None,
-                figsize: Tuple[Union[int, float], Union[int, float]] = (5.6, 4.8),
-                feature=str,
-                df_seq=None,
-                labels=None,
-                names_to_show=None,
-                show_seq=False,
-                name_test="TEST",
-                name_ref="REF",
-                color_test="tab:green",
-                color_ref="tab:gray",
-                fontsize_mean_dif=15,
-                fontsize_name_test=13,
-                fontsize_name_ref=13,
-                fontsize_names_to_show=11,
-                histplot=False,
-                alpha_hist=0.1,
-                alpha_dif=0.2,
-                ) -> plt.Axes:
+    @staticmethod
+    def eval(df_eval: pd.DataFrame = None,
+             figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
+             legend: bool = True,
+             legend_y: float = -0.175,
+             ) -> Tuple[plt.Figure, plt.Axes]:
         """
-        Plot distributions of feature values for test and reference datasets highlighting their mean difference.
+        Plot evaluation output of CPP comparing multiple sets of identified feature sets.
+
+        Evaluation measures can be grouped into 'Homogeneity' measures ('avg STD' and 'avg IQR') assessing
+        the similarity within the sets of identified negatives, and 'Dissimilarity' measures ('avg AUC', 'avg KLD')
+        assessing the dissimilarity between the identified negatives and the other reference groups including
+        positive samples ('Pos'), unlabeled samples ('Unl'), and ground-truth negative samples ('Neg') if given.
 
         Parameters
         ----------
+        df_eval : pd.DataFrame, shape (n_feature_sets, n_metrics)
+            DataFrame with evaluation measures for sets of identified features. Each `row` corresponds to a specific
+            feature set. Requiered 'columns' are:
+
+            - 'name': Name of the feature set.
+            - 'n_features': Number of features per scale category given as list.
+            - 'avg_ABS_AUC': Absolute AUC averaged across all features.
+            - 'max_ABS_AUC': Maximum AUC among all features (i.e., feature with the best discrimination).
+            - 'avg_MEAN_DIF': Two mean differences averaged across all features (for positive and negative 'mean_dif')
+            - 'avg_STD_TEST' Mean standard deviation averaged across all features.
+            - 'n_clusters': Optimal number of clusters.
+            - 'avg_n_feat_per_clust': Average number of features per cluster.
+            - 'std_n_feat_per_clust': Standard deviation of feature number per cluster
+
+        figsize : tuple, default=(6, 4)
+            Width and height of the figure in inches.
+        legend : bool, default=True
+            If ``True``, scale category legend is set under number of features measures.
+        legend_y : float, default=-0.175
+            Legend position regarding the plot y-axis applied if ``legend=True``.
+
+        Returns
+        -------
+        fig : plt.Figure
+            Figure object for evaluation plot
+        axes : array of plt.Axes
+            Array of Axes objects, each representing a subplot within the figure.
+
+        See Also
+        --------
+        * :meth:`CPP.eval` for details on evaluation measures.
+        * :func:`comp_auc_adjusted`.
+
+        Examples
+        --------
+        .. include:: examples/cpp_plot_eval.rst
+        """
+        # Check input
+        cols_requiered = [ut.COL_NAME, ut.COL_AVG_STD, ut.COL_AVG_IQR, ut.COL_AVG_ABS_AUC_POS, ut.COL_AVG_ABS_AUC_UNL]
+        ut.check_df(name="df_eval", df=df_eval, cols_requiered=cols_requiered, accept_none=False, accept_nan=False)
+        ut.check_figsize(figsize=figsize, accept_none=True)
+        ut.check_bool(name="legend", val=legend)
+        ut.check_number_val(name="legend_y", val=legend_y)
+        # Plotting
+        fig, axes = plot_eval(df_eval=df_eval, figsize=figsize, legend=legend, legend_y=legend_y)
+        return fig, axes
+
+
+    # Plotting methods for single feature
+    def feature(self,
+                feature: str = None,
+                df_seq: pd.DataFrame = None,
+                labels: ut.ArrayLike1D = None,
+                label_test: int = 1,
+                label_ref: int = 0, 
+                ax: Optional[plt.Axes] = None,
+                figsize: Tuple[Union[int, float], Union[int, float]] = (5.6, 4.8),
+                names_to_show: Optional[Union[List[str], str]] = None,
+                name_test: str = "TEST",
+                name_ref: str = "REF",
+                color_test: str = "tab:green",
+                color_ref: str = "tab:gray",
+                show_seq: bool = False,
+                histplot: bool = False,
+                fontsize_mean_dif: Union[int, float, None] = 15,
+                fontsize_name_test: Union[int, float, None] = 13,
+                fontsize_name_ref: Union[int, float, None] = 13,
+                fontsize_names_to_show: Union[int, float, None] = 11,
+                alpha_hist: Union[int, float] = 0.1,
+                alpha_dif: Union[int, float] = 0.2,
+                ) -> plt.Axes:
+        """
+        Plot distributions of CPP feature values for test and reference datasets highlighting their mean difference.
+
+        A CPP feature is defined as a ``Part-Split-Scale`` combination, introduced in [Breimann24c]_.
+
+        Parameters
+        ----------
+        feature : str
+            Name of the feature for which test and reference set distributions and difference should be plotted.
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
+            in a distinct ``Position-based``, ``Part-based``, ``Sequence-based``, or ``Sequence-TMD-based`` format.
+        labels : array-like, shape (n_samples,)
+            Class labels for samples in sequence DataFrame (typically, test=1, reference=0).
+        label_test : int, default=1,
+            Class label of test group in ``labels``.
+        label_ref : int, default=0,
+            Class label of reference group in ``labels``.
+        ax : plt.Axes, optional
+            Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
+        figsize : tuple, default=(5.6, 4.8)
+            Figure size (width, height) in inches.
+        names_to_show : list of str, optional
+            Names of specific samples from ``df_seq`` to highlight on plot. 'name' column must be given in ``df_seq``
+            if ``names_to_show`` is not ``None``.
+        name_test : str, default="TEST"
+            Name for the test dataset.
+        name_ref : str, default="REF"
+            Name for the reference dataset.
+        color_test : str, default="tab:green"
+            Color for the test dataset.
+        color_ref : str, default="tab:gray"
+            Color for the reference dataset.
+        show_seq : bool, default=False
+            If ``True``, show sequence of samples selected via ``names_to_show``.
+        histplot : bool, default=False
+            If ``True``, plot a histogram. If ``False``, plot a kernel density estimate (KDE) plot.
+        fontsize_mean_dif : Union[int, float], default=15
+            Font size (>0) for displayed mean difference text.
+        fontsize_name_test : Union[int, float], default=13
+            Font size (>0) for the name of the test dataset.
+        fontsize_name_ref : Union[int, float], default=13
+            Font size (>0) for the name of the reference dataset.
+        fontsize_names_to_show : Union[int, float], default=11
+            Font size (>0) for the names selected via ``names_to_show``.
+        alpha_hist : int or float, default=0.1
+            Alpha value for the histogram distributions [0-1].
+        alpha_dif : int or float, default=0.2
+            Alpha value for the mean difference area [0-1].
 
         Returns
         -------
         ax : plt.Axes
-            Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
-        figsize : tuple, default=(5.6, 4.8)
-            Figure size (width, height) in inches.
-        """
+            CPP feature plot axes object.
 
+        See Also
+        --------
+        * :class:`SequenceFeature` for details on CPP feature concept.
+        * :meth:`SequenceFeature.get_df_parts` for details on format of ``df_seq``.
+        * The internally used :func:`seaborn.histplot` and :func:`seaborn.kdeplot` functions.
+
+        Examples
+        --------
+        .. include:: examples/cpp_plot_feature.rst
+        """
         # Check input
-        # TODO check input, add docstring, typing
-        #feature = ut.check_list_like(name="feature", val=feature, convert=True, accept_str=True)
-        check_names_to_show(df_seq=df_seq, names_to_show=names_to_show)
+        ut.check_features(features=feature, list_scales=list(self._df_scales))
+        ut.check_df_seq(df_seq=df_seq, accept_none=False)
+        ut.check_number_val(name="label_test", val=label_test, just_int=True)
+        ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
+        labels = ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
+                                 len_requiered=len(df_seq), allow_other_vals=False)
+        ut.check_ax(ax=ax, accept_none=True)
+        ut.check_figsize(figsize=figsize, accept_none=True)
+        names_to_show = ut.check_list_like(name="name_to_show", val=names_to_show, accept_str=True, accept_none=True)
+        ut.check_str(name="name_test", val=name_test)
+        ut.check_str(name="name_ref", val=name_ref)
+        ut.check_color(name="color_test", val=color_test)
+        ut.check_color(name="color_ref", val=color_ref)
+        ut.check_bool(name="show_seq", val=show_seq)
+        ut.check_bool(name="histplot", val=histplot)
+        args = dict(min_val=0, exclusive_limits=True, accept_none=True)
+        ut.check_number_range(name="fontsize_mean_dif", val=fontsize_mean_dif, **args)
+        ut.check_number_range(name="fontsize_name_test", val=fontsize_name_test, **args)
+        ut.check_number_range(name="fontsize_name_ref", val=fontsize_name_ref, **args)
+        ut.check_number_range(name="fontsize_names_to_show", val=fontsize_names_to_show, **args)
+        ut.check_number_range(name="alpha_hist", val=alpha_hist, accept_none=False, min_val=0, max_val=1, just_int=False)
+        ut.check_number_range(name="alpha_dif", val=alpha_dif, accept_none=False, min_val=0, max_val=1, just_int=False)
+        check_match_df_seq_names_to_show(df_seq=df_seq, names_to_show=names_to_show)
         # Plot feature
-        ax = plot_feature(ax=ax, figsize=figsize,
-                          feature=feature, df_scales=self._df_scales, accept_gaps=self._accept_gaps,
-                          df_seq=df_seq, labels=labels,
-                          names_to_show=names_to_show, show_seq=show_seq,
-                          name_test=name_test, name_ref=name_ref,
-                          color_test=color_test, color_ref=color_ref,
-                          fontsize_mean_dif=fontsize_mean_dif,
-                          fontsize_name_test=fontsize_name_test,
-                          fontsize_name_ref=fontsize_name_ref,
-                          fontsize_names_to_show=fontsize_names_to_show,
-                          histplot=histplot, alpha_hist=alpha_hist, alpha_dif=alpha_dif)
+        try:
+            ax = plot_feature(ax=ax, figsize=figsize,
+                              feature=feature, df_scales=self._df_scales, accept_gaps=self._accept_gaps,
+                              df_seq=df_seq, labels=labels, label_test=label_test, label_ref=label_ref,
+                              jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                              names_to_show=names_to_show, show_seq=show_seq,
+                              name_test=name_test, name_ref=name_ref,
+                              color_test=color_test, color_ref=color_ref,
+                              fontsize_mean_dif=fontsize_mean_dif,
+                              fontsize_name_test=fontsize_name_test,
+                              fontsize_name_ref=fontsize_name_ref,
+                              fontsize_names_to_show=fontsize_names_to_show,
+                              histplot=histplot, alpha_hist=alpha_hist, alpha_dif=alpha_dif)
+        # Catch backend not-accepted-gaps error
+        except Exception as e:
+            raise ValueError(e)
         return ax
 
     # Plotting methods for group and single level
     def ranking(self,
-                ax=None,
+                ax: Optional[plt.Axes] = None,
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
                 df_feat=None,
                 df_parts=None,
                 tmd_len=20,
                 labels=None,
-                top_n=15,
+                top_n: int = 15,
                 name_test="TEST",
                 name_ref="REF",
-                error_bar=False,
-                shap_plot=False,
-                fontsize_titles=11,
-                fontsize_labels=11,
-                fontsize_annotations=11,
+                error_bar: bool = False,
+                shap_plot: bool = False,
+                fontsize_titles: Union[int, float] = 11,
+                fontsize_labels: Union[int, float] = 11,
+                fontsize_annotations: Union[int, float] = 11,
                 feature_val_in_percent=True,
                 capsize=2,
                 tmd_jmd_space=2,
@@ -287,7 +427,20 @@ class CPPPlot:
                 xlim_dif=(-17.5, 17.5),
                 xlim_rank=(0, 5)
                 ):
-        """"""
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        ax : plt.Axes
+            CPP ranking plot axes object.
+
+        Examples
+        --------
+        .. include:: examples/cpp_plot_ranking.rst
+        """
         # Check input
         # TODO check input, add docstring, typing
         ut.check_bool(name="shap_plot", val=shap_plot)
@@ -297,36 +450,34 @@ class CPPPlot:
             if df_parts is None:
                 raise ValueError("'df_parts' should not be None if 'error_bar' is True")
         # Plot ranking
-        fig, ax = plot_ranking(figsize=figsize, df_feat=df_feat, top_n=top_n, df_parts=df_parts,
-                               tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
-                               df_scales=self._df_scales, labels=labels,
-                               name_test=name_test, name_ref=name_ref,
-                               error_bar=error_bar, shap_plot=shap_plot,
-                               fontsize_titles=fontsize_titles,
-                               fontsize_labels=fontsize_labels,
-                               fontsize_annotations=fontsize_annotations,
-                               feature_val_in_percent=feature_val_in_percent,
-                               capsize=capsize, tmd_jmd_space=tmd_jmd_space,
-                               col_dif=col_dif, col_rank=col_rank, xlim_dif=xlim_dif, xlim_rank=xlim_rank)
+        try:
+            fig, ax = plot_ranking(figsize=figsize, df_feat=df_feat, top_n=top_n, df_parts=df_parts,
+                                   tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                                   df_scales=self._df_scales, labels=labels,
+                                   name_test=name_test, name_ref=name_ref,
+                                   error_bar=error_bar, shap_plot=shap_plot,
+                                   fontsize_titles=fontsize_titles,
+                                   fontsize_labels=fontsize_labels,
+                                   fontsize_annotations=fontsize_annotations,
+                                   feature_val_in_percent=feature_val_in_percent,
+                                   capsize=capsize, tmd_jmd_space=tmd_jmd_space,
+                                   col_dif=col_dif, col_rank=col_rank, xlim_dif=xlim_dif, xlim_rank=xlim_rank)
+        # Catch backend not-accepted-gaps error
+        except Exception as e:
+            raise ValueError(e)
         return fig, ax
 
     def profile(self,
-                ax=None,
+                ax: Optional[plt.Axes] = None,
                 figsize=(7, 5),
-
                 df_feat=None,
-
                 shap_plot=False,
-
                 col_value="feat_importance",
                 value_type="sum",
                 normalize=True,
-
                 dict_color=None,
-
                 edge_color="none",
                 bar_width=0.75,
-
                 tmd_len=20,
                 start=1,
                 jmd_n_seq=None,
@@ -338,23 +489,18 @@ class CPPPlot:
                 jmd_seq_color="white",
                 seq_size=None,
                 fontsize_tmd_jmd=None,
-
                 xtick_size=11.0,
                 xtick_width=2.0,
                 xtick_length=5.0,
-
                 ytick_size=None,
                 ytick_width=None,
                 ytick_length=5.0,
                 ylim=None,
-
                 xticks_pos=False,
                 add_jmd_tmd=True,
                 highlight_tmd_area=True,
                 highlight_alpha=0.15,
-
                 grid_axis=None,
-
                 add_legend_cat=False,
                 legend_kws=None):
         """
@@ -363,7 +509,7 @@ class CPPPlot:
         Parameters
         ----------
         df_feat : class:`pandas.DataFrame`, optional, default=None
-            Dataframe containing the features to be plotted. If ``None``, default features from the instance will be used.
+            Dataframe containing the features to be plotted. If ``None``, default=features from the instance will be used.
         col_value : {'abs_auc', 'mean_dif', 'std_test', 'feat_importance', 'feat_impact', ...}, default='mean_dif'
             Column name in ``df_feat`` containing the numerical values to be plotted.
         value_type : str, default='count'
@@ -431,10 +577,15 @@ class CPPPlot:
         shap_plot : bool, default=False
             If True, SHAP (SHapley Additive exPlanations) plot is generated.
 
+
         Returns
         -------
-        ax : matplotlib.axes.Axes
-            The axes object containing the plot.
+        ax : plt.Axes
+            CPP profile plot axes object.
+
+        Examples
+        --------
+        .. include:: examples/cpp_plot_profile.rst
 
         """
         # Group arguments
@@ -463,7 +614,7 @@ class CPPPlot:
         df_feat = ut.check_df_feat(df_feat=df_feat)
         check_value_type(value_type=value_type, count_in=True)
         check_args_ytick(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
-        check_figsize(figsize=figsize)
+        ut.check_figsize(figsize=figsize)
         dict_color = check_dict_color(dict_color=dict_color, df_cat=self._df_cat)
         check_grid_axis(grid_axis=grid_axis)    # TODO replace against check from valid strings in utils
 
@@ -496,6 +647,7 @@ class CPPPlot:
 
                 vmin=None,
                 vmax=None,
+                ax: Optional[plt.Axes] = None,
                 grid_on=True,
                 cmap="RdBu_r",
                 cmap_n_colors=None,
@@ -605,8 +757,8 @@ class CPPPlot:
 
         Returns
         -------
-        ax : matplotlib Axes
-            Axes object containing the heatmap.
+        ax : plt.Axes
+            CPP heatmap plot axes object.
 
         Notes
         -----
@@ -617,6 +769,10 @@ class CPPPlot:
         See Also
         --------
         * :meth:`seaborn.heatmap` method for seaborn heatmap.
+
+        Examples
+        --------
+        .. include:: examples/cpp_plot_heatmap.rst
         """
         # Group arguments
         args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
@@ -641,7 +797,7 @@ class CPPPlot:
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat)
         check_value_type(value_type=value_type, count_in=False)
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
-        check_figsize(figsize=figsize)
+        ut.check_figsize(figsize=figsize)
         dict_color = check_dict_color(dict_color=dict_color, df_cat=self._df_cat)
 
         # Get df positions
@@ -696,6 +852,20 @@ class CPPPlot:
                     legend_kws=None,
                     cbar_pct=True,
                     ):
+        """
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        ax : plt.Axes
+            CPP feature map axes object.
+
+        Examples
+        --------
+        .. include:: examples/cpp_plot_feature_map.rst
+        """
         # TODO CHECK
         # TODO cbar & feature importance y location depend on n features.
         # TODO bar label not in
@@ -719,7 +889,7 @@ class CPPPlot:
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat)
         check_value_type(value_type=value_type, count_in=False)
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
-        check_figsize(figsize=figsize)
+        ut.check_figsize(figsize=figsize)
         dict_color = check_dict_color(dict_color=dict_color, df_cat=self._df_cat)
         # Get df positions
         ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat, y=y, col_value=col_value, value_type=value_type,
@@ -749,7 +919,4 @@ class CPPPlot:
         seq_size = get_optimal_fontsize(ax, sorted_labels)
         for l in sorted_labels:
             l.set_fontsize(seq_size)
-
-    def eval(self):
-        """"""
 

@@ -153,7 +153,7 @@ class SequenceFeature:
         Parameters
         ----------
         verbose : bool, optional
-            If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if 'None'.
+            If ``True``, verbose outputs are enabled. Global ``verbose`` setting is used if ´´None``.
         """
         self.verbose = ut.check_verbose(verbose)
 
@@ -191,9 +191,12 @@ class SequenceFeature:
         df_parts: pd.DataFrame, shape (n_samples, n_parts)
             Sequence parts DataFrame.
 
+        See Also
+        --------
+        * :class:`aaanalysis.SequenceFeature` for definition of parts, and lists of all existing and default parts.
+
         Notes
         -----
-        * See :class:`aaanalysis.SequenceFeature` for definition of parts, and lists of all existing and default parts.
         * If ``ext_len`` in aaanalysis.options is not set to > 0, following parts containing extended tmd are not
           considered for ``all_parts=True``: ['tmd_e', 'ext_c', 'ext_n', 'ext_n_tmd_n', 'tmd_c_ext_c'].
         * ``jmd_n_len`` and ``jmd_c_len`` must be both given, except for the part-based format.
@@ -428,12 +431,16 @@ class SequenceFeature:
         if self.verbose:
             warn_creation_of_feature_matrix(features=features, df_parts=df_parts, name="df_feat")
         # Get sample difference to reference group
-        df_feat = get_df_feat_(features=features, df_parts=df_parts, labels=labels,
-                               label_test=label_test, label_ref=label_ref,
-                               df_scales=df_scales, df_cat=df_cat,
-                               accept_gaps=accept_gaps, parametric=parametric,
-                               start=start, jmd_n_len=jmd_n_len, tmd_len=tmd_len, jmd_c_len=jmd_c_len,
-                               n_jobs=n_jobs)
+        try:
+            df_feat = get_df_feat_(features=features, df_parts=df_parts, labels=labels,
+                                   label_test=label_test, label_ref=label_ref,
+                                   df_scales=df_scales, df_cat=df_cat,
+                                   accept_gaps=accept_gaps, parametric=parametric,
+                                   start=start, jmd_n_len=jmd_n_len, tmd_len=tmd_len, jmd_c_len=jmd_c_len,
+                                   n_jobs=n_jobs)
+        # Catch backend not-accepted-gaps error
+        except Exception as e:
+            raise ValueError(e)
         return df_feat
 
     def feature_matrix(self,
@@ -488,11 +495,15 @@ class SequenceFeature:
         if self.verbose:
             warn_creation_of_feature_matrix(features=features, df_parts=df_parts)
         # Create feature matrix using parallel processing
-        feat_matrix = get_feature_matrix_(features=features,
-                                          df_parts=df_parts,
-                                          df_scales=df_scales,
-                                          accept_gaps=accept_gaps,
-                                          n_jobs=n_jobs)
+        try:
+            feat_matrix = get_feature_matrix_(features=features,
+                                              df_parts=df_parts,
+                                              df_scales=df_scales,
+                                              accept_gaps=accept_gaps,
+                                              n_jobs=n_jobs)
+        # Catch backend not-accepted-gaps error
+        except Exception as e:
+            raise ValueError(e)
         return feat_matrix
 
     def get_features(self,

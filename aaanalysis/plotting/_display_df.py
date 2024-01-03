@@ -1,7 +1,7 @@
 """
 This is a script for displaying pd.DataFrames as HTML output for jupyter notebooks.
 """
-from typing import Optional
+from typing import Optional, Union
 import pandas as pd
 from IPython.display import display, HTML
 
@@ -21,7 +21,7 @@ def _adjust_df(df=None, char_limit = 50):
 
 # Main functions
 def display_df(df: pd.DataFrame = None,
-               fontsize: int = 12,
+               fontsize: Union[int, float] = 12,
                max_width_pct: int = 100,
                max_height: int = 300,
                char_limit: int = 25,

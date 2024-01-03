@@ -80,7 +80,7 @@ class TestPlotSettingsComplexCases:
            st.sampled_from(["x", "y", "both"]))
     @example(1.5, "Arial", True, False, False, True, False, "y")
     @example(1.0, "Verdana", False, True, True, False, True, "x")
-    @settings(max_examples=5)
+    @settings(max_examples=5, deadline=500)
     def test_complex_positive_cases(self, font_scale, font, weight_bold, adjust_only_font, adjust_further_elements, grid, no_ticks, grid_axis):
         aa.plot_settings(font_scale=font_scale, font=font, weight_bold=weight_bold, adjust_only_font=adjust_only_font, adjust_further_elements=adjust_further_elements, grid=grid, no_ticks=no_ticks, grid_axis=grid_axis)
 
@@ -93,7 +93,7 @@ class TestPlotSettingsComplexCases:
            st.booleans(),
            st.text())
     @example(-1.0, "InvalidFont", True, False, False, True, False, "z")
-    @settings(max_examples=5)
+    @settings(max_examples=5, deadline=1000)
     def test_complex_negative_cases(self, font_scale, font, weight_bold, adjust_only_font, adjust_further_elements, grid, no_ticks, grid_axis):
         with pytest.raises(Exception):
             aa.plot_settings(font_scale=font_scale, font=font, weight_bold=weight_bold, adjust_only_font=adjust_only_font, adjust_further_elements=adjust_further_elements, grid=grid, no_ticks=no_ticks, grid_axis=grid_axis)

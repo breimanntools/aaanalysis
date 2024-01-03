@@ -19,7 +19,7 @@ import aaanalysis.utils as ut
 # II Main Functions
 class TreeModel:
     """
-    Tree Model class: A wrapper for tree-based prediction models to obtain feature importance.
+    UNDER CONSTRUCTION - Tree Model class: A wrapper for tree-based prediction models to obtain feature importance.
     """
     def __init__(self, model_class=None):
         """"""

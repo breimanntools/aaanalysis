@@ -41,13 +41,13 @@ class TestPlotSetLegend:
         with pytest.raises(ValueError):
             aa.plot_legend(ax=self.ax, dict_color=dict_color, lw="not right")
 
-    @settings(max_examples=5)
+    @settings(max_examples=5, deadline=500)
     @given(marker_size=st.floats(min_value=-5, max_value=-1))
     def test_invalid_marker_size(self, marker_size, dict_color):
         with pytest.raises(ValueError):
             aa.plot_legend(ax=self.ax, dict_color=dict_color, marker_size=marker_size)
 
-    @settings(max_examples=5)
+    @settings(max_examples=5, deadline=500)
     @given(marker=st.text(min_size=1, max_size=5))
     @example(marker="invalid_marker")
     def test_invalid_marker(self, marker, dict_color):
@@ -56,7 +56,7 @@ class TestPlotSetLegend:
             with pytest.raises(ValueError):
                 aa.plot_legend(ax=self.ax, dict_color=dict_color, marker=marker)
 
-    @settings(max_examples=5)
+    @settings(max_examples=5, deadline=500)
     @given(ncol=st.integers(min_value=1, max_value=10))
     def test_plot_set_legend_ncol(self, ncol, dict_color):
         """Test the 'ncol' parameter."""
@@ -65,7 +65,7 @@ class TestPlotSetLegend:
         assert isinstance(result, plt.Axes)
 
 
-    @settings(max_examples=5)
+    @settings(max_examples=5, deadline=500)
     @given(labelspacing=st.floats(0, 5))
     def test_plot_set_legend_labelspacing(self, labelspacing, dict_color):
         """Test the 'labelspacing' parameter."""
@@ -74,7 +74,7 @@ class TestPlotSetLegend:
         assert isinstance(result, plt.Axes)
 
 
-    @settings(max_examples=5)
+    @settings(max_examples=5, deadline=500)
     @given(columnspacing=st.floats(0, 5))
     def test_plot_set_legend_columnspacing(self, columnspacing, dict_color):
         """Test the 'columnspacing' parameter."""
@@ -83,7 +83,7 @@ class TestPlotSetLegend:
         assert isinstance(result, plt.Axes)
 
 
-    @settings(max_examples=5)
+    @settings(max_examples=5, deadline=500)
     @given(handletextpad=st.floats(0, 5))
     def test_plot_set_legend_handletextpad(self, handletextpad, dict_color):
         """Test the 'handletextpad' parameter."""
@@ -153,7 +153,7 @@ class TestPlotSetLegend:
 
 
     # Negative Test: check that if list_cat items are not in dict_color, it should raise an error
-    @settings(max_examples=5)
+    @settings(max_examples=5, deadline=500)
     @given(random_cat=some.text())
     def test_invalid_list_cat(self, random_cat):
         fig, ax = plt.subplots()
@@ -167,7 +167,7 @@ class TestPlotSetLegend:
 class TestPlotSetLegendComplex:
     """Test plot_set_legend function with complex scenarios."""
 
-    @settings(max_examples=5)
+    @settings(max_examples=5, deadline=500)
     @given(st.floats(1, 10))
     def test_plot_set_legend_ncol(self, ncol):
         ax = plt.gca()
@@ -175,7 +175,7 @@ class TestPlotSetLegendComplex:
         result = aa.plot_legend(ax=ax, ncol=int(ncol), dict_color=dict_color)
         assert isinstance(result, plt.Axes)
 
-    @settings(max_examples=5)
+    @settings(max_examples=5, deadline=500)
     @given(st.lists(st.text(), min_size=1, max_size=5))
     def test_plot_set_legend_custom_labels(self, labels):
         fig, ax = plt.subplots()

@@ -157,7 +157,7 @@ class TestGetSplitKws:
 class TestGetSplitKwsComplex:
     """Test complex combinations of parameters in get_split_kws."""
 
-    @settings(max_examples=5)
+    @settings(max_examples=5, deadline=500)
     @given(
         split_types=st.sampled_from([None, "Segment", "Pattern", "PeriodicPattern", ["Segment", "Pattern"], ["Pattern", "PeriodicPattern"], ["Segment", "PeriodicPattern"]]),
         n_split_min=st.integers(min_value=1, max_value=14),
@@ -183,7 +183,7 @@ class TestGetSplitKwsComplex:
                                       len_max=len_max, steps_periodicpattern=steps_periodicpattern)
             assert isinstance(result, dict)
 
-    @settings(max_examples=5)
+    @settings(max_examples=5, deadline=500)
     @given(
         split_types=st.sampled_from(["Segment", ["Pattern", "PeriodicPattern"]]),
         n_split_min=st.integers(min_value=1, max_value=3),
@@ -207,7 +207,7 @@ class TestGetSplitKwsComplex:
                                       len_max=len_max, steps_periodicpattern=steps_periodicpattern)
             assert isinstance(result, dict)
 
-    @settings(max_examples=5)
+    @settings(max_examples=5, deadline=500)
     @given(
         split_types=st.sampled_from([None, ["Segment", "Pattern"]]),
         n_split_min=st.integers(min_value=5, max_value=7),

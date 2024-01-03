@@ -138,7 +138,7 @@ class dPULearnPlot:
         # Check input
         cols_requiered = [ut.COL_NAME, ut.COL_AVG_STD, ut.COL_AVG_IQR, ut.COL_AVG_ABS_AUC_POS, ut.COL_AVG_ABS_AUC_UNL]
         ut.check_df(name="df_eval", df=df_eval, cols_requiered=cols_requiered, accept_none=False, accept_nan=False)
-        ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
+        ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_bool(name="legend", val=legend)
         ut.check_number_val(name="legend_y", val=legend_y)
         ut.check_list_colors(name="colors", val=colors, accept_none=True, min_n=4)
@@ -220,7 +220,7 @@ class dPULearnPlot:
         ut.check_labels(labels=labels) # Pre-check if proper format
         vals_requiered = [0, 1] if 2 not in set(labels) else [0, 1, 2]
         labels = ut.check_labels(labels=labels, vals_requiered=vals_requiered, allow_other_vals=False)
-        ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
+        ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_number_range(name="pc_x", val=pc_x, min_val=1, max_val=n_pc, just_int=True)
         ut.check_number_range(name="pc_y", val=pc_y, min_val=1, max_val=n_pc, just_int=True)
         ut.check_bool(name="show_pos_mean_x", val=show_pos_mean_x)

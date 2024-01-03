@@ -5,7 +5,6 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-import numpy as np
 
 import aaanalysis.utils as ut
 
@@ -18,36 +17,46 @@ COL_FEAT_VAL = "feature_values"
 
 # I Helper Functions
 # Data processing
-def _get_df_feat(feature, df_seq, df_scales, accept_gaps):
+def _get_df_feat_vals(feature=None, df_seq=None, df_scales=None, accept_gaps=False,
+                      jmd_n_len=10, jmd_c_len=10):
+    """Get DataFrame with values of selected feature for proteins in df"""
     list_parts = get_list_parts(features=feature)
-    df_parts = get_df_parts_(df_seq=df_seq, list_parts=list_parts)
+    df_parts = get_df_parts_(df_seq=df_seq, list_parts=list_parts,
+                             jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     X = get_feature_matrix_(features=feature,
                             df_parts=df_parts,
                             df_scales=df_scales,
-                            accept_gaps=accept_gaps)
-    list_names = df_seq[ut.COL_NAME].to_list()
-    df = pd.DataFrame({COL_FEAT_VAL: X.flatten(), ut.COL_NAME: list_names})
-    return df
+                            accept_gaps=accept_gaps,
+                            n_jobs=1)
+    if ut.COL_NAME in df_seq:
+        list_names = df_seq[ut.COL_NAME].to_list()
+    else:
+        list_names = [f"Protein {i}" for i in range(len(df_seq))]
+    df_feat_vals = pd.DataFrame({COL_FEAT_VAL: X.flatten(), ut.COL_NAME: list_names})
+    return df_feat_vals
 
 
-def _get_mean_vals_(df, labels):
+def _get_mean_vals_(df_feat_vals=None, labels=None, label_test=1, label_ref=0):
     """Get mean values for test and reference group and their difference"""
-    mask_test = [x == 0 for x in labels]
-    mask_ref = [x == 1 for x in labels]
-    mean_test = df[COL_FEAT_VAL][mask_test].mean()
-    mean_ref = df[COL_FEAT_VAL][mask_ref].mean()
+    mask_test = [x == label_test for x in labels]
+    mask_ref = [x == label_ref for x in labels]
+    mean_test = df_feat_vals[COL_FEAT_VAL][mask_test].mean()
+    mean_ref = df_feat_vals[COL_FEAT_VAL][mask_ref].mean()
     mean_dif = round(mean_test - mean_ref, 3)
     return mean_test, mean_ref, mean_dif
 
 
-def _get_df_show(df, feature, df_seq, names_to_show, show_seq):
+def _get_df_show(df_feat_vals=None, feature=None, df_seq=None, names_to_show=None, show_seq=False,
+                 jmd_n_len=10, jmd_c_len=10):
+    """Get DataFrame with values to show"""
     names_to_show = [] if names_to_show is None else names_to_show
-    df_show = df[df[ut.COL_NAME].isin(names_to_show)][[COL_FEAT_VAL, ut.COL_NAME, ut.COL_LABEL]]
+    df_show = df_feat_vals[df_feat_vals[ut.COL_NAME].isin(names_to_show)][[COL_FEAT_VAL, ut.COL_NAME, ut.COL_LABEL]]
     names_to_show = df_show[ut.COL_NAME].to_list()
     if show_seq and len(names_to_show) > 0:
         df_seq = df_seq[df_seq[ut.COL_NAME].isin(names_to_show)]
         list_parts = ["jmd_n", "tmd", "jmd_c"]
-        df_parts = get_df_parts_(df_seq=df_seq, list_parts=list_parts)
+        df_parts = get_df_parts_(df_seq=df_seq, list_parts=list_parts,
+                                 jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         names_with_seq = []
         for i, (_, row) in enumerate(df_parts.iterrows()):
             jmd_n, tmd, jmd_c = row[list_parts]
@@ -81,22 +90,31 @@ def _add_mean_dif(ax, mean_test, mean_ref, mean_dif, y_mean_dif, alpha_dif):
 def _add_mean_dif_text(mean_test, mean_ref, mean_dif, y_mean_dif, name_test, name_ref,
                        color_test, color_ref, fontsize_name_test, fontsize_name_ref, fontsize_mean_dif):
     """Add text annotations for mean difference"""
+    # Get default font sizes
+    fs = ut.plot_gco()
+    fontsize_mean_dif = fs + 2 if fontsize_mean_dif is None else fontsize_mean_dif
+    fontsize_name_test = fs if fontsize_name_test is None else fontsize_name_test
+    fontsize_name_ref = fs if fontsize_name_ref is None else fontsize_name_ref
+    # Plot text
     middle = min([mean_test, mean_ref]) + abs(mean_dif) / 2
     str_mean_dif = f"{ut.LABEL_MEAN_DIF}={mean_dif}"
-    plt.text(middle, y_mean_dif * 1.05, str_mean_dif, weight="bold", color="black", ha="center", size=fontsize_mean_dif)
+    plt.text(middle, y_mean_dif * 1.05, str_mean_dif, color="black", ha="center", size=fontsize_mean_dif)
     d = 0.015
     x_test = mean_test - d if mean_dif < 0 else mean_test + d
     ha_test = "right" if mean_dif < 0 else "left"
     x_ref = mean_ref - d if mean_dif > 0 else mean_ref + d
     ha_ref = "right" if mean_dif > 0 else "left"
-    plt.text(x_test, y_mean_dif, name_test, ha=ha_test, va="center_baseline", color=color_test, weight="bold",
+    plt.text(x_test, y_mean_dif, name_test, ha=ha_test, va="center_baseline", color=color_test,
              size=fontsize_name_test)
-    plt.text(x_ref, y_mean_dif, name_ref, ha=ha_ref, va="center_baseline", color=color_ref, weight="bold",
+    plt.text(x_ref, y_mean_dif, name_ref, ha=ha_ref, va="center_baseline", color=color_ref,
              size=fontsize_name_ref)
 
 
 def _add_names_to_show(ax, df_show, name_test, color_test, color_ref, fontsize_names_to_show, show_seq):
     """Add individual data points with arrows to plot"""
+    # Get default font sizes
+    fs = ut.plot_gco()
+    fontsize_names_to_show = fs - 2 if fontsize_names_to_show is None else fontsize_names_to_show
     for i, row in df_show.iterrows():
         val, name, label = row.values
         color = color_test if label == name_test else color_ref
@@ -110,28 +128,33 @@ def _add_names_to_show(ax, df_show, name_test, color_test, color_ref, fontsize_n
 
 # II Main Functions
 def plot_feature(ax=None, figsize=(5.6, 4.8), feature=str,
-                 df_seq=None, labels=None, df_scales=None, accept_gaps=None,
+                 df_seq=None, labels=None, label_test=1, label_ref=0,
+                 df_scales=None, accept_gaps=None,
+                 jmd_n_len=10, jmd_c_len=10,
                  name_test="TEST", name_ref="REF", names_to_show=None,
-                 show_seq=True,
+                 show_seq=False,
                  color_test="tab:green", color_ref="tab:gray",
                  histplot=False, alpha_hist=0.1, alpha_dif=0.25,
-                 fontsize_mean_dif=15,  fontsize_name_test=13,
+                 fontsize_mean_dif=15, fontsize_name_test=13,
                  fontsize_name_ref=13, fontsize_names_to_show=13,
                  ):
     """Plot distributions of feature values for test and reference datasets highlighting their mean difference."""
     # Get data
-    df = _get_df_feat(feature, df_seq, df_scales, accept_gaps)
-    df[ut.COL_LABEL] = [name_test if x == 1 else name_ref for x in labels]
-    mean_test, mean_ref, mean_dif = _get_mean_vals_(df, labels)
+    df_feat_vals = _get_df_feat_vals(feature=feature, df_seq=df_seq, df_scales=df_scales, accept_gaps=accept_gaps,
+                                     jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+    df_feat_vals[ut.COL_LABEL] = [name_test if x == label_test else name_ref for x in labels]
+    mean_test, mean_ref, mean_dif = _get_mean_vals_(df_feat_vals=df_feat_vals, labels=labels,
+                                                    label_test=label_test, label_ref=label_ref)
     # Get data for individual proteins to show
-    df_show = _get_df_show(df, feature, df_seq, names_to_show, show_seq)
+    df_show = _get_df_show(df_feat_vals=df_feat_vals, feature=feature, df_seq=df_seq,
+                           names_to_show=names_to_show, show_seq=show_seq,
+                           jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     # Plotting
     pe = PlotElements()
     pe.set_figsize(figsize=figsize)
-    args = dict(palette=[color_test, color_ref], hue_order=[name_test, name_ref],
-                data=df, hue=ut.COL_LABEL,
-                x=COL_FEAT_VAL,
-                legend=False, ax=ax)
+    args = dict(data=df_feat_vals, x=COL_FEAT_VAL,  hue=ut.COL_LABEL, ax=ax,
+                palette=[color_test, color_ref], hue_order=[name_test, name_ref],
+                legend=False)
     if histplot:
         sns.histplot(**args)
     else:

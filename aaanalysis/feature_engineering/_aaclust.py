@@ -126,7 +126,7 @@ class AAclust(Wrapper):
         model_kwargs : dict, optional
             Keyword arguments to pass to the selected clustering model.
         verbose : bool, optional
-            If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if 'None'.
+            If ``True``, verbose outputs are enabled. Global ``verbose`` setting is used if ´´None``.
 
         Examples
         --------

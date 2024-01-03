@@ -156,7 +156,7 @@ class AAclustPlot:
         model_kwargs : dict, optional
             Keyword arguments to pass to the selected decomposition model.
         verbose : bool, optional
-            If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if 'None'.
+            If ``True``, verbose outputs are enabled. Global ``verbose`` setting is used if ´´None``.
 
         Examples
         --------
@@ -205,7 +205,7 @@ class AAclustPlot:
         fig : plt.Figure
             Figure object for evaluation plot
         axes : array of plt.Axes
-            Array of Axes objects, each representing a subplot within the figure. .
+            Array of Axes objects, each representing a subplot within the figure.
 
         Notes
         -----
@@ -222,7 +222,7 @@ class AAclustPlot:
         # Check input
         ut.check_df(name="df_eval", df=df_eval, cols_requiered=ut.COLS_EVAL_AACLUST, accept_none=False, accept_nan=False)
         check_dict_xlims(dict_xlims=dict_xlims)
-        ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True)
+        ut.check_figsize(figsize=figsize, accept_none=True)
         # Plotting
         colors = ut.plot_get_clist_(n_colors=4)
         fig, axes = plot_eval(df_eval=df_eval,
@@ -240,7 +240,7 @@ class AAclustPlot:
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
                 legend: bool = True,
                 dot_size: int = 100,
-                dot_alpha: float = 0.75,
+                dot_alpha: Union[int, float] = 0.75,
                 palette: Optional[mpl.colors.ListedColormap] = None,
                 ) -> Tuple[plt.Axes, pd.DataFrame]:
         """PCA plot of clustering with centers highlighted
@@ -263,8 +263,8 @@ class AAclustPlot:
             Whether to show the legend.
         dot_size : int, default=100
             Size of the plotted dots.
-        dot_alpha : float, default=0.75
-            Alpha value of the plotted dots.
+        dot_alpha : float or int, default=0.75
+            Alpha value of the plotted dots [0-1].
         palette : list, optional
             Colormap for the labels or list of colors. If ``None``, a default colormap is used.
 
@@ -296,7 +296,7 @@ class AAclustPlot:
         ut.check_number_range(name="component_x", val=component_x, accept_none=False, min_val=1, just_int=True)
         ut.check_number_range(name="component_y", val=component_y, accept_none=False, min_val=1, just_int=True)
         ut.check_ax(ax=ax, accept_none=True)
-        ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True, check_n_number=True)
+        ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_number_range(name="dot_alpha", val=dot_alpha, accept_none=False, min_val=0, max_val=1, just_int=False)
         ut.check_number_range(name="dot_size", val=dot_size, accept_none=False, min_val=1, just_int=True)
         ut.check_bool(name="legend", val=legend)
@@ -321,7 +321,7 @@ class AAclustPlot:
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
                 legend: bool = True,
                 dot_size: int = 100,
-                dot_alpha: float = 0.75,
+                dot_alpha: Union[int, float] = 0.75,
                 palette: Optional[mpl.colors.ListedColormap] = None,
                 ) -> Tuple[plt.Axes, pd.DataFrame]:
         """PCA plot of clustering with medoids highlighted
@@ -352,8 +352,8 @@ class AAclustPlot:
             Whether to show the legend.
         dot_size : int, default=100
             Size of the plotted dots.
-        dot_alpha : float, default=0.75
-            Alpha value of the plotted dots.
+        dot_alpha : float or int, default=0.75
+            Alpha value of the plotted dots [0-1].
         palette : list, optional
             Colormap for the labels or list of colors. If ``None``, a default colormap is used.
 
@@ -386,7 +386,7 @@ class AAclustPlot:
         ut.check_number_range(name="component_y", val=component_y, accept_none=False, min_val=1, just_int=True)
         check_metric(metric=metric)
         ut.check_ax(ax=ax, accept_none=True)
-        ut.check_tuple(name="figsize", val=figsize, n=2, accept_none=True, check_n_number=True)
+        ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_number_range(name="dot_alpha", val=dot_alpha, accept_none=False, min_val=0, max_val=1, just_int=False)
         ut.check_number_range(name="dot_size", val=dot_size, accept_none=False, min_val=1, just_int=True)
         ut.check_bool(name="legend", val=legend)

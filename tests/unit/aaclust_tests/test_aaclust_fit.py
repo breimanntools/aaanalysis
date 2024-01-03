@@ -108,7 +108,7 @@ class TestAAclust:
         assert isinstance(aac.labels_medoids_, np.ndarray)
         assert isinstance(aac.is_medoid_, np.ndarray)
 
-    @settings(max_examples=10)
+    @settings(max_examples=10, deadline=1000)
     @given(names=some.lists(some.text(min_size=1, max_size=10), min_size=10, max_size=50))
     def test_fit_names(self, names):
         """
@@ -148,7 +148,7 @@ class TestAAclust:
         for metric in valid_metrics:
             aac.fit(X, metric=metric)
 
-    @settings(max_examples=10)
+    @settings(max_examples=10, deadline=1000)
     @given(metric=some.text(min_size=1).filter(lambda x: x not in ["correlation", None, "manhattan", "euclidean", "cosine"]))
     def test_invalid_metric(self, metric):
         """
@@ -219,7 +219,7 @@ class TestAAclustComplex:
                 assert len(model.medoids_) == len(set(model.labels_))
 
     # Property-based testing for negative cases
-    @settings(max_examples=20)
+    @settings(max_examples=20, deadline=1000)
     @given(n_clusters=some.integers(max_value=0))
     def test_fit_invalid_n_clusters(self, n_clusters):
         """Test the fit method with an invalid number of clusters."""

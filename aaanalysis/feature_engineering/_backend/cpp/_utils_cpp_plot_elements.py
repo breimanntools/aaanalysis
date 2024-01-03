@@ -13,14 +13,10 @@ import aaanalysis.utils as ut
 # I Helper Functions
 
 
-# Figure Modifications
-
-
 # Heatmap settings functions
 # TODO refactor cbar (easier handling for combination
 def _get_ytick_pad_heatmap(ax=None):
-    """"""
-    # TODO check add bars aa.plot
+    """Calculate padding for y-ticks in a heatmap."""
     xmax = ax.get_xlim()[1]
     width, height = plt.gcf().get_size_inches()
     pad = width+8-xmax/10
@@ -28,13 +24,12 @@ def _get_ytick_pad_heatmap(ax=None):
 
 
 def _get_kws_legend_under_plot(list_cat=None, items_per_col=3, x_adjust=-0.3, y_adjust=-0.03):
-    """"""
+    """Generate keyword arguments for placing a legend under a plot"""
     width, height = plt.gcf().get_size_inches()
-    ncol = len(set(list_cat))
     bbox_y = width / height * y_adjust
     bbox_x = -0.2 + x_adjust
-    print(bbox_y, bbox_x)
     # TODO
+    ncol = len(set(list_cat))
     if ncol > 4:
         ncol = int(np.ceil(ncol/items_per_col))
     kws_legend = dict(ncol=ncol, loc=2, frameon=False, bbox_to_anchor=(bbox_x, bbox_y),
@@ -45,7 +40,9 @@ def _get_kws_legend_under_plot(list_cat=None, items_per_col=3, x_adjust=-0.3, y_
 
 
 def _update_kws_legend_under_plot(kws_legend=None, legend_kws=None):
-    """"""
+    """Update the keyword arguments for a plot legend with additional settings."""
+    if kws_legend is None:
+        kws_legend = {}
     # Set title_fontsize to fontsize if given
     if legend_kws is not None:
         if "title_fontproperties" not in legend_kws:

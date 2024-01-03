@@ -101,7 +101,7 @@ class CPP(Tool):
         accept_gaps : bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
         verbose : bool, optional
-            If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if ``None``.
+            If ``True``, verbose outputs are enabled. Global ``verbose`` setting is used if ´´None``.
 
         Notes
         -----
@@ -166,7 +166,7 @@ class CPP(Tool):
         Parameters
         ----------
         labels : array-like, shape (n_samples,)
-            Class labels for samples in sequence DataFrame (test=1, reference=0).
+            Class labels for samples in sequence DataFrame (typically, test=1, reference=0).
         label_test : int, default=1,
             Class label of test group in ``labels``.
         label_ref : int, default=0,
@@ -259,15 +259,19 @@ class CPP(Tool):
             ut.print_out(f"1. CPP creates {n_feat} features for {len(self.df_parts)} samples")
             ut.print_start_progress()
         # Pre-filtering: Select best n % of feature (filter_pct) based std(test set) and mean_dif
-        abs_mean_dif, std_test, features = pre_filtering_info(df_parts=self.df_parts,
-                                                              split_kws=self.split_kws,
-                                                              df_scales=self.df_scales,
-                                                              labels=labels,
-                                                              label_test=label_test,
-                                                              label_ref=label_ref,
-                                                              accept_gaps=self._accept_gaps,
-                                                              verbose=self._verbose,
-                                                              n_jobs=n_jobs)
+        try:
+            abs_mean_dif, std_test, features = pre_filtering_info(df_parts=self.df_parts,
+                                                                  split_kws=self.split_kws,
+                                                                  df_scales=self.df_scales,
+                                                                  labels=labels,
+                                                                  label_test=label_test,
+                                                                  label_ref=label_ref,
+                                                                  accept_gaps=self._accept_gaps,
+                                                                  verbose=self._verbose,
+                                                                  n_jobs=n_jobs)
+        # Catch backend not-accepted-gaps error
+        except Exception as e:
+            raise ValueError(e)
         n_feat = int(len(features))
         if n_pre_filter is None:
             n_pre_filter = int(n_feat * (pct_pre_filter / 100))
@@ -284,9 +288,13 @@ class CPP(Tool):
                            max_std_test=max_std_test)
         features = df[ut.COL_FEATURE].to_list()
         # Add feature information
-        df = add_stat(df_feat=df, df_scales=self.df_scales, df_parts=self.df_parts,
-                      labels=labels, parametric=parametric, accept_gaps=self._accept_gaps,
-                      label_test=label_test, label_ref=label_ref)
+        try:
+            df = add_stat(df_feat=df, df_scales=self.df_scales, df_parts=self.df_parts,
+                          labels=labels, parametric=parametric, accept_gaps=self._accept_gaps,
+                          label_test=label_test, label_ref=label_ref)
+        # Catch backend not-accepted-gaps error
+        except Exception as e:
+            raise ValueError(e)
         feat_positions = get_positions_(features=features, start=start, **args_len)
         df[ut.COL_POSITION] = feat_positions
         df = add_scale_info_(df_feat=df, df_cat=self.df_cat)
@@ -328,7 +336,7 @@ class CPP(Tool):
         list_df_feat : list of pd.DataFrames
             List of feature DataFrames each of shape (n_features, n_feature_info)
         labels : array-like, shape (n_samples,)
-            Class labels for samples in sequence DataFrame (test=1, reference=0).
+            Class labels for samples in sequence DataFrame (typically, test=1, reference=0).
         label_test : int, default=1,
             Class label of test group in ``labels``.
         label_ref : int, default=0,
@@ -397,11 +405,15 @@ class CPP(Tool):
             list_df_parts = [self.df_parts[mask_test]] * len(list_df_feat)
         check_match_list_df_feat_list_df_parts(list_df_feat=list_df_feat, list_df_parts=list_df_parts)
         # Evaluation
-        df_eval = evaluate_features(list_df_feat=list_df_feat,
-                                    names_feature_sets=names_feature_sets,
-                                    list_df_parts=list_df_parts,
-                                    df_scales=self.df_scales,
-                                    accept_gaps=self._accept_gaps,
-                                    n_jobs=n_jobs,
-                                    min_th=min_th)
+        try:
+            df_eval = evaluate_features(list_df_feat=list_df_feat,
+                                        names_feature_sets=names_feature_sets,
+                                        list_df_parts=list_df_parts,
+                                        df_scales=self.df_scales,
+                                        accept_gaps=self._accept_gaps,
+                                        n_jobs=n_jobs,
+                                        min_th=min_th)
+        # Catch backend not-accepted-gaps error
+        except Exception as e:
+            raise ValueError(e)
         return df_eval
