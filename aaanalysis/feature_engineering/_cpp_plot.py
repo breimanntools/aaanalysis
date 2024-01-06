@@ -262,7 +262,8 @@ class CPPPlot:
         .. include:: examples/cpp_plot_eval.rst
         """
         # Check input
-        cols_requiered = [ut.COL_NAME, ut.COL_AVG_STD, ut.COL_AVG_IQR, ut.COL_AVG_ABS_AUC_POS, ut.COL_AVG_ABS_AUC_UNL]
+        #cols_requiered = [ut.COL_NAME, ut.COL_AVG_STD, ut.COL_AVG_IQR, ut.COL_AVG_ABS_AUC_POS, ut.COL_AVG_ABS_AUC_UNL]
+        cols_requiered = [ut.COL_NAME] # TODO add other names from df_eval (from cpp)
         ut.check_df(name="df_eval", df=df_eval, cols_requiered=cols_requiered, accept_none=False, accept_nan=False)
         ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_bool(name="legend", val=legend)
@@ -405,22 +406,18 @@ class CPPPlot:
 
     # Plotting methods for group and single level
     def ranking(self,
+                df_feat=None,
                 ax: Optional[plt.Axes] = None,
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
-                df_feat=None,
-                df_parts=None,
                 tmd_len=20,
-                labels=None,
                 top_n: int = 15,
-                name_test="TEST",
-                name_ref="REF",
-                error_bar: bool = False,
+                name_test: str = "TEST",
+                name_ref: str = "REF",
                 shap_plot: bool = False,
                 fontsize_titles: Union[int, float] = 11,
                 fontsize_labels: Union[int, float] = 11,
                 fontsize_annotations: Union[int, float] = 11,
-                feature_val_in_percent=True,
-                capsize=2,
+                feature_val_in_percent: bool = True,
                 tmd_jmd_space=2,
                 col_dif=ut.COL_MEAN_DIF,
                 col_rank=ut.COL_FEAT_IMPORT,
@@ -444,23 +441,17 @@ class CPPPlot:
         # Check input
         # TODO check input, add docstring, typing
         ut.check_bool(name="shap_plot", val=shap_plot)
-        if error_bar:
-            if labels is None:
-                raise ValueError("'labels' should not be None if 'error_bar' is True")
-            if df_parts is None:
-                raise ValueError("'df_parts' should not be None if 'error_bar' is True")
         # Plot ranking
         try:
-            fig, ax = plot_ranking(figsize=figsize, df_feat=df_feat, top_n=top_n, df_parts=df_parts,
+            fig, ax = plot_ranking(figsize=figsize, df_feat=df_feat, top_n=top_n,
                                    tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
-                                   df_scales=self._df_scales, labels=labels,
                                    name_test=name_test, name_ref=name_ref,
-                                   error_bar=error_bar, shap_plot=shap_plot,
+                                   shap_plot=shap_plot,
                                    fontsize_titles=fontsize_titles,
                                    fontsize_labels=fontsize_labels,
                                    fontsize_annotations=fontsize_annotations,
                                    feature_val_in_percent=feature_val_in_percent,
-                                   capsize=capsize, tmd_jmd_space=tmd_jmd_space,
+                                   tmd_jmd_space=tmd_jmd_space,
                                    col_dif=col_dif, col_rank=col_rank, xlim_dif=xlim_dif, xlim_rank=xlim_rank)
         # Catch backend not-accepted-gaps error
         except Exception as e:

@@ -1,3 +1,5 @@
+"""This is a script to convert csv/excel files into RST files """
+
 import os
 import pandas as pd
 import re
@@ -28,7 +30,6 @@ EXCLUDE_FROM_REF_CHECK = ["t3a_aaontology_categories",
 
 # Helper Functions
 def _f_xlsx(on=True, file=None, ending=".xlsx"):
-    """"""
     if on:
         if ending not in file:
             return file.split(".")[0] + ending
@@ -48,7 +49,6 @@ def _check_references(table_name=None, table_refs=None, list_refs=None):
 
 
 def _check_tables(list_tables):
-    """"""
     f = lambda x: _f_xlsx(on=False, file=x)
     if list_tables != LIST_TABLES:
         list_missing_map = [f(x) for x in list_tables if x not in list_tables]
@@ -79,6 +79,7 @@ def _convert_excel_to_rst(df):
 
 # Main Functionality
 def generate_table_rst():
+    """Generate rst tables from csv and excel"""
     # Read the existing references
     with open(FILE_REF, 'r') as f:
         list_refs = f.read()

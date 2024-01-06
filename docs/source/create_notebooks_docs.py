@@ -42,15 +42,14 @@ LIST_EXCLUDE = []
 
 # Helper functions
 class CustomPreprocessor(Preprocessor):
+    """Class for notebook preprocessing"""
     def __init__(self, notebook_name='default', in_examples=False, **kwargs):
         super().__init__(**kwargs)
         self.notebook_name = notebook_name
         self.in_examples=in_examples
 
     def preprocess(self, nb, resources):
-        """
-        Rename image resources and update the notebook cells accordingly.
-        """
+        """Rename image resources and update the notebook cells accordingly."""
         # Extract the base name of the notebook file
         output_items = list(resources['outputs'].items())
         for idx, (output_name, output_content) in enumerate(output_items):

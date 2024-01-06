@@ -131,19 +131,13 @@ def _add_annotation_extreme_val(sub_fig=None, max_neg_val=-2, min_pos_val=2, tex
             sub_fig.annotate(f"{int(val)}%", (x, p.get_y() + p.get_height()/2), ha=ha, **args)
 
 
-def plot_feature_mean_dif(ax=None, df=None, df_parts=None, df_scales=None, labels=None, x_dif=None, n=20, xlim=(-22, 22), error_bar=True,
-                          fontsize_annotation=8, in_percent=True, capsize=2):
+def plot_feature_mean_dif(ax=None, df=None, col_dif=None, n=20, xlim=(-22, 22), fontsize_annotation=8):
     """"""
     plt.sca(ax)
-    colors = [get_color_dif(mean_dif=x) for x in df[x_dif]]
+    colors = [get_color_dif(mean_dif=x) for x in df[col_dif]]
     df["hue"] = colors     # Adjust to use palette for sns.barplot after v0.14.0
     args = dict(hue="hue", palette={x: x for x in colors}, legend=False)
-    sub_fig = sns.barplot(ax=ax, data=df, y="feature", x=x_dif, **args)
-    if error_bar:
-        pooled_std = _get_std_dif(df_feat=df, labels=labels, in_percent=in_percent, df_parts=df_parts,
-                                  df_scales=df_scales)
-        plt.errorbar(x=df[x_dif], y=range(0, n), xerr=pooled_std,
-                     fmt='none', c='tab:gray', capsize=capsize)
+    sub_fig = sns.barplot(ax=ax, data=df, y="feature", x=col_dif, **args)
     sns.despine(top=True, right=True, left=False, bottom=False)
     _add_annotation_extreme_val(sub_fig=sub_fig, text_size=fontsize_annotation,
                                 max_neg_val=xlim[0], min_pos_val=xlim[1])
@@ -204,17 +198,19 @@ def plot_feature_rank(ax=None, df=None, n=20, xlim=(0, 8),
 
 # II Main Functions
 # TODO adjust to work with flexible TMD/JMD length choice
-def plot_ranking(figsize=(7, 5), df_feat=None, top_n=25, df_scales=None, labels=None,
-                 df_parts=None, tmd_len=20, jmd_n_len=10, jmd_c_len=10,
+def plot_ranking(figsize=(7, 5), df_feat=None, top_n=25,
+                 tmd_len=20, jmd_n_len=10, jmd_c_len=10,
                  name_test="test", name_ref="ref",
                  fontsize_titles=11,
                  fontsize_labels=11,
                  fontsize_annotations=11,
                  feature_val_in_percent=True,
-                 error_bar=True, shap_plot=False,
-                 capsize=2, tmd_jmd_space=2,
-                 col_rank=ut.COL_FEAT_IMPORT, xlim_dif=(-17.5, 17.5),
-                 col_dif=ut.COL_MEAN_DIF, xlim_rank=(0, 8)):
+                 shap_plot=False,
+                 tmd_jmd_space=2,
+                 col_rank=ut.COL_FEAT_IMPORT,
+                 xlim_dif=(-17.5, 17.5),
+                 col_dif=ut.COL_MEAN_DIF,
+                 xlim_rank=(0, 8)):
     """"""
     df_feat = df_feat.copy()
     # Adjust df_feat
@@ -232,10 +228,8 @@ def plot_ranking(figsize=(7, 5), df_feat=None, top_n=25, df_scales=None, labels=
     y = -top_n/25   # Empirically optimized location
     add_feature_title(y=y, fontsize_title=fontsize_titles)
     # 2. Barplot mean difference
-    plot_feature_mean_dif(ax=axes[1], df=df_feat, df_parts=df_parts, df_scales=df_scales, labels=labels,
-                          n=top_n, x_dif=col_dif, xlim=xlim_dif,
-                          error_bar=error_bar, in_percent=feature_val_in_percent,
-                          capsize=capsize,
+    plot_feature_mean_dif(ax=axes[1], df=df_feat,
+                          n=top_n, col_dif=col_dif, xlim=xlim_dif,
                           fontsize_annotation=fontsize_annotations)
     sns.despine(ax=axes[1], top=True, right=True, left=True, bottom=False)
     plt.title(f"Mean difference\nof feature value", size=fontsize_titles, weight="bold")
