@@ -37,8 +37,8 @@ a:visited {
 
 /* Override the content area */
 .wy-nav-content {
-    /*max-width: 65% destroys default behavior*/
-    width: 100%;
+    max-width: 90%;
+    width: auto;
     padding-left: 45px;
     padding-right: 45px;
 }
@@ -93,4 +93,3 @@ a:visited {
 .wy-menu-vertical a {
     color: #d9d9d9;
 }
-
