@@ -104,10 +104,9 @@ a:visited {
 }
 
 /* ------ Adjust Example Boxes ------ */
-/*TODO*/
 .admonition-examples.admonition {
     background-color: white; /* Set the background color to white */
-    border: 1px solid #eaeaea; /* Optional: set border color */
+    /* border: 0px solid #eaeaea; /* Optional: set border color */
     /* Other styles (padding, etc.) as needed */
 }
 
@@ -116,4 +115,18 @@ a:visited {
     display: block;
     margin-left: auto;
     margin-right: auto;
+}
+
+/* ----- Mobile responsive adjustments ------ */
+@media screen and (max-width: 768px) {
+    .wy-nav-content .field-list {
+        display: block;
+    }
+    .wy-nav-content dl.field-list dt {
+        float: none;
+        width: auto;
+    }
+    .wy-nav-content dl.field-list dd {
+        margin-left: 0;
+    }
 }
