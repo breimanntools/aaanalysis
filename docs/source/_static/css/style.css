@@ -39,7 +39,7 @@ a:visited {
 .wy-nav-content {
     /*max-width: 65% destroys default behavior*/
     /*width: 100%; */
-    max-width: 75%;
+    max-width: 65%;
     width: auto;
     padding-left: 45px;
     padding-right: 45px;
@@ -48,8 +48,8 @@ a:visited {
 /* Media query for mobile devices */
 @media (max-width: 767px) {
     .wy-nav-content {
-        padding-left: 15px; /* Adjust for mobile */
-        padding-right: 15px; /* Adjust for mobile */
+        padding-left: 5px; /* Adjust for mobile */
+        padding-right: 5px; /* Adjust for mobile */
     }
 }
 
