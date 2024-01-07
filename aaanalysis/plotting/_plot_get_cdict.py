@@ -35,5 +35,6 @@ def plot_get_cdict(name: str = "DICT_COLOR") -> dict:
     list_names = [ut.STR_DICT_COLOR, ut.STR_DICT_CAT]
     if name not in list_names:
         raise ValueError(f"'name' must be one of following: {list_names}")
+    # Get plotting dictionary
     dict_color = ut.plot_get_cdict_(name=name)
     return dict_color

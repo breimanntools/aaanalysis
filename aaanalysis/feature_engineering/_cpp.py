@@ -96,7 +96,7 @@ class CPP(Tool):
         df_scales : pd.DataFrame, shape (n_features, n_scales), optional
             DataFrame with scales (features are typically amino acids). Default from :meth:`load_scales` with ``name='scales'``.
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
-            DataFrame with categories for physicochemical amino acid scales.
+            DataFrame with categories for physicochemical amino acid scales. Must contain all scales from ``df_scales``.
             Default from :meth:`load_scales` with ``name='scales_cat'``.
         accept_gaps : bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).

@@ -1,5 +1,5 @@
 """
-This is a script for testing the aa.AAclustPlot class.
+This is a script for testing the AAclustPlot class.
 """
 from hypothesis import given
 import hypothesis.strategies as st

@@ -365,7 +365,7 @@ class SequenceFeature:
         df_scales : pd.DataFrame, shape (n_features, n_scales), optional
             DataFrame with scales (features are typically amino acids). Default from :meth:`load_scales` with ``
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
-            DataFrame with categories for physicochemical amino acid scales.
+            DataFrame with categories for physicochemical amino acid scales. Must contain all scales from ``df_scales``.
             Default from :meth:`load_scales` with ``name='scales_cat'``.
         start : int, default=1
             Position label of first amino acid position (starting at N-terminus).
@@ -570,7 +570,7 @@ class SequenceFeature:
         features : array-like, shape (n_features,)
             List of feature ids (>0).
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
-            DataFrame with categories for physicochemical amino acid scales.
+            DataFrame with categories for physicochemical amino acid scales. Must contain all scales from ``df_scales``.
             Default from :meth:`load_scales` with ``name='scales_cat'``.
         start : int, default=1
             Position label of first amino acid position (starting at N-terminus).

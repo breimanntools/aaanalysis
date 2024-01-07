@@ -156,8 +156,9 @@ class CPPPlot:
     """
     Plotting class for ``CPP`` (Comparative Physicochemical Profiling).
 
-    This plotting class visualizes the results of the result of the :class:`aaanalysis.CPP` class. The CPP results
-    can be visualized at global or individual sample level as ranking plot, profile, or map (heatmap, feature map).
+    This plotting class visualizes the results of the result of the :class:`aaanalysis.CPP` class. As introduced in
+    [Breimann24c]_, the CPP results can be visualized at global or individual sample level as ranking plot, profile,
+    or map (heatmap, feature map).
 
     """
     def __init__(self,
@@ -171,9 +172,9 @@ class CPPPlot:
         Parameters
         ----------
         df_scales : pd.DataFrame, shape (n_features, n_scales), optional
-            DataFrame with scales (features are typically amino acids). Default from :meth:`load_scales` with ``
+            DataFrame with scales (features are typically amino acids). Default from :meth:`load_scales` with ``.
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
-            DataFrame with categories for physicochemical amino acid scales.
+            DataFrame with categories for physicochemical amino acid scales. Must contain all scales from ``df_scales``.
             Default from :meth:`load_scales` with ``name='scales_cat'``.
         jmd_n_len : int, default=10
             Length of JMD-N (>=0).
@@ -183,6 +184,10 @@ class CPPPlot:
             Whether to accept missing values by enabling omitting for computations (if ``True``).
         verbose: bool, optional
             If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if ``None``.
+
+        Examples
+        --------
+        .. include:: examples/cpp_plot.rst
         """
         # Load defaults
         if df_scales is None:
@@ -262,8 +267,9 @@ class CPPPlot:
         .. include:: examples/cpp_plot_eval.rst
         """
         # Check input
-        #cols_requiered = [ut.COL_NAME, ut.COL_AVG_STD, ut.COL_AVG_IQR, ut.COL_AVG_ABS_AUC_POS, ut.COL_AVG_ABS_AUC_UNL]
-        cols_requiered = [ut.COL_NAME] # TODO add other names from df_eval (from cpp)
+        cols_requiered = [ut.COL_NAME, ut.COL_N_FEAT, ut.COL_AVG_ABS_AUC, ut.COL_MAX_ABS_AUC,
+                          ut.COL_AVG_MEAN_DIF, ut.COL_AVG_STD_TEST, ut.COL_N_CLUST,
+                          ut.COL_AVG_N_FEAT_PER_CLUST, ut.COL_STD_N_FEAT_PER_CLUST]
         ut.check_df(name="df_eval", df=df_eval, cols_requiered=cols_requiered, accept_none=False, accept_nan=False)
         ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_bool(name="legend", val=legend)
