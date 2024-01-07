@@ -37,10 +37,20 @@ a:visited {
 
 /* Override the content area */
 .wy-nav-content {
-    max-width: 90%;
+    /*max-width: 65% destroys default behavior*/
+    /*width: 100%; */
+    max-width: 75%;
     width: auto;
     padding-left: 45px;
     padding-right: 45px;
+}
+
+/* Media query for mobile devices */
+@media (max-width: 767px) {
+    .wy-nav-content {
+        padding-left: 15px; /* Adjust for mobile */
+        padding-right: 15px; /* Adjust for mobile */
+    }
 }
 
 /* ------ Table Styles ------ */
