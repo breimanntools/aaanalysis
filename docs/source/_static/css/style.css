@@ -39,7 +39,6 @@ a:visited {
 .wy-nav-content {
     /*max-width: 65% destroys default behavior*/
     /*width: 100%; */
-    max-width: 65%;
     width: 100%;
     padding-left: 45px;
     padding-right: 45px;
@@ -102,4 +101,19 @@ a:visited {
 /* Style for vertical menu items */
 .wy-menu-vertical a {
     color: #d9d9d9;
+}
+
+/* ------ Adjust Example Boxes ------ */
+/*TODO*/
+.admonition-examples.admonition {
+    background-color: white; /* Set the background color to white */
+    border: 1px solid #eaeaea; /* Optional: set border color */
+    /* Other styles (padding, etc.) as needed */
+}
+
+.admonition-examples.admonition img,
+.admonition img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
