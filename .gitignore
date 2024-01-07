@@ -4,6 +4,7 @@
 /recipe/
 /tutorials/.ipynb_checkpoints/
 /dist/
+
 # Created documentation
 /docs/build/
 /docs/source/generated/
@@ -28,6 +29,11 @@ Thumbs.db
 __pycache__/
 *.py[cod]
 *$py.class
+**/__pycache__/
+
+# Hypothesis
+.hypothesis/
+.coverage
 
 ## C extensions
 *.so
