@@ -1,3 +1,4 @@
+.. module:: aaanalysis.py
 .. currentmodule:: aaanalysis
 
 .. _api:
@@ -22,9 +23,9 @@ Data Handling
 .. autosummary::
     :toctree: generated/
 
-    aaanalysis.load_dataset
-    aaanalysis.load_scales
-    aaanalysis.load_features
+    load_dataset
+    load_scales
+    load_features
 
 .. _feature_engineering_api:
 
@@ -32,12 +33,14 @@ Feature Engineering
 -------------------
 .. autosummary::
     :toctree: generated/
+    :template: autosummary/class_template.rst
 
-    aaanalysis.AAclust
-    aaanalysis.AAclustPlot
-    aaanalysis.SequenceFeature
-    aaanalysis.CPP
-    aaanalysis.CPPPlot
+
+    AAclust
+    AAclustPlot
+    SequenceFeature
+    CPP
+    CPPPlot
 
 .. _pu_learning_api:
 
@@ -45,9 +48,10 @@ PU Learning
 -----------
 .. autosummary::
     :toctree: generated/
+    :template: autosummary/class_template.rst
 
-    aaanalysis.dPULearn
-    aaanalysis.dPULearnPlot
+    dPULearn
+    dPULearnPlot
 
 .. _explainable_ai_api:
 
@@ -55,9 +59,11 @@ Explainable AI
 --------------
 .. autosummary::
     :toctree: generated/
+    :template: autosummary/class_template.rst
 
-    aaanalysis.TreeModel
-    aaanalysis.ShapModel
+
+    TreeModel
+    ShapModel
 
 .. _perturbation_api:
 
@@ -65,11 +71,13 @@ Perturbation
 ------------
 .. autosummary::
     :toctree: generated/
+    :template: autosummary/class_template.rst
 
-    aaanalysis.AAMut
-    aaanalysis.AAMutPlot
-    aaanalysis.SeqMut
-    aaanalysis.SeqMutPlot
+
+    AAMut
+    AAMutPlot
+    SeqMut
+    SeqMutPlot
 
 .. _plot_api:
 
@@ -78,13 +86,13 @@ Plot Utilities
 .. autosummary::
     :toctree: generated/
 
-    aaanalysis.plot_get_clist
-    aaanalysis.plot_get_cmap
-    aaanalysis.plot_get_cdict
-    aaanalysis.plot_settings
-    aaanalysis.plot_gcfs
-    aaanalysis.plot_legend
-    aaanalysis.display_df
+    plot_get_clist
+    plot_get_cmap
+    plot_get_cdict
+    plot_settings
+    plot_gcfs
+    plot_legend
+    display_df
 
 .. _metric_api:
 
@@ -93,6 +101,6 @@ Metric Utilities
 .. autosummary::
     :toctree: generated/
 
-    aaanalysis.comp_auc_adjusted
-    aaanalysis.comp_bic_score
-    aaanalysis.comp_kld
+    comp_auc_adjusted
+    comp_bic_score
+    comp_kld

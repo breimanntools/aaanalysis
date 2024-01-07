@@ -69,26 +69,20 @@ extensions = [
 # -- Autodoc & Numpydoc settings ----------------------------------------------
 # Autodoc settings
 # See https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#configuration
-# Define the settings for undocumented members, private members, etc.
-undocumented_members = False
-private_members = False
-special_members = ""  # Modify this if you have specific special members to include
-exclude_initialization = "__init__"
-type_hints_display = "description"
-autodoc_member_order = 'bysource'
-
 autodoc_default_options = {
     "members": True,  # Document members (methods, attributes, etc.) of documented classes and modules
-    "undoc-members": undocumented_members,
-    "private-members": private_members,
-    "special-members": special_members,
+    "undoc-members": False,
+    "private-members": False,
+    "special-members": "",
     "inherited-members": False,  # Document members that are inherited from the base class
     "show-inheritance": False,  # Show the base classes in the documentation for a class
     "ignore-module-all": False,  # Ignore __all__ when looking for members to document
-    "exclude-members": exclude_initialization,
-    "autodoc_typehints": type_hints_display,
+    "exclude-members": "",
+    "autodoc_typehints": "description",
     "imported-members": False,  # Document members imported into the documented module from other modules
 }
+
+autodoc_member_order = 'bysource'
 
 # Type hint settings
 typehints_fully_qualified = False
@@ -100,14 +94,14 @@ typehints_document_rtype = False    # Check
 # Auto summary settings
 # See https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html#configuration
 autosummary_generate = True
+autosummary_generate_overwrite = True
 autosummary_ignore_module_all = False
-
 
 # Napoleon settings
 # See https://sphinxcontrib-napoleon.readthedocs.io/en/latest/sphinxcontrib.napoleon.html#sphinxcontrib.napoleon.Config
 napoleon_google_docstring = False   # Not default
 napoleon_numpy_docstring = True
-napoleon_include_init_with_doc = False
+napoleon_include_init_with_doc = True  # If True, list __init__ docstring separately from class docstring
 napoleon_include_private_with_doc = False
 napoleon_include_special_with_doc = False
 napoleon_use_admonition_for_examples = True
@@ -148,7 +142,7 @@ html_theme_options = {
     "style_nav_header_background": "#343131",
     "collapse_navigation": True,
     "sticky_navigation": True,
-    "navigation_depth": 3,
+    "navigation_depth": 4,
     "includehidden": True,
     "titles_only": False,
 }

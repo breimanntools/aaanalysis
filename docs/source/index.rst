@@ -36,7 +36,7 @@ Install
    tutorials.rst
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: REFERENCES
 
    api.rst
