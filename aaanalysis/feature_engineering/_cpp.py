@@ -364,7 +364,7 @@ class CPP(Tool):
             - 'n_features': Number of features per scale category given as list. Categories are ordered as follows:
               ['ASA/Volume', 'Composition', 'Conformation', 'Energy', 'Others', 'Polarity', 'Shape', 'Structure-Activity']
             - 'avg_ABS_AUC': Absolute AUC averaged across all features.
-            - 'max_ABS_AUC': Maximum AUC among all features (i.e., feature with the best discrimination).
+            - 'range_ABS_AUC': Quintile range of absolute AUC among all features (min, 25%, median, 75%, max).
             - 'avg_MEAN_DIF': Two mean differences averaged across all features separately for features with positive
               and negative 'mean_dif'.
             - 'avg_STD_TEST' Mean standard deviation averaged across all features.
@@ -372,16 +372,17 @@ class CPP(Tool):
             - 'avg_n_feat_per_clust': Average number of features per cluster.
             - 'std_n_feat_per_clust': Standard deviation of feature number per cluster.
 
-        * 'n_clusters' is optimized for a KMeans clustering model based on the minimum pair-wise Pearson correlation
-          value across all clusters, which has to exceed the minimum correlation threshold ``min_th``.
+        * 'n_clusters' is optimized for a KMeans clustering model based on the minimum Pearson correlation between
+          the cluster center and all cluster members across all clusters (``min_cor_center`` in :class:`AAclust`),
+          which has to exceed the minimum correlation threshold ``min_th``.
 
         See Also
         --------
         * :ref:`usage_principles_aaontology` for details on scale categories.
-        * :meth:`aaanalysis.CPP.run` for details on CPP statistical measures.
-        * :func:`aaanalysis.comp_auc_adjusted` for details on 'abs_auc'.
+        * :meth:`CPP.run` for details on CPP statistical measures.
+        * :func:`comp_auc_adjusted` for details on 'abs_auc'.
         * :class:`sklearn.cluster.KMeans` for employed clustering model.
-        * :class:`aaanalysis.AAclust` ([Breimann24a]_) for details on cluster optimization using Pearson correlation.
+        * :class:`AAclust` ([Breimann24a]_) for details on cluster optimization using Pearson correlation.
 
         Examples
         --------

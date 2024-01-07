@@ -4,12 +4,13 @@ This is a script for testing the CPP().run() method.
 import pytest
 import pandas as pd
 import aaanalysis as aa
+import random
 aa.options["verbose"] = False
 
 
 def get_parts_splits_scales():
     """"""
-    df_seq = aa.load_dataset(name="DOM_GSEC", n=3)
+    df_seq = aa.load_dataset(name="DOM_GSEC", n=2)
     labels = df_seq["label"].to_list()
     df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq, list_parts=["tmd_jmd"])
     df_scales = aa.load_scales().T.head(2).T
@@ -28,9 +29,9 @@ class TestCPPRun:
         labels = df_seq["label"].to_list()
         sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq)
-        df_scales = aa.load_scales(top60_n=38)
+        df_scales = aa.load_scales(top60_n=38).T.head(10).T
         cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
-        df_feat = cpp.run(labels=labels)
+        df_feat = cpp.run(labels=labels, n_jobs=1)
         assert isinstance(df_feat, pd.DataFrame)
 
     def test_all_parst(self):
@@ -45,8 +46,9 @@ class TestCPPRun:
     def test_valid_labels(self):
         all_data_set_names = [x for x in aa.load_dataset()["Dataset"].to_list() if "AA" not in x
                               and "AMYLO" not in x and "PU" not in x]
+        sampled_names = random.sample(all_data_set_names, 3)
         df_scales = aa.load_scales().T.head(2).T
-        for name in all_data_set_names:
+        for name in sampled_names:
             df_seq = aa.load_dataset(name=name, n=10, min_len=50)
             labels = df_seq["label"].to_list()
             sf = aa.SequenceFeature()

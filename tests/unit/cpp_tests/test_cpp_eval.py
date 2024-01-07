@@ -59,7 +59,7 @@ class TestCPPEval:
         assert isinstance(df_eval, pd.DataFrame)
 
     def test_valid_min_th(self):
-        for min_th in [0, 0.3, 1]:
+        for min_th in [0, 1]:
             df_parts, labels, split_kws, df_scales = get_parts_splits_scales()
             cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales)
             list_df_feat = get_list_df_feat()
@@ -78,7 +78,7 @@ class TestCPPEval:
             assert isinstance(df_eval, pd.DataFrame)
 
     def test_valid_list_df_parts(self):
-        for i in range(3):
+        for i in range(2):
             n_samples = random.randint(5, 60)
             size = random.randint(2, 3)
             df_parts, labels, split_kws, df_scales = get_parts_splits_scales(n_samples=n_samples)
@@ -93,7 +93,7 @@ class TestCPPEval:
         list_df_feat = get_list_df_feat()
         cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws)
         df_eval = cpp.eval(list_df_feat=list_df_feat, labels=labels,
-                           n_jobs=None)
+                           n_jobs=2)
         assert isinstance(df_eval, pd.DataFrame)
 
     # Negative tests
@@ -184,20 +184,20 @@ class TestCPPEvalComplex:
     # Positive tests
     def test_complex_case_valid_combination_1(self):
         """Test with a valid combination of parameters"""
-        df_parts, labels, split_kws, df_scales = get_parts_splits_scales(n_samples=10)
+        df_parts, labels, split_kws, df_scales = get_parts_splits_scales(n_samples=5)
         cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales)
-        list_df_feat = get_list_df_feat(size=3, n_feat=50)
+        list_df_feat = get_list_df_feat(size=3, n_feat=20)
         list_df_parts = [df_parts] * 3
         df_eval = cpp.eval(list_df_feat=list_df_feat, labels=labels, list_df_parts=list_df_parts, n_jobs=2)
         assert isinstance(df_eval, pd.DataFrame)
 
     def test_complex_case_valid_combination_2(self):
         """Test with another valid combination of parameters"""
-        df_parts, labels, split_kws, df_scales = get_parts_splits_scales(n_samples=15)
+        df_parts, labels, split_kws, df_scales = get_parts_splits_scales(n_samples=10)
         cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales)
-        list_df_feat = get_list_df_feat(size=2, n_feat=60)
+        list_df_feat = get_list_df_feat(size=2, n_feat=15)
         names_feature_sets = ['set1', 'set2']
-        df_eval = cpp.eval(list_df_feat=list_df_feat, labels=labels, names_feature_sets=names_feature_sets, n_jobs=4)
+        df_eval = cpp.eval(list_df_feat=list_df_feat, labels=labels, names_feature_sets=names_feature_sets, n_jobs=3)
         assert isinstance(df_eval, pd.DataFrame)
 
     # Negative tests

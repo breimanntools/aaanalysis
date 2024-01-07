@@ -12,7 +12,7 @@ import aaanalysis.utils as ut
 
 # I Helper Functions
 def _plot_neg_homogeneity(ax=None, df_eval=None, col=None, colors=None, val_name="Value"):
-    """"""
+    """Plot homogeneity among identified negatives"""
     sns.barplot(ax=ax, data=df_eval, y=ut.COL_NAME, x=col, color=colors[0])
     # Adding the numbers to the end of the bars
     for p in ax.patches:

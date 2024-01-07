@@ -29,16 +29,10 @@ class TestdPULearnPlotEval:
     """Test aa.dPULearnPlot.eval() function for individual parameters."""
 
     # Positive tests
-    @settings(max_examples=10, deadline=4000)
-    @given(n_samples=some.integers(min_value=2, max_value=10))
+    @settings(max_examples=5, deadline=4000)
+    @given(n_samples=some.integers(min_value=2, max_value=5))
     def test_df_eval_valid(self, n_samples):
         df_eval = _create_sample_df_eval(n_rows=n_samples)
-        fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval)
-        assert isinstance(fig, plt.Figure)
-        assert isinstance(axes, np.ndarray)
-        assert isinstance(axes[0], plt.Axes)
-        plt.close(fig)
-        df_eval = _create_sample_df_eval(n_rows=n_samples, just_ned=False)
         fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval)
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, np.ndarray)

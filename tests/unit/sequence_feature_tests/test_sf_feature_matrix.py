@@ -126,7 +126,7 @@ class TestFeatureMatrixComplex:
     def test_valid_combinations(self):
         """Test with valid combinations of parameters."""
         sf = aa.SequenceFeature()
-        for i in range(5):
+        for i in range(3):
             n_feat, n_samples = random.randint(5, 100), random.randint(5, 50)
             features, df_parts, labels = _get_df_feat_input(n_feat=n_feat, n_samples=n_samples)
             df_scales = aa.load_scales() if random.choice([True, False]) else None

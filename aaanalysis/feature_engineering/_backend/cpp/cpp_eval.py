@@ -11,12 +11,23 @@ from .utils_feature import get_feature_matrix_
 
 
 # Helper function
+def _min_cor_center(X):
+    """Get minimum for correlation of all columns with cluster center, defined as the mean values
+    for each amino acid over all scales."""
+    # Get cluster center
+    f = lambda x: x.mean(axis=0)[np.newaxis, :]
+    # Create new matrix including cluster center
+    center_X = np.concatenate([f(X), X], axis=0)
+    # Get minimum correlation with mean values
+    min_cor = np.corrcoef(center_X)[0, ].min()
+    return min_cor
+
+
 def get_min_cor(X, labels=None):
     """Compute minimum pair-wise correlation for each cluster label and return minimum of obtained cluster minimums."""
     # Minimum correlations for each cluster (with center or all scales)
     list_masks = [[i == label for i in labels] for label in set(labels)]
-    f = lambda x: np.corrcoef(x).min()
-    list_min_cor = [f(X[mask]) for mask in list_masks]
+    list_min_cor = [_min_cor_center(X[mask]) for mask in list_masks]
     # Minimum for all clusters
     min_cor = min(list_min_cor)
     return min_cor
@@ -69,7 +80,7 @@ def evaluate_features(list_df_feat=None, names_feature_sets=None,
         eval_dict[ut.COL_N_FEAT] = (len(df_feat), [len(df_feat[df_feat[ut.COL_CAT] == cat]) for cat in ut.COLS_CAT])
         # Compute CPP statistics
         eval_dict[ut.COL_AVG_ABS_AUC] = df_feat[ut.COL_ABS_AUC].mean()
-        eval_dict[ut.COL_MAX_ABS_AUC] = df_feat[ut.COL_ABS_AUC].max()
+        eval_dict[ut.COL_RANGE_ABS_AUC] = df_feat[ut.COL_ABS_AUC].quantile([0, 0.25, 0.5, 0.75, 1]).round(3).tolist()
         eval_dict[ut.COL_AVG_MEAN_DIF] = (round(df_feat[df_feat[ut.COL_MEAN_DIF] > 0][ut.COL_MEAN_DIF].mean(), 3),
                                           round(df_feat[df_feat[ut.COL_MEAN_DIF] < 0][ut.COL_MEAN_DIF].mean(), 3))
         eval_dict[ut.COL_AVG_STD_TEST] = df_feat[ut.COL_STD_TEST].mean()

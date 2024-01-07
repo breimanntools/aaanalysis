@@ -172,7 +172,7 @@ class CPPPlot:
         Parameters
         ----------
         df_scales : pd.DataFrame, shape (n_features, n_scales), optional
-            DataFrame with scales (features are typically amino acids). Default from :meth:`load_scales` with ``.
+            DataFrame with scales (features are typically amino acids). Default from :meth:`load_scales``.
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
             DataFrame with categories for physicochemical amino acid scales. Must contain all scales from ``df_scales``.
             Default from :meth:`load_scales` with ``name='scales_cat'``.
@@ -216,8 +216,7 @@ class CPPPlot:
     @staticmethod
     def eval(df_eval: pd.DataFrame = None,
              figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
-             legend: bool = True,
-             legend_y: float = -0.175,
+             dict_color: Optional[dict] = None,
              ) -> Tuple[plt.Figure, plt.Axes]:
         """
         Plot evaluation output of CPP comparing multiple sets of identified feature sets.
@@ -236,7 +235,7 @@ class CPPPlot:
             - 'name': Name of the feature set.
             - 'n_features': Number of features per scale category given as list.
             - 'avg_ABS_AUC': Absolute AUC averaged across all features.
-            - 'max_ABS_AUC': Maximum AUC among all features (i.e., feature with the best discrimination).
+            - 'range_ABS_AUC': Quintile range of absolute AUC among all features (min, 25%, median, 75%, max).
             - 'avg_MEAN_DIF': Two mean differences averaged across all features (for positive and negative 'mean_dif')
             - 'avg_STD_TEST' Mean standard deviation averaged across all features.
             - 'n_clusters': Optimal number of clusters.
@@ -245,10 +244,8 @@ class CPPPlot:
 
         figsize : tuple, default=(6, 4)
             Width and height of the figure in inches.
-        legend : bool, default=True
-            If ``True``, scale category legend is set under number of features measures.
-        legend_y : float, default=-0.175
-            Legend position regarding the plot y-axis applied if ``legend=True``.
+        dict_color : dict, optional
+            Color dictionary for scale categories. Default from :meth:`plot_get_cdict` with ``name='DICT_CAT'.
 
         Returns
         -------
@@ -267,15 +264,16 @@ class CPPPlot:
         .. include:: examples/cpp_plot_eval.rst
         """
         # Check input
-        cols_requiered = [ut.COL_NAME, ut.COL_N_FEAT, ut.COL_AVG_ABS_AUC, ut.COL_MAX_ABS_AUC,
+        cols_requiered = [ut.COL_NAME, ut.COL_N_FEAT, ut.COL_AVG_ABS_AUC, ut.COL_RANGE_ABS_AUC,
                           ut.COL_AVG_MEAN_DIF, ut.COL_AVG_STD_TEST, ut.COL_N_CLUST,
                           ut.COL_AVG_N_FEAT_PER_CLUST, ut.COL_STD_N_FEAT_PER_CLUST]
         ut.check_df(name="df_eval", df=df_eval, cols_requiered=cols_requiered, accept_none=False, accept_nan=False)
         ut.check_figsize(figsize=figsize, accept_none=True)
-        ut.check_bool(name="legend", val=legend)
-        ut.check_number_val(name="legend_y", val=legend_y)
+        ut.check_dict(name="dict_color", val=dict_color, accept_none=True)
+        if dict_color is None:
+            dict_color = ut.plot_get_cdict_(name="DICT_CAT")
         # Plotting
-        fig, axes = plot_eval(df_eval=df_eval, figsize=figsize, legend=legend, legend_y=legend_y)
+        fig, axes = plot_eval(df_eval=df_eval, figsize=figsize, dict_color=dict_color)
         return fig, axes
 
 

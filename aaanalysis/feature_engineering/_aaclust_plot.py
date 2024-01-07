@@ -243,7 +243,8 @@ class AAclustPlot:
                 dot_alpha: Union[int, float] = 0.75,
                 palette: Optional[mpl.colors.ListedColormap] = None,
                 ) -> Tuple[plt.Axes, pd.DataFrame]:
-        """PCA plot of clustering with centers highlighted
+        """
+        PCA plot of clustering with centers highlighted
 
         Parameters
         ----------
@@ -324,7 +325,8 @@ class AAclustPlot:
                 dot_alpha: Union[int, float] = 0.75,
                 palette: Optional[mpl.colors.ListedColormap] = None,
                 ) -> Tuple[plt.Axes, pd.DataFrame]:
-        """PCA plot of clustering with medoids highlighted
+        """
+        PCA plot of clustering with medoids highlighted
 
         Parameters
         ----------

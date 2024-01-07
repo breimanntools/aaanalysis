@@ -164,11 +164,11 @@ class AAclust(Wrapper):
         """
         Applies AAclust algorithm to feature matrix (``X``).
 
-        AAclust determines the optimal number of clusters, k, without pre-specification. It partitions data (``X``) into
-        clusters by maximizing the within-cluster Pearson correlation beyond the ``min_th`` threshold. The quality of
-        clustering is either based on the minimum Pearson correlation of all members (``on_center=False``) or between
-        the cluster center and its members (``on_center=True``), using either the 'min_cor_all' or 'min_cor_center'
-        function, respectively, as described in [Breimann24a]_.
+        Introduced in [Breimann24a]_, AAclust determines the optimal number of clusters, k, without pre-specification.
+        It partitions data (``X``) into clusters by maximizing the within-cluster Pearson correlation beyond the
+        ``min_th`` threshold. The quality of clustering is either based on the minimum Pearson correlation of all
+        members (``on_center=False``) or between the cluster center and its members (``on_center=True``),
+        using either the ``min_cor_all`` or ``min_cor_center`` correlation measures, respectively.
 
         Parameters
         ----------
@@ -200,12 +200,19 @@ class AAclust(Wrapper):
 
         Notes
         -----
-        * Sets all attributes of the :class:`aanalysis.AAclust` class.
-        * The AAclust algorithm consists of three main steps:
+        * The ``AAclust`` algorithm consists of three main steps:
+
             1. Estimate the lower bound of k.
             2. Refine k (recursively) using the chosen quality measure.
             3. Optionally, merge smaller clusters as directed by the merge ``metric``.
+
+        * ``AAclust`` provides two correlation-based quality measure to optimize ``n_clusters``:
+
+            - ``min_cor_center``: Minimum Pearson correlation between the cluster center and all cluster members.
+            - ``min_cor_all``: Minium pairwise Pearson correlation among all cluster members.
+
         * A representative scale (medoid) closest to each cluster center is selected for redundancy reduction.
+        * Sets all attributes of the :class:`aanalysis.AAclust` class.
 
         See Also
         --------

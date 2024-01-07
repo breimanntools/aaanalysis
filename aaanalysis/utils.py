@@ -158,7 +158,7 @@ COLS_EVAL_AACLUST = [COL_N_CLUST, COL_BIC, COL_CH, COL_SC]
 # CPP evaluation
 COL_N_FEAT = "n_features"
 COL_AVG_ABS_AUC = "avg_ABS_AUC"
-COL_MAX_ABS_AUC = "max_ABS_AUC"
+COL_RANGE_ABS_AUC = "range_ABS_AUC"   # Quintiles (min, 25%, median, 75%, max)
 COL_AVG_MEAN_DIF = "avg_MEAN_DIF"
 COL_AVG_STD_TEST = "avg_STD_TEST"
 # COL_N_CLUST = "n_clusters"
