@@ -35,13 +35,14 @@ class TestCPPRun:
         assert isinstance(df_feat, pd.DataFrame)
 
     def test_all_parst(self):
-        """"""
         _, _, split_kws, df_scales = get_parts_splits_scales()
         df_seq = aa.load_dataset(name="DOM_GSEC", n=3)
         labels = df_seq["label"].to_list()
         df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq, all_parts=True)
         cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws)
         df_feat = cpp.run(labels=labels)
+        assert isinstance(df_feat, pd.DataFrame)
+
 
     def test_valid_labels(self):
         all_data_set_names = [x for x in aa.load_dataset()["Dataset"].to_list() if "AA" not in x

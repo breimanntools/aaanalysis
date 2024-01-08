@@ -7,12 +7,6 @@ import aaanalysis as aa
 from pandas.testing import assert_frame_equal
 
 
-def get_df_parts():
-    """"""
-    df_scales = aa.load_scales()
-    df_cat = aa.load_scales(name="scales_cat")
-    return df_scales, df_cat
-
 class TestCPPPlot:
     """Positive Test cases for CPPPlot class."""
 

@@ -18,6 +18,7 @@ from ._backend.check_feature import (check_split_kws,
                                      check_df_cat,
                                      check_match_df_cat_features,
                                      check_match_df_parts_df_scales,
+                                     check_match_df_seq_jmd_len,
                                      check_match_df_scales_df_cat)
 from ._backend.cpp.utils_cpp_plot import get_optimal_fontsize
 
@@ -347,7 +348,7 @@ class CPPPlot:
         return fig, axes
 
 
-    # Plotting methods for single feature
+    # Plotting method for single feature
     def feature(self,
                 feature: str = None,
                 df_seq: pd.DataFrame = None,
@@ -355,7 +356,7 @@ class CPPPlot:
                 label_test: int = 1,
                 label_ref: int = 0, 
                 ax: Optional[plt.Axes] = None,
-                figsize: Tuple[int or float, int or float] = (5.6, 4.8),
+                figsize: Tuple[Union[int, float], Union[int, float]] = (5.6, 4.8),
                 names_to_show: Optional[Union[List[str], str]] = None,
                 name_test: str = "TEST",
                 name_ref: str = "REF",
@@ -457,7 +458,7 @@ class CPPPlot:
         ut.check_color(name="color_ref", val=color_ref)
         ut.check_bool(name="show_seq", val=show_seq)
         ut.check_bool(name="histplot", val=histplot)
-        args = dict(min_val=0, exclusive_limits=True, accept_none=True)
+        args = dict(min_val=0, exclusive_limits=True, accept_none=True, just_int=False)
         ut.check_number_range(name="fontsize_mean_dif", val=fontsize_mean_dif, **args)
         ut.check_number_range(name="fontsize_name_test", val=fontsize_name_test, **args)
         ut.check_number_range(name="fontsize_name_ref", val=fontsize_name_ref, **args)
@@ -465,6 +466,7 @@ class CPPPlot:
         ut.check_number_range(name="alpha_hist", val=alpha_hist, accept_none=False, min_val=0, max_val=1, just_int=False)
         ut.check_number_range(name="alpha_dif", val=alpha_dif, accept_none=False, min_val=0, max_val=1, just_int=False)
         check_match_df_seq_names_to_show(df_seq=df_seq, names_to_show=names_to_show)
+        df_seq = check_match_df_seq_jmd_len(df_seq=df_seq, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
         # Plot feature
         try:
             ax = plot_feature(ax=ax, figsize=figsize,
@@ -484,43 +486,92 @@ class CPPPlot:
             raise ValueError(e)
         return ax
 
-    # Plotting methods for group and single level
+    # Plotting methods for multiple features (group and sample level)
     def ranking(self,
-                df_feat=None,
+                df_feat: pd.DataFrame = None,
                 ax: Optional[plt.Axes] = None,
-                figsize: Tuple[int or float, int or float] = (7, 5),
-                tmd_len=20,
+                figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
+                tmd_len: int = 20,
                 top_n: int = 15,
                 name_test: str = "TEST",
                 name_ref: str = "REF",
                 shap_plot: bool = False,
-                fontsize_titles: int or float = 11,
-                fontsize_labels: int or float = 11,
-                fontsize_annotations: int or float = 11,
+                fontsize_titles: Union[int, float, None] = 11,
+                fontsize_labels: Union[int, float, None] = 11,
+                fontsize_annotations: Union[int, float, None] = 11,
                 feature_val_in_percent: bool = True,
-                tmd_jmd_space=2,
-                col_dif=ut.COL_MEAN_DIF,
-                col_rank=ut.COL_FEAT_IMPORT,
-                xlim_dif=(-17.5, 17.5),
-                xlim_rank=(0, 5)
-                ):
+                tmd_jmd_space: int = 2,
+                col_dif: str = ut.COL_MEAN_DIF,
+                col_rank: str = ut.COL_FEAT_IMPORT,
+                xlim_dif: Tuple[Union[int, float], Union[int, float]] =(-17.5, 17.5),
+                xlim_rank: Tuple[Union[int, float], Union[int, float]] =(0, 5)
+                ) -> Tuple[plt.Figure, plt.Axes]:
         """
+        Plot a ranking of features based on their importance or difference.
+
+        This method visualizes the most significant features that distinguish between two groups, typically
+        'test' and 'reference'. It can optionally show SHAP values if `shap_plot` is set to True.
 
         Parameters
         ----------
+        df_feat : pd.DataFrame
+            DataFrame containing feature importance or SHAP values.
+        ax : plt.Axes, optional
+            Pre-defined Axes object to plot on. If None, a new Axes object is created with the specified `figsize`.
+        figsize : tuple, default=(7, 5)
+            Figure size in inches (width, height).
+        tmd_len : int, default=20
+            Length of the transmembrane domain to consider in the feature calculation.
+        top_n : int, default=15
+            The number of top features to display in the ranking.
+        name_test : str, default="TEST"
+            Label for the test dataset.
+        name_ref : str, default="REF"
+            Label for the reference dataset.
+        shap_plot : bool, default=False
+            If ``True``, the method expects SHAP values in `df_feat` and plots them accordingly.
+        fontsize_titles : int or float, default=11
+            Font size for the plot titles.
+        fontsize_labels : int or float or None, default=11
+            Font size for the x and y labels.
+        fontsize_annotations : int or float or None, default=11
+            Font size for annotations within the plot.
+        feature_val_in_percent : bool, default=True
+            If ``True``, feature values are shown in percentage.
+        tmd_jmd_space : int, default=2
+            The space between TMD and JMD regions in the plot.
+        col_dif : str, default=ut.COL_MEAN_DIF
+            The column name in `df_feat` representing the mean difference.
+        col_rank : str, default=ut.COL_FEAT_IMPORT
+            The column name in `df_feat` representing the feature importance.
+        xlim_dif : tuple, default=(-17.5, 17.5)
+            x-axis limits for difference plot.
+        xlim_rank : tuple, default=(0, 5)
+            x-axis limits for ranking plot.
 
         Returns
         -------
+        fig : plt.Figure
+            The Figure object for the ranking plot if `ax` is None; otherwise, None.
         ax : plt.Axes
-            CPP ranking plot axes object.
+            The Axes object for the ranking plot..
 
         Examples
         --------
         .. include:: examples/cpp_plot_ranking.rst
         """
-        # Check input
         # TODO check input, add docstring, typing
+        # Check input
+        ut.check_df_feat(df_feat=df_feat)   # Do not check for list_parts since df_pos can be obtained for any part
+        ut.check_ax(ax=ax, accept_none=True)
+        ut.check_figsize(figsize=figsize, accept_none=True)
+        ut.check_str(name="name_test", val=name_test)
+        ut.check_str(name="name_ref", val=name_ref)
         ut.check_bool(name="shap_plot", val=shap_plot)
+        args = dict(min_val=0, exclusive_limits=True, accept_none=True, just_int=False)
+        ut.check_number_range(name="fontsize_titles", val=fontsize_titles, **args)
+        ut.check_number_range(name="fontsize_labels", val=fontsize_labels, **args)
+        ut.check_number_range(name="fontsize_annotations", val=fontsize_annotations, **args)
         # Plot ranking
         try:
             fig, ax = plot_ranking(figsize=figsize, df_feat=df_feat, top_n=top_n,
@@ -579,7 +630,7 @@ class CPPPlot:
 
         Parameters
         ----------
-        df_feat : class:`pandas.DataFrame`, optional, default=None
+        df_feat : pd.DataFrame, optional, default=None
             Dataframe containing the features to be plotted. If ``None``, default=features from the instance will be used.
         col_value : {'abs_auc', 'mean_dif', 'std_test', 'feat_importance', 'feat_impact', ...}, default='mean_dif'
             Column name in ``df_feat`` containing the numerical values to be plotted.

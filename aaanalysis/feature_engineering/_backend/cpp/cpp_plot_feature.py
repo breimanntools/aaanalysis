@@ -71,23 +71,23 @@ def _get_df_show(df_feat_vals=None, feature=None, df_seq=None, names_to_show=Non
 def _add_mean_dif(ax, mean_test, mean_ref, mean_dif, y_mean_dif, alpha_dif):
     """Add area to highlight mean differences between reference and test group"""
     color_dif = get_color_dif(mean_dif=mean_dif)
-    plt.plot([mean_test, mean_ref], [y_mean_dif, y_mean_dif], "-", color=color_dif, linewidth=4)
+    ax.plot([mean_test, mean_ref], [y_mean_dif, y_mean_dif], "-", color=color_dif, linewidth=4)
     args_lines = dict(color="black", markeredgewidth=5)
-    plt.plot(mean_ref, y_mean_dif, "|", **args_lines)
-    plt.plot(mean_test, y_mean_dif, "|", **args_lines)
+    ax.plot(mean_ref, y_mean_dif, "|", **args_lines)
+    ax.plot(mean_test, y_mean_dif, "|", **args_lines)
 
-    plt.plot([mean_test, mean_test], [0, y_mean_dif], "-", color=color_dif, linewidth=2, alpha=0.25)
-    plt.plot([mean_ref, mean_ref], [0, y_mean_dif], "-", color=color_dif, linewidth=2, alpha=0.25)
+    ax.plot([mean_test, mean_test], [0, y_mean_dif], "-", color=color_dif, linewidth=2, alpha=0.25)
+    ax.plot([mean_ref, mean_ref], [0, y_mean_dif], "-", color=color_dif, linewidth=2, alpha=0.25)
 
     bar = mpl.patches.Rectangle((mean_ref, 0), width=mean_dif, height=y_mean_dif, linewidth=1, color=color_dif,
                                 zorder=0, clip_on=False, alpha=alpha_dif)
 
     ax.add_patch(bar)
-    plt.plot([mean_test, mean_test], [0, y_mean_dif], "--", color="black", linewidth=2, alpha=1)
-    plt.plot([mean_ref, mean_ref], [0, y_mean_dif], "--", color="black", linewidth=2, alpha=1)
+    ax.plot([mean_test, mean_test], [0, y_mean_dif], "--", color="black", linewidth=2, alpha=1)
+    ax.plot([mean_ref, mean_ref], [0, y_mean_dif], "--", color="black", linewidth=2, alpha=1)
 
 
-def _add_mean_dif_text(mean_test, mean_ref, mean_dif, y_mean_dif, name_test, name_ref,
+def _add_mean_dif_text(ax, mean_test, mean_ref, mean_dif, y_mean_dif, name_test, name_ref,
                        color_test, color_ref, fontsize_name_test, fontsize_name_ref, fontsize_mean_dif):
     """Add text annotations for mean difference"""
     # Get default font sizes
@@ -97,17 +97,17 @@ def _add_mean_dif_text(mean_test, mean_ref, mean_dif, y_mean_dif, name_test, nam
     fontsize_name_ref = fs if fontsize_name_ref is None else fontsize_name_ref
     # Plot text
     middle = min([mean_test, mean_ref]) + abs(mean_dif) / 2
-    str_mean_dif = f"{ut.LABEL_MEAN_DIF}={mean_dif}"
-    plt.text(middle, y_mean_dif * 1.05, str_mean_dif, color="black", ha="center", size=fontsize_mean_dif)
+    str_mean_dif = f"{ut.LABEL_MEAN_DIF}={mean_dif:.3f}"  # Ensure mean_dif is formatted nicely
+    ax.text(middle, y_mean_dif * 1.05, str_mean_dif, color="black", ha="center", size=fontsize_mean_dif)
     d = 0.015
     x_test = mean_test - d if mean_dif < 0 else mean_test + d
     ha_test = "right" if mean_dif < 0 else "left"
     x_ref = mean_ref - d if mean_dif > 0 else mean_ref + d
     ha_ref = "right" if mean_dif > 0 else "left"
-    plt.text(x_test, y_mean_dif, name_test, ha=ha_test, va="center_baseline", color=color_test,
-             size=fontsize_name_test)
-    plt.text(x_ref, y_mean_dif, name_ref, ha=ha_ref, va="center_baseline", color=color_ref,
-             size=fontsize_name_ref)
+    ax.text(x_test, y_mean_dif, name_test, ha=ha_test, va="center_baseline",
+            color=color_test, size=fontsize_name_test)
+    ax.text(x_ref, y_mean_dif, name_ref, ha=ha_ref, va="center_baseline",
+            color=color_ref, size=fontsize_name_ref)
 
 
 def _add_names_to_show(ax, df_show, name_test, color_test, color_ref, fontsize_names_to_show, show_seq):
@@ -159,19 +159,22 @@ def plot_feature(ax=None, figsize=(5.6, 4.8), feature=str,
         sns.histplot(**args)
     else:
         sns.kdeplot(**args, fill=True, alpha=alpha_hist, common_norm=False)
-    ax = plt.gca()
+    if ax is None:
+        ax = plt.gca()
     fs = ut.plot_gco(option='font.size')  # Either None or current font size (if not provided, default size is used)
-    y_mean_dif = plt.ylim()[1] * 1.05
-    plt.ylim(0, y_mean_dif * 1.2)
-    plt.xlim(0, 1)
+    # Set limits and labels using ax
+    y_mean_dif = ax.get_ylim()[1] * 1.05
+    y_max = max(y_mean_dif * 1.2, 1)
+    ax.set_ylim(0, y_max)
+    ax.set_xlim(0, 1)
     # Add mean dif
     _add_mean_dif(ax, mean_test, mean_ref, mean_dif, y_mean_dif, alpha_dif)
-    _add_mean_dif_text(mean_test, mean_ref, mean_dif, y_mean_dif, name_test, name_ref,
+    _add_mean_dif_text(ax, mean_test, mean_ref, mean_dif, y_mean_dif, name_test, name_ref,
                        color_test, color_ref, fontsize_name_test, fontsize_name_ref, fontsize_mean_dif)
     # Add plot labels
     y_label = ut.LABEL_HIST_COUNT if histplot else ut.LABEL_HIST_DEN
-    plt.ylabel(y_label, size=fs)
-    plt.xlabel(ut.LABEL_FEAT_VAL, size=fs)
+    ax.set_ylabel(y_label, size=fs)
+    ax.set_xlabel(ut.LABEL_FEAT_VAL, size=fs)
     # Add individual data points
     if len(df_show) != 0:
         _add_names_to_show(ax, df_show, name_test, color_test, color_ref, fontsize_names_to_show, show_seq)

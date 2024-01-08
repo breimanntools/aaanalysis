@@ -147,7 +147,8 @@ def plot_eval(df_eval=None, figsize=(8, 5), dict_color=None, legend=True, legend
     _plot_n_clusters(ax=axes[3], df_eval=_df_eval)
     _plot_feat_per_cluster(ax=axes[4], df_eval=_df_eval)
     # Adding central titles
-    axes[1].set_title('Discriminative Power', ha='left', va='center', weight="bold")
+    x_min = axes[1].get_xlim()[0]
+    axes[1].set_title('Discriminative Power', ha='left', va='center', x=x_min, weight="bold")
     axes[3].set_title('Redundancy', ha='left', va='center', weight="bold")
     # Set legend under plot
     n_feat_cat = np.array([x[1] for x in df_eval[ut.COL_N_FEAT]]).sum(axis=0)

@@ -88,33 +88,6 @@ def plot_feature_position(ax=None, df=None, n=20, space=3, tmd_len=20, jmd_n_len
 
 
 # Add feature mean difference
-def _get_std_dif(df_feat=None, df_parts=None, labels=None, in_percent=True, df_scales=None):
-    """Compute pooled standard deviation between difference of mean(reference) and mean(test) as follows:
-
-        SDpooled = √((n1-1)*SD1*SD1 + (n2-1)*SD2*SD2)/(n1+n2-2)
-
-        where,
-        SD1 = Standard Deviation for group 1
-        SD2 = Standard Deviation for group 2
-        n1 =  Sample Size for group 1
-        n2 =  Sample Size for group 2
-    """
-    X = get_feature_matrix_(features=df_feat[ut.COL_FEATURE].to_list(), df_parts=df_parts, df_scales=df_scales)
-    mask_test = [bool(x) for x in labels]
-    mask_ref = [not bool(x) for x in labels]
-    list_pooled_std = []
-    for i in range(len(df_feat)):
-        f_std = lambda x: statistics.stdev(x)
-        vals1 = X[:, i][mask_ref]
-        vals2 = X[:, i][mask_test]
-        sd1, sd2 = f_std(vals1), f_std(vals2)
-        n1, n2 = len(vals1), len(vals2)
-        pooled_std = math.sqrt((sd1*sd1 * (n1-1) + (sd2*sd2 * (n2-1))))/(n1+n2+2)
-        factor = 100 if in_percent else 1
-        list_pooled_std.append(round(pooled_std, 3) * factor)
-    return list_pooled_std
-
-
 def _add_annotation_extreme_val(sub_fig=None, max_neg_val=-2, min_pos_val=2, text_size=9):
     """"""
     args = dict(va='center_baseline', size=text_size, xytext=(0.5, 0), textcoords='offset points',
@@ -211,7 +184,7 @@ def plot_ranking(figsize=(7, 5), df_feat=None, top_n=25,
                  xlim_dif=(-17.5, 17.5),
                  col_dif=ut.COL_MEAN_DIF,
                  xlim_rank=(0, 8)):
-    """"""
+    """Plot ranking of feature DataFrame"""
     df_feat = df_feat.copy()
     # Adjust df_feat
     df_feat = df_feat.copy().reset_index(drop=True).head(top_n)
