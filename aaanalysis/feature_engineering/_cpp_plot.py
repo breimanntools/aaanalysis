@@ -376,10 +376,10 @@ class CPPPlot:
         Introduced in [Breimann24a]_, a CPP feature is defined as a ``Part-Split-Scale`` combination. For a sample,
         a feature value is computed in three steps:
 
-            1. Selecting a sequence part
-            2. Splitting the sequence part to obtain a ``Part-Split`` combination
-            3. Assigning to each amino acids of the ``Part-Split`` combination its respective scale value
-               and computing the average, called feature value.
+            1. ``Part Selection``: Identify a specific sequence part.
+            2. ``Part-Splitting``: Divide the selected part into segments, creating a 'Part-Split' combination.
+            3. ``Scale Value Assignment``: For each amino acid in the 'Part-Split' segment,
+               assign its corresponding scale value and calculate the average, which is termed the feature value.
 
         Parameters
         ----------

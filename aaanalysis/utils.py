@@ -322,13 +322,21 @@ def read_csv_cached(name, sep=None):
 
 
 def load_default_scales(scale_cat=False):
-    """Load default scales sets or categories"""
+    """Load default scales sets or categories. Copy is always returned to maintain data integrity."""
     if scale_cat:
-        df_cat = read_excel_cached(FOLDER_DATA + f"{STR_SCALE_CAT}.xlsx")
-        return df_cat
+        if options["df_cat"] is None:
+            df_cat = read_excel_cached(FOLDER_DATA + f"{STR_SCALE_CAT}.xlsx")
+            options["df_cat"] = df_cat
+            return df_cat.copy()
+        else:
+            return options["df_cat"].copy()
     else:
-        df_scales = read_excel_cached(FOLDER_DATA + f"{STR_SCALES}.xlsx", index_col=0)
-        return df_scales
+        if options["df_scales"] is None:
+            df_scales = read_excel_cached(FOLDER_DATA + f"{STR_SCALES}.xlsx", index_col=0)
+            options["df_scales"] = df_scales
+            return df_scales.copy()
+        else:
+            return options["df_scales"].copy()
 
 
 # Adjust df_eval

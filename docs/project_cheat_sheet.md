@@ -107,7 +107,7 @@ Testing frameworks validate that your code works as intended.
 2. `pytest <file>`: Run specific tests.
 3. `pytest -k <test_name>`: Run specific test.
 4. `pytest --cov=<module>`: Generate coverage.
-5. `pytest --fixtures`: Show fixtures.
+5. `pytest --durations=0`: Show all tests sorted by duration.
 
 ### unittest
 
