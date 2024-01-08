@@ -67,9 +67,9 @@ def check_list_cat(dict_color=None, list_cat=None):
     if not all(elem in dict_color for elem in list_cat):
         missing_keys = [elem for elem in list_cat if elem not in dict_color]
         raise ValueError(f"The following keys in 'list_cat' are not in 'dict_colors': {', '.join(missing_keys)}")
-    if len(dict_color) != len(list_cat):
+    if len(dict_color) < len(list_cat):
         raise ValueError(
-            f"Length must match between 'list_cat' ({len(list_cat)}) and 'dict_colors' ({len(dict_color)}).")
+            f"'dict_colors' (n={len(dict_color)}) must contain >= elements than 'list_cat' (n={len(list_cat)}).")
     return list_cat
 
 
@@ -215,12 +215,12 @@ def plot_get_clist_(n_colors=3):
 
 
 def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
-                loc="upper left", loc_out=False, y=None, x=None, ncol=3,
-                labelspacing=0.2, columnspacing=1.0, handletextpad=0.8, handlelength=2.0,
-                fontsize=None, fontsize_title=None, weight_font="normal", weight_title="normal",
-                marker=None, marker_size=10, lw=0, linestyle=None, edgecolor=None,
-                hatch=None, hatchcolor="white", title=None, title_align_left=True,
-                frameon=False, **kwargs):
+                 loc="upper left", loc_out=False, y=None, x=None, ncol=3,
+                 labelspacing=0.2, columnspacing=1.0, handletextpad=0.8, handlelength=2.0,
+                 fontsize=None, fontsize_title=None, weight_font="normal", weight_title="normal",
+                 marker=None, marker_size=10, lw=0, linestyle=None, edgecolor=None,
+                 hatch=None, hatchcolor="white", title=None, title_align_left=True,
+                 frameon=False, **kwargs):
     """Sets an independently customizable plot legend"""
     # Check input
     if ax is None:
@@ -234,7 +234,6 @@ def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
     # Remove existing legend
     if ax.get_legend() is not None and len(ax.get_legend().get_lines()) > 0:
         ax.legend_.remove()
-
     # Update legend arguments
     args = dict(loc=loc, ncol=ncol, fontsize=fontsize, labelspacing=labelspacing, columnspacing=columnspacing,
                 handletextpad=handletextpad, handlelength=handlelength, borderpad=0, title=title,
@@ -251,14 +250,7 @@ def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
     handles = [_create_marker(dict_color[cat], labels[i], marker[i], marker_size[i],
                               lw, edgecolor, linestyle[i], hatch[i], hatchcolor)
                for i, cat in enumerate(list_cat)]
-
     legend = ax.legend(handles=handles, labels=labels, **args)
     if title_align_left:
         legend._legend_box.align = "left"
     return ax
-
-
-
-
-
-

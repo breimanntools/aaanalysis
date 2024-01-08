@@ -74,9 +74,9 @@ class CPP(Tool):
 
     See Also
     --------
-    * :class:`aaanalysis.SequenceFeature` for definition of sequence ``Parts``.
-    * :meth:`aaanalysis.SequenceFeature.split_kws` for definition of ``Splits`` key word arguments.
-    * :func:`aaanalysis.load_scales` for definition of amino acid ``Scales`` and their categories.
+    * :class:`SequenceFeature` for definition of sequence ``Parts``.
+    * :meth:`SequenceFeature.split_kws` for definition of ``Splits`` key word arguments.
+    * :func:`load_scales` for definition of amino acid ``Scales`` and their categories.
 
     """
     def __init__(self,
@@ -227,7 +227,7 @@ class CPP(Tool):
 
         See Also
         --------
-        * :func:`aaanalysis.comp_auc_adjusted` for details on 'abs_auc'.
+        * :func:`comp_auc_adjusted` for details on 'abs_auc'.
 
         Examples
         --------
@@ -318,18 +318,17 @@ class CPP(Tool):
              label_ref : int = 0,
              min_th: float = 0.0,
              names_feature_sets: Optional[List[str]] = None,
+             list_cat: Optional[List[str]] = None,
              list_df_parts : Optional[List[pd.DataFrame]] = None,
              n_jobs: Union[int, None] = 1,
              ) -> pd.DataFrame:
         """
         Evaluate the quality of different sets of identified CPP features.
 
-        The quality is assessed regarding three quality groups:
+        Feature sets are evaluated regarding two quality groups:
 
-        - **Categories** of scales across all features.
-        - **CPP statistics** comparing the test against reference dataset aggregated across all features.
-        - **Homogeneity** among  all identified features assessed by optimized number of clusters
-          based on pair-wise Pearson correlation between features.
+        - **Discriminative Power**: The capability of features to distinguish between test and reference datasets.
+        - **Redundancy**: Assessed by the optimized number of clusters, based on Pearson correlation among features.
 
         Parameters
         ----------
@@ -345,6 +344,9 @@ class CPP(Tool):
             Pearson correlation threshold for clustering optimization (between -1 and 1).
         names_feature_sets : list of str, optional
             List of names for feature sets corresponding to ``list_df_feat``.
+        list_cat : list of str, optional
+            List of scale categories to retrieve number of features from. Default:
+            ['ASA/Volume', 'Composition', 'Conformation', 'Energy', 'Others', 'Polarity', 'Shape', 'Structure-Activity']
         list_df_parts : list of pd.DataFrames, optional
             List of part DataFrames each of shape (n_samples, n_parts). Must match with ``list_df_feat``.
         n_jobs : int, default=1
@@ -361,13 +363,11 @@ class CPP(Tool):
         * ``df_eval`` includes the following columns (upper-case indicates direct reference to ``df_feat`` columns):
 
             - 'name': Name of the feature set, typically based on CPP run settings, if ``names`` is provided.
-            - 'n_features': Number of features per scale category given as list. Categories are ordered as follows:
-              ['ASA/Volume', 'Composition', 'Conformation', 'Energy', 'Others', 'Polarity', 'Shape', 'Structure-Activity']
+            - 'n_features': Tuple with total number of features and list of number of features per scale category from ``list_cat``.
             - 'avg_ABS_AUC': Absolute AUC averaged across all features.
             - 'range_ABS_AUC': Quintile range of absolute AUC among all features (min, 25%, median, 75%, max).
-            - 'avg_MEAN_DIF': Two mean differences averaged across all features separately for features with positive
-              and negative 'mean_dif'.
-            - 'avg_STD_TEST' Mean standard deviation averaged across all features.
+            - 'avg_MEAN_DIF': Tuple of mean differences averaged across all features separately
+              for features with positive and negative 'mean_dif'.
             - 'n_clusters': Optimal number of clusters [2,100].
             - 'avg_n_feat_per_clust': Average number of features per cluster.
             - 'std_n_feat_per_clust': Standard deviation of feature number per cluster.
@@ -397,6 +397,8 @@ class CPP(Tool):
         list_df_feat = ut.check_list_like(name="list_df_feat", val=list_df_feat, min_len=2)
         names_feature_sets = ut.check_list_like(name="names_feature_sets", val=names_feature_sets, accept_none=True,
                                             accept_str=True, check_all_str_or_convertible=True)
+        list_cat = ut.check_list_like(name="list_cat", val=list_cat, accept_none=True, accept_str=True,
+                                      check_all_str_or_convertible=True)
         ut.check_number_range(name="n_jobs", val=n_jobs, min_val=1, accept_none=True, just_int=True)
         check_match_list_df_feat_names_feature_sets(list_df_feat=list_df_feat,
                                                     names_feature_sets=names_feature_sets)
@@ -404,11 +406,14 @@ class CPP(Tool):
         mask_test = [x == label_test for x in labels]
         if list_df_parts is None:
             list_df_parts = [self.df_parts[mask_test]] * len(list_df_feat)
+        if list_cat is None:
+            list_cat = ut.LIST_CAT
         check_match_list_df_feat_list_df_parts(list_df_feat=list_df_feat, list_df_parts=list_df_parts)
         # Evaluation
         try:
             df_eval = evaluate_features(list_df_feat=list_df_feat,
                                         names_feature_sets=names_feature_sets,
+                                        list_cat=list_cat,
                                         list_df_parts=list_df_parts,
                                         df_scales=self.df_scales,
                                         accept_gaps=self._accept_gaps,

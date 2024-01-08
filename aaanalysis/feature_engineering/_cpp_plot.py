@@ -151,6 +151,50 @@ def check_match_df_seq_names_to_show(df_seq=None, names_to_show=None):
                          f"column of 'df_seq': {missing_names}")
 
 
+def check_match_dict_color_list_cat(dict_color=None, list_cat=None):
+    """Check if all categories from list_cat are in dict_color"""
+    if list_cat is None:
+        return dict_color # Skip test
+    # Check list_cat for duplicates
+    if len(list_cat) != len(set(list_cat)):
+        raise ValueError(f"'list_cat' {list_cat} should not contain duplicates.")
+
+    missing_cat = [x for x in list_cat if x not in dict_color]
+    if len(missing_cat) > 0:
+        raise ValueError(f"Following categories from 'list_cat' miss a color in 'dict_color': {missing_cat}")
+    return {cat: dict_color[cat] for cat in list_cat}
+
+
+def check_df_eval(df_eval):
+    """Check if columns in df_eval have valid values"""
+    if len(df_eval) <= 1:
+        raise ValueError("'df_eval' should contain at least two features sets")
+    # Check quality measures
+    list_n_feat = df_eval[ut.COL_N_FEAT].values[0]
+    range_abs_auc = df_eval[ut.COL_RANGE_ABS_AUC].values[0]
+    avg_mean_dif = df_eval[ut.COL_RANGE_ABS_AUC].values[0]
+    n_clusters = df_eval[ut.COL_N_CLUST].values[0]
+    avg_n_feat_per_clust = df_eval[ut.COL_AVG_N_FEAT_PER_CLUST].values[0]
+    std_n_feat_per_clust = df_eval[ut.COL_STD_N_FEAT_PER_CLUST].values[0]
+    ut.check_number_val(name=f"{ut.COL_N_FEAT}: n_features", val=list_n_feat[0], just_int=True)
+    ut.check_list_like(name=f"{ut.COL_N_FEAT}: list_n_feat", val=list_n_feat[1], accept_str=False)
+    ut.check_list_like(name=ut.COL_RANGE_ABS_AUC, val=range_abs_auc, accept_str=False)
+    ut.check_number_val(name=f"{ut.COL_AVG_MEAN_DIF} (pos)", val=avg_mean_dif[0], just_int=False)
+    ut.check_number_val(name=f"{ut.COL_AVG_MEAN_DIF} (neg)", val=avg_mean_dif[1], just_int=False)
+    ut.check_number_range(name=ut.COL_N_CLUST, val=n_clusters, min_val=1, just_int=True)
+    ut.check_number_range(name=ut.COL_AVG_N_FEAT_PER_CLUST, val=avg_n_feat_per_clust, just_int=False)
+    ut.check_number_range(name=ut.COL_STD_N_FEAT_PER_CLUST, val=std_n_feat_per_clust, just_int=False)
+
+
+def check_match_df_eval_list_cat(df_eval=None, list_cat=None):
+    """Check if number of features per category in df_eval and list_cat match"""
+    names = df_eval[ut.COL_NAME].to_list()
+    list_n_feat_sets = [x[1] for x in df_eval[ut.COL_N_FEAT]]
+    for list_n_feat, name in zip(list_n_feat_sets, names):
+        if len(list_n_feat) != len(list_cat):
+            raise ValueError(f"Number of features per category in '{name}' does not match with 'list_cat' {list_cat}")
+
+
 # II Main Functions
 class CPPPlot:
     """
@@ -215,16 +259,21 @@ class CPPPlot:
 
     @staticmethod
     def eval(df_eval: pd.DataFrame = None,
-             figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
+             figsize: Tuple[int or float, int or float] = (6, 4),
+             legend: bool = True,
+             legend_y: float = -0.3,
              dict_color: Optional[dict] = None,
+             list_cat: Optional[List[str]] = None,
              ) -> Tuple[plt.Figure, plt.Axes]:
         """
         Plot evaluation output of CPP comparing multiple sets of identified feature sets.
 
-        Evaluation measures can be grouped into 'Homogeneity' measures ('avg STD' and 'avg IQR') assessing
-        the similarity within the sets of identified negatives, and 'Dissimilarity' measures ('avg AUC', 'avg KLD')
-        assessing the dissimilarity between the identified negatives and the other reference groups including
-        positive samples ('Pos'), unlabeled samples ('Unl'), and ground-truth negative samples ('Neg') if given.
+        Evaluation measures are categorized into two groups:
+
+        * ``Discriminative Power`` measures ('range_ABS_AUC' and 'avg_MEAN_DIF'), which
+          assess the effectiveness of the feature set in distinguishing between the test and reference datasets.
+        * ``Redundancy`` measures ('n_clusters', 'avg_n_feat_per_clust', and 'std_n_feat_per_clust'), which
+          evaluate the internal redundancy of a feature set using Pearson correlation-based clustering.
 
         Parameters
         ----------
@@ -234,18 +283,22 @@ class CPPPlot:
 
             - 'name': Name of the feature set.
             - 'n_features': Number of features per scale category given as list.
-            - 'avg_ABS_AUC': Absolute AUC averaged across all features.
             - 'range_ABS_AUC': Quintile range of absolute AUC among all features (min, 25%, median, 75%, max).
             - 'avg_MEAN_DIF': Two mean differences averaged across all features (for positive and negative 'mean_dif')
-            - 'avg_STD_TEST' Mean standard deviation averaged across all features.
             - 'n_clusters': Optimal number of clusters.
             - 'avg_n_feat_per_clust': Average number of features per cluster.
             - 'std_n_feat_per_clust': Standard deviation of feature number per cluster
 
         figsize : tuple, default=(6, 4)
             Width and height of the figure in inches.
+        legend : bool, default=True
+            If ``True``, scale category legend is set under number of features measures.
+        legend_y : float, default=-0.3
+            Legend position regarding the plot y-axis applied if ``legend=True``.
         dict_color : dict, optional
-            Color dictionary for scale categories. Default from :meth:`plot_get_cdict` with ``name='DICT_CAT'.
+            Color dictionary for scale categories. Default from :meth:`plot_get_cdict` with ``name='DICT_CAT'``.
+        list_cat : list of str, optional
+            List of scale categories for which feature numbers are shown.
 
         Returns
         -------
@@ -253,6 +306,12 @@ class CPPPlot:
             Figure object for evaluation plot
         axes : array of plt.Axes
             Array of Axes objects, each representing a subplot within the figure.
+
+        Notes
+        -----
+        * Altering ``figsize`` height could result in unappropriated legend spacing. This can be adjusted by the
+          ``legend_y`` parameter together with using the :func:`matplotlib.pyplot.subplots_adjust` function,
+          here used with (wspace=0.25, hspace=0, bottom=0.35) parameter settings.
 
         See Also
         --------
@@ -264,16 +323,27 @@ class CPPPlot:
         .. include:: examples/cpp_plot_eval.rst
         """
         # Check input
-        cols_requiered = [ut.COL_NAME, ut.COL_N_FEAT, ut.COL_AVG_ABS_AUC, ut.COL_RANGE_ABS_AUC,
-                          ut.COL_AVG_MEAN_DIF, ut.COL_AVG_STD_TEST, ut.COL_N_CLUST,
-                          ut.COL_AVG_N_FEAT_PER_CLUST, ut.COL_STD_N_FEAT_PER_CLUST]
+        cols_requiered = [ut.COL_NAME, ut.COL_N_FEAT,
+                          ut.COL_RANGE_ABS_AUC, ut.COL_AVG_MEAN_DIF,
+                          ut.COL_N_CLUST, ut.COL_AVG_N_FEAT_PER_CLUST, ut.COL_STD_N_FEAT_PER_CLUST]
         ut.check_df(name="df_eval", df=df_eval, cols_requiered=cols_requiered, accept_none=False, accept_nan=False)
+        check_df_eval(df_eval=df_eval)
         ut.check_figsize(figsize=figsize, accept_none=True)
-        ut.check_dict(name="dict_color", val=dict_color, accept_none=True)
+        ut.check_bool(name="legend", val=legend)
+        ut.check_number_val(name="legend_y", val=legend_y)
+        ut.check_dict_color(name="dict_color", val=dict_color, accept_none=True)
+        list_cat = ut.check_list_like(name="list_cat", val=list_cat, accept_none=True, accept_str=True,
+                                      check_all_str_or_convertible=True)
         if dict_color is None:
             dict_color = ut.plot_get_cdict_(name="DICT_CAT")
+        if list_cat is None:
+            list_cat = ut.LIST_CAT
+        check_match_df_eval_list_cat(df_eval=df_eval, list_cat=list_cat)
+        dict_color = check_match_dict_color_list_cat(dict_color=dict_color, list_cat=list_cat)
         # Plotting
-        fig, axes = plot_eval(df_eval=df_eval, figsize=figsize, dict_color=dict_color)
+        fig, axes = plot_eval(df_eval=df_eval, figsize=figsize,
+                              legend=legend, legend_y=legend_y,
+                              dict_color=dict_color, list_cat=list_cat)
         return fig, axes
 
 
@@ -285,7 +355,7 @@ class CPPPlot:
                 label_test: int = 1,
                 label_ref: int = 0, 
                 ax: Optional[plt.Axes] = None,
-                figsize: Tuple[Union[int, float], Union[int, float]] = (5.6, 4.8),
+                figsize: Tuple[int or float, int or float] = (5.6, 4.8),
                 names_to_show: Optional[Union[List[str], str]] = None,
                 name_test: str = "TEST",
                 name_ref: str = "REF",
@@ -297,13 +367,19 @@ class CPPPlot:
                 fontsize_name_test: Union[int, float, None] = 13,
                 fontsize_name_ref: Union[int, float, None] = 13,
                 fontsize_names_to_show: Union[int, float, None] = 11,
-                alpha_hist: Union[int, float] = 0.1,
-                alpha_dif: Union[int, float] = 0.2,
+                alpha_hist: int or float = 0.1,
+                alpha_dif: int or float = 0.2,
                 ) -> plt.Axes:
         """
         Plot distributions of CPP feature values for test and reference datasets highlighting their mean difference.
 
-        A CPP feature is defined as a ``Part-Split-Scale`` combination, introduced in [Breimann24c]_.
+        Introduced in [Breimann24a]_, a CPP feature is defined as a ``Part-Split-Scale`` combination. For a sample,
+        a feature value is computed in three steps:
+
+            1. Selecting a sequence part
+            2. Splitting the sequence part to obtain a ``Part-Split`` combination
+            3. Assigning to each amino acids of the ``Part-Split`` combination its respective scale value
+               and computing the average, called feature value.
 
         Parameters
         ----------
@@ -337,13 +413,13 @@ class CPPPlot:
             If ``True``, show sequence of samples selected via ``names_to_show``.
         histplot : bool, default=False
             If ``True``, plot a histogram. If ``False``, plot a kernel density estimate (KDE) plot.
-        fontsize_mean_dif : Union[int, float], default=15
+        fontsize_mean_dif : int or float, default=15
             Font size (>0) for displayed mean difference text.
-        fontsize_name_test : Union[int, float], default=13
+        fontsize_name_test : int or float, default=13
             Font size (>0) for the name of the test dataset.
-        fontsize_name_ref : Union[int, float], default=13
+        fontsize_name_ref : int or float, default=13
             Font size (>0) for the name of the reference dataset.
-        fontsize_names_to_show : Union[int, float], default=11
+        fontsize_names_to_show : int or float, default=11
             Font size (>0) for the names selected via ``names_to_show``.
         alpha_hist : int or float, default=0.1
             Alpha value for the histogram distributions [0-1].
@@ -412,15 +488,15 @@ class CPPPlot:
     def ranking(self,
                 df_feat=None,
                 ax: Optional[plt.Axes] = None,
-                figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
+                figsize: Tuple[int or float, int or float] = (7, 5),
                 tmd_len=20,
                 top_n: int = 15,
                 name_test: str = "TEST",
                 name_ref: str = "REF",
                 shap_plot: bool = False,
-                fontsize_titles: Union[int, float] = 11,
-                fontsize_labels: Union[int, float] = 11,
-                fontsize_annotations: Union[int, float] = 11,
+                fontsize_titles: int or float = 11,
+                fontsize_labels: int or float = 11,
+                fontsize_annotations: int or float = 11,
                 feature_val_in_percent: bool = True,
                 tmd_jmd_space=2,
                 col_dif=ut.COL_MEAN_DIF,

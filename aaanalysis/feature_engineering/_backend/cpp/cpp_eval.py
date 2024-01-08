@@ -69,23 +69,26 @@ def get_features_per_cluster_stats(X=None, n_clusters=2):
 
 # II Main function
 @ut.catch_runtime_warnings()
-def evaluate_features(list_df_feat=None, names_feature_sets=None,
+def evaluate_features(list_df_feat=None, names_feature_sets=None, list_cat=None,
                       list_df_parts=None, df_scales=None, accept_gaps=False,
                       n_jobs=1, min_th=0.0):
     """Evaluate sets of clustering labels"""
     list_evals = []
     for df_feat, df_parts in zip(list_df_feat, list_df_parts):
+        # Filter feature dataframe
+        df = df_feat[df_feat[ut.COL_CAT].isin(list_cat)].copy()
+        if len(df) == 0:
+            raise ValueError(f"'list_cat' ({list_cat}) results in empty 'df_feat' after filtering.")
         eval_dict = {}
         # Get number features per of category
-        eval_dict[ut.COL_N_FEAT] = (len(df_feat), [len(df_feat[df_feat[ut.COL_CAT] == cat]) for cat in ut.COLS_CAT])
+        eval_dict[ut.COL_N_FEAT] = (len(df), [len(df[df[ut.COL_CAT] == cat]) for cat in list_cat])
         # Compute CPP statistics
-        eval_dict[ut.COL_AVG_ABS_AUC] = df_feat[ut.COL_ABS_AUC].mean()
-        eval_dict[ut.COL_RANGE_ABS_AUC] = df_feat[ut.COL_ABS_AUC].quantile([0, 0.25, 0.5, 0.75, 1]).round(3).tolist()
-        eval_dict[ut.COL_AVG_MEAN_DIF] = (round(df_feat[df_feat[ut.COL_MEAN_DIF] > 0][ut.COL_MEAN_DIF].mean(), 3),
-                                          round(df_feat[df_feat[ut.COL_MEAN_DIF] < 0][ut.COL_MEAN_DIF].mean(), 3))
-        eval_dict[ut.COL_AVG_STD_TEST] = df_feat[ut.COL_STD_TEST].mean()
+        eval_dict[ut.COL_AVG_ABS_AUC] = df[ut.COL_ABS_AUC].mean()
+        eval_dict[ut.COL_RANGE_ABS_AUC] = df[ut.COL_ABS_AUC].quantile([0, 0.25, 0.5, 0.75, 1]).round(3).tolist()
+        eval_dict[ut.COL_AVG_MEAN_DIF] = (round(df[df[ut.COL_MEAN_DIF] > 0][ut.COL_MEAN_DIF].mean(), 3),
+                                          round(df[df[ut.COL_MEAN_DIF] < 0][ut.COL_MEAN_DIF].mean(), 3))
         # Obtain optimal number of clusters
-        features = list(df_feat[ut.COL_FEATURE])
+        features = list(df[ut.COL_FEATURE])
         X = get_feature_matrix_(features=features, df_parts=df_parts, df_scales=df_scales,
                                 accept_gaps=accept_gaps, n_jobs=n_jobs)
         # Get n_clusters for features

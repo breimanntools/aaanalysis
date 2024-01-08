@@ -1,7 +1,6 @@
 """
 This is a script for testing the CPPPlot class.
 """
-import pandas as pd
 import pytest
 from hypothesis import given, settings, strategies as st
 import aaanalysis as aa

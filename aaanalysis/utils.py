@@ -23,7 +23,7 @@ from ._utils.check_data import (check_X, check_X_unique_samples,
                                 check_array_like, check_superset_subset,
                                 check_df)
 from ._utils.check_models import check_mode_class, check_model_kwargs
-from ._utils.check_plots import (check_vmin_vmax, check_color, check_list_colors,
+from ._utils.check_plots import (check_vmin_vmax, check_color, check_list_colors, check_dict_color,
                                  check_cmap, check_palette,
                                  check_ylim, check_y_categorical)
 
@@ -235,7 +235,7 @@ DICT_COLOR_CAT = {"ASA/Volume": "tab:blue",
                   "Shape": "tab:cyan",
                   "Structure-Activity": "tab:brown"}
 
-COLS_CAT = ['ASA/Volume', 'Composition', 'Conformation', 'Energy',
+LIST_CAT = ['ASA/Volume', 'Composition', 'Conformation', 'Energy',
             'Others', 'Polarity', 'Shape', 'Structure-Activity']
 
 

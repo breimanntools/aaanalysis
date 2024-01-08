@@ -59,6 +59,19 @@ def check_list_colors(name=None, val=None, accept_none=False, min_n=None, max_n=
         raise ValueError(f"'{name}' should contain no more than {max_n} colors")
 
 
+def check_dict_color(name="dict_color", val=None, accept_none=False, min_n=None, max_n=None):
+    """Check if colors in dict_color are valid"""
+    if accept_none and val is None:
+        return None # Skip check
+    ut_check.check_dict(name=name, val=val, accept_none=accept_none)
+    for key in val:
+        check_color(name=name, val=val[key], accept_none=accept_none)
+    if min_n is not None and len(val) < min_n:
+        raise ValueError(f"'{name}' should contain at least {min_n} colors")
+    if max_n is not None and len(val) > max_n:
+        raise ValueError(f"'{name}' should contain no more than {max_n} colors")
+
+
 def check_cmap(name=None, val=None, accept_none=False):
     """Check if cmap is a valid colormap for matplotlib."""
     valid_cmaps = plt.colormaps()

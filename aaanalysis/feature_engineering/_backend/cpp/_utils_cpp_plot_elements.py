@@ -121,6 +121,7 @@ class PlotElements:
         plt.title(title, **title_kws)
 
     # Set legend
+    # Greatly simplify
     # TODO for profile or move to heatmap only
     def add_legend_cat(self, ax=None, df_pos=None, df_cat=None, y=None, dict_color=None, legend_kws=None):
         """"""

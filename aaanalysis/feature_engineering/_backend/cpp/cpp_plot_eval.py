@@ -31,6 +31,8 @@ def _plot_n_features(ax=None, df_eval=None, dict_color=None):
     ax.set_xlabel(ut.COL_N_FEAT)
     sns.despine()
 
+
+
 def _plot_range_abs_auc(ax=None, df_eval=None):
     """Boxplot for abs AUC ranges"""
     names = df_eval[ut.COL_NAME].to_list()
@@ -56,10 +58,11 @@ def _plot_range_abs_auc(ax=None, df_eval=None):
             max_total = max_val
     ax.set_yticks(np.arange(len(names)))
     ax.set_yticklabels(names)
-    ax.set_xlim(min_total-0.02, max_total+0.02)
+    x_adjust = (max_total - min_total)*0.1
+    ax.set_xlim(min_total-x_adjust, max_total+x_adjust)
     ax.set_xticks([round(min_total, 2), round(max_total, 2)])
-    ax.set_xticklabels([f'{min_total:.2f}', f'{max_total:.2f}'])
-    ax.set_xlabel('abs AUC\n(avg)')
+    ax.set_xticklabels([f'{min_total:.1f}', f'{max_total:.1f}'])
+    ax.set_xlabel('abs AUC\n')
     sns.despine()
 
 
@@ -74,33 +77,28 @@ def _plot_avg_mean_dif(ax=None, df_eval=None):
     # Set the width of the bars
     bar_height = BAR_WIDTH/2
     # Plotting
-    args = dict(va='center', ha='right', color="white")
+    fs = ut.plot_gco()
+    args_in = dict(va='center', ha='right', color="white", fontsize=fs-1)
+    args_out = dict(va='center', ha='left', color="black", fontsize=fs-1)
+    max_abs_dif = max([max([abs(x[0]), abs(x[1])]) for x in list_mean_dif])
     for i, (pos, neg) in enumerate(list_mean_dif):
         i_pos = i + bar_height / 2
         ax.barh(i_pos, pos, height=bar_height, color=color_pos)
-        ax.text(pos, i_pos, f'{pos:.2f}', **args)
+        if pos > max_abs_dif/2:
+            ax.text(pos, i_pos, f'{pos:.2f}', **args_in)
+        else:
+            ax.text(pos, i_pos, f'{pos:.2f}', **args_out)
         i_neg = i - bar_height / 2
         ax.barh(i_neg, abs(neg), height=bar_height, color=color_neg)
-        ax.text(abs(neg), i_neg, f'{neg:.2f}', **args)
+        if abs(neg) > max_abs_dif/2:
+            ax.text(abs(neg), i_neg, f'{neg:.2f}', **args_in)
+        else:
+            ax.text(abs(neg), i_neg, f'{neg:.2f}', **args_out)
     # Setting the labels and title
     ax.set_yticks(np.arange(len(names)))
     ax.set_yticklabels(names)
     ax.set_xlabel('mean dif\n(avg pos/neg)')
 
-
-def _plot_std_test(ax=None, df_eval=None):
-    """Plot std of test class"""
-    list_std_test = df_eval[ut.COL_AVG_STD_TEST].tolist()
-    names = df_eval[ut.COL_NAME].to_list()
-    # Plotting
-    args = dict(va='center', ha='right', color="white")
-    for i, std_test in enumerate(list_std_test):
-        ax.barh(i, std_test, height=BAR_WIDTH*0.66, color=COLOR_BASE)
-        ax.text(std_test, i, f'{std_test:.3f}', **args)
-    # Setting the labels and title
-    ax.set_yticks(np.arange(len(names)))
-    ax.set_yticklabels(names)
-    ax.set_xlabel('std test\n(avg)')
 
 def _plot_n_clusters(ax=None, df_eval=None):
     """Plot number of clusters"""
@@ -127,27 +125,46 @@ def _plot_feat_per_cluster(ax=None, df_eval=None):
     # Plotting
     for i, (avg_n_feat, std_n_feat) in enumerate(zip(list_avg_n_feat, list_std_n_feat)):
         ax.barh(i, avg_n_feat, height=BAR_WIDTH*0.66, color=COLOR_BASE)
-        ax.errorbar(avg_n_feat, i, xerr=std_n_feat, ecolor="black", elinewidth=1.5,
-                    capsize=6, capthick=1.5)
-
+        ax.errorbar(avg_n_feat, i, xerr=std_n_feat, ecolor="black", elinewidth=1,
+                    capsize=5, capthick=1)
     # Setting the labels and title
+    x_min, x_max = ax.get_xlim()
+    ax.set_xlim(0, x_max)
     ax.set_yticks(np.arange(len(names)))
     ax.set_yticklabels(names)
-    ax.set_xlabel('feat/clust\n(avg ± std)')
+    ax.set_xlabel('n feat/clust\n(avg ± std)')
 
 # II Main functions
-def plot_eval(df_eval=None, figsize=(8, 4), dict_color=None):
+def plot_eval(df_eval=None, figsize=(8, 5), dict_color=None, legend=True, legend_y=-0.3, list_cat=None):
     """Plot evaluation of CPP feature sets"""
     # Reverse order to have first dataset on top
     _df_eval = df_eval.iloc[::-1].reset_index(drop=True)
-    print(df_eval)
-    fig, axes = plt.subplots(1, 6, sharey=True, figsize=figsize)
+    fig, axes = plt.subplots(1, 5, sharey=True, figsize=figsize)
+    # Plotting individual components
     _plot_n_features(ax=axes[0], df_eval=_df_eval, dict_color=dict_color)
     _plot_range_abs_auc(ax=axes[1], df_eval=_df_eval)
     _plot_avg_mean_dif(ax=axes[2], df_eval=_df_eval)
-    _plot_std_test(ax=axes[3], df_eval=_df_eval)
-    _plot_n_clusters(ax=axes[4], df_eval=_df_eval)
-    _plot_feat_per_cluster(ax=axes[5], df_eval=_df_eval)
+    _plot_n_clusters(ax=axes[3], df_eval=_df_eval)
+    _plot_feat_per_cluster(ax=axes[4], df_eval=_df_eval)
+    # Adding central titles
+    axes[1].set_title('Discriminative Power', ha='left', va='center', weight="bold")
+    axes[3].set_title('Redundancy', ha='left', va='center', weight="bold")
+    # Set legend under plot
+    n_feat_cat = np.array([x[1] for x in df_eval[ut.COL_N_FEAT]]).sum(axis=0)
+    # Filter non-occurring categories
+    _list_cat = [cat for cat, n in zip(dict_color, n_feat_cat) if n != 0]
+    if list_cat is None:
+        list_cat = _list_cat
+    else:
+        list_cat = [x for x in list_cat if x in _list_cat]
     plt.tight_layout()
-    plt.subplots_adjust(wspace=0.25, hspace=0)
+    if legend:
+        fs = ut.plot_gco()
+        ut.plot_legend_(ax=axes[0], dict_color=dict_color, list_cat=list_cat, loc="upper left",
+                        ncol=np.ceil(len(list_cat)/2), y=legend_y,
+                        title="Scale category", fontsize=fs-1,
+                        labelspacing=0.1, columnspacing=0.4, handletextpad=0.2, handlelength=2)
+        plt.subplots_adjust(wspace=0.25, hspace=0, bottom=0.35)
+    else:
+        plt.subplots_adjust(wspace=0.25, hspace=0)
     return fig, axes

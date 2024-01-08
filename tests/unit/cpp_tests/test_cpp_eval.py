@@ -77,6 +77,15 @@ class TestCPPEval:
                                names_feature_sets=names_feature_sets)
             assert isinstance(df_eval, pd.DataFrame)
 
+    def test_valid_list_cat(self):
+        df_parts, labels, split_kws, df_scales = get_parts_splits_scales()
+        valid_list_cats = [["Conformation"], ["Conformation", "Energy", "Polarity"], "Polarity"]
+        for list_cat in  valid_list_cats:
+            cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales)
+            list_df_feat = get_list_df_feat()
+            df_eval = cpp.eval(list_df_feat=list_df_feat, labels=labels, list_cat=list_cat)
+            assert isinstance(df_eval, pd.DataFrame)
+
     def test_valid_list_df_parts(self):
         for i in range(2):
             n_samples = random.randint(5, 60)
@@ -158,6 +167,15 @@ class TestCPPEval:
         with pytest.raises(ValueError):
             cpp.eval(list_df_feat=list_df_feat, labels=labels,
                      names_feature_sets=[1, 2,3 ,54 ,5 ,6 ])
+
+    def test_invalid_list_cat(self):
+        df_parts, labels, split_kws, df_scales = get_parts_splits_scales()
+        valid_list_cats = [2, [], {}, "Others", ["Invalid 1", "Invalid 2"]]
+        for list_cat in  valid_list_cats:
+            cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales)
+            list_df_feat = get_list_df_feat()
+            with pytest.raises(ValueError):
+                df_eval = cpp.eval(list_df_feat=list_df_feat, labels=labels, list_cat=list_cat)
 
 
     def test_invalid_list_df_parts(self):
