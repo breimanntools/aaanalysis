@@ -217,10 +217,11 @@ class CPPPlot:
         Parameters
         ----------
         df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
-            DataFrame with scales (letters are typically amino acids). Default from :meth:`load_scales``.
+            DataFrame of scales with letters typically representing amino acids. Default from :meth:`load_scales`
+            unless specified in ``options['df_scales']``.
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
-            DataFrame with categories for physicochemical amino acid scales. Must contain all scales from ``df_scales``.
-            Default from :meth:`load_scales` with ``name='scales_cat'``.
+            DataFrame of categories for physicochemical scales. Must contain all scales from ``df_scales``.
+            Default from :meth:`load_scales` with ``name='scales_cat'``, unless specified in ``options['df_cat']``.
         jmd_n_len : int, default=10
             Length of JMD-N (>=0).
         jmd_c_len: int, default=10

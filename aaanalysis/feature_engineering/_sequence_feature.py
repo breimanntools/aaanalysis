@@ -363,10 +363,11 @@ class SequenceFeature:
         label_ref : int, default=0,
             Class label of reference group in ``labels``.
         df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
-            DataFrame with scales (letters are typically amino acids). Default from :meth:`load_scales` with ``
+            DataFrame of scales with letters typically representing amino acids. Default from :meth:`load_scales`
+            unless specified in ``options['df_scales']``.
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
-            DataFrame with categories for physicochemical amino acid scales. Must contain all scales from ``df_scales``.
-            Default from :meth:`load_scales` with ``name='scales_cat'``.
+            DataFrame of categories for physicochemical scales. Must contain all scales from ``df_scales``.
+            Default from :meth:`load_scales` with ``name='scales_cat'``, unless specified in ``options['df_cat']``.
         start : int, default=1
             Position label of first amino acid position (starting at N-terminus).
         tmd_len : int, default=20
@@ -460,7 +461,8 @@ class SequenceFeature:
         df_parts : pd.DataFrame, shape (n_samples, n_parts)
             DataFrame with sequence parts.
         df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
-            DataFrame with scales (letters are typically amino acids). Default from :meth:`load_scales` with ``name='scales'``.
+            DataFrame of scales with letters typically representing amino acids. Default from :meth:`load_scales`
+            unless specified in ``options['df_scales']``.
         accept_gaps: bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
         n_jobs : int, default=1
@@ -570,8 +572,8 @@ class SequenceFeature:
         features : array-like, shape (n_features,)
             List of feature ids (>0).
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
-            DataFrame with categories for physicochemical amino acid scales. Must contain all scales from ``df_scales``.
-            Default from :meth:`load_scales` with ``name='scales_cat'``.
+            DataFrame of categories for physicochemical scales. Must contain all scales from ``df_scales``.
+            Default from :meth:`load_scales` with ``name='scales_cat'``, unless specified in ``options['df_cat']``.
         start : int, default=1
             Position label of first amino acid position (starting at N-terminus).
         tmd_len : int, default=20

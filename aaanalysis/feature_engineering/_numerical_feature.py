@@ -62,7 +62,7 @@ class NumericalFeature:
         Parameters
         ----------
         df_scales : pd.DataFrame, shape (n_letters, n_scales)
-            DataFrame with scales (letters are typically amino acids).
+            DataFrame of scales with letters typically representing amino acids.
         letter_new : str
             The new letter to be added to the alphabet.
         value_type : {'min', 'mean', 'median', 'max'}, default='mean'

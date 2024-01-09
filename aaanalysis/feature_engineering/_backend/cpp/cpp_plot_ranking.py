@@ -217,10 +217,10 @@ def plot_ranking(figsize=(7, 5), df_feat=None, top_n=25,
     label_ranking = ut.LABEL_FEAT_IMPACT if shap_plot else ut.LABEL_FEAT_IMPORT
     plt.xlabel(label_ranking, size=fontsize_labels)
     # Adjust axis
-    for i in range(3):
-        axes[i].tick_params(which='major', axis="both", labelsize=fontsize_labels)
+    for i, ax in enumerate(axes):
+        ax.tick_params(which='major', axis="both", labelsize=fontsize_labels)
         if i > 0:
-            axes[i].tick_params(which='major', axis="y", length=0, labelsize=0)
+            ax.tick_params(which='major', axis="y", length=0, labelsize=0)
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.2)
     fig = plt.gcf()
