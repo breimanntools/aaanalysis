@@ -130,7 +130,8 @@ def check_split_kws(split_kws=None, accept_none=True):
 
 
 # Check parts
-def check_parts_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None, accept_none_len=False,
+def check_parts_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None,
+                    accept_none_tmd_len=False, accept_none_jmd_len=False,
                     tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None):
     """Check length parameters and if they are matching with sequences if provided"""
     tmd_seq = ut.check_str(name="tmd_seq", val=tmd_seq, accept_none=True, return_empty_string=True)
@@ -143,9 +144,9 @@ def check_parts_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None, accept_none_le
         tmd_seq = jmd_n_seq = jmd_c_seq = None
     # Check lengths
     ext_len = ut.options["ext_len"]
-    ut.check_number_range(name="tmd_len", val=tmd_len, accept_none=accept_none_len, min_val=1, just_int=True)
-    ut.check_number_range(name="jmd_n_len", val=jmd_n_len, accept_none=accept_none_len, min_val=0, just_int=True)
-    ut.check_number_range(name="jmd_c_len", val=jmd_c_len, accept_none=accept_none_len, min_val=0, just_int=True)
+    ut.check_number_range(name="tmd_len", val=tmd_len, accept_none=accept_none_tmd_len, min_val=1, just_int=True)
+    ut.check_number_range(name="jmd_n_len", val=jmd_n_len, accept_none=accept_none_jmd_len, min_val=0, just_int=True)
+    ut.check_number_range(name="jmd_c_len", val=jmd_c_len, accept_none=accept_none_jmd_len, min_val=0, just_int=True)
     ut.check_number_range(name="ext_len", val=ext_len, min_val=0, accept_none=True, just_int=True)
     # Check len_ext
     if ext_len is not None and ext_len != 0:

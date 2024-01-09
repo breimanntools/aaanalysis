@@ -1,5 +1,5 @@
 from .data_handling import load_dataset, load_scales, load_features, to_fasta
-from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, CPP, CPPPlot
+from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
 from .explainable_ai import TreeModel, ShapModel
 from .pertubation import AAMut, AAMutPlot, SeqMut, SeqMutPlot
@@ -17,6 +17,7 @@ __all__ = [
     "AAclust",
     "AAclustPlot",
     "SequenceFeature",
+    "NumericalFeature",
     "CPP",
     "CPPPlot",
     "dPULearn",

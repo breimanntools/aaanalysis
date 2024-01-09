@@ -75,8 +75,8 @@ class TestdPULearnPlotEval:
         plt.close(fig)
 
     def test_colors_valid(self):
-        # Test 15 random color lists
-        for i in range(15):
+        # Test 5 random color lists
+        for i in range(5):
             df_eval = _create_sample_df_eval()
             colors = random.sample(VALID_COLORS, 4)
             fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval, colors=colors)

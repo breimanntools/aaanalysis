@@ -216,8 +216,8 @@ class CPPPlot:
         """
         Parameters
         ----------
-        df_scales : pd.DataFrame, shape (n_features, n_scales), optional
-            DataFrame with scales (features are typically amino acids). Default from :meth:`load_scales``.
+        df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
+            DataFrame with scales (letters are typically amino acids). Default from :meth:`load_scales``.
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
             DataFrame with categories for physicochemical amino acid scales. Must contain all scales from ``df_scales``.
             Default from :meth:`load_scales` with ``name='scales_cat'``.
@@ -243,7 +243,7 @@ class CPPPlot:
         verbose = ut.check_verbose(verbose)
         check_df_scales(df_scales=df_scales)
         check_df_cat(df_cat=df_cat)
-        check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_none_len=True)
+        check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_none_tmd_len=True)
         ut.check_bool(name="accept_gaps", val=accept_gaps)
         df_scales, df_cat = check_match_df_scales_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
         # General settings

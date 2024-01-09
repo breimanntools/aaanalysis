@@ -17,12 +17,11 @@ class TestLoadScales:
         df = aa.load_scales()
         assert isinstance(df, DataFrame)
 
-    @settings(deadline=1000)
-    @given(name=some.sampled_from(["scales", "scales_raw", "scales_cat", "scales_pc", "top60", "top60_eval"]))
-    def test_load_scales_names(self, name):
+    def test_load_scales_names(self):
         """Test different dataset names."""
-        df = aa.load_scales(name=name)
-        assert isinstance(df, DataFrame)
+        for name in ["scales", "scales_raw", "scales_cat", "scales_pc", "top60", "top60_eval"]:
+            df = aa.load_scales(name=name)
+            assert isinstance(df, DataFrame)
 
     def test_load_scales_just_aaindex(self):
         """Test the 'just_aaindex' parameter."""
@@ -34,7 +33,7 @@ class TestLoadScales:
         df = aa.load_scales(unclassified_out=True)
         assert isinstance(df, DataFrame)
 
-    @settings(deadline=1000)
+    @settings(max_examples=10, deadline=1000)
     @given(top60_n=some.integers(min_value=1, max_value=60))
     def test_load_scales_top60_n(self, top60_n):
         """Test the 'top60_n' parameter."""

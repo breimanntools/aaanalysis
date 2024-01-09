@@ -224,7 +224,7 @@ class SequenceFeature:
         .. include:: examples/sf_get_df_parts.rst
         """
         # Check input
-        check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_none_len=True)
+        check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_none_tmd_len=True)
         ut.check_df_seq(df_seq=df_seq)
         ut.check_bool(name="all_parts", val=all_parts)
         list_parts = ut.check_list_parts(list_parts=list_parts, all_parts=all_parts, accept_none=True)
@@ -362,8 +362,8 @@ class SequenceFeature:
             Class label of test group in ``labels``.
         label_ref : int, default=0,
             Class label of reference group in ``labels``.
-        df_scales : pd.DataFrame, shape (n_features, n_scales), optional
-            DataFrame with scales (features are typically amino acids). Default from :meth:`load_scales` with ``
+        df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
+            DataFrame with scales (letters are typically amino acids). Default from :meth:`load_scales` with ``
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
             DataFrame with categories for physicochemical amino acid scales. Must contain all scales from ``df_scales``.
             Default from :meth:`load_scales` with ``name='scales_cat'``.
@@ -459,8 +459,8 @@ class SequenceFeature:
             Ids of features for which matrix of feature values should be created.
         df_parts : pd.DataFrame, shape (n_samples, n_parts)
             DataFrame with sequence parts.
-        df_scales : pd.DataFrame, shape (n_features, n_scales), optional
-            DataFrame with scales (features are typically amino acids). Default from :meth:`load_scales` with ``name='scales'``.
+        df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
+            DataFrame with scales (letters are typically amino acids). Default from :meth:`load_scales` with ``name='scales'``.
         accept_gaps: bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
         n_jobs : int, default=1

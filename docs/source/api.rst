@@ -39,6 +39,7 @@ Feature Engineering
     AAclust
     AAclustPlot
     SequenceFeature
+    NumericalFeature
     CPP
     CPPPlot
 

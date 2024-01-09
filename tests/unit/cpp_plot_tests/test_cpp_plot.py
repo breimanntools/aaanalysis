@@ -82,18 +82,29 @@ class TestCPPPlot:
             with pytest.raises(ValueError):
                 cpp_plot = aa.CPPPlot(df_scales=df_scales, df_cat=_df_cat)
 
-    @given(jmd_n_len=st.integers(max_value=-1))  # Negative integers
-    def test_invalid_jmd_n_len(self, jmd_n_len):
+    def test_invalid_jmd_n_len(self):
         """Negative test for jmd_n_len parameter with invalid values."""
         with pytest.raises(ValueError):
-            aa.CPPPlot(jmd_n_len=jmd_n_len)
+            aa.CPPPlot(jmd_n_len=-1)
+        with pytest.raises(ValueError):
+            aa.CPPPlot(jmd_n_len=None)
+        with pytest.raises(ValueError):
+            aa.CPPPlot(jmd_n_len="invalid")
+        with pytest.raises(ValueError):
+            aa.CPPPlot(jmd_n_len=[0, 2])
 
     # Test for jmd_c_len parameter with invalid values
-    @given(jmd_c_len=st.integers(max_value=-1))  # Negative integers
-    def test_invalid_jmd_c_len(self, jmd_c_len):
+    def test_invalid_jmd_c_len(self):
         """Negative test for jmd_c_len parameter with invalid values."""
         with pytest.raises(ValueError):
-            aa.CPPPlot(jmd_c_len=jmd_c_len)
+            aa.CPPPlot(jmd_c_len=-1)
+        with pytest.raises(ValueError):
+            aa.CPPPlot(jmd_c_len=None)
+        with pytest.raises(ValueError):
+            aa.CPPPlot(jmd_c_len="invalid")
+        with pytest.raises(ValueError):
+            aa.CPPPlot(jmd_c_len=[0, 2])
+
 
     def test_invalid_accept_gaps(self):
         """Positive test for accept_gaps parameter."""

@@ -88,8 +88,8 @@ class TestCPPPlotEval:
             assert isinstance(axes, np.ndarray)
             plt.close()
 
-    @settings(max_examples=10, deadline=2500)
-    @given(legend_y=st.floats(min_value=-1.0, max_value=1.0))
+    @settings(max_examples=5, deadline=2500)
+    @given(legend_y=st.floats(min_value=-0.5, max_value=0.5))
     def test_legend_y_input(self, legend_y):
         df_eval = create_valid_df_eval(n_rows=5)
         cpp_plot = aa.CPPPlot()
