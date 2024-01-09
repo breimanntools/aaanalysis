@@ -1,23 +1,19 @@
 """
 This is a script for the backend of the cpp_plot.ranking method
 """
-import statistics
-import math
-import pandas as pd
-import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 import aaanalysis.utils as ut
-from .utils_feature import get_feature_matrix_, get_positions_
+from .utils_feature import get_positions_
 from .utils_cpp_plot import add_part_seq, add_feature_title, get_color_dif
 
 
 # I Helper Functions
 # Adjust df_feat
-def adjust_df_feat(df_feat=None, col_dif=None, xlim_dif=None, feature_val_in_percent=True):
-    """"""
+def _adjust_df_feat(df_feat=None, col_dif=None, xlim_dif=None, feature_val_in_percent=True):
+    """Adjusts feature values in `df_feat` based on percentage scaling and sets the limits for difference columns."""
     df_feat = df_feat.copy()
     if feature_val_in_percent:
         if max(df_feat[col_dif]) - min(df_feat[col_dif]) < 1:
@@ -29,16 +25,16 @@ def adjust_df_feat(df_feat=None, col_dif=None, xlim_dif=None, feature_val_in_per
     return df_feat, xlim_dif
 
 
-# Add feature position
+# 1. Subplot: Feature position
 def _add_pos_bars(ax=None, x=None, y=None, color="tab:gray", height=0.5, width=1.0, alpha=1.0):
-    """"""
+    """Adds a rectangle (bar) to the axis `ax` at specified `x`, `y` position with given dimensions and style."""
     bar = mpl.patches.Rectangle((x, y), width=width, height=height, linewidth=0, color=color, zorder=4, clip_on=False,
                                 alpha=alpha)
     ax.add_patch(bar)
 
 
 def _add_position_bars(ax=None, df_feat=None):
-    """"""
+    """Plots position bars for each feature in `df_feat` on the given axis `ax`."""
     for y, row in df_feat.iterrows():
         positions = [int(x) for x in row[ut.COL_POSITION].split(",")]
         is_segment = positions[-1] - positions[0] == len(positions) - 1
@@ -52,7 +48,7 @@ def _add_position_bars(ax=None, df_feat=None):
 
 
 def _get_tmd_jmd_label(jmd_n_len=10, jmd_c_len=10, space=3):
-    """"""
+    """Generates a label for TMD and JMD regions based on their lengths and spacing."""
     jmd_len = jmd_c_len + jmd_n_len
     # Space factors should be between 1 and max-1
     total_space = space*2
@@ -66,7 +62,7 @@ def _get_tmd_jmd_label(jmd_n_len=10, jmd_c_len=10, space=3):
 
 
 def plot_feature_position(ax=None, df=None, n=20, space=3, tmd_len=20, jmd_n_len=10, jmd_c_len=10, fontsize_label=None):
-    """"""
+    """Plots the feature positions for a given DataFrame `df` on the axis `ax` with specified formatting parameters."""
     height = 0.01 * n
     plt.sca(ax)
     # Set y ticks
@@ -87,9 +83,9 @@ def plot_feature_position(ax=None, df=None, n=20, space=3, tmd_len=20, jmd_n_len
     plt.xlabel(x_label, size=fontsize_label)
 
 
-# Add feature mean difference
+# 2. Subplot: Feature mean difference
 def _add_annotation_extreme_val(sub_fig=None, max_neg_val=-2, min_pos_val=2, text_size=9):
-    """"""
+    """Adds annotations for extreme values in a subplot `sub_fig`, defining thresholds for maximum negative and minimum positive values."""
     args = dict(va='center_baseline', size=text_size, xytext=(0.5, 0), textcoords='offset points',
                 color="white")
     for p in sub_fig.patches:
@@ -105,7 +101,7 @@ def _add_annotation_extreme_val(sub_fig=None, max_neg_val=-2, min_pos_val=2, tex
 
 
 def plot_feature_mean_dif(ax=None, df=None, col_dif=None, n=20, xlim=(-22, 22), fontsize_annotation=8):
-    """"""
+    """Plots the mean difference of features in `df` on the axis `ax`, with custom range `xlim` and annotation font size."""
     plt.sca(ax)
     colors = [get_color_dif(mean_dif=x) for x in df[col_dif]]
     df["hue"] = colors     # Adjust to use palette for sns.barplot after v0.14.0
@@ -124,9 +120,9 @@ def plot_feature_mean_dif(ax=None, df=None, col_dif=None, n=20, xlim=(-22, 22), 
     plt.ylabel("")
 
 
-# Add feature importance
+# 3. Subplot: Ranking based on absolute AUC, feature importance or feature impact
 def _add_annotation_right(sub_fig=None, an_in_val=2, max_val=10.0, text_size=8):
-    """"""
+    """Adds right-aligned annotations for feature importance in a subplot `sub_fig`, considering an inner value threshold and maximum value."""
     args = dict(va='center_baseline', size=text_size, xytext=(0.5, 0), textcoords='offset points')
     args_left = dict(ha='left', **args)
     args_right = dict(ha="right", **args, color="white")
@@ -142,7 +138,7 @@ def _add_annotation_right(sub_fig=None, an_in_val=2, max_val=10.0, text_size=8):
 def plot_feature_rank(ax=None, df=None, n=20, xlim=(0, 8),
                       fontsize_annotation=8, col_rank=ut.COL_FEAT_IMPORT,
                       shap_plot=False):
-    """"""
+    """Plots the feature ranking based on `df` on the axis `ax`, adjusting for SHAP values if `shap_plot` is True."""
     df = df.copy()
     plt.sca(ax)
     if shap_plot:
@@ -188,8 +184,8 @@ def plot_ranking(figsize=(7, 5), df_feat=None, top_n=25,
     df_feat = df_feat.copy()
     # Adjust df_feat
     df_feat = df_feat.copy().reset_index(drop=True).head(top_n)
-    df_feat, xlim_dif = adjust_df_feat(df_feat=df_feat, col_dif=col_dif, xlim_dif=xlim_dif,
-                                       feature_val_in_percent=feature_val_in_percent)
+    df_feat, xlim_dif = _adjust_df_feat(df_feat=df_feat, col_dif=col_dif, xlim_dif=xlim_dif,
+                                        feature_val_in_percent=feature_val_in_percent)
     df_feat[ut.COL_POSITION] = get_positions_(features=df_feat[ut.COL_FEATURE],
                                               tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     # Plotting (three subplots)

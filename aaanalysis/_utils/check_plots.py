@@ -30,6 +30,19 @@ def check_vmin_vmax(vmin=None, vmax=None):
         raise ValueError(f"'vmin' ({vmin}) < 'vmax' ({vmax}) not fulfilled.")
 
 
+def check_lim(name="xlim", val=None, accept_none=True):
+    """Validate that lim parameter ('xlim' or 'ylim') is tuple with two numbers, where the first is less than the second."""
+    if accept_none and val is None:
+        return None  # Skip check
+    ut_check.check_tuple(name=name, val=val, n=2)
+    min_val, max_val = val
+    ut_check.check_number_val(name=f"{name}:min", val=min_val, just_int=False)
+    ut_check.check_number_val(name=f"{name}:max", val=max_val, just_int=False)
+    if min_val >= max_val:
+        raise ValueError(f"'{name}:min' ({min_val}) should be < '{name}:max' ({max_val}).")
+
+
+# Check colors
 def check_color(name=None, val=None, accept_none=False):
     """Check if the provided value is a valid color for matplotlib."""
     base_colors = list(mcolors.BASE_COLORS.keys())
@@ -89,31 +102,3 @@ def check_palette(name=None, val=None, accept_none=False):
     elif isinstance(val, list):
         for v in val:
             check_color(name=name, val=v, accept_none=accept_none)
-
-
-# CPP plots
-def check_ylim(df=None, ylim=None, col_value=None, retrieve_plot=False, scaling_factor=1.1):
-    """Check if ylim is valid and appropriate for the given dataframe and column."""
-    if ylim is not None:
-        ut_check.check_tuple(name="ylim", val=ylim, n=2)
-        ut_check.check_number_val(name="ylim:min", val=ylim[0], just_int=False)
-        ut_check.check_number_val(name="ylim:max", val=ylim[1], just_int=False)
-        max_val = round(max(df[col_value]), 3)
-        max_y = ylim[1]
-        if max_val >= max_y:
-            error = "Maximum of 'ylim' ({}) must be higher than maximum" \
-                    " value of given datasets ({}).".format(max_y, max_val)
-            raise ValueError(error)
-    else:
-        if retrieve_plot:
-            ylim = plt.ylim()
-            ylim = (ylim[0] * scaling_factor, ylim[1] * scaling_factor)
-    return ylim
-
-def check_y_categorical(df=None, y=None):
-    """Check if the y column in the dataframe is categorical."""
-    list_cat_columns = [col for col, data_type in zip(list(df), df.dtypes)
-                        if data_type != float and "position" not in col]# and col != "feature"]
-    if y not in list_cat_columns:
-        raise ValueError(f"'y' ({y}) should be one of following columns with categorical values "
-                         f"of 'df': {list_cat_columns}")

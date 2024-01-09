@@ -38,13 +38,7 @@ def check_dict_xlims(dict_xlims=None):
     if len(wrong_keys) > 0:
         raise ValueError(f"'dict_xlims' should not contain the following keys: {wrong_keys}")
     for key in dict_xlims:
-        if len(dict_xlims[key]) != 2:
-            raise ValueError("'dict_xlims' values should be tuple with two numbers.")
-        xmin, xmax = dict_xlims[key]
-        ut.check_number_val(name="dict_xlims:min", val=xmin, just_int=False, accept_none=False)
-        ut.check_number_val(name="dict_xlims:max", val=xmax, just_int=False, accept_none=False)
-        if xmin >= xmax:
-            raise ValueError(f"'dict_xlims:min' ({xmin}) should be < 'dict_xlims:max' ({xmax}) for '{key}'.")
+        ut.check_lim(name="xlim", val=dict_xlims[key])
 
 
 # Check correlation plot
@@ -221,6 +215,7 @@ class AAclustPlot:
         """
         # Check input
         ut.check_df(name="df_eval", df=df_eval, cols_requiered=ut.COLS_EVAL_AACLUST, accept_none=False, accept_nan=False)
+        # TODO check if needed
         check_dict_xlims(dict_xlims=dict_xlims)
         ut.check_figsize(figsize=figsize, accept_none=True)
         # Plotting

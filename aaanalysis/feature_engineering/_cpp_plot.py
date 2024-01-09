@@ -1,7 +1,7 @@
 """
 This is a script for the frontend of the CPPPlot class.
 """
-from typing import Optional, Dict, Union, List, Tuple, Type
+from typing import Optional, Dict, Union, List, Tuple, Type, Literal
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -111,6 +111,14 @@ def check_dict_color(dict_color=None, df_cat=None):
         ut.check_color(name=key, val=color)
     return dict_color
 
+def check_y_categorical(df=None, y=None):
+    """Check if the y column in the dataframe is categorical."""
+    list_cat_columns = [col for col, data_type in zip(list(df), df.dtypes)
+                        if data_type != float and "position" not in col]# and col != "feature"]
+    if y not in list_cat_columns:
+        raise ValueError(f"'y' ({y}) should be one of following columns with categorical values "
+                         f"of 'df': {list_cat_columns}")
+
 
 # Check barplot and profile
 def check_grid_axis(grid_axis=None):
@@ -138,20 +146,7 @@ def check_ylabel_fontweight(ylabel_fontweight=None, accept_none=True):
                 f"\n\tor one of following: {list_weights}"
         raise ValueError(error)
 
-
-def check_match_df_seq_names_to_show(df_seq=None, names_to_show=None):
-    """Check if """
-    if names_to_show is None:
-        return # Skip check
-    if ut.COL_NAME not in df_seq:
-        raise ValueError(f"'df_seq' must contain '{ut.COL_NAME}' column if 'names_to_show' ({names_to_show}) is not none")
-    list_names = df_seq[ut.COL_NAME].to_list()
-    missing_names = [x for x in names_to_show if x not in list_names]
-    if len(missing_names) > 0:
-        raise ValueError(f"Following names from 'names_to_show' are not in '{ut.COL_NAME}' "
-                         f"column of 'df_seq': {missing_names}")
-
-
+# Checks for eval plot
 def check_match_dict_color_list_cat(dict_color=None, list_cat=None):
     """Check if all categories from list_cat are in dict_color"""
     if list_cat is None:
@@ -194,6 +189,26 @@ def check_match_df_eval_list_cat(df_eval=None, list_cat=None):
     for list_n_feat, name in zip(list_n_feat_sets, names):
         if len(list_n_feat) != len(list_cat):
             raise ValueError(f"Number of features per category in '{name}' does not match with 'list_cat' {list_cat}")
+
+
+# Checks for feature plot
+def check_match_df_seq_names_to_show(df_seq=None, names_to_show=None):
+    """Check if """
+    if names_to_show is None:
+        return # Skip check
+    if ut.COL_NAME not in df_seq:
+        raise ValueError(f"'df_seq' must contain '{ut.COL_NAME}' column if 'names_to_show' ({names_to_show}) is not none")
+    list_names = df_seq[ut.COL_NAME].to_list()
+    missing_names = [x for x in names_to_show if x not in list_names]
+    if len(missing_names) > 0:
+        raise ValueError(f"Following names from 'names_to_show' are not in '{ut.COL_NAME}' "
+                         f"column of 'df_seq': {missing_names}")
+
+# Checks for ranking plot
+def check_match_df_feat_shap_plot(df_feat=None, shap_plot=False):
+    """Check if feature impact column in df_feat if shap_plot is True"""
+    if shap_plot:
+        ut.check_df(name="df_feat", df=df_feat, cols_requiered=[ut.COL_FEAT_IMPACT])
 
 
 # II Main Functions
@@ -490,61 +505,63 @@ class CPPPlot:
     # Plotting methods for multiple features (group and sample level)
     def ranking(self,
                 df_feat: pd.DataFrame = None,
+                top_n: int = 15,
+                shap_plot: bool = False,
                 ax: Optional[plt.Axes] = None,
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
                 tmd_len: int = 20,
-                top_n: int = 15,
+                tmd_jmd_space: int = 2,
+                tmd_color: str = "mediumspringgreen",
+                jmd_color: str = "blue",
                 name_test: str = "TEST",
                 name_ref: str = "REF",
-                shap_plot: bool = False,
                 fontsize_titles: Union[int, float, None] = 11,
                 fontsize_labels: Union[int, float, None] = 11,
                 fontsize_annotations: Union[int, float, None] = 11,
                 feature_val_in_percent: bool = True,
-                tmd_jmd_space: int = 2,
-                col_dif: str = ut.COL_MEAN_DIF,
-                col_rank: str = ut.COL_FEAT_IMPORT,
-                xlim_dif: Tuple[Union[int, float], Union[int, float]] =(-17.5, 17.5),
-                xlim_rank: Tuple[Union[int, float], Union[int, float]] =(0, 5)
+                xlim_dif: Tuple[Union[int, float], Union[int, float]] = (-17.5, 17.5),
+                xlim_rank: Tuple[Union[int, float], Union[int, float]] = (0, 5)
                 ) -> Tuple[plt.Figure, plt.Axes]:
         """
-        Plot a ranking of features based on their importance or difference.
+        Plot a feature ranking based on absolute AUC, feature importance, or sample-specif feature impact.
 
-        This method visualizes the most significant features that distinguish between two groups, typically
-        'test' and 'reference'. It can optionally show SHAP values if `shap_plot` is set to True.
+        Introduced in [Breimann24c]_, this method visualizes the most important features for discriminating between
+        the test and the reference dataset groups. At sample level, the feature impact derived from SHAP values
+        of a specific sample can be used for ranking if ``shap_plot=True`` and 'feature_impact' column in ``df_feat``.
 
         Parameters
         ----------
-        df_feat : pd.DataFrame
-            DataFrame containing feature importance or SHAP values.
+        df_feat : DataFrame, shape (n_features, n_feature_info)
+            Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
+            Can also include feature importance (``feat_importance``) or impact (``feat_impact``) columns for ranking.
+        top_n : int, default=15
+            The number of top features to display in the ranking. Should be > 1 and <= ``n_features``:
+        shap_plot : bool, default=False
+            If ``True``, the method expects SHAP values in `df_feat` and plots them accordingly.
         ax : plt.Axes, optional
-            Pre-defined Axes object to plot on. If None, a new Axes object is created with the specified `figsize`.
+            Pre-defined Axes object to plot on. If ``None``, a new Axes object is created with the specified ``figsize``.
         figsize : tuple, default=(7, 5)
             Figure size in inches (width, height).
         tmd_len : int, default=20
-            Length of the transmembrane domain to consider in the feature calculation.
-        top_n : int, default=15
-            The number of top features to display in the ranking.
+            Length of TMD to be depicted (>0).
+        tmd_jmd_space : int, default=2
+            The space between TMD and JMD regions in the plot.
+        tmd_color : str, default='mediumspringgreen'
+            Color for TMD.
+        jmd_color : str, default='blue'
+            Color for JMD.
         name_test : str, default="TEST"
-            Label for the test dataset.
+            Name of the test dataset to show in mean difference subplot.
         name_ref : str, default="REF"
-            Label for the reference dataset.
-        shap_plot : bool, default=False
-            If ``True``, the method expects SHAP values in `df_feat` and plots them accordingly.
+            Name of reference dataset to show in mean difference subplot.
         fontsize_titles : int or float, default=11
             Font size for the plot titles.
-        fontsize_labels : int or float or None, default=11
+        fontsize_labels : int or float , default=11
             Font size for the x and y labels.
-        fontsize_annotations : int or float or None, default=11
+        fontsize_annotations : int or float, default=11
             Font size for annotations within the plot.
         feature_val_in_percent : bool, default=True
             If ``True``, feature values are shown in percentage.
-        tmd_jmd_space : int, default=2
-            The space between TMD and JMD regions in the plot.
-        col_dif : str, default=ut.COL_MEAN_DIF
-            The column name in `df_feat` representing the mean difference.
-        col_rank : str, default=ut.COL_FEAT_IMPORT
-            The column name in `df_feat` representing the feature importance.
         xlim_dif : tuple, default=(-17.5, 17.5)
             x-axis limits for difference plot.
         xlim_rank : tuple, default=(0, 5)
@@ -555,27 +572,53 @@ class CPPPlot:
         fig : plt.Figure
             The Figure object for the ranking plot if `ax` is None; otherwise, None.
         ax : plt.Axes
-            The Axes object for the ranking plot..
+            The Axes object for the ranking plot.
+
+        Notes
+        -----
+        * Features are ranked in descending order based one of the following ``df_feat`` columns:
+
+            a) ``feat_importance``: when feature importance is in ``df_feat`` and ``shap_plot=False``.
+            b) ``feat_impact``: when sample-specific feature impact is in ``df_feat`` and ``shap_plot=True``.
+            c) ``abs_auc``: otherwise.
+
+        See Also
+        --------
+        * :meth:`CPP.run` for details on CPP statistical measures.
+        * :func:`comp_auc_adjusted` for details on 'abs_auc'.
+        * :meth:`CPPPlot.feature` for visualization of mean differences for specific features.
 
         Examples
         --------
         .. include:: examples/cpp_plot_ranking.rst
         """
-        # TODO check input, add docstring, typing
         # Check input
-        ut.check_df_feat(df_feat=df_feat)   # Do not check for list_parts since df_pos can be obtained for any part
+        ut.check_df_feat(df_feat=df_feat)
+        ut.check_number_range(name="top_n", val=top_n, min_val=2, max_val=len(df_feat), just_int=True)
+        ut.check_bool(name="shap_plot", val=shap_plot)
         ut.check_ax(ax=ax, accept_none=True)
         ut.check_figsize(figsize=figsize, accept_none=True)
+        args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
+        # TODO check if tmd_jmd_space necessary
+        ut.check_color(name="tmd_color", val=tmd_color)
+        ut.check_color(name="jmd_color", val=jmd_color)
         ut.check_str(name="name_test", val=name_test)
         ut.check_str(name="name_ref", val=name_ref)
-        ut.check_bool(name="shap_plot", val=shap_plot)
         args = dict(min_val=0, exclusive_limits=True, accept_none=True, just_int=False)
         ut.check_number_range(name="fontsize_titles", val=fontsize_titles, **args)
         ut.check_number_range(name="fontsize_labels", val=fontsize_labels, **args)
         ut.check_number_range(name="fontsize_annotations", val=fontsize_annotations, **args)
+        ut.check_lim(name="xlim_dif", val=xlim_dif)
+        ut.check_lim(name="xlim_rank", val=xlim_rank)
+        check_match_df_feat_shap_plot(df_feat=df_feat, shap_plot=shap_plot)
         # Plot ranking
+        col_dif = ut.COL_MEAN_DIF
+        col_rank = ut.COL_FEAT_IMPORT if ut.COL_FEAT_IMPACT in list(df_feat) else ut.COL_ABS_AUC
+        if shap_plot:
+            col_rank = ut.COL_FEAT_IMPACT
         try:
             fig, ax = plot_ranking(figsize=figsize, df_feat=df_feat, top_n=top_n,
+                                   col_dif=col_dif, col_rank=col_rank,
                                    tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
                                    name_test=name_test, name_ref=name_ref,
                                    shap_plot=shap_plot,
@@ -584,7 +627,7 @@ class CPPPlot:
                                    fontsize_annotations=fontsize_annotations,
                                    feature_val_in_percent=feature_val_in_percent,
                                    tmd_jmd_space=tmd_jmd_space,
-                                   col_dif=col_dif, col_rank=col_rank, xlim_dif=xlim_dif, xlim_rank=xlim_rank)
+                                   xlim_dif=xlim_dif, xlim_rank=xlim_rank)
         # Catch backend not-accepted-gaps error
         except Exception as e:
             raise ValueError(e)
@@ -631,8 +674,9 @@ class CPPPlot:
 
         Parameters
         ----------
-        df_feat : pd.DataFrame, optional, default=None
-            Dataframe containing the features to be plotted. If ``None``, default=features from the instance will be used.
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info)
+            Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
+            Must also include either ``feat_importance`` or ``feat_impact`` column.
         col_value : {'abs_auc', 'mean_dif', 'std_test', 'feat_importance', 'feat_impact', ...}, default='mean_dif'
             Column name in ``df_feat`` containing the numerical values to be plotted.
         value_type : str, default='count'
@@ -650,7 +694,7 @@ class CPPPlot:
         add_jmd_tmd : bool, default=True
             If True, adds JMD and TMD lines/annotations to the plot.
         tmd_len : int, default=20
-            Length of the TMD.
+            Length of TMD to be depicted (>0).
         start : int, default=1
             Position label of first amino acid position (starting at N-terminus).
         jmd_n_seq : str, optional
@@ -808,8 +852,9 @@ class CPPPlot:
 
         Parameters
         ----------
-        df_feat : pd.DataFrame, shape (n_feature, n_feature_information)
-            DataFrame containing unique identifiers, scale information, statistics, and positions for each feature.
+        df_feat : pd.DataFrame, shape (n_feature, n_feature_info)
+            Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
+            Can also include feture impact (``feat_impact``) column.
         y : {'category', 'subcategory', 'scale_name'}, default='subcategory'
             Column name in ``df_feat`` representing scale information (shown on the y-axis).
         col_value : {'abs_auc', 'mean_dif', 'std_test', 'feat_importance', 'feat_impact', ...}, default='mean_dif'
@@ -916,7 +961,7 @@ class CPPPlot:
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
         ut.check_dict(name="cbar_kws", val=cbar_kws, accept_none=True)
         ut.check_df(df=df_feat, name="df_feat", cols_requiered=col_value, cols_nan_check=col_value)
-        ut.check_y_categorical(df=df_feat, y=y)
+        check_y_categorical(df=df_feat, y=y)
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat)
         check_value_type(value_type=value_type, count_in=False)
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
@@ -979,6 +1024,65 @@ class CPPPlot:
 
         Parameters
         ----------
+        df_feat : pd.DataFrame, shape (n_feature, n_feature_info)
+            Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
+            Must also include feature imporatnce (``feat_importance``) column.
+        y : {'category', 'subcategory', 'scale_name'}, default='subcategory'
+            Column name in ``df_feat`` representing scale information (shown on the y-axis).
+        col_value : {'abs_auc', 'mean_dif', 'std_test', 'feat_importance', 'feat_impact', ...}, default='mean_dif'
+            Column name in ``df_feat`` containing numerical values to display.
+        value_type : {'mean', 'sum', 'std'}, default='mean'
+            Method to aggregate numerical values from ``col_value``.
+        normalize : {True, False, 'positions', 'positions_only'}, default=False
+            Specifies normalization for numerical values in ``col_value``:
+
+            - False: Set value at all positions of a feature without further normalization.
+            - True: Set value at all positions of a feature and normalize across all features.
+            - 'positions': Value/number of positions set at each position of a feature and normalized across features.
+              Recommended when aiming to emphasize features with fewer positions using 'col_value'='feat_impact' and 'value_type'='mean'.
+
+        figsize : tuple(float, float), default=(10,7)
+            Width and height of the figure in inches passed to :func:`matplotlib.pyplot.figure`.
+        vmin, vmax : float, optional
+            Values to anchor the colormap, otherwise, inferred from data and other keyword arguments.
+        cmap : matplotlib colormap name or object, or list of colors, default='seismic'
+            Name of color map assigning data values to color space. If 'SHAP', colors from
+            `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ will be used (recommended for feature impact).
+        cmap_n_colors : int, optional
+            Number of discrete steps in diverging or sequential color map.
+        dict_color : dict, optional
+            Map of colors for scale categories classifying scales shown on y-axis.
+        cbar_kws : dict of key, value mappings, optional
+            Keyword arguments for :meth:`matplotlib.figure.Figure.colorbar`.
+        tmd_len : int, default=20
+            Length of TMD to be depicted (>0).
+        start : int, default=1
+            Position label of first amino acid position (starting at N-terminus).
+        tmd_color : str, default='mediumspringgreen'
+            Color of TMD bar.
+        jmd_color : str, default='blue'
+            Color of JMD-N and JMD-C bar.
+        tmd_seq_color : str, default='black'
+            Color of TMD sequence.
+        jmd_seq_color : str, default='white'
+            Color of JMD-N and JMD-C sequence.
+        seq_size : float, optional
+            Font size of all sequence parts in points. If ``None``, optimized automatically.
+        fontsize_tmd_jmd : float, optional
+            Font size of 'TMD', 'JMD-N' and 'JMD-C'  label in points. If ``None``, optimized automatically.
+        xtick_size : float, default=11.0
+            Size of x ticks in points. Passed as 'size' argument to :meth:`matplotlib.axes.Axes.set_xticklabels`.
+        xtick_width : float, default=2.0
+            Width of x ticks in points. Passed as 'width' argument to :meth:`matplotlib.axes.Axes.tick_params`.
+        xtick_length : float, default=5.0,
+            Length of x ticks in points. Passed as 'length' argument to :meth:`matplotlib.axes.Axes.tick_params`.
+        ytick_size : float, optional
+            Size of scale information as y ticks in points. Passed to :meth:`matplotlib.axes.Axes.tick_params`.
+            If ``None``, optimized automatically.
+        add_legend_cat : bool, default=True,
+            Whether to add legend for categories under plot and classification of scales at y-axis.
+        legend_kws : dict, optional
+            Keyword arguments passed to :meth:`matplotlib.axes.Axes.legend`.
 
         Returns
         -------
@@ -1008,7 +1112,7 @@ class CPPPlot:
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
         ut.check_dict(name="cbar_kws", val=cbar_kws, accept_none=True)
         ut.check_df(df=df_feat, name="df_feat", cols_requiered=col_value, cols_nan_check=col_value)
-        ut.check_y_categorical(df=df_feat, y=y)
+        check_y_categorical(df=df_feat, y=y)
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat)
         check_value_type(value_type=value_type, count_in=False)
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)

@@ -23,9 +23,9 @@ from ._utils.check_data import (check_X, check_X_unique_samples,
                                 check_array_like, check_superset_subset,
                                 check_df)
 from ._utils.check_models import check_mode_class, check_model_kwargs
-from ._utils.check_plots import (check_vmin_vmax, check_color, check_list_colors, check_dict_color,
-                                 check_cmap, check_palette,
-                                 check_ylim, check_y_categorical)
+from ._utils.check_plots import (check_vmin_vmax, check_lim,
+                                 check_color, check_list_colors, check_dict_color,
+                                 check_cmap, check_palette)
 
 # Special functions
 from ._utils.new_types import ArrayLike1D, ArrayLike2D
@@ -37,9 +37,9 @@ from ._utils.plotting import (plot_gco, plot_get_clist_, plot_legend_)
 # Utility functions
 from ._utils.utils_metrics import (auc_adjusted_, kullback_leibler_divergence_, bic_score_)
 from ._utils.utils_output import (print_out, print_start_progress, print_progress, print_finished_progress)
-from ._utils.utils_plot_elements import plot_add_bars
-from ._utils.utils_plot_eval import adjust_spines, x_ticks_0
-
+from ._utils.utils_plot_elements import (plot_add_bars,
+                                         adjust_spine_to_middle,
+                                         x_ticks_0)
 
 # Folder structure
 def _folder_path(super_folder, folder_name):

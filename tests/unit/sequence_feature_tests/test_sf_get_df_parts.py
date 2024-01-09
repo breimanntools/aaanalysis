@@ -79,7 +79,7 @@ class TestGetDfParts:
         assert isinstance(sf.get_df_parts(df_seq=df_seq[cols_seq_format]), pd.DataFrame)
         assert isinstance(sf.get_df_parts(df_seq=df_seq[cols_pos_format]), pd.DataFrame)
         assert isinstance(sf.get_df_parts(df_seq=df_seq[cols_part_format]), pd.DataFrame)
-        assert isinstance(sf.get_df_parts(df_seq=df_seq[cols_part_format], jmd_n_len=None, jmd_c_len=None), pd.DataFrame)
+        assert isinstance(sf.get_df_parts(df_seq=df_seq[cols_part_format], jmd_n_len=0, jmd_c_len=0), pd.DataFrame)
         assert isinstance(sf.get_df_parts(df_seq=df_seq[cols_seq_tmd_format]), pd.DataFrame)
 
     @settings(max_examples=10, deadline=1000)

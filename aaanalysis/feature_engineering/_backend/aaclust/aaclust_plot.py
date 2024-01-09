@@ -63,7 +63,7 @@ def plot_eval(df_eval=None, dict_xlims=None, figsize=None, colors=None):
         ax.set_ylabel("")
         ax.set_xlabel(col)
         # Adjust spines
-        ax = ut.adjust_spines(ax=ax)
+        ax = ut.adjust_spine_to_middle(ax=ax)
         # Manual xlims, if needed
         if dict_xlims and col in dict_xlims:
             ax.set_xlim(dict_xlims[col])

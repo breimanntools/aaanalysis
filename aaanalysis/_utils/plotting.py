@@ -38,7 +38,7 @@ def _create_marker(color, label, marker, marker_size, lw, edgecolor, linestyle, 
 
 
 # Check functions
-def marker_has(marker, val=None):
+def _marker_has(marker, val=None):
     if isinstance(marker, str):
         return marker == val
     elif marker is None:
@@ -48,7 +48,7 @@ def marker_has(marker, val=None):
     else:
         raise ValueError(f"'marker' ({marker}) is wrong")
 
-def marker_has_no(marker, val=None):
+def _marker_has_no(marker, val=None):
     if isinstance(marker, str):
         return marker != val
     elif marker is None:
@@ -60,7 +60,7 @@ def marker_has_no(marker, val=None):
 
 
 # Checking functions for list inputs
-def check_list_cat(dict_color=None, list_cat=None):
+def _check_list_cat(dict_color=None, list_cat=None):
     """Ensure items in list_cat are keys in dict_color and match in length."""
     if not list_cat:
         return list(dict_color.keys())
@@ -73,7 +73,7 @@ def check_list_cat(dict_color=None, list_cat=None):
     return list_cat
 
 
-def check_labels(list_cat=None, labels=None):
+def _check_labels(list_cat=None, labels=None):
     """Validate labels and match their length to list_cat."""
     if labels is None:
         labels = list_cat
@@ -83,7 +83,7 @@ def check_labels(list_cat=None, labels=None):
 
 
 # Checking functions for inputs that can be list or single values (redundancy accepted for better user communication)
-def check_hatches(marker=None, hatch=None, list_cat=None):
+def _check_hatches(marker=None, hatch=None, list_cat=None):
     """Check validity of list_hatche."""
     valid_hatches = ['/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*']
     # Check if hatch is valid
@@ -98,14 +98,14 @@ def check_hatches(marker=None, hatch=None, list_cat=None):
         if len(hatch) != len(list_cat):
             raise ValueError(f"Length must match of 'hatch' ({hatch}) and categories ({list_cat}).")  # Check if hatch can be chosen
     # Warn for parameter conflicts
-    if marker_has_no(marker, val=None) and hatch:
+    if _marker_has_no(marker, val=None) and hatch:
         warnings.warn(f"'hatch' can only be applied to the default marker, set 'marker=None'.", UserWarning)
     # Create hatch list
     list_hatch = [hatch] * len(list_cat) if not isinstance(hatch, list) else hatch
     return list_hatch
 
 
-def check_marker(marker=None, list_cat=None, lw=0):
+def _check_marker(marker=None, list_cat=None, lw=0):
     """Check validity of markers"""
     # Add '-' for line and None for default marker
     valid_markers = [None, "-"] + list(mlines.Line2D.markers.keys())
@@ -119,14 +119,14 @@ def check_marker(marker=None, list_cat=None, lw=0):
         if len(marker) != len(list_cat):
             raise ValueError(f"Length must match of 'marker' ({marker}) and categories ({list_cat}).")
     # Warn for parameter conflicts
-    if marker_has(marker, val="-") and lw <= 0:
+    if _marker_has(marker, val="-") and lw <= 0:
         warnings.warn(f"Marker lines ('-') are only shown if 'lw' ({lw}) is > 0.", UserWarning)
     # Create marker list
     list_marker = [marker] * len(list_cat) if not isinstance(marker, list) else marker
     return list_marker
 
 
-def check_marker_size(marker_size=None, list_cat=None):
+def _check_marker_size(marker_size=None, list_cat=None):
     """Check size of markers"""
     # Check if marker_size is valid
     if isinstance(marker_size, (int, float)):
@@ -143,7 +143,7 @@ def check_marker_size(marker_size=None, list_cat=None):
     return list_marker_size
 
 
-def check_linestyle(linestyle=None, list_cat=None, marker=None):
+def _check_linestyle(linestyle=None, list_cat=None, marker=None):
     """Check validity of linestyle."""
     _lines = ['-', '--', '-.', ':', ]
     _names = ["solid", "dashed", "dashed-doted", "dotted"]
@@ -162,7 +162,7 @@ def check_linestyle(linestyle=None, list_cat=None, marker=None):
             raise ValueError(f"'marker_linestyle' ('{linestyle}') must be one of following: {_lines},"
                              f" or corresponding names: {_names} ")
     # Warn for parameter conflicts
-    if linestyle is not None and marker_has_no(marker, val="-"):
+    if linestyle is not None and _marker_has_no(marker, val="-"):
         warnings.warn(f"'linestyle' ({linestyle}) is only applicable to marker lines ('-'), not to '{marker}'.", UserWarning)
     # Create list_marker_linestyle list
     list_marker_linestyle = [linestyle] * len(list_cat) if not isinstance(linestyle, list) else linestyle
@@ -225,12 +225,12 @@ def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
     # Check input
     if ax is None:
         ax = plt.gca()
-    list_cat = check_list_cat(dict_color=dict_color, list_cat=list_cat)
-    labels = check_labels(list_cat=list_cat, labels=labels)
-    marker = check_marker(marker=marker, list_cat=list_cat, lw=lw)
-    hatch = check_hatches(marker=marker, hatch=hatch, list_cat=list_cat)
-    linestyle = check_linestyle(linestyle=linestyle, list_cat=list_cat, marker=marker)
-    marker_size = check_marker_size(marker_size, list_cat=list_cat)
+    list_cat = _check_list_cat(dict_color=dict_color, list_cat=list_cat)
+    labels = _check_labels(list_cat=list_cat, labels=labels)
+    marker = _check_marker(marker=marker, list_cat=list_cat, lw=lw)
+    hatch = _check_hatches(marker=marker, hatch=hatch, list_cat=list_cat)
+    linestyle = _check_linestyle(linestyle=linestyle, list_cat=list_cat, marker=marker)
+    marker_size = _check_marker_size(marker_size=marker_size, list_cat=list_cat)
     # Remove existing legend
     if ax.get_legend() is not None and len(ax.get_legend().get_lines()) > 0:
         ax.legend_.remove()

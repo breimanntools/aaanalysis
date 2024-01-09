@@ -10,6 +10,21 @@ import aaanalysis.utils as ut
 from ._utils_cpp_plot_elements import PlotElements
 from ._utils_cpp_plot_positions import PlotPositions
 
+def _scale_ylim(df=None, ylim=None, col_value=None, retrieve_plot=False, scaling_factor=1.1):
+    """Check if ylim is valid and appropriate for the given dataframe and column."""
+    if ylim is not None:
+        max_val = round(max(df[col_value]), 3)
+        max_y = ylim[1]
+        if max_val >= max_y:
+            error = "Maximum of 'ylim' ({}) must be higher than maximum" \
+                    " value of given datasets ({}).".format(max_y, max_val)
+            raise ValueError(error)
+    else:
+        if retrieve_plot:
+            ylim = plt.ylim()
+            ylim = (ylim[0] * scaling_factor, ylim[1] * scaling_factor)
+    return ylim
+
 
 # I Helper Functions
 # Plotting functions
@@ -23,7 +38,7 @@ def _plot_cpp_shap_profile(ax=None, df_pos=None, ylim=None, plot_args=None):
     df_neg = df_neg.sum(axis=1)
     ax = df_pos.plot(ax=ax, color=ut.COLOR_SHAP_POS, **plot_args)
     ax = df_neg.plot(ax=ax, color=ut.COLOR_SHAP_NEG, **plot_args)
-    ylim = ut.check_ylim(df=df, col_value="col_cat", ylim=ylim, retrieve_plot=True)
+    ylim = _scale_ylim(df=df, col_value="col_cat", ylim=ylim, retrieve_plot=True)
     plt.ylim(ylim)
     return ax
 
@@ -40,7 +55,7 @@ def _plot_cpp_profile(ax=None, df_pos=None, dict_color=None, add_legend=True, co
     if not add_legend:
         df_bar = df_bar.sum(axis=1)
     ax = df_bar.plot(ax=ax, color=color, **plot_args)
-    ylim = ut.check_ylim(df=df, col_value="col_cat", ylim=ylim)
+    ylim = _scale_ylim(df=df, col_value="col_cat", ylim=ylim)
     plt.ylim(ylim)
     # Set legend
     if add_legend:

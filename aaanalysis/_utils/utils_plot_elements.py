@@ -4,6 +4,8 @@ This is a script for internal plotting utility functions used in the backend.
 import seaborn as sns
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+
 
 # Helper functions
 def _get_color_map(labels, color):
@@ -174,4 +176,26 @@ def plot_add_bars(ax=None, labels=None, colors='tab:gray', bar_position='left',
                          xtick_label_rotation=xtick_label_rotation, ytick_label_rotation=ytick_label_rotation,
                          nx=nx, ny=ny)
 
-# TODO add AAclust eval elements
+def adjust_spine_to_middle(ax=None):
+    """Adjust spines to be in middle if data range from <0 to >0"""
+    min_val, max_val = ax.get_xlim()
+    if max_val > 0 and min_val >= 0:
+        sns.despine(ax=ax)
+    else:
+        sns.despine(ax=ax, left=True)
+        current_lw = ax.spines['bottom'].get_linewidth()
+        ax.axvline(0, color='black', linewidth=current_lw)
+        val = max([abs(min_val), abs(max_val)])
+        ax.set_xlim(-val, val)
+    return ax
+
+
+def x_ticks_0(ax):
+    """Apply custom formatting for x-axis ticks."""
+    def custom_x_ticks(x, pos):
+        """Format x-axis ticks."""
+        if x % 1 == 0:  # Check if number is an integer
+            return f'{int(x)}'  # Format as integer
+        else:
+            return f'{x:.2f}'  # Format as float with two decimal places
+    ax.xaxis.set_major_formatter(mticker.FuncFormatter(custom_x_ticks))
