@@ -110,8 +110,9 @@ class PlotElements:
     @staticmethod
     def set_figsize(figsize=None):
         """Set figsize of figure only if not part of subplots"""
-        if len(plt.gcf().get_axes()) == 0:
-            plt.figure(figsize=figsize)
+        fig = plt.gcf()
+        if len(fig.get_axes()) == 0:
+            fig.set_size_inches(figsize)
 
     @staticmethod
     def set_title_(title=None, title_kws=None):
