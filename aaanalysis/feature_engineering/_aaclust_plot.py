@@ -192,7 +192,7 @@ class AAclustPlot:
             A dictionary containing x-axis limits (``xmin``, ``xmax``) for selected evaluation measure metric subplots.
             Keys should be names of the ``evaluation measures`` (e.g., 'BIC'). If ``None``, x-axis are auto-scaled.
         figsize : tuple, default=(7, 6)
-            Width and height of the figure in inches.
+            Figure dimensions (width, height) in inches.
 
         Returns
         -------
@@ -253,14 +253,14 @@ class AAclustPlot:
             Index of the PCA component for the y-axis. Must be >= 1.
         ax : plt.Axes, optional
             Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
-        figsize : tuple, default=(7,6)
-            Figure size (width, height) in inches.
+        figsize : tuple, default=(7, 6)
+            Figure dimensions (width, height) in inches.
         legend : bool, default=True
             Whether to show the legend.
         dot_size : int, default=100
             Size of the plotted dots.
         dot_alpha : float or int, default=0.75
-            Alpha value of the plotted dots [0-1].
+            The transparency alpha value [0-1] of the plotted dots.
         palette : list, optional
             Colormap for the labels or list of colors. If ``None``, a default colormap is used.
 
@@ -344,13 +344,13 @@ class AAclustPlot:
         ax : plt.Axes, optional
             Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
         figsize : tuple, default=(7, 6)
-            Figure size (width, height) in inches.
+            Figure dimensions (width, height) in inches.
         legend : bool, default=True
             Whether to show the legend.
         dot_size : int, default=100
             Size of the plotted dots.
         dot_alpha : float or int, default=0.75
-            Alpha value of the plotted dots [0-1].
+            The transparency alpha value [0-1] of the plotted dots.
         palette : list, optional
             Colormap for the labels or list of colors. If ``None``, a default colormap is used.
 

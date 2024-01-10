@@ -1,5 +1,5 @@
 """
-This is a script for the backend of the cpp_plot.ranking method
+This is a script for the backend of the cpp_plot.ranking method.
 """
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -7,21 +7,16 @@ import matplotlib as mpl
 
 import aaanalysis.utils as ut
 from .utils_feature import get_positions_
-from .utils_cpp_plot import add_part_seq, add_feature_title, get_color_dif
+from .utils_cpp_plot import add_part_seq, get_color_dif
 
 
 # I Helper Functions
 # Adjust df_feat
-def _adjust_df_feat(df_feat=None, col_dif=None, xlim_dif=None, feature_val_in_percent=True):
+def _adjust_df_feat(df_feat=None, col_dif=None, xlim_dif=None):
     """Adjusts feature values in `df_feat` based on percentage scaling and sets the limits for difference columns."""
     df_feat = df_feat.copy()
-    if feature_val_in_percent:
-        if max(df_feat[col_dif]) - min(df_feat[col_dif]) < 1:
-            df_feat[col_dif] *= 100
-    else:
-        if max(df_feat[col_dif]) - min(df_feat[col_dif]) > 1:
-            df_feat[col_dif] /= 100
-            xlim_dif = (xlim_dif[0]/100, xlim_dif[1]/100)
+    if max(df_feat[col_dif]) - min(df_feat[col_dif]) < 1:
+        df_feat[col_dif] *= 100
     return df_feat, xlim_dif
 
 
@@ -61,9 +56,11 @@ def _get_tmd_jmd_label(jmd_n_len=10, jmd_c_len=10, space=3):
     return x_label
 
 
-def plot_feature_position(ax=None, df=None, n=20, space=3, tmd_len=20, jmd_n_len=10, jmd_c_len=10, fontsize_label=None):
+def plot_feature_position(ax=None, df=None, n=20, space=3, tmd_len=20, jmd_n_len=10, jmd_c_len=10,
+                          tmd_color="mediumspringgreen", jmd_color="blue", fontsize_label=None, tmd_jmd_alpha=0.075):
     """Plots the feature positions for a given DataFrame `df` on the axis `ax` with specified formatting parameters."""
-    height = 0.01 * n
+    fig_height = plt.gcf().get_size_inches()[1]
+    height = min([0.01 * n, 0.2]) * 5/fig_height
     plt.sca(ax)
     # Set y ticks
     plt.tick_params(axis='y', which='both', bottom=False, top=False, labelbottom=False)
@@ -75,8 +72,11 @@ def plot_feature_position(ax=None, df=None, n=20, space=3, tmd_len=20, jmd_n_len
     plt.tick_params(axis='x', which='both', bottom=False, top=False, labelbottom=False)
     sns.despine(top=True, right=True, left=False, bottom=True)
     args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
-    add_part_seq(ax=ax, y=len(df)-0.5, height=height, **args_len)
-    add_part_seq(ax=ax, y=-0.5, height=len(df), alpha=0.075, **args_len)
+    args_color = dict(tmd_color=tmd_color, jmd_color=jmd_color)
+    # Add sequence part under plot
+    add_part_seq(ax=ax, y=len(df)-0.5, height=height, **args_len, **args_color)
+    # Add sequence area in plot
+    add_part_seq(ax=ax, y=-0.5, height=len(df), alpha=tmd_jmd_alpha, **args_len, **args_color)
     _add_position_bars(ax=ax, df_feat=df)
     # Adjust xlabel
     x_label = _get_tmd_jmd_label(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, space=space)
@@ -137,7 +137,7 @@ def _add_annotation_right(sub_fig=None, an_in_val=2, max_val=10.0, text_size=8):
 
 def plot_feature_rank(ax=None, df=None, n=20, xlim=(0, 8),
                       fontsize_annotation=8, col_rank=ut.COL_FEAT_IMPORT,
-                      shap_plot=False):
+                      shap_plot=False, x_rank_info=None):
     """Plots the feature ranking based on `df` on the axis `ax`, adjusting for SHAP values if `shap_plot` is True."""
     df = df.copy()
     plt.sca(ax)
@@ -157,8 +157,12 @@ def plot_feature_rank(ax=None, df=None, n=20, xlim=(0, 8),
     plt.xlim(xlim)
     _add_annotation_right(sub_fig=sub_fig, text_size=fontsize_annotation, an_in_val=x_max/2, max_val=xlim[1])
     str_sum = f"Σ={round(df[col_rank].sum(), 1)}%"
-    args = dict(ha="right", size=fontsize_annotation)
-    x = xlim[1] * 1.2
+    if x_rank_info is None:
+        x = xlim[1] * 1.2
+        args = dict(ha="right", size=fontsize_annotation)
+    else:
+        x = x_rank_info
+        args = dict(ha="left", size=fontsize_annotation)
     plt.text(x, n-2.5, str_sum, weight="normal", **args)
     if shap_plot:
         plt.text(x, n-1.5, "negative", weight="bold", color=ut.COLOR_SHAP_NEG, va="top", **args)
@@ -166,52 +170,55 @@ def plot_feature_rank(ax=None, df=None, n=20, xlim=(0, 8),
 
 
 # II Main Functions
-# TODO adjust to work with flexible TMD/JMD length choice
-def plot_ranking(figsize=(7, 5), df_feat=None, top_n=25,
+def plot_ranking(df_feat=None, n_top=15,
+                 col_dif=None, col_rank=None,
+                 shap_plot=False,
+                 figsize=(7, 5),
                  tmd_len=20, jmd_n_len=10, jmd_c_len=10,
+                 tmd_color="mediumspringgreen", jmd_color="blue",
+                 tmd_jmd_alpha=0.075,
                  name_test="test", name_ref="ref",
                  fontsize_titles=11,
                  fontsize_labels=11,
                  fontsize_annotations=11,
-                 feature_val_in_percent=True,
-                 shap_plot=False,
                  tmd_jmd_space=2,
-                 col_rank=ut.COL_FEAT_IMPORT,
                  xlim_dif=(-17.5, 17.5),
-                 col_dif=ut.COL_MEAN_DIF,
-                 xlim_rank=(0, 8)):
+                 xlim_rank=(0, 8),
+                 x_rank_info=None):
     """Plot ranking of feature DataFrame"""
-    df_feat = df_feat.copy()
     # Adjust df_feat
-    df_feat = df_feat.copy().reset_index(drop=True).head(top_n)
-    df_feat, xlim_dif = _adjust_df_feat(df_feat=df_feat, col_dif=col_dif, xlim_dif=xlim_dif,
-                                        feature_val_in_percent=feature_val_in_percent)
+    df_feat = df_feat.head(n_top).copy().reset_index(drop=True)
+    df_feat, xlim_dif = _adjust_df_feat(df_feat=df_feat, col_dif=col_dif, xlim_dif=xlim_dif)
     df_feat[ut.COL_POSITION] = get_positions_(features=df_feat[ut.COL_FEATURE],
                                               tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     # Plotting (three subplots)
     fig, axes = plt.subplots(1, 3, sharey=True, figsize=figsize)
     # 1. Plot feature positions
-    plot_feature_position(ax=axes[0], df=df_feat, n=top_n, space=tmd_jmd_space,
+    plot_feature_position(ax=axes[0], df=df_feat, n=n_top, space=tmd_jmd_space,
                           tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
+                          tmd_color=tmd_color, jmd_color=jmd_color, tmd_jmd_alpha=tmd_jmd_alpha,
                           fontsize_label=fontsize_labels)
-    y = -top_n/25   # Empirically optimized location
-    add_feature_title(y=y, fontsize_title=fontsize_titles)
+    # String optimized for horizontal alignment
+    title_positions = ("                  Feature                  \n"
+                       "Scale (subcategory)  +  Positions                 ")
+    plt.title(title_positions, x=0, weight="bold", fontsize=fontsize_titles)
     # 2. Barplot mean difference
     plot_feature_mean_dif(ax=axes[1], df=df_feat,
-                          n=top_n, col_dif=col_dif, xlim=xlim_dif,
+                          n=n_top, col_dif=col_dif, xlim=xlim_dif,
                           fontsize_annotation=fontsize_annotations)
     sns.despine(ax=axes[1], top=True, right=True, left=True, bottom=False)
-    plt.title(f"Mean difference\nof feature value", size=fontsize_titles, weight="bold")
-    label_mean_dif = f"{name_test} - {name_ref}"
-    label_mean_dif += " [%]" if feature_val_in_percent else ""
-    plt.xlabel(label_mean_dif, size=fontsize_labels)
+    axes[1].set_title(f"Mean difference\nof feature value",
+                      size=fontsize_titles, weight="bold")
+    label_mean_dif = f"{name_test} - {name_ref} [%]"
+    axes[1].set_xlabel(label_mean_dif, size=fontsize_labels)
     # 3. Barplot importance
-    plot_feature_rank(ax=axes[2], df=df_feat, n=top_n, xlim=xlim_rank,
-                      col_rank=col_rank, shap_plot=shap_plot,
+    plot_feature_rank(ax=axes[2], df=df_feat, n=n_top, xlim=xlim_rank,
+                      col_rank=col_rank, shap_plot=shap_plot, x_rank_info=x_rank_info,
                       fontsize_annotation=fontsize_annotations)
-    plt.title(f"{ut.LABEL_FEAT_RANKING}\n(top {top_n} features)", size=fontsize_titles, ha="center", weight="bold")
+    axes[2].set_title(f"{ut.LABEL_FEAT_RANKING}\n(top {n_top} features)",
+                      size=fontsize_titles, ha="center", weight="bold")
     label_ranking = ut.LABEL_FEAT_IMPACT if shap_plot else ut.LABEL_FEAT_IMPORT
-    plt.xlabel(label_ranking, size=fontsize_labels)
+    axes[2].set_xlabel(label_ranking, size=fontsize_labels)
     # Adjust axis
     for i, ax in enumerate(axes):
         ax.tick_params(which='major', axis="both", labelsize=fontsize_labels)
@@ -219,6 +226,4 @@ def plot_ranking(figsize=(7, 5), df_feat=None, top_n=25,
             ax.tick_params(which='major', axis="y", length=0, labelsize=0)
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.2)
-    fig = plt.gcf()
-    ax = plt.gca()
-    return fig, ax
+    return fig, axes

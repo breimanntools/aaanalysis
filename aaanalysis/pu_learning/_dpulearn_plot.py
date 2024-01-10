@@ -106,7 +106,7 @@ class dPULearnPlot:
               between the set of identified negatives and other datasets ('pos', 'unl', or 'neg').
 
         figsize : tuple, default=(6, 4)
-            Width and height of the figure in inches.
+            Figure dimensions (width, height) in inches.
         legend : bool, default=True
             If ``True``, legend is set under dissimilarity measures.
         legend_y : float, default=-0.175
@@ -175,7 +175,7 @@ class dPULearnPlot:
         df_pu : pd.DataFrame, shape (n_samples, pca_features)
             A DataFrame with the PCA-transformed features obtained from ``dPULearn.df_pu_``.
         figsize : tuple, default=(6, 6)
-            Width and height of the figure in inches.
+            Figure dimensions (width, height) in inches.
         labels : array-like, shape (n_samples,)
             Dataset labels of samples in ``df_pu``. Labels should contain 0 (identified negative) and 1 (positive).
             Unlabeled samples (2) can also be provided.

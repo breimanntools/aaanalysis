@@ -15,15 +15,6 @@ def get_color_dif(mean_dif=0):
     return ut.COLOR_FEAT_NEG if mean_dif < 0 else ut.COLOR_FEAT_POS
 
 
-def add_feature_title(y=None, fontsize_title=None, pad_factor=2.0):
-    """"""
-    f_space = lambda x: " "*x
-    plt.text(0, y, "Scale (subcategory)" + f_space(3), size=fontsize_title, weight="bold", ha="right")
-    plt.text(0, y, f_space(3) + "Positions", size=fontsize_title, weight="bold", ha="left")
-    plt.text(0, y * pad_factor, "Feature", size=fontsize_title + 1, weight="bold", ha="center")
-    plt.text(0, y, "+", size=fontsize_title, weight="bold", ha="center")
-
-
 def get_optimal_fontsize(ax, labels):
     """Get optimal sequence size for plot"""
     plt.tight_layout()

@@ -118,7 +118,8 @@ def _set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws=None,
     f = lambda x: int(x) if int(x) == float(x) else round(x, 1)
     cbar.set_ticklabels([f"{f(x)}{str_pct}" if float(x) != 0 else str_zero for x in cbar_ticks])
     cb = ax.collections[0].colorbar
-    cb.set_label(label=cbar_kws["label"], weight=weight, size=fontsize)
+    if "label" in cbar_kws:
+        cb.set_label(label=cbar_kws["label"], weight=weight, size=fontsize)
     cb.ax.xaxis.set_ticks_position('top')
     cb.ax.xaxis.set_label_position('top')
 
@@ -181,7 +182,6 @@ def _plot_inner_heatmap(ax=None, figsize=(8, 8), df_pos=None, vmin=None, vmax=No
     return ax
 
 
-# TODO adjust and integrate into _cpp_plot.heatmap
 # Outer plotting function
 def plot_heatmap(df_feat=None, df_cat=None, col_cat="subcategory", col_value="mean_dif", value_type="mean", normalize=False,
                  figsize=(8, 5), ax=None, dict_color=None,

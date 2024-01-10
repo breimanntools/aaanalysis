@@ -12,13 +12,21 @@ import matplotlib as mpl
 import aaanalysis
 import aaanalysis.utils as ut
 
-from .utils_cpp_plot import add_feature_title
 from .cpp_plot_heatmap import plot_heatmap
 from ._utils_cpp_plot_elements import PlotElements
 from ._utils_cpp_plot_positions import PlotPositions
 
 
 # I Helper Functions
+def add_feature_title_single_fig(y=None, fontsize_title=None, pad_factor=2.0):
+    """Add title for feature onto single figure"""
+    f_space = lambda x: " "*x
+    plt.text(0, y, "Scale (subcategory)" + f_space(3), size=fontsize_title, weight="bold", ha="right")
+    plt.text(0, y, f_space(3) + "Positions", size=fontsize_title, weight="bold", ha="left")
+    plt.text(0, y * pad_factor, "Feature", size=fontsize_title + 1, weight="bold", ha="center")
+    plt.text(0, y, "+", size=fontsize_title, weight="bold", ha="center")
+
+
 def _bars(ax=None, df=None, top_n=5, top_pcp=None, sum_imp=None, show_sum_pcp=True, label=ut.LABEL_FEAT_IMPORT,
           legendsize=12, labelsize=12, top_pcp_size=12, top_pcp_weight="bold", titlesize=12):
     """"""
@@ -139,7 +147,7 @@ def plot_feature_map(df_feat=None, df_cat=None, y="subcategory", col_value="mean
                                #ax=ax, y=n_subcat+3, x=plt.xlim()[1], pad_factor=1,
                                tick_fontsize=cbar_ticksize,
                                title_weight=info_weight)
-    add_feature_title(y=-n_subcat / 80, fontsize_title=fontsize_text, pad_factor=3.2)
+    add_feature_title_single_fig(y=-n_subcat / 80, fontsize_title=fontsize_text, pad_factor=3.2)
     fig.tight_layout()#pad=3.0)
     plt.subplots_adjust(wspace=0, bottom=0.15, top=0.92)#, left=0.3)
     plt.tight_layout()

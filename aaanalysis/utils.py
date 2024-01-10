@@ -581,7 +581,7 @@ def check_features(features=None, list_parts=None, list_scales=None):
     return features
 
 
-def check_df_feat(df_feat=None, df_cat=None, list_parts=None):
+def check_df_feat(df_feat=None, df_cat=None, list_parts=None, shap_plot=None):
     """Check if df not empty pd.DataFrame"""
     # Check df
     cols_feat = [COL_FEATURE] + COLS_FEAT_SCALES + COLS_FEAT_STAT
@@ -601,6 +601,14 @@ def check_df_feat(df_feat=None, df_cat=None, list_parts=None):
         missing_scales = [x for x in scales if x not in list_scales]
         if len(missing_scales) > 0:
             raise ValueError(f"Following scales occur in 'df_feat' but not in 'df_cat': {missing_scales}")
+    # Check if feat_importance or feat_impact column is in df_feat
+    if shap_plot is not None:
+        if shap_plot:
+            if COL_FEAT_IMPACT not in list(df_feat):
+                raise ValueError(f"If 'shap_plot' is True, '{COL_FEAT_IMPACT}' must be in 'df_feat' columns: {list(df_feat)}")
+        else:
+            if COL_FEAT_IMPORT not in list(df_feat):
+                raise ValueError(f"If 'shap_plot' is False, '{COL_FEAT_IMPORT}' must be in 'df_feat' columns: {list(df_feat)}")
     return df_feat.copy()
 
 
