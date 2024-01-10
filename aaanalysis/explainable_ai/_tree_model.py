@@ -21,7 +21,10 @@ class TreeModel:
     """
     UNDER CONSTRUCTION - Tree Model class: A wrapper for tree-based prediction models to obtain feature importance.
     """
-    def __init__(self, model_class=None):
+    def __init__(self,
+                 model_class_rcf=None,
+                 list_model_classes_fit=None
+                 ):
         """"""
 
     def fit(self, n_epochs=10, rcf=True, return_models=False):

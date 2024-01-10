@@ -46,7 +46,7 @@ class TestExtendAlphabet:
     def test_change_default_scales(self):
         df_scales = aa.load_scales()
         nf = aa.NumericalFeature()
-        df_scales_new = nf.extend_alphabet(df_scales=df_scales, letter_new="X")
+        df_scales_new = nf.extend_alphabet(df_scales=df_scales, new_letter="X")
         aa.options["df_scales"] = df_scales_new
         df_scales_old = aa.load_scales()
         cpp_plot = aa.CPPPlot()

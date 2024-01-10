@@ -45,14 +45,17 @@ def _add_position_bars(ax=None, df_feat=None):
 def _get_tmd_jmd_label(jmd_n_len=10, jmd_c_len=10, space=3):
     """Generates a label for TMD and JMD regions based on their lengths and spacing."""
     jmd_len = jmd_c_len + jmd_n_len
+    name_tmd = ut.options["name_tmd"]
+    name_jmd_n = ut.options["name_jmd_n"]
+    name_jmd_c = ut.options["name_jmd_c"]
     # Space factors should be between 1 and max-1
     total_space = space*2
     space_n_factor = max(min(int(round(jmd_n_len/jmd_len*total_space)), total_space-1), 1)
     space_c_factor = total_space - space_n_factor
     x_label = ""
-    x_label += "JMD-N" + " " * space_n_factor if jmd_n_len > 0 else " " * (4 + space_c_factor)
-    x_label += "TMD"
-    x_label += " " * space_c_factor + "JMD-C" if jmd_c_len > 0 else " " * (4 + space_n_factor)
+    x_label += name_jmd_n + " " * space_n_factor if jmd_n_len > 0 else " " * (4 + space_c_factor)
+    x_label += name_tmd
+    x_label += " " * space_c_factor + name_jmd_c if jmd_c_len > 0 else " " * (4 + space_n_factor)
     return x_label
 
 

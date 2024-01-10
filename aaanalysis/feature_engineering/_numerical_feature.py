@@ -49,8 +49,8 @@ class NumericalFeature:
 
     @staticmethod
     def extend_alphabet(df_scales : pd.DataFrame = None,
-                        letter_new : str = None,
-                        value_type : Literal["min", "mean", "median", "max"] = "mean" ,
+                        new_letter : str = None,
+                        value_type : Literal["min", "mean", "median", "max"] = "mean",
                         ) -> pd.DataFrame:
         """
         Extend amino acid alphabet of ``df_scales`` by new letter.
@@ -63,7 +63,7 @@ class NumericalFeature:
         ----------
         df_scales : pd.DataFrame, shape (n_letters, n_scales)
             DataFrame of scales with letters typically representing amino acids.
-        letter_new : str
+        new_letter : str
             The new letter to be added to the alphabet.
         value_type : {'min', 'mean', 'median', 'max'}, default='mean'
             The type of statistic to compute for the new letter (one of 'min', 'mean', 'median', 'max').
@@ -80,9 +80,9 @@ class NumericalFeature:
         # Check input
         df_scales = df_scales.copy()
         check_df_scales(df_scales=df_scales)
-        ut.check_str(name="letter_new", val=letter_new)
+        ut.check_str(name="letter_new", val=new_letter)
         check_value_type(value_type=value_type)
-        check_match_df_scales_letter_new(df_scales=df_scales, letter_new=letter_new)
+        check_match_df_scales_letter_new(df_scales=df_scales, letter_new=new_letter)
         # Compute the statistic for each scale
         if value_type == "min":
             new_values = df_scales.min()
@@ -93,7 +93,7 @@ class NumericalFeature:
         else:
             new_values = df_scales.max()
         # Add the new letter to the DataFrame
-        df_scales.loc[letter_new] = new_values
+        df_scales.loc[new_letter] = new_values
         return df_scales
 
     """

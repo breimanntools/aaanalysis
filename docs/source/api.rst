@@ -35,7 +35,6 @@ Feature Engineering
     :toctree: generated/
     :template: autosummary/class_template.rst
 
-
     AAclust
     AAclustPlot
     SequenceFeature
@@ -62,7 +61,6 @@ Explainable AI
     :toctree: generated/
     :template: autosummary/class_template.rst
 
-
     TreeModel
     ShapModel
 
@@ -73,7 +71,6 @@ Perturbation
 .. autosummary::
     :toctree: generated/
     :template: autosummary/class_template.rst
-
 
     AAMut
     AAMutPlot
@@ -105,3 +102,12 @@ Metric Utilities
     comp_auc_adjusted
     comp_bic_score
     comp_kld
+
+.. _options:
+
+Options
+-------
+.. autosummary::
+    :toctree: generated/
+
+    options

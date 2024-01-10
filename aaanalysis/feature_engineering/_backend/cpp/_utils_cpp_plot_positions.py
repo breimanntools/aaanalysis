@@ -113,6 +113,9 @@ def _add_part_seq(ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, x_shift
 def _add_part_seq_second_ticks(ax2=None, seq_size=11.0, xticks=None, xtick_labels=None,
                                fontsize_tmd_jmd=11, xtick_size=11, x_shift=0.5):
     """Add additional ticks for box of sequence parts"""
+    name_tmd = ut.options["name_tmd"]
+    name_jmd_n = ut.options["name_jmd_n"]
+    name_jmd_c = ut.options["name_jmd_c"]
     # Move twinned axis ticks and label from top to bottom
     ax2.xaxis.set_ticks_position("bottom")
     ax2.xaxis.set_label_position("bottom")
@@ -125,10 +128,10 @@ def _add_part_seq_second_ticks(ax2=None, seq_size=11.0, xticks=None, xtick_label
     labels = ax2.xaxis.get_ticklabels()
     for l in labels:
         text = l.get_text()
-        if "TMD" in text:
+        if name_tmd in text:
             l.set_size(fontsize_tmd_jmd)
             l.set_weight("bold")
-        elif "JMD" in text:
+        elif name_jmd_n in text or name_jmd_c in text:
             l.set_size(fontsize_tmd_jmd)
             l.set_weight("bold")
 
@@ -226,11 +229,14 @@ class PlotPositions:
 
     def add_tmd_jmd_text(self, ax=None, x_shift=0, fontsize_tmd_jmd=None):
         """"""
+        name_tmd = ut.options["name_tmd"]
+        name_jmd_n = ut.options["name_jmd_n"]
+        name_jmd_c = ut.options["name_jmd_c"]
         jmd_n_start, tmd_start, jmd_c_start = self._get_starts(x_shift=x_shift)
         if fontsize_tmd_jmd is None or fontsize_tmd_jmd > 0:
-            _add_part_text(ax=ax, start=tmd_start, len_part=self.tmd_len, text="TMD", fontsize=fontsize_tmd_jmd)
-            _add_part_text(ax=ax, start=jmd_n_start, text="JMD-N", len_part=self.jmd_n_len, fontsize=fontsize_tmd_jmd)
-            _add_part_text(ax=ax, start=jmd_c_start, text="JMD-C", len_part=self.jmd_c_len, fontsize=fontsize_tmd_jmd)
+            _add_part_text(ax=ax, start=tmd_start, len_part=self.tmd_len, text=name_tmd, fontsize=fontsize_tmd_jmd)
+            _add_part_text(ax=ax, start=jmd_n_start, text=name_jmd_n, len_part=self.jmd_n_len, fontsize=fontsize_tmd_jmd)
+            _add_part_text(ax=ax, start=jmd_c_start, text=name_jmd_c, len_part=self.jmd_c_len, fontsize=fontsize_tmd_jmd)
 
     def add_tmd_jmd_xticks(self, ax=None, x_shift=0, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0):
         """"""
@@ -262,14 +268,17 @@ class PlotPositions:
                                  tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
         fontsize_tmd_jmd = seq_size * 1.1 if fontsize_tmd_jmd is None else fontsize_tmd_jmd
         # Set second axis (with ticks and part annotations)
+        name_tmd = ut.options["name_tmd"]
+        name_jmd_n = ut.options["name_jmd_n"]
+        name_jmd_c = ut.options["name_jmd_c"]
         jmd_n_end, tmd_end, jmd_c_end = self._get_ends(x_shift=-1)
         jmd_n_middle, tmd_middle, jmd_c_middle = self._get_middles(x_shift=-0.5)
         if not xticks_pos:
             xticks = [jmd_n_middle, tmd_middle, jmd_c_middle]
-            xtick_labels = ["JMD-N", "TMD", "JMD-C"]
+            xtick_labels = [name_jmd_n, name_tmd, name_jmd_c]
         else:
             xticks = [0, jmd_n_middle, jmd_n_end, tmd_middle, tmd_end, jmd_c_middle, jmd_c_end]
-            xtick_labels = [self.start, "JMD-N", jmd_n_end + self.start, "TMD", tmd_end + self.start, "JMD-C",
+            xtick_labels = [self.start, name_jmd_n, jmd_n_end + self.start, name_tmd, tmd_end + self.start, name_jmd_c,
                             jmd_c_end + self.start]
         ax2 = get_new_axis(ax=ax, heatmap=heatmap)
         ax2.set_xlim(ax.get_xlim())
