@@ -61,7 +61,7 @@ Explainable AI
     :toctree: generated/
     :template: autosummary/class_template.rst
 
-    #TreeModel
+    TreeModel
     ShapModel
 
 .. _perturbation_api:

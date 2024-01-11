@@ -54,6 +54,18 @@ class TestdPULearnPlotEval:
         assert fig.get_size_inches()[1] == figsize[1]
         plt.close(fig)
 
+    def test_dict_xlims(self):
+        df_eval = _create_sample_df_eval()
+        dict_xlims_a = {0: (0, 3)}
+        dict_xlims_b = {1: (1, 4), 2: (-2, 4)}
+        dict_xlims_c = {}
+        for dict_xlims in [dict_xlims_a, dict_xlims_b, dict_xlims_c]:
+            fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval, dict_xlims=dict_xlims)
+            assert isinstance(fig, plt.Figure)
+            assert isinstance(axes, np.ndarray)
+            assert isinstance(axes[0], plt.Axes)
+            plt.close(fig)
+
     def test_legend_valid(self):
         df_eval = _create_sample_df_eval()
         for legend in [True, False]:
@@ -103,6 +115,16 @@ class TestdPULearnPlotEval:
         df_eval = _create_sample_df_eval()
         with pytest.raises(ValueError):
             aa.dPULearnPlot.eval(df_eval=df_eval, figsize=(0, 4))
+
+    def test_dict_xlims_invalid(self):
+        df_eval = _create_sample_df_eval()
+        dict_xlims_a = {10: (0, 3)}
+        dict_xlims_b = {1: ("1", 4), 2: (-2, 4)}
+        dict_xlims_c = {1: (5, 2), 2: (-2, 4)}
+        for dict_xlims in [dict_xlims_a, dict_xlims_b, dict_xlims_c]:
+            with pytest.raises(ValueError):
+                fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval, dict_xlims=dict_xlims)
+                plt.close(fig)
 
     def test_legend_y_invalid(self):
         df_eval = _create_sample_df_eval()

@@ -53,7 +53,7 @@ class TestAAclustPlotEval:
 
     def test_dict_xlims_input(self):
         """Test the 'dict_xlims' parameter with valid data."""
-        dict_xlims = {"BIC": (2, 5), "CH": (3, 5)}
+        dict_xlims = {0: (2, 5), 1: (3, 5)}
         data = np.random.randn(5, 4)
         df_eval = pd.DataFrame(data, columns=COLS_EVAL)
         df_eval = _add_names_to_df_eval(df_eval=df_eval)
@@ -103,11 +103,15 @@ class TestAAclustPlotEval:
 
     def test_invalid_dict_xlims(self):
         """Test the 'dict_xlims' parameter with valid data."""
-        dict_xlims = {"BIC": (2, -5), "CH": (3, -5)}
+        dict_xlims = {0: (2, -5), 1: (3, -5)}
         data = np.random.randn(5, 4)
         df_eval = pd.DataFrame(data, columns=COLS_EVAL)
         with pytest.raises(ValueError):
             fig, axes =  aa.AAclustPlot().eval(df_eval=df_eval, dict_xlims=dict_xlims)
+            plt.close()
+        dict_xlims = {"0": (2, -5), "1": (3, -5)}
+        with pytest.raises(ValueError):
+            fig, axes = aa.AAclustPlot().eval(df_eval=df_eval, dict_xlims=dict_xlims)
             plt.close()
 
 
@@ -118,7 +122,7 @@ class TestEvalComplex:
         """Test with a valid use case."""
         data = [[0.5, 0.4, 5, 6], [0.3, 0.7, 1, 2], [0.9, 0.1, 5, 3]]
         names = ["Set 1", "Set 2", "Set 3"]
-        dict_xlims = {"n_clusters": (2, 4), "BIC": (0.1, 1.0), "CH": (0.2, 0.8), "SC": (0.3, 0.9)}
+        dict_xlims = {0: (2, 4), 1: (0.1, 1.0), 2: (0.2, 0.8), 3: (0.3, 0.9)}
         figsize = (8, 7)
         df_eval = pd.DataFrame(data, columns=COLS_EVAL)
         df_eval = _add_names_to_df_eval(df_eval=df_eval, names_datasets=names)

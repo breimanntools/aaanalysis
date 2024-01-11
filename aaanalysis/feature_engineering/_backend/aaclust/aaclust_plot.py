@@ -64,9 +64,6 @@ def plot_eval(df_eval=None, dict_xlims=None, figsize=None, colors=None):
         ax.set_xlabel(col)
         # Adjust spines
         ax = ut.adjust_spine_to_middle(ax=ax)
-        # Manual xlims, if needed
-        if dict_xlims and col in dict_xlims:
-            ax.set_xlim(dict_xlims[col])
         if i == 0:
             ax.set_title("Clustering", weight="bold")
         elif i == 2:
@@ -74,6 +71,10 @@ def plot_eval(df_eval=None, dict_xlims=None, figsize=None, colors=None):
         ax.tick_params(axis='y', which='both', left=False)
         if i != 0:
             ut.x_ticks_0(ax=ax)
+    # Set xlims
+    if dict_xlims is not None:
+        for i in dict_xlims:
+            axes[i].set_xlim(dict_xlims[i])
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.25, hspace=0)
     return fig, axes

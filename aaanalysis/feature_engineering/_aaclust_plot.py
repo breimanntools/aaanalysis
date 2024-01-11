@@ -29,18 +29,6 @@ def check_match_df_eval_names(df_eval=None, names=None):
     return df_eval
 
 
-def check_dict_xlims(dict_xlims=None):
-    """Validate the structure and content of dict_xlims to ensure it contains the correct keys and value formats."""
-    if dict_xlims is None:
-        return
-    ut.check_dict(name="dict_xlims", val=dict_xlims)
-    wrong_keys = [x for x in list(dict_xlims) if x not in ut.COLS_EVAL_AACLUST]
-    if len(wrong_keys) > 0:
-        raise ValueError(f"'dict_xlims' should not contain the following keys: {wrong_keys}")
-    for key in dict_xlims:
-        ut.check_lim(name="xlim", val=dict_xlims[key])
-
-
 # Check correlation plot
 def check_match_df_corr_labels(df_corr=None, labels=None):
     """Ensure the number of labels matches the number of samples in df_corr"""
@@ -179,8 +167,8 @@ class AAclustPlot:
 
     @staticmethod
     def eval(df_eval: pd.DataFrame = None,
-             dict_xlims: Optional[Union[None, dict]] = None,
              figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
+             dict_xlims: Optional[Union[None, dict]] = None,
              ) -> Tuple[plt.Figure, plt.Axes]:
         """
         Plots evaluation of ``n_clusters`` and clustering metrics ``BIC``, ``CH``, and ``SC`` from ``df_seq``.
@@ -199,11 +187,11 @@ class AAclustPlot:
             - 'CH': Calinski-Harabasz Index.
             - 'SC': Silhouette Coefficient.
 
-        dict_xlims : dict, optional
-            A dictionary containing x-axis limits (``xmin``, ``xmax``) for selected evaluation measure metric subplots.
-            Keys should be names of the ``evaluation measures`` (e.g., 'BIC'). If ``None``, x-axis are auto-scaled.
         figsize : tuple, default=(7, 6)
             Figure dimensions (width, height) in inches.
+        dict_xlims : dict, optional
+            A dictionary containing x-axis limits for subplots. Keys should be the subplot axis number ({0, 1, 2, 4})
+            and values should be tuple specifying (``xmin``, ``xmax``). If ``None``, x-axis limits are auto-scaled.
 
         Returns
         -------
@@ -226,8 +214,7 @@ class AAclustPlot:
         """
         # Check input
         ut.check_df(name="df_eval", df=df_eval, cols_requiered=ut.COLS_EVAL_AACLUST, accept_none=False, accept_nan=False)
-        # TODO check if needed
-        check_dict_xlims(dict_xlims=dict_xlims)
+        ut.check_dict_xlims(dict_xlims=dict_xlims, n_ax=4)
         ut.check_figsize(figsize=figsize, accept_none=True)
         # Plotting
         colors = ut.plot_get_clist_(n_colors=4)

@@ -79,6 +79,19 @@ class TestCPPPlotEval:
             assert fig.get_size_inches()[1] == figsize[1]
             plt.close()
 
+    def test_dict_xlims_input(self):
+        """Test the 'dict_xlims' parameter with valid data."""
+        dict_xlims = {0: (2, 5), 1: (3, 5), 4: (0, 10)}
+        df_eval = create_valid_df_eval(n_rows=5)
+        cpp_plot = aa.CPPPlot()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            fig, axes = cpp_plot.eval(df_eval=df_eval, dict_xlims=dict_xlims)
+            assert isinstance(fig, plt.Figure)
+            assert isinstance(axes, np.ndarray)
+            plt.close()
+
+
     def test_legend_input(self):
         for legend in [True, False]:
             df_eval = create_valid_df_eval(n_rows=5)
@@ -132,6 +145,16 @@ class TestCPPPlotEval:
         cpp_plot = aa.CPPPlot()
         with pytest.raises(ValueError):
             cpp_plot.eval(df_eval=df_eval, figsize=('invalid', 'input'))
+
+    def test_invlaid_dict_xlims(self):
+        df_eval = create_valid_df_eval(n_rows=5)
+        cpp_plot = aa.CPPPlot()
+        with pytest.raises(ValueError):
+            cpp_plot.eval(df_eval=df_eval, dict_xlims=('invalid', 'input'))
+        with pytest.raises(ValueError):
+            cpp_plot.eval(df_eval=df_eval, dict_xlims={10: (10, 12)})
+        with pytest.raises(ValueError):
+            cpp_plot.eval(df_eval=df_eval, dict_xlims={2: ("10", 12)})
 
     def test_dict_color_invalid_input(self):
         df_eval = create_valid_df_eval(n_rows=5)

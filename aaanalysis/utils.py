@@ -26,7 +26,7 @@ from ._utils.check_data import (check_X, check_X_unique_samples,
                                 check_array_like, check_superset_subset,
                                 check_df)
 from ._utils.check_models import check_mode_class, check_model_kwargs
-from ._utils.check_plots import (check_vmin_vmax, check_lim,
+from ._utils.check_plots import (check_vmin_vmax, check_lim, check_dict_xlims,
                                  check_color, check_list_colors, check_dict_color,
                                  check_cmap, check_palette)
 

@@ -75,6 +75,7 @@ class dPULearnPlot:
     @staticmethod
     def eval(df_eval: pd.DataFrame = None,
              figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
+             dict_xlims: Optional[Union[None, dict]] = None,
              legend: bool = True,
              legend_y: float = -0.175,
              colors: Optional[List[str]] = None,
@@ -107,6 +108,9 @@ class dPULearnPlot:
 
         figsize : tuple, default=(6, 4)
             Figure dimensions (width, height) in inches.
+        dict_xlims : dict, optional
+            A dictionary containing x-axis limits for subplots. Keys should be the subplot axis number ({0, 1, 2, 4})
+            and values should be tuple specifying (``xmin``, ``xmax``). If ``None``, x-axis limits are auto-scaled.
         legend : bool, default=True
             If ``True``, legend is set under dissimilarity measures.
         legend_y : float, default=-0.175
@@ -139,13 +143,16 @@ class dPULearnPlot:
         cols_requiered = [ut.COL_NAME, ut.COL_AVG_STD, ut.COL_AVG_IQR, ut.COL_AVG_ABS_AUC_POS, ut.COL_AVG_ABS_AUC_UNL]
         ut.check_df(name="df_eval", df=df_eval, cols_requiered=cols_requiered, accept_none=False, accept_nan=False)
         ut.check_figsize(figsize=figsize, accept_none=True)
+        ut.check_dict_xlims(dict_xlims=dict_xlims, n_ax=4)
         ut.check_bool(name="legend", val=legend)
         ut.check_number_val(name="legend_y", val=legend_y)
         ut.check_list_colors(name="colors", val=colors, accept_none=True, min_n=4)
         # Plotting
         if colors is None:
             colors = [ut.COLOR_REL_NEG, ut.COLOR_POS, ut.COLOR_UNL, ut.COLOR_NEG]
-        fig, axes = plot_eval(df_eval=df_eval, colors=colors, figsize=figsize, legend=legend, legend_y=legend_y)
+        fig, axes = plot_eval(df_eval=df_eval, colors=colors,
+                              figsize=figsize, dict_xlims=dict_xlims,
+                              legend=legend, legend_y=legend_y)
         return fig, axes
 
     @staticmethod

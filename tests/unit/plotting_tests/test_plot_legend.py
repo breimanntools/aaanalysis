@@ -41,7 +41,7 @@ class TestPlotSetLegend:
         with pytest.raises(ValueError):
             aa.plot_legend(ax=self.ax, dict_color=dict_color, lw="not right")
 
-    @settings(max_examples=5, deadline=500)
+    @settings(max_examples=7, deadline=500)
     @given(marker_size=st.floats(min_value=-5, max_value=-1))
     def test_invalid_marker_size(self, marker_size, dict_color):
         with pytest.raises(ValueError):

@@ -42,6 +42,22 @@ def check_lim(name="xlim", val=None, accept_none=True):
         raise ValueError(f"'{name}:min' ({min_val}) should be < '{name}:max' ({max_val}).")
 
 
+def check_dict_xlims(dict_xlims=None, n_ax=None):
+    """Validate the structure and content of dict_xlims to ensure it contains the correct keys and value formats."""
+    if n_ax is None:
+        # DEV: Developer warning
+        raise ValueError("'n_ax' must be specified")
+    if dict_xlims is None:
+        return
+    ut_check.check_dict(name="dict_xlims", val=dict_xlims)
+    wrong_keys = [x for x in list(dict_xlims) if x not in range(n_ax)]
+    if len(wrong_keys) > 0:
+        raise ValueError(
+            f"'dict_xlims' contains invalid keys: {wrong_keys}. Valid keys are axis indices from 0 to {n_ax - 1}.")
+    for key in dict_xlims:
+        check_lim(name="xlim", val=dict_xlims[key])
+
+
 # Check colors
 def check_color(name=None, val=None, accept_none=False):
     """Check if the provided value is a valid color for matplotlib."""

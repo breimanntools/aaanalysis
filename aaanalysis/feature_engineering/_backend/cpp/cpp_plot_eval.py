@@ -135,7 +135,7 @@ def _plot_feat_per_cluster(ax=None, df_eval=None):
     ax.set_xlabel('n feat/clust\n(avg ± std)')
 
 # II Main functions
-def plot_eval(df_eval=None, figsize=(8, 5), dict_color=None, legend=True, legend_y=-0.3, list_cat=None):
+def plot_eval(df_eval=None, figsize=(8, 5), dict_xlims=None, dict_color=None, legend=True, legend_y=-0.3, list_cat=None):
     """Plot evaluation of CPP feature sets"""
     # Reverse order to have first dataset on top
     _df_eval = df_eval.iloc[::-1].reset_index(drop=True)
@@ -146,6 +146,10 @@ def plot_eval(df_eval=None, figsize=(8, 5), dict_color=None, legend=True, legend
     _plot_avg_mean_dif(ax=axes[2], df_eval=_df_eval)
     _plot_n_clusters(ax=axes[3], df_eval=_df_eval)
     _plot_feat_per_cluster(ax=axes[4], df_eval=_df_eval)
+    # Set xlims
+    if dict_xlims is not None:
+        for i in dict_xlims:
+            axes[i].set_xlim(dict_xlims[i])
     # Adding central titles
     x_min = axes[1].get_xlim()[0]
     axes[1].set_title('Discriminative Power', ha='left', va='center', x=x_min, weight="bold")

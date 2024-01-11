@@ -270,6 +270,7 @@ class CPPPlot:
     @staticmethod
     def eval(df_eval: pd.DataFrame = None,
              figsize: Tuple[int or float, int or float] = (6, 4),
+             dict_xlims: Optional[Union[None, dict]] = None,
              legend: bool = True,
              legend_y: float = -0.3,
              dict_color: Optional[dict] = None,
@@ -301,6 +302,9 @@ class CPPPlot:
 
         figsize : tuple, default=(6, 4)
             Figure dimensions (width, height) in inches.
+        dict_xlims : dict, optional
+            A dictionary containing x-axis limits for subplots. Keys should be the subplot axis number ({0, 1, 2, 4})
+            and values should be tuple specifying (``xmin``, ``xmax``). If ``None``, x-axis limits are auto-scaled.
         legend : bool, default=True
             If ``True``, scale category legend is set under number of features measures.
         legend_y : float, default=-0.3
@@ -339,6 +343,7 @@ class CPPPlot:
         ut.check_df(name="df_eval", df=df_eval, cols_requiered=cols_requiered, accept_none=False, accept_nan=False)
         check_df_eval(df_eval=df_eval)
         ut.check_figsize(figsize=figsize, accept_none=True)
+        ut.check_dict_xlims(dict_xlims=dict_xlims, n_ax=5)
         ut.check_bool(name="legend", val=legend)
         ut.check_number_val(name="legend_y", val=legend_y)
         ut.check_dict_color(name="dict_color", val=dict_color, accept_none=True)
@@ -351,7 +356,7 @@ class CPPPlot:
         check_match_df_eval_list_cat(df_eval=df_eval, list_cat=list_cat)
         dict_color = check_match_dict_color_list_cat(dict_color=dict_color, list_cat=list_cat)
         # Plotting
-        fig, axes = plot_eval(df_eval=df_eval, figsize=figsize,
+        fig, axes = plot_eval(df_eval=df_eval, figsize=figsize, dict_xlims=dict_xlims,
                               legend=legend, legend_y=legend_y,
                               dict_color=dict_color, list_cat=list_cat)
         return fig, axes

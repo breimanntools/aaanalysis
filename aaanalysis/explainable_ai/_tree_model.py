@@ -87,7 +87,7 @@ def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, fe
 # II Main Functions
 class TreeModel:
     """
-    Tree Model class: A wrapper for tree-based prediction models to obtain feature importance.
+    UNDER CONSTRUCTION - Tree Model class: A wrapper for tree-based prediction models to obtain feature importance.
 
     Attributes
     ----------
@@ -218,7 +218,7 @@ class TreeModel:
           for recursive feature elimination.
         * :class:`sklearn.feature_selection.RFECV` for similar cross-validation based recursive feature elimination
           algorithm. This one does not provide an upper limit for the number of features to select.
-        * :funct:`sklearn.model_selection.cross_validate` for details on cross-validation
+        * :func:`sklearn.model_selection.cross_validate` for details on cross-validation
         * Sckit-learn `cross-validation <https://scikit-learn.org/stable/modules/cross_validation.html>`_ documentation.
         * Sckit-learn `classification metrics and scorings <https://scikit-learn.org/stable/modules/model_evaluation.html>`_.
 

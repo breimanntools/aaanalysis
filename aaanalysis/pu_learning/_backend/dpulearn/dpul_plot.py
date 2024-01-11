@@ -46,7 +46,7 @@ def _plot_dist_dissimilarity(ax=None, df_eval=None, cols=None, colors=None, val_
 
 
 # II Main Functions
-def plot_eval(df_eval=None, figsize=None, colors=None, legend=True, legend_y=-0.175):
+def plot_eval(df_eval=None, figsize=None, dict_xlims=None, colors=None, legend=True, legend_y=-0.175):
     """Plot evaluation of AAclust clustering results"""
     cols_eval = [x for x in ut.COLS_EVAL_DPULEARN if x in list(df_eval)]
     cols_homogeneity = cols_eval[1:3]
@@ -74,6 +74,11 @@ def plot_eval(df_eval=None, figsize=None, colors=None, legend=True, legend_y=-0.
         ut.plot_legend_(ax=ax, dict_color=dict_color,
                         title="Reference datasets", y=legend_y, handletextpad=0.1)
     # Adjust plot
+    if dict_xlims is not None:
+        for i in dict_xlims:
+            # Check that KLD axis are only set if valid
+            if i <= ncols:
+                axes[i].set_xlim(dict_xlims[i])
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.25, hspace=0)
     return fig, axes
