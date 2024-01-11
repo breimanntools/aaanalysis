@@ -34,15 +34,17 @@ class TestdPULearn:
     @settings(deadline=1000, max_examples=10)
     @given(data=some.data())
     def test_pca_kwargs_various_combinations(self, data):
-        """Test the 'pca_kwargs' parameter with various valid combinations."""
-        # Generate a pca_kwargs dictionary with a combination of parameters
-        pca_kwargs = {param: data.draw(some.sampled_from(values)) for param, values in valid_pca_params.items()}
+        """Test the 'model_kwargs' parameter with various valid combinations."""
+        # Generate a model_kwargs dictionary with a combination of parameters
+        model_kwargs = {param: data.draw(some.sampled_from(values)) for param, values in valid_pca_params.items()}
         valid_args = list(inspect.signature(PCA).parameters.keys())
-        pca_kwargs = {key: pca_kwargs[key] for key in pca_kwargs if key in valid_args}
-        # Create the dPULearn model with generated pca_kwargs
-        model = aa.dPULearn(pca_kwargs=pca_kwargs)
-        # Assert that the pca_kwargs in the model match the generated ones
-        assert model.pca_kwargs == pca_kwargs
+        model_kwargs = {key: model_kwargs[key] for key in model_kwargs if key in valid_args}
+        # Create the dPULearn model with generated model_kwargs
+        model = aa.dPULearn(model_kwargs=model_kwargs)
+        # Assert that the model_kwargs in the model match the generated ones
+        if "random_state" not in model_kwargs:
+            model_kwargs.update(dict(random_state=None))
+        assert model._model_kwargs == model_kwargs
 
 
     # Negative tests
@@ -54,7 +56,7 @@ class TestdPULearn:
         pca_kwargs = {key: pca_kwargs[key] for key in pca_kwargs if key not in valid_args}
         pca_kwargs["invalid_param"] = "invalid_value"   # At least one invalid
         with pytest.raises(ValueError):
-            aa.dPULearn(pca_kwargs=pca_kwargs)
+            aa.dPULearn(model_kwargs=pca_kwargs)
 
 
 class TestdPULearnComplex:
@@ -62,24 +64,25 @@ class TestdPULearnComplex:
 
     # Positive tests
     @settings(deadline=1000, max_examples=10)
-    @given(verbose=some.booleans(), pca_kwargs=some.dictionaries(keys=some.text(), values=some.integers()))
-    def test_verbose_and_pca_kwargs(self, verbose, pca_kwargs):
+    @given(verbose=some.booleans(), model_kwargs=some.dictionaries(keys=some.text(), values=some.integers()))
+    def test_verbose_and_pca_kwargs(self, verbose, model_kwargs):
         """Test 'verbose' and 'pca_kwargs' parameters together."""
         valid_args = list(inspect.signature(PCA).parameters.keys())
-        pca_kwargs = {key: pca_kwargs[key] for key in pca_kwargs if key in valid_args}
-        model = aa.dPULearn(verbose=verbose, pca_kwargs=pca_kwargs)
+        model_kwargs = {key: model_kwargs[key] for key in model_kwargs if key in valid_args}
+        model = aa.dPULearn(verbose=verbose, model_kwargs=model_kwargs)
+        if "random_state" not in model_kwargs:
+            model_kwargs.update(dict(random_state=None))
         assert model._verbose == verbose
-        assert model.pca_kwargs == pca_kwargs
+        assert model._model_kwargs == model_kwargs
 
 
     # Negative tests
     @settings(deadline=1000, max_examples=10)
-    @given(verbose=some.booleans(), pca_kwargs=some.dictionaries(keys=some.text(), values=some.just("invalid_value")))
-    def test_valid_verbose_and_invalid_pca_and_kwargs(self, verbose, pca_kwargs):
+    @given(verbose=some.booleans(), model_kwargs=some.dictionaries(keys=some.text(), values=some.just("invalid_value")))
+    def test_valid_verbose_and_invalid_pca_and_kwargs(self, verbose, model_kwargs):
         """Test combining valid 'verbose' with invalid 'pca_kwargs'."""
         valid_args = list(inspect.signature(PCA).parameters.keys())
-        pca_kwargs = {key: pca_kwargs[key] for key in pca_kwargs if key not in valid_args}
-        pca_kwargs["invalid_param"] = "invalid_value"   # At least one invalid
+        model_kwargs = {key: model_kwargs[key] for key in model_kwargs if key not in valid_args}
+        model_kwargs["invalid_param"] = "invalid_value"   # At least one invalid
         with pytest.raises(ValueError):
-            aa.dPULearn(verbose=verbose, pca_kwargs=pca_kwargs)
-
+            aa.dPULearn(verbose=verbose, model_kwargs=model_kwargs)

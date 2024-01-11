@@ -51,7 +51,9 @@ def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan
         else:
             raise ValueError(f"'{name}' should not be None.")
     # Type checking
-    if dtype == 'int':
+    if dtype == "numeric":
+        expected_dtype = "numeric"
+    elif dtype == 'int':
         expected_dtype = 'int'
     elif dtype == 'float':
         expected_dtype = 'float64'

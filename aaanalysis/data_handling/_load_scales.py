@@ -54,6 +54,18 @@ def _get_selected_scales(top60_n=None):
     return selected_scales
 
 
+def _adjust_dtypes(df=None, name=None):
+    """Set dtypes to avoid loading problems"""
+    # Adjust data type of column values
+    name_all_float = [ut.STR_SCALES, ut.STR_SCALES_RAW, ut.STR_SCALES_PC]
+    name_all_int = [ut.STR_TOP60]
+    if name in name_all_float:
+        df = df.astype(float)
+    elif name in name_all_int:
+        df = df.astype(int)
+    return df
+
+
 # II Main Functions
 def load_scales(name: str = "scales",
                 just_aaindex: bool = False,
@@ -126,7 +138,6 @@ def load_scales(name: str = "scales",
     ut.check_bool(name="just_aaindex", val=just_aaindex)
     ut.check_bool(name="unclassified_in", val=unclassified_out)
     top60_n = check_top60_n(name=name, top60_n=top60_n)
-
     # Load and filter top60 scales
     if top60_n is not None:
         selected_scales = _get_selected_scales(top60_n=top60_n)
@@ -137,6 +148,7 @@ def load_scales(name: str = "scales",
         elif name in [ut.STR_SCALES, ut.STR_SCALES_RAW]:
             df = ut.read_excel_cached(ut.FOLDER_DATA + name + ".xlsx", index_col=0)
             df = df[selected_scales]
+            df = _adjust_dtypes(df=df, name=name)
             return df.copy()
         else:
             raise ValueError(f"Wrong 'name' ('{name}') for 'top60_n")
@@ -147,6 +159,7 @@ def load_scales(name: str = "scales",
             df_cat = ut.read_excel_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.xlsx")
             return df_cat
         df = ut.read_excel_cached(ut.FOLDER_DATA + name + ".xlsx", index_col=0)
+        df = _adjust_dtypes(df=df, name=name)
         return df.copy()
 
     # Load and filter scale categories
@@ -160,11 +173,5 @@ def load_scales(name: str = "scales",
     if name in [ut.STR_SCALES, ut.STR_SCALES_RAW]:
         selected_scales = [x for x in list(df) if x in list(df_cat[ut.COL_SCALE_ID])]
         df = df[selected_scales]
-    # Adjust data type of column values
-    name_all_float = [ut.STR_SCALES, ut.STR_SCALES_RAW, ut.STR_SCALES_PC]
-    name_all_int = [ut.STR_TOP60]
-    if name in name_all_float:
-        df = df.astype(float)
-    elif name in name_all_int:
-        df = df.astype(int)
+    df = _adjust_dtypes(df=df, name=name)
     return df.copy()

@@ -2,19 +2,83 @@
 This is a script for setting system level options for AAanalysis.
 """
 from typing import Dict, Any
+import os
+
+from ._utils.check_type import check_bool, check_number_val, check_number_range, check_str
+from ._utils.check_data import check_df
 
 # System level options
-verbose = True
-random_state = 42
-name_tmd = "TMD"
-name_jmd_n = "JMD-N"
-name_jmd_c = "JMD-C"
-ext_len = 0
-df_scales = None
-df_cat = None
+_dict_options = {
+    'verbose': True,
+    'random_state': "off",
+    'allow_multiprocessing': True,
+    'name_tmd': "TMD",
+    'name_jmd_n': "JMD-N",
+    'name_jmd_c': "JMD-C",
+    'ext_len': 0,
+    'df_scales': None,
+    'df_cat': None,
+}
+
+# Check system level (option) parameters or depending parameters
+def check_verbose(verbose=None):
+    """Check if general verbosity is on or off. Adjusted based on options setting and value provided to object"""
+    if verbose is None:
+        # System level verbosity
+        verbose = options['verbose']
+        check_bool(name="verbose (option)", val=verbose)
+    else:
+        check_bool(name="verbose", val=verbose)
+    return verbose
+
+
+def check_n_jobs(n_jobs=None):
+    """Adjust n_jobs to 1 if multiprocessing is not allowed"""
+    allow_multiprocessing = options["allow_multiprocessing"]
+    check_bool(name="allow_multiprocessing (options)", val=allow_multiprocessing)
+    # Disable multiprocessing
+    if not allow_multiprocessing:
+        n_jobs = 1
+        os.environ['LOKY_MAX_CPU_COUNT'] = "1"
+    # Set n_jobs to maximum number of CPUs
+    if n_jobs == -1:
+        n_jobs = os.cpu_count()
+    # Check which n_jobs are allowed
+    check_number_val(name="j_jobs", val=n_jobs, accept_none=True)
+    if n_jobs is None or n_jobs >= 1:
+        check_number_range(name="n_jobs", val=n_jobs, accept_none=True, just_int=True, min_val=1)
+    return n_jobs
+
+
+def check_random_state(random_state=None):
+    """Adjust random state if global is not 'off' (default)"""
+    global_random_state = options["random_state"]
+    if global_random_state != "off":
+        check_number_val(name="random_state (option)", val=global_random_state, accept_none=True, just_int=True)
+        random_state = global_random_state
+    else:
+        check_number_val(name="random_state", val=random_state, accept_none=True, just_int=True)
+    return random_state
+
 
 # DEV: Parameters are used as directive to get better documentation style
 # Enables setting of system level variables like in matplotlib
+def _check_option(name_option="", option=None):
+    """Check if option is valid"""
+    if name_option == "verbose":
+        check_verbose(verbose=option)
+    if name_option == "random_state":
+        if option != "off":
+            check_random_state(random_state=option)
+    if name_option == "allow_multiprocessing":
+        check_bool(name=name_option, val=option)
+    if "name" in name_option:
+        check_str(name=name_option, val=option, accept_none=False)
+    if name_option == "ext_len":
+        check_number_range(name=name_option, val=option, min_val=0, accept_none=False)
+    if "df" in name_option:
+        check_df(name=name_option, df=option, accept_none=False)
+
 class Settings:
     """
      A class for managing system-level settings for AAanalysis.
@@ -22,14 +86,22 @@ class Settings:
     This class mimics a dictionary-like interface, allowing the setting and retrieving
     of system-level options. It is designed to be used as a single global instance, ``options``.
 
-    Paramters
-    ---------
+    Parameters
+    ----------
     The following options can be set:
 
     verbose : bool, default=True
         Whether verbose mode should be enabled or not.
-    random_state : int, default=42
-        Random state variable used for stochastic models from packages like scipy or scikit-learn.
+    random_state : int, None, or 'off', default='off'
+        The seed used by the random number generator.
+
+        * If set to a positive integer, results of stochastic processes are consistent, enabling reproducibility.
+        * If set to ``None``, stochastic processes will be truly random.
+        * If set to 'off', no global random state variable will be set, allowing the underlying libraries to use
+          their default random state behavior.
+
+    allow_multiprocessing : bool, default=True
+        Whether multiprocessing is allowed in general. If ``False``, ``n_jobs`` is automatically set to 1.
     name_tmd : str, default='TMD'
         Name of target middle domain (TMD) used in CPP plots.
     name_jmd_n : str, default='JMD_N'
@@ -52,29 +124,33 @@ class Settings:
     * :class:`SequenceFeature` for definition of sequence ``Parts``.
     * :func:`load_scales` for details on scale and scale category DataFrames.
 
+    Warnings
+    --------
+    * Multiprocessing Compatibility: Enabling multiprocessing (``allow_multiprocessing=True``)
+      can lead to issues in environments that don't support forking or when interfacing with
+      certain libraries. If encountering errors, consider setting ``allow_multiprocessing=False``.
+      Note that this may affect performance in computation-intensive operations.
+
     Examples
     --------
     .. include:: examples/options.rst
     """
     def __init__(self):
-        self._settings: Dict[str, Any] = {
-            'verbose': verbose,
-            'random_state': random_state,
-            'name_tmd': name_tmd,
-            'name_jmd_n': name_jmd_n,
-            'name_jmd_c': name_jmd_c,
-            'ext_len': ext_len,
-            'df_scales': df_scales,
-            'df_cat': df_cat,
-        }
+        self._settings: Dict[str, Any] = _dict_options.copy()
 
     def __getitem__(self, key: str) -> Any:
         """Retrieve a setting's value using dict-like access."""
         return self._settings.get(key, None)
 
     def __setitem__(self, key: str, value: Any) -> None:
-        """Set a setting's value using dict-like access."""
-        self._settings[key] = value
+        """Set a setting's value using dict-like access.
+           Prevent adding new keys that are not already in the system options."""
+        if key in self._settings:
+            _check_option(name_option=key, option=value)
+            self._settings[key] = value
+        else:
+            valid_options = list(_dict_options.keys())
+            raise KeyError(f"'{key}' is not valid options. Valid options are: {valid_options}.")
 
     def __contains__(self, key: str) -> bool:
         """Check if a key is in the settings."""
@@ -83,7 +159,6 @@ class Settings:
     def __str__(self) -> str:
         """Return a string representation of the settings dictionary."""
         return str(self._settings)
-
 
 # Global settings instance
 options = Settings()

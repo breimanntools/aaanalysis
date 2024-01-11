@@ -40,8 +40,8 @@ class TestAAclust:
         """
         aa.options["verbose"] = True
         aac = aa.AAclust()
-        assert aac.model_class == KMeans
-        assert aac._model_kwargs == dict(n_init="auto")
+        assert aac._model_class == KMeans
+        assert aac._model_kwargs == dict(n_init="auto", random_state=None)
         assert aac._verbose is True # Default value from options
         assert aac.model is None
         aa.options["verbose"] = False

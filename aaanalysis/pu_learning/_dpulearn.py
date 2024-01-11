@@ -112,22 +112,33 @@ class dPULearn:
     * See :func:`sklearn.decomposition.PCA`.
     """
     def __init__(self,
-                 pca_kwargs: Optional[dict] = None,
+                 model_kwargs: Optional[dict] = None,
                  verbose: Optional[bool] = None,
+                 random_state: Optional[str] = None,
                  ):
         """
         Parameters
         ----------
+        model_kwargs : dict, optional
+            Additional keyword arguments for Principal Component Analysis (PCA) model.
         verbose : bool, optional
             If ``True``, verbose outputs are enabled. Global ``verbose`` setting is used if ´´None``.
-        pca_kwargs : dict, optional
-            Additional keyword arguments for Principal Component Analysis (PCA) model.
+        random_state : int, optional
+            The seed used by the random number generator. If a positive integer, results of stochastic processes are
+            consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.
+
         """
-        if pca_kwargs is None:
-            pca_kwargs = dict()
-        ut.check_model_kwargs(model_class=PCA, model_kwargs=pca_kwargs, param_to_check=None)
-        self.pca_kwargs = pca_kwargs
-        self._verbose = ut.check_verbose(verbose)
+        # Global parameters
+        verbose = ut.check_verbose(verbose)
+        random_state = ut.check_random_state(random_state=random_state)
+        # Model parameters
+        model_kwargs = ut.check_model_kwargs(model_class=PCA,
+                                             model_kwargs=model_kwargs,
+                                             random_state=random_state)
+        # Internal attributes
+        self._verbose = verbose
+        self._random_state = random_state
+        self._model_kwargs = model_kwargs
         # Output parameters (will be set during model fitting)
         self.labels_ = None
         self.df_pu_ = None
@@ -214,7 +225,7 @@ class dPULearn:
             new_labels, df_pu = get_neg_via_distance(**args, metric=metric)
         # Identify most far away negatives in PCA compressed feature space
         else:
-            new_labels, df_pu = get_neg_via_pca(**args, n_components=n_components, **self.pca_kwargs)
+            new_labels, df_pu = get_neg_via_pca(**args, n_components=n_components, **self._model_kwargs)
         # Set new labels
         self.labels_ = np.asarray(new_labels)
         self.df_pu_ = df_pu

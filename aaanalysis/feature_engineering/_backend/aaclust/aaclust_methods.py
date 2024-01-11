@@ -3,7 +3,6 @@ This is a script for the backend of various AAclust methods.
 """
 import pandas as pd
 import numpy as np
-from collections import OrderedDict
 
 import aaanalysis.utils as ut
 from ._utils_aaclust import _compute_centers, _compute_medoids

@@ -17,8 +17,10 @@ class TestAAclustPlot:
     def test_positive_model_kwargs(self, model_kwargs):
         """Test positive cases for model_kwargs parameter."""
         aac_plot = aa.AAclustPlot(model_class=PCA, model_kwargs=model_kwargs)
-        assert aac_plot.model_kwargs == model_kwargs
-        assert aac_plot.model_class == PCA
+        expected_kwargs = model_kwargs.copy()
+        expected_kwargs.update(dict(random_state=None))
+        assert aac_plot._model_kwargs == expected_kwargs
+        assert aac_plot._model_class == PCA
 
     # Negative Test Cases
     def test_invalid_key_model_kwargs(self):

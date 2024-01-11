@@ -39,10 +39,10 @@ class TestAAclust:
         if model_class_name:
             ModelClass = K_BASED_MODELS[model_class_name]
             aaclust = aa.AAclust(model_class=ModelClass)
-            assert aaclust.model_class is ModelClass
+            assert aaclust._model_class is ModelClass
         elif model_class_name is None:
             aaclust = aa.AAclust()
-            assert aaclust.model_class is KMeans
+            assert aaclust._model_class is KMeans
         else:
             with pytest.raises(ValueError):
                 aa.AAclust(model_class=model_class_name)
@@ -69,6 +69,8 @@ class TestAAclust:
         """Test the 'model_kwargs' parameter."""
         try:
             aaclust = aa.AAclust(model_kwargs=model_kwargs)
+            if "random_state" not in model_kwargs:
+                model_kwargs.update(dict(random_state=None))
             assert aaclust._model_kwargs == model_kwargs
         except Exception as e:
             with pytest.raises(type(e)):
@@ -94,7 +96,9 @@ class TestAAclustComplex:
             ModelClass = K_BASED_MODELS[model_class_name]
             try:
                 aaclust = aa.AAclust(model_class=ModelClass(**model_kwargs), model_kwargs=model_kwargs)
-                assert isinstance(aaclust.model_class, ModelClass)
+                if "random_state" not in model_kwargs:
+                    model_kwargs.update(dict(random_state=None))
+                assert isinstance(aaclust._model_class, ModelClass)
                 assert aaclust._model_kwargs == model_kwargs
             except Exception as e:
                 with pytest.raises(type(e)):
@@ -110,6 +114,8 @@ class TestAAclustComplex:
         """Test 'model_kwargs' and 'verbose' parameters together."""
         try:
             aaclust = aa.AAclust(model_kwargs=model_kwargs, verbose=verbose)
+            if "random_state" not in model_kwargs:
+                model_kwargs.update(dict(random_state=None))
             assert aaclust._model_kwargs == model_kwargs
             assert aaclust._verbose == verbose
         except Exception as e:

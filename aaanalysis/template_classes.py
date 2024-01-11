@@ -37,7 +37,7 @@ class Wrapper(ABC):
     @abstractmethod
     def __init__(self):
         # Model attributes to be implemented by wrapper class
-        self.model_class = None
+        self._model_class = None
         self.model = None
         self.model_kwargs = None
 

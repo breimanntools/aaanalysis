@@ -2,8 +2,8 @@
 This is a script for the frontend of the AAclust class, a clustering wrapper object to obtain redundancy-reduced
 scale subsets.
 """
-import numpy as np
 from typing import Optional, Dict, List, Tuple, Type
+import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.base import ClusterMixin
 from sklearn.exceptions import ConvergenceWarning
@@ -87,7 +87,7 @@ class AAclust(Wrapper):
     Attributes
     ----------
     model : object
-        The instantiated clustering model object after calling the ``fit`` method.
+        The instantiated and fitted clustering model object after calling the ``fit`` method.
     n_clusters : int
         Number of clusters obtained by AAclust.
     labels_ : array-like, shape (n_samples,)
@@ -117,7 +117,9 @@ class AAclust(Wrapper):
     def __init__(self,
                  model_class: Type[ClusterMixin] = KMeans,
                  model_kwargs: Optional[Dict] = None,
-                 verbose: Optional[bool] = None):
+                 verbose: Optional[bool] = None,
+                 random_state: Optional[str] = None,
+                 ):
         """
         Parameters
         ----------
@@ -127,20 +129,30 @@ class AAclust(Wrapper):
             Keyword arguments to pass to the selected clustering model.
         verbose : bool, optional
             If ``True``, verbose outputs are enabled. Global ``verbose`` setting is used if ´´None``.
+        random_state : int, optional
+            The seed used by the random number generator. If a positive integer, results of stochastic processes are
+            consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.
 
         Examples
         --------
         .. include:: examples/aaclust.rst
         """
+        # Global parameters
+        verbose = ut.check_verbose(verbose)
+        random_state = ut.check_random_state(random_state=random_state)
         # Model parameters
-        model_class = ut.check_mode_class(model_class=model_class)
+        ut.check_mode_class(model_class=model_class)
         if model_kwargs is None and model_class is KMeans:
             model_kwargs = dict(n_init="auto")
-        model_kwargs = ut.check_model_kwargs(model_class=model_class, model_kwargs=model_kwargs,
-                                             param_to_check="n_clusters")
-        self.model_class = model_class
+        model_kwargs = ut.check_model_kwargs(model_class=model_class,
+                                             model_kwargs=model_kwargs,
+                                             param_to_check="n_clusters",
+                                             random_state=random_state)
+        # Internal attributes
+        self._verbose = verbose
+        self._random_state = random_state
+        self._model_class = model_class
         self._model_kwargs = model_kwargs
-        self._verbose = ut.check_verbose(verbose)
         # Output parameters (set during model fitting)
         self.model : Optional[ClusterMixin] = None
         self.n_clusters: Optional[int] = None
@@ -236,26 +248,26 @@ class AAclust(Wrapper):
         ut.check_bool(name="on_center", val=on_center)
         check_match_X_n_clusters(X=X, n_clusters=n_clusters, accept_none=True)
         check_match_X_names(X=X, names=names, accept_none=True)
-        args = dict(model=self.model_class, model_kwargs=self._model_kwargs, min_th=min_th, on_center=on_center)
+        args = dict(model=self._model_class, model_kwargs=self._model_kwargs, min_th=min_th, on_center=on_center)
         # Clustering using given clustering models
         if n_clusters is not None:
-            self.model = self.model_class(n_clusters=n_clusters, **self._model_kwargs)
+            self.model = self._model_class(n_clusters=n_clusters, **self._model_kwargs)
             labels = self.model.fit(X).labels_.tolist()
 
         # Clustering using AAclust algorithm
         else:
-            # Step 1.: Estimation of lower bound of k (number of clusters)
+            # 1. Step: Estimation of lower bound of k (number of clusters)
             if self._verbose:
                 ut.print_out("1. Estimation of lower bound of k (number of clusters)", end="")
             n_clusters_lb = estimate_lower_bound_n_clusters(X, **args)
-            # Step 2. Optimization of k by recursive clustering
+            # 2. Step: Optimization of k by recursive clustering
             if self._verbose:
                 objective_fct = "min_cor_center" if on_center else "min_cor_all"
                 ut.print_out(f"2. Optimization of k by recursive clustering ({objective_fct}, min_th={min_th}, k={n_clusters_lb})", end="")
             n_clusters = optimize_n_clusters(X, n_clusters=n_clusters_lb, **args)
-            self.model = self.model_class(n_clusters=n_clusters, **self._model_kwargs)
+            self.model = self._model_class(n_clusters=n_clusters, **self._model_kwargs)
             labels = self.model.fit(X).labels_.tolist()
-            # Step 3. Cluster merging (optional)
+            # 3. Step: Cluster merging (optional)
             if metric is not None:
                 if self._verbose:
                     ut.print_out(f"3. Cluster merging (k={len(labels)})", end="")

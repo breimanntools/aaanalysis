@@ -85,7 +85,9 @@ class CPP(Tool):
                  df_scales: Optional[pd.DataFrame] = None,
                  df_cat: Optional[pd.DataFrame] = None,
                  accept_gaps: bool = False,
-                 verbose: Optional[bool] = None):
+                 verbose: Optional[bool] = None,
+                 random_state: Optional[str] = None,
+                 ):
         """
         Parameters
         ----------
@@ -103,6 +105,9 @@ class CPP(Tool):
             Whether to accept missing values by enabling omitting for computations (if ``True``).
         verbose : bool, optional
             If ``True``, verbose outputs are enabled. Global ``verbose`` setting is used if ´´None``.
+        random_state : int, optional
+            The seed used by the random number generator. If a positive integer, results of stochastic processes are
+            consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.
 
         Notes
         -----
@@ -121,6 +126,7 @@ class CPP(Tool):
             df_cat = ut.load_default_scales(scale_cat=True)
         # Check input
         verbose = ut.check_verbose(verbose)
+        random_state = ut.check_random_state(random_state=random_state)
         check_df_parts(df_parts=df_parts)
         check_split_kws(split_kws=split_kws)
         check_df_scales(df_scales=df_scales)
@@ -130,8 +136,9 @@ class CPP(Tool):
         check_match_df_parts_split_kws(df_parts=df_parts, split_kws=split_kws)
         df_scales, df_cat = check_match_df_scales_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
         # Internal attributes
-        self._verbose = verbose
         self._accept_gaps = accept_gaps
+        self._verbose = verbose
+        self._random_state = random_state
         # Feature components: Scales + Part + Split
         self.df_cat = df_cat.copy()
         self.df_scales = df_scales.copy()
@@ -155,7 +162,7 @@ class CPP(Tool):
             tmd_len: int = 20,
             jmd_n_len: int = 10,
             jmd_c_len: int = 10,
-            n_jobs: Optional[int] = None
+            n_jobs: Optional[int] = 1
             ) -> pd.DataFrame:
         """
         Perform Comparative Physicochemical Profiling (CPP) algorithm: creation and two-step filtering of
@@ -196,8 +203,9 @@ class CPP(Tool):
             Length of JMD-N (>=0).
         jmd_c_len : int, default=10
             Length of JMD-C (>=0).
-        n_jobs : int, optional
-            Number of CPUs used for multiprocessing. If ``None``, number will be optimized automatically.
+        n_jobs : int, None, or -1, default=1
+            Number of CPU cores used for multiprocessing. If ``None``, the number is optimized automatically.
+            If ``-1``, the number is set to all available cores.
 
         Returns
         -------
@@ -250,7 +258,7 @@ class CPP(Tool):
         ut.check_bool(name="parametric", val=parametric)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
-        ut.check_number_range(name="n_jobs", val=n_jobs, min_val=1, accept_none=True, just_int=True)
+        n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         # Settings and creation of objects
         n_feat = len(get_features_(list_parts=list(self.df_parts),
                                    split_kws=self.split_kws,
@@ -260,19 +268,15 @@ class CPP(Tool):
             ut.print_out(f"1. CPP creates {n_feat} features for {len(self.df_parts)} samples")
             ut.print_start_progress()
         # Pre-filtering: Select best n % of feature (filter_pct) based std(test set) and mean_dif
-        try:
-            abs_mean_dif, std_test, features = pre_filtering_info(df_parts=self.df_parts,
-                                                                  split_kws=self.split_kws,
-                                                                  df_scales=self.df_scales,
-                                                                  labels=labels,
-                                                                  label_test=label_test,
-                                                                  label_ref=label_ref,
-                                                                  accept_gaps=self._accept_gaps,
-                                                                  verbose=self._verbose,
-                                                                  n_jobs=n_jobs)
-        # Catch backend not-accepted-gaps error
-        except Exception as e:
-            raise ValueError(e)
+        abs_mean_dif, std_test, features = pre_filtering_info(df_parts=self.df_parts,
+                                                              split_kws=self.split_kws,
+                                                              df_scales=self.df_scales,
+                                                              labels=labels,
+                                                              label_test=label_test,
+                                                              label_ref=label_ref,
+                                                              accept_gaps=self._accept_gaps,
+                                                              verbose=self._verbose,
+                                                              n_jobs=n_jobs)
         n_feat = int(len(features))
         if n_pre_filter is None:
             n_pre_filter = int(n_feat * (pct_pre_filter / 100))
@@ -289,13 +293,9 @@ class CPP(Tool):
                            max_std_test=max_std_test)
         features = df[ut.COL_FEATURE].to_list()
         # Add feature information
-        try:
-            df = add_stat(df_feat=df, df_scales=self.df_scales, df_parts=self.df_parts,
-                          labels=labels, parametric=parametric, accept_gaps=self._accept_gaps,
-                          label_test=label_test, label_ref=label_ref)
-        # Catch backend not-accepted-gaps error
-        except Exception as e:
-            raise ValueError(e)
+        df = add_stat(df_feat=df, df_scales=self.df_scales, df_parts=self.df_parts,
+                      labels=labels, parametric=parametric, accept_gaps=self._accept_gaps,
+                      label_test=label_test, label_ref=label_ref, n_jobs=n_jobs)
         feat_positions = get_positions_(features=features, start=start, **args_len)
         df[ut.COL_POSITION] = feat_positions
         df = add_scale_info_(df_feat=df, df_cat=self.df_cat)
@@ -350,8 +350,9 @@ class CPP(Tool):
             ['ASA/Volume', 'Composition', 'Conformation', 'Energy', 'Others', 'Polarity', 'Shape', 'Structure-Activity']
         list_df_parts : list of pd.DataFrames, optional
             List of part DataFrames each of shape (n_samples, n_parts). Must match with ``list_df_feat``.
-        n_jobs : int, default=1
-            Number of CPUs used for multiprocessing. If ``None``, number will be optimized automatically.
+        n_jobs : int, None, or -1, default=1
+            Number of CPU cores used for multiprocessing. If ``None``, the number is optimized automatically.
+            If ``-1``, the number is set to all available cores.
 
         Returns
         -------
@@ -390,17 +391,17 @@ class CPP(Tool):
         .. include:: examples/cpp_eval.rst
         """
         # Check input
+        list_df_feat = ut.check_list_like(name="list_df_feat", val=list_df_feat, min_len=2)
         ut.check_number_val(name="label_test", val=label_test, just_int=True)
         ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
         labels = ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
                                  len_requiered=len(self.df_parts), allow_other_vals=False)
         ut.check_number_range(name="min_th", val=min_th, min_val=-1, max_val=1, just_int=False)
-        list_df_feat = ut.check_list_like(name="list_df_feat", val=list_df_feat, min_len=2)
         names_feature_sets = ut.check_list_like(name="names_feature_sets", val=names_feature_sets, accept_none=True,
                                             accept_str=True, check_all_str_or_convertible=True)
         list_cat = ut.check_list_like(name="list_cat", val=list_cat, accept_none=True, accept_str=True,
                                       check_all_str_or_convertible=True)
-        ut.check_number_range(name="n_jobs", val=n_jobs, min_val=1, accept_none=True, just_int=True)
+        n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         check_match_list_df_feat_names_feature_sets(list_df_feat=list_df_feat,
                                                     names_feature_sets=names_feature_sets)
         ut.check_list_like(name="list_df_parts", val=list_df_parts, accept_none=True)
@@ -410,17 +411,13 @@ class CPP(Tool):
         if list_cat is None:
             list_cat = ut.LIST_CAT
         check_match_list_df_feat_list_df_parts(list_df_feat=list_df_feat, list_df_parts=list_df_parts)
-        # Evaluation
-        try:
-            df_eval = evaluate_features(list_df_feat=list_df_feat,
-                                        names_feature_sets=names_feature_sets,
-                                        list_cat=list_cat,
-                                        list_df_parts=list_df_parts,
-                                        df_scales=self.df_scales,
-                                        accept_gaps=self._accept_gaps,
-                                        n_jobs=n_jobs,
-                                        min_th=min_th)
-        # Catch backend not-accepted-gaps error
-        except Exception as e:
-            raise ValueError(e)
+        df_eval = evaluate_features(list_df_feat=list_df_feat,
+                                    names_feature_sets=names_feature_sets,
+                                    list_cat=list_cat,
+                                    list_df_parts=list_df_parts,
+                                    df_scales=self.df_scales,
+                                    accept_gaps=self._accept_gaps,
+                                    min_th=min_th,
+                                    n_jobs=n_jobs,
+                                    random_state=self._random_state)
         return df_eval

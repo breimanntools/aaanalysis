@@ -477,22 +477,18 @@ class CPPPlot:
         check_match_df_seq_names_to_show(df_seq=df_seq, names_to_show=names_to_show)
         df_seq = check_match_df_seq_jmd_len(df_seq=df_seq, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
         # Plot feature
-        try:
-            ax = plot_feature(ax=ax, figsize=figsize,
-                              feature=feature, df_scales=self._df_scales, accept_gaps=self._accept_gaps,
-                              df_seq=df_seq, labels=labels, label_test=label_test, label_ref=label_ref,
-                              jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
-                              names_to_show=names_to_show, show_seq=show_seq,
-                              name_test=name_test, name_ref=name_ref,
-                              color_test=color_test, color_ref=color_ref,
-                              fontsize_mean_dif=fontsize_mean_dif,
-                              fontsize_name_test=fontsize_name_test,
-                              fontsize_name_ref=fontsize_name_ref,
-                              fontsize_names_to_show=fontsize_names_to_show,
-                              histplot=histplot, alpha_hist=alpha_hist, alpha_dif=alpha_dif)
-        # Catch backend not-accepted-gaps error
-        except Exception as e:
-            raise ValueError(e)
+        ax = plot_feature(ax=ax, figsize=figsize,
+                          feature=feature, df_scales=self._df_scales, accept_gaps=self._accept_gaps,
+                          df_seq=df_seq, labels=labels, label_test=label_test, label_ref=label_ref,
+                          jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                          names_to_show=names_to_show, show_seq=show_seq,
+                          name_test=name_test, name_ref=name_ref,
+                          color_test=color_test, color_ref=color_ref,
+                          fontsize_mean_dif=fontsize_mean_dif,
+                          fontsize_name_test=fontsize_name_test,
+                          fontsize_name_ref=fontsize_name_ref,
+                          fontsize_names_to_show=fontsize_names_to_show,
+                          histplot=histplot, alpha_hist=alpha_hist, alpha_dif=alpha_dif)
         return ax
 
     # Plotting methods for multiple features (group and sample level)

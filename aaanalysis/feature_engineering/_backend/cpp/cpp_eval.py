@@ -33,14 +33,13 @@ def get_min_cor(X, labels=None):
     return min_cor
 
 
-def get_best_n_clusters(X=None, min_th=0.3):
+def get_best_n_clusters(X=None, min_th=0.3, random_state=None):
     """Obtain the best number of clusters based on internal cluster minimum correlation."""
-    random_state = ut.options["random_state"]
     n_features, _ = X.shape
     max_n = min([100, n_features-1])
     best_n_clusters = max_n
     for n_clusters in range(2, max_n):
-        kmeans = KMeans(n_clusters=n_clusters, random_state=random_state, n_init="auto")
+        kmeans = KMeans(n_clusters=n_clusters, n_init="auto", random_state=random_state)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             labels = kmeans.fit_predict(X)
@@ -52,12 +51,11 @@ def get_best_n_clusters(X=None, min_th=0.3):
     return best_n_clusters
 
 
-def get_features_per_cluster_stats(X=None, n_clusters=2):
+def get_features_per_cluster_stats(X=None, n_clusters=2, random_state=None):
     """Calculate the average number of features per cluster and its standard deviation."""
-    random_state = ut.options["random_state"]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        kmeans = KMeans(n_clusters=n_clusters, random_state=random_state, n_init="auto")
+        kmeans = KMeans(n_clusters=n_clusters, n_init="auto", random_state=random_state)
         labels = kmeans.fit_predict(X)
     # Count features in each cluster
     feat_per_cluster = [np.sum(labels == i) for i in range(n_clusters)]
@@ -71,7 +69,7 @@ def get_features_per_cluster_stats(X=None, n_clusters=2):
 @ut.catch_runtime_warnings()
 def evaluate_features(list_df_feat=None, names_feature_sets=None, list_cat=None,
                       list_df_parts=None, df_scales=None, accept_gaps=False,
-                      n_jobs=1, min_th=0.0):
+                      n_jobs=1, min_th=0.0, random_state=None):
     """Evaluate sets of clustering labels"""
     list_evals = []
     for df_feat, df_parts in zip(list_df_feat, list_df_parts):
@@ -92,10 +90,11 @@ def evaluate_features(list_df_feat=None, names_feature_sets=None, list_cat=None,
         X = get_feature_matrix_(features=features, df_parts=df_parts, df_scales=df_scales,
                                 accept_gaps=accept_gaps, n_jobs=n_jobs)
         # Get n_clusters for features
-        best_n_clust = get_best_n_clusters(X=X.T, min_th=min_th)
+        best_n_clust = get_best_n_clusters(X=X.T, min_th=min_th, random_state=random_state)
         eval_dict[ut.COL_N_CLUST] = best_n_clust
         avg_feat_per_cluster, std_feat_per_cluster = get_features_per_cluster_stats(X=X.T,
-                                                                                    n_clusters=best_n_clust)
+                                                                                    n_clusters=best_n_clust,
+                                                                                    random_state=random_state)
         eval_dict[ut.COL_AVG_N_FEAT_PER_CLUST] = avg_feat_per_cluster
         eval_dict[ut.COL_STD_N_FEAT_PER_CLUST] = std_feat_per_cluster
         # Append this dictionary to the list_evals

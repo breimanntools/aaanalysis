@@ -332,9 +332,9 @@ def check_df_scales(df_scales=None, accept_none=False):
     # Check if index is unique
     if len(list(df_scales.index)) != len(set(df_scales.index)):
         raise ValueError("Index in 'df_scales' must be unique. Drop duplicates!")
-    # Check if columns contain number
+    # Check if columns contain numbers
     dict_dtype = dict(df_scales.dtypes)
-    cols_wrong_type = [col for col in dict_dtype if dict_dtype[col] not in [np.number, int, float]]
+    cols_wrong_type = [col for col in dict_dtype if not np.issubdtype(dict_dtype[col], np.number)]
     if len(cols_wrong_type) > 0:
         error = "'df_scales' should only contain numbers." \
                 f"\n  Following columns contain no numerical values: {cols_wrong_type}"

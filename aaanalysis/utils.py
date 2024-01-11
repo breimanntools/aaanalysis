@@ -10,7 +10,10 @@ import seaborn as sns
 import numpy as np
 import warnings
 
-from .config import options
+from .config import (options,
+                     check_verbose,
+                     check_n_jobs,
+                     check_random_state)
 
 # Import utility functions explicitly (can be imported from this utils file from other modules)
 # Checking functions
@@ -127,19 +130,19 @@ COL_AA_REF = "amino_acids_ref"
 
 # Columns for df_feat after processing with explainable AI methods
 COL_FEAT_IMPORT = "feat_importance"
-COL_FEAT_IMP_STD = "feat_importance_std"
+COL_FEAT_IMPORT_STD = "feat_importance_std"
 COL_FEAT_IMPACT = "feat_impact"
 
 COLS_FEAT_SCALES = [COL_CAT, COL_SUBCAT, COL_SCALE_NAME]
 COLS_FEAT_STAT = [COL_ABS_AUC, COL_ABS_MEAN_DIF, COL_MEAN_DIF, COL_STD_TEST, COL_STD_REF]
-COLS_FEAT_WEIGHT = [COL_FEAT_IMPORT, COL_FEAT_IMP_STD, COL_FEAT_IMPACT]
+COLS_FEAT_WEIGHT = [COL_FEAT_IMPORT, COL_FEAT_IMPORT_STD, COL_FEAT_IMPACT]
 DICT_VALUE_TYPE = {COL_ABS_AUC: "mean",
                    COL_ABS_MEAN_DIF: "mean",
                    COL_MEAN_DIF: "mean",
                    COL_STD_TEST: "mean",
                    COL_STD_REF: "mean",
                    COL_FEAT_IMPORT: "sum",
-                   COL_FEAT_IMP_STD: "mean",
+                   COL_FEAT_IMPORT_STD: "mean",
                    COL_FEAT_IMPACT: "sum"}
 
 
@@ -333,6 +336,7 @@ def load_default_scales(scale_cat=False):
     else:
         if options["df_scales"] is None:
             df_scales = read_excel_cached(FOLDER_DATA + f"{STR_SCALES}.xlsx", index_col=0)
+            df_scales = df_scales.astype(float)
             options["df_scales"] = df_scales
             return df_scales.copy()
         else:
@@ -347,18 +351,6 @@ def add_names_to_df_eval(df_eval=None, names=None):
         names = [f"Set {i}" for i in range(1, n_datasets + 1)]
     df_eval.insert(0, COL_NAME, names)
     return df_eval
-
-
-# Main check functions
-# Check system level (option) parameters
-def check_verbose(verbose):
-    """Check if general verbosity is on or off. Adjusted based on options setting and value provided to object"""
-    if verbose is None:
-        # System level verbosity
-        verbose = options['verbose']
-    else:
-        check_bool(name="verbose", val=verbose)
-    return verbose
 
 
 # Plotting utilities

@@ -61,7 +61,7 @@ Explainable AI
     :toctree: generated/
     :template: autosummary/class_template.rst
 
-    TreeModel
+    #TreeModel
     ShapModel
 
 .. _perturbation_api:
@@ -77,37 +77,21 @@ Perturbation
     SeqMut
     SeqMutPlot
 
-.. _plot_api:
+.. _utility_functions_api:
 
-Plot Utilities
---------------
-.. autosummary::
-    :toctree: generated/
-
-    plot_get_clist
-    plot_get_cmap
-    plot_get_cdict
-    plot_settings
-    plot_gcfs
-    plot_legend
-    display_df
-
-.. _metric_api:
-
-Metric Utilities
-----------------
+Utility Functions
+-----------------
 .. autosummary::
     :toctree: generated/
 
     comp_auc_adjusted
     comp_bic_score
     comp_kld
-
-.. _options:
-
-Options
--------
-.. autosummary::
-    :toctree: generated/
-
+    display_df
     options
+    plot_gcfs
+    plot_get_cdict
+    plot_get_clist
+    plot_get_cmap
+    plot_legend
+    plot_settings

@@ -164,7 +164,7 @@ def filtering(df=None, df_scales=None, max_overlap=0.5, max_cor=0.5, n_filter=10
 
 # Adder methods for CPP analysis (used in run method)
 def add_stat(df_feat=None, df_parts=None, df_scales=None, labels=None, parametric=False, accept_gaps=False,
-             label_test=1, label_ref=0):
+             label_test=1, label_ref=0, n_jobs=None):
         """
         Add summary statistics for each feature to DataFrame.
 
@@ -179,7 +179,8 @@ def add_stat(df_feat=None, df_parts=None, df_scales=None, labels=None, parametri
         X = get_feature_matrix_(features=features,
                                 df_parts=df_parts,
                                 df_scales=df_scales,
-                                accept_gaps=accept_gaps)
+                                accept_gaps=accept_gaps,
+                                n_jobs=n_jobs)
         df_feat = add_stat_(df=df_feat, X=X, labels=labels, parametric=parametric,
                             label_test=label_test, label_ref=label_ref)
         return df_feat

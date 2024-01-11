@@ -380,8 +380,9 @@ class SequenceFeature:
             Whether to use parametric (T-test) or non-parametric (Mann-Whitney-U-test) test for p-value computation.
         accept_gaps : bool, default=False
             Whether to accept missing values by enabling omitting for computations (if True).
-        n_jobs : int, default=1
-            The number of jobs to run in parallel. If ``None``, it will be set to the maximum.
+        n_jobs : int, None, or -1, default=1
+            Number of CPU cores used for multiprocessing. If ``None``, the number is optimized automatically.
+            If ``-1``, the number is set to all available cores.
 
         Returns
         -------
@@ -428,20 +429,17 @@ class SequenceFeature:
         check_match_labels_label_test_label_ref(labels=labels, label_test=label_test, label_ref=label_ref)
         check_match_df_parts_label_test_label_ref(df_parts=df_parts, labels=labels,
                                                   label_test=label_test, label_ref=label_ref)
+        n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         # User warning
         if self.verbose:
             warn_creation_of_feature_matrix(features=features, df_parts=df_parts, name="df_feat")
         # Get sample difference to reference group
-        try:
-            df_feat = get_df_feat_(features=features, df_parts=df_parts, labels=labels,
-                                   label_test=label_test, label_ref=label_ref,
-                                   df_scales=df_scales, df_cat=df_cat,
-                                   accept_gaps=accept_gaps, parametric=parametric,
-                                   start=start, jmd_n_len=jmd_n_len, tmd_len=tmd_len, jmd_c_len=jmd_c_len,
-                                   n_jobs=n_jobs)
-        # Catch backend not-accepted-gaps error
-        except Exception as e:
-            raise ValueError(e)
+        df_feat = get_df_feat_(features=features, df_parts=df_parts, labels=labels,
+                               label_test=label_test, label_ref=label_ref,
+                               df_scales=df_scales, df_cat=df_cat,
+                               accept_gaps=accept_gaps, parametric=parametric,
+                               start=start, jmd_n_len=jmd_n_len, tmd_len=tmd_len, jmd_c_len=jmd_c_len,
+                               n_jobs=n_jobs)
         return df_feat
 
     def feature_matrix(self,
@@ -465,8 +463,9 @@ class SequenceFeature:
             unless specified in ``options['df_scales']``.
         accept_gaps: bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
-        n_jobs : int, default=1
-            The number of jobs to run in parallel. If ``None``, it will be set to the maximum.
+        n_jobs : int, None, or -1, default=1
+            Number of CPU cores used for multiprocessing. If ``None``, the number is optimized automatically.
+            If ``-1``, the number is set to all available cores.
 
         Returns
         -------
@@ -489,7 +488,7 @@ class SequenceFeature:
         check_df_parts(df_parts=df_parts)
         features = ut.check_features(features=features, list_parts=list(df_parts), list_scales=list(df_scales))
         ut.check_bool(name="accept_gaps", val=accept_gaps)
-        ut.check_number_range(name="j_jobs", val=n_jobs, accept_none=True, min_val=1, just_int=True)
+        n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         check_match_df_parts_features(df_parts=df_parts, features=features)
         check_match_df_scales_features(df_scales=df_scales, features=features)
         df_parts = check_match_df_parts_df_scales(df_scales=df_scales, df_parts=df_parts, accept_gaps=accept_gaps)
@@ -497,15 +496,11 @@ class SequenceFeature:
         if self.verbose:
             warn_creation_of_feature_matrix(features=features, df_parts=df_parts)
         # Create feature matrix using parallel processing
-        try:
-            feat_matrix = get_feature_matrix_(features=features,
-                                              df_parts=df_parts,
-                                              df_scales=df_scales,
-                                              accept_gaps=accept_gaps,
-                                              n_jobs=n_jobs)
-        # Catch backend not-accepted-gaps error
-        except Exception as e:
-            raise ValueError(e)
+        feat_matrix = get_feature_matrix_(features=features,
+                                          df_parts=df_parts,
+                                          df_scales=df_scales,
+                                          accept_gaps=accept_gaps,
+                                          n_jobs=n_jobs)
         return feat_matrix
 
     def get_features(self,

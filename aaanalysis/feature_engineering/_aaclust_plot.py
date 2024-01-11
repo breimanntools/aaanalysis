@@ -141,7 +141,9 @@ class AAclustPlot:
     def __init__(self,
                  model_class: Type[TransformerMixin] = PCA,
                  model_kwargs: Optional[Dict] = None,
-                 verbose: Optional[bool] = None):
+                 verbose: Optional[bool] = None,
+                 random_state: Optional[str] = None,
+                 ):
         """
         Parameters
         ----------
@@ -151,20 +153,29 @@ class AAclustPlot:
             Keyword arguments to pass to the selected decomposition model.
         verbose : bool, optional
             If ``True``, verbose outputs are enabled. Global ``verbose`` setting is used if ´´None``.
+        random_state : int, optional
+            The seed used by the random number generator. If a positive integer, results of stochastic processes are
+            consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.
 
         Examples
         --------
         .. include:: examples/aac_plot.rst
         """
+        # Global parameters
+        verbose = ut.check_verbose(verbose)
+        random_state = ut.check_random_state(random_state=random_state)
         # Model parameters
-        model_class = ut.check_mode_class(model_class=model_class)
+        ut.check_mode_class(model_class=model_class)
         model_kwargs = ut.check_model_kwargs(model_class=model_class,
                                              model_kwargs=model_kwargs,
                                              param_to_check="n_components",
-                                             method_to_check="transform")
-        self.verbose = ut.check_verbose(verbose)
-        self.model_class = model_class
-        self.model_kwargs = model_kwargs
+                                             method_to_check="transform",
+                                             random_state=random_state)
+        # Internal attributes
+        self._verbose = verbose
+        self._random_state = random_state
+        self._model_class = model_class
+        self._model_kwargs = model_kwargs
 
     @staticmethod
     def eval(df_eval: pd.DataFrame = None,
@@ -300,7 +311,7 @@ class AAclustPlot:
         # Plotting
         ax, df_components = plot_center_or_medoid(X, labels=labels, plot_centers=True,
                                                   component_x=component_x, component_y=component_y,
-                                                  model_class=self.model_class, model_kwargs=self.model_kwargs,
+                                                  model_class=self._model_class, model_kwargs=self._model_kwargs,
                                                   ax=ax, figsize=figsize,
                                                   dot_size=dot_size, dot_alpha=dot_alpha,
                                                   legend=legend, palette=palette)
@@ -391,7 +402,7 @@ class AAclustPlot:
         # Create plot
         ax, df_components = plot_center_or_medoid(X, labels=labels, plot_centers=False, metric=metric,
                                                   component_x=component_x, component_y=component_y,
-                                                  model_class=self.model_class, model_kwargs=self.model_kwargs,
+                                                  model_class=self._model_class, model_kwargs=self._model_kwargs,
                                                   ax=ax, figsize=figsize,
                                                   dot_size=dot_size, dot_alpha=dot_alpha,
                                                   legend=legend, palette=palette)
@@ -481,7 +492,7 @@ class AAclustPlot:
         labels = check_match_df_corr_labels(df_corr=df_corr, labels=labels)
         pairwise = [str(x) for x in list(df_corr)] == [str(x) for x in list(df_corr.T)]
         labels_ref = check_match_df_corr_labels_ref(df_corr=df_corr, labels_ref=labels_ref, labels=labels,
-                                                    pairwise=pairwise, verbose=self.verbose)
+                                                    pairwise=pairwise, verbose=self._verbose)
         ut.check_bool(name="cluster_x", val=cluster_x)
         check_match_df_corr_clust_x(df_corr=df_corr, cluster_x=cluster_x)
         check_method(method=method)

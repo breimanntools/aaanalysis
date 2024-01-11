@@ -69,6 +69,8 @@ class TestFeatureMatrix:
         assert isinstance(result, np.ndarray)
         result = sf.feature_matrix(features=features, df_parts=df_parts, n_jobs=None)
         assert isinstance(result, np.ndarray)
+        result = sf.feature_matrix(features=features, df_parts=df_parts, n_jobs=-1)
+        assert isinstance(result, np.ndarray)
 
     def test_accept_gaps(self):
         features, df_parts, labels = _get_df_feat_input()
@@ -118,7 +120,7 @@ class TestFeatureMatrix:
         with pytest.raises(ValueError):
             sf.feature_matrix(features=features, df_parts=df_parts, n_jobs="invalid")
         with pytest.raises(ValueError):
-            sf.feature_matrix(features=features, df_parts=df_parts, n_jobs=-1)
+            sf.feature_matrix(features=features, df_parts=df_parts, n_jobs=-2)
 
 class TestFeatureMatrixComplex:
     """Complex positive tests for the 'feature_matrix' method."""
