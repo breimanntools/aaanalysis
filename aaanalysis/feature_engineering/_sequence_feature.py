@@ -54,7 +54,7 @@ def warn_creation_of_feature_matrix(features=None, df_parts=None, name="Feature 
     n_feat = len(features)
     n_samples = len(df_parts)
     n_vals = n_feat * n_samples
-    ut.print_out(f"'{name}' for {n_feat} features and {n_samples} samples will be created")
+    ut.print_out(f"'{name}' for {n_feat} features and {n_samples} samples will be created.")
     if n_vals > 1000 * 1000:
         warning = f"Feature matrix with n={n_vals}>=10^6 values will be created, which will take some time.\n" \
                   "It is recommended to create a feature matrix for a pre-selected number features " \
@@ -147,13 +147,13 @@ class SequenceFeature:
     """
 
     def __init__(self,
-                 verbose: Optional[bool] = None
+                 verbose: bool = True
                  ):
         """
         Parameters
         ----------
-        verbose : bool, optional
-            If ``True``, verbose outputs are enabled. Global ``verbose`` setting is used if ´´None``.
+        verbose : bool, default=True
+            If ``True``, verbose outputs are enabled.
         """
         self.verbose = ut.check_verbose(verbose)
 

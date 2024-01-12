@@ -9,7 +9,7 @@ from ._utils.check_data import check_df
 
 # System level options
 _dict_options = {
-    'verbose': True,
+    'verbose': "off",
     'random_state': "off",
     'allow_multiprocessing': True,
     'name_tmd': "TMD",
@@ -23,13 +23,26 @@ _dict_options = {
 # Check system level (option) parameters or depending parameters
 def check_verbose(verbose=None):
     """Check if general verbosity is on or off. Adjusted based on options setting and value provided to object"""
-    if verbose is None:
+    global_verbose = options["verbose"]
+    if global_verbose != "off":
         # System level verbosity
-        verbose = options['verbose']
-        check_bool(name="verbose (option)", val=verbose)
+        check_bool(name="verbose (option)", val=global_verbose)
+        verbose = global_verbose
     else:
         check_bool(name="verbose", val=verbose)
     return verbose
+
+
+def check_random_state(random_state=None):
+    """Adjust random state if global is not 'off' (default)"""
+    global_random_state = options["random_state"]
+    if global_random_state != "off":
+        # System-level random state
+        check_number_val(name="random_state (option)", val=global_random_state, accept_none=True, just_int=True)
+        random_state = global_random_state
+    else:
+        check_number_val(name="random_state", val=random_state, accept_none=True, just_int=True)
+    return random_state
 
 
 def check_n_jobs(n_jobs=None):
@@ -50,23 +63,13 @@ def check_n_jobs(n_jobs=None):
     return n_jobs
 
 
-def check_random_state(random_state=None):
-    """Adjust random state if global is not 'off' (default)"""
-    global_random_state = options["random_state"]
-    if global_random_state != "off":
-        check_number_val(name="random_state (option)", val=global_random_state, accept_none=True, just_int=True)
-        random_state = global_random_state
-    else:
-        check_number_val(name="random_state", val=random_state, accept_none=True, just_int=True)
-    return random_state
-
-
 # DEV: Parameters are used as directive to get better documentation style
 # Enables setting of system level variables like in matplotlib
 def _check_option(name_option="", option=None):
     """Check if option is valid"""
     if name_option == "verbose":
-        check_verbose(verbose=option)
+        if option != "off":
+            check_verbose(verbose=option)
     if name_option == "random_state":
         if option != "off":
             check_random_state(random_state=option)
@@ -79,6 +82,7 @@ def _check_option(name_option="", option=None):
     if "df" in name_option:
         check_df(name=name_option, df=option, accept_none=False)
 
+
 class Settings:
     """
      A class for managing system-level settings for AAanalysis.
@@ -90,8 +94,8 @@ class Settings:
     ----------
     The following options can be set:
 
-    verbose : bool, default=True
-        Whether verbose mode should be enabled or not.
+    verbose : bool or 'off', default='off'
+        Sets verbose mode to ``True`` or ``False`` globally if not 'off'.
     random_state : int, None, or 'off', default='off'
         The seed used by the random number generator.
 

@@ -129,7 +129,7 @@ class AAclustPlot:
     def __init__(self,
                  model_class: Type[TransformerMixin] = PCA,
                  model_kwargs: Optional[Dict] = None,
-                 verbose: Optional[bool] = None,
+                 verbose: bool = True,
                  random_state: Optional[str] = None,
                  ):
         """
@@ -139,8 +139,8 @@ class AAclustPlot:
             A decomposition model class with ``n_components`` parameter.
         model_kwargs : dict, optional
             Keyword arguments to pass to the selected decomposition model.
-        verbose : bool, optional
-            If ``True``, verbose outputs are enabled. Global ``verbose`` setting is used if ´´None``.
+        verbose : bool, default=True
+            If ``True``, verbose outputs are enabled.
         random_state : int, optional
             The seed used by the random number generator. If a positive integer, results of stochastic processes are
             consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.

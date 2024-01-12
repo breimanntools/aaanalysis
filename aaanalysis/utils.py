@@ -39,7 +39,7 @@ from ._utils.plotting import (plot_gco, plot_get_clist_, plot_legend_)
 
 # Utility functions
 from ._utils.utils_metrics import (auc_adjusted_, kullback_leibler_divergence_, bic_score_)
-from ._utils.utils_output import (print_out, print_start_progress, print_progress, print_finished_progress)
+from ._utils.utils_output import (print_out, print_start_progress, print_progress, print_end_progress)
 from ._utils.utils_plot_elements import (plot_add_bars,
                                          adjust_spine_to_middle,
                                          x_ticks_0)

@@ -28,6 +28,7 @@ class TestdPULearn:
     @given(verbose=some.booleans())
     def test_verbose_parameter(self, verbose):
         """Test the 'verbose' parameter."""
+        aa.options["verbose"] = "off"
         model = aa.dPULearn(verbose=verbose)
         assert model._verbose == verbose
 

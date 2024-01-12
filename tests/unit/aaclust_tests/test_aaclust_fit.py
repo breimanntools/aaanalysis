@@ -50,13 +50,13 @@ class TestAAclust:
         aac = aa.AAclust()
         assert aac._verbose is False
 
-
     # Property-based testing for positive cases
-    @given(verbose=some.booleans())
-    def test_verbose_init(self, verbose):
+    def test_verbose_init(self):
         """Test the 'verbose' parameter during initialization."""
-        aac = aa.AAclust(verbose=verbose)
-        assert aac._verbose == verbose
+        aa.options["verbose"] = "off"
+        for verbose in [True, False]:
+            aac = aa.AAclust(verbose=verbose)
+            assert aac._verbose == verbose
 
     @given(n_clusters=some.integers(min_value=1, max_value=10))
     def test_fit_n_clusters(self, n_clusters):

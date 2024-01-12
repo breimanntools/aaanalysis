@@ -87,7 +87,7 @@ class AAclust(Wrapper):
     Attributes
     ----------
     model : object
-        The instantiated and fitted clustering model object after calling the ``fit`` method.
+        The fitted clustering model object after calling the ``fit`` method.
     n_clusters : int
         Number of clusters obtained by AAclust.
     labels_ : array-like, shape (n_samples,)
@@ -117,7 +117,7 @@ class AAclust(Wrapper):
     def __init__(self,
                  model_class: Type[ClusterMixin] = KMeans,
                  model_kwargs: Optional[Dict] = None,
-                 verbose: Optional[bool] = None,
+                 verbose: bool = True,
                  random_state: Optional[str] = None,
                  ):
         """
@@ -127,8 +127,8 @@ class AAclust(Wrapper):
             A clustering model class with ``n_clusters`` parameter. This class will be instantiated by the ``.fit`` method.
         model_kwargs : dict, optional
             Keyword arguments to pass to the selected clustering model.
-        verbose : bool, optional
-            If ``True``, verbose outputs are enabled. Global ``verbose`` setting is used if ´´None``.
+        verbose : bool, default=True
+            If ``True``, verbose outputs are enabled.
         random_state : int, optional
             The seed used by the random number generator. If a positive integer, results of stochastic processes are
             consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.

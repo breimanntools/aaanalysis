@@ -50,6 +50,7 @@ class TestCPPPlot:
 
     def test_verbose(self):
         """Positive test for verbose parameter."""
+        aa.options["verbose"] = "off"
         for verbose in [True, False]:
             cpp_plot = aa.CPPPlot(verbose=verbose)
             assert cpp_plot._verbose is verbose

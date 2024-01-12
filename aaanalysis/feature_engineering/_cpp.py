@@ -85,7 +85,7 @@ class CPP(Tool):
                  df_scales: Optional[pd.DataFrame] = None,
                  df_cat: Optional[pd.DataFrame] = None,
                  accept_gaps: bool = False,
-                 verbose: Optional[bool] = None,
+                 verbose: bool = True,
                  random_state: Optional[str] = None,
                  ):
         """
@@ -103,8 +103,8 @@ class CPP(Tool):
             Default from :meth:`load_scales` with ``name='scales_cat'``, unless specified in ``options['df_cat']``.
         accept_gaps : bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
-        verbose : bool, optional
-            If ``True``, verbose outputs are enabled. Global ``verbose`` setting is used if ´´None``.
+        verbose : bool, default=True
+            If ``True``, verbose outputs are enabled.
         random_state : int, optional
             The seed used by the random number generator. If a positive integer, results of stochastic processes are
             consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.
@@ -265,8 +265,8 @@ class CPP(Tool):
                                    list_scales=list(self.df_scales)))
         n_filter = n_feat if n_feat < n_filter else n_filter
         if self._verbose:
-            ut.print_out(f"1. CPP creates {n_feat} features for {len(self.df_parts)} samples")
-            ut.print_start_progress()
+            start_message = f"1. CPP creates {n_feat} features for {len(self.df_parts)} samples"
+            ut.print_start_progress(start_message=start_message)
         # Pre-filtering: Select best n % of feature (filter_pct) based std(test set) and mean_dif
         abs_mean_dif, std_test, features = pre_filtering_info(df_parts=self.df_parts,
                                                               split_kws=self.split_kws,
@@ -282,10 +282,10 @@ class CPP(Tool):
             n_pre_filter = int(n_feat * (pct_pre_filter / 100))
             n_pre_filter = n_filter if n_pre_filter < n_filter else n_pre_filter
         if self._verbose:
-            ut.print_finished_progress()
             pct_pre_filter = np.round((n_pre_filter/n_feat*100), 2)
-            ut.print_out(f"2. CPP pre-filters {n_pre_filter} features ({pct_pre_filter}%) with highest '{ut.COL_ABS_MEAN_DIF}'"
-                         f" and 'max_std_test' <= {max_std_test}")
+            end_message = (f"2. CPP pre-filters {n_pre_filter} features ({pct_pre_filter}%) with highest "
+                           f"'{ut.COL_ABS_MEAN_DIF}' and 'max_std_test' <= {max_std_test}")
+            ut.print_end_progress(end_message=end_message)
         df = pre_filtering(features=features,
                            abs_mean_dif=abs_mean_dif,
                            std_test=std_test,

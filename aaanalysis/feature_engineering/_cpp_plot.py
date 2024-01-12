@@ -220,7 +220,8 @@ class CPPPlot:
                  jmd_n_len: int = 10,
                  jmd_c_len: int = 10,
                  accept_gaps: bool = False,
-                 verbose: Optional[bool] = None):
+                 verbose: bool = True
+                 ):
         """
         Parameters
         ----------
@@ -236,8 +237,8 @@ class CPPPlot:
             Length of JMD-C (>=0).
         accept_gaps: bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
-        verbose: bool, optional
-            If ``True``, verbose outputs are enabled. Global 'verbose' setting is used if ``None``.
+        verbose: bool, default=True
+            If ``True``, verbose outputs are enabled.
 
         Examples
         --------

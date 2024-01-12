@@ -113,7 +113,7 @@ class dPULearn:
     """
     def __init__(self,
                  model_kwargs: Optional[dict] = None,
-                 verbose: Optional[bool] = None,
+                 verbose: bool = True,
                  random_state: Optional[str] = None,
                  ):
         """
@@ -121,8 +121,8 @@ class dPULearn:
         ----------
         model_kwargs : dict, optional
             Additional keyword arguments for Principal Component Analysis (PCA) model.
-        verbose : bool, optional
-            If ``True``, verbose outputs are enabled. Global ``verbose`` setting is used if ´´None``.
+        verbose : bool, default=True
+            If ``True``, verbose outputs are enabled.
         random_state : int, optional
             The seed used by the random number generator. If a positive integer, results of stochastic processes are
             consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.

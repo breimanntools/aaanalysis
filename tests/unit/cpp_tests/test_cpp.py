@@ -86,6 +86,7 @@ class TestCheckCPP:
             assert aa.CPP(df_parts=df_parts, accept_gaps=accept_gaps)._accept_gaps == accept_gaps
 
     def test_valid_verbose(self):
+        aa.options["verbose"] = "off"
         df_parts = get_df_parts()
         for verbose in [True, False]:
             assert aa.CPP(df_parts=df_parts, verbose=verbose)._verbose == verbose

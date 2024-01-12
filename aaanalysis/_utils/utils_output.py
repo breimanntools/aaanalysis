@@ -23,8 +23,12 @@ def print_out(input_str, **args):
     _print_blue(input_str, **args)
 
 # Progress bar
-def print_start_progress():
+def print_start_progress(start_message=None):
     """Print start progress"""
+    # Start message
+    if start_message is not None:
+        print_out(start_message)
+    # Start progress bar
     progress_bar = " " * 25
     print_out(f"\r   |{progress_bar}| 0.00%", end="")
 
@@ -36,8 +40,12 @@ def print_progress(i=0, n=0):
     print_out(f"\r   |{progress_bar}| {progress:.2f}%", end="")
 
 
-def print_finished_progress():
+def print_end_progress(end_message=None):
     """Print finished progress bar"""
+    # End progress bar
     progress_bar = "#" * 25
     print_out(f"\r   |{progress_bar}| 100.00%")
+    # End message
+    if end_message is not None:
+        print_out(end_message)
 
