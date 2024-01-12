@@ -13,7 +13,7 @@ def recursive_feature_elimination(X, labels=None, step=None, n_feat_max=50, n_fe
     n_features = X.shape[1]
     selected_features = np.ones(n_features, dtype=bool)
     best_score = 0
-    is_feature = selected_features.copy()
+    is_selected = selected_features.copy()
 
     while n_features > n_feat_min:
         rf.fit(X[:, selected_features], labels)
@@ -36,17 +36,17 @@ def recursive_feature_elimination(X, labels=None, step=None, n_feat_max=50, n_fe
             current_score = np.mean(cross_val_score(rf, X[:, selected_features], labels, scoring=scoring, cv=n_cv))
             if current_score > best_score:
                 best_score = current_score
-                is_feature = selected_features.copy()
-    return is_feature
+                is_selected = selected_features.copy()
+    return is_selected
 
 
 # 2. Step: Computation of feature importance
-def compute_feature_importance(X, labels=None, is_feature=None, list_model_classes=None,
+def compute_feature_importance(X, labels=None, is_selected=None, list_model_classes=None,
                                list_model_kwargs=None):
     """Compute the average feature importance across multiple tree-based models."""
-    selected_indices = np.where(is_feature)[0]
+    selected_indices = np.where(is_selected)[0]
     X_selected = X[:, selected_indices]
-    importances = np.zeros((len(list_model_classes), len(is_feature)))
+    importances = np.zeros((len(list_model_classes), len(is_selected)))
     for i, model_class in enumerate(list_model_classes):
         model_kwargs = list_model_kwargs[i] if list_model_kwargs is not None else {}
         model = model_class(**model_kwargs)

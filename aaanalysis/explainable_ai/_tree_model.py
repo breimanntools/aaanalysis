@@ -53,7 +53,7 @@ def check_metrics(name="list_eval_sores", metrics=None):
         raise ValueError(f"Wrong 'metrics' ({wrong_metrics}). Chose from these: {valid_metrics}")
 
 
-def check_list_is_feature(list_is_feature=None, X=None):
+def check_list_is_selected(list_is_feature=None, X=None):
     """Check if list_is_feature is list containing bool 2D matrix matching to X"""
     if not isinstance(list_is_feature, list):
         raise ValueError("'list_is_feature' must be a list with 2D boolean matrix.")
@@ -162,7 +162,7 @@ class TreeModel:
         # Output parameters (set during model fitting)
         self.feat_importance : Optional[ut.ArrayLike1D] = None
         self.feat_importance_std : Optional[ut.ArrayLike1D] = None
-        self.is_feature_ : Optional[ut.ArrayLike2D] = None
+        self.is_selected_ : Optional[ut.ArrayLike2D] = None
 
     def fit(self,
             X: ut.ArrayLike2D,
@@ -240,30 +240,31 @@ class TreeModel:
         # Obtain tree-based feature importance
         n_features = X.shape[1]
         feature_importance = np.empty(shape=(n_rounds, n_features))
-        is_feature_rounds = np.ones(shape=(n_rounds, n_features), dtype=bool)
+        is_selected_rounds = np.ones(shape=(n_rounds, n_features), dtype=bool)
         # TODO add progress
         for i in range(n_rounds):
-            is_feature = np.ones(n_features, dtype=bool)
+            is_selected = np.ones(n_features, dtype=bool)
             # 1. Step: Recursive feature elimination
+            # Add Multi processing.
             if use_rfe:
                 args = dict(labels=labels, n_feat_min=n_feat_min, n_feat_max=n_feat_max,
                             n_cv=n_cv, scoring=metric, step=step, random_state=self._random_state)
-                is_feature = recursive_feature_elimination(X, **args)
+                is_selected = recursive_feature_elimination(X, **args)
             # 2. Step: Compute feature importance
-            feature_importance[i, :] = compute_feature_importance(X, labels=labels, is_feature=is_feature,
+            feature_importance[i, :] = compute_feature_importance(X, labels=labels, is_selected=is_selected,
                                                                   list_model_classes=self._list_model_classes,
                                                                   list_model_kwargs=self._list_model_kwargs)
-            is_feature_rounds[i, :] = is_feature
+            is_selected_rounds[i, :] = is_selected
         # Save results in output parameters
         self.feat_importance = np.mean(feature_importance, axis=0).round(5) * 100
         self.feat_importance_std = np.std(feature_importance, axis=0).round(5) * 100
-        self.is_feature_ = is_feature_rounds
+        self.is_selected_ = is_selected_rounds
         return self
 
     def eval(self,
              X : ut.ArrayLike2D,
              labels: ut.ArrayLike1D = None,
-             list_is_feature: List[ut.ArrayLike2D] = None,
+             list_is_selected: List[ut.ArrayLike2D] = None,
              names_feature_selections: Optional[List[str]] = None,
              list_metrics: Union[str, List[str]] = None,
              n_cv: int = 5,
@@ -277,7 +278,7 @@ class TreeModel:
             Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
         labels : array-like, shape (n_samples)
             Dataset labels of samples in ``X``. Should be either 1 (positive) or 0 (negative).
-        list_is_feature : array-like, shape (n_feature_sets, n_round, n_features)
+        list_is_selected : array-like, shape (n_feature_sets, n_round, n_features)
             List of boolean arrays with shape (n_rounds, n_features) indicating different feature selections.
         names_feature_selections : list of str, optional
             List of dataset names corresponding to ``list_is_feature``.
@@ -307,7 +308,7 @@ class TreeModel:
         X = ut.check_X(X=X)
         ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
         labels = check_match_labels_X(labels=labels, X=X)
-        check_list_is_feature(list_is_feature=list_is_feature, X=X)
+        check_list_is_selected(list_is_feature=list_is_selected, X=X)
         names_feature_selections = ut.check_list_like(name="name_feature_selections", val=names_feature_selections, accept_none=True,
                                                       accept_str=True, check_all_str_or_convertible=True)
         if list_metrics is None:
@@ -316,7 +317,7 @@ class TreeModel:
         ut.check_number_range(name="n_cv", val=n_cv, min_val=2, just_int=True)
         # Perform evaluation
         df_eval = eval_feature_selections(X, labels=labels,
-                                          list_is_feature=list_is_feature,
+                                          list_is_feature=list_is_selected,
                                           names_feature_selections=names_feature_selections,
                                           n_cv=n_cv,
                                           list_metrics=list_metrics,
