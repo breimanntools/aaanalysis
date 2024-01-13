@@ -95,7 +95,8 @@ def check_match_X_is_selected(X=None, is_selected=None):
 # II Main Functions
 class TreeModel:
     """
-    Tree Model class: A wrapper for tree-based models to obtain Monte Carlo estimates of feature importance and predictions.
+    Tree Model class: A wrapper for tree-based models to obtain Monte Carlo estimates of feature
+    importance and predictions [Breimann24c]_.
 
     Monte Carlo estimates are derived by averaging feature importance or prediction probabilities across various
     tree-based models and training rounds, enhancing the robustness and reproducibility of these estimates.
@@ -151,7 +152,7 @@ class TreeModel:
 
         Examples
         --------
-        .. include:: examples/tree_model.rest
+        .. include:: examples/tree_model.rst
         """
         # Global parameters
         verbose = ut.check_verbose(verbose)
@@ -249,7 +250,7 @@ class TreeModel:
 
         Examples
         --------
-        .. include:: tree_model_fit.rst
+        .. include:: examples/tm_fit.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -319,7 +320,7 @@ class TreeModel:
 
         Examples
         --------
-        .. include:: examples/tree_model_eval.rst
+        .. include:: examples/tm_eval.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -373,7 +374,7 @@ class TreeModel:
 
         Examples
         --------
-        .. include:: examples/tree_model_predict.rst
+        .. include:: examples/tm_predict_proba.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -414,7 +415,7 @@ class TreeModel:
 
         Examples
         --------
-        .. include:: examples/tree_model_add_feat_importance.rst
+        .. include:: examples/tm_add_feat_importance.rst
          """
         # Check input
         ut.check_df_feat(df_feat=df_feat)
