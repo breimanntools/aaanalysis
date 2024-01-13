@@ -42,35 +42,41 @@ def _convert_2d(val=None, name=None):
 
 
 # Check array like
-def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan=False,
-                     convert_2d=False, accept_none=False):
+def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan=False, convert_2d=False,
+                     accept_none=False, expected_dim=None):
     """Check if the provided value is array-like and matches the specified dtype."""
     if val is None:
         if accept_none:
-            return None # skip tests
+            return None  # Skip tests
         else:
             raise ValueError(f"'{name}' should not be None.")
-    # Type checking
-    if dtype == "numeric":
-        expected_dtype = "numeric"
-    elif dtype == 'int':
-        expected_dtype = 'int'
-    elif dtype == 'float':
-        expected_dtype = 'float64'
-    elif dtype == 'any' or dtype is None:
-        expected_dtype = None
-    else:
-        raise ValueError(f"'dtype' ({dtype}) not recognized.")
-    # Convert a 1D list or array to a 2D array
+    # Extend dtype to handle a list of dtypes including bool
+    dtype = check_type.check_str(name="dtype", val=dtype, accept_none=True)
+    valid_dtypes = ["numeric", "int", "float", "bool", None]
+    if dtype not in valid_dtypes:
+        raise ValueError(f"'dtype' should be one of the following: {valid_dtypes}")
+    dict_expected_dtype = {"numeric": "numeric", "int": "int64", "float": "float64", "bool": "bool"}
+    expected_dtype = dict_expected_dtype[dtype] if dtype is not None else None
+    # Specific check for boolean arrays
+    if dtype == "bool":
+        flattened_val = np.array(val).flatten()
+        if not all(isinstance(item, (bool, np.bool_)) for item in flattened_val):
+            raise ValueError(f"All elements in '{name}' must be of type 'bool' (either Python native or NumPy bool).")
+
+    # Convert a 1D list or array to a 2D array if needed
     if convert_2d:
         val = _convert_2d(val=val, name=name)
     # Utilize Scikit-learn's check_array for robust checking
-    try:
-        val = check_array(val, dtype=expected_dtype, ensure_2d=ensure_2d, force_all_finite=not allow_nan)
-    except Exception as e:
-        dtype = "any type" if dtype is None else dtype
-        raise ValueError(f"'{name}' should be array-like with '{dtype}' values."
-                         f"\nscikit message:\n\t{e}")
+    if dtype != "bool":  # Skip this check for boolean arrays
+        try:
+            val = check_array(val, dtype=expected_dtype, ensure_2d=ensure_2d, force_all_finite=not allow_nan)
+        except Exception as e:
+            dtype = "any type" if dtype is None else dtype
+            raise ValueError(f"'{name}' should be array-like with '{dtype}' values."
+                             f"\nscikit message:\n\t{e}")
+    # Check dimensions if specified
+    if expected_dim is not None and len(val.shape) != expected_dim:
+        raise ValueError(f"'{name}' should have {expected_dim} dimensions, but has {len(val.shape)}.")
     return val
 
 

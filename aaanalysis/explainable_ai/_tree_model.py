@@ -9,7 +9,7 @@ import numpy as np
 
 import aaanalysis.utils as ut
 
-from .backend.tree_model.tree_model_fit import recursive_feature_elimination, compute_feature_importance
+from .backend.tree_model.tree_model_fit import fit_tree_based_models
 from .backend.tree_model.tree_model_predict_proba import monte_carlo_predict_proba
 from .backend.tree_model.tree_model_eval import eval_feature_selections
 
@@ -39,7 +39,7 @@ def check_match_labels_X(labels=None, X=None):
 def check_n_feat_min_n_feat_max(n_feat_min=None, n_feat_max=None):
     """Check if vmin and vmax are valid numbers and vmin is less than vmax."""
     ut.check_number_range(name="n_feat_min", val=n_feat_min, min_val=1, just_int=True, accept_none=False)
-    ut.check_number_range(name="n_feat_max", val=n_feat_min, min_val=2, just_int=True, accept_none=False)
+    ut.check_number_range(name="n_feat_max", val=n_feat_max, min_val=2, just_int=True, accept_none=False)
     if n_feat_min >= n_feat_max:
         raise ValueError(f"'n_feat_min' ({n_feat_min}) < 'n_feat_max' ({n_feat_max}) not fulfilled.")
 
@@ -59,15 +59,13 @@ def check_list_is_selected(list_is_feature=None, X=None):
     """Check if list_is_feature is list containing bool 2D matrix matching to X"""
     if not isinstance(list_is_feature, list):
         raise ValueError("'list_is_feature' must be a list with 2D boolean matrix.")
-    if X is not None:
-        n_features = X.shape[1]
-        for is_feature_rounds in list_is_feature:
-            if not all(isinstance(is_feature, np.ndarray) and is_feature.dtype == bool for is_feature in is_feature_rounds):
-                raise ValueError("Each element in 'list_is_feature' must be a 2D boolean array.")
-            for is_feature in is_feature_rounds:
-                _n_features = is_feature.shape[0]
-                if _n_features != n_features:
-                    raise ValueError(f"Number of feature does not match for 'list_is_feature' (n={_n_features}) and 'X' (n={n_features}.")
+    n_features = X.shape[1]
+    for is_feature_rounds in list_is_feature:
+        if not all(isinstance(is_feature, np.ndarray) and is_feature.dtype == bool and
+                   len(is_feature) == n_features for is_feature in is_feature_rounds):
+            raise ValueError(
+                f"Each element in 'list_is_feature' must be a 1D boolean array with n features='{n_features}' elements.")
+
 
 def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, feat_importance_std=None, drop=False):
     """Check if df_feat matches with importance values"""
@@ -78,12 +76,13 @@ def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, fe
         raise ValueError(f"Mismatch of number of features in 'df_feat' (n={n_feat} and in 'feat_importance' (n={n_feat_imp})")
     if n_feat != n_feat_imp_std:
         raise ValueError(f"Mismatch of number of features in 'df_feat' (n={n_feat} and in 'feat_importance_std' (n={n_feat_imp})")
-    if drop:
+    if not drop:
         # Check if columns already exist
         if ut.COL_FEAT_IMPORT in list(df_feat):
-            raise ValueError(f"'{ut.COL_FEAT_IMPORT}' already in 'df_feat' columns: {list(df_feat)}")
+            raise ValueError(f"'{ut.COL_FEAT_IMPORT}' already in 'df_feat' columns. To override, set 'drop=True'.")
         if ut.COL_FEAT_IMPORT_STD in list(df_feat):
-            raise ValueError(f"'{ut.COL_FEAT_IMPORT_STD}' already in 'df_feat' columns: {list(df_feat)}")
+            raise ValueError(f"'{ut.COL_FEAT_IMPORT_STD}' already in 'df_feat' columns. To override, set 'drop=True'.")
+
 
 def check_match_X_is_selected(X=None, is_selected=None):
     """Check if length of X and feature selection mask (is_selected) matches"""
@@ -98,13 +97,14 @@ class TreeModel:
     """
     Tree Model class: A wrapper for tree-based models to obtain Monte Carlo estimates of feature importance and predictions.
 
-    This class provides a structured approach to analyze feature importance across multiple tree-based models.
-    It employs Monte Carlo methods to enhance the robustness of the feature importance estimation and includes
-    functionalities for recursive feature elimination (RFE) and evaluation of feature selections.
+    Monte Carlo estimates are derived by averaging feature importance or prediction probabilities across various
+    tree-based models and training rounds, enhancing the robustness and reproducibility of these estimates.
+    Additionally, the class supports feature selection through recursive feature elimination (RFE) and offers
+    comprehensive evaluation of feature selections.
 
     Attributes
     ----------
-    list_models : Nested list with objects, shape (n_rounds, n_models)
+    list_models_ : Nested list with objects, shape (n_rounds, n_models)
         List with fitted tree-based models for every round after calling the ``fit`` method.
     feat_importance : array-like, shape (n_features)
         An arrays containing importance of each feature averaged across all rounds
@@ -112,7 +112,7 @@ class TreeModel:
     feat_importance_std : array-like, shape (n_features)
         An arrays containing standard deviation for feature importance across all rounds
         and trained models from `list_model_classes`. Same order as ``feature_importance``.
-    is_selected : array-like, shape (n_rounds, n_features)
+    is_selected_ : array-like, shape (n_rounds, n_features)
         2D array indicating features being selected by recursive features selection  (1) or not (0) for each round.
         Same order as ``feature_importance``.
 
@@ -129,6 +129,7 @@ class TreeModel:
     def __init__(self,
                  list_model_classes : List[Type[Union[ClassifierMixin, BaseEstimator]]] = None,
                  list_model_kwargs: Optional[List[Dict]] = None,
+                 is_preselected: Optional[ut.ArrayLike1D] = None,
                  verbose: bool = True,
                  random_state: Optional[int] = None,
                  ):
@@ -139,6 +140,9 @@ class TreeModel:
             A list of tree-based model classes to be used for feature importance analysis.
         list_model_kwargs : list of dict, optional
             A list of dictionaries containing keyword arguments for each model in `list_model_classes`.
+        is_preselected : array-like, shape (n_features)
+            Boolean array indicating features being preselected before applying recursive features selection.
+            ``True`` indicates that a feature is preselected and ``False`` that it is not.
         verbose : bool, default=True
             If ``True``, verbose outputs are enabled.
         random_state : int, optional
@@ -152,15 +156,19 @@ class TreeModel:
         # Global parameters
         verbose = ut.check_verbose(verbose)
         random_state = ut.check_random_state(random_state=random_state)
+        is_preselected = ut.check_array_like(name="is_preselected_feature", val=is_preselected,
+                                             accept_none=True, expected_dim=1, dtype="bool")
         # Model parameters
         if list_model_classes is None:
             list_model_classes = [RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
         elif not isinstance(list_model_classes, list):
             list_model_classes = [list_model_classes]   # Single models are possible as well (but not recommender)
-        list_model_classes = ut.check_list_like(name="list_model_classes", val=list_model_classes, accept_none=False)
+        list_model_classes = ut.check_list_like(name="list_model_classes", val=list_model_classes,
+                                                accept_none=False, min_len=1)
         ut.check_list_like(name="list_model_kwargs", val=list_model_kwargs, accept_none=True)
         if list_model_kwargs is None:
-            list_model_kwargs = [{}] * len(list_model_classes)
+            list_model_kwargs = [{} for _ in list_model_classes]
+        check_match_list_model_classes_kwargs(list_model_classes=list_model_classes, list_model_kwargs=list_model_kwargs)
         _list_model_kwargs = []
         for model_class, model_kwargs in zip(list_model_classes, list_model_kwargs):
             ut.check_mode_class(model_class=model_class)
@@ -174,16 +182,17 @@ class TreeModel:
         self._random_state = random_state
         self._list_model_classes = list_model_classes
         self._list_model_kwargs = _list_model_kwargs
+        self._is_preselected = is_preselected
         # Output parameters (set during model fitting)
-        self.list_models : Optional[List[List[Union[ClassifierMixin, BaseEstimator]]]] = None
         self.feat_importance : Optional[ut.ArrayLike1D] = None
         self.feat_importance_std : Optional[ut.ArrayLike1D] = None
-        self.is_selected : Optional[ut.ArrayLike2D] = None
+        self.is_selected_ : Optional[ut.ArrayLike2D] = None
+        self.list_models_ : Optional[List[List[Union[ClassifierMixin, BaseEstimator]]]] = None
 
     def fit(self,
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D = None,
-            n_rounds: int = 10,
+            n_rounds: int = 5,
             use_rfe: bool = True,
             n_cv: int = 5,
             n_feat_min: int = 10,
@@ -192,7 +201,7 @@ class TreeModel:
             step : Optional[int] = None,
             ) -> "TreeModel":
         """
-        Fit tree-based models ``n_rounds`` time and compute average feature importance [Breimann24c]_.
+        Fit tree-based models and compute average feature importance [Breimann24c]_.
 
         The feature importance is calculated across all models and rounds. In each round, the set of features can
         optionally be prefiltered using Recursive Feature Elimination (RFE) with a default RandomForestClassifier,
@@ -206,7 +215,7 @@ class TreeModel:
             Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
         labels : array-like, shape (n_samples)
             Dataset labels of samples in ``X``. Should be either 1 (positive) or 0 (negative).
-        n_rounds : int, default=10
+        n_rounds : int, default=5
             The number of rounds (>=1) to fit the model.
         use_rfe : bool, default=True
             Whether to use recursive feature elimination (RFE) with random forest model for feature selection.
@@ -253,39 +262,20 @@ class TreeModel:
         ut.check_str(name="metric", val=metric)
         check_metrics(name="metric", metrics=metric)
         ut.check_number_range(name="step", val=step, min_val=1, accept_none=True, just_int=True)
-        # Obtain tree-based feature importance
-        n_features = X.shape[1]
-        feature_importance = np.empty(shape=(n_rounds, n_features))
-        is_selected_rounds = np.ones(shape=(n_rounds, n_features), dtype=bool)
-        list_models_rounds = []
-        if self._verbose and use_rfe:
-            start_message = (f"Tree Model starts recursive feature elimination (RFE) "
-                             f"to obtain {n_rounds} sets of {n_feat_min} to {n_feat_max} features.")
-            ut.print_start_progress(start_message=start_message)
-        for i in range(n_rounds):
-            is_selected = np.ones(n_features, dtype=bool)
-            # 1. Step: Recursive feature elimination
-            # Add Multi processing.
-            if use_rfe:
-                args = dict(labels=labels, n_feat_min=n_feat_min, n_feat_max=n_feat_max,
-                            n_cv=n_cv, scoring=metric, step=step, random_state=self._random_state,
-                            verbose=self._verbose, i=i, n_rounds=n_rounds)
-                is_selected = recursive_feature_elimination(X, **args)
-            is_selected_rounds[i, :] = is_selected
-            # 2. Step: Compute feature importance
-            avg_importance, list_models = compute_feature_importance(X, labels=labels, is_selected=is_selected,
-                                                                  list_model_classes=self._list_model_classes,
-                                                                  list_model_kwargs=self._list_model_kwargs)
-            feature_importance[i, :] = avg_importance
-            list_models_rounds.append(list_models)
-        if self._verbose and use_rfe:
-            end_message = "Tree Model finished recursive feature elimination and saved results."
-            ut.print_end_progress(end_message=end_message)
+        # Fit tree-based models and save feature importance
+        args = dict(X=X, labels=labels,
+                    list_model_classes=self._list_model_classes,
+                    list_model_kwargs=self._list_model_kwargs,
+                    is_preselected=self._is_preselected,
+                    n_rounds=n_rounds, use_rfe=use_rfe, n_cv=n_cv,
+                    n_feat_min=n_feat_min, n_feat_max=n_feat_max, metric=metric, step=step,
+                    verbose=self._verbose, random_state=self._random_state)
+        feature_importance, is_selected_rounds, list_models_rounds = fit_tree_based_models(**args)
         # Save results in output parameters
         self.feat_importance = np.mean(feature_importance, axis=0).round(5) * 100
         self.feat_importance_std = np.std(feature_importance, axis=0).round(5) * 100
-        self.is_selected = is_selected_rounds
-        self.list_models = list_models_rounds
+        self.is_selected_ = is_selected_rounds
+        self.list_models_ = list_models_rounds
         return self
 
     def eval(self,
@@ -335,6 +325,7 @@ class TreeModel:
         X = ut.check_X(X=X)
         ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
         labels = check_match_labels_X(labels=labels, X=X)
+        ut.check_list_like(name="list_is_selected", val=list_is_selected)
         check_list_is_selected(list_is_feature=list_is_selected, X=X)
         names_feature_selections = ut.check_list_like(name="name_feature_selections", val=names_feature_selections, accept_none=True,
                                                       accept_str=True, check_all_str_or_convertible=True)
@@ -349,7 +340,8 @@ class TreeModel:
                                           n_cv=n_cv,
                                           list_metrics=list_metrics,
                                           list_model_classes=self._list_model_classes,
-                                          list_model_kwargs=self._list_model_kwargs)
+                                          list_model_kwargs=self._list_model_kwargs,
+                                          verbose=self._verbose)
 
         return df_eval
 
@@ -385,11 +377,11 @@ class TreeModel:
         """
         # Check input
         X = ut.check_X(X=X)
-        check_match_X_is_selected(X=X, is_selected=self.is_selected)
+        check_match_X_is_selected(X=X, is_selected=self.is_selected_)
         # Predictions
         pred, pred_std = monte_carlo_predict_proba(X=X,
-                                                   list_models=self.list_models,
-                                                   is_selected=self.is_selected)
+                                                   list_models=self.list_models_,
+                                                   is_selected=self.is_selected_)
         return pred, pred_std
 
 

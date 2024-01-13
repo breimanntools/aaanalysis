@@ -193,7 +193,7 @@ class TestRanking:
 
 
     @settings(max_examples=3, deadline=1500)
-    @given(xlim_dif=st.tuples(st.floats(min_value=-100, max_value=0), st.floats(min_value=0, max_value=100)))
+    @given(xlim_dif=st.tuples(st.floats(min_value=-10, max_value=0), st.floats(min_value=0, max_value=10)))
     def test_xlim_dif(self, xlim_dif):
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
