@@ -71,13 +71,6 @@ class CPP(Tool):
         DataFrame with amino acid ``Scales``.
     df_cat
         DataFrame with categories for physicochemical amino acid ``Scales``.
-
-    See Also
-    --------
-    * :class:`SequenceFeature` for definition of sequence ``Parts``.
-    * :meth:`SequenceFeature.split_kws` for definition of ``Splits`` key word arguments.
-    * :func:`load_scales` for definition of amino acid ``Scales`` and their categories.
-
     """
     def __init__(self,
                  df_parts: pd.DataFrame = None,
@@ -112,6 +105,13 @@ class CPP(Tool):
         Notes
         -----
         * All scales from ``df_scales`` must be contained in ``df_cat``
+
+        See Also
+        --------
+        * :class:`CPPPlot`: the respective plotting class.
+        * :class:`SequenceFeature` for definition of sequence ``Parts``.
+        * :meth:`SequenceFeature.split_kws` for definition of ``Splits`` key word arguments.
+        * :func:`load_scales` for definition of amino acid ``Scales`` and their categories.
 
         Examples
         --------
@@ -380,6 +380,7 @@ class CPP(Tool):
 
         See Also
         --------
+        * :func:`CPPPlot.eval`: the respective plotting method.
         * :ref:`usage_principles_aaontology` for details on scale categories.
         * :meth:`CPP.run` for details on CPP statistical measures.
         * :func:`comp_auc_adjusted` for details on 'abs_auc'.

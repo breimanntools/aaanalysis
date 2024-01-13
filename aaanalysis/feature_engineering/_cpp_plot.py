@@ -240,6 +240,10 @@ class CPPPlot:
         verbose: bool, default=True
             If ``True``, verbose outputs are enabled.
 
+        See Also
+        --------
+        * :class:`CPP`: the respective computation class.
+
         Examples
         --------
         .. include:: examples/cpp_plot.rst
@@ -330,7 +334,7 @@ class CPPPlot:
 
         See Also
         --------
-        * :meth:`CPP.eval` for details on evaluation measures.
+        * :meth:`CPP.eval`: the respective computaton method.
         * :func:`comp_auc_adjusted`.
 
         Examples

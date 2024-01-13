@@ -102,14 +102,7 @@ class dPULearn:
 
         For distance-based identification, 'PCi' columns are replaced with the results for the selected metric.
 
-    See Also
-    --------
-    * For a detailed discussion on Positive-Unlabeled (PU) learning, its challenges, and evaluation strategies,
-      refer to the PU Learning section in the Usage Principles documentation: `usage_principles/pu_learning`.
 
-    See Also
-    --------
-    * See :func:`sklearn.decomposition.PCA`.
     """
     def __init__(self,
                  model_kwargs: Optional[dict] = None,
@@ -127,6 +120,16 @@ class dPULearn:
             The seed used by the random number generator. If a positive integer, results of stochastic processes are
             consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.
 
+        Notes
+        -----
+        * All attributes are set during fitting via the :meth:`dPULearn.fit` method and can be directly accessed.
+        * For a detailed discussion on Positive-Unlabeled (PU) learning, its challenges, and evaluation strategies,
+          refer to the PU Learning section in the Usage Principles documentation: `usage_principles/pu_learning`.
+
+        See Also
+        --------
+        * :class:`dPULearnPlot`: the respective plotting class.
+        * :func:`sklearn.decomposition.PCA` for details on principal component analysis.
         """
         # Global parameters
         verbose = ut.check_verbose(verbose)
@@ -289,6 +292,7 @@ class dPULearn:
 
         See Also
         --------
+        * :meth:`dPULearnPlot.eval`: the respective plotting method.
         * :ref:`usage_principles_pu_learning` for details on different evaluation strategies.
 
         Examples

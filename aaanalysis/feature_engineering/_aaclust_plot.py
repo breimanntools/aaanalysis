@@ -121,10 +121,6 @@ class AAclustPlot:
     This plotting class visualizes the result of the :class:`aaanalysis.AAclust` class, introduced in [Breimann24a]_.
     Dimensionality reduction is performed for visualization using decomposition models such as
     Principal Component Analysis (PCA).
-
-    See Also
-    --------
-    * Scikit-learn `decomposition model classes <https://scikit-learn.org/stable/modules/classes.html#module-sklearn.decomposition>`_.
     """
     def __init__(self,
                  model_class: Type[TransformerMixin] = PCA,
@@ -144,6 +140,11 @@ class AAclustPlot:
         random_state : int, optional
             The seed used by the random number generator. If a positive integer, results of stochastic processes are
             consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.
+
+        See Also
+        --------
+        * :class:`AAclust`: the respective computation class.
+        * Scikit-learn `decomposition model classes <https://scikit-learn.org/stable/modules/classes.html#module-sklearn.decomposition>`_.
 
         Examples
         --------

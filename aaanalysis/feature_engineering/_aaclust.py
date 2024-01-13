@@ -79,10 +79,9 @@ class AAclust(Wrapper):
     of numerical scales.
 
     Introduced in [Breimann24a]_, AAclust uses clustering models that require a pre-defined number of clusters
-    (k, set by ``n_clusters``), such as k-means or other `scikit-learn clustering models
-    <https://scikit-learn.org/stable/modules/clustering.html>`_. AAclust optimizes the value of k by utilizing Pearson
-    correlation and then selects a representative sample ('medoid') for each cluster closest to the center,
-    resulting in a redundancy-reduced sample set.
+    (k, set by ``n_clusters``), such as k-means or other `scikit-learn clustering models <https://scikit-learn.org/stable/modules/clustering.html>`_.
+    AAclust optimizes the value of k by utilizing Pearson correlation and then selects a representative sample ('medoid')
+    for each cluster closest to the center, resulting in a redundancy-reduced sample set.
 
     Attributes
     ----------
@@ -90,29 +89,20 @@ class AAclust(Wrapper):
         The fitted clustering model object after calling the ``fit`` method.
     n_clusters : int
         Number of clusters obtained by AAclust.
-    labels_ : array-like, shape (n_samples,)
+    labels_ : array-like, shape (n_samples)
         Cluster labels in the order of samples in ``X``.
     centers_ : array-like, shape (n_clusters, n_features)
         Average scale values corresponding to each cluster.
-    labels_centers_ : array-like, shape (n_clusters,)
+    labels_centers_ : array-like, shape (n_clusters)
         Cluster labels for each cluster center.
     medoids_ : array-like, shape (n_clusters, n_features)
         Representative samples, one for each cluster.
-    labels_medoids_ :  array-like, shape (n_clusters,)
+    labels_medoids_ :  array-like, shape (n_clusters)
         Cluster labels for each medoid.
-    is_medoid_ : array-like, shape (n_samples, )
+    is_medoid_ : array-like, shape (n_samples)
         Array indicating samples being medoids (1) or not (0). Same order as ``labels_``.
     medoid_names_ : list
         Names of the medoids. Set if ``names`` is provided to ``.fit``.
-
-    Notes
-    -----
-    * All attributes are set during ``.fit`` and can be directly accessed.
-    * AAclust is designed primarily for amino acid scales but can be used for any set of numerical indices.
-
-    See Also
-    --------
-    * Scikit-learn `clustering model classes <https://scikit-learn.org/stable/modules/clustering.html>`_.
     """
     def __init__(self,
                  model_class: Type[ClusterMixin] = KMeans,
@@ -124,7 +114,7 @@ class AAclust(Wrapper):
         Parameters
         ----------
         model_class : Type[ClusterMixin], default=KMeans
-            A clustering model class with ``n_clusters`` parameter. This class will be instantiated by the ``.fit`` method.
+            A clustering model class with ``n_clusters`` parameter.
         model_kwargs : dict, optional
             Keyword arguments to pass to the selected clustering model.
         verbose : bool, default=True
@@ -132,6 +122,16 @@ class AAclust(Wrapper):
         random_state : int, optional
             The seed used by the random number generator. If a positive integer, results of stochastic processes are
             consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.
+
+        Notes
+        -----
+        * All attributes are set during fitting via the :meth:`AAclust.fit` method  and can be directly accessed.
+        * AAclust is designed primarily for amino acid scales but can be used for any set of numerical indices.
+
+        See Also
+        --------
+        * :class:`AAclustPlot`, the respective plotting class.
+        * Scikit-learn `clustering model classes <https://scikit-learn.org/stable/modules/clustering.html>`_.
 
         Examples
         --------
@@ -224,7 +224,6 @@ class AAclust(Wrapper):
             - ``min_cor_all``: Minium pairwise Pearson correlation among all cluster members.
 
         * A representative scale (medoid) closest to each cluster center is selected for redundancy reduction.
-        * Sets all attributes of the :class:`aanalysis.AAclust` class.
 
         See Also
         --------
@@ -301,13 +300,13 @@ class AAclust(Wrapper):
 
         The following established clustering measures are used:
 
-            - ``BIC`` (Bayesian Information Criterion): Reflects the goodness of fit for the clustering while accounting for
-              the number of clusters and parameters. The BIC value can range from negative infinity to positive infinity.
-              A higher BIC indicates superior clustering quality.
-            - ``CH`` (Calinski-Harabasz Index): Represents the ratio of between-cluster dispersion mean to the within-cluster dispersion.
-              The CH value ranges from 0 to positive infinity. A higher CH score suggests better-defined clustering.
-            - ``SC`` (Silhouette Coefficient): Evaluates the proximity of each data point in one cluster to the points in the neighboring clusters.
-              The SC score lies between -1 and 1. A value closer to 1 implies better clustering.
+        - ``BIC`` (Bayesian Information Criterion): Reflects the goodness of fit for the clustering while accounting for
+          the number of clusters and parameters. The BIC value can range from negative infinity to positive infinity.
+          A higher BIC indicates superior clustering quality.
+        - ``CH`` (Calinski-Harabasz Index): Represents the ratio of between-cluster dispersion mean to the within-cluster dispersion.
+          The CH value ranges from 0 to positive infinity. A higher CH score suggests better-defined clustering.
+        - ``SC`` (Silhouette Coefficient): Evaluates the proximity of each data point in one cluster to the points in the neighboring clusters.
+          The SC score lies between -1 and 1. A value closer to 1 implies better clustering.
 
         Parameters
         ----------
@@ -328,11 +327,11 @@ class AAclust(Wrapper):
         -----
         ``df_eval`` includes the following columns:
 
-        - 'names': Names (string) of evaluated datasets.
-        - 'n_clusters': Number (integer) of clusters, equal to number of medoids.
-        - 'BIC': BIC value (float) for clustering (-inf to inf).
-        - 'CH': CH value (float) for clustering (0 to inf).
-        - 'SC': SC value (float) for clustering (-1 to 1).
+            - 'names': Names (string) of evaluated datasets.
+            - 'n_clusters': Number (integer) of clusters, equal to number of medoids.
+            - 'BIC': BIC value (float) for clustering (-inf to inf).
+            - 'CH': CH value (float) for clustering (0 to inf).
+            - 'SC': SC value (float) for clustering (-1 to 1).
 
         BIC was adapted form this `StackExchange discussion <https://stats.stackexchange.com/questions/90769/using-bic-to-estimate-the-number-of-k-in-kmeans>`_
         and modified to align with the SC and CH score so that higher values signify better clustering,
@@ -340,8 +339,9 @@ class AAclust(Wrapper):
 
         See Also
         --------
-        * :func:`sklearn.metrics.calinski_harabasz_score`.
-        * :func:`sklearn.metrics.silhouette_score`.
+        * :meth:`AAclustPlot.eval`: the respective plotting method.
+        * :func:`sklearn.metrics.silhouette_score`: a commonly used clustering quality measures.
+        * :func:`sklearn.metrics.calinski_harabasz_score`: a commonly used clustering quality measures.
 
         Examples
         --------
@@ -384,7 +384,7 @@ class AAclust(Wrapper):
         names : list of str
             List of sample names corresponding to ``X``.
         shorten_names : bool, default=True
-            If ``True`` shorten version of the names will be used.
+            If ``True``, shorten version of the names will be used.
 
         Returns
         -------

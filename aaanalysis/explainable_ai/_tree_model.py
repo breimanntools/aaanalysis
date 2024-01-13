@@ -114,18 +114,8 @@ class TreeModel:
         An arrays containing standard deviation for feature importance across all rounds
         and trained models from `list_model_classes`. Same order as ``feature_importance``.
     is_selected_ : array-like, shape (n_rounds, n_features)
-        2D array indicating features being selected by recursive features selection  (1) or not (0) for each round.
+        2D array indicating features being selected by recursive features selection (True) or not (False) for each round.
         Same order as ``feature_importance``.
-
-    Notes
-    -----
-    * All attributes are set during `.fit()` and can be directly accessed.
-
-    See Also
-    --------
-    * :class:`sklearn.ensemble.RandomForestClassifier` for Random Forest model.
-    * :class:`sklearn.ensemble.ExtraTreesClassifier` for Extra Trees model.
-    * :class:`sklearn.ensemble.GradientBoostingClassifier` for Gradient Boosting model.
     """
     def __init__(self,
                  list_model_classes : List[Type[Union[ClassifierMixin, BaseEstimator]]] = None,
@@ -149,6 +139,16 @@ class TreeModel:
         random_state : int, optional
             The seed used by the random number generator. If a positive integer, results of stochastic processes are
             consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.
+
+        Notes
+        -----
+        * All attributes are set during fitting via the :meth:`TreeModel.fit` method and can be directly accessed.
+
+        See Also
+        --------
+        * :class:`sklearn.ensemble.RandomForestClassifier` for Random Forest model.
+        * :class:`sklearn.ensemble.ExtraTreesClassifier` for Extra Trees model.
+        * :class:`sklearn.ensemble.GradientBoostingClassifier` for Gradient Boosting model.
 
         Examples
         --------
@@ -312,7 +312,7 @@ class TreeModel:
 
         Notes
         -----
-        * :func:'sklearn.metrics.balanced_accuracy_score' is recommended if datasets are unbalanced.
+        * :func:`sklearn.metrics.balanced_accuracy_score` is recommended if datasets are unbalanced.
 
         See Also
         --------
