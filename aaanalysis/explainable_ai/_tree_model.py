@@ -111,6 +111,10 @@ def check_list_is_selected(list_is_selected=None, X=None, convert_1d_to_2d=False
 
 def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, feat_importance_std=None, drop=False):
     """Check if df_feat matches with importance values"""
+    if feat_importance is None:
+        raise ValueError(f"'feat_importance' is None. Please fit TreeModel before adding feature importance.")
+    if feat_importance_std is None:
+        raise ValueError(f"'feat_importance_std' is None. Please fit TreeModel before adding feature importance.")
     n_feat = len(df_feat)
     n_feat_imp = len(feat_importance)
     n_feat_imp_std = len(feat_importance_std)
@@ -475,6 +479,7 @@ class TreeModel:
          """
         # Check input
         ut.check_df_feat(df_feat=df_feat)
+        ut.check_bool(name="drop", val=drop)
         check_match_df_feat_importance_arrays(df_feat=df_feat,
                                               feat_importance=self.feat_importance,
                                               feat_importance_std=self.feat_importance_std,

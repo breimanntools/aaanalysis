@@ -123,6 +123,7 @@ def check_labels(labels=None, name="labels", vals_requiered=None, len_requiered=
     """Check the provided labels against various criteria like type, required values, and length."""
     if labels is None:
         raise ValueError(f"'{name}' should not be None.")
+    labels = check_type.check_list_like(name=name, val=labels)
     # Convert labels to a numpy array if it's not already
     labels = np.asarray(labels)
     # Ensure labels is at least 1-dimensional
