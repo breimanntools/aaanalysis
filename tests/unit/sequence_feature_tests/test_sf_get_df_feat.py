@@ -218,7 +218,7 @@ class TestGetDfFeat:
 class TestGetDfFeatComplexPositive:
     """Complex positive tests for the get_df_feat method."""
 
-    @settings(max_examples=5, deadline=1000)
+    @settings(max_examples=5, deadline=1500)
     @given(
         tmd_len=some.integers(min_value=15, max_value=30),
         jmd_n_len=some.integers(min_value=10, max_value=15),

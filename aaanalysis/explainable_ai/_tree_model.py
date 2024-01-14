@@ -15,6 +15,15 @@ from .backend.tree_model.tree_model_eval import eval_feature_selections
 
 
 # I Helper Functions
+def check_is_preselected(is_preselected=None):
+    """Check if preselected is valid"""
+    is_preselected = ut.check_array_like(name="is_preselected_feature", val=is_preselected, accept_none=True,
+                                         expected_dim=1, dtype="bool")
+    if is_preselected is not None and sum(is_preselected) == 0:
+        raise ValueError(f"Number of preselected features should not be 0 in 'is_preselected': {is_preselected}")
+    return is_preselected
+
+
 def check_match_list_model_classes_kwargs(list_model_classes=None, list_model_kwargs=None):
     """Check length match of list_model_classes and list_model_kwargs"""
     n_models = len(list_model_classes)
@@ -39,9 +48,20 @@ def check_match_labels_X(labels=None, X=None):
 def check_n_feat_min_n_feat_max(n_feat_min=None, n_feat_max=None):
     """Check if vmin and vmax are valid numbers and vmin is less than vmax."""
     ut.check_number_range(name="n_feat_min", val=n_feat_min, min_val=1, just_int=True, accept_none=False)
-    ut.check_number_range(name="n_feat_max", val=n_feat_max, min_val=2, just_int=True, accept_none=False)
-    if n_feat_min >= n_feat_max:
-        raise ValueError(f"'n_feat_min' ({n_feat_min}) < 'n_feat_max' ({n_feat_max}) not fulfilled.")
+    ut.check_number_range(name="n_feat_max", val=n_feat_max, min_val=1, just_int=True, accept_none=False)
+    if n_feat_min > n_feat_max:
+        raise ValueError(f"'n_feat_min' ({n_feat_min}) >= 'n_feat_max' ({n_feat_max}) not fulfilled.")
+
+def check_n_cv(n_cv=None, labels=None):
+    """Check if n_cv is valid"""
+    ut.check_number_range(name="n_cv", val=n_cv, min_val=2, just_int=True)
+    # Check if smaller than smaller class
+    # Count the occurrences of each class
+    unique, counts = np.unique(labels, return_counts=True)
+    min_class_count = min(counts)
+    # Ensure n_cv is not greater than the smallest class count
+    if n_cv > min_class_count:
+        raise ValueError(f"'n_cv' should not be greater than the smallest class count ({min_class_count}), got {n_cv}.")
 
 
 def check_metrics(name="list_eval_sores", metrics=None):
@@ -157,8 +177,7 @@ class TreeModel:
         # Global parameters
         verbose = ut.check_verbose(verbose)
         random_state = ut.check_random_state(random_state=random_state)
-        is_preselected = ut.check_array_like(name="is_preselected_feature", val=is_preselected,
-                                             accept_none=True, expected_dim=1, dtype="bool")
+        is_preselected = check_is_preselected(is_preselected=is_preselected)
         # Model parameters
         if list_model_classes is None:
             list_model_classes = [RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
@@ -221,16 +240,18 @@ class TreeModel:
         use_rfe : bool, default=True
             Whether to use recursive feature elimination (RFE) with random forest model for feature selection.
         n_feat_min : int, default=10
-            The minimum number of features to select each round for RFE. Should be < ``n_feat_max``.
+            The minimum number of features to select each round for RFE. Should be 0 < ``n_feat_min`` <= ``n_feat_max``.
         n_feat_max : int, default=50
-            The maximum number of features to select each round for RFE. Should be > ``n_fat_min``.
+            The maximum number of features to select each round for RFE. Should be >= ``n_feat_min``.
         metric : str, default="accuracy"
             The name of the scoring function to use for cross-validation for RFE.
+            Valid metrics are: {'accuracy', 'balanced_accuracy', 'precision', 'recall', 'f1', 'roc_auc'}
         n_cv : int, default=5
-            Determines the number of folds (>1) for cross-validation for RFE.
+            The number of cross-validation folds for RFE, must be > 1 and ≤ the smallest class's sample count.
         step : int, optional
-            Number of features to remove at each iteration for RFE. If ``None``, all features that have the minimum
-            importance score are removed at each iteration, which is a faster but less controlled strategy.
+            Number of features to remove per RFE iteration. If ``None``, removes all features with the lowest importance
+            scores each iteration, offering a faster but less precise approach. Should be < ``n_features``.
+            Ideally, ``step`` should be much smaller than ``n_features``, with 1-5% of `n_features` being a recommended range.
 
         Returns
         -------
@@ -254,15 +275,16 @@ class TreeModel:
         """
         # Check input
         X = ut.check_X(X=X)
+        n_samp, n_feat = X.shape
         ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
         labels = check_match_labels_X(labels=labels, X=X)
         ut.check_number_range(name="n_rounds", val=n_rounds, min_val=1, just_int=True)
         ut.check_bool(name="use_rfe", val=use_rfe)
-        ut.check_number_range(name="n_cv", val=n_cv, min_val=2, just_int=True)
+        check_n_cv(n_cv=n_cv, labels=labels)
         check_n_feat_min_n_feat_max(n_feat_min=n_feat_min, n_feat_max=n_feat_max)
         ut.check_str(name="metric", val=metric)
         check_metrics(name="metric", metrics=metric)
-        ut.check_number_range(name="step", val=step, min_val=1, accept_none=True, just_int=True)
+        ut.check_number_range(name="step", val=step, min_val=1, max_val=n_feat-1, accept_none=True, just_int=True)
         # Fit tree-based models and save feature importance
         args = dict(X=X, labels=labels,
                     list_model_classes=self._list_model_classes,
@@ -304,6 +326,7 @@ class TreeModel:
             Number of folds for cross-validation.
         list_metrics : str or list of str, default=['accuracy', 'f1', 'precision', 'recall']
             List of scoring metrics to use for evaluation. Only metrics for binary classification are allowed.
+            Valid metrics are: {'accuracy', 'balanced_accuracy', 'precision', 'recall', 'f1', 'roc_auc'}
 
         Returns
         -------
@@ -324,6 +347,7 @@ class TreeModel:
         """
         # Check input
         X = ut.check_X(X=X)
+        n_samples, n_feat = X.shape
         ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
         labels = check_match_labels_X(labels=labels, X=X)
         ut.check_list_like(name="list_is_selected", val=list_is_selected)
@@ -333,7 +357,7 @@ class TreeModel:
         if list_metrics is None:
             list_metrics = ["accuracy", "f1", "precision", "recall"]
         check_metrics(name="list_metrics", metrics=list_metrics)
-        ut.check_number_range(name="n_cv", val=n_cv, min_val=2, just_int=True)
+        ut.check_number_range(name="n_cv", val=n_cv, min_val=2, max_val=n_samples-1 , just_int=True)
         # Perform evaluation
         df_eval = eval_feature_selections(X, labels=labels,
                                           list_is_feature=list_is_selected,

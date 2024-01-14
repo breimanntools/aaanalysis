@@ -67,13 +67,13 @@ def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan
     if convert_2d:
         val = _convert_2d(val=val, name=name)
     # Utilize Scikit-learn's check_array for robust checking
-    if dtype != "bool":  # Skip this check for boolean arrays
-        try:
-            val = check_array(val, dtype=expected_dtype, ensure_2d=ensure_2d, force_all_finite=not allow_nan)
-        except Exception as e:
-            dtype = "any type" if dtype is None else dtype
-            raise ValueError(f"'{name}' should be array-like with '{dtype}' values."
-                             f"\nscikit message:\n\t{e}")
+    try:
+        # Convert list to array
+        val = check_array(val, dtype=expected_dtype, ensure_2d=ensure_2d, force_all_finite=not allow_nan)
+    except Exception as e:
+        dtype = "any type" if dtype is None else dtype
+        raise ValueError(f"'{name}' should be array-like with '{dtype}' values."
+                         f"\nscikit message:\n\t{e}")
     # Check dimensions if specified
     if expected_dim is not None and len(val.shape) != expected_dim:
         raise ValueError(f"'{name}' should have {expected_dim} dimensions, but has {len(val.shape)}.")

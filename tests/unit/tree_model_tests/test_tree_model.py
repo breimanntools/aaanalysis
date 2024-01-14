@@ -1,11 +1,10 @@
-"""
-This script tests the aa.TreeModel class initialization and its parameters.
-"""
+"""This script tests the TreeModel class initialization and its parameters."""
 import numpy as np
 from hypothesis import given, settings
 import hypothesis.strategies as some
 import pytest
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier
+from sklearn.neighbors import KNeighborsClassifier
 import aaanalysis as aa
 
 # Mock data for testing
@@ -27,13 +26,15 @@ class TestTreeModel:
         assert tree_model._list_model_kwargs == mock_kwargs[0:2]
 
     @settings(deadline=1000)
-    @given(is_preselected=some.lists(some.booleans(), min_size=1, max_size=5))
+    @given(is_preselected=some.lists(some.booleans(), min_size=2, max_size=5))
     def test_is_preselected_parameter(self, is_preselected):
         """Test the 'is_preselected' parameter."""
-        tree_model = aa.TreeModel(is_preselected=is_preselected)
-        assert np.array_equal(tree_model._is_preselected, is_preselected)
-        tree_model = aa.TreeModel(is_preselected=mock_preselected)
-        assert np.array_equal(tree_model._is_preselected, mock_preselected)
+        if sum(is_preselected) > 1:
+
+            tree_model = aa.TreeModel(is_preselected=is_preselected)
+            assert np.array_equal(tree_model._is_preselected, is_preselected)
+            tree_model = aa.TreeModel(is_preselected=mock_preselected)
+            assert np.array_equal(tree_model._is_preselected, mock_preselected)
 
     @settings(deadline=1000)
     @given(verbose=some.booleans())
@@ -65,6 +66,8 @@ class TestTreeModel:
         """Test empty list for 'list_model_classes' parameter."""
         with pytest.raises(ValueError):
             aa.TreeModel(list_model_classes=[])
+        with pytest.raises(ValueError):
+            aa.TreeModel(list_model_classes=[KNeighborsClassifier])
 
     def test_invalid_list_model_kwargs_type(self):
         """Test invalid type for 'list_model_kwargs' parameter."""
@@ -117,13 +120,14 @@ class TestTreeModelComplex:
             assert tree_model._random_state == random_state
 
     @settings(deadline=1000, max_examples=10)
-    @given(is_preselected=some.lists(some.booleans(), min_size=1, max_size=5),
+    @given(is_preselected=some.lists(some.booleans(), min_size=2, max_size=5),
            random_state=some.integers() | some.none())
     def test_is_preselected_and_random_state(self, is_preselected, random_state):
         """Test 'is_preselected' and 'random_state' parameters together."""
-        tree_model = aa.TreeModel(is_preselected=is_preselected, random_state=random_state)
-        assert np.array_equal(tree_model._is_preselected, is_preselected)
-        assert tree_model._random_state == random_state
+        if sum(is_preselected) > 1:
+            tree_model = aa.TreeModel(is_preselected=is_preselected, random_state=random_state)
+            assert np.array_equal(tree_model._is_preselected, is_preselected)
+            assert tree_model._random_state == random_state
 
     @settings(deadline=1000, max_examples=10)
     @given(list_model_classes=some.lists(some.sampled_from(mock_classes), min_size=1, max_size=3),

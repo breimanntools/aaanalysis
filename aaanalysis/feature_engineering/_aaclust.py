@@ -130,7 +130,7 @@ class AAclust(Wrapper):
 
         See Also
         --------
-        * :class:`AAclustPlot`, the respective plotting class.
+        * :class:`AAclustPlot`: the respective plotting class.
         * Scikit-learn `clustering model classes <https://scikit-learn.org/stable/modules/clustering.html>`_.
 
         Examples

@@ -27,8 +27,9 @@ def _recursive_feature_elimination(X, labels=None, step=None, n_feat_max=50, n_f
             min_importance = np.min(importances)
             features_to_remove = (importances == min_importance)
         else:
-            # Remove a fixed number of least important features
-            indices_to_remove = np.argsort(importances)[:step]
+            # Remove a fixed number of least important features (a maximum of n_features -1)
+            _step = min(n_features-1, step)
+            indices_to_remove = np.argsort(importances)[:_step]
             features_to_remove = np.zeros_like(importances, dtype=bool)
             features_to_remove[indices_to_remove] = True
         selected_features[np.where(selected_features)[0][features_to_remove]] = False
