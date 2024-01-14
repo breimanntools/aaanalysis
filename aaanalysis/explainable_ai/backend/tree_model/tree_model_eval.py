@@ -7,6 +7,7 @@ import aaanalysis.utils as ut
 
 
 # II Main methods
+@ut.catch_undefined_metric_warning()
 def eval_feature_selections(X, labels=None, list_is_feature=None, names_feature_selections=None, n_cv=5,
                             list_metrics=None, list_model_classes=None, list_model_kwargs=None, verbose=True):
     """Evaluate the performance of different feature selections for multiple models,

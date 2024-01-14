@@ -1,5 +1,9 @@
 """
 This is a script for the frontend of the TreeModel class used to obtain feature importance reproducibly.
+
+DEV: TODO features
+a) TreeModel.fit: Add n_jobs as input
+b) TreeModel.eval: Add n_features to output
 """
 from typing import Optional, Dict, List, Tuple, Type, Union, Callable
 from sklearn.base import ClassifierMixin, BaseEstimator
@@ -56,7 +60,6 @@ def check_n_cv(n_cv=None, labels=None):
     """Check if n_cv is valid"""
     ut.check_number_range(name="n_cv", val=n_cv, min_val=2, just_int=True)
     # Check if smaller than smaller class
-    # Count the occurrences of each class
     unique, counts = np.unique(labels, return_counts=True)
     min_class_count = min(counts)
     # Ensure n_cv is not greater than the smallest class count
@@ -75,17 +78,36 @@ def check_metrics(name="list_eval_sores", metrics=None):
         raise ValueError(f"Wrong 'metrics' ({wrong_metrics}). Chose from these: {valid_metrics}")
 
 
-def check_list_is_selected(list_is_feature=None, X=None):
+def check_list_is_selected(list_is_selected=None, X=None, convert_1d_to_2d=False):
     """Check if list_is_feature is list containing bool 2D matrix matching to X"""
-    if not isinstance(list_is_feature, list):
-        raise ValueError("'list_is_feature' must be a list with 2D boolean matrix.")
+    if not isinstance(list_is_selected, list):
+        raise ValueError("'list_is_feature' must be a list with 2D boolean array.")
+    list_is_selected = list_is_selected.copy()
     n_features = X.shape[1]
-    for is_feature_rounds in list_is_feature:
-        if not all(isinstance(is_feature, np.ndarray) and is_feature.dtype == bool and
-                   len(is_feature) == n_features for is_feature in is_feature_rounds):
-            raise ValueError(
-                f"Each element in 'list_is_feature' must be a 1D boolean array with n features='{n_features}' elements.")
+    str_error = f"Each element in 'list_is_feature' must be a 2D boolean array each with 'n_features'={n_features} elements."
+    for index, is_feature_round in enumerate(list_is_selected):
+        if convert_1d_to_2d and isinstance(is_feature_round, np.ndarray):
+            if is_feature_round.ndim != 1:
+                raise ValueError(f"Element at index {index} should be 1D boolean array if 'convert_1d_to_2d=True'")
+            else:
+                if is_feature_round.dtype != bool:
+                    raise ValueError(f"Element at index {index} is not a boolean array.")
+                if is_feature_round.size != n_features:
+                    raise ValueError(f"1D array at index {index} does not match 'n_features'={n_features}.")
+            list_is_selected[index] = is_feature_round.reshape(1, -1)  # Convert and update the array in the list
 
+        is_feature_round = list_is_selected[index]
+        if not isinstance(is_feature_round, np.ndarray):
+            raise ValueError(f"Element at index {index} in 'list_is_feature' is not a numpy array.\n {str_error}")
+        if is_feature_round.dtype != bool:
+            raise ValueError(f"Element at index {index} in 'list_is_feature' is not a boolean array.\n {str_error}")
+        if is_feature_round.ndim != 2:
+            raise ValueError(f"Element at index {index} in 'list_is_feature' is not a 2D array.\n {str_error}")
+        if is_feature_round.shape[1] != n_features:
+            raise ValueError(
+                f"Element at index {index} in 'list_is_feature' does not match the number of features in 'X'. "
+                f"Expected {n_features} features, got {is_feature_round.shape[1]}.\n {str_error}")
+    return list_is_selected
 
 def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, feat_importance_std=None, drop=False):
     """Check if df_feat matches with importance values"""
@@ -239,6 +261,8 @@ class TreeModel:
             The number of rounds (>=1) to fit the model.
         use_rfe : bool, default=True
             Whether to use recursive feature elimination (RFE) with random forest model for feature selection.
+        n_cv : int, default=5
+            The number of cross-validation folds for RFE, must be > 1 and ≤ the smallest class's sample count.
         n_feat_min : int, default=10
             The minimum number of features to select each round for RFE. Should be 0 < ``n_feat_min`` <= ``n_feat_max``.
         n_feat_max : int, default=50
@@ -246,8 +270,6 @@ class TreeModel:
         metric : str, default="accuracy"
             The name of the scoring function to use for cross-validation for RFE.
             Valid metrics are: {'accuracy', 'balanced_accuracy', 'precision', 'recall', 'f1', 'roc_auc'}
-        n_cv : int, default=5
-            The number of cross-validation folds for RFE, must be > 1 and ≤ the smallest class's sample count.
         step : int, optional
             Number of features to remove per RFE iteration. If ``None``, removes all features with the lowest importance
             scores each iteration, offering a faster but less precise approach. Should be < ``n_features``.
@@ -305,9 +327,10 @@ class TreeModel:
              X : ut.ArrayLike2D,
              labels: ut.ArrayLike1D = None,
              list_is_selected: List[ut.ArrayLike2D] = None,
+             convert_1d_to_2d: bool = False,
              names_feature_selections: Optional[List[str]] = None,
-             list_metrics: Union[str, List[str]] = None,
              n_cv: int = 5,
+             list_metrics: Union[str, List[str]] = None,
              ) -> pd.DataFrame:
         """
         Evaluate the prediction performance for different feature selections.
@@ -319,12 +342,14 @@ class TreeModel:
         labels : array-like, shape (n_samples)
             Dataset labels of samples in ``X``. Should be either 1 (positive) or 0 (negative).
         list_is_selected : array-like, shape (n_feature_sets, n_round, n_features)
-            List of boolean arrays with shape (n_rounds, n_features) indicating different feature selections.
+            List of 2D boolean arrays with shape (n_rounds, n_features) indicating different feature selections.
+        convert_1d_to_2d : bool, default=False
+            If ``True``, convert all boolean arrays in `list_is_selected` from 1D to 2D arrays with a single row.
         names_feature_selections : list of str, optional
             List of dataset names corresponding to ``list_is_feature``.
         n_cv : int, default=5
-            Number of folds for cross-validation.
-        list_metrics : str or list of str, default=['accuracy', 'f1', 'precision', 'recall']
+            The number of cross-validation folds for RFE, must be > 1 and ≤ the smallest class's sample count.
+        list_metrics : str or list of str, default=['accuracy', 'precision', 'recall', 'f1']
             List of scoring metrics to use for evaluation. Only metrics for binary classification are allowed.
             Valid metrics are: {'accuracy', 'balanced_accuracy', 'precision', 'recall', 'f1', 'roc_auc'}
 
@@ -337,6 +362,11 @@ class TreeModel:
         -----
         * :func:`sklearn.metrics.balanced_accuracy_score` is recommended if datasets are unbalanced.
 
+        Warnings
+        --------
+        * ``list_metrics``: 'precision' and 'f1' metrics may trigger 'UndefinedMetricWarning' in imbalanced or
+          small datasets due to division by zero if no positive predictions can be maid.
+
         See Also
         --------
         * Sckit-learn `classification metrics and scorings <https://scikit-learn.org/stable/modules/model_evaluation.html>`_.
@@ -346,18 +376,20 @@ class TreeModel:
         .. include:: examples/tm_eval.rst
         """
         # Check input
-        X = ut.check_X(X=X)
+        X = ut.check_X(X=X, min_n_unique_features=2)
         n_samples, n_feat = X.shape
         ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
         labels = check_match_labels_X(labels=labels, X=X)
         ut.check_list_like(name="list_is_selected", val=list_is_selected)
-        check_list_is_selected(list_is_feature=list_is_selected, X=X)
+        ut.check_bool(name="convert_1d_to_2d", val=convert_1d_to_2d)
+        list_is_selected = check_list_is_selected(list_is_selected=list_is_selected, X=X,
+                                                  convert_1d_to_2d=convert_1d_to_2d)
         names_feature_selections = ut.check_list_like(name="name_feature_selections", val=names_feature_selections, accept_none=True,
                                                       accept_str=True, check_all_str_or_convertible=True)
         if list_metrics is None:
-            list_metrics = ["accuracy", "f1", "precision", "recall"]
+            list_metrics = ["accuracy", "precision", "recall", "f1"]
         check_metrics(name="list_metrics", metrics=list_metrics)
-        ut.check_number_range(name="n_cv", val=n_cv, min_val=2, max_val=n_samples-1 , just_int=True)
+        check_n_cv(n_cv=n_cv, labels=labels)
         # Perform evaluation
         df_eval = eval_feature_selections(X, labels=labels,
                                           list_is_feature=list_is_selected,

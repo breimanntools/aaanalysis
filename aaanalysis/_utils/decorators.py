@@ -4,7 +4,7 @@ This a script for general decorators used in AAanalysis.
 """
 import warnings
 import traceback
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning, UndefinedMetricWarning
 import functools
 import re
 
@@ -114,7 +114,47 @@ def catch_invalid_divide_warning():
             with CatchRuntimeWarnings() as crw:
                 result = func(*args, **kwargs)
             if crw.get_warnings():
-                raise InvalidDivisionException(f"\nError due to RuntimeWarning: {crw.get_warnings()[0]}")
+                raise InvalidDivisionException(f"\nError due to 'RuntimeWarning': {crw.get_warnings()[0]}")
+            return result
+        return wrapper
+    return decorator
+
+# Catch UndefinedMetricWarnings
+class CatchUndefinedMetricWarning:
+    """Context manager to catch and aggregate UndefinedMetricWarnings."""
+    def __enter__(self):
+        self._warn_set = set()
+        self._other_warnings = []
+        self._showwarning_orig = warnings.showwarning
+        warnings.showwarning = self._catch_warning
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        warnings.showwarning = self._showwarning_orig
+        for warn_message, warn_category, filename, lineno in self._other_warnings:
+            warnings.warn_explicit(warn_message, warn_category, filename, lineno)
+
+    def _catch_warning(self, message, category, filename, lineno, file=None, line=None):
+        if category == UndefinedMetricWarning:
+            self._warn_set.add(str(message))  # Add message to set (duplicates are automatically handled)
+        else:
+            self._other_warnings.append((message, category, filename, lineno))
+
+    def get_warnings(self):
+        return list(self._warn_set)
+
+def catch_undefined_metric_warning():
+    """Decorator to catch and report UndefinedMetricWarnings once per unique message."""
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            with CatchUndefinedMetricWarning() as cumw:
+                result = func(*args, **kwargs)
+            if cumw.get_warnings():
+                summary_msg = "The following 'UndefinedMetricWarning' was caught:\n" + "\n".join(cumw.get_warnings())
+                summary_msg += ("\n This warning was likely triggered due to 'precision' or 'f1' metrics and "
+                                "an imbalanced and/or small dataset.")
+                warnings.warn(summary_msg, UndefinedMetricWarning)
             return result
         return wrapper
     return decorator

@@ -34,7 +34,8 @@ from ._utils.check_plots import (check_vmin_vmax, check_lim, check_dict_xlims,
 from ._utils.new_types import ArrayLike1D, ArrayLike2D
 from ._utils.decorators import (catch_runtime_warnings, CatchRuntimeWarnings,
                                 catch_convergence_warning, ClusteringConvergenceException,
-                                catch_invalid_divide_warning)
+                                catch_invalid_divide_warning,
+                                catch_undefined_metric_warning, CatchUndefinedMetricWarning)
 from ._utils.plotting import (plot_gco, plot_get_clist_, plot_legend_)
 
 # Utility functions

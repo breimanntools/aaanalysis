@@ -64,6 +64,7 @@ def _compute_feature_importance(X, labels=None, is_selected=None, list_model_cla
 
 
 # Complete fit method
+@ut.catch_undefined_metric_warning()
 def fit_tree_based_models(X=None, labels=None,
                           list_model_classes=None, list_model_kwargs=None, is_preselected=None,
                           n_rounds=None, use_rfe=True, n_cv=5, n_feat_min=10, n_feat_max=50, metric="accuracy", step=1,

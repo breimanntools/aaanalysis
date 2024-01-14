@@ -81,7 +81,8 @@ def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan
 
 
 # Check feature matrix and labels
-def check_X(X, X_name="X", min_n_samples=3, min_n_features=2, ensure_2d=True, allow_nan=False, accept_none=False):
+def check_X(X, X_name="X", min_n_samples=3, min_n_features=2, min_n_unique_features=None,
+            ensure_2d=True, allow_nan=False, accept_none=False):
     """Check the feature matrix X is valid."""
     if X is None:
         if not accept_none:
@@ -98,6 +99,10 @@ def check_X(X, X_name="X", min_n_samples=3, min_n_features=2, ensure_2d=True, al
     if n_features < min_n_features:
         raise ValueError(f"n_features ({n_features} in 'X') should be >= {min_n_features}."
                          f"\nX = {X}")
+    if min_n_unique_features is not None:
+        n_unique_features = sum([len(set(X[:, col])) > 1 for col in range(n_features)])
+        if n_unique_features < min_n_unique_features:
+            raise ValueError(f"'n_unique_features' ({n_unique_features}) should be >= {min_n_unique_features}")
     return X
 
 

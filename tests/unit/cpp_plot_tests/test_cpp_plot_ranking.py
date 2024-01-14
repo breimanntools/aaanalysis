@@ -274,12 +274,10 @@ class TestRanking:
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, tmd_len=tmd_len)
 
-    @settings(max_examples=20, deadline=1500)
-    @given(xlim_dif=st.tuples(st.floats(min_value=0), st.floats(max_value=-101)))
-    def test_invalid_xlim_dif(self, xlim_dif):
-        cpp_plot = aa.CPPPlot()
-        df_feat = create_df_feat()
-        if xlim_dif[0] > xlim_dif[1]:
+    def test_invalid_xlim_dif(self):
+        for xlim_dif in [(2,1), (None, 1), (), (1, 1, 1), (-2, -4)]:
+            cpp_plot = aa.CPPPlot()
+            df_feat = create_df_feat()
             with pytest.raises(ValueError):
                 cpp_plot.ranking(df_feat=df_feat, xlim_dif=xlim_dif)
 
