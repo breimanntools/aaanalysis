@@ -1,5 +1,5 @@
 """
-This is a script for the frontend of the TreeModel class used to obtain feature importance reproducibly.
+This is a script for the frontend of the TreeModel class used to obtain Mote Carlo estimates of feature importance.
 
 DEV: TODO features
 a) TreeModel.fit: Add n_jobs as input
@@ -13,7 +13,9 @@ import numpy as np
 
 import aaanalysis.utils as ut
 
-from .backend.check_models import (check_match_list_model_classes_kwargs)
+from .backend.check_models import (check_match_list_model_classes_kwargs,
+                                   check_match_labels_X,
+                                   check_match_X_is_selected)
 from .backend.tree_model.tree_model_fit import fit_tree_based_models
 from .backend.tree_model.tree_model_predict_proba import monte_carlo_predict_proba
 from .backend.tree_model.tree_model_eval import eval_feature_selections
@@ -27,19 +29,6 @@ def check_is_preselected(is_preselected=None):
     if is_preselected is not None and sum(is_preselected) == 0:
         raise ValueError(f"Number of preselected features should not be 0 in 'is_preselected': {is_preselected}")
     return is_preselected
-
-
-def check_match_labels_X(labels=None, X=None):
-    """Check if labels binary classification task labels"""
-    n_samples = X.shape[0]
-    labels = ut.check_labels(labels=labels, len_requiered=n_samples)
-    unique_labels = set(labels)
-    if len(unique_labels) != 2:
-        raise ValueError(f"'labels' should contain 2 unique labels ({unique_labels})")
-    # The higher label is considered as the positive (test) class
-    label_test = list(sorted(unique_labels))[1]
-    labels = np.asarray([1 if x == label_test else 0 for x in labels])
-    return labels
 
 
 def check_n_feat_min_n_feat_max(n_feat_min=None, n_feat_max=None):
@@ -124,14 +113,6 @@ def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, fe
         if ut.COL_FEAT_IMPORT_STD in list(df_feat):
             raise ValueError(f"'{ut.COL_FEAT_IMPORT_STD}' already in 'df_feat' columns. To override, set 'drop=True'.")
 
-
-def check_match_X_is_selected(X=None, is_selected=None):
-    """Check if length of X and feature selection mask (is_selected) matches"""
-    n_features = X.shape[1]
-    n_feat_is_selected = len(is_selected[0])
-    if n_features != n_feat_is_selected:
-        raise ValueError(f"Number of features from 'X' ({n_features}) does not match "
-                         f"with 'is_selected' attribute ({n_feat_is_selected})")
 
 
 # II Main Functions
@@ -411,8 +392,6 @@ class TreeModel:
         Predictions are performed using all tree-based models from the `list_model_classes` attribute and
         feature selections from the `is_selected` attribute.
 
-        Parameters
-        ----------
         X : array-like, shape (n_samples, n_features)
             Feature matrix. Rows typically correspond to samples and columns to features.
 

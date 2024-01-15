@@ -1,16 +1,19 @@
 """
-This is a script for the processing SHAP values, primarily for the combination of SHAP with CPP.
-SHAP models are not included due to instability of SHAP package development. ShapModel should solely work with
-SHAP value matrix.
+This is a script for the frontend of the ShapExplainer class used to obtain Mote Carlo estimates of feature impact.
+Note: SHAP models are not included in the requirement of the aaanalysis package
+due to the instability of SHAP package. Please install the SHAP package for using the ShapExplainer class.
 """
 from typing import Optional, Dict, List, Tuple, Type, Union, Callable
 import pandas as pd
 import numpy as np
 from sklearn.base import ClassifierMixin, BaseEstimator
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier
+import warnings
 
 import aaanalysis.utils as ut
-from .backend.check_models import (check_match_list_model_classes_kwargs)
+from .backend.check_models import (check_match_list_model_classes_kwargs,
+                                   check_match_labels_X,
+                                   check_match_X_is_selected)
 from .backend.shap_explainer.shap_explainer_fit import monte_carlo_shap_estimation
 from .backend.shap_explainer.shap_feat import (comp_shap_feature_importance,
                                                insert_shap_feature_importance,
@@ -19,6 +22,24 @@ from .backend.shap_explainer.shap_feat import (comp_shap_feature_importance,
 
 
 # I Helper Functions
+# Check functions for fit method
+def check_match_labels_fuzzy_labeling(labels=None, fuzzy_labeling=False, verbose=True):
+    """Check if only on label is fuzzy labeled and that the remaining sample balanced (best training scenario)"""
+    if not fuzzy_labeling:
+        return  # Skip check if fuzzy labeling is not enabled
+     # Check for one fuzzy label and balance among other labels
+    n_fuzzy_labels = len([label for label in labels if label not in [0, 1]])
+    if n_fuzzy_labels != 1 and verbose:
+        warnings.warn(f"Optimal training with fuzzy labeling requires exactly one fuzzy label, but {n_fuzzy_labels} were given.")
+    non_fuzzy_labels = [label for label in labels if label in [0, 1]]
+    n_pos = non_fuzzy_labels.count(1)
+    n_neg = non_fuzzy_labels.count(0)
+    if n_pos != n_neg and verbose:
+        warnings.warn(f"For optimal training, non-fuzzy labels should be balanced (equal number of 0s and 1s). "
+                      f"\n The 'labels' contain {n_pos} positive (1) and {n_neg} negative (0) samples.")
+
+
+# Check function for add_feat_impact method
 def check_pos(pos=None, n_samples=None):
     """Check if pos is int or list of ints"""
     if pos is None:
@@ -91,6 +112,7 @@ def check_match_df_feat_shap_values(df_feat=None, shap_values=None, drop=False, 
 
 
 # II Main Functions
+# TODO add warning if SHAP not installed
 class ShapExplainer:
     """
     SHAP Explainer class: A wrapper for SHAP (SHapley Additive exPlanations) explainers to obtain Monte Carlo estimate
@@ -102,7 +124,13 @@ class ShapExplainer:
 
     Attributes
     ----------
-
+    shap_values_ : array-like, shape(n_samples, n_features)
+        2D array with Monte Carlo estimates of SHAP values obtained by SHAP explainer models averaged across all rounds,
+        feature selections, and trained models from `list_model_classes`.
+    exp_value_ : int
+        Expected value for explaining the model output obtained by SHAP explainer model  averaged across all rounds,
+        feature selections, and trained models from `list_model_classes`. Typically, 0.5 for binary classification
+        and balanced dataset.
 
     """
     def __init__(self,
@@ -118,6 +146,8 @@ class ShapExplainer:
         ----------
         explainer_class : model, default=None
             The `SHAP TreeExplainer model <https://shap.readthedocs.io/en/latest/generated/shap.TreeExplainer.html>_`
+        explainer_kwargs : dict, optional
+            Keyword arguments for the explainer class model.
         list_model_classes : list of Type[ClassifierMixin or BaseEstimator], default=[RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
             A list of tree-based model classes to be used for feature importance analysis.
         list_model_kwargs : list of dict, optional
@@ -133,8 +163,6 @@ class ShapExplainer:
         * All attributes are set during fitting via the :meth:`TreeModel.fit` method and can be directly accessed.
         * The `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ package should be installed by the user
           to provide its ``TreeExplainer`` model.
-                Notes
-
 
         See Also
         --------
@@ -190,17 +218,60 @@ class ShapExplainer:
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D = None,
             is_selected: ut.ArrayLike2D = None,
-            fuzzy_labeling: bool = False,
             n_rounds: int = 5,
-            ):
+            fuzzy_labeling: bool = False,
+            ) -> "ShapExplainer":
         """
-        Obtain SHAP values aggregated across tree-based models and training rounds
+        Obtain SHAP values aggregated across tree-based models and training rounds.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
+        labels : array-like, shape (n_samples)
+            Dataset labels of samples in ``X``. Should be either 1 (positive) or 0 (negative).
+        is_selected : array-like, shape (n_selection_round, n_features)
+            2D boolean arrays indicating different feature selections.
+        n_rounds : int, default=5
+            The number of rounds (>=1) to fit the models and obtain the SHAP values by explainer.
+        fuzzy_labeling : bool, default=False
+            If ``True``, fuzzy labeling is applied to approximate SHAP values for samples with uncertain/partial
+            memberships (e.g., between >0 and <1 for binary classification scenarios).
+
+        Returns
+        -------
+        ShapExplainer
+            The fitted ShapExplainer model instance.
+
+        Notes
+        -----
+        ``Fuzzy Labeling``
+
+        - Aim: Compute SHAP value for datasets with uncertain or ambiguous labels. Especially useful to explain newly
+          predicted samples, where class label is set to the respective prediction probability.
+        - Approach: Uses probabilistic labels to represent degrees of membership.
+        - Idea: Adjusts label thresholds dynamically in Monte Carlo estimation to better represent label uncertainties.
+        - Background: Inspired by fuzzy logic, replacing binary true/false with degrees of truth.
+
+        See Also
+        --------
+        * [Breimann24c]_ introduces fuzzy labeling to compute Monte Carlo estimates of SHAP values
+          for samples with not clearly defined class membership.
 
         Examples
         --------
         .. include:: examples/se_fit.rst
         """
         # Check input
+        X = ut.check_X(X=X)
+        ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
+        labels = check_match_labels_X(labels=labels, X=X)
+        is_selected = ut.check_array_like(name="is_selected_feature", val=is_selected, accept_none=False,
+                                          expected_dim=2, dtype="bool")
+        check_match_X_is_selected(X=X, is_selected=is_selected)
+        ut.check_bool(name="fuzzy_labeling", val=fuzzy_labeling)
+        ut.check_number_range(name="n_rounds", val=n_rounds, min_val=1, just_int=True)
+        check_match_labels_fuzzy_labeling(labels=labels, fuzzy_labeling=fuzzy_labeling, verbose=self._verbose)
         # Compute shap values
         shap_values, exp_val = monte_carlo_shap_estimation(X, labels=labels,
                                                            list_model_classes=self._list_model_classes,
@@ -208,14 +279,15 @@ class ShapExplainer:
                                                            explainer_class=self._explainer_class,
                                                            explainer_kwargs=self._explainer_kwargs,
                                                            is_selected=is_selected,
-                                                           fuzzy_labeling=fuzzy_labeling)
+                                                           fuzzy_labeling=fuzzy_labeling,
+                                                           n_rounds=n_rounds)
         self.shap_values_ = shap_values
         self.exp_value_ = exp_val
         return self
 
     def eval(self, shap_values=None, is_selected=None):
         """
-        Evaluate convergence of Monte Carlo estimates of SHAP values depending on number of rounds
+        UNDER CONSTRUCTION - Evaluate convergence of Monte Carlo estimates of SHAP values depending on number of rounds
         """
 
 
@@ -229,7 +301,7 @@ class ShapExplainer:
                         shap_feat_importance: bool = False,
                         ):
         """
-        Compute SHAP feature impact (or importance) from SHAP values and add to DataFrame.
+        Compute SHAP feature impact (or importance) from SHAP values and add to feature DataFrame.
 
         The different scenarios for computing the feature impact are possible:
 

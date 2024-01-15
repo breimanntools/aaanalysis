@@ -43,29 +43,34 @@ def _aggregate_shap_values(X, labels=None, list_model_classes=None, list_model_k
     return shap_values, exp_val
 
 
+
 # II Main Functions
 def monte_carlo_shap_estimation(X, labels=None, list_model_classes=None, list_model_kwargs=None,
                                 explainer_class=None, explainer_kwargs=None, n_rounds=5,
                                 is_selected=None, fuzzy_labeling=False):
-    """Compute Monte Carlo estimates of SHAP values for multiple models and feature selections."""
+    """
+    Compute Monte Carlo estimates of SHAP values for multiple models and feature selections.
+    """
     n_samples, n_features = X.shape
-    n_rounds = len(is_selected)
-    mc_shap_values = np.zeros(shape=(n_samples, n_features, n_rounds))
+    n_selection_rounds = len(is_selected)
+    mc_shap_values = np.zeros(shape=(n_samples, n_features, n_rounds, n_selection_rounds))
     list_expected_value = []
-    for i, selected_features in enumerate(is_selected):
-        labels_ = labels
-        # Adjust fuzzy labels (labels between 0 and 1, e.g., 0.5 -> 50% 1 and 50% 0)
-        if fuzzy_labeling:
-            threshold = (i + 1) / n_rounds
-            labels_ = [int(x >= threshold) for x in labels]
-        X_selected = X[:, selected_features]
-        _shap_values, _exp_val = _aggregate_shap_values(X_selected, labels=labels_,
-                                                        list_model_classes=list_model_classes,
-                                                        list_model_kwargs=list_model_kwargs,
-                                                        explainer_class=explainer_class,
-                                                        explainer_kwargs=explainer_kwargs)
-        mc_shap_values[:, selected_features, i] = _shap_values
-        list_expected_value.append(_exp_val)
-    shap_values = mc_shap_values.mean(axis=2)
+    for j in range(n_rounds):
+        for i, selected_features in enumerate(is_selected):
+            labels_ = labels
+            # Adjust fuzzy labels (labels between 0 and 1, e.g., 0.5 -> 50% 1 and 50% 0)
+            if fuzzy_labeling:
+                threshold = (i * (j + 1)) / (n_rounds * n_selection_rounds)
+                labels_ = [int(x >= threshold) for x in labels]
+            X_selected = X[:, selected_features]
+            _shap_values, _exp_val = _aggregate_shap_values(X_selected, labels=labels_,
+                                                            list_model_classes=list_model_classes,
+                                                            list_model_kwargs=list_model_kwargs,
+                                                            explainer_class=explainer_class,
+                                                            explainer_kwargs=explainer_kwargs)
+            mc_shap_values[:, selected_features, j, i] = _shap_values
+            list_expected_value.append(_exp_val)
+    # Averaging over rounds and selections
+    shap_values = mc_shap_values.mean(axis=(2, 3))
     exp_val = np.mean(list_expected_value)
     return shap_values, exp_val
