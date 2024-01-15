@@ -530,7 +530,7 @@ class CPPPlot:
 
         Parameters
         ----------
-        df_feat : DataFrame, shape (n_features, n_feature_info)
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
             Can also include feature importance (``feat_importance``) or impact (``feat_impact``) columns for ranking.
         n_top : int, default=15

@@ -163,15 +163,15 @@ class dPULearnPlot:
     def pca(df_pu: pd.DataFrame = None,
             labels=None,
             figsize: Tuple[Union[int, float], Union[int, float]] = (5, 5),
-            pc_x : int = 1,
-            pc_y : int = 2,
-            show_pos_mean_x=True,
-            show_pos_mean_y=True,
+            pc_x: int = 1,
+            pc_y: int = 2,
+            show_pos_mean_x: bool = True,
+            show_pos_mean_y: bool = True,
             colors: Optional[List[str]] = None,
             names: Optional[List[str]] = None,
-            legend : bool = True,
-            legend_y : float = -0.15,
-            kwargs_scatterplot : Optional[dict] = None,
+            legend: bool = True,
+            legend_y: float = -0.15,
+            kwargs_scatterplot: Optional[dict] = None,
             ) -> plt.Axes:
         """
         Principal component analysis (PCA) plot for set of identified negatives.

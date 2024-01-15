@@ -1,7 +1,7 @@
 from .data_handling import load_dataset, load_scales, load_features, to_fasta
 from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
-from .explainable_ai import TreeModel, ShapModel
+from .explainable_ai import TreeModel, ShapExplainer
 from .pertubation import AAMut, AAMutPlot, SeqMut, SeqMutPlot
 from .plotting import (plot_get_clist, plot_get_cmap, plot_get_cdict,
                        plot_settings, plot_legend, plot_gcfs,
@@ -22,8 +22,7 @@ __all__ = [
     "CPPPlot",
     "dPULearn",
     "dPULearnPlot",
-    "TreeModel",
-    "ShapModel",
+    "TreeModel", "ShapExplainer",
     "AAMut",
     "AAMutPlot",
     "SeqMut",

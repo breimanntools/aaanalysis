@@ -65,6 +65,7 @@ def check_str(name=None, val=None, accept_none=False, return_empty_string=False)
         raise ValueError(f"'{name}' ('{val}') should be string.")
     return val
 
+
 def check_bool(name=None, val=None, accept_none=False):
     """Check if the provided value is a boolean."""
     if val is None:

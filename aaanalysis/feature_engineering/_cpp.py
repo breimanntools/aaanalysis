@@ -27,6 +27,7 @@ from ._backend.cpp.utils_feature import get_positions_, add_scale_info_
 from ._backend.cpp.cpp_run import pre_filtering_info, pre_filtering, filtering, add_stat
 from ._backend.cpp.cpp_eval import evaluate_features
 
+
 # I Helper Functions
 def check_sample_in_df_seq(sample_name=None, df_seq=None):
     """Check if sample name in df_seq"""
@@ -148,8 +149,8 @@ class CPP(Tool):
     # Main method
     def run(self,
             labels: ut.ArrayLike1D = None,
-            label_test : int = 1,
-            label_ref : int = 0,
+            label_test: int = 1,
+            label_ref: int = 0,
             n_filter: int = 100,
             n_pre_filter: Optional[int] = None,
             pct_pre_filter: int = 5,
@@ -315,12 +316,12 @@ class CPP(Tool):
     def eval(self,
              list_df_feat: List[pd.DataFrame] = None,
              labels: ut.ArrayLike1D = None,
-             label_test : int = 1,
-             label_ref : int = 0,
+             label_test: int = 1,
+             label_ref: int = 0,
              min_th: float = 0.0,
              names_feature_sets: Optional[List[str]] = None,
              list_cat: Optional[List[str]] = None,
-             list_df_parts : Optional[List[pd.DataFrame]] = None,
+             list_df_parts: Optional[List[pd.DataFrame]] = None,
              n_jobs: Union[int, None] = 1,
              ) -> pd.DataFrame:
         """
