@@ -4,6 +4,7 @@ This is a script for common check function for the explainable AI models.
 import numpy as np
 import aaanalysis.utils as ut
 
+
 def check_match_list_model_classes_kwargs(list_model_classes=None, list_model_kwargs=None):
     """Check length match of list_model_classes and list_model_kwargs"""
     n_models = len(list_model_classes)
@@ -15,6 +16,7 @@ def check_match_list_model_classes_kwargs(list_model_classes=None, list_model_kw
 def check_match_labels_X(labels=None, X=None):
     """Check if labels binary classification task labels"""
     n_samples = X.shape[0]
+    # Accept float if fuzzy_labling is True
     labels = ut.check_labels(labels=labels, len_requiered=n_samples)
     unique_labels = set(labels)
     if len(unique_labels) != 2:

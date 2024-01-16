@@ -597,8 +597,10 @@ def check_df_feat(df_feat=None, df_cat=None, list_parts=None, shap_plot=None):
     # Check if feat_importance or feat_impact column is in df_feat
     if shap_plot is not None:
         if shap_plot:
-            if COL_FEAT_IMPACT not in list(df_feat):
-                raise ValueError(f"If 'shap_plot' is True, '{COL_FEAT_IMPACT}' must be in 'df_feat' columns: {list(df_feat)}")
+            col_feat_impact = [x for x in list(df_feat) if COL_FEAT_IMPACT in x]
+            if len(col_feat_impact) == 0:
+                raise ValueError(f"If 'shap_plot' is True, At least on '{COL_FEAT_IMPACT}' column must be "
+                                 f"in 'df_feat' columns: {list(df_feat)}")
         else:
             if COL_FEAT_IMPORT not in list(df_feat):
                 raise ValueError(f"If 'shap_plot' is False, '{COL_FEAT_IMPORT}' must be in 'df_feat' columns: {list(df_feat)}")

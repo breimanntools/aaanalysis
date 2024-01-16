@@ -142,8 +142,6 @@ class AAclust(Wrapper):
         random_state = ut.check_random_state(random_state=random_state)
         # Model parameters
         ut.check_mode_class(model_class=model_class)
-        if model_kwargs is None and model_class is KMeans:
-            model_kwargs = dict(n_init="auto")
         model_kwargs = ut.check_model_kwargs(model_class=model_class,
                                              model_kwargs=model_kwargs,
                                              param_to_check="n_clusters",

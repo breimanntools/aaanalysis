@@ -9,6 +9,7 @@ import numpy as np
 from sklearn.base import ClassifierMixin, BaseEstimator
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier
 import warnings
+import importlib.util
 
 import aaanalysis.utils as ut
 from .backend.check_models import (check_match_list_model_classes_kwargs,
@@ -22,12 +23,49 @@ from .backend.shap_explainer.shap_feat import (comp_shap_feature_importance,
 
 
 # I Helper Functions
+# Check init
+def check_shap_installed():
+    """Check if shap is installed"""
+    if importlib.util.find_spec("shap") is None:
+        raise ImportError("SHAP package is required for 'ShapExplainer' but not installed. "
+                          "Please install it using 'pip install shap'.")
+
+
 # Check functions for fit method
+def check_match_labels_X_fuzzy_labeling(labels=None, X=None, fuzzy_labeling=False):
+    """Check if labels are binary classification task labels or apply to fuzzy_labeling [0-1]"""
+    if not fuzzy_labeling:
+        labels = check_match_labels_X(labels=labels, X=X)
+        return labels
+    n_samples = X.shape[0]
+    # Accept float if fuzzy_labling is True
+    labels = ut.check_labels(labels=labels, len_requiered=n_samples, accept_float=fuzzy_labeling)
+    unique_labels = set(labels)
+    if len(unique_labels) < 2:
+        raise ValueError(f"'labels' should contain at least 2 unique labels ({unique_labels})")
+    # The higher label is considered as the positive (test) class
+    wrong_labels = [x for x in labels if not 0 <= x <= 1]
+    if len(wrong_labels) != 0:
+        raise ValueError(f"'labels' should contain only values between 0 and 1. Wrong labels are: {wrong_labels}")
+    return labels
+
+
+def check_is_selected(is_selected=None, n_feat=None):
+    """Check is_selected and set if None"""
+    if is_selected is None:
+        is_selected = np.ones((1, n_feat), dtype=bool)
+    else:
+        is_selected = is_selected.astype(bool)
+        is_selected = ut.check_array_like(name="is_selected_feature", val=is_selected, accept_none=False,
+                                          expected_dim=2, dtype="bool")
+    return is_selected
+
+
 def check_match_labels_fuzzy_labeling(labels=None, fuzzy_labeling=False, verbose=True):
     """Check if only on label is fuzzy labeled and that the remaining sample balanced (best training scenario)"""
     if not fuzzy_labeling:
         return  # Skip check if fuzzy labeling is not enabled
-     # Check for one fuzzy label and balance among other labels
+    # Check for one fuzzy label and balance among other labels
     n_fuzzy_labels = len([label for label in labels if label not in [0, 1]])
     if n_fuzzy_labels != 1 and verbose:
         warnings.warn(f"Optimal training with fuzzy labeling requires exactly one fuzzy label, but {n_fuzzy_labels} were given.")
@@ -176,6 +214,8 @@ class ShapExplainer:
         --------
         .. include:: examples/shap_explainer.rst
         """
+        # SHAP package check
+        check_shap_installed()
         # Global parameters
         verbose = ut.check_verbose(verbose)
         random_state = ut.check_random_state(random_state=random_state)
@@ -264,10 +304,10 @@ class ShapExplainer:
         """
         # Check input
         X = ut.check_X(X=X)
+        n_samples, n_feat = X.shape
         ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
-        labels = check_match_labels_X(labels=labels, X=X)
-        is_selected = ut.check_array_like(name="is_selected_feature", val=is_selected, accept_none=False,
-                                          expected_dim=2, dtype="bool")
+        labels = check_match_labels_X_fuzzy_labeling(labels=labels, X=X, fuzzy_labeling=fuzzy_labeling)
+        is_selected = check_is_selected(is_selected=is_selected, n_feat=n_feat)
         check_match_X_is_selected(X=X, is_selected=is_selected)
         ut.check_bool(name="fuzzy_labeling", val=fuzzy_labeling)
         ut.check_number_range(name="n_rounds", val=n_rounds, min_val=1, just_int=True)
@@ -289,7 +329,6 @@ class ShapExplainer:
         """
         UNDER CONSTRUCTION - Evaluate convergence of Monte Carlo estimates of SHAP values depending on number of rounds
         """
-
 
     def add_feat_impact(self,
                         df_feat: pd.DataFrame = None,

@@ -13,7 +13,7 @@ def _get_shap_values(shap_values):
 
 def _compute_shap_values(X, labels, model_class=None, model_kwargs=None,
                          explainer_class=None, explainer_kwargs=None):
-    """Fit a model and compute SHAP values using the provided SHAP Explainer.."""
+    """Fit a model and compute SHAP values using the provided SHAP Explainer"""
     model = model_class(**model_kwargs).fit(X, labels)
     explainer = explainer_class(model, X, **explainer_kwargs)
     shap_values_ = explainer.shap_values(X, y=labels)
@@ -61,7 +61,8 @@ def monte_carlo_shap_estimation(X, labels=None, list_model_classes=None, list_mo
             # Adjust fuzzy labels (labels between 0 and 1, e.g., 0.5 -> 50% 1 and 50% 0)
             if fuzzy_labeling:
                 threshold = (i * (j + 1)) / (n_rounds * n_selection_rounds)
-                labels_ = [int(x >= threshold) for x in labels]
+                f = lambda x: x if x in [0, 1] else int(x >= threshold)
+                labels_ = [f(x) for x in labels]
             X_selected = X[:, selected_features]
             _shap_values, _exp_val = _aggregate_shap_values(X_selected, labels=labels_,
                                                             list_model_classes=list_model_classes,

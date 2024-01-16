@@ -2,7 +2,10 @@
 This is a script for the backend of the ShapModel.add_feat_impact() and ShapModel.add_feat_importance() methods.
 """
 import numpy as np
+import pandas as pd
+
 import aaanalysis.utils as ut
+
 
 # I Helper Functions
 def _abs_normalize(values=None):
@@ -87,7 +90,13 @@ def insert_shap_feature_impact(df_feat=None, feat_impact=None, pos=None, names=N
     if drop:
         columns = [x for x in list(df_feat) if ut.COL_FEAT_IMPACT not in x]
         df_feat = df_feat[columns]
+
+    # Prepare new data based on pos and names
+    dict_feat_impact = {}
     for n, col_name in zip(pos, names):
         column_name = f'{ut.COL_FEAT_IMPACT}_{col_name}'
-        df_feat[column_name] = feat_impact[n] if isinstance(pos, list) else feat_impact
+        dict_feat_impact[column_name] = feat_impact[n] if isinstance(pos, list) else feat_impact
+    # Convert the dictionary to a DataFrame
+    df_feat_impact = pd.DataFrame(dict_feat_impact)
+    df_feat = pd.concat([df_feat, df_feat_impact], axis=1)
     return df_feat

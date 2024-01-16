@@ -117,9 +117,8 @@ def check_X_unique_samples(X, min_n_unique_samples=3):
     return X
 
 
-
 def check_labels(labels=None, name="labels", vals_requiered=None, len_requiered=None, allow_other_vals=True,
-                 n_per_group_requiered=None):
+                 n_per_group_requiered=None, accept_float=False):
     """Check the provided labels against various criteria like type, required values, and length."""
     if labels is None:
         raise ValueError(f"'{name}' should not be None.")
@@ -131,9 +130,11 @@ def check_labels(labels=None, name="labels", vals_requiered=None, len_requiered=
         labels = np.array([labels.item()])  # Convert 0-d array to 1-d array
     unique_labels = set(labels)
     if len(unique_labels) == 1:
-       raise ValueError(f"'{name}' should contain more than one different value ({unique_labels}).")
-    integer_types = (int, np.int_, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64)
-    wrong_types = [l for l in unique_labels if not isinstance(l, integer_types)]
+        raise ValueError(f"'{name}' should contain more than one different value ({unique_labels}).")
+    valid_types = (int, np.int_, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64)
+    if accept_float:
+        valid_types += (float, np.float_, np.float16, np.float32, np.float64)
+    wrong_types = [l for l in unique_labels if not isinstance(l, valid_types)]
     if wrong_types:
         raise ValueError(f"Labels in '{name}' should be type int, but contain: {set(map(type, wrong_types))}")
     if vals_requiered is not None:
