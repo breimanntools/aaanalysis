@@ -23,6 +23,7 @@ from .backend.shap_explainer.shap_feat import (comp_shap_feature_importance,
 
 
 # I Helper Functions
+# TODO add shap to dependecies
 # Check init
 def check_shap_installed():
     """Check if shap is installed"""
@@ -150,7 +151,6 @@ def check_match_df_feat_shap_values(df_feat=None, shap_values=None, drop=False, 
 
 
 # II Main Functions
-# TODO add warning if SHAP not installed
 class ShapExplainer:
     """
     SHAP Explainer class: A wrapper for SHAP (SHapley Additive exPlanations) explainers to obtain Monte Carlo estimate
@@ -220,11 +220,11 @@ class ShapExplainer:
         verbose = ut.check_verbose(verbose)
         random_state = ut.check_random_state(random_state=random_state)
         # Tree Explainer parameters
-        ut.check_mode_class(model_class=explainer_class)
+        ut.check_mode_class(model_class=explainer_class, name_model_class="explainer_class")
         if explainer_kwargs is None:
             explainer_kwargs = dict(model_output="probability")
         ut.check_model_kwargs(model_class=explainer_class, model_kwargs=explainer_kwargs,
-                              param_to_check="model_output")
+                              param_to_check="model_output", name_model_class="explainer_class")
         # Model parameters
         if list_model_classes is None:
             list_model_classes = [RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
@@ -384,7 +384,7 @@ class ShapExplainer:
 
         Examples
         --------
-        .. include:: examples/sm_add_feat_impact.rst
+        .. include:: examples/se_add_feat_impact.rst
         """
         # Check input
         n_samples, n_features = self.shap_values_.shape
