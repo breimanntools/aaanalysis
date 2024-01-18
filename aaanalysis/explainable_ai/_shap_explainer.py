@@ -10,6 +10,7 @@ from sklearn.base import ClassifierMixin, BaseEstimator
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier
 import warnings
 import importlib.util
+import shap
 
 import aaanalysis.utils as ut
 from .backend.check_models import (check_match_list_model_classes_kwargs,
@@ -221,6 +222,8 @@ class ShapExplainer:
         random_state = ut.check_random_state(random_state=random_state)
         # Tree Explainer parameters
         ut.check_mode_class(model_class=explainer_class, name_model_class="explainer_class")
+        if explainer_class is None:
+            explainer_class = shap.TreeExplainer
         if explainer_kwargs is None:
             explainer_kwargs = dict(model_output="probability")
         ut.check_model_kwargs(model_class=explainer_class, model_kwargs=explainer_kwargs,
