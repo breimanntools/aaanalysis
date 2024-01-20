@@ -6,14 +6,14 @@ from inspect import isclass
 
 
 # Main functions
-def check_mode_class(model_class=None, name_model_class="model_class"):
+def check_mode_class(model_class=None):
     """Check if the provided object is a class and callable, typically used for validating model classes."""
     # Check if model_class is actually a class and not an instance
     if not isclass(model_class):
-        raise ValueError(f"'{name_model_class}' ('{model_class}') is not a model class. Please provide a valid model class.")
+        raise ValueError(f"'model_class' ('{model_class}') is not a model class. Please provide a valid model class.")
     # Check if model is callable
     if not callable(getattr(model_class, "__call__", None)):
-        raise ValueError(f"'{name_model_class}' ('{model_class}') is not a callable model.")
+        raise ValueError(f"'model_class' ('{model_class}') is not a callable model.")
 
 
 def check_model_kwargs(model_class=None, model_kwargs=None, name_model_class="model_class",

@@ -9,7 +9,6 @@ import numpy as np
 from sklearn.base import ClassifierMixin, BaseEstimator
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier
 import warnings
-import importlib.util
 import shap
 
 import aaanalysis.utils as ut
@@ -24,13 +23,43 @@ from .backend.shap_explainer.shap_feat import (comp_shap_feature_importance,
 
 
 # I Helper Functions
-# TODO add shap to dependecies
 # Check init
-def check_shap_installed():
-    """Check if shap is installed"""
-    if importlib.util.find_spec("shap") is None:
-        raise ImportError("SHAP package is required for 'ShapExplainer' but not installed. "
-                          "Please install it using 'pip install shap'.")
+def check_shap_explainer(explainer_class=None, explainer_kwargs=None):
+    """Check if explainer class is a valid shap explainer"""
+    if not (isinstance(explainer_class, type) and issubclass(explainer_class, shap.Explainer)):
+        raise ValueError(f"'{explainer_class.__name__}' is not a valid SHAP explainer")
+    # Check if explainer has shap_values method
+    if explainer_class != shap.Explainer:
+        explainer_kwargs = ut.check_model_kwargs(model_class=explainer_class,
+                                                 model_kwargs=explainer_kwargs,
+                                                 name_model_class="explainer_class",
+                                                 method_to_check="shap_values")
+    # Not needed for the General Explainer
+    else:
+        explainer_kwargs = explainer_kwargs or {}
+    return explainer_kwargs
+
+
+def check_match_class_explainer_and_models(explainer_class=None, list_model_classes=None):
+    """Check if each model in list_model_class is compatible with the shap explainer class"""
+    dummy_data = np.array([[0, 1], [1, 0]])  # Minimal dummy data to initialize explainers
+    dummy_label = [0, 1]
+    for model_class in list_model_classes:
+        try:
+            # Fit the dummy model
+            model = model_class().fit(dummy_data, dummy_label)
+            # Determine the correct input for the explainer
+            if explainer_class.__name__ in ['KernelExplainer', 'OtherExplainerNeedingPredict']:
+                model_input = model.predict_proba if hasattr(model, 'predict_proba') else model.predict
+            else:
+                model_input = model
+            # Attempt to create the explainer with the appropriate input
+            explainer_kwargs = {}  # Provide an empty dictionary if explainer_kwargs is None
+            explainer_class(model_input, dummy_data, **explainer_kwargs)
+        except Exception as e:
+            str_error = (f"The SHAP explainer '{explainer_class.__name__}' is not compatible with "
+                         f"the model '{model_class.__name__}'.\nSHAP message:\n\t{e}")
+            raise ValueError(str_error)
 
 
 # Check functions for fit method
@@ -155,11 +184,12 @@ def check_match_df_feat_shap_values(df_feat=None, shap_values=None, drop=False, 
 class ShapExplainer:
     """
     SHAP Explainer class: A wrapper for SHAP (SHapley Additive exPlanations) explainers to obtain Monte Carlo estimate
-    for feature impact and importance.
+    for shap values, feature impact, and feature importance.
 
-    `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ is an explainable Artificial Intelligence (AI) framework.
-            - SHAP (SHapley Additive exPlanations) is a game theoretic approach to explain the output of any machine learning model.
-        - SHAP values represent a feature's responsibility for a change in the model output.
+    `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ is an explainable Artificial Intelligence (AI) framework
+    and game-theoretic approach to explain the output of any machine learning model using SHAP values. These
+    SHAP values represent a feature's responsibility for a change in the model output to increase of decrease a
+    sample prediction score due to the positive or negative impact of its features, respectively.
 
     Attributes
     ----------
@@ -183,9 +213,9 @@ class ShapExplainer:
         """
         Parameters
         ----------
-        explainer_class : model, default=None
-            The `SHAP TreeExplainer model <https://shap.readthedocs.io/en/latest/generated/shap.TreeExplainer.html>_`
-        explainer_kwargs : dict, optional
+        explainer_class : model, default=TreeExplainer
+            The `SHAP Explainer model <https://shap.readthedocs.io/en/latest/api.html#explainers>_`.
+        explainer_kwargs : dict, default={model_output='probability'}
             Keyword arguments for the explainer class model.
         list_model_classes : list of Type[ClassifierMixin or BaseEstimator], default=[RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
             A list of tree-based model classes to be used for feature importance analysis.
@@ -199,14 +229,21 @@ class ShapExplainer:
 
         Notes
         -----
-        * All attributes are set during fitting via the :meth:`TreeModel.fit` method and can be directly accessed.
-        * The `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ package should be installed by the user
-          to provide its ``TreeExplainer`` model.
+        * All attributes are set during fitting via the :meth:`ShapExplainer.fit` method and can be directly accessed.
+        * The Explainer models should be provided from the `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_
+          package
+        * The shap explainer model and the provided machine learning models must match. Recommended are the following
+          explainer model types:
+
+          - :class:`shap.TreeExplainer`: Tree explainer for tree-based models such as Random Forest
+          - :class:`shap.LinerExplainer`: Linear explainer for linear models such as Support Vector Machine or Regression.
+          - :class:`shap.KernelExplainer`: Kernel explainer for any model type (background dataset should be provided
+            to increase computational efficiency for large datasets)
+
+        # By default, Tree explainer is used with Random Forest, Extra Trees, and Gradient Boosting models.
 
         See Also
         --------
-        * `SHAP TreeExplainer model <https://shap.readthedocs.io/en/latest/generated/shap.TreeExplainer.html>_` for
-          details on tree-based explainer models in the SHAP package.
         * :class:`sklearn.ensemble.RandomForestClassifier` for Random Forest model.
         * :class:`sklearn.ensemble.ExtraTreesClassifier` for Extra Trees model.
         * :class:`sklearn.ensemble.GradientBoostingClassifier` for Gradient Boosting model.
@@ -215,36 +252,33 @@ class ShapExplainer:
         --------
         .. include:: examples/shap_explainer.rst
         """
-        # SHAP package check
-        check_shap_installed()
         # Global parameters
         verbose = ut.check_verbose(verbose)
         random_state = ut.check_random_state(random_state=random_state)
-        # Tree Explainer parameters
-        ut.check_mode_class(model_class=explainer_class, name_model_class="explainer_class")
+        # Check SHAP explainer model
         if explainer_class is None:
             explainer_class = shap.TreeExplainer
-        if explainer_kwargs is None:
-            explainer_kwargs = dict(model_output="probability")
-        ut.check_model_kwargs(model_class=explainer_class, model_kwargs=explainer_kwargs,
-                              param_to_check="model_output", name_model_class="explainer_class")
+            explainer_kwargs = explainer_kwargs or dict(model_output="probability")
+        check_shap_explainer(explainer_class=explainer_class, explainer_kwargs=explainer_kwargs)
         # Model parameters
         if list_model_classes is None:
             list_model_classes = [RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
         elif not isinstance(list_model_classes, list):
             list_model_classes = [list_model_classes]  # Single models are possible as well (but not recommender)
-        list_model_classes = ut.check_list_like(name="list_model_classes", val=list_model_classes, accept_none=False,
-                                                min_len=1)
+        list_model_classes = ut.check_list_like(name="list_model_classes", val=list_model_classes,
+                                                accept_none=False, min_len=1)
         ut.check_list_like(name="list_model_kwargs", val=list_model_kwargs, accept_none=True)
         if list_model_kwargs is None:
             list_model_kwargs = [{} for _ in list_model_classes]
         check_match_list_model_classes_kwargs(list_model_classes=list_model_classes,
                                               list_model_kwargs=list_model_kwargs)
+        check_match_class_explainer_and_models(explainer_class=explainer_class, list_model_classes=list_model_classes)
         _list_model_kwargs = []
         for model_class, model_kwargs in zip(list_model_classes, list_model_kwargs):
             ut.check_mode_class(model_class=model_class)
-            model_kwargs = ut.check_model_kwargs(model_class=model_class, model_kwargs=model_kwargs,
-                                                 attribute_to_check="feature_importances_", random_state=random_state)
+            model_kwargs = ut.check_model_kwargs(model_class=model_class,
+                                                 model_kwargs=model_kwargs,
+                                                 random_state=random_state)
             _list_model_kwargs.append(model_kwargs)
         # Internal attributes
         self._verbose = verbose
@@ -323,7 +357,8 @@ class ShapExplainer:
                                                            explainer_kwargs=self._explainer_kwargs,
                                                            is_selected=is_selected,
                                                            fuzzy_labeling=fuzzy_labeling,
-                                                           n_rounds=n_rounds)
+                                                           n_rounds=n_rounds,
+                                                           verbose=self._verbose)
         self.shap_values_ = shap_values
         self.exp_value_ = exp_val
         return self

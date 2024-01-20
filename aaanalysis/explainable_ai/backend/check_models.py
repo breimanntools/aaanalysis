@@ -16,7 +16,7 @@ def check_match_list_model_classes_kwargs(list_model_classes=None, list_model_kw
 def check_match_labels_X(labels=None, X=None):
     """Check if labels binary classification task labels"""
     n_samples = X.shape[0]
-    # Accept float if fuzzy_labling is True
+    # Accept float if fuzzy_labeling is True
     labels = ut.check_labels(labels=labels, len_requiered=n_samples)
     unique_labels = set(labels)
     if len(unique_labels) != 2:

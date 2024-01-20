@@ -73,7 +73,7 @@ def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan
     except Exception as e:
         dtype = "any type" if dtype is None else dtype
         raise ValueError(f"'{name}' should be array-like with '{dtype}' values."
-                         f"\nscikit message:\n\t{e}")
+                         f"\nScikit message:\n\t{e}")
     # Check dimensions if specified
     if expected_dim is not None and len(val.shape) != expected_dim:
         raise ValueError(f"'{name}' should have {expected_dim} dimensions, but has {len(val.shape)}.")

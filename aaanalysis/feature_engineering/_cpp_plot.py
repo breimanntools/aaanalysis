@@ -780,7 +780,8 @@ class CPPPlot:
         ut.check_figsize(figsize=figsize)
         dict_color = check_dict_color(dict_color=dict_color, df_cat=self._df_cat)
         check_grid_axis(grid_axis=grid_axis)    # TODO replace against check from valid strings in utils
-
+        # TODO get min and max val requiered from df
+        ylim = ut.check_lim(name="ylim", val=ylim, accept_none=True)
         # Plot profile
         ax = plot_profile(figsize=figsize, ax=ax, df_feat=df_feat, df_cat=self._df_cat,
                           col_value=col_value, value_type=value_type, normalize=normalize,

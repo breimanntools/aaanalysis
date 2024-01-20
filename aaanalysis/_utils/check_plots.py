@@ -1,8 +1,7 @@
 """
 This is a script for plot checking utility functions.
 """
-import pandas as pd
-import numpy as np
+import warnings
 import re
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -30,16 +29,36 @@ def check_vmin_vmax(vmin=None, vmax=None):
         raise ValueError(f"'vmin' ({vmin}) < 'vmax' ({vmax}) not fulfilled.")
 
 
-def check_lim(name="xlim", val=None, accept_none=True):
+def check_lim(name="xlim", val=None, accept_none=True, min_vaL_req=None, max_val_req=None, adjust_lim=False, verbose=True):
     """Validate that lim parameter ('xlim' or 'ylim') is tuple with two numbers, where the first is less than the second."""
-    if accept_none and val is None:
-        return None  # Skip check
+    if val is None:
+        if accept_none:
+            return None  # Skip check
+        else:
+            raise ValueError(f"'{name}' should not be None")
     ut_check.check_tuple(name=name, val=val, n=2)
     min_val, max_val = val
     ut_check.check_number_val(name=f"{name}:min", val=min_val, just_int=False)
     ut_check.check_number_val(name=f"{name}:max", val=max_val, just_int=False)
     if min_val >= max_val:
         raise ValueError(f"'{name}:min' ({min_val}) should be < '{name}:max' ({max_val}).")
+    str_error_warn_min = f"'{name}:min' ({min_val}) should be <= '{min_vaL_req}'."
+    str_error_warn_max = f"'{name}:max' ({max_val}) should be >= '{max_val_req}'."
+    if not adjust_lim:
+        if min_val < min_vaL_req:
+            raise ValueError(str_error_warn_min)
+        if max_val > max_val_req:
+            raise ValueError(str_error_warn_max)
+    else:
+        if min_val < min_vaL_req:
+           if verbose:
+               warnings.warn(str_error_warn_min)
+           return None
+        if max_val > max_val_req:
+            if verbose:
+                warnings.warn(str_error_warn_max)
+            return None
+
 
 
 def check_dict_xlims(dict_xlims=None, n_ax=None):
