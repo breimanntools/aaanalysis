@@ -5,7 +5,7 @@ from typing import Optional, Dict, List, Tuple, Type, Union, Callable
 import pandas as pd
 import numpy as np
 from sklearn.base import ClassifierMixin, BaseEstimator
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 import warnings
 import shap
 
@@ -90,9 +90,11 @@ def check_match_labels_X_fuzzy_labeling(labels=None, X=None, fuzzy_labeling=Fals
 
 def check_is_selected(is_selected=None, n_feat=None):
     """Check is_selected and set if None"""
+
     if is_selected is None:
         is_selected = np.ones((1, n_feat), dtype=bool)
     else:
+        is_selected = ut.check_array_like(name="is_selected_feature", val=is_selected, accept_none=False)
         is_selected = is_selected.astype(bool)
         is_selected = ut.check_array_like(name="is_selected_feature", val=is_selected, accept_none=False,
                                           expected_dim=2, dtype="bool")
@@ -216,10 +218,10 @@ class ShapExplainer:
 
     Attributes
     ----------
-    shap_values_ : array-like, shape(n_samples, n_features)
+    shap_values : array-like, shape(n_samples, n_features)
         2D array with Monte Carlo estimates of SHAP values obtained by SHAP explainer models averaged across all rounds,
         feature selections, and trained models from `list_model_classes`.
-    exp_value_ : int
+    exp_value : int
         Expected value for explaining the model output obtained by SHAP explainer model  averaged across all rounds,
         feature selections, and trained models from `list_model_classes`. Typically, 0.5 for binary classification
         and balanced dataset.
@@ -238,10 +240,12 @@ class ShapExplainer:
         ----------
         explainer_class : model, default=TreeExplainer
             The `SHAP Explainer model <https://shap.readthedocs.io/en/latest/api.html#explainers>`_.
+            Must be one of the following: :class:`shap.TreeExplainer`, :class:`shap.LinearExplainer`,
+            :class:`shap.KernelExplainer`, :class:`shap.DeepExplainer`, :class:`shap.GradientExplainer`.
         explainer_kwargs : dict, default={model_output='probability'}
             Keyword arguments for the explainer class model.
-        list_model_classes : list of Type[ClassifierMixin or BaseEstimator], default=[RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
-            A list of tree-based model classes to be used for feature importance analysis.
+        list_model_classes : list of Type[ClassifierMixin or BaseEstimator], default=[RandomForestClassifier, ExtraTreesClassifier]
+            A list of prediction model classes used to obtain SHAP values.
         list_model_kwargs : list of dict, optional
             A list of dictionaries containing keyword arguments for each model in `list_model_classes`.
         verbose : bool, default=True
@@ -258,8 +262,8 @@ class ShapExplainer:
         * The selection of the SHAP explainer must align with the machine learning models used.
           Following explainer model types are allowed:
 
-          - :class:`shap.TreeExplainer`: Ideal for tree-based models (e.g., decision trees, random forests, XGBoost).
-            Efficient in computing SHAP values by leveraging the tree structure.
+          - :class:`shap.TreeExplainer`: Ideal for tree-based models (by default, random forests and extra trees; further
+            recommended are XGBoost and CatBoost). Efficient in computing SHAP values by leveraging the tree structure.
           - :class:`shap.LinearExplainer`: Suited for linear models (e.g., logistic regression, linear regression).
             Computes SHAP values directly from model coefficients.
           - :class:`shap.KernelExplainer`: Model-agnostic, works with any model type. Uses weighted linear regression to
@@ -277,7 +281,6 @@ class ShapExplainer:
         --------
         * :class:`sklearn.ensemble.RandomForestClassifier` for random forest model.
         * :class:`sklearn.ensemble.ExtraTreesClassifier` for extra trees model.
-        * :class:`sklearn.ensemble.GradientBoostingClassifier` for gradient boosting model.
 
         Examples
         --------
@@ -293,7 +296,7 @@ class ShapExplainer:
         explainer_kwargs = check_shap_explainer(explainer_class=explainer_class, explainer_kwargs=explainer_kwargs)
         # Check model parameters
         if list_model_classes is None:
-            list_model_classes = [RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
+            list_model_classes = [RandomForestClassifier, ExtraTreesClassifier]
         elif not isinstance(list_model_classes, list):
             # If single model is used (not recommended)
             list_model_classes = [list_model_classes]
@@ -325,20 +328,20 @@ class ShapExplainer:
         self._list_model_classes = list_model_classes
         self._list_model_kwargs = _list_model_kwargs
         # Output parameters (set during model fitting)
-        self.shap_values_: Optional[ut.ArrayLike2D] = None
-        self.exp_value_: Optional[int] = None
+        self.shap_values: Optional[ut.ArrayLike2D] = None
+        self.exp_value: Optional[int] = None
 
     def fit(self,
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D = None,
-            is_selected: ut.ArrayLike2D = None,
             n_rounds: int = 5,
+            is_selected: ut.ArrayLike2D = None,
             fuzzy_labeling: bool = False,
             class_index: int = 1,
             n_background_data: Optional[int] = None,
             ) -> "ShapExplainer":
         """
-        Obtain SHAP values aggregated across tree-based models and training rounds.
+        Obtain SHAP values aggregated across prediction models and training rounds.
 
         Parameters
         ----------
@@ -346,16 +349,16 @@ class ShapExplainer:
             Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
         labels : array-like, shape (n_samples)
             Dataset labels of samples in ``X``. Should be either 1 (positive) or 0 (negative).
-        is_selected : array-like, shape (n_selection_round, n_features)
-            2D boolean arrays indicating different feature selections.
-        n_rounds : int, default=5
-            The number of rounds (>=1) to fit the models and obtain the SHAP values by explainer.
-        fuzzy_labeling : bool, default=False
-            If ``True``, fuzzy labeling is applied to approximate SHAP values for samples with uncertain/partial
-            memberships (e.g., between >0 and <1 for binary classification scenarios).
         class_index : int, default=1
             The index of the class for which SHAP values are computed in a classification tasks.
             For binary classification, '0' represents the negative class and '1' the positive class.
+        n_rounds : int, default=5
+            The number of rounds (>=1) to fit the models and obtain the SHAP values by explainer.
+        is_selected : array-like, shape (n_selection_round, n_features)
+            2D boolean arrays indicating different feature selections.
+        fuzzy_labeling : bool, default=False
+            If ``True``, fuzzy labeling is applied to approximate SHAP values for samples with uncertain/partial
+            memberships (e.g., between >0 and <1 for binary classification scenarios).
         n_background_data : None or int, optional
             The number samples (< 'n_samples') in the background dataset used for the `KernelExplainer`` to reduce
             computation time. The dataset is obtained by k-means clustering. If ``None``, the full dataset 'X' is used.
@@ -367,7 +370,7 @@ class ShapExplainer:
 
         Notes
         -----
-        ``Fuzzy Labeling``
+        **Fuzzy Labeling**
 
         - Aim: Compute SHAP value for datasets with uncertain or ambiguous labels. Especially useful to explain newly
           predicted samples, where class label is set to the respective prediction probability.
@@ -388,14 +391,14 @@ class ShapExplainer:
         X = ut.check_X(X=X)
         n_samples, n_feat = X.shape
         ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
-        labels = check_match_labels_X_fuzzy_labeling(labels=labels, X=X, fuzzy_labeling=fuzzy_labeling)
-        is_selected = check_is_selected(is_selected=is_selected, n_feat=n_feat)
-        check_match_X_is_selected(X=X, is_selected=is_selected)
         ut.check_bool(name="fuzzy_labeling", val=fuzzy_labeling)
-        ut.check_number_range(name="n_rounds", val=n_rounds, min_val=1, just_int=True)
-        check_match_labels_fuzzy_labeling(labels=labels, fuzzy_labeling=fuzzy_labeling, verbose=self._verbose)
+        labels = check_match_labels_X_fuzzy_labeling(labels=labels, X=X, fuzzy_labeling=fuzzy_labeling)
         ut.check_number_range(name="class_index", val=class_index, min_val=0, just_int=True, accept_none=True)
         check_match_class_index_labels(class_index=class_index, labels=labels)
+        is_selected = check_is_selected(is_selected=is_selected, n_feat=n_feat)
+        check_match_X_is_selected(X=X, is_selected=is_selected)
+        ut.check_number_range(name="n_rounds", val=n_rounds, min_val=1, just_int=True)
+        check_match_labels_fuzzy_labeling(labels=labels, fuzzy_labeling=fuzzy_labeling, verbose=self._verbose)
         ut.check_number_range(name="n_background_data", val=n_background_data, min_val=1, just_int=True, accept_none=True)
         check_match_n_background_data_X(n_background_data=n_background_data, X=X)
         # Compute shap values
@@ -410,8 +413,8 @@ class ShapExplainer:
                                                            verbose=self._verbose,
                                                            class_index=class_index,
                                                            n_background_data=n_background_data)
-        self.shap_values_ = shap_values
-        self.exp_value_ = exp_val
+        self.shap_values = shap_values
+        self.exp_value = exp_val
         return self
 
     def eval(self, shap_values=None, is_selected=None):
@@ -476,7 +479,7 @@ class ShapExplainer:
         .. include:: examples/se_add_feat_impact.rst
         """
         # Check input
-        n_samples, n_features = self.shap_values_.shape
+        n_samples, n_features = self.shap_values.shape
         ut.check_df_feat(df_feat=df_feat)
         ut.check_bool(name="drop", val=drop)
         pos = check_pos(pos=pos, n_samples=n_samples)
@@ -486,14 +489,14 @@ class ShapExplainer:
         ut.check_bool(name="group_average", val=group_average)
         ut.check_bool(name="shap_feat_importance", val=shap_feat_importance)
         check_match_pos_group_average(pos=pos, group_average=group_average)
-        check_match_df_feat_shap_values(df_feat=df_feat, drop=drop, shap_values=self.shap_values_,
+        check_match_df_feat_shap_values(df_feat=df_feat, drop=drop, shap_values=self.shap_values,
                                         shap_feat_importance=shap_feat_importance)
         # Compute feature importance
         if shap_feat_importance:
-            feat_importance = comp_shap_feature_importance(shap_values=self.shap_values_, normalize=normalize)
+            feat_importance = comp_shap_feature_importance(shap_values=self.shap_values, normalize=normalize)
             df_feat = insert_shap_feature_importance(df_feat=df_feat, feat_importance=feat_importance, drop=drop)
         # Compute feature impact
-        feat_impact = comp_shap_feature_impact(self.shap_values_, pos=pos,
+        feat_impact = comp_shap_feature_impact(self.shap_values, pos=pos,
                                                group_average=group_average,
                                                normalize=normalize)
         df_feat = insert_shap_feature_impact(df_feat=df_feat, feat_impact=feat_impact,

@@ -136,7 +136,7 @@ class TestShapExplainer:
                 aa.ShapExplainer(random_state=random_state)
 
 
-class TestComplexShapExplainer:
+class TestShapExplainerComplex:
     """Complex test class"""
 
     # Positive test
