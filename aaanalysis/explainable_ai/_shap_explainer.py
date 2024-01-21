@@ -259,6 +259,8 @@ class ShapExplainer:
         * All attributes are set during fitting via the :meth:`ShapExplainer.fit` method and can be directly accessed.
         * The Explainer models should be provided from the `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_
           package
+        * SHAP model fitting messages appear in red and are not controlled by ``verbose``, unlike AAanalysis progress
+          messages in blue.
         * The selection of the SHAP explainer must align with the machine learning models used.
           Following explainer model types are allowed:
 
@@ -334,10 +336,10 @@ class ShapExplainer:
     def fit(self,
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D = None,
+            class_index: int = 1,
             n_rounds: int = 5,
             is_selected: ut.ArrayLike2D = None,
             fuzzy_labeling: bool = False,
-            class_index: int = 1,
             n_background_data: Optional[int] = None,
             ) -> "ShapExplainer":
         """

@@ -112,8 +112,7 @@ class TestShapExplainer:
             aa.ShapExplainer(list_model_kwargs="invalid")
         # 2 instead of 3
         with pytest.raises(ValueError):
-            aa.ShapExplainer(list_model_kwargs=[{"n_estimators": 10, "max_depth": 5},
-                                                {"n_estimators": 10, "max_depth": 5}])
+            aa.ShapExplainer(list_model_kwargs=[{"n_estimators": 10, "max_depth": 5}])
         # Wrong parameter
         with pytest.raises(ValueError):
             aa.ShapExplainer(
