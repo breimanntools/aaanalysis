@@ -44,21 +44,25 @@ def check_lim(name="xlim", val=None, accept_none=True, min_vaL_req=None, max_val
         raise ValueError(f"'{name}:min' ({min_val}) should be < '{name}:max' ({max_val}).")
     str_error_warn_min = f"'{name}:min' ({min_val}) should be <= '{min_vaL_req}'."
     str_error_warn_max = f"'{name}:max' ({max_val}) should be >= '{max_val_req}'."
-    if not adjust_lim:
-        if min_val < min_vaL_req:
-            raise ValueError(str_error_warn_min)
-        if max_val > max_val_req:
-            raise ValueError(str_error_warn_max)
+    if min_vaL_req is not None and max_val_req is not None:
+        if not adjust_lim:
+            if min_val > min_vaL_req:
+                raise ValueError(str_error_warn_min)
+            if max_val < max_val_req:
+                raise ValueError(str_error_warn_max)
+        else:
+            if min_val > min_vaL_req:
+                if verbose:
+                    warnings.warn(str_error_warn_min)
+                min_val = min_vaL_req
+            if max_val < max_val_req:
+                if verbose:
+                    warnings.warn(str_error_warn_max)
+                max_val = max_val_req
     else:
-        if min_val < min_vaL_req:
-           if verbose:
-               warnings.warn(str_error_warn_min)
-           return None
-        if max_val > max_val_req:
-            if verbose:
-                warnings.warn(str_error_warn_max)
-            return None
-
+        if adjust_lim:
+            raise ValueError("'adjust_lim' can only be True if 'min_val_req' and 'max_val_req' are given")
+    return tuple((min_val, max_val))
 
 
 def check_dict_xlims(dict_xlims=None, n_ax=None):

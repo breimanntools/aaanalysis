@@ -169,9 +169,9 @@ class TreeModel:
 
         See Also
         --------
-        * :class:`sklearn.ensemble.RandomForestClassifier` for Random Forest model.
-        * :class:`sklearn.ensemble.ExtraTreesClassifier` for Extra Trees model.
-        * :class:`sklearn.ensemble.GradientBoostingClassifier` for Gradient Boosting model.
+        * :class:`sklearn.ensemble.RandomForestClassifier` for random forest model.
+        * :class:`sklearn.ensemble.ExtraTreesClassifier` for extra trees model.
+        * :class:`sklearn.ensemble.GradientBoostingClassifier` for gradient boosting model.
 
         Examples
         --------

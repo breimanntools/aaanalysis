@@ -34,5 +34,3 @@ def check_match_X_is_selected(X=None, is_selected=None):
     if n_features != n_feat_is_selected:
         raise ValueError(f"Number of features from 'X' ({n_features}) does not match "
                          f"with 'is_selected' attribute ({n_feat_is_selected})")
-
-

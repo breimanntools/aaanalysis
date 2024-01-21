@@ -1,7 +1,5 @@
 """
 This is a script for the frontend of the ShapExplainer class used to obtain Mote Carlo estimates of feature impact.
-Note: SHAP models are not included in the requirement of the aaanalysis package
-due to the instability of SHAP package. Please install the SHAP package for using the ShapExplainer class.
 """
 from typing import Optional, Dict, List, Tuple, Type, Union, Callable
 import pandas as pd
@@ -26,17 +24,17 @@ from .backend.shap_explainer.shap_feat import (comp_shap_feature_importance,
 # Check init
 def check_shap_explainer(explainer_class=None, explainer_kwargs=None):
     """Check if explainer class is a valid shap explainer"""
-    if not (isinstance(explainer_class, type) and issubclass(explainer_class, shap.Explainer)):
-        raise ValueError(f"'{explainer_class.__name__}' is not a valid SHAP explainer")
+    list_valid_explainers = [shap.TreeExplainer, shap.LinearExplainer, shap.KernelExplainer,
+                             shap.DeepExplainer, shap.GradientExplainer]
+    names_valid_explainers = [x.__name__ for x in list_valid_explainers]
+    if not (isinstance(explainer_class, type) and explainer_class in list_valid_explainers):
+        raise ValueError(f"'{explainer_class.__name__}' is not a valid 'explainer_class'. "
+                         f"Chose from the following: {names_valid_explainers}")
     # Check if explainer has shap_values method
-    if explainer_class != shap.Explainer:
-        explainer_kwargs = ut.check_model_kwargs(model_class=explainer_class,
-                                                 model_kwargs=explainer_kwargs,
-                                                 name_model_class="explainer_class",
-                                                 method_to_check="shap_values")
-    # Not needed for the General Explainer
-    else:
-        explainer_kwargs = explainer_kwargs or {}
+    explainer_kwargs = ut.check_model_kwargs(model_class=explainer_class,
+                                             model_kwargs=explainer_kwargs,
+                                             name_model_class="explainer_class",
+                                             method_to_check="shap_values")
     return explainer_kwargs
 
 
@@ -55,7 +53,7 @@ def check_match_class_explainer_and_models(explainer_class=None, list_model_clas
                 model_input = model
             # Attempt to create the explainer with the appropriate input
             explainer_kwargs = {}  # Provide an empty dictionary if explainer_kwargs is None
-            explainer_class(model_input, dummy_data, **explainer_kwargs)
+            explainer = explainer_class(model_input, dummy_data, **explainer_kwargs)
         except Exception as e:
             str_error = (f"The SHAP explainer '{explainer_class.__name__}' is not compatible with "
                          f"the model '{model_class.__name__}'.\nSHAP message:\n\t{e}")
@@ -69,7 +67,7 @@ def check_match_labels_X_fuzzy_labeling(labels=None, X=None, fuzzy_labeling=Fals
         labels = check_match_labels_X(labels=labels, X=X)
         return labels
     n_samples = X.shape[0]
-    # Accept float if fuzzy_labling is True
+    # Accept float if fuzzy_labeling is True
     labels = ut.check_labels(labels=labels, len_requiered=n_samples, accept_float=fuzzy_labeling)
     unique_labels = set(labels)
     if len(unique_labels) < 2:
@@ -106,6 +104,22 @@ def check_match_labels_fuzzy_labeling(labels=None, fuzzy_labeling=False, verbose
     if n_pos != n_neg and verbose:
         warnings.warn(f"For optimal training, non-fuzzy labels should be balanced (equal number of 0s and 1s). "
                       f"\n The 'labels' contain {n_pos} positive (1) and {n_neg} negative (0) samples.")
+
+
+def check_match_class_index_labels(class_index=None, labels=None):
+    """Check if class index matches to classes (unique labels) in labels"""
+    n_classes = len(set(labels))
+    if class_index >= n_classes:
+        raise ValueError(f"'class_index' ({class_index}) should be < number of classes ({n_classes}) from 'labels'")
+
+
+def check_match_n_background_data_X(n_background_data=None, X=None):
+    """Check if n_background_data not >= n_samples"""
+    if n_background_data is None:
+        return None # Skip test
+    n_samples, n_features = X.shape
+    if n_background_data >= n_samples:
+        raise ValueError(f"'n_background_data' ({n_background_data}) must be < 'n_samples' ({n_samples}) from 'X'.")
 
 
 # Check function for add_feat_impact method
@@ -203,7 +217,7 @@ class ShapExplainer:
 
     """
     def __init__(self,
-                 explainer_class: Callable = None,
+                 explainer_class: Callable = shap.TreeExplainer,
                  explainer_kwargs: Optional[dict] = None,
                  list_model_classes: List[Type[Union[ClassifierMixin, BaseEstimator]]] = None,
                  list_model_kwargs: Optional[List[dict]] = None,
@@ -232,21 +246,29 @@ class ShapExplainer:
         * All attributes are set during fitting via the :meth:`ShapExplainer.fit` method and can be directly accessed.
         * The Explainer models should be provided from the `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_
           package
-        * The shap explainer model and the provided machine learning models must match. Recommended are the following
-          explainer model types:
+        * The selection of the SHAP explainer must align with the machine learning models used.
+          Following explainer model types are allowed:
 
-          - :class:`shap.TreeExplainer`: Tree explainer for tree-based models such as Random Forest
-          - :class:`shap.LinerExplainer`: Linear explainer for linear models such as Support Vector Machine or Regression.
-          - :class:`shap.KernelExplainer`: Kernel explainer for any model type (background dataset should be provided
-            to increase computational efficiency for large datasets)
+          - :class:`shap.TreeExplainer`: Ideal for tree-based models (e.g., decision trees, random forests, XGBoost).
+            Efficient in computing SHAP values by leveraging the tree structure.
+          - :class:`shap.LinearExplainer`: Suited for linear models (e.g., logistic regression, linear regression).
+            Computes SHAP values directly from model coefficients.
+          - :class:`shap.KernelExplainer`: Model-agnostic, works with any model type. Uses weighted linear regression to
+            approximate SHAP values. Versatile but less computationally efficient, which can be increased by a background dataset.
+          - :class:`shap.DeepExplainer`: Designed for deep learning models (e.g., models from TensorFlow, Keras).
+            Approximates SHAP values by analyzing neuron groups, suitable for complex networks.
+          - :class:`shap.GradientExplainer`: Also for deep learning, but uses expected gradients.
+            Effective for models with differentiable components.
 
-        # By default, Tree explainer is used with Random Forest, Extra Trees, and Gradient Boosting models.
+          Proper explainer choice is key for accurate model explanations.
+
+        * By default, :class:`shap.TreeExplainer` is used with random forest, extra trees, and gradient boosting models.
 
         See Also
         --------
-        * :class:`sklearn.ensemble.RandomForestClassifier` for Random Forest model.
-        * :class:`sklearn.ensemble.ExtraTreesClassifier` for Extra Trees model.
-        * :class:`sklearn.ensemble.GradientBoostingClassifier` for Gradient Boosting model.
+        * :class:`sklearn.ensemble.RandomForestClassifier` for random forest model.
+        * :class:`sklearn.ensemble.ExtraTreesClassifier` for extra trees model.
+        * :class:`sklearn.ensemble.GradientBoostingClassifier` for gradient boosting model.
 
         Examples
         --------
@@ -259,20 +281,23 @@ class ShapExplainer:
         if explainer_class is None:
             explainer_class = shap.TreeExplainer
             explainer_kwargs = explainer_kwargs or dict(model_output="probability")
-        check_shap_explainer(explainer_class=explainer_class, explainer_kwargs=explainer_kwargs)
-        # Model parameters
+        explainer_kwargs = check_shap_explainer(explainer_class=explainer_class, explainer_kwargs=explainer_kwargs)
+        # Check model parameters
         if list_model_classes is None:
             list_model_classes = [RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
         elif not isinstance(list_model_classes, list):
-            list_model_classes = [list_model_classes]  # Single models are possible as well (but not recommender)
-        list_model_classes = ut.check_list_like(name="list_model_classes", val=list_model_classes,
-                                                accept_none=False, min_len=1)
+            # If single model is used (not recommended)
+            list_model_classes = [list_model_classes]
+        list_model_classes = ut.check_list_like(name="list_model_classes",
+                                                val=list_model_classes,
+                                                accept_none=False,
+                                                min_len=1)
         ut.check_list_like(name="list_model_kwargs", val=list_model_kwargs, accept_none=True)
         if list_model_kwargs is None:
             list_model_kwargs = [{} for _ in list_model_classes]
+        # Check matching of model parameters
         check_match_list_model_classes_kwargs(list_model_classes=list_model_classes,
                                               list_model_kwargs=list_model_kwargs)
-        check_match_class_explainer_and_models(explainer_class=explainer_class, list_model_classes=list_model_classes)
         _list_model_kwargs = []
         for model_class, model_kwargs in zip(list_model_classes, list_model_kwargs):
             ut.check_mode_class(model_class=model_class)
@@ -280,6 +305,7 @@ class ShapExplainer:
                                                  model_kwargs=model_kwargs,
                                                  random_state=random_state)
             _list_model_kwargs.append(model_kwargs)
+        check_match_class_explainer_and_models(explainer_class=explainer_class, list_model_classes=list_model_classes)
         # Internal attributes
         self._verbose = verbose
         self._random_state = random_state
@@ -297,6 +323,8 @@ class ShapExplainer:
             is_selected: ut.ArrayLike2D = None,
             n_rounds: int = 5,
             fuzzy_labeling: bool = False,
+            class_index: int = 1,
+            n_background_data: Optional[int] = None,
             ) -> "ShapExplainer":
         """
         Obtain SHAP values aggregated across tree-based models and training rounds.
@@ -314,6 +342,12 @@ class ShapExplainer:
         fuzzy_labeling : bool, default=False
             If ``True``, fuzzy labeling is applied to approximate SHAP values for samples with uncertain/partial
             memberships (e.g., between >0 and <1 for binary classification scenarios).
+        class_index : int, default=1
+            The index of the class for which SHAP values are computed in a classification tasks.
+            For binary classification, '0' represents the negative class and '1' the positive class.
+        n_background_data : None or int, optional
+            The number samples (< 'n_samples') in the background dataset used for the `KernelExplainer`` to reduce
+            computation time. The dataset is obtained by k-means clustering. If ``None``, the full dataset 'X' is used.
 
         Returns
         -------
@@ -349,6 +383,10 @@ class ShapExplainer:
         ut.check_bool(name="fuzzy_labeling", val=fuzzy_labeling)
         ut.check_number_range(name="n_rounds", val=n_rounds, min_val=1, just_int=True)
         check_match_labels_fuzzy_labeling(labels=labels, fuzzy_labeling=fuzzy_labeling, verbose=self._verbose)
+        ut.check_number_range(name="class_index", val=class_index, min_val=0, just_int=True, accept_none=True)
+        check_match_class_index_labels(class_index=class_index, labels=labels)
+        ut.check_number_range(name="n_background_data", val=n_background_data, min_val=1, just_int=True, accept_none=True)
+        check_match_n_background_data_X(n_background_data=n_background_data, X=X)
         # Compute shap values
         shap_values, exp_val = monte_carlo_shap_estimation(X, labels=labels,
                                                            list_model_classes=self._list_model_classes,
@@ -358,7 +396,9 @@ class ShapExplainer:
                                                            is_selected=is_selected,
                                                            fuzzy_labeling=fuzzy_labeling,
                                                            n_rounds=n_rounds,
-                                                           verbose=self._verbose)
+                                                           verbose=self._verbose,
+                                                           class_index=class_index,
+                                                           n_background_data=n_background_data)
         self.shap_values_ = shap_values
         self.exp_value_ = exp_val
         return self

@@ -19,7 +19,7 @@ def _mean_dif(X=None, labels=None, label_test=1, label_ref=0):
 
 
 def _std(X=None, labels=None, group=1):
-    """Get standard deviation (std) for data sets points with group label"""
+    """Get standard deviation (std) for datasets points with group label"""
     mask = [x == group for x in labels]
     group_std = np.std(X[mask], axis=0)
     return group_std
