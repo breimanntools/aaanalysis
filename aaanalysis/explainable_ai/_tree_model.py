@@ -392,6 +392,8 @@ class TreeModel:
         Predictions are performed using all tree-based models from the `list_model_classes` attribute and
         feature selections from the `is_selected` attribute.
 
+        Parameters
+        ----------
         X : array-like, shape (n_samples, n_features)
             Feature matrix. Rows typically correspond to samples and columns to features.
 

@@ -29,7 +29,7 @@ def check_vmin_vmax(vmin=None, vmax=None):
         raise ValueError(f"'vmin' ({vmin}) < 'vmax' ({vmax}) not fulfilled.")
 
 
-def check_lim(name="xlim", val=None, accept_none=True, min_vaL_req=None, max_val_req=None, adjust_lim=False, verbose=True):
+def check_lim(name="xlim", val=None, accept_none=True):
     """Validate that lim parameter ('xlim' or 'ylim') is tuple with two numbers, where the first is less than the second."""
     if val is None:
         if accept_none:
@@ -42,27 +42,6 @@ def check_lim(name="xlim", val=None, accept_none=True, min_vaL_req=None, max_val
     ut_check.check_number_val(name=f"{name}:max", val=max_val, just_int=False)
     if min_val >= max_val:
         raise ValueError(f"'{name}:min' ({min_val}) should be < '{name}:max' ({max_val}).")
-    str_error_warn_min = f"'{name}:min' ({min_val}) should be <= '{min_vaL_req}'."
-    str_error_warn_max = f"'{name}:max' ({max_val}) should be >= '{max_val_req}'."
-    if min_vaL_req is not None and max_val_req is not None:
-        if not adjust_lim:
-            if min_val > min_vaL_req:
-                raise ValueError(str_error_warn_min)
-            if max_val < max_val_req:
-                raise ValueError(str_error_warn_max)
-        else:
-            if min_val > min_vaL_req:
-                if verbose:
-                    warnings.warn(str_error_warn_min)
-                min_val = min_vaL_req
-            if max_val < max_val_req:
-                if verbose:
-                    warnings.warn(str_error_warn_max)
-                max_val = max_val_req
-    else:
-        if adjust_lim:
-            raise ValueError("'adjust_lim' can only be True if 'min_val_req' and 'max_val_req' are given")
-    return tuple((min_val, max_val))
 
 
 def check_dict_xlims(dict_xlims=None, n_ax=None):
@@ -111,7 +90,7 @@ def check_list_colors(name=None, val=None, accept_none=False, min_n=None, max_n=
         raise ValueError(f"'{name}' should contain no more than {max_n} colors")
 
 
-def check_dict_color(name="dict_color", val=None, accept_none=False, min_n=None, max_n=None):
+def check_dict_color(name="dict_color", val=None, accept_none=False, min_n=None, max_n=None, add_message=None):
     """Check if colors in dict_color are valid"""
     if accept_none and val is None:
         return None # Skip check
@@ -119,9 +98,15 @@ def check_dict_color(name="dict_color", val=None, accept_none=False, min_n=None,
     for key in val:
         check_color(name=name, val=val[key], accept_none=accept_none)
     if min_n is not None and len(val) < min_n:
-        raise ValueError(f"'{name}' should contain at least {min_n} colors")
+        str_error = f"'{name}' should contain at least {min_n} colors"
+        if add_message is not None:
+            str_error += add_message
+        raise ValueError(str_error)
     if max_n is not None and len(val) > max_n:
-        raise ValueError(f"'{name}' should contain no more than {max_n} colors")
+        str_error = f"'{name}' should contain no more than {max_n} colors"
+        if add_message is not None:
+            str_error += add_message
+        raise ValueError(str_error)
 
 
 def check_cmap(name=None, val=None, accept_none=False):

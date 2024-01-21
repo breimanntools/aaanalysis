@@ -36,12 +36,13 @@ def check_verbose(verbose=None):
 def check_random_state(random_state=None):
     """Adjust random state if global is not 'off' (default)"""
     global_random_state = options["random_state"]
+    args = dict(min_val=0, accept_none=True, just_int=True)
     if global_random_state != "off":
         # System-level random state
-        check_number_val(name="random_state (option)", val=global_random_state, accept_none=True, just_int=True)
+        check_number_range(name="random_state (option)", val=global_random_state, **args)
         random_state = global_random_state
     else:
-        check_number_val(name="random_state", val=random_state, accept_none=True, just_int=True)
+        check_number_range(name="random_state", val=random_state, **args)
     return random_state
 
 

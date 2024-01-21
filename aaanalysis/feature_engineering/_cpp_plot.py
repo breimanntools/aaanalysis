@@ -20,6 +20,17 @@ from ._backend.check_feature import (check_split_kws,
                                      check_match_df_parts_df_scales,
                                      check_match_df_seq_jmd_len,
                                      check_match_df_scales_df_cat)
+from ._backend.check_cpp_plot import (check_value_type,
+                                      check_y_categorical,
+                                      check_args_xtick,
+                                      check_args_ytick,
+                                      check_grid_axis,
+                                      check_ylim,
+                                      check_args_size,
+                                      check_part_color,
+                                      check_seq_color,
+                                      check_match_dict_color_df_cat)
+
 from ._backend.cpp.utils_cpp_plot import get_optimal_fontsize
 
 from ._backend.cpp.cpp_plot_eval import plot_eval
@@ -28,7 +39,6 @@ from ._backend.cpp.cpp_plot_ranking import plot_ranking
 from ._backend.cpp.cpp_plot_profile import plot_profile
 from ._backend.cpp.cpp_plot_heatmap import plot_heatmap
 from ._backend.cpp.cpp_plot_feature_map import plot_feature_map
-
 
 # TODO simplify checks & interface (end-to-end check with tests & docu)
 # TODO plot_functions test & refactor (end-to-end)
@@ -41,111 +51,6 @@ from ._backend.cpp.cpp_plot_feature_map import plot_feature_map
 
 
 # I Helper Functions
-# Check input data
-def check_value_type(value_type=None, count_in=True):
-    """Check if value type is valid"""
-    list_value_type = ["count", "sum", "mean"]
-    if count_in:
-        list_value_type.append("count")
-    if value_type not in list_value_type:
-        raise ValueError(f"'value_type' ('{value_type}') should be on of following: {list_value_type}")
-
-
-# Check for plotting methods
-def check_args_size(seq_size=None, fontsize_tmd_jmd=None):
-    """Check if sequence size parameters match"""
-    ut.check_number_range(name="seq_size", val=seq_size, min_val=0, accept_none=True, just_int=False)
-    ut.check_number_range(name="fontsize_tmd_jmd", val=fontsize_tmd_jmd, min_val=0, accept_none=True, just_int=False)
-    args_size = dict(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
-    return args_size
-
-
-def check_args_xtick(xtick_size=None, xtick_width=None, xtick_length=None):
-    """Check if x tick parameters non-negative float"""
-    args = dict(accept_none=True, just_int=False, min_val=0)
-    ut.check_number_range(name="xtick_size", val=xtick_size, **args)
-    ut.check_number_range(name="xtick_width", val=xtick_width, **args)
-    ut.check_number_range(name="xtick_length", val=xtick_length, **args)
-    args_xtick = dict(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
-    return args_xtick
-
-
-def check_args_ytick(ytick_size=None, ytick_width=None, ytick_length=None):
-    """Check if y tick parameters non-negative float"""
-    args = dict(accept_none=True, just_int=False, min_val=1)
-    ut.check_number_range(name="ytick_size", val=ytick_size, **args)
-    ut.check_number_range(name="ytick_width", val=ytick_width, **args)
-    ut.check_number_range(name="ytick_length", val=ytick_length, **args)
-    args_ytick = dict(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
-    return args_ytick
-
-
-def check_part_color(tmd_color=None, jmd_color=None):
-    """Check if part colors valid"""
-    ut.check_color(name="tmd_color", val=tmd_color)
-    ut.check_color(name="jmd_color", val=jmd_color)
-    args_part_color = dict(tmd_color=tmd_color, jmd_color=jmd_color)
-    return args_part_color
-
-
-def check_seq_color(tmd_seq_color=None, jmd_seq_color=None):
-    """Check sequence colors"""
-    ut.check_color(name="tmd_seq_color", val=tmd_seq_color)
-    ut.check_color(name="jmd_seq_color", val=jmd_seq_color)
-    args_seq_color = dict(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
-    return args_seq_color
-
-def check_dict_color(dict_color=None, df_cat=None):
-    """Check if color dictionary is matching to DataFrame with categories"""
-    list_cats = list(sorted(set(df_cat[ut.COL_CAT])))
-    if dict_color is None:
-        dict_color = ut.DICT_COLOR_CAT
-    if not isinstance(dict_color, dict):
-        raise ValueError(f"'dict_color' should be a dictionary with colors for: {list_cats}")
-    list_cat_not_in_dict_cat = [x for x in list_cats if x not in dict_color]
-    if len(list_cat_not_in_dict_cat) > 0:
-        error = f"'dict_color' not complete! Following categories are missing from 'df_cat': {list_cat_not_in_dict_cat}"
-        raise ValueError(error)
-    for key in dict_color:
-        color = dict_color[key]
-        ut.check_color(name=key, val=color)
-    return dict_color
-
-def check_y_categorical(df=None, y=None):
-    """Check if the y column in the dataframe is categorical."""
-    list_cat_columns = [col for col, data_type in zip(list(df), df.dtypes)
-                        if data_type != float and "position" not in col]# and col != "feature"]
-    if y not in list_cat_columns:
-        raise ValueError(f"'y' ({y}) should be one of following columns with categorical values "
-                         f"of 'df': {list_cat_columns}")
-
-
-# Check barplot and profile
-def check_grid_axis(grid_axis=None):
-    """"""
-    list_valid = ["x", 'y', 'both', None]
-    if grid_axis not in list_valid:
-        raise ValueError(f"'grid_axis' ('{grid_axis}') not valid. Chose from following: {list_valid}")
-
-
-# Check stat plot
-def check_ylabel_fontweight(ylabel_fontweight=None, accept_none=True):
-    """"""
-    if accept_none and ylabel_fontweight is None:
-        return
-    name = "ylabel_fontweight"
-    list_weights = ['light', 'medium', 'bold']
-    if type(ylabel_fontweight) in [float, int]:
-        ut.check_number_range(name=name, val=ylabel_fontweight, min_val=0, max_val=1000, just_int=False)
-    elif isinstance(ylabel_fontweight, str):
-        if ylabel_fontweight not in list_weights:
-            error = f"'{name}' ({ylabel_fontweight}) should be one of following: {list_weights}"
-            raise ValueError(error)
-    else:
-        error = f"'{name}' ({ylabel_fontweight}) should be either numeric value in range 0-1000" \
-                f"\n\tor one of following: {list_weights}"
-        raise ValueError(error)
-
 # Checks for eval plot
 def check_match_dict_color_list_cat(dict_color=None, list_cat=None):
     """Check if all categories from list_cat are in dict_color"""
@@ -203,6 +108,7 @@ def check_match_df_seq_names_to_show(df_seq=None, names_to_show=None):
     if len(missing_names) > 0:
         raise ValueError(f"Following names from 'names_to_show' are not in '{ut.COL_NAME}' "
                          f"column of 'df_seq': {missing_names}")
+
 
 # II Main Functions
 class CPPPlot:
@@ -778,10 +684,10 @@ class CPPPlot:
         check_value_type(value_type=value_type, count_in=True)
         check_args_ytick(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
         ut.check_figsize(figsize=figsize)
-        dict_color = check_dict_color(dict_color=dict_color, df_cat=self._df_cat)
+        dict_color = check_match_dict_color_df_cat(dict_color=dict_color, df_cat=self._df_cat)
         check_grid_axis(grid_axis=grid_axis)    # TODO replace against check from valid strings in utils
         # TODO get min and max val requiered from df
-        ylim = ut.check_lim(name="ylim", val=ylim, accept_none=True)
+        ylim = check_ylim(ylim=ylim, accept_none=True, verbose=self._verbose)
         # Plot profile
         ax = plot_profile(figsize=figsize, ax=ax, df_feat=df_feat, df_cat=self._df_cat,
                           col_value=col_value, value_type=value_type, normalize=normalize,
@@ -964,7 +870,7 @@ class CPPPlot:
         check_value_type(value_type=value_type, count_in=False)
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
         ut.check_figsize(figsize=figsize)
-        dict_color = check_dict_color(dict_color=dict_color, df_cat=self._df_cat)
+        dict_color = check_match_dict_color_df_cat(dict_color=dict_color, df_cat=self._df_cat)
 
         # Get df positions
         ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat, col_cat=y, col_value=col_value, value_type=value_type,
@@ -1116,7 +1022,7 @@ class CPPPlot:
         check_value_type(value_type=value_type, count_in=False)
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
         ut.check_figsize(figsize=figsize)
-        dict_color = check_dict_color(dict_color=dict_color, df_cat=self._df_cat)
+        dict_color = check_match_dict_color_df_cat(dict_color=dict_color, df_cat=self._df_cat)
         # Get df positions
         ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat, y=y, col_value=col_value, value_type=value_type,
                               normalize=normalize, figsize=figsize,

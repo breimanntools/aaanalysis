@@ -24,6 +24,8 @@ from .backend.shap_explainer.shap_feat import (comp_shap_feature_importance,
 # Check init
 def check_shap_explainer(explainer_class=None, explainer_kwargs=None):
     """Check if explainer class is a valid shap explainer"""
+    ut.check_mode_class(model_class=explainer_class)
+    ut.check_dict(name="explainer_kwargs", val=explainer_kwargs, accept_none=True)
     list_valid_explainers = [shap.TreeExplainer, shap.LinearExplainer, shap.KernelExplainer,
                              shap.DeepExplainer, shap.GradientExplainer]
     names_valid_explainers = [x.__name__ for x in list_valid_explainers]
@@ -38,11 +40,12 @@ def check_shap_explainer(explainer_class=None, explainer_kwargs=None):
     return explainer_kwargs
 
 
-def check_match_class_explainer_and_models(explainer_class=None, list_model_classes=None):
+def check_match_class_explainer_and_models(explainer_class=None, explainer_kwargs=None, list_model_classes=None):
     """Check if each model in list_model_class is compatible with the shap explainer class"""
     dummy_data = np.array([[0, 1], [1, 0]])  # Minimal dummy data to initialize explainers
     dummy_label = [0, 1]
     for model_class in list_model_classes:
+        # Check model compatability
         try:
             # Fit the dummy model
             model = model_class().fit(dummy_data, dummy_label)
@@ -52,12 +55,18 @@ def check_match_class_explainer_and_models(explainer_class=None, list_model_clas
             else:
                 model_input = model
             # Attempt to create the explainer with the appropriate input
-            explainer_kwargs = {}  # Provide an empty dictionary if explainer_kwargs is None
-            explainer = explainer_class(model_input, dummy_data, **explainer_kwargs)
+            explainer = explainer_class(model_input, dummy_data, **{})
         except Exception as e:
             str_error = (f"The SHAP explainer '{explainer_class.__name__}' is not compatible with "
                          f"the model '{model_class.__name__}'.\nSHAP message:\n\t{e}")
             raise ValueError(str_error)
+        if explainer_kwargs is not None:
+            try:
+                explainer = explainer_class(model_input, dummy_data, **explainer_kwargs)
+            except Exception as e:
+                str_error = (f"The SHAP explainer '{explainer_class.__name__}' has invalid 'explainer_kwargs': {explainer_class}"
+                             f"\nSHAP message:\n\t{e}")
+                raise ValueError(str_error)
 
 
 # Check functions for fit method
@@ -228,7 +237,7 @@ class ShapExplainer:
         Parameters
         ----------
         explainer_class : model, default=TreeExplainer
-            The `SHAP Explainer model <https://shap.readthedocs.io/en/latest/api.html#explainers>_`.
+            The `SHAP Explainer model <https://shap.readthedocs.io/en/latest/api.html#explainers>`_.
         explainer_kwargs : dict, default={model_output='probability'}
             Keyword arguments for the explainer class model.
         list_model_classes : list of Type[ClassifierMixin or BaseEstimator], default=[RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
@@ -305,7 +314,9 @@ class ShapExplainer:
                                                  model_kwargs=model_kwargs,
                                                  random_state=random_state)
             _list_model_kwargs.append(model_kwargs)
-        check_match_class_explainer_and_models(explainer_class=explainer_class, list_model_classes=list_model_classes)
+        check_match_class_explainer_and_models(explainer_class=explainer_class,
+                                               explainer_kwargs=explainer_kwargs,
+                                               list_model_classes=list_model_classes)
         # Internal attributes
         self._verbose = verbose
         self._random_state = random_state
