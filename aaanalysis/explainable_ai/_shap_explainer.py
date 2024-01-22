@@ -457,9 +457,9 @@ class ShapExplainer:
 
         Three different scenarios for computing the feature impact are possible:
 
-            a) For a single sample, returning its feature impact.
-            b) For multiple samples, returning each sample's feature impact.
-            c) For a group of samples, returning the group average feature impact and its standard deviation.
+            a) For a **single sample**, include its feature impact.
+            b) For **multiple samples**, include each sample's feature impact.
+            c) For a **group of samples**, include the group average feature impact and its standard deviation.
 
         The respective feature impact column(s) is/are included as ``feat_impact_'name(s)'`` in ``df_feat``.
         The shap explainer-based feature importance column is included as ``feat_importance``.
@@ -472,7 +472,7 @@ class ShapExplainer:
             If ``True``, allow dropping of already existing ``feat_impact`` and ``feat_impact_std`` columns
             from ``df_feat`` before inserting.
         pos : int, list of int, or None
-            Position index/indices for the sample(s) in ``shap_values_``.
+            Position index/indices for the sample(s) in ``shap_values``.
             If ``None``, the impact for each sample will be returned.
         name: str or list of str, optional
             Unique name(s) used for the feature impact columns. When provided, they should align with ``pos`` as follows:
@@ -497,17 +497,17 @@ class ShapExplainer:
 
         Notes
         -----
-        **Feature impact (sample-level)**
+        **Feature impact (sample-level):**
         The feature impact quantifies the positive or negative influence of a feature to increase or decrease the model
         output for a specific sample (typically, the prediction score). For each sample, the impact of an individual feature
         is represented by its corresponding SHAP value. These values are normalized such that the sum of their absolute
         values equals 100%, reflecting the relative contribution of each feature within that specific sample.
 
-        **Feature impact (group-level)**
+        **Feature impact (group-level):**
         The feature impact calculated for individual samples can be averaged to determine the feature impact for a group.
         This provides an understanding of how features influence the model's output on average within that group.
 
-        **Feature importance (SHAP Value-based)**
+        **Feature importance (SHAP Value-based):**
         The average of the feature impact across all samples is termed as shap value-based 'feature importance'.
         This metric gives an overview of the overall influence of each feature across the entire dataset.
 

@@ -80,9 +80,9 @@ def display_df(df: pd.DataFrame = None,
     show_shape : bool, default=False
         If ``True``, shape of ``df`` is printed.
     n_rows : int, optional
-        Display only the first n rows.
+        Display only the first n rows. If negative, last n rows will be shown.
     n_cols : int, optional
-        Display only the first n columns.
+        Display only the first n columns. If negative, last n columns will be shown.
     row_to_show : int or str, optional
         Display only the specified row.
     col_to_show : int or str, optional
@@ -97,8 +97,9 @@ def display_df(df: pd.DataFrame = None,
     ut.check_number_range(name="max_width_pct", val=max_width_pct, min_val=1, max_val=100, accept_none=False, just_int=True)
     ut.check_number_range(name="max_height", val=max_height, min_val=1, accept_none=False, just_int=True)
     ut.check_number_range(name="char_limit", val=char_limit, min_val=1, accept_none=True, just_int=True)
-    ut.check_number_range(name="n_rows", val=n_rows, min_val=1, max_val=len(df), accept_none=True, just_int=True)
-    ut.check_number_range(name="n_cols", val=n_cols, min_val=1, max_val=len(df.T), accept_none=True, just_int=True)
+    n_rows_, n_cols_ = len(df), len(df.T)
+    ut.check_number_range(name="n_rows", val=n_rows, min_val=-n_rows_, max_val=n_rows_, accept_none=True, just_int=True)
+    ut.check_number_range(name="n_cols", val=n_cols, min_val=-n_cols_, max_val=n_cols_, accept_none=True, just_int=True)
     _check_show(name="show_only_col", val=col_to_show, df=df)
     _check_show(name="show_only_row", val=row_to_show, df=df)
     # Show shape before filtering
@@ -109,9 +110,15 @@ def display_df(df: pd.DataFrame = None,
     df = _select_col(df=df, col_to_show=col_to_show)
     df = _select_row(df=df, row_to_show=row_to_show)
     if row_to_show is None and n_rows is not None:
-        df = df.head(n_rows)
+        if n_rows > 0:
+            df = df.head(n_rows)
+        else:
+            df = df.tail(abs(n_rows))
     if col_to_show is None and n_cols is not None:
-        df = df.T.head(n_cols).T
+        if n_cols > 0:
+            df = df.T.head(n_cols).T
+        else:
+            df = df.T.tail(abs(n_cols)).T
     # Style dataframe
     df = _adjust_df(df=df, char_limit=char_limit)
     styled_df = (
