@@ -461,20 +461,17 @@ class ShapExplainer:
             Position index/indices for the sample(s) in ``shap_values_``.
             If ``None``, the impact for each sample will be returned.
         names: str or list of str, optional
-            Name(s) of the sample(s) or group, used for naming the inserted ``feat_impact`` columns in ``df_feat``.
-            When given, `pos`` should not be ``None`` and align with ``names``. Ensure the following:
-
-            - For a single sample: ``names`` is a str and `pos` is a single int.
-            - For multiple samples: ``names`` is a list of strs, ``pos`` is a corresponding list of ints.
-            - For a group: ``names`` is a str, ``pos`` is a list of ints for the group's samples.
-
+            Name(s) of the sample(s) or group, used to name new ``feat_impact`` column(s) in ``df_feat``.
+            When provided, ``pos`` should not be ``None`` and should align with ``names``:
+                - Single sample: ``names`` is a str and `pos` is a single int.
+                - Multiple samples: ``names`` is a list of str, ``pos`` is a corresponding list of int.
+                - Group: ``names`` is a str, ``pos`` is a list of int for the group samples.
         normalize : bool, default=True
-            Whether to normalize the feature impact to percentage.
+            If ``True``, normalize the feature impact to percentage.
         group_average : bool, default=False
-            Whether to compute the average of samples given by ``pos``.
+            If ``True``, compute the average of samples given by ``pos``.
         shap_feat_importance : bool, default=False
-            If ``True``, the feature importance (i.e., absolute average shap values) will be included in ``df_feat``
-            instead of the feature impact.
+            If ``True``, include feature importance (i.e., absolute average shap values) instead of impact to ``df_feat``.
 
         Returns
         -------
