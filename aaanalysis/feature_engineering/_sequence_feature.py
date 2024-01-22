@@ -91,6 +91,19 @@ def check_match_df_parts_label_test_label_ref(df_parts=None, labels=None, label_
                              f"\n Add them to the current parts of 'df_parts': {list_parts}")
 
 
+def check_col_cat(col_cat=None):
+    """Check if col_cat valid column from df_feat"""
+    if col_cat not in ut.COLS_FEAT_SCALES:
+        raise ValueError(f"'col_cat' {col_cat} should be one of the following: {ut.COLS_FEAT_SCALES}")
+
+
+def check_col_value(col_value=None):
+    """Check if col_value valid column from df_feat"""
+    cols_feat = ut.COLS_FEAT_STAT + ut.COLS_FEAT_WEIGHT
+    if col_value not in cols_feat:
+        raise ValueError(f"'col_value' {col_value} should be one of the following: {cols_feat}")
+
+
 # II Main Functions
 class SequenceFeature:
     """
@@ -727,8 +740,8 @@ class SequenceFeature:
         # Check input
         list_parts = ut.check_list_parts(list_parts=list_parts, return_default=False, accept_none=True)
         ut.check_df_feat(df_feat=df_feat)   # Do not check for list_parts since df_pos can be obtained for any part
-        ut.check_col_cat(col_cat=col_cat)
-        ut.check_col_value(col_value=col_value)
+        check_col_cat(col_cat=col_cat)
+        check_col_value(col_value=col_value)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         ut.check_bool(name="normalize", val=normalize)

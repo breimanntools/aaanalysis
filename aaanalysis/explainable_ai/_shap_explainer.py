@@ -4,7 +4,7 @@ This is a script for the frontend of the ShapExplainer class used to obtain Mote
 from typing import Optional, Dict, List, Tuple, Type, Union, Callable
 import pandas as pd
 import numpy as np
-from sklearn.base import ClassifierMixin, BaseEstimator
+from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 import warnings
 import shap
@@ -156,10 +156,15 @@ def check_name(name=None):
         ut.check_str(name=f"name", val=name)
 
 
-def check_match_pos_name(pos=None, name=None):
+def check_match_pos_name(pos=None, name=None, group_average=False):
     """Check if length of pos and name matches"""
     if name is not None:
-        if isinstance(pos, list) and isinstance(name, list):
+        if group_average:
+            if isinstance(pos, list):
+                if isinstance(name, list):
+                    raise ValueError(f"'name' ")
+                name = ["Group"]
+        elif isinstance(pos, list) and isinstance(name, list):
             if len(pos) != len(name):
                 raise ValueError("Length of 'pos' and 'name' must be equal.")
         elif isinstance(pos, int) and isinstance(name, str):
@@ -230,7 +235,7 @@ class ShapExplainer:
     def __init__(self,
                  explainer_class: Callable = shap.TreeExplainer,
                  explainer_kwargs: Optional[dict] = None,
-                 list_model_classes: List[Type[Union[ClassifierMixin, BaseEstimator]]] = None,
+                 list_model_classes: List[Type[Union[BaseEstimator]]] = None,
                  list_model_kwargs: Optional[List[dict]] = None,
                  verbose: bool = True,
                  random_state: Optional[int] = None,
@@ -244,7 +249,7 @@ class ShapExplainer:
             :class:`shap.KernelExplainer`, :class:`shap.DeepExplainer`, :class:`shap.GradientExplainer`.
         explainer_kwargs : dict, default={model_output='probability'}
             Keyword arguments for the explainer class model.
-        list_model_classes : list of Type[ClassifierMixin or BaseEstimator], default=[RandomForestClassifier, ExtraTreesClassifier]
+        list_model_classes : list of Type[BaseEstimator], default=[RandomForestClassifier, ExtraTreesClassifier]
             A list of prediction model classes used to obtain SHAP values.
         list_model_kwargs : list of dict, optional
             A list of dictionaries containing keyword arguments for each model in `list_model_classes`.
@@ -456,7 +461,13 @@ class ShapExplainer:
             Position index/indices for the sample(s) in ``shap_values_``.
             If ``None``, the impact for each sample will be returned.
         names: str or list of str, optional
-            Name of the sample or group. Used for naming the new columns in `df_feat`.
+            Name(s) of the sample(s) or group, used for naming the inserted ``feat_impact`` columns in ``df_feat``.
+            When given, `pos`` should not be ``None`` and align with ``names``. Ensure the following:
+
+            - For a single sample: ``names`` is a str and `pos` is a single int.
+            - For multiple samples: ``names`` is a list of strs, ``pos`` is a corresponding list of ints.
+            - For a group: ``names`` is a str, ``pos`` is a list of ints for the group's samples.
+
         normalize : bool, default=True
             Whether to normalize the feature impact to percentage.
         group_average : bool, default=False
@@ -487,6 +498,7 @@ class ShapExplainer:
         pos = check_pos(pos=pos, n_samples=n_samples)
         check_name(name=names)
         pos, names = check_match_pos_name(pos=pos, name=names)
+        print(names)
         ut.check_bool(name="normalize", val=normalize)
         ut.check_bool(name="group_average", val=group_average)
         ut.check_bool(name="shap_feat_importance", val=shap_feat_importance)
@@ -495,13 +507,14 @@ class ShapExplainer:
                                         shap_feat_importance=shap_feat_importance)
         # Compute feature importance
         if shap_feat_importance:
-            feat_importance = comp_shap_feature_importance(shap_values=self.shap_values, normalize=normalize)
-            df_feat = insert_shap_feature_importance(df_feat=df_feat, feat_importance=feat_importance, drop=drop)
+            feat_importance = comp_shap_feature_importance(shap_values=self.shap_values,
+                                                           normalize=normalize)
+            df_feat = insert_shap_feature_importance(df_feat=df_feat,
+                                                     feat_importance=feat_importance,
+                                                     drop=drop)
         # Compute feature impact
-        feat_impact = comp_shap_feature_impact(self.shap_values,
-                                               pos=pos,
-                                               group_average=group_average,
-                                               normalize=normalize)
-        df_feat = insert_shap_feature_impact(df_feat=df_feat, feat_impact=feat_impact, group_average=group_average,
-                                             pos=pos, names=names, drop=drop)
+        args = dict(pos=pos, group_average=group_average)
+        feat_impact = comp_shap_feature_impact(self.shap_values, normalize=normalize, **args)
+        df_feat = insert_shap_feature_impact(df_feat=df_feat, feat_impact=feat_impact,
+                                             names=names, drop=drop, **args)
         return df_feat

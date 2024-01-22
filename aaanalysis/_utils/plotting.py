@@ -126,7 +126,7 @@ def _check_marker(marker=None, list_cat=None, lw=0):
     return list_marker
 
 
-def _check_marker_size(marker_size=None, list_cat=None):
+def _check_marker_size(marker_size=10, list_cat=None):
     """Check size of markers"""
     # Check if marker_size is valid
     if isinstance(marker_size, (int, float)):

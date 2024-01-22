@@ -1,49 +1,80 @@
 """
-This is the main script for utility functions, folder structure, and constants.
-Most imported modules contain checking functions for code validation.
+This is the core script for utility functions, folder structure, and constants.
+
+Utility functions are explicitly imported here such that other modules can import them (via ut.).
+These comprise options, datatypes, decorators, check functions, internal utility functions,
+and backend of external utility functions.
 """
 import os
 import platform
 from functools import lru_cache
 import pandas as pd
 import seaborn as sns
-import numpy as np
-import warnings
 
+# Options
 from .config import (options,
                      check_verbose,
                      check_n_jobs,
                      check_random_state)
 
-# Import utility functions explicitly (can be imported from this utils file from other modules)
-# Checking functions
-from ._utils.check_type import (check_number_range, check_number_val, check_str, check_bool,
-                                check_dict, check_tuple, check_list_like,
-                                check_ax, check_figsize)
-from ._utils.check_data import (check_X, check_X_unique_samples,
-                                check_labels, check_match_X_labels, check_match_X_list_labels,
-                                check_match_list_labels_names_datasets,
-                                check_array_like, check_superset_subset,
-                                check_df)
-from ._utils.check_models import check_mode_class, check_model_kwargs
-from ._utils.check_plots import (check_vmin_vmax, check_lim, check_dict_xlims,
-                                 check_color, check_list_colors, check_dict_color,
-                                 check_cmap, check_palette)
-
-# Special functions
+# Data types
 from ._utils.new_types import ArrayLike1D, ArrayLike2D
-from ._utils.decorators import (catch_runtime_warnings, CatchRuntimeWarnings,
-                                catch_convergence_warning, ClusteringConvergenceException,
-                                catch_invalid_divide_warning,
-                                catch_undefined_metric_warning, CatchUndefinedMetricWarning)
-from ._utils.plotting import (plot_gco, plot_get_clist_, plot_legend_)
 
-# Utility functions
-from ._utils.utils_metrics import (auc_adjusted_, kullback_leibler_divergence_, bic_score_)
-from ._utils.utils_output import (print_out, print_start_progress, print_progress, print_end_progress)
+# Decorators
+from ._utils.decorators import (catch_runtime_warnings,
+                                CatchRuntimeWarnings,
+                                catch_convergence_warning,
+                                ClusteringConvergenceException,
+                                catch_invalid_divide_warning,
+                                catch_undefined_metric_warning,
+                                CatchUndefinedMetricWarning)
+
+# Check functions
+from ._utils.check_type import (check_number_range,
+                                check_number_val,
+                                check_str,
+                                check_bool,
+                                check_dict,
+                                check_tuple,
+                                check_list_like,
+                                check_ax,
+                                check_figsize)
+from ._utils.check_data import (check_X,
+                                check_X_unique_samples,
+                                check_labels,
+                                check_match_X_labels,
+                                check_match_X_list_labels,
+                                check_match_list_labels_names_datasets,
+                                check_array_like,
+                                check_superset_subset,
+                                check_df)
+from ._utils.check_models import (check_mode_class,
+                                  check_model_kwargs)
+from ._utils.check_plots import (check_vmin_vmax,
+                                 check_lim,
+                                 check_dict_xlims,
+                                 check_color,
+                                 check_list_colors,
+                                 check_dict_color,
+                                 check_cmap,
+                                 check_palette)
+
+# Internal utility functions
+from ._utils.utils_output import (print_out,
+                                  print_start_progress,
+                                  print_progress,
+                                  print_end_progress)
 from ._utils.utils_plot_elements import (plot_add_bars,
                                          adjust_spine_to_middle,
                                          x_ticks_0)
+
+# External (system-level) utility functions (only backend)
+from ._utils.plotting import (plot_gco,
+                              plot_get_clist_,
+                              plot_legend_)
+from ._utils.metrics import (auc_adjusted_,
+                             kullback_leibler_divergence_,
+                             bic_score_)
 
 # Folder structure
 def _folder_path(super_folder, folder_name):
@@ -606,16 +637,3 @@ def check_df_feat(df_feat=None, df_cat=None, list_parts=None, shap_plot=None):
             if COL_FEAT_IMPORT not in list(df_feat):
                 raise ValueError(f"If 'shap_plot' is False, '{COL_FEAT_IMPORT}' must be in 'df_feat' columns: {list(df_feat)}")
     return df_feat.copy()
-
-
-def check_col_cat(col_cat=None):
-    """Check if col_cat valid column from df_feat"""
-    if col_cat not in COLS_FEAT_SCALES:
-        raise ValueError(f"'col_cat' {col_cat} should be one of the following: {COLS_FEAT_SCALES}")
-
-
-def check_col_value(col_value=None):
-    """Check if col_value valid column from df_feat"""
-    cols_feat = COLS_FEAT_STAT + COLS_FEAT_WEIGHT
-    if col_value not in cols_feat:
-        raise ValueError(f"'col_value' {col_value} should be one of the following: {cols_feat}")
