@@ -1,11 +1,11 @@
 """
 This is a script for plot checking utility functions.
 """
-import warnings
 import re
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
+from ._utils import add_str
 import aaanalysis._utils.check_type as ut_check
 
 
@@ -90,7 +90,7 @@ def check_list_colors(name=None, val=None, accept_none=False, min_n=None, max_n=
         raise ValueError(f"'{name}' should contain no more than {max_n} colors")
 
 
-def check_dict_color(name="dict_color", val=None, accept_none=False, min_n=None, max_n=None, add_message=None):
+def check_dict_color(name="dict_color", val=None, accept_none=False, min_n=None, max_n=None, str_add=None):
     """Check if colors in dict_color are valid"""
     if accept_none and val is None:
         return None # Skip check
@@ -98,14 +98,10 @@ def check_dict_color(name="dict_color", val=None, accept_none=False, min_n=None,
     for key in val:
         check_color(name=name, val=val[key], accept_none=accept_none)
     if min_n is not None and len(val) < min_n:
-        str_error = f"'{name}' should contain at least {min_n} colors"
-        if add_message is not None:
-            str_error += add_message
+        str_error = add_str(str_error=f"'{name}' should contain at least {min_n} colors", str_add=str_add)
         raise ValueError(str_error)
     if max_n is not None and len(val) > max_n:
-        str_error = f"'{name}' should contain no more than {max_n} colors"
-        if add_message is not None:
-            str_error += add_message
+        str_error = add_str(str_error=f"'{name}' should contain no more than {max_n} colors", str_add=str_add)
         raise ValueError(str_error)
 
 

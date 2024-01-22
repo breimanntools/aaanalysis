@@ -145,40 +145,53 @@ def check_pos(pos=None, n_samples=None):
         ut.check_number_range(name=f"pos", val=pos, min_val=0, max_val=n_samples, just_int=True)
     return pos
 
+
 def check_name(name=None):
     """Check if name is str ror list of str"""
     if name is None:
         return None     # Skip test
+    str_add = f"'name' should be string or list of strings, but following was given: {name}"
     if isinstance(name, list):
         for i in name:
-            ut.check_str(name=f"name: {i}", val=i)
+            ut.check_str(name=f"name: {i}", val=i, str_add=str_add)
+        duplicated_names = list(set([x for x in name if name.count(x) > 1]))
+        if len(duplicated_names) > 0:
+            raise ValueError(f"'name' should not contain duplicated names: {duplicated_names}")
     else:
-        ut.check_str(name=f"name", val=name)
+        ut.check_str(name=f"name", val=name, str_add=str_add)
 
 
 def check_match_pos_name(pos=None, name=None, group_average=False):
     """Check if length of pos and name matches"""
-    if name is not None:
-        if group_average:
-            if isinstance(pos, list):
-                if isinstance(name, list):
-                    raise ValueError(f"'name' ")
-                name = ["Group"]
-        elif isinstance(pos, list) and isinstance(name, list):
-            if len(pos) != len(name):
-                raise ValueError("Length of 'pos' and 'name' must be equal.")
-        elif isinstance(pos, int) and isinstance(name, str):
-            pos = [pos]  # Convert to list for consistency
-            name = [name]
+    # Group scenario
+    if group_average:
+        if not isinstance(pos, list):
+            raise ValueError(f"For 'group_average', 'pos' ({pos}) must be a list of integers.")
+        if name is None:
+            name = "Group"  # Default group name
+        elif isinstance(name, str):
+            name = name  # Ensure name is a list
         else:
-            raise ValueError("Type mismatch: 'pos' should be int if 'name' is str, and list if 'name' is list.")
+            raise ValueError(f"For 'group_average', 'name' ({name}) must be a single string or None.")
+    # Single sample or multiple samples scenarios
     else:
+        if name is not None:
+            if isinstance(pos, int) and isinstance(name, str):
+                pos = [pos]  # Convert to list for consistency
+                name = [name]
+            elif isinstance(pos, list) and isinstance(name, list):
+                if len(pos) != len(name):
+                    raise ValueError(f"Length of 'pos' (n={len(pos)}) and 'name' (n={len(name)}) must be equal for multiple samples.")
+            else:
+                raise ValueError("Mismatch: 'pos' should be int and 'name' str for a single sample, and both lists for multiple samples."
+                                 f"\n 'pos': {pos}. \n 'name': {name}")
         # Generate default names if name is None
-        if isinstance(pos, list):
-            name = [f"Protein{p}" for p in pos]
         else:
-            name = [f"Protein{pos}"]
-            pos = [pos]
+            if isinstance(pos, list):
+                name = [f"Protein{p}" for p in pos]
+            else:
+                name = [f"Protein{pos}"]
+                pos = [pos]
     return pos, name
 
 
@@ -379,11 +392,11 @@ class ShapExplainer:
         -----
         **Fuzzy Labeling**
 
-        - Aim: Compute SHAP value for datasets with uncertain or ambiguous labels. Especially useful to explain newly
+        * Aim: Compute SHAP value for datasets with uncertain or ambiguous labels. Especially useful to explain newly
           predicted samples, where class label is set to the respective prediction probability.
-        - Approach: Uses probabilistic labels to represent degrees of membership.
-        - Idea: Adjusts label thresholds dynamically in Monte Carlo estimation to better represent label uncertainties.
-        - Background: Inspired by fuzzy logic, replacing binary true/false with degrees of truth.
+        * Approach: Uses probabilistic labels to represent degrees of membership.
+        * Idea: Adjusts label thresholds dynamically in Monte Carlo estimation to better represent label uncertainties.
+        * Background: Inspired by fuzzy logic, replacing binary true/false with degrees of truth.
 
         See Also
         --------
@@ -433,7 +446,7 @@ class ShapExplainer:
                         df_feat: pd.DataFrame = None,
                         drop: bool = False,
                         pos: Union[int, List[int], None] = None,
-                        names: Optional[Union[str, List[str]]] = None,
+                        name: Optional[Union[str, List[str]]] = None,
                         normalize: bool = True,
                         group_average: bool = False,
                         shap_feat_importance: bool = False,
@@ -445,9 +458,9 @@ class ShapExplainer:
 
             a) For a single sample, returning its feature impact.
             b) For multiple samples, returning each sample's feature impact.
-            c) For a group of samples, returning the group average feature impact.
+            c) For a group of samples, returning the group average feature impact and its standard deviation.
 
-        The respective feature impact column(s) is/are included as ``feat_impact+name(s)``.
+        The respective feature impact column(s) is/are included as ``feat_impact_'name(s)'`` in ``df_feat``.
         The shap explainer-based feature importance column is included as ``feat_importance``.
 
         Parameters
@@ -460,12 +473,12 @@ class ShapExplainer:
         pos : int, list of int, or None
             Position index/indices for the sample(s) in ``shap_values_``.
             If ``None``, the impact for each sample will be returned.
-        names: str or list of str, optional
-            Name(s) of the sample(s) or group, used to name new ``feat_impact`` column(s) in ``df_feat``.
-            When provided, ``pos`` should not be ``None`` and should align with ``names``:
-                - Single sample: ``names`` is a str and `pos` is a single int.
-                - Multiple samples: ``names`` is a list of str, ``pos`` is a corresponding list of int.
-                - Group: ``names`` is a str, ``pos`` is a list of int for the group samples.
+        name: str or list of str, optional
+            Unique name(s) used for the feature impact columns. When provided, they should align with ``pos`` as follows:
+                - Single sample: ``name`` should be a string and ``pos`` an integer.
+                - Multiple samples: ``name`` should be a list of string and ``pos`` a corresponding list of integers.
+                - Group: ``name`` should be a string and ``pos`` a list of integers for the group samples.
+            If ``pos`` is ``None`` (all samples are considered), ``name`` must be list with names for each sample.
         normalize : bool, default=True
             If ``True``, normalize the feature impact to percentage.
         group_average : bool, default=False
@@ -481,8 +494,13 @@ class ShapExplainer:
 
         Notes
         -----
-        - SHAP values represent a feature's responsibility for a change in the model output.
-        - Missing values are accepted in SHAP values.
+        * SHAP values represent a feature's responsibility for a change in the model output.
+        * Missing values are accepted in SHAP values.
+
+        Warnings
+        --------
+        * If ``group_average=True``, warning when the standard deviation of a feature's impact significantly exceeds
+          its mean impact, this may indicate an unreliable grouping.
 
         Examples
         --------
@@ -493,11 +511,10 @@ class ShapExplainer:
         ut.check_df_feat(df_feat=df_feat)
         ut.check_bool(name="drop", val=drop)
         pos = check_pos(pos=pos, n_samples=n_samples)
-        check_name(name=names)
-        pos, names = check_match_pos_name(pos=pos, name=names)
-        print(names)
-        ut.check_bool(name="normalize", val=normalize)
+        check_name(name=name)
         ut.check_bool(name="group_average", val=group_average)
+        pos, name = check_match_pos_name(pos=pos, name=name, group_average=group_average)
+        ut.check_bool(name="normalize", val=normalize)
         ut.check_bool(name="shap_feat_importance", val=shap_feat_importance)
         check_match_pos_group_average(pos=pos, group_average=group_average)
         check_match_df_feat_shap_values(df_feat=df_feat, drop=drop, shap_values=self.shap_values,
@@ -510,8 +527,14 @@ class ShapExplainer:
                                                      feat_importance=feat_importance,
                                                      drop=drop)
         # Compute feature impact
-        args = dict(pos=pos, group_average=group_average)
-        feat_impact = comp_shap_feature_impact(self.shap_values, normalize=normalize, **args)
-        df_feat = insert_shap_feature_impact(df_feat=df_feat, feat_impact=feat_impact,
-                                             names=names, drop=drop, **args)
+        feat_impact = comp_shap_feature_impact(self.shap_values,
+                                               normalize=normalize,
+                                               pos=pos,
+                                               verbose=self._verbose,
+                                               group_average=group_average)
+        df_feat = insert_shap_feature_impact(df_feat=df_feat,
+                                             feat_impact=feat_impact,
+                                             name=name,
+                                             drop=drop,
+                                             group_average=group_average)
         return df_feat

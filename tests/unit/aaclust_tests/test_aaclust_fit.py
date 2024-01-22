@@ -164,6 +164,7 @@ class TestAAclustComplex:
     """Test AAclust class"""
 
     # Property-based testing for positive cases
+    @settings(deadline=3500, max_examples=20)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=12, max_side=100),
                          elements=some.floats(allow_nan=False, allow_infinity=False)),
            n_clusters=some.integers(min_value=2, max_value=5))

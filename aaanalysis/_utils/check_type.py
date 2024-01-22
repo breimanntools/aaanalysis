@@ -4,6 +4,8 @@ Basic utility check functions for type checking
 import pandas as pd
 import numpy as np
 
+from ._utils import add_str
+
 
 # Type checking functions
 def check_number_val(name=None, val=None, accept_none=False, just_int=False):
@@ -55,14 +57,16 @@ def check_number_range(name=None, val=None, min_val=0, max_val=None, exclusive_l
     return val
 
 
-def check_str(name=None, val=None, accept_none=False, return_empty_string=False):
+def check_str(name=None, val=None, accept_none=False, return_empty_string=False, str_add=None):
     """Check type string"""
     if val is None:
         if not accept_none:
-            raise ValueError(f"'{name}' should not be None.")
+            str_error = add_str(str_error=f"'{name}' should not be None.", str_add=str_add)
+            raise ValueError(str_error)
         return "" if return_empty_string else None
     if not isinstance(val, str):
-        raise ValueError(f"'{name}' ('{val}') should be string.")
+        str_error = add_str(str_error= f"'{name}' ('{val}') should be string.", str_add=str_add)
+        raise ValueError(str_error)
     return val
 
 

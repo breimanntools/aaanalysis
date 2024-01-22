@@ -3,6 +3,7 @@ This is a script for the backend of the ShapExplainer.add_feat_impact() and Shap
 """
 import numpy as np
 import pandas as pd
+import warnings
 
 import aaanalysis.utils as ut
 
@@ -24,7 +25,7 @@ def _comp_sample_shap_feat_impact(shap_values=None, i=None, normalize=True):
     return feat_impact
 
 
-def _comp_group_shap_feat_impact(shap_values=None, list_i=None, normalize=True):
+def _comp_group_shap_feat_impact(shap_values=None, list_i=None, normalize=True, verbose=True):
     """Compute the shap feature impact for a group of samples"""
     shap_value_samples = shap_values[list_i]
     mean_shap_value_samples = shap_value_samples.mean(axis=0)
@@ -35,8 +36,12 @@ def _comp_group_shap_feat_impact(shap_values=None, list_i=None, normalize=True):
         abs_sum_before_norm = sum(np.abs(feat_impact))
         feat_impact = _abs_normalize(values=feat_impact)
         abs_sum_after_norm = sum(np.abs(feat_impact))
-        # Scale std
+        # Scale std (assumes linear scaling factor)
         feat_impact_std *= abs_sum_after_norm/abs_sum_before_norm
+    if verbose:
+        max_std, max_impact = round(max(np.abs(feat_impact_std)), 2), round(max(np.abs(feat_impact)), 2)
+        if max_std > max_impact * 5:
+            warnings.warn(f"Absolute maximum of 'feat_impact_std' ({max_std}) >> 'feat_impact' ({max_impact}). Grouping might be invalid.")
     return feat_impact, feat_impact_std
 
 
@@ -65,45 +70,39 @@ def insert_shap_feature_importance(df_feat=None, feat_importance=None, drop=Fals
 
 
 # Feature impact
-def comp_shap_feature_impact(shap_values, pos=None, normalize=True, group_average=False):
+def comp_shap_feature_impact(shap_values, pos=None, normalize=True, group_average=False, verbose=True):
     """
     Compute SHAP feature impact for different scenarios:
         a) For a single sample, returning its feature impact.
         b) For multiple samples, returning each sample's feature impact.
         c) For a group of samples, returning the group average feature impact.
     """
-    # Case a: Single sample
+    # Single sample
     if isinstance(pos, int):
         return _comp_sample_shap_feat_impact(shap_values, i=pos, normalize=normalize)
-    # Case b: Multiple samples
+    # Multiple samples
     elif isinstance(pos, list) and not group_average:
         impacts = [_comp_sample_shap_feat_impact(shap_values, i, normalize) for i in pos]
         return np.array(impacts)
-    # Case c: Group average
+    # Group average
     elif isinstance(pos, list) and group_average:
-        return _comp_group_shap_feat_impact(shap_values, list_i=pos, normalize=normalize)
+        feat_impact, feat_impact_std = _comp_group_shap_feat_impact(shap_values, list_i=pos, normalize=normalize,
+                                                                    verbose=verbose)
+        return np.array([feat_impact, feat_impact_std])
 
 
-def insert_shap_feature_impact(df_feat=None, feat_impact=None, group_average=False, pos=None, names=None, drop=False):
+def insert_shap_feature_impact(df_feat=None, feat_impact=None, name=None, group_average=False, drop=False):
     """Insert shap explainer-based feature importance"""
     df_feat = df_feat.copy()
     if drop:
         columns = [x for x in list(df_feat) if ut.COL_FEAT_IMPACT not in x]
         df_feat = df_feat[columns]
-    # Prepare new data based on pos and names
-    """
-    dict_feat_impact = {}
-    for n, col_name in zip(pos, names):
-        column_name = f'{ut.COL_FEAT_IMPACT}_{col_name}'
-        dict_feat_impact[column_name] = feat_impact[n] if isinstance(pos, list) else feat_impact
-    df_feat_impact = pd.DataFrame(dict_feat_impact)
-    """
+    # Single sample or multiple samples
     if not group_average:
-        col_names = [f'{ut.COL_FEAT_IMPACT}_{col_name}' for col_name in names]
-        df_feat_impact = pd.DataFrame(data=feat_impact.T, columns=col_names)
+        col_names = [f'{ut.COL_FEAT_IMPACT}_{col_name}' for col_name in name]
+    # Group average
     else:
-        feat_impact = np.array(feat_impact).T
-        df_feat_impact = pd.DataFrame(data=feat_impact, columns=[ut.COL_FEAT_IMPACT, ut.COL_FEAT_IMPACT_STD])
+        col_names = [f'{ut.COL_FEAT_IMPACT}_{name}', f'{ut.COL_FEAT_IMPACT_STD}_{name}']
+    df_feat_impact = pd.DataFrame(data=feat_impact.T, columns=col_names)
     df_feat = pd.concat([df_feat, df_feat_impact], axis=1)
     return df_feat
-

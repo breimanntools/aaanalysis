@@ -120,8 +120,8 @@ def check_match_dict_color_df_cat(dict_color=None, df_cat=None):
     list_cats = list(sorted(set(df_cat[ut.COL_CAT])))
     if dict_color is None:
         dict_color = ut.DICT_COLOR_CAT
-    add_message = f"\n'dict_color' should be a dictionary with colors for: {list_cats}"
-    ut.check_dict_color(val=dict_color, add_message=add_message)
+    str_add = f"'dict_color' should be a dictionary with colors for: {list_cats}"
+    ut.check_dict_color(val=dict_color, str_add=str_add)
     list_cat_not_in_dict_cat = [x for x in list_cats if x not in dict_color]
     if len(list_cat_not_in_dict_cat) > 0:
         error = f"'dict_color' not complete! Following categories are missing from 'df_cat': {list_cat_not_in_dict_cat}"

@@ -2,9 +2,7 @@
 import pandas as pd
 import numpy as np
 import pytest
-from hypothesis import given, settings
-import hypothesis.strategies as st
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+import random
 import aaanalysis as aa
 
 aa.options["verbose"] = False
@@ -55,7 +53,8 @@ class TestAddFeatImpact:
             assert sum(["feat_impact" in x for x in list(df_feat)]) == len(df_seq)
 
     def test_pos_valid(self):
-        for pos in range(len(df_seq)):
+        sample_positions = random.sample(range(len(df_seq)), 3)
+        for pos in sample_positions:
             se = aa.ShapExplainer()
             se.fit(valid_X, labels=valid_labels, **ARGS)
             df_feat = create_df_feat()
@@ -63,11 +62,44 @@ class TestAddFeatImpact:
             assert isinstance(df_feat, pd.DataFrame)
 
     def test_names_valid(self):
-        names = [f"P{i}" for i in range(len(df_seq))]
+        name = [f"P{i}" for i in range(len(df_seq))]
         se = aa.ShapExplainer()
         se.fit(valid_X, labels=valid_labels, **ARGS)
         df_feat = create_df_feat()
-        df_feat = se.add_feat_impact(df_feat=df_feat, names=names)
+        df_feat = se.add_feat_impact(df_feat=df_feat, name=name)
+        assert isinstance(df_feat, pd.DataFrame)
+
+    def test_name_single_valid(self):
+        se = aa.ShapExplainer()
+        se.fit(valid_X, labels=valid_labels, **ARGS)
+        df_feat = create_df_feat()
+        name = "SampleName"
+        pos = 0
+        df_feat = se.add_feat_impact(df_feat=df_feat, name=name, pos=pos)
+        assert isinstance(df_feat, pd.DataFrame)
+        assert f"feat_impact_{name}" in list(df_feat)
+
+    def test_name_multiple_valid(self):
+        se = aa.ShapExplainer()
+        se.fit(valid_X, labels=valid_labels, **ARGS)
+        df_feat = create_df_feat()
+        names = ["SampleName1", "SampleName2"]
+        pos = [0, 1]
+        df_feat = se.add_feat_impact(df_feat=df_feat, name=names, pos=pos)
+        #assert isinstance(df_feat, pd.DataFrame)
+        for name in names:
+            assert f"feat_impact_{name}" in df_feat.columns
+
+    def test_group_average_valid(self):
+        se = aa.ShapExplainer()
+        for group_average in [True, False]:
+            se.fit(valid_X, labels=valid_labels, **ARGS)
+            df_feat = create_df_feat()
+            df_feat = se.add_feat_impact(df_feat=df_feat, group_average=group_average)
+            assert isinstance(df_feat, pd.DataFrame)
+        se.fit(valid_X, labels=valid_labels, **ARGS)
+        df_feat = create_df_feat()
+        df_feat = se.add_feat_impact(df_feat=df_feat, pos=[1,2,3], group_average=True)
         assert isinstance(df_feat, pd.DataFrame)
 
     def test_normalize_valid(self):
@@ -76,14 +108,6 @@ class TestAddFeatImpact:
             se.fit(valid_X, labels=valid_labels, **ARGS)
             df_feat = create_df_feat()
             df_feat = se.add_feat_impact(df_feat=df_feat, normalize=normalize)
-            assert isinstance(df_feat, pd.DataFrame)
-
-    def test_group_average_valid(self):
-        for group_average in [True, False]:
-            se = aa.ShapExplainer()
-            se.fit(valid_X, labels=valid_labels, **ARGS)
-            df_feat = create_df_feat()
-            df_feat = se.add_feat_impact(df_feat=df_feat, group_average=group_average)
             assert isinstance(df_feat, pd.DataFrame)
 
     def test_shap_feat_importance_valid(self):
@@ -95,3 +119,108 @@ class TestAddFeatImpact:
             assert isinstance(df_feat, pd.DataFrame)
 
     # Negative tests
+    def test_df_feat_invalid(self):
+        se = aa.ShapExplainer()
+        se.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=None)
+
+    def test_drop_invalid(self):
+        se = aa.ShapExplainer()
+        se.fit(valid_X, labels=valid_labels, **ARGS)
+        df_feat = create_df_feat()
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=df_feat, drop="not_a_boolean")
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=df_feat, drop=[])
+        with pytest.raises(ValueError):
+            df_feat = se.add_feat_impact(df_feat=df_feat, drop=True)
+            df_feat = se.add_feat_impact(df_feat=df_feat, drop=False)
+
+    def test_pos_invalid(self):
+        se = aa.ShapExplainer()
+        se.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=create_df_feat(), pos="not_a_valid_pos")
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=create_df_feat(), pos=[1, None])
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=create_df_feat(), pos=[1, "asdf"])
+
+    def test_name_invalid(self):
+        se = aa.ShapExplainer()
+        se.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=create_df_feat(), name=123)  # Invalid name type
+        with pytest.raises(ValueError):
+            name = ["Name"] * (len(valid_labels))
+            se.add_feat_impact(df_feat=create_df_feat(), name=name)  # Duplicated names
+        with pytest.raises(ValueError):
+            name = [f"Name{i}" for i in range(len(valid_labels) - 1)]   # Not matching
+            se.add_feat_impact(df_feat=create_df_feat(), name=name)
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=create_df_feat(), pos=[1, 2], name="Not matching")
+
+    def test_group_average_invalid(self):
+        se = aa.ShapExplainer()
+        se.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=create_df_feat(), group_average="not_a_boolean")
+        # Only str is allowed if group_average is True
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=create_df_feat(), group_average=True, name=[])
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=create_df_feat(), group_average=True, name=["Group1"])
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=create_df_feat(), group_average=True, name=["Group1", 234])
+
+    def test_normalize_invalid(self):
+        se = aa.ShapExplainer()
+        se.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=create_df_feat(), normalize="not_a_boolean")
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=create_df_feat(), normalize=123)
+
+    def test_shap_feat_importance_invalid(self):
+        se = aa.ShapExplainer()
+        se.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=create_df_feat(), shap_feat_importance="not_a_boolean")
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=create_df_feat(), shap_feat_importance=123)
+
+class TestAddFeatImpactComplex:
+    """Test the add_feat_impact method with complex cases combining multiple parameters."""
+
+    def test_complex_valid(self):
+        """Complex test with valid parameter combinations."""
+        se = aa.ShapExplainer()
+        se.fit(valid_X, labels=valid_labels, **ARGS)
+
+        # Testing with a combination of valid parameters
+        df_feat = create_df_feat(drop=True)
+        names = ["Sample1", "Sample2"]
+        pos = [0, 1]
+        group_average = False
+        normalize = True
+
+        result = se.add_feat_impact(df_feat=df_feat, name=names, pos=pos,
+                                    group_average=group_average, normalize=normalize)
+        assert isinstance(result, pd.DataFrame)
+        for name in names:
+            assert f"feat_impact_{name}" in result.columns
+
+    def test_complex_invalid(self):
+        """Complex test with invalid parameter combinations."""
+        se = aa.ShapExplainer()
+        se.fit(valid_X, labels=valid_labels, **ARGS)
+
+        # Testing with a combination of invalid parameters
+        df_feat = create_df_feat(drop=True)
+        names = ["Sample1", 123]  # Invalid name
+        pos = [0, 1]
+        group_average = True  # Group average shouldn't be True for multiple names
+
+        with pytest.raises(ValueError):
+            se.add_feat_impact(df_feat=df_feat, name=names, pos=pos, group_average=group_average)

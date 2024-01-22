@@ -4,6 +4,7 @@ This is a script for data checking utility functions.
 import pandas as pd
 import numpy as np
 from sklearn.utils import check_array
+
 import aaanalysis._utils.check_type as check_type
 
 # Helper functions
