@@ -226,13 +226,13 @@ def check_match_df_feat_shap_values(df_feat=None, shap_values=None, drop=False, 
 # II Main Functions
 class ShapExplainer:
     """
-    SHAP Explainer class: A wrapper for SHAP (SHapley Additive exPlanations) explainers to obtain Monte Carlo estimate
-    for shap values, feature impact, and feature importance.
+    SHAP Explainer class: A wrapper for SHAP (SHapley Additive exPlanations) explainers to obtain Monte Carlo estimates
+    for feature impact [Breimann24c]_.
 
     `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ is an explainable Artificial Intelligence (AI) framework
-    and game-theoretic approach to explain the output of any machine learning model using SHAP values. These
-    SHAP values represent a feature's responsibility for a change in the model output to increase of decrease a
-    sample prediction score due to the positive or negative impact of its features, respectively.
+    and game-theoretic approach to explain the output of any machine learning model using SHAP values. These SHAP values
+    represent a feature's responsibility for a change in the model output to increase of decrease a sample prediction
+    score due to the positive or negative impact of its features, respectively.
 
     Attributes
     ----------
@@ -301,6 +301,7 @@ class ShapExplainer:
         --------
         * :class:`sklearn.ensemble.RandomForestClassifier` for random forest model.
         * :class:`sklearn.ensemble.ExtraTreesClassifier` for extra trees model.
+        * :meth:`ShapExplainer.add_feat_impact` for details on feature impact and feature importance.
 
         Examples
         --------
@@ -421,7 +422,7 @@ class ShapExplainer:
         check_match_labels_fuzzy_labeling(labels=labels, fuzzy_labeling=fuzzy_labeling, verbose=self._verbose)
         ut.check_number_range(name="n_background_data", val=n_background_data, min_val=1, just_int=True, accept_none=True)
         check_match_n_background_data_X(n_background_data=n_background_data, X=X)
-        # Compute shap values
+        # Compute SHAP values
         shap_values, exp_val = monte_carlo_shap_estimation(X, labels=labels,
                                                            list_model_classes=self._list_model_classes,
                                                            list_model_kwargs=self._list_model_kwargs,
@@ -454,7 +455,7 @@ class ShapExplainer:
         """
         Compute SHAP feature impact (or importance) from SHAP values and add to feature DataFrame.
 
-        The different scenarios for computing the feature impact are possible:
+        Three different scenarios for computing the feature impact are possible:
 
             a) For a single sample, returning its feature impact.
             b) For multiple samples, returning each sample's feature impact.
@@ -476,9 +477,9 @@ class ShapExplainer:
         name: str or list of str, optional
             Unique name(s) used for the feature impact columns. When provided, they should align with ``pos`` as follows:
 
-            - Single sample: ``name`` should be a string and ``pos`` an integer.
-            - Multiple samples: ``name`` should be a list of string and ``pos`` a corresponding list of integers.
-            - Group: ``name`` should be a string and ``pos`` a list of integers for the group samples.
+            - Single sample: ``name`` should be a string, and ``pos`` should be an integer.
+            - Multiple samples: ``name`` should be a list of string, and ``pos`` should be a corresponding list of integers.
+            - Group: ``name`` should be a string, and ``pos`` should be a list of integers, each indicating a group sample.
 
             If ``pos`` is ``None`` (all samples are considered), ``name`` must be list with names for each sample.
         normalize : bool, default=True
@@ -486,7 +487,7 @@ class ShapExplainer:
         group_average : bool, default=False
             If ``True``, compute the average of samples given by ``pos``.
         shap_feat_importance : bool, default=False
-            If ``True``, include feature importance (i.e., absolute average shap values) instead of impact to ``df_feat``.
+            If ``True``, include feature importance (i.e., absolute average SHAP values) instead of impact to ``df_feat``.
 
         Returns
         -------
@@ -496,8 +497,19 @@ class ShapExplainer:
 
         Notes
         -----
-        * SHAP values represent a feature's responsibility for a change in the model output.
-        * Missing values are accepted in SHAP values.
+        **Feature impact (sample-level)**
+        The feature impact quantifies the positive or negative influence of a feature to increase or decrease the model
+        output for a specific sample (typically, the prediction score). For each sample, the impact of an individual feature
+        is represented by its corresponding SHAP value. These values are normalized such that the sum of their absolute
+        values equals 100%, reflecting the relative contribution of each feature within that specific sample.
+
+        **Feature impact (group-level)**
+        The feature impact calculated for individual samples can be averaged to determine the feature impact for a group.
+        This provides an understanding of how features influence the model's output on average within that group.
+
+        **Feature importance (SHAP Value-based)**
+        The average of the feature impact across all samples is termed as shap value-based 'feature importance'.
+        This metric gives an overview of the overall influence of each feature across the entire dataset.
 
         Warnings
         --------

@@ -97,7 +97,7 @@ def monte_carlo_shap_estimation(X, labels=None, list_model_classes=None, list_mo
     mc_shap_values = np.zeros(shape=(n_samples, n_features, n_rounds, n_selection_rounds))
     list_expected_value = []
     if verbose:
-        ut.print_start_progress(start_message=f"ShapExplainer starts Monte Carlo estimation of shap values over {n_rounds} rounds.")
+        ut.print_start_progress(start_message=f"ShapExplainer starts Monte Carlo estimation of SHAP values over {n_rounds} rounds.")
     for i in range(n_rounds):
         for j, selected_features in enumerate(is_selected):
             if verbose:
