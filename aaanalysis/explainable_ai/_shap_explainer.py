@@ -541,14 +541,15 @@ class ShapExplainer:
                                                      feat_importance=feat_importance,
                                                      drop=drop)
         # Compute feature impact
-        feat_impact = comp_shap_feature_impact(self.shap_values,
-                                               normalize=normalize,
-                                               pos=pos,
-                                               verbose=self._verbose,
-                                               group_average=group_average)
-        df_feat = insert_shap_feature_impact(df_feat=df_feat,
-                                             feat_impact=feat_impact,
-                                             name=name,
-                                             drop=drop,
-                                             group_average=group_average)
+        else:
+            feat_impact = comp_shap_feature_impact(self.shap_values,
+                                                   normalize=normalize,
+                                                   pos=pos,
+                                                   verbose=self._verbose,
+                                                   group_average=group_average)
+            df_feat = insert_shap_feature_impact(df_feat=df_feat,
+                                                 feat_impact=feat_impact,
+                                                 name=name,
+                                                 drop=drop,
+                                                 group_average=group_average)
         return df_feat
