@@ -475,9 +475,11 @@ class ShapExplainer:
             If ``None``, the impact for each sample will be returned.
         name: str or list of str, optional
             Unique name(s) used for the feature impact columns. When provided, they should align with ``pos`` as follows:
+
                 - Single sample: ``name`` should be a string and ``pos`` an integer.
                 - Multiple samples: ``name`` should be a list of string and ``pos`` a corresponding list of integers.
                 - Group: ``name`` should be a string and ``pos`` a list of integers for the group samples.
+
             If ``pos`` is ``None`` (all samples are considered), ``name`` must be list with names for each sample.
         normalize : bool, default=True
             If ``True``, normalize the feature impact to percentage.
