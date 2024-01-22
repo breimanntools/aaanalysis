@@ -133,6 +133,7 @@ COL_AA_REF = "amino_acids_ref"
 COL_FEAT_IMPORT = "feat_importance"
 COL_FEAT_IMPORT_STD = "feat_importance_std"
 COL_FEAT_IMPACT = "feat_impact"
+COL_FEAT_IMPACT_STD = "feat_impact_std"
 
 COLS_FEAT_SCALES = [COL_CAT, COL_SUBCAT, COL_SCALE_NAME]
 COLS_FEAT_STAT = [COL_ABS_AUC, COL_ABS_MEAN_DIF, COL_MEAN_DIF, COL_STD_TEST, COL_STD_REF]

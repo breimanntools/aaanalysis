@@ -139,12 +139,11 @@ def check_pos(pos=None, n_samples=None):
     if pos is None:
         # Create position list for all samples
         pos = list(range(n_samples))
-        return pos
     if isinstance(pos, list) or isinstance(pos, np.ndarray):
         ut.check_list_like(name="pos", val=pos, check_all_non_neg_int=True)
     else:
         ut.check_number_range(name=f"pos", val=pos, min_val=0, max_val=n_samples, just_int=True)
-
+    return pos
 
 def check_name(name=None):
     """Check if name is str ror list of str"""
@@ -152,7 +151,7 @@ def check_name(name=None):
         return None     # Skip test
     if isinstance(name, list):
         for i in name:
-            ut.check_str(name=f"name: {i}", val=name)
+            ut.check_str(name=f"name: {i}", val=i)
     else:
         ut.check_str(name=f"name", val=name)
 
@@ -171,9 +170,10 @@ def check_match_pos_name(pos=None, name=None):
     else:
         # Generate default names if name is None
         if isinstance(pos, list):
-            name = [f"Protein{i + 1}" for i in range(len(pos))]
+            name = [f"Protein{p}" for p in pos]
         else:
-            name = ["Protein1"]
+            name = [f"Protein{pos}"]
+            pos = [pos]
     return pos, name
 
 
@@ -498,9 +498,10 @@ class ShapExplainer:
             feat_importance = comp_shap_feature_importance(shap_values=self.shap_values, normalize=normalize)
             df_feat = insert_shap_feature_importance(df_feat=df_feat, feat_importance=feat_importance, drop=drop)
         # Compute feature impact
-        feat_impact = comp_shap_feature_impact(self.shap_values, pos=pos,
+        feat_impact = comp_shap_feature_impact(self.shap_values,
+                                               pos=pos,
                                                group_average=group_average,
                                                normalize=normalize)
-        df_feat = insert_shap_feature_impact(df_feat=df_feat, feat_impact=feat_impact,
+        df_feat = insert_shap_feature_impact(df_feat=df_feat, feat_impact=feat_impact, group_average=group_average,
                                              pos=pos, names=names, drop=drop)
         return df_feat

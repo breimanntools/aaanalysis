@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from hypothesis import given, settings
 import hypothesis.strategies as st
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 import aaanalysis as aa
 import hypothesis.extra.numpy as npst
 

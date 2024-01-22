@@ -84,19 +84,26 @@ def comp_shap_feature_impact(shap_values, pos=None, normalize=True, group_averag
         return _comp_group_shap_feat_impact(shap_values, list_i=pos, normalize=normalize)
 
 
-def insert_shap_feature_impact(df_feat=None, feat_impact=None, pos=None, names=None, drop=False):
+def insert_shap_feature_impact(df_feat=None, feat_impact=None, group_average=False, pos=None, names=None, drop=False):
     """Insert shap explainer-based feature importance"""
     df_feat = df_feat.copy()
     if drop:
         columns = [x for x in list(df_feat) if ut.COL_FEAT_IMPACT not in x]
         df_feat = df_feat[columns]
-
     # Prepare new data based on pos and names
+    """
     dict_feat_impact = {}
     for n, col_name in zip(pos, names):
         column_name = f'{ut.COL_FEAT_IMPACT}_{col_name}'
         dict_feat_impact[column_name] = feat_impact[n] if isinstance(pos, list) else feat_impact
-    # Convert the dictionary to a DataFrame
     df_feat_impact = pd.DataFrame(dict_feat_impact)
+    """
+    if not group_average:
+        col_names = [f'{ut.COL_FEAT_IMPACT}_{col_name}' for col_name in names]
+        df_feat_impact = pd.DataFrame(data=feat_impact.T, columns=col_names)
+    else:
+        feat_impact = np.array(feat_impact).T
+        df_feat_impact = pd.DataFrame(data=feat_impact, columns=[ut.COL_FEAT_IMPACT, ut.COL_FEAT_IMPACT_STD])
     df_feat = pd.concat([df_feat, df_feat_impact], axis=1)
     return df_feat
+
