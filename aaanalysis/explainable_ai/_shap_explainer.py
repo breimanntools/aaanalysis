@@ -301,7 +301,7 @@ class ShapExplainer:
         --------
         * :class:`sklearn.ensemble.RandomForestClassifier` for random forest model.
         * :class:`sklearn.ensemble.ExtraTreesClassifier` for extra trees model.
-        * :meth:`ShapExplainer.add_feat_impact` for details on feature impact and feature importance.
+        * :meth:`ShapExplainer.add_feat_impact` for details on feature impact and SHAP value-based feature importance.
 
         Examples
         --------
@@ -457,9 +457,9 @@ class ShapExplainer:
 
         Three different scenarios for computing the feature impact are possible:
 
-            a) For a **single sample**, include its feature impact.
-            b) For **multiple samples**, include each sample's feature impact.
-            c) For a **group of samples**, include the group average feature impact and its standard deviation.
+            a) **Single sample**: compute its feature impact.
+            b) **Multiple samples**: compute each sample's feature impact.
+            c) **Group of samples**: compute the group average feature impact and its standard deviation.
 
         The respective feature impact column(s) is/are included as ``feat_impact_'name(s)'`` in ``df_feat``.
         The shap explainer-based feature importance column is included as ``feat_importance``.
@@ -477,9 +477,9 @@ class ShapExplainer:
         name: str or list of str, optional
             Unique name(s) used for the feature impact columns. When provided, they should align with ``pos`` as follows:
 
-            - Single sample: ``name`` should be a string, and ``pos`` should be an integer.
-            - Multiple samples: ``name`` should be a list of string, and ``pos`` should be a corresponding list of integers.
-            - Group: ``name`` should be a string, and ``pos`` should be a list of integers, each indicating a group sample.
+            - **Single sample**: ``name`` as string and ``pos`` as integer.
+            - **Multiple samples**: ``name`` as list of string and ``pos`` as corresponding list of integers.
+            - **Group**: ``name`` as string and ``pos`` as list of integers, each indicating a group sample.
 
             If ``pos`` is ``None`` (all samples are considered), ``name`` must be list with names for each sample.
         normalize : bool, default=True
@@ -497,17 +497,17 @@ class ShapExplainer:
 
         Notes
         -----
-        **Feature impact (sample-level):**
+        **Feature impact (sample-level)**:
         The feature impact quantifies the positive or negative influence of a feature to increase or decrease the model
         output for a specific sample (typically, the prediction score). For each sample, the impact of an individual feature
         is represented by its corresponding SHAP value. These values are normalized such that the sum of their absolute
         values equals 100%, reflecting the relative contribution of each feature within that specific sample.
 
-        **Feature impact (group-level):**
+        **Feature impact (group-level)**:
         The feature impact calculated for individual samples can be averaged to determine the feature impact for a group.
         This provides an understanding of how features influence the model's output on average within that group.
 
-        **Feature importance (SHAP Value-based):**
+        **Feature importance (SHAP value-based)**:
         The average of the feature impact across all samples is termed as shap value-based 'feature importance'.
         This metric gives an overview of the overall influence of each feature across the entire dataset.
 

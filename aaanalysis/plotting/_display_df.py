@@ -11,12 +11,18 @@ from aaanalysis import utils as ut
 def _adjust_df(df=None, char_limit = 50):
     df = df.copy()
     list_index = df.index
-    if sum([type(i) is not int for i in list_index]) == 0:
-        df.index = [x+1 for x in df.index]
+    # Adjust index if it consists solely of integers
+    if all(isinstance(i, int) for i in list_index):
+        df.index = [x + 1 for x in df.index]
+    # Function to truncate strings longer than char_limit
+    def truncate_string(s):
+        return str(s)[:int(char_limit/2)] + '...' + str(s)[-int(char_limit/2):] if len(str(s)) > char_limit else s
+    # Apply truncation to each cell in the DataFrame
     if char_limit is not None:
-        f = lambda x: str(x)[:int(char_limit/2)] + '...' + str(x)[-int(char_limit/2):]
-        df = df.map(lambda x: f(x) if isinstance(x, str) and len(str(x)) > char_limit else x)
+        for col in df.columns:
+            df[col] = df[col].apply(lambda x: truncate_string(x) if isinstance(x, str) else x)
     return df
+
 
 def _check_show(name="row_to_show", val=None, df=None):
     """Check if valid string or int"""
