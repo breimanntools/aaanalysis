@@ -15,7 +15,7 @@ from .utils_cpp_plot import add_part_seq, get_color_dif
 def _adjust_df_feat(df_feat=None, col_dif=None, xlim_dif=None):
     """Adjusts feature values in `df_feat` based on percentage scaling and sets the limits for difference columns."""
     df_feat = df_feat.copy()
-    if max(df_feat[col_dif]) - min(df_feat[col_dif]) < 1:
+    if max(df_feat[col_dif]) - min(df_feat[col_dif]) <= 2:
         df_feat[col_dif] *= 100
     return df_feat, xlim_dif
 

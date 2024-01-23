@@ -610,12 +610,12 @@ def check_features(features=None, list_parts=None, list_scales=None):
     return features
 
 
-def check_df_feat(df_feat=None, df_cat=None, list_parts=None, shap_plot=None, col_rank=None):
+def check_df_feat(df_feat=None, df_cat=None, list_parts=None, shap_plot=None, cols_requiered=None):
     """Check if df not empty pd.DataFrame"""
     # Check df
     cols_feat = [COL_FEATURE] + COLS_FEAT_SCALES + COLS_FEAT_STAT
-    if col_rank is not None:
-        cols_feat += [col_rank]
+    if cols_requiered is not None:
+        cols_feat += [cols_requiered] if type(cols_requiered) is str else cols_requiered
     check_df(df=df_feat, name="df_feat", cols_requiered=cols_feat)
     if len(df_feat) == 0 or len(list(df_feat)) == 0:
         raise ValueError("'df_feat' should be not empty")

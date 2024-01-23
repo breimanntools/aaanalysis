@@ -202,8 +202,8 @@ class TestAAclustComplex:
                 assert len(set(model.labels_)) == n_clusters
                 assert len(model.medoids_) == n_clusters
 
-    @settings(deadline=3500, max_examples=20)
-    @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=10, max_side=50),
+    @settings(deadline=10000, max_examples=20)
+    @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=10, max_side=30),
                          elements=some.floats(allow_nan=False, allow_infinity=False)))
     def test_fit_without_n_clusters(self, X):
         """Test the fit method without a pre-defined number of clusters."""

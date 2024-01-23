@@ -110,12 +110,24 @@ def check_match_df_seq_names_to_show(df_seq=None, names_to_show=None):
                          f"column of 'df_seq': {missing_names}")
 
 # Ranking plot
+def check_col_dif(col_dif=None, shap_plot=False):
+    """Check if col_dif is string and set default"""
+    ut.check_str(name="col_dif", val=col_dif, accept_none=False)
+    if not shap_plot and col_dif != ut.COL_MEAN_DIF:
+        raise ValueError(f"If 'shap_plot=False', 'col_dif' must be '{ut.COL_MEAN_DIF}'")
+    if shap_plot and ut.COL_MEAN_DIF not in col_dif:
+        raise ValueError(f"If 'shap_plot=True', 'col_dif' ({col_dif}) must follow '{ut.COL_MEAN_DIF}_'name''")
+
+
 def check_col_rank(col_rank=None, shap_plot=False):
     """Check if col_rank is string and set default"""
     ut.check_str(name="col_rank", val=col_rank, accept_none=True)
     if col_rank is None:
         col_rank = ut.COL_FEAT_IMPACT if shap_plot else ut.COL_FEAT_IMPORT
+    if shap_plot and ut.COL_FEAT_IMPACT not in col_rank:
+        raise ValueError(f"If 'shap_plot=True', 'col_rank' ({col_rank}) must follow '{ut.COL_FEAT_IMPACT}_'name''")
     return col_rank
+
 
 # II Main Functions
 class CPPPlot:
@@ -153,9 +165,29 @@ class CPPPlot:
         verbose: bool, default=True
             If ``True``, verbose outputs are enabled.
 
+        Notes
+        -----
+        Several methods provide the ``shap_plot`` parameter, which allows to specify whether a plot visualizes
+        the results of the group-level CPP analysis or the sample-level CPP-SHAP analysis (if ``shap_plot=True``).
+
+        - **CPP Analysis**: Group-level analysis of the most discriminant features between a test and a reference group.
+          The overall results are visualized by the :meth:`CPPPlot.feature_map`, revealing the characteristic
+          physicochemical signature of the test group.
+        - **CPP-SHAP Analysis**: Sample-level analysis of the CPP feature impact with single-residue resolution.
+
+        The methods showing the CPP and CPP-SHAP analysis results are as follows:
+
+        - :meth:`CPPPlot.ranking`: the 'CPP/-SHAP ranking plot' shows the top n ranked features, their feature value differences,
+          and feature importance/impact.
+        - :meth:`CPPPlot.profile`: the 'CPP/-SHAP profile' shows the cumulative feature importance/impact per residue position.
+        - :meth:`CPPPlot.heatmap`: the 'CPP/-SHAP heatmap' shows the feature value difference or feature impact per
+          residue position (x-axis) and scale subcategory (y-axis).
+
         See Also
         --------
-        * :class:`CPP`: the respective computation class.
+        * :class:`CPP`: the respective computation class for the **CPP Analysis**.
+        * :class:`ShapExplainer`: the class combining CPP with the `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_
+          explainable Artificial Intelligence (AI) framework.
 
         Examples
         --------
@@ -418,8 +450,9 @@ class CPPPlot:
     def ranking(self,
                 df_feat: pd.DataFrame = None,
                 n_top: int = 15,
-                col_rank: Optional[str] = None,
                 shap_plot: bool = False,
+                col_rank: Optional[str] = None,
+                col_dif: str = "mean_dif",
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
                 tmd_len: int = 20,
                 tmd_jmd_space: int = 2,
@@ -449,11 +482,23 @@ class CPPPlot:
             Can also include feature importance (``feat_importance``) or impact (``feat_impact``) columns for ranking.
         n_top : int, default=15
             The number of top features to display. Should be 1 < ``n_top`` <= ``n_features``.
-        col_rank : str, optional
-            Column name in ``df_feat`` for feature importance/impact values. Defaults to 'feat_importance',
-            or 'feat_impact' if `shap_plot` is `True`
         shap_plot : bool, default=False
             If ``True``, the positive (blue) and negative (red) feature impact is shown in the ranking subplot.
+        col_rank : str, optional
+            Column name in ``df_feat`` for feature importance/impact values. Two options are supported:
+
+            - **CPP Analysis**: Defaults to the ``feat_importance`` column.
+            - **CPP-SHAP Analysis**:  When ``shap_plot=True``, allows selection of specific feature impacts from a
+             ``feat_impact_'name'`` column for samples or groups
+
+        col_dif : str, default='mean_dif'
+            Column name in ``df_feat`` for differences in feature values. Two scenarios are available:
+
+            - **CPP Analysis**: By default, selects the difference between the test group and the reference group
+              from the ``mean_dif`` column.
+            - **CPP-SHAP Analysis**: When ``shap_plot=True``, enables the selection of sample- or group-specific
+              differences against the reference group from a ``mean_dif_'name'`` column.
+
         figsize : tuple, default=(7, 5)
             Figure dimensions (width, height) in inches.
         tmd_len : int, default=20
@@ -510,8 +555,9 @@ class CPPPlot:
         """
         # Check input
         ut.check_bool(name="shap_plot", val=shap_plot)
+        check_col_dif(col_dif=col_dif, shap_plot=shap_plot)
         col_rank = check_col_rank(col_rank=col_rank, shap_plot=shap_plot)
-        df_feat = ut.check_df_feat(df_feat=df_feat, shap_plot=shap_plot, col_rank=col_rank)
+        df_feat = ut.check_df_feat(df_feat=df_feat, shap_plot=shap_plot, cols_requiered=[col_dif, col_dif])
         ut.check_number_range(name="n_top", val=n_top, min_val=2, max_val=len(df_feat), just_int=True)
         ut.check_figsize(figsize=figsize, accept_none=True)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
@@ -530,7 +576,7 @@ class CPPPlot:
         ut.check_number_range(name="x_sum", val=x_rank_info, min_val=0, accept_none=True, just_int=False)
         # Plot ranking
         fig, axes = plot_ranking(df_feat=df_feat.copy(), n_top=n_top,
-                                 col_dif=ut.COL_MEAN_DIF,
+                                 col_dif=col_dif,
                                  col_rank=col_rank,
                                  shap_plot=shap_plot,
                                  figsize=figsize,
