@@ -14,10 +14,11 @@ from .backend.check_models import (check_match_list_model_classes_kwargs,
                                    check_match_labels_X,
                                    check_match_X_is_selected)
 from .backend.shap_explainer.shap_explainer_fit import monte_carlo_shap_estimation
-from .backend.shap_explainer.shap_feat import (comp_shap_feature_importance,
-                                               insert_shap_feature_importance,
-                                               comp_shap_feature_impact,
-                                               insert_shap_feature_impact)
+from .backend.shap_explainer.se_add_feat_impact import (comp_shap_feature_importance,
+                                                        insert_shap_feature_importance,
+                                                        comp_shap_feature_impact,
+                                                        insert_shap_feature_impact)
+from .backend.shap_explainer.se_add_sample_mean_dif import add_sample_mean_dif_
 
 
 # I Helper Functions
@@ -70,6 +71,13 @@ def check_match_class_explainer_and_models(explainer_class=None, explainer_kwarg
 
 
 # Check functions for fit method
+def check_shap_values(shap_values=None):
+    """Check if shap values are properly set"""
+    if shap_values is None:
+        raise ValueError("'shape_values' are None. Use 'ShapExplainer().fit()' to compute them.")
+    ut.check_array_like(name="shap_values", val=shap_values, dtype="numeric")
+
+
 def check_match_labels_X_fuzzy_labeling(labels=None, X=None, fuzzy_labeling=False):
     """Check if labels are binary classification task labels or apply to fuzzy_labeling [0-1]"""
     if not fuzzy_labeling:
@@ -137,13 +145,17 @@ def check_match_n_background_data_X(n_background_data=None, X=None):
 # Check function for add_feat_impact method
 def check_sample_positions(sample_positions=None, n_samples=None):
     """Check if sample_positions is int or list of ints"""
+    str_add = "'sample_position' should be integer or list of integers indicating sample indices."
     if sample_positions is None:
         # Create sample_positions list for all samples
         sample_positions = list(range(n_samples))
+    args = dict(min_val=0, max_val=n_samples-1, just_int=True, str_add=str_add)
     if isinstance(sample_positions, list) or isinstance(sample_positions, np.ndarray):
-        ut.check_list_like(name="sample_positions", val=sample_positions, check_all_non_neg_int=True)
+        ut.check_list_like(name="sample_positions", val=sample_positions, check_all_non_neg_int=True, str_add=str_add)
+        for i in sample_positions:
+            ut.check_number_range(name=f"sample_positions: {i}", val=i, **args)
     else:
-        ut.check_number_range(name=f"sample_positions", val=sample_positions, min_val=0, max_val=n_samples, just_int=True)
+        ut.check_number_range(name=f"sample_positions", val=sample_positions, **args)
     return sample_positions
 
 
@@ -458,12 +470,13 @@ class ShapExplainer:
 
         Three different scenarios for computing the feature impact are possible:
 
-            a) **Single sample**: compute its feature impact.
-            b) **Multiple samples**: compute each sample's feature impact.
-            c) **Group of samples**: compute the group average feature impact and its standard deviation.
+            a) **Single sample**: Computes the feature impact for a selected sample.
+            b) **Multiple samples**: Computes the feature impact for multiple samples (all by default).
+            c) **Group of samples**: Computes the average feature impact for a group of samples (+ standard deviation).
 
-        The respective feature impact column(s) is/are included as ``feat_impact_'name(s)'`` in ``df_feat``.
-        The shap explainer-based feature importance column is included as ``feat_importance``.
+        The calculated feature impacts are added to ``df_feat`` as new columns named ``feat_impact_'name(s)'``,
+        corresponding to each sample or group. Additionally, the SHAP value-based feature importance can be included
+        as ``feat_importance`` column.
 
         Parameters
         ----------
@@ -523,12 +536,13 @@ class ShapExplainer:
         .. include:: examples/se_add_feat_impact.rst
         """
         # Check input
+        check_shap_values(shap_values=self.shap_values)
         n_samples, n_features = self.shap_values.shape
         df_feat = ut.check_df_feat(df_feat=df_feat)
         ut.check_bool(name="drop", val=drop)
-        sample_positions = check_sample_positions(sample_positions=sample_positions, n_samples=n_samples)
         check_names(names=names)
         ut.check_bool(name="group_average", val=group_average)
+        sample_positions = check_sample_positions(sample_positions=sample_positions, n_samples=n_samples)
         sample_positions, names = check_match_sample_positions_names(sample_positions=sample_positions, names=names,
                                                                      group_average=group_average)
         ut.check_bool(name="normalize", val=normalize)
@@ -563,13 +577,22 @@ class ShapExplainer:
                             labels: ut.ArrayLike1D = None,
                             label_ref: int = 0,
                             df_feat: pd.DataFrame = None,
+                            drop: bool = False,
                             sample_positions: Union[int, List[int], None] = None,
                             names: Optional[Union[str, List[str]]] = None,
                             group_average: bool = False,
                             ) -> pd.DataFrame:
         """
-        Compute the feature value difference between selected samples and a reference group average, and include to
-        feature DataFrame.
+        Compute the feature value difference between selected samples and a reference group average.
+
+        Three different scenarios for computing the difference with the reference group average (MEAN_REF) are possible:
+
+            a) **Single sample**: Computes the difference for a selected sample and MEAN_REF.
+            b) **Multiple samples**: Computes differences for multiple selected samples (all by default) individually against MEAN_REF.
+            c) **Group of samples**: Computes the difference between the average of a selected group of samples and MEAN_REF.
+
+        The calculated differences are added to ``df_feat`` as new columns named ``mean_dif_'name(s)'``,
+        corresponding to each sample or group.
 
         Parameters
         ----------
@@ -581,6 +604,9 @@ class ShapExplainer:
             Class label of reference group in ``labels``.
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
+        drop : bool, default=False
+            If ``True``, allow dropping of already existing sample specific mean difference columns from
+            ``df_feat`` before inserting.
         sample_positions : int, list of int, or None
             Position index/indices for the sample(s) in ``shap_values``.
             If ``None``, the impact for each sample will be returned.
@@ -591,6 +617,7 @@ class ShapExplainer:
             - **Single sample**: ``name`` as string and ``sample_positions`` as integer.
             - **Multiple samples**: ``name`` as list of string and ``sample_positions`` as corresponding list of integers.
             - **Group**: ``name`` as string and ``sample_positions`` as list of integers, each indicating a group sample.
+
             If ``sample_positions`` is ``None`` (all samples are considered), ``name`` must be list with names for each sample.
         group_average : bool, default=False
             If ``True``, compute the average of samples given by ``sample_positions``.
@@ -606,31 +633,23 @@ class ShapExplainer:
         .. include:: examples/se_add_sample_mean_dif.rst
         """
         # Check input
-        # TODO complete check functions
         X = ut.check_X(X=X)
         n_samples, n_feat = X.shape
         ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
-        sample_positions = check_sample_positions(sample_positions=sample_positions, n_samples=n_samples)
+        ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
+        labels = ut.check_labels(labels=labels, vals_requiered=[label_ref],
+                                 len_requiered=n_samples, allow_other_vals=True,
+                                 accept_float=True) # Accept fuzzy labeling by default
+        df_feat = ut.check_df_feat(df_feat=df_feat)
+        ut.check_bool(name="drop", val=drop)
         check_names(names=names)
         ut.check_bool(name="group_average", val=group_average)
+        sample_positions = check_sample_positions(sample_positions=sample_positions, n_samples=n_samples)
         sample_positions, names = check_match_sample_positions_names(sample_positions=sample_positions, names=names,
                                                                      group_average=group_average)
-
-        # TODO put to backend
-        # Compute mean of reference group
-        ref_group_mask = (labels == label_ref)
-        ref_group_mean = X[ref_group_mask].mean(axis=0)
-        # Compute the group average over selected samples
-        if group_average:
-            group_mean = X[sample_positions].mean(axis=0)
-            mean_diff = group_mean - ref_group_mean
-            column_name = f"group_mean_diff_{names[0]}" if names else "group_mean_diff"
-            df_feat[column_name] = mean_diff
-        # Compute feature value mean difference for each selected sample
-        else:
-            for i, pos in enumerate(sample_positions):
-                sample_mean = X[pos]
-                mean_diff = sample_mean - ref_group_mean
-                column_name = f"mean_diff_{names[i]}"
-                df_feat[column_name] = mean_diff
+        # Compute differences
+        df_feat = add_sample_mean_dif_(X, labels=labels, label_ref=label_ref,
+                                       df_feat=df_feat, drop=drop,
+                                       sample_positions=sample_positions, names=names,
+                                       group_average=group_average)
         return df_feat

@@ -17,7 +17,8 @@ def check_match_labels_X(labels=None, X=None):
     """Check if labels binary classification task labels"""
     n_samples = X.shape[0]
     # Accept float if fuzzy_labeling is True
-    labels = ut.check_labels(labels=labels, len_requiered=n_samples)
+    str_add = "Consider setting 'fuzzy_labeling=True'."
+    labels = ut.check_labels(labels=labels, len_requiered=n_samples, str_add=str_add)
     unique_labels = set(labels)
     if len(unique_labels) != 2:
         raise ValueError(f"'labels' should contain 2 unique labels ({unique_labels})")

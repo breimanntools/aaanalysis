@@ -18,8 +18,11 @@ from .config import (options,
                      check_random_state)
 
 # Data types
-from ._utils.new_types import ArrayLike1D, ArrayLike2D
-from ._utils._utils import VALID_INT_TYPES, VALID_FLOAT_TYPES, VALID_INT_FLOAT_TYPES
+from ._utils.utils_types import (ArrayLike1D,
+                                 ArrayLike2D,
+                                 VALID_INT_TYPES,
+                                 VALID_FLOAT_TYPES,
+                                 VALID_INT_FLOAT_TYPES)
 
 # Decorators
 from ._utils.decorators import (catch_runtime_warnings,
@@ -37,9 +40,7 @@ from ._utils.check_type import (check_number_range,
                                 check_bool,
                                 check_dict,
                                 check_tuple,
-                                check_list_like,
-                                check_ax,
-                                check_figsize)
+                                check_list_like)
 from ._utils.check_data import (check_X,
                                 check_X_unique_samples,
                                 check_labels,
@@ -51,7 +52,9 @@ from ._utils.check_data import (check_X,
                                 check_df)
 from ._utils.check_models import (check_mode_class,
                                   check_model_kwargs)
-from ._utils.check_plots import (check_vmin_vmax,
+from ._utils.check_plots import (check_ax,
+                                 check_figsize,
+                                 check_vmin_vmax,
                                  check_lim,
                                  check_dict_xlims,
                                  check_color,

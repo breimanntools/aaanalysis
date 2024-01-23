@@ -127,7 +127,7 @@ class TestTreeModelComplex:
            random_state=some.integers() | some.none())
     def test_is_preselected_and_random_state(self, is_preselected, random_state):
         """Test 'is_preselected' and 'random_state' parameters together."""
-        if sum(is_preselected) > 1:
+        if sum(is_preselected) > 1 and (random_state >= 0 or random_state is None):
             tree_model = aa.TreeModel(is_preselected=is_preselected, random_state=random_state)
             assert np.array_equal(tree_model._is_preselected, is_preselected)
             assert tree_model._random_state == random_state

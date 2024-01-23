@@ -5,9 +5,6 @@ import pytest
 import random
 import aaanalysis as aa
 
-aa.options["verbose"] = False
-
-
 def create_df_feat(drop=True):
     df_feat = aa.load_features(name="DOM_GSEC").head(50)
     if drop:
@@ -38,7 +35,7 @@ class TestAddFeatImpact:
 
     # Positive tests
     def test_df_feat_valid(self):
-        se = aa.ShapExplainer()
+        se = aa.ShapExplainer(verbose=False)
         se.fit(valid_X, labels=valid_labels, **ARGS)
         df_feat = create_df_feat()
         df_feat = se.add_feat_impact(df_feat=df_feat)
@@ -47,32 +44,41 @@ class TestAddFeatImpact:
 
     def test_drop_valid(self):
         for drop in [True, False]:
-            se = aa.ShapExplainer()
+            se = aa.ShapExplainer(verbose=False)
             se.fit(valid_X, labels=valid_labels, **ARGS)
             df_feat = create_df_feat(drop=not drop)
             df_feat = se.add_feat_impact(df_feat=df_feat, drop=drop)
             assert isinstance(df_feat, pd.DataFrame)
             assert sum(["feat_impact" in x for x in list(df_feat)]) == len(df_seq)
 
-    def test_pos_valid(self):
+    def test_sample_positions_valid(self):
+        se = aa.ShapExplainer(verbose=False)
         sample_positions = random.sample(range(len(df_seq)), 3)
         for pos in sample_positions:
-            se = aa.ShapExplainer()
             se.fit(valid_X, labels=valid_labels, **ARGS)
             df_feat = create_df_feat()
             df_feat = se.add_feat_impact(df_feat=df_feat, sample_positions=pos, drop=True)
             assert isinstance(df_feat, pd.DataFrame)
+        df_feat = create_df_feat()
+        df_feat = se.add_feat_impact(df_feat=df_feat, sample_positions=list(range(0, len(df_seq)-1)),
+                                     drop=True)
+        assert isinstance(df_feat, pd.DataFrame)
+        df_feat = create_df_feat()
+        df_feat = se.add_feat_impact(df_feat=df_feat, sample_positions=sample_positions, drop=True)
+        assert isinstance(df_feat, pd.DataFrame)
 
     def test_names_valid(self):
         names = [f"P{i}" for i in range(len(df_seq))]
-        se = aa.ShapExplainer()
+        se = aa.ShapExplainer(verbose=False)
         se.fit(valid_X, labels=valid_labels, **ARGS)
         df_feat = create_df_feat()
-        df_feat = se.add_feat_impact(df_feat=df_feat, names=names)
+        df_feat = se.add_feat_impact(df_feat=df_feat, names=names, drop=True)
+        assert isinstance(df_feat, pd.DataFrame)
+        df_feat = se.add_feat_impact(df_feat=df_feat, names="test", sample_positions=1, drop=True)
         assert isinstance(df_feat, pd.DataFrame)
 
     def test_name_single_valid(self):
-        se = aa.ShapExplainer()
+        se = aa.ShapExplainer(verbose=False)
         se.fit(valid_X, labels=valid_labels, **ARGS)
         df_feat = create_df_feat()
         names = "SampleName"
@@ -82,7 +88,7 @@ class TestAddFeatImpact:
         assert f"feat_impact_{names}" in list(df_feat)
 
     def test_name_multiple_valid(self):
-        se = aa.ShapExplainer()
+        se = aa.ShapExplainer(verbose=False)
         se.fit(valid_X, labels=valid_labels, **ARGS)
         df_feat = create_df_feat()
         names = ["SampleName1", "SampleName2"]
@@ -93,7 +99,7 @@ class TestAddFeatImpact:
             assert f"feat_impact_{name}" in df_feat.columns
 
     def test_group_average_valid(self):
-        se = aa.ShapExplainer()
+        se = aa.ShapExplainer(verbose=False)
         for group_average in [True, False]:
             se.fit(valid_X, labels=valid_labels, **ARGS)
             df_feat = create_df_feat()
@@ -106,7 +112,7 @@ class TestAddFeatImpact:
 
     def test_normalize_valid(self):
         for normalize in [True, False]:
-            se = aa.ShapExplainer()
+            se = aa.ShapExplainer(verbose=False)
             se.fit(valid_X, labels=valid_labels, **ARGS)
             df_feat = create_df_feat()
             df_feat = se.add_feat_impact(df_feat=df_feat, normalize=normalize)
@@ -114,7 +120,7 @@ class TestAddFeatImpact:
 
     def test_shap_feat_importance_valid(self):
         for shap_feat_importance in [True, False]:
-            se = aa.ShapExplainer()
+            se = aa.ShapExplainer(verbose=False)
             se.fit(valid_X, labels=valid_labels, **ARGS)
             df_feat = create_df_feat()
             df_feat = se.add_feat_impact(df_feat=df_feat, shap_feat_importance=shap_feat_importance, drop=True)
@@ -122,13 +128,13 @@ class TestAddFeatImpact:
 
     # Negative tests
     def test_df_feat_invalid(self):
-        se = aa.ShapExplainer()
+        se = aa.ShapExplainer(verbose=False)
         se.fit(valid_X, labels=valid_labels, **ARGS)
         with pytest.raises(ValueError):
             se.add_feat_impact(df_feat=None)
 
     def test_drop_invalid(self):
-        se = aa.ShapExplainer()
+        se = aa.ShapExplainer(verbose=False)
         se.fit(valid_X, labels=valid_labels, **ARGS)
         df_feat = create_df_feat()
         with pytest.raises(ValueError):
@@ -140,7 +146,7 @@ class TestAddFeatImpact:
             df_feat = se.add_feat_impact(df_feat=df_feat, drop=False)
 
     def test_pos_invalid(self):
-        se = aa.ShapExplainer()
+        se = aa.ShapExplainer(verbose=False)
         se.fit(valid_X, labels=valid_labels, **ARGS)
         with pytest.raises(ValueError):
             se.add_feat_impact(df_feat=create_df_feat(), sample_positions="not_a_valid_pos")
@@ -150,7 +156,7 @@ class TestAddFeatImpact:
             se.add_feat_impact(df_feat=create_df_feat(), sample_positions=[1, "asdf"])
 
     def test_name_invalid(self):
-        se = aa.ShapExplainer()
+        se = aa.ShapExplainer(verbose=False)
         se.fit(valid_X, labels=valid_labels, **ARGS)
         with pytest.raises(ValueError):
             se.add_feat_impact(df_feat=create_df_feat(), names=123)  # Invalid name type
@@ -164,7 +170,7 @@ class TestAddFeatImpact:
             se.add_feat_impact(df_feat=create_df_feat(), sample_positions=[1, 2], names="Not matching")
 
     def test_group_average_invalid(self):
-        se = aa.ShapExplainer()
+        se = aa.ShapExplainer(verbose=False)
         se.fit(valid_X, labels=valid_labels, **ARGS)
         with pytest.raises(ValueError):
             se.add_feat_impact(df_feat=create_df_feat(), group_average="not_a_boolean")
@@ -177,7 +183,7 @@ class TestAddFeatImpact:
             se.add_feat_impact(df_feat=create_df_feat(), group_average=True, names=["Group1", 234])
 
     def test_normalize_invalid(self):
-        se = aa.ShapExplainer()
+        se = aa.ShapExplainer(verbose=False)
         se.fit(valid_X, labels=valid_labels, **ARGS)
         with pytest.raises(ValueError):
             se.add_feat_impact(df_feat=create_df_feat(), normalize="not_a_boolean")
@@ -185,7 +191,7 @@ class TestAddFeatImpact:
             se.add_feat_impact(df_feat=create_df_feat(), normalize=123)
 
     def test_shap_feat_importance_invalid(self):
-        se = aa.ShapExplainer()
+        se = aa.ShapExplainer(verbose=False)
         se.fit(valid_X, labels=valid_labels, **ARGS)
         with pytest.raises(ValueError):
             se.add_feat_impact(df_feat=create_df_feat(), shap_feat_importance="not_a_boolean")
@@ -197,7 +203,7 @@ class TestAddFeatImpactComplex:
 
     def test_complex_valid(self):
         """Complex test with valid parameter combinations."""
-        se = aa.ShapExplainer()
+        se = aa.ShapExplainer(verbose=False)
         se.fit(valid_X, labels=valid_labels, **ARGS)
 
         # Testing with a combination of valid parameters
@@ -215,7 +221,7 @@ class TestAddFeatImpactComplex:
 
     def test_complex_invalid(self):
         """Complex test with invalid parameter combinations."""
-        se = aa.ShapExplainer()
+        se = aa.ShapExplainer(verbose=False)
         se.fit(valid_X, labels=valid_labels, **ARGS)
 
         # Testing with a combination of invalid parameters
