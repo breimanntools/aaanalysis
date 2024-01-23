@@ -231,9 +231,9 @@ class CPPPlot:
 
         Evaluation measures are categorized into two groups:
 
-        * ``Discriminative Power`` measures ('range_ABS_AUC' and 'avg_MEAN_DIF'), which
+        * **Discriminative Power** measures ('range_ABS_AUC' and 'avg_MEAN_DIF'), which
           assess the effectiveness of the feature set in distinguishing between the test and reference datasets.
-        * ``Redundancy`` measures ('n_clusters', 'avg_n_feat_per_clust', and 'std_n_feat_per_clust'), which
+        * **Redundancy** measures ('n_clusters', 'avg_n_feat_per_clust', and 'std_n_feat_per_clust'), which
           evaluate the internal redundancy of a feature set using Pearson correlation-based clustering.
 
         Parameters
@@ -341,9 +341,9 @@ class CPPPlot:
         Introduced in [Breimann24a]_, a CPP feature is defined as a ``Part-Split-Scale`` combination. For a sample,
         a feature value is computed in three steps:
 
-            1. ``Part Selection``: Identify a specific sequence part.
-            2. ``Part-Splitting``: Divide the selected part into segments, creating a 'Part-Split' combination.
-            3. ``Scale Value Assignment``: For each amino acid in the 'Part-Split' segment,
+            1. **Part Selection**: Identify a specific sequence part.
+            2. **Part-Splitting**: Divide the selected part into segments, creating a 'Part-Split' combination.
+            3. **Scale Value Assignment**: For each amino acid in the 'Part-Split' segment,
                assign its corresponding scale value and calculate the average, which is termed the feature value.
 
         Parameters
@@ -538,10 +538,11 @@ class CPPPlot:
 
         Notes
         -----
-        * Features are ranked in descending order based one of the following ``df_feat`` columns:
+        * Features are shown as ordered in ``df_feat``. A ranking in descending order based one the following
+          ``df_feat`` columns is recommended:
 
-            a) ``feat_importance``: when feature importance is in ``df_feat`` and ``shap_plot=False``.
-            b) ``feat_impact``: when sample-specific feature impact is in ``df_feat`` and ``shap_plot=True``.
+            - ``feat_importance``: when feature importance is in ``df_feat`` and ``shap_plot=False``.
+            - ``feat_impact_'name'``: when sample-specific feature impact is in ``df_feat`` and ``shap_plot=True``.
 
         See Also
         --------
