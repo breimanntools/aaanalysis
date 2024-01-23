@@ -529,7 +529,8 @@ class ShapExplainer:
         sample_positions = check_sample_positions(sample_positions=sample_positions, n_samples=n_samples)
         check_names(names=names)
         ut.check_bool(name="group_average", val=group_average)
-        sample_positions, names = check_match_sample_positions_names(sample_positions=sample_positions, names=names, group_average=group_average)
+        sample_positions, names = check_match_sample_positions_names(sample_positions=sample_positions, names=names,
+                                                                     group_average=group_average)
         ut.check_bool(name="normalize", val=normalize)
         ut.check_bool(name="shap_feat_importance", val=shap_feat_importance)
         check_match_sample_positions_group_average(sample_positions=sample_positions, group_average=group_average)
@@ -605,5 +606,31 @@ class ShapExplainer:
         .. include:: examples/se_add_sample_mean_dif.rst
         """
         # Check input
+        # TODO complete check functions
+        X = ut.check_X(X=X)
+        n_samples, n_feat = X.shape
+        ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
+        sample_positions = check_sample_positions(sample_positions=sample_positions, n_samples=n_samples)
+        check_names(names=names)
+        ut.check_bool(name="group_average", val=group_average)
+        sample_positions, names = check_match_sample_positions_names(sample_positions=sample_positions, names=names,
+                                                                     group_average=group_average)
 
-        # Compute feature value mean difference
+        # TODO put to backend
+        # Compute mean of reference group
+        ref_group_mask = (labels == label_ref)
+        ref_group_mean = X[ref_group_mask].mean(axis=0)
+        # Compute the group average over selected samples
+        if group_average:
+            group_mean = X[sample_positions].mean(axis=0)
+            mean_diff = group_mean - ref_group_mean
+            column_name = f"group_mean_diff_{names[0]}" if names else "group_mean_diff"
+            df_feat[column_name] = mean_diff
+        # Compute feature value mean difference for each selected sample
+        else:
+            for i, pos in enumerate(sample_positions):
+                sample_mean = X[pos]
+                mean_diff = sample_mean - ref_group_mean
+                column_name = f"mean_diff_{names[i]}"
+                df_feat[column_name] = mean_diff
+        return df_feat
