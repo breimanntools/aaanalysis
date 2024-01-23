@@ -739,7 +739,8 @@ class SequenceFeature:
         """
         # Check input
         list_parts = ut.check_list_parts(list_parts=list_parts, return_default=False, accept_none=True)
-        ut.check_df_feat(df_feat=df_feat)   # Do not check for list_parts since df_pos can be obtained for any part
+        # Do not check for list_parts since df_pos can be obtained for any part
+        df_feat = ut.check_df_feat(df_feat=df_feat)
         check_col_cat(col_cat=col_cat)
         check_col_value(col_value=col_value)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)

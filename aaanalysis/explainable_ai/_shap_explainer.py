@@ -103,6 +103,7 @@ def check_is_selected(is_selected=None, n_feat=None):
 
 def check_match_labels_fuzzy_labeling(labels=None, fuzzy_labeling=False, verbose=True):
     """Check if only on label is fuzzy labeled and that the remaining sample balanced (best training scenario)"""
+    # TODO adjust for multi-class
     if not fuzzy_labeling:
         return  # Skip check if fuzzy labeling is not enabled
     # Check for one fuzzy label and balance among other labels
@@ -117,11 +118,11 @@ def check_match_labels_fuzzy_labeling(labels=None, fuzzy_labeling=False, verbose
                       f"\n The 'labels' contain {n_pos} positive (1) and {n_neg} negative (0) samples.")
 
 
-def check_match_class_index_labels(class_index=None, labels=None):
+def check_match_labels_target_class_labels(label_target_class=None, labels=None):
     """Check if class index matches to classes (unique labels) in labels"""
-    n_classes = len(set(labels))
-    if class_index >= n_classes:
-        raise ValueError(f"'class_index' ({class_index}) should be < number of classes ({n_classes}) from 'labels'")
+    label_classes = sorted(list(dict.fromkeys([x for x in labels if x == int(x)])))
+    if label_target_class not in label_classes:
+        raise ValueError(f"'label_target_class' ({label_target_class}) should be from 'labels' classes: {label_classes}")
 
 
 def check_match_n_background_data_X(n_background_data=None, X=None):
@@ -134,72 +135,72 @@ def check_match_n_background_data_X(n_background_data=None, X=None):
 
 
 # Check function for add_feat_impact method
-def check_pos(pos=None, n_samples=None):
-    """Check if pos is int or list of ints"""
-    if pos is None:
-        # Create position list for all samples
-        pos = list(range(n_samples))
-    if isinstance(pos, list) or isinstance(pos, np.ndarray):
-        ut.check_list_like(name="pos", val=pos, check_all_non_neg_int=True)
+def check_sample_positions(sample_positions=None, n_samples=None):
+    """Check if sample_positions is int or list of ints"""
+    if sample_positions is None:
+        # Create sample_positions list for all samples
+        sample_positions = list(range(n_samples))
+    if isinstance(sample_positions, list) or isinstance(sample_positions, np.ndarray):
+        ut.check_list_like(name="sample_positions", val=sample_positions, check_all_non_neg_int=True)
     else:
-        ut.check_number_range(name=f"pos", val=pos, min_val=0, max_val=n_samples, just_int=True)
-    return pos
+        ut.check_number_range(name=f"sample_positions", val=sample_positions, min_val=0, max_val=n_samples, just_int=True)
+    return sample_positions
 
 
-def check_name(name=None):
+def check_names(names=None):
     """Check if name is str ror list of str"""
-    if name is None:
+    if names is None:
         return None     # Skip test
-    str_add = f"'name' should be string or list of strings, but following was given: {name}"
-    if isinstance(name, list):
-        for i in name:
-            ut.check_str(name=f"name: {i}", val=i, str_add=str_add)
-        duplicated_names = list(set([x for x in name if name.count(x) > 1]))
+    str_add = f"'name' should be string or list of strings, but following was given: {names}"
+    if isinstance(names, list):
+        for i in names:
+            ut.check_str(name=f"names: {i}", val=i, str_add=str_add)
+        duplicated_names = list(set([x for x in names if names.count(x) > 1]))
         if len(duplicated_names) > 0:
-            raise ValueError(f"'name' should not contain duplicated names: {duplicated_names}")
+            raise ValueError(f"'names' should not contain duplicated names: {duplicated_names}")
     else:
-        ut.check_str(name=f"name", val=name, str_add=str_add)
+        ut.check_str(name=f"names", val=names, str_add=str_add)
 
 
-def check_match_pos_name(pos=None, name=None, group_average=False):
-    """Check if length of pos and name matches"""
+def check_match_sample_positions_names(sample_positions=None, names=None, group_average=False):
+    """Check if length of sample_positions and names matches"""
     # Group scenario
     if group_average:
-        if not isinstance(pos, list):
-            raise ValueError(f"For 'group_average', 'pos' ({pos}) must be a list of integers.")
-        if name is None:
-            name = "Group"  # Default group name
-        elif isinstance(name, str):
-            name = name  # Ensure name is a list
+        if not isinstance(sample_positions, list):
+            raise ValueError(f"For 'group_average', 'sample_positions' ({sample_positions}) must be a list of integers.")
+        if names is None:
+            names = "Group"  # Default group names
+        elif isinstance(names, str):
+            names = names  # Ensure names is a list
         else:
-            raise ValueError(f"For 'group_average', 'name' ({name}) must be a single string or None.")
+            raise ValueError(f"For 'group_average', 'names' ({names}) must be a single string or None.")
     # Single sample or multiple samples scenarios
     else:
-        if name is not None:
-            if isinstance(pos, int) and isinstance(name, str):
-                pos = [pos]  # Convert to list for consistency
-                name = [name]
-            elif isinstance(pos, list) and isinstance(name, list):
-                if len(pos) != len(name):
-                    raise ValueError(f"Length of 'pos' (n={len(pos)}) and 'name' (n={len(name)}) must be equal for multiple samples.")
+        if names is not None:
+            if isinstance(sample_positions, int) and isinstance(names, str):
+                sample_positions = [sample_positions]  # Convert to list for consistency
+                names = [names]
+            elif isinstance(sample_positions, list) and isinstance(names, list):
+                if len(sample_positions) != len(names):
+                    raise ValueError(f"Length of 'sample_positions' (n={len(sample_positions)}) and 'names' (n={len(names)}) must be equal for multiple samples.")
             else:
-                raise ValueError("Mismatch: 'pos' should be int and 'name' str for a single sample, and both lists for multiple samples."
-                                 f"\n 'pos': {pos}. \n 'name': {name}")
-        # Generate default names if name is None
+                raise ValueError("Mismatch: 'sample_positions' should be int and 'names' str for a single sample, and both lists for multiple samples."
+                                 f"\n 'sample_positions': {sample_positions}. \n 'names': {names}")
+        # Generate default names if names is None
         else:
-            if isinstance(pos, list):
-                name = [f"Protein{p}" for p in pos]
+            if isinstance(sample_positions, list):
+                names = [f"Protein{p}" for p in sample_positions]
             else:
-                name = [f"Protein{pos}"]
-                pos = [pos]
-    return pos, name
+                names = [f"Protein{sample_positions}"]
+                sample_positions = [sample_positions]
+    return sample_positions, names
 
 
-def check_match_pos_group_average(pos=None, group_average=False):
-    """Check if group_average only True if pos is list"""
+def check_match_sample_positions_group_average(sample_positions=None, group_average=False):
+    """Check if group_average only True if sample_positions is list"""
     if group_average:
-        ut.check_list_like(name=pos, val=pos)
-        if len(pos) == 1:
+        ut.check_list_like(name="sample_positions", val=sample_positions)
+        if len(sample_positions) == 1:
             raise ValueError
 
 
@@ -355,7 +356,7 @@ class ShapExplainer:
     def fit(self,
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D = None,
-            class_index: int = 1,
+            label_target_class: int = 1,
             n_rounds: int = 5,
             is_selected: ut.ArrayLike2D = None,
             fuzzy_labeling: bool = False,
@@ -370,8 +371,8 @@ class ShapExplainer:
             Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
         labels : array-like, shape (n_samples)
             Dataset labels of samples in ``X``. Should be either 1 (positive) or 0 (negative).
-        class_index : int, default=1
-            The index of the class for which SHAP values are computed in a classification tasks.
+        label_target_class : int, default=1
+            The label of the class for which SHAP values are computed in a classification tasks.
             For binary classification, '0' represents the negative class and '1' the positive class.
         n_rounds : int, default=5
             The number of rounds (>=1) to fit the models and obtain the SHAP values by explainer.
@@ -414,12 +415,12 @@ class ShapExplainer:
         ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
         ut.check_bool(name="fuzzy_labeling", val=fuzzy_labeling)
         labels = check_match_labels_X_fuzzy_labeling(labels=labels, X=X, fuzzy_labeling=fuzzy_labeling)
-        ut.check_number_range(name="class_index", val=class_index, min_val=0, just_int=True, accept_none=True)
-        check_match_class_index_labels(class_index=class_index, labels=labels)
+        check_match_labels_fuzzy_labeling(labels=labels, fuzzy_labeling=fuzzy_labeling, verbose=self._verbose)
+        ut.check_number_range(name="label_target_class", val=label_target_class, min_val=0, just_int=True, accept_none=True)
+        check_match_labels_target_class_labels(label_target_class=label_target_class, labels=labels)
         is_selected = check_is_selected(is_selected=is_selected, n_feat=n_feat)
         check_match_X_is_selected(X=X, is_selected=is_selected)
         ut.check_number_range(name="n_rounds", val=n_rounds, min_val=1, just_int=True)
-        check_match_labels_fuzzy_labeling(labels=labels, fuzzy_labeling=fuzzy_labeling, verbose=self._verbose)
         ut.check_number_range(name="n_background_data", val=n_background_data, min_val=1, just_int=True, accept_none=True)
         check_match_n_background_data_X(n_background_data=n_background_data, X=X)
         # Compute SHAP values
@@ -432,7 +433,7 @@ class ShapExplainer:
                                                            fuzzy_labeling=fuzzy_labeling,
                                                            n_rounds=n_rounds,
                                                            verbose=self._verbose,
-                                                           class_index=class_index,
+                                                           label_target_class=label_target_class,
                                                            n_background_data=n_background_data)
         self.shap_values = shap_values
         self.exp_value = exp_val
@@ -446,8 +447,8 @@ class ShapExplainer:
     def add_feat_impact(self,
                         df_feat: pd.DataFrame = None,
                         drop: bool = False,
-                        pos: Union[int, List[int], None] = None,
-                        name: Optional[Union[str, List[str]]] = None,
+                        sample_positions: Union[int, List[int], None] = None,
+                        names: Optional[Union[str, List[str]]] = None,
                         normalize: bool = True,
                         group_average: bool = False,
                         shap_feat_importance: bool = False,
@@ -469,23 +470,24 @@ class ShapExplainer:
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
         drop : bool, default=False
-            If ``True``, allow dropping of already existing ``feat_impact`` and ``feat_impact_std`` columns
-            from ``df_feat`` before inserting.
-        pos : int, list of int, or None
+            If ``True``, allow dropping of already existing feature impact and feature importance columns from
+            ``df_feat`` before inserting.
+        sample_positions : int, list of int, or None
             Position index/indices for the sample(s) in ``shap_values``.
             If ``None``, the impact for each sample will be returned.
-        name: str or list of str, optional
-            Unique name(s) used for the feature impact columns. When provided, they should align with ``pos`` as follows:
+        names: str or list of str, optional
+            Unique name(s) used for the feature impact columns. When provided, they should align with
+            ``sample_positions`` as follows:
 
-            - **Single sample**: ``name`` as string and ``pos`` as integer.
-            - **Multiple samples**: ``name`` as list of string and ``pos`` as corresponding list of integers.
-            - **Group**: ``name`` as string and ``pos`` as list of integers, each indicating a group sample.
+            - **Single sample**: ``name`` as string and ``sample_positions`` as integer.
+            - **Multiple samples**: ``name`` as list of string and ``sample_positions`` as corresponding list of integers.
+            - **Group**: ``name`` as string and ``sample_positions`` as list of integers, each indicating a group sample.
 
-            If ``pos`` is ``None`` (all samples are considered), ``name`` must be list with names for each sample.
+            If ``sample_positions`` is ``None`` (all samples are considered), ``name`` must be list with names for each sample.
         normalize : bool, default=True
             If ``True``, normalize the feature impact to percentage.
         group_average : bool, default=False
-            If ``True``, compute the average of samples given by ``pos``.
+            If ``True``, compute the average of samples given by ``sample_positions``.
         shap_feat_importance : bool, default=False
             If ``True``, include feature importance (i.e., absolute average SHAP values) instead of impact to ``df_feat``.
 
@@ -522,15 +524,15 @@ class ShapExplainer:
         """
         # Check input
         n_samples, n_features = self.shap_values.shape
-        ut.check_df_feat(df_feat=df_feat)
+        df_feat = ut.check_df_feat(df_feat=df_feat)
         ut.check_bool(name="drop", val=drop)
-        pos = check_pos(pos=pos, n_samples=n_samples)
-        check_name(name=name)
+        sample_positions = check_sample_positions(sample_positions=sample_positions, n_samples=n_samples)
+        check_names(names=names)
         ut.check_bool(name="group_average", val=group_average)
-        pos, name = check_match_pos_name(pos=pos, name=name, group_average=group_average)
+        sample_positions, names = check_match_sample_positions_names(sample_positions=sample_positions, names=names, group_average=group_average)
         ut.check_bool(name="normalize", val=normalize)
         ut.check_bool(name="shap_feat_importance", val=shap_feat_importance)
-        check_match_pos_group_average(pos=pos, group_average=group_average)
+        check_match_sample_positions_group_average(sample_positions=sample_positions, group_average=group_average)
         check_match_df_feat_shap_values(df_feat=df_feat, drop=drop, shap_values=self.shap_values,
                                         shap_feat_importance=shap_feat_importance)
         # Compute feature importance
@@ -544,12 +546,12 @@ class ShapExplainer:
         else:
             feat_impact = comp_shap_feature_impact(self.shap_values,
                                                    normalize=normalize,
-                                                   pos=pos,
+                                                   sample_positions=sample_positions,
                                                    verbose=self._verbose,
                                                    group_average=group_average)
             df_feat = insert_shap_feature_impact(df_feat=df_feat,
                                                  feat_impact=feat_impact,
-                                                 name=name,
+                                                 names=names,
                                                  drop=drop,
                                                  group_average=group_average)
         return df_feat

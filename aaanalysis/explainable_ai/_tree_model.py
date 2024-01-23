@@ -454,7 +454,7 @@ class TreeModel:
         .. include:: examples/tm_add_feat_importance.rst
          """
         # Check input
-        ut.check_df_feat(df_feat=df_feat)
+        df_feat = ut.check_df_feat(df_feat=df_feat)
         ut.check_bool(name="drop", val=drop)
         check_match_df_feat_importance_arrays(df_feat=df_feat,
                                               feat_importance=self.feat_importance,

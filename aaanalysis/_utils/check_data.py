@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from sklearn.utils import check_array
 
+from ._utils import VALID_INT_TYPES, VALID_INT_FLOAT_TYPES
 import aaanalysis._utils.check_type as check_type
 
 # Helper functions
@@ -132,9 +133,7 @@ def check_labels(labels=None, name="labels", vals_requiered=None, len_requiered=
     unique_labels = set(labels)
     if len(unique_labels) == 1:
         raise ValueError(f"'{name}' should contain more than one different value ({unique_labels}).")
-    valid_types = (int, np.int_, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64)
-    if accept_float:
-        valid_types += (float, np.float_, np.float16, np.float32, np.float64)
+    valid_types = VALID_INT_TYPES if not accept_float else VALID_INT_FLOAT_TYPES
     wrong_types = [l for l in unique_labels if not isinstance(l, valid_types)]
     if wrong_types:
         raise ValueError(f"Labels in '{name}' should be type int, but contain: {set(map(type, wrong_types))}")

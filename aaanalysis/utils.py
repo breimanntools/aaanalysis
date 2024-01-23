@@ -19,6 +19,7 @@ from .config import (options,
 
 # Data types
 from ._utils.new_types import ArrayLike1D, ArrayLike2D
+from ._utils._utils import VALID_INT_TYPES, VALID_FLOAT_TYPES, VALID_INT_FLOAT_TYPES
 
 # Decorators
 from ._utils.decorators import (catch_runtime_warnings,
@@ -606,10 +607,12 @@ def check_features(features=None, list_parts=None, list_scales=None):
     return features
 
 
-def check_df_feat(df_feat=None, df_cat=None, list_parts=None, shap_plot=None):
+def check_df_feat(df_feat=None, df_cat=None, list_parts=None, shap_plot=None, col_rank=None):
     """Check if df not empty pd.DataFrame"""
     # Check df
     cols_feat = [COL_FEATURE] + COLS_FEAT_SCALES + COLS_FEAT_STAT
+    if col_rank is not None:
+        cols_feat += [col_rank]
     check_df(df=df_feat, name="df_feat", cols_requiered=cols_feat)
     if len(df_feat) == 0 or len(list(df_feat)) == 0:
         raise ValueError("'df_feat' should be not empty")
@@ -636,4 +639,5 @@ def check_df_feat(df_feat=None, df_cat=None, list_parts=None, shap_plot=None):
         else:
             if COL_FEAT_IMPORT not in list(df_feat):
                 raise ValueError(f"If 'shap_plot' is False, '{COL_FEAT_IMPORT}' must be in 'df_feat' columns: {list(df_feat)}")
-    return df_feat.copy()
+    df_feat = df_feat.reset_index(drop=True).copy()
+    return df_feat

@@ -109,6 +109,13 @@ def check_match_df_seq_names_to_show(df_seq=None, names_to_show=None):
         raise ValueError(f"Following names from 'names_to_show' are not in '{ut.COL_NAME}' "
                          f"column of 'df_seq': {missing_names}")
 
+# Ranking plot
+def check_col_rank(col_rank=None, shap_plot=False):
+    """Check if col_rank is string and set default"""
+    ut.check_str(name="col_rank", val=col_rank, accept_none=True)
+    if col_rank is None:
+        col_rank = ut.COL_FEAT_IMPACT if shap_plot else ut.COL_FEAT_IMPORT
+    return col_rank
 
 # II Main Functions
 class CPPPlot:
@@ -411,6 +418,7 @@ class CPPPlot:
     def ranking(self,
                 df_feat: pd.DataFrame = None,
                 n_top: int = 15,
+                col_rank: Optional[str] = None,
                 shap_plot: bool = False,
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
                 tmd_len: int = 20,
@@ -441,6 +449,9 @@ class CPPPlot:
             Can also include feature importance (``feat_importance``) or impact (``feat_impact``) columns for ranking.
         n_top : int, default=15
             The number of top features to display. Should be 1 < ``n_top`` <= ``n_features``.
+        col_rank : str, optional
+            Column name in ``df_feat`` for feature importance/impact values. Defaults to 'feat_importance',
+            or 'feat_impact' if `shap_plot` is `True`
         shap_plot : bool, default=False
             If ``True``, the positive (blue) and negative (red) feature impact is shown in the ranking subplot.
         figsize : tuple, default=(7, 5)
@@ -498,9 +509,10 @@ class CPPPlot:
         .. include:: examples/cpp_plot_ranking.rst
         """
         # Check input
-        ut.check_df_feat(df_feat=df_feat, shap_plot=shap_plot)
-        ut.check_number_range(name="n_top", val=n_top, min_val=2, max_val=len(df_feat), just_int=True)
         ut.check_bool(name="shap_plot", val=shap_plot)
+        col_rank = check_col_rank(col_rank=col_rank, shap_plot=shap_plot)
+        df_feat = ut.check_df_feat(df_feat=df_feat, shap_plot=shap_plot, col_rank=col_rank)
+        ut.check_number_range(name="n_top", val=n_top, min_val=2, max_val=len(df_feat), just_int=True)
         ut.check_figsize(figsize=figsize, accept_none=True)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
         ut.check_number_range(name="tmd_jmd_space", val=tmd_jmd_space, min_val=1, just_int=True, accept_none=False)
@@ -517,10 +529,9 @@ class CPPPlot:
         ut.check_lim(name="xlim_rank", val=xlim_rank)
         ut.check_number_range(name="x_sum", val=x_rank_info, min_val=0, accept_none=True, just_int=False)
         # Plot ranking
-        col_dif = ut.COL_MEAN_DIF
-        col_rank = ut.COL_FEAT_IMPACT if shap_plot else ut.COL_FEAT_IMPORT
         fig, axes = plot_ranking(df_feat=df_feat.copy(), n_top=n_top,
-                                 col_dif=col_dif, col_rank=col_rank,
+                                 col_dif=ut.COL_MEAN_DIF,
+                                 col_rank=col_rank,
                                  shap_plot=shap_plot,
                                  figsize=figsize,
                                  tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
@@ -659,7 +670,7 @@ class CPPPlot:
         """
         # Group arguments
         # TODO CHECK
-        ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot)
+        df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot)
 
         args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
                                                 jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
@@ -855,7 +866,7 @@ class CPPPlot:
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
 
         # Checking input
-        ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot)
+        df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot)
 
         # Args checked by Matplotlib: title, cmap, cbar_kws, legend_kws
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)

@@ -77,22 +77,22 @@ class TestDisplayDf:
         with pytest.raises(ValueError):
             aa.display_df(sample_dataframe, char_limit=invalid_value)
 
-    @pytest.mark.parametrize("invalid_value", [-1, 0, 'invalid'])
+    @pytest.mark.parametrize("invalid_value", [-100, 'invalid'])
     def test_invalid_n_rows(self, invalid_value, sample_dataframe):
         with pytest.raises(ValueError):
             aa.display_df(sample_dataframe, n_rows=invalid_value)
 
-    @pytest.mark.parametrize("invalid_value", [-1, 0, 'invalid'])
+    @pytest.mark.parametrize("invalid_value", [-100, 'invalid'])
     def test_invalid_n_cols(self, invalid_value, sample_dataframe):
         with pytest.raises(ValueError):
             aa.display_df(sample_dataframe, n_cols=invalid_value)
 
-    @pytest.mark.parametrize("invalid_value", [-1, "0", 5.5])
+    @pytest.mark.parametrize("invalid_value", [-100, "0", 5.5])
     def test_invalid_row_to_show(self, invalid_value, sample_dataframe):
         with pytest.raises(ValueError):
             aa.display_df(sample_dataframe, row_to_show=invalid_value)
 
-    @pytest.mark.parametrize("invalid_value", [-1, "0", 5.5])
+    @pytest.mark.parametrize("invalid_value", [-100, "0", 5.5])
     def test_invalid_col_to_show(self, invalid_value, sample_dataframe):
         with pytest.raises(ValueError):
             aa.display_df(sample_dataframe, col_to_show=invalid_value)

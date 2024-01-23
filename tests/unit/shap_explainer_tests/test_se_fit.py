@@ -126,11 +126,11 @@ class TestShapExplainerFit:
         assert se.shap_values is not None
         assert se.exp_value is not None
 
-    def test_class_index_parameter(self):
-        for class_index in [0 ,1]:
+    def test_label_target_class_parameter(self):
+        for label_target_class in [0 ,1]:
             se = aa.ShapExplainer(**MODEL_KWARGS)
             labels = create_labels(valid_X.shape[0])
-            se.fit(valid_X, labels=labels, class_index=class_index, **ARGS)
+            se.fit(valid_X, labels=labels, label_target_class=label_target_class, **ARGS)
             assert se.shap_values is not None
 
     def test_n_background_data_parameter(self):
@@ -191,12 +191,12 @@ class TestShapExplainerFit:
             labels[0] = 0.5
             se.fit(valid_X, labels=labels, fuzzy_labeling=False)
 
-    def test_invalid_class_index_parameter(self):
+    def test_invalid_label_target_class_parameter(self):
         se = aa.ShapExplainer(**MODEL_KWARGS)
         with pytest.raises(ValueError):
-            se.fit(valid_X, labels=create_labels(valid_X.shape[0]), class_index="invalid")
+            se.fit(valid_X, labels=create_labels(valid_X.shape[0]), label_target_class="invalid")
         with pytest.raises(ValueError):
-            se.fit(valid_X, labels=create_labels(valid_X.shape[0]), class_index=-1)
+            se.fit(valid_X, labels=create_labels(valid_X.shape[0]), label_target_class=-1)
 
     def test_invalid_n_background_data_parameter(self):
         se = aa.ShapExplainer(**MODEL_KWARGS)
@@ -220,11 +220,11 @@ class TestShapExplainerFitComplex:
         list_is_selected = create_list_is_selected(n_features=n_feat)
         n_rounds = 2
         fuzzy_labeling = True
-        class_index = 1
+        label_target_class = 1
         n_background_data = 10
         # Execute with a combination of valid parameters
         se.fit(valid_X, labels=labels, is_selected=list_is_selected, n_rounds=n_rounds, fuzzy_labeling=fuzzy_labeling,
-               class_index=class_index, n_background_data=n_background_data)
+               label_target_class=label_target_class, n_background_data=n_background_data)
         # Assertions to ensure proper functionality
         assert se.shap_values is not None
         assert se.exp_value is not None
@@ -241,9 +241,9 @@ class TestShapExplainerFitComplex:
         list_is_selected = create_list_is_selected(n_features=n_feat)
         n_rounds = "invalid"  # Invalid type for n_rounds
         fuzzy_labeling = "maybe"  # Invalid type for fuzzy_labeling
-        class_index = 3  # Invalid class_index for binary classification
+        label_target_class = 3  # Invalid label_target_class for binary classification
         n_background_data = -10  # Invalid n_background_data
         # Execute with a combination of invalid parameters and expect a ValueError
         with pytest.raises(ValueError):
             se.fit(valid_X, labels=labels, is_selected=list_is_selected, n_rounds=n_rounds,
-                   fuzzy_labeling=fuzzy_labeling, class_index=class_index, n_background_data=n_background_data)
+                   fuzzy_labeling=fuzzy_labeling, label_target_class=label_target_class, n_background_data=n_background_data)

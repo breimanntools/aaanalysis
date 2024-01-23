@@ -16,6 +16,13 @@ def _abs_normalize(values=None):
 
 
 # II Main Functions
+def _drop_feat_columns(df_feat=None):
+    """Drop all feature impact and feature importance columns"""
+    f = lambda x: x not in [ut.COL_FEAT_IMPORT, ut.COL_FEAT_IMPORT_STD] and ut.COL_FEAT_IMPACT not in x
+    columns = [x for x in list(df_feat) if f(x)]
+    df_feat = df_feat[columns]
+    return df_feat
+
 def _comp_sample_shap_feat_impact(shap_values=None, i=None, normalize=True):
     """Compute the shap feature impact for the i-th sample"""
     shap_value_sample = shap_values[i]
@@ -62,15 +69,14 @@ def insert_shap_feature_importance(df_feat=None, feat_importance=None, drop=Fals
     """Insert shap explainer-based feature importance"""
     df_feat = df_feat.copy()
     if drop:
-        columns = [x for x in list(df_feat) if x not in [ut.COL_FEAT_IMPORT, ut.COL_FEAT_IMPORT_STD]]
-        df_feat = df_feat[columns]
+        df_feat = _drop_feat_columns(df_feat=df_feat)
     args = dict(allow_duplicates=False)
     df_feat.insert(loc=len(df_feat.columns), column=ut.COL_FEAT_IMPORT, value=feat_importance, **args)
     return df_feat
 
 
 # Feature impact
-def comp_shap_feature_impact(shap_values, pos=None, normalize=True, group_average=False, verbose=True):
+def comp_shap_feature_impact(shap_values, sample_positions=None, normalize=True, group_average=False, verbose=True):
     """
     Compute SHAP feature impact for different scenarios:
         a) For a single sample, returning its feature impact.
@@ -78,31 +84,30 @@ def comp_shap_feature_impact(shap_values, pos=None, normalize=True, group_averag
         c) For a group of samples, returning the group average feature impact.
     """
     # Single sample
-    if isinstance(pos, int):
-        return _comp_sample_shap_feat_impact(shap_values, i=pos, normalize=normalize)
+    if isinstance(sample_positions, int):
+        return _comp_sample_shap_feat_impact(shap_values, i=sample_positions, normalize=normalize)
     # Multiple samples
-    elif isinstance(pos, list) and not group_average:
-        impacts = [_comp_sample_shap_feat_impact(shap_values, i, normalize) for i in pos]
+    elif isinstance(sample_positions, list) and not group_average:
+        impacts = [_comp_sample_shap_feat_impact(shap_values, i, normalize) for i in sample_positions]
         return np.array(impacts)
     # Group average
-    elif isinstance(pos, list) and group_average:
-        feat_impact, feat_impact_std = _comp_group_shap_feat_impact(shap_values, list_i=pos, normalize=normalize,
+    elif isinstance(sample_positions, list) and group_average:
+        feat_impact, feat_impact_std = _comp_group_shap_feat_impact(shap_values, list_i=sample_positions, normalize=normalize,
                                                                     verbose=verbose)
         return np.array([feat_impact, feat_impact_std])
 
 
-def insert_shap_feature_impact(df_feat=None, feat_impact=None, name=None, group_average=False, drop=False):
+def insert_shap_feature_impact(df_feat=None, feat_impact=None, names=None, group_average=False, drop=False):
     """Insert shap explainer-based feature importance"""
     df_feat = df_feat.copy()
     if drop:
-        columns = [x for x in list(df_feat) if ut.COL_FEAT_IMPACT not in x]
-        df_feat = df_feat[columns]
+        df_feat = _drop_feat_columns(df_feat=df_feat)
     # Single sample or multiple samples
     if not group_average:
-        col_names = [f'{ut.COL_FEAT_IMPACT}_{col_name}' for col_name in name]
+        col_names = [f'{ut.COL_FEAT_IMPACT}_{col_name}' for col_name in names]
     # Group average
     else:
-        col_names = [f'{ut.COL_FEAT_IMPACT}_{name}', f'{ut.COL_FEAT_IMPACT_STD}_{name}']
+        col_names = [f'{ut.COL_FEAT_IMPACT}_{names}', f'{ut.COL_FEAT_IMPACT_STD}_{names}']
     df_feat_impact = pd.DataFrame(data=feat_impact.T, columns=col_names)
     df_feat = pd.concat([df_feat, df_feat_impact], axis=1)
     return df_feat

@@ -21,7 +21,6 @@ def _get_background_data(X, explainer_class=None, n_background_data=None):
         background_data = X
     return background_data
 
-
 def _get_shap_values(shap_output, class_index=1):
     """Retrieve SHAP values for the specified class index from SHAP output."""
     # For other types of SHAP outputs (like those from specific explainers)
@@ -56,7 +55,6 @@ def _compute_shap_values(X, labels, model_class=None, model_kwargs=None,
 
     # Process SHAP values
     shap_values = _get_shap_values(shap_output, class_index=class_index)
-
     # Handle expected value for classification models
     expected_value = explainer.expected_value
     if not np.isscalar(expected_value):
@@ -68,6 +66,7 @@ def _aggregate_shap_values(X, labels=None, list_model_classes=None, list_model_k
                            explainer_class=None, explainer_kwargs=None,
                            class_index=1, n_background_data=None):
     """Aggregate SHAP values across multiple models."""
+
     n_samples, n_features = X.shape
     n_models = len(list_model_classes)
     shap_values_rounds = np.empty(shape=(n_samples, n_features, n_models))
@@ -84,17 +83,21 @@ def _aggregate_shap_values(X, labels=None, list_model_classes=None, list_model_k
     exp_val = np.mean(list_expected_value)
     return shap_values, exp_val
 
-import sys
 
 # II Main Functions
 def monte_carlo_shap_estimation(X, labels=None, list_model_classes=None, list_model_kwargs=None,
                                 explainer_class=None, explainer_kwargs=None, n_rounds=5,
                                 is_selected=None, fuzzy_labeling=False, verbose=False,
-                                class_index=1, n_background_data=None):
+                                label_target_class=1, n_background_data=None):
     """Compute Monte Carlo estimates of SHAP values for multiple models and feature selections."""
+    # Get class index
+    label_classes = sorted(list(dict.fromkeys([x for x in labels if x == int(x)])))
+    class_index = label_classes.index(label_target_class)
+    # Create empty SHAP value matrix
     n_samples, n_features = X.shape
     n_selection_rounds = len(is_selected)
     mc_shap_values = np.zeros(shape=(n_samples, n_features, n_rounds, n_selection_rounds))
+    # Compute SHAP values
     list_expected_value = []
     if verbose:
         ut.print_start_progress(start_message=f"ShapExplainer starts Monte Carlo estimation of SHAP values over {n_rounds} rounds.")
@@ -111,7 +114,7 @@ def monte_carlo_shap_estimation(X, labels=None, list_model_classes=None, list_mo
             else:
                 labels_ = labels
             X_selected = X[:, selected_features]
-            args = dict(list_model_classes=list_model_classes,list_model_kwargs=list_model_kwargs,
+            args = dict(list_model_classes=list_model_classes, list_model_kwargs=list_model_kwargs,
                         explainer_class=explainer_class, explainer_kwargs=explainer_kwargs,
                         class_index=class_index, n_background_data=n_background_data)
             _shap_values, _exp_val = _aggregate_shap_values(X_selected, labels=labels_, **args)

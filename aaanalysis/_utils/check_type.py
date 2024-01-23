@@ -4,7 +4,7 @@ Basic utility check functions for type checking
 import pandas as pd
 import numpy as np
 
-from ._utils import add_str
+from ._utils import add_str, VALID_INT_TYPES, VALID_INT_FLOAT_TYPES
 
 
 # Type checking functions
@@ -17,10 +17,7 @@ def check_number_val(name=None, val=None, accept_none=False, just_int=False):
     if just_int is None:
         raise ValueError("'just_int' must be specified")
     # Define valid types for integers and floating points
-    integer_types = (int, np.int_, np.intc, np.intp, np.int8, np.int16, np.int32,
-                     np.int64, np.uint8, np.uint16, np.uint32, np.uint64)
-    float_types = (float, np.float_, np.float16, np.float32, np.float64)
-    valid_types = integer_types if just_int else integer_types + float_types
+    valid_types = VALID_INT_TYPES if just_int else VALID_INT_TYPES + VALID_INT_FLOAT_TYPES
     type_description = "an integer" if just_int else "a float or an integer"
     if not isinstance(val, valid_types):
         raise ValueError(f"'{name}' should be {type_description}, but got {type(val).__name__}.")
@@ -36,11 +33,7 @@ def check_number_range(name=None, val=None, min_val=0, max_val=None, exclusive_l
     if just_int is None:
         raise ValueError("'just_int' must be specified")
     # Define valid types for integers and floating points
-    integer_types = (int, np.int_, np.intc, np.intp, np.int8, np.int16,
-                     np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64)
-    float_types = (float, np.float_, np.float16, np.float32, np.float64)
-    valid_types = integer_types if just_int else integer_types + float_types
-
+    valid_types = VALID_INT_TYPES if just_int else VALID_INT_TYPES + VALID_INT_FLOAT_TYPES
     # Verify the value's type and range
     type_description = "an integer" if just_int else "a float or an integer"
     if not isinstance(val, valid_types):
