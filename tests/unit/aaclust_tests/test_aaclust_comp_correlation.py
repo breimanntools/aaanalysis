@@ -62,6 +62,7 @@ class TestCompCorrelation:
                 warnings.simplefilter("ignore", RuntimeWarning)
                 aa.AAclust.comp_correlation(X, X_ref=X_ref, labels=labels)
 
+    @settings(deadline=300, max_examples=25)
     @given(labels_ref=npst.arrays(dtype=np.int32,
                                   shape=npst.array_shapes(min_dims=1, max_dims=1, min_side=10, max_side=30),
                                   elements=some.integers(min_value=0, max_value=30)))

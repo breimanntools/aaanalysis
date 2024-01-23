@@ -113,10 +113,14 @@ def check_match_df_seq_names_to_show(df_seq=None, names_to_show=None):
 def check_col_dif(col_dif=None, shap_plot=False):
     """Check if col_dif is string and set default"""
     ut.check_str(name="col_dif", val=col_dif, accept_none=False)
-    if not shap_plot and col_dif != ut.COL_MEAN_DIF:
-        raise ValueError(f"If 'shap_plot=False', 'col_dif' must be '{ut.COL_MEAN_DIF}'")
-    if shap_plot and ut.COL_MEAN_DIF not in col_dif:
-        raise ValueError(f"If 'shap_plot=True', 'col_dif' ({col_dif}) must follow '{ut.COL_MEAN_DIF}_'name''")
+    if col_dif is None:
+        col_dif = ut.COL_MEAN_DIF
+    if not shap_plot:
+        if col_dif != ut.COL_MEAN_DIF:
+            raise ValueError(f"If 'shap_plot=False', 'col_dif' ('{col_dif}') must be '{ut.COL_MEAN_DIF}'")
+    else:
+        if ut.COL_MEAN_DIF not in col_dif:
+            raise ValueError(f"If 'shap_plot=True', 'col_dif' ('{col_dif}') must follow '{ut.COL_MEAN_DIF}_'name''")
 
 
 def check_col_rank(col_rank=None, shap_plot=False):
@@ -124,8 +128,12 @@ def check_col_rank(col_rank=None, shap_plot=False):
     ut.check_str(name="col_rank", val=col_rank, accept_none=True)
     if col_rank is None:
         col_rank = ut.COL_FEAT_IMPACT if shap_plot else ut.COL_FEAT_IMPORT
-    if shap_plot and ut.COL_FEAT_IMPACT not in col_rank:
-        raise ValueError(f"If 'shap_plot=True', 'col_rank' ({col_rank}) must follow '{ut.COL_FEAT_IMPACT}_'name''")
+    if not shap_plot:
+        if col_rank != ut.COL_FEAT_IMPORT:
+            raise ValueError(f"If 'shap_plot=False', 'col_rank' ('{col_rank}') must be '{ut.COL_FEAT_IMPORT}'")
+    else:
+        if ut.COL_FEAT_IMPACT not in col_rank:
+            raise ValueError(f"If 'shap_plot=True', 'col_rank' ('{col_rank}') must follow '{ut.COL_FEAT_IMPACT}_'name''")
     return col_rank
 
 
@@ -451,8 +459,8 @@ class CPPPlot:
                 df_feat: pd.DataFrame = None,
                 n_top: int = 15,
                 shap_plot: bool = False,
-                col_rank: Optional[str] = None,
                 col_dif: str = "mean_dif",
+                col_rank: Optional[str] = None,
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
                 tmd_len: int = 20,
                 tmd_jmd_space: int = 2,
@@ -484,13 +492,6 @@ class CPPPlot:
             The number of top features to display. Should be 1 < ``n_top`` <= ``n_features``.
         shap_plot : bool, default=False
             If ``True``, the positive (blue) and negative (red) feature impact is shown in the ranking subplot.
-        col_rank : str, optional
-            Column name in ``df_feat`` for feature importance/impact values. Two options are supported:
-
-            - **CPP Analysis**: Defaults to the ``feat_importance`` column.
-            - **CPP-SHAP Analysis**:  When ``shap_plot=True``, allows selection of specific feature impacts from a
-             ``feat_impact_'name'`` column for samples or groups
-
         col_dif : str, default='mean_dif'
             Column name in ``df_feat`` for differences in feature values. Two scenarios are available:
 
@@ -498,6 +499,13 @@ class CPPPlot:
               from the ``mean_dif`` column.
             - **CPP-SHAP Analysis**: When ``shap_plot=True``, enables the selection of sample- or group-specific
               differences against the reference group from a ``mean_dif_'name'`` column.
+
+        col_rank : str, optional
+            Column name in ``df_feat`` for feature importance/impact values. Two options are supported:
+
+            - **CPP Analysis**: Defaults to the ``feat_importance`` column.
+            - **CPP-SHAP Analysis**:  When ``shap_plot=True``, allows selection of specific feature impacts from a
+             ``feat_impact_'name'`` column for samples or groups
 
         figsize : tuple, default=(7, 5)
             Figure dimensions (width, height) in inches.
@@ -539,7 +547,7 @@ class CPPPlot:
         Notes
         -----
         * Features are shown as ordered in ``df_feat``. A ranking in descending order based one the following
-          ``df_feat`` columns is recommended:
+          columns is recommended:
 
             - ``feat_importance``: when feature importance is in ``df_feat`` and ``shap_plot=False``.
             - ``feat_impact_'name'``: when sample-specific feature impact is in ``df_feat`` and ``shap_plot=True``.
@@ -558,7 +566,7 @@ class CPPPlot:
         ut.check_bool(name="shap_plot", val=shap_plot)
         check_col_dif(col_dif=col_dif, shap_plot=shap_plot)
         col_rank = check_col_rank(col_rank=col_rank, shap_plot=shap_plot)
-        df_feat = ut.check_df_feat(df_feat=df_feat, shap_plot=shap_plot, cols_requiered=[col_dif, col_dif])
+        df_feat = ut.check_df_feat(df_feat=df_feat, shap_plot=shap_plot, cols_requiered=[col_rank, col_dif])
         ut.check_number_range(name="n_top", val=n_top, min_val=2, max_val=len(df_feat), just_int=True)
         ut.check_figsize(figsize=figsize, accept_none=True)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
@@ -592,6 +600,7 @@ class CPPPlot:
                                  xlim_dif=xlim_dif, xlim_rank=xlim_rank,
                                  x_rank_info=x_rank_info)
         return fig, axes
+
 
     def profile(self,
                 ax: Optional[plt.Axes] = None,
