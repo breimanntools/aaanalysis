@@ -237,7 +237,7 @@ class TreeModel:
         X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
         labels : array-like, shape (n_samples)
-            Dataset labels of samples in ``X``. Should be either 1 (positive) or 0 (negative).
+            Class labels for samples in ``X`` (typically, 1=positive, 0=negative).
         n_rounds : int, default=5
             The number of rounds (>=1) to fit the model.
         use_rfe : bool, default=True
@@ -321,7 +321,7 @@ class TreeModel:
         X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
         labels : array-like, shape (n_samples)
-            Dataset labels of samples in ``X``. Should be either 1 (positive) or 0 (negative).
+            Class labels for samples in ``X`` (typically, 1=positive, 0=negative).
         list_is_selected : array-like, shape (n_feature_sets, n_round, n_features)
             List of 2D boolean arrays with shape (n_rounds, n_features) indicating different feature selections.
         convert_1d_to_2d : bool, default=False

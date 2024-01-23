@@ -420,7 +420,7 @@ class AAclustPlot:
 
         Parameters
         ----------
-        df_corr : pd.DataFrame
+        df_corr : pd.DataFrame, shape (n_samples, n_clusters)
             DataFrame with correlation matrix. `Rows` typically correspond to scales and `columns` to clusters.
         labels : array-like, shape (n_samples,)
             Cluster labels determining the grouping and coloring of the side color bar.

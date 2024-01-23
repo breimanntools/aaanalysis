@@ -370,7 +370,7 @@ class ShapExplainer:
         X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
         labels : array-like, shape (n_samples)
-            Dataset labels of samples in ``X``. Should be either 1 (positive) or 0 (negative).
+            Class labels for samples in ``X`` (typically, 1=positive, 0=negative).
         label_target_class : int, default=1
             The label of the class for which SHAP values are computed in a classification tasks.
             For binary classification, '0' represents the negative class and '1' the positive class.
@@ -452,9 +452,9 @@ class ShapExplainer:
                         normalize: bool = True,
                         group_average: bool = False,
                         shap_feat_importance: bool = False,
-                        ):
+                        ) -> pd.DataFrame:
         """
-        Compute SHAP feature impact (or importance) from SHAP values and add to feature DataFrame.
+        Compute SHAP feature impact (or importance) from SHAP values and add to the feature DataFrame.
 
         Three different scenarios for computing the feature impact are possible:
 
@@ -493,25 +493,25 @@ class ShapExplainer:
 
         Returns
         -------
-        df_feat: DataFrame, shape (n_features, n_feature_info+n)
-            Feature DataFrame including feature impact. If feature impact for multiple samples is computed,
+        df_feat: pd.DataFrame, shape (n_features, n_feature_info+n)
+            Feature DataFrame including feature impact. If the feature impact is computed for multiple samples,
             n=number of samples; n=1, otherwise.
 
         Notes
         -----
         **Feature impact (sample-level)**:
-        The feature impact quantifies the positive or negative influence of a feature to increase or decrease the model
-        output for a specific sample (typically, the prediction score). For each sample, the impact of an individual feature
+        The feature impact quantifies the positive or negative contribution of a feature to increase or decrease the model
+        output for a specific sample (typically, prediction score). For each sample, the impact of an individual feature
         is represented by its corresponding SHAP value. These values are normalized such that the sum of their absolute
-        values equals 100%, reflecting the relative contribution of each feature within that specific sample.
+        values equals 100%.
 
         **Feature impact (group-level)**:
         The feature impact calculated for individual samples can be averaged to determine the feature impact for a group.
-        This provides an understanding of how features influence the model's output on average within that group.
+        This reflects how features influence the model's output on average within that group.
 
         **Feature importance (SHAP value-based)**:
         The average of the feature impact across all samples is termed as shap value-based 'feature importance'.
-        This metric gives an overview of the overall influence of each feature across the entire dataset.
+        This quantifies the overall contribution of each feature across the entire dataset.
 
         Warnings
         --------
@@ -554,4 +554,56 @@ class ShapExplainer:
                                                  names=names,
                                                  drop=drop,
                                                  group_average=group_average)
+
         return df_feat
+
+    @staticmethod
+    def add_sample_mean_dif(X: ut.ArrayLike2D,
+                            labels: ut.ArrayLike1D = None,
+                            label_ref: int = 0,
+                            df_feat: pd.DataFrame = None,
+                            sample_positions: Union[int, List[int], None] = None,
+                            names: Optional[Union[str, List[str]]] = None,
+                            group_average: bool = False,
+                            ) -> pd.DataFrame:
+        """
+        Compute the feature value difference between selected samples and a reference group average, and include to
+        feature DataFrame.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
+        labels : array-like, shape (n_samples)
+            Class labels for samples in ``X`` (typically, 1=positive, 0=negative).
+        label_ref : int, default=0,
+            Class label of reference group in ``labels``.
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info)
+            Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
+        sample_positions : int, list of int, or None
+            Position index/indices for the sample(s) in ``shap_values``.
+            If ``None``, the impact for each sample will be returned.
+        names: str or list of str, optional
+            Unique name(s) used for the feature value differences columns. When provided, they should align with
+            ``sample_positions`` as follows:
+
+            - **Single sample**: ``name`` as string and ``sample_positions`` as integer.
+            - **Multiple samples**: ``name`` as list of string and ``sample_positions`` as corresponding list of integers.
+            - **Group**: ``name`` as string and ``sample_positions`` as list of integers, each indicating a group sample.
+            If ``sample_positions`` is ``None`` (all samples are considered), ``name`` must be list with names for each sample.
+        group_average : bool, default=False
+            If ``True``, compute the average of samples given by ``sample_positions``.
+
+        Returns
+        -------
+        df_feat: pd.DataFrame, shape (n_features, n_feature_info+n)
+            Feature DataFrame including feature value difference. If the feature value difference is computed for multiple
+            samples, n=number of samples; n=1, otherwise.
+
+        Examples
+        --------
+        .. include:: examples/se_add_sample_mean_dif.rst
+        """
+        # Check input
+
+        # Compute feature value mean difference
