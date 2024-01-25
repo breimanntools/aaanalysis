@@ -24,11 +24,8 @@ from ._backend.check_cpp_plot import (check_value_type,
                                       check_y_categorical,
                                       check_args_xtick,
                                       check_args_ytick,
-                                      check_grid_axis,
-                                      check_ylim,
+                                      check_match_ylim_df_feat,
                                       check_args_size,
-                                      check_part_color,
-                                      check_seq_color,
                                       check_match_dict_color_df_cat)
 
 from ._backend.cpp.utils_cpp_plot import get_optimal_fontsize
@@ -109,7 +106,7 @@ def check_match_df_seq_names_to_show(df_seq=None, names_to_show=None):
         raise ValueError(f"Following names from 'names_to_show' are not in '{ut.COL_NAME}' "
                          f"column of 'df_seq': {missing_names}")
 
-# Ranking plot
+# Checks for main CPP plots (ranking, profile, maps)
 def check_col_dif(col_dif=None, shap_plot=False):
     """Check if col_dif is string and set default"""
     ut.check_str(name="col_dif", val=col_dif, accept_none=False)
@@ -123,18 +120,18 @@ def check_col_dif(col_dif=None, shap_plot=False):
             raise ValueError(f"If 'shap_plot=True', 'col_dif' ('{col_dif}') must follow '{ut.COL_MEAN_DIF}_'name''")
 
 
-def check_col_rank(col_rank=None, shap_plot=False):
-    """Check if col_rank is string and set default"""
-    ut.check_str(name="col_rank", val=col_rank, accept_none=True)
-    if col_rank is None:
-        col_rank = ut.COL_FEAT_IMPACT if shap_plot else ut.COL_FEAT_IMPORT
+def check_col_imp(col_imp=None, shap_plot=False):
+    """Check if col_imp is string and set default"""
+    ut.check_str(name="col_imp", val=col_imp, accept_none=True)
+    if col_imp is None:
+        col_imp = ut.COL_FEAT_IMPACT if shap_plot else ut.COL_FEAT_IMPORT
     if not shap_plot:
-        if col_rank != ut.COL_FEAT_IMPORT:
-            raise ValueError(f"If 'shap_plot=False', 'col_rank' ('{col_rank}') must be '{ut.COL_FEAT_IMPORT}'")
+        if col_imp != ut.COL_FEAT_IMPORT:
+            raise ValueError(f"If 'shap_plot=False', 'col_imp' ('{col_imp}') must be '{ut.COL_FEAT_IMPORT}'")
     else:
-        if ut.COL_FEAT_IMPACT not in col_rank:
-            raise ValueError(f"If 'shap_plot=True', 'col_rank' ('{col_rank}') must follow '{ut.COL_FEAT_IMPACT}_'name''")
-    return col_rank
+        if ut.COL_FEAT_IMPACT not in col_imp:
+            raise ValueError(f"If 'shap_plot=True', 'col_imp' ('{col_imp}') must follow '{ut.COL_FEAT_IMPACT}_'name''")
+    return col_imp
 
 
 # II Main Functions
@@ -460,7 +457,7 @@ class CPPPlot:
                 n_top: int = 15,
                 shap_plot: bool = False,
                 col_dif: str = "mean_dif",
-                col_rank: Optional[str] = None,
+                col_imp: str = "feat_importance",
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
                 tmd_len: int = 20,
                 tmd_jmd_space: int = 2,
@@ -487,11 +484,11 @@ class CPPPlot:
         ----------
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
-            Can also include feature importance (``feat_importance``) or impact (``feat_impact``) columns for ranking.
+            Must also include feature importance (``feat_importance``) or impact (``feat_impact_'name'``) columns.
         n_top : int, default=15
             The number of top features to display. Should be 1 < ``n_top`` <= ``n_features``.
         shap_plot : bool, default=False
-            If ``True``, the positive (blue) and negative (red) feature impact is shown in the ranking subplot.
+            If ``True``, the positive (red) and negative (blue) feature impact is shown in the ranking subplot.
         col_dif : str, default='mean_dif'
             Column name in ``df_feat`` for differences in feature values. Two scenarios are available:
 
@@ -500,7 +497,7 @@ class CPPPlot:
             - **CPP-SHAP Analysis**: When ``shap_plot=True``, enables the selection of sample- or group-specific
               differences against the reference group from a ``mean_dif_'name'`` column.
 
-        col_rank : str, optional
+        col_imp : str, default='feat_importance'
             Column name in ``df_feat`` for feature importance/impact values. Two options are supported:
 
             - **CPP Analysis**: Defaults to the ``feat_importance`` column.
@@ -565,8 +562,8 @@ class CPPPlot:
         # Check input
         ut.check_bool(name="shap_plot", val=shap_plot)
         check_col_dif(col_dif=col_dif, shap_plot=shap_plot)
-        col_rank = check_col_rank(col_rank=col_rank, shap_plot=shap_plot)
-        df_feat = ut.check_df_feat(df_feat=df_feat, shap_plot=shap_plot, cols_requiered=[col_rank, col_dif])
+        col_imp = check_col_imp(col_imp=col_imp, shap_plot=shap_plot)
+        df_feat = ut.check_df_feat(df_feat=df_feat, shap_plot=shap_plot, cols_requiered=[col_imp, col_dif])
         ut.check_number_range(name="n_top", val=n_top, min_val=2, max_val=len(df_feat), just_int=True)
         ut.check_figsize(figsize=figsize, accept_none=True)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
@@ -586,7 +583,7 @@ class CPPPlot:
         # Plot ranking
         fig, axes = plot_ranking(df_feat=df_feat.copy(), n_top=n_top,
                                  col_dif=col_dif,
-                                 col_rank=col_rank,
+                                 col_imp=col_imp,
                                  shap_plot=shap_plot,
                                  figsize=figsize,
                                  tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
@@ -603,41 +600,41 @@ class CPPPlot:
 
 
     def profile(self,
+                df_feat: pd.DataFrame = None,
+                shap_plot: bool = False,
+                col_imp: str = "feat_importance",
+                normalize: bool = True,
                 ax: Optional[plt.Axes] = None,
-                figsize=(7, 5),
-                df_feat=None,
-                shap_plot=False,
-                col_value="feat_importance",
-                value_type="sum",
-                normalize=True,
-                dict_color=None,
-                edge_color="none",
-                bar_width=0.75,
-                tmd_len=20,
-                start=1,
-                jmd_n_seq=None,
-                tmd_seq=None,
-                jmd_c_seq=None,
-                tmd_color="mediumspringgreen",
-                jmd_color="blue",
-                tmd_seq_color="black",
-                jmd_seq_color="white",
-                seq_size=None,
-                fontsize_tmd_jmd=None,
-                xtick_size=11.0,
-                xtick_width=2.0,
-                xtick_length=5.0,
-                ytick_size=None,
-                ytick_width=None,
-                ytick_length=5.0,
-                ylim=None,
-                xticks_pos=False,
-                add_jmd_tmd=True,
-                highlight_tmd_area=True,
-                highlight_alpha=0.15,
-                grid_axis=None,
-                add_legend_cat=False,
-                legend_kws=None):
+                figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
+                start: int = 1,
+                tmd_len: int = 20,
+                add_jmd_tmd: bool = True,
+                jmd_n_seq: Optional[str] = None,
+                tmd_seq: Optional[str] = None,
+                jmd_c_seq: Optional[str] = None,
+                tmd_color: str = "mediumspringgreen",
+                jmd_color: str = "blue",
+                tmd_seq_color: str = "black",
+                jmd_seq_color: str = "white",
+                seq_size: Union[int, float] = None,
+                fontsize_tmd_jmd: Union[int, float] = None,
+                bar_width: Union[int, float] = 0.75,
+                edge_color: Optional[str] = "none",
+                xtick_size: Union[int, float] = 11.0,
+                xtick_width: Union[int, float] = 2.0,
+                xtick_length: Union[int, float] = 5.0,
+                ytick_size: Optional[Union[int, float]] = None,
+                ytick_width: Optional[Union[int, float]] = None,
+                ytick_length: Union[int, float] =5.0,
+                ylim: Tuple[float, float] = None,
+                grid_axis: Optional[Literal['x', 'y', 'both']] = None,
+                xticks_pos: bool = False,  # TODO naming
+                highlight_tmd_area: bool = True,
+                highlight_alpha: float = 0.15,
+                add_legend_cat: bool = False,
+                dict_color: Optional[dict] = None,
+                legend_kws: Optional[dict] = None
+                ) -> Tuple[plt.Figure, plt.Axes]:
         """
         Plot CPP profile for given features from 'df_feat'.
 
@@ -646,26 +643,31 @@ class CPPPlot:
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
             Must also include either ``feat_importance`` or ``feat_impact`` column.
-        col_value : {'abs_auc', 'mean_dif', 'std_test', 'feat_importance', 'feat_impact', ...}, default='mean_dif'
-            Column name in ``df_feat`` containing the numerical values to be plotted.
-        value_type : str, default='count'
-            Type of value. Available options are specified by the ``check_value_type`` function.
+        shap_plot : bool, default=False
+            If ``True``, the positive (red) and negative (blue) feature impact is shown by +/- bars.
+        col_imp : str, default='feat_importance'
+            Column name in ``df_feat`` for feature importance/impact values. Two options are supported:
+
+            - **CPP Analysis**: Defaults to the ``feat_importance`` column.
+            - **CPP-SHAP Analysis**:  When ``shap_plot=True``, allows selection of specific feature impacts from a
+             ``feat_impact_'name'`` column for samples or groups
+
         normalize : bool, default=False
-            If True, the feature values will be normalized.
+            If ``True``, normalizes aggregated numerical values to a total of 100%.
+        ax : plt.Axes, optional
+            Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
         figsize : tuple, default=(7, 5)
             Figure dimensions (width, height) in inches.
-        dict_color : dict, optional
-            Dictionary mapping categories to colors.
-        edge_color : str, default='none'
-            Color of the edges of the bars.
-        bar_width : float, default=0.75
+        bar_width : int or float, default=0.75
             Width of the bars.
-        add_jmd_tmd : bool, default=True
-            If True, adds JMD and TMD lines/annotations to the plot.
+        edge_color : str, default='none' # TODO check
+            Color of the bar edges. 'none' means no color, while 'None' give default matplotlib color.
+        add_jmd_tmd : bool, default=True    # TODO check
+            If ``True``, adds JMD and TMD and their annotations to the plot.
         tmd_len : int, default=20
             Length of TMD to be depicted (>0).
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus).
+            Position label of first residue position (starting at N-terminus).
         jmd_n_seq : str, optional
             JMD N-terminal sequence.
         tmd_seq : str, optional
@@ -680,39 +682,38 @@ class CPPPlot:
             Color for TMD sequence.
         jmd_seq_color : str, default='white'
             Color for JMD sequence.
-        seq_size : float, optional
+        seq_size : int or float, optional
             Font size for sequence annotations.
-        fontsize_tmd_jmd : float, optional
+        fontsize_tmd_jmd : int or float, optional
             Font size for TMD and JMD annotations.
-        xtick_size : float, default=11.0
+        xtick_size : int or float, default=11.0
             Size for x-tick labels.
-        xtick_width : float, default=2.0
+        xtick_width : int or float, default=2.0
             Width of the x-ticks.
-        xtick_length : float, default=5.0
+        xtick_length : int or float, default=5.0
             Length of the x-ticks.
         xticks_pos : bool, default=False
-            If True, x-tick positions are adjusted based on given sequences.
-        ytick_size : float, optional
+            If ``True``, x-tick positions are adjusted based on given sequences.
+        ytick_size : int or float, optional
             Size for y-tick labels.
-        ytick_width : float, default=2.0
+        ytick_width : int or float, default=2.0
             Width of the y-ticks.
-        ytick_length : float, default=5.0
+        ytick_length : int or float, default=5.0
             Length of the y-ticks.
         ylim : tuple, optional
-            Y-axis limits.
+            Y-axis limits. If ``None``, y-axis limits are set automatically.
         highlight_tmd_area : bool, default=True
-            If True, highlights the TMD area on the plot.
+            If ``True``, highlights the TMD area on the plot.
         highlight_alpha : float, default=0.15
             The transparency alpha value [0-1] for TMD area highlighting.
-        grid_axis : str, default='both'
-            Axis on which the grid is drawn if not None. Options: None, 'both', 'x', 'y'.
+        grid_axis : {'x', 'y', 'both', None}, default=None
+            Axis on which the grid is drawn if not ``None``.
         add_legend_cat : bool, default=True
-            If True, a legend is added for categories.
+            If ``True``, a legend is added for the scale categories.
+        dict_color : dict, optional
+            Dictionary mapping scale categories to colors for legend.
         legend_kws : dict, optional
             Keyword arguments for the legend.
-        shap_plot : bool, default=False
-            If True, SHAP (SHapley Additive exPlanations) plot is generated.
-
 
         Returns
         -------
@@ -722,55 +723,52 @@ class CPPPlot:
         Examples
         --------
         .. include:: examples/cpp_plot_profile.rst
-
         """
-        # Group arguments
-        # TODO CHECK
-        df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot)
-
-        args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
-                                                jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
-        args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
-
-        args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
-        args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
-        args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
-
-        # Checking input
-        # Args checked by Matplotlib: title, legend_kws
-        # Args checked by internal plotting functions: ylim
-        ut.check_number_range(name="bar_width", val=bar_width, min_val=0, just_int=False)
+        # Check main arguments
+        ut.check_bool(name="shap_plot", val=shap_plot)
+        col_imp = check_col_imp(col_imp=col_imp, shap_plot=shap_plot)
+        df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot, cols_requiered=[col_imp])
+        ut.check_bool(name="normalize", val=normalize)
+        ut.check_ax(ax=ax, accept_none=True)
+        ut.check_figsize(figsize=figsize, accept_none=True)
+        # Check TMD-JMD arguments
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
+        args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                                             jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
+        args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
+        # Check colors and general figure arguments
+        ut.check_number_range(name="bar_width", val=bar_width, min_val=0, just_int=False)
+        dict_color_args = dict(edge_color=edge_color, tmd_color=tmd_color, jmd_color=jmd_color,
+                               tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
+        for name in dict_color_args:
+            ut.check_color(name=name, val=dict_color_args[name], accept_none=True)
+        args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
+        args_ytick = check_args_ytick(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
+        ut.check_lim(name="ylim", val=ylim, accept_none=True)
+        # TODO get min and max val requiered from df
+        ylim = check_match_ylim_df_feat(ylim=ylim, df_feat=df_feat, verbose=self._verbose)
+        ut.check_grid_axis(grid_axis=grid_axis)
+        # Check profile-specific arguments
+        ut.check_bool(name="highlight_tmd_area", val=highlight_tmd_area)
         ut.check_number_range(name="tmd_area_alpha", val=highlight_alpha, min_val=0, max_val=1, just_int=False)
         ut.check_bool(name="add_jmd_tmd", val=add_jmd_tmd)
-        ut.check_bool(name="highlight_tmd_area", val=highlight_tmd_area)
-        ut.check_bool(name="shap_plot", val=shap_plot)
         ut.check_bool(name="add_legend_cat", val=add_legend_cat)
-        ut.check_color(name="edge_color", val=edge_color, accept_none=True)
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
-        check_value_type(value_type=value_type, count_in=True)
-        check_args_ytick(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
-        ut.check_figsize(figsize=figsize)
         dict_color = check_match_dict_color_df_cat(dict_color=dict_color, df_cat=self._df_cat)
-        check_grid_axis(grid_axis=grid_axis)    # TODO replace against check from valid strings in utils
-        # TODO get min and max val requiered from df
-        ylim = check_ylim(ylim=ylim, accept_none=True, verbose=self._verbose)
         # Plot profile
-        ax = plot_profile(figsize=figsize, ax=ax, df_feat=df_feat, df_cat=self._df_cat,
-                          col_value=col_value, value_type=value_type, normalize=normalize,
-                          dict_color=dict_color,
-                          edge_color=edge_color, bar_width=bar_width,
+        ax = plot_profile(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot,
+                          col_imp=col_imp, normalize=normalize,
+                          figsize=figsize, ax=ax,
                           add_jmd_tmd=add_jmd_tmd,
-                          start=start, **args_len, **args_seq,
-                          tmd_color=tmd_color, jmd_color=jmd_color, tmd_seq_color=tmd_seq_color,
-                          jmd_seq_color=jmd_seq_color,
-                          seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd,
-                          xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length,
-                          xticks_pos=xticks_pos, ytick_size=ytick_size, ytick_width=ytick_width,
-                          ytick_length=ytick_length, ylim=ylim,
+                          start=start, **args_len, **args_seq, **args_size,
+                          tmd_color=tmd_color, jmd_color=jmd_color,
+                          tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color,
+                          bar_width=bar_width, edge_color=edge_color,
+                          **args_xtick, **args_ytick,
+                          grid_axis=grid_axis, ylim=ylim,
+                          xticks_pos=xticks_pos,
                           highlight_tmd_area=highlight_tmd_area, highlight_alpha=highlight_alpha,
-                          grid_axis=grid_axis, add_legend_cat=add_legend_cat,
-                          legend_kws=legend_kws, shap_plot=shap_plot)
+                          add_legend_cat=add_legend_cat, dict_color=dict_color, legend_kws=legend_kws)
         return ax
 
     def heatmap(self,
@@ -857,7 +855,7 @@ class CPPPlot:
         tmd_len : int, default=20
             Length of TMD to be depicted (>0).
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus).
+            Position label of first residue position (starting at N-terminus).
         tmd_seq : str, optional
             Sequence of TMD. 'tmd_len' is set to length of TMD if sequence for TMD, JMD-N and JMD-C are given.
             Recommended if feature impact or mean difference should be depicted for one sample.
@@ -875,17 +873,17 @@ class CPPPlot:
             Color of TMD sequence.
         jmd_seq_color : str, default='white'
             Color of JMD-N and JMD-C sequence.
-        seq_size : float, optional
+        seq_size : int or float, optional
             Font size of all sequence parts in points. If ``None``, optimized automatically.
         fontsize_tmd_jmd : float, optional
             Font size of 'TMD', 'JMD-N' and 'JMD-C'  label in points. If ``None``, optimized automatically.
-        xtick_size : float, default=11.0
+        xtick_size : int or float, default=11.0
             Size of x ticks in points. Passed as 'size' argument to :meth:`matplotlib.axes.Axes.set_xticklabels`.
-        xtick_width : float, default=2.0
+        xtick_width : int or float, default=2.0
             Width of x ticks in points. Passed as 'width' argument to :meth:`matplotlib.axes.Axes.tick_params`.
-        xtick_length : float, default=5.0,
+        xtick_length : int or float, default=5.0,
             Length of x ticks in points. Passed as 'length' argument to :meth:`matplotlib.axes.Axes.tick_params`.
-        ytick_size : float, optional
+        ytick_size : int or float, optional
             Size of scale information as y ticks in points. Passed to :meth:`matplotlib.axes.Axes.tick_params`.
             If ``None``, optimized automatically.
         add_legend_cat : bool, default=True,
@@ -918,8 +916,6 @@ class CPPPlot:
         args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
                                                 tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
-        args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
-        args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
 
         # Checking input
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot)
@@ -1029,7 +1025,7 @@ class CPPPlot:
         tmd_len : int, default=20
             Length of TMD to be depicted (>0).
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus).
+            Position label of first residue position (starting at N-terminus).
         tmd_color : str, default='mediumspringgreen'
             Color of TMD bar.
         jmd_color : str, default='blue'
@@ -1038,17 +1034,17 @@ class CPPPlot:
             Color of TMD sequence.
         jmd_seq_color : str, default='white'
             Color of JMD-N and JMD-C sequence.
-        seq_size : float, optional
+        seq_size : int or float, optional
             Font size of all sequence parts in points. If ``None``, optimized automatically.
         fontsize_tmd_jmd : float, optional
             Font size of 'TMD', 'JMD-N' and 'JMD-C'  label in points. If ``None``, optimized automatically.
-        xtick_size : float, default=11.0
+        xtick_size : int or float, default=11.0
             Size of x ticks in points. Passed as 'size' argument to :meth:`matplotlib.axes.Axes.set_xticklabels`.
-        xtick_width : float, default=2.0
+        xtick_width : int or float, default=2.0
             Width of x ticks in points. Passed as 'width' argument to :meth:`matplotlib.axes.Axes.tick_params`.
-        xtick_length : float, default=5.0,
+        xtick_length : int or float, default=5.0,
             Length of x ticks in points. Passed as 'length' argument to :meth:`matplotlib.axes.Axes.tick_params`.
-        ytick_size : float, optional
+        ytick_size : int or float, optional
             Size of scale information as y ticks in points. Passed to :meth:`matplotlib.axes.Axes.tick_params`.
             If ``None``, optimized automatically.
         add_legend_cat : bool, default=True,
@@ -1072,8 +1068,6 @@ class CPPPlot:
         # Group arguments
         args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
-        args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
-        args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
         # Checking input
         # Args checked by Matplotlib: title, cmap, cbar_kws, legend_kws
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat)

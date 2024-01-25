@@ -10,7 +10,7 @@ from hypothesis import given, settings, assume
 import hypothesis.strategies as st
 import aaanalysis as aa
 
-# TODO add tests for col_rank and col_dif
+# TODO add tests for col_imp and col_dif
 # Setup and helper functions
 def create_df_feat(num_features=50):
     """Creates a dummy DataFrame to mimic df_feat input."""
@@ -51,7 +51,8 @@ class TestRanking:
         values = np.array([1] * len(df_feat))
         df_feat.insert(0, "feat_impact", values)
         for shap_plot in [True, False]:
-            fig, axes = cpp_plot.ranking(df_feat=df_feat, shap_plot=shap_plot)
+            col_imp = "feat_impact" if shap_plot else "feat_importance"
+            fig, axes = cpp_plot.ranking(df_feat=df_feat, shap_plot=shap_plot, col_imp=col_imp)
             assert isinstance(fig, plt.Figure)
             assert isinstance(axes, np.ndarray)
             assert len(axes) == 3
@@ -67,20 +68,21 @@ class TestRanking:
             if col_dif not in df_feat.columns:
                 df_feat.insert(0, col_dif, [1] * len(df_feat))
             shap_plot = col_dif != "mean_dif"
-            fig, axes = cpp_plot.ranking(df_feat=df_feat, col_dif=col_dif, shap_plot=shap_plot)
+            col_imp = "feat_impact" if shap_plot else "feat_importance"
+            fig, axes = cpp_plot.ranking(df_feat=df_feat, shap_plot=shap_plot, col_imp=col_imp, col_dif=col_dif)
             assert isinstance(fig, plt.Figure)
             assert isinstance(axes, np.ndarray)
             plt.close()
 
-    def test_col_rank_valid(self):
+    def test_col_imp_valid(self):
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
-        valid_col_ranks = ['feat_importance', 'feat_impact_TestSample', 'feat_impact_col_rank']
-        for col_rank in valid_col_ranks:
-            if col_rank not in df_feat.columns:
-                df_feat.insert(0, col_rank, [1] * len(df_feat))
-            shap_plot = col_rank != "feat_importance"
-            fig, axes = cpp_plot.ranking(df_feat=df_feat, col_rank=col_rank, shap_plot=shap_plot)
+        valid_col_imps = ['feat_importance', 'feat_impact_TestSample', 'feat_impact_col_imp']
+        for col_imp in valid_col_imps:
+            if col_imp not in df_feat.columns:
+                df_feat.insert(0, col_imp, [1] * len(df_feat))
+            shap_plot = col_imp != "feat_importance"
+            fig, axes = cpp_plot.ranking(df_feat=df_feat, col_imp=col_imp, shap_plot=shap_plot)
             assert isinstance(fig, plt.Figure)
             assert isinstance(axes, np.ndarray)
             plt.close()
@@ -289,14 +291,14 @@ class TestRanking:
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, col_dif='invalid_col_test', shap_plot=False)
 
-    def test_col_rank_invalid(self):
+    def test_col_imp_invalid(self):
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
         df_feat["feat_impact_test"] = 2
         with pytest.raises(ValueError):
-            cpp_plot.ranking(df_feat=df_feat, col_rank='invalid_col_name')
+            cpp_plot.ranking(df_feat=df_feat, col_imp='invalid_col_name')
         with pytest.raises(ValueError):
-            cpp_plot.ranking(df_feat=df_feat, col_rank='feat_impact_test', shap_plot=False)
+            cpp_plot.ranking(df_feat=df_feat, col_imp='feat_impact_test', shap_plot=False)
 
     def test_invalid_figsize(self):
         cpp_plot = aa.CPPPlot()

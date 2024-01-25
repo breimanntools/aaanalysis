@@ -382,7 +382,7 @@ class SequenceFeature:
             DataFrame of categories for physicochemical scales. Must contain all scales from ``df_scales``.
             Default from :meth:`load_scales` with ``name='scales_cat'``, unless specified in ``options['df_cat']``.
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus).
+            Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
             Length of TMD (>0).
         jmd_n_len : int, default=10
@@ -583,7 +583,7 @@ class SequenceFeature:
             DataFrame of categories for physicochemical scales. Must contain all scales from ``df_scales``.
             Default from :meth:`load_scales` with ``name='scales_cat'``, unless specified in ``options['df_cat']``.
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus).
+            Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
             Length of TMD (>0).
         jmd_n_len : int, default=10
@@ -646,7 +646,7 @@ class SequenceFeature:
         features : array-like, shape (n_features,)
             List of feature ids.
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus).
+            Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
             Length of TMD (>0).
         jmd_n_len : int, default=10
@@ -712,7 +712,7 @@ class SequenceFeature:
         col_cat : {'category', 'subcategory', 'scale_name'}, default='category'
             Column name in ``df_feat`` for categorizing the numerical values during aggregation.
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus).
+            Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
             Length of TMD (>0).
         jmd_n_len : int, default=10

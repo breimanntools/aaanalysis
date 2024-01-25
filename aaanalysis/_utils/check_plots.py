@@ -42,6 +42,17 @@ def check_figsize(figsize=None, accept_none=False, str_add=None):
     check_type.check_number_range(name="figsize:width", val=figsize[0], **args)
     check_type.check_number_range(name="figsize:height", val=figsize[1], **args)
 
+
+def check_grid_axis(grid_axis="y", accept_none=True, str_add=None):
+    if accept_none and grid_axis is None:
+        return None # Skip test
+    list_grid_axis = ["y", "x", "both"]
+    if grid_axis not in list_grid_axis:
+        str_error = add_str(str_error=f"'grid_axis' ({grid_axis}) should be one of following: {list_grid_axis}",
+                            str_add=str_add)
+        raise ValueError(str_error)
+
+
 # Check min and max values
 def check_vmin_vmax(vmin=None, vmax=None, str_add=None):
     """Check if vmin and vmax are valid numbers and vmin is less than vmax."""

@@ -54,6 +54,7 @@ from ._utils.check_models import (check_mode_class,
                                   check_model_kwargs)
 from ._utils.check_plots import (check_ax,
                                  check_figsize,
+                                 check_grid_axis,
                                  check_vmin_vmax,
                                  check_lim,
                                  check_dict_xlims,

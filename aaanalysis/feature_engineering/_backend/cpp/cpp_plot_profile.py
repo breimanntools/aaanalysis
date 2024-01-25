@@ -10,10 +10,11 @@ import aaanalysis.utils as ut
 from ._utils_cpp_plot_elements import PlotElements
 from ._utils_cpp_plot_positions import PlotPositions
 
-def _scale_ylim(df=None, ylim=None, col_value=None, retrieve_plot=False, scaling_factor=1.1):
+def _scale_ylim(df=None, ylim=None, col_imp=None, retrieve_plot=False, scaling_factor=1.1):
     """Check if ylim is valid and appropriate for the given dataframe and column."""
+    # TODO in check function
     if ylim is not None:
-        max_val = round(max(df[col_value]), 3)
+        max_val = round(max(df[col_imp]), 3)
         max_y = ylim[1]
         if max_val >= max_y:
             error = "Maximum of 'ylim' ({}) must be higher than maximum" \
@@ -38,7 +39,7 @@ def _plot_cpp_shap_profile(ax=None, df_pos=None, ylim=None, plot_args=None):
     df_neg = df_neg.sum(axis=1)
     ax = df_pos.plot(ax=ax, color=ut.COLOR_SHAP_POS, **plot_args)
     ax = df_neg.plot(ax=ax, color=ut.COLOR_SHAP_NEG, **plot_args)
-    ylim = _scale_ylim(df=df, col_value="col_cat", ylim=ylim, retrieve_plot=True)
+    ylim = _scale_ylim(df=df, col_imp="col_cat", ylim=ylim, retrieve_plot=True)
     plt.ylim(ylim)
     return ax
 
@@ -55,7 +56,7 @@ def _plot_cpp_profile(ax=None, df_pos=None, dict_color=None, add_legend=True, co
     if not add_legend:
         df_bar = df_bar.sum(axis=1)
     ax = df_bar.plot(ax=ax, color=color, **plot_args)
-    ylim = _scale_ylim(df=df, col_value="col_cat", ylim=ylim)
+    ylim = _scale_ylim(df=df, col_imp="col_cat", ylim=ylim)
     plt.ylim(ylim)
     # Set legend
     if add_legend:
@@ -115,7 +116,7 @@ def _plot_profile(ax=None, df_pos=None, dict_color=None, edge_color="none",
 
 # Outer plotting function
 def plot_profile(figsize=(7, 5), ax=None, df_feat=None, df_cat=None,
-                 col_value="mean_dif", value_type="count", normalize=False,
+                 col_imp="feat_importance", normalize=False,
                  dict_color=None,
                  edge_color="none", bar_width=0.75,
                  add_jmd_tmd=True, tmd_len=20, jmd_n_len=10, jmd_c_len=10,
@@ -140,7 +141,7 @@ def plot_profile(figsize=(7, 5), ax=None, df_feat=None, df_cat=None,
     col_cat = "scale_name" if shap_plot else "category"   # Column name in df_feat for grouping.
     pp = PlotPositions(**args_len, start=start)
     df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat.copy(), col_cat=col_cat,
-                           col_value=col_value, value_type=value_type,
+                           col_value=col_imp, value_type="sum",
                            normalize=normalize)
     # Plotting
     pe = PlotElements()
