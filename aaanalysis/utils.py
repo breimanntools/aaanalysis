@@ -231,6 +231,7 @@ LABEL_FEAT_VAL = "Feature value"
 LABEL_HIST_COUNT = "Number of proteins"
 LABEL_HIST_DEN = "Relative density"
 
+LABEL_FEAT_NUMBER = "Number of features\n(per residue position)"
 LABEL_FEAT_IMPORT_CUM = "Cumulative feature importance\n(normalized) [%]"
 LABEL_FEAT_IMPACT_CUM = "Cumulative feature impact\n(normalized) [%]"
 LABEL_CBAR_FEAT_IMPACT_CUM = "Cumulative feature impact"
@@ -392,6 +393,10 @@ def add_names_to_df_eval(df_eval=None, names=None):
 
 
 # Plotting utilities
+def get_color_dif(mean_dif=0):
+    return COLOR_FEAT_NEG if mean_dif < 0 else COLOR_FEAT_POS
+
+
 # DEV: Exceptionally placed here due to dependency on constants
 def plot_get_cdict_(name=STR_DICT_COLOR):
     """Return DICT_COLOR or DICT_COLOR_CAT"""

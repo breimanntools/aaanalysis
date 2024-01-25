@@ -89,7 +89,7 @@ def plot_feature_map(df_feat=None, df_cat=None, y="subcategory", col_value="mean
                      tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1,
                      tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, linecolor=None,
                      tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
-                     seq_size=None, fontsize_tmd_jmd=None, xticks_pos=False, xtick_size=11.0, xtick_width=2.0,
+                     seq_size=None, fontsize_tmd_jmd=None, add_xticks_pos=False, xtick_size=11.0, xtick_width=2.0,
                      xtick_length=5.0, ytick_size=None, add_legend_cat=True, legend_kws=None, cbar_pct=True,
                      name_test="TEST", name_ref="REF",
                      fontsize_text=11, cbar_ticksize=11):
@@ -136,7 +136,7 @@ def plot_feature_map(df_feat=None, df_cat=None, y="subcategory", col_value="mean
                       tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, linecolor=linecolor,
                       tmd_color=tmd_color, jmd_color=jmd_color, tmd_seq_color=tmd_seq_color,
                       jmd_seq_color=jmd_seq_color, add_importance_map=True,
-                      seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd, xticks_pos=xticks_pos,
+                      seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd, add_xticks_pos=add_xticks_pos,
                       xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length,
                       ytick_size=ytick_size, add_legend_cat=add_legend_cat, legend_kws=legend_kws,
                       cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws, cbar_ax=cbar_ax,  #cbar_ax_pos=cbar_pos,

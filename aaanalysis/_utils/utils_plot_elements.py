@@ -35,6 +35,7 @@ def _get_positions_lengths_colors(labels, color_map):
             current_label = label
     return positions, lengths, colors
 
+
 def _get_xy_wh(ax=None, position=None, pos=None, bar_spacing=None, length=None, bar_width=None):
     """Get x and y position together with width and height/length"""
     x_min, x_max = ax.get_xlim()
@@ -53,6 +54,7 @@ def _get_xy_wh(ax=None, position=None, pos=None, bar_spacing=None, length=None, 
         return (x, pos), (bar_width, length)
     else:
         raise ValueError("Position should be 'left', 'right', 'top', or 'bottom'.")
+
 
 def _get_xy_hava(position=None, xy=None, wh=None, label_spacing_factor=1.5):
     """Get x and y position together with horizontal alignment and vertical alignment"""
@@ -79,6 +81,7 @@ def _get_xy_hava(position=None, xy=None, wh=None, label_spacing_factor=1.5):
 def _add_bar_labels(ax=None, bar_labels_align=None, position=None, bar_width=None,
                     labels=None, positions=None, lengths=None, bar_labels=None, bar_spacing=None,
                     label_spacing_factor=1.5):
+    """Add labels next to the bars"""
     label_map = {label: bar_labels[i] for i, label in enumerate(sorted(set(labels)))}
     rotation = 0 if bar_labels_align == 'horizontal' else 90
     for pos, length in zip(positions, lengths):

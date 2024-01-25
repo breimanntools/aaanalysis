@@ -192,7 +192,7 @@ def plot_heatmap(df_feat=None, df_cat=None, col_cat="subcategory", col_value="me
                  tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, linecolor=None, add_importance_map=False,
                  tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
                  seq_size=None, fontsize_tmd_jmd=None, fontsize_labels=11,
-                 xticks_pos=False, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, ytick_size=None,
+                 add_xticks_pos=False, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, ytick_size=None,
                  add_legend_cat=True, legend_kws=None, cbar_pct=True):
     # Group arguments
     args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
@@ -220,20 +220,18 @@ def plot_heatmap(df_feat=None, df_cat=None, col_cat="subcategory", col_value="me
                              **args_len, start=start)
     # Autosize tmd sequence & annotation
     pe = PlotElements()
-    opt_size = pe.optimize_label_size(ax=ax, df_pos=df_pos)
     # Add tmd_jmd sequence
     if isinstance(tmd_seq, str):
         ax = pp.add_tmd_jmd_seq(ax=ax, **args_seq, **args_size, **args_part_color, **args_seq_color,
-                                xticks_pos=xticks_pos,
+                                add_xticks_pos=add_xticks_pos,
                                 x_shift=0.5, xtick_size=xtick_size)
         # TODO check how to implement in functional style (relates to update_seq)
         #self.ax_seq = ax
     # Add tmd_jmd bar
     elif add_jmd_tmd:
-        size = opt_size if fontsize_tmd_jmd is None else fontsize_tmd_jmd
         pp.add_tmd_jmd_bar(ax=ax, **args_part_color)
         pp.add_tmd_jmd_xticks(ax=ax, x_shift=0.5, **args_xtick)
-        pp.add_tmd_jmd_text(ax=ax, x_shift=0, fontsize_tmd_jmd=size)
+        pp.add_tmd_jmd_text(ax=ax, x_shift=0, fontsize_tmd_jmd=fontsize_tmd_jmd)
     # Add cbar
     _set_cbar_heatmap(ax=ax, vmin=vmin, vmax=vmax,
                       dict_cbar=dict_cbar, cbar_kws=cbar_kws_, cbar_pct=cbar_pct,

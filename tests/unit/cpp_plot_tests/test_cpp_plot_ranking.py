@@ -285,7 +285,7 @@ class TestRanking:
     def test_col_dif_invalid(self):
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
-        df_feat["mean_dif_test"] = 2
+        df_feat.insert(0, "mean_dif_test", [2] * len(df_feat))
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, col_dif='invalid_col_name')
         with pytest.raises(ValueError):
@@ -294,7 +294,7 @@ class TestRanking:
     def test_col_imp_invalid(self):
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
-        df_feat["feat_impact_test"] = 2
+        df_feat.insert(0, "feat_impact_test", [2] * len(df_feat))
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, col_imp='invalid_col_name')
         with pytest.raises(ValueError):

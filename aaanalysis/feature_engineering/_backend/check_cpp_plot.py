@@ -49,38 +49,6 @@ def check_args_ytick(ytick_size=None, ytick_width=None, ytick_length=None):
     return args_ytick
 
 
-def check_match_ylim_df_feat(ylim=None, df_feat=None, adjust_lim=False, verbose=True):
-    """Validate that lim parameter ('xlim' or 'ylim') is tuple with two numbers, where the first is less than the second."""
-    # TODO add computation of min_val_req ...
-    min_val_req = None
-    max_val_req = None
-    name = "ylim"
-    if ylim is None:
-        return ylim
-    min_val, max_val = ylim
-    str_error_warn_min = f"'{name}:min' ({min_val}) should be <= '{min_val_req}'."
-    str_error_warn_max = f"'{name}:max' ({max_val}) should be >= '{max_val_req}'."
-    if min_val_req is not None and max_val_req is not None:
-        if not adjust_lim:
-            if min_val > min_val_req:
-                raise ValueError(str_error_warn_min)
-            if max_val < max_val_req:
-                raise ValueError(str_error_warn_max)
-        else:
-            if min_val > min_val_req:
-                if verbose:
-                    warnings.warn(str_error_warn_min)
-                min_val = min_val_req
-            if max_val < max_val_req:
-                if verbose:
-                    warnings.warn(str_error_warn_max)
-                max_val = max_val_req
-    else:
-        if adjust_lim:
-            raise ValueError("'adjust_lim' can only be True if 'min_val_req' and 'max_val_req' are given")
-    return tuple((min_val, max_val))
-
-
 # Check sequence size
 def check_args_size(seq_size=None, fontsize_tmd_jmd=None):
     """Check if sequence size parameters match"""
@@ -91,6 +59,22 @@ def check_args_size(seq_size=None, fontsize_tmd_jmd=None):
 
 
 # Check colors
+def check_part_color(tmd_color=None, jmd_color=None):
+    """Check if part colors valid"""
+    ut.check_color(name="tmd_color", val=tmd_color)
+    ut.check_color(name="jmd_color", val=jmd_color)
+    args_part_color = dict(tmd_color=tmd_color, jmd_color=jmd_color)
+    return args_part_color
+
+
+def check_seq_color(tmd_seq_color=None, jmd_seq_color=None):
+    """Check sequence colors"""
+    ut.check_color(name="tmd_seq_color", val=tmd_seq_color, accept_none=True)
+    ut.check_color(name="jmd_seq_color", val=jmd_seq_color, accept_none=True)
+    args_seq_color = dict(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
+    return args_seq_color
+
+
 def check_match_dict_color_df_cat(dict_color=None, df_cat=None):
     """Check if color dictionary is matching to DataFrame with categories"""
     list_cats = list(sorted(set(df_cat[ut.COL_CAT])))

@@ -104,13 +104,15 @@ def check_dict_xlims(dict_xlims=None, n_ax=None, str_add=None):
 # Check colors
 def check_color(name=None, val=None, accept_none=False, str_add=None):
     """Check if the provided value is a valid color for matplotlib."""
+    if val is None:
+        if accept_none:
+            return None # Skip test
+        else:
+            raise ValueError(f"'{name}' should not be None")
     base_colors = list(mcolors.BASE_COLORS.keys())
     tableau_colors = list(mcolors.TABLEAU_COLORS.keys())
     css4_colors = list(mcolors.CSS4_COLORS.keys())
     all_colors = base_colors + tableau_colors + css4_colors
-    if accept_none:
-        all_colors.append("none")
-    # Check if valid hex or RGB tuple
     if _is_valid_hex_color(val) or _is_valid_rgb_tuple(val):
         return
     elif val not in all_colors:

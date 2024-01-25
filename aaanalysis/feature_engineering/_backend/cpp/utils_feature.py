@@ -244,8 +244,7 @@ def get_df_pos_(df_feat=None, col_cat="category", col_value=None, value_type="co
     """Get df with aggregated values for each combination of column values and positions"""
     df_feat = df_feat.copy()
     list_y_cat = sorted(set(df_feat[col_cat]))
-    normalize_for_pos = value_type != "mean"
-    if normalize_for_pos:
+    if value_type != "mean" and col_value is not None:
         df_feat[col_value] = df_feat[col_value] / [len(x.split(",")) for x in df_feat[ut.COL_POSITION]]
     # Get df with features for each position
     df_pos_long = _get_df_pos_long(df=df_feat, col_cat=col_cat, col_value=col_value)

@@ -1,17 +1,37 @@
 """
-This is a script for ...
+This is a script for the backend PlotElements utility class for the CPPPlot class.
 """
-import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 
 import aaanalysis.utils as ut
 
 
 # I Helper Functions
+# TODO check if needed
+def draw_shap_legend(x=None, y=10, offset_text=1, fontsize=13):
+    """Draw higher lower element for indicating colors"""
+    arrow_dif = y * 0.02
+    plt.text(x - offset_text, y, 'higher',
+             fontweight='bold',
+             fontsize=fontsize, color=ut.COLOR_SHAP_POS,
+             horizontalalignment='right')
 
+    plt.text(x + offset_text * 1.1, y, 'lower',
+             fontweight='bold',
+             fontsize=fontsize, color=ut.COLOR_SHAP_NEG,
+             horizontalalignment='left')
+
+    plt.text(x, y - arrow_dif, r'$\leftarrow$',
+             fontweight='bold',
+             fontsize=fontsize+1, color=ut.COLOR_SHAP_NEG,
+             horizontalalignment='center')
+
+    plt.text(x, y + arrow_dif, r'$\rightarrow$',
+             fontweight='bold',
+             fontsize=fontsize+1, color=ut.COLOR_SHAP_POS,
+             horizontalalignment='center')
 
 # Heatmap settings functions
 # TODO refactor cbar (easier handling for combination
@@ -54,78 +74,44 @@ def _update_kws_legend_under_plot(kws_legend=None, legend_kws=None):
 
 # II Main Functions
 class PlotElements:
-    """https://matplotlib.org/stable/gallery/showcase/anatomy.html"""
+    """Utility class for plot element configurations and enhancements."""
 
-    # Get new axis object
+    # Get color dict
     @staticmethod
-    def get_new_axis(ax=None, heatmap=False):
-        """Get new axis object with same y axis as input ax"""
-        if heatmap:
-            ax_new = ax.twiny()
-        else:
-            ymin, ymax = plt.ylim()
-            ytick_old = list([round(x, 3) for x in plt.yticks()[0]])
-            yticks = [ymin] + [y for y in ytick_old if ymin < y < ymax] + [ymax]
-            ax_new = ax.figure.add_subplot(ax.get_subplotspec(), frameon=False, yticks=yticks)
-            ax_new.set_ylim(ymin, ymax)
-            # Remove last and/or first element from yticks
-            if ymax not in ytick_old:
-                yticks.pop()
-            if ymin not in ytick_old:
-                yticks.pop(0)
-            ax_new.yaxis.set_ticks(yticks)
-            # Hide y-labels of first axis object
-            ax.yaxis.set_ticks(yticks, minor=True)
-            ax.tick_params(axis="y", colors="white")
-        return ax_new
+    def get_color_dif(mean_dif=0):
+        """Return color based on the mean difference value."""
+        return ut.COLOR_FEAT_NEG if mean_dif < 0 else ut.COLOR_FEAT_POS
 
-    # Get legend items (TODO check if not in plotting utils)
+
+    # Get legend items
     @staticmethod
     def get_legend_handles_labels(dict_color=None, list_cat=None):
-        """Get legend handles from dict_color"""
+        """Create legend handles from the provided color dictionary."""
         dict_leg = {cat: dict_color[cat] for cat in dict_color if cat in list_cat}
         f = lambda l, c: mpl.patches.Patch(color=l, label=c, lw=0)
         handles = [f(l, c) for c, l in dict_leg.items()]
         labels = list(dict_leg.keys())
         return handles, labels
 
-    # Autosize labels
-    @staticmethod
-    def optimize_label_size(ax=None, df_pos=None, label_term=True):
-        """Autoscaling of size of sequence characters"""
-        max_len_label = max([len(x) for x in df_pos.index])
-        n_pos = len(list(df_pos))
-        if label_term:
-            l = max([(85 - n_pos - max_len_label) / 6, 0])
-        else:
-            l = 8
-        width, height = plt.gcf().get_size_inches()
-        xmax = ax.get_xlim()[1]
-        # Formula based on manual optimization (on tmd=13-23, jmd=10)
-        size = l - (6 + xmax / 10) + width * 2.4
-        size = max(min(15, size), 10)   # Should range between 10 and 15 (can be adjusted)
-        return size
-
     # Set figsize
     @staticmethod
     def set_figsize(figsize=None):
-        """Set figsize of figure only if not part of subplots"""
+        """Set the figure size if not part of subplots."""
         fig = plt.gcf()
         if len(fig.get_axes()) == 0:
             fig.set_size_inches(figsize)
 
     @staticmethod
     def set_title_(title=None, title_kws=None):
-        """"""
+        """Set the title of the plot."""
         if title_kws is None:
             title_kws = {}
         plt.title(title, **title_kws)
 
     # Set legend
-    # Greatly simplify
-    # TODO for profile or move to heatmap only
+    # TODO simplify (use set legend utils) for profile or move to heatmap only
     def add_legend_cat(self, ax=None, df_pos=None, df_cat=None, y=None, dict_color=None, legend_kws=None):
-        """"""
+        """Add a category legend to the plot."""
         # Get list of categories and their counts
         dict_cat = {}
         columns = [ut.COL_CAT, y]
@@ -160,7 +146,7 @@ class PlotElements:
 
     @staticmethod
     def set_y_ticks(ax=None, fs=None):
-        """"""
+        """Set custom y-tick labels with the specified font size."""
         tick_positions = ax.get_yticks()
         ax.yaxis.set_major_locator(mpl.ticker.FixedLocator(tick_positions))
         tick_labels = [round(float(i), 1) for i in tick_positions]
@@ -168,7 +154,7 @@ class PlotElements:
 
     @staticmethod
     def set_x_ticks(ax=None, fs=None):
-        """"""
+        """Set custom x-tick labels with the specified font size."""
         tick_positions = ax.get_xticks()
         ax.xaxis.set_major_locator(mpl.ticker.FixedLocator(tick_positions))
         tick_labels = [round(float(i), 1) for i in tick_positions]

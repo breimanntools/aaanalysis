@@ -7,7 +7,6 @@ import matplotlib as mpl
 
 import aaanalysis.utils as ut
 from .utils_feature import get_positions_
-from .utils_cpp_plot import add_part_seq, get_color_dif
 
 
 # I Helper Functions
@@ -40,6 +39,18 @@ def _add_position_bars(ax=None, df_feat=None):
             # Add pattern
             for pos in positions:
                 _add_pos_bars(ax=ax, x=pos - 1, y=y - 0.25)
+
+def _add_part_seq(ax=None, jmd_n_len=10, jmd_c_len=10, tmd_len=20, y=-0.75, height=0.2,
+                 tmd_color="mediumspringgreen", jmd_color="blue", alpha=1.0, start=0.0):
+    """Add colored box for sequence parts in figure"""
+    list_color = [jmd_color, tmd_color, jmd_color]
+    list_length = [jmd_n_len, tmd_len, jmd_c_len]
+    # Add jmd_n
+    for length, color in zip(list_length, list_color):
+        bar = mpl.patches.Rectangle((start, y), width=length, height=height, linewidth=0, color=color, zorder=4,
+                                    clip_on=False, alpha=alpha)
+        start += length
+        ax.add_patch(bar)
 
 
 def _get_tmd_jmd_label(jmd_n_len=10, jmd_c_len=10, space=3):
@@ -77,9 +88,9 @@ def plot_feature_position(ax=None, df=None, n=20, space=3, tmd_len=20, jmd_n_len
     args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     args_color = dict(tmd_color=tmd_color, jmd_color=jmd_color)
     # Add sequence part under plot
-    add_part_seq(ax=ax, y=len(df)-0.5, height=height, **args_len, **args_color)
+    _add_part_seq(ax=ax, y=len(df)-0.5, height=height, **args_len, **args_color)
     # Add sequence area in plot
-    add_part_seq(ax=ax, y=-0.5, height=len(df), alpha=tmd_jmd_alpha, **args_len, **args_color)
+    _add_part_seq(ax=ax, y=-0.5, height=len(df), alpha=tmd_jmd_alpha, **args_len, **args_color)
     _add_position_bars(ax=ax, df_feat=df)
     # Adjust xlabel
     x_label = _get_tmd_jmd_label(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, space=space)
@@ -106,7 +117,7 @@ def _add_annotation_extreme_val(sub_fig=None, max_neg_val=-2, min_pos_val=2, tex
 def plot_feature_mean_dif(ax=None, df=None, col_dif=None, n=20, xlim=(-22, 22), fontsize_annotation=8):
     """Plots the mean difference of features in `df` on the axis `ax`, with custom range `xlim` and annotation font size."""
     plt.sca(ax)
-    colors = [get_color_dif(mean_dif=x) for x in df[col_dif]]
+    colors = [ut.get_color_dif(mean_dif=x) for x in df[col_dif]]
     df["hue"] = colors     # Adjust to use palette for sns.barplot after v0.14.0
     args = dict(hue="hue", palette={x: x for x in colors}, legend=False)
     sub_fig = sns.barplot(ax=ax, data=df, y="feature", x=col_dif, **args)
