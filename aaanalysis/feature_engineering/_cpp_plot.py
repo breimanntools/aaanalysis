@@ -35,11 +35,9 @@ from ._backend.cpp.cpp_plot_ranking import plot_ranking
 from ._backend.cpp.cpp_plot_profile import plot_profile
 from ._backend.cpp.cpp_plot_heatmap import plot_heatmap
 from ._backend.cpp.cpp_plot_feature_map import plot_feature_map
+from ._backend.cpp.cpp_plot_update_seq_size import update_seq_size_, update_tmd_jmd_labels
 
 # TODO simplify checks & interface (end-to-end check with tests & docu)
-# TODO simplify interface (delete old profile)
-# TODO merge (grid_axis=None -> grid=False,)
-# TODO normalize=True/False (always normalize for positions)
 
 
 # I Helper Functions
@@ -127,6 +125,12 @@ def check_col_imp(col_imp=None, shap_plot=False):
         if ut.COL_FEAT_IMPACT not in col_imp:
             raise ValueError(f"If 'shap_plot=True', 'col_imp' ('{col_imp}') must follow '{ut.COL_FEAT_IMPACT}_'name''")
     return col_imp
+
+
+def check_match_shap_plot_add_legend_cat(shap_plot=False, add_legend_cat=False):
+    """Check if not both are True"""
+    if shap_plot and add_legend_cat:
+        raise ValueError(f"'shap_plot' ({shap_plot}) and 'add_legend_cat' ({add_legend_cat}) can not be both True.")
 
 
 # II Main Functions
@@ -469,7 +473,7 @@ class CPPPlot:
                 x_rank_info: Optional[Union[int, float]] = None,
                 ) -> Tuple[plt.Figure, plt.Axes]:
         """
-        Plot a feature ranking based on absolute AUC, feature importance, or sample-specif feature impact.
+        Plot CPP/-SHAP feature ranking based on feature importance or sample-specif feature impact.
 
         Introduced in [Breimann24c]_, this method visualizes the most important features for discriminating between
         the test and the reference dataset groups. At sample level, the feature impact derived from SHAP values
@@ -604,8 +608,8 @@ class CPPPlot:
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
                 start: int = 1,
                 tmd_len: int = 20,
-                jmd_n_seq: Optional[str] = None,
                 tmd_seq: Optional[str] = None,
+                jmd_n_seq: Optional[str] = None,
                 jmd_c_seq: Optional[str] = None,
                 tmd_color: str = "mediumspringgreen",
                 jmd_color: str = "blue",
@@ -613,7 +617,7 @@ class CPPPlot:
                 jmd_seq_color: str = "white",
                 seq_size: Union[int, float] = None,
                 fontsize_tmd_jmd: Union[int, float] = None,
-                add_xticks_pos: bool = False, 
+                add_xticks_pos: bool = False,
                 highlight_tmd_area: bool = True,
                 highlight_alpha: float = 0.15,
                 add_legend_cat: bool = False,
@@ -631,7 +635,7 @@ class CPPPlot:
                 ytick_length: Union[int, float] = 5.0,
                 ) -> Tuple[plt.Figure, plt.Axes]:
         """
-        Plot CPP profile for given features from 'df_feat'.
+        Plot CPP/-SHAP profile showing feature importance/impact per residue position.
 
         Parameters
         ----------
@@ -660,10 +664,10 @@ class CPPPlot:
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
             Length of TMD to be depicted (>0).
-        jmd_n_seq : str, optional
-            JMD N-terminal sequence.
         tmd_seq : str, optional
             TMD sequence.
+        jmd_n_seq : str, optional
+            JMD N-terminal sequence.
         jmd_c_seq : str, optional
             JMD C-terminal sequence.
         tmd_color : str, default='mediumspringgreen'
@@ -713,6 +717,8 @@ class CPPPlot:
 
         Returns
         -------
+        fig : plt.Figure
+            The Figure object for the CPP profile plot.
         ax : plt.Axes
             CPP profile plot axes object.
 
@@ -746,6 +752,7 @@ class CPPPlot:
         check_match_features_seq_parts(features=df_feat["feature"],
                                        tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
                                        tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
+        check_match_shap_plot_add_legend_cat(shap_plot=shap_plot, add_legend_cat=add_legend_cat)
         # Check general plot styling input
         ut.check_number_range(name="bar_width", val=bar_width, min_val=0, just_int=False)
         ut.check_color(name="edge_color", val=edge_color, accept_none=True)
@@ -754,19 +761,23 @@ class CPPPlot:
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         args_ytick = check_args_ytick(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
         # Plot profile
-        ax = plot_profile(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot,
-                          col_imp=col_imp, normalize=normalize,
-                          figsize=figsize, ax=ax,
-                          start=start,
-                          **args_len, **args_seq, **args_size,
-                          **args_part_color, **args_seq_color,
-                          add_xticks_pos=add_xticks_pos,
-                          highlight_tmd_area=highlight_tmd_area, highlight_alpha=highlight_alpha,
-                          add_legend_cat=add_legend_cat, dict_color=dict_color, legend_kws=legend_kws,
-                          bar_width=bar_width, edge_color=edge_color,
-                          grid_axis=grid_axis, ylim=ylim, **args_xtick, **args_ytick)
+        fig, ax = plot_profile(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot,
+                               col_imp=col_imp, normalize=normalize,
+                               figsize=figsize, ax=ax,
+                               start=start,
+                               **args_len, **args_seq, **args_size,
+                               **args_part_color, **args_seq_color,
+                               add_xticks_pos=add_xticks_pos,
+                               highlight_tmd_area=highlight_tmd_area, highlight_alpha=highlight_alpha,
+                               add_legend_cat=add_legend_cat, dict_color=dict_color, legend_kws=legend_kws,
+                               bar_width=bar_width, edge_color=edge_color,
+                               grid_axis=grid_axis, ylim=ylim, **args_xtick, **args_ytick)
         plt.tight_layout()
-        return ax
+        if tmd_seq is not None:
+            ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
+            if self._verbose:
+                ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
+        return fig, ax
 
     def heatmap(self,
                 df_feat=None,
@@ -810,7 +821,8 @@ class CPPPlot:
                 cbar_pct=True,
                 ):
         """
-        Plot CPP heatmap of the selected value column with scale information (y-axis) versus sequence position (x-axis).
+        Plot CPP/-SHAP heatmap showing feature value mean difference/feature impact per scale subcategory (y-axis)
+        and residue position (x-axis).
 
         This is a wrapper function for :func:`seaborn.heatmap`, designed to highlight differences between two sets
         of sequences at the positional level (e.g., amino acid level for protein sequences).
@@ -914,7 +926,6 @@ class CPPPlot:
         args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
                                                 tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
-
         # Checking input
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot)
 
@@ -987,6 +998,8 @@ class CPPPlot:
                     cbar_pct=True,
                     ):
         """
+        Plot CPP feature map showing feature value mean difference and feature importance per scale subcategory
+        (y-axis) and residue position (x-axis).
 
         Parameters
         ----------
@@ -1097,4 +1110,85 @@ class CPPPlot:
                               xtick_length=xtick_length, ytick_size=ytick_size,
                               legend_kws=legend_kws, cbar_pct=cbar_pct, linecolor=linecolor)
         plt.subplots_adjust(right=0.95)
+        return ax
+
+    def update_seq_size(self,
+                        ax=None,
+                        fig: Optional[plt.figure] = None,
+                        tmd_seq: str = None,
+                        jmd_n_seq: str = None,
+                        jmd_c_seq: str = None,
+                        max_x_dist: float = 0.1,
+                        fontsize_tmd_jmd: Union[int, float] = None,
+                        weight_tmd_jmd: Literal['normal', 'bold'] = 'bold',
+                        tmd_color: str = "mediumspringgreen",
+                        jmd_color: str = "blue",
+                        tmd_seq_color: str = "black",
+                        jmd_seq_color: str = "white",
+                        ) -> plt.Axes:
+        """
+        Update the font size of the sequence characters to prevent overlap.
+
+        This method adjusts the font size of TMD-JMD sequence characters based on their provided sequences
+        to ensure that the labels are clearly legible and do not overlap in the plot. It can be called after
+        further plot modification of the :meth:`CPPPlot.profile` or :meth:`CPPPlot.heatmap`
+        methods, which use as well the ``tmd_seq``, ``jmd_n_seq``, and ``jmd_c_seq`` parameters.
+
+        Parameters
+        ---------
+        ax : plt.Axes
+            CPP plot axes object.
+        fig : plt.Figure, optional
+            CPP plot figure object.
+        tmd_seq : str
+            TMD sequence.
+        jmd_n_seq : str
+            JMD N-terminal sequence.
+        jmd_c_seq : str
+            JMD C-terminal sequence.
+        max_x_dist : float, default=0.1
+            Maximum allowed horizontal distance between sequence characters during font size optimization.
+            A greater value reduces the overlap of sequence characters by reducing font size more aggressively.
+        fontsize_tmd_jmd : int or float, optional
+            Font size for TMD and JMD annotations.
+        weight_tmd_jmd : {'normal', 'bold'}, default='bold'
+            Font weight for TMD and JMD annotations.
+        tmd_color : str, default='mediumspringgreen'
+            Color for TMD.
+        jmd_color : str, default='blue'
+            Color for JMD.
+        tmd_seq_color : str, default='black'
+            Color for TMD sequence.
+        jmd_seq_color : str, default='white'
+            Color for JMD sequence.
+
+        Returns
+        -------
+        ax : plt.Axes
+            CPP plot axes object.
+
+        Notes
+        -----
+        * Use :meth:`CPPPlot.update_seq_size``AFTER :func:`matplotlib.pyplot.tight_layout()`.
+
+        Examples
+        --------
+        .. include:: examples/cpp_plot_update_seq_size.rst
+        """
+        # Check input
+        ut.check_ax(ax=ax, accept_none=False)
+        ut.check_fig(fig=fig, accept_none=True)
+        args_len, args_seq = check_parts_len(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
+        ut.check_number_range(name="max_x_dist", val=max_x_dist, min_val=0, just_int=False)
+        ut.check_number_range(name="fontsize_tmd_jmd", val=fontsize_tmd_jmd, min_val=0, accept_none=True, just_int=False)
+        ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd, accept_none=False)
+        args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
+        args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
+        # Adjust font size to prevent overlap
+        ax, seq_size = update_seq_size_(ax=ax, **args_seq, max_x_dist=max_x_dist, **args_part_color, **args_seq_color)
+        update_tmd_jmd_labels(fig=fig, seq_size=seq_size,
+                              fontsize_tmd_jmd=fontsize_tmd_jmd,
+                              weight_tmd_jmd=weight_tmd_jmd)
+        if self._verbose:
+            ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
         return ax

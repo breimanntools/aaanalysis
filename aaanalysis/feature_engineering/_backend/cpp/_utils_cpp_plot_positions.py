@@ -6,37 +6,52 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 import aaanalysis.utils as ut
-
 from .utils_feature import get_positions_, get_df_pos_
 
 
 # I Helper Functions
 # Optimize fontsize
-def _get_optimal_fontsize(ax, labels):
-    plt.tight_layout()
-    min_fontsize, max_fontsize = 1, 60  # Adjust max_fontsize as needed
-    lw = plt.gcf().get_size_inches()[0] / 5
-    f = lambda l: l.get_window_extent(ax.figure.canvas.get_renderer())
-    while max_fontsize - min_fontsize > 0.1:
+def _get_optimal_fontsize(ax=None, labels=None, max_x_dist=0.1):
+    """Optimize font size for sequence characters"""
+    min_fontsize, max_fontsize = 1, 60
+    th_binary_search = 0.01
+    fs_reduction = 0.05
+    # Line width for the bounding box
+    lw = ax.figure.get_size_inches()[0] / 5
+    # Function to compute the bounding box for each label
+    f = lambda l: l.get_window_extent(ax.figure.canvas.get_renderer()).transformed(ax.transData.inverted())
+    def set_label_properties(_label, _fontsize):
+        _label.set_fontsize(_fontsize)
+        _label.set_bbox(dict(facecolor='none', edgecolor='none', zorder=0.1, alpha=1, clip_on=False, pad=0, linewidth=lw))
+
+    # Function to check overlap between bounding boxes
+    def check_overlap(_bbox_list):
+        for i in range(len(_bbox_list) - 1):
+            x_distance = _bbox_list[i + 1].x0 - _bbox_list[i].x1
+            if x_distance < max_x_dist:
+                return True
+        return False
+
+    # Binary search to narrow down the font size range
+    while max_fontsize - min_fontsize > th_binary_search:
         fontsize = (min_fontsize + max_fontsize) / 2
-        overlap_detected = False
         for label in labels:
-            label.set_fontsize(fontsize)
-            # Update the bounding box with the linewidth
-            label.set_bbox(dict(facecolor='none', edgecolor='none', zorder=0.1, alpha=1, clip_on=False, pad=0, linewidth=lw))
-        for i in range(len(labels) - 1):
-            l1 = f(labels[i])
-            l2 = f(labels[i + 1])
-            # Adjust the width considering the linewidth
-            adjusted_width_l1 = l1.width + lw
-            if l1.x0 + adjusted_width_l1 > l2.x0:
-                overlap_detected = True
-                break
-        if overlap_detected:
+            set_label_properties(label, fontsize)
+        bbox_list = [f(label) for label in labels]
+        if check_overlap(bbox_list):
             max_fontsize = fontsize
         else:
             min_fontsize = fontsize
-    optimal_fontsize = min_fontsize
+
+    # High precision step-wise reduction
+    optimal_fontsize = max_fontsize
+    while optimal_fontsize > min_fontsize:
+        for label in labels:
+            set_label_properties(label, optimal_fontsize)
+        bbox_list = [f(label) for label in labels]
+        if not check_overlap(bbox_list):
+            break  # If no overlap is detected, this is the optimal size
+        optimal_fontsize -= fs_reduction
     return optimal_fontsize
 
 
@@ -116,14 +131,14 @@ def _add_part_seq(ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, x_shift
                      fontname=ut.FONT_AA, zorder=2)
     ax.set_xticklabels(labels=[tmd_jmd[i] for i in minor_xticks], minor=True, **kws_ticks)
     ax.set_xticklabels(labels=[tmd_jmd[i] for i in major_xticks], minor=False, **kws_ticks)
-    ax.tick_params(length=0, which="both")
+    ax.tick_params(axis="x", length=0, which="both")
     # Get labels in order of sequence (separate between minor and major ticks)
     dict_pos_label = dict(zip(minor_xticks, ax.xaxis.get_ticklabels(which="minor")))
     dict_pos_label.update(dict(zip(major_xticks, ax.xaxis.get_ticklabels(which="major"))))
     labels = list(dict(sorted(dict_pos_label.items(), key=lambda item: item[0])).values())
     # Adjust font size to prevent overlap
     if seq_size is None:
-        seq_size = _get_optimal_fontsize(ax, labels)
+        seq_size = _get_optimal_fontsize(ax=ax, labels=labels)
     # Set colored box around sequence to indicate TMD, JMD
     lw = plt.gcf().get_size_inches()[0]/5
     for l, c in zip(labels, colors):
@@ -165,20 +180,7 @@ def _get_new_axis(ax=None, heatmap=False):
     if heatmap:
         ax_new = ax.twiny()
     else:
-        ymin, ymax = plt.ylim()
-        ytick_old = list([round(x, 3) for x in plt.yticks()[0]])
-        yticks = [ymin] + [y for y in ytick_old if ymin < y < ymax] + [ymax]
-        ax_new = ax.figure.add_subplot(ax.get_subplotspec(), frameon=False, yticks=yticks)
-        ax_new.set_ylim(ymin, ymax)
-        # Remove last and/or first element from yticks
-        if ymax not in ytick_old:
-            yticks.pop()
-        if ymin not in ytick_old:
-            yticks.pop(0)
-        ax_new.yaxis.set_ticks(yticks)
-        # Hide y-labels of first axis object
-        ax.yaxis.set_ticks(yticks, minor=True)
-        ax.tick_params(axis="y", colors="white")
+        ax_new = ax.figure.add_subplot(ax.get_subplotspec(), frameon=False, yticks=[])
     return ax_new
 
 
@@ -249,24 +251,43 @@ class PlotPositions:
         df_pos = df_pos.T[sorted_col].T
         return df_pos.round(3)
 
-    # Add tmd jmd bars
-    def get_xticks_with_labels(self, step=5):
-        """Generate x-ticks and their labels for the plot."""
-        second_pos = int((self.start+step)/step)*step
-        xticks_middle = list(range(second_pos, self.stop, step))
-        xticks_labels = [self.start] + xticks_middle + [self.stop]
-        xticks = [x-self.start for x in xticks_labels]
-        return xticks, xticks_labels
+    # Add TMD-JMD sequence
+    @staticmethod
+    def get_optimal_fontsize(ax, labels, max_x_dist=0.1):
+        """Get sequence fontsize optimized to not overlap"""
+        opt_fs = _get_optimal_fontsize(ax=ax, labels=labels, max_x_dist=max_x_dist)
+        return round(opt_fs, 2)
 
-    def add_xticks(self, ax=None, x_shift=0.0, xticks_position="bottom", xtick_size=11.0, xtick_width=2.0,
-                   xtick_length=4.0):
-        """Add x-ticks to the plot."""
-        xticks, xticks_labels = self.get_xticks_with_labels(step=5)
-        ax.set_xticks([x + x_shift for x in xticks])
-        ax.set_xticklabels(xticks_labels, rotation=0, size=xtick_size)
-        ax.tick_params(axis="x", color="black", length=xtick_length, width=xtick_width)
-        ax.xaxis.set_ticks_position(xticks_position)
+    def add_tmd_jmd_seq(self, ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, add_xticks_pos=False, heatmap=True,
+                        tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
+                        x_shift=0, xtick_size=11, seq_size=None, fontsize_tmd_jmd=None):
+        """Add sequences and corresponding x-ticks for TMD and JMD regions."""
+        seq_size = _add_part_seq(ax=ax, jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq, x_shift=x_shift,
+                               seq_size=seq_size, tmd_color=tmd_color, jmd_color=jmd_color,
+                               tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
+        fontsize_tmd_jmd = seq_size if fontsize_tmd_jmd is None else fontsize_tmd_jmd
+        # Set second axis (with ticks and part annotations)
+        name_tmd = ut.options["name_tmd"]
+        name_jmd_n = ut.options["name_jmd_n"]
+        name_jmd_c = ut.options["name_jmd_c"]
+        jmd_n_end, tmd_end, jmd_c_end = self._get_ends(x_shift=-1)
+        jmd_n_middle, tmd_middle, jmd_c_middle = self._get_middles(x_shift=-0.5)
+        if not add_xticks_pos:
+            xticks = [jmd_n_middle, tmd_middle, jmd_c_middle]
+            xtick_labels = [name_jmd_n, name_tmd, name_jmd_c]
+        else:
+            xticks = [0, jmd_n_middle, jmd_n_end, tmd_middle, tmd_end, jmd_c_middle, jmd_c_end]
+            xtick_labels = [self.start, name_jmd_n, jmd_n_end + self.start, name_tmd, tmd_end + self.start, name_jmd_c,
+                            jmd_c_end + self.start]
+        if fontsize_tmd_jmd > 0:
+            ax2 = _get_new_axis(ax=ax, heatmap=heatmap)
+            ax2.set_xlim(ax.get_xlim())
+            _add_part_seq_second_ticks(ax2=ax2, xticks=xticks, xtick_labels=xtick_labels,
+                                       x_shift=x_shift, seq_size=seq_size,
+                                       fontsize_tmd_jmd=fontsize_tmd_jmd, xtick_size=xtick_size)
+        return ax
 
+    # Add TMD-JMD elements
     def add_tmd_jmd_bar(self, ax=None, x_shift=0, jmd_color="blue", tmd_color="mediumspringgreen"):
         """Add colored bars to indicate TMD and JMD regions."""
         jmd_n_start, tmd_start, jmd_c_start = self._get_starts(x_shift=x_shift)
@@ -306,29 +327,20 @@ class PlotPositions:
                                      color=tmd_color, zorder=0.1, clip_on=True, alpha=alpha)
         ax.add_patch(rect)
 
-    def add_tmd_jmd_seq(self, ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, add_xticks_pos=False, heatmap=True,
-                        tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
-                        x_shift=0, xtick_size=11, seq_size=None, fontsize_tmd_jmd=None):
-        """Add sequences and corresponding x-ticks for TMD and JMD regions."""
-        seq_size = _add_part_seq(ax=ax, jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq, x_shift=x_shift,
-                                 seq_size=seq_size, tmd_color=tmd_color, jmd_color=jmd_color,
-                                 tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
-        fontsize_tmd_jmd = seq_size if fontsize_tmd_jmd is None else fontsize_tmd_jmd
-        # Set second axis (with ticks and part annotations)
-        name_tmd = ut.options["name_tmd"]
-        name_jmd_n = ut.options["name_jmd_n"]
-        name_jmd_c = ut.options["name_jmd_c"]
-        jmd_n_end, tmd_end, jmd_c_end = self._get_ends(x_shift=-1)
-        jmd_n_middle, tmd_middle, jmd_c_middle = self._get_middles(x_shift=-0.5)
-        if not add_xticks_pos:
-            xticks = [jmd_n_middle, tmd_middle, jmd_c_middle]
-            xtick_labels = [name_jmd_n, name_tmd, name_jmd_c]
-        else:
-            xticks = [0, jmd_n_middle, jmd_n_end, tmd_middle, tmd_end, jmd_c_middle, jmd_c_end]
-            xtick_labels = [self.start, name_jmd_n, jmd_n_end + self.start, name_tmd, tmd_end + self.start, name_jmd_c,
-                            jmd_c_end + self.start]
-        ax2 = _get_new_axis(ax=ax, heatmap=heatmap)
-        ax2.set_xlim(ax.get_xlim())
-        _add_part_seq_second_ticks(ax2=ax2, xticks=xticks, xtick_labels=xtick_labels, x_shift=x_shift, seq_size=seq_size,
-                                   fontsize_tmd_jmd=fontsize_tmd_jmd, xtick_size=xtick_size)
-        return ax
+    # Add x-ticks
+    def get_xticks_with_labels(self, step=5):
+        """Generate x-ticks and their labels for the plot."""
+        second_pos = int((self.start+step)/step)*step
+        xticks_middle = list(range(second_pos, self.stop, step))
+        xticks_labels = [self.start] + xticks_middle + [self.stop]
+        xticks = [x-self.start for x in xticks_labels]
+        return xticks, xticks_labels
+
+    def add_xticks(self, ax=None, x_shift=0.0, xticks_position="bottom", xtick_size=11.0, xtick_width=2.0,
+                   xtick_length=4.0):
+        """Add x-ticks to the plot."""
+        xticks, xticks_labels = self.get_xticks_with_labels(step=5)
+        ax.set_xticks([x + x_shift for x in xticks])
+        ax.set_xticklabels(xticks_labels, rotation=0, size=xtick_size)
+        ax.tick_params(axis="x", color="black", length=xtick_length, width=xtick_width)
+        ax.xaxis.set_ticks_position(xticks_position)

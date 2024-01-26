@@ -1,6 +1,7 @@
 """
-This is a script for ...
+This is a script for the backend of the CPPPlot.feature_map method.
 """
+
 import statistics
 import math
 import pandas as pd
@@ -175,7 +176,6 @@ def plot_feature_map(df_feat=None, df_cat=None, y="subcategory", col_value="mean
     bbox_x = 0.5
     bbox_y = height * 0.0225 - 0.17 #0.2175
     bbox_y = 0.01
-    print(fig)
     _label = f"Feature value\n{name_test} - {name_ref}"
     cbar_kws = dict(use_gridspec=False,
                     orientation="horizontal",

@@ -49,10 +49,10 @@ def _get_kws_legend_under_plot(list_cat=None, items_per_col=3, x_adjust=-0.3, y_
     bbox_y = width / height * y_adjust
     bbox_x = -0.2 + x_adjust
     # TODO
-    ncol = len(set(list_cat))
-    if ncol > 4:
-        ncol = int(np.ceil(ncol/items_per_col))
-    kws_legend = dict(ncol=ncol, loc=2, frameon=False, bbox_to_anchor=(bbox_x, bbox_y),
+    n_cols = len(set(list_cat))
+    if n_cols > 4:
+        n_cols = int(np.ceil(n_cols/items_per_col))
+    kws_legend = dict(n_cols=n_cols, loc=2, frameon=False, bbox_to_anchor=(bbox_x, bbox_y),
                       columnspacing=0.3, labelspacing=0.05, handletextpad=0.15,
                       facecolor="white",  shadow=False,
                       title="Scale category")
@@ -95,11 +95,19 @@ class PlotElements:
 
     # Set figsize
     @staticmethod
-    def set_figsize(figsize=None):
-        """Set the figure size if not part of subplots."""
-        fig = plt.gcf()
-        if len(fig.get_axes()) == 0:
-            fig.set_size_inches(figsize)
+    def set_figsize(ax=None, figsize=None, force_set=False):
+        """Set the figure size. Optionally create a figure and an axes object if none exists."""
+        if ax:
+            fig = ax.figure
+        elif not plt.get_fignums():
+            fig, ax = plt.subplots(figsize=figsize)
+        else:
+            fig = plt.gcf()
+        # Set figure size if force_set is True or if there are no axes in the figure
+        if force_set or len(fig.get_axes()) == 0:
+            fig.set_size_inches(figsize, forward=True)
+        return fig, ax
+
 
     @staticmethod
     def set_title_(title=None, title_kws=None):

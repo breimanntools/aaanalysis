@@ -1,5 +1,5 @@
 """
-This is a script for ...
+This is a script for the backend of the dPULearnPlot methods.
 """
 import time
 import pandas as pd
@@ -53,8 +53,8 @@ def plot_eval(df_eval=None, figsize=None, dict_xlims=None, colors=None, legend=T
     cols_auc = [c for c in cols_eval if "AUC" in c]
     cols_kld = [c for c in cols_eval if "KLD" in c]
     kld_in = len(cols_kld) != 0
-    ncols = 3 if not kld_in else 4
-    fig, axes = plt.subplots(1, ncols, sharey=True, figsize=figsize)
+    n_colss = 3 if not kld_in else 4
+    fig, axes = plt.subplots(1, n_colss, sharey=True, figsize=figsize)
     # Show Homogeneity
     for i, col in enumerate(cols_homogeneity):
         ax = axes[i]
@@ -77,7 +77,7 @@ def plot_eval(df_eval=None, figsize=None, dict_xlims=None, colors=None, legend=T
     if dict_xlims is not None:
         for i in dict_xlims:
             # Check that KLD axis are only set if valid
-            if i <= ncols:
+            if i <= n_colss:
                 axes[i].set_xlim(dict_xlims[i])
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.25, hspace=0)
@@ -120,8 +120,8 @@ def plot_pca(df_pu=None, labels=None, figsize=(6, 6),
     # Legend settings
     if legend:
         dict_color = {label: color for label, color in zip(names, colors)}
-        ut.plot_legend_(ax=plt.gca(),  dict_color=dict_color, title="Datasets",
-                        ncol=1, y=legend_y, handletextpad=0.4, fontsize=fs, fontsize_title=fs-1, weight_title="bold")
+        ut.plot_legend_(ax=plt.gca(), dict_color=dict_color, title="Datasets",
+                        n_cols=1, y=legend_y, handletextpad=0.4, fontsize=fs, fontsize_title=fs - 1, weight_title="bold")
     # Labels
     plt.xlabel(label_x)
     plt.ylabel(label_y)

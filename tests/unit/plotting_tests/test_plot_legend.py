@@ -57,11 +57,11 @@ class TestPlotSetLegend:
                 aa.plot_legend(ax=self.ax, dict_color=dict_color, marker=marker)
 
     @settings(max_examples=5, deadline=500)
-    @given(ncol=st.integers(min_value=1, max_value=10))
-    def test_plot_set_legend_ncol(self, ncol, dict_color):
-        """Test the 'ncol' parameter."""
+    @given(n_cols=st.integers(min_value=1, max_value=10))
+    def test_plot_set_legend_n_cols(self, n_cols, dict_color):
+        """Test the 'n_cols' parameter."""
         ax = plt.gca()
-        result = aa.plot_legend(ax=ax, ncol=ncol, dict_color=dict_color)
+        result = aa.plot_legend(ax=ax, n_cols=n_cols, dict_color=dict_color)
         assert isinstance(result, plt.Axes)
 
 
@@ -169,10 +169,10 @@ class TestPlotSetLegendComplex:
 
     @settings(max_examples=5, deadline=500)
     @given(st.floats(1, 10))
-    def test_plot_set_legend_ncol(self, ncol):
+    def test_plot_set_legend_n_cols(self, n_cols):
         ax = plt.gca()
         dict_color = {str(i): "r" for i in range(0, 10)}
-        result = aa.plot_legend(ax=ax, ncol=int(ncol), dict_color=dict_color)
+        result = aa.plot_legend(ax=ax, n_cols=int(n_cols), dict_color=dict_color)
         assert isinstance(result, plt.Axes)
 
     @settings(max_examples=5, deadline=500)

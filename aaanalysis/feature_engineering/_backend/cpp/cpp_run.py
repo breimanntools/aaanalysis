@@ -1,4 +1,8 @@
-"""Backend for CPP run method"""
+"""
+This is a script for the backend of the CPP.run() method.
+
+This is the key algorithm of CPP and for AAanalysis.
+"""
 import os
 import numpy as np
 import pandas as pd

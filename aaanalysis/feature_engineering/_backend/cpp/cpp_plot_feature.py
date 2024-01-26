@@ -1,5 +1,5 @@
 """
-This is a script for backend of the cpp_plot.feature method.
+This is a script for the backend of the CPPPlot.feature() method.
 """
 import pandas as pd
 import seaborn as sns
@@ -150,7 +150,7 @@ def plot_feature(ax=None, figsize=(5.6, 4.8), feature=str,
                            jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     # Plotting
     pe = PlotElements()
-    pe.set_figsize(figsize=figsize)
+    fig, ax = pe.set_figsize(ax=ax, figsize=figsize)
     args = dict(data=df_feat_vals, x=COL_FEAT_VAL,  hue=ut.COL_LABEL, ax=ax,
                 palette=[color_test, color_ref], hue_order=[name_test, name_ref],
                 legend=False)

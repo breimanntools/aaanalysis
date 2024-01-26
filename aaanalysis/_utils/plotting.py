@@ -215,13 +215,15 @@ def plot_get_clist_(n_colors=3):
 
 
 def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
-                 loc="upper left", loc_out=False, y=None, x=None, ncol=3,
+                 loc="upper left", loc_out=False, y=None, x=None, n_cols=3,
                  labelspacing=0.2, columnspacing=1.0, handletextpad=0.8, handlelength=2.0,
                  fontsize=None, fontsize_title=None, weight_font="normal", weight_title="normal",
                  marker=None, marker_size=10, lw=0, linestyle=None, edgecolor=None,
                  hatch=None, hatchcolor="white", title=None, title_align_left=True,
                  frameon=False, **kwargs):
     """Sets an independently customizable plot legend"""
+
+
     # Check input
     if ax is None:
         ax = plt.gca()
@@ -235,13 +237,12 @@ def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
     if ax.get_legend() is not None and len(ax.get_legend().get_lines()) > 0:
         ax.legend_.remove()
     # Update legend arguments
-    args = dict(loc=loc, ncol=ncol, fontsize=fontsize, labelspacing=labelspacing, columnspacing=columnspacing,
+    args = dict(loc=loc, ncol=n_cols, fontsize=fontsize, labelspacing=labelspacing, columnspacing=columnspacing,
                 handletextpad=handletextpad, handlelength=handlelength, borderpad=0, title=title,
                 edgecolor=edgecolor, prop={"weight": weight_font, "size": fontsize}, frameon=frameon)
     args.update(kwargs)
     if fontsize_title:
         args["title_fontproperties"] = {"weight": weight_title, "size": fontsize_title}
-
     if loc_out:
         x, y = x or 0, y or -0.25
     if x or y:

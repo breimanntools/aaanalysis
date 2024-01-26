@@ -1,5 +1,5 @@
 """
-This is a script for the backend of the CPP.eval method.
+This is a script for the backend of the CPP.eval() method.
 """
 import pandas as pd
 import numpy as np

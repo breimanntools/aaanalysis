@@ -1,5 +1,5 @@
 """
-This is a script for the backend of the cpp_plot.heatmap method.
+This is a script for the backend of the CPPPlot.heatmap() method.
 """
 import numpy as np
 import seaborn as sns
@@ -159,9 +159,8 @@ def _plot_inner_heatmap(ax=None, figsize=(8, 8), df_pos=None, vmin=None, vmax=No
     linewidths = 0.01 if grid_on else 0
     # Plot with 0 set to NaN
     pe = PlotElements()
-    pe.set_figsize(figsize=figsize)   # figsize is not used as argument in seaborn (but in pandas)
+    fig, ax = pe.set_figsize(ax=ax, figsize=figsize)   # figsize is not used as argument in seaborn (but in pandas)
     data = df_pos.replace(0, np.NaN)
-
     ax = sns.heatmap(data, ax=ax, vmin=vmin, vmax=vmax,
                      cbar_ax=cbar_ax, cbar_kws=cbar_kws, cmap=cmap,  center=center,
                      yticklabels=True, xticklabels=True,

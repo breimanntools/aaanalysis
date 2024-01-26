@@ -166,7 +166,7 @@ def plot_eval(df_eval=None, figsize=(8, 5), dict_xlims=None, dict_color=None, le
     if legend:
         fs = ut.plot_gco()
         ut.plot_legend_(ax=axes[0], dict_color=dict_color, list_cat=list_cat, loc="upper left",
-                        ncol=np.ceil(len(list_cat)/2), y=legend_y,
+                        n_cols=np.ceil(len(list_cat) / 2), y=legend_y,
                         title="Scale category", fontsize=fs-1,
                         labelspacing=0.1, columnspacing=0.4, handletextpad=0.2, handlelength=2)
         plt.subplots_adjust(wspace=0.25, hspace=0, bottom=0.35)

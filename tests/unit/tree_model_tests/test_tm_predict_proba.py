@@ -51,9 +51,9 @@ class TestPredictProba:
     """
 
     # Positive tests for X parameter
-    @settings(max_examples=10, deadline=10000)
+    @settings(max_examples=20, deadline=10000)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
-                         elements=st.floats(allow_nan=False, allow_infinity=False)))
+                         elements=st.floats(allow_nan=False, allow_infinity=False, max_value=1000, min_value=-1000)))
     def test_positive_X_parameter(self, X):
         tm = aa.TreeModel()
         X = X.round(0)

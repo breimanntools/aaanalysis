@@ -21,7 +21,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
                 frameon: bool = False,
                 y: Optional[Union[int, float]] = None,
                 x: Optional[Union[int, float]] = None,
-                ncol: int = 3,
+                n_cols: int = 3,
                 labelspacing: Union[int, float] = 0.2,
                 columnspacing: Union[int, float] = 1.0,
                 handletextpad: Union[int, float] = 0.8,
@@ -70,7 +70,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
         The y-coordinate for the legend's anchor point.
     x : int or float, optional
         The x-coordinate for the legend's anchor point.
-    ncol : int, default=1
+    n_cols : int, default=1
         Number of columns in the legend, at least 1.
     labelspacing : int or float, default=0.2
         Vertical spacing between legend items.
@@ -140,7 +140,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
     ut.check_bool(name="title_align_left", val=title_align_left)
     ut.check_bool(name="loc_out", val=loc_out)
     ut.check_bool(name="frameon", val=frameon)
-    ut.check_number_range(name="ncol", val=ncol, min_val=1, accept_none=True, just_int=True)
+    ut.check_number_range(name="n_cols", val=n_cols, min_val=1, accept_none=True, just_int=True)
     ut.check_number_val(name="x", val=x, accept_none=True, just_int=False)
     ut.check_number_val(name="y", val=y, accept_none=True, just_int=False)
     ut.check_number_val(name="lw", val=lw, accept_none=True, just_int=False)
@@ -151,11 +151,12 @@ def plot_legend(ax: Optional[plt.Axes] = None,
         ut.check_number_range(name=key, val=args_non_neg[key], min_val=0, accept_none=True, just_int=False)
     # Create new legend
     ax = ut.plot_legend_(ax=ax, dict_color=dict_color, list_cat=list_cat, labels=labels,
-                         loc=loc, loc_out=loc_out, y=y, x=x, ncol=ncol,
+                         loc=loc, loc_out=loc_out, y=y, x=x, n_cols=n_cols,
                          labelspacing=labelspacing, columnspacing=columnspacing,
                          handletextpad=handletextpad, handlelength=handlelength,
                          fontsize=fontsize, fontsize_title=fontsize_title,
                          weight_font=weight_font, weight_title=weight_title,
                          marker=marker, marker_size=marker_size, lw=lw, linestyle=linestyle, edgecolor=edgecolor,
-                         hatch=hatch, hatchcolor=hatchcolor, title=title, title_align_left=title_align_left, **kwargs)
+                         hatch=hatch, hatchcolor=hatchcolor, title=title, title_align_left=title_align_left,
+                         frameon=frameon, **kwargs)
     return ax

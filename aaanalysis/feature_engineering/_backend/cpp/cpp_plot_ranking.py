@@ -1,5 +1,5 @@
 """
-This is a script for the backend of the cpp_plot.ranking method.
+This is a script for the backend of the CPPPlot.ranking() method.
 """
 import seaborn as sns
 import matplotlib.pyplot as plt

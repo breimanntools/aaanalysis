@@ -22,6 +22,19 @@ def _is_valid_rgb_tuple(val):
 
 
 # Check figure
+def check_fig(fig=None, accept_none=False, str_add=None):
+    """Check if the provided value is a matplotlib Figure instance or None."""
+    import matplotlib.figure
+    if accept_none and fig is None:
+        return None
+    if not isinstance(fig, matplotlib.figure.Figure):
+        str_error = f"'fig' (type={type(fig)}) should be mpl.figure.Figure or None."
+        if str_add:
+            str_error += " " + str_add
+        raise ValueError(str_error)
+    return fig
+
+
 def check_ax(ax=None, accept_none=False, str_add=None):
     """Check if the provided value is a matplotlib Axes instance or None."""
     import matplotlib.axes
@@ -49,6 +62,16 @@ def check_grid_axis(grid_axis="y", accept_none=True, str_add=None):
     list_grid_axis = ["y", "x", "both"]
     if grid_axis not in list_grid_axis:
         str_error = add_str(str_error=f"'grid_axis' ({grid_axis}) should be one of following: {list_grid_axis}",
+                            str_add=str_add)
+        raise ValueError(str_error)
+
+
+def check_font_weight(name="font_weight", font_weight=None, accept_none=True, str_add=None):
+    if accept_none and font_weight is None:
+        return None # Skip test
+    list_weight = ["normal", "bold"]
+    if font_weight not in list_weight:
+        str_error = add_str(str_error=f"'{name}' ({font_weight}) should be one of following: {list_weight}",
                             str_add=str_add)
         raise ValueError(str_error)
 

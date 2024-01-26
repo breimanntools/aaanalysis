@@ -185,6 +185,7 @@ def check_match_features_seq_parts(features=None, tmd_seq=None, jmd_n_seq=None, 
                 raise ValueError(
                     f"Sequence 'part' ({seq}, n={len(seq)}) too short for '{feature}' feature (n_max={n_max})")
 
+
 # Check df_seq
 def _get_tmd_positions(row):
     """Get position of tmd from sequence"""
