@@ -7,7 +7,7 @@ import matplotlib.colors as mcolors
 
 from ._utils import add_str
 import aaanalysis._utils.check_type as check_type
-
+import numpy as np
 
 # Helper functions
 def _is_valid_hex_color(val):
@@ -35,7 +35,7 @@ def check_fig(fig=None, accept_none=False, str_add=None):
     return fig
 
 
-def check_ax(ax=None, accept_none=False, str_add=None):
+def check_ax(ax=None, accept_none=False, str_add=None, return_first=False):
     """Check if the provided value is a matplotlib Axes instance or None."""
     import matplotlib.axes
     if accept_none and ax is None:
@@ -44,6 +44,10 @@ def check_ax(ax=None, accept_none=False, str_add=None):
         str_error = add_str(str_error=f"'ax' (type={type(ax)}) should be mpl.axes.Axes or None.",
                             str_add=str_add)
         raise ValueError(str_error)
+    if return_first:
+        if isinstance(ax, (list, tuple, np.ndarray)) and len(ax) > 0:
+            ax = ax[0]
+    return ax
 
 
 def check_figsize(figsize=None, accept_none=False, str_add=None):

@@ -86,7 +86,17 @@ def check_match_dict_color_df_cat(dict_color=None, df_cat=None):
     if len(list_cat_not_in_dict_cat) > 0:
         error = f"'dict_color' not complete! Following categories are missing from 'df_cat': {list_cat_not_in_dict_cat}"
         raise ValueError(error)
-    for key in dict_color:
+    for key in list_cats:
         color = dict_color[key]
         ut.check_color(name=key, val=color)
     return dict_color
+
+def check_match_dict_color_df_feat(dict_color=None, df_feat=None):
+    """Check if color dictionary is matching with feature DataFrame"""
+    list_cats = list(sorted(set(df_feat[ut.COL_CAT])))
+    list_cat_not_in_dict_cat = [x for x in list_cats if x not in dict_color]
+    if len(list_cat_not_in_dict_cat) > 0:
+        error = f"'dict_color' not complete! Following categories are missing from 'df_cat': {list_cat_not_in_dict_cat}"
+        raise ValueError(error)
+    _dict_color = {cat: dict_color[cat] for cat in list_cats}
+    return _dict_color

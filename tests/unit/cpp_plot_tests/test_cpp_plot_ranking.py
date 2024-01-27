@@ -10,7 +10,6 @@ from hypothesis import given, settings, assume
 import hypothesis.strategies as st
 import aaanalysis as aa
 
-# TODO add tests for col_imp and col_dif
 # Setup and helper functions
 def create_df_feat(num_features=50):
     """Creates a dummy DataFrame to mimic df_feat input."""

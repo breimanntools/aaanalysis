@@ -27,7 +27,8 @@ from ._backend.check_cpp_plot import (check_value_type,
                                       check_args_size,
                                       check_part_color,
                                       check_seq_color,
-                                      check_match_dict_color_df_cat)
+                                      check_match_dict_color_df_cat,
+                                      check_match_dict_color_df_feat)
 
 from ._backend.cpp.cpp_plot_eval import plot_eval
 from ._backend.cpp.cpp_plot_feature import plot_feature
@@ -35,7 +36,7 @@ from ._backend.cpp.cpp_plot_ranking import plot_ranking
 from ._backend.cpp.cpp_plot_profile import plot_profile
 from ._backend.cpp.cpp_plot_heatmap import plot_heatmap
 from ._backend.cpp.cpp_plot_feature_map import plot_feature_map
-from ._backend.cpp.cpp_plot_update_seq_size import update_seq_size_, update_tmd_jmd_labels
+from ._backend.cpp.cpp_plot_update_seq_size import get_tmd_jmd_seq, update_seq_size_, update_tmd_jmd_labels
 
 # TODO simplify checks & interface (end-to-end check with tests & docu)
 
@@ -131,6 +132,20 @@ def check_match_shap_plot_add_legend_cat(shap_plot=False, add_legend_cat=False):
     """Check if not both are True"""
     if shap_plot and add_legend_cat:
         raise ValueError(f"'shap_plot' ({shap_plot}) and 'add_legend_cat' ({add_legend_cat}) can not be both True.")
+
+
+# Check update_seq_size
+def check_match_ax_seq_len(ax=None, jmd_n_len=10, jmd_c_len=10):
+    """Check if ax matches with requiered length"""
+    labels = ax.xaxis.get_ticklabels(which="both")
+    f = lambda l: l.get_window_extent(ax.figure.canvas.get_renderer())
+    tick_positions = [f(l).x0 for l in labels]
+    _, sorted_labels = zip(*sorted(zip(tick_positions, labels), key=lambda t: t[0]))
+    tmd_jmd_seq = "".join([x.get_text() for x in sorted_labels])
+    min_len = jmd_n_len + 1 + jmd_c_len
+    if len(tmd_jmd_seq) <= min_len:
+        raise ValueError(f"TMD-JMD sequence from 'ax' is shorter than minimum ({min_len}; jmd_n: {jmd_n_len}, tmd:>1, jmd_c: {jmd_c_len}."
+                         f"\n Sequence (len: {len(tmd_jmd_seq)}) retrieved from 'ax' is: '{tmd_jmd_seq}'")
 
 
 # II Main Functions
@@ -749,6 +764,7 @@ class CPPPlot:
         ut.check_bool(name="add_legend_cat", val=add_legend_cat)
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
         dict_color = check_match_dict_color_df_cat(dict_color=dict_color, df_cat=self._df_cat)
+        dict_color = check_match_dict_color_df_feat(dict_color=dict_color, df_feat=df_feat)
         check_match_features_seq_parts(features=df_feat["feature"],
                                        tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
                                        tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
@@ -943,7 +959,7 @@ class CPPPlot:
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
         ut.check_figsize(figsize=figsize)
         dict_color = check_match_dict_color_df_cat(dict_color=dict_color, df_cat=self._df_cat)
-
+        dict_color = check_match_dict_color_df_feat(dict_color=dict_color, df_feat=df_feat)
         # Get df positions
         ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat, col_cat=y, col_value=col_value, value_type=value_type,
                           normalize=normalize, figsize=figsize,
@@ -1096,6 +1112,7 @@ class CPPPlot:
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
         ut.check_figsize(figsize=figsize)
         dict_color = check_match_dict_color_df_cat(dict_color=dict_color, df_cat=self._df_cat)
+        dict_color = check_match_dict_color_df_feat(dict_color=dict_color, df_feat=df_feat)
         # Get df positions
         ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat, y=y, col_value=col_value, value_type=value_type,
                               normalize=normalize, figsize=figsize,
@@ -1115,9 +1132,6 @@ class CPPPlot:
     def update_seq_size(self,
                         ax: plt.Axes = None,
                         fig: Optional[plt.Figure] = None,
-                        tmd_seq: str = None,
-                        jmd_n_seq: str = None,
-                        jmd_c_seq: str = None,
                         max_x_dist: float = 0.1,
                         fontsize_tmd_jmd: Union[int, float] = None,
                         weight_tmd_jmd: Literal['normal', 'bold'] = 'bold',
@@ -1138,12 +1152,6 @@ class CPPPlot:
             CPP plot axes object.
         fig : plt.Figure, optional
             CPP plot figure object. If given, ``fontsize_tmd_jmd`` will be automatically adjusted.
-        tmd_seq : str
-            TMD sequence.
-        jmd_n_seq : str
-            JMD N-terminal sequence.
-        jmd_c_seq : str
-            JMD C-terminal sequence.
         max_x_dist : float, default=0.1
             Maximum allowed horizontal distance between sequence characters during font size optimization.
             A greater value reduces potential overlaps of sequence characters.
@@ -1180,15 +1188,18 @@ class CPPPlot:
         .. include:: examples/cpp_plot_update_seq_size.rst
         """
         # Check input
-        ut.check_ax(ax=ax, accept_none=False)
+        ax = ut.check_ax(ax=ax, accept_none=False, return_first=True)
         ut.check_fig(fig=fig, accept_none=True)
-        args_len, args_seq = check_parts_len(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
         ut.check_number_range(name="max_x_dist", val=max_x_dist, min_val=0, just_int=False)
         ut.check_number_range(name="fontsize_tmd_jmd", val=fontsize_tmd_jmd, min_val=0, accept_none=True, just_int=False)
         ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd, accept_none=False)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
+        check_match_ax_seq_len(ax=ax, jmd_c_len=self._jmd_c_len, jmd_n_len=self._jmd_n_len)
         # Adjust font size to prevent overlap
+        jmd_n_seq, tmd_seq, jmd_c_seq = get_tmd_jmd_seq(ax=ax, jmd_c_len=self._jmd_c_len, jmd_n_len=self._jmd_n_len)
+        args_len, args_seq = check_parts_len(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
+                                             jmd_c_len=self._jmd_c_len, jmd_n_len=self._jmd_n_len)
         ax, seq_size = update_seq_size_(ax=ax, **args_seq, max_x_dist=max_x_dist, **args_part_color, **args_seq_color)
         update_tmd_jmd_labels(fig=fig, seq_size=seq_size,
                               fontsize_tmd_jmd=fontsize_tmd_jmd,
