@@ -512,7 +512,7 @@ class CPPPlot:
         tmd_color : str, default='mediumspringgreen'
             Color for TMD.
         jmd_color : str, default='blue'
-            Color for JMD.
+            Color for JMDs.
         tmd_jmd_alpha : int or float, default=0.075
             The transparency alpha value [0-1] of the TMD-JMD area in the feature position subplot.
         name_test : str, default="TEST"
@@ -673,7 +673,7 @@ class CPPPlot:
         tmd_color : str, default='mediumspringgreen'
             Color for TMD.
         jmd_color : str, default='blue'
-            Color for JMD.
+            Color for JMDs.
         tmd_seq_color : str, default='black'
             Color for TMD sequence.
         jmd_seq_color : str, default='white'
@@ -681,7 +681,7 @@ class CPPPlot:
         seq_size : int or float, optional
             Font size for sequence annotations.
         fontsize_tmd_jmd : int or float, optional
-            Font size for TMD and JMD annotations.
+            Font size for the part labels (JMD-N, TMD, JMD-C).
         add_xticks_pos : bool, default=False
             If ``True``, include x-tick positions when TMD-JMD sequence is given.
         highlight_tmd_area : bool, default=True
@@ -885,8 +885,8 @@ class CPPPlot:
             Color of JMD-N and JMD-C sequence.
         seq_size : int or float, optional
             Font size of all sequence parts in points. If ``None``, optimized automatically.
-        fontsize_tmd_jmd : float, optional
-            Font size of 'TMD', 'JMD-N' and 'JMD-C'  label in points. If ``None``, optimized automatically.
+        fontsize_tmd_jmd : int or float, optional
+            Font size for the part labels (JMD-N, TMD, JMD-C).
         xtick_size : int or float, default=11.0
             Size of x ticks in points. Passed as 'size' argument to :meth:`matplotlib.axes.Axes.set_xticklabels`.
         xtick_width : int or float, default=2.0
@@ -1113,8 +1113,8 @@ class CPPPlot:
         return ax
 
     def update_seq_size(self,
-                        ax=None,
-                        fig: Optional[plt.figure] = None,
+                        ax: plt.Axes = None,
+                        fig: Optional[plt.Figure] = None,
                         tmd_seq: str = None,
                         jmd_n_seq: str = None,
                         jmd_c_seq: str = None,
@@ -1130,16 +1130,14 @@ class CPPPlot:
         Update the font size of the sequence characters to prevent overlap.
 
         This method adjusts the font size of TMD-JMD sequence characters based on their provided sequences
-        to ensure that the labels are clearly legible and do not overlap in the plot. It can be called after
-        further plot modification of the :meth:`CPPPlot.profile` or :meth:`CPPPlot.heatmap`
-        methods, which use as well the ``tmd_seq``, ``jmd_n_seq``, and ``jmd_c_seq`` parameters.
+        to ensure that the labels are clearly legible and do not overlap in the plot.
 
         Parameters
         ---------
         ax : plt.Axes
             CPP plot axes object.
         fig : plt.Figure, optional
-            CPP plot figure object.
+            CPP plot figure object. If given, ``fontsize_tmd_jmd`` will be automatically adjusted.
         tmd_seq : str
             TMD sequence.
         jmd_n_seq : str
@@ -1148,19 +1146,19 @@ class CPPPlot:
             JMD C-terminal sequence.
         max_x_dist : float, default=0.1
             Maximum allowed horizontal distance between sequence characters during font size optimization.
-            A greater value reduces the overlap of sequence characters by reducing font size more aggressively.
+            A greater value reduces potential overlaps of sequence characters.
         fontsize_tmd_jmd : int or float, optional
-            Font size for TMD and JMD annotations.
+            Font size for the part labels (JMD-N, TMD, JMD-C).
         weight_tmd_jmd : {'normal', 'bold'}, default='bold'
-            Font weight for TMD and JMD annotations.
+            Font weight for the part labels (JMD-N, TMD, JMD-C).
         tmd_color : str, default='mediumspringgreen'
             Color for TMD.
         jmd_color : str, default='blue'
-            Color for JMD.
+            Color for JMDs.
         tmd_seq_color : str, default='black'
             Color for TMD sequence.
         jmd_seq_color : str, default='white'
-            Color for JMD sequence.
+            Color for JMD sequences.
 
         Returns
         -------
@@ -1169,7 +1167,13 @@ class CPPPlot:
 
         Notes
         -----
-        * Use :meth:`CPPPlot.update_seq_size``AFTER :func:`matplotlib.pyplot.tight_layout()`.
+        * Use :meth:`CPPPlot.update_seq_size` AFTER :func:`matplotlib.pyplot.tight_layout`.
+
+        See Also
+        --------
+        * :meth:`CPPPlot.profile` and :meth:`CPPPlot.heatmap` methods, which also use the ``tmd_seq``, ``jmd_n_seq``,
+          and ``jmd_c_seq`` parameters. :meth:`CPPPlot.update_seq_size` should be called after further plot
+          modifications that alter the size of figure or x-axis.
 
         Examples
         --------
