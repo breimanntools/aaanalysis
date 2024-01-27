@@ -8,6 +8,8 @@ import random
 import pytest
 import aaanalysis as aa
 
+aa.options["verbose"] = False
+
 
 # Helper functions
 def get_args_seq(n=0):
@@ -26,7 +28,6 @@ def plot_profile(cpp_plot=None, shap_plot=False, args_seq=None):
     return fig, ax
 
 
-aa.options["verbose"] = False
 COL_FEAT_IMPACT_TEST = "feat_impact_test"
 N_SEQ = 10
 _df_feat = aa.load_features().head(5)

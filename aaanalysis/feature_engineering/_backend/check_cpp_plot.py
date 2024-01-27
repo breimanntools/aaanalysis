@@ -10,6 +10,7 @@ import aaanalysis.utils as ut
 
 
 # Check input data
+# TODO check if needed
 def check_value_type(value_type=None, count_in=True):
     """Check if value type is valid"""
     list_value_type = ["count", "sum", "mean"]
@@ -18,7 +19,7 @@ def check_value_type(value_type=None, count_in=True):
     if value_type not in list_value_type:
         raise ValueError(f"'value_type' ('{value_type}') should be on of following: {list_value_type}")
 
-
+# TODO check if needed
 def check_y_categorical(df=None, y=None):
     """Check if the y column in the dataframe is categorical."""
     list_cat_columns = [col for col, data_type in zip(list(df), df.dtypes)
@@ -41,7 +42,7 @@ def check_args_xtick(xtick_size=None, xtick_width=None, xtick_length=None):
 
 def check_args_ytick(ytick_size=None, ytick_width=None, ytick_length=None):
     """Check if y tick parameters non-negative float"""
-    args = dict(accept_none=True, just_int=False, min_val=1)
+    args = dict(accept_none=True, just_int=False, min_val=0)
     ut.check_number_range(name="ytick_size", val=ytick_size, **args)
     ut.check_number_range(name="ytick_width", val=ytick_width, **args)
     ut.check_number_range(name="ytick_length", val=ytick_length, **args)
@@ -75,28 +76,21 @@ def check_seq_color(tmd_seq_color=None, jmd_seq_color=None):
     return args_seq_color
 
 
-def check_match_dict_color_df_cat(dict_color=None, df_cat=None):
+def check_match_dict_color_df(dict_color=None, df=None, name_df="df_feat"):
     """Check if color dictionary is matching to DataFrame with categories"""
-    list_cats = list(sorted(set(df_cat[ut.COL_CAT])))
+    ut.check_df(name=name_df, df=df, cols_requiered=ut.COL_CAT)
+    list_cats = list(sorted(set(df[ut.COL_CAT])))
     if dict_color is None:
         dict_color = ut.DICT_COLOR_CAT
     str_add = f"'dict_color' should be a dictionary with colors for: {list_cats}"
     ut.check_dict_color(val=dict_color, str_add=str_add)
     list_cat_not_in_dict_cat = [x for x in list_cats if x not in dict_color]
     if len(list_cat_not_in_dict_cat) > 0:
-        error = f"'dict_color' not complete! Following categories are missing from 'df_cat': {list_cat_not_in_dict_cat}"
+        error = f"'dict_color' not complete! Following categories are missing from '{name_df}': {list_cat_not_in_dict_cat}"
         raise ValueError(error)
     for key in list_cats:
         color = dict_color[key]
         ut.check_color(name=key, val=color)
-    return dict_color
-
-def check_match_dict_color_df_feat(dict_color=None, df_feat=None):
-    """Check if color dictionary is matching with feature DataFrame"""
-    list_cats = list(sorted(set(df_feat[ut.COL_CAT])))
-    list_cat_not_in_dict_cat = [x for x in list_cats if x not in dict_color]
-    if len(list_cat_not_in_dict_cat) > 0:
-        error = f"'dict_color' not complete! Following categories are missing from 'df_cat': {list_cat_not_in_dict_cat}"
-        raise ValueError(error)
+    # Filter colors
     _dict_color = {cat: dict_color[cat] for cat in list_cats}
     return _dict_color

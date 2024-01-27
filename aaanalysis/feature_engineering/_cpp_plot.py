@@ -27,8 +27,7 @@ from ._backend.check_cpp_plot import (check_value_type,
                                       check_args_size,
                                       check_part_color,
                                       check_seq_color,
-                                      check_match_dict_color_df_cat,
-                                      check_match_dict_color_df_feat)
+                                      check_match_dict_color_df)
 
 from ._backend.cpp.cpp_plot_eval import plot_eval
 from ._backend.cpp.cpp_plot_feature import plot_feature
@@ -669,7 +668,7 @@ class CPPPlot:
 
             If ``None``, the number of features per residue position will be shown.
 
-        normalize : bool, default=False
+        normalize : bool, default=True
             If ``True``, normalizes aggregated numerical values to a total of 100%.
         ax : plt.Axes, optional
             Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
@@ -678,7 +677,7 @@ class CPPPlot:
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
-            Length of TMD to be depicted (>0).
+            Length of TMD to be depicted (>0). Must match with all feature from ``df_feat``.
         tmd_seq : str, optional
             TMD sequence.
         jmd_n_seq : str, optional
@@ -703,8 +702,9 @@ class CPPPlot:
             If ``True``, highlights the TMD area on the plot.
         highlight_alpha : float, default=0.15
             The transparency alpha value [0-1] for TMD area highlighting.
-        add_legend_cat : bool, default=True
-            If ``True``, a legend is added for the scale categories.
+        add_legend_cat : bool, default=False
+            If ``True``, the scale categories are indicated as stacked bars and a legend is added. If ``True``,
+            ensure that ``shap_plot=False``.
         dict_color : dict, optional
             Color dictionary of scale categories for legend. Default from :meth:`plot_get_cdict` with ``name='DICT_CAT'``.
         legend_kws : dict, optional
@@ -718,17 +718,17 @@ class CPPPlot:
         ylim : tuple, optional
             Y-axis limits. If ``None``, y-axis limits are set automatically.
         xtick_size : int or float, default=11.0
-            Size for x-tick labels.
+            Size for x-tick labels (>0).
         xtick_width : int or float, default=2.0
-            Width of the x-ticks.
+            Width of the x-ticks (>0).
         xtick_length : int or float, default=5.0
-            Length of the x-ticks.
+            Length of the x-ticks (>0).
         ytick_size : int or float, optional
-            Size for y-tick labels.
+            Size for y-tick labels (>0).
         ytick_width : int or float, default=2.0
-            Width of the y-ticks.
+            Width of the y-ticks (>0).
         ytick_length : int or float, default=5.0
-            Length of the y-ticks.
+            Length of the y-ticks (>0).
 
         Returns
         -------
@@ -736,6 +736,11 @@ class CPPPlot:
             The Figure object for the CPP profile plot.
         ax : plt.Axes
             CPP profile plot axes object.
+
+        Warnings
+        --------
+        * If ``ylim`` does not match with minimum and/or maximum of aggregate numerical values across all residue
+          position, a ``UserWarning`` is raised and ``ylim`` will be adjusted automatically.
 
         Examples
         --------
@@ -763,8 +768,7 @@ class CPPPlot:
         ut.check_number_range(name="tmd_area_alpha", val=highlight_alpha, min_val=0, max_val=1, just_int=False)
         ut.check_bool(name="add_legend_cat", val=add_legend_cat)
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
-        dict_color = check_match_dict_color_df_cat(dict_color=dict_color, df_cat=self._df_cat)
-        dict_color = check_match_dict_color_df_feat(dict_color=dict_color, df_feat=df_feat)
+        dict_color = check_match_dict_color_df(dict_color=dict_color, df=df_feat)
         check_match_features_seq_parts(features=df_feat["feature"],
                                        tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
                                        tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
@@ -789,7 +793,7 @@ class CPPPlot:
                                bar_width=bar_width, edge_color=edge_color,
                                grid_axis=grid_axis, ylim=ylim, **args_xtick, **args_ytick)
         plt.tight_layout()
-        if tmd_seq is not None:
+        if tmd_seq is not None and seq_size is None:
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
@@ -797,13 +801,12 @@ class CPPPlot:
 
     def heatmap(self,
                 df_feat=None,
+                shap_plot: bool = False,
                 y="subcategory",
                 col_value="mean_dif",
                 value_type="mean",
                 normalize=False,
                 figsize=(8, 8),
-                shap_plot : bool = False,
-                dict_color=None,
                 vmin=None,
                 vmax=None,
                 ax: Optional[plt.Axes] = None,
@@ -827,14 +830,17 @@ class CPPPlot:
                 seq_size=None,
                 fontsize_tmd_jmd=None,
                 add_xticks_pos=False,  # TODO check if change
-                xtick_size=11.0,
-                xtick_width=2.0,
-                xtick_length=5.0,
-                ytick_size=None,
-
-                add_legend_cat=True,
-                legend_kws=None,
                 cbar_pct=True,
+
+                add_legend_cat: bool = True,
+                dict_color: Optional[dict] = None,
+                legend_kws: Optional[dict] = None,
+                xtick_size: Union[int, float] = 11.0,
+                xtick_width: Union[int, float] = 2.0,
+                xtick_length: Union[int, float] = 5.0,
+                ytick_size: Optional[Union[int, float]] = None,
+                ytick_width: Optional[Union[int, float]] = None,
+                ytick_length: Union[int, float] = 5.0,
                 ):
         """
         Plot CPP/-SHAP heatmap showing feature value mean difference/feature impact per scale subcategory (y-axis)
@@ -871,15 +877,12 @@ class CPPPlot:
             `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ will be used (recommended for feature impact).
         cmap_n_colors : int, optional
             Number of discrete steps in diverging or sequential color map.
-        dict_color : dict, optional
-            Color dictionary of scale categories classifying scales shown on y-axis. Default from :meth:`plot_get_cdict`
-            with ``name='DICT_CAT'``.
         cbar_kws : dict of key, value mappings, optional
             Keyword arguments for :meth:`matplotlib.figure.Figure.colorbar`.
         add_jmd_tmd : bool, default=True
             Whether to add colored bar under heatmap indicating sequence parts (JMD-N, TMD, JMD-C).
         tmd_len : int, default=20
-            Length of TMD to be depicted (>0).
+            Length of TMD to be depicted (>0). Must match with all feature from ``df_feat``.
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_seq : str, optional
@@ -903,19 +906,25 @@ class CPPPlot:
             Font size of all sequence parts in points. If ``None``, optimized automatically.
         fontsize_tmd_jmd : int or float, optional
             Font size for the part labels (JMD-N, TMD, JMD-C).
-        xtick_size : int or float, default=11.0
-            Size of x ticks in points. Passed as 'size' argument to :meth:`matplotlib.axes.Axes.set_xticklabels`.
-        xtick_width : int or float, default=2.0
-            Width of x ticks in points. Passed as 'width' argument to :meth:`matplotlib.axes.Axes.tick_params`.
-        xtick_length : int or float, default=5.0,
-            Length of x ticks in points. Passed as 'length' argument to :meth:`matplotlib.axes.Axes.tick_params`.
-        ytick_size : int or float, optional
-            Size of scale information as y ticks in points. Passed to :meth:`matplotlib.axes.Axes.tick_params`.
-            If ``None``, optimized automatically.
-        add_legend_cat : bool, default=True,
-            Whether to add legend for categories under plot and classification of scales at y-axis.
+        add_legend_cat : bool, default=True
+            If ``True``, a legend is added for the scale categories.
+        dict_color : dict, optional
+            Color dictionary of scale categories classifying scales shown on y-axis. Default from
+            :meth:`plot_get_cdict` with ``name='DICT_CAT'``.
         legend_kws : dict, optional
-            Keyword arguments passed to :meth:`matplotlib.axes.Axes.legend`.
+            Keyword arguments for the legend.
+        xtick_size : int or float, default=11.0
+            Size for x-tick labels (>0).
+        xtick_width : int or float, default=2.0
+            Width of the x-ticks (>0).
+        xtick_length : int or float, default=5.0
+            Length of the x-ticks (>0).
+        ytick_size : int or float, optional
+            Size for y-tick labels (>0).
+        ytick_width : int or float, optional
+            Width of the y-ticks (>0).
+        ytick_length : int or float, default=5.0
+            Length of the y-ticks (>0).
 
         Returns
         -------
@@ -958,8 +967,7 @@ class CPPPlot:
         check_value_type(value_type=value_type, count_in=False)
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
         ut.check_figsize(figsize=figsize)
-        dict_color = check_match_dict_color_df_cat(dict_color=dict_color, df_cat=self._df_cat)
-        dict_color = check_match_dict_color_df_feat(dict_color=dict_color, df_feat=df_feat)
+        dict_color = check_match_dict_color_df(dict_color=dict_color, df=df_feat)
         # Get df positions
         ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat, col_cat=y, col_value=col_value, value_type=value_type,
                           normalize=normalize, figsize=figsize,
@@ -985,8 +993,6 @@ class CPPPlot:
                     value_type="mean",
                     normalize=False,
                     figsize=(8, 8),
-                    dict_color=None,
-
                     vmin=None,
                     vmax=None,
                     grid_on=True,
@@ -1004,14 +1010,17 @@ class CPPPlot:
                     jmd_seq_color="white",
                     seq_size=None,
                     fontsize_tmd_jmd=None,
-                    xtick_size=11.0,
-                    xtick_width=2.0,
-                    xtick_length=5.0,
-                    ytick_size=None,
-
-                    add_legend_cat=True,
-                    legend_kws=None,
                     cbar_pct=True,
+                    add_legend_cat: bool = True,
+                    dict_color: Optional[dict] = None,
+                    legend_kws: Optional[dict] = None,
+                    xtick_size: Union[int, float] = 11.0,
+                    xtick_width: Union[int, float] = 2.0,
+                    xtick_length: Union[int, float] = 5.0,
+                    ytick_size: Optional[Union[int, float]] = None,
+                    ytick_width: Optional[Union[int, float]] = None,
+                    ytick_length: Union[int, float] = 5.0,
+
                     ):
         """
         Plot CPP feature map showing feature value mean difference and feature importance per scale subcategory
@@ -1045,13 +1054,12 @@ class CPPPlot:
             `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ will be used (recommended for feature impact).
         cmap_n_colors : int, optional
             Number of discrete steps in diverging or sequential color map.
-        dict_color : dict, optional
             Color dictionary of scale categories classifying scales shown on y-axis. Default from :meth:`plot_get_cdict`
             with ``name='DICT_CAT'``.
         cbar_kws : dict of key, value mappings, optional
             Keyword arguments for :meth:`matplotlib.figure.Figure.colorbar`.
         tmd_len : int, default=20
-            Length of TMD to be depicted (>0).
+            Length of TMD to be depicted (>0). Must match with all feature from ``df_feat``.
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_color : str, default='mediumspringgreen'
@@ -1066,24 +1074,35 @@ class CPPPlot:
             Font size of all sequence parts in points. If ``None``, optimized automatically.
         fontsize_tmd_jmd : float, optional
             Font size of 'TMD', 'JMD-N' and 'JMD-C'  label in points. If ``None``, optimized automatically.
-        xtick_size : int or float, default=11.0
-            Size of x ticks in points. Passed as 'size' argument to :meth:`matplotlib.axes.Axes.set_xticklabels`.
-        xtick_width : int or float, default=2.0
-            Width of x ticks in points. Passed as 'width' argument to :meth:`matplotlib.axes.Axes.tick_params`.
-        xtick_length : int or float, default=5.0,
-            Length of x ticks in points. Passed as 'length' argument to :meth:`matplotlib.axes.Axes.tick_params`.
-        ytick_size : int or float, optional
-            Size of scale information as y ticks in points. Passed to :meth:`matplotlib.axes.Axes.tick_params`.
-            If ``None``, optimized automatically.
-        add_legend_cat : bool, default=True,
-            Whether to add legend for categories under plot and classification of scales at y-axis.
+
+        add_legend_cat : bool, default=True
+            If ``True``, a legend is added for the scale categories.
+        dict_color : dict, optional
+            Color dictionary of scale categories classifying scales shown on y-axis. Default from
+            :meth:`plot_get_cdict` with ``name='DICT_CAT'``.
         legend_kws : dict, optional
-            Keyword arguments passed to :meth:`matplotlib.axes.Axes.legend`.
+            Keyword arguments for the legend.
+        xtick_size : int or float, default=11.0
+            Size for x-tick labels (>0).
+        xtick_width : int or float, default=2.0
+            Width of the x-ticks (>0).
+        xtick_length : int or float, default=5.0
+            Length of the x-ticks (>0).
+        ytick_size : int or float, optional
+            Size for y-tick labels (>0).
+        ytick_width : int or float, optional
+            Width of the y-ticks (>0).
+        ytick_length : int or float, default=5.0
+            Length of the y-ticks (>0).
 
         Returns
         -------
         ax : plt.Axes
             CPP feature map axes object.
+
+        Notes
+        -----
+        * If plotting is slow, set ``seq_size`` manually to avoid fontsize optimization.
 
         Examples
         --------
@@ -1111,8 +1130,7 @@ class CPPPlot:
         check_value_type(value_type=value_type, count_in=False)
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
         ut.check_figsize(figsize=figsize)
-        dict_color = check_match_dict_color_df_cat(dict_color=dict_color, df_cat=self._df_cat)
-        dict_color = check_match_dict_color_df_feat(dict_color=dict_color, df_feat=df_feat)
+        dict_color = check_match_dict_color_df(dict_color=dict_color, df=df_feat)
         # Get df positions
         ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat, y=y, col_value=col_value, value_type=value_type,
                               normalize=normalize, figsize=figsize,
