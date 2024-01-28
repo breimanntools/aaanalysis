@@ -9,30 +9,6 @@ import aaanalysis.utils as ut
 
 
 # I Helper Functions
-# TODO check if needed
-def draw_shap_legend(x=None, y=10, offset_text=1, fontsize=13):
-    """Draw higher lower element for indicating colors"""
-    arrow_dif = y * 0.02
-    plt.text(x - offset_text, y, 'higher',
-             fontweight='bold',
-             fontsize=fontsize, color=ut.COLOR_SHAP_POS,
-             horizontalalignment='right')
-
-    plt.text(x + offset_text * 1.1, y, 'lower',
-             fontweight='bold',
-             fontsize=fontsize, color=ut.COLOR_SHAP_NEG,
-             horizontalalignment='left')
-
-    plt.text(x, y - arrow_dif, r'$\leftarrow$',
-             fontweight='bold',
-             fontsize=fontsize+1, color=ut.COLOR_SHAP_NEG,
-             horizontalalignment='center')
-
-    plt.text(x, y + arrow_dif, r'$\rightarrow$',
-             fontweight='bold',
-             fontsize=fontsize+1, color=ut.COLOR_SHAP_POS,
-             horizontalalignment='center')
-
 # Heatmap settings functions
 # TODO refactor cbar (easier handling for combination
 def _get_ytick_pad_heatmap(ax=None):
@@ -117,6 +93,25 @@ class PlotElements:
         plt.title(title, **title_kws)
 
     # Set legend
+    @staticmethod
+    def update_legend_kws(legend_kws=None, fontsize_label=None, heatmap=False):
+        """Update legend arguments and set defaults"""
+        fs = 12
+        if heatmap:
+            _legend_kws = dict(n_cols=2, loc=2, fontsize=fs, fontsize_title=fs,
+                               title="Scale category",
+                               weight_font="normal", weight_title="bold")
+        else:
+            _legend_kws = dict(n_cols=2, loc=2, fontsize=fs,
+                               fontsize_title=fs, title="Scale category",
+                               weight_font="normal", weight_title="bold")
+        if legend_kws is not None:
+            _legend_kws.update(legend_kws)
+        if "fontsize" not in _legend_kws:
+            _legend_kws["fontsize"] = fontsize_label
+        return _legend_kws
+
+
     # TODO simplify (use set legend utils) for profile or move to heatmap only
     def add_legend_cat(self, ax=None, df_pos=None, df_cat=None, y=None, dict_color=None, legend_kws=None):
         """Add a category legend to the plot."""
@@ -148,6 +143,8 @@ class PlotElements:
         kws_legend = _get_kws_legend_under_plot(list_cat=list_cat)
         kws_legend = _update_kws_legend_under_plot(kws_legend=kws_legend, legend_kws=legend_kws)
         handles, labels = self.get_legend_handles_labels(dict_color=dict_color, list_cat=sorted(set(list_cat)))
+        n = kws_legend.pop("n_cols")
+        kws_legend["ncol"] = n
         legend = ax.legend(handles=handles, labels=labels, **kws_legend)
         legend._legend_box.align = "left"
         return ax

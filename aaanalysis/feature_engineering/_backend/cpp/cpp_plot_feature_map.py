@@ -28,8 +28,8 @@ def add_feature_title_single_fig(y=None, fontsize_title=None, pad_factor=2.0):
     plt.text(0, y, "+", size=fontsize_title, weight="bold", ha="center")
 
 
-def _bars(ax=None, df=None, top_n=5, top_pcp=None, sum_imp=None, show_sum_pcp=True, label=ut.LABEL_FEAT_IMPORT,
-          legendsize=12, labelsize=12, top_pcp_size=12, top_pcp_weight="bold", titlesize=12):
+def plot_feat_importance_bars(ax=None, df=None, top_n=5, top_pcp=None, sum_imp=None, show_sum_pcp=True, label=ut.LABEL_FEAT_IMPORT,
+                              legendsize=12, labelsize=12, top_pcp_size=12, top_pcp_weight="bold", titlesize=12):
     """"""
     plt.sca(ax)
     df["pos_start"] = [int(x.split(",")[0]) if "," in x else int(x) for x in df[ut.COL_POSITION]]
@@ -59,6 +59,27 @@ def _bars(ax=None, df=None, top_n=5, top_pcp=None, sum_imp=None, show_sum_pcp=Tr
     plt.tight_layout()
 
 
+# Add importance map (for feature map)
+def _add_importance_map(ax=None, df_feat=None, df_cat=None, start=None, args_len=None, col_cat=None):
+    """"""
+    pp = PlotPositions(**args_len, start=start)
+    df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat, col_cat=col_cat,
+                           col_val=ut.COL_FEAT_IMPORT, value_type="sum",
+                           normalize=True)
+    _df = pd.melt(df_pos.reset_index(), id_vars="index")
+    _df.columns = [ut.COL_SUBCAT, "position", ut.COL_FEAT_IMPORT]
+    _list_sub_cat = _df[ut.COL_SUBCAT].unique()
+    for i, sub_cat in enumerate(_list_sub_cat):
+        _dff = _df[_df[ut.COL_SUBCAT] == sub_cat]
+        for pos, val in enumerate(_dff[ut.COL_FEAT_IMPORT]):
+            _symbol = "■"
+            color = "black"
+            size = 7 if val >= 1 else (5 if val >= 0.5 else 3)
+            _args_symbol = dict(ha="center", va="center", color=color, size=size)
+            if val >= 0.2:
+                ax.text(pos + 0.5, i + 0.5, _symbol, **_args_symbol)
+
+
 def _add_importance_map_legend(ax=None, y=None, x=None, fontsize=None, tick_fontsize=None, title_weight="bold"):
     """"""
     # Now create a list of Patch instances for the second legend
@@ -82,7 +103,8 @@ def _add_importance_map_legend(ax=None, y=None, x=None, fontsize=None, tick_font
 
 
 # II Main Functions
-def plot_feature_map(df_feat=None, df_cat=None, y="subcategory", col_value="mean_dif", value_type="mean", normalize=False,
+def plot_feature_map(df_feat=None, df_cat=None,
+                     col_cat="subcategory", col_val="mean_dif", normalize=False,
                      figsize=(8, 8), ax=None, dict_color=None,
                      vmin=None, vmax=None, grid_on=True, cmap="RdBu_r", cmap_n_colors=None, cbar_kws=None,
                      cbar_pos=(0.5, 0.01, 0.2, 0.015), legend_xy=(-0.5, -0.04),  # TODO add
@@ -98,6 +120,13 @@ def plot_feature_map(df_feat=None, df_cat=None, y="subcategory", col_value="mean
     Plot a feature map of the selected value column with scale information (y-axis) versus sequence position (x-axis).
     """
     # Group arguments
+    # Group arguments
+    args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
+    args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+    args_size = dict(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd) # TODO check if need (where is labelfontsiz)
+    args_part_color = dict(tmd_color=tmd_color, jmd_color=jmd_color)
+    args_seq_color = dict(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
+    args_xtick = dict(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
     # Plot
     ####
     width, height = figsize
@@ -105,9 +134,9 @@ def plot_feature_map(df_feat=None, df_cat=None, y="subcategory", col_value="mean
     fig, axes = plt.subplots(1, 2, sharey=True,
                              gridspec_kw={'width_ratios': [6, min(1*height/width, 1)], "wspace": 0},
                              figsize=figsize, layout="constrained")
-    _bars(ax=axes[1], df=df_feat.copy(), legendsize=fontsize_text, titlesize=fontsize_text - 2,
-          labelsize=fontsize_text, top_pcp_size=fontsize_text - 5, top_pcp_weight="bold",
-          label="Cumulative feature\n  importance [%]")
+    plot_feat_importance_bars(ax=axes[1], df=df_feat.copy(), legendsize=fontsize_text, titlesize=fontsize_text - 2,
+                              labelsize=fontsize_text, top_pcp_size=fontsize_text - 5, top_pcp_weight="bold",
+                              label="Cumulative feature\n  importance [%]")
     info_weight = "normal"
     _label = f"Feature value\n{name_test} - {name_ref}"
     cbar_kws = dict(use_gridspec=False,
@@ -128,26 +157,29 @@ def plot_feature_map(df_feat=None, df_cat=None, y="subcategory", col_value="mean
     cbar_ax_pos = (0.5, 0.01, 0.2, 0.015)
     fig = plt.gcf()
     cbar_ax = fig.add_axes(cbar_ax_pos)
-    ax = plot_heatmap(df_feat=df_feat, df_cat=df_cat, ax=axes[0],
-                      col_cat=y, col_value=col_value, value_type=value_type, normalize=normalize,
-                      figsize=figsize, dict_color=dict_color,
+    ax = plot_heatmap(df_feat=df_feat, df_cat=df_cat, shap_plot=False,
+                      col_cat=col_cat, col_val=col_val, normalize=normalize,
+                      ax=axes[0], figsize=figsize,
+                      dict_color=dict_color,
                       vmin=vmin, vmax=vmax, grid_on=grid_on,
                       facecolor_dark=facecolor_dark, add_jmd_tmd=add_jmd_tmd,
-                      tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start,
-                      tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, linecolor=linecolor,
+                      start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
+                      tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, grid_linecolor=linecolor,
                       tmd_color=tmd_color, jmd_color=jmd_color, tmd_seq_color=tmd_seq_color,
-                      jmd_seq_color=jmd_seq_color, add_importance_map=True,
+                      jmd_seq_color=jmd_seq_color,
                       seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd, add_xticks_pos=add_xticks_pos,
                       xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length,
                       ytick_size=ytick_size, add_legend_cat=add_legend_cat, legend_kws=legend_kws,
                       cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws, cbar_ax=cbar_ax,  #cbar_ax_pos=cbar_pos,
                       cbar_pct=cbar_pct)
     # Add importance map
+    _add_importance_map(ax=ax, df_feat=df_feat, df_cat=df_cat, start=start, args_len=args_len, col_cat=col_cat)
     _add_importance_map_legend(fontsize=fontsize_text,
                                ax=cbar_ax, y=0, x=1.5,
                                #ax=ax, y=n_subcat+3, x=plt.xlim()[1], pad_factor=1,
                                tick_fontsize=cbar_ticksize,
                                title_weight=info_weight)
+    # Add ffeature title
     add_feature_title_single_fig(y=-n_subcat / 80, fontsize_title=fontsize_text, pad_factor=3.2)
     fig.tight_layout()#pad=3.0)
     plt.subplots_adjust(wspace=0, bottom=0.15, top=0.92)#, left=0.3)
@@ -190,7 +222,7 @@ def plot_feature_map(df_feat=None, df_cat=None, y="subcategory", col_value="mean
                       bbox_to_anchor=(-0.5, -0.04), loc=2)
     ####
     ax = plot_heatmap(df_feat=df_feat, df_cat=df_cat, ax=axes[0],
-                      y=y, col_value=col_value, value_type=value_type, normalize=normalize,
+                      y=y, col_val=col_val, value_type=value_type, normalize=normalize,
                       figsize=figsize, dict_color=dict_color,
                       vmin=vmin, vmax=vmax, grid_on=grid_on,
                       facecolor_dark=facecolor_dark, add_jmd_tmd=add_jmd_tmd,

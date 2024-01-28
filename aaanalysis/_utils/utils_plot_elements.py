@@ -124,31 +124,7 @@ def plot_add_bars(ax=None, labels=None, colors='tab:gray', bar_position='left',
                   bar_spacing=0.05,  bar_width=0.1, bar_labels=None, label_spacing_factor=1.5,
                   bar_labels_align='horizontal', set_tick_labels=True,
                   xtick_label_rotation=45, ytick_label_rotation=0):
-    """
-    Add colored bars along a specified axis of the plot based on label grouping.
-
-    Parameters:
-        ax (matplotlib.axes._axes.Axes): The axes to which bars will be added.
-        labels (list or array-like): Labels determining bar grouping and coloring.
-        bar_position (str): The position to add the bars ('left', 'right', 'top', 'bottom').
-        bar_spacing (float): Spacing between plot and added bars.
-        label_spacing_factor (float): Spacing between plot and text label as factor of 'bar_spacing'.
-            If 1, text is directly placed next to bar.
-        colors (str or list): Either a matplotlib color string, or a list of colors for each unique label.
-        bar_labels (list, optional): Labels for the bars.
-        bar_labels_align (str): Text alignment for bar labels, either 'horizontal' or other valid matplotlib alignment.
-        bar_width (float): The width of the bars, expressed in the units of the opposite axis's elements.
-            Specifically, when adding a vertical bar (with position 'left' or 'right'), `bar_width` denotes
-            the horizontal extent of the bar, interpreted in terms of the spacing between adjacent elements on the x-axis.
-            Conversely, when adding a horizontal bar (with position 'top' or 'bottom'), `bar_width` represents the vertical
-             extent, mapped onto the y-axis spacing.
-        xtick_label_rotation (int): X-axis label rotation.
-        ytick_label_rotation (int): Y-axis label rotation.
-        set_tick_labels (bool): Whether to adjust tick labels.
-
-    Note:
-        This function adds colored bars in correspondence with the provided `labels` to visualize groupings in plots.
-    """
+    """Add colored bars along a specified axis of the plot based on label grouping."""
     # Get the number of plotted items
     nx, ny = int(max(plt.xlim())), int(max(plt.ylim()))
     num_plotted_items = ny if bar_position in ['left', 'right'] else nx

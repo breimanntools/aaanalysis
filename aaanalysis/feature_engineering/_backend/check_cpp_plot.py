@@ -9,26 +9,6 @@ import warnings
 import aaanalysis.utils as ut
 
 
-# Check input data
-# TODO check if needed
-def check_value_type(value_type=None, count_in=True):
-    """Check if value type is valid"""
-    list_value_type = ["count", "sum", "mean"]
-    if count_in:
-        list_value_type.append("count")
-    if value_type not in list_value_type:
-        raise ValueError(f"'value_type' ('{value_type}') should be on of following: {list_value_type}")
-
-# TODO check if needed
-def check_y_categorical(df=None, y=None):
-    """Check if the y column in the dataframe is categorical."""
-    list_cat_columns = [col for col, data_type in zip(list(df), df.dtypes)
-                        if data_type != float and "position" not in col]# and col != "feature"]
-    if y not in list_cat_columns:
-        raise ValueError(f"'y' ({y}) should be one of following columns with categorical values "
-                         f"of 'df': {list_cat_columns}")
-
-
 # Check for plotting methods
 def check_args_xtick(xtick_size=None, xtick_width=None, xtick_length=None):
     """Check if x tick parameters non-negative float"""

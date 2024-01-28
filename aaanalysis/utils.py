@@ -618,13 +618,14 @@ def check_features(features=None, list_parts=None, list_scales=None):
     return features
 
 
-def check_df_feat(df_feat=None, df_cat=None, list_parts=None, shap_plot=None, cols_requiered=None):
+def check_df_feat(df_feat=None, df_cat=None, list_parts=None, shap_plot=None,
+                  cols_requiered=None, cols_nan_check=None):
     """Check if df not empty pd.DataFrame"""
     # Check df
     cols_feat = [COL_FEATURE] + COLS_FEAT_SCALES + COLS_FEAT_STAT
     if cols_requiered is not None:
         cols_feat += [cols_requiered] if type(cols_requiered) is str else cols_requiered
-    check_df(df=df_feat, name="df_feat", cols_requiered=cols_feat)
+    check_df(df=df_feat, name="df_feat", cols_requiered=cols_feat, cols_nan_check=cols_nan_check)
     if len(df_feat) == 0 or len(list(df_feat)) == 0:
         raise ValueError("'df_feat' should be not empty")
     duplicated_columns = df_feat.columns[df_feat.columns.duplicated()]

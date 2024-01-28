@@ -22,6 +22,7 @@ LIST_CAT = ['ASA/Volume', 'Conformation', 'Energy', 'Polarity', 'Shape', 'Compos
 DICT_COLOR = dict(zip(LIST_CAT, VALID_COLORS))
 
 def get_args_seq(n=0):
+    aa.options["verbose"] = False
     df_seq = aa.load_dataset(name="DOM_GSEC", n=N_SEQ)
     jmd_n_seq, tmd_seq, jmd_c_seq = df_seq.loc[n, ["jmd_n", "tmd", "jmd_c"]]
     args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
@@ -29,6 +30,7 @@ def get_args_seq(n=0):
 
 
 def get_df_feat(n=10):
+    aa.options["verbose"] = False
     df_feat = aa.load_features().head(n)
     df_feat.insert(0, COL_FEAT_IMPACT_TEST, [2]*len(df_feat))
     return df_feat

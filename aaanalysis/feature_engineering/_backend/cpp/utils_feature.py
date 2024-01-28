@@ -98,12 +98,12 @@ def _get_positions(dict_part_pos=None, features=None, as_str=True):
 
 
 # Get df positions
-def _get_df_pos_long(df=None, col_cat="category", col_value=None):
+def _get_df_pos_long(df=None, col_cat="category", col_val=None):
     """Get """
-    if col_value is None:
+    if col_val is None:
         df_feat = df[[ut.COL_FEATURE, col_cat]].set_index(ut.COL_FEATURE)
     else:
-        df_feat = df[[ut.COL_FEATURE, col_cat, col_value]].set_index(ut.COL_FEATURE)
+        df_feat = df[[ut.COL_FEATURE, col_cat, col_val]].set_index(ut.COL_FEATURE)
     # Columns = scale categories, rows = features
     df_pos_long = pd.DataFrame(df[ut.COL_POSITION].str.split(",").tolist())
     df_pos_long.index = df[ut.COL_FEATURE]
@@ -240,14 +240,14 @@ def get_feature_matrix_(features=None, df_parts=None, df_scales=None, accept_gap
     return feat_matrix
 
 
-def get_df_pos_(df_feat=None, col_cat="category", col_value=None, value_type="count", start=None, stop=None):
+def get_df_pos_(df_feat=None, col_cat="category", col_val=None, value_type="count", start=None, stop=None):
     """Get df with aggregated values for each combination of column values and positions"""
     df_feat = df_feat.copy()
     list_y_cat = sorted(set(df_feat[col_cat]))
-    if value_type != "mean" and col_value is not None:
-        df_feat[col_value] = df_feat[col_value] / [len(x.split(",")) for x in df_feat[ut.COL_POSITION]]
+    if value_type != "mean" and col_val is not None:
+        df_feat[col_val] = df_feat[col_val] / [len(x.split(",")) for x in df_feat[ut.COL_POSITION]]
     # Get df with features for each position
-    df_pos_long = _get_df_pos_long(df=df_feat, col_cat=col_cat, col_value=col_value)
+    df_pos_long = _get_df_pos_long(df=df_feat, col_cat=col_cat, col_val=col_val)
     # Get dict with values of categories for each position
     dict_pos_val = {p: [] for p in range(start, stop+1)}
     dict_cat_val = {c: 0 for c in list_y_cat}
@@ -255,11 +255,11 @@ def get_df_pos_(df_feat=None, col_cat="category", col_value=None, value_type="co
         if value_type == "count":
             dict_val = dict(df_pos_long[df_pos_long[ut.COL_POSITION] == p][col_cat].value_counts())
         elif value_type == "mean":
-            dict_val = dict(df_pos_long[df_pos_long[ut.COL_POSITION] == p].groupby(col_cat).mean()[col_value])
+            dict_val = dict(df_pos_long[df_pos_long[ut.COL_POSITION] == p].groupby(col_cat).mean()[col_val])
         elif value_type == "sum":
-            dict_val = dict(df_pos_long[df_pos_long[ut.COL_POSITION] == p].groupby(col_cat).sum()[col_value])
+            dict_val = dict(df_pos_long[df_pos_long[ut.COL_POSITION] == p].groupby(col_cat).sum()[col_val])
         else:
-            dict_val = dict(df_pos_long[df_pos_long[ut.COL_POSITION] == p].groupby(col_cat).std()[col_value])
+            dict_val = dict(df_pos_long[df_pos_long[ut.COL_POSITION] == p].groupby(col_cat).std()[col_val])
         dict_pos_val[p] = {**dict_cat_val, **dict_val}
     # Get df with values (e.g., counts) of each category and each position
     df_pos = pd.DataFrame(dict_pos_val)

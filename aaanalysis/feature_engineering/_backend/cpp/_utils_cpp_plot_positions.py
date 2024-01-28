@@ -56,14 +56,14 @@ def _get_optimal_fontsize(ax=None, labels=None, max_x_dist=0.1):
 
 
 # Positions
-def _get_df_pos_sign(df_feat=None, count=True, col_cat="category", col_value=None, value_type="count",
+def _get_df_pos_sign(df_feat=None, count=True, col_cat="category", col_val=None, value_type="count",
                      start=None, stop=None):
     """Get DataFrame for positive and negative values based on feature importance."""
-    kwargs = dict(col_cat=col_cat, col_value=col_value, value_type=value_type,
+    kwargs = dict(col_cat=col_cat, col_val=col_val, value_type=value_type,
                   start=start, stop=stop)
     list_df = []
-    df_p = df_feat[df_feat[col_value] > 0]
-    df_n = df_feat[df_feat[col_value] <= 0]
+    df_p = df_feat[df_feat[col_val] > 0]
+    df_n = df_feat[df_feat[col_val] <= 0]
     if len(df_p) > 0:
         df_positive = get_df_pos_(df_feat=df_p, **kwargs)
         list_df.append(df_positive)
@@ -235,7 +235,7 @@ class PlotPositions:
         return jmd_n_end, tmd_end, jmd_c_end
 
     # Main methods
-    def get_df_pos(self, df_feat=None, df_cat=None, col_cat="category", col_value="mean_dif",
+    def get_df_pos(self, df_feat=None, df_cat=None, col_cat="category", col_val="mean_dif",
                    value_type="count", normalize=False):
         """Get df_pos with values (e.g., counts or mean auc) for each feature (y) and positions (x)"""
         df_feat = df_feat.copy()
@@ -249,9 +249,9 @@ class PlotPositions:
         df_feat[ut.COL_POSITION] = feat_positions
         # Get dataframe with positions
         # TODO check df_pos and simplify
-        kwargs = dict(col_cat=col_cat, col_value=col_value, value_type=value_type, start=self.start, stop=self.stop)
+        kwargs = dict(col_cat=col_cat, col_val=col_val, value_type=value_type, start=self.start, stop=self.stop)
         if value_type == "count":
-            if col_value is None:
+            if col_val is None:
                 df_pos = get_df_pos_(df_feat=df_feat, **kwargs)
             else:
                 df_pos = _get_df_pos_sign(df_feat=df_feat, count=True, **kwargs)

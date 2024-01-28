@@ -13,41 +13,51 @@ from ._utils_cpp_plot_positions import PlotPositions
 
 
 # I Helper Functions
-# cbar helper functions
-def _get_center_heatmap(df_pos=None):
-    """Get center of heatmap colormap"""
-    center = 0 if df_pos.min().min() < 0 else None
-    return center
+def _get_value_type(col_val="abs_auc"):
+    """Get value type corresponding to col_val"""
+    dict_val_type = ut.DICT_VALUE_TYPE
+    val_type = "sum"if ut.COL_FEAT_IMPACT in col_val else dict_val_type[col_val]
+    return val_type
 
+def _infer_vmin_vmax_from_data(df_pos=None, vmin=None, vmax=None):
+    """Infer vmin and vmax from data if None"""
+    vmin = df_pos.min().min() if vmin is None else vmin
+    vmax = df_pos.max().max() if vmax is None else vmax
+    return vmin, vmax
 
-def _get_cmap_heatmap(df_pos=None, cmap=None, n_colors=None, higher_color=None, lower_color=None, facecolor_dark=True):
-    """Get sequential or diverging cmap for heatmap"""
+# Get cbar cmap
+def _get_shap_cmap(n_colors=None, facecolor_dark=False):
+    """Generate SHAP specific colormap."""
+    n = 20
+    cmap_low = sns.light_palette(ut.COLOR_SHAP_NEG, input="hex", reverse=True, n_colors=int(n_colors/2) + n)
+    cmap_high = sns.light_palette(ut.COLOR_SHAP_POS, input="hex", n_colors=int(n_colors/2) + n)
+    c_middle = [(0, 0, 0)] if facecolor_dark else [cmap_low[-1]]
+    cmap = cmap_low[0:-n] + c_middle + cmap_high[n:]
+    return cmap
+
+def _get_diverging_cmap(cmap, n_colors=None, facecolor_dark=False):
+    """Generate a diverging colormap."""
+    n = 5
+    cmap = sns.color_palette(cmap, n_colors=n_colors + n * 2)
+    cmap_low, cmap_high = cmap[:int((n_colors + n * 2) / 2)], cmap[int((n_colors + n * 2) / 2):]
+    c_middle = [(0, 0, 0)] if facecolor_dark else [cmap_low[-1]]
+    cmap = cmap_low[0:-n] + c_middle + cmap_high[n:]
+    return cmap
+
+def _get_cmap_heatmap(df_pos=None, cmap=None, n_colors=100, facecolor_dark=True):
+    """Generate a sequential or diverging colormap for heatmap."""
     n_colors = 100 if n_colors is None else n_colors
     if cmap == "SHAP":
-        n = 20
-        cmap_low = sns.light_palette(lower_color, input="hex", reverse=True, n_colors=int(n_colors/2)+n)
-        cmap_high = sns.light_palette(higher_color, input="hex", n_colors=int(n_colors/2)+n)
-        c_middle = [(0, 0, 0)] if facecolor_dark else [cmap_low[-1]]
-        cmap = cmap_low[0:-n] + c_middle + cmap_high[n:]
-        return cmap
+        return _get_shap_cmap(n_colors, facecolor_dark)
     if cmap is None:
-        # Use diverging colormap if positive and negative
-        if df_pos.min().min() < 0:
-            cmap = "RdBu_r"
-        # Use sequential colormap if values just positive
-        else:
-            cmap = "flare"
+        cmap = "RdBu_r" if df_pos.min().min() < 0 else "flare"
     if df_pos.min().min() >= 0:
         cmap = sns.color_palette(cmap, n_colors=n_colors)
     else:
-        n = 5
-        cmap = sns.color_palette(cmap, n_colors=n_colors+n*2)
-        cmap_low, cmap_high = cmap[0:int((n_colors+n*2)/2)], cmap[int((n_colors+n*2)/2):]
-        c_middle = [(0, 0, 0)] if facecolor_dark else [cmap_low[-1]]
-        cmap = cmap_low[0:-n] + c_middle + cmap_high[n:]
+        cmap = _get_diverging_cmap(cmap, n_colors=n_colors, facecolor_dark=facecolor_dark)
     return cmap
 
-
+# Get cbar ticks
 def _get_cbar_ticks_heatmap(df_pos=None):
     """Get legend ticks for heatmap"""
     stop_legend = df_pos.values.max()
@@ -62,15 +72,14 @@ def _get_cbar_ticks_heatmap(df_pos=None):
 def _get_cbar_args_heatmap(cbar_kws=None, df_pos=None):
     """Parameter to set manually"""
     # Get cbar ticks
-    """
-    _label = f"Feature value\n{name_test} - {name_ref}"
+    #_label = f"Feature value\n{name_test} - {name_ref}"
+    _label = "Feature value\nTEST-REF"
     cbar_kws = dict(use_gridspec=False,
                     orientation="horizontal",
-                    ticksize=tick_fontsize,
+                    #ticksize=tick_fontsize,
                     label=_label,
                     pad=2,
                     panchor=(0, 0))
-    """
     cbar_ticks = _get_cbar_ticks_heatmap(df_pos=df_pos)
     width, height = plt.gcf().get_size_inches()
     dict_cbar = {"ticksize": width + 3, "labelsize": width + 6, "labelweight": "medium"}
@@ -84,28 +93,20 @@ def _get_cbar_args_heatmap(cbar_kws=None, df_pos=None):
     return dict_cbar, cbar_kws_
 
 
-def _infer_vmin_vmax_from_data(df_pos=None, vmin=None, vmax=None):
-    """Infer vmin and vmax from data if None"""
-    vmin = df_pos.min().min() if vmin is None else vmin
-    vmax = df_pos.max().max() if vmax is None else vmax
-    return vmin, vmax
-
-
 # Get cbar args and set cbar
-def _get_cbar_arguments(df_pos=None, cmap=None, cmap_n_colors=None, cbar_kws=None, facecolor_dark=None):
+def get_cbar_args(df_pos=None, cmap=None, cmap_n_colors=None, cbar_kws=None, facecolor_dark=None):
     """"""
-    center = _get_center_heatmap(df_pos=df_pos)
-    cmap = _get_cmap_heatmap(df_pos=df_pos, cmap=cmap, n_colors=cmap_n_colors, higher_color=ut.COLOR_SHAP_POS,
-                             lower_color=ut.COLOR_SHAP_NEG, facecolor_dark=facecolor_dark)
+    center = 0 if df_pos.min().min() < 0 else None
+    cmap = _get_cmap_heatmap(df_pos=df_pos, cmap=cmap, n_colors=cmap_n_colors, facecolor_dark=facecolor_dark)
     dict_cbar, cbar_kws_ = _get_cbar_args_heatmap(cbar_kws=cbar_kws, df_pos=df_pos)
     return center, cmap, dict_cbar, cbar_kws_
 
 
-def _set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws=None,
-                      vmin=None, vmax=None, cbar_pct=True, weight="normal",
-                      fontsize=11):
+def set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws=None,
+                     vmin=None, vmax=None, cbar_pct=True, weight="normal",
+                     fontsize=11):
     """"""
-    # Set colorbar labelsize and ticksize
+    # Set colorbar label size and ticksize
     cbar = ax.collections[0].colorbar
     cbar.ax.tick_params(labelsize=dict_cbar["ticksize"])
     if "label" in cbar_kws:
@@ -123,26 +124,6 @@ def _set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws=None,
     cb.ax.xaxis.set_ticks_position('top')
     cb.ax.xaxis.set_label_position('top')
 
-
-# Add importance map (for feature map)
-def _add_importance_map(ax=None, df_feat=None, df_cat=None, start=None, args_len=None, col_cat=None):
-    """"""
-    pp = PlotPositions(**args_len, start=start)
-    df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat, col_cat=col_cat,
-                           col_value=ut.COL_FEAT_IMPORT, value_type="sum",
-                           normalize=True)
-    _df = pd.melt(df_pos.reset_index(), id_vars="index")
-    _df.columns = [ut.COL_SUBCAT, "position", ut.COL_FEAT_IMPORT]
-    _list_sub_cat = _df[ut.COL_SUBCAT].unique()
-    for i, sub_cat in enumerate(_list_sub_cat):
-        _dff = _df[_df[ut.COL_SUBCAT] == sub_cat]
-        for pos, val in enumerate(_dff[ut.COL_FEAT_IMPORT]):
-            _symbol = "■"
-            color = "black"
-            size = 7 if val >= 1 else (5 if val >= 0.5 else 3)
-            _args_symbol = dict(ha="center", va="center", color=color, size=size)
-            if val >= 0.2:
-                ax.text(pos + 0.5, i + 0.5, _symbol, **_args_symbol)
 
 
 # II Main Functions
@@ -175,50 +156,59 @@ def _plot_inner_heatmap(ax=None, figsize=(8, 8), df_pos=None, vmin=None, vmax=No
         spine.set_visible(True)
     ax.set_facecolor(facecolor)
     # Add lines to frame
-    # TODO as argument
-    ax.axvline(jmd_n_len, color=linecolor, linestyle="-", linewidth=1.5)
-    ax.axvline(x=jmd_n_len + tmd_len, color=linecolor, linestyle="-", linewidth=1.5)
+    # TODO as argument grid_lw
+    lw = ut.plot_gco(option="grid.linewidth") * 2
+    ax.axvline(jmd_n_len, color=linecolor, linestyle="-", linewidth=lw)
+    ax.axvline(x=jmd_n_len + tmd_len, color=linecolor, linestyle="-", linewidth=lw)
     return ax
 
 
-# Outer plotting function
-def plot_heatmap(df_feat=None, df_cat=None, col_cat="subcategory", col_value="mean_dif", value_type="mean", normalize=False,
-                 figsize=(8, 5), ax=None, dict_color=None,
-                 vmin=None, vmax=None, grid_on=True,
-                 cmap="RdBu_r", cmap_n_colors=None, cbar_kws=None, cbar_ax=None,  #cbar_ax_pos=(0.5, 0.01, 0.2, 0.015),
-                 facecolor_dark=False, add_jmd_tmd=True,
-                 tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1,
-                 tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, linecolor=None, add_importance_map=False,
-                 tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
+# Main plotting function
+def plot_heatmap(df_feat=None, df_cat=None, shap_plot=False,
+                 col_cat="subcategory", col_val="mean_dif",
+                 normalize=False,
+                 ax=None, figsize=(8, 5),
+                 start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10,
+                 tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None,
+                 tmd_color="mediumspringgreen", jmd_color="blue",
+                 tmd_seq_color="black", jmd_seq_color="white",
                  seq_size=None, fontsize_tmd_jmd=None, fontsize_labels=11,
-                 add_xticks_pos=False, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, ytick_size=None,
-                 add_legend_cat=True, legend_kws=None, cbar_pct=True):
+                 add_xticks_pos=False,
+                 grid_on=True, grid_linecolor=None, grid_linewidth=1,
+                 add_tmd_jmd_border=True, border_linewidth=None,
+                 add_legend_cat=True, dict_color=None, legend_kws=None,
+                 facecolor_dark=None, add_jmd_tmd=True,
+                 vmin=None, vmax=None,
+                 cmap="RdBu_r", cmap_n_colors=None, cbar_kws=None, cbar_ax=None,  #cbar_ax_pos=(0.5, 0.01, 0.2, 0.015)
+                 cbar_pct=True,
+                 xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, ytick_size=None):
     # Group arguments
     args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
     args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
-    args_size = dict(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
-    args_xtick = dict(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
+    args_size = dict(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd) # TODO check if need (where is labelfontsiz)
     args_part_color = dict(tmd_color=tmd_color, jmd_color=jmd_color)
     args_seq_color = dict(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
+    args_xtick = dict(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
     # Get df positions
+    value_type = _get_value_type(col_val=col_val)
     pp = PlotPositions(**args_len, start=start)
     df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat.copy(), col_cat=col_cat,
-                           col_value=col_value, value_type=value_type,
-                           normalize=normalize)
-    # Get cbar args
+                           col_val=col_val, value_type=value_type, normalize=normalize)
     vmin, vmax = _infer_vmin_vmax_from_data(df_pos=df_pos, vmin=vmin, vmax=vmax)
-    center, cmap, dict_cbar, cbar_kws_ = _get_cbar_arguments(df_pos=df_pos, cmap=cmap, cmap_n_colors=cmap_n_colors,
-                                                             cbar_kws=cbar_kws, facecolor_dark=facecolor_dark)
-    # fig = plt.gcf()
-    # cbar_ax = fig.add_axes(cbar_ax_pos)
+    # Get cbar args
+    center, cmap, dict_cbar, cbar_kws_ = get_cbar_args(df_pos=df_pos, cmap=cmap, cmap_n_colors=cmap_n_colors,
+                                                       cbar_kws=cbar_kws, facecolor_dark=facecolor_dark)
     # Plotting
+    print(dict_cbar)
+    print(cbar_kws_)
+    pe = PlotElements()
+    fig, ax = pe.set_figsize(ax=ax, figsize=figsize, force_set=True)
+    #cbar_ax = fig.add_axes(cbar_ax_pos)
     ax = _plot_inner_heatmap(ax=ax, figsize=figsize, df_pos=df_pos, vmin=vmin, vmax=vmax,
-                             facecolor_dark=facecolor_dark, grid_on=grid_on, linecolor=linecolor,
+                             facecolor_dark=facecolor_dark, grid_on=grid_on, linecolor=grid_linecolor,
                              cbar_ax=cbar_ax, cmap=cmap, center=center, cbar_kws=cbar_kws,
                              x_shift=0.5, **args_xtick, ytick_size=ytick_size,
                              **args_len, start=start)
-    # Autosize tmd sequence & annotation
-    pe = PlotElements()
     # Add tmd_jmd sequence
     if isinstance(tmd_seq, str):
         ax = pp.add_tmd_jmd_seq(ax=ax, **args_seq, **args_size, **args_part_color, **args_seq_color,
@@ -232,41 +222,20 @@ def plot_heatmap(df_feat=None, df_cat=None, col_cat="subcategory", col_value="me
         pp.add_tmd_jmd_xticks(ax=ax, x_shift=0.5, **args_xtick)
         pp.add_tmd_jmd_text(ax=ax, x_shift=0, fontsize_tmd_jmd=fontsize_tmd_jmd)
     # Add cbar
-    _set_cbar_heatmap(ax=ax, vmin=vmin, vmax=vmax,
-                      dict_cbar=dict_cbar, cbar_kws=cbar_kws_, cbar_pct=cbar_pct,
-                      weight="normal", fontsize=fontsize_labels)
+    # TODO under and with title
+    set_cbar_heatmap(ax=ax, vmin=vmin, vmax=vmax,
+                     dict_cbar=dict_cbar, cbar_kws=cbar_kws_, cbar_pct=cbar_pct,
+                     weight="normal", fontsize=fontsize_labels)
     # Add scale classification
+    """
+    if add_legend_cat:
+        legend_kws = pe.update_legend_kws(legend_kws=legend_kws)
+        ut.plot_legend_(ax=ax, dict_color=dict_color, **legend_kws)
+    """
     if add_legend_cat:
         ax = pe.add_legend_cat(ax=ax, df_pos=df_pos, df_cat=df_cat, y=col_cat, dict_color=dict_color,
                                legend_kws=legend_kws)
-    # Add importance map
-    if add_importance_map:
-        _add_importance_map(ax=ax, df_feat=df_feat, df_cat=df_cat, start=start, args_len=args_len, col_cat=col_cat)
     # Set current axis to main axis object depending on tmd sequence given or not
     plt.sca(plt.gcf().axes[0])
     ax = plt.gca()
     return ax
-
-
-# Special calling example fomr sub pred
-"""
-def plot_feat_heatmap(df_rel_nonsub=None, df_feat=None, n=50, ytick_size=16, label_fontsize=15,
-                      just_subexpert=True, annotation="Uniprot", name_test="SUBEXP", name_ref="REF",
-                      facecolor_dark=True, show_title=False, add_importance_map=False):
-    """"""
-    cp = CPPPlot(df_rel_nonsub=df_rel_nonsub, just_subexpert=just_subexpert, annotation=annotation)
-    # Adjust for plotting profiles
-    df_feat = df_feat.sort_values(by=ut.COL_FEAT_IMP, ascending=False).reset_index(drop=True)
-    sum_n = round(sum(df_feat[ut.COL_FEAT_IMP].head(n)))
-    f = lambda x: x if x != 0 else 0.1
-    df_feat[ut.COL_FEAT_IMP] = [f(x) for x in df_feat[ut.COL_FEAT_IMP]]
-    ut.plot_settings(change_size=False)
-    if n >= 60:
-        args_fig = dict(figsize=(10, 10), feat_pad_factor=3.2)
-    else:
-        args_fig = dict(figsize=(10, 9), feat_pad_factor=3.6)
-    title = f"{name_test} vs {name_ref} (top {n} features)" if show_title else None
-    args = dict(df_feat=df_feat.copy(), facecolor_dark=facecolor_dark, title=title)
-    cp.heatmap(**args, n=n, sum_imp=sum_n, tick_fontsize=ytick_size, label_fontsize=label_fontsize,
-               **args_fig, add_importance_map=add_importance_map, name_ref=name_ref, name_test=name_test)
-"""

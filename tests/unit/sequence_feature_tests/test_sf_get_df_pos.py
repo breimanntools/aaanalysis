@@ -39,15 +39,15 @@ class TestGetDfPos:
             result = sf.get_df_pos(df_feat=df_feat)
             assert isinstance(result, pd.DataFrame)
 
-    def test_valid_col_value(self):
+    def test_valid_col_val(self):
 
         for i in range(5):
-            col_value = random.choice(['abs_auc', 'abs_mean_dif', 'mean_dif', 'std_test', 'std_ref'])
+            col_val = random.choice(['abs_auc', 'abs_mean_dif', 'mean_dif', 'std_test', 'std_ref'])
             n_feat = random.randint(5, 100)
             n_samples = random.randint(5, 50)
             df_feat = _get_df_feat(n_feat=n_feat, n_samples=n_samples)
             sf = aa.SequenceFeature()
-            result = sf.get_df_pos(df_feat=df_feat, col_value=col_value)
+            result = sf.get_df_pos(df_feat=df_feat, col_val=col_val)
             assert isinstance(result, pd.DataFrame)
 
     def test_valid_col_cat(self):
@@ -128,11 +128,11 @@ class TestGetDfPos:
             sf = aa.SequenceFeature()
             sf.get_df_pos(df_feat=None)
 
-    def test_invalid_col_value(self):
+    def test_invalid_col_val(self):
         df_feat = _get_df_feat()
         sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
-            sf.get_df_pos(df_feat=df_feat, col_value="invalid_value")
+            sf.get_df_pos(df_feat=df_feat, col_val="invalid_value")
 
     def test_invalid_col_cat(self):
         df_feat = _get_df_feat()
@@ -183,7 +183,7 @@ class TestGetDfPosComplex:
     def test_complex_case_positive_1(self):
         df_feat = _get_df_feat(n_feat=15, n_samples=30)
         sf = aa.SequenceFeature()
-        result = sf.get_df_pos(df_feat=df_feat, col_value='mean_dif',
+        result = sf.get_df_pos(df_feat=df_feat, col_val='mean_dif',
                                col_cat='category', start=5, tmd_len=25, jmd_n_len=15, jmd_c_len=15,
                                normalize=True)
         assert isinstance(result, pd.DataFrame) and not result.empty
@@ -191,7 +191,7 @@ class TestGetDfPosComplex:
     def test_complex_case_positive_2(self):
         df_feat = _get_df_feat(n_feat=20, n_samples=40, list_parts=['tmd', 'jmd_n', 'jmd_c'])
         sf = aa.SequenceFeature()
-        result = sf.get_df_pos(df_feat=df_feat, col_value='abs_auc', col_cat='scale_name',
+        result = sf.get_df_pos(df_feat=df_feat, col_val='abs_auc', col_cat='scale_name',
                                start=10, tmd_len=30, jmd_n_len=20, jmd_c_len=20, normalize=False)
         assert isinstance(result, pd.DataFrame) and not result.empty
 
@@ -200,12 +200,12 @@ class TestGetDfPosComplex:
         df_feat = _get_df_feat(n_feat=10, n_samples=20)
         sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
-            sf.get_df_pos(df_feat=df_feat, col_value='invalid_value', col_cat='invalid_category',
+            sf.get_df_pos(df_feat=df_feat, col_val='invalid_value', col_cat='invalid_category',
                           start=-10, tmd_len=0, jmd_n_len=30, jmd_c_len=30, normalize=True)
 
     def test_complex_case_negative_2(self):
         df_feat = _get_df_feat(n_feat=5, n_samples=10)
         sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
-            sf.get_df_pos(df_feat=df_feat, col_value='mean_dif', col_cat='category', start=100,
+            sf.get_df_pos(df_feat=df_feat, col_val='mean_dif', col_cat='category', start=100,
                           tmd_len=25, jmd_n_len=50, jmd_c_len=-10, normalize="not_a_boolean")

@@ -37,27 +37,12 @@ def _scale_ylim(df_bars=None, ylim=None, col_imp=None, retrieve_plot=False, scal
     return ylim
 
 
-def _update_legend_kws(legend_kws=None, fontsize_label=None):
-    """Update legend arguments and set defaults"""
-    fs = 12
-    _legend_kws = dict(n_cols=2, loc=2,
-                       fontsize=fs, fontsize_title=fs,
-                       title="Scale category",
-                       weight_font="normal", weight_title="bold")
-    if legend_kws is not None:
-        _legend_kws.update(legend_kws)
-    if "fontsize" not in _legend_kws:
-        _legend_kws["fontsize"] = fontsize_label
-    return _legend_kws
-
-
 # II Main Functions
 # CPP/-SHAP profile plotting functions
 def _plot_cpp_profile(ax=None, df_pos=None, dict_color=None, show_cat=True, color=None, ylim=None,
                       plot_args=None):
     """Plot CPP profile on given axes."""
-    pe = PlotElements()
-    handles, labels = pe.get_legend_handles_labels(dict_color=dict_color, list_cat=list(df_pos.index))
+    labels = list(dict_color.keys())
     df_bar = df_pos.T[labels]
     df = pd.concat([df_bar[df_bar < 0].sum(axis=1), df_bar[df_bar > 0].sum(axis=1)]).to_frame(name="col_cat")
     color = dict_color if show_cat else color
@@ -85,12 +70,13 @@ def _plot_cpp_shap_profile(ax=None, df_pos=None, ylim=None, plot_args=None):
 
 
 # Inner plotting function
-def _plot_profile(df_pos=None, shap_plot=False, ax=None, color="tab:gray",
+def _plot_profile(df_pos=None, shap_plot=False, ax=None,
                   start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10,
                   show_cat=True, dict_color=None,
-                  edge_color="none", bar_width=0.8, ylim=None,
+                  bar_width=0.8, edge_color="none",
+                  color="tab:gray", ylim=None,
                   xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
-                  ytick_size=None, ytick_width=None, ytick_length=None):
+                  ytick_size=None, ytick_width=None, ytick_length=5.0):
     """Inner function to plot feature profile by calling CPP or CPP-SHAP, and set ticks and limits"""
     # Constants for additional spacing
     XLIM_ADD = 3 if shap_plot else 1
@@ -132,19 +118,20 @@ def _plot_profile(df_pos=None, shap_plot=False, ax=None, color="tab:gray",
 
 
 # Main plotting function
-def plot_profile(figsize=(7, 5), ax=None, df_feat=None, df_cat=None,
+def plot_profile(df_feat=None, df_cat=None, shap_plot=False,
                  col_imp="feat_importance", normalize=False,
-                 dict_color=None,
-                 edge_color="none", bar_width=0.75,
-                 tmd_len=20, jmd_n_len=10, jmd_c_len=10,
-                 start=1, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None,
+                 ax=None, figsize=(7, 5),
+                 start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10,
+                 jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None,
                  tmd_color="mediumspringgreen", jmd_color="blue",
                  tmd_seq_color="black", jmd_seq_color="white",
-                 seq_size=None, fontsize_tmd_jmd=None, fontsize_label=None,
-                 xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, add_xticks_pos=False,
-                 ytick_size=None, ytick_width=None, ytick_length=None, ylim=None,
-                 highlight_tmd_area=True, highlight_alpha=0.15, grid_axis=None,
-                 add_legend_cat=True, legend_kws=None, shap_plot=False):
+                 seq_size=None, fontsize_tmd_jmd=None,
+                 add_xticks_pos=False, highlight_tmd_area=True, highlight_alpha=0.15,
+                 add_legend_cat=True, dict_color=None,legend_kws=None,
+                 bar_width=0.75, edge_color="none",
+                 grid_axis=None, ylim=None,
+                 xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
+                 ytick_size=None, ytick_width=None, ytick_length=5.0):
     """Main function to plot feature profiles with various customizations and styling."""
     # Group arguments
     args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
@@ -158,7 +145,7 @@ def plot_profile(figsize=(7, 5), ax=None, df_feat=None, df_cat=None,
     col_cat = "scale_name" if shap_plot else "category"
     pp = PlotPositions(**args_len, start=start)
     df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat.copy(), col_cat=col_cat,
-                           col_value=col_imp, value_type=value_type, normalize=normalize)
+                           col_val=col_imp, value_type=value_type, normalize=normalize)
     # Plotting
     pe = PlotElements()
     fig, ax = pe.set_figsize(ax=ax, figsize=figsize, force_set=True)
@@ -172,7 +159,7 @@ def plot_profile(figsize=(7, 5), ax=None, df_feat=None, df_cat=None,
         ylabel = ut.LABEL_FEAT_NUMBER
     else:
         ylabel = ut.LABEL_FEAT_IMPACT_CUM if shap_plot else ut.LABEL_FEAT_IMPORT_CUM
-    ax.set_ylabel(ylabel, size=fontsize_label)
+    ax.set_ylabel(ylabel)
     # Add grid
     if grid_axis is not None:
         ax.set_axisbelow(True)  # Grid behind datasets
@@ -193,7 +180,7 @@ def plot_profile(figsize=(7, 5), ax=None, df_feat=None, df_cat=None,
         pp.add_tmd_jmd_text(ax=ax, x_shift=-0.5, fontsize_tmd_jmd=fontsize_tmd_jmd)
     # Add legend
     if add_legend_cat:
-        legend_kws = _update_legend_kws(legend_kws=legend_kws)
+        legend_kws = pe.update_legend_kws(legend_kws=legend_kws)
         ut.plot_legend_(ax=ax, dict_color=dict_color, **legend_kws)
     # Set current axis to main axis object depending on tmd sequence given or not
     plt.sca(plt.gcf().axes[0])

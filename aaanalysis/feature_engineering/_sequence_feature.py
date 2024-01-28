@@ -97,11 +97,11 @@ def check_col_cat(col_cat=None):
         raise ValueError(f"'col_cat' {col_cat} should be one of the following: {ut.COLS_FEAT_SCALES}")
 
 
-def check_col_value(col_value=None):
-    """Check if col_value valid column from df_feat"""
+def check_col_val(col_val=None):
+    """Check if col_val valid column from df_feat"""
     cols_feat = ut.COLS_FEAT_STAT + ut.COLS_FEAT_WEIGHT
-    if col_value not in cols_feat:
-        raise ValueError(f"'col_value' {col_value} should be one of the following: {cols_feat}")
+    if col_val not in cols_feat:
+        raise ValueError(f"'col_val' {col_val} should be one of the following: {cols_feat}")
 
 
 # II Main Functions
@@ -690,7 +690,7 @@ class SequenceFeature:
 
     @staticmethod
     def get_df_pos(df_feat: pd.DataFrame = None,
-                   col_value: str = "mean_dif",
+                   col_val: str = "mean_dif",
                    col_cat: str = "category",
                    start: int = 1,
                    tmd_len: int = 20,
@@ -706,7 +706,7 @@ class SequenceFeature:
         ----------
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
-        col_value : {'abs_auc', 'abs_mean_dif', 'mean_dif', 'std_test', 'std_ref'}, default='mean_dif'
+        col_val : {'abs_auc', 'abs_mean_dif', 'mean_dif', 'std_test', 'std_ref'}, default='mean_dif'
             Column name in ``df_feat`` containing numerical values to ``average``. If feature importance and impact
             are provided as {'feat_importance', 'feat_impact'} columns, their ``sum`` of values is computed.
         col_cat : {'category', 'subcategory', 'scale_name'}, default='category'
@@ -742,15 +742,15 @@ class SequenceFeature:
         # Do not check for list_parts since df_pos can be obtained for any part
         df_feat = ut.check_df_feat(df_feat=df_feat)
         check_col_cat(col_cat=col_cat)
-        check_col_value(col_value=col_value)
+        check_col_val(col_val=col_val)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         ut.check_bool(name="normalize", val=normalize)
         check_match_features_seq_parts(features=df_feat[ut.COL_FEATURE], **args_len)
         # Get df pos
         stop = start + jmd_n_len + tmd_len + jmd_c_len - 1
-        value_type = ut.DICT_VALUE_TYPE[col_value]
-        df_pos = get_df_pos_(df_feat=df_feat, col_cat=col_cat, col_value=col_value, value_type=value_type,
+        value_type = ut.DICT_VALUE_TYPE[col_val]
+        df_pos = get_df_pos_(df_feat=df_feat, col_cat=col_cat, col_val=col_val, value_type=value_type,
                              start=start, stop=stop)
         if normalize:
             df_pos = df_pos / abs(df_pos).sum().sum() * 100

@@ -13,6 +13,7 @@ aa.options["verbose"] = False
 
 # Helper functions
 def get_args_seq(n=0):
+    aa.options["verbose"] = False
     df_seq = aa.load_dataset(name="DOM_GSEC", n=N_SEQ)
     jmd_n_seq, tmd_seq, jmd_c_seq = df_seq.loc[n, ["jmd_n", "tmd", "jmd_c"]]
     args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
@@ -20,6 +21,7 @@ def get_args_seq(n=0):
 
 
 def plot_profile(cpp_plot=None, shap_plot=False, args_seq=None):
+    aa.options["verbose"] = False
     col_imp = COL_FEAT_IMPACT_TEST if shap_plot else "feat_importance"
     if args_seq is None:
         fig, ax = cpp_plot.profile(df_feat=_df_feat, col_imp=col_imp, shap_plot=shap_plot)
@@ -55,7 +57,7 @@ class TestUpdateSeqSize:
             plt.close()
 
     @settings(max_examples=2, deadline=10000)
-    @given(fontsize_tmd_jmd=st.one_of(st.none(), st.integers(min_value=1, max_value=15)))
+    @given(fontsize_tmd_jmd=st.one_of(st.none(), st.integers(min_value=0, max_value=15)))
     def test_fontsize_tmd_jmd(self, fontsize_tmd_jmd):
         cpp_plot = aa.CPPPlot()
         args_seq = get_args_seq()
@@ -119,15 +121,14 @@ class TestUpdateSeqSize:
         with pytest.raises(ValueError):
             cpp_plot.update_seq_size(ax=None)
 
-    @settings(max_examples=2, deadline=10000)
-    @given(fontsize_tmd_jmd=st.one_of(st.just(-1), st.just(0), st.text()))
-    def test_fontsize_tmd_jmd_negative(self, fontsize_tmd_jmd):
+    def test_fontsize_tmd_jmd_negative(self):
         cpp_plot = aa.CPPPlot()
-        args_seq = get_args_seq()
-        _, ax = plot_profile(cpp_plot=cpp_plot, args_seq=args_seq)
-        with pytest.raises(ValueError):
-            cpp_plot.update_seq_size(ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd)
-        plt.close()
+        for fontsize_tmd_jmd in ["invalid", -1, []]:
+            args_seq = get_args_seq()
+            _, ax = plot_profile(cpp_plot=cpp_plot, args_seq=args_seq)
+            with pytest.raises(ValueError):
+                cpp_plot.update_seq_size(ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd)
+            plt.close()
 
     @settings(max_examples=2, deadline=10000)
     @given(weight_tmd_jmd=st.text(min_size=1).filter(lambda x: x not in ['normal', 'bold']))
