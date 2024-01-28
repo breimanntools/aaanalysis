@@ -803,39 +803,43 @@ class CPPPlot:
     def heatmap(self,
                 df_feat=None,
                 shap_plot: bool = False,
-                y="subcategory",
-                col_value="mean_dif",
-                value_type="mean",
-                normalize=False,
-                figsize=(8, 8),
+                col_cat : Literal['category', 'subcategory', 'scale_name'] ="subcategory",
+                col_value: str = "mean_dif",
+                value_type: Literal['mean', 'sum', 'std'] = "mean", # TODO remove
+                normalize: bool = False,
+                ax: Optional[plt.Axes] = None,
+                figsize: Tuple[Union[int, float], Union[int, float]] = (8, 8),
+                start: int = 1,
+                tmd_len: int = 20,
+                tmd_seq: Optional[str] = None,
+                jmd_n_seq: Optional[str] = None,
+                jmd_c_seq: Optional[str] = None,
+                tmd_color: str = "mediumspringgreen",
+                jmd_color: str = "blue",
+                tmd_seq_color: str = "black",
+                jmd_seq_color: str = "white",
+                seq_size: Union[int, float] = None,
+                fontsize_tmd_jmd: Union[int, float] = None,
+                add_xticks_pos: bool = False,
+
                 vmin=None,
                 vmax=None,
-                ax: Optional[plt.Axes] = None,
                 grid_on=True,
+
                 cmap="RdBu_r",
                 cmap_n_colors=None,
                 cbar_kws=None,
-                facecolor_dark=False,
+
+                facecolor_dark=False,   # TODO remove (set by shap_plot)
 
                 add_jmd_tmd=True,  # Remove
-                tmd_len=20,
-                start=1,
-                jmd_n_seq=None,
-                tmd_seq=None,
-                jmd_c_seq=None,
-                linecolor=None,
-                tmd_color="mediumspringgreen",
-                jmd_color="blue",
-                tmd_seq_color="black",
-                jmd_seq_color="white",
-                seq_size=None,
-                fontsize_tmd_jmd=None,
-                add_xticks_pos=False,  # TODO check if change
                 cbar_pct=True,
+                linecolor="black",
 
                 add_legend_cat: bool = True,
                 dict_color: Optional[dict] = None,
                 legend_kws: Optional[dict] = None,
+
                 xtick_size: Union[int, float] = 11.0,
                 xtick_width: Union[int, float] = 2.0,
                 xtick_length: Union[int, float] = 5.0,
@@ -855,10 +859,14 @@ class CPPPlot:
         df_feat : pd.DataFrame, shape (n_feature, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
             Can also include feature impact (``feat_impact``) column.
-        y : {'category', 'subcategory', 'scale_name'}, default='subcategory'
+        shap_plot : bool, default=False
+            If ``True``, the positive (red) and negative (blue) feature impact is shown per scale subcategory
+            and residue position.
+        col_cat : {'category', 'subcategory', 'scale_name'}, default='subcategory'
             Column name in ``df_feat`` representing scale information (shown on the y-axis).
-        col_value : {'abs_auc', 'mean_dif', 'std_test', 'feat_importance', 'feat_impact', ...}, default='mean_dif'
+        col_value : {'abs_auc', 'mean_dif', 'std_test', 'feat_importance', 'feat_impact_'name''}, default='mean_dif'
             Column name in ``df_feat`` containing numerical values to display.
+
         value_type : {'mean', 'sum', 'std'}, default='mean'
             Method to aggregate numerical values from ``col_value``.
         normalize : {True, False, 'positions', 'positions_only'}, default=False
@@ -964,13 +972,13 @@ class CPPPlot:
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
         ut.check_dict(name="cbar_kws", val=cbar_kws, accept_none=True)
         ut.check_df(df=df_feat, name="df_feat", cols_requiered=col_value, cols_nan_check=col_value)
-        check_y_categorical(df=df_feat, y=y)
+        check_y_categorical(df=df_feat, y=col_cat)
         check_value_type(value_type=value_type, count_in=False)
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
         ut.check_figsize(figsize=figsize)
         dict_color = check_match_dict_color_df(dict_color=dict_color, df=df_feat)
         # Get df positions
-        ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat, col_cat=y, col_value=col_value, value_type=value_type,
+        ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat, col_cat=col_cat, col_value=col_value, value_type=value_type,
                           normalize=normalize, figsize=figsize,
                           dict_color=dict_color, vmin=vmin, vmax=vmax, grid_on=grid_on,
                           cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws,

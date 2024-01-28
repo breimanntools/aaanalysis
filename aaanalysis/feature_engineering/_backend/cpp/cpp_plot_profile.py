@@ -40,9 +40,10 @@ def _scale_ylim(df_bars=None, ylim=None, col_imp=None, retrieve_plot=False, scal
 def _update_legend_kws(legend_kws=None, fontsize_label=None):
     """Update legend arguments and set defaults"""
     fs = 12
-    _legend_kws = dict(n_cols=2, prop={"size": fs}, loc=2, frameon=False,
-                       columnspacing=1, facecolor="white", framealpha=1,
-                       title="Scale category", fontsize_title=fs)
+    _legend_kws = dict(n_cols=2, loc=2,
+                       fontsize=fs, fontsize_title=fs,
+                       title="Scale category",
+                       weight_font="normal", weight_title="bold")
     if legend_kws is not None:
         _legend_kws.update(legend_kws)
     if "fontsize" not in _legend_kws:
