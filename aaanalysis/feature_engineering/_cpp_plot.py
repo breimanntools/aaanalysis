@@ -759,7 +759,8 @@ class CPPPlot:
         # Check specific input
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
         args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
-                                             jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
+                                             jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
+                                             check_jmd_seq_len_consistent=True)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
         args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
@@ -853,7 +854,7 @@ class CPPPlot:
         ----------
         df_feat : pd.DataFrame, shape (n_feature, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
-            Can also include feture impact (``feat_impact``) column.
+            Can also include feature impact (``feat_impact``) column.
         y : {'category', 'subcategory', 'scale_name'}, default='subcategory'
             Column name in ``df_feat`` representing scale information (shown on the y-axis).
         col_value : {'abs_auc', 'mean_dif', 'std_test', 'feat_importance', 'feat_impact', ...}, default='mean_dif'

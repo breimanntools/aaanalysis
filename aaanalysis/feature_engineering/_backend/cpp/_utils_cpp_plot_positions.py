@@ -77,6 +77,21 @@ def _get_df_pos_sign(df_feat=None, count=True, col_cat="category", col_value=Non
 
 
 # TMD-JMD bar functions
+def _adjust_xticks_labels(xticks=None, xtick_labels=None, add_xtick_pos=True,
+                          exists_jmd_n=True, exists_jmd_c=True):
+    """Remove JMD-N and/or JMD-C from x-ticks and x-tick labels if not exist"""
+    n = 2 if add_xtick_pos else 1
+    if not exists_jmd_n:
+        # Remove JMD-N related ticks and labels if it does not exist
+        xticks = xticks[n:]
+        xtick_labels = xtick_labels[n:]
+    if not exists_jmd_c:
+        # Remove JMD-C related ticks and labels if it does not exist
+        xticks = xticks[:-n]
+        xtick_labels = xtick_labels[:-n]
+    return xticks, xtick_labels
+
+
 def _get_bar_height(ax=None, divider=50):
     """Calculate bar height for sequence part visualization."""
     ylim = ax.get_ylim()
@@ -272,6 +287,7 @@ class PlotPositions:
         name_jmd_c = ut.options["name_jmd_c"]
         jmd_n_end, tmd_end, jmd_c_end = self._get_ends(x_shift=-1)
         jmd_n_middle, tmd_middle, jmd_c_middle = self._get_middles(x_shift=-0.5)
+        # Get x-ticks and x-tick labels
         if not add_xticks_pos:
             xticks = [jmd_n_middle, tmd_middle, jmd_c_middle]
             xtick_labels = [name_jmd_n, name_tmd, name_jmd_c]
@@ -279,6 +295,13 @@ class PlotPositions:
             xticks = [0, jmd_n_middle, jmd_n_end, tmd_middle, tmd_end, jmd_c_middle, jmd_c_end]
             xtick_labels = [self.start, name_jmd_n, jmd_n_end + self.start, name_tmd, tmd_end + self.start, name_jmd_c,
                             jmd_c_end + self.start]
+        # Adjust x-ticks and x-tick labels
+        exists_jmd_n = len(jmd_n_seq) > 0
+        exists_jmd_c = len(jmd_c_seq) > 0
+        xticks, xtick_labels = _adjust_xticks_labels(xticks=xticks, xtick_labels=xtick_labels,
+                                                     add_xtick_pos=add_xticks_pos,
+                                                     exists_jmd_n=exists_jmd_n, exists_jmd_c=exists_jmd_c)
+        # Set x-ticks and x-tick labels
         if fontsize_tmd_jmd > 0:
             ax2 = _get_new_axis(ax=ax, heatmap=heatmap)
             ax2.set_xlim(ax.get_xlim())
@@ -301,10 +324,15 @@ class PlotPositions:
         name_jmd_n = ut.options["name_jmd_n"]
         name_jmd_c = ut.options["name_jmd_c"]
         jmd_n_start, tmd_start, jmd_c_start = self._get_starts(x_shift=x_shift)
+        exists_jmd_n = self.jmd_n_len > 0
+        exists_jmd_c = self.jmd_c_len > 0
         if fontsize_tmd_jmd is None or fontsize_tmd_jmd > 0:
-            _add_part_text(ax=ax, start=tmd_start, len_part=self.tmd_len, text=name_tmd, fontsize=fontsize_tmd_jmd)
-            _add_part_text(ax=ax, start=jmd_n_start, text=name_jmd_n, len_part=self.jmd_n_len, fontsize=fontsize_tmd_jmd)
-            _add_part_text(ax=ax, start=jmd_c_start, text=name_jmd_c, len_part=self.jmd_c_len, fontsize=fontsize_tmd_jmd)
+            args = dict(ax=ax, fontsize=fontsize_tmd_jmd)
+            _add_part_text(start=tmd_start, len_part=self.tmd_len, text=name_tmd, **args)
+            if exists_jmd_n:
+                _add_part_text(start=jmd_n_start, text=name_jmd_n, len_part=self.jmd_n_len, **args)
+            if exists_jmd_c:
+                _add_part_text(start=jmd_c_start, text=name_jmd_c, len_part=self.jmd_c_len, **args)
 
     def add_tmd_jmd_xticks(self, ax=None, x_shift=0, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0):
         """Adjust x-ticks for TMD and JMD regions."""

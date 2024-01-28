@@ -132,13 +132,19 @@ def check_split_kws(split_kws=None, accept_none=True):
 # Check parts
 def check_parts_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None,
                     accept_none_tmd_len=False, accept_none_jmd_len=False,
-                    tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None):
+                    tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None,
+                    check_jmd_seq_len_consistent=False):
     """Check length parameters and if they are matching with sequences if provided"""
     tmd_seq = ut.check_str(name="tmd_seq", val=tmd_seq, accept_none=True, return_empty_string=True)
     jmd_n_seq = ut.check_str(name="jmd_n_seq", val=jmd_n_seq, accept_none=True, return_empty_string=True)
     jmd_c_seq = ut.check_str(name="jmd_c_seq", val=jmd_c_seq, accept_none=True, return_empty_string=True)
     # If sequences is not None, set length to sequence length
     if len(jmd_n_seq + tmd_seq + jmd_c_seq) > 0:
+        if check_jmd_seq_len_consistent:
+            if jmd_n_len is None or jmd_n_len != len(jmd_n_seq):
+                raise ValueError(f"Not matching of 'jmd_n_len' ({jmd_n_len}) and 'jmd_n_seq' ({jmd_n_seq})")
+            if jmd_c_len is None or jmd_c_len != len(jmd_c_seq):
+                raise ValueError(f"Not matching of 'jmd_c_len' ({jmd_c_len}) and 'jmd_n_seq' ({jmd_c_seq})")
         tmd_len, jmd_n_len, jmd_c_len = len(tmd_seq), len(jmd_n_seq), len(jmd_c_seq)
     else:
         tmd_seq = jmd_n_seq = jmd_c_seq = None
