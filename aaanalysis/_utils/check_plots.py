@@ -70,7 +70,7 @@ def check_grid_axis(grid_axis="y", accept_none=True, str_add=None):
         raise ValueError(str_error)
 
 
-def check_font_weight(name="font_weight", font_weight=None, accept_none=True, str_add=None):
+def check_font_weight(name="font_weight", font_weight=None, accept_none=False, str_add=None):
     if accept_none and font_weight is None:
         return None # Skip test
     list_weight = ["normal", "bold"]

@@ -125,7 +125,7 @@ def plot_profile(df_feat=None, df_cat=None, shap_plot=False,
                  jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None,
                  tmd_color="mediumspringgreen", jmd_color="blue",
                  tmd_seq_color="black", jmd_seq_color="white",
-                 seq_size=None, fontsize_tmd_jmd=None,
+                 seq_size=None, fontsize_tmd_jmd=None, weight_tmd_jmd="normal",
                  add_xticks_pos=False, highlight_tmd_area=True, highlight_alpha=0.15,
                  add_legend_cat=True, dict_color=None,legend_kws=None,
                  bar_width=0.75, edge_color="none",
@@ -144,8 +144,9 @@ def plot_profile(df_feat=None, df_cat=None, shap_plot=False,
     value_type = "sum" if col_imp else "count"
     col_cat = "scale_name" if shap_plot else "category"
     pp = PlotPositions(**args_len, start=start)
-    df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat.copy(), col_cat=col_cat,
-                           col_val=col_imp, value_type=value_type, normalize=normalize)
+    df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat.copy(),
+                           col_cat=col_cat, col_val=col_imp,
+                           value_type=value_type, normalize=normalize)
     # Plotting
     pe = PlotElements()
     fig, ax = pe.set_figsize(ax=ax, figsize=figsize, force_set=True)
@@ -169,10 +170,11 @@ def plot_profile(df_feat=None, df_cat=None, shap_plot=False,
         pp.highlight_tmd_area(ax=ax, x_shift=-0.5, tmd_color=tmd_color, alpha=highlight_alpha)
     # Add TMD-JMD sequence
     if type(tmd_seq) == str:
-        pp.add_tmd_jmd_seq(ax=ax, seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd,
-                           **args_seq, **args_part_color, **args_seq_color,
-                           add_xticks_pos=add_xticks_pos, heatmap=False, x_shift=0,
-                           xtick_size=xtick_size)
+        pp.add_tmd_jmd_seq(ax=ax, **args_seq, **args_part_color, **args_seq_color,
+                           seq_size=seq_size,
+                           fontsize_tmd_jmd=fontsize_tmd_jmd, weight_tmd_jmd=weight_tmd_jmd,
+                           add_xticks_pos=add_xticks_pos, heatmap=False,
+                           x_shift=0, xtick_size=xtick_size)
     # Add TMD-JMD bar
     else:
         pp.add_tmd_jmd_bar(ax=ax, x_shift=-0.5, **args_part_color)
@@ -180,7 +182,11 @@ def plot_profile(df_feat=None, df_cat=None, shap_plot=False,
         pp.add_tmd_jmd_text(ax=ax, x_shift=-0.5, fontsize_tmd_jmd=fontsize_tmd_jmd)
     # Add legend
     if add_legend_cat:
-        legend_kws = pe.update_legend_kws(legend_kws=legend_kws)
+        fs = ut.plot_gco() - 2
+        _legend_kws = dict(n_cols=2, loc=2, fontsize=fs, fontsize_title=fs)
+        if legend_kws is not None:
+            _legend_kws.update(legend_kws)
+        legend_kws = pe.update_cat_legend_kws(legend_kws=_legend_kws)
         ut.plot_legend_(ax=ax, dict_color=dict_color, **legend_kws)
     # Set current axis to main axis object depending on tmd sequence given or not
     plt.sca(plt.gcf().axes[0])

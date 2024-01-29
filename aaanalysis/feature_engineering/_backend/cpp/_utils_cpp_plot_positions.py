@@ -165,7 +165,8 @@ def _add_part_seq(ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, x_shift
 
 
 def _add_part_seq_second_ticks(ax2=None, seq_size=11.0, xticks=None, xtick_labels=None,
-                               fontsize_tmd_jmd=11, xtick_size=11, x_shift=0.5):
+                               fontsize_tmd_jmd=11, weight_tmd_jmd="normal",
+                               xtick_size=11, x_shift=0.5, heatmap=False):
     """Add additional ticks for box of sequence parts"""
     name_tmd = ut.options["name_tmd"]
     name_jmd_n = ut.options["name_jmd_n"]
@@ -174,7 +175,8 @@ def _add_part_seq_second_ticks(ax2=None, seq_size=11.0, xticks=None, xtick_label
     ax2.xaxis.set_ticks_position("bottom")
     ax2.xaxis.set_label_position("bottom")
     # Offset the twin axis below the host
-    ax2.spines["bottom"].set_position(("outward", seq_size + 7))
+    y_pos = 5 if heatmap else 7
+    ax2.spines["bottom"].set_position(("outward", seq_size+y_pos))
     ax2.set_xticks([x + x_shift for x in xticks])
     ax2.set_xticklabels(xtick_labels, size=xtick_size, rotation=0, color="black", ha="center", va="top")
     ax2.tick_params(axis="x", color="black", length=0, width=0, bottom=True, pad=0)
@@ -184,18 +186,20 @@ def _add_part_seq_second_ticks(ax2=None, seq_size=11.0, xticks=None, xtick_label
         text = l.get_text()
         if name_tmd in text:
             l.set_size(fontsize_tmd_jmd)
-            l.set_weight("bold")
+            l.set_weight(weight_tmd_jmd)
         elif name_jmd_n in text or name_jmd_c in text:
             l.set_size(fontsize_tmd_jmd)
-            l.set_weight("bold")
+            l.set_weight(weight_tmd_jmd)
 
 
-def _get_new_axis(ax=None, heatmap=False):
+def _get_new_axis(ax=None):
     """Get new axis object with same y-axis as input ax"""
+    """
     if heatmap:
         ax_new = ax.twiny()
     else:
-        ax_new = ax.figure.add_subplot(ax.get_subplotspec(), frameon=False, yticks=[])
+    """
+    ax_new = ax.figure.add_subplot(ax.get_subplotspec(), frameon=False, yticks=[])
     return ax_new
 
 
@@ -235,7 +239,8 @@ class PlotPositions:
         return jmd_n_end, tmd_end, jmd_c_end
 
     # Main methods
-    def get_df_pos(self, df_feat=None, df_cat=None, col_cat="category", col_val="mean_dif",
+    def get_df_pos(self, df_feat=None, df_cat=None,
+                   col_cat="category", col_val="mean_dif",
                    value_type="count", normalize=False):
         """Get df_pos with values (e.g., counts or mean auc) for each feature (y) and positions (x)"""
         df_feat = df_feat.copy()
@@ -248,7 +253,6 @@ class PlotPositions:
                                         jmd_c_len=self.jmd_c_len)
         df_feat[ut.COL_POSITION] = feat_positions
         # Get dataframe with positions
-        # TODO check df_pos and simplify
         kwargs = dict(col_cat=col_cat, col_val=col_val, value_type=value_type, start=self.start, stop=self.stop)
         if value_type == "count":
             if col_val is None:
@@ -273,9 +277,12 @@ class PlotPositions:
         opt_fs = _get_optimal_fontsize(ax=ax, labels=labels, max_x_dist=max_x_dist)
         return round(opt_fs, 2)
 
-    def add_tmd_jmd_seq(self, ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, add_xticks_pos=False, heatmap=True,
-                        tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
-                        x_shift=0, xtick_size=11, seq_size=None, fontsize_tmd_jmd=None):
+    def add_tmd_jmd_seq(self, ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None,
+                        tmd_color="mediumspringgreen", jmd_color="blue",
+                        tmd_seq_color="black", jmd_seq_color="white",
+                        add_xticks_pos=False, heatmap=True,
+                        x_shift=0, xtick_size=11, seq_size=None,
+                        fontsize_tmd_jmd=None, weight_tmd_jmd="normal"):
         """Add sequences and corresponding x-ticks for TMD and JMD regions."""
         seq_size = _add_part_seq(ax=ax, jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq, x_shift=x_shift,
                                seq_size=seq_size, tmd_color=tmd_color, jmd_color=jmd_color,
@@ -303,11 +310,12 @@ class PlotPositions:
                                                      exists_jmd_n=exists_jmd_n, exists_jmd_c=exists_jmd_c)
         # Set x-ticks and x-tick labels
         if fontsize_tmd_jmd > 0:
-            ax2 = _get_new_axis(ax=ax, heatmap=heatmap)
+            ax2 = _get_new_axis(ax=ax)
             ax2.set_xlim(ax.get_xlim())
             _add_part_seq_second_ticks(ax2=ax2, xticks=xticks, xtick_labels=xtick_labels,
-                                       x_shift=x_shift, seq_size=seq_size,
-                                       fontsize_tmd_jmd=fontsize_tmd_jmd, xtick_size=xtick_size)
+                                       x_shift=x_shift, seq_size=seq_size,xtick_size=xtick_size,
+                                       fontsize_tmd_jmd=fontsize_tmd_jmd, weight_tmd_jmd=weight_tmd_jmd,
+                                       heatmap=heatmap)
         return ax
 
     # Add TMD-JMD elements
@@ -364,8 +372,9 @@ class PlotPositions:
         xticks = [x-self.start for x in xticks_labels]
         return xticks, xticks_labels
 
-    def add_xticks(self, ax=None, x_shift=0.0, xticks_position="bottom", xtick_size=11.0, xtick_width=2.0,
-                   xtick_length=4.0):
+
+    def add_xticks(self, ax=None, x_shift=0.0, xticks_position="bottom",
+                   xtick_size=11.0, xtick_width=2.0, xtick_length=4.0):
         """Add x-ticks to the plot."""
         xticks, xticks_labels = self.get_xticks_with_labels(step=5)
         ax.set_xticks([x + x_shift for x in xticks])

@@ -338,7 +338,7 @@ def _get_cpp_cmap(n_colors=100, facecolor_dark=None):
 
 def _get_shap_cmap(n_colors=100, facecolor_dark=True):
     """Generate a diverging color map for feature values."""
-    n = 20 # TODO check if 5 is better for CPP-SHAP heatmap
+    n = 20
     cmap_low = sns.light_palette(COLOR_SHAP_NEG, input="hex", reverse=True, n_colors=int(n_colors / 2) + n)
     cmap_high = sns.light_palette(COLOR_SHAP_POS, input="hex", n_colors=int(n_colors / 2) + n)
     if facecolor_dark is None:

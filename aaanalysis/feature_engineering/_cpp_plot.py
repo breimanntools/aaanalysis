@@ -105,7 +105,7 @@ def check_col_dif(col_dif=None, shap_plot=False):
         col_dif = ut.COL_MEAN_DIF
     if not shap_plot:
         if col_dif != ut.COL_MEAN_DIF:
-            raise ValueError(f"If 'shap_plot=False', 'col_dif' ('{col_dif}') must be '{ut.COL_MEAN_DIF}'")
+            raise ValueError(f"'col_dif' ('{col_dif}') must be '{ut.COL_MEAN_DIF}'")
     else:
         if ut.COL_MEAN_DIF not in col_dif:
             raise ValueError(f"If 'shap_plot=True', 'col_dif' ('{col_dif}') must follow '{ut.COL_MEAN_DIF}_'name''")
@@ -118,7 +118,7 @@ def check_col_imp(col_imp=None, shap_plot=False):
         col_imp = ut.COL_FEAT_IMPACT if shap_plot else ut.COL_FEAT_IMPORT
     if not shap_plot:
         if col_imp != ut.COL_FEAT_IMPORT:
-            raise ValueError(f"If 'shap_plot=False', 'col_imp' ('{col_imp}') must be '{ut.COL_FEAT_IMPORT}'")
+            raise ValueError(f"'col_imp' ('{col_imp}') must be '{ut.COL_FEAT_IMPORT}'")
     else:
         if ut.COL_FEAT_IMPACT not in col_imp:
             raise ValueError(f"If 'shap_plot=True', 'col_imp' ('{col_imp}') must follow '{ut.COL_FEAT_IMPACT}_'name''")
@@ -133,7 +133,7 @@ def check_col_cat(col_cat=None):
         raise ValueError(f"'col_cat' ({col_cat}) should be one of the following: {list_valid_col_cat}")
 
 
-def check_col_val(col_val=None, shap_plot=False):
+def check_col_val(col_val=None, shap_plot=False, sample_mean_dif=False):
     """Check if col_val is valid"""
     list_valid_col_val = [ut.COL_MEAN_DIF, ut.COL_ABS_MEAN_DIF, ut.COL_ABS_AUC, ut.COL_FEAT_IMPORT]
     str_error_shap = (f"If 'shap_plot=True', 'col_val' ('{col_val}') must follow '{ut.COL_FEAT_IMPACT}_'name'' or "
@@ -141,7 +141,11 @@ def check_col_val(col_val=None, shap_plot=False):
     str_add = f"Should be one of the following: {list_valid_col_val}" if not shap_plot else str_error_shap
     ut.check_str(name="col_val", val=col_val, accept_none=False, str_add=str_add)
     if not shap_plot:
-        if col_val not in list_valid_col_val:
+        if sample_mean_dif:
+            if ut.COL_MEAN_DIF not in col_val and col_val not in list_valid_col_val:
+                raise ValueError(f"'col_val' ('{col_val}') must follow {ut.COL_MEAN_DIF}_name' or "
+                                 f"should be one of the following: {list_valid_col_val}")
+        elif col_val not in list_valid_col_val:
             raise ValueError(f"'col_val' ('{col_val}') should be one of the following: {list_valid_col_val}")
     else:
         if ut.COL_FEAT_IMPACT not in col_val and ut.COL_MEAN_DIF not in col_val:
@@ -558,7 +562,7 @@ class CPPPlot:
         fontsize_titles : int or float, default=10
             Font size for the titles.
         fontsize_labels : int or float , default=11
-            Font size for labels.
+            Font size for plot labels.
         fontsize_annotations : int or float, default=11
             Font size for annotations.
         xlim_dif : tuple, default=(-17.5, 17.5)
@@ -636,10 +640,13 @@ class CPPPlot:
 
 
     def profile(self,
+                # Data and Plot Type
                 df_feat: pd.DataFrame = None,
                 shap_plot: bool = False,
                 col_imp: Union[str, None] = "feat_importance",
                 normalize: bool = True,
+
+                # Visual Appearance of TMD-JMD
                 ax: Optional[plt.Axes] = None,
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
                 start: int = 1,
@@ -653,9 +660,12 @@ class CPPPlot:
                 jmd_seq_color: str = "white",
                 seq_size: Union[int, float] = None,
                 fontsize_tmd_jmd: Union[int, float] = None,
+                weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
                 add_xticks_pos: bool = False,
                 highlight_tmd_area: bool = True,
                 highlight_alpha: float = 0.15,
+
+                # Legend, Axis, and Grid Configurations
                 add_legend_cat: bool = False,
                 dict_color: Optional[dict] = None,
                 legend_kws: Optional[dict] = None,
@@ -718,6 +728,8 @@ class CPPPlot:
             Font size for sequence annotations.
         fontsize_tmd_jmd : int or float, optional
             Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
+        weight_tmd_jmd : {'normal', 'bold'}, default='normal'
+            Font weight for the part labels: 'JMD-N', 'TMD', 'JMD-C'.
         add_xticks_pos : bool, default=False
             If ``True``, include x-tick positions when TMD-JMD sequence is given.
         highlight_tmd_area : bool, default=True
@@ -786,6 +798,7 @@ class CPPPlot:
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
         args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
+        ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd)
         ut.check_bool(name="add_xticks_pos", val=add_xticks_pos)
         ut.check_bool(name="highlight_tmd_area", val=highlight_tmd_area)
         ut.check_number_range(name="tmd_area_alpha", val=highlight_alpha, min_val=0, max_val=1, just_int=False)
@@ -808,7 +821,7 @@ class CPPPlot:
                                col_imp=col_imp, normalize=normalize,
                                figsize=figsize, ax=ax,
                                start=start,
-                               **args_len, **args_seq, **args_size,
+                               **args_len, **args_seq, **args_size, weight_tmd_jmd=weight_tmd_jmd,
                                **args_part_color, **args_seq_color,
                                add_xticks_pos=add_xticks_pos,
                                highlight_tmd_area=highlight_tmd_area, highlight_alpha=highlight_alpha,
@@ -823,12 +836,16 @@ class CPPPlot:
         return fig, ax
 
     def heatmap(self,
+                # Data and Plot Type
                 df_feat=None,
                 shap_plot: bool = False,
                 col_cat : Literal['category', 'subcategory', 'scale_name'] ="subcategory",
                 col_val: str = "mean_dif",
                 normalize: bool = False,
-                ax: Optional[plt.Axes] = None,
+                name_test: str = "TEST",
+                name_ref: str = "REF",
+
+                # Visual Appearance and TMD-JMD
                 figsize: Tuple[Union[int, float], Union[int, float]] = (8, 8),
                 start: int = 1,
                 tmd_len: int = 20,
@@ -840,27 +857,24 @@ class CPPPlot:
                 tmd_seq_color: str = "black",
                 jmd_seq_color: str = "white",
                 seq_size: Union[int, float] = None,
-                fontsize_tmd_jmd: Union[int, float] = None,
+                fontsize_tmd_jmd: Union[int, float] = 12,
+                weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
+                fontsize_labels:Union[int, float] = 12,
                 add_xticks_pos: bool = False,
 
-                vmin=None,
-                vmax=None,
-                grid_on=True,
-
-                cmap="RdBu_r",
-                cmap_n_colors=None,
-                cbar_kws=None,
-
-                facecolor_dark: Optional[bool] = None,   # TODO remove (set by shap_plot)
-
-                add_jmd_tmd=True,  # Remove
-                cbar_pct=True,
-                linecolor="black",
-
-                add_legend_cat: bool = True,
+                # Legend, Axis, and Grid Configurations
+                grid_linecolor: Optional[str] = None,
+                grid_linewidth: Union[int, float] = 0.01,
+                border_linewidth: Union[int, float] = 2,
+                facecolor_dark: Optional[bool] = None,
+                vmin: Optional[Union[int, float]] = None,
+                vmax: Optional[Union[int, float]] = None,
+                cmap: Optional[str] = None,
+                cmap_n_colors: Optional[int] = None,
+                cbar_kws: Optional[dict] = None,
+                cbar_pct: bool = True,
                 dict_color: Optional[dict] = None,
                 legend_kws: Optional[dict] = None,
-
                 xtick_size: Union[int, float] = 11.0,
                 xtick_width: Union[int, float] = 2.0,
                 xtick_length: Union[int, float] = 5.0,
@@ -885,16 +899,13 @@ class CPPPlot:
             Column name in ``df_feat`` representing scale information (shown on the y-axis).
         col_val : {'mean_dif', 'abs_mean_dif', 'abs_auc', 'feat_importance', 'feat_impact_'name''}, default='mean_dif'
             Column name in ``df_feat`` containing numerical values to display.
-
-        normalize : {True, False, 'positions', 'positions_only'}, default=False
-            Specifies normalization for numerical values in ``col_val``:
-
-            - False: Set value at all positions of a feature without further normalization.
-            - True: Set value at all positions of a feature and normalize across all features.
-            - 'positions': Value/number of positions set at each position of a feature and normalized across features.
-              Recommended when aiming to emphasize features with fewer positions using 'col_val'='feat_impact' and 'value_type'='mean'.
-
-        figsize : tuple, default=(10,7)
+        normalize : bool, default=True
+            If ``True``, normalizes aggregated numerical values to a total of 100%.
+        name_test : str, default="TEST"
+            Name for the test dataset.
+        name_ref : str, default="REF"
+            Name for the reference dataset.
+        figsize : tuple, default=(8, 8)
             Figure dimensions (width, height) in inches.
         vmin, vmax : float, optional
             Values to anchor the colormap, otherwise, inferred from data and other keyword arguments.
@@ -905,8 +916,6 @@ class CPPPlot:
             Number of discrete steps in diverging or sequential color map.
         cbar_kws : dict of key, value mappings, optional
             Keyword arguments for :meth:`matplotlib.figure.Figure.colorbar`.
-        add_jmd_tmd : bool, default=True
-            Whether to add colored bar under heatmap indicating sequence parts (JMD-N, TMD, JMD-C).
         tmd_len : int, default=20
             Length of TMD to be depicted (>0). Must match with all feature from ``df_feat``.
         start : int, default=1
@@ -932,8 +941,8 @@ class CPPPlot:
             Font size of all sequence parts in points. If ``None``, optimized automatically.
         fontsize_tmd_jmd : int or float, optional
             Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
-        add_legend_cat : bool, default=True
-            If ``True``, a legend is added for the scale categories.
+        weight_tmd_jmd : {'normal', 'bold'}, default='normal'
+            Font weight for the part labels: 'JMD-N', 'TMD', 'JMD-C'.
         dict_color : dict, optional
             Color dictionary of scale categories classifying scales shown on y-axis. Default from
             :meth:`plot_get_cdict` with ``name='DICT_CAT'``.
@@ -974,52 +983,51 @@ class CPPPlot:
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot,
                                    cols_requiered=col_val, cols_nan_check=col_val)
         ut.check_bool(name="normalize", val=normalize)
-        ut.check_ax(ax=ax, accept_none=True)
         ut.check_figsize(figsize=figsize, accept_none=True)
         # Check specific input
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
-
-        args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
         args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
                                              jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
                                              check_jmd_seq_len_consistent=True)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
         args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
-        ut.check_bool(name="add_xticks_pos", val=add_xticks_pos)
+        ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd)
 
-        # TODO CHECK
-        args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
-                                             tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
-        args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         # Checking input
         # Args checked by Matplotlib: title, cmap, cbar_kws, legend_kws
         ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
         ut.check_number_range(name="cmap_n_colors", val=cmap_n_colors, min_val=1, accept_none=True, just_int=True)
-        ut.check_bool(name="add_jmd_tmd", val=add_jmd_tmd)
-        ut.check_bool(name="add_legend_cat", val=add_legend_cat)
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
         ut.check_dict(name="cbar_kws", val=cbar_kws, accept_none=True)
         check_col_cat(col_cat=col_cat)
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
         ut.check_figsize(figsize=figsize)
         dict_color = check_match_dict_color_df(dict_color=dict_color, df=df_feat)
+        ut.check_bool(name="add_xticks_pos", val=add_xticks_pos)
+        args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         # Get df positions
+        # TODO check args (fontsize & legend/cbar positioning) Labels should be adjustable by plot_settings
         ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot,
-                          col_cat=col_cat, col_val=col_val,
-                          normalize=normalize, figsize=figsize,
-                          dict_color=dict_color, vmin=vmin, vmax=vmax, grid_on=grid_on,
-                          cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws,
-                          facecolor_dark=facecolor_dark, add_jmd_tmd=add_jmd_tmd,
+                          col_cat=col_cat, col_val=col_val, normalize=normalize,
+                          name_test=name_test, name_ref=name_ref,
+                          figsize=figsize,
                           start=start, **args_len, **args_seq,
-                          tmd_color=tmd_color, jmd_color=jmd_color, tmd_seq_color=tmd_seq_color,
-                          jmd_seq_color=jmd_seq_color,
-                          seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd,
-                          add_xticks_pos=add_xticks_pos, xtick_size=xtick_size, xtick_width=xtick_width,
-                          xtick_length=xtick_length, ytick_size=ytick_size,
-                          add_legend_cat=add_legend_cat, legend_kws=legend_kws, cbar_pct=cbar_pct,
-                          grid_linecolor=linecolor)
+                          **args_part_color, **args_seq_color,
+                          **args_size, fontsize_labels=fontsize_labels,
+                          add_xticks_pos=add_xticks_pos,
+                          grid_linewidth=grid_linewidth, grid_linecolor=grid_linecolor,
+                          border_linewidth=border_linewidth,
+                          facecolor_dark=facecolor_dark,
+                          vmin=vmin, vmax=vmax,
+                          cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws, cbar_pct=cbar_pct,
+                          dict_color=dict_color, legend_kws=legend_kws,
+                          **args_xtick, ytick_size=ytick_size)
         plt.tight_layout()
+        if tmd_seq is not None and seq_size is None:
+            ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
+            if self._verbose:
+                ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
         return ax
 
     # Plotting method for only group level
@@ -1027,34 +1035,44 @@ class CPPPlot:
                     df_feat=None,
                     col_cat="subcategory",
                     col_val="mean_dif",
+                    col_imp="feat_importance",
                     normalize=False,
-                    figsize=(8, 8),
-                    vmin=None,
-                    vmax=None,
-                    grid_on=True,
-                    cmap="RdBu_r",
-                    cmap_n_colors=None,
-                    cbar_kws=None,
-                    facecolor_dark=False,
+                    name_test: str = "TEST",
+                    name_ref: str = "REF",
 
-                    tmd_len=20,
-                    start=1,
-                    linecolor=None,
-                    tmd_color="mediumspringgreen",
-                    jmd_color="blue",
-                    tmd_seq_color="black",
-                    jmd_seq_color="white",
-                    seq_size=None,
-                    fontsize_tmd_jmd=None,
-                    cbar_pct=True,
-                    add_legend_cat: bool = True,
+                    # Visual Appearance and TMD-JMD
+                    figsize: Tuple[Union[int, float], Union[int, float]] = (8, 8),
+                    start: int = 1,
+                    tmd_len: int = 20,
+                    tmd_seq: Optional[str] = None,
+                    jmd_n_seq: Optional[str] = None,
+                    jmd_c_seq: Optional[str] = None,
+                    tmd_color: str = "mediumspringgreen",
+                    jmd_color: str = "blue",
+                    tmd_seq_color: str = "black",
+                    jmd_seq_color: str = "white",
+                    seq_size: Union[int, float] = None,
+                    fontsize_tmd_jmd: Union[int, float] = None,
+                    weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
+                    add_xticks_pos: bool = False,
+
+                    # Legend, Axis, and Grid Configurations
+                    grid_linecolor: Optional[str] = None,
+                    grid_linewidth: Union[int, float] = 0.01,
+                    border_linewidth: Union[int, float] = 2,
+                    facecolor_dark: Optional[bool] = None,
+                    vmin: Optional[Union[int, float]] = None,
+                    vmax: Optional[Union[int, float]] = None,
+                    cmap: Optional[str] = None,
+                    cmap_n_colors: Optional[int] = None,
+                    cbar_kws: Optional[dict] = None,
+                    cbar_pct: bool = True,
                     dict_color: Optional[dict] = None,
                     legend_kws: Optional[dict] = None,
                     xtick_size: Union[int, float] = 11.0,
                     xtick_width: Union[int, float] = 2.0,
                     xtick_length: Union[int, float] = 5.0,
-                    ytick_size: Optional[Union[int, float]] = None,
-
+                    ytick_size: Optional[Union[int, float]] = None
                     ):
         """
         Plot CPP feature map showing feature value mean difference and feature importance per scale subcategory
@@ -1064,21 +1082,19 @@ class CPPPlot:
         ----------
         df_feat : pd.DataFrame, shape (n_feature, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
-            Must also include feature imporatnce (``feat_importance``) column.
+            Must also include feature importance (``feat_importance``) column.
         col_cat : {'category', 'subcategory', 'scale_name'}, default='subcategory'
             Column name in ``df_feat`` representing scale information (shown on the y-axis).
-        col_val : {'abs_auc', 'mean_dif', 'std_test', 'feat_importance', 'feat_impact_'name''}, default='mean_dif'
+        col_val : {'mean_dif', 'abs_mean_dif', 'abs_auc'}, default='mean_dif'
             Column name in ``df_feat`` containing numerical values to display.
-        normalize : {True, False, 'positions', 'positions_only'}, default=False
-            Specifies normalization for numerical values in ``col_val``:
-
-            - False: Set value at all positions of a feature without further normalization.
-            - True: Set value at all positions of a feature and normalize across all features.
-            - 'positions': Value/number of positions set at each position of a feature and normalized across features.
-              Recommended when aiming to emphasize features with fewer positions using 'col_val'='feat_impact' and 'value_type'='mean'.
-
-        figsize : tuple, default=(10,7)
+        normalize : bool, default=True
+            If ``True``, normalizes aggregated numerical values to a total of 100%.
+        figsize : tuple, default=(8, 8)
             Figure dimensions (width, height) in inches.
+        name_test : str, default="TEST"
+            Name for the test dataset.
+        name_ref : str, default="REF"
+            Name for the reference dataset.
         vmin, vmax : float, optional
             Values to anchor the colormap, otherwise, inferred from data and other keyword arguments.
         cmap : matplotlib colormap name or object, or list of colors, default='seismic'
@@ -1106,8 +1122,6 @@ class CPPPlot:
             Font size of all sequence parts in points. If ``None``, optimized automatically.
         fontsize_tmd_jmd : int or float, optional
             Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
-        add_legend_cat : bool, default=True
-            If ``True``, a legend is added for the scale categories.
         dict_color : dict, optional
             Color dictionary of scale categories classifying scales shown on y-axis. Default from
             :meth:`plot_get_cdict` with ``name='DICT_CAT'``.
@@ -1139,6 +1153,12 @@ class CPPPlot:
         # TODO cbar & feature importance y location depend on n features.
         # TODO bar label not in
         # TODO TMD size dep on size of plot (change)
+        # Check primary input
+        check_col_cat(col_cat=col_cat)
+        col_val = check_col_val(col_val=col_val, sample_mean_dif=True)
+        col_imp = check_col_imp(col_imp=col_imp)
+        df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, cols_requiered=[col_val, col_imp],
+                                   cols_nan_check=col_val)
         # Group arguments
         args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
@@ -1149,7 +1169,6 @@ class CPPPlot:
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
         ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
         ut.check_number_range(name="cmap_n_colors", val=cmap_n_colors, min_val=1, accept_none=True, just_int=True)
-        ut.check_bool(name="add_legend_cat", val=add_legend_cat)
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
         ut.check_dict(name="cbar_kws", val=cbar_kws, accept_none=True)
         ut.check_df(df=df_feat, name="df_feat", cols_requiered=col_val, cols_nan_check=col_val)
@@ -1160,18 +1179,19 @@ class CPPPlot:
         # Get df positions
         # TODO where is tmd_jmd line??
         ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat,
-                              col_cat=col_cat, col_val=col_val,
-                              normalize=normalize, figsize=figsize,
-                              dict_color=dict_color, vmin=vmin, vmax=vmax, grid_on=grid_on,
+                              col_cat=col_cat, col_val=col_val, normalize=normalize,
+                              figsize=figsize, name_test=name_test, name_ref=name_ref,
+                              dict_color=dict_color, vmin=vmin, vmax=vmax,
                               cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws,
                               facecolor_dark=facecolor_dark,
                               start=start, **args_len,
                               tmd_color=tmd_color, jmd_color=jmd_color, tmd_seq_color=tmd_seq_color,
                               jmd_seq_color=jmd_seq_color,
-                              seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd,
+                              seq_size=seq_size,
+                              fontsize_tmd_jmd=fontsize_tmd_jmd, weight_tmd_jmd=weight_tmd_jmd,
                               xtick_size=xtick_size, xtick_width=xtick_width,
                               xtick_length=xtick_length, ytick_size=ytick_size,
-                              legend_kws=legend_kws, cbar_pct=cbar_pct, linecolor=linecolor)
+                              legend_kws=legend_kws, cbar_pct=cbar_pct, grid_linecolor=grid_linecolor)
         plt.subplots_adjust(right=0.95)
         return ax
 
@@ -1180,7 +1200,7 @@ class CPPPlot:
                         fig: Optional[plt.Figure] = None,
                         max_x_dist: float = 0.1,
                         fontsize_tmd_jmd: Union[int, float] = None,
-                        weight_tmd_jmd: Literal['normal', 'bold'] = 'bold',
+                        weight_tmd_jmd: Literal['normal', 'bold'] = 'normal',
                         tmd_color: str = "mediumspringgreen",
                         jmd_color: str = "blue",
                         tmd_seq_color: str = "black",
@@ -1203,8 +1223,8 @@ class CPPPlot:
             A greater value reduces potential overlaps of sequence characters.
         fontsize_tmd_jmd : int or float, optional
             Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
-        weight_tmd_jmd : {'normal', 'bold'}, default='bold'
-            Font weight for the part labels (JMD-N, TMD, JMD-C).
+        weight_tmd_jmd : {'normal', 'bold'}, default='normal'
+            Font weight for the part labels: 'JMD-N', 'TMD', 'JMD-C'.
         tmd_color : str, default='mediumspringgreen'
             Color for TMD.
         jmd_color : str, default='blue'
@@ -1238,7 +1258,7 @@ class CPPPlot:
         ut.check_fig(fig=fig, accept_none=True)
         ut.check_number_range(name="max_x_dist", val=max_x_dist, min_val=0, just_int=False)
         ut.check_number_range(name="fontsize_tmd_jmd", val=fontsize_tmd_jmd, min_val=0, accept_none=True, just_int=False)
-        ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd, accept_none=False)
+        ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
         check_match_ax_seq_len(ax=ax, jmd_c_len=self._jmd_c_len, jmd_n_len=self._jmd_n_len)

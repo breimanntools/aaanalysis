@@ -222,8 +222,6 @@ def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
                  hatch=None, hatchcolor="white", title=None, title_align_left=True,
                  frameon=False, **kwargs):
     """Sets an independently customizable plot legend"""
-
-
     # Check input
     if ax is None:
         ax = plt.gca()
