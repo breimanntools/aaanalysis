@@ -8,15 +8,18 @@ from ._utils_cpp_plot_map import plot_heatmap_
 
 
 # II Main Functions
-def plot_heatmap(df_feat=None, df_cat=None, shap_plot=False,
-                 col_cat="subcategory", col_val="mean_dif", normalize=False,
+def plot_heatmap(df_feat=None, df_cat=None,
+                 shap_plot=False,
+                 col_cat="subcategory", col_val="mean_dif",
+                 normalize=False,
                  name_test="TEST", name_ref="REF",
                  figsize=(8, 8),
                  start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10,
                  tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None,
                  tmd_color="mediumspringgreen", jmd_color="blue",
                  tmd_seq_color="black", jmd_seq_color="white",
-                 seq_size=None, fontsize_tmd_jmd=12, fontsize_labels=12,
+                 seq_size=None, fontsize_tmd_jmd=None, weight_tmd_jmd="normal",
+                 fontsize_labels=None,
                  add_xticks_pos=False,
                  grid_linewidth=0.01, grid_linecolor=None,
                  border_linewidth=2,
@@ -27,12 +30,16 @@ def plot_heatmap(df_feat=None, df_cat=None, shap_plot=False,
                  xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
                  ytick_size=None):
     """Plot heatmap of feature values"""
+    # Set fontsize
+    fs = ut.plot_gco()
+    fontsize_labels = fs if fontsize_labels is None else fontsize_labels
+
     # Group arguments
     args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
-    args_size = dict(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
     args_part_color = dict(tmd_color=tmd_color, jmd_color=jmd_color)
     args_seq_color = dict(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
+    args_fs = dict(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd, fontsize_labels=fontsize_labels)
     args_xtick = dict(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
 
     # Set SHAP arguments
@@ -46,26 +53,31 @@ def plot_heatmap(df_feat=None, df_cat=None, shap_plot=False,
 
     # Plot
     fig, ax = plt.subplots(figsize=figsize)
-    # Set cat legend arguments
     width, height = figsize
-    y = 0.8/height
-    print(y)
-    print(y/5)
-    _legend_kws = dict(fontsize=fontsize_labels, fontsize_title=fontsize_labels, y=-y, x=0)
-    if legend_kws is not None:
-        _legend_kws.update(legend_kws)
+    y = 2/height
+    y_cbar = 0# y/5
+    y_leg = -y
+    print(y_cbar, y_leg)
     # Create cbar axes: [left, bottom, width, height]
-    cbar_ax_pos = (0.6, y/5, 0.25, 0.015)
+    cbar_ax_pos = (0.7, y_cbar, 0.25, 0.015)
     cbar_ax = fig.add_axes(cbar_ax_pos)
     _cbar_kws = dict(ticksize=fontsize_labels, label=label)
     if cbar_kws is not None:
         _cbar_kws.update(cbar_kws)
+
+    # Set cat legend arguments
+    _legend_kws = dict(fontsize=fontsize_labels,
+                       fontsize_title=fontsize_labels,
+                       y=y_leg, x=0, loc=8)
+    if legend_kws is not None:
+        _legend_kws.update(legend_kws)
+
     ax = plot_heatmap_(df_feat=df_feat, df_cat=df_cat,
                        col_cat=col_cat, col_val=col_val, normalize=normalize,
                        ax=ax, figsize=figsize,
                        start=start, **args_len, **args_seq,
                        **args_part_color, **args_seq_color,
-                       **args_size, fontsize_labels=fontsize_labels,
+                       **args_fs, weight_tmd_jmd=weight_tmd_jmd,
                        add_xticks_pos=add_xticks_pos,
                        grid_linecolor=grid_linecolor, grid_linewidth=grid_linewidth,
                        border_linewidth=border_linewidth,

@@ -67,7 +67,7 @@ class PlotElements:
 
     # Scale classification elements
     @staticmethod
-    def update_cat_legend_kws(legend_kws=None, _legend_kws=None, fontsize_labels=None):
+    def update_cat_legend_kws(legend_kws=None, _legend_kws=None):
         """Update legend arguments and set defaults"""
         if _legend_kws is None:
             _legend_kws = DICT_LEGEND_CAT.copy()

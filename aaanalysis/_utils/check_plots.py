@@ -80,6 +80,15 @@ def check_font_weight(name="font_weight", font_weight=None, accept_none=False, s
         raise ValueError(str_error)
 
 
+def check_fontsize_args(**kwargs):
+    """Check fontsize parameters"""
+    args_fs = {}
+    for name, val in kwargs.items():
+        check_type.check_number_range(name=name, val=val, min_val=0, accept_none=True, just_int=False)
+        args_fs[name] = val
+    return args_fs
+
+
 # Check min and max values
 def check_vmin_vmax(vmin=None, vmax=None, str_add=None):
     """Check if vmin and vmax are valid numbers and vmin is less than vmax."""

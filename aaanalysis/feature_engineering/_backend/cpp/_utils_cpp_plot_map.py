@@ -49,7 +49,7 @@ def _get_diverging_cmap(cmap, n_colors=None, facecolor_dark=False):
 
 
 def get_cmap_heatmap(df_pos=None, cmap=None, n_colors=None, facecolor_dark=True):
-    """Create a sequential or diverging colormap for a heatmap."""
+    """Create a sequential or diverging colormap for a heatmap based on data properties."""
     n_colors = n_colors if n_colors is not None else 100
     args = dict(n_colors=n_colors, facecolor_dark=facecolor_dark)
     if cmap is None:
@@ -126,7 +126,7 @@ def _plot_inner_heatmap(df_pos=None, ax=None, figsize=(8, 8),
                         x_shift=0.0,
                         xtick_size=11.0, xtick_width=2.0, xtick_length=None,
                         ytick_size=None):
-    """Show summary static values of feature categories/sub_categories per position as heat map"""
+    """Plot the inner heatmap with specific settings and styles."""
     # Heatmap arguments
     vmin, vmax = _get_vmin_vmax(df_pos=df_pos, vmin=vmin, vmax=vmax)
     center = 0 if df_pos.min().min() < 0 else None
@@ -166,8 +166,9 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                   tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None,
                   tmd_color="mediumspringgreen", jmd_color="blue",
                   tmd_seq_color="black", jmd_seq_color="white",
-                  seq_size=None, fontsize_labels=11,
+                  seq_size=None,
                   fontsize_tmd_jmd=None, weight_tmd_jmd="normal",
+                  fontsize_labels=11,
                   add_xticks_pos=False,
                   grid_linewidth=0.01, grid_linecolor=None,
                   border_linewidth=2,
@@ -175,15 +176,17 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                   cmap=None, cmap_n_colors=None,
                   cbar_ax=None, cbar_pct=True, cbar_kws=None,
                   dict_color=None, legend_kws=None,
-                  xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, ytick_size=None):
-    """"""
+                  xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
+                  ytick_size=None):
+    """Main function to plot heatmap for feature value per categories/subcategories per position."""
     # Group arguments
     args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
     args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     args_part_color = dict(tmd_color=tmd_color, jmd_color=jmd_color)
     args_seq_color = dict(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
-    args_size = dict(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
+    args_fs = dict(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
     args_xtick = dict(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
+
     # Get df positions
     value_type = _get_value_type(col_val=col_val)
     pp = PlotPositions(**args_len, start=start)
@@ -194,6 +197,7 @@ def plot_heatmap_(df_feat=None, df_cat=None,
     # Get color bar arguments
     cmap = get_cmap_heatmap(df_pos=df_pos, cmap=cmap, n_colors=cmap_n_colors, facecolor_dark=facecolor_dark)
     dict_cbar, cbar_kws = get_cbar_args_heatmap(df_pos=df_pos, cbar_kws=cbar_kws)
+
     # Plotting
     pe = PlotElements()
     fig, ax = pe.set_figsize(ax=ax, figsize=figsize, force_set=True)
@@ -205,18 +209,14 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                              cbar_ax=cbar_ax, cmap=cmap, cbar_kws=cbar_kws,
                              x_shift=0.5, **args_xtick, ytick_size=ytick_size)
     # Add color bar
-    # TODO check if cabar and fontsize_labels are setting the same
-    print(fontsize_tmd_jmd)
-    print(fontsize_labels)
-    print(cbar_kws)
-    print(xtick_size)
     set_cbar_heatmap(ax=ax, vmin=vmin, vmax=vmax,
-                     dict_cbar=dict_cbar, cbar_kws=cbar_kws, cbar_pct=cbar_pct,
+                     dict_cbar=dict_cbar,
+                     cbar_kws=cbar_kws, cbar_pct=cbar_pct,
                      weight="normal", fontsize=fontsize_labels)
+
     # Add tmd_jmd sequence
     if isinstance(tmd_seq, str):
-        ax = pp.add_tmd_jmd_seq(ax=ax, seq_size=seq_size,
-                                fontsize_tmd_jmd=fontsize_tmd_jmd,
+        ax = pp.add_tmd_jmd_seq(ax=ax, **args_fs,
                                 weight_tmd_jmd=weight_tmd_jmd,
                                 **args_seq, **args_part_color, **args_seq_color,
                                 add_xticks_pos=add_xticks_pos, heatmap=True,
@@ -226,11 +226,13 @@ def plot_heatmap_(df_feat=None, df_cat=None,
         pp.add_tmd_jmd_bar(ax=ax, **args_part_color)
         pp.add_tmd_jmd_xticks(ax=ax, x_shift=0.5, **args_xtick)
         pp.add_tmd_jmd_text(ax=ax, x_shift=0, fontsize_tmd_jmd=fontsize_tmd_jmd)
+
     # Add scale bars
     bar_width = _get_bar_width(fig=fig, len_seq=jmd_n_len+tmd_len+jmd_c_len)
     pe.add_subcat_bars(ax=ax, df_pos=df_pos, df_feat=df_feat,
                        col_cat=col_cat, dict_color=dict_color,
                        bar_width=bar_width, bar_spacing=bar_width*0.75)
+
     # Add scale legend
     legend_kws = pe.update_cat_legend_kws(legend_kws=legend_kws)
     ut.plot_legend_(ax=ax, dict_color=dict_color, **legend_kws)

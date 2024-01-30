@@ -30,15 +30,6 @@ def check_args_ytick(ytick_size=None, ytick_width=None, ytick_length=None):
     return args_ytick
 
 
-# Check sequence size
-def check_args_size(seq_size=None, fontsize_tmd_jmd=None):
-    """Check if sequence size parameters match"""
-    ut.check_number_range(name="seq_size", val=seq_size, min_val=0, accept_none=True, just_int=False)
-    ut.check_number_range(name="fontsize_tmd_jmd", val=fontsize_tmd_jmd, min_val=0, accept_none=True, just_int=False)
-    args_size = dict(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
-    return args_size
-
-
 # Check colors
 def check_part_color(tmd_color=None, jmd_color=None):
     """Check if part colors valid"""

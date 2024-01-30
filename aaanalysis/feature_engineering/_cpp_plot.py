@@ -22,7 +22,6 @@ from ._backend.check_feature import (check_split_kws,
                                      check_match_df_scales_df_cat)
 from ._backend.check_cpp_plot import (check_args_xtick,
                                       check_args_ytick,
-                                      check_args_size,
                                       check_part_color,
                                       check_seq_color,
                                       check_match_dict_color_df)
@@ -797,7 +796,8 @@ class CPPPlot:
                                              check_jmd_seq_len_consistent=True)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
-        args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
+        args_fs = ut.check_fontsize_args(seq_size=seq_size,
+                                         fontsize_tmd_jmd=fontsize_tmd_jmd)
         ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd)
         ut.check_bool(name="add_xticks_pos", val=add_xticks_pos)
         ut.check_bool(name="highlight_tmd_area", val=highlight_tmd_area)
@@ -820,9 +820,9 @@ class CPPPlot:
         fig, ax = plot_profile(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot,
                                col_imp=col_imp, normalize=normalize,
                                figsize=figsize, ax=ax,
-                               start=start,
-                               **args_len, **args_seq, **args_size, weight_tmd_jmd=weight_tmd_jmd,
+                               start=start, **args_len, **args_seq,
                                **args_part_color, **args_seq_color,
+                               **args_fs, weight_tmd_jmd=weight_tmd_jmd,
                                add_xticks_pos=add_xticks_pos,
                                highlight_tmd_area=highlight_tmd_area, highlight_alpha=highlight_alpha,
                                add_legend_cat=add_legend_cat, dict_color=dict_color, legend_kws=legend_kws,
@@ -857,9 +857,9 @@ class CPPPlot:
                 tmd_seq_color: str = "black",
                 jmd_seq_color: str = "white",
                 seq_size: Union[int, float] = None,
-                fontsize_tmd_jmd: Union[int, float] = 12,
+                fontsize_tmd_jmd: Optional[Union[int, float]] = None,
                 weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
-                fontsize_labels:Union[int, float] = 12,
+                fontsize_labels: Union[int, float] = None,
                 add_xticks_pos: bool = False,
 
                 # Legend, Axis, and Grid Configurations
@@ -871,8 +871,8 @@ class CPPPlot:
                 vmax: Optional[Union[int, float]] = None,
                 cmap: Optional[str] = None,
                 cmap_n_colors: Optional[int] = None,
-                cbar_kws: Optional[dict] = None,
                 cbar_pct: bool = True,
+                cbar_kws: Optional[dict] = None,
                 dict_color: Optional[dict] = None,
                 legend_kws: Optional[dict] = None,
                 xtick_size: Union[int, float] = 11.0,
@@ -943,6 +943,10 @@ class CPPPlot:
             Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
         weight_tmd_jmd : {'normal', 'bold'}, default='normal'
             Font weight for the part labels: 'JMD-N', 'TMD', 'JMD-C'.
+        fontsize_labels : int or float, default=12
+            Font size (>= 0) for figure labels.
+        add_xticks_pos : bool, default=False
+            If ``True``, include x-tick positions when TMD-JMD sequence is given.
         dict_color : dict, optional
             Color dictionary of scale categories classifying scales shown on y-axis. Default from
             :meth:`plot_get_cdict` with ``name='DICT_CAT'``.
@@ -991,36 +995,38 @@ class CPPPlot:
                                              check_jmd_seq_len_consistent=True)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
-        args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
+        args_fs = ut.check_fontsize_args(seq_size=seq_size,
+                                         fontsize_tmd_jmd=fontsize_tmd_jmd,
+                                         fontsize_labels=fontsize_labels)
         ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd)
-
-        # Checking input
-        # Args checked by Matplotlib: title, cmap, cbar_kws, legend_kws
-        ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
-        ut.check_number_range(name="cmap_n_colors", val=cmap_n_colors, min_val=1, accept_none=True, just_int=True)
-        ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
-        ut.check_dict(name="cbar_kws", val=cbar_kws, accept_none=True)
-        check_col_cat(col_cat=col_cat)
-        ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
-        ut.check_figsize(figsize=figsize)
-        dict_color = check_match_dict_color_df(dict_color=dict_color, df=df_feat)
         ut.check_bool(name="add_xticks_pos", val=add_xticks_pos)
+
+        # Check figure input
+        ut.check_bool(name="facecolor_dark", val=facecolor_dark, accept_none=True)
+        ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
+        ut.check_number_range(name="cmap_n_colors", val=cmap_n_colors, min_val=1, accept_none=True, just_int=True)
+        ut.check_dict(name="cbar_kws", val=cbar_kws, accept_none=True)
+        dict_color = check_match_dict_color_df(dict_color=dict_color, df=df_feat)
+        ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
+        ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
         # Get df positions
         # TODO check args (fontsize & legend/cbar positioning) Labels should be adjustable by plot_settings
-        ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot,
-                          col_cat=col_cat, col_val=col_val, normalize=normalize,
+        ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat,
+                          shap_plot=shap_plot,
+                          col_cat=col_cat, col_val=col_val,
+                          normalize=normalize,
                           name_test=name_test, name_ref=name_ref,
                           figsize=figsize,
                           start=start, **args_len, **args_seq,
                           **args_part_color, **args_seq_color,
-                          **args_size, fontsize_labels=fontsize_labels,
+                          **args_fs, weight_tmd_jmd=weight_tmd_jmd,
                           add_xticks_pos=add_xticks_pos,
                           grid_linewidth=grid_linewidth, grid_linecolor=grid_linecolor,
                           border_linewidth=border_linewidth,
-                          facecolor_dark=facecolor_dark,
-                          vmin=vmin, vmax=vmax,
-                          cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws, cbar_pct=cbar_pct,
+                          facecolor_dark=facecolor_dark, vmin=vmin, vmax=vmax,
+                          cmap=cmap, cmap_n_colors=cmap_n_colors,
+                          cbar_pct=cbar_pct, cbar_kws=cbar_kws,
                           dict_color=dict_color, legend_kws=legend_kws,
                           **args_xtick, ytick_size=ytick_size)
         plt.tight_layout()
@@ -1054,19 +1060,21 @@ class CPPPlot:
                     seq_size: Union[int, float] = None,
                     fontsize_tmd_jmd: Union[int, float] = None,
                     weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
+                    fontsize_labels: Union[int, float] = 12,
+                    fontsize_annotations: Union[int, float] = 10,
                     add_xticks_pos: bool = False,
 
                     # Legend, Axis, and Grid Configurations
-                    grid_linecolor: Optional[str] = None,
                     grid_linewidth: Union[int, float] = 0.01,
+                    grid_linecolor: Optional[str] = None,
                     border_linewidth: Union[int, float] = 2,
-                    facecolor_dark: Optional[bool] = None,
+                    facecolor_dark: bool = False,
                     vmin: Optional[Union[int, float]] = None,
                     vmax: Optional[Union[int, float]] = None,
                     cmap: Optional[str] = None,
                     cmap_n_colors: Optional[int] = None,
-                    cbar_kws: Optional[dict] = None,
                     cbar_pct: bool = True,
+                    cbar_kws: Optional[dict] = None,
                     dict_color: Optional[dict] = None,
                     legend_kws: Optional[dict] = None,
                     xtick_size: Union[int, float] = 11.0,
@@ -1157,41 +1165,52 @@ class CPPPlot:
         check_col_cat(col_cat=col_cat)
         col_val = check_col_val(col_val=col_val, sample_mean_dif=True)
         col_imp = check_col_imp(col_imp=col_imp)
-        df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, cols_requiered=[col_val, col_imp],
+        df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat,
+                                   cols_requiered=[col_val, col_imp],
                                    cols_nan_check=col_val)
-        # Group arguments
-        args_size = check_args_size(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd)
-        args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
-        # Checking input
-        # Args checked by Matplotlib: title, cmap, cbar_kws, legend_kws
-        df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat)
-        args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
+        ut.check_bool(name="normalize", val=normalize)
+        ut.check_figsize(figsize=figsize, accept_none=True)
+
+        # Check specific input
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
-        ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
-        ut.check_number_range(name="cmap_n_colors", val=cmap_n_colors, min_val=1, accept_none=True, just_int=True)
-        ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
-        ut.check_dict(name="cbar_kws", val=cbar_kws, accept_none=True)
-        ut.check_df(df=df_feat, name="df_feat", cols_requiered=col_val, cols_nan_check=col_val)
-        check_col_cat(col_cat=col_cat)
+        args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                                             jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
+                                             check_jmd_seq_len_consistent=True)
+        args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
+        args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
+        args_fs = ut.check_fontsize_args(seq_size=seq_size,
+                                         fontsize_tmd_jmd=fontsize_tmd_jmd,
+                                         fontsize_labels=fontsize_labels,
+                                         fontsize_annotations=fontsize_annotations)
+        ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd)
+        ut.check_bool(name="add_xticks_pos", val=add_xticks_pos)
+
+        # Check figure input
+        ut.check_bool(name="facecolor_dark", val=facecolor_dark)
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
-        ut.check_figsize(figsize=figsize)
+        ut.check_number_range(name="cmap_n_colors", val=cmap_n_colors, min_val=1, accept_none=True, just_int=True)
+        ut.check_dict(name="cbar_kws", val=cbar_kws, accept_none=True)
         dict_color = check_match_dict_color_df(dict_color=dict_color, df=df_feat)
+        ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
+        args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
+        ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
         # Get df positions
-        # TODO where is tmd_jmd line??
         ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat,
-                              col_cat=col_cat, col_val=col_val, normalize=normalize,
-                              figsize=figsize, name_test=name_test, name_ref=name_ref,
-                              dict_color=dict_color, vmin=vmin, vmax=vmax,
-                              cmap=cmap, cmap_n_colors=cmap_n_colors, cbar_kws=cbar_kws,
-                              facecolor_dark=facecolor_dark,
-                              start=start, **args_len,
-                              tmd_color=tmd_color, jmd_color=jmd_color, tmd_seq_color=tmd_seq_color,
-                              jmd_seq_color=jmd_seq_color,
-                              seq_size=seq_size,
-                              fontsize_tmd_jmd=fontsize_tmd_jmd, weight_tmd_jmd=weight_tmd_jmd,
-                              xtick_size=xtick_size, xtick_width=xtick_width,
-                              xtick_length=xtick_length, ytick_size=ytick_size,
-                              legend_kws=legend_kws, cbar_pct=cbar_pct, grid_linecolor=grid_linecolor)
+                              col_cat=col_cat, col_val=col_val, col_imp=col_imp,
+                              normalize=normalize,
+                              name_test=name_test, name_ref=name_ref,
+                              figsize=figsize,
+                              start=start, **args_len, **args_seq,
+                              **args_part_color, **args_seq_color,
+                              **args_fs, weight_tmd_jmd=weight_tmd_jmd,
+                              add_xticks_pos=add_xticks_pos,
+                              grid_linewidth=grid_linewidth, grid_linecolor=grid_linecolor,
+                              border_linewidth=border_linewidth,
+                              facecolor_dark=facecolor_dark, vmin=vmin, vmax=vmax,
+                              cmap=cmap, cmap_n_colors=cmap_n_colors,
+                              cbar_pct=cbar_pct, cbar_kws=cbar_kws,
+                              dict_color=dict_color, legend_kws=legend_kws,
+                              **args_xtick, ytick_size=ytick_size)
         plt.subplots_adjust(right=0.95)
         return ax
 
