@@ -8,7 +8,7 @@ import warnings
 
 import aaanalysis.utils as ut
 from ._utils_cpp_plot_elements import PlotElements
-from ._utils_cpp_plot_positions import PlotPositions
+from ._utils_cpp_plot_positions import PlotPartPositions
 
 
 # I Helper Functions
@@ -81,7 +81,7 @@ def _plot_profile(df_pos=None, shap_plot=False, ax=None,
     # Constants for additional spacing
     XLIM_ADD = 3 if shap_plot else 1
     seq_len = jmd_n_len + tmd_len + jmd_c_len
-    pp = PlotPositions(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
+    pp = PlotPartPositions(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
     plot_args = dict(kind="bar", stacked=True, rot=0, width=bar_width, edgecolor=edge_color,
                      legend=False, zorder=10)
 
@@ -143,7 +143,7 @@ def plot_profile(df_feat=None, df_cat=None, shap_plot=False,
     # Get df positions
     value_type = "sum" if col_imp else "count"
     col_cat = "scale_name" if shap_plot else "category"
-    pp = PlotPositions(**args_len, start=start)
+    pp = PlotPartPositions(**args_len, start=start)
     df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat.copy(),
                            col_cat=col_cat, col_val=col_imp,
                            value_type=value_type, normalize=normalize)
@@ -186,7 +186,7 @@ def plot_profile(df_feat=None, df_cat=None, shap_plot=False,
         _legend_kws = dict(n_cols=2, loc=2, fontsize=fs, fontsize_title=fs)
         if legend_kws is not None:
             _legend_kws.update(legend_kws)
-        legend_kws = pe.update_cat_legend_kws(legend_kws=_legend_kws)
+        legend_kws = pe.adjust_cat_legend_kws(legend_kws=_legend_kws)
         ut.plot_legend_(ax=ax, dict_color=dict_color, **legend_kws)
     # Set current axis to main axis object depending on tmd sequence given or not
     plt.sca(plt.gcf().axes[0])

@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import aaanalysis.utils as ut
 
 from ._utils_cpp_plot_elements import PlotElements
-from ._utils_cpp_plot_positions import PlotPositions
+from ._utils_cpp_plot_positions import PlotPartPositions
 
 
 # I Helper Functions
@@ -21,13 +21,26 @@ def _get_value_type(col_val="abs_auc"):
 
 
 def _get_vmin_vmax(df_pos=None, vmin=None, vmax=None):
-    """Calculate minimum and maximum values for the heatmap if not provided."""
+    """Obtain minimum and maximum values for the heatmap."""
+    if vmax is not None and vmin is not None:
+        return vmin, vmax   # Skip adjustment
     vmin = df_pos.min().min() if vmin is None else vmin
     vmax = df_pos.max().max() if vmax is None else vmax
+    # Create centered vmin and vmax
     val = max((abs(vmin), abs(vmax)))
     vmax = val
     vmin = -val if vmin < 0 else 0
     return vmin, vmax
+
+
+def _get_center(df_pos=None, vmin=None, vmax=None):
+    """Obtain center for cbar"""
+    if vmax is not None and vmin is not None:
+        return None # Skip adjustment
+    vmin = df_pos.min().min() if vmin is None else vmin
+    vmax = df_pos.max().max() if vmax is None else vmax
+    center = 0 if vmin < 0 < vmax else None
+    return center
 
 
 def _get_bar_width(fig=None, len_seq=None):
@@ -38,21 +51,7 @@ def _get_bar_width(fig=None, len_seq=None):
     return bar_width
 
 
-# TODO
-def _get_bar_height(fig=None, len_seq=None):
-    """Get consistent bar width to for category bars"""
-    width, height = fig.get_size_inches()
-    width_factor = 1 / width * 8
-    bar_width = len_seq / 110 * width_factor
-    return bar_width
 
-"""
-def _get_bar_height(ax=None, divider=50):
-    ylim = ax.get_ylim()
-    width, height = plt.gcf().get_size_inches()
-    bar_height = abs(ylim[0] - ylim[1]) / divider / height*6
-    return bar_height
-"""
 # Get color map
 def _get_diverging_cmap(cmap, n_colors=None, facecolor_dark=False):
     """Generate a diverging colormap based on the provided cmap."""
@@ -64,16 +63,19 @@ def _get_diverging_cmap(cmap, n_colors=None, facecolor_dark=False):
     return cmap
 
 
-def get_cmap_heatmap(df_pos=None, cmap=None, n_colors=None, facecolor_dark=True):
+def get_cmap_heatmap(df_pos=None, cmap=None, n_colors=None, facecolor_dark=True, vmin=None, vmax=None):
     """Create a sequential or diverging colormap for a heatmap based on data properties."""
     n_colors = n_colors if n_colors is not None else 100
-    args = dict(n_colors=n_colors, facecolor_dark=facecolor_dark)
+    v_max = df_pos.max().max() if vmax is None else vmax
+    v_min = df_pos.min().min() if vmin is None else vmin
+    only_neg = v_max <= 0
+    only_pos = v_min >= 0
+    print(only_pos, only_neg)
+    args = dict(n_colors=n_colors, facecolor_dark=facecolor_dark,
+                only_neg=only_neg, only_pos=only_pos)
     if cmap is None:
-        if df_pos.min().min() < 0:
-            cmap_cpp = ut.plot_get_cmap_(name=ut.STR_CMAP_CPP, **args)
-            return cmap_cpp
-        else:
-            cmap = "flare"
+        cmap_cpp = ut.plot_get_cmap_(name=ut.STR_CMAP_CPP, **args)
+        return cmap_cpp
     if cmap == "SHAP":
         cmap_shap = ut.plot_get_cmap_(name=ut.STR_CMAP_SHAP, **args)
         return cmap_shap
@@ -153,7 +155,7 @@ def _plot_inner_heatmap(df_pos=None, ax=None, figsize=(8, 8),
     """Plot the inner heatmap with specific settings and styles."""
     # Heatmap arguments
     vmin, vmax = _get_vmin_vmax(df_pos=df_pos, vmin=vmin, vmax=vmax)
-    center = 0 if df_pos.min().min() < 0 else None
+    center = _get_center(df_pos=df_pos, vmin=vmin, vmax=vmax)
     facecolor = "black" if facecolor_dark else "white"
     grid_linecolor = grid_linecolor if grid_linecolor is not None else  "gray" if facecolor_dark else "black"
     # Plot with 0 set to NaN
@@ -166,7 +168,7 @@ def _plot_inner_heatmap(df_pos=None, ax=None, figsize=(8, 8),
                      cbar_ax=cbar_ax, cbar_kws=cbar_kws, cmap=cmap,
                      yticklabels=True, xticklabels=True)
     # Set default x-ticks
-    pp = PlotPositions(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
+    pp = PlotPartPositions(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
     pp.add_xticks(ax=ax, xticks_position="bottom", x_shift=x_shift,
                   xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
     ax.tick_params(axis='y', which='both', length=0, labelsize=ytick_size)
@@ -214,13 +216,14 @@ def plot_heatmap_(df_feat=None, df_cat=None,
 
     # Get df positions
     value_type = _get_value_type(col_val=col_val)
-    pp = PlotPositions(**args_len, start=start)
+    pp = PlotPartPositions(**args_len, start=start)
     df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat.copy(),
                            col_cat=col_cat, col_val=col_val,
                            value_type=value_type, normalize=normalize)
     vmin, vmax = _get_vmin_vmax(df_pos=df_pos, vmin=vmin, vmax=vmax)
     # Get color bar arguments
-    cmap = get_cmap_heatmap(df_pos=df_pos, cmap=cmap, n_colors=cmap_n_colors, facecolor_dark=facecolor_dark)
+    cmap = get_cmap_heatmap(df_pos=df_pos, cmap=cmap, n_colors=cmap_n_colors, facecolor_dark=facecolor_dark,
+                            vmin=vmin, vmax=vmax)
     dict_cbar, cbar_kws = get_cbar_args_heatmap(df_pos=df_pos, cbar_kws=cbar_kws)
 
     # Plotting
@@ -259,7 +262,7 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                        bar_width=bar_width, bar_spacing=bar_width*0.75)
 
     # Add scale legend
-    legend_kws = pe.update_cat_legend_kws(legend_kws=legend_kws)
+    #legend_kws = pe.update_cat_legend_kws(legend_kws=legend_kws)
     ut.plot_legend_(ax=ax, dict_color=dict_color, **legend_kws)
     # Set current axis to main axis object depending on tmd sequence given or not
     plt.sca(plt.gcf().axes[0])

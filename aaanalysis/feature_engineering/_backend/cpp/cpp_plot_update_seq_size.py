@@ -2,7 +2,7 @@
 This is a script for the backend of the CPPPlot.update_seq_size() method.
 """
 import matplotlib.pyplot as plt
-from ._utils_cpp_plot_positions import PlotPositions
+from ._utils_cpp_plot_positions import PlotPartPositions
 
 # I Helper functions
 def _get_sorted_x_tick_labels(ax=None):
@@ -36,7 +36,7 @@ def update_seq_size_(ax=None, tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None,
     # Get all x-axis tick labels
     labels = _get_sorted_x_tick_labels(ax=ax)
     # Adjust font size to prevent overlap
-    pp = PlotPositions()
+    pp = PlotPartPositions()
     seq_size = pp.get_optimal_fontsize(ax=ax, labels=labels, max_x_dist=max_x_dist)
     lw = plt.gcf().get_size_inches()[0]/5
     for l, c in zip(labels, colors):

@@ -323,31 +323,45 @@ def get_dict_part_seq(tmd=None, jmd_n=None, jmd_c=None):
     return part_seq_dict
 
 
-def _get_cpp_cmap(n_colors=100, facecolor_dark=None):
+def _adjust_cmap(cmap_low=None, cmap_high=None, n=None, n_add_to_end=None,
+                 facecolor_dark=None, only_neg=False, only_pos=False):
+    """Adjust cmap"""
+    if facecolor_dark is None:
+        c_middle = [cmap_low[-1]]
+    else:
+        c_middle = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
+    if only_neg:
+        cmap = cmap_low[0:-n] + c_middle
+    elif only_pos:
+        cmap = c_middle + cmap_high[n + n_add_to_end:]
+    else:
+        cmap = cmap_low[0:-n] + c_middle + cmap_high[n + n_add_to_end:]
+    return cmap
+
+
+def _get_cpp_cmap(n_colors=100, facecolor_dark=None, only_pos=False, only_neg=False):
     """Generate a diverging color map for CPP feature values."""
     n = 5
     cmap = sns.color_palette(palette="RdBu_r", n_colors=n_colors + n * 2)
     cmap_low, cmap_high = cmap[0:int((n_colors + n * 2) / 2)], cmap[int((n_colors + n * 2) / 2):]
-    if facecolor_dark is None:
-        c_middle = [cmap_low[-1]]
-    else:
-        c_middle = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
-    add_to_end = 1  # Must be added to keep list size consistent
-    cmap = cmap_low[0:-n] + c_middle + cmap_high[n+add_to_end:]
+    n_add_to_end = 1  # Must be added to keep list size consistent
+    cmap = _adjust_cmap(cmap_low=cmap_low, cmap_high=cmap_high,
+                        n=n, n_add_to_end=n_add_to_end,
+                        facecolor_dark=facecolor_dark,
+                        only_neg=only_neg, only_pos=only_pos)
     return cmap
 
 
-def _get_shap_cmap(n_colors=100, facecolor_dark=True):
+def _get_shap_cmap(n_colors=100, facecolor_dark=True, only_pos=False, only_neg=False):
     """Generate a diverging color map for feature values."""
     n = 20
     cmap_low = sns.light_palette(COLOR_SHAP_NEG, input="hex", reverse=True, n_colors=int(n_colors / 2) + n)
     cmap_high = sns.light_palette(COLOR_SHAP_POS, input="hex", n_colors=int(n_colors / 2) + n)
-    if facecolor_dark is None:
-        c_middle = [cmap_low[-1]]
-    else:
-        c_middle = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
-    add_to_end = (n_colors+1)%2 # Must be added to keep list size consistent
-    cmap = cmap_low[0:-n] + c_middle + cmap_high[n+add_to_end:]
+    n_add_to_end = (n_colors + 1) % 2  # Must be added to keep list size consistent
+    cmap = _adjust_cmap(cmap_low=cmap_low, cmap_high=cmap_high,
+                        n=n, n_add_to_end=n_add_to_end,
+                        facecolor_dark=facecolor_dark,
+                        only_neg=only_neg, only_pos=only_pos)
     return cmap
 
 # II Main functions
@@ -411,12 +425,14 @@ def plot_get_cdict_(name=STR_DICT_COLOR):
         raise ValueError(f"'name' must be '{STR_DICT_COLOR}' or '{STR_DICT_CAT}'")
 
 
-def plot_get_cmap_(name="CPP", n_colors=101, facecolor_dark=None):
+def plot_get_cmap_(name="CPP", n_colors=101, facecolor_dark=None, only_pos=False, only_neg=False):
     """Get color map for CPP or CPP-SHAP plots"""
+    args = dict(n_colors=n_colors, facecolor_dark=facecolor_dark,
+                only_neg=only_neg, only_pos=only_pos)
     if name == STR_CMAP_CPP:
-        return _get_cpp_cmap(n_colors=n_colors, facecolor_dark=facecolor_dark)
+        return _get_cpp_cmap(**args)
     elif name == STR_CMAP_SHAP:
-        return _get_shap_cmap(n_colors=n_colors, facecolor_dark=facecolor_dark)
+        return _get_shap_cmap(**args)
     else:
         raise ValueError(f"'name' must be '{STR_CMAP_CPP}' or '{STR_CMAP_SHAP}'")
 

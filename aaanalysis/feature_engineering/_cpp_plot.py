@@ -1213,8 +1213,8 @@ class CPPPlot:
                                    dict_color=dict_color, legend_kws=legend_kws,
                                    **args_xtick, ytick_size=ytick_size)
         # Adjust plot
+        # TODO catch warnings, give arguments up, adjust plot for better spacing,
         with warnings.catch_warnings():
-            print("hit")
             warnings.simplefilter("ignore", category=UserWarning)
             fig.tight_layout()
             plt.subplots_adjust(right=0.95)

@@ -3,13 +3,12 @@ This is a script for the backend PlotElements utility class for the CPPPlot clas
 """
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 
 import aaanalysis.utils as ut
 
 # I Helper Functions
-DICT_LEGEND_CAT = dict(n_cols=2,
-                       loc=9,
-                       title=ut.LABEL_SCALE_CAT,
+DICT_LEGEND_CAT = dict(loc=9,
                        weight_title="normal",
                        labelspacing=0.05,
                        handletextpad=0.2)
@@ -25,6 +24,16 @@ def _get_colors_for_col_cat(labels=None, dict_color=None, df_feat=None, col_cat=
 # II Main Functions
 class PlotElements:
     """Utility class for plot element configurations and enhancements."""
+
+    # Adjust plot elements
+    @staticmethod
+    def adjust_fontsize(fontsize_labels=None, fontsize_annotations=None):
+        """Adjust font size for labels and annotations to defaults if not specified."""
+        fs = ut.plot_gco()
+        fontsize_labels = fs if fontsize_labels is None else fontsize_labels
+        fontsize_annotations = fs - 2 if fontsize_annotations is None else fontsize_annotations
+        return fontsize_labels, fontsize_annotations
+
 
     # Set plot elements
     @staticmethod
@@ -67,15 +76,6 @@ class PlotElements:
 
     # Scale classification elements
     @staticmethod
-    def update_cat_legend_kws(legend_kws=None, _legend_kws=None):
-        """Update legend arguments and set defaults"""
-        if _legend_kws is None:
-            _legend_kws = DICT_LEGEND_CAT.copy()
-        if legend_kws is not None:
-            _legend_kws.update(legend_kws)
-        return _legend_kws
-
-    @staticmethod
     def add_subcat_bars(ax=None, df_pos=None, df_feat=None, col_cat=None, dict_color=None,
                         bar_width=0.3, bar_spacing=0.15):
         """Add left colored sidebar to indicate category grouping"""
@@ -84,3 +84,58 @@ class PlotElements:
         ut.plot_add_bars(ax=ax, labels=labels, colors=colors,
                          bar_width=bar_width, bar_spacing=bar_spacing, label_spacing_factor=2)
 
+
+    @staticmethod
+    def adjust_cat_legend_kws(legend_kws=None, n_cat=None,
+                              legend_xy=None, fontsize_labels=None):
+        """Optimize legend position and appearance based on the number of categories and provided keywords."""
+        n_cols = 2 if legend_kws is None else legend_kws.get("n_cols", 2)
+        n_rows = np.floor(n_cat / n_cols)
+        if legend_xy is not None:
+            x, y = legend_xy
+            title = ut.LABEL_SCALE_CAT
+        else:
+            x, y = -0.1, -0.01
+            str_space = "\n" * int((6-n_rows))
+            title = f"{str_space}{ut.LABEL_SCALE_CAT}"
+
+        # Prepare legend keywords
+        _legend_kws = dict(fontsize=fontsize_labels,
+                           fontsize_title=fontsize_labels,
+                           n_cols=n_cols,
+                           title=title,
+                           x=x, y=y,
+                           **DICT_LEGEND_CAT)
+        if legend_kws is not None:
+            _legend_kws.update(legend_kws)
+        return _legend_kws
+
+
+    # Color bar elements
+    @staticmethod
+    def adjust_cbar_kws(fig=None, cbar_kws=None, cbar_xywh=None,
+                        fontsize_labels=None, label=None):
+        """Set color bar position, appearance, and label with default or provided keywords."""
+        width, height = plt.gcf().get_size_inches()
+        bar_height = 0.15/height
+        bar_bottom = 0.06/height
+
+        # Create cbar positions: [left, bottom, width, height]
+        default_cbar_xywh = (0.5, bar_bottom, 0.2, bar_height)
+
+        # Replace None values in cbar_xywh with defaults
+        if cbar_kws is not None:
+            _cbar_xywh = tuple(i if i is not None else def_i for i, def_i in
+                               zip(cbar_xywh, default_cbar_xywh))
+        else:
+            _cbar_xywh = default_cbar_xywh
+
+        # Create color bar axes
+        cbar_ax = fig.add_axes(_cbar_xywh)
+
+        # Prepare color bar keywords
+        _cbar_kws = dict(ticksize=fontsize_labels,
+                         label=label)
+        if cbar_kws is not None:
+            _cbar_kws.update(cbar_kws)
+        return _cbar_kws, cbar_ax

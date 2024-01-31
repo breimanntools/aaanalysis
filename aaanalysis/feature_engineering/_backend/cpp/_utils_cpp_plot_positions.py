@@ -199,7 +199,7 @@ def _get_new_axis(ax=None):
 
 
 # II Main Functions
-class PlotPositions:
+class PlotPartPositions:
     """Class for plotting positional information for CPP analysis"""
 
     def __init__(self, tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1):

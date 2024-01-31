@@ -8,56 +8,9 @@ import matplotlib.pyplot as plt
 
 import aaanalysis.utils as ut
 
-from ._utils_cpp_plot_positions import PlotPositions
+from ._utils_cpp_plot_elements import PlotElements
+from ._utils_cpp_plot_positions import PlotPartPositions
 from ._utils_cpp_plot_map import plot_heatmap_
-
-
-# I Helper Functions
-def _adjust_fontsize(fontsize_labels=None, fontsize_annotations=None):
-    """Adjust font size for labels and annotations to defaults if not specified."""
-    fs = ut.plot_gco()
-    fontsize_labels = fs if fontsize_labels is None else fontsize_labels
-    fontsize_annotations = fs - 2 if fontsize_annotations is None else fontsize_annotations
-    return fontsize_labels, fontsize_annotations
-
-
-def _adjust_legend_kws(legend_kws=None, n_cat=None,
-                       legend_xy=None, fontsize_labels=None):
-    """Optimize legend position and appearance based on the number of categories and provided keywords."""
-    n_cols = 2 if legend_kws is None else legend_kws.get("n_cols", 2)
-    n_rows = np.floor(n_cat / n_cols)
-    if legend_xy is not None:
-        x, y = legend_xy
-        title = ut.LABEL_SCALE_CAT
-    else:
-        x, y = -0.1, -0.01
-        str_space = "\n" * int((6-n_rows))
-        title = f"{str_space}{ut.LABEL_SCALE_CAT}"
-    _legend_kws = dict(fontsize=fontsize_labels,
-                       fontsize_title=fontsize_labels,
-                       n_cols=n_cols,
-                       title=title,
-                       x=x, y=y)
-    if legend_kws is not None:
-        _legend_kws.update(legend_kws)
-    return _legend_kws
-
-
-def _adjust_cbar_kws(fig=None, cbar_kws=None, cbar_xywh=None,
-                     name_test=None, name_ref=None,
-                     fontsize_labels=None):
-    """Set color bar position, appearance, and label with default or provided keywords."""
-    # Use default cbar position and size if cbar_xywh is not provided
-    default_cbar_ax_pos = (0.5, 0.01, 0.2, 0.015)
-    cbar_ax_pos = cbar_xywh if cbar_xywh is not None else default_cbar_ax_pos
-
-    # Create cbar axes: [left, bottom, width, height]
-    cbar_ax = fig.add_axes(cbar_ax_pos)
-    _cbar_kws = dict(ticksize=fontsize_labels,
-                     label=f"Feature value\n{name_test} - {name_ref}")
-    if cbar_kws is not None:
-        _cbar_kws.update(cbar_kws)
-    return _cbar_kws, cbar_ax
 
 
 # Add feature importance plot elements
@@ -103,7 +56,7 @@ def plot_feat_importance_bars(ax=None, df=None, top_pcp=None,
 def add_feat_importance_map(ax=None, df_feat=None, df_cat=None, start=None, args_len=None,
                             col_cat=None, col_imp=None, normalize=False):
     """Overlay feature importance symbols on the heatmap based on the importance values."""
-    pp = PlotPositions(**args_len, start=start)
+    pp = PlotPartPositions(**args_len, start=start)
     df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat,
                            col_cat=col_cat, col_val=col_imp,
                            value_type="sum", normalize=normalize)
@@ -121,7 +74,7 @@ def add_feat_importance_map(ax=None, df_feat=None, df_cat=None, start=None, args
                 ax.text(pos + 0.5, i + 0.5, _symbol, **_args_symbol)
 
 
-def add_feat_importance_legend(ax=None, legend_imp_xy=None, fontsize_title=None, fontsize=None):
+def add_feat_importance_legend(ax=None, legend_imp_xy=None, label=None, fontsize_title=None, fontsize=None):
     """Add a custom legend indicating the meaning of feature importance symbols."""
     if legend_imp_xy is not None:
         x, y = legend_imp_xy
@@ -138,7 +91,7 @@ def add_feat_importance_legend(ax=None, legend_imp_xy=None, fontsize_title=None,
         for label, size in zip(list_labels, list_sizes)]
     # Create the second legend
     ax.legend(handles=legend_handles,
-              title="Feature importance",
+              title=label,
               loc='lower left',
               bbox_to_anchor=(x, y),
               frameon=False,
@@ -173,8 +126,9 @@ def plot_feature_map(df_feat=None, df_cat=None,
                      ytick_size=None):
     """Create a comprehensive feature map with a heatmap, feature importance bars, and custom legends."""
     # Get fontsize
-    fs_labels, fs_annotations = _adjust_fontsize(fontsize_labels=fontsize_labels,
-                                                 fontsize_annotations=fontsize_annotations)
+    pe = PlotElements()
+    fs_labels, fs_annotations = pe.adjust_fontsize(fontsize_labels=fontsize_labels,
+                                                   fontsize_annotations=fontsize_annotations)
     # Group arguments
     args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
     args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
@@ -195,28 +149,30 @@ def plot_feature_map(df_feat=None, df_cat=None,
                              layout="constrained")
 
     # Set color bar and legend arguments
-    _cbar_kws, cbar_ax = _adjust_cbar_kws(fig=fig,
-                                          cbar_kws=cbar_kws,
-                                          cbar_xywh=None,
-                                          name_test=name_test,
-                                          name_ref=name_ref,
-                                          fontsize_labels=fs_labels)
+    label_cbar = f"Feature value\n{name_test} - {name_ref}"
+    _cbar_kws, cbar_ax = pe.adjust_cbar_kws(fig=fig,
+                                            cbar_kws=cbar_kws,
+                                            cbar_xywh=None,
+                                            label=label_cbar,
+                                            fontsize_labels=fs_labels)
 
     n_cat = len(set(df_feat[ut.COL_CAT]))
-    _legend_kws = _adjust_legend_kws(legend_kws=legend_kws,
-                                     n_cat=n_cat,
-                                     legend_xy=None,
-                                     fontsize_labels=fs_labels)
+    _legend_kws = pe.adjust_cat_legend_kws(legend_kws=legend_kws,
+                                           n_cat=n_cat,
+                                           legend_xy=None,
+                                           fontsize_labels=fs_labels)
 
     # Plot feat importance bars
+    label_bars_imp = "Cumulative feature\n  importance [%]"
     plot_feat_importance_bars(ax=axes[1], df=df_feat.copy(),
                               titlesize=fs_annotations,
                               labelsize=fs_annotations,
                               top_pcp_size=fs_annotations-2,
                               top_pcp_weight="bold",
                               col_imp=col_imp,
-                              label="Cumulative feature\n  importance [%]")
+                              label=label_bars_imp)
 
+    # Plot heatmap
     ax = plot_heatmap_(df_feat=df_feat, df_cat=df_cat,
                        col_cat=col_cat, col_val=col_val,
                        normalize=normalize,
@@ -234,9 +190,9 @@ def plot_feature_map(df_feat=None, df_cat=None,
                        **args_xtick, ytick_size=ytick_size)
 
     # Add feature position title
-    title_positions = ("                  Feature                  \n"
-                       "Scale (subcategory)  +  Positions                 ")
-    plt.title(title_positions, x=0, weight="bold", fontsize=fs_annotations)
+    label_feat_pos = ("                  Feature                  \n"
+                      "Scale (subcategory)  +  Positions                 ")
+    plt.title(label_feat_pos, x=0, weight="bold", fontsize=fs_annotations)
 
 
     # Add feature importance map
@@ -245,8 +201,10 @@ def plot_feature_map(df_feat=None, df_cat=None,
                             normalize=normalize,
                             ax=ax, start=start, args_len=args_len)
 
+    label_feat_imp = "Feature importance"
     add_feat_importance_legend(ax=cbar_ax,
                                legend_imp_xy=None,
+                               label=label_feat_imp,
                                fontsize_title=fs_labels,
                                fontsize=fs_annotations)
 

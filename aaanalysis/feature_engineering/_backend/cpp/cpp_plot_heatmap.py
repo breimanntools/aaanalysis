@@ -4,6 +4,7 @@ This is a script for the backend of the CPPPlot.heatmap() method.
 import matplotlib.pyplot as plt
 
 import aaanalysis.utils as ut
+from ._utils_cpp_plot_elements import PlotElements
 from ._utils_cpp_plot_map import plot_heatmap_
 
 
@@ -31,8 +32,8 @@ def plot_heatmap(df_feat=None, df_cat=None,
                  ytick_size=None):
     """Plot heatmap of feature values"""
     # Set fontsize
-    fs = ut.plot_gco()
-    fontsize_labels = fs if fontsize_labels is None else fontsize_labels
+    pe = PlotElements()
+    fs_labels, _ = pe.adjust_fontsize(fontsize_labels=fontsize_labels)
 
     # Group arguments
     args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
@@ -45,33 +46,31 @@ def plot_heatmap(df_feat=None, df_cat=None,
     # Set SHAP arguments
     if facecolor_dark is None:
         facecolor_dark = shap_plot
+
     if shap_plot:
         cmap = "SHAP"
-        label = ut.LABEL_CBAR_FEAT_IMPACT_CUM
+        label_cbar = ut.LABEL_CBAR_FEAT_IMPACT_CUM
     else:
-        label = f"Feature value\n{name_test} - {name_ref}"
+        label_cbar = f"Feature value\n{name_test} - {name_ref}"
 
     # Plot
     fig, ax = plt.subplots(figsize=figsize)
-    width, height = figsize
-    y = 2/height
-    y_cbar = 0# y/5
-    y_leg = -y
-    print(y_cbar, y_leg)
-    # Create cbar axes: [left, bottom, width, height]
-    cbar_ax_pos = (0.7, y_cbar, 0.25, 0.015)
-    cbar_ax = fig.add_axes(cbar_ax_pos)
-    _cbar_kws = dict(ticksize=fontsize_labels, label=label)
-    if cbar_kws is not None:
-        _cbar_kws.update(cbar_kws)
+
+    # Set color bar and legend arguments
+    _cbar_kws, cbar_ax = pe.adjust_cbar_kws(fig=fig,
+                                            cbar_kws=cbar_kws,
+                                            cbar_xywh=None,
+                                            label=label_cbar,
+                                            fontsize_labels=fs_labels)
 
     # Set cat legend arguments
-    _legend_kws = dict(fontsize=fontsize_labels,
-                       fontsize_title=fontsize_labels,
-                       y=y_leg, x=0, loc=8)
-    if legend_kws is not None:
-        _legend_kws.update(legend_kws)
+    n_cat = len(set(df_feat[ut.COL_CAT]))
+    _legend_kws = pe.adjust_cat_legend_kws(legend_kws=legend_kws,
+                                           n_cat=n_cat,
+                                           legend_xy=None,
+                                           fontsize_labels=fs_labels)
 
+    # Plot heatmap
     ax = plot_heatmap_(df_feat=df_feat, df_cat=df_cat,
                        col_cat=col_cat, col_val=col_val, normalize=normalize,
                        ax=ax, figsize=figsize,
