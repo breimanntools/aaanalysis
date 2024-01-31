@@ -194,11 +194,6 @@ def _add_part_seq_second_ticks(ax2=None, seq_size=11.0, xticks=None, xtick_label
 
 def _get_new_axis(ax=None):
     """Get new axis object with same y-axis as input ax"""
-    """
-    if heatmap:
-        ax_new = ax.twiny()
-    else:
-    """
     ax_new = ax.figure.add_subplot(ax.get_subplotspec(), frameon=False, yticks=[])
     return ax_new
 

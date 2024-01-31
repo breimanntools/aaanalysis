@@ -11,12 +11,12 @@ from .utils_feature import get_positions_
 
 # I Helper Functions
 # Adjust df_feat
-def _adjust_df_feat(df_feat=None, col_dif=None, xlim_dif=None):
+def _adjust_df_feat(df_feat=None, col_dif=None):
     """Adjusts feature values in `df_feat` based on percentage scaling and sets the limits for difference columns."""
     df_feat = df_feat.copy()
     if max(df_feat[col_dif]) - min(df_feat[col_dif]) <= 2:
         df_feat[col_dif] *= 100
-    return df_feat, xlim_dif
+    return df_feat
 
 
 # 1. Subplot: Feature position
@@ -202,7 +202,7 @@ def plot_ranking(df_feat=None, n_top=15,
     """Plot ranking of feature DataFrame"""
     # Adjust df_feat
     df_feat = df_feat.head(n_top).copy().reset_index(drop=True)
-    df_feat, xlim_dif = _adjust_df_feat(df_feat=df_feat, col_dif=col_dif, xlim_dif=xlim_dif)
+    df_feat = _adjust_df_feat(df_feat=df_feat, col_dif=col_dif)
     df_feat[ut.COL_POSITION] = get_positions_(features=df_feat[ut.COL_FEATURE],
                                               tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     # Plotting (three subplots)

@@ -1,5 +1,6 @@
 """
-This is a script for the backend of the CPPPlot.heatmap() method.
+This is the common utility script for the backend of the CPPPlot.heatmap() and
+CPPPlot.feat_map() methods.
 """
 import numpy as np
 import seaborn as sns
@@ -37,6 +38,21 @@ def _get_bar_width(fig=None, len_seq=None):
     return bar_width
 
 
+# TODO
+def _get_bar_height(fig=None, len_seq=None):
+    """Get consistent bar width to for category bars"""
+    width, height = fig.get_size_inches()
+    width_factor = 1 / width * 8
+    bar_width = len_seq / 110 * width_factor
+    return bar_width
+
+"""
+def _get_bar_height(ax=None, divider=50):
+    ylim = ax.get_ylim()
+    width, height = plt.gcf().get_size_inches()
+    bar_height = abs(ylim[0] - ylim[1]) / divider / height*6
+    return bar_height
+"""
 # Get color map
 def _get_diverging_cmap(cmap, n_colors=None, facecolor_dark=False):
     """Generate a diverging colormap based on the provided cmap."""
@@ -116,6 +132,14 @@ def set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws=None,
 
 
 # II Main Functions
+def _adjust_df_feat(df_feat=None, col_val=None, cbar_pct=True):
+    """Adjusts feature values in `df_feat` based on percentage scaling and sets the limits for difference columns."""
+    df_feat = df_feat.copy()
+    if cbar_pct and max(df_feat[col_val]) - min(df_feat[col_val]) <= 2:
+        df_feat[col_val] *= 100
+    return df_feat
+
+
 # Inner plotting function
 def _plot_inner_heatmap(df_pos=None, ax=None, figsize=(8, 8),
                         start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10,
@@ -179,6 +203,7 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                   xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
                   ytick_size=None):
     """Main function to plot heatmap for feature value per categories/subcategories per position."""
+    df_feat = _adjust_df_feat(df_feat=df_feat, col_val=col_val, cbar_pct=cbar_pct)
     # Group arguments
     args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
     args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)

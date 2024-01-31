@@ -15,7 +15,7 @@ DICT_LEGEND_CAT = dict(n_cols=2,
                        handletextpad=0.2)
 
 
-def get_colors_for_col_cat(labels=None, dict_color=None, df_feat=None, col_cat=None):
+def _get_colors_for_col_cat(labels=None, dict_color=None, df_feat=None, col_cat=None):
     """Extend color dict for given category column"""
     dict_cat = dict(zip(df_feat[col_cat], df_feat[ut.COL_CAT]))
     colors = [dict_color[dict_cat[c]] for c in labels]
@@ -80,7 +80,7 @@ class PlotElements:
                         bar_width=0.3, bar_spacing=0.15):
         """Add left colored sidebar to indicate category grouping"""
         labels = list(df_pos.index)
-        colors = get_colors_for_col_cat(labels=labels, df_feat=df_feat, col_cat=col_cat, dict_color=dict_color)
+        colors = _get_colors_for_col_cat(labels=labels, df_feat=df_feat, col_cat=col_cat, dict_color=dict_color)
         ut.plot_add_bars(ax=ax, labels=labels, colors=colors,
                          bar_width=bar_width, bar_spacing=bar_spacing, label_spacing_factor=2)
 

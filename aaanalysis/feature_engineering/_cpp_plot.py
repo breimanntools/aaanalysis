@@ -4,6 +4,7 @@ This is a script for the frontend of the CPPPlot class.
 from typing import Optional, Dict, Union, List, Tuple, Type, Literal
 import pandas as pd
 import matplotlib.pyplot as plt
+import warnings
 
 import aaanalysis.utils as ut
 
@@ -1195,24 +1196,30 @@ class CPPPlot:
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
         # Get df positions
-        ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat,
-                              col_cat=col_cat, col_val=col_val, col_imp=col_imp,
-                              normalize=normalize,
-                              name_test=name_test, name_ref=name_ref,
-                              figsize=figsize,
-                              start=start, **args_len, **args_seq,
-                              **args_part_color, **args_seq_color,
-                              **args_fs, weight_tmd_jmd=weight_tmd_jmd,
-                              add_xticks_pos=add_xticks_pos,
-                              grid_linewidth=grid_linewidth, grid_linecolor=grid_linecolor,
-                              border_linewidth=border_linewidth,
-                              facecolor_dark=facecolor_dark, vmin=vmin, vmax=vmax,
-                              cmap=cmap, cmap_n_colors=cmap_n_colors,
-                              cbar_pct=cbar_pct, cbar_kws=cbar_kws,
-                              dict_color=dict_color, legend_kws=legend_kws,
-                              **args_xtick, ytick_size=ytick_size)
-        plt.subplots_adjust(right=0.95)
+        fig, ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat,
+                                   col_cat=col_cat, col_val=col_val, col_imp=col_imp,
+                                   normalize=normalize,
+                                   name_test=name_test, name_ref=name_ref,
+                                   figsize=figsize,
+                                   start=start, **args_len, **args_seq,
+                                   **args_part_color, **args_seq_color,
+                                   **args_fs, weight_tmd_jmd=weight_tmd_jmd,
+                                   add_xticks_pos=add_xticks_pos,
+                                   grid_linewidth=grid_linewidth, grid_linecolor=grid_linecolor,
+                                   border_linewidth=border_linewidth,
+                                   facecolor_dark=facecolor_dark, vmin=vmin, vmax=vmax,
+                                   cmap=cmap, cmap_n_colors=cmap_n_colors,
+                                   cbar_pct=cbar_pct, cbar_kws=cbar_kws,
+                                   dict_color=dict_color, legend_kws=legend_kws,
+                                   **args_xtick, ytick_size=ytick_size)
+        # Adjust plot
+        with warnings.catch_warnings():
+            print("hit")
+            warnings.simplefilter("ignore", category=UserWarning)
+            fig.tight_layout()
+            plt.subplots_adjust(right=0.95)
         return ax
+
 
     def update_seq_size(self,
                         ax: plt.Axes = None,
