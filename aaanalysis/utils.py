@@ -410,7 +410,7 @@ def _get_diverging_cmap(cmap="ReBu_r", n_colors=101, facecolor_dark=False, only_
 
 
 def _get_shap_cmap(n_colors=101, facecolor_dark=True, only_pos=False, only_neg=False):
-    """Generate a diverging color map for feature values."""
+    """Generate a diverging colormap for feature values."""
     n = min((int(np.floor(1 + n_colors/5)), 20))
     c_middle = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
     if only_neg:
@@ -430,7 +430,7 @@ def _get_shap_cmap(n_colors=101, facecolor_dark=True, only_pos=False, only_neg=F
 
 
 def plot_get_cmap_(cmap="CPP", n_colors=101, facecolor_dark=None, only_pos=False, only_neg=False):
-    """Get color map for CPP or CPP-SHAP plots"""
+    """Get colormap for CPP or CPP-SHAP plots"""
     args = dict(n_colors=n_colors, facecolor_dark=facecolor_dark,
                 only_neg=only_neg, only_pos=only_pos)
     if cmap == STR_CMAP_CPP:

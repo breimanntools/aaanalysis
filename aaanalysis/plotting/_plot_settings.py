@@ -24,7 +24,7 @@ def check_font(font="Arial"):
 
 # Helper function
 def set_tick_size(axis=None, major_size=None, minor_size=None):
-    """Set tick size for the given axis."""
+    """Set tick size of the given axis."""
     plt.rcParams[f"{axis}tick.major.size"] = major_size
     plt.rcParams[f"{axis}tick.minor.size"] = minor_size
 

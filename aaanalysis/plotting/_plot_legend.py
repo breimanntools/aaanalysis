@@ -81,9 +81,9 @@ def plot_legend(ax: Optional[plt.Axes] = None,
     handlelength : int or float, default=2.0
         Length of legend handle.
     fontsize : int or float, optional
-        Font size for the legend text.
+        Font size of the legend text.
     fontsize_title : inf or float, optional
-        Font size for the legend title.
+        Font size of the legend title.
     weight_font : str, default='normal'
         Weight of the font.
     weight_title : str, default='normal'
@@ -91,7 +91,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
     marker : str, int, or list, optional
         Handle marker for legend items. Lines ('-') only visible if ``lw>0``.
     marker_size : int, float, or list, optional
-        Marker size for legend items.
+        Marker size of legend items.
     lw : int or float, default=0
         Line width for legend items. If negative, corners are rounded.
     linestyle : str or list, optional

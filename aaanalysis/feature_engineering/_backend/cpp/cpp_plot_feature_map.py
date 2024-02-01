@@ -151,7 +151,7 @@ def plot_feature_map(df_feat=None, df_cat=None,
                              gridspec_kw={'width_ratios': width_ratio, "wspace": 0},
                              layout="constrained")
 
-    # Set color bar and legend arguments
+    # Set colorbar and legend arguments
     label_cbar = f"Feature value\n{name_test} - {name_ref}"
     _cbar_kws, cbar_ax = pe.adjust_cbar_kws(fig=fig,
                                             cbar_kws=cbar_kws,

@@ -12,11 +12,19 @@ from ._utils_cpp_plot_elements import PlotElements
 from ._utils_cpp_plot_positions import PlotPartPositions
 
 
+WIDTH_NORM_FACTOR = 110
+
+
 # I Helper Functions
 def _get_value_type(col_val="abs_auc"):
     """Determine the value type based on column value."""
     dict_val_type = ut.DICT_VALUE_TYPE
-    val_type = "sum"if ut.COL_FEAT_IMPACT in col_val else dict_val_type[col_val]
+    if ut.COL_FEAT_IMPACT in col_val:
+        val_type = "sum"
+    elif ut.COL_MEAN_DIF in col_val:
+        val_type = "mean"
+    else:
+        val_type = dict_val_type.get(col_val, "mean")
     return val_type
 
 
@@ -50,14 +58,6 @@ def _get_vmin_vmax(df_pos=None, vmin=None, vmax=None):
     return vmin, vmax
 
 
-def _get_bar_width(fig=None, len_seq=None):
-    """Get consistent bar width to for category bars"""
-    width, height = fig.get_size_inches()
-    width_factor = 1 / width * 8
-    bar_width = len_seq / 110 * width_factor
-    return bar_width
-
-
 def _get_center(df_pos=None, vmin=None, vmax=None):
     """Obtain center for cbar"""
     if vmax is not None and vmin is not None:
@@ -68,7 +68,15 @@ def _get_center(df_pos=None, vmin=None, vmax=None):
     return center
 
 
-# Get color map
+def _get_bar_width(fig=None, len_seq=None):
+    """Get consistent bar width to for category bars"""
+    width, height = fig.get_size_inches()
+    width_factor = 1 / width * 8
+    bar_width = len_seq / WIDTH_NORM_FACTOR * width_factor
+    return bar_width
+
+
+# Get colormap
 def _get_cmap_heatmap(df_pos=None, cmap=None, n_colors=101, facecolor_dark=True, vmin=None, vmax=None):
     """Create a sequential or diverging colormap for a heatmap based on data properties."""
     n_colors = n_colors if n_colors is not None else 101
@@ -83,9 +91,9 @@ def _get_cmap_heatmap(df_pos=None, cmap=None, n_colors=101, facecolor_dark=True,
     return cmap
 
 
-# Get and set color bar arguments
+# Get and set colorbar arguments
 def _get_cbar_ticks_heatmap(df_pos=None):
-    """Calculate color bar ticks for the heatmap."""
+    """Calculate colorbar ticks for the heatmap."""
     stop_legend = df_pos.values.max()
     if type(stop_legend) is int:
         # Ticks for count datasets
@@ -96,13 +104,13 @@ def _get_cbar_ticks_heatmap(df_pos=None):
 
 
 def _get_cbar_args_heatmap(df_pos=None, cbar_kws=None):
-    """Create color bar arguments for the heatmap."""
+    """Create colorbar arguments for the heatmap."""
     cbar_ticksize = ut.plot_gco() - 2
     cbar_ticks = _get_cbar_ticks_heatmap(df_pos=df_pos)
     dict_cbar = {"ticksize": cbar_ticksize, "labelsize": cbar_ticksize, "labelweight": "normal"}
     cbar_kws_ = dict(orientation="horizontal", ticks=cbar_ticks)
     if cbar_kws is not None:
-        # Catch color bar arguments that must be set manually
+        # Catch colorbar arguments that must be set manually
         for arg in dict_cbar:
             if arg in cbar_kws:
                 dict_cbar[arg] = cbar_kws.pop(arg)
@@ -112,7 +120,7 @@ def _get_cbar_args_heatmap(df_pos=None, cbar_kws=None):
 
 def _set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws=None,
                       vmin=None, vmax=None, cbar_pct=True, weight="normal", fontsize=11):
-    """Configure the heatmap's color bar."""
+    """Configure the heatmap's colorbar."""
     cbar = ax.collections[0].colorbar
     cbar.ax.tick_params(labelsize=dict_cbar["ticksize"])
     if "label" in cbar_kws:
@@ -129,7 +137,7 @@ def _set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws=None,
     cbar.ax.xaxis.set_ticks_position('top')
     cbar.ax.xaxis.set_label_position('top')
 
-    # Customization for the thin line on top of the color bar
+    # Customization for the thin line on top of the colorbar
     for spine in cbar.ax.spines.values():
         spine.set_visible(False)  # Show only the top spine
     cbar.ax.spines['top'].set_visible(True)
@@ -220,7 +228,7 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                            col_cat=col_cat, col_val=col_val,
                            value_type=value_type, normalize=normalize)
     vmin, vmax = _get_vmin_vmax(df_pos=df_pos, vmin=vmin, vmax=vmax)
-    # Get color bar arguments
+    # Get colorbar arguments
     cmap = _get_cmap_heatmap(df_pos=df_pos, cmap=cmap, n_colors=cmap_n_colors, facecolor_dark=facecolor_dark,
                              vmin=vmin, vmax=vmax)
     dict_cbar, cbar_kws = _get_cbar_args_heatmap(df_pos=df_pos, cbar_kws=cbar_kws)
@@ -235,7 +243,7 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                              facecolor_dark=facecolor_dark, vmin=vmin, vmax=vmax,
                              cbar_ax=cbar_ax, cmap=cmap, cbar_kws=cbar_kws,
                              x_shift=0.5, **args_xtick, ytick_size=ytick_size)
-    # Add color bar
+    # Add colorbar
     _set_cbar_heatmap(ax=ax, vmin=vmin, vmax=vmax,
                       dict_cbar=dict_cbar,
                       cbar_kws=cbar_kws, cbar_pct=cbar_pct,

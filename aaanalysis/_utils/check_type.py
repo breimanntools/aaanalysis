@@ -96,7 +96,8 @@ def check_dict(name=None, val=None, accept_none=False, str_add=None):
         raise ValueError(str_error)
 
 
-def check_tuple(name=None, val=None, n=None, check_n_number=True, accept_none=False, str_add=None):
+def check_tuple(name=None, val=None, n=None, check_number=True, accept_none=False,
+                accept_none_number=False, str_add=None):
     """Check if the provided value is a tuple, optionally of a certain length and containing only numbers."""
     if val is None:
         if not accept_none:
@@ -110,9 +111,10 @@ def check_tuple(name=None, val=None, n=None, check_n_number=True, accept_none=Fa
         str_error = add_str(str_error=f"'{name}' ({val}) should be a tuple with {n} elements.",
                             str_add=str_add)
         raise ValueError(str_error)
-    if n is not None and check_n_number:
+    if n is not None and check_number:
         for v in val:
-            check_number_val(name=name, val=v, just_int=False, accept_none=False, str_add=str_add)
+            check_number_val(name=name, val=v, just_int=False, accept_none=accept_none_number,
+                             str_add=str_add)
 
 
 def check_list_like(name=None, val=None, accept_none=False, convert=True, accept_str=False, min_len=None,

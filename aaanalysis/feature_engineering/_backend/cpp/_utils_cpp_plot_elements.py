@@ -37,7 +37,7 @@ class PlotElements:
     # Adjust plot elements
     @staticmethod
     def adjust_fontsize(fontsize_labels=None, fontsize_annotations=None):
-        """Adjust font size for labels and annotations to defaults if not specified."""
+        """Adjust font size of labels and annotations to defaults if not specified."""
         fs = ut.plot_gco()
         fontsize_labels = fs if fontsize_labels is None else fontsize_labels
         fontsize_annotations = fs - 2 if fontsize_annotations is None else fontsize_annotations
@@ -120,11 +120,11 @@ class PlotElements:
         return _legend_kws
 
 
-    # Color bar elements
+    # Colorbar elements
     @staticmethod
     def adjust_cbar_kws(fig=None, cbar_kws=None, cbar_xywh=None,
                         fontsize_labels=None, label=None):
-        """Set color bar position, appearance, and label with default or provided keywords."""
+        """Set colorbar position, appearance, and label with default or provided keywords."""
         width, height = plt.gcf().get_size_inches()
         bar_height = 0.15/height
         bar_bottom = 0.06/height
@@ -133,10 +133,10 @@ class PlotElements:
         cbar_xywh_default = (0.5, bar_bottom, 0.2, bar_height)
         _cbar_xywh = _adjust_tuple_elements(tuple_in=cbar_xywh, tuple_default=cbar_xywh_default)
 
-        # Create color bar axes
+        # Create colorbar axes
         cbar_ax = fig.add_axes(_cbar_xywh)
 
-        # Prepare color bar keywords
+        # Prepare colorbar keywords
         _cbar_kws = dict(ticksize=fontsize_labels, label=label)
         if cbar_kws is not None:
             _cbar_kws.update(cbar_kws)

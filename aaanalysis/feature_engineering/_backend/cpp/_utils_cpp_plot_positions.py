@@ -12,7 +12,7 @@ from .utils_feature import get_positions_, get_df_pos_
 # I Helper Functions
 # Optimize fontsize
 def _get_optimal_fontsize(ax=None, labels=None, max_x_dist=0.1):
-    """Optimize font size for sequence characters"""
+    """Optimize font size of sequence characters"""
     min_fontsize, max_fontsize = 1, 60
     th_binary_search = 0.01
     fs_reduction = 0.05

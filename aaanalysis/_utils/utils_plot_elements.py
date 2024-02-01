@@ -9,7 +9,7 @@ import matplotlib.ticker as mticker
 
 # Helper functions
 def _get_color_map(labels=None, colors=None, sort_unique_labels=True):
-    """Get color map"""
+    """Get colormap"""
     if sort_unique_labels:
         unique_labels = sorted(set(labels))
     else:
