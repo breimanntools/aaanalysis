@@ -151,7 +151,7 @@ def _add_annotation_right(sub_fig=None, an_in_val=2, max_val=10.0, text_size=8):
 
 def plot_feature_rank(ax=None, df=None, n=20, xlim=(0, 8),
                       fontsize_annotation=8, col_imp=ut.COL_FEAT_IMPORT,
-                      shap_plot=False, x_rank_info=None):
+                      shap_plot=False, rank_info_xy=None):
     """Plots the feature ranking based on `df` on the axis `ax`, adjusting for SHAP values if `shap_plot` is True."""
     df = df.copy()
     plt.sca(ax)
@@ -171,16 +171,17 @@ def plot_feature_rank(ax=None, df=None, n=20, xlim=(0, 8),
     plt.xlim(xlim)
     _add_annotation_right(sub_fig=sub_fig, text_size=fontsize_annotation, an_in_val=x_max/2, max_val=xlim[1])
     str_sum = f"Σ={round(df[col_imp].sum(), 1)}%"
-    if x_rank_info is None:
+    if rank_info_xy is None:
         x = xlim[1] * 1.2
+        y = n-1.5 if shap_plot else n-2.5
         args = dict(ha="right", size=fontsize_annotation)
     else:
-        x = x_rank_info
+        x, y = rank_info_xy
         args = dict(ha="left", size=fontsize_annotation)
-    plt.text(x, n-2.5, str_sum, weight="normal", **args)
+    plt.text(x, y, str_sum, weight="normal", **args)
     if shap_plot:
-        plt.text(x, n-1.5, "negative", weight="bold", color=ut.COLOR_SHAP_NEG, va="top", **args)
-        plt.text(x, n-1.5, "positive", weight="bold", color=ut.COLOR_SHAP_POS, va="bottom", **args)
+        plt.text(x, y, "negative", weight="bold", color=ut.COLOR_SHAP_NEG, va="top", **args)
+        plt.text(x, y, "positive", weight="bold", color=ut.COLOR_SHAP_POS, va="bottom", **args)
 
 
 # II Main Functions
@@ -198,7 +199,7 @@ def plot_ranking(df_feat=None, n_top=15,
                  tmd_jmd_space=2,
                  xlim_dif=(-17.5, 17.5),
                  xlim_rank=(0, 8),
-                 x_rank_info=None):
+                 rank_info_xy=None):
     """Plot ranking of feature DataFrame"""
     # Adjust df_feat
     df_feat = df_feat.head(n_top).copy().reset_index(drop=True)
@@ -227,7 +228,7 @@ def plot_ranking(df_feat=None, n_top=15,
     axes[1].set_xlabel(label_mean_dif, size=fontsize_labels)
     # 3. Barplot importance
     plot_feature_rank(ax=axes[2], df=df_feat, n=n_top, xlim=xlim_rank,
-                      col_imp=col_imp, shap_plot=shap_plot, x_rank_info=x_rank_info,
+                      col_imp=col_imp, shap_plot=shap_plot, rank_info_xy=rank_info_xy,
                       fontsize_annotation=fontsize_annotations)
     axes[2].set_title(f"{ut.LABEL_FEAT_RANKING}\n(top {n_top} features)",
                       size=fontsize_titles, ha="center", weight="bold")

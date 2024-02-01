@@ -518,7 +518,7 @@ class CPPPlot:
                 fontsize_annotations: Union[int, float, None] = 11,
                 xlim_dif: Tuple[Union[int, float], Union[int, float]] = (-17.5, 17.5),
                 xlim_rank: Tuple[Union[int, float], Union[int, float]] = (0, 5),
-                x_rank_info: Optional[Union[int, float]] = None,
+                rank_info_xy: Optional[Union[int, float]] = None,
                 ) -> Tuple[plt.Figure, plt.Axes]:
         """
         Plot CPP/-SHAP feature ranking based on feature importance or sample-specif feature impact.
@@ -536,13 +536,15 @@ class CPPPlot:
             The number of top features to display. Should be 1 < ``n_top`` <= ``n_features``.
         shap_plot : bool, default=False
             Determines the analysis mode. If ``False``, the **CPP Analysis** mode is used, focusing on group-level results.
-            If ``True``, the **CPP-SHAP Aanalysis** is applied displaying specific sample-level (or subgroup-level) results.
+            If ``True``, the **CPP-SHAP Aanalysis** is applied displaying specific sample-level (or subgroup-level) results:
 
             **CPP Analysis**:
+
             - ``col_dif`` displays the group-level difference of feature values, with the `mean_dif` column selected by default.
             - ``col_imp`` refers to the group-level `feat_importance` column (shown in gray) used for feature ranking.
 
             **CPP-SHAP Analysis**:
+
             - ``col_dif`` allows the selection of sample-specific differences against the reference group
               from a `mean_dif_'name'` column.
             - ``col_imp`` enables the selection of specific feature impacts from a `feat_impact_'name'` column for
@@ -578,9 +580,10 @@ class CPPPlot:
             x-axis limits for the mean difference subplot.
         xlim_rank : tuple, default=(0, 5)
             x-axis limits for the ranking subplot.
-        x_rank_info : int, optional
-            x-axis position in the ranking subplot for the total feature importance
-            when ``shap_plot=False`` or feature impact and SHAP legend otherwise.
+        rank_info_xy : tuple of two floats (x, y), optional
+            Position (x-axis, y-axis) in ranking subplot for showing additional information:
+            - When ``shap_plot=False`: Displays sum of feature importance.
+            - When ``shap_plot=True``: Show the sum of the absolute feature impact and the SHAP legend.
 
         Returns
         -------
@@ -627,7 +630,8 @@ class CPPPlot:
         ut.check_number_range(name="fontsize_annotations", val=fontsize_annotations, **args)
         ut.check_lim(name="xlim_dif", val=xlim_dif)
         ut.check_lim(name="xlim_rank", val=xlim_rank)
-        ut.check_number_range(name="x_sum", val=x_rank_info, min_val=0, accept_none=True, just_int=False)
+        ut.check_tuple(name="rank_info_xy", val=rank_info_xy, n=2,
+                       accept_none=True, check_number=True)
         # DEV: No match check for features and tmd (check_match_features_seq_parts) necessary
         # Plot ranking
         fig, axes = plot_ranking(df_feat=df_feat.copy(), n_top=n_top,
@@ -644,7 +648,7 @@ class CPPPlot:
                                  fontsize_annotations=fontsize_annotations,
                                  tmd_jmd_space=tmd_jmd_space,
                                  xlim_dif=xlim_dif, xlim_rank=xlim_rank,
-                                 x_rank_info=x_rank_info)
+                                 rank_info_xy=rank_info_xy)
         return fig, axes
 
 

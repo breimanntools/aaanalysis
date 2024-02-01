@@ -251,7 +251,7 @@ class TestRanking:
     def test_x_rank_info(self, x_rank_info):
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
-        fig, axes = cpp_plot.ranking(df_feat=df_feat, x_rank_info=x_rank_info)
+        fig, axes = cpp_plot.ranking(df_feat=df_feat, rank_info_xy=x_rank_info)
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, np.ndarray)
         assert len(axes) == 3
@@ -339,9 +339,9 @@ class TestRanking:
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
         with pytest.raises(ValueError):
-            cpp_plot.ranking(df_feat=df_feat, x_rank_info=-1)
+            cpp_plot.ranking(df_feat=df_feat, rank_info_xy=-1)
         with pytest.raises(ValueError):
-            cpp_plot.ranking(df_feat=df_feat, x_rank_info="str")
+            cpp_plot.ranking(df_feat=df_feat, rank_info_xy="str")
 
     @settings(max_examples=20, deadline=1500)
     @given(tmd_jmd_space=st.one_of(st.integers(max_value=0), st.floats(allow_nan=True)))
@@ -467,7 +467,7 @@ class TestRankingComplex:
                                      fontsize_labels=fontsize_labels,
                                      fontsize_annotations=fontsize_annotations,
                                      xlim_dif=xlim_dif, xlim_rank=xlim_rank,
-                                     x_rank_info=x_rank_info)
+                                     rank_info_xy=x_rank_info)
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, np.ndarray)
         assert len(axes) == 3
