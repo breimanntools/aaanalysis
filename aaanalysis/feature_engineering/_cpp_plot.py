@@ -871,11 +871,13 @@ class CPPPlot:
                 vmin: Optional[Union[int, float]] = None,
                 vmax: Optional[Union[int, float]] = None,
                 cmap: Optional[str] = None,
-                cmap_n_colors: Optional[int] = None,
+                cmap_n_colors: int = 101,
                 cbar_pct: bool = True,
                 cbar_kws: Optional[dict] = None,
+                cbar_xywh: Tuple[float, Optional[float], float, Optional[float]] = (0.7, None, 0.2, None),
                 dict_color: Optional[dict] = None,
                 legend_kws: Optional[dict] = None,
+                legend_xy: Tuple[float, float] = (-0.1, -0.01),
                 xtick_size: Union[int, float] = 11.0,
                 xtick_width: Union[int, float] = 2.0,
                 xtick_length: Union[int, float] = 5.0,
@@ -913,7 +915,7 @@ class CPPPlot:
         cmap : matplotlib colormap name or object, or list of colors, default='seismic'
             Name of color map assigning data values to color space. If 'SHAP', colors from
             `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ will be used (recommended for feature impact).
-        cmap_n_colors : int, optional
+        cmap_n_colors : int, default=101
             Number of discrete steps in diverging or sequential color map.
         cbar_kws : dict of key, value mappings, optional
             Keyword arguments for :meth:`matplotlib.figure.Figure.colorbar`.
@@ -1012,25 +1014,26 @@ class CPPPlot:
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
         # Get df positions
-        # TODO check args (fontsize & legend/cbar positioning) Labels should be adjustable by plot_settings
-        ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat,
-                          shap_plot=shap_plot,
-                          col_cat=col_cat, col_val=col_val,
-                          normalize=normalize,
-                          name_test=name_test, name_ref=name_ref,
-                          figsize=figsize,
-                          start=start, **args_len, **args_seq,
-                          **args_part_color, **args_seq_color,
-                          **args_fs, weight_tmd_jmd=weight_tmd_jmd,
-                          add_xticks_pos=add_xticks_pos,
-                          grid_linewidth=grid_linewidth, grid_linecolor=grid_linecolor,
-                          border_linewidth=border_linewidth,
-                          facecolor_dark=facecolor_dark, vmin=vmin, vmax=vmax,
-                          cmap=cmap, cmap_n_colors=cmap_n_colors,
-                          cbar_pct=cbar_pct, cbar_kws=cbar_kws,
-                          dict_color=dict_color, legend_kws=legend_kws,
-                          **args_xtick, ytick_size=ytick_size)
-        plt.tight_layout()
+        fig, ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat,
+                               shap_plot=shap_plot,
+                               col_cat=col_cat, col_val=col_val,
+                               normalize=normalize,
+                               name_test=name_test, name_ref=name_ref,
+                               figsize=figsize,
+                               start=start, **args_len, **args_seq,
+                               **args_part_color, **args_seq_color,
+                               **args_fs, weight_tmd_jmd=weight_tmd_jmd,
+                               add_xticks_pos=add_xticks_pos,
+                               grid_linewidth=grid_linewidth, grid_linecolor=grid_linecolor,
+                               border_linewidth=border_linewidth,
+                               facecolor_dark=facecolor_dark, vmin=vmin, vmax=vmax,
+                               cmap=cmap, cmap_n_colors=cmap_n_colors,
+                               cbar_pct=cbar_pct, cbar_kws=cbar_kws, cbar_xywh=cbar_xywh,
+                               dict_color=dict_color, legend_kws=legend_kws, legend_xy=legend_xy,
+                               **args_xtick, ytick_size=ytick_size)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            fig.tight_layout()
         if tmd_seq is not None and seq_size is None:
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
             if self._verbose:
@@ -1073,7 +1076,7 @@ class CPPPlot:
                     vmin: Optional[Union[int, float]] = None,
                     vmax: Optional[Union[int, float]] = None,
                     cmap: Optional[str] = None,
-                    cmap_n_colors: Optional[int] = None,
+                    cmap_n_colors: int = 101,
                     cbar_pct: bool = True,
                     cbar_kws: Optional[dict] = None,
                     dict_color: Optional[dict] = None,
@@ -1109,7 +1112,7 @@ class CPPPlot:
         cmap : matplotlib colormap name or object, or list of colors, default='seismic'
             Name of color map assigning data values to color space. If 'SHAP', colors from
             `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ will be used (recommended for feature impact).
-        cmap_n_colors : int, optional
+        cmap_n_colors : int, default=101
             Number of discrete steps in diverging or sequential color map.
             Color dictionary of scale categories classifying scales shown on y-axis. Default from :meth:`plot_get_cdict`
             with ``name='DICT_CAT'``.
@@ -1158,10 +1161,6 @@ class CPPPlot:
         --------
         .. include:: examples/cpp_plot_feature_map.rst
         """
-        # TODO CHECK
-        # TODO cbar & feature importance y location depend on n features.
-        # TODO bar label not in
-        # TODO TMD size dep on size of plot (change)
         # Check primary input
         check_col_cat(col_cat=col_cat)
         col_val = check_col_val(col_val=col_val, sample_mean_dif=True)
@@ -1189,7 +1188,7 @@ class CPPPlot:
         # Check figure input
         ut.check_bool(name="facecolor_dark", val=facecolor_dark)
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
-        ut.check_number_range(name="cmap_n_colors", val=cmap_n_colors, min_val=1, accept_none=True, just_int=True)
+        ut.check_number_range(name="cmap_n_colors", val=cmap_n_colors, min_val=2, just_int=True)
         ut.check_dict(name="cbar_kws", val=cbar_kws, accept_none=True)
         dict_color = check_match_dict_color_df(dict_color=dict_color, df=df_feat)
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
@@ -1213,11 +1212,15 @@ class CPPPlot:
                                    dict_color=dict_color, legend_kws=legend_kws,
                                    **args_xtick, ytick_size=ytick_size)
         # Adjust plot
-        # TODO catch warnings, give arguments up, adjust plot for better spacing,
+        # TODO give arguments up, adjust plot for better spacing,
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             fig.tight_layout()
             plt.subplots_adjust(right=0.95)
+        if tmd_seq is not None and seq_size is None:
+            ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
+            if self._verbose:
+                ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
         return ax
 
 

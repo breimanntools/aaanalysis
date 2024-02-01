@@ -20,6 +20,23 @@ def _get_value_type(col_val="abs_auc"):
     return val_type
 
 
+def _adjust_df_feat(df_feat=None, col_val=None, cbar_pct=True):
+    """Adjusts feature values in `df_feat` based on percentage scaling and sets the limits for difference columns."""
+    df_feat = df_feat.copy()
+    val_type = _get_value_type(col_val=col_val)
+    if val_type == "sum":
+        sum_val = df_feat[col_val].abs().sum()
+        adjust_col_val = sum_val < 1
+    else:
+        min_val = df_feat[col_val].min()
+        max_val = df_feat[col_val].max()
+        n_th = 1 if max_val < 0 or 0 < min_val else 2
+        adjust_col_val = max(df_feat[col_val]) - min(df_feat[col_val]) < n_th
+    if cbar_pct and adjust_col_val:
+        df_feat[col_val] *= 100
+    return df_feat
+
+
 def _get_vmin_vmax(df_pos=None, vmin=None, vmax=None):
     """Obtain minimum and maximum values for the heatmap."""
     if vmax is not None and vmin is not None:
@@ -28,9 +45,17 @@ def _get_vmin_vmax(df_pos=None, vmin=None, vmax=None):
     vmax = df_pos.max().max() if vmax is None else vmax
     # Create centered vmin and vmax
     val = max((abs(vmin), abs(vmax)))
-    vmax = val
+    vmax = val if vmax > 0 else 0
     vmin = -val if vmin < 0 else 0
     return vmin, vmax
+
+
+def _get_bar_width(fig=None, len_seq=None):
+    """Get consistent bar width to for category bars"""
+    width, height = fig.get_size_inches()
+    width_factor = 1 / width * 8
+    bar_width = len_seq / 110 * width_factor
+    return bar_width
 
 
 def _get_center(df_pos=None, vmin=None, vmax=None):
@@ -43,46 +68,18 @@ def _get_center(df_pos=None, vmin=None, vmax=None):
     return center
 
 
-def _get_bar_width(fig=None, len_seq=None):
-    """Get consistent bar width to for category bars"""
-    width, height = fig.get_size_inches()
-    width_factor = 1 / width * 8
-    bar_width = len_seq / 110 * width_factor
-    return bar_width
-
-
-
 # Get color map
-def _get_diverging_cmap(cmap, n_colors=None, facecolor_dark=False):
-    """Generate a diverging colormap based on the provided cmap."""
-    n = 5
-    cmap = sns.color_palette(cmap, n_colors=n_colors + n * 2)
-    cmap_low, cmap_high = cmap[:int((n_colors + n * 2) / 2)], cmap[int((n_colors + n * 2) / 2):]
-    c_middle = [(0, 0, 0)] if facecolor_dark else [cmap_low[-1]]
-    cmap = cmap_low[0:-n] + c_middle + cmap_high[n:]
-    return cmap
-
-
-def get_cmap_heatmap(df_pos=None, cmap=None, n_colors=None, facecolor_dark=True, vmin=None, vmax=None):
+def _get_cmap_heatmap(df_pos=None, cmap=None, n_colors=101, facecolor_dark=True, vmin=None, vmax=None):
     """Create a sequential or diverging colormap for a heatmap based on data properties."""
-    n_colors = n_colors if n_colors is not None else 100
+    n_colors = n_colors if n_colors is not None else 101
     v_max = df_pos.max().max() if vmax is None else vmax
     v_min = df_pos.min().min() if vmin is None else vmin
     only_neg = v_max <= 0
     only_pos = v_min >= 0
-    print(only_pos, only_neg)
     args = dict(n_colors=n_colors, facecolor_dark=facecolor_dark,
                 only_neg=only_neg, only_pos=only_pos)
-    if cmap is None:
-        cmap_cpp = ut.plot_get_cmap_(name=ut.STR_CMAP_CPP, **args)
-        return cmap_cpp
-    if cmap == "SHAP":
-        cmap_shap = ut.plot_get_cmap_(name=ut.STR_CMAP_SHAP, **args)
-        return cmap_shap
-    if df_pos.min().min() >= 0:
-        cmap = sns.color_palette(cmap, n_colors=n_colors)
-    else:
-        cmap = _get_diverging_cmap(cmap, **args)
+    cmap = ut.STR_CMAP_CPP if cmap is None else cmap
+    cmap = ut.plot_get_cmap_(cmap=cmap, **args)
     return cmap
 
 
@@ -98,7 +95,7 @@ def _get_cbar_ticks_heatmap(df_pos=None):
     return cbar_ticks
 
 
-def get_cbar_args_heatmap(df_pos=None, cbar_kws=None):
+def _get_cbar_args_heatmap(df_pos=None, cbar_kws=None):
     """Create color bar arguments for the heatmap."""
     cbar_ticksize = ut.plot_gco() - 2
     cbar_ticks = _get_cbar_ticks_heatmap(df_pos=df_pos)
@@ -113,8 +110,8 @@ def get_cbar_args_heatmap(df_pos=None, cbar_kws=None):
     return dict_cbar, cbar_kws_
 
 
-def set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws=None,
-                     vmin=None, vmax=None, cbar_pct=True, weight="normal", fontsize=11):
+def _set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws=None,
+                      vmin=None, vmax=None, cbar_pct=True, weight="normal", fontsize=11):
     """Configure the heatmap's color bar."""
     cbar = ax.collections[0].colorbar
     cbar.ax.tick_params(labelsize=dict_cbar["ticksize"])
@@ -132,16 +129,15 @@ def set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws=None,
     cbar.ax.xaxis.set_ticks_position('top')
     cbar.ax.xaxis.set_label_position('top')
 
+    # Customization for the thin line on top of the color bar
+    for spine in cbar.ax.spines.values():
+        spine.set_visible(False)  # Show only the top spine
+    cbar.ax.spines['top'].set_visible(True)
+    xtick_width = ut.plot_gco(option="xtick.major.width")
+    cbar.ax.spines['top'].set_linewidth(xtick_width)
+
 
 # II Main Functions
-def _adjust_df_feat(df_feat=None, col_val=None, cbar_pct=True):
-    """Adjusts feature values in `df_feat` based on percentage scaling and sets the limits for difference columns."""
-    df_feat = df_feat.copy()
-    if cbar_pct and max(df_feat[col_val]) - min(df_feat[col_val]) <= 2:
-        df_feat[col_val] *= 100
-    return df_feat
-
-
 # Inner plotting function
 def _plot_inner_heatmap(df_pos=None, ax=None, figsize=(8, 8),
                         start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10,
@@ -178,8 +174,10 @@ def _plot_inner_heatmap(df_pos=None, ax=None, figsize=(8, 8),
     ax.set_facecolor(facecolor)
     # Add lines to frame
     args = dict(color=grid_linecolor, linestyle="-", linewidth=border_linewidth)
-    ax.axvline(jmd_n_len, **args)
-    ax.axvline(x=jmd_n_len + tmd_len, **args)
+    if jmd_n_len > 0:
+        ax.axvline(jmd_n_len, **args)
+    if jmd_c_len > 0:
+        ax.axvline(x=jmd_n_len + tmd_len, **args)
     return ax
 
 
@@ -187,7 +185,7 @@ def _plot_inner_heatmap(df_pos=None, ax=None, figsize=(8, 8),
 def plot_heatmap_(df_feat=None, df_cat=None,
                   col_cat="subcategory", col_val="mean_dif",
                   normalize=False,
-                  ax=None, figsize=(8, 5),
+                  ax=None, figsize=(8, 8),
                   start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10,
                   tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None,
                   tmd_color="mediumspringgreen", jmd_color="blue",
@@ -198,14 +196,15 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                   add_xticks_pos=False,
                   grid_linewidth=0.01, grid_linecolor=None,
                   border_linewidth=2,
-                  facecolor_dark=None, vmin=None, vmax=None,
-                  cmap=None, cmap_n_colors=None,
+                  facecolor_dark=False, vmin=None, vmax=None,
+                  cmap=None, cmap_n_colors=101,
                   cbar_ax=None, cbar_pct=True, cbar_kws=None,
                   dict_color=None, legend_kws=None,
                   xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
                   ytick_size=None):
     """Main function to plot heatmap for feature value per categories/subcategories per position."""
     df_feat = _adjust_df_feat(df_feat=df_feat, col_val=col_val, cbar_pct=cbar_pct)
+
     # Group arguments
     args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
     args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
@@ -222,9 +221,9 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                            value_type=value_type, normalize=normalize)
     vmin, vmax = _get_vmin_vmax(df_pos=df_pos, vmin=vmin, vmax=vmax)
     # Get color bar arguments
-    cmap = get_cmap_heatmap(df_pos=df_pos, cmap=cmap, n_colors=cmap_n_colors, facecolor_dark=facecolor_dark,
-                            vmin=vmin, vmax=vmax)
-    dict_cbar, cbar_kws = get_cbar_args_heatmap(df_pos=df_pos, cbar_kws=cbar_kws)
+    cmap = _get_cmap_heatmap(df_pos=df_pos, cmap=cmap, n_colors=cmap_n_colors, facecolor_dark=facecolor_dark,
+                             vmin=vmin, vmax=vmax)
+    dict_cbar, cbar_kws = _get_cbar_args_heatmap(df_pos=df_pos, cbar_kws=cbar_kws)
 
     # Plotting
     pe = PlotElements()
@@ -237,10 +236,10 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                              cbar_ax=cbar_ax, cmap=cmap, cbar_kws=cbar_kws,
                              x_shift=0.5, **args_xtick, ytick_size=ytick_size)
     # Add color bar
-    set_cbar_heatmap(ax=ax, vmin=vmin, vmax=vmax,
-                     dict_cbar=dict_cbar,
-                     cbar_kws=cbar_kws, cbar_pct=cbar_pct,
-                     weight="normal", fontsize=fontsize_labels)
+    _set_cbar_heatmap(ax=ax, vmin=vmin, vmax=vmax,
+                      dict_cbar=dict_cbar,
+                      cbar_kws=cbar_kws, cbar_pct=cbar_pct,
+                      weight="normal", fontsize=fontsize_labels)
 
     # Add tmd_jmd sequence
     if isinstance(tmd_seq, str):
@@ -262,9 +261,9 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                        bar_width=bar_width, bar_spacing=bar_width*0.75)
 
     # Add scale legend
-    #legend_kws = pe.update_cat_legend_kws(legend_kws=legend_kws)
     ut.plot_legend_(ax=ax, dict_color=dict_color, **legend_kws)
-    # Set current axis to main axis object depending on tmd sequence given or not
+
+    # Set current axis to main axis object
     plt.sca(plt.gcf().axes[0])
     ax = plt.gca()
     return ax

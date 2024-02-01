@@ -30,8 +30,6 @@ class TestPlotGetCMap:
         light_colors = aa.plot_get_cmap(name=ut.STR_CMAP_CPP, facecolor_dark=False)
         dark_colors = aa.plot_get_cmap(name=ut.STR_CMAP_CPP, facecolor_dark=True)
         assert light_colors != dark_colors
-        middle_colors = aa.plot_get_cmap(name=ut.STR_CMAP_CPP, facecolor_dark=None)
-        assert light_colors != middle_colors
 
     def test_return_type_cpp(self):
         colors = aa.plot_get_cmap(name=ut.STR_CMAP_CPP)

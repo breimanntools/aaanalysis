@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import warnings
 
 import aaanalysis.utils as ut
 
@@ -49,7 +50,9 @@ def plot_feat_importance_bars(ax=None, df=None, top_pcp=None,
     ax.tick_params(axis='x', which='both', labelsize=labelsize, pad=-1)
     sns.despine(ax=ax, bottom=True, top=False)
     plt.xlim(0, max(list_imp))
-    plt.tight_layout()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=UserWarning)
+        plt.tight_layout()
 
 
 # TODO adjust 3 th by args
@@ -119,7 +122,7 @@ def plot_feature_map(df_feat=None, df_cat=None,
                      grid_linewidth=0.01, grid_linecolor=None,
                      border_linewidth=2,
                      facecolor_dark=False, vmin=None, vmax=None,
-                     cmap=None, cmap_n_colors=None,
+                     cmap=None, cmap_n_colors=101,
                      cbar_pct=True, cbar_kws=None,
                      dict_color=None, legend_kws=None,
                      xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,

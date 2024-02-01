@@ -21,6 +21,15 @@ def _get_colors_for_col_cat(labels=None, dict_color=None, df_feat=None, col_cat=
     return colors
 
 
+def _adjust_tuple_elements(tuple_in=None, tuple_default=None):
+    """Replace elements of input tuple that are None with the corresponding element from default tuple."""
+    if tuple_in is not None:
+        tuple_out = tuple(i if i is not None else def_i for i, def_i in zip(tuple_in,  tuple_default))
+    else:
+        tuple_out =  tuple_default
+    return tuple_out
+
+
 # II Main Functions
 class PlotElements:
     """Utility class for plot element configurations and enhancements."""
@@ -91,13 +100,13 @@ class PlotElements:
         """Optimize legend position and appearance based on the number of categories and provided keywords."""
         n_cols = 2 if legend_kws is None else legend_kws.get("n_cols", 2)
         n_rows = np.floor(n_cat / n_cols)
-        if legend_xy is not None:
-            x, y = legend_xy
-            title = ut.LABEL_SCALE_CAT
-        else:
-            x, y = -0.1, -0.01
-            str_space = "\n" * int((6-n_rows))
-            title = f"{str_space}{ut.LABEL_SCALE_CAT}"
+
+        # Create legend position [center (x), top (y)]
+        legend_xy_default = (-0.1, -0.01)
+        _legend_xy = _adjust_tuple_elements(tuple_in=legend_xy, tuple_default=legend_xy_default)
+        x, y = _legend_xy
+        str_space = "\n" * int((6-n_rows))
+        title = f"{str_space}{ut.LABEL_SCALE_CAT}"
 
         # Prepare legend keywords
         _legend_kws = dict(fontsize=fontsize_labels,
@@ -120,22 +129,15 @@ class PlotElements:
         bar_height = 0.15/height
         bar_bottom = 0.06/height
 
-        # Create cbar positions: [left, bottom, width, height]
-        default_cbar_xywh = (0.5, bar_bottom, 0.2, bar_height)
-
-        # Replace None values in cbar_xywh with defaults
-        if cbar_kws is not None:
-            _cbar_xywh = tuple(i if i is not None else def_i for i, def_i in
-                               zip(cbar_xywh, default_cbar_xywh))
-        else:
-            _cbar_xywh = default_cbar_xywh
+        # Create cbar positions: [left (x), bottom (y), width, height]
+        cbar_xywh_default = (0.5, bar_bottom, 0.2, bar_height)
+        _cbar_xywh = _adjust_tuple_elements(tuple_in=cbar_xywh, tuple_default=cbar_xywh_default)
 
         # Create color bar axes
         cbar_ax = fig.add_axes(_cbar_xywh)
 
         # Prepare color bar keywords
-        _cbar_kws = dict(ticksize=fontsize_labels,
-                         label=label)
+        _cbar_kws = dict(ticksize=fontsize_labels, label=label)
         if cbar_kws is not None:
             _cbar_kws.update(cbar_kws)
         return _cbar_kws, cbar_ax

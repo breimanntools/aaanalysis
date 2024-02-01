@@ -64,6 +64,9 @@ class Split:
         len_segment = len(seq) / n_split
         start = int(len_segment * (i_th - 1))   # Start at 0 for i_th = 1
         end = int(len_segment * i_th)
+        # DEV: If 'IndexError: list index out of range',
+        #  check in interface that sequence size matches with features
+        #  via 'check_match_features_seq_parts'
         seq_segment = seq[start:end]
         return seq_segment
 
@@ -93,6 +96,9 @@ class Split:
         if self.type_str:
             seq_pattern = "".join([seq[i-1] for i in list_pos])
         else:
+            # DEV: If 'IndexError: list index out of range',
+            #  check in interface that sequence size matches with features
+            #  via 'check_match_features_seq_parts'
             seq_pattern = [seq[i-1] for i in list_pos]
         return seq_pattern
 
@@ -138,6 +144,9 @@ class Split:
         if self.type_str:
             seq_periodicpattern = "".join([seq[i-1] for i in list_pos])
         else:
+            # DEV: If 'IndexError: list index out of range',
+            #  check in interface that sequence size matches with features
+            #  via 'check_match_features_seq_parts'
             seq_periodicpattern = [seq[i-1] for i in list_pos]
         return seq_periodicpattern
 

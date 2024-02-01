@@ -183,11 +183,13 @@ def plot_profile(df_feat=None, df_cat=None, shap_plot=False,
     # Add legend
     if add_legend_cat:
         fs = ut.plot_gco() - 2
-        _legend_kws = dict(n_cols=2, loc=2, fontsize=fs, fontsize_title=fs)
+        _legend_kws = dict(n_cols=2, loc=2, fontsize=fs,
+                           labelspacing=0.05, handletextpad=0.2,
+                           fontsize_title=fs, title=ut.LABEL_SCALE_CAT,
+                           weight_title="bold")
         if legend_kws is not None:
             _legend_kws.update(legend_kws)
-        legend_kws = pe.adjust_cat_legend_kws(legend_kws=_legend_kws)
-        ut.plot_legend_(ax=ax, dict_color=dict_color, **legend_kws)
+        ut.plot_legend_(ax=ax, dict_color=dict_color, **_legend_kws)
     # Set current axis to main axis object depending on tmd sequence given or not
     plt.sca(plt.gcf().axes[0])
     ax = plt.gca()

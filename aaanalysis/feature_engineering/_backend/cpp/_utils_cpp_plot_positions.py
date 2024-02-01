@@ -344,7 +344,14 @@ class PlotPartPositions:
         xtick_length += height if xtick_length != 0 else 0
         # Adjust for start counting at position 0
         jmd_n_end, tmd_end, jmd_c_end = self._get_ends(x_shift=-1)
-        xticks = [0, jmd_n_end, tmd_end, jmd_c_end]
+        exists_jmd_n = self.jmd_n_len > 0
+        exists_jmd_c = self.jmd_c_len > 0
+        xticks = [0]
+        if exists_jmd_n:
+            xticks.append(jmd_n_end)
+        xticks.append(tmd_end)
+        if exists_jmd_c:
+            xticks.append(jmd_c_end)
         ax.set_xticks([x + x_shift for x in xticks])
         ax.set_xticklabels([x + self.start for x in xticks], size=xtick_size, rotation=0)
         ax.tick_params(axis="x", length=xtick_length, color="black", width=xtick_width, bottom=True)

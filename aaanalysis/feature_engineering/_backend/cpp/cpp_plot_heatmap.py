@@ -25,9 +25,9 @@ def plot_heatmap(df_feat=None, df_cat=None,
                  grid_linewidth=0.01, grid_linecolor=None,
                  border_linewidth=2,
                  facecolor_dark=None, vmin=None, vmax=None,
-                 cmap=None, cmap_n_colors=None,
-                 cbar_pct=True, cbar_kws=None,
-                 dict_color=None, legend_kws=None,
+                 cmap=None, cmap_n_colors=101,
+                 cbar_pct=True, cbar_kws=None, cbar_xywh=(0.7, None, 0.2, None),
+                 dict_color=None, legend_kws=None, legend_xy=(-0.1, -0.01),
                  xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
                  ytick_size=None):
     """Plot heatmap of feature values"""
@@ -48,7 +48,7 @@ def plot_heatmap(df_feat=None, df_cat=None,
         facecolor_dark = shap_plot
 
     if shap_plot:
-        cmap = "SHAP"
+        cmap = "SHAP" if cmap is None else cmap
         label_cbar = ut.LABEL_CBAR_FEAT_IMPACT_CUM
     else:
         label_cbar = f"Feature value\n{name_test} - {name_ref}"
@@ -59,7 +59,7 @@ def plot_heatmap(df_feat=None, df_cat=None,
     # Set color bar and legend arguments
     _cbar_kws, cbar_ax = pe.adjust_cbar_kws(fig=fig,
                                             cbar_kws=cbar_kws,
-                                            cbar_xywh=None,
+                                            cbar_xywh=cbar_xywh,
                                             label=label_cbar,
                                             fontsize_labels=fs_labels)
 
@@ -67,7 +67,7 @@ def plot_heatmap(df_feat=None, df_cat=None,
     n_cat = len(set(df_feat[ut.COL_CAT]))
     _legend_kws = pe.adjust_cat_legend_kws(legend_kws=legend_kws,
                                            n_cat=n_cat,
-                                           legend_xy=None,
+                                           legend_xy=legend_xy,
                                            fontsize_labels=fs_labels)
 
     # Plot heatmap
@@ -85,4 +85,4 @@ def plot_heatmap(df_feat=None, df_cat=None,
                        cbar_ax=cbar_ax, cbar_pct=cbar_pct, cbar_kws=_cbar_kws,
                        dict_color=dict_color, legend_kws=_legend_kws,
                        **args_xtick, ytick_size=ytick_size)
-    return ax
+    return fig, ax
