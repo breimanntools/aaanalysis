@@ -518,7 +518,7 @@ class CPPPlot:
                 fontsize_annotations: Union[int, float, None] = 11,
                 xlim_dif: Tuple[Union[int, float], Union[int, float]] = (-17.5, 17.5),
                 xlim_rank: Tuple[Union[int, float], Union[int, float]] = (0, 5),
-                rank_info_xy: Optional[Union[int, float]] = None,
+                rank_info_xy: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
                 ) -> Tuple[plt.Figure, plt.Axes]:
         """
         Plot CPP/-SHAP feature ranking based on feature importance or sample-specif feature impact.
@@ -535,8 +535,8 @@ class CPPPlot:
         n_top : int, default=15
             The number of top features to display. Should be 1 < ``n_top`` <= ``n_features``.
         shap_plot : bool, default=False
-            Determines the analysis mode. If ``False``, the **CPP Analysis** mode is used, focusing on group-level results.
-            If ``True``, the **CPP-SHAP Aanalysis** is applied displaying specific sample-level (or subgroup-level) results:
+            Specifies the analysis type to be shown: **CPP Analysis** for group-level results (if ``False``) or
+            **CPP-SHAP Analysis** for sample-level (or subgroup-level) results:
 
             **CPP Analysis**:
 

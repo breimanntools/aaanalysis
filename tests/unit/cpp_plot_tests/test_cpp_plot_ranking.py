@@ -9,6 +9,7 @@ import warnings
 from hypothesis import given, settings, assume
 import hypothesis.strategies as st
 import aaanalysis as aa
+import random
 
 # Setup and helper functions
 def create_df_feat(num_features=50):
@@ -246,17 +247,18 @@ class TestRanking:
             assert isinstance(axes[0], plt.Axes)
             plt.close()
 
-    @settings(max_examples=3, deadline=1500)
-    @given(x_rank_info=st.one_of(st.none(), st.floats(min_value=0, max_value=100)))
-    def test_x_rank_info(self, x_rank_info):
+    def test_rank_info_xy(self):
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
-        fig, axes = cpp_plot.ranking(df_feat=df_feat, rank_info_xy=x_rank_info)
-        assert isinstance(fig, plt.Figure)
-        assert isinstance(axes, np.ndarray)
-        assert len(axes) == 3
-        assert isinstance(axes[0], plt.Axes)
-        plt.close()
+        for _ in range(3):
+            x = random.uniform(0, 10)
+            y = random.uniform(0, 1)
+            fig, axes = cpp_plot.ranking(df_feat=df_feat, rank_info_xy=(x, y))
+            assert isinstance(fig, plt.Figure)
+            assert isinstance(axes, np.ndarray)
+            assert len(axes) == 3
+            assert isinstance(axes[0], plt.Axes)
+            plt.close()
 
     # Negative Test
     def test_invalid_df_feat(self):
@@ -335,13 +337,15 @@ class TestRanking:
             with pytest.raises(ValueError):
                 cpp_plot.ranking(df_feat=df_feat, xlim_rank=xlim_rank)
 
-    def test_invalid_x_rank_info(self):
+    def test_invalid_rank_info_xy(self):
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, rank_info_xy=-1)
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, rank_info_xy="str")
+        with pytest.raises(ValueError):
+            cpp_plot.ranking(df_feat=df_feat, rank_info_xy=(None, 123))
 
     @settings(max_examples=20, deadline=1500)
     @given(tmd_jmd_space=st.one_of(st.integers(max_value=0), st.floats(allow_nan=True)))
@@ -457,7 +461,7 @@ class TestRankingComplex:
         fontsize_annotations = 10
         xlim_dif = (-20, 20)
         xlim_rank = (1, 10)
-        x_rank_info = 5
+        rank_info_xy = (2, 4)
 
         fig, axes = cpp_plot.ranking(df_feat=df_feat, n_top=n_top, figsize=figsize,
                                      tmd_len=tmd_len, tmd_jmd_space=tmd_jmd_space,
@@ -467,7 +471,7 @@ class TestRankingComplex:
                                      fontsize_labels=fontsize_labels,
                                      fontsize_annotations=fontsize_annotations,
                                      xlim_dif=xlim_dif, xlim_rank=xlim_rank,
-                                     rank_info_xy=x_rank_info)
+                                     rank_info_xy=rank_info_xy)
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, np.ndarray)
         assert len(axes) == 3
