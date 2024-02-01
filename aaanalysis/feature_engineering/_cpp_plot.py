@@ -873,7 +873,7 @@ class CPPPlot:
                 # Data and Plot Type
                 df_feat=None,
                 shap_plot: bool = False,
-                col_cat : Literal['category', 'subcategory', 'scale_name'] ="subcategory",
+                col_cat : Literal['category', 'subcategory', 'scale_name'] = "subcategory",
                 col_val: str = "mean_dif",
                 normalize: bool = False,
                 name_test: str = "TEST",
@@ -1032,8 +1032,8 @@ class CPPPlot:
 
         Notes
         -----
-        * ``tmd_seq_color`` and ``jmd_seq_color`` are applicable only when ``tmd_seq``, ``jmd_n_seq``,
-           and ``jmd_c_seq`` are provided.
+        ``tmd_seq_color`` and ``jmd_seq_color`` are applicable only when ``tmd_seq``, ``jmd_n_seq``,
+        and ``jmd_c_seq`` are provided.
 
         See Also
         --------
@@ -1119,7 +1119,7 @@ class CPPPlot:
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
-        return ax
+        return fig, ax
 
     def feature_map(self,
                     # Data and Plot Type
