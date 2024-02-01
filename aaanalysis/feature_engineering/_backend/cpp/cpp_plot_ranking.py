@@ -173,15 +173,15 @@ def plot_feature_rank(ax=None, df=None, n=20, xlim=(0, 8),
     str_sum = f"Σ={round(df[col_imp].sum(), 1)}%"
     if rank_info_xy is None:
         x = xlim[1] * 1.2
-        y = n-1.5 if shap_plot else n-2.5
+        y = n-2.5
         args = dict(ha="right", size=fontsize_annotation)
     else:
         x, y = rank_info_xy
         args = dict(ha="left", size=fontsize_annotation)
     plt.text(x, y, str_sum, weight="normal", **args)
     if shap_plot:
-        plt.text(x, y, "negative", weight="bold", color=ut.COLOR_SHAP_NEG, va="top", **args)
-        plt.text(x, y, "positive", weight="bold", color=ut.COLOR_SHAP_POS, va="bottom", **args)
+        plt.text(x, y+1, "negative", weight="bold", color=ut.COLOR_SHAP_NEG, va="top", **args)
+        plt.text(x, y+1, "positive", weight="bold", color=ut.COLOR_SHAP_POS, va="bottom", **args)
 
 
 # II Main Functions
@@ -239,6 +239,4 @@ def plot_ranking(df_feat=None, n_top=15,
         ax.tick_params(which='major', axis="both", labelsize=fontsize_labels)
         if i > 0:
             ax.tick_params(which='major', axis="y", length=0, labelsize=0)
-    plt.tight_layout()
-    plt.subplots_adjust(wspace=0.2)
     return fig, axes

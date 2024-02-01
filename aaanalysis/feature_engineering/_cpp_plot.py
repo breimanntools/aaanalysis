@@ -582,6 +582,7 @@ class CPPPlot:
             x-axis limits for the ranking subplot.
         rank_info_xy : tuple of two floats (x, y), optional
             Position (x-axis, y-axis) in ranking subplot for showing additional information:
+
             - When ``shap_plot=False`: Displays sum of feature importance.
             - When ``shap_plot=True``: Show the sum of the absolute feature impact and the SHAP legend.
 
@@ -649,6 +650,10 @@ class CPPPlot:
                                  tmd_jmd_space=tmd_jmd_space,
                                  xlim_dif=xlim_dif, xlim_rank=xlim_rank,
                                  rank_info_xy=rank_info_xy)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            plt.tight_layout()
+            plt.subplots_adjust(wspace=0.2)
         return fig, axes
 
 
@@ -848,7 +853,9 @@ class CPPPlot:
                                add_legend_cat=add_legend_cat, dict_color=dict_color, legend_kws=legend_kws,
                                bar_width=bar_width, edge_color=edge_color,
                                grid_axis=grid_axis, ylim=ylim, **args_xtick, **args_ytick)
-        plt.tight_layout()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            plt.tight_layout()
         if tmd_seq is not None and seq_size is None:
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
             if self._verbose:
