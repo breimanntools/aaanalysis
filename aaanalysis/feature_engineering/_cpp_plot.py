@@ -533,7 +533,7 @@ class CPPPlot:
         n_top : int, default=15
             The number of top features to display. Should be 1 < ``n_top`` <= ``n_features``.
         shap_plot : bool, default=False
-            Specifies the visualized analysis type: **CPP Analysis** (if ``False``) for group-level results or
+            Set the analysis type: **CPP Analysis** (if ``False``) for group-level or
             **CPP-SHAP Analysis** for sample-level (or subgroup-level) results:
 
             **CPP Analysis**
@@ -707,7 +707,7 @@ class CPPPlot:
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
             Must also include either ``feat_importance`` or ``feat_impact`` column.
         shap_plot : bool, default=False
-            Specifies the visualized analysis type: **CPP Analysis** (if ``False``) for group-level results or
+            Set the analysis type: **CPP Analysis** (if ``False``) for group-level or
             **CPP-SHAP Analysis** for sample-level (or subgroup-level) results:
 
              **CPP Analysis**
@@ -929,7 +929,7 @@ class CPPPlot:
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
             Can also include feature impact (``feat_impact``) column.
         shap_plot : bool, default=False
-            Specifies the visualized analysis type: **CPP Analysis** (if ``False``) for group-level results or
+            Set the analysis type: **CPP Analysis** (if ``False``) for group-level or
             **CPP-SHAP Analysis** for sample-level (or subgroup-level) results:
 
              **CPP Analysis**
