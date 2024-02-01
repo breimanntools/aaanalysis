@@ -35,8 +35,6 @@ from ._backend.cpp.cpp_plot_heatmap import plot_heatmap
 from ._backend.cpp.cpp_plot_feature_map import plot_feature_map
 from ._backend.cpp.cpp_plot_update_seq_size import get_tmd_jmd_seq, update_seq_size_, update_tmd_jmd_labels
 
-# TODO simplify checks & interface (end-to-end check with tests & docu)
-
 
 # I Helper Functions
 # Checks for eval plot
@@ -535,20 +533,20 @@ class CPPPlot:
         n_top : int, default=15
             The number of top features to display. Should be 1 < ``n_top`` <= ``n_features``.
         shap_plot : bool, default=False
-            Specifies the analysis type to be shown: **CPP Analysis** (if ``False``) for group-level results or
+            Specifies the visualized analysis type: **CPP Analysis** (if ``False``) for group-level results or
             **CPP-SHAP Analysis** for sample-level (or subgroup-level) results:
 
             **CPP Analysis**
 
-            - ``col_dif`` displays the group-level difference of feature values, with the `mean_dif` column selected by default.
-            - ``col_imp`` refers to the group-level `feat_importance` column (shown in gray) used for feature ranking.
+            - ``col_dif``: Displays the group-level difference of feature values, with the `mean_dif` column selected by default.
+            - ``col_imp``: Refers to the group-level `feat_importance` column (shown in gray) used for feature ranking.
 
             **CPP-SHAP Analysis**
 
-            - ``col_dif`` allows the selection of sample-specific differences against the reference group
+            - ``col_dif``: Allows the selection of sample-specific differences against the reference group
               from a `mean_dif_'name'` column.
-            - ``col_imp`` enables the selection of specific feature impacts from a `feat_impact_'name'` column for
-              individual samples, where positive (red) and negative (blue) feature impacts are visualized in the feature ranking.
+            - ``col_imp``: Enables the selection of specific feature impacts from a `feat_impact_'name'` column for
+              an individual sample, where positive (red) and negative (blue) feature impacts are visualized in the ranking.
 
         col_dif : str, default='mean_dif'
             Column name in ``df_feat`` for differences in feature values. Must match with the ``shap_plot`` setting.
@@ -709,30 +707,22 @@ class CPPPlot:
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
             Must also include either ``feat_importance`` or ``feat_impact`` column.
         shap_plot : bool, default=False
-            Specifies the analysis type to be shown: **CPP Analysis** (if ``False``) for group-level results or
+            Specifies the visualized analysis type: **CPP Analysis** (if ``False``) for group-level results or
             **CPP-SHAP Analysis** for sample-level (or subgroup-level) results:
 
              **CPP Analysis**
 
-             - ``col_imp`` refers to the group-level `feat_importance` column (shown in gray) used for feature ranking.
+             - ``col_imp``: Refers to the group-level `feat_importance` column (shown in gray),
+               depicted by gray bars for each residue position.
 
              **CPP-SHAP Analysis**
 
-             - ``col_imp`` enables the selection of specific feature impacts from a `feat_impact_'name'` column for
-               individual samples, where positive (red) and negative (blue) feature impacts are visualized in the feature ranking.
+             - ``col_imp``: Enables the selection of specific feature impacts from a `feat_impact_'name'` column for
+               an individual sample, where positive (red) and negative (blue) feature impacts are visualized by +/- bars.
 
-
-            If ``True``, the positive (red) and negative (blue) feature impact is shown by +/- bars.
         col_imp : str or None, default='feat_importance'
-            Column name in ``df_feat`` for feature importance/impact values to be shown per residue position.
-            Two options are supported:
-
-            - **CPP Analysis**: By default, uses the ``feat_importance`` column to show feature importance.
-            - **CPP-SHAP Analysis**:  When ``shap_plot=True``, allows selection of specific feature impacts from a
-             ``feat_impact_'name'`` column for samples or a group.
-
+            Column name in ``df_feat`` for feature importance/impact values. Must match with the ``shap_plot`` setting.
             If ``None``, the number of features per residue position will be shown.
-
         normalize : bool, default=True
             If ``True``, normalizes aggregated numerical values to a total of 100%.
         ax : plt.Axes, optional
@@ -925,7 +915,7 @@ class CPPPlot:
                 xtick_width: Union[int, float] = 2.0,
                 xtick_length: Union[int, float] = 5.0,
                 ytick_size: Optional[Union[int, float]] = None,
-                ):
+                ) -> Tuple[plt.Figure, plt.Axes]:
         """
         Plot a CPP/-SHAP heatmap showing the feature value mean difference/feature impact per scale subcategory (y-axis)
         and residue position (x-axis).
@@ -939,16 +929,25 @@ class CPPPlot:
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
             Can also include feature impact (``feat_impact``) column.
         shap_plot : bool, default=False
-            If ``True``, the positive (red) and negative (blue) feature impact is shown per scale subcategory
-            and residue position. Two scenarios are available:
+            Specifies the visualized analysis type: **CPP Analysis** (if ``False``) for group-level results or
+            **CPP-SHAP Analysis** for sample-level (or subgroup-level) results:
 
+             **CPP Analysis**
+
+            - ``col_val``: Displays typically the difference of feature values, either at group-level when the `mean_dif`
+              column is selected or at sample-level (group-level) when a `mean_dif_'name'` column is provided.
+
+            **CPP-SHAP Analysis**
+
+            - ``col_val``: Enables typically the selection of specific feature impacts from a `feat_impact_'name'` column
+              for an individual sample, where positive (red) and negative (blue) feature impacts are indicated.
 
         col_cat : {'category', 'subcategory', 'scale_name'}, default='subcategory'
-            Column name in ``df_feat`` representing the scale classification (shown on the y-axis).
-        col_val : {'mean_dif', 'abs_mean_dif', 'abs_auc', 'feat_importance', 'feat_impact_'name''}, default='mean_dif'
-            Column name in ``df_feat`` containing numerical values to display.
+            Column name in ``df_feat`` for scale classification (y-axis).
+        col_val : {'mean_dif', 'mean_dif_'name'', 'abs_mean_dif', 'abs_auc', 'feat_importance', 'feat_impact_'name''}, default='mean_dif'
+            Column name in ``df_feat`` for numerical values to display. Must match with the ``shap_plot`` setting.
         normalize : bool, default=True
-            If ``True``, normalizes aggregated numerical values to a total of 100%.
+            If ``True``, normalizes aggregated numerical values to a 100% total.
         name_test : str, default="TEST"
             Name for the test dataset.
         name_ref : str, default="REF"
@@ -1038,7 +1037,10 @@ class CPPPlot:
 
         See Also
         --------
-        * :meth:`seaborn.heatmap` method for seaborn heatmap.
+        * :meth:`CPP.run` for details on CPP statistical measures of the ``df_feat`` DataFrame.
+        * :class:`SequenceFeature` for definition of sequence ``Parts``.
+        * :meth:`CPPPlot.feature` for visualization of mean differences for specific features.
+        * :meth:`seaborn.heatmap` for seaborn heatmap.
         * :meth:`matplotlib.figure.Figure.colorbar` for colorbar arguments.
         * :meth:`plot_legend` used for setting scale category legend.
 
