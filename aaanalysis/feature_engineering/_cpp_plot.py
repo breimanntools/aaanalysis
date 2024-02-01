@@ -535,15 +535,15 @@ class CPPPlot:
         n_top : int, default=15
             The number of top features to display. Should be 1 < ``n_top`` <= ``n_features``.
         shap_plot : bool, default=False
-            Specifies the analysis type to be shown: **CPP Analysis** for group-level results (if ``False``) or
+            Specifies the analysis type to be shown: **CPP Analysis** (if ``False``) for group-level results or
             **CPP-SHAP Analysis** for sample-level (or subgroup-level) results:
 
-            **CPP Analysis**:
+            **CPP Analysis**
 
             - ``col_dif`` displays the group-level difference of feature values, with the `mean_dif` column selected by default.
             - ``col_imp`` refers to the group-level `feat_importance` column (shown in gray) used for feature ranking.
 
-            **CPP-SHAP Analysis**:
+            **CPP-SHAP Analysis**
 
             - ``col_dif`` allows the selection of sample-specific differences against the reference group
               from a `mean_dif_'name'` column.
@@ -580,10 +580,10 @@ class CPPPlot:
             x-axis limits for the mean difference subplot.
         xlim_rank : tuple, default=(0, 5)
             x-axis limits for the ranking subplot.
-        rank_info_xy : tuple of two floats (x, y), optional
+        rank_info_xy : tuple of two float, optional
             Position (x-axis, y-axis) in ranking subplot for showing additional information:
 
-            - When ``shap_plot=False`: Displays sum of feature importance.
+            - When ``shap_plot=False``: Displays sum of feature importance.
             - When ``shap_plot=True``: Show the sum of the absolute feature impact and the SHAP legend.
 
         Returns
@@ -598,8 +598,8 @@ class CPPPlot:
         * Features are shown as ordered in ``df_feat``. A ranking in descending order based one the following
           columns is recommended:
 
-            - ``feat_importance``: when feature importance is in ``df_feat`` and ``shap_plot=False``.
-            - ``feat_impact_'name'``: when sample-specific feature impact is in ``df_feat`` and ``shap_plot=True``.
+          - ``feat_importance``: when feature importance is in ``df_feat`` and ``shap_plot=False``.
+          - ``feat_impact_'name'``: when sample-specific feature impact is in ``df_feat`` and ``shap_plot=True``.
 
         See Also
         --------
@@ -650,6 +650,8 @@ class CPPPlot:
                                  tmd_jmd_space=tmd_jmd_space,
                                  xlim_dif=xlim_dif, xlim_rank=xlim_rank,
                                  rank_info_xy=rank_info_xy)
+
+        # Adjust plot
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             plt.tight_layout()
@@ -707,6 +709,19 @@ class CPPPlot:
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
             Must also include either ``feat_importance`` or ``feat_impact`` column.
         shap_plot : bool, default=False
+            Specifies the analysis type to be shown: **CPP Analysis** (if ``False``) for group-level results or
+            **CPP-SHAP Analysis** for sample-level (or subgroup-level) results:
+
+             **CPP Analysis**
+
+             - ``col_imp`` refers to the group-level `feat_importance` column (shown in gray) used for feature ranking.
+
+             **CPP-SHAP Analysis**
+
+             - ``col_imp`` enables the selection of specific feature impacts from a `feat_impact_'name'` column for
+               individual samples, where positive (red) and negative (blue) feature impacts are visualized in the feature ranking.
+
+
             If ``True``, the positive (red) and negative (blue) feature impact is shown by +/- bars.
         col_imp : str or None, default='feat_importance'
             Column name in ``df_feat`` for feature importance/impact values to be shown per residue position.
@@ -853,6 +868,8 @@ class CPPPlot:
                                add_legend_cat=add_legend_cat, dict_color=dict_color, legend_kws=legend_kws,
                                bar_width=bar_width, edge_color=edge_color,
                                grid_axis=grid_axis, ylim=ylim, **args_xtick, **args_ytick)
+
+        # Adjust plot
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             plt.tight_layout()
@@ -1072,7 +1089,8 @@ class CPPPlot:
                        check_number=True, accept_none_number=False)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
-        # Get df positions
+
+        # Plot heatmap
         fig, ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat,
                                shap_plot=shap_plot,
                                col_cat=col_cat, col_val=col_val,
@@ -1090,6 +1108,8 @@ class CPPPlot:
                                cbar_pct=cbar_pct, cbar_kws=cbar_kws, cbar_xywh=cbar_xywh,
                                dict_color=dict_color, legend_kws=legend_kws, legend_xy=legend_xy,
                                **args_xtick, ytick_size=ytick_size)
+
+        # Adjust plot
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             fig.tight_layout()
@@ -1253,7 +1273,8 @@ class CPPPlot:
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
-        # Get df positions
+
+        # Plot feature map
         fig, ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat,
                                    col_cat=col_cat, col_val=col_val, col_imp=col_imp,
                                    normalize=normalize,
@@ -1270,6 +1291,7 @@ class CPPPlot:
                                    cbar_pct=cbar_pct, cbar_kws=cbar_kws,
                                    dict_color=dict_color, legend_kws=legend_kws,
                                    **args_xtick, ytick_size=ytick_size)
+
         # Adjust plot
         # TODO give arguments up, adjust plot for better spacing,
         with warnings.catch_warnings():
