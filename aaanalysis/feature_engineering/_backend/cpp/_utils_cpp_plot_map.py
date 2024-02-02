@@ -58,16 +58,6 @@ def _get_vmin_vmax(df_pos=None, vmin=None, vmax=None):
     return vmin, vmax
 
 
-def _get_center(df_pos=None, vmin=None, vmax=None):
-    """Obtain center for cbar"""
-    if vmax is not None and vmin is not None:
-        return None # Skip adjustment
-    vmin = df_pos.min().min() if vmin is None else vmin
-    vmax = df_pos.max().max() if vmax is None else vmax
-    center = 0 if vmin < 0 < vmax else None
-    return center
-
-
 def _get_bar_width(fig=None, len_seq=None):
     """Get consistent bar width to for category bars"""
     width, height = fig.get_size_inches()
@@ -137,12 +127,15 @@ def _set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws=None,
     cbar.ax.xaxis.set_ticks_position('top')
     cbar.ax.xaxis.set_label_position('top')
 
-    # Customization for the thin line on top of the colorbar
+    # Customization for the thin line on top or right of the colorbar
+    orientation = cbar_kws.get("orientation", None)
     for spine in cbar.ax.spines.values():
         spine.set_visible(False)  # Show only the top spine
-    cbar.ax.spines['top'].set_visible(True)
-    xtick_width = ut.plot_gco(option="xtick.major.width")
-    cbar.ax.spines['top'].set_linewidth(xtick_width)
+    if orientation is not None:
+        pos = "top" if orientation == "horizontal" else "right"
+        cbar.ax.spines[pos].set_visible(True)
+        xtick_width = ut.plot_gco(option="xtick.major.width")
+        cbar.ax.spines[pos].set_linewidth(xtick_width)
 
 
 # II Main Functions
@@ -154,12 +147,11 @@ def _plot_inner_heatmap(df_pos=None, ax=None, figsize=(8, 8),
                         facecolor_dark=True, vmin=None, vmax=None,
                         cbar_ax=None, cmap=None, cbar_kws=None,
                         x_shift=0.0,
-                        xtick_size=11.0, xtick_width=2.0, xtick_length=None,
-                        ytick_size=None):
+                        xtick_size=11.0, xtick_width=2.0, xtick_length=None):
     """Plot the inner heatmap with specific settings and styles."""
     # Heatmap arguments
     vmin, vmax = _get_vmin_vmax(df_pos=df_pos, vmin=vmin, vmax=vmax)
-    center = _get_center(df_pos=df_pos, vmin=vmin, vmax=vmax)
+    center = 0
     facecolor = "black" if facecolor_dark else "white"
     grid_linecolor = grid_linecolor if grid_linecolor is not None else  "gray" if facecolor_dark else "black"
     # Plot with 0 set to NaN
@@ -175,7 +167,8 @@ def _plot_inner_heatmap(df_pos=None, ax=None, figsize=(8, 8),
     pp = PlotPartPositions(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
     pp.add_xticks(ax=ax, xticks_position="bottom", x_shift=x_shift,
                   xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
-    ax.tick_params(axis='y', which='both', length=0, labelsize=ytick_size)
+    # Remove y-ticks
+    ax.tick_params(axis='y', which='both', length=0, labelsize=0)
     # Set frame
     for _, spine in ax.spines.items():
         spine.set_visible(True)
@@ -208,8 +201,7 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                   cmap=None, cmap_n_colors=101,
                   cbar_ax=None, cbar_pct=True, cbar_kws=None,
                   dict_color=None, legend_kws=None,
-                  xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
-                  ytick_size=None):
+                  xtick_size=11.0, xtick_width=2.0, xtick_length=5.0):
     """Main function to plot heatmap for feature value per categories/subcategories per position."""
     df_feat = _adjust_df_feat(df_feat=df_feat, col_val=col_val, cbar_pct=cbar_pct)
 
@@ -242,7 +234,7 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                              border_linewidth=border_linewidth,
                              facecolor_dark=facecolor_dark, vmin=vmin, vmax=vmax,
                              cbar_ax=cbar_ax, cmap=cmap, cbar_kws=cbar_kws,
-                             x_shift=0.5, **args_xtick, ytick_size=ytick_size)
+                             x_shift=0.5, **args_xtick)
     # Add colorbar
     _set_cbar_heatmap(ax=ax, vmin=vmin, vmax=vmax,
                       dict_cbar=dict_cbar,

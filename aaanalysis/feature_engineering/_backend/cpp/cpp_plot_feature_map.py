@@ -125,8 +125,7 @@ def plot_feature_map(df_feat=None, df_cat=None,
                      cmap=None, cmap_n_colors=101,
                      cbar_pct=True, cbar_kws=None,
                      dict_color=None, legend_kws=None,
-                     xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
-                     ytick_size=None):
+                     xtick_size=11.0, xtick_width=2.0, xtick_length=5.0):
     """Create a comprehensive feature map with a heatmap, feature importance bars, and custom legends."""
     # Get fontsize
     pe = PlotElements()
@@ -190,7 +189,7 @@ def plot_feature_map(df_feat=None, df_cat=None,
                        cmap=cmap, cmap_n_colors=cmap_n_colors,
                        cbar_ax=cbar_ax, cbar_pct=cbar_pct, cbar_kws=_cbar_kws,
                        dict_color=dict_color, legend_kws=_legend_kws,
-                       **args_xtick, ytick_size=ytick_size)
+                       **args_xtick)
 
     # Add feature position title
     label_feat_pos = ("                  Feature                  \n"

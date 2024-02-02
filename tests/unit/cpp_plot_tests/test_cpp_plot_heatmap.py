@@ -275,13 +275,12 @@ class TestCCPlotHeatmap:
     @settings(max_examples=3, deadline=5000)
     @given(xtick_size=st.floats(min_value=8.0, max_value=14.0),
            xtick_width=st.floats(min_value=0.5, max_value=2.0),
-           xtick_length=st.floats(min_value=3.0, max_value=10.0),
-           ytick_size=st.floats(min_value=8.0, max_value=14.0))
-    def test_xy_tick_styling(self, xtick_size, xtick_width, xtick_length, ytick_size):
+           xtick_length=st.floats(min_value=3.0, max_value=10.0))
+    def test_xy_tick_styling(self, xtick_size, xtick_width, xtick_length):
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
         fig, ax = cpp_plot.heatmap(df_feat=df_feat, xtick_size=xtick_size, xtick_width=xtick_width,
-                                   xtick_length=xtick_length, ytick_size=ytick_size)
+                                   xtick_length=xtick_length)
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
@@ -567,14 +566,13 @@ class TestCCPlotHeatmap:
 
     @settings(max_examples=3, deadline=5000)
     @given(xtick_size=st.just(-1), xtick_width=st.just(-1),
-           xtick_length=st.just(-1), ytick_size=st.just(-1))
-    def test_invalid_tick_styling(self, xtick_size, xtick_width, xtick_length, ytick_size):
+           xtick_length=st.just(-1))
+    def test_invalid_tick_styling(self, xtick_size, xtick_width, xtick_length):
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
         with pytest.raises(ValueError):
             cpp_plot.heatmap(df_feat=df_feat, xtick_size=xtick_size,
-                             xtick_width=xtick_width, xtick_length=xtick_length,
-                             ytick_size=ytick_size)
+                             xtick_width=xtick_width, xtick_length=xtick_length)
         plt.close()
 
 class TestCCPlotHeatmapComplex:
@@ -620,7 +618,6 @@ class TestCCPlotHeatmapComplex:
             xtick_size=11,
             xtick_width=2,
             xtick_length=5,
-            ytick_size=11,
             **args_seq
         )
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
@@ -666,6 +663,5 @@ class TestCCPlotHeatmapComplex:
                 xtick_size=-1,  # Invalid xtick_size
                 xtick_width=-1,  # Invalid xtick_width
                 xtick_length=-1,  # Invalid xtick_length
-                ytick_size=-1,  # Invalid ytick_size
                 **args_seq)
         plt.close()

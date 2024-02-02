@@ -869,9 +869,10 @@ class CPPPlot:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
         return fig, ax
 
+
     def heatmap(self,
                 # Data and Plot Type
-                df_feat=None,
+                df_feat: pd.DataFrame = None,
                 shap_plot: bool = False,
                 col_cat : Literal['category', 'subcategory', 'scale_name'] = "subcategory",
                 col_val: str = "mean_dif",
@@ -889,10 +890,10 @@ class CPPPlot:
                 jmd_color: str = "blue",
                 tmd_seq_color: str = "black",
                 jmd_seq_color: str = "white",
-                seq_size: Union[int, float] = None,
+                seq_size: Optional[Union[int, float]] = None,
                 fontsize_tmd_jmd: Optional[Union[int, float]] = None,
                 weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
-                fontsize_labels: Union[int, float] = None,
+                fontsize_labels: Optional[Union[int, float]] = None,
                 add_xticks_pos: bool = False,
 
                 # Legend, Axis, and Grid Configurations
@@ -913,14 +914,10 @@ class CPPPlot:
                 xtick_size: Union[int, float] = 11.0,
                 xtick_width: Union[int, float] = 2.0,
                 xtick_length: Union[int, float] = 5.0,
-                ytick_size: Optional[Union[int, float]] = None,
                 ) -> Tuple[plt.Figure, plt.Axes]:
         """
-        Plot a CPP/-SHAP heatmap showing the feature value mean difference/feature impact per scale subcategory (y-axis)
-        and residue position (x-axis).
-
-        This is a wrapper function for :func:`seaborn.heatmap`, designed to highlight differences between two sets
-        of sequences at the positional level (e.g., amino acid level for protein sequences).
+        Plot a CPP/-SHAP heatmap showing the feature value mean difference/feature impact
+        per scale subcategory (y-axis) and residue position (x-axis).
 
         Parameters
         ----------
@@ -943,7 +940,7 @@ class CPPPlot:
 
         col_cat : {'category', 'subcategory', 'scale_name'}, default='subcategory'
             Column name in ``df_feat`` for scale classification (y-axis).
-        col_val : {'mean_dif', 'mean_dif_'name'', 'abs_mean_dif', 'abs_auc', 'feat_importance', 'feat_impact_'name''}, default='mean_dif'
+        col_val : {'mean_dif', 'abs_mean_dif', 'abs_auc', 'feat_importance', 'mean_dif_'name'', 'feat_impact_'name''}, default='mean_dif'
             Column name in ``df_feat`` for numerical values to display. Must match with the ``shap_plot`` setting.
         name_test : str, default="TEST"
             Name for the test dataset.
@@ -975,16 +972,16 @@ class CPPPlot:
             Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
         weight_tmd_jmd : {'normal', 'bold'}, default='normal'
             Font weight for the part labels: 'JMD-N', 'TMD', 'JMD-C'.
-        fontsize_labels : int or float, default=12
-            Font size (>= 0) for figure labels.
+        fontsize_labels : int or float, optional
+            Font size (>= 0) for figure labels. If ``None``, determined automatically.
         add_xticks_pos : bool, default=False
             If ``True``, include x-tick positions when TMD-JMD sequence is given.
         grid_linewidth : int or float, default=0.01
-            Line width for the grid of the heatmap.
+            Line width for the grid.
         grid_linecolor : str, optional
             Color for the grid lines. If ``None``, automatically determined based on the ``facecolor_dark`` setting.
         border_linewidth : int or float, default=2
-            Line width for the TMD-JMD border of the heatmap.
+            Line width for the TMD-JMD border.
         facecolor_dark : bool, optional
             Sets background of heatmap to black (if ``True``) or white. If ``None``, automatically determined from
             ``shap_plot`` setting. Affects grid cells for missing or near-zero data based on ``col_val``.
@@ -1016,8 +1013,6 @@ class CPPPlot:
             Width of the x-ticks (>0).
         xtick_length : int or float, default=5.0
             Length of the x-ticks (>0).
-        ytick_size : int or float, optional
-            Size of y-tick labels (>0).
 
         Returns
         -------
@@ -1038,6 +1033,7 @@ class CPPPlot:
         * :meth:`CPPPlot.feature` for visualization of mean differences for specific features.
         * :meth:`seaborn.heatmap` for seaborn heatmap.
         * :meth:`matplotlib.figure.Figure.colorbar` for colorbar arguments.
+        * `Matplotlib Colormaps <https://matplotlib.org/stable/users/explain/colors/colormaps.html>`_ for further ``cmap`` options.
         * :meth:`plot_legend` used for setting scale category legend.
 
         Examples
@@ -1085,7 +1081,6 @@ class CPPPlot:
         ut.check_tuple(name="legend_xy", val=legend_xy, n=2, accept_none=False,
                        check_number=True, accept_none_number=True)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
-        ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
 
         # Plot heatmap
         fig, ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat,
@@ -1104,7 +1099,7 @@ class CPPPlot:
                                cmap=cmap, cmap_n_colors=cmap_n_colors,
                                cbar_pct=cbar_pct, cbar_kws=cbar_kws, cbar_xywh=cbar_xywh,
                                dict_color=dict_color, legend_kws=legend_kws, legend_xy=legend_xy,
-                               **args_xtick, ytick_size=ytick_size)
+                               **args_xtick)
 
         # Adjust plot
         with warnings.catch_warnings():
@@ -1116,17 +1111,18 @@ class CPPPlot:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
         return fig, ax
 
+
     def feature_map(self,
                     # Data and Plot Type
-                    df_feat=None,
-                    col_cat="subcategory",
-                    col_val="mean_dif",
-                    col_imp="feat_importance",
+                    df_feat: pd.DataFrame = None,
+                    col_cat: Literal['category', 'subcategory', 'scale_name'] = "subcategory",
+                    col_val: str = "mean_dif",
+                    col_imp: str = "feat_importance",
                     name_test: str = "TEST",
                     name_ref: str = "REF",
+                    figsize: Tuple[Union[int, float], Union[int, float]] = (8, 8),
 
                     # Appearance of Parts (TMD-JMD)
-                    figsize: Tuple[Union[int, float], Union[int, float]] = (8, 8),
                     start: int = 1,
                     tmd_len: int = 20,
                     tmd_seq: Optional[str] = None,
@@ -1136,8 +1132,8 @@ class CPPPlot:
                     jmd_color: str = "blue",
                     tmd_seq_color: str = "black",
                     jmd_seq_color: str = "white",
-                    seq_size: Union[int, float] = None,
-                    fontsize_tmd_jmd: Union[int, float] = None,
+                    seq_size: Optional[Union[int, float]] = None,
+                    fontsize_tmd_jmd: Optional[Union[int, float]] = None,
                     weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
                     fontsize_labels: Union[int, float] = 12,
                     fontsize_annotations: Union[int, float] = 10,
@@ -1154,16 +1150,17 @@ class CPPPlot:
                     cmap_n_colors: int = 101,
                     cbar_pct: bool = True,
                     cbar_kws: Optional[dict] = None,
+                    cbar_xywh: Tuple[Optional[float], Optional[float], Optional[float], Optional[float]] = (0.5, None, 0.2, None),
                     dict_color: Optional[dict] = None,
                     legend_kws: Optional[dict] = None,
+                    legend_xy: Tuple[Optional[float], Optional[float]] = (-0.1, -0.01),
                     xtick_size: Union[int, float] = 11.0,
                     xtick_width: Union[int, float] = 2.0,
                     xtick_length: Union[int, float] = 5.0,
-                    ytick_size: Optional[Union[int, float]] = None
-                    ):
+                    )-> Tuple[plt.Figure, plt.Axes]:
         """
-        Plot CPP feature map showing feature value mean difference and feature importance per scale subcategory
-        (y-axis) and residue position (x-axis).
+        Plot CPP feature map showing feature value mean difference and feature importance
+        per scale subcategory (y-axis) and residue position (x-axis).
 
         Parameters
         ----------
@@ -1218,8 +1215,6 @@ class CPPPlot:
             Width of the x-ticks (>0).
         xtick_length : int or float, default=5.0
             Length of the x-ticks (>0).
-        ytick_size : int or float, optional
-            Size of y-tick labels (>0).
 
         Returns
         -------
@@ -1265,7 +1260,6 @@ class CPPPlot:
         dict_color = check_match_dict_color_df(dict_color=dict_color, df=df_feat)
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
-        ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
 
         # Plot feature map
         fig, ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat,
@@ -1283,7 +1277,7 @@ class CPPPlot:
                                    cmap=cmap, cmap_n_colors=cmap_n_colors,
                                    cbar_pct=cbar_pct, cbar_kws=cbar_kws,
                                    dict_color=dict_color, legend_kws=legend_kws,
-                                   **args_xtick, ytick_size=ytick_size)
+                                   **args_xtick)
 
         # Adjust plot
         # TODO give arguments up, adjust plot for better spacing,

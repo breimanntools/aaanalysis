@@ -392,41 +392,42 @@ def plot_get_cdict_(name=STR_DICT_COLOR):
 def _get_diverging_cmap(cmap="ReBu_r", n_colors=101, facecolor_dark=False, only_pos=False, only_neg=False):
     """Generate a diverging colormap based on the provided cmap."""
     n = min(int(np.floor(1 + n_colors/20)), 5)
-    c_middle = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
+    color_0 = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
     if only_neg:
         cmap = sns.color_palette(palette=cmap, n_colors=(n_colors * 2) + n)
-        cmap = cmap[0:n_colors-1] + c_middle
+        cmap = cmap[0:n_colors-1] + color_0
     elif only_pos:
         cmap = sns.color_palette(palette=cmap, n_colors=(n_colors * 2) + n)
-        cmap = c_middle + cmap[-n_colors+1:]
+        cmap = color_0 + cmap[-n_colors+1:]
     else:
         n_cmap = n_colors + n * 2
         n_colors_half = int(np.floor(n_colors / 2))
-        n_sub = (n_colors+1)%2
+        n_sub = (n_colors + 1) % 2
         n_cmap_half = int(np.floor(n_cmap / 2))
         cmap = sns.color_palette(cmap, n_colors=n_cmap)
         cmap_low, cmap_high = cmap[:n_cmap_half - n], cmap[n + n_cmap_half:]
-        cmap = cmap_low[0:n_colors_half-n_sub] + c_middle + cmap_high[-n_colors_half:]
+        cmap = cmap_low[0:n_colors_half-n_sub] + color_0 + cmap_high[-n_colors_half:]
     return cmap
 
 
 def _get_shap_cmap(n_colors=101, facecolor_dark=True, only_pos=False, only_neg=False):
     """Generate a diverging colormap for feature values."""
     n = min((int(np.floor(1 + n_colors/5)), 20))
-    c_middle = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
+    color_0 = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
+
     if only_neg:
         cmap = sns.light_palette(COLOR_SHAP_NEG, input="hex", reverse=True, n_colors=n_colors + n)
-        cmap = cmap[0:n_colors-1] + c_middle
+        cmap = cmap[0:n_colors-1] + color_0
     elif only_pos:
         cmap = sns.light_palette(COLOR_SHAP_POS, input="hex", n_colors=n_colors + n)
-        cmap = c_middle + cmap[-n_colors+1:]
+        cmap = color_0 + cmap[-n_colors+1:]
     else:
         n_colors_half = int(np.floor(n_colors / 2))
         n_sub = (n_colors + 1) % 2
         n_cmap_half = n_colors_half + n
         cmap_low = sns.light_palette(COLOR_SHAP_NEG, input="hex", reverse=True, n_colors=n_cmap_half)
         cmap_high = sns.light_palette(COLOR_SHAP_POS, input="hex", n_colors=n_cmap_half)
-        cmap = cmap_low[0:n_colors_half-n_sub] + c_middle + cmap_high[-n_colors_half:]
+        cmap = cmap_low[0:n_colors_half-n_sub] + color_0 + cmap_high[-n_colors_half:]
     return cmap
 
 
