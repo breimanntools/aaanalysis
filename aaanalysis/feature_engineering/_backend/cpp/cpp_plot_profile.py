@@ -179,7 +179,9 @@ def plot_profile(df_feat=None, df_cat=None, shap_plot=False,
     else:
         pp.add_tmd_jmd_bar(ax=ax, x_shift=-0.5, **args_part_color)
         pp.add_tmd_jmd_xticks(ax=ax, x_shift=0, **args_xtick)
-        pp.add_tmd_jmd_text(ax=ax, x_shift=-0.5, fontsize_tmd_jmd=fontsize_tmd_jmd)
+        pp.add_tmd_jmd_text(ax=ax, x_shift=-0.5,
+                            fontsize_tmd_jmd=fontsize_tmd_jmd,
+                            weight_tmd_jmd=weight_tmd_jmd)
     # Add legend
     if add_legend_cat:
         fs = ut.plot_gco() - 2

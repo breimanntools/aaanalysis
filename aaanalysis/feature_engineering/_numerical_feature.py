@@ -37,7 +37,6 @@ class NumericalFeature:
     """
 
     """
-    TODO
     @staticmethod
     def comp_correlation():
 

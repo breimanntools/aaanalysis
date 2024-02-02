@@ -94,7 +94,8 @@ class PlotElements:
 
         # Create legend position [center (x), top (y)]
         legend_xy_default = (-0.1, -0.01)
-        _legend_xy = ut.adjust_tuple_elements(tuple_in=legend_xy, tuple_default=legend_xy_default)
+        _legend_xy = ut.adjust_tuple_elements(tuple_in=legend_xy,
+                                              tuple_default=legend_xy_default)
         x, y = _legend_xy
         str_space = "\n" * int((6-n_rows))
         title = f"{str_space}{ut.LABEL_SCALE_CAT}"
@@ -122,7 +123,8 @@ class PlotElements:
 
         # Create cbar positions: [left (x), bottom (y), width, height]
         cbar_xywh_default = (0.5, bar_bottom, 0.2, bar_height)
-        _cbar_xywh = ut.adjust_tuple_elements(tuple_in=cbar_xywh, tuple_default=cbar_xywh_default)
+        _cbar_xywh = ut.adjust_tuple_elements(tuple_in=cbar_xywh,
+                                              tuple_default=cbar_xywh_default)
 
         # Create colorbar axes
         cbar_ax = fig.add_axes(_cbar_xywh)

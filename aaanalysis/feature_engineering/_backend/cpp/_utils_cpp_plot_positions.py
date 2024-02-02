@@ -117,7 +117,7 @@ def _add_part_bar(ax=None, start=1.0, len_part=40.0, color="blue"):
     ax.add_patch(bar)
 
 
-def _add_part_text(ax=None, start=1.0, len_part=10.0, fontsize=None, text=None):
+def _add_part_text(ax=None, text=None, start=1.0, len_part=10.0, fontsize=None, fontweight="normal"):
     """Place text marking for TMD and JMD sequence parts."""
     bar_height = _get_bar_height(ax=ax)
     y = _get_y(ax=ax, bar_height=bar_height, height_factor=1.3, reversed_weight=-1)
@@ -126,7 +126,7 @@ def _add_part_text(ax=None, start=1.0, len_part=10.0, fontsize=None, text=None):
             horizontalalignment='center',
             verticalalignment='top',
             fontsize=fontsize,
-            fontweight='normal',
+            fontweight=fontweight,
             color='black')
 
 
@@ -321,7 +321,7 @@ class PlotPartPositions:
         _add_part_bar(ax=ax, start=tmd_start, len_part=self.tmd_len, color=tmd_color)
         _add_part_bar(ax=ax, start=jmd_c_start, len_part=self.jmd_c_len, color=jmd_color)
 
-    def add_tmd_jmd_text(self, ax=None, x_shift=0, fontsize_tmd_jmd=None):
+    def add_tmd_jmd_text(self, ax=None, x_shift=0, fontsize_tmd_jmd=None, weight_tmd_jmd="normal"):
         """Add text labels for TMD and JMD regions."""
         name_tmd = ut.options["name_tmd"]
         name_jmd_n = ut.options["name_jmd_n"]
@@ -330,7 +330,7 @@ class PlotPartPositions:
         exists_jmd_n = self.jmd_n_len > 0
         exists_jmd_c = self.jmd_c_len > 0
         if fontsize_tmd_jmd is None or fontsize_tmd_jmd > 0:
-            args = dict(ax=ax, fontsize=fontsize_tmd_jmd)
+            args = dict(ax=ax, fontsize=fontsize_tmd_jmd, fontweight=weight_tmd_jmd)
             _add_part_text(start=tmd_start, len_part=self.tmd_len, text=name_tmd, **args)
             if exists_jmd_n:
                 _add_part_text(start=jmd_n_start, text=name_jmd_n, len_part=self.jmd_n_len, **args)
@@ -352,9 +352,10 @@ class PlotPartPositions:
         xticks.append(tmd_end)
         if exists_jmd_c:
             xticks.append(jmd_c_end)
-        ax.set_xticks([x + x_shift for x in xticks])
-        ax.set_xticklabels([x + self.start for x in xticks], size=xtick_size, rotation=0)
-        ax.tick_params(axis="x", length=xtick_length, color="black", width=xtick_width, bottom=True)
+        if xtick_size > 0:
+            ax.set_xticks([x + x_shift for x in xticks])
+            ax.set_xticklabels([x + self.start for x in xticks], size=xtick_size, rotation=0)
+            ax.tick_params(axis="x", length=xtick_length, color="black", width=xtick_width, bottom=True)
 
     def highlight_tmd_area(self, ax=None, x_shift=0, tmd_color="mediumspringgreen", alpha=0.2):
         """Highlight the TMD area in the plot."""

@@ -15,10 +15,10 @@ from ._utils_cpp_plot_map import plot_heatmap_
 
 
 # Add feature importance plot elements
-def plot_feat_importance_bars(ax=None, df=None, top_pcp=None,
+def plot_feat_importance_bars(ax=None, df=None, annotation_th=None,
                               label=ut.LABEL_FEAT_IMPORT, col_imp=None,
-                              titlesize=12, labelsize=12, top_pcp_size=12,
-                              top_pcp_weight="bold"):
+                              fontsize_title=12, fontsize_label=12, fontsize_annotation=12,
+                              weight_annotation="bold"):
     """Display a horizontal bar plot for feature importance sorted by categories."""
     col_start = "pos_start"
     col_subcat_lower = "subcat_lower"
@@ -33,32 +33,38 @@ def plot_feat_importance_bars(ax=None, df=None, top_pcp=None,
     list_subcat = list(
         df.sort_values(by=[ut.COL_CAT, ut.COL_SUBCAT], key=lambda x: x.str.lower())[ut.COL_SUBCAT].drop_duplicates())
     list_imp = [dict_imp[x] for x in list_subcat]
-    ax.barh(list_subcat, list_imp, color="tab:gray", edgecolor="white", align="edge")
-    plt.xlabel(label, size=titlesize, weight="bold", ha="center")
+    ax.barh(list_subcat, list_imp, color=ut.COLOR_FEAT_IMP, edgecolor="white", align="edge")
+    plt.xlabel(label, size=fontsize_title, weight="bold", ha="center")
     ax.xaxis.set_label_position('top')
     # Add annotations
-    top_pcp = max(list_imp)/2 if top_pcp is None else top_pcp
+    v_max = int(np.ceil(max(list_imp)))
+    annotation_th = v_max / 2 if annotation_th is None else annotation_th
     for i, val in enumerate(list_imp):
-        if val >= top_pcp:
-            plt.text(val, i+0.45, f"{round(val, 1)}% ",
+        if val >= annotation_th:
+            plt.text(val, i + 0.45, f"{round(val, 1)}% ",
                      va="center", ha="right",
-                     weight=top_pcp_weight,
+                     weight=weight_annotation,
                      color="white",
-                     size=top_pcp_size)
+                     size=fontsize_annotation)
     # Adjust ticks
     ax.tick_params(axis='y', which='both', length=0, labelsize=0)
-    ax.tick_params(axis='x', which='both', labelsize=labelsize, pad=-1)
+    ax.tick_params(axis='x', which='both', labelsize=fontsize_label, pad=-1)
     sns.despine(ax=ax, bottom=True, top=False)
-    plt.xlim(0, max(list_imp))
+    plt.xlim(0, v_max)
+    ut.x_ticks_0(ax)
+
+    # Adjust plot size
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=UserWarning)
         plt.tight_layout()
 
 
-# TODO adjust 3 th by args
-def add_feat_importance_map(ax=None, df_feat=None, df_cat=None, start=None, args_len=None,
-                            col_cat=None, col_imp=None):
+def add_feat_importance_map(ax=None, df_feat=None, df_cat=None,
+                            col_cat=None, col_imp=None,
+                            legend_imp_th=(0.2, 0.5, 1),
+                            start=None, args_len=None):
     """Overlay feature importance symbols on the heatmap based on the importance values."""
+    th1, th2, th3 = legend_imp_th
     pp = PlotPartPositions(**args_len, start=start)
     df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat,
                            col_cat=col_cat, col_val=col_imp,
@@ -71,21 +77,17 @@ def add_feat_importance_map(ax=None, df_feat=None, df_cat=None, start=None, args
         for pos, val in enumerate(_dff[col_imp]):
             _symbol = "■"
             color = "black"
-            size = 7 if val >= 1 else (5 if val >= 0.5 else 3)
+            size = 9 if val >= th3 else (6 if val >= th2 else 3)
             _args_symbol = dict(ha="center", va="center", color=color, size=size)
-            if val >= 0.2:
+            if val >= th1:
                 ax.text(pos + 0.5, i + 0.5, _symbol, **_args_symbol)
 
 
-def add_feat_importance_legend(ax=None, legend_imp_xy=None, label=None, fontsize_title=None, fontsize=None):
+def add_feat_importance_legend(ax=None, legend_imp_xy=None, legend_imp_th=None,
+                               label=None, fontsize_title=None, fontsize=None):
     """Add a custom legend indicating the meaning of feature importance symbols."""
-    if legend_imp_xy is not None:
-        x, y = legend_imp_xy
-    else:
-        x = 1.25
-        y = 0
     # Define the sizes for the legend markers
-    list_labels = ["  >0.2%", "  >0.5%", "  >1.0%"]
+    list_labels = [f"  >{float(x)}%" for x in legend_imp_th]
     list_sizes = [3, 5, 7]
     # Create the legend handles manually
     legend_handles = [
@@ -96,7 +98,7 @@ def add_feat_importance_legend(ax=None, legend_imp_xy=None, label=None, fontsize
     ax.legend(handles=legend_handles,
               title=label,
               loc='lower left',
-              bbox_to_anchor=(x, y),
+              bbox_to_anchor=legend_imp_xy,
               frameon=False,
               title_fontsize=fontsize_title,
               fontsize=fontsize,
@@ -122,8 +124,10 @@ def plot_feature_map(df_feat=None, df_cat=None,
                      border_linewidth=2,
                      facecolor_dark=False, vmin=None, vmax=None,
                      cmap=None, cmap_n_colors=101,
-                     cbar_pct=True, cbar_kws=None,
-                     dict_color=None, legend_kws=None,
+                     cbar_pct=True, cbar_kws=None, cbar_xywh=(0.5, None, 0.2, None),
+                     dict_color=None, legend_kws=None, legend_xy=(-0.1, -0.01),
+                     legend_imp_th=(0.2, 0.5, 1), legend_imp_xy=(1.25, 0),
+                     bar_imp_annotation_th=None,
                      xtick_size=11.0, xtick_width=2.0, xtick_length=5.0):
     """Create a comprehensive feature map with a heatmap, feature importance bars, and custom legends."""
     # Get fontsize
@@ -153,23 +157,24 @@ def plot_feature_map(df_feat=None, df_cat=None,
     label_cbar = f"Feature value\n{name_test} - {name_ref}"
     _cbar_kws, cbar_ax = pe.adjust_cbar_kws(fig=fig,
                                             cbar_kws=cbar_kws,
-                                            cbar_xywh=None,
+                                            cbar_xywh=cbar_xywh,
                                             label=label_cbar,
                                             fontsize_labels=fs_labels)
 
     n_cat = len(set(df_feat[ut.COL_CAT]))
     _legend_kws = pe.adjust_cat_legend_kws(legend_kws=legend_kws,
                                            n_cat=n_cat,
-                                           legend_xy=None,
+                                           legend_xy=legend_xy,
                                            fontsize_labels=fs_labels)
 
     # Plot feat importance bars
     label_bars_imp = "Cumulative feature\n  importance [%]"
     plot_feat_importance_bars(ax=axes[1], df=df_feat.copy(),
-                              titlesize=fs_annotations,
-                              labelsize=fs_annotations,
-                              top_pcp_size=fs_annotations-2,
-                              top_pcp_weight="bold",
+                              fontsize_title=fs_annotations,
+                              fontsize_label=fs_annotations,
+                              annotation_th=bar_imp_annotation_th,
+                              fontsize_annotation=fs_annotations - 2,
+                              weight_annotation="bold",
                               col_imp=col_imp,
                               label=label_bars_imp)
 
@@ -196,13 +201,21 @@ def plot_feature_map(df_feat=None, df_cat=None,
 
 
     # Add feature importance map
+    legend_imp_th_default = (0.2, 0.5, 1)
+    _legend_imp_th = ut.adjust_tuple_elements(tuple_in=legend_imp_th,
+                                              tuple_default=legend_imp_th_default)
     add_feat_importance_map(df_feat=df_feat, df_cat=df_cat,
                             col_cat=col_cat, col_imp=col_imp,
+                            legend_imp_th=_legend_imp_th,
                             ax=ax, start=start, args_len=args_len)
 
+    legend_imp_xy_default = (1.25, 0)
+    _legend_imp_xy = ut.adjust_tuple_elements(tuple_in=legend_imp_xy,
+                                              tuple_default=legend_imp_xy_default)
     label_feat_imp = "Feature importance"
     add_feat_importance_legend(ax=cbar_ax,
-                               legend_imp_xy=None,
+                               legend_imp_th=_legend_imp_th,
+                               legend_imp_xy=_legend_imp_xy,
                                label=label_feat_imp,
                                fontsize_title=fs_labels,
                                fontsize=fs_annotations)

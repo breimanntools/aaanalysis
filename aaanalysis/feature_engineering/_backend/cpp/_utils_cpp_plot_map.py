@@ -251,7 +251,9 @@ def plot_heatmap_(df_feat=None, df_cat=None,
     else:
         pp.add_tmd_jmd_bar(ax=ax, **args_part_color)
         pp.add_tmd_jmd_xticks(ax=ax, x_shift=0.5, **args_xtick)
-        pp.add_tmd_jmd_text(ax=ax, x_shift=0, fontsize_tmd_jmd=fontsize_tmd_jmd)
+        pp.add_tmd_jmd_text(ax=ax, x_shift=0,
+                            fontsize_tmd_jmd=fontsize_tmd_jmd,
+                            weight_tmd_jmd=weight_tmd_jmd)
 
     # Add scale bars
     bar_width = _get_bar_width(fig=fig, len_seq=jmd_n_len+tmd_len+jmd_c_len)

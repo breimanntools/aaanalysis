@@ -123,8 +123,8 @@ def check_col_imp(col_imp=None, shap_plot=False):
     if col_imp is None:
         col_imp = ut.COL_FEAT_IMPACT if shap_plot else ut.COL_FEAT_IMPORT
     if not shap_plot:
-        if col_imp != ut.COL_FEAT_IMPORT:
-            raise ValueError(f"'col_imp' ('{col_imp}') must be '{ut.COL_FEAT_IMPORT}'")
+        if ut.COL_FEAT_IMPORT not in col_imp:
+            raise ValueError(f"'col_imp' ('{col_imp}') must be '{ut.COL_FEAT_IMPORT} or follow '{ut.COL_FEAT_IMPORT}_'name'")
     else:
         if ut.COL_FEAT_IMPACT not in col_imp:
             raise ValueError(f"If 'shap_plot=True', 'col_imp' ('{col_imp}') must follow '{ut.COL_FEAT_IMPACT}_'name''")
@@ -163,6 +163,18 @@ def check_match_shap_plot_add_legend_cat(shap_plot=False, add_legend_cat=False):
     """Check if not both are True"""
     if shap_plot and add_legend_cat:
         raise ValueError(f"'shap_plot' ({shap_plot}) and 'add_legend_cat' ({add_legend_cat}) can not be both True.")
+
+
+def check_legend_imp_th(legend_imp_th=None):
+    """Check if legend importance thresholds are valid"""
+    ut.check_tuple(name="legend_imp_th", val=legend_imp_th, n=3,
+                   accept_none=False, check_number=True,
+                   accept_none_number=False)
+    th1, th2, th3 = legend_imp_th
+    if th1 >= th2 or th2 >= th3:
+        raise ValueError(f"'legend_imp_th' ({legend_imp_th}) should contain 3 numbers in ascending order")
+    if th1 <= 0:
+        raise ValueError(f"Minium of 'legend_imp_th' ({legend_imp_th[0]}) should be > 0")
 
 
 # Check update_seq_size
@@ -893,7 +905,7 @@ class CPPPlot:
                 seq_size: Optional[Union[int, float]] = None,
                 fontsize_tmd_jmd: Optional[Union[int, float]] = None,
                 weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
-                fontsize_labels: Optional[Union[int, float]] = None,
+                fontsize_labels: Union[int, float] = 12,
                 add_xticks_pos: bool = False,
 
                 # Legend, Axis, and Grid Configurations
@@ -972,14 +984,14 @@ class CPPPlot:
             Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
         weight_tmd_jmd : {'normal', 'bold'}, default='normal'
             Font weight for the part labels: 'JMD-N', 'TMD', 'JMD-C'.
-        fontsize_labels : int or float, optional
+        fontsize_labels : int or float, default=12
             Font size (>= 0) for figure labels. If ``None``, determined automatically.
         add_xticks_pos : bool, default=False
             If ``True``, include x-tick positions when TMD-JMD sequence is given.
         grid_linewidth : int or float, default=0.01
             Line width for the grid.
         grid_linecolor : str, optional
-            Color for the grid lines. If ``None``, automatically determined based on the ``facecolor_dark`` setting.
+            Color for the grid lines. If ``None``, automatically determined based on ``facecolor_dark``.
         border_linewidth : int or float, default=2
             Line width for the TMD-JMD border.
         facecolor_dark : bool, optional
@@ -1006,7 +1018,7 @@ class CPPPlot:
         legend_kws : dict, optional
             Keyword arguments for the legend passed to :meth:`plot_legend`.
         legend_xy : tuple, default=(-0.1, -0.01)
-            Legend position: x- and y-axis coordinates. Values are set to default if ``None``.
+            Position for scale category legend: x- and y-axis coordinates. Values are set to default if ``None``.
         xtick_size : int or float, default=11.0
             Size of x-tick labels (>0).
         xtick_width : int or float, default=2.0
@@ -1017,7 +1029,7 @@ class CPPPlot:
         Returns
         -------
         fig : plt.Figure
-            The Figure object for the CPP heatmap plot.
+            The Figure object for the CPP heatmap.
         ax : plt.Axes
             Array of Axes objects for the CPP heatmap.
 
@@ -1121,7 +1133,6 @@ class CPPPlot:
                     col_imp: str = "feat_importance",
                     name_test: str = "TEST",
                     name_ref: str = "REF",
-
                     figsize: Tuple[Union[int, float], Union[int, float]] = (8, 8),
 
                     # Appearance of Parts (TMD-JMD)
@@ -1156,6 +1167,9 @@ class CPPPlot:
                     dict_color: Optional[dict] = None,
                     legend_kws: Optional[dict] = None,
                     legend_xy: Tuple[Optional[float], Optional[float]] = (-0.1, -0.01),
+                    legend_imp_th: Tuple[Optional[float], Optional[float], Optional[float]] = (0.2, 0.5, 1),
+                    legend_imp_xy: Tuple[Optional[float], Optional[float]] = (1.25, 0),
+                    bar_imp_annotation_th: Optional[Union[int, float]] = None,
                     xtick_size: Union[int, float] = 11.0,
                     xtick_width: Union[int, float] = 2.0,
                     xtick_length: Union[int, float] = 5.0,
@@ -1168,49 +1182,86 @@ class CPPPlot:
         ----------
         df_feat : pd.DataFrame, shape (n_feature, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
-            Must also include feature importance (``feat_importance``) column.
+            Must also include a feature importance column (``col_imp``).
         col_cat : {'category', 'subcategory', 'scale_name'}, default='subcategory'
-            Column name in ``df_feat`` representing scale information (shown on the y-axis).
+            Column name in ``df_feat`` for scale information (y-axis).
         col_val : {'mean_dif', 'abs_mean_dif', 'abs_auc'}, default='mean_dif'
-            Column name in ``df_feat`` containing numerical values to display.
-        figsize : tuple, default=(8, 8)
-            Figure dimensions (width, height) in inches.
+            Column name in ``df_feat`` for numerical values to display.
+        col_imp :  {'feat_importance', 'feat_importance_'name''}, default='feat_importance'
+            Column name in ``df_feat`` for feature importance (group-, subgroup- or sample-level).
         name_test : str, default="TEST"
             Name for the test dataset.
         name_ref : str, default="REF"
             Name for the reference dataset.
-        vmin, vmax : float, optional
-            Values to anchor the colormap, otherwise, inferred from data and other keyword arguments.
-        cmap : matplotlib colormap name or object, or list of colors, default='seismic'
-            Name of colormap assigning data values to color space. If 'SHAP', colors from
-            `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ will be used (recommended for feature impact).
-        cmap_n_colors : int, default=101
-            Number of discrete steps in diverging or sequential colormap.
-            Color dictionary of scale categories classifying scales shown on y-axis. Default from :meth:`plot_get_cdict`
-            with ``name='DICT_CAT'``.
-        cbar_kws : dict of key, value mappings, optional
-            Keyword arguments for :meth:`matplotlib.figure.Figure.colorbar`.
-        tmd_len : int, default=20
-            Length of TMD to be depicted (>0). Must match with all feature from ``df_feat``.
+        figsize : tuple, default=(8, 8)
+            Figure dimensions (width, height) in inches.
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
+        tmd_len : int, default=20
+            Length of TMD to be depicted (>0). Must match with all feature from ``df_feat``.
+        tmd_seq : str, optional
+            TMD sequence for specific sample.
+        jmd_n_seq : str, optional
+            JMD N-terminal sequence for specific sample. Length must match with 'jmd_n_len' attribute.
+        jmd_c_seq : str, optional
+            JMD C-terminal sequence for specific sample. Length must match with 'jmd_c_len' attribute.
         tmd_color : str, default='mediumspringgreen'
-            Color of TMD bar.
+            Color for TMD.
         jmd_color : str, default='blue'
-            Color of JMD-N and JMD-C bar.
+            Color for JMDs.
         tmd_seq_color : str, default='black'
-            Color of TMD sequence.
+            Color for TMD sequence.
         jmd_seq_color : str, default='white'
-            Color of JMD-N and JMD-C sequence.
+            Color for JMD sequence.
         seq_size : int or float, optional
-            Font size of all sequence parts in points. If ``None``, optimized automatically.
+            Font size (>=0) for sequence characters. If ``None``, optimized automatically.
         fontsize_tmd_jmd : int or float, optional
             Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
+        weight_tmd_jmd : {'normal', 'bold'}, default='normal'
+            Font weight for the part labels: 'JMD-N', 'TMD', 'JMD-C'.
+        fontsize_labels : int or float, default=12
+            Font size (>= 0) for figure labels. If ``None``, determined automatically.
+        fontsize_annotations : int or float, default=10
+            Font size (>= 0) for figure annotations. If ``None``, determined automatically.
+        add_xticks_pos : bool, default=False
+            If ``True``, include x-tick positions when TMD-JMD sequence is given.
+        grid_linewidth : int or float, default=0.01
+            Line width for the grid.
+        grid_linecolor : str, optional
+            Color for the grid lines. If ``None``, automatically determined based on ``facecolor_dark``.
+        border_linewidth : int or float, default=2
+            Line width for the TMD-JMD border.
+        facecolor_dark : bool, optional
+            Sets background of heatmap to black (if ``True``) or white. If ``None``, automatically determined from
+            ``shap_plot`` setting. Affects grid cells for missing or near-zero data based on ``col_val``.
+        vmin : int or float, optional
+            Minimum ``col_val`` value setting the lower end of the colormap. If ``None``, determined automatically.
+        vmax : int or float, optional
+            Maximum ``col_val`` value setting the upper end of the colormap. If ``None``, determined automatically.
+        cmap : matplotlib colormap name or object, optional
+            Name of the colormap to use. If ``None``, automatically determined ``col_val`` data and 'shap_plot' setting.
+        cmap_n_colors : int, default=101
+            Number of discrete steps (>1) in diverging or sequential colormap.
+        cbar_pct : bool, default=True
+            If ``True``, colorbar is represented in percentage and the ``col_val`` values are converted
+            accordingly by multiplying with 100 if necessary.
+        cbar_kws : dict of key, value mappings, optional
+            Keyword arguments for colorbar passed to :meth:`matplotlib.figure.Figure.colorbar`.
+        cbar_xywh : tuple, default=(0.7, None, 0.2, None)
+            Colorbar position and size: x-axis (left), y-axis (bottom), width, height. Values are optimized if ``None``.
         dict_color : dict, optional
             Color dictionary of scale categories classifying scales shown on y-axis. Default from
             :meth:`plot_get_cdict` with ``name='DICT_CAT'``.
         legend_kws : dict, optional
             Keyword arguments for the legend passed to :meth:`plot_legend`.
+        legend_xy : tuple, default=(-0.1, -0.01)
+            Position for scale category legend: x- and y-axis coordinates. Values are set to default if ``None``.
+        legend_imp_th : tuple, default=(0.2, 0.5, 1)
+            Three ascending thresholds for feature importance (scale- and residue-specific).
+        legend_imp_xy : tuple, default=(1.25, 0)
+            Position for feature importance legend: x- and y-axis coordinates (relative to cbar).
+        bar_imp_annotation_th : int or float, optional
+            Threshold for cumulated feature importance to be shown on right bars. If ``None``, determined automatically.
         xtick_size : int or float, default=11.0
             Size of x-tick labels (>0).
         xtick_width : int or float, default=2.0
@@ -1220,12 +1271,25 @@ class CPPPlot:
 
         Returns
         -------
+        fig : plt.Figure
+            The Figure object for the CPP feature map.
         ax : plt.Axes
-            CPP feature map axes object.
+            Array of Axes objects for the CPP feature map.
 
         Notes
         -----
-        * If plotting is slow, set ``seq_size`` manually to avoid fontsize optimization.
+        ``tmd_seq_color`` and ``jmd_seq_color`` are applicable only when ``tmd_seq``, ``jmd_n_seq``,
+        and ``jmd_c_seq`` are provided.
+
+        See Also
+        --------
+        * :meth:`CPP.run` for details on CPP statistical measures of the ``df_feat`` DataFrame.
+        * :class:`SequenceFeature` for definition of sequence ``Parts``.
+        * :meth:`CPPPlot.feature` for visualization of mean differences for specific features.
+        * :meth:`seaborn.heatmap` for seaborn heatmap.
+        * :meth:`matplotlib.figure.Figure.colorbar` for colorbar arguments.
+        * `Matplotlib Colormaps <https://matplotlib.org/stable/users/explain/colors/colormaps.html>`_ for further ``cmap`` options.
+        * :meth:`plot_legend` used for setting scale category legend.
 
         Examples
         --------
@@ -1275,10 +1339,14 @@ class CPPPlot:
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
         ut.check_tuple(name="legend_xy", val=legend_xy, n=2, accept_none=False,
                        check_number=True, accept_none_number=True)
+        check_legend_imp_th(legend_imp_th=legend_imp_th)
+        ut.check_tuple(name="legend_imp_xy", val=legend_imp_xy, n=2, accept_none=False,
+                       check_number=True, accept_none_number=True)
+        ut.check_number_range(name="bar_imp_annotation_th", val=bar_imp_annotation_th,
+                              accept_none=True, min_val=0, just_int=False)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
 
         # Plot feature map
-        # TODO give arguments up & down
         fig, ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat,
                                    col_cat=col_cat, col_val=col_val, col_imp=col_imp,
                                    name_test=name_test, name_ref=name_ref,
@@ -1291,8 +1359,10 @@ class CPPPlot:
                                    border_linewidth=border_linewidth,
                                    facecolor_dark=facecolor_dark, vmin=vmin, vmax=vmax,
                                    cmap=cmap, cmap_n_colors=cmap_n_colors,
-                                   cbar_pct=cbar_pct, cbar_kws=cbar_kws,
-                                   dict_color=dict_color, legend_kws=legend_kws,
+                                   cbar_pct=cbar_pct, cbar_kws=cbar_kws, cbar_xywh=cbar_xywh,
+                                   dict_color=dict_color, legend_kws=legend_kws, legend_xy=legend_xy,
+                                   legend_imp_th=legend_imp_th, legend_imp_xy=legend_imp_xy,
+                                   bar_imp_annotation_th=bar_imp_annotation_th,
                                    **args_xtick)
 
         # Adjust plot
@@ -1304,7 +1374,7 @@ class CPPPlot:
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
-        return ax
+        return fig, ax
 
 
     def update_seq_size(self,
