@@ -185,3 +185,12 @@ def x_ticks_0(ax):
         else:
             return f'{x:.2f}'  # Format as float with two decimal places
     ax.xaxis.set_major_formatter(mticker.FuncFormatter(custom_x_ticks))
+
+
+def adjust_tuple_elements(tuple_in=None, tuple_default=None):
+    """Replace elements of input tuple that are None with the corresponding element from default tuple."""
+    if tuple_in is not None:
+        tuple_out = tuple(i if i is not None else def_i for i, def_i in zip(tuple_in,  tuple_default))
+    else:
+        tuple_out =  tuple_default
+    return tuple_out

@@ -516,7 +516,7 @@ class CPPPlot:
                 fontsize_annotations: Union[int, float, None] = 11,
                 xlim_dif: Tuple[Union[int, float], Union[int, float]] = (-17.5, 17.5),
                 xlim_rank: Tuple[Union[int, float], Union[int, float]] = (0, 5),
-                rank_info_xy: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
+                rank_info_xy: Optional[Tuple[Optional[Union[int, float]], Optional[Union[int, float]]]] = None,
                 ) -> Tuple[plt.Figure, plt.Axes]:
         """
         Plot CPP/-SHAP feature ranking based on feature importance or sample-specif feature impact.
@@ -578,8 +578,8 @@ class CPPPlot:
             x-axis limits for the mean difference subplot.
         xlim_rank : tuple, default=(0, 5)
             x-axis limits for the ranking subplot.
-        rank_info_xy : tuple of two float, optional
-            Position (x-axis, y-axis) in ranking subplot for showing additional information:
+        rank_info_xy : tuple, optional
+            Position (x-axis, y-axis) in ranking subplot for showing additional information (optimized if ``None``):
 
             - When ``shap_plot=False``: Displays sum of feature importance.
             - When ``shap_plot=True``: Show the sum of the absolute feature impact and the SHAP legend.
@@ -630,7 +630,7 @@ class CPPPlot:
         ut.check_lim(name="xlim_dif", val=xlim_dif)
         ut.check_lim(name="xlim_rank", val=xlim_rank)
         ut.check_tuple(name="rank_info_xy", val=rank_info_xy, n=2,
-                       accept_none=True, check_number=True)
+                       accept_none=True, check_number=True, accept_none_number=True)
         # DEV: No match check for features and tmd (check_match_features_seq_parts) necessary
         # Plot ranking
         fig, axes = plot_ranking(df_feat=df_feat.copy(), n_top=n_top,
@@ -875,7 +875,6 @@ class CPPPlot:
                 shap_plot: bool = False,
                 col_cat : Literal['category', 'subcategory', 'scale_name'] = "subcategory",
                 col_val: str = "mean_dif",
-                normalize: bool = False,
                 name_test: str = "TEST",
                 name_ref: str = "REF",
                 figsize: Tuple[Union[int, float], Union[int, float]] = (8, 8),
@@ -907,10 +906,10 @@ class CPPPlot:
                 cmap_n_colors: int = 101,
                 cbar_pct: bool = True,
                 cbar_kws: Optional[dict] = None,
-                cbar_xywh: Tuple[float, Optional[float], float, Optional[float]] = (0.7, None, 0.2, None),
+                cbar_xywh: Tuple[Optional[float], Optional[float], Optional[float], Optional[float]] = (0.7, None, 0.2, None),
                 dict_color: Optional[dict] = None,
                 legend_kws: Optional[dict] = None,
-                legend_xy: Tuple[float, float] = (-0.1, -0.01),
+                legend_xy: Tuple[Optional[float], Optional[float]] = (-0.1, -0.01),
                 xtick_size: Union[int, float] = 11.0,
                 xtick_width: Union[int, float] = 2.0,
                 xtick_length: Union[int, float] = 5.0,
@@ -946,8 +945,6 @@ class CPPPlot:
             Column name in ``df_feat`` for scale classification (y-axis).
         col_val : {'mean_dif', 'mean_dif_'name'', 'abs_mean_dif', 'abs_auc', 'feat_importance', 'feat_impact_'name''}, default='mean_dif'
             Column name in ``df_feat`` for numerical values to display. Must match with the ``shap_plot`` setting.
-        normalize : bool, default=True
-            If ``True``, normalizes aggregated numerical values to a 100% total.
         name_test : str, default="TEST"
             Name for the test dataset.
         name_ref : str, default="REF"
@@ -998,22 +995,21 @@ class CPPPlot:
         cmap : matplotlib colormap name or object, optional
             Name of the colormap to use. If ``None``, automatically determined ``col_val`` data and 'shap_plot' setting.
         cmap_n_colors : int, default=101
-            Number of discrete steps in diverging or sequential colormap.
+            Number of discrete steps (>1) in diverging or sequential colormap.
         cbar_pct : bool, default=True
             If ``True``, colorbar is represented in percentage and the ``col_val`` values are converted
             accordingly by multiplying with 100 if necessary.
         cbar_kws : dict of key, value mappings, optional
             Keyword arguments for colorbar passed to :meth:`matplotlib.figure.Figure.colorbar`.
         cbar_xywh : tuple, default=(0.7, None, 0.2, None)
-            Colorbar position and size: x-axis (left), y-axis (bottom), width, height.
-            y-axis position and height are optimized automatically if ``None``.
+            Colorbar position and size: x-axis (left), y-axis (bottom), width, height. Values are optimized if ``None``.
         dict_color : dict, optional
             Color dictionary of scale categories classifying scales shown on y-axis. Default from
             :meth:`plot_get_cdict` with ``name='DICT_CAT'``.
         legend_kws : dict, optional
             Keyword arguments for the legend passed to :meth:`plot_legend`.
         legend_xy : tuple, default=(-0.1, -0.01)
-            Legend position: x- and y-axis coordinates.
+            Legend position: x- and y-axis coordinates. Values are set to default if ``None``.
         xtick_size : int or float, default=11.0
             Size of x-tick labels (>0).
         xtick_width : int or float, default=2.0
@@ -1054,7 +1050,6 @@ class CPPPlot:
         col_val = check_col_val(col_val=col_val, shap_plot=shap_plot)
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot,
                                    cols_requiered=col_val, cols_nan_check=col_val)
-        ut.check_bool(name="normalize", val=normalize)
         ut.check_str(name="name_test", val=name_test)
         ut.check_str(name="name_ref", val=name_ref)
         ut.check_figsize(figsize=figsize, accept_none=True)
@@ -1080,7 +1075,7 @@ class CPPPlot:
         ut.check_bool(name="facecolor_dark", val=facecolor_dark, accept_none=True)
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
         check_cmap_for_heatmap(cmap=cmap)
-        ut.check_number_range(name="cmap_n_colors", val=cmap_n_colors, min_val=1, accept_none=True, just_int=True)
+        ut.check_number_range(name="cmap_n_colors", val=cmap_n_colors, min_val=2, accept_none=True, just_int=True)
         ut.check_bool(name="cbar_pct", val=cbar_pct)
         ut.check_dict(name="cbar_kws", val=cbar_kws, accept_none=True)
         ut.check_tuple(name="cbar_xywh", val=cbar_xywh, n=4, accept_none=False,
@@ -1088,7 +1083,7 @@ class CPPPlot:
         dict_color = check_match_dict_color_df(dict_color=dict_color, df=df_feat)
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
         ut.check_tuple(name="legend_xy", val=legend_xy, n=2, accept_none=False,
-                       check_number=True, accept_none_number=False)
+                       check_number=True, accept_none_number=True)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         ut.check_number_range(name="ytick_size", val=ytick_size, accept_none=True, just_int=False, min_val=1)
 
@@ -1096,7 +1091,7 @@ class CPPPlot:
         fig, ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat,
                                shap_plot=shap_plot,
                                col_cat=col_cat, col_val=col_val,
-                               normalize=normalize,
+                               normalize=False,
                                name_test=name_test, name_ref=name_ref,
                                figsize=figsize,
                                start=start, **args_len, **args_seq,
@@ -1127,7 +1122,6 @@ class CPPPlot:
                     col_cat="subcategory",
                     col_val="mean_dif",
                     col_imp="feat_importance",
-                    normalize=False,
                     name_test: str = "TEST",
                     name_ref: str = "REF",
 
@@ -1180,8 +1174,6 @@ class CPPPlot:
             Column name in ``df_feat`` representing scale information (shown on the y-axis).
         col_val : {'mean_dif', 'abs_mean_dif', 'abs_auc'}, default='mean_dif'
             Column name in ``df_feat`` containing numerical values to display.
-        normalize : bool, default=True
-            If ``True``, normalizes aggregated numerical values to a total of 100%.
         figsize : tuple, default=(8, 8)
             Figure dimensions (width, height) in inches.
         name_test : str, default="TEST"
@@ -1249,7 +1241,6 @@ class CPPPlot:
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat,
                                    cols_requiered=[col_val, col_imp],
                                    cols_nan_check=col_val)
-        ut.check_bool(name="normalize", val=normalize)
         ut.check_figsize(figsize=figsize, accept_none=True)
 
         # Check specific input
@@ -1279,7 +1270,7 @@ class CPPPlot:
         # Plot feature map
         fig, ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat,
                                    col_cat=col_cat, col_val=col_val, col_imp=col_imp,
-                                   normalize=normalize,
+                                   normalize=False,
                                    name_test=name_test, name_ref=name_ref,
                                    figsize=figsize,
                                    start=start, **args_len, **args_seq,

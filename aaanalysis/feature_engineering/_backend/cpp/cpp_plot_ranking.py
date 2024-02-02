@@ -170,14 +170,14 @@ def plot_feature_rank(ax=None, df=None, n=20, xlim=(0, 8),
         xlim = (xlim[0], x_max)
     plt.xlim(xlim)
     _add_annotation_right(sub_fig=sub_fig, text_size=fontsize_annotation, an_in_val=x_max/2, max_val=xlim[1])
+
+    # Add legend
     str_sum = f"Σ={round(df[col_imp].sum(), 1)}%"
-    if rank_info_xy is None:
-        x = xlim[1] * 1.2
-        y = n-2.5
-        args = dict(ha="right", size=fontsize_annotation)
-    else:
-        x, y = rank_info_xy
-        args = dict(ha="left", size=fontsize_annotation)
+    args = dict(ha="right", size=fontsize_annotation)
+    rank_info_xy_default = (xlim[1] * 1.2, n-2.5)
+    _rank_info_xy = ut.adjust_tuple_elements(tuple_in=rank_info_xy,
+                                            tuple_default=rank_info_xy_default)
+    x, y = _rank_info_xy
     plt.text(x, y, str_sum, weight="normal", **args)
     if shap_plot:
         plt.text(x, y+1, "negative", weight="bold", color=ut.COLOR_SHAP_NEG, va="top", **args)

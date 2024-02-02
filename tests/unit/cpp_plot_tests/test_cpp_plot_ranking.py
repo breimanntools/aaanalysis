@@ -345,7 +345,7 @@ class TestRanking:
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, rank_info_xy="str")
         with pytest.raises(ValueError):
-            cpp_plot.ranking(df_feat=df_feat, rank_info_xy=(None, 123))
+            cpp_plot.ranking(df_feat=df_feat, rank_info_xy=(None, 123, 234))
 
     @settings(max_examples=20, deadline=1500)
     @given(tmd_jmd_space=st.one_of(st.integers(max_value=0), st.floats(allow_nan=True)))

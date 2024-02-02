@@ -36,16 +36,16 @@ def get_df_feat(n=10):
     return df_feat
 
 
-class TestProfilePositive:
+class TestCPPPlotProfile:
     """Positive test cases for the profile method, focusing on individual parameters."""
 
+    # Positive tests: Data and Plot Type
     def test_df_feat(self):
         df_feat = get_df_feat()
         cpp_plot = aa.CPPPlot()
         fig, ax = cpp_plot.profile(df_feat=df_feat)
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
-
 
     def test_shap_plot_col_imp(self):
         df_feat = get_df_feat()
@@ -73,6 +73,7 @@ class TestProfilePositive:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
+    # Positive tests: Appearance of Parts (TMD-JMD)
     @settings(max_examples=3, deadline=5000)
     @given(start=st.integers(min_value=0, max_value=1000))
     def test_start(self, start):
@@ -92,6 +93,14 @@ class TestProfilePositive:
             fig, ax = cpp_plot.profile(df_feat=df_feat, tmd_len=tmd_len)
             assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
             plt.close()
+
+    def test_sequence_parameters(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat()
+        args_seq = get_args_seq()
+        fig, ax = cpp_plot.profile(df_feat=df_feat, **args_seq)
+        assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
+        plt.close()
 
     @settings(max_examples=3, deadline=5000)
     @given(jmd_color=st.sampled_from(VALID_COLORS), tmd_seq_color=st.sampled_from(VALID_COLORS),
@@ -126,6 +135,7 @@ class TestProfilePositive:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
+    # Positive tests: Legend, Axis, and Grid Configurations
     @settings(max_examples=3, deadline=5000)
     @given(highlight_alpha=st.floats(min_value=0.0, max_value=1.0),
            bar_width=st.floats(min_value=0.1, max_value=2.0))
@@ -170,14 +180,6 @@ class TestProfilePositive:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    def test_sequence_parameters(self):
-        cpp_plot = aa.CPPPlot()
-        df_feat = get_df_feat()
-        args_seq = get_args_seq()
-        fig, ax = cpp_plot.profile(df_feat=df_feat, **args_seq)
-        assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
-        plt.close()
-
     def test_dict_color(self):
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
@@ -211,10 +213,18 @@ class TestProfilePositive:
         assert ax is predefined_ax  # Ensure the same ax object is used
         plt.close()
 
-    # Negative tests
+    # Negative tests: Data and Plot Type
     def test_invalid_df_feat(self):
         cpp_plot = aa.CPPPlot()
         df_feat = "invalid_df_feat"  # This should be a DataFrame
+        with pytest.raises(ValueError):
+            cpp_plot.profile(df_feat=df_feat)
+        plt.close()
+        df_feat = get_df_feat(n=150)
+        with pytest.raises(ValueError):
+            cpp_plot.profile(df_feat=df_feat, tmd_len=2)
+        plt.close()
+        cpp_plot = aa.CPPPlot(jmd_c_len=2)
         with pytest.raises(ValueError):
             cpp_plot.profile(df_feat=df_feat)
         plt.close()
@@ -239,7 +249,7 @@ class TestProfilePositive:
         plt.close()
 
     @settings(max_examples=3, deadline=5000)
-    @given(figsize=st.tuples(st.just(-10.0), st.just(-10.0)))  # Negative values for figsize
+    @given(figsize=st.tuples(st.just(-10.0), st.just(-10.0)))
     def test_invalid_figsize(self, figsize):
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
@@ -247,8 +257,17 @@ class TestProfilePositive:
             cpp_plot.profile(df_feat=df_feat, figsize=figsize)
         plt.close()
 
+    def test_zero_or_negative_figsize(self):
+        for figsize in [(None, None), [], "asdf", (-12, 1)]:
+            cpp_plot = aa.CPPPlot()
+            df_feat = get_df_feat()
+            with pytest.raises(ValueError):
+                cpp_plot.profile(df_feat=df_feat, figsize=figsize)
+            plt.close()
+
+    # Negative tests: Appearance of Parts (TMD-JMD)
     @settings(max_examples=3, deadline=5000)
-    @given(start=st.just(-1))  # Negative start value
+    @given(start=st.just(-1))
     def test_invalid_start(self, start):
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
@@ -266,6 +285,16 @@ class TestProfilePositive:
         plt.close()
 
     @settings(max_examples=3, deadline=5000)
+    @given(tmd_seq=st.text(), jmd_n_seq=st.text(), jmd_c_seq=st.text())
+    def test_invalid_sequences(self, tmd_seq, jmd_n_seq, jmd_c_seq):
+        if not isinstance(tmd_seq, str) or not isinstance(jmd_n_seq, str) or not isinstance(jmd_c_seq, str):
+            cpp_plot = aa.CPPPlot()
+            df_feat = get_df_feat()
+            with pytest.raises(ValueError):
+                cpp_plot.profile(df_feat=df_feat, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
+            plt.close()
+
+    @settings(max_examples=3, deadline=5000)
     @given(color=st.sampled_from(INVALID_COLORS))
     def test_invalid_color_parameters(self, color):
         cpp_plot = aa.CPPPlot()
@@ -274,6 +303,14 @@ class TestProfilePositive:
             cpp_plot.profile(df_feat=df_feat, tmd_color=color, jmd_color=color, tmd_seq_color=color, jmd_seq_color=color)
         plt.close()
 
+    def test_invalid_ax(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat()
+        with pytest.raises(ValueError):
+            cpp_plot.profile(df_feat=df_feat, ax="not_an_ax_object")  # ax should be a matplotlib.axes.Axes instance or None
+        plt.close()
+
+    # Negative tests: Legend, Axis, and Grid Configurations
     @settings(max_examples=3, deadline=5000)
     @given(dict_color=st.just({'invalid_cat': 'blue'}))
     def test_invalid_dict_color(self, dict_color):
@@ -290,7 +327,6 @@ class TestProfilePositive:
         with pytest.raises(ValueError):
             cpp_plot.profile(df_feat=df_feat, add_legend_cat=True, legend_kws=invalid_legend_kws)
         plt.close()
-
 
     @settings(max_examples=3, deadline=5000)
     @given(highlight_alpha=st.just(-1), bar_width=st.just(-1))  # Negative values for alpha and bar_width
@@ -320,32 +356,6 @@ class TestProfilePositive:
             cpp_plot.profile(df_feat=df_feat, xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length,
                              ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
         plt.close()
-
-    def test_invalid_ax(self):
-        cpp_plot = aa.CPPPlot()
-        df_feat = get_df_feat()
-        with pytest.raises(ValueError):
-            cpp_plot.profile(df_feat=df_feat, ax="not_an_ax_object")  # ax should be a matplotlib.axes.Axes instance or None
-        plt.close()
-
-    @settings(max_examples=3, deadline=5000)
-    @given(tmd_seq=st.text(), jmd_n_seq=st.text(), jmd_c_seq=st.text())
-    def test_invalid_sequences(self, tmd_seq, jmd_n_seq, jmd_c_seq):
-        if not isinstance(tmd_seq, str) or not isinstance(jmd_n_seq, str) or not isinstance(jmd_c_seq, str):
-            cpp_plot = aa.CPPPlot()
-            df_feat = get_df_feat()
-            with pytest.raises(ValueError):
-                cpp_plot.profile(df_feat=df_feat, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
-            plt.close()
-
-
-    def test_zero_or_negative_figsize(self):
-        for figsize in [(None, None), [], "asdf", (-12, 1)]:
-            cpp_plot = aa.CPPPlot()
-            df_feat = get_df_feat()
-            with pytest.raises(ValueError):
-                cpp_plot.profile(df_feat=df_feat, figsize=figsize)
-            plt.close()
 
     def test_invalid_ylim(self):
         for ylim in [(5, 3), (5, 5), (-1, -2), (None, "str"), ()]:

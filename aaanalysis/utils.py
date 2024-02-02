@@ -75,7 +75,8 @@ from ._utils.utils_output import (print_out,
                                   print_end_progress)
 from ._utils.utils_plot_elements import (plot_add_bars,
                                          adjust_spine_to_middle,
-                                         x_ticks_0)
+                                         x_ticks_0,
+                                         adjust_tuple_elements)
 
 # External (system-level) utility functions (only backend)
 from ._utils.plotting import (plot_gco,
