@@ -13,29 +13,34 @@ from ._utils_cpp_plot_elements import PlotElements
 from ._utils_cpp_plot_positions import PlotPartPositions
 from ._utils_cpp_plot_map import plot_heatmap_
 
+# I Helper functions
+def _get_sorted_list_cat(df_feat=None, col_cat=None):
+    """Case non-sensitive sorted list of scale categories"""
+    df = df_feat.copy()
+    # Sort case non-sensitive
+    df = df.sort_values(by=[ut.COL_CAT, ut.COL_SUBCAT], key=lambda x: x.str.lower())
+    list_cat = list(df[col_cat].drop_duplicates())
+    return list_cat
+
 
 # Add feature importance plot elements
-def plot_feat_importance_bars(ax=None, df=None, annotation_th=None,
-                              label=ut.LABEL_FEAT_IMPORT, col_imp=None,
+def plot_feat_importance_bars(ax=None, df_feat=None, col_cat=None, col_imp=None,
+                              annotation_th=None, label=None,
                               fontsize_title=12, fontsize_label=12, fontsize_annotation=12,
                               weight_annotation="bold"):
     """Display a horizontal bar plot for feature importance sorted by categories."""
-    col_start = "pos_start"
-    col_subcat_lower = "subcat_lower"
-    plt.sca(ax)
-    df[col_start] = [int(x.split(",")[0]) if "," in x else int(x) for x in df[ut.COL_POSITION]]
-    df[col_subcat_lower] = [x.lower() for x in df[ut.COL_SUBCAT]]
-    df = df.sort_values(by=[ut.COL_CAT, col_subcat_lower, col_start, col_imp],
-                        ascending=[True, True, True, False])
-    df_imp = df[[ut.COL_SUBCAT, col_imp]].groupby(by=ut.COL_SUBCAT).sum()
+    # Get feature importance per scale class
+    df_imp = df_feat[[col_cat, col_imp]].groupby(by=col_cat).sum()
     dict_imp = dict(zip(df_imp.index, df_imp[col_imp]))
-    # Case non-sensitive sorted list of subcat
-    list_subcat = list(
-        df.sort_values(by=[ut.COL_CAT, ut.COL_SUBCAT], key=lambda x: x.str.lower())[ut.COL_SUBCAT].drop_duplicates())
-    list_imp = [dict_imp[x] for x in list_subcat]
-    ax.barh(list_subcat, list_imp, color=ut.COLOR_FEAT_IMP, edgecolor="white", align="edge")
+    list_cat = _get_sorted_list_cat(df_feat=df_feat, col_cat=col_cat)
+    list_imp = [dict_imp[x] for x in list_cat]
+
+    # Plot bars
+    plt.sca(ax)
+    ax.barh(list_cat, list_imp, color=ut.COLOR_FEAT_IMP, edgecolor="white", align="edge")
     plt.xlabel(label, size=fontsize_title, weight="bold", ha="center")
     ax.xaxis.set_label_position('top')
+
     # Add annotations
     v_max = int(np.ceil(max(list_imp)))
     annotation_th = v_max / 2 if annotation_th is None else annotation_th
@@ -46,6 +51,7 @@ def plot_feat_importance_bars(ax=None, df=None, annotation_th=None,
                      weight=weight_annotation,
                      color="white",
                      size=fontsize_annotation)
+
     # Adjust ticks
     ax.tick_params(axis='y', which='both', length=0, labelsize=0)
     ax.tick_params(axis='x', which='both', labelsize=fontsize_label, pad=-1)
@@ -89,11 +95,13 @@ def add_feat_importance_legend(ax=None, legend_imp_xy=None, legend_imp_th=None,
     # Define the sizes for the legend markers
     list_labels = [f"  >{float(x)}%" for x in legend_imp_th]
     list_sizes = [3, 5, 7]
+
     # Create the legend handles manually
     legend_handles = [
         plt.Line2D([0], [0], marker='s', color='w', label=label,
                    markersize=size, markerfacecolor='black', linewidth=0)
         for label, size in zip(list_labels, list_sizes)]
+
     # Create the second legend
     ax.legend(handles=legend_handles,
               title=label,
@@ -166,18 +174,16 @@ def plot_feature_map(df_feat=None, df_cat=None,
                                            n_cat=n_cat,
                                            legend_xy=legend_xy,
                                            fontsize_labels=fs_labels)
-
     # Plot feat importance bars
     label_bars_imp = "Cumulative feature\n  importance [%]"
-    plot_feat_importance_bars(ax=axes[1], df=df_feat.copy(),
+    plot_feat_importance_bars(ax=axes[1], df_feat=df_feat.copy(),
+                              col_imp=col_imp, col_cat=col_cat,
                               fontsize_title=fs_annotations,
                               fontsize_label=fs_annotations,
                               annotation_th=bar_imp_annotation_th,
                               fontsize_annotation=fs_annotations - 2,
                               weight_annotation="bold",
-                              col_imp=col_imp,
                               label=label_bars_imp)
-
     # Plot heatmap
     ax = plot_heatmap_(df_feat=df_feat, df_cat=df_cat,
                        col_cat=col_cat, col_val=col_val,

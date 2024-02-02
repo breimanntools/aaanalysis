@@ -227,6 +227,14 @@ class TestCCPlotHeatmap:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
+    def test_valid_cbar_kws(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat()
+        valid_cbar_kws = {'orientation': 'horizontal'}
+        fig, ax = cpp_plot.heatmap(df_feat=df_feat, cbar_kws=valid_cbar_kws)
+        assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
+        plt.close()
+
     @settings(max_examples=3, deadline=5000)
     @given(cbar_pct=st.booleans())
     def test_cbar_pct(self, cbar_pct):

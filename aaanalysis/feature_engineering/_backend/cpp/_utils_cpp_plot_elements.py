@@ -99,7 +99,6 @@ class PlotElements:
         x, y = _legend_xy
         str_space = "\n" * int((6-n_rows))
         title = f"{str_space}{ut.LABEL_SCALE_CAT}"
-
         # Prepare legend keywords
         _legend_kws = dict(fontsize=fontsize_labels,
                            fontsize_title=fontsize_labels,

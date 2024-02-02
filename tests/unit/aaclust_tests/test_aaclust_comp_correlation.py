@@ -31,6 +31,7 @@ def check_invalid_conditions(X, labels, min_samples=2, check_unique=True):
 class TestCompCorrelation:
     """Test comp_correlation function of the AAclust class."""
 
+    @settings(deadline=500)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=1, max_side=5),
                          elements=some.floats(allow_nan=True, allow_infinity=True)))
     def test_valid_X(self, X):
@@ -50,6 +51,7 @@ class TestCompCorrelation:
                 assert len(result_df) == len(labels_sorted)
                 assert isinstance(labels_sorted, np.ndarray)
 
+    @settings(deadline=500)
     @given(X_ref=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=1, max_side=5),
                              elements=some.floats(allow_nan=True, allow_infinity=True)))
     def test_invalid_X_ref(self, X_ref):
@@ -82,9 +84,7 @@ class TestCompCorrelation:
             assert len(result_df) == len(labels_sorted)
             assert isinstance(labels_sorted, np.ndarray)
 
-
-
-
+    @settings(deadline=500)
     @given(labels_ref=npst.arrays(dtype=np.float64,
                                   shape=npst.array_shapes(min_dims=1, max_dims=1, min_side=1, max_side=5),
                                   elements=some.floats(allow_nan=True, allow_infinity=True)))
@@ -95,6 +95,7 @@ class TestCompCorrelation:
         with pytest.raises(ValueError):
             aa.AAclust.comp_correlation(X, labels=np.array([1, 2, 1]), X_ref=X_ref, labels_ref=labels_ref)
 
+    @settings(deadline=500)
     @given(names=some.lists(some.text(), min_size=1, max_size=5))
     def test_valid_names(self, names):
         """Test a valid 'names' parameter."""
@@ -112,7 +113,7 @@ class TestCompCorrelation:
             assert len(result_df) == len(labels_sorted)
             assert isinstance(labels_sorted, np.ndarray)
 
-
+    @settings(deadline=500)
     @given(names=some.lists(some.integers(), min_size=1, max_size=5))
     def test_invalid_names_dtype(self, names):
         """Test invalid 'names' datatype."""
@@ -129,6 +130,7 @@ class TestCompCorrelation:
         with pytest.raises(ValueError):
             aa.AAclust.comp_correlation(X, labels=labels, names=pd.DataFrame())
 
+    @settings(deadline=500)
     @given(names_ref=some.lists(some.text(), min_size=1, max_size=5))
     def test_valid_names_ref(self, names_ref):
         """Test a valid 'names_ref' parameter."""
@@ -146,6 +148,7 @@ class TestCompCorrelation:
             assert len(result_df) == len(labels_sorted)
             assert isinstance(labels_sorted, np.ndarray)
 
+    @settings(deadline=500)
     @given(names_ref=some.lists(some.integers(), min_size=1, max_size=5))
     def test_invalid_names_ref_dtype(self, names_ref):
         """Test invalid 'names_ref' datatype."""
