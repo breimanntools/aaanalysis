@@ -12,7 +12,6 @@ from ._utils_cpp_plot_map import plot_heatmap_
 def plot_heatmap(df_feat=None, df_cat=None,
                  shap_plot=False,
                  col_cat="subcategory", col_val="mean_dif",
-                 normalize=False,
                  name_test="TEST", name_ref="REF",
                  figsize=(8, 8),
                  start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10,
@@ -72,7 +71,7 @@ def plot_heatmap(df_feat=None, df_cat=None,
 
     # Plot heatmap
     ax = plot_heatmap_(df_feat=df_feat, df_cat=df_cat,
-                       col_cat=col_cat, col_val=col_val, normalize=normalize,
+                       col_cat=col_cat, col_val=col_val,
                        ax=ax, figsize=figsize,
                        start=start, **args_len, **args_seq,
                        **args_part_color, **args_seq_color,

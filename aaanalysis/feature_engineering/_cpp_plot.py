@@ -472,15 +472,15 @@ class CPPPlot:
         ut.check_color(name="color_ref", val=color_ref)
         ut.check_bool(name="show_seq", val=show_seq)
         ut.check_bool(name="histplot", val=histplot)
-        args = dict(min_val=0, exclusive_limits=True, accept_none=True, just_int=False)
-        ut.check_number_range(name="fontsize_mean_dif", val=fontsize_mean_dif, **args)
-        ut.check_number_range(name="fontsize_name_test", val=fontsize_name_test, **args)
-        ut.check_number_range(name="fontsize_name_ref", val=fontsize_name_ref, **args)
-        ut.check_number_range(name="fontsize_names_to_show", val=fontsize_names_to_show, **args)
+        args_fs = ut.check_fontsize_args(fontsize_mean_dif=fontsize_mean_dif,
+                                         fontsize_name_test=fontsize_name_test,
+                                         fontsize_name_ref=fontsize_name_ref,
+                                         fontsize_names_to_show=fontsize_names_to_show)
         ut.check_number_range(name="alpha_hist", val=alpha_hist, accept_none=False, min_val=0, max_val=1, just_int=False)
         ut.check_number_range(name="alpha_dif", val=alpha_dif, accept_none=False, min_val=0, max_val=1, just_int=False)
         check_match_df_seq_names_to_show(df_seq=df_seq, names_to_show=names_to_show)
         df_seq = check_match_df_seq_jmd_len(df_seq=df_seq, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
+
         # Plot feature
         ax = plot_feature(ax=ax, figsize=figsize,
                           feature=feature, df_scales=self._df_scales, accept_gaps=self._accept_gaps,
@@ -489,10 +489,7 @@ class CPPPlot:
                           names_to_show=names_to_show, show_seq=show_seq,
                           name_test=name_test, name_ref=name_ref,
                           color_test=color_test, color_ref=color_ref,
-                          fontsize_mean_dif=fontsize_mean_dif,
-                          fontsize_name_test=fontsize_name_test,
-                          fontsize_name_ref=fontsize_name_ref,
-                          fontsize_names_to_show=fontsize_names_to_show,
+                          **args_fs,
                           histplot=histplot, alpha_hist=alpha_hist, alpha_dif=alpha_dif)
         return ax
 
@@ -631,6 +628,7 @@ class CPPPlot:
         ut.check_lim(name="xlim_rank", val=xlim_rank)
         ut.check_tuple(name="rank_info_xy", val=rank_info_xy, n=2,
                        accept_none=True, check_number=True, accept_none_number=True)
+
         # DEV: No match check for features and tmd (check_match_features_seq_parts) necessary
         # Plot ranking
         fig, axes = plot_ranking(df_feat=df_feat.copy(), n_top=n_top,
@@ -818,6 +816,7 @@ class CPPPlot:
         ut.check_bool(name="normalize", val=normalize)
         ut.check_ax(ax=ax, accept_none=True)
         ut.check_figsize(figsize=figsize, accept_none=True)
+
         # Check specific TMD-JMD input
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
         args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
@@ -835,6 +834,7 @@ class CPPPlot:
                                        tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
                                        tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
         check_match_shap_plot_add_legend_cat(shap_plot=shap_plot, add_legend_cat=add_legend_cat)
+
         # Check plot styling input
         ut.check_bool(name="add_legend_cat", val=add_legend_cat)
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
@@ -1049,6 +1049,7 @@ class CPPPlot:
         ut.check_str(name="name_test", val=name_test)
         ut.check_str(name="name_ref", val=name_ref)
         ut.check_figsize(figsize=figsize, accept_none=True)
+
         # Check specific TMD-JMD input
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
         args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
@@ -1064,6 +1065,7 @@ class CPPPlot:
         check_match_features_seq_parts(features=df_feat[ut.COL_FEATURE],
                                        tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
                                        tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
+
         # Check plot styling input
         ut.check_number_range(name="grid_linewidth", val=grid_linewidth, min_val=0, just_int=False)
         ut.check_color(name="grid_linecolor", val=grid_linecolor, accept_none=True)
@@ -1086,7 +1088,6 @@ class CPPPlot:
         fig, ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat,
                                shap_plot=shap_plot,
                                col_cat=col_cat, col_val=col_val,
-                               normalize=False,
                                name_test=name_test, name_ref=name_ref,
                                figsize=figsize,
                                start=start, **args_len, **args_seq,
@@ -1120,6 +1121,7 @@ class CPPPlot:
                     col_imp: str = "feat_importance",
                     name_test: str = "TEST",
                     name_ref: str = "REF",
+
                     figsize: Tuple[Union[int, float], Union[int, float]] = (8, 8),
 
                     # Appearance of Parts (TMD-JMD)
@@ -1236,9 +1238,11 @@ class CPPPlot:
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat,
                                    cols_requiered=[col_val, col_imp],
                                    cols_nan_check=col_val)
+        ut.check_str(name="name_test", val=name_test)
+        ut.check_str(name="name_ref", val=name_ref)
         ut.check_figsize(figsize=figsize, accept_none=True)
 
-        # Check specific input
+        # Check specific TMD-JMD input
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
         args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
                                              jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
@@ -1251,20 +1255,32 @@ class CPPPlot:
                                          fontsize_annotations=fontsize_annotations)
         ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd)
         ut.check_bool(name="add_xticks_pos", val=add_xticks_pos)
+        check_match_features_seq_parts(features=df_feat[ut.COL_FEATURE],
+                                       tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                                       tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
 
-        # Check figure input
-        ut.check_bool(name="facecolor_dark", val=facecolor_dark)
+        # Check plot styling input
+        ut.check_number_range(name="grid_linewidth", val=grid_linewidth, min_val=0, just_int=False)
+        ut.check_color(name="grid_linecolor", val=grid_linecolor, accept_none=True)
+        ut.check_number_range(name="border_linewidth", val=border_linewidth, min_val=0, just_int=False)
+        ut.check_bool(name="facecolor_dark", val=facecolor_dark, accept_none=False)
         ut.check_vmin_vmax(vmin=vmin, vmax=vmax)
-        ut.check_number_range(name="cmap_n_colors", val=cmap_n_colors, min_val=2, just_int=True)
+        check_cmap_for_heatmap(cmap=cmap)
+        ut.check_number_range(name="cmap_n_colors", val=cmap_n_colors, min_val=2, accept_none=True, just_int=True)
+        ut.check_bool(name="cbar_pct", val=cbar_pct)
         ut.check_dict(name="cbar_kws", val=cbar_kws, accept_none=True)
+        ut.check_tuple(name="cbar_xywh", val=cbar_xywh, n=4, accept_none=False,
+                       check_number=True, accept_none_number=True)
         dict_color = check_match_dict_color_df(dict_color=dict_color, df=df_feat)
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
+        ut.check_tuple(name="legend_xy", val=legend_xy, n=2, accept_none=False,
+                       check_number=True, accept_none_number=True)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
 
         # Plot feature map
+        # TODO give arguments up & down
         fig, ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat,
                                    col_cat=col_cat, col_val=col_val, col_imp=col_imp,
-                                   normalize=False,
                                    name_test=name_test, name_ref=name_ref,
                                    figsize=figsize,
                                    start=start, **args_len, **args_seq,
@@ -1280,7 +1296,6 @@ class CPPPlot:
                                    **args_xtick)
 
         # Adjust plot
-        # TODO give arguments up, adjust plot for better spacing,
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             fig.tight_layout()

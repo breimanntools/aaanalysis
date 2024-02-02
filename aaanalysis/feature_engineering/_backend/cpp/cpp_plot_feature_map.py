@@ -57,12 +57,12 @@ def plot_feat_importance_bars(ax=None, df=None, top_pcp=None,
 
 # TODO adjust 3 th by args
 def add_feat_importance_map(ax=None, df_feat=None, df_cat=None, start=None, args_len=None,
-                            col_cat=None, col_imp=None, normalize=False):
+                            col_cat=None, col_imp=None):
     """Overlay feature importance symbols on the heatmap based on the importance values."""
     pp = PlotPartPositions(**args_len, start=start)
     df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat,
                            col_cat=col_cat, col_val=col_imp,
-                           value_type="sum", normalize=normalize)
+                           value_type="sum", normalize=False)
     _df = pd.melt(df_pos.reset_index(), id_vars="index")
     _df.columns = [ut.COL_SUBCAT, ut.COL_POSITION, col_imp]
     _list_sub_cat = _df[ut.COL_SUBCAT].unique()
@@ -108,7 +108,6 @@ def add_feat_importance_legend(ax=None, legend_imp_xy=None, label=None, fontsize
 # II Main Functions
 def plot_feature_map(df_feat=None, df_cat=None,
                      col_cat="subcategory", col_val="mean_dif", col_imp="feat_importance",
-                     normalize=False,
                      name_test="TEST", name_ref="REF",
                      figsize=(8, 8),
                      start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10,
@@ -177,7 +176,6 @@ def plot_feature_map(df_feat=None, df_cat=None,
     # Plot heatmap
     ax = plot_heatmap_(df_feat=df_feat, df_cat=df_cat,
                        col_cat=col_cat, col_val=col_val,
-                       normalize=normalize,
                        ax=axes[0], figsize=figsize,
                        start=start, **args_len, **args_seq,
                        **args_part_color, **args_seq_color,
@@ -200,7 +198,6 @@ def plot_feature_map(df_feat=None, df_cat=None,
     # Add feature importance map
     add_feat_importance_map(df_feat=df_feat, df_cat=df_cat,
                             col_cat=col_cat, col_imp=col_imp,
-                            normalize=normalize,
                             ax=ax, start=start, args_len=args_len)
 
     label_feat_imp = "Feature importance"

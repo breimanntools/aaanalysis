@@ -185,7 +185,6 @@ def _plot_inner_heatmap(df_pos=None, ax=None, figsize=(8, 8),
 # Main plotting function
 def plot_heatmap_(df_feat=None, df_cat=None,
                   col_cat="subcategory", col_val="mean_dif",
-                  normalize=False,
                   ax=None, figsize=(8, 8),
                   start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10,
                   tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None,
@@ -218,7 +217,7 @@ def plot_heatmap_(df_feat=None, df_cat=None,
     pp = PlotPartPositions(**args_len, start=start)
     df_pos = pp.get_df_pos(df_feat=df_feat.copy(), df_cat=df_cat.copy(),
                            col_cat=col_cat, col_val=col_val,
-                           value_type=value_type, normalize=normalize)
+                           value_type=value_type, normalize=False)
     vmin, vmax = _get_vmin_vmax(df_pos=df_pos, vmin=vmin, vmax=vmax)
     # Get colorbar arguments
     cmap = _get_cmap_heatmap(df_pos=df_pos, cmap=cmap, n_colors=cmap_n_colors, facecolor_dark=facecolor_dark,
