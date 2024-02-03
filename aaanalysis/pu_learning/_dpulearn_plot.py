@@ -64,10 +64,11 @@ def check_match_names_colors(names=None, colors=None):
 # II Main Functions
 class dPULearnPlot:
     """
-    Plotting class for ``dPULearn`` (deterministic Positive-Unlabeled Learning) [Breimann24c]_.
+    Plotting class for :class:`dPULearn` (deterministic Positive-Unlabeled Learning) results [Breimann24c]_.
 
-    This plotting class visualizes the result of the :class:`aaanalysis.dPULearn` class used to identify
-    negative from unlabeled data.
+    This plotting class visualizes the by ``dPULearn`` reliably identified negative samples in a compressed feature
+    space.
+
     """
     def __int__(self):
         """

@@ -194,10 +194,10 @@ def check_match_ax_seq_len(ax=None, jmd_n_len=10, jmd_c_len=10):
 # II Main Functions
 class CPPPlot:
     """
-    Plotting class for ``CPP`` (Comparative Physicochemical Profiling) results [Breimann24c]_.
+    Plotting class for :class:`CPP` (Comparative Physicochemical Profiling) results [Breimann24c]_.
 
-    This plotting class visualizes the result from the :class:`CPP` class. It supports multiple plot types for
-    group or sample-level analysis, including ranking plots, profiles, heatmaps, and feature maps.
+    This class supports multiple plot types for group or sample-level analysis, including ranking plots,
+    profiles, heatmaps, and feature maps.
 
     """
     def __init__(self,
