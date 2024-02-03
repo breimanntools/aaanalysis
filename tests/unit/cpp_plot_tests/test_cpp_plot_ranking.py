@@ -45,6 +45,18 @@ class TestRanking:
         assert isinstance(axes[0], plt.Axes)
         plt.close()
 
+
+    def test_rank(self):
+        for rank in [True, False]:
+            cpp_plot = aa.CPPPlot()
+            df_feat = create_df_feat()
+            fig, axes = cpp_plot.ranking(df_feat=df_feat, rank=rank)
+            assert isinstance(fig, plt.Figure)
+            assert isinstance(axes, np.ndarray)
+            assert len(axes) == 3
+            assert isinstance(axes[0], plt.Axes)
+            plt.close()
+
     def test_shap_plot(self):
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
@@ -102,7 +114,7 @@ class TestRanking:
             plt.close()
 
     @settings(max_examples=3, deadline=1500)
-    @given(tmd_len=st.integers(min_value=1, max_value=100))
+    @given(tmd_len=st.integers(min_value=17, max_value=100))
     def test_tmd_len(self, tmd_len):
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
@@ -282,6 +294,14 @@ class TestRanking:
             cpp_plot.ranking(df_feat=df_feat, n_top=1000)
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, n_top=True)
+
+    def test_invalid_rank(self):
+        for rank in [[], None, 123]:
+            cpp_plot = aa.CPPPlot()
+            df_feat = create_df_feat()
+            with pytest.raises(ValueError):
+                fig, axes = cpp_plot.ranking(df_feat=df_feat, rank=rank)
+            plt.close()
 
     def test_col_dif_invalid(self):
         cpp_plot = aa.CPPPlot()

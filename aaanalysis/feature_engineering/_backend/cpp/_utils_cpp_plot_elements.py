@@ -25,16 +25,6 @@ def _get_colors_for_col_cat(labels=None, dict_color=None, df_feat=None, col_cat=
 class PlotElements:
     """Utility class for plot element configurations and enhancements."""
 
-    # Adjust plot elements
-    @staticmethod
-    def adjust_fontsize(fontsize_labels=None, fontsize_annotations=None):
-        """Adjust font size of labels and annotations to defaults if not specified."""
-        fs = ut.plot_gco()
-        fontsize_labels = fs if fontsize_labels is None else fontsize_labels
-        fontsize_annotations = fs - 2 if fontsize_annotations is None else fontsize_annotations
-        return fontsize_labels, fontsize_annotations
-
-
     # Set plot elements
     @staticmethod
     def set_figsize(ax=None, figsize=None, force_set=False):

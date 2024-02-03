@@ -31,14 +31,15 @@ def plot_heatmap(df_feat=None, df_cat=None,
     """Plot heatmap of feature values"""
     # Set fontsize
     pe = PlotElements()
-    fs_labels, _ = pe.adjust_fontsize(fontsize_labels=fontsize_labels)
+    fs = ut.plot_gco()
+    fs_labels = fs if fontsize_labels is None else fontsize_labels
 
     # Group arguments
     args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     args_seq = dict(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
     args_part_color = dict(tmd_color=tmd_color, jmd_color=jmd_color)
     args_seq_color = dict(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
-    args_fs = dict(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd, fontsize_labels=fontsize_labels)
+    args_fs = dict(seq_size=seq_size, fontsize_tmd_jmd=fontsize_tmd_jmd, fontsize_labels=fs_labels)
     args_xtick = dict(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
 
     # Set SHAP arguments

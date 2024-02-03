@@ -13,7 +13,8 @@ def check_number_val(name=None, val=None, accept_none=False, just_int=False, str
     """Check if value is a valid integer or float"""
     if val is None:
         if not accept_none:
-            raise ValueError(f"'{name}' should not be None.")
+            str_error = add_str(str_error=f"'{name}' should not be None.", str_add=str_add)
+            raise ValueError(str_error)
         return None
     if just_int is None:
         raise ValueError("'just_int' must be specified")
@@ -31,7 +32,8 @@ def check_number_range(name=None, val=None, min_val=0, max_val=None, exclusive_l
     """Check if value of given name is within defined range"""
     if val is None:
         if not accept_none:
-            raise ValueError(f"'{name}' should not be None.")
+            str_error = add_str(str_error=f"'{name}' should not be None.", str_add=str_add)
+            raise ValueError(str_error)
         return None
     if just_int is None:
         raise ValueError("'just_int' must be specified")
@@ -63,7 +65,8 @@ def check_str(name=None, val=None, accept_none=False, return_empty_string=False,
     """Check type string"""
     if val is None:
         if not accept_none:
-            raise ValueError(f"'{name}' should not be None.")
+            str_error = add_str(str_error=f"'{name}' should not be None.", str_add=str_add)
+            raise ValueError(str_error)
         return "" if return_empty_string else None
     if not isinstance(val, str):
         str_error = add_str(str_error=f"'{name}' ('{val}') should be string.",
@@ -76,7 +79,8 @@ def check_bool(name=None, val=None, accept_none=False, str_add=None):
     """Check if the provided value is a boolean."""
     if val is None:
         if not accept_none:
-            raise ValueError(f"'{name}' should not be None.")
+            str_error = add_str(str_error=f"'{name}' should not be None.", str_add=str_add)
+            raise ValueError(str_error)
         return None
     if not isinstance(val, bool):
         str_error = add_str(str_error=f"'{name}' ({val}) should be bool.",
@@ -88,7 +92,8 @@ def check_dict(name=None, val=None, accept_none=False, str_add=None):
     """Check if the provided value is a dictionary."""
     if val is None:
         if not accept_none:
-            raise ValueError(f"'{name}' should not be None.")
+            str_error = add_str(str_error=f"'{name}' should not be None.", str_add=str_add)
+            raise ValueError(str_error)
         return None
     if not isinstance(val, dict):
         str_error = add_str(str_error=f"'{name}' ({val}) should be a dictionary.",
@@ -101,7 +106,8 @@ def check_tuple(name=None, val=None, n=None, check_number=True, accept_none=Fals
     """Check if the provided value is a tuple, optionally of a certain length and containing only numbers."""
     if val is None:
         if not accept_none:
-            raise ValueError(f"'{name}' should not be None.")
+            str_error = add_str(str_error=f"'{name}' should not be None.", str_add=str_add)
+            raise ValueError(str_error)
         return None
     if not isinstance(val, tuple):
         str_error = add_str(str_error=f"'{name}' ({val}) should be a tuple.",
@@ -123,7 +129,8 @@ def check_list_like(name=None, val=None, accept_none=False, convert=True, accept
     """Check if the value is list-like, optionally converting it to a list, and performing additional checks."""
     if val is None:
         if not accept_none:
-            raise ValueError(f"'{name}' should not be None.")
+            str_error = add_str(str_error=f"'{name}' should not be None.", str_add=str_add)
+            raise ValueError(str_error)
         return None
     if not convert:
         if not isinstance(val, list):

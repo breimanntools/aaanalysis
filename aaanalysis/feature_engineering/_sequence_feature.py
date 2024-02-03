@@ -107,28 +107,27 @@ def check_col_val(col_val=None):
 # II Main Functions
 class SequenceFeature:
     """
-    Utility feature engineering class using sequences to create ``CPP`` feature components (``Parts``, ``Splits``,
-    and  ``Scales``) and data structures (e.g., feature matrix).
+    Utility feature engineering class using sequences to create ``CPP`` feature components (**Parts**, **Splits**,
+    and  **Scales**) and data structures [Breimann24c]_.
 
-    Introduced in [Breimann24c]_, the three feature components  are the primary input for the :class:`aaanalysis.CPP`
-    class and define Comparative Physicochemical Profiling (CPP) features.
+    The three feature components are the primary input for the :class:`aaanalysis.CPP` class and define
+    Comparative Physicochemical Profiling (CPP) features.
 
     Notes
     -----
     Feature Components:
-        - ``Part``: A continuous subset of a sequence, such as a protein domain.
-        - ``Split``: Continuous or discontinuous subset of a ``Part``, such as a segment or a pattern.
-        - ``Scale``: A physicochemical scale, i.e., a set of numerical values (typically [0-1]) assigned to amino acids.
+        - **Part**: A continuous subset of a sequence, such as a protein domain.
+        - **Split**: Continuous or discontinuous subset of a ``Part``, such as a segment or a pattern.
+        - **Scale**: A physicochemical scale, i.e., a set of numerical values (typically [0-1]) assigned to amino acids.
 
     Main Parts:
         We define three main parts from which each other part can be derived from:
 
-        - ``TMD (target middle domain)``: Protein domain of interest with varying length,
-          such as the transmembrane domain (TMD) of γ-secretase substrates (see [Breimann24c]_).
-        - ``JMD-N (juxta middle domain N-terminal)``: Protein domain or sequence region directly N-terminally next
-          to the TMD, typically set to a fixed length (10 by default).
-        - ``JMD-C (juxta middle domain C-terminal)``: Protein domain or sequence region directly C-terminally next
-          to the TMD, typically set to a fixed length (10 by default).
+        - **TMD (target middle domain)**: Protein domain of interest with varying length.
+        - **JMD-N (juxta middle domain N-terminal)**: Protein domain or sequence region directly
+          N-terminally next to the TMD, typically set to a fixed length (10 by default).
+        - **JMD-C (juxta middle domain C-terminal)**: Protein domain or sequence region directly
+          C-terminally next to the TMD, typically set to a fixed length (10 by default).
 
     Feature: Part + Split + Scale
         Physicochemical property (expressed as numerical scale) present at distinct amino acid

@@ -75,10 +75,10 @@ def check_match_X_X_neg(X=None, X_neg=None):
 # II Main Functions
 class dPULearn:
     """
-    Deterministic Positive-Unlabeled Learning (dPULearn) class for identifying reliable negatives from unlabeled data.
+    Deterministic Positive-Unlabeled Learning (dPULearn) class for identifying negatives from unlabeled data [Breimann24c]_.
 
-    Introduced in [Breimann24c]_, dPULearn offers a deterministic approach to Positive-Unlabeled (PU) learning,
-    featuring two distinct identification approaches:
+    dPULearn offers a deterministic approach to Positive-Unlabeled (PU) learning, featuring two distinct
+    identification approaches:
 
     - **PCA-based identification**: This is the primary method where Principal Component Analysis (PCA) is utilized
       to reduce the dimensionality of the feature space. Based on the most informative principal components (PCs),

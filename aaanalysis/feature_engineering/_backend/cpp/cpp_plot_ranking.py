@@ -174,7 +174,7 @@ def plot_feature_rank(ax=None, df=None, n=20, xlim=(0, 8),
     # Add legend
     str_sum = f"Σ={round(df[col_imp].sum(), 1)}%"
     args = dict(ha="right", size=fontsize_annotation)
-    rank_info_xy_default = (xlim[1] * 1.2, n-2.5)
+    rank_info_xy_default = (xlim[1]*1.1, n-2.5)
     _rank_info_xy = ut.adjust_tuple_elements(tuple_in=rank_info_xy,
                                             tuple_default=rank_info_xy_default)
     x, y = _rank_info_xy
@@ -185,7 +185,8 @@ def plot_feature_rank(ax=None, df=None, n=20, xlim=(0, 8),
 
 
 # II Main Functions
-def plot_ranking(df_feat=None, n_top=15,
+def plot_ranking(df_feat=None,
+                 n_top=15, rank=False,
                  col_dif=None, col_imp=None,
                  shap_plot=False,
                  figsize=(7, 5),
@@ -202,6 +203,8 @@ def plot_ranking(df_feat=None, n_top=15,
                  rank_info_xy=None):
     """Plot ranking of feature DataFrame"""
     # Adjust df_feat
+    if rank:
+        df_feat = df_feat.sort_values(by=col_imp, ascending=False)
     df_feat = df_feat.head(n_top).copy().reset_index(drop=True)
     df_feat = _adjust_df_feat(df_feat=df_feat, col_dif=col_dif)
     df_feat[ut.COL_POSITION] = get_positions_(features=df_feat[ut.COL_FEATURE],
@@ -213,10 +216,7 @@ def plot_ranking(df_feat=None, n_top=15,
                           tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                           tmd_color=tmd_color, jmd_color=jmd_color, tmd_jmd_alpha=tmd_jmd_alpha,
                           fontsize_label=fontsize_labels)
-    # String optimized for horizontal alignment
-    title_positions = ("                  Feature                  \n"
-                       "Scale (subcategory)  +  Positions                 ")
-    plt.title(title_positions, x=0, weight="bold", fontsize=fontsize_titles)
+    plt.title(ut.LABEL_FEAT_POS, x=0, weight="bold", fontsize=fontsize_titles)
     # 2. Barplot mean difference
     plot_feature_mean_dif(ax=axes[1], df=df_feat,
                           n=n_top, col_dif=col_dif, xlim=xlim_dif,

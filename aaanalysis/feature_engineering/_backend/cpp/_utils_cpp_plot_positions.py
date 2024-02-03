@@ -339,6 +339,11 @@ class PlotPartPositions:
 
     def add_tmd_jmd_xticks(self, ax=None, x_shift=0, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0):
         """Adjust x-ticks for TMD and JMD regions."""
+        # Remove the xticks and return early
+        if xtick_size == 0:
+            ax.set_xticks([])
+            ax.set_xticklabels([])
+            return
         # Adjust tick tick_length based on figure size
         width, height = plt.gcf().get_size_inches()
         xtick_length += height if xtick_length != 0 else 0
@@ -352,10 +357,10 @@ class PlotPartPositions:
         xticks.append(tmd_end)
         if exists_jmd_c:
             xticks.append(jmd_c_end)
-        if xtick_size > 0:
-            ax.set_xticks([x + x_shift for x in xticks])
-            ax.set_xticklabels([x + self.start for x in xticks], size=xtick_size, rotation=0)
-            ax.tick_params(axis="x", length=xtick_length, color="black", width=xtick_width, bottom=True)
+        ax.set_xticks([x + x_shift for x in xticks])
+        ax.set_xticklabels([x + self.start for x in xticks], size=xtick_size, rotation=0)
+        ax.tick_params(axis="x", length=xtick_length, color="black", width=xtick_width, bottom=True)
+
 
     def highlight_tmd_area(self, ax=None, x_shift=0, tmd_color="mediumspringgreen", alpha=0.2):
         """Highlight the TMD area in the plot."""

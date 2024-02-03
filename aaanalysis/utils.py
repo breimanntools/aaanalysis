@@ -240,6 +240,8 @@ LABEL_FEAT_NUMBER = "Number of features\n(per residue position)"
 LABEL_FEAT_IMPORT_CUM = "Cumulative feature importance\n(normalized) [%]"
 LABEL_FEAT_IMPACT_CUM = "Cumulative feature impact\n(normalized) [%]"
 LABEL_CBAR_FEAT_IMPACT_CUM = "Cumulative feature impact"
+LABEL_FEAT_POS = ("                  Feature                  \n"
+                  "Scale (subcategory)  +  Positions                 ")
 
 LABEL_FEAT_IMPORT = "Importance [%]"
 LABEL_FEAT_IMPACT = "Impact [%]"

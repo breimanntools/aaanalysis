@@ -218,8 +218,8 @@ class TreeModel:
             n_rounds: int = 5,
             use_rfe: bool = True,
             n_cv: int = 5,
-            n_feat_min: int = 10,
-            n_feat_max: int = 50,
+            n_feat_min: int = 25,
+            n_feat_max: int = 75,
             metric: str = "accuracy",
             step : Optional[int] = None,
             ) -> "TreeModel":
@@ -244,9 +244,9 @@ class TreeModel:
             Whether to use recursive feature elimination (RFE) with random forest model for feature selection.
         n_cv : int, default=5
             The number of cross-validation folds for RFE, must be > 1 and ≤ the smallest class's sample count.
-        n_feat_min : int, default=10
+        n_feat_min : int, default=25
             The minimum number of features to select each round for RFE. Should be 0 < ``n_feat_min`` <= ``n_feat_max``.
-        n_feat_max : int, default=50
+        n_feat_max : int, default=75
             The maximum number of features to select each round for RFE. Should be >= ``n_feat_min``.
         metric : str, default="accuracy"
             The name of the scoring function to use for cross-validation for RFE.

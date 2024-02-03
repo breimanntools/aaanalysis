@@ -57,10 +57,10 @@ def check_match_list_df_feat_names_feature_sets(list_df_feat=None, names_feature
 class CPP(Tool):
     """
     Comparative Physicochemical Profiling (CPP) class to create and filter features that are most discriminant
-    between two sets of sequences.
+    between two sets of sequences [Breimann24c]_.
 
-    Introduced in [Breimann24c]_, CPP aims at identifying a collection of non-redundant features that are most
-    discriminant between the test and reference group of sequences.
+    CPP aims at identifying a collection of non-redundant features that are most discriminant between the
+    test and reference group of sequences.
 
     Attributes
     ----------
@@ -163,7 +163,7 @@ class CPP(Tool):
             tmd_len: int = 20,
             jmd_n_len: int = 10,
             jmd_c_len: int = 10,
-            n_jobs: Optional[int] = 1
+            n_jobs: Optional[int] = None
             ) -> pd.DataFrame:
         """
         Perform Comparative Physicochemical Profiling (CPP) algorithm: creation and two-step filtering of
@@ -204,7 +204,7 @@ class CPP(Tool):
             Length of JMD-N (>=0).
         jmd_c_len : int, default=10
             Length of JMD-C (>=0).
-        n_jobs : int, None, or -1, default=1
+        n_jobs : int, None, or -1, default=None
             Number of CPU cores used for multiprocessing. If ``None``, the number is optimized automatically.
             If ``-1``, the number is set to all available cores.
 
@@ -322,7 +322,7 @@ class CPP(Tool):
              names_feature_sets: Optional[List[str]] = None,
              list_cat: Optional[List[str]] = None,
              list_df_parts: Optional[List[pd.DataFrame]] = None,
-             n_jobs: Union[int, None] = 1,
+             n_jobs: Optional[int] = None,
              ) -> pd.DataFrame:
         """
         Evaluate the quality of different sets of identified CPP features.
@@ -351,7 +351,7 @@ class CPP(Tool):
             ['ASA/Volume', 'Composition', 'Conformation', 'Energy', 'Others', 'Polarity', 'Shape', 'Structure-Activity']
         list_df_parts : list of pd.DataFrames, optional
             List of part DataFrames each of shape (n_samples, n_parts). Must match with ``list_df_feat``.
-        n_jobs : int, None, or -1, default=1
+        n_jobs : int, None, or -1, default=None
             Number of CPU cores used for multiprocessing. If ``None``, the number is optimized automatically.
             If ``-1``, the number is set to all available cores.
 

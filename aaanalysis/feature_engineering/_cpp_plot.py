@@ -165,16 +165,16 @@ def check_match_shap_plot_add_legend_cat(shap_plot=False, add_legend_cat=False):
         raise ValueError(f"'shap_plot' ({shap_plot}) and 'add_legend_cat' ({add_legend_cat}) can not be both True.")
 
 
-def check_legend_imp_th(legend_imp_th=None):
+def check_imp_tuples(name="imp_th", imp_tuples=None):
     """Check if legend importance thresholds are valid"""
-    ut.check_tuple(name="legend_imp_th", val=legend_imp_th, n=3,
+    ut.check_tuple(name=name, val=imp_tuples, n=3,
                    accept_none=False, check_number=True,
-                   accept_none_number=False)
-    th1, th2, th3 = legend_imp_th
+                   accept_none_number=False, str_add=f"Or should not contain None values: {imp_tuples}")
+    th1, th2, th3 = imp_tuples
     if th1 >= th2 or th2 >= th3:
-        raise ValueError(f"'legend_imp_th' ({legend_imp_th}) should contain 3 numbers in ascending order")
+        raise ValueError(f"'{name}' ({imp_tuples}) should contain 3 numbers in ascending order")
     if th1 <= 0:
-        raise ValueError(f"Minium of 'legend_imp_th' ({legend_imp_th[0]}) should be > 0")
+        raise ValueError(f"Minium of '{name}' ({imp_tuples[0]}) should be > 0")
 
 
 # Check update_seq_size
@@ -194,11 +194,10 @@ def check_match_ax_seq_len(ax=None, jmd_n_len=10, jmd_c_len=10):
 # II Main Functions
 class CPPPlot:
     """
-    Plotting class for ``CPP`` (Comparative Physicochemical Profiling).
+    Plotting class for ``CPP`` (Comparative Physicochemical Profiling) results [Breimann24c]_.
 
-    This plotting class visualizes the results of the result of the :class:`aaanalysis.CPP` class. As introduced in
-    [Breimann24c]_, the CPP results can be visualized at global or individual sample level as ranking plot, profile,
-    or map (heatmap, feature map).
+    This plotting class visualizes the result from the :class:`CPP` class. It supports multiple plot types for
+    group or sample-level analysis, including ranking plots, profiles, heatmaps, and feature maps.
 
     """
     def __init__(self,
@@ -508,10 +507,11 @@ class CPPPlot:
     # Plotting methods for multiple features (group and sample level)
     def ranking(self,
                 df_feat: pd.DataFrame = None,
-                n_top: int = 15,
                 shap_plot: bool = False,
                 col_dif: str = "mean_dif",
                 col_imp: str = "feat_importance",
+                rank: bool = True,
+                n_top: int = 15,
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
                 tmd_len: int = 20,
                 tmd_jmd_space: int = 2,
@@ -539,8 +539,6 @@ class CPPPlot:
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
             Must also include feature importance (``feat_importance``) or impact (``feat_impact_'name'``) columns.
-        n_top : int, default=15
-            The number of top features to display. Should be 1 < ``n_top`` <= ``n_features``.
         shap_plot : bool, default=False
             Set the analysis type: **CPP Analysis** (if ``False``) for group-level or
             **CPP-SHAP Analysis** for sample-level (or subgroup-level) results:
@@ -561,6 +559,10 @@ class CPPPlot:
             Column name in ``df_feat`` for differences in feature values. Must match with the ``shap_plot`` setting.
         col_imp : str, default='feat_importance'
             Column name in ``df_feat`` for feature importance/impact values. Must match with the ``shap_plot`` setting.
+        rank : bool, default=True
+            If ``True``, features will be ranked in descending order of ``col_imp`` values.
+        n_top : int, default=15
+            The number of top features to display. Should be 1 < ``n_top`` <= ``n_features``.
         figsize : tuple, default=(7, 5)
             Figure dimensions (width, height) in inches.
         tmd_len : int, default=20
@@ -624,8 +626,11 @@ class CPPPlot:
         col_imp = check_col_imp(col_imp=col_imp, shap_plot=shap_plot)
         df_feat = ut.check_df_feat(df_feat=df_feat, shap_plot=shap_plot, cols_requiered=[col_imp, col_dif])
         ut.check_number_range(name="n_top", val=n_top, min_val=2, max_val=len(df_feat), just_int=True)
+        ut.check_bool(name="rank", val=rank, accept_none=False)
         ut.check_figsize(figsize=figsize, accept_none=True)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
+        check_match_features_seq_parts(features=df_feat[ut.COL_FEATURE],
+                                       tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
         ut.check_number_range(name="tmd_jmd_space", val=tmd_jmd_space, min_val=1, just_int=True, accept_none=False)
         ut.check_color(name="tmd_color", val=tmd_color)
         ut.check_color(name="jmd_color", val=jmd_color)
@@ -643,7 +648,8 @@ class CPPPlot:
 
         # DEV: No match check for features and tmd (check_match_features_seq_parts) necessary
         # Plot ranking
-        fig, axes = plot_ranking(df_feat=df_feat.copy(), n_top=n_top,
+        fig, axes = plot_ranking(df_feat=df_feat.copy(),
+                                 n_top=n_top, rank=rank,
                                  col_dif=col_dif,
                                  col_imp=col_imp,
                                  shap_plot=shap_plot,
@@ -662,8 +668,8 @@ class CPPPlot:
         # Adjust plot
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
-            plt.tight_layout()
-            plt.subplots_adjust(wspace=0.2)
+            fig.tight_layout()
+            plt.subplots_adjust(left=0.25, wspace=0.1)
         return fig, axes
 
 
@@ -1148,8 +1154,10 @@ class CPPPlot:
                     seq_size: Optional[Union[int, float]] = None,
                     fontsize_tmd_jmd: Optional[Union[int, float]] = None,
                     weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
+                    fontsize_titles: Union[int, float] = 11,
                     fontsize_labels: Union[int, float] = 12,
-                    fontsize_annotations: Union[int, float] = 10,
+                    fontsize_annotations: Union[int, float] = 11,
+                    fontsize_imp_bar: Union[int, float] = 9,
                     add_xticks_pos: bool = False,
 
                     # Legend, Axis, and Grid Configurations
@@ -1167,9 +1175,10 @@ class CPPPlot:
                     dict_color: Optional[dict] = None,
                     legend_kws: Optional[dict] = None,
                     legend_xy: Tuple[Optional[float], Optional[float]] = (-0.1, -0.01),
-                    legend_imp_th: Tuple[Optional[float], Optional[float], Optional[float]] = (0.2, 0.5, 1),
                     legend_imp_xy: Tuple[Optional[float], Optional[float]] = (1.25, 0),
-                    bar_imp_annotation_th: Optional[Union[int, float]] = None,
+                    imp_ths: Tuple[Optional[float], Optional[float], Optional[float]] = (0.2, 0.5, 1),
+                    imp_marker_sizes: Tuple[Optional[float], Optional[float], Optional[float]] = (3, 5, 8),
+                    imp_bar_th: Optional[Union[int, float]] = None,
                     xtick_size: Union[int, float] = 11.0,
                     xtick_width: Union[int, float] = 2.0,
                     xtick_length: Union[int, float] = 5.0,
@@ -1219,10 +1228,14 @@ class CPPPlot:
             Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
         weight_tmd_jmd : {'normal', 'bold'}, default='normal'
             Font weight for the part labels: 'JMD-N', 'TMD', 'JMD-C'.
+        fontsize_titles : int or float, default=11
+            Font size (>= 0) for figure titles. If ``None``, determined automatically.
         fontsize_labels : int or float, default=12
             Font size (>= 0) for figure labels. If ``None``, determined automatically.
         fontsize_annotations : int or float, default=10
             Font size (>= 0) for figure annotations. If ``None``, determined automatically.
+        fontsize_imp_bar : int or float, default=9
+            Font size (>= 0) for feature importance in bars. If ``None``, determined automatically.
         add_xticks_pos : bool, default=False
             If ``True``, include x-tick positions when TMD-JMD sequence is given.
         grid_linewidth : int or float, default=0.01
@@ -1256,11 +1269,13 @@ class CPPPlot:
             Keyword arguments for the legend passed to :meth:`plot_legend`.
         legend_xy : tuple, default=(-0.1, -0.01)
             Position for scale category legend: x- and y-axis coordinates. Values are set to default if ``None``.
-        legend_imp_th : tuple, default=(0.2, 0.5, 1)
-            Three ascending thresholds for feature importance (scale- and residue-specific).
         legend_imp_xy : tuple, default=(1.25, 0)
             Position for feature importance legend: x- and y-axis coordinates (relative to cbar).
-        bar_imp_annotation_th : int or float, optional
+        imp_ths : tuple, default=(0.2, 0.5, 1)
+            Three ascending thresholds for feature importance (scale- and residue-specific).
+        imp_marker_sizes : tuple, default=(3, 5, 8)
+            Size of three feature importance markers defined by ``impd_th``.
+        imp_bar_th : int or float, optional
             Threshold for cumulated feature importance to be shown on right bars. If ``None``, determined automatically.
         xtick_size : int or float, default=11.0
             Size of x-tick labels (>0).
@@ -1302,6 +1317,7 @@ class CPPPlot:
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat,
                                    cols_requiered=[col_val, col_imp],
                                    cols_nan_check=col_val)
+
         ut.check_str(name="name_test", val=name_test)
         ut.check_str(name="name_ref", val=name_ref)
         ut.check_figsize(figsize=figsize, accept_none=True)
@@ -1315,8 +1331,10 @@ class CPPPlot:
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
         args_fs = ut.check_fontsize_args(seq_size=seq_size,
                                          fontsize_tmd_jmd=fontsize_tmd_jmd,
+                                         fontsize_titles=fontsize_titles,
                                          fontsize_labels=fontsize_labels,
-                                         fontsize_annotations=fontsize_annotations)
+                                         fontsize_annotations=fontsize_annotations,
+                                         fontsize_imp_bar=fontsize_imp_bar)
         ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd)
         ut.check_bool(name="add_xticks_pos", val=add_xticks_pos)
         check_match_features_seq_parts(features=df_feat[ut.COL_FEATURE],
@@ -1339,10 +1357,11 @@ class CPPPlot:
         ut.check_dict(name="legend_kws", val=legend_kws, accept_none=True)
         ut.check_tuple(name="legend_xy", val=legend_xy, n=2, accept_none=False,
                        check_number=True, accept_none_number=True)
-        check_legend_imp_th(legend_imp_th=legend_imp_th)
         ut.check_tuple(name="legend_imp_xy", val=legend_imp_xy, n=2, accept_none=False,
                        check_number=True, accept_none_number=True)
-        ut.check_number_range(name="bar_imp_annotation_th", val=bar_imp_annotation_th,
+        check_imp_tuples(name="imp_ths", imp_tuples=imp_ths)
+        check_imp_tuples(name="imp_marker_sizes", imp_tuples=imp_marker_sizes)
+        ut.check_number_range(name="imp_bar_th", val=imp_bar_th,
                               accept_none=True, min_val=0, just_int=False)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
 
@@ -1361,8 +1380,9 @@ class CPPPlot:
                                    cmap=cmap, cmap_n_colors=cmap_n_colors,
                                    cbar_pct=cbar_pct, cbar_kws=cbar_kws, cbar_xywh=cbar_xywh,
                                    dict_color=dict_color, legend_kws=legend_kws, legend_xy=legend_xy,
-                                   legend_imp_th=legend_imp_th, legend_imp_xy=legend_imp_xy,
-                                   bar_imp_annotation_th=bar_imp_annotation_th,
+                                   legend_imp_xy=legend_imp_xy,
+                                   imp_ths=imp_ths, imp_marker_sizes=imp_marker_sizes,
+                                   imp_bar_th=imp_bar_th,
                                    **args_xtick)
 
         # Adjust plot

@@ -135,12 +135,17 @@ class TestCCPlotFeatureMap:
         plt.close()
 
     @settings(max_examples=3, deadline=5000)
-    @given(seq_size=st.floats(min_value=8.0, max_value=14.0), fontsize=st.floats(min_value=8.0, max_value=14.0))
+    @given(seq_size=st.floats(min_value=8.0, max_value=14.0),
+           fontsize=st.floats(min_value=8.0, max_value=14.0))
     def test_font_sizes(self, seq_size, fontsize):
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
-        fig, ax = cpp_plot.feature_map(df_feat=df_feat, seq_size=seq_size, fontsize_tmd_jmd=fontsize,
-                                   fontsize_labels=fontsize, fontsize_annotations=fontsize)
+        fig, ax = cpp_plot.feature_map(df_feat=df_feat, seq_size=seq_size,
+                                       fontsize_tmd_jmd=fontsize,
+                                       fontsize_labels=fontsize,
+                                       fontsize_annotations=fontsize,
+                                       fontsize_titles=fontsize,
+                                       fontsize_imp_bar=fontsize)
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
@@ -270,21 +275,39 @@ class TestCCPlotFeatureMap:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    def test_valid_legend_imp_th_xy(self):
+    def test_valid_imp_legend_xy(self):
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
-        valid_legend_imp_th = (0.1, 0.4, 0.9)
         valid_legend_imp_xy = (1.5, 0.5)
-        fig, ax = cpp_plot.feature_map(df_feat=df_feat, legend_imp_th=valid_legend_imp_th,
+        fig, ax = cpp_plot.feature_map(df_feat=df_feat,
                                        legend_imp_xy=valid_legend_imp_xy)
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    def test_valid_bar_imp_annotation_th(self):
+    def test_valid_imp_ths(self):
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
-        valid_bar_imp_annotation_th = 0.5
-        fig, ax = cpp_plot.feature_map(df_feat=df_feat, bar_imp_annotation_th=valid_bar_imp_annotation_th)
+        valid_imp_ths = (0.1, 0.4, 0.9)
+        fig, ax = cpp_plot.feature_map(df_feat=df_feat,
+                                       imp_ths=valid_imp_ths)
+        assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
+        plt.close()
+
+    def test_valid_imp_marker_sizes(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat()
+        valid_imp_marker_sizes = (1, 4, 6)
+        fig, ax = cpp_plot.feature_map(df_feat=df_feat,
+                                       imp_marker_sizes=valid_imp_marker_sizes)
+        assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
+        plt.close()
+    
+    
+    def test_valid_imp_bar_th(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat()
+        valid_imp_bar_th = 0.5
+        fig, ax = cpp_plot.feature_map(df_feat=df_feat, imp_bar_th=valid_imp_bar_th)
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
@@ -441,8 +464,11 @@ class TestCCPlotFeatureMap:
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
         with pytest.raises(ValueError):
-            cpp_plot.feature_map(df_feat=df_feat, fontsize_labels=fontsize_labels,
-                                 fontsize_annotations=fontsize_labels)
+            cpp_plot.feature_map(df_feat=df_feat,
+                                 fontsize_labels=fontsize_labels,
+                                 fontsize_annotations=fontsize_labels,
+                                 fontsize_titles=fontsize_labels,
+                                 fontsize_imp_bar=fontsize_labels)
         plt.close()
 
     @settings(max_examples=3, deadline=5000)
@@ -588,23 +614,36 @@ class TestCCPlotFeatureMap:
                 cpp_plot.feature_map(df_feat=df_feat, legend_xy=legend_xy)
             plt.close()
 
-    def test_invalid_legend_imp_th_xy(self):
+    def test_invalid_legend_imp_xy(self):
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
-        invalid_legend_imp_th = (1.1, 0.4, 0.9)  # Values should be in a certain range or order
         invalid_legend_imp_xy = 'not_a_tuple'  # Should be a tuple
-        with pytest.raises(ValueError):
-            cpp_plot.feature_map(df_feat=df_feat, legend_imp_th=invalid_legend_imp_th)
         with pytest.raises(ValueError):
             cpp_plot.feature_map(df_feat=df_feat, legend_imp_xy=invalid_legend_imp_xy)
         plt.close()
 
-    def test_invalid_bar_imp_annotation_th(self):
+    def test_invalid_imp_ths(self):
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
-        invalid_bar_imp_annotation_th = -0.5  # Negative values might be invalid
+        invalid_imp_ths = (1.1, 0.4, 0.9)  # Values should be in a certain range or order
         with pytest.raises(ValueError):
-            cpp_plot.feature_map(df_feat=df_feat, bar_imp_annotation_th=invalid_bar_imp_annotation_th)
+            cpp_plot.feature_map(df_feat=df_feat, imp_ths=invalid_imp_ths)
+        plt.close()
+
+    def test_invalid_imp_marker_sizes(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat()
+        invalid_imp_marker_sizes = (1.1, 0.4, 0.9)  # Values should be in a certain range or order
+        with pytest.raises(ValueError):
+            cpp_plot.feature_map(df_feat=df_feat, imp_marker_sizes=invalid_imp_marker_sizes)
+        plt.close()
+
+    def test_invalid_imp_bar_th(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat()
+        invalid_imp_bar_th = -0.5  # Negative values might be invalid
+        with pytest.raises(ValueError):
+            cpp_plot.feature_map(df_feat=df_feat, imp_bar_th=invalid_imp_bar_th)
         plt.close()
 
     @settings(max_examples=3, deadline=5000)
@@ -625,14 +664,14 @@ class TestCCPlotFeatureMapComplex:
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
         args_seq = get_args_seq()
-        fig, ax = cpp_plot.feature_map(df_feat=df_feat,  col_cat='subcategory', col_val="abs_mean_dif",
-            name_test='Test Protein', name_ref='Ref Protein', figsize=(12, 12), start=5, tmd_len=25,
-            tmd_color='mediumspringgreen', jmd_color='blue', tmd_seq_color='black', jmd_seq_color='white', seq_size=12,
-            fontsize_tmd_jmd=14, weight_tmd_jmd='bold', fontsize_labels=12, add_xticks_pos=True, grid_linewidth=0.5,
-            grid_linecolor='gray', border_linewidth=3, facecolor_dark=False, vmin=0, vmax=5, cmap='viridis',
-            cmap_n_colors=200, cbar_pct=True, cbar_xywh=(0.85, 0.1, 0.05, 0.8), dict_color=DICT_COLOR,
-            legend_kws={'title': 'Categories', 'loc': 'upper left'}, legend_xy=(-0.15, 1.05), xtick_size=11,
-            xtick_width=2, xtick_length=5, **args_seq)
+        fig, ax = cpp_plot.feature_map(df_feat=df_feat, col_cat='subcategory', col_val="abs_mean_dif",
+                                       name_test='Test Protein', name_ref='Ref Protein', figsize=(12, 12), start=5, tmd_len=25,
+                                       tmd_color='mediumspringgreen', jmd_color='blue', tmd_seq_color='black', jmd_seq_color='white', seq_size=12,
+                                       fontsize_tmd_jmd=14, weight_tmd_jmd='bold', fontsize_labels=12, add_xticks_pos=True, grid_linewidth=0.5,
+                                       grid_linecolor='gray', border_linewidth=3, facecolor_dark=False, vmin=0, vmax=5, cmap='viridis',
+                                       cmap_n_colors=200, cbar_pct=True, cbar_xywh=(0.85, 0.1, 0.05, 0.8), dict_color=DICT_COLOR,
+                                       legend_kws={'title': 'Categories', 'loc': 'upper left'}, legend_xy=(-0.15, 1.05), xtick_size=11,
+                                       xtick_width=2, xtick_length=5, **args_seq)
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
@@ -644,37 +683,37 @@ class TestCCPlotFeatureMapComplex:
         args_seq = get_args_seq()
         with pytest.raises(ValueError):
             cpp_plot.feature_map(df_feat=df_feat,
-                             col_cat='invalid_category',  # Invalid col_cat
-                             col_val='invalid_col_val',  # Invalid col_val
-                             name_test=123,  # Invalid name_test
-                             name_ref=123,  # Invalid name_ref
-                             figsize=(-5, -5),  # Invalid figsize
-                             start=-10,  # Invalid start
-                             tmd_len=-20,  # Invalid tmd_len
-                             tmd_color='invalid_color',  # Invalid tmd_color
-                             jmd_color='invalid_color',  # Invalid jmd_color
-                             tmd_seq_color='invalid_color',  # Invalid tmd_seq_color
-                             jmd_seq_color='invalid_color',  # Invalid jmd_seq_color
-                             seq_size=-1,  # Invalid seq_size
-                             fontsize_tmd_jmd=-1,  # Invalid fontsize_tmd_jmd
-                             weight_tmd_jmd='invalid',  # Invalid weight_tmd_jmd
-                             fontsize_labels=-1,  # Invalid fontsize_labels
-                             add_xticks_pos='invalid',  # Invalid add_xticks_pos
-                             grid_linewidth=-1,  # Invalid grid_linewidth
-                             grid_linecolor='invalid_color',  # Invalid grid_linecolor
-                             border_linewidth=-1,  # Invalid border_linewidth
-                             facecolor_dark='invalid',  # Invalid facecolor_dark
-                             vmin=5,  # Invalid vmin > vmax
-                             vmax=0,  # Invalid vmin > vmax
-                             cmap='invalid_cmap',  # Invalid cmap
-                             cmap_n_colors=-100,  # Invalid cmap_n_colors
-                             cbar_pct='invalid',  # Invalid cbar_pct
-                             cbar_xywh=(-0.1, -0.1, -0.1, -0.1),  # Invalid cbar_xywh
-                             dict_color={'invalid_cat': 'blue'},  # Invalid dict_color
-                             legend_kws='not_a_dict',  # Invalid legend_kws
-                             legend_xy=(-2, -2),  # Invalid legend_xy
-                             xtick_size=-1,  # Invalid xtick_size
-                             xtick_width=-1,  # Invalid xtick_width
-                             xtick_length=-1,  # Invalid xtick_length
-                             **args_seq)
+                                 col_cat='invalid_category',  # Invalid col_cat
+                                 col_val='invalid_col_val',  # Invalid col_val
+                                 name_test=123,  # Invalid name_test
+                                 name_ref=123,  # Invalid name_ref
+                                 figsize=(-5, -5),  # Invalid figsize
+                                 start=-10,  # Invalid start
+                                 tmd_len=-20,  # Invalid tmd_len
+                                 tmd_color='invalid_color',  # Invalid tmd_color
+                                 jmd_color='invalid_color',  # Invalid jmd_color
+                                 tmd_seq_color='invalid_color',  # Invalid tmd_seq_color
+                                 jmd_seq_color='invalid_color',  # Invalid jmd_seq_color
+                                 seq_size=-1,  # Invalid seq_size
+                                 fontsize_tmd_jmd=-1,  # Invalid fontsize_tmd_jmd
+                                 weight_tmd_jmd='invalid',  # Invalid weight_tmd_jmd
+                                 fontsize_labels=-1,  # Invalid fontsize_labels
+                                 add_xticks_pos='invalid',  # Invalid add_xticks_pos
+                                 grid_linewidth=-1,  # Invalid grid_linewidth
+                                 grid_linecolor='invalid_color',  # Invalid grid_linecolor
+                                 border_linewidth=-1,  # Invalid border_linewidth
+                                 facecolor_dark='invalid',  # Invalid facecolor_dark
+                                 vmin=5,  # Invalid vmin > vmax
+                                 vmax=0,  # Invalid vmin > vmax
+                                 cmap='invalid_cmap',  # Invalid cmap
+                                 cmap_n_colors=-100,  # Invalid cmap_n_colors
+                                 cbar_pct='invalid',  # Invalid cbar_pct
+                                 cbar_xywh=(-0.1, -0.1, -0.1, -0.1),  # Invalid cbar_xywh
+                                 dict_color={'invalid_cat': 'blue'},  # Invalid dict_color
+                                 legend_kws='not_a_dict',  # Invalid legend_kws
+                                 legend_xy=(-2, -2),  # Invalid legend_xy
+                                 xtick_size=-1,  # Invalid xtick_size
+                                 xtick_width=-1,  # Invalid xtick_width
+                                 xtick_length=-1,  # Invalid xtick_length
+                                 **args_seq)
         plt.close()
