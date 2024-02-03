@@ -107,7 +107,7 @@ def check_col_val(col_val=None):
 # II Main Functions
 class SequenceFeature:
     """
-    Utility feature engineering class using sequences to create ``CPP`` feature components (**Parts**, **Splits**,
+    Utility feature engineering class using sequences to create :class:`CPP` feature components (**Parts**, **Splits**,
     and  **Scales**) and data structures [Breimann24c]_.
 
     The three feature components are the primary input for the :class:`aaanalysis.CPP` class and define
