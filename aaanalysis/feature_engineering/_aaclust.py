@@ -75,7 +75,7 @@ def post_check_n_clusters(n_clusters_actual=None, n_clusters=None):
 # II Main Functions
 class AAclust(Wrapper):
     """
-    Amino Acid clustering (AAclust) class: A k-optimized clustering wrapper for selecting redundancy-reduced sets
+    Amino Acid clustering (**AAclust**) class: A k-optimized clustering wrapper for selecting redundancy-reduced sets
     of numerical scales [Breimann24a]_.
 
     AAclust uses clustering models that require a pre-defined number of clusters (k, set by ``n_clusters``),

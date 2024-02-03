@@ -117,7 +117,7 @@ class SequenceFeature:
     -----
     Feature Components:
         - **Part**: A continuous subset of a sequence, such as a protein domain.
-        - **Split**: Continuous or discontinuous subset of a ``Part``, such as a segment or a pattern.
+        - **Split**: Continuous or discontinuous subset of a **Part**, either segment or pattern.
         - **Scale**: A physicochemical scale, i.e., a set of numerical values (typically [0-1]) assigned to amino acids.
 
     Main Parts:
