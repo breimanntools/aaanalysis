@@ -56,7 +56,7 @@ def check_match_list_df_feat_names_feature_sets(list_df_feat=None, names_feature
 # II Main Functions
 class CPP(Tool):
     """
-    Comparative Physicochemical Profiling (**CPP**) class to create and filter features that are most discriminant
+    Comparative Physicochemical Profiling (**CPP**) class to create and filter features most discriminant
     between two sets of sequences [Breimann24c]_.
 
     CPP aims at identifying a collection of non-redundant features that are most discriminant between the
@@ -65,13 +65,13 @@ class CPP(Tool):
     Attributes
     ----------
     df_parts
-        DataFrame with sequence ``Parts``.
+        DataFrame with sequence **Parts**.
     split_kws
-        Nested dictionary defining ``Splits`` with parameter dictionary for each chosen split_type.
+        Nested dictionary defining **Splits** with parameter dictionary for each chosen split_type.
     df_scales
-        DataFrame with amino acid ``Scales``.
+        DataFrame with amino acid **Scales**.
     df_cat
-        DataFrame with categories for physicochemical amino acid ``Scales``.
+        DataFrame with categories for physicochemical amino acid **Scales**.
     """
     def __init__(self,
                  df_parts: pd.DataFrame = None,
