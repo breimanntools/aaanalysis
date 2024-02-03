@@ -1,9 +1,9 @@
-.. _usage_principles_aaontology:
+.. _usage_principles_aaclust:
 
-AAontology: Classification of amino acid scales
-===============================================
+AAclust: Selecting Redundancy-Reduced Scale Sets
+================================================
 
-AAontology is a two-level classification of amino acid scale, introduced in [Breimann24b]_.
+AAontology is a two-level classification of amino acid scale, introduced in [Breimann24a]_.
 
 It was created by automatic scale classification and manual refinement:
 
