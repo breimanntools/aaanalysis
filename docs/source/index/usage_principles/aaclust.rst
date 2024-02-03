@@ -3,12 +3,20 @@
 AAclust: Selecting Redundancy-Reduced Scale Sets
 ================================================
 
-AAontology is a two-level classification of amino acid scale, introduced in [Breimann24a]_.
+AAclust is a clustering wrapper framework. introduced in [Breimann24a]_.
 
-It was created by automatic scale classification and manual refinement:
+Taking any a set of amino acid scales as input, it estimates and optimizes the number of clusters to obtain a
+redundancy-reduced scale set:
 
-.. image :: /_artwork/schemes/scheme_AAontology1.png
+.. image :: /_artwork/schemes/scheme_AAclust1.png
 
-AAontology comprises 586 amino acid scales, organized into 67 scale subcategories, and 8 scale categories:
+.. image :: /_artwork/schemes/scheme_AAclust1tp.png
 
-.. image :: /_artwork/schemes/scheme_AAontology2.png
+
+AAclust provides two selection modi: k-optimized and k-based selection:
+
+.. image :: /_artwork/schemes/scheme_AAclust2.png
+
+Three different clustering quality measures can be used to evaluate the the resulting clustering results:
+
+.. image :: /_artwork/schemes/scheme_AAclust3.png

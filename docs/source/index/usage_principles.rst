@@ -25,6 +25,7 @@ To get started with AAanalysis, import it as follows:
    :maxdepth: 1
 
    usage_principles/aaontology
+   usage_principles/aaclust
    usage_principles/feature_identification
    usage_principles/pu_learning
    usage_principles/xai
