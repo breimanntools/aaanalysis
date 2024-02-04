@@ -18,6 +18,14 @@ unlabeled and undiscovered. PU learning algorithms aim to identify negative data
 comparison with the positive data, coupled with iterative learning strategies. This approach adeptly handles the
 inherent data asymmetry in applications where labeled negatives are unattainable.
 
+dPULearn: Learning reliably from Unbalanced and Small Data
+----------------------------------------------------------
+dPULearn (deterministic Positive-Unlabeled Learning) is a non-stochastic PU Learning algorithm for identifying
+reliably negative samples from unlabeled data, as introduced in [Breimann24c]_.
+
+.. image :: /_artwork/schemes/scheme_dPULearn.png
+
+
 Challenges and Potential Biases in PU Learning
 ----------------------------------------------
 PU learning faces specific challenges, that can be summarized as follows:

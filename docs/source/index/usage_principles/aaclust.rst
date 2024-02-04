@@ -10,9 +10,6 @@ redundancy-reduced scale set:
 
 .. image :: /_artwork/schemes/scheme_AAclust1.png
 
-.. image :: /_artwork/schemes/scheme_AAclust1tp.png
-
-
 AAclust provides two selection modi: k-optimized and k-based selection:
 
 .. image :: /_artwork/schemes/scheme_AAclust2.png
