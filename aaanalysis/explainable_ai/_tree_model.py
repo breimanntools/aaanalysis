@@ -183,7 +183,7 @@ class TreeModel:
         is_preselected = check_is_preselected(is_preselected=is_preselected)
         # Model parameters
         if list_model_classes is None:
-            list_model_classes = [RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
+            list_model_classes = [RandomForestClassifier, ExtraTreesClassifier]
         elif not isinstance(list_model_classes, list):
             list_model_classes = [list_model_classes]   # Single models are possible as well (but not recommender)
         list_model_classes = ut.check_list_like(name="list_model_classes", val=list_model_classes,
