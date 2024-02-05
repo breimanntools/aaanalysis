@@ -149,30 +149,32 @@ def _add_annotation_right(sub_fig=None, an_in_val=2, max_val=10.0, text_size=8):
             sub_fig.annotate(f"{round(val, 1)}%", (x, p.get_y() + p.get_height()/2), **args_right)
 
 
-def plot_feature_rank(ax=None, df=None, n=20, xlim=(0, 8),
+def plot_feature_rank(ax=None, df_feat=None, n=20, xlim=(0, 4),
                       fontsize_annotation=8, col_imp=ut.COL_FEAT_IMPORT,
                       shap_plot=False, rank_info_xy=None):
     """Plots the feature ranking based on `df` on the axis `ax`, adjusting for SHAP values if `shap_plot` is True."""
-    df = df.copy()
+    df_feat = df_feat.copy()
     plt.sca(ax)
     if shap_plot:
-        colors = [ut.COLOR_SHAP_NEG if v < 0 else ut.COLOR_SHAP_POS for v in df[col_imp]]
+        colors = [ut.COLOR_SHAP_NEG if v < 0 else ut.COLOR_SHAP_POS for v in df_feat[col_imp]]
     else:
-        colors = ["tab:gray"] * len(df)
-    df[col_imp] = abs(df[col_imp]).round(1)
-    df["hue"] = colors     # Adjust to use palette for sns.barplot after v0.14.0
+        colors = ["tab:gray"] * len(df_feat)
+    df_feat[col_imp] = abs(df_feat[col_imp]).round(1)
+    df_feat["hue"] = colors     # Adjust to use palette for sns.barplot after v0.14.0
     args = dict(hue="hue", palette={x: x for x in colors}, legend=False)
-    sub_fig = sns.barplot(ax=ax, data=df, y="feature", x=col_imp, **args)
-    plt.yticks(range(0, n), list(df[ut.COL_SUBCAT]))
+    sub_fig = sns.barplot(ax=ax, data=df_feat, y="feature", x=col_imp, **args)
+    plt.yticks(range(0, n), list(df_feat[ut.COL_SUBCAT]))
     plt.ylabel("")
-    x_max = df[col_imp].max()
-    if xlim[1] < x_max:
-        xlim = (xlim[0], x_max)
-    plt.xlim(xlim)
-    _add_annotation_right(sub_fig=sub_fig, text_size=fontsize_annotation, an_in_val=x_max/2, max_val=xlim[1])
 
+    # Set x-axis limits
+    xlim = plt.xlim() if xlim is None else xlim
+    x_max = max(df_feat[col_imp].max(), xlim[1])
+    xlim = (xlim[0], x_max)
+    plt.xlim(xlim)
+
+    _add_annotation_right(sub_fig=sub_fig, text_size=fontsize_annotation, an_in_val=x_max/2, max_val=xlim[1])
     # Add legend
-    str_sum = f"Σ={round(df[col_imp].sum(), 1)}%"
+    str_sum = f"Σ={round(df_feat[col_imp].sum(), 1)}%"
     args = dict(ha="right", size=fontsize_annotation)
     rank_info_xy_default = (xlim[1]*1.1, n-2.5)
     _rank_info_xy = ut.adjust_tuple_elements(tuple_in=rank_info_xy,
@@ -199,7 +201,7 @@ def plot_ranking(df_feat=None,
                  fontsize_annotations=11,
                  tmd_jmd_space=2,
                  xlim_dif=(-17.5, 17.5),
-                 xlim_rank=(0, 8),
+                 xlim_rank=(0, 4),
                  rank_info_xy=None):
     """Plot ranking of feature DataFrame"""
     # Adjust df_feat
@@ -227,7 +229,7 @@ def plot_ranking(df_feat=None,
     label_mean_dif = f"{name_test} - {name_ref} [%]"
     axes[1].set_xlabel(label_mean_dif, size=fontsize_labels)
     # 3. Barplot importance
-    plot_feature_rank(ax=axes[2], df=df_feat, n=n_top, xlim=xlim_rank,
+    plot_feature_rank(ax=axes[2], df_feat=df_feat, n=n_top, xlim=xlim_rank,
                       col_imp=col_imp, shap_plot=shap_plot, rank_info_xy=rank_info_xy,
                       fontsize_annotation=fontsize_annotations)
     axes[2].set_title(f"{ut.LABEL_FEAT_RANKING}\n(top {n_top} features)",

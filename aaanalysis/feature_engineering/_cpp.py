@@ -322,7 +322,7 @@ class CPP(Tool):
              names_feature_sets: Optional[List[str]] = None,
              list_cat: Optional[List[str]] = None,
              list_df_parts: Optional[List[pd.DataFrame]] = None,
-             n_jobs: Optional[int] = None,
+             n_jobs: Optional[int] = 1,
              ) -> pd.DataFrame:
         """
         Evaluate the quality of different sets of identified CPP features.
@@ -351,7 +351,7 @@ class CPP(Tool):
             ['ASA/Volume', 'Composition', 'Conformation', 'Energy', 'Others', 'Polarity', 'Shape', 'Structure-Activity']
         list_df_parts : list of pd.DataFrames, optional
             List of part DataFrames each of shape (n_samples, n_parts). Must match with ``list_df_feat``.
-        n_jobs : int, None, or -1, default=None
+        n_jobs : int, None, or -1, default=1
             Number of CPU cores used for multiprocessing. If ``None``, the number is optimized automatically.
             If ``-1``, the number is set to all available cores.
 

@@ -520,11 +520,11 @@ class CPPPlot:
                 tmd_jmd_alpha: Union[int, float] = 0.075,
                 name_test: str = "TEST",
                 name_ref: str = "REF",
-                fontsize_titles: Union[int, float, None] = 10,
-                fontsize_labels: Union[int, float, None] = 11,
+                fontsize_titles: Union[int, float, None] = 12,
+                fontsize_labels: Union[int, float, None] = 12,
                 fontsize_annotations: Union[int, float, None] = 11,
-                xlim_dif: Tuple[Union[int, float], Union[int, float]] = (-17.5, 17.5),
-                xlim_rank: Tuple[Union[int, float], Union[int, float]] = (0, 5),
+                xlim_dif: Union[Tuple[Union[int, float], Union[int, float]], None] = (-17.5, 17.5),
+                xlim_rank: Optional[Tuple[Union[int, float], Union[int, float]]] = (0, 4),
                 rank_info_xy: Optional[Tuple[Optional[Union[int, float]], Optional[Union[int, float]]]] = None,
                 ) -> Tuple[plt.Figure, plt.Axes]:
         """
@@ -579,16 +579,16 @@ class CPPPlot:
             Name of the test dataset to show in the mean difference subplot.
         name_ref : str, default="REF"
             Name of reference dataset to show in the mean difference subplot.
-        fontsize_titles : int or float, default=10
+        fontsize_titles : int or float, default=12
             Font size of the titles.
-        fontsize_labels : int or float , default=11
+        fontsize_labels : int or float , default=12
             Font size of plot labels.
         fontsize_annotations : int or float, default=11
             Font size of annotations.
         xlim_dif : tuple, default=(-17.5, 17.5)
             x-axis limits for the mean difference subplot.
-        xlim_rank : tuple, default=(0, 5)
-            x-axis limits for the ranking subplot.
+        xlim_rank : tuple, default=(0, 4)
+            x-axis limits for the ranking subplot. If ``None``, determined automatically.
         rank_info_xy : tuple, optional
             Position (x-axis, y-axis) in ranking subplot for showing additional information (optimized if ``None``):
 
@@ -644,7 +644,7 @@ class CPPPlot:
         ut.check_lim(name="xlim_dif", val=xlim_dif)
         ut.check_lim(name="xlim_rank", val=xlim_rank)
         ut.check_tuple(name="rank_info_xy", val=rank_info_xy, n=2,
-                       accept_none=True, check_number=True, accept_none_number=True)
+                       accept_none=True, check_number=True)
 
         # DEV: No match check for features and tmd (check_match_features_seq_parts) necessary
         # Plot ranking
@@ -669,7 +669,7 @@ class CPPPlot:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             fig.tight_layout()
-            plt.subplots_adjust(left=0.25, wspace=0.1)
+            plt.subplots_adjust(left=0.25, wspace=0.15)
         return fig, axes
 
 

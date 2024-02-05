@@ -20,8 +20,8 @@ class TestTreeModel:
     # Positive tests
     def test_list_model_kwargs_parameter(self):
         """Test the 'list_model_kwargs' parameter."""
-        tree_model = aa.TreeModel(list_model_kwargs=mock_kwargs)
-        assert tree_model._list_model_kwargs == mock_kwargs
+        tree_model = aa.TreeModel(list_model_kwargs=mock_kwargs[0:2])
+        assert tree_model._list_model_kwargs == mock_kwargs[0:2]
         tree_model = aa.TreeModel(list_model_kwargs=mock_kwargs[0:1], list_model_classes=mock_classes[0:1])
         assert tree_model._list_model_kwargs == mock_kwargs[0:1]
         tree_model = aa.TreeModel(list_model_kwargs=mock_kwargs[0:2], list_model_classes=mock_classes[0:2])

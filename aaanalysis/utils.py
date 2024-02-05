@@ -243,6 +243,9 @@ LABEL_CBAR_FEAT_IMPACT_CUM = "Cumulative feature impact"
 LABEL_FEAT_POS = ("                  Feature                  \n"
                   "Scale (subcategory)  +  Positions                 ")
 
+_LABEL_FEAT_POS = ("      Feature     \n"
+                  "       Scale  +  Positions")
+
 LABEL_FEAT_IMPORT = "Importance [%]"
 LABEL_FEAT_IMPACT = "Impact [%]"
 LABEL_FEAT_RANKING = "Feature ranking"

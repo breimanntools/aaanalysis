@@ -7,7 +7,7 @@ b) TreeModel.eval: Add n_features to output
 """
 from typing import Optional, Dict, List, Tuple, Type, Union, Callable
 from sklearn.base import ClassifierMixin, BaseEstimator
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 import pandas as pd
 import numpy as np
 
@@ -150,7 +150,7 @@ class TreeModel:
         """
         Parameters
         ----------
-        list_model_classes : list of Type[ClassifierMixin or BaseEstimator], default=[RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
+        list_model_classes : list of Type[ClassifierMixin or BaseEstimator], default=[RandomForestClassifier, ExtraTreesClassifier]
             A list of tree-based model classes to be used for feature importance analysis.
         list_model_kwargs : list of dict, optional
             A list of dictionaries containing keyword arguments for each model in `list_model_classes`.
@@ -171,7 +171,6 @@ class TreeModel:
         --------
         * :class:`sklearn.ensemble.RandomForestClassifier` for random forest model.
         * :class:`sklearn.ensemble.ExtraTreesClassifier` for extra trees model.
-        * :class:`sklearn.ensemble.GradientBoostingClassifier` for gradient boosting model.
 
         Examples
         --------
@@ -216,7 +215,7 @@ class TreeModel:
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D = None,
             n_rounds: int = 5,
-            use_rfe: bool = True,
+            use_rfe: bool = False,
             n_cv: int = 5,
             n_feat_min: int = 25,
             n_feat_max: int = 75,
@@ -240,8 +239,8 @@ class TreeModel:
             Class labels for samples in ``X`` (typically, 1=positive, 0=negative).
         n_rounds : int, default=5
             The number of rounds (>=1) to fit the model.
-        use_rfe : bool, default=True
-            Whether to use recursive feature elimination (RFE) with random forest model for feature selection.
+        use_rfe : bool, default=False
+            If ``True``, recursive feature elimination (RFE) is used with random forest model for feature selection.
         n_cv : int, default=5
             The number of cross-validation folds for RFE, must be > 1 and ≤ the smallest class's sample count.
         n_feat_min : int, default=25
