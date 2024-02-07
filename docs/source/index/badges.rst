@@ -1,20 +1,20 @@
 .. Developer Notes:
     Comments explain how to set up each badge and its purpose. Please update badges in README.rst and vice versa
 
-.. Group 1: Build and Test Status
-.. --------------------------------
-.. Build Status Badge
-.. To set up this badge, go to your GitHub Actions tab and find the relevant workflow.
-.. Click on "Create status badge" and copy the Markdown or RST code.
-.. image:: https://github.com/breimanntools/aaanalysis/workflows/Build/badge.svg
-   :target: https://github.com/breimanntools/aaanalysis/actions
-   :alt: Build Status
+.. .. Group 1: Build and Test Status
+.. .. --------------------------------
+.. .. Build Status Badge
+.. .. To set up this badge, go to your GitHub Actions tab and find the relevant workflow.
+.. .. Click on "Create status badge" and copy the Markdown or RST code.
+.. .. image:: https://github.com/breimanntools/aaanalysis/workflows/Build/badge.svg
+..   :target: https://github.com/breimanntools/aaanalysis/actions
+..   :alt: Build Status
 
-.. Python-check Badge
-.. This badge reflects the status of your Python code checks if set up in GitHub Actions.
-.. image:: https://github.com/breimanntools/aaanalysis/workflows/Python-check/badge.svg
-   :target: https://github.com/breimanntools/aaanalysis/actions
-   :alt: Python-check
+.. .. Python-check Badge
+.. .. This badge reflects the status of your Python code checks if set up in GitHub Actions.
+.. .. image:: https://github.com/breimanntools/aaanalysis/workflows/Python-check/badge.svg
+..    :target: https://github.com/breimanntools/aaanalysis/actions
+..    :alt: Python-check
 
 .. Group 2: Package and Version Information
 .. ----------------------------------------
@@ -37,11 +37,11 @@
    :target: https://pypi.python.org/pypi/aaanalysis
    :alt: PyPI - Package Version
 
-.. Conda - Package Version Badge
-.. This badge shows the latest package version available on conda-forge.
-.. image:: https://anaconda.org/conda-forge/aaanalysis/badges/version.svg
-   :target: https://anaconda.org/conda-forge/aaanalysis
-   :alt: Conda - Package Version
+.. .. Conda - Package Version Badge
+.. .. This badge shows the latest package version available on conda-forge.
+.. .. image:: https://anaconda.org/conda-forge/aaanalysis/badges/version.svg
+..    :target: https://anaconda.org/conda-forge/aaanalysis
+..    :alt: Conda - Package Version
 
 .. Group 3: Documentation and Code Quality
 .. ---------------------------------------
