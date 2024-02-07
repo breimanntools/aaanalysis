@@ -11,6 +11,10 @@ Tutorials
 
 Getting Started
 ---------------
+For a quick start with AAanalysis, we recommend the **Quick Start** tutorial To get a deeper understanding, see the
+**Slow Start** tutorial, which offers the same examples plus comprehensive conceptual background and additional resources.
+To create publication-ready plots with a few lines of code, check out the **Plotting Prelude**.
+
 .. toctree::
    :maxdepth: 1
 
