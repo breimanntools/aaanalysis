@@ -28,9 +28,23 @@ Data Handling
 
 Feature Engineering
 -------------------
+.. toctree::
+   :maxdepth: 1
+
+   generated/tutorial3a_aaclust
+   generated/tutorial3b_sequence_feature
+   generated/tutorial3c_cpp
 
 PU Learning
 -----------
+.. toctree::
+   :maxdepth: 1
+
+   generated/tutorial4a_dpulearn
 
 Explainable AI
 --------------
+.. toctree::
+   :maxdepth: 1
+
+   generated/tutorial5a_shap_explainer
