@@ -11,9 +11,9 @@ Tutorials
 
 Getting Started
 ---------------
-For a quick start with AAanalysis, we recommend the **Quick Start** tutorial To get a deeper understanding, see the
-**Slow Start** tutorial, which offers the same examples plus comprehensive conceptual background and additional resources.
-To create publication-ready plots with a few lines of code, check out the **Plotting Prelude**.
+For a quick start with AAanalysis, we recommend the **Quick Start** tutorial. Get a deeper understanding with the
+**Slow Start** tutorial, offering the same examples plus conceptual background. Create publication-ready plots with a
+few lines of code as shown in the **Plotting Prelude** tutorial.
 
 .. toctree::
    :maxdepth: 1
@@ -24,6 +24,9 @@ To create publication-ready plots with a few lines of code, check out the **Plot
 
 Data Handling
 -------------
+Learn how to load protein benchmarking datasets in the **Data Loader** tutorial. See the **Scale Loader** for an
+introduction into the variety of available scale sets and **AAontology**, our two-level amino acid scale classification.
+
 .. toctree::
    :maxdepth: 1
 
@@ -32,6 +35,8 @@ Data Handling
 
 Feature Engineering
 -------------------
+
+
 .. toctree::
    :maxdepth: 1
 
