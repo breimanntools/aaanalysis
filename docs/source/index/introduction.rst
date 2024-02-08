@@ -24,7 +24,7 @@ Start your journey with AAanalysis by visiting our :ref:`Contributing <contribut
 and information on contribution. Delve into the core concepts behind our algorithms in the
 :ref:`Usage Principles <usage_principles>` section to understand our design philosophy, equipping
 you with the mental models necessary for effective application. Our :ref:`Evaluation <evaluation>`
-strategies are detailed to facilitate an transparent and objective analysis our algorithms´s outcome.
+strategies are detailed to facilitate an transparent and objective analysis of our algorithms´s outcome.
 
 To get hands-on experience, explore our :ref:`Tutorials <tutorials>`. In addition to our detailed :ref:`API <api>`
 documentation, we compiled various overview :ref:`Tables <tables>` that provide in-depth resources, including our
