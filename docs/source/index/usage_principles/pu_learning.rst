@@ -1,6 +1,6 @@
 .. _usage_principles_pu_learning:
 
-Learning from Unbalanced and Small Data
+dPULearn: Learning From Unbalanced Data
 =======================================
 In the life sciences, the prevalence of unbalanced and small datasets often leads to challenges in machine learning,
 particularly when dealing with a rare class of interest. Typically, binary classification involves labeled positive

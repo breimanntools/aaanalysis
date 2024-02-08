@@ -1,5 +1,5 @@
-Identifying Physicochemical Signatures using CPP
-================================================
+CPP: Identifying Physicochemical Signatures
+===========================================
 
 The central algorithm of the AAanalysis framework is Comparative Physicochemical Profiling (**CPP**), a sequence-based
 feature engineering algorithm for interpretable protein prediction [Breimann24c]_. CPP enables the identification

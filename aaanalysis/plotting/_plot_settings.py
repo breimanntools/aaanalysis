@@ -89,7 +89,7 @@ def plot_settings(font_scale: Union[int, float] = 1,
 
     See Also
     --------
-    * More examples in `Plotting prelude <plotting_prelude.html>`_.
+    * More examples in `Plotting Prelude <plotting_prelude.html>`_.
     * :func:`seaborn.set_context`, where ``font_scale`` is utilized.
     * :data:`matplotlib.rcParams`, which manages the global settings in :mod:`matplotlib`.
 

@@ -25,7 +25,7 @@ def plot_get_cdict(name: str = "DICT_COLOR") -> dict:
 
     See Also
     --------
-    * `Plotting prelude <plotting_prelude.html>`_.
+    * `Plotting Prelude <plotting_prelude.html>`_.
 
     Examples
     --------

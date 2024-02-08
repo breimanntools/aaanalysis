@@ -1,6 +1,6 @@
 .. _usage_principles_aaontology:
 
-AAontology: Classification of amino acid scales
+AAontology: Classification of Amino Acid Scales
 ===============================================
 
 AAontology is a two-level classification of amino acid scale, introduced in [Breimann24b]_.

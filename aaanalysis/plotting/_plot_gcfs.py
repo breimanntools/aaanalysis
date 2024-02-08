@@ -22,7 +22,7 @@ def plot_gcfs(option: str = 'font.size') -> int:
 
     See Also
     --------
-    * `Plotting prelude <plotting_prelude.html>`_.
+    * `Plotting Prelude <plotting_prelude.html>`_.
 
     Examples
     --------
