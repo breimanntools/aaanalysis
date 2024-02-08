@@ -26,10 +26,11 @@ AAanalysis provides a handful of DataFrames for seamless data management. Starti
 and accommodates user-defined splitting (**split_kws**). Our CPP algorithm then utilizes these to generate
 physicochemical features (**df_feat**) by comparing protein sequence sets.
 
-See the primary data flow within the AAanalysis toolkit in this diagram:
+See the primary analysis pipeline of the AAanalysis framework in this diagram:
 
 .. image:: /_artwork/diagrams/components.png
 
+Details on the foundational concepts of AAnalysis are provided by the following usage principles:
 
 .. toctree::
    :maxdepth: 1

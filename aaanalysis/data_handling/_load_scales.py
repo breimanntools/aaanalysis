@@ -69,7 +69,7 @@ def _adjust_dtypes(df=None, name=None):
 # II Main Functions
 def load_scales(name: str = "scales",
                 just_aaindex: bool = False,
-                unclassified_out: bool = False,
+                unclassified_out: bool = True,
                 top60_n: Optional[Union[int, str]] = None
                 ) -> DataFrame:
     """
@@ -89,7 +89,7 @@ def load_scales(name: str = "scales",
         Name of the loaded dataset:
 
         - ``scales_raw``: All amino acid scales.
-        - ``scales``:  Min-max normlized raw scales.
+        - ``scales``:  Min-max normalized raw scales.
         - ``scales_cat``: Two-level classification (AAontology).
         - ``scales_pc``: First 20 PCs of compressed scales.
         - ``top60``:  Selection of 60 best performing scale sets.
@@ -99,7 +99,7 @@ def load_scales(name: str = "scales",
 
     just_aaindex : bool, default=False
         If ``True``, returns only scales from AAindex. Relevant only for 'scales', 'scales_raw', or 'scales_cat'.
-    unclassified_out : bool, default=False
+    unclassified_out : bool, default=True
         Determines exclusion of unclassified scales. Relevant only for 'scales', 'scales_raw', or 'scales_cat'.
     top60_n : int or str, optional
          Select the n-th scale set from top60 sets and return it for 'scales', 'scales_raw', or 'scales_cat'.

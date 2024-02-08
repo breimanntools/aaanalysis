@@ -14,6 +14,8 @@ We prioritize diverse, robust, and transparent evaluation techniques. This encom
 addressing the unique challenges presented by different machine learning subfields, such as clustering and
 positive-unlabeled learning.
 
+The following sections provide more details for each relevant subfield:
+
 .. toctree::
    :maxdepth: 1
 
