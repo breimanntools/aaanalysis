@@ -30,7 +30,7 @@ See the primary analysis pipeline of the AAanalysis framework in this diagram:
 
 .. image:: /_artwork/diagrams/components.png
 
-Details on the foundational concepts of AAnalysis are provided by the following usage principles:
+Details on the foundational concepts of AAnalysis are provided by the following sections:
 
 .. toctree::
    :maxdepth: 1

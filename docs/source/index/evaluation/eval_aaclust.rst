@@ -38,9 +38,9 @@ These measures are essential in assessing the distinct aspects of clustering qua
 and between-cluster separation, depicted below:
 
 .. image:: /_artwork/schemes/scheme_AAclust3.png
-   :algin: center
 
-   Illustration of clustering quality measures from [Breimann24b]_.
+
+Illustration of clustering quality measures from [Breimann24b]_.
 
 To learn more about clustering and its evaluation in detail, you may refer to the
 `scikit-learn clustering <https://scikit-learn.org/stable/modules/clustering.html>`_ documentation.
