@@ -29,6 +29,8 @@ physicochemical features (**df_feat**) by comparing protein sequence sets.
 See the primary analysis pipeline of the AAanalysis framework in this diagram:
 
 .. image:: /_artwork/diagrams/components.png
+   :align: center
+   :alt: AAanalysis workflow
 
 Details on the foundational concepts of AAnalysis are provided by the following sections:
 
