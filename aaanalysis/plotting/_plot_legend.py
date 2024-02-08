@@ -121,7 +121,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
 
     See Also
     --------
-    * More examples in `Plotting Prelude <plotting_prelude.html>`_.
+    * More examples in `Plotting prelude <plotting_prelude.html>`_.
     * `Linestyles of markers <https://matplotlib.org/stable/gallery/lines_bars_and_markers/linestyles.html>`_.
     * `Hatches <https://matplotlib.org/stable/gallery/shapes_and_collections/hatch_style_reference.html>`_, which are filling patterns.
     * :class:`matplotlib.lines.Line2D` for available marker shapes and line properties.

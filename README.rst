@@ -49,7 +49,7 @@ Moreover, AAanalysis provides functions for loading protein benchmark datasets (
 amino acid scale sets (**load_scales**), and their in-depth two-level classification (**AAontology**).
 
 If you are looking to make publication-ready plots with a view lines of code, see our
-`Plotting Prelude <https://https://aaanalysis.readthedocs.io/en/latest/generated/plotting_prelude.htmll>`_.
+`Plotting prelude <https://https://aaanalysis.readthedocs.io/en/latest/generated/plotting_prelude.htmll>`_.
 
 Install
 =======
