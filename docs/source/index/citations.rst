@@ -1,6 +1,6 @@
 .. _citations:
 
-If you use 'AAanalysis' in your work, please cite the respective publication as follows:
+If you use **AAanalysis** in your work, please cite the respective publication as follows:
 
 **AAclust**:
    [Breimann24a]_ Breimann and Frishman (2024a),

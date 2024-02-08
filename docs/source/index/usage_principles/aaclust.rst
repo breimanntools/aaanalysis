@@ -13,7 +13,3 @@ redundancy-reduced scale set:
 AAclust provides two selection modi: k-optimized and k-based selection:
 
 .. image :: /_artwork/schemes/scheme_AAclust2.png
-
-Three different clustering quality measures can be used to evaluate the the resulting clustering results:
-
-.. image :: /_artwork/schemes/scheme_AAclust3.png

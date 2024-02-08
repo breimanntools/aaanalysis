@@ -11,8 +11,8 @@ Tutorials
 
 Getting Started
 ---------------
-For a quick start with AAanalysis, we recommend the **Quick Start** tutorial. Get a deeper understanding with the
-**Slow Start** tutorial, offering the same examples plus conceptual background. Create publication-ready plots with a
+For a kickstart with AAanalysis, we recommend the **Quick start** tutorial. Get a deeper understanding with the
+**Slow start** tutorial, offering the same examples plus conceptual background. Create publication-ready plots with a
 few lines of code as shown in the **Plotting Prelude** tutorial.
 
 .. toctree::
@@ -35,7 +35,7 @@ introduction into the variety of available scale sets and **AAontology**, our tw
 
 Feature Engineering
 -------------------
-
+The
 
 .. toctree::
    :maxdepth: 1

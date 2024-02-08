@@ -20,7 +20,6 @@ To get started with AAanalysis, import it as follows:
 
     import aaanalysis as aa
 
-**Data Flow**:
 AAanalysis provides a handful of DataFrames for seamless data management. Starting with amino acid scale information
 (**df_scales**, **df_cat**) and protein sequences (**df_seq**), it enables segmentation into parts (**df_parts**)
 and accommodates user-defined splitting (**split_kws**). Our CPP algorithm then utilizes these to generate
