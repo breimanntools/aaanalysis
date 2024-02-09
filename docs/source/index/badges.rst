@@ -1,20 +1,20 @@
-.. Developer Notes:
+..
+    Developer Notes:
     Comments explain how to set up each badge and its purpose. Please update badges in README.rst and vice versa
-
-.. .. Group 1: Build and Test Status
-.. .. --------------------------------
-.. .. Build Status Badge
-.. .. To set up this badge, go to your GitHub Actions tab and find the relevant workflow.
-.. .. Click on "Create status badge" and copy the Markdown or RST code.
-.. .. image:: https://github.com/breimanntools/aaanalysis/workflows/Build/badge.svg
-..   :target: https://github.com/breimanntools/aaanalysis/actions
-..   :alt: Build Status
-
-.. .. Python-check Badge
-.. .. This badge reflects the status of your Python code checks if set up in GitHub Actions.
-.. .. image:: https://github.com/breimanntools/aaanalysis/workflows/Python-check/badge.svg
-..    :target: https://github.com/breimanntools/aaanalysis/actions
-..    :alt: Python-check
+    These part should be added if package stable
+    Group 1: Build and Test Status
+    Build Status Badge
+    To set up this badge, go to your GitHub Actions tab and find the relevant workflow.
+    Click on "Create status badge" and copy the Markdown or RST code.
+    image:: https://github.com/breimanntools/aaanalysis/workflows/Build/badge.svg
+    :target: https://github.com/breimanntools/aaanalysis/actions
+    :alt: Build Status
+    Python-check Badge
+    This badge reflects the status of your Python code checks if set up in GitHub Actions.
+    image:: https://github.com/breimanntools/aaanalysis/workflows/Python-check/badge.svg
+    :target: https://github.com/breimanntools/aaanalysis/actions
+    :alt: Python-check
+..
 
 .. Group 2: Package and Version Information
 .. ----------------------------------------

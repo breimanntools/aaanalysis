@@ -12,8 +12,8 @@ Tutorials
 
 Getting Started
 ---------------
-For an introduction into AAanalysis, explore our **Quick start** and **Slow start** tutorials, both offer the same examples
-with the latter explaining the conceptual background. The **Plotting Prelude** tutorial can help to create beautiful plots.
+For an introduction into AAanalysis, explore our **Quick start** and **Slow start** tutorials, both offering the same examples
+with the latter explaining the conceptual background. The **Plotting Prelude** tutorial can help you to create publication-ready plots.
 
 
 .. toctree::
