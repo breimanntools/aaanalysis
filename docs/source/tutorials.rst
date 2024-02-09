@@ -1,6 +1,7 @@
 ..
    Developer Notes:
-   The tutorials are referenced here such that the path must be relative to work for Sphinx referencing system elsewher.
+   The paths to tutorials are relative to ensure compatibility with the Sphinx referencing system
+   used throughout the documentation.
 ..
 
 
@@ -11,9 +12,9 @@ Tutorials
 
 Getting Started
 ---------------
-For a kickstart with AAanalysis, we recommend the **Quick start** tutorial. Get a deeper understanding with the
-**Slow start** tutorial, offering the same examples plus conceptual background. Create publication-ready plots with a
-few lines of code as shown in the **Plotting Prelude** tutorial.
+For an introduction into AAanalysis, explore our **Quick start** and **Slow start** tutorials, both offering the same examples
+with the latter explaining additionally their conceptual background. The **Plotting Prelude** tutorial can help to create beautiful plots.
+
 
 .. toctree::
    :maxdepth: 1
@@ -24,8 +25,7 @@ few lines of code as shown in the **Plotting Prelude** tutorial.
 
 Data Handling
 -------------
-Learn how to load protein benchmarking datasets in the **Data Loader** tutorial. See the **Scale Loader** for an
-introduction into the variety of available scale sets and **AAontology**, our two-level amino acid scale classification.
+Learn how to load protein benchmarking datasets and scale sets in the **Data Loader** and **Scale Loader**  tutorials.
 
 .. toctree::
    :maxdepth: 1
@@ -35,7 +35,8 @@ introduction into the variety of available scale sets and **AAontology**, our tw
 
 Feature Engineering
 -------------------
-The
+Explore interpretable feature engineering, the core of AAanalysis, with the **AAclust**, **SequenceFeature**,
+and **CPP** tutorials.
 
 .. toctree::
    :maxdepth: 1
@@ -46,6 +47,8 @@ The
 
 PU Learning
 -----------
+Start positive-Unlabeled (PU) learning to tackle unbalanced and small data through our **dPULearn** tutorial.
+
 .. toctree::
    :maxdepth: 1
 
@@ -53,6 +56,8 @@ PU Learning
 
 Explainable AI
 --------------
+Explaining sample level predictions at single-residue resolution is introduced in our **ShapExplainer** tutorial.
+
 .. toctree::
    :maxdepth: 1
 
