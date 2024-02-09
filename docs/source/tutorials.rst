@@ -12,8 +12,8 @@ Tutorials
 
 Getting Started
 ---------------
-For an introduction into AAanalysis, explore our **Quick start** and **Slow start** tutorials, both offering the same examples
-with the latter explaining additionally their conceptual background. The **Plotting Prelude** tutorial can help to create beautiful plots.
+For an introduction into AAanalysis, explore our **Quick start** and **Slow start** tutorials, both offer the same examples
+with the latter explaining the conceptual background. The **Plotting Prelude** tutorial can help to create beautiful plots.
 
 
 .. toctree::
@@ -25,7 +25,7 @@ with the latter explaining additionally their conceptual background. The **Plott
 
 Data Handling
 -------------
-Learn how to load protein benchmarking datasets and scale sets in the **Data Loader** and **Scale Loader**  tutorials.
+Learn how to load protein benchmarking datasets and amino acid scale sets in the **Data Loader** and **Scale Loader**  tutorials.
 
 .. toctree::
    :maxdepth: 1
