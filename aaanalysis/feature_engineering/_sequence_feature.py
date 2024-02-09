@@ -215,20 +215,20 @@ class SequenceFeature:
 
         Formats for ``df_seq`` are differentiated by their respective columns:
 
-        ``Position-based format``
+        **Position-based format**
             - 'sequence': The complete amino acid sequence.
             - 'tmd_start': Starting positions of the TMD in the sequence.
             - 'tmd_stop': Ending positions of the TMD in the sequence.
 
-        ``Part-based format``
+        **Part-based format**
             - 'jmd_n': Amino acid sequence for JMD-N.
             - 'tmd': Amino acid sequence for TMD.
             - 'jmd_c': Amino acid sequence for JMD-C.
 
-        ``Sequence-TMD-based format``
+        **Sequence-TMD-based format**
             - 'sequence' and 'tmd' columns.
 
-        ``Sequence-based format``
+        **Sequence-based format**
             - Only the 'sequence' column.
 
         Examples
@@ -267,9 +267,9 @@ class SequenceFeature:
         """
         Create dictionary with kwargs for three split types:
 
-            - ``Segment``: continuous sub-sequence.
-            - ``Pattern``: non-periodic discontinuous sub-sequence
-            - ``PeriodicPattern``: periodic discontinuous sub-sequence.
+            - **Segment**: continuous sub-sequence.
+            - **Pattern**: non-periodic discontinuous sub-sequence
+            - **PeriodicPattern**: periodic discontinuous sub-sequence.
 
         Parameters
         ----------
