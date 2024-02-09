@@ -52,7 +52,7 @@ AI  `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ framework to expl
 single-residue resolution.
 
 If you are looking to make publication-ready plots with a view lines of code, see our
-`Plotting Prelude <https://https://aaanalysis.readthedocs.io/en/latest/generated/plotting_prelude.htmll>`_.
+`Plotting Prelude <https://aaanalysis.readthedocs.io/en/latest/generated/plotting_prelude.html>`_.
 
 You can find the official documentation at `Read the Docs <https://aaanalysis.readthedocs.io/en/latest/>`_.
 
