@@ -31,7 +31,7 @@ documentation, we compiled various overview :ref:`Tables <tables>` that provide 
 **AAontology** scale classification and a variety of benchmark protein datasets. Discover the scientific foundation
 of AAanalysis in the :ref:`References <references>` section.
 
-.. comment::
+..
 
     TODO if diagram is ready
     **Entry Points**:
@@ -39,3 +39,5 @@ of AAanalysis in the :ref:`References <references>` section.
     in diverse research environments.
 
     [Link to entry point diagram]
+
+..

@@ -272,8 +272,8 @@ Various amino acid scale datasets are provided.
 AAontology
 ----------
 AAontology ([Breimann24b]_) provides a two-tiered system for amino acid classification, designed to enhance the interpretability of
-sequence-based protein predictions. It encompasses 586 physicochemical scales, which are systematically arranged
-into ``67 subcategories`` and further grouped into ``8 categories``. Every scale, subcategory, and main category
+sequence-based protein predictions. It encompasses *586 physicochemical scales*, which are systematically arranged
+into *67 subcategories* and further grouped into *8 categories*. Every scale, subcategory, and main category
 is clearly defined and supported by key references. The scales were grouped into their respective subcategories
 using a combination of AAclust ([Breimann24a]_) clustering and assessments of biological similarity. Those scales that couldn't
 be allocated to a specific subcategory are labeled as 'unclassified'.
@@ -346,7 +346,7 @@ Categories
      - 1
    * - Shape
      - Subcategories regarding shape and steric characteristics of residues (e.g., side chain angle, symmetry, or measures of graph-based representation of residues such as eccentricity)
-     - Prabhakaran-Ponnuswamy, 1982; Karkbara-Knisley, 2016
+     - Prabhakaran-Ponnuswamy, 1982; Kakraba-Knisley, 2016
      - 45
      - 4
      - 6
@@ -681,17 +681,17 @@ Subcategories
      - Graph (1. eigenvalue)
      - 5
      - Measure of graph-theoretic representation of residue, defined as eigenvalue of Laplacian matrix of undirected node-weighted graph (nodes represent atoms (weighted by mass) and edges represent molecular bonds)
-     - Karkbara-Knisley, 2016
+     - Kakraba-Knisley, 2016
    * - Shape
      - Graph (2. eigenvalue)
      - 3
      - Measure of graph-theoretic representation of residue, defined as second smallest eigenvalue of Laplacian matrix of undirected node-weighted graph (nodes represent atoms (weighted by mass) and edges represent molecular bonds)
-     - Karkbara-Knisley, 2016
+     - Kakraba-Knisley, 2016
    * - Shape
      - Side chain length
      - 19
      - Length of side chain and graph-based size measures like eccentricity of undirected node-weighted graph (nodes represent atoms (weighted by mass) and edges represent molecular bonds)
-     - Charton-Charton, 1983; Karkbara-Knisley, 2016
+     - Charton-Charton, 1983; Kakraba-Knisley, 2016
    * - Shape
      - Reduced distance
      - 5

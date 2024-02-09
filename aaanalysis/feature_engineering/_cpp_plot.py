@@ -538,7 +538,7 @@ class CPPPlot:
         ----------
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
-            Must also include feature importance (``feat_importance``) or impact (``feat_impact_'name'``) columns.
+            Must also include feature importance (`feat_importance`) or impact (``feat_impact_'name'``) columns.
         shap_plot : bool, default=False
             Set the analysis type: **CPP Analysis** (if ``False``) for group-level or
             **CPP-SHAP Analysis** for sample-level (or subgroup-level) results:
@@ -958,7 +958,7 @@ class CPPPlot:
 
         col_cat : {'category', 'subcategory', 'scale_name'}, default='subcategory'
             Column name in ``df_feat`` for scale classification (y-axis).
-        col_val : {'mean_dif', 'abs_mean_dif', 'abs_auc', 'feat_importance', 'mean_dif_'name'', 'feat_impact_'name''}, default='mean_dif'
+        col_val : {'mean_dif', 'abs_mean_dif', 'abs_auc', 'feat_importance', ``mean_dif_'name'``, ``feat_impact_'name'``}, default='mean_dif'
             Column name in ``df_feat`` for numerical values to display. Must match with the ``shap_plot`` setting.
         name_test : str, default="TEST"
             Name for the test dataset.
@@ -1196,7 +1196,7 @@ class CPPPlot:
             Column name in ``df_feat`` for scale information (y-axis).
         col_val : {'mean_dif', 'abs_mean_dif', 'abs_auc'}, default='mean_dif'
             Column name in ``df_feat`` for numerical values to display.
-        col_imp :  {'feat_importance', 'feat_importance_'name''}, default='feat_importance'
+        col_imp :  {``feat_importance``, ``feat_importance_'name'``}, default='feat_importance'
             Column name in ``df_feat`` for feature importance (group-, subgroup- or sample-level).
         name_test : str, default="TEST"
             Name for the test dataset.
