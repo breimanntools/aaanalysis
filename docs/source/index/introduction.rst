@@ -1,3 +1,14 @@
+..
+   Developer Notes:
+
+    TODO if diagram is ready
+    **Entry Points**:
+    Our toolkit bridges seamlessly with external libraries, enhancing its versatility and integration capabilities
+    in diverse research environments.
+
+    [Link to entry point diagram]
+..
+
 Introduction
 ============
 **AAanalysis** is a Python framework designed for scientists and researchers focusing on interpretable sequence-based
@@ -30,14 +41,3 @@ To get hands-on experience, explore our :ref:`Tutorials <tutorials>`. In additio
 documentation, we compiled various overview :ref:`Tables <tables>` that provide in-depth resources, including our
 **AAontology** scale classification and a variety of benchmark protein datasets. Discover the scientific foundation
 of AAanalysis in the :ref:`References <references>` section.
-
-..
-
-    TODO if diagram is ready
-    **Entry Points**:
-    Our toolkit bridges seamlessly with external libraries, enhancing its versatility and integration capabilities
-    in diverse research environments.
-
-    [Link to entry point diagram]
-
-..
