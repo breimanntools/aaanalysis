@@ -46,8 +46,8 @@ Its foundation are the following algorithms:
 - **AAclust**: k-optimized clustering wrapper framework to select redundancy-reduced sets of numerical scales
   (e.g., amino acid scales).
 
-In addition, AAanalysis provide functions for loading various protein benchmark datasets (**load_data**), amino acid
-scales (**load_scales**), and their two-level classification (**AAontology**). We combined **CPP** with the explainable
+In addition, AAanalysis provide functions for loading various protein benchmark datasets, amino acid scales,
+and their two-level classification (**AAontology**). We combined **CPP** with the explainable
 AI  `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ framework to explain sample level predictions with
 single-residue resolution.
 
