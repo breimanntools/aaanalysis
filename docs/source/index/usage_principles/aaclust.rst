@@ -24,7 +24,6 @@ The distinctions between these modes and their respective AAclust options are de
 
 .. figure:: /_artwork/schemes/scheme_AAclust2.png
    :align: center
-   :width: 750px
    :alt: Operational modes of AAclust.
 
    Operational modes of AAclust for determining the number of clusters, from [Breimann24a]_.
