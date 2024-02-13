@@ -8,9 +8,9 @@ AAclust is a clustering wrapper framework. introduced in [Breimann24a]_.
 Taking any a set of amino acid scales as input, it estimates and optimizes the number of clusters to obtain a
 redundancy-reduced scale set:
 
-.. image :: /_artwork/schemes/scheme_AAclust1.png
+.. figure:: /_artwork/schemes/scheme_AAclust1.png
 
-Scheme of AAclust algorithm with clustering of amino acid scales and scale selection from [Breimann24a]_.
+   Scheme of AAclust algorithm with clustering of amino acid scales and scale selection from [Breimann24a]_.
 
 AAclust provides two selection modi: k-optimized and k-based selection:
 
