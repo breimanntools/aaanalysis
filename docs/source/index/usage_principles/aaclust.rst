@@ -9,20 +9,25 @@ of amino acid scales, introduced in [Breimann24a]_. Using Pearson correlation, A
 
 
 .. figure:: /_artwork/schemes/scheme_AAclust1.png
+   :align: center
+   :scale: 100%
+   :alt: AAclust algorithm.
 
    Scheme of AAclust algorithm with clustering of amino acid scales and scale selection from [Breimann24a]_.
 
-AAclust offers two distinct approaches for setting the number of clusters (*k*):
+AAclust introduces two modes for defining the number of clusters (*k*):
 
-    - *k*-optimized: Here, *k* is automatically optimized by AAclust, ensuring an automated and refined selection process
-    - *k*-based: In this mode, *k* is directly specified by the user.
+    - *k*-optimized: AAclust automatically optimizes *k*, streamlining the scale selection process.
+    - *k*-based: The user specifies *k*, allowing for custom configurations.
 
-The following scheme compares both methods and their respective options:
+TThe distinctions between these modes and their respective AAclust options are depicted below:
 
 
 .. figure:: /_artwork/schemes/scheme_AAclust2.png
+   :align: center
+   :scale: 75%
+   :alt: AAclust options
 
-   Two operational modes (*k*-optimized and *k*-based) of AAclust for determining the number of clusters,
-   from [Breimann24a]_.
+   Operational modes of AAclust for determining the number of clusters, from [Breimann24a]_.
 
 See our :doc:`AAclust Tutorial </generated/tutorial3a_aaclust>` for hands-on examples.
