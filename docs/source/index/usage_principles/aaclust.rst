@@ -10,7 +10,6 @@ of amino acid scales, introduced in [Breimann24a]_. Using Pearson correlation, A
 
 .. figure:: /_artwork/schemes/scheme_AAclust1.png
    :align: center
-   :scale: 100%
    :alt: AAclust algorithm for clustering amino acid scales.
 
    Scheme of AAclust algorithm with clustering of amino acid scales and scale selection, from [Breimann24a]_.
