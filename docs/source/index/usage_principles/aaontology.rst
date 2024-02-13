@@ -7,13 +7,13 @@ AAontology is a two-level classification of amino acid scale, introduced in [Bre
 
 It was created by automatic scale classification and manual refinement:
 
-.. image :: /_artwork/schemes/scheme_AAontology1.png
+.. figure:: /_artwork/schemes/scheme_AAontology1.png
 
-Workflow of scale classification from [Breimann24b]_.
+   Workflow of scale classification from [Breimann24b]_.
 
 
 AAontology comprises 586 amino acid scales, organized into 67 scale subcategories, and 8 scale categories:
 
-.. image :: /_artwork/schemes/scheme_AAontology2.png
+.. figure:: /_artwork/schemes/scheme_AAontology2.png
 
-AAontology two-level amino acid scale classification from [Breimann24b]_.
+   AAontology two-level amino acid scale classification from [Breimann24b]_.

@@ -14,7 +14,8 @@ redundancy-reduced scale set:
 
 AAclust provides two selection modi: k-optimized and k-based selection:
 
-.. image :: /_artwork/schemes/scheme_AAclust2.png
+.. figure:: /_artwork/schemes/scheme_AAclust2.png
 
-Two AAclust modi for number of clusters (k): k-optimized (AAclust optimized) and k-based (user-defined ), from [Breimann24a]_.
+   Two AAclust modi for number of clusters (k): k-optimized (AAclust optimized) and k-based (user-defined ),
+   from [Breimann24a]_.
 

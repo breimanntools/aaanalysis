@@ -19,4 +19,6 @@ To explain machine learning-based prediction results for individual proteins wit
 we combined CPP with the explainable AI framework `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_.
 AAanalysis offers four different visualizations:
 
-.. image :: /_artwork/schemes/scheme_CPP_eAI.png
+.. figure:: /_artwork/schemes/scheme_CPP_eAI.png
+
+   Overview of explainable AI with single-residue resolution by combining CPP with the SHAP, from [Breimann24c]_.
