@@ -110,9 +110,9 @@ class CPP(Tool):
         See Also
         --------
         * :class:`CPPPlot`: the respective plotting class.
-        * :class:`SequenceFeature` for definition of sequence ``Parts``.
-        * :meth:`SequenceFeature.split_kws` for definition of ``Splits`` key word arguments.
-        * :func:`load_scales` for definition of amino acid ``Scales`` and their categories.
+        * :class:`SequenceFeature` for definition of sequence **Parts**.
+        * :meth:`SequenceFeature.split_kws` for definition of **Splits** key word arguments.
+        * :func:`load_scales` for definition of amino acid **Scales** and their categories.
 
         Examples
         --------
@@ -217,9 +217,8 @@ class CPP(Tool):
         -----
         * Pre-filtering can be adjusted by the following parameters: {'n_pre_filter', 'pct_pre_filter', 'max_std_test'}.
         * Filtering can be adjusted by the following parameters: {'n_filter', 'max_overlap', 'max_cor', 'check_cat'}.
-        * ``check_cat`` (not introduced in [Breimann24c]_) was included to provide higher filtering flexibility.
         * ``df_feat`` contains the following 13 columns, including the unique feature id (1), scale information (2-5),
-           statistical results for filtering and ranking (6-12), and feature positions (13):
+          statistical results for filtering and ranking (6-12), and feature positions (13):
 
             1. 'features': Feature ID (PART-SPLIT-SCALE)
             2. 'category': Scale category
@@ -237,7 +236,7 @@ class CPP(Tool):
 
         See Also
         --------
-        * :func:`comp_auc_adjusted` for details on 'abs_auc'.
+        * :func:`comp_auc_adjusted` for details on ``abs_auc``.
 
         Examples
         --------

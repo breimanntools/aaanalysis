@@ -18,4 +18,3 @@ AAclust provides two selection modi: k-optimized and k-based selection:
 
    Two AAclust modi for number of clusters (k): k-optimized (AAclust optimized) and k-based (user-defined ),
    from [Breimann24a]_.
-

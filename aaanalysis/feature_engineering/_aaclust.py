@@ -210,13 +210,13 @@ class AAclust(Wrapper):
 
         Notes
         -----
-        * The ``AAclust`` algorithm consists of three main steps:
+        * The **AAclust** algorithm consists of three main steps:
 
             1. Estimate the lower bound of k.
             2. Refine k (recursively) using the chosen quality measure.
             3. Optionally, merge smaller clusters as directed by the merge ``metric``.
 
-        * ``AAclust`` provides two correlation-based quality measure to optimize ``n_clusters``:
+        * **AAclust** provides two correlation-based quality measure to optimize ``n_clusters``:
 
             - ``min_cor_center``: Minimum Pearson correlation between the cluster center and all cluster members.
             - ``min_cor_all``: Minium pairwise Pearson correlation among all cluster members.

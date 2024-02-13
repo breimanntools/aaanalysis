@@ -399,12 +399,12 @@ class CPPPlot:
         """
         Plot distributions of CPP feature values for test and reference datasets highlighting their mean difference.
 
-        Introduced in [Breimann24a]_, a CPP feature is defined as a ``Part-Split-Scale`` combination. For a sample,
+        Introduced in [Breimann24a]_, a CPP feature is defined as a **Part-Split-Scale** combination. For a sample,
         a feature value is computed in three steps:
 
             1. **Part Selection**: Identify a specific sequence part.
-            2. **Part-Splitting**: Divide the selected part into segments, creating a 'Part-Split' combination.
-            3. **Scale Value Assignment**: For each amino acid in the 'Part-Split' segment,
+            2. **Part-Splitting**: Divide the selected part into subsequences, creating a **Part-Split** combination.
+            3. **Scale Value Assignment**: For each amino acid in the **Part-Split** subsequence,
                assign its corresponding scale value and calculate the average, which is termed the feature value.
 
         Parameters
@@ -413,7 +413,7 @@ class CPPPlot:
             Name of the feature for which test and reference set distributions and difference should be plotted.
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
             DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
-            in a distinct ``Position-based``, ``Part-based``, ``Sequence-based``, or ``Sequence-TMD-based`` format.
+            in a distinct **Position-based**, **Part-based**, **Sequence-based**, or **Sequence-TMD-based** format.
         labels : array-like, shape (n_samples,)
             Class labels for samples in sequence DataFrame (typically, test=1, reference=0).
         label_test : int, default=1,
@@ -460,7 +460,7 @@ class CPPPlot:
         See Also
         --------
         * :class:`SequenceFeature` for details on CPP feature concept.
-        * :meth:`SequenceFeature.get_df_parts` for details on format of ``df_seq``.
+        * :meth:`SequenceFeature.get_df_parts` for details on formats of ``df_seq``.
         * The internally used :func:`seaborn.histplot` and :func:`seaborn.kdeplot` functions.
 
         Examples
