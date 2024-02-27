@@ -7,6 +7,7 @@ from IPython.display import display, HTML
 
 from aaanalysis import utils as ut
 
+
 # Helper functions
 def _adjust_df(df=None, char_limit = 50):
     df = df.copy()

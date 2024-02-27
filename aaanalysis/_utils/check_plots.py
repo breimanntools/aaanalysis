@@ -9,6 +9,7 @@ from ._utils import add_str
 import aaanalysis._utils.check_type as check_type
 import numpy as np
 
+
 # Helper functions
 def _is_valid_hex_color(val):
     """Check if a value is a valid hex color."""

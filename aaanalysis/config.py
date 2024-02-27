@@ -20,6 +20,7 @@ _dict_options = {
     'df_cat': None,
 }
 
+
 # Check system level (option) parameters or depending parameters
 def check_verbose(verbose=None):
     """Check if general verbosity is on or off. Adjusted based on options setting and value provided to object"""

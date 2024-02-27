@@ -3,6 +3,7 @@ This is a script for getting current font size of figures.
 """
 import seaborn as sns
 
+
 # Main function
 def plot_gcfs(option: str = 'font.size') -> int:
     """

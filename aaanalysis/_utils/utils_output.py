@@ -6,6 +6,7 @@ import sys
 
 STR_PROGRESS = "."
 
+
 # I Helper Functions
 # Plotting & print functions
 def _print_red(input_str, **args):
