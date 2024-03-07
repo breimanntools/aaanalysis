@@ -2,8 +2,10 @@
 This is a script for adjusting terminal output.
 """
 import numpy as np
+import sys
 
 STR_PROGRESS = "."
+
 
 # I Helper Functions
 # Plotting & print functions
@@ -33,13 +35,16 @@ def print_start_progress(start_message=None):
     # Start progress bar
     progress_bar = " " * 25
     print_out(f"\r   |{progress_bar}| 0.0%", end="")
+    sys.stdout.flush()
 
 
-def print_progress(i=0, n=0):
+def print_progress(i=0, n=0, add_new_line=False):
     """Print progress"""
     progress = min(np.round(i/n * 100, 2), 100)
     progress_bar = STR_PROGRESS * int(progress/4) + " " * (25-int(progress/4))
-    print_out(f"\r   |{progress_bar}| {progress:.1f}%", end="")
+    str_end = "\n" if add_new_line else ""
+    print_out(f"\r   |{progress_bar}| {progress:.1f}%", end=str_end)
+    sys.stdout.flush()
 
 
 def print_end_progress(end_message=None):
@@ -50,3 +55,5 @@ def print_end_progress(end_message=None):
     # End message
     if end_message is not None:
         print_out(end_message)
+    sys.stdout.flush()
+

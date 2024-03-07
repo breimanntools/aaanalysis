@@ -21,8 +21,8 @@ def _check_n_classes_n_samples(X=None, labels=None):
 
 
 # Adjusted Area Under the Curve (AUC*)
-def comp_auc_adjusted(X : ut.ArrayLike2D = None,
-                      labels : ut.ArrayLike1D = None,
+def comp_auc_adjusted(X: ut.ArrayLike2D = None,
+                      labels: ut.ArrayLike1D = None,
                       label_test: int = 1,
                       label_ref: int = 0,
                       ) -> ut.ArrayLike1D:
@@ -70,8 +70,8 @@ def comp_auc_adjusted(X : ut.ArrayLike2D = None,
 
 
 # BIC score
-def comp_bic_score(X : ut.ArrayLike2D = None,
-                   labels : ut.ArrayLike1D =None
+def comp_bic_score(X: ut.ArrayLike2D = None,
+                   labels: ut.ArrayLike1D =None
                    ) -> float:
     """
     Compute an adjusted Bayesian Information Criterion (BIC) (-∞, ∞) for assessing clustering quality.
@@ -121,10 +121,10 @@ def comp_bic_score(X : ut.ArrayLike2D = None,
 
 
 # Kullback-Leibler Divergence
-def comp_kld(X : ut.ArrayLike2D = None,
-             labels : ut.ArrayLike1D =None,
-             label_test : int = 1,
-             label_ref : int = 0
+def comp_kld(X: ut.ArrayLike2D = None,
+             labels: ut.ArrayLike1D =None,
+             label_test: int = 1,
+             label_ref: int = 0
              ) -> ut.ArrayLike1D:
     """
     Compute the Kullback-Leibler Divergence (KLD) [0, ∞) for assessing the similarity between two groups.
@@ -179,7 +179,7 @@ def comp_kld(X : ut.ArrayLike2D = None,
     ut.check_number_val(name="label_ref", val=label_ref, just_int=True, accept_none=False)
     ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
                     n_per_group_requiered=2, allow_other_vals=False)
-    ut.check_match_X_labels(X=X, labels=labels, check_variability_for_kld=True)
+    ut.check_match_X_labels(X=X, labels=labels, check_variability=True)
     # Compute tge Kullback-Leibler divergence
     try:
         kld = kullback_leibler_divergence_(X=X, labels=labels, label_test=label_test, label_ref=label_ref)

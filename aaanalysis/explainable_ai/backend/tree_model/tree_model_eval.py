@@ -8,20 +8,20 @@ import aaanalysis.utils as ut
 
 # II Main methods
 @ut.catch_undefined_metric_warning()
-def eval_feature_selections(X, labels=None, list_is_feature=None, names_feature_selections=None, n_cv=5,
+def eval_feature_selections(X, labels=None, list_is_selected=None, names_feature_selections=None, n_cv=5,
                             list_metrics=None, list_model_classes=None, list_model_kwargs=None, verbose=True):
     """Evaluate the performance of different feature selections for multiple models,
     and compute the average score across all models and rounds for each scoring metric."""
-    n_feature_sets = len(list_is_feature)
+    n_feature_sets = len(list_is_selected)
     n_metrics = len(list_metrics)
     list_evals = np.empty((n_feature_sets, n_metrics))
     if verbose:
         ut.print_start_progress(start_message=f"Tree Model starts evaluation of {n_feature_sets} feature sets.")
-    for i, is_feature_rounds in enumerate(list_is_feature):
-        n_rounds = len(is_feature_rounds)
+    for i, is_selected_rounds in enumerate(list_is_selected):
+        n_rounds = len(is_selected_rounds)
         results_round = np.empty((n_rounds, n_metrics))
-        for j, is_feature in enumerate(is_feature_rounds):
-            X_selected = X[:, is_feature]
+        for j, is_selected in enumerate(is_selected_rounds):
+            X_selected = X[:, is_selected]
             for k, eval_score in enumerate(list_metrics):
                 if verbose:
                     pct_progress = (j + k/n_metrics)/n_rounds

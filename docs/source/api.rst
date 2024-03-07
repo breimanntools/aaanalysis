@@ -62,7 +62,7 @@ Explainable AI
     :template: autosummary/class_template.rst
 
     TreeModel
-    ShapModel
+    ShapExplainer
 
 .. _perturbation_api:
 

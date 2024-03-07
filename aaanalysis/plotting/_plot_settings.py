@@ -22,15 +22,9 @@ def check_font(font="Arial"):
         raise ValueError(error_message)
 
 
-def check_grid_axis(grid_axis="y"):
-    list_grid_axis = ["y", "x", "both"]
-    if grid_axis not in list_grid_axis:
-        raise ValueError(f"'grid_axis' ({grid_axis}) should be one of following: {list_grid_axis}")
-
-
 # Helper function
 def set_tick_size(axis=None, major_size=None, minor_size=None):
-    """Set tick size for the given axis."""
+    """Set tick size of the given axis."""
     plt.rcParams[f"{axis}tick.major.size"] = major_size
     plt.rcParams[f"{axis}tick.minor.size"] = minor_size
 
@@ -106,7 +100,7 @@ def plot_settings(font_scale: Union[int, float] = 1,
     # Check input
     ut.check_number_range(name="font_scale", val=font_scale, min_val=0, just_int=False)
     check_font(font=font)
-    check_grid_axis(grid_axis=grid_axis)
+    ut.check_grid_axis(grid_axis=grid_axis)
     args_bool = {"weight_bold": weight_bold, "adjust_only_font": adjust_only_font,
                  "adjust_further_elements": adjust_further_elements, "grid": grid,
                  "short_ticks": short_ticks, "short_ticks_x": short_ticks_x, "short_ticks_y": short_ticks_y,

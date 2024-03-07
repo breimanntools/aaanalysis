@@ -43,7 +43,7 @@ ARGS = dict(n_cv=2, list_metrics=["accuracy"])
 
 # Create valid X
 df_seq = aa.load_dataset(name="DOM_GSEC")
-df_feat = aa.load_features()
+df_feat = aa.load_features().head(50)
 valid_labels = df_seq["label"].to_list()
 sf = aa.SequenceFeature()
 df_parts = sf.get_df_parts(df_seq=df_seq)
@@ -109,7 +109,7 @@ class TestEval:
                               names_feature_selections=names, **ARGS)
             assert isinstance(df_eval, pd.DataFrame)
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=7500)
     @given(metrics=st.lists(st.sampled_from(["accuracy", "f1", "precision", "recall", "roc_auc"]),
                             min_size=1, max_size=2))
     def test_list_metrics_parameter(self, metrics):

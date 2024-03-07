@@ -1,6 +1,9 @@
 """
-This is the main script for utility functions, folder structure, and constants.
-Most imported modules contain checking functions for code validation.
+This is the core script for utility functions, folder structure, and constants.
+
+Utility functions are explicitly imported here such that other modules can import them (via ut.).
+These comprise options, datatypes, decorators, check functions, internal utility functions,
+and backend of external utility functions.
 """
 import os
 import platform
@@ -8,42 +11,80 @@ from functools import lru_cache
 import pandas as pd
 import seaborn as sns
 import numpy as np
-import warnings
 
+# Options
 from .config import (options,
                      check_verbose,
                      check_n_jobs,
                      check_random_state)
 
-# Import utility functions explicitly (can be imported from this utils file from other modules)
-# Checking functions
-from ._utils.check_type import (check_number_range, check_number_val, check_str, check_bool,
-                                check_dict, check_tuple, check_list_like,
-                                check_ax, check_figsize)
-from ._utils.check_data import (check_X, check_X_unique_samples,
-                                check_labels, check_match_X_labels, check_match_X_list_labels,
-                                check_match_list_labels_names_datasets,
-                                check_array_like, check_superset_subset,
-                                check_df)
-from ._utils.check_models import check_mode_class, check_model_kwargs
-from ._utils.check_plots import (check_vmin_vmax, check_lim, check_dict_xlims,
-                                 check_color, check_list_colors, check_dict_color,
-                                 check_cmap, check_palette)
+# Data types
+from ._utils.utils_types import (ArrayLike1D,
+                                 ArrayLike2D,
+                                 VALID_INT_TYPES,
+                                 VALID_FLOAT_TYPES,
+                                 VALID_INT_FLOAT_TYPES)
 
-# Special functions
-from ._utils.new_types import ArrayLike1D, ArrayLike2D
-from ._utils.decorators import (catch_runtime_warnings, CatchRuntimeWarnings,
-                                catch_convergence_warning, ClusteringConvergenceException,
+# Decorators
+from ._utils.decorators import (catch_runtime_warnings,
+                                CatchRuntimeWarnings,
+                                catch_convergence_warning,
+                                ClusteringConvergenceException,
                                 catch_invalid_divide_warning,
-                                catch_undefined_metric_warning, CatchUndefinedMetricWarning)
-from ._utils.plotting import (plot_gco, plot_get_clist_, plot_legend_)
+                                catch_undefined_metric_warning,
+                                CatchUndefinedMetricWarning)
 
-# Utility functions
-from ._utils.utils_metrics import (auc_adjusted_, kullback_leibler_divergence_, bic_score_)
-from ._utils.utils_output import (print_out, print_start_progress, print_progress, print_end_progress)
+# Check functions
+from ._utils.check_type import (check_number_range,
+                                check_number_val,
+                                check_str,
+                                check_bool,
+                                check_dict,
+                                check_tuple,
+                                check_list_like)
+from ._utils.check_data import (check_X,
+                                check_X_unique_samples,
+                                check_labels,
+                                check_match_X_labels,
+                                check_match_X_list_labels,
+                                check_match_list_labels_names_datasets,
+                                check_array_like,
+                                check_superset_subset,
+                                check_df)
+from ._utils.check_models import (check_mode_class,
+                                  check_model_kwargs)
+from ._utils.check_plots import (check_fig,
+                                 check_ax,
+                                 check_figsize,
+                                 check_grid_axis,
+                                 check_font_weight,
+                                 check_fontsize_args,
+                                 check_vmin_vmax,
+                                 check_lim,
+                                 check_dict_xlims,
+                                 check_color,
+                                 check_list_colors,
+                                 check_dict_color,
+                                 check_cmap,
+                                 check_palette)
+
+# Internal utility functions
+from ._utils.utils_output import (print_out,
+                                  print_start_progress,
+                                  print_progress,
+                                  print_end_progress)
 from ._utils.utils_plot_elements import (plot_add_bars,
                                          adjust_spine_to_middle,
-                                         x_ticks_0)
+                                         x_ticks_0,
+                                         adjust_tuple_elements)
+
+# External (system-level) utility functions (only backend)
+from ._utils.plotting import (plot_gco,
+                              plot_get_clist_,
+                              plot_legend_)
+from ._utils.metrics import (auc_adjusted_,
+                             kullback_leibler_divergence_,
+                             bic_score_)
 
 # Folder structure
 def _folder_path(super_folder, folder_name):
@@ -133,6 +174,7 @@ COL_AA_REF = "amino_acids_ref"
 COL_FEAT_IMPORT = "feat_importance"
 COL_FEAT_IMPORT_STD = "feat_importance_std"
 COL_FEAT_IMPACT = "feat_impact"
+COL_FEAT_IMPACT_STD = "feat_impact_std"
 
 COLS_FEAT_SCALES = [COL_CAT, COL_SUBCAT, COL_SCALE_NAME]
 COLS_FEAT_STAT = [COL_ABS_AUC, COL_ABS_MEAN_DIF, COL_MEAN_DIF, COL_STD_TEST, COL_STD_REF]
@@ -194,9 +236,15 @@ LABEL_FEAT_VAL = "Feature value"
 LABEL_HIST_COUNT = "Number of proteins"
 LABEL_HIST_DEN = "Relative density"
 
+LABEL_FEAT_NUMBER = "Number of features\n(per residue position)"
 LABEL_FEAT_IMPORT_CUM = "Cumulative feature importance\n(normalized) [%]"
 LABEL_FEAT_IMPACT_CUM = "Cumulative feature impact\n(normalized) [%]"
 LABEL_CBAR_FEAT_IMPACT_CUM = "Cumulative feature impact"
+LABEL_FEAT_POS = ("                  Feature                  \n"
+                  "Scale (subcategory)  +  Positions                 ")
+
+_LABEL_FEAT_POS = ("      Feature     \n"
+                  "       Scale  +  Positions")
 
 LABEL_FEAT_IMPORT = "Importance [%]"
 LABEL_FEAT_IMPACT = "Impact [%]"
@@ -282,32 +330,8 @@ def get_dict_part_seq(tmd=None, jmd_n=None, jmd_c=None):
     return part_seq_dict
 
 
-def _get_cpp_cmap(n_colors=100, facecolor_dark=None):
-    """Generate a diverging color map for CPP feature values."""
-    n = 5
-    cmap = sns.color_palette(palette="RdBu_r", n_colors=n_colors + n * 2)
-    cmap_low, cmap_high = cmap[0:int((n_colors + n * 2) / 2)], cmap[int((n_colors + n * 2) / 2):]
-    if facecolor_dark is None:
-        c_middle = [cmap_low[-1]]
-    else:
-        c_middle = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
-    add_to_end = 1  # Must be added to keep list size consistent
-    cmap = cmap_low[0:-n] + c_middle + cmap_high[n+add_to_end:]
-    return cmap
 
 
-def _get_shap_cmap(n_colors=100, facecolor_dark=True):
-    """Generate a diverging color map for feature values."""
-    n = 20 # TODO check if 5 is better for CPP-SHAP heatmap
-    cmap_low = sns.light_palette(COLOR_SHAP_NEG, input="hex", reverse=True, n_colors=int(n_colors / 2) + n)
-    cmap_high = sns.light_palette(COLOR_SHAP_POS, input="hex", n_colors=int(n_colors / 2) + n)
-    if facecolor_dark is None:
-        c_middle = [cmap_low[-1]]
-    else:
-        c_middle = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
-    add_to_end = (n_colors+1)%2 # Must be added to keep list size consistent
-    cmap = cmap_low[0:-n] + c_middle + cmap_high[n+add_to_end:]
-    return cmap
 
 # II Main functions
 # Caching for data loading for better performance (data loaded ones)
@@ -355,6 +379,10 @@ def add_names_to_df_eval(df_eval=None, names=None):
 
 
 # Plotting utilities
+def get_color_dif(mean_dif=0):
+    return COLOR_FEAT_NEG if mean_dif < 0 else COLOR_FEAT_POS
+
+
 # DEV: Exceptionally placed here due to dependency on constants
 def plot_get_cdict_(name=STR_DICT_COLOR):
     """Return DICT_COLOR or DICT_COLOR_CAT"""
@@ -366,14 +394,59 @@ def plot_get_cdict_(name=STR_DICT_COLOR):
         raise ValueError(f"'name' must be '{STR_DICT_COLOR}' or '{STR_DICT_CAT}'")
 
 
-def plot_get_cmap_(name="CPP", n_colors=101, facecolor_dark=None):
-    """Get color map for CPP or CPP-SHAP plots"""
-    if name == STR_CMAP_CPP:
-        return _get_cpp_cmap(n_colors=n_colors, facecolor_dark=facecolor_dark)
-    elif name == STR_CMAP_SHAP:
-        return _get_shap_cmap(n_colors=n_colors, facecolor_dark=facecolor_dark)
+def _get_diverging_cmap(cmap="ReBu_r", n_colors=101, facecolor_dark=False, only_pos=False, only_neg=False):
+    """Generate a diverging colormap based on the provided cmap."""
+    n = min(int(np.floor(1 + n_colors/20)), 5)
+    color_0 = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
+    if only_neg:
+        cmap = sns.color_palette(palette=cmap, n_colors=(n_colors * 2) + n)
+        cmap = cmap[0:n_colors-1] + color_0
+    elif only_pos:
+        cmap = sns.color_palette(palette=cmap, n_colors=(n_colors * 2) + n)
+        cmap = color_0 + cmap[-n_colors+1:]
     else:
-        raise ValueError(f"'name' must be '{STR_CMAP_CPP}' or '{STR_CMAP_SHAP}'")
+        n_cmap = n_colors + n * 2
+        n_colors_half = int(np.floor(n_colors / 2))
+        n_sub = (n_colors + 1) % 2
+        n_cmap_half = int(np.floor(n_cmap / 2))
+        cmap = sns.color_palette(cmap, n_colors=n_cmap)
+        cmap_low, cmap_high = cmap[:n_cmap_half - n], cmap[n + n_cmap_half:]
+        cmap = cmap_low[0:n_colors_half-n_sub] + color_0 + cmap_high[-n_colors_half:]
+    return cmap
+
+
+def _get_shap_cmap(n_colors=101, facecolor_dark=True, only_pos=False, only_neg=False):
+    """Generate a diverging colormap for feature values."""
+    n = min((int(np.floor(1 + n_colors/5)), 20))
+    color_0 = [(0, 0, 0)] if facecolor_dark else [(1, 1, 1)]
+
+    if only_neg:
+        cmap = sns.light_palette(COLOR_SHAP_NEG, input="hex", reverse=True, n_colors=n_colors + n)
+        cmap = cmap[0:n_colors-1] + color_0
+    elif only_pos:
+        cmap = sns.light_palette(COLOR_SHAP_POS, input="hex", n_colors=n_colors + n)
+        cmap = color_0 + cmap[-n_colors+1:]
+    else:
+        n_colors_half = int(np.floor(n_colors / 2))
+        n_sub = (n_colors + 1) % 2
+        n_cmap_half = n_colors_half + n
+        cmap_low = sns.light_palette(COLOR_SHAP_NEG, input="hex", reverse=True, n_colors=n_cmap_half)
+        cmap_high = sns.light_palette(COLOR_SHAP_POS, input="hex", n_colors=n_cmap_half)
+        cmap = cmap_low[0:n_colors_half-n_sub] + color_0 + cmap_high[-n_colors_half:]
+    return cmap
+
+
+def plot_get_cmap_(cmap="CPP", n_colors=101, facecolor_dark=None, only_pos=False, only_neg=False):
+    """Get colormap for CPP or CPP-SHAP plots"""
+    args = dict(n_colors=n_colors, facecolor_dark=facecolor_dark,
+                only_neg=only_neg, only_pos=only_pos)
+    if cmap == STR_CMAP_CPP:
+        cmap = _get_diverging_cmap("RdBu_r", **args)
+    elif cmap == STR_CMAP_SHAP:
+        cmap =  _get_shap_cmap(**args)
+    else:
+        cmap = _get_diverging_cmap(cmap=cmap, **args)
+    return cmap
 
 
 # Check df_seq
@@ -574,11 +647,14 @@ def check_features(features=None, list_parts=None, list_scales=None):
     return features
 
 
-def check_df_feat(df_feat=None, df_cat=None, list_parts=None, shap_plot=None):
+def check_df_feat(df_feat=None, df_cat=None, list_parts=None, shap_plot=None,
+                  cols_requiered=None, cols_nan_check=None):
     """Check if df not empty pd.DataFrame"""
     # Check df
     cols_feat = [COL_FEATURE] + COLS_FEAT_SCALES + COLS_FEAT_STAT
-    check_df(df=df_feat, name="df_feat", cols_requiered=cols_feat)
+    if cols_requiered is not None:
+        cols_feat += [cols_requiered] if type(cols_requiered) is str else cols_requiered
+    check_df(df=df_feat, name="df_feat", cols_requiered=cols_feat, cols_nan_check=cols_nan_check)
     if len(df_feat) == 0 or len(list(df_feat)) == 0:
         raise ValueError("'df_feat' should be not empty")
     duplicated_columns = df_feat.columns[df_feat.columns.duplicated()]
@@ -597,22 +673,12 @@ def check_df_feat(df_feat=None, df_cat=None, list_parts=None, shap_plot=None):
     # Check if feat_importance or feat_impact column is in df_feat
     if shap_plot is not None:
         if shap_plot:
-            if COL_FEAT_IMPACT not in list(df_feat):
-                raise ValueError(f"If 'shap_plot' is True, '{COL_FEAT_IMPACT}' must be in 'df_feat' columns: {list(df_feat)}")
+            col_feat_impact = [x for x in list(df_feat) if COL_FEAT_IMPACT in x]
+            if len(col_feat_impact) == 0:
+                raise ValueError(f"If 'shap_plot' is True, At least on '{COL_FEAT_IMPACT}' column must be "
+                                 f"in 'df_feat' columns: {list(df_feat)}")
         else:
             if COL_FEAT_IMPORT not in list(df_feat):
                 raise ValueError(f"If 'shap_plot' is False, '{COL_FEAT_IMPORT}' must be in 'df_feat' columns: {list(df_feat)}")
-    return df_feat.copy()
-
-
-def check_col_cat(col_cat=None):
-    """Check if col_cat valid column from df_feat"""
-    if col_cat not in COLS_FEAT_SCALES:
-        raise ValueError(f"'col_cat' {col_cat} should be one of the following: {COLS_FEAT_SCALES}")
-
-
-def check_col_value(col_value=None):
-    """Check if col_value valid column from df_feat"""
-    cols_feat = COLS_FEAT_STAT + COLS_FEAT_WEIGHT
-    if col_value not in cols_feat:
-        raise ValueError(f"'col_value' {col_value} should be one of the following: {cols_feat}")
+    df_feat = df_feat.reset_index(drop=True).copy()
+    return df_feat

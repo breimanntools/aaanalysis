@@ -1,5 +1,5 @@
 """
-This is a script for the frontend of the TreeModel class used to obtain feature importance reproducibly.
+This is a script for the frontend of the TreeModel class used to obtain Mote Carlo estimates of feature importance.
 
 DEV: TODO features
 a) TreeModel.fit: Add n_jobs as input
@@ -7,12 +7,15 @@ b) TreeModel.eval: Add n_features to output
 """
 from typing import Optional, Dict, List, Tuple, Type, Union, Callable
 from sklearn.base import ClassifierMixin, BaseEstimator
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 import pandas as pd
 import numpy as np
 
 import aaanalysis.utils as ut
 
+from .backend.check_models import (check_match_list_model_classes_kwargs,
+                                   check_match_labels_X,
+                                   check_match_X_is_selected)
 from .backend.tree_model.tree_model_fit import fit_tree_based_models
 from .backend.tree_model.tree_model_predict_proba import monte_carlo_predict_proba
 from .backend.tree_model.tree_model_eval import eval_feature_selections
@@ -28,33 +31,13 @@ def check_is_preselected(is_preselected=None):
     return is_preselected
 
 
-def check_match_list_model_classes_kwargs(list_model_classes=None, list_model_kwargs=None):
-    """Check length match of list_model_classes and list_model_kwargs"""
-    n_models = len(list_model_classes)
-    n_args = len(list_model_kwargs)
-    if n_models != n_args:
-        raise ValueError(f"Length of 'list_model_kwargs' (n={n_args}) should match to 'list_model_classes' (n{n_models}")
-
-
-def check_match_labels_X(labels=None, X=None):
-    """Check if labels binary classification task labels"""
-    n_samples = X.shape[0]
-    labels = ut.check_labels(labels=labels, len_requiered=n_samples)
-    unique_labels = set(labels)
-    if len(unique_labels) != 2:
-        raise ValueError(f"'labels' should contain 2 unique labels ({unique_labels})")
-    # The higher label is considered as the positive (test) class
-    label_test = list(sorted(unique_labels))[1]
-    labels = np.asarray([1 if x == label_test else 0 for x in labels])
-    return labels
-
-
 def check_n_feat_min_n_feat_max(n_feat_min=None, n_feat_max=None):
     """Check if vmin and vmax are valid numbers and vmin is less than vmax."""
     ut.check_number_range(name="n_feat_min", val=n_feat_min, min_val=1, just_int=True, accept_none=False)
     ut.check_number_range(name="n_feat_max", val=n_feat_max, min_val=1, just_int=True, accept_none=False)
     if n_feat_min > n_feat_max:
         raise ValueError(f"'n_feat_min' ({n_feat_min}) >= 'n_feat_max' ({n_feat_max}) not fulfilled.")
+
 
 def check_n_cv(n_cv=None, labels=None):
     """Check if n_cv is valid"""
@@ -109,6 +92,7 @@ def check_list_is_selected(list_is_selected=None, X=None, convert_1d_to_2d=False
                 f"Expected {n_features} features, got {is_feature_round.shape[1]}.\n {str_error}")
     return list_is_selected
 
+
 def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, feat_importance_std=None, drop=False):
     """Check if df_feat matches with importance values"""
     if feat_importance is None:
@@ -130,13 +114,6 @@ def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, fe
             raise ValueError(f"'{ut.COL_FEAT_IMPORT_STD}' already in 'df_feat' columns. To override, set 'drop=True'.")
 
 
-def check_match_X_is_selected(X=None, is_selected=None):
-    """Check if length of X and feature selection mask (is_selected) matches"""
-    n_features = X.shape[1]
-    n_feat_is_selected = len(is_selected[0])
-    if n_features != n_feat_is_selected:
-        raise ValueError(f"Number of features from 'X' ({n_features}) does not match "
-                         f"with 'is_selected' attribute ({n_feat_is_selected})")
 
 # II Main Functions
 class TreeModel:
@@ -173,7 +150,7 @@ class TreeModel:
         """
         Parameters
         ----------
-        list_model_classes : list of Type[ClassifierMixin or BaseEstimator], default=[RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
+        list_model_classes : list of Type[ClassifierMixin or BaseEstimator], default=[RandomForestClassifier, ExtraTreesClassifier]
             A list of tree-based model classes to be used for feature importance analysis.
         list_model_kwargs : list of dict, optional
             A list of dictionaries containing keyword arguments for each model in `list_model_classes`.
@@ -192,9 +169,8 @@ class TreeModel:
 
         See Also
         --------
-        * :class:`sklearn.ensemble.RandomForestClassifier` for Random Forest model.
-        * :class:`sklearn.ensemble.ExtraTreesClassifier` for Extra Trees model.
-        * :class:`sklearn.ensemble.GradientBoostingClassifier` for Gradient Boosting model.
+        * :class:`sklearn.ensemble.RandomForestClassifier` for random forest model.
+        * :class:`sklearn.ensemble.ExtraTreesClassifier` for extra trees model.
 
         Examples
         --------
@@ -206,7 +182,7 @@ class TreeModel:
         is_preselected = check_is_preselected(is_preselected=is_preselected)
         # Model parameters
         if list_model_classes is None:
-            list_model_classes = [RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
+            list_model_classes = [RandomForestClassifier, ExtraTreesClassifier]
         elif not isinstance(list_model_classes, list):
             list_model_classes = [list_model_classes]   # Single models are possible as well (but not recommender)
         list_model_classes = ut.check_list_like(name="list_model_classes", val=list_model_classes,
@@ -230,19 +206,19 @@ class TreeModel:
         self._list_model_kwargs = _list_model_kwargs
         self._is_preselected = is_preselected
         # Output parameters (set during model fitting)
-        self.feat_importance : Optional[ut.ArrayLike1D] = None
-        self.feat_importance_std : Optional[ut.ArrayLike1D] = None
-        self.is_selected_ : Optional[ut.ArrayLike2D] = None
-        self.list_models_ : Optional[List[List[Union[ClassifierMixin, BaseEstimator]]]] = None
+        self.feat_importance: Optional[ut.ArrayLike1D] = None
+        self.feat_importance_std: Optional[ut.ArrayLike1D] = None
+        self.is_selected_: Optional[ut.ArrayLike2D] = None
+        self.list_models_: Optional[List[List[Union[ClassifierMixin, BaseEstimator]]]] = None
 
     def fit(self,
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D = None,
             n_rounds: int = 5,
-            use_rfe: bool = True,
+            use_rfe: bool = False,
             n_cv: int = 5,
-            n_feat_min: int = 10,
-            n_feat_max: int = 50,
+            n_feat_min: int = 25,
+            n_feat_max: int = 75,
             metric: str = "accuracy",
             step : Optional[int] = None,
             ) -> "TreeModel":
@@ -260,16 +236,16 @@ class TreeModel:
         X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
         labels : array-like, shape (n_samples)
-            Dataset labels of samples in ``X``. Should be either 1 (positive) or 0 (negative).
+            Class labels for samples in ``X`` (typically, 1=positive, 0=negative).
         n_rounds : int, default=5
             The number of rounds (>=1) to fit the model.
-        use_rfe : bool, default=True
-            Whether to use recursive feature elimination (RFE) with random forest model for feature selection.
+        use_rfe : bool, default=False
+            If ``True``, recursive feature elimination (RFE) is used with random forest model for feature selection.
         n_cv : int, default=5
             The number of cross-validation folds for RFE, must be > 1 and ≤ the smallest class's sample count.
-        n_feat_min : int, default=10
+        n_feat_min : int, default=25
             The minimum number of features to select each round for RFE. Should be 0 < ``n_feat_min`` <= ``n_feat_max``.
-        n_feat_max : int, default=50
+        n_feat_max : int, default=75
             The maximum number of features to select each round for RFE. Should be >= ``n_feat_min``.
         metric : str, default="accuracy"
             The name of the scoring function to use for cross-validation for RFE.
@@ -328,7 +304,7 @@ class TreeModel:
         return self
 
     def eval(self,
-             X : ut.ArrayLike2D,
+             X: ut.ArrayLike2D,
              labels: ut.ArrayLike1D = None,
              list_is_selected: List[ut.ArrayLike2D] = None,
              convert_1d_to_2d: bool = False,
@@ -344,7 +320,7 @@ class TreeModel:
         X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
         labels : array-like, shape (n_samples)
-            Dataset labels of samples in ``X``. Should be either 1 (positive) or 0 (negative).
+            Class labels for samples in ``X`` (typically, 1=positive, 0=negative).
         list_is_selected : array-like, shape (n_feature_sets, n_round, n_features)
             List of 2D boolean arrays with shape (n_rounds, n_features) indicating different feature selections.
         convert_1d_to_2d : bool, default=False
@@ -396,7 +372,7 @@ class TreeModel:
         check_n_cv(n_cv=n_cv, labels=labels)
         # Perform evaluation
         df_eval = eval_feature_selections(X, labels=labels,
-                                          list_is_feature=list_is_selected,
+                                          list_is_selected=list_is_selected,
                                           names_feature_selections=names_feature_selections,
                                           n_cv=n_cv,
                                           list_metrics=list_metrics,
@@ -445,10 +421,9 @@ class TreeModel:
                                                    is_selected=self.is_selected_)
         return pred, pred_std
 
-
     def add_feat_importance(self,
-                            df_feat : pd.DataFrame = None,
-                            drop : bool = False
+                            df_feat: pd.DataFrame = None,
+                            drop: bool = False
                             ) -> pd.DataFrame:
         """
         Include feature importance and its standard deviation to feature DataFrame.
@@ -458,7 +433,7 @@ class TreeModel:
 
         Parameters
         ----------
-        df_feat : DataFrame, shape (n_features, n_feature_info)
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
         drop : bool, default=False
             If ``True``, allow dropping of already existing ``feat_importance`` and ``feat_importance_std`` columns
@@ -466,7 +441,7 @@ class TreeModel:
 
         Returns
         -------
-        df_feat : DataFrame, shape (n_features, n_feature_info+2)
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info+2)
             Feature DataFrame including ``feat_importance`` and ``feat_importance_std`` columns.
 
         See Also
@@ -478,7 +453,7 @@ class TreeModel:
         .. include:: examples/tm_add_feat_importance.rst
          """
         # Check input
-        ut.check_df_feat(df_feat=df_feat)
+        df_feat = ut.check_df_feat(df_feat=df_feat)
         ut.check_bool(name="drop", val=drop)
         check_match_df_feat_importance_arrays(df_feat=df_feat,
                                               feat_importance=self.feat_importance,

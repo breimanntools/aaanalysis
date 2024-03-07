@@ -13,12 +13,12 @@ import aaanalysis.utils as ut
 
 # I Helper Functions
 # TODO add more parsers for often used data formats in computational biology (make overview)
+# TODO implement parser from df to df_seq (remove not necessary columns and adjust naming)
 
 
 # II Main Functions
 def read_fasta():
     """"""
-    # TODO implement a fasta parser to df_seq
 
 
 def to_fasta(df=None, fasta_name=None, col_id=None, col_seq=None, cols_info=None):
@@ -52,4 +52,3 @@ def to_fasta(df=None, fasta_name=None, col_id=None, col_seq=None, cols_info=None
 
 def to_df_seq(df=None):
     """"""
-    # TODO implement parser from df to df_seq (remove not necessary columns and adjust naming)

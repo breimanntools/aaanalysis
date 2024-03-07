@@ -116,10 +116,9 @@ def check_match_bar_colors_labels(bar_colors=None, labels=None):
 # II Main Functions
 class AAclustPlot:
     """
-    Plotting class for ``AAclust`` (Amino Acid clustering).
+    Plotting class for :class:`AAclust` (Amino Acid clustering) results [Breimann24a]_.
 
-    This plotting class visualizes the result of the :class:`aaanalysis.AAclust` class, introduced in [Breimann24a]_.
-    Dimensionality reduction is performed for visualization using decomposition models such as
+    This class performs dimensionality reduction for visualization using decomposition models such as
     Principal Component Analysis (PCA).
     """
     def __init__(self,
@@ -420,10 +419,10 @@ class AAclustPlot:
 
         Parameters
         ----------
-        df_corr : pd.DataFrame
+        df_corr : pd.DataFrame, shape (n_samples, n_clusters)
             DataFrame with correlation matrix. `Rows` typically correspond to scales and `columns` to clusters.
         labels : array-like, shape (n_samples,)
-            Cluster labels determining the grouping and coloring of the side color bar.
+            Cluster labels determining the grouping and coloring of the side colorbar.
             It should have the same length as number of rows in ``df_corr`` (n_samples).
         labels_ref  : array-like, shape (n_clusters,), optional
             Cluster labels comprising unique values from 'labels'. Length must match with 'n_clusters' in ``df_corr``.

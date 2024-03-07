@@ -1,5 +1,6 @@
 """
-This is a script for the backend of the SequenceFeature() object, a supportive class for the CPP feature engineering.
+This is a script for the backend of the SequenceFeature() object,
+a supportive class for the CPP feature engineering.
 """
 import pandas as pd
 import numpy as np

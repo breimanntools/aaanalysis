@@ -8,16 +8,19 @@ import matplotlib.ticker as mticker
 
 
 # Helper functions
-def _get_color_map(labels, color):
-    """Get color map"""
-    unique_labels = sorted(set(labels))
-    if isinstance(color, list) and len(color) != 1:
-        if len(color) < len(unique_labels):
-            color *= len(unique_labels)
-        color_map = {label: color[i] for i, label in enumerate(unique_labels)}
+def _get_color_map(labels=None, colors=None, sort_unique_labels=True):
+    """Get colormap"""
+    if sort_unique_labels:
+        unique_labels = sorted(set(labels))
     else:
-        color = color[0] if isinstance(color, list) else color
-        color_map = {label: color for label in unique_labels}
+        unique_labels = labels
+    if isinstance(colors, list) and len(colors) != 1:
+        if len(colors) < len(unique_labels):
+            colors *= len(unique_labels)
+        color_map = {label: colors[i] for i, label in enumerate(unique_labels)}
+    else:
+        colors = colors[0] if isinstance(colors, list) else colors
+        color_map = {label: colors for label in unique_labels}
     return color_map, unique_labels
 
 
@@ -34,6 +37,7 @@ def _get_positions_lengths_colors(labels, color_map):
             start_pos = i
             current_label = label
     return positions, lengths, colors
+
 
 def _get_xy_wh(ax=None, position=None, pos=None, bar_spacing=None, length=None, bar_width=None):
     """Get x and y position together with width and height/length"""
@@ -53,6 +57,7 @@ def _get_xy_wh(ax=None, position=None, pos=None, bar_spacing=None, length=None, 
         return (x, pos), (bar_width, length)
     else:
         raise ValueError("Position should be 'left', 'right', 'top', or 'bottom'.")
+
 
 def _get_xy_hava(position=None, xy=None, wh=None, label_spacing_factor=1.5):
     """Get x and y position together with horizontal alignment and vertical alignment"""
@@ -79,6 +84,7 @@ def _get_xy_hava(position=None, xy=None, wh=None, label_spacing_factor=1.5):
 def _add_bar_labels(ax=None, bar_labels_align=None, position=None, bar_width=None,
                     labels=None, positions=None, lengths=None, bar_labels=None, bar_spacing=None,
                     label_spacing_factor=1.5):
+    """Add labels next to the bars"""
     label_map = {label: bar_labels[i] for i, label in enumerate(sorted(set(labels)))}
     rotation = 0 if bar_labels_align == 'horizontal' else 90
     for pos, length in zip(positions, lengths):
@@ -115,47 +121,26 @@ def _add_text_labels(ax=None, position=None, bar_width=None, bar_spacing=None, l
             ax.text(tick_locs[idx], ny + label_spacing + bar_width, label,
                     ha='right', va='top', rotation=xtick_label_rotation)
 
-# TODO use for CPP plots
+
 # Main function
 def plot_add_bars(ax=None, labels=None, colors='tab:gray', bar_position='left',
                   bar_spacing=0.05,  bar_width=0.1, bar_labels=None, label_spacing_factor=1.5,
                   bar_labels_align='horizontal', set_tick_labels=True,
                   xtick_label_rotation=45, ytick_label_rotation=0):
-    """
-    Add colored bars along a specified axis of the plot based on label grouping.
-
-    Parameters:
-        ax (matplotlib.axes._axes.Axes): The axes to which bars will be added.
-        labels (list or array-like): Labels determining bar grouping and coloring.
-        bar_position (str): The position to add the bars ('left', 'right', 'top', 'bottom').
-        bar_spacing (float): Spacing between plot and added bars.
-        label_spacing_factor (float): Spacing between plot and text label as factor of 'bar_spacing'.
-            If 1, text is directly placed next to bar.
-        colors (str or list): Either a matplotlib color string, or a list of colors for each unique label.
-        bar_labels (list, optional): Labels for the bars.
-        bar_labels_align (str): Text alignment for bar labels, either 'horizontal' or other valid matplotlib alignment.
-        bar_width (float): The width of the bars, expressed in the units of the opposite axis's elements.
-            Specifically, when adding a vertical bar (with position 'left' or 'right'), `bar_width` denotes
-            the horizontal extent of the bar, interpreted in terms of the spacing between adjacent elements on the x-axis.
-            Conversely, when adding a horizontal bar (with position 'top' or 'bottom'), `bar_width` represents the vertical
-             extent, mapped onto the y-axis spacing.
-        xtick_label_rotation (int): X-axis label rotation.
-        ytick_label_rotation (int): Y-axis label rotation.
-        set_tick_labels (bool): Whether to adjust tick labels.
-
-    Note:
-        This function adds colored bars in correspondence with the provided `labels` to visualize groupings in plots.
-    """
+    """Add colored bars along a specified axis of the plot based on label grouping."""
+    if labels is None:
+        raise ValueError("'labels' should not be None")
     # Get the number of plotted items
-    nx, ny = int(max(plt.xlim())), int(max(plt.ylim()))
+    nx, ny = int(max(ax.get_xlim())), int(max(ax.get_ylim()))
     num_plotted_items = ny if bar_position in ['left', 'right'] else nx
-    if not isinstance(labels, list):
+    if not isinstance(labels, list) and labels is not None:
         labels = list(labels)
-        # Check if labels match the shape of the data
+    # Check if labels match the shape of the data
     if len(labels) != num_plotted_items:
         raise ValueError(f"Mismatch: The number of labels ({len(labels)}) must match to number of plotted items ({num_plotted_items}).")
     single_color = isinstance(colors, str) or (isinstance(colors, (list, tuple)) and len(set(colors)) == 1)
-    color_map, _ = _get_color_map(labels, colors)
+    sort_unique_labels = len(labels) != len(colors)
+    color_map, _ = _get_color_map(labels=labels, colors=colors, sort_unique_labels=sort_unique_labels)
     positions, lengths, colors = _get_positions_lengths_colors(labels, color_map)
     args_pos = dict(position=bar_position, bar_width=bar_width, bar_spacing=bar_spacing)
     if bar_labels is not None:
@@ -175,6 +160,7 @@ def plot_add_bars(ax=None, labels=None, colors='tab:gray', bar_position='left',
         _add_text_labels(ax=ax, **args_pos, label_spacing_factor=label_spacing_factor,
                          xtick_label_rotation=xtick_label_rotation, ytick_label_rotation=ytick_label_rotation,
                          nx=nx, ny=ny)
+
 
 def adjust_spine_to_middle(ax=None):
     """Adjust spines to be in middle if data range from <0 to >0"""
@@ -199,3 +185,12 @@ def x_ticks_0(ax):
         else:
             return f'{x:.2f}'  # Format as float with two decimal places
     ax.xaxis.set_major_formatter(mticker.FuncFormatter(custom_x_ticks))
+
+
+def adjust_tuple_elements(tuple_in=None, tuple_default=None):
+    """Replace elements of input tuple that are None with the corresponding element from default tuple."""
+    if tuple_in is not None:
+        tuple_out = tuple(i if i is not None else def_i for i, def_i in zip(tuple_in,  tuple_default))
+    else:
+        tuple_out =  tuple_default
+    return tuple_out

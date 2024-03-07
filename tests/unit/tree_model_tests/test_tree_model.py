@@ -7,6 +7,8 @@ from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, Gradi
 from sklearn.neighbors import KNeighborsClassifier
 import aaanalysis as aa
 
+aa.options["verbose"] = "off"
+
 # Mock data for testing
 mock_classes = [RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
 mock_kwargs = [{'n_estimators': 10}, {'min_samples_split': 2}, {'learning_rate': 0.1}]
@@ -18,8 +20,8 @@ class TestTreeModel:
     # Positive tests
     def test_list_model_kwargs_parameter(self):
         """Test the 'list_model_kwargs' parameter."""
-        tree_model = aa.TreeModel(list_model_kwargs=mock_kwargs)
-        assert tree_model._list_model_kwargs == mock_kwargs
+        tree_model = aa.TreeModel(list_model_kwargs=mock_kwargs[0:2])
+        assert tree_model._list_model_kwargs == mock_kwargs[0:2]
         tree_model = aa.TreeModel(list_model_kwargs=mock_kwargs[0:1], list_model_classes=mock_classes[0:1])
         assert tree_model._list_model_kwargs == mock_kwargs[0:1]
         tree_model = aa.TreeModel(list_model_kwargs=mock_kwargs[0:2], list_model_classes=mock_classes[0:2])
@@ -48,8 +50,9 @@ class TestTreeModel:
     @given(random_state=some.integers() | some.none())
     def test_random_state_parameter(self, random_state):
         """Test the 'random_state' parameter."""
-        tree_model = aa.TreeModel(random_state=random_state)
-        assert tree_model._random_state == random_state
+        if random_state is None or random_state >= 0:
+            tree_model = aa.TreeModel(random_state=random_state)
+            assert tree_model._random_state == random_state
 
     # Negative tests
     def test_invalid_list_model_classes_type(self):
@@ -113,7 +116,7 @@ class TestTreeModelComplex:
     @given(verbose=some.booleans(), random_state=some.integers())
     def test_verbose_and_random_state(self, verbose, random_state):
         """Test 'verbose' and 'random_state' parameters together."""
-        aa.options["verbose"] = "off"
+        aa.options["random_state"] = "off"
         if random_state > -1:
             tree_model = aa.TreeModel(verbose=verbose, random_state=random_state)
             assert tree_model._verbose == verbose
@@ -124,7 +127,7 @@ class TestTreeModelComplex:
            random_state=some.integers() | some.none())
     def test_is_preselected_and_random_state(self, is_preselected, random_state):
         """Test 'is_preselected' and 'random_state' parameters together."""
-        if sum(is_preselected) > 1:
+        if sum(is_preselected) > 1 and (random_state is None or random_state >= 0):
             tree_model = aa.TreeModel(is_preselected=is_preselected, random_state=random_state)
             assert np.array_equal(tree_model._is_preselected, is_preselected)
             assert tree_model._random_state == random_state

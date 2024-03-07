@@ -64,10 +64,11 @@ def check_match_names_colors(names=None, colors=None):
 # II Main Functions
 class dPULearnPlot:
     """
-    Plotting class for ``dPULearn`` (deterministic Positive-Unlabeled Learning) [Breimann24c]_.
+    Plotting class for :class:`dPULearn` (deterministic Positive-Unlabeled Learning) results [Breimann24c]_.
 
-    This plotting class visualizes the result of the :class:`aaanalysis.dPULearn` class used to identify
-    negative from unlabeled data.
+    This plotting class visualizes the by ``dPULearn`` reliably identified negative samples in a compressed feature
+    space.
+
     """
     def __int__(self):
         """
@@ -163,15 +164,15 @@ class dPULearnPlot:
     def pca(df_pu: pd.DataFrame = None,
             labels=None,
             figsize: Tuple[Union[int, float], Union[int, float]] = (5, 5),
-            pc_x : int = 1,
-            pc_y : int = 2,
-            show_pos_mean_x=True,
-            show_pos_mean_y=True,
+            pc_x: int = 1,
+            pc_y: int = 2,
+            show_pos_mean_x: bool = True,
+            show_pos_mean_y: bool = True,
             colors: Optional[List[str]] = None,
             names: Optional[List[str]] = None,
-            legend : bool = True,
-            legend_y : float = -0.15,
-            kwargs_scatterplot : Optional[dict] = None,
+            legend: bool = True,
+            legend_y: float = -0.15,
+            kwargs_scatterplot: Optional[dict] = None,
             ) -> plt.Axes:
         """
         Principal component analysis (PCA) plot for set of identified negatives.

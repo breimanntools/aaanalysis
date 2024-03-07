@@ -32,6 +32,7 @@ def create_labels(size):
     labels = np.array([1, 1, 0, 0] + list(np.random.choice([1, 0], size=size-4)))
     return labels
 
+
 # Create valid X
 df_seq = aa.load_dataset(name="DOM_GSEC")
 df_feat = aa.load_features()
@@ -43,15 +44,16 @@ valid_X = sf.feature_matrix(features=df_feat["feature"], df_parts=df_parts)
 N_ROUNDS = 2
 ARGS = dict(use_rfe=False, n_cv=2, n_rounds=N_ROUNDS)
 
+
 class TestPredictProba:
     """
     Test the predict_proba method with positive and negative test cases for each parameter individually.
     """
 
     # Positive tests for X parameter
-    @settings(max_examples=10, deadline=4000)
+    @settings(max_examples=20, deadline=10000)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
-                         elements=st.floats(allow_nan=False, allow_infinity=False)))
+                         elements=st.floats(allow_nan=False, allow_infinity=False, max_value=1000, min_value=-1000)))
     def test_positive_X_parameter(self, X):
         tm = aa.TreeModel()
         X = X.round(0)

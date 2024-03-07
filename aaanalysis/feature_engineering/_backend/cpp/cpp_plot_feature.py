@@ -1,5 +1,5 @@
 """
-This is a script for backend of the cpp_plot.feature method.
+This is a script for the backend of the CPPPlot.feature() method.
 """
 import pandas as pd
 import seaborn as sns
@@ -9,7 +9,6 @@ import matplotlib as mpl
 import aaanalysis.utils as ut
 
 from .utils_feature import get_list_parts, get_df_parts_, get_feature_matrix_, get_amino_acids_
-from .utils_cpp_plot import get_color_dif
 from ._utils_cpp_plot_elements import PlotElements
 
 COL_FEAT_VAL = "feature_values"
@@ -70,7 +69,7 @@ def _get_df_show(df_feat_vals=None, feature=None, df_seq=None, names_to_show=Non
 # Additional plot information
 def _add_mean_dif(ax, mean_test, mean_ref, mean_dif, y_mean_dif, alpha_dif):
     """Add area to highlight mean differences between reference and test group"""
-    color_dif = get_color_dif(mean_dif=mean_dif)
+    color_dif = ut.get_color_dif(mean_dif=mean_dif)
     ax.plot([mean_test, mean_ref], [y_mean_dif, y_mean_dif], "-", color=color_dif, linewidth=4)
     args_lines = dict(color="black", markeredgewidth=5)
     ax.plot(mean_ref, y_mean_dif, "|", **args_lines)
@@ -151,7 +150,7 @@ def plot_feature(ax=None, figsize=(5.6, 4.8), feature=str,
                            jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     # Plotting
     pe = PlotElements()
-    pe.set_figsize(figsize=figsize)
+    fig, ax = pe.set_figsize(ax=ax, figsize=figsize)
     args = dict(data=df_feat_vals, x=COL_FEAT_VAL,  hue=ut.COL_LABEL, ax=ax,
                 palette=[color_test, color_ref], hue_order=[name_test, name_ref],
                 legend=False)

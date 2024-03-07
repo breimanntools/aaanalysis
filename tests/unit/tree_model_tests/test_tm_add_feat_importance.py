@@ -1,4 +1,4 @@
-"""This script tests the add_feat_importance() method."""
+"""This script tests the TreeModel.add_feat_importance() method."""
 import pandas as pd
 import pytest
 from hypothesis import given, settings

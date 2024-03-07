@@ -1,4 +1,8 @@
-"""Backend for CPP run method"""
+"""
+This is a script for the backend of the CPP.run() method.
+
+This is the key algorithm of CPP and for AAanalysis.
+"""
 import os
 import numpy as np
 import pandas as pd
@@ -83,7 +87,7 @@ def _pre_filtering_info(list_scales, dict_all_scales, labels_ps, part_split, acc
 
 def _filtering_info(df=None, df_scales=None, check_cat=True):
     """Get datasets structures for filtering, two dictionaries with feature to scale category resp.
-    feature positions and one data sets frame with paired pearson correlations of all scales"""
+    feature positions and one datasets frame with paired pearson correlations of all scales"""
     if check_cat:
         dict_c = dict(zip(df[ut.COL_FEATURE], df["category"]))
     else:

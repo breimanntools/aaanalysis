@@ -89,7 +89,7 @@ def load_scales(name: str = "scales",
         Name of the loaded dataset:
 
         - ``scales_raw``: All amino acid scales.
-        - ``scales``:  Min-max normlized raw scales.
+        - ``scales``:  Min-max normalized raw scales.
         - ``scales_cat``: Two-level classification (AAontology).
         - ``scales_pc``: First 20 PCs of compressed scales.
         - ``top60``:  Selection of 60 best performing scale sets.

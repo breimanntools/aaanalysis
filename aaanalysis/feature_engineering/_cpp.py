@@ -27,6 +27,7 @@ from ._backend.cpp.utils_feature import get_positions_, add_scale_info_
 from ._backend.cpp.cpp_run import pre_filtering_info, pre_filtering, filtering, add_stat
 from ._backend.cpp.cpp_eval import evaluate_features
 
+
 # I Helper Functions
 def check_sample_in_df_seq(sample_name=None, df_seq=None):
     """Check if sample name in df_seq"""
@@ -55,22 +56,22 @@ def check_match_list_df_feat_names_feature_sets(list_df_feat=None, names_feature
 # II Main Functions
 class CPP(Tool):
     """
-    Comparative Physicochemical Profiling (CPP) class to create and filter features that are most discriminant
-    between two sets of sequences.
+    Comparative Physicochemical Profiling (**CPP**) class to create and filter features that are most discriminant
+    between two sets of sequences [Breimann24c]_.
 
-    Introduced in [Breimann24c]_, CPP aims at identifying a collection of non-redundant features that are most
-    discriminant between the test and reference group of sequences.
+    CPP aims at identifying a set of non-redundant features that are most discriminant between the
+    test and reference group of sequences.
 
     Attributes
     ----------
     df_parts
-        DataFrame with sequence ``Parts``.
+        DataFrame with sequence **Parts**.
     split_kws
-        Nested dictionary defining ``Splits`` with parameter dictionary for each chosen split_type.
+        Nested dictionary defining **Splits** with parameter dictionary for each chosen split_type.
     df_scales
-        DataFrame with amino acid ``Scales``.
+        DataFrame with amino acid **Scales**.
     df_cat
-        DataFrame with categories for physicochemical amino acid ``Scales``.
+        DataFrame with categories for physicochemical amino acid **Scales**.
     """
     def __init__(self,
                  df_parts: pd.DataFrame = None,
@@ -109,9 +110,9 @@ class CPP(Tool):
         See Also
         --------
         * :class:`CPPPlot`: the respective plotting class.
-        * :class:`SequenceFeature` for definition of sequence ``Parts``.
-        * :meth:`SequenceFeature.split_kws` for definition of ``Splits`` key word arguments.
-        * :func:`load_scales` for definition of amino acid ``Scales`` and their categories.
+        * :class:`SequenceFeature` for definition of sequence **Parts**.
+        * :meth:`SequenceFeature.split_kws` for definition of **Splits** key word arguments.
+        * :func:`load_scales` for definition of amino acid **Scales** and their categories.
 
         Examples
         --------
@@ -148,8 +149,8 @@ class CPP(Tool):
     # Main method
     def run(self,
             labels: ut.ArrayLike1D = None,
-            label_test : int = 1,
-            label_ref : int = 0,
+            label_test: int = 1,
+            label_ref: int = 0,
             n_filter: int = 100,
             n_pre_filter: Optional[int] = None,
             pct_pre_filter: int = 5,
@@ -162,13 +163,13 @@ class CPP(Tool):
             tmd_len: int = 20,
             jmd_n_len: int = 10,
             jmd_c_len: int = 10,
-            n_jobs: Optional[int] = 1
+            n_jobs: Optional[int] = None
             ) -> pd.DataFrame:
         """
         Perform Comparative Physicochemical Profiling (CPP) algorithm: creation and two-step filtering of
         interpretable sequence-based features.
 
-        The aim of the CPP algorithm is to identify a collection of unique, non-redundant features that are most
+        The aim of the CPP algorithm is to identify a set of unique, non-redundant features that are most
         discriminant between the test and reference group of sequences. See [Breimann24c]_ for details on the algorithm.
 
         Parameters
@@ -196,14 +197,14 @@ class CPP(Tool):
         parametric : bool, default=False
             Whether to use parametric (T-test) or non-parametric (Mann-Whitney-U-test) test for p-value computation.
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus).
+            Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
             Length of TMD (>0).
         jmd_n_len : int, default=10
             Length of JMD-N (>=0).
         jmd_c_len : int, default=10
             Length of JMD-C (>=0).
-        n_jobs : int, None, or -1, default=1
+        n_jobs : int, None, or -1, default=None
             Number of CPU cores used for multiprocessing. If ``None``, the number is optimized automatically.
             If ``-1``, the number is set to all available cores.
 
@@ -216,9 +217,8 @@ class CPP(Tool):
         -----
         * Pre-filtering can be adjusted by the following parameters: {'n_pre_filter', 'pct_pre_filter', 'max_std_test'}.
         * Filtering can be adjusted by the following parameters: {'n_filter', 'max_overlap', 'max_cor', 'check_cat'}.
-        * ``check_cat`` (not introduced in [Breimann24c]_) was included to provide higher filtering flexibility.
         * ``df_feat`` contains the following 13 columns, including the unique feature id (1), scale information (2-5),
-           statistical results for filtering and ranking (6-12), and feature positions (13):
+          statistical results for filtering and ranking (6-12), and feature positions (13):
 
             1. 'features': Feature ID (PART-SPLIT-SCALE)
             2. 'category': Scale category
@@ -236,7 +236,7 @@ class CPP(Tool):
 
         See Also
         --------
-        * :func:`comp_auc_adjusted` for details on 'abs_auc'.
+        * :func:`comp_auc_adjusted` for details on ``abs_auc``.
 
         Examples
         --------
@@ -315,13 +315,13 @@ class CPP(Tool):
     def eval(self,
              list_df_feat: List[pd.DataFrame] = None,
              labels: ut.ArrayLike1D = None,
-             label_test : int = 1,
-             label_ref : int = 0,
+             label_test: int = 1,
+             label_ref: int = 0,
              min_th: float = 0.0,
              names_feature_sets: Optional[List[str]] = None,
              list_cat: Optional[List[str]] = None,
-             list_df_parts : Optional[List[pd.DataFrame]] = None,
-             n_jobs: Union[int, None] = 1,
+             list_df_parts: Optional[List[pd.DataFrame]] = None,
+             n_jobs: Optional[int] = 1,
              ) -> pd.DataFrame:
         """
         Evaluate the quality of different sets of identified CPP features.

@@ -1,3 +1,14 @@
+..
+   Developer Notes:
+
+    TODO if diagram is ready
+    **Entry Points**:
+    Our toolkit bridges seamlessly with external libraries, enhancing its versatility and integration capabilities
+    in diverse research environments.
+
+    [Link to entry point diagram]
+..
+
 Introduction
 ============
 **AAanalysis** is a Python framework designed for scientists and researchers focusing on interpretable sequence-based
@@ -20,27 +31,13 @@ It enables the discovery of physicochemical signatures that underlie biological 
 
 Overview of Documentation
 -------------------------
-Begin with AAanalysis by visiting our :ref:`contributing page <contributing>` for installation instructions
-and information on contribution. Delve into the guiding principles and design philosophy of our key algorithms in the
-:ref:`usage principles section <usage_principles>`. To get hands-on experience, explore our :ref:`tutorials <tutorials>`.
-In addition to our detailed :ref:`API documentation <api>`, we compiled various :ref:`overview tables <tables>`
-providing in-depth resources, including **AAontology**—our unique two-level classification of amino acid scales—and
-various benchmark protein datasets.
+Start your journey with AAanalysis by visiting our :ref:`Contributing <contributing>` page for installation instructions
+and information on contribution. Delve into the core concepts behind our algorithms in the
+:ref:`Usage Principles <usage_principles>` section to understand our design philosophy, equipping
+you with the mental models necessary for effective application. Our :ref:`Evaluation <evaluation>`
+strategies are detailed to facilitate an transparent and objective analysis of our algorithms´s outcome.
 
-Data Flow and Entry Points
---------------------------
-**Data Flow**:
-AAanalysis provides a handful of DataFrames for seamless data management. Starting with amino acid scale information
-(**df_scales**, **df_cat**) and protein sequences (**df_seq**), it enables segmentation into parts (**df_parts**)
-and accommodates user-defined splitting (**split_kws**). Our CPP algorithm then utilizes these to generate
-physicochemical features (**df_feat**) by comparing protein sequence sets.
-
-See the primary data flow within the AAanalysis toolkit in this diagram:
-
-.. image:: /_artwork/diagrams/components.png
-
-**Entry Points**:
-Our toolkit bridges seamlessly with external libraries, enhancing its versatility and integration capabilities
-in diverse research environments.
-
-[Link to entry point diagram]
+To get hands-on experience, explore our :ref:`Tutorials <tutorials>`. In addition to our detailed :ref:`API <api>`
+documentation, we compiled various overview :ref:`Tables <tables>` that provide in-depth resources, including our
+**AAontology** scale classification and a variety of benchmark protein datasets. Discover the scientific foundation
+of AAanalysis in the :ref:`References <references>` section.

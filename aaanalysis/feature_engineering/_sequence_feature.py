@@ -91,31 +91,43 @@ def check_match_df_parts_label_test_label_ref(df_parts=None, labels=None, label_
                              f"\n Add them to the current parts of 'df_parts': {list_parts}")
 
 
+def check_col_cat(col_cat=None):
+    """Check if col_cat valid column from df_feat"""
+    if col_cat not in ut.COLS_FEAT_SCALES:
+        raise ValueError(f"'col_cat' {col_cat} should be one of the following: {ut.COLS_FEAT_SCALES}")
+
+
+def check_col_val(col_val=None):
+    """Check if col_val valid column from df_feat"""
+    cols_feat = ut.COLS_FEAT_STAT + ut.COLS_FEAT_WEIGHT
+    if col_val not in cols_feat:
+        raise ValueError(f"'col_val' {col_val} should be one of the following: {cols_feat}")
+
+
 # II Main Functions
 class SequenceFeature:
     """
-    Utility feature engineering class using sequences to create ``CPP`` feature components (``Parts``, ``Splits``,
-    and  ``Scales``) and data structures (e.g., feature matrix).
+    Utility feature engineering class using sequences to create :class:`CPP` feature components (**Parts**, **Splits**,
+    and  **Scales**) and data structures [Breimann24c]_.
 
-    Introduced in [Breimann24c]_, the three feature components  are the primary input for the :class:`aaanalysis.CPP`
-    class and define Comparative Physicochemical Profiling (CPP) features.
+    The three feature components are the primary input for the :class:`aaanalysis.CPP` class and define
+    Comparative Physicochemical Profiling (CPP) features.
 
     Notes
     -----
     Feature Components:
-        - ``Part``: A continuous subset of a sequence, such as a protein domain.
-        - ``Split``: Continuous or discontinuous subset of a ``Part``, such as a segment or a pattern.
-        - ``Scale``: A physicochemical scale, i.e., a set of numerical values (typically [0-1]) assigned to amino acids.
+        - **Part**: A continuous subset of a sequence, such as a protein domain.
+        - **Split**: Continuous or discontinuous subset of a **Part**, either segment or pattern.
+        - **Scale**: A physicochemical scale, i.e., a set of numerical values (typically [0-1]) assigned to amino acids.
 
     Main Parts:
         We define three main parts from which each other part can be derived from:
 
-        - ``TMD (target middle domain)``: Protein domain of interest with varying length,
-          such as the transmembrane domain (TMD) of γ-secretase substrates (see [Breimann24c]_).
-        - ``JMD-N (juxta middle domain N-terminal)``: Protein domain or sequence region directly N-terminally next
-          to the TMD, typically set to a fixed length (10 by default).
-        - ``JMD-C (juxta middle domain C-terminal)``: Protein domain or sequence region directly C-terminally next
-          to the TMD, typically set to a fixed length (10 by default).
+        - **TMD (target middle domain)**: Protein domain of interest with varying length.
+        - **JMD-N (juxta middle domain N-terminal)**: Protein domain or sequence region directly
+          N-terminally next to the TMD, typically set to a fixed length (10 by default).
+        - **JMD-C (juxta middle domain C-terminal)**: Protein domain or sequence region directly
+          C-terminally next to the TMD, typically set to a fixed length (10 by default).
 
     Feature: Part + Split + Scale
         Physicochemical property (expressed as numerical scale) present at distinct amino acid
@@ -173,7 +185,7 @@ class SequenceFeature:
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
             DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
-            in a distinct ``Position-based``, ``Part-based``, ``Sequence-based``, or ``Sequence-TMD-based`` format.
+            in a distinct format: **Position-based**, **Part-based**, **Sequence-based**, or **Sequence-TMD-based**.
         list_parts: list of str, default={``tmd``, ``jmd_n_tmd_n``, ``tmd_c_jmd_c``}
             Names of sequence parts that should be obtained for sequences from ``df_seq``.
         jmd_n_len: int, default=10
@@ -203,20 +215,20 @@ class SequenceFeature:
 
         Formats for ``df_seq`` are differentiated by their respective columns:
 
-        ``Position-based format``
+        **Position-based format**
             - 'sequence': The complete amino acid sequence.
             - 'tmd_start': Starting positions of the TMD in the sequence.
             - 'tmd_stop': Ending positions of the TMD in the sequence.
 
-        ``Part-based format``
+        **Part-based format**
             - 'jmd_n': Amino acid sequence for JMD-N.
             - 'tmd': Amino acid sequence for TMD.
             - 'jmd_c': Amino acid sequence for JMD-C.
 
-        ``Sequence-TMD-based format``
+        **Sequence-TMD-based format**
             - 'sequence' and 'tmd' columns.
 
-        ``Sequence-based format``
+        **Sequence-based format**
             - Only the 'sequence' column.
 
         Examples
@@ -255,9 +267,9 @@ class SequenceFeature:
         """
         Create dictionary with kwargs for three split types:
 
-            - ``Segment``: continuous sub-sequence.
-            - ``Pattern``: non-periodic discontinuous sub-sequence
-            - ``PeriodicPattern``: periodic discontinuous sub-sequence.
+            - **Segment**: continuous sub-sequence.
+            - **Pattern**: non-periodic discontinuous sub-sequence
+            - **PeriodicPattern**: periodic discontinuous sub-sequence.
 
         Parameters
         ----------
@@ -369,7 +381,7 @@ class SequenceFeature:
             DataFrame of categories for physicochemical scales. Must contain all scales from ``df_scales``.
             Default from :meth:`load_scales` with ``name='scales_cat'``, unless specified in ``options['df_cat']``.
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus).
+            Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
             Length of TMD (>0).
         jmd_n_len : int, default=10
@@ -570,7 +582,7 @@ class SequenceFeature:
             DataFrame of categories for physicochemical scales. Must contain all scales from ``df_scales``.
             Default from :meth:`load_scales` with ``name='scales_cat'``, unless specified in ``options['df_cat']``.
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus).
+            Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
             Length of TMD (>0).
         jmd_n_len : int, default=10
@@ -633,7 +645,7 @@ class SequenceFeature:
         features : array-like, shape (n_features,)
             List of feature ids.
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus).
+            Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
             Length of TMD (>0).
         jmd_n_len : int, default=10
@@ -677,7 +689,7 @@ class SequenceFeature:
 
     @staticmethod
     def get_df_pos(df_feat: pd.DataFrame = None,
-                   col_value: str = "mean_dif",
+                   col_val: str = "mean_dif",
                    col_cat: str = "category",
                    start: int = 1,
                    tmd_len: int = 20,
@@ -693,13 +705,13 @@ class SequenceFeature:
         ----------
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
-        col_value : {'abs_auc', 'abs_mean_dif', 'mean_dif', 'std_test', 'std_ref'}, default='mean_dif'
+        col_val : {'abs_auc', 'abs_mean_dif', 'mean_dif', 'std_test', 'std_ref'}, default='mean_dif'
             Column name in ``df_feat`` containing numerical values to ``average``. If feature importance and impact
             are provided as {'feat_importance', 'feat_impact'} columns, their ``sum`` of values is computed.
         col_cat : {'category', 'subcategory', 'scale_name'}, default='category'
             Column name in ``df_feat`` for categorizing the numerical values during aggregation.
         start : int, default=1
-            Position label of first amino acid position (starting at N-terminus).
+            Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
             Length of TMD (>0).
         jmd_n_len : int, default=10
@@ -726,17 +738,18 @@ class SequenceFeature:
         """
         # Check input
         list_parts = ut.check_list_parts(list_parts=list_parts, return_default=False, accept_none=True)
-        ut.check_df_feat(df_feat=df_feat)   # Do not check for list_parts since df_pos can be obtained for any part
-        ut.check_col_cat(col_cat=col_cat)
-        ut.check_col_value(col_value=col_value)
+        # Do not check for list_parts since df_pos can be obtained for any part
+        df_feat = ut.check_df_feat(df_feat=df_feat)
+        check_col_cat(col_cat=col_cat)
+        check_col_val(col_val=col_val)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         ut.check_bool(name="normalize", val=normalize)
         check_match_features_seq_parts(features=df_feat[ut.COL_FEATURE], **args_len)
         # Get df pos
         stop = start + jmd_n_len + tmd_len + jmd_c_len - 1
-        value_type = ut.DICT_VALUE_TYPE[col_value]
-        df_pos = get_df_pos_(df_feat=df_feat, col_cat=col_cat, col_value=col_value, value_type=value_type,
+        value_type = ut.DICT_VALUE_TYPE[col_val]
+        df_pos = get_df_pos_(df_feat=df_feat, col_cat=col_cat, col_val=col_val, value_type=value_type,
                              start=start, stop=stop)
         if normalize:
             df_pos = df_pos / abs(df_pos).sum().sum() * 100

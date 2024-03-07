@@ -143,7 +143,7 @@ def plot_correlation(df_corr=None, labels=None, labels_ref=None, cluster_x=True,
     # Adjust ticks
     ax.set_xticklabels(ax.get_xticklabels(), rotation=xtick_label_rotation, ha="right")
     ax.set_yticklabels(ax.get_yticklabels(), rotation=ytick_label_rotation)
-    # Customizing color bart tick lines
+    # Customizing colorbart tick lines
     if 'cbar' not in _kwargs_heatmap:
         cbar = ax.collections[0].colorbar
         lw = ut.plot_gco(option="axes.linewidth")

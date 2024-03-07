@@ -26,8 +26,9 @@ Install
    :caption: OVERVIEW
 
    index/introduction.rst
-   index/usage_principles.rst
    index/CONTRIBUTING_COPY.rst
+   index/usage_principles.rst
+   index/evaluation.rst
 
 .. toctree::
    :maxdepth: 1

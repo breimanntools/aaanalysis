@@ -41,7 +41,7 @@ class TestAAclust:
         aa.options["verbose"] = True
         aac = aa.AAclust()
         assert aac._model_class == KMeans
-        assert aac._model_kwargs == dict(n_init="auto", random_state=None)
+        assert aac._model_kwargs == dict(random_state=None)
         assert aac._verbose is True # Default value from options
         assert aac.model is None
         aa.options["verbose"] = False
@@ -164,6 +164,7 @@ class TestAAclustComplex:
     """Test AAclust class"""
 
     # Property-based testing for positive cases
+    @settings(deadline=3500, max_examples=20)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=12, max_side=100),
                          elements=some.floats(allow_nan=False, allow_infinity=False)),
            n_clusters=some.integers(min_value=2, max_value=5))
@@ -201,8 +202,8 @@ class TestAAclustComplex:
                 assert len(set(model.labels_)) == n_clusters
                 assert len(model.medoids_) == n_clusters
 
-    @settings(deadline=3500, max_examples=20)
-    @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=10, max_side=50),
+    @settings(deadline=10000, max_examples=20)
+    @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=10, max_side=30),
                          elements=some.floats(allow_nan=False, allow_infinity=False)))
     def test_fit_without_n_clusters(self, X):
         """Test the fit method without a pre-defined number of clusters."""

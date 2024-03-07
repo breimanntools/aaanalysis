@@ -75,10 +75,10 @@ def check_match_X_X_neg(X=None, X_neg=None):
 # II Main Functions
 class dPULearn:
     """
-    Deterministic Positive-Unlabeled Learning (dPULearn) class for identifying reliable negatives from unlabeled data.
+    Deterministic Positive-Unlabeled Learning (**dPULearn**) class for identifying reliable negatives from unlabeled data [Breimann24c]_.
 
-    Introduced in [Breimann24c]_, dPULearn offers a deterministic approach to Positive-Unlabeled (PU) learning,
-    featuring two distinct identification approaches:
+    dPULearn offers a deterministic approach to Positive-Unlabeled (PU) learning, featuring two distinct
+    identification approaches:
 
     - **PCA-based identification**: This is the primary method where Principal Component Analysis (PCA) is utilized
       to reduce the dimensionality of the feature space. Based on the most informative principal components (PCs),
@@ -306,7 +306,7 @@ class dPULearn:
         list_labels = ut.check_array_like(name="list_labels", val=list_labels, ensure_2d=True, convert_2d=True)
         names_datasets = ut.check_list_like(name="names_datasets", val=names_datasets, accept_none=True, accept_str=True,
                                             check_all_str_or_convertible=True)
-        ut.check_match_X_list_labels(X=X, list_labels=list_labels, comp_kld=comp_kld, vals_requiered=[0])
+        ut.check_match_X_list_labels(X=X, list_labels=list_labels, check_variability=comp_kld, vals_requiered=[0])
         ut.check_match_list_labels_names_datasets(list_labels=list_labels, names_datasets=names_datasets)
         check_match_X_X_neg(X=X, X_neg=X_neg)
         # Evaluation for homogeneity within negatives and alignment of distribution with other datasets

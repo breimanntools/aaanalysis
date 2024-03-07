@@ -23,4 +23,4 @@ class AAMut:
         """Compute difference between amino acids for given property scale. """
 
     def eval(self):
-        """"""  # TODO add evaluation function
+        """"""

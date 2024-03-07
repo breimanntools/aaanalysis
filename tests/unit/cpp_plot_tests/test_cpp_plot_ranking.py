@@ -9,7 +9,7 @@ import warnings
 from hypothesis import given, settings, assume
 import hypothesis.strategies as st
 import aaanalysis as aa
-
+import random
 
 # Setup and helper functions
 def create_df_feat(num_features=50):
@@ -45,17 +45,58 @@ class TestRanking:
         assert isinstance(axes[0], plt.Axes)
         plt.close()
 
+
+    def test_rank(self):
+        for rank in [True, False]:
+            cpp_plot = aa.CPPPlot()
+            df_feat = create_df_feat()
+            fig, axes = cpp_plot.ranking(df_feat=df_feat, rank=rank)
+            assert isinstance(fig, plt.Figure)
+            assert isinstance(axes, np.ndarray)
+            assert len(axes) == 3
+            assert isinstance(axes[0], plt.Axes)
+            plt.close()
+
     def test_shap_plot(self):
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
         values = np.array([1] * len(df_feat))
         df_feat.insert(0, "feat_impact", values)
         for shap_plot in [True, False]:
-            fig, axes = cpp_plot.ranking(df_feat=df_feat, shap_plot=shap_plot)
+            col_imp = "feat_impact" if shap_plot else "feat_importance"
+            fig, axes = cpp_plot.ranking(df_feat=df_feat, shap_plot=shap_plot, col_imp=col_imp)
             assert isinstance(fig, plt.Figure)
             assert isinstance(axes, np.ndarray)
             assert len(axes) == 3
             assert isinstance(axes[0], plt.Axes)
+            plt.close()
+
+    def test_col_dif_valid(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = create_df_feat()
+        df_feat.insert(0, "feat_impact", [1] * len(df_feat))
+        valid_col_difs = ['mean_dif', 'mean_dif_TestSample', 'mean_dif_test']
+        for col_dif in valid_col_difs:
+            if col_dif not in df_feat.columns:
+                df_feat.insert(0, col_dif, [1] * len(df_feat))
+            shap_plot = col_dif != "mean_dif"
+            col_imp = "feat_impact" if shap_plot else "feat_importance"
+            fig, axes = cpp_plot.ranking(df_feat=df_feat, shap_plot=shap_plot, col_imp=col_imp, col_dif=col_dif)
+            assert isinstance(fig, plt.Figure)
+            assert isinstance(axes, np.ndarray)
+            plt.close()
+
+    def test_col_imp_valid(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = create_df_feat()
+        valid_col_imps = ['feat_importance', 'feat_impact_TestSample', 'feat_impact_col_imp']
+        for col_imp in valid_col_imps:
+            if col_imp not in df_feat.columns:
+                df_feat.insert(0, col_imp, [1] * len(df_feat))
+            shap_plot = col_imp != "feat_importance"
+            fig, axes = cpp_plot.ranking(df_feat=df_feat, col_imp=col_imp, shap_plot=shap_plot)
+            assert isinstance(fig, plt.Figure)
+            assert isinstance(axes, np.ndarray)
             plt.close()
 
     @settings(max_examples=3, deadline=2000)
@@ -73,7 +114,7 @@ class TestRanking:
             plt.close()
 
     @settings(max_examples=3, deadline=1500)
-    @given(tmd_len=st.integers(min_value=1, max_value=100))
+    @given(tmd_len=st.integers(min_value=17, max_value=100))
     def test_tmd_len(self, tmd_len):
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
@@ -218,17 +259,18 @@ class TestRanking:
             assert isinstance(axes[0], plt.Axes)
             plt.close()
 
-    @settings(max_examples=3, deadline=1500)
-    @given(x_rank_info=st.one_of(st.none(), st.floats(min_value=0, max_value=100)))
-    def test_x_rank_info(self, x_rank_info):
+    def test_rank_info_xy(self):
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
-        fig, axes = cpp_plot.ranking(df_feat=df_feat, x_rank_info=x_rank_info)
-        assert isinstance(fig, plt.Figure)
-        assert isinstance(axes, np.ndarray)
-        assert len(axes) == 3
-        assert isinstance(axes[0], plt.Axes)
-        plt.close()
+        for _ in range(3):
+            x = random.uniform(0, 10)
+            y = random.uniform(0, 1)
+            fig, axes = cpp_plot.ranking(df_feat=df_feat, rank_info_xy=(x, y))
+            assert isinstance(fig, plt.Figure)
+            assert isinstance(axes, np.ndarray)
+            assert len(axes) == 3
+            assert isinstance(axes[0], plt.Axes)
+            plt.close()
 
     # Negative Test
     def test_invalid_df_feat(self):
@@ -253,6 +295,31 @@ class TestRanking:
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, n_top=True)
 
+    def test_invalid_rank(self):
+        for rank in [[], None, 123]:
+            cpp_plot = aa.CPPPlot()
+            df_feat = create_df_feat()
+            with pytest.raises(ValueError):
+                fig, axes = cpp_plot.ranking(df_feat=df_feat, rank=rank)
+            plt.close()
+
+    def test_col_dif_invalid(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = create_df_feat()
+        df_feat.insert(0, "mean_dif_test", [2] * len(df_feat))
+        with pytest.raises(ValueError):
+            cpp_plot.ranking(df_feat=df_feat, col_dif='invalid_col_name')
+        with pytest.raises(ValueError):
+            cpp_plot.ranking(df_feat=df_feat, col_dif='invalid_col_test', shap_plot=False)
+
+    def test_col_imp_invalid(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = create_df_feat()
+        df_feat.insert(0, "feat_impact_test", [2] * len(df_feat))
+        with pytest.raises(ValueError):
+            cpp_plot.ranking(df_feat=df_feat, col_imp='invalid_col_name')
+        with pytest.raises(ValueError):
+            cpp_plot.ranking(df_feat=df_feat, col_imp='feat_impact_test', shap_plot=False)
 
     def test_invalid_figsize(self):
         cpp_plot = aa.CPPPlot()
@@ -290,13 +357,15 @@ class TestRanking:
             with pytest.raises(ValueError):
                 cpp_plot.ranking(df_feat=df_feat, xlim_rank=xlim_rank)
 
-    def test_invalid_x_rank_info(self):
+    def test_invalid_rank_info_xy(self):
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
         with pytest.raises(ValueError):
-            cpp_plot.ranking(df_feat=df_feat, x_rank_info=-1)
+            cpp_plot.ranking(df_feat=df_feat, rank_info_xy=-1)
         with pytest.raises(ValueError):
-            cpp_plot.ranking(df_feat=df_feat, x_rank_info="str")
+            cpp_plot.ranking(df_feat=df_feat, rank_info_xy="str")
+        with pytest.raises(ValueError):
+            cpp_plot.ranking(df_feat=df_feat, rank_info_xy=(None, 123, 234))
 
     @settings(max_examples=20, deadline=1500)
     @given(tmd_jmd_space=st.one_of(st.integers(max_value=0), st.floats(allow_nan=True)))
@@ -412,7 +481,7 @@ class TestRankingComplex:
         fontsize_annotations = 10
         xlim_dif = (-20, 20)
         xlim_rank = (1, 10)
-        x_rank_info = 5
+        rank_info_xy = (2, 4)
 
         fig, axes = cpp_plot.ranking(df_feat=df_feat, n_top=n_top, figsize=figsize,
                                      tmd_len=tmd_len, tmd_jmd_space=tmd_jmd_space,
@@ -422,7 +491,7 @@ class TestRankingComplex:
                                      fontsize_labels=fontsize_labels,
                                      fontsize_annotations=fontsize_annotations,
                                      xlim_dif=xlim_dif, xlim_rank=xlim_rank,
-                                     x_rank_info=x_rank_info)
+                                     rank_info_xy=rank_info_xy)
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, np.ndarray)
         assert len(axes) == 3

@@ -64,8 +64,8 @@ ADD-TABLE
 AAontology
 ----------
 AAontology ([Breimann24b]_) provides a two-tiered system for amino acid classification, designed to enhance the interpretability of
-sequence-based protein predictions. It encompasses 586 physicochemical scales, which are systematically arranged
-into ``67 subcategories`` and further grouped into ``8 categories``. Every scale, subcategory, and main category
+sequence-based protein predictions. It encompasses *586 physicochemical scales*, which are systematically arranged
+into *67 subcategories* and further grouped into *8 categories*. Every scale, subcategory, and main category
 is clearly defined and supported by key references. The scales were grouped into their respective subcategories
 using a combination of AAclust ([Breimann24a]_) clustering and assessments of biological similarity. Those scales that couldn't
 be allocated to a specific subcategory are labeled as 'unclassified'.

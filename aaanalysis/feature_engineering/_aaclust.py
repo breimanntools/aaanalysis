@@ -75,12 +75,12 @@ def post_check_n_clusters(n_clusters_actual=None, n_clusters=None):
 # II Main Functions
 class AAclust(Wrapper):
     """
-    Amino Acid clustering (AAclust) class: A k-optimized clustering wrapper for selecting redundancy-reduced sets
-    of numerical scales.
+    Amino Acid clustering (**AAclust**) class: A k-optimized clustering wrapper for selecting redundancy-reduced sets
+    of numerical scales [Breimann24a]_.
 
-    Introduced in [Breimann24a]_, AAclust uses clustering models that require a pre-defined number of clusters
-    (k, set by ``n_clusters``), such as k-means or other `scikit-learn clustering models <https://scikit-learn.org/stable/modules/clustering.html>`_.
-    AAclust optimizes the value of k by utilizing Pearson correlation and then selects a representative sample ('medoid')
+    AAclust uses clustering models that require a pre-defined number of clusters (k, set by ``n_clusters``),
+    such as k-means or other `scikit-learn clustering models <https://scikit-learn.org/stable/modules/clustering.html>`_.
+    It optimizes the value of k by utilizing Pearson correlation and then selects a representative sample ('medoid')
     for each cluster closest to the center, resulting in a redundancy-reduced sample set.
 
     Attributes
@@ -142,8 +142,6 @@ class AAclust(Wrapper):
         random_state = ut.check_random_state(random_state=random_state)
         # Model parameters
         ut.check_mode_class(model_class=model_class)
-        if model_kwargs is None and model_class is KMeans:
-            model_kwargs = dict(n_init="auto")
         model_kwargs = ut.check_model_kwargs(model_class=model_class,
                                              model_kwargs=model_kwargs,
                                              param_to_check="n_clusters",
@@ -212,13 +210,13 @@ class AAclust(Wrapper):
 
         Notes
         -----
-        * The ``AAclust`` algorithm consists of three main steps:
+        * The **AAclust** algorithm consists of three main steps:
 
             1. Estimate the lower bound of k.
             2. Refine k (recursively) using the chosen quality measure.
             3. Optionally, merge smaller clusters as directed by the merge ``metric``.
 
-        * ``AAclust`` provides two correlation-based quality measure to optimize ``n_clusters``:
+        * **AAclust** provides two correlation-based quality measure to optimize ``n_clusters``:
 
             - ``min_cor_center``: Minimum Pearson correlation between the cluster center and all cluster members.
             - ``min_cor_all``: Minium pairwise Pearson correlation among all cluster members.
