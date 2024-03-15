@@ -20,6 +20,8 @@ Install
    or
    conda install -c conda-forge aaanalysis
 
+**Note**: Please use Python 3.9 and pip to avoid any dependency issues. Support for Python 3.10 to 3.12 is
+planned for the next release.
 
 .. toctree::
    :maxdepth: 1
