@@ -20,3 +20,6 @@ class SeqMutPlot:
     # Main method
     def mutation_landscape(self):
         """"""
+
+    def residue_mutation_impact(self):
+        """"""
