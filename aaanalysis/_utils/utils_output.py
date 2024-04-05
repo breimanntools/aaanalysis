@@ -60,4 +60,3 @@ def print_end_progress(end_message=None):
     if end_message is not None:
         print_out(end_message)
     sys.stdout.flush()
-

@@ -103,7 +103,8 @@ def check_vmin_vmax(vmin=None, vmax=None, str_add=None):
 
 
 def check_lim(name="xlim", val=None, accept_none=True, str_add=None):
-    """Validate that lim parameter ('xlim' or 'ylim') is tuple with two numbers, where the first is less than the second."""
+    """Validate that lim parameter ('xlim' or 'ylim') is tuple with two numbers, where the first
+     is less than the second."""
     if val is None:
         if accept_none:
             return None  # Skip check

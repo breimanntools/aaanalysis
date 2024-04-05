@@ -146,7 +146,8 @@ def check_list_like(name=None, val=None, accept_none=False, convert=True, accept
                                 str_add=str_add)
             raise ValueError(str_error)
         if isinstance(val, np.ndarray) and val.ndim != 1:
-            str_error = add_str(str_error=f"'{name}' is a multi-dimensional numpy array and cannot be considered as a list.",
+            str_error = add_str(str_error=f"'{name}' is a multi-dimensional numpy array and cannot"
+                                          f" be considered as a list.",
                                 str_add=str_add)
             raise ValueError(str_error)
         val = list(val) if isinstance(val, (np.ndarray, pd.Series)) else val

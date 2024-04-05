@@ -119,6 +119,7 @@ def catch_invalid_divide_warning():
         return wrapper
     return decorator
 
+
 # Catch UndefinedMetricWarnings
 class CatchUndefinedMetricWarning:
     """Context manager to catch and aggregate UndefinedMetricWarnings."""
@@ -142,6 +143,7 @@ class CatchUndefinedMetricWarning:
 
     def get_warnings(self):
         return list(self._warn_set)
+
 
 def catch_undefined_metric_warning():
     """Decorator to catch and report UndefinedMetricWarnings once per unique message."""

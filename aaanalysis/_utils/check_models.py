@@ -72,5 +72,3 @@ def check_model_kwargs(model_class=None, model_kwargs=None, name_model_class="mo
     if "random_state" not in model_kwargs and "random_state" in valid_args:
         model_kwargs.update(dict(random_state=random_state))
     return model_kwargs
-
-
