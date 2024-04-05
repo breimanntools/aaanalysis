@@ -41,7 +41,9 @@ Welcome to the AAanalysis documentation!
    :alt: Downloads
 
 ..
+    Missing badges
     |Build Status| |Python Check| |Conda Version|
+
 .. list-table::
    :widths: 25 75
    :header-rows: 1
