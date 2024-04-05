@@ -27,9 +27,12 @@ LIST_CAT = ['ASA/Volume', 'Conformation', 'Energy', 'Polarity', 'Shape', 'Compos
 DICT_COLOR = dict(zip(LIST_CAT, VALID_COLORS))
 
 
+# Helper functions
 def adjust_vmin_vmax(vmin=None, vmax=None):
-    vmin = -10000 if vmin < -10000 else vmin
-    vmax = 10000 if vmax > 10000 else vmax
+    if vmin is not None:
+        vmin = -10000 if vmin < -10000 else vmin
+    if vmax is not None:
+        vmax = 10000 if vmax > 10000 else vmax
     return vmin, vmax
 
 
