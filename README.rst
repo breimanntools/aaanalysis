@@ -1,19 +1,5 @@
 Welcome to the AAanalysis documentation!
 ========================================
-..
-    Developer Notes:
-    Please update badges in README.rst and vice versa
-    image:: https://github.com/breimanntools/aaanalysis/workflows/Build/badge.svg
-    :target: https://github.com/breimanntools/aaanalysis/actions
-    :alt: Build Status
-    image:: https://github.com/breimanntools/aaanalysis/workflows/Python-check/badge.svg
-    :target: https://github.com/breimanntools/aaanalysis/actions
-    :alt: Python-check
-    image:: https://anaconda.org/conda-forge/aaanalysis/badges/version.svg
-    :target: https://anaconda.org/conda-forge/aaanalysis
-    :alt: Conda - Package Version
-..
-
 .. image:: https://img.shields.io/pypi/status/aaanalysis.svg
    :target: https://pypi.org/project/aaanalysis/
    :alt: PyPI - Status
@@ -32,6 +18,21 @@ Welcome to the AAanalysis documentation!
 .. image:: https://pepy.tech/badge/aaanalysis
    :target: https://pepy.tech/project/aaanalysis
    :alt: Downloads
+
+..
+    Developer Notes:
+    Please update badges in README.rst and vice versa
+    image:: https://github.com/breimanntools/aaanalysis/workflows/Build/badge.svg
+    :target: https://github.com/breimanntools/aaanalysis/actions
+    :alt: Build Status
+    image:: https://github.com/breimanntools/aaanalysis/workflows/Python-check/badge.svg
+    :target: https://github.com/breimanntools/aaanalysis/actions
+    :alt: Python-check
+    image:: https://anaconda.org/conda-forge/aaanalysis/badges/version.svg
+    :target: https://anaconda.org/conda-forge/aaanalysis
+    :alt: Conda - Package Version
+..
+
 
 **AAanalysis** (Amino Acid analysis) is a Python framework for interpretable sequence-based protein prediction.
 Its foundation are the following algorithms:
