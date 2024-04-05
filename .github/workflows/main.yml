@@ -61,9 +61,9 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install flake8 mypy black
-    - name: Run flake8
+    - name: Run flake8 (check style)
       run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-    - name: Run mypy
+    - name: Run mypy (check static typing)
       run: mypy aaanalysis/__init__.py --follow-imports=skip
-    - name: Check code formatting with black
-      run: black --check ./
+    - name: Run black (check code formatting)
+      run: black --check -diff ./ --line-length=100
