@@ -42,7 +42,7 @@ __all__ = [
 # Import of professional (pro) version features if dependencies are available
 try:
     from .explainable_ai import TreeModel, ShapExplainer
-    from .plotting import display_df
+    from .show_html import display_df
     # Extend the __all__ list with pro features if successful
     __all__.extend(["TreeModel",
                     "ShapExplainer",
@@ -51,7 +51,7 @@ try:
 except ImportError as e:
     # Define a factory function to create a class or function placeholder
     def make_unavailable_feature(feature_name):
-        str_error = (f"'{feature_name}' requires additional dependencies. Please install the professional version of AAanalysis via:"
+        str_error = (f"'{feature_name}' needs additional dependencies. Install AAanalysis Professional via:"
                      f"\n\tpip install aaanalysis[pro]")
 
         class UnavailableFeature:
