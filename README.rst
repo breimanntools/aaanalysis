@@ -3,8 +3,6 @@ Welcome to the AAanalysis documentation!
 ..
     Developer Notes:
     Please update badges in README.rst and vice versa
-Testing Badges
---------------
 
 .. |Build Status| image:: https://github.com/breimanntools/aaanalysis/workflows/Build/badge.svg
    :target: https://github.com/breimanntools/aaanalysis/actions
@@ -13,9 +11,6 @@ Testing Badges
 .. |Python Check| image:: https://github.com/breimanntools/aaanalysis/workflows/Python-check/badge.svg
    :target: https://github.com/breimanntools/aaanalysis/actions
    :alt: Python-check
-
-Package Badges
---------------
 
 .. |PyPI Status| image:: https://img.shields.io/pypi/status/aaanalysis.svg
    :target: https://pypi.org/project/aaanalysis/
@@ -45,9 +40,10 @@ Package Badges
    :target: https://pepy.tech/project/aaanalysis
    :alt: Downloads
 
-|Build Status| |Python Check|
+..
+    |Build Status| |Python Check| |Conda Version|
 
-|PyPI Status| |Supported Python Versions| |PyPI Version| |Conda Version| |Documentation Status| |License| |Downloads|
+|PyPI Status| |Supported Python Versions| |PyPI Version| |Documentation Status| |License| |Downloads|
 
 **AAanalysis** (Amino Acid analysis) is a Python framework for interpretable sequence-based protein prediction.
 Its foundation are the following algorithms:
