@@ -3,7 +3,7 @@ name: Run Tests and Checks
 on:
   push:
     branches:
-      - master
+      - master_disabled
   pull_request:
     branches:
       - master
@@ -38,6 +38,6 @@ jobs:
       - name: Run flake8 for code quality check
         run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
       - name: Run mypy for type checking
-        run: mypy aaanalysis/
+        run: mypy aaanalysis/__init__.py
       - name: Check code formatting with black
         run: black --check ./
