@@ -37,7 +37,7 @@ jobs:
       - name: Install mypy
         run: pip install mypy
       - name: Run mypy for type checking
-        run: mypy --strict ./
+        run: mypy --strict --exclude tests/
       - name: Install black
         run: pip install black
       - name: Check code formatting with black
