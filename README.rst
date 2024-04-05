@@ -47,7 +47,9 @@ Welcome to the AAanalysis documentation!
    :header-rows: 1
 
    * - Package
-     - |PyPI Status| |Supported Python Versions| |PyPI Version| |Documentation Status| |License| |Downloads|
+     - |PyPI Status| |PyPI Version| |Supported Python Versions| |Downloads| |License|
+   * - Testing
+     - |Documentation Status|
 
 **AAanalysis** (Amino Acid analysis) is a Python framework for interpretable sequence-based protein prediction.
 Its foundation are the following algorithms:
