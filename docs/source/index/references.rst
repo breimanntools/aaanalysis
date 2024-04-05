@@ -34,7 +34,7 @@ AAanalysis Algorithms
    `bioRxiv <https://www.biorxiv.org/content/10.1101/2023.08.03.551768v1>`__.
 
 .. [Breimann24c] Breimann and Kamp *et al.* (2024c),
-   *Charting γ-secretase substrates by explainable AI*,
+   *Interpretable feature engineering by CPP reveals the physicochemical signature of γ-secretase substrates*,
    .. # Link if available
 
 Machine Learning
