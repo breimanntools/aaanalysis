@@ -1130,7 +1130,6 @@ class CPPPlot:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
         return fig, ax
 
-
     def feature_map(self,
                     # Data and Plot Type
                     df_feat: pd.DataFrame = None,
