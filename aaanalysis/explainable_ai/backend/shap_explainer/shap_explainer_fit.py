@@ -77,6 +77,11 @@ def _aggregate_shap_values(X, labels=None, list_model_classes=None, list_model_k
                     explainer_class=explainer_class, explainer_kwargs=explainer_kwargs,
                     class_index=class_index, n_background_data=n_background_data)
         shap_values, expected_value = _compute_shap_values(X, labels=labels, **args)
+
+        # Ensure that shap_values has the expected shape (n_samples, n_features)
+        if shap_values.shape != (X.shape[0], X.shape[1]):
+            shap_values = shap_values[:, :, 0]
+
         shap_values_rounds[:, :, i] = shap_values
         list_expected_value.append(expected_value)
     shap_values = np.mean(shap_values_rounds, axis=2)

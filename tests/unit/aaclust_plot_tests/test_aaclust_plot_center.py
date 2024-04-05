@@ -128,7 +128,7 @@ class TestAAclustPlotCenter:
         labels = [i % n_clusters for i in range(n_samples)]
         aac_plot = aa.AAclustPlot()
         # Check if at least 3 unique values exist and non is nan
-        if np.isnan(X).any() or np.asarray_chkfinite(X).any():
+        if np.isnan(X).any() or np.isinf(X).any():
             with pytest.raises(ValueError):
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", RuntimeWarning)

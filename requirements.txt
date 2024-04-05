@@ -1,31 +1,35 @@
 # Requires Python >= 3.9
+
+# Dependecies for core version (pip install aaanalysis)
 cycler>=0.11.0
 et-xmlfile>=1.1.0
 fonttools>=4.37.1
-joblib>=1.1.0
+joblib>=1.2.0
 kiwisolver>=1.4.4
 matplotlib>=3.5.3
 numpy>=1.24.4
 openpyxl>=3.0.10
 packaging>=21.3
-# Avoid Future warning due to seaborn, Can be increased if seaborn solvded this >12.0
-pandas>=2.0.0 #,<=2.1
+pandas>=2.0.0
 patsy>=0.5.2
 Pillow>=10.0.1
+pip>=23.2.01
 pyparsing>=3.0.9
 python-dateutil>=2.8.2
 pytz>=2022.2.1
 scikit-learn>=1.4
-scipy>=1.9.0
-seaborn>=0.11.2 #,<=0.13.0
+scipy>=1.10.0
+seaborn>=0.11.2
 six>=1.16.0
 statsmodels>=0.13.2
 threadpoolctl>=3.1.0
-pip>=23.2.01 #22.2.2
+
+# Dependencies for professional version (pip install aaanalysis[pro])
+shap>=0.44.0
+hypothesis>=6.86.2
+ipython>=8.16.1
 nbconvert>=7.8.0
 nbformat>=5.9.2
+nox>=2024.3.2
 pytest>=7.4.2
-hypothesis>=6.86.2
-shap>=0.44.0
-ipython>=8.16.1
 UpSetPlot>=0.8.0

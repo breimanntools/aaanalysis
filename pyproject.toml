@@ -16,6 +16,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Natural Language :: English",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
@@ -33,7 +34,7 @@ classifiers = [
 
 # Requirement
 [tool.poetry.dependencies]
-python = ">=3.9,<=3.11"
+python = ">=3.9,<=3.12"
 cycler = "^0.11.0"
 et-xmlfile = "^1.1.0"
 fonttools = "^4.37.1"

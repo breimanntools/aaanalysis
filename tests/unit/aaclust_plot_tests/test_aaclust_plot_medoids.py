@@ -25,7 +25,8 @@ def call_aaclust_plot_medoids(X=None, labels=None, **kwargs):
         assert isinstance(ax, plt.Axes) and isinstance(df_components, pd.DataFrame)
         plt.close()
 
-class TestAAclustPlotCenter:
+
+class TestAAclustPlotMedoids:
     """Test the 'medoids' method of the AAclustPlot class."""
 
     # Positive Tests
@@ -64,7 +65,6 @@ class TestAAclustPlotCenter:
         X = np.random.rand(10, 5)
         call_aaclust_plot_medoids(X=X, figsize=figsize)
 
-
     @settings(max_examples=10, deadline=1000)
     @given(dot_alpha=some.floats(min_value=0.0, max_value=1.0))
     def test_valid_dot_alpha(self, dot_alpha):
@@ -79,14 +79,12 @@ class TestAAclustPlotCenter:
         X = np.random.rand(10, 5)
         call_aaclust_plot_medoids(X=X, dot_size=dot_size)
 
-
     @settings(max_examples=3, deadline=1000)
     @given(legend=some.booleans())
     def test_valid_legend(self, legend):
         """Test the 'legend' parameter with a valid boolean."""
         X = np.random.rand(10, 5)
         call_aaclust_plot_medoids(X=X, legend=legend)
-
 
     @settings(max_examples=10, deadline=1000)
     @given(palette=some.sampled_from(["viridis", "plasma", "inferno", "magma", "cividis"]))
@@ -126,8 +124,8 @@ class TestAAclustPlotCenter:
         n_clusters = max(2, int(n_samples / 2))  # Ensure at least 2 clusters
         labels = [i % n_clusters for i in range(n_samples)]
         aac_plot = aa.AAclustPlot()
-        # Check if at least 3 unique values exist and non is nan
-        if np.isnan(X).any() or np.asarray_chkfinite(X).any():
+        # Check if any nan or inf values exist
+        if np.isnan(X).any() or np.isinf(X).any():
             with pytest.raises(ValueError):
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", RuntimeWarning)

@@ -1,6 +1,7 @@
 Welcome to the AAanalysis documentation!
 ========================================
-.. Developer Notes:
+..
+    Developer Notes:
     Please update badges in README.rst and vice versa
     image:: https://github.com/breimanntools/aaanalysis/workflows/Build/badge.svg
     :target: https://github.com/breimanntools/aaanalysis/actions
@@ -11,6 +12,7 @@ Welcome to the AAanalysis documentation!
     image:: https://anaconda.org/conda-forge/aaanalysis/badges/version.svg
     :target: https://anaconda.org/conda-forge/aaanalysis
     :alt: Conda - Package Version
+..
 
 .. image:: https://img.shields.io/pypi/status/aaanalysis.svg
    :target: https://pypi.org/project/aaanalysis/

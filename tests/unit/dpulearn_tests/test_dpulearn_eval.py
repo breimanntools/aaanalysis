@@ -85,7 +85,7 @@ class TestdPULearnEval:
             if not is_invalid:
                 assert isinstance(dpul.eval(X, list_labels=list_labels, X_neg=X_neg), pd.DataFrame)
 
-    @settings(max_examples=10)
+    @settings(max_examples=10, deadline=1000)
     @given(comp_kld=st.booleans())
     def test_comp_kld(self, comp_kld):
         """Test 'comp_kld' with valid inputs."""
@@ -170,6 +170,7 @@ class TestdPULearnEval:
         list_labels = [np.random.randint(0, 3, size=100)]
         with pytest.raises(ValueError):
             dpul.eval(X, list_labels, comp_kld="invalid_type")  # Passing a string instead of
+
 
 class TestdPULearnEvalComplex:
     """Complex test cases for dPULearn.eval() method combining multiple parameters."""
