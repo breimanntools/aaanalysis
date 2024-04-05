@@ -66,4 +66,4 @@ jobs:
     - name: Run mypy (check static typing)
       run: mypy aaanalysis/__init__.py --follow-imports=skip
     - name: Run black (check code formatting)
-      run: black --check -diff ./ --line-length=100
+      run: black --check --diff ./ --line-length=100
