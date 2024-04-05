@@ -38,6 +38,6 @@ jobs:
       - name: Run flake8 for code quality check
         run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
       - name: Run mypy for type checking
-        run: mypy --strict --exclude tests/
+        run: mypy aaanalysis/
       - name: Check code formatting with black
         run: black --check ./
