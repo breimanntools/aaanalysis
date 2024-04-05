@@ -32,7 +32,7 @@ classifiers = [
     # 7 - Inactive (project no longer maintained)
 ]
 
-# Requirement
+# Core Requirement
 [tool.poetry.dependencies]
 python = ">=3.9,<=3.12"
 cycler = "^0.11.0"

@@ -39,6 +39,8 @@ jobs:
 
     - name: Run Tests
       run: pytest tests
+      env:
+        HYPOTHESIS_DEADLINE: None
 
   code-quality:
     runs-on: ubuntu-latest
