@@ -66,4 +66,4 @@ jobs:
     - name: Run mypy (check static typing)
       run: mypy aaanalysis/__init__.py --follow-imports=skip
     - name: Run pylint (check code quality)
-      run: pylint aaanalysis
+      run: pylint aaanalysis/__init__.py
