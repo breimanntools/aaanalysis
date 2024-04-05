@@ -46,8 +46,6 @@ Welcome to the AAanalysis documentation!
    :widths: 25 75
    :header-rows: 1
 
-   * - Aspect
-     - Badges
    * - Package
      - |PyPI Status| |Supported Python Versions| |PyPI Version| |Documentation Status| |License| |Downloads|
 
