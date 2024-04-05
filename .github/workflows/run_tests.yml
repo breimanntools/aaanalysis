@@ -3,7 +3,7 @@ name: Run Tests and Checks
 on:
   push:
     branches:
-      - master_disabled
+      - master
   pull_request:
     branches:
       - master
