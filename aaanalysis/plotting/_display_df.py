@@ -15,9 +15,11 @@ def _adjust_df(df=None, char_limit = 50):
     # Adjust index if it consists solely of integers
     if all(isinstance(i, int) for i in list_index):
         df.index = [x + 1 for x in df.index]
+
     # Function to truncate strings longer than char_limit
     def truncate_string(s):
         return str(s)[:int(char_limit/2)] + '...' + str(s)[-int(char_limit/2):] if len(str(s)) > char_limit else s
+
     # Apply truncation to each cell in the DataFrame
     if char_limit is not None:
         for col in df.columns:
@@ -41,6 +43,7 @@ def _check_show(name="row_to_show", val=None, df=None):
     else:
         raise ValueError(f"'{name}' ('{val}') should be int (<{n}) or one of following {str_row_or_column} names: {rows_or_columns}")
 
+
 def _select_row(df=None, row_to_show=None):
     """Select row"""
     if row_to_show is not None:
@@ -49,6 +52,7 @@ def _select_row(df=None, row_to_show=None):
         elif isinstance(row_to_show, str):
             df = df.loc[[row_to_show]]
     return df
+
 
 def _select_col(df=None, col_to_show=None):
     """Select column"""
@@ -134,7 +138,7 @@ def display_df(df: pd.DataFrame = None,
         .set_table_styles([
             # Explicitly set background and text color for headers
             {'selector': 'thead th', 'props': [('background-color', 'white'), ('color', 'black')]},
-             # Style for odd and even rows
+            # Style for odd and even rows
             {'selector': 'tbody tr:nth-child(odd)', 'props': [('background-color', '#f2f2f2')]},
             {'selector': 'tbody tr:nth-child(even)', 'props': [('background-color', 'white')]},
             # General styling for table cells

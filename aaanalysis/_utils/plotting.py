@@ -9,6 +9,7 @@ import warnings
 
 from .check_type import check_number_range
 
+
 # I Helper function
 def _create_marker(color, label, marker, marker_size, lw, edgecolor, linestyle, hatch, hatchcolor):
     """Create custom marker based on input."""
@@ -47,6 +48,7 @@ def _marker_has(marker, val=None):
         return any([x == val for x in marker])
     else:
         raise ValueError(f"'marker' ({marker}) is wrong")
+
 
 def _marker_has_no(marker, val=None):
     if isinstance(marker, str):
@@ -183,8 +185,8 @@ def plot_gco(option='font.size', show_options=False):
         raise ValueError(f"Option not valid, select from the following: {options}")
     return option_value
 
-# DEV: plot_get_cdict and plot_get_cmap are implemented in main utils
 
+# DEV: plot_get_cdict and plot_get_cmap are implemented in main utils
 # Remaining backend plotting functions
 def plot_get_clist_(n_colors=3):
     """Get manually curated list of 2 to 9 colors."""

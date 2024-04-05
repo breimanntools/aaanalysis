@@ -159,6 +159,9 @@ html_context = {
     'github_version': 'master/',
 }
 
+html_meta = {
+    'google-site-verification': 'Rk3T0-H7cpFf5UxXiL4-LMS0WN7FIyU_3NiomozORV0'
+}
 
 """
 htmlhelp_basename = "YOUR_PROJECT_NAMEdoc"

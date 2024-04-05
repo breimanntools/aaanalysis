@@ -1,5 +1,6 @@
 """This is a script for utility functions for utility functions."""
 
+
 # Helper functions
 # This function is only used in utility check function
 def add_str(str_error=None, str_add=None):

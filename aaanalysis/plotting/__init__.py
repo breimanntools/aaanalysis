@@ -4,7 +4,7 @@ from ._plot_get_cdict import plot_get_cdict
 from ._plot_settings import plot_settings
 from ._plot_gcfs import plot_gcfs
 from ._plot_legend import plot_legend
-from ._display_df import display_df
+#from ._display_df import display_df
 
 
 __all__ = [
@@ -14,5 +14,5 @@ __all__ = [
     "plot_settings",
     "plot_legend",
     "plot_gcfs",
-    "display_df",
+    #"display_df",
 ]

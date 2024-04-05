@@ -13,18 +13,22 @@ def _print_red(input_str, **args):
     """Prints the given string in red text."""
     print(f"\033[91m{input_str}\033[0m", **args)
 
+
 def _print_blue(input_str, **args):
     """Prints the given string in blue text."""
     print(f"\033[94m{input_str}\033[0m", **args)
+
 
 def _print_green(input_str, **args):
     """Prints the given string in Matrix-style green text."""
     print(f"\033[92m{input_str}\033[0m", **args)
     #print(f"\033[32m{input_str}\033[0m", **args)
 
+
 def print_out(input_str, **args):
     """Prints the given string in Matrix-style green text."""
     _print_blue(input_str, **args)
+
 
 # Progress bar
 def print_start_progress(start_message=None):
