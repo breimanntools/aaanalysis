@@ -215,7 +215,7 @@ class TestCCPlotHeatmap:
         vmin, vmax = adjust_vmin_vmax(vmin=vmin, vmax=vmax)
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
-        if vmax is None or vmin is None or vmin < vmax:
+        if vmax is None or vmin is None or (vmax is not None and vmin is not None and vmin < vmax):
             fig, ax = cpp_plot.heatmap(df_feat=df_feat, vmin=vmin, vmax=vmax)
             assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
             plt.close()

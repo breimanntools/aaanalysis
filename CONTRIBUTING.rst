@@ -140,7 +140,7 @@ Alternatively, use `pip` to install dependencies from 'requirements.txt' and add
 .. code-block:: bash
 
     pip install -r requirements.txt
-    pip install -r docs/source/requirements_docs.txt
+    pip install -r docs/source/requirements_dev.txt
 
 **General Notes**
 
