@@ -96,10 +96,11 @@ def check_vmin_vmax(vmin=None, vmax=None, str_add=None):
     args = dict(accept_none=True, just_int=False, str_add=str_add)
     check_type.check_number_val(name="vmin", val=vmin, **args)
     check_type.check_number_val(name="vmax", val=vmax, **args)
-    if vmin is not None and vmax is not None and vmin >= vmax:
-        str_error = add_str(str_error=f"'vmin' ({vmin}) < 'vmax' ({vmax}) not fulfilled.",
-                            str_add=str_add)
-        raise ValueError(str_error)
+    if vmin is not None and vmax is not None:
+        if vmin >= vmax:
+            str_error = add_str(str_error=f"'vmin' ({vmin}) < 'vmax' ({vmax}) not fulfilled.",
+                                str_add=str_add)
+            raise ValueError(str_error)
 
 
 def check_lim(name="xlim", val=None, accept_none=True, str_add=None):

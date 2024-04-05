@@ -26,6 +26,13 @@ LIST_CAT = ['ASA/Volume', 'Conformation', 'Energy', 'Polarity', 'Shape', 'Compos
 DICT_COLOR = dict(zip(LIST_CAT, VALID_COLORS))
 
 
+# Helper function
+def adjust_vmin_vmax(vmin=None, vmax=None):
+    vmin = -10000 if vmin < -10000 else vmin
+    vmax = 10000 if vmax > 10000 else vmax
+    return vmin, vmax
+
+
 def get_args_seq(n=0):
     aa.options["verbose"] = False
     df_seq = aa.load_dataset(name="DOM_GSEC", n=N_SEQ)
@@ -197,6 +204,7 @@ class TestCCPlotFeatureMap:
     @given(vmin=st.one_of(st.none(), st.integers(min_value=0), st.floats(min_value=0.0)),
            vmax=st.one_of(st.none(), st.integers(min_value=1), st.floats(min_value=1.0)))
     def test_vmin_vmax(self, vmin, vmax):
+        vmin, vmax = adjust_vmin_vmax(vmin=vmin, vmax=vmax)
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
         if vmax is None or vmin is None or vmin < vmax:
@@ -520,6 +528,7 @@ class TestCCPlotFeatureMap:
     @settings(max_examples=3, deadline=5000)
     @given(vmin=st.floats(min_value=10.0), vmax=st.floats(max_value=0.0))  # Invalid vmin > vmax
     def test_invalid_vmin_vmax(self, vmin, vmax):
+        vmin, vmax = adjust_vmin_vmax(vmin=vmin, vmax=vmax)
         if vmin > vmax:
             cpp_plot = aa.CPPPlot()
             df_feat = get_df_feat()

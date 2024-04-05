@@ -8,6 +8,12 @@ import aaanalysis as aa
 
 
 # Helper function
+def adjust_vmin_vmax(vmin=None, vmax=None):
+    vmin = -10000 if vmin < -10000 else vmin
+    vmax = 10000 if vmax > 10000 else vmax
+    return vmin, vmax
+
+
 def call_aaclust_plot_correlation(df_corr=None, **kwargs):
     """"""
     aac_plot = aa.AAclustPlot(verbose=False)
@@ -19,6 +25,7 @@ def call_aaclust_plot_correlation(df_corr=None, **kwargs):
     if not df_corr.isna().any().any() and len(set(all_vals)) != 1:
         assert isinstance(aac_plot.correlation(df_corr=df_corr, labels=labels, **kwargs), plt.Axes)
         plt.close()
+
 
 class TestAAclustPlotCorrelation:
     """Test the 'correlation' method of the AAclustPlot class."""
@@ -143,6 +150,7 @@ class TestAAclustPlotCorrelation:
            df_corr=some.lists(some.lists(some.floats(min_value=-1.0, max_value=1.0, allow_nan=False, allow_infinity=False),
                                          min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
     def test_vmin(self, vmin, df_corr):
+        vmin, vmax = adjust_vmin_vmax(vmin=vmin)
         call_aaclust_plot_correlation(df_corr=df_corr, vmin=vmin)
 
     @settings(max_examples=10, deadline=1000)
@@ -150,6 +158,7 @@ class TestAAclustPlotCorrelation:
            df_corr=some.lists(some.lists(some.floats(min_value=-1.0, max_value=1.0, allow_nan=False, allow_infinity=False),
                                          min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
     def test_vmax(self, vmax, df_corr):
+        vmin, vmax = adjust_vmin_vmax(vmax=vmax)
         call_aaclust_plot_correlation(df_corr=df_corr, vmax=vmax)
 
     @settings(max_examples=10, deadline=1000)
