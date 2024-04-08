@@ -32,12 +32,12 @@ Welcome to the AAanalysis documentation!
    :target: https://github.com/breimanntools/aaanalysis/actions/workflows/main.yml
    :alt: CI/CD Pipeline
 
-.. |Test Coverage| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/test_coverage/badge.svg
-   :target: https://github.com/breimanntools/aaanalysis/actions
+.. |Test Coverage| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/test_coverage.yml/badge.svg
+   :target: https://github.com/breimanntools/aaanalysis/actions/workflows/test_coverage.yml
    :alt: Test Coverage
 
-.. |Code QL| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis/badge.svg
-   :target: https://github.com/breimanntools/aaanalysis/actions
+.. |Code QL| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml/badge.svg
+   :target: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml
    :alt: CodeQL
 
 
