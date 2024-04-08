@@ -76,17 +76,17 @@ You can find the official documentation at `Read the Docs <https://aaanalysis.re
 
 Install
 =======
-**AAanalysis** can be installed either from `PyPi <https://pypi.org/project/aaanalysis>`_ or
-`conda-forge <https://anaconda.org/conda-forge/aaanalysis>`_:
+**AAanalysis** can be installed from `PyPi <https://pypi.org/project/aaanalysis>`_:
 
 .. code-block:: bash
 
    pip install -u aaanalysis
-   or
-   conda install -c conda-forge aaanalysis
 
-**Note**: Please use Python 3.9 and pip to avoid any dependency issues. Support for Python 3.10 to 3.12 is
-planned for the next release.
+For extended features, including our explainable AI module, please use the 'professional' version:
+
+.. code-block:: bash
+
+   pip install -u aaanalysis[pro]
 
 Contributing
 ============
@@ -110,10 +110,8 @@ If you use AAanalysis in your work, please cite the respective publication as fo
 
 **CPP**:
    Breimann and Kamp *et al.* (2024c),
-   *Interpretable feature engineering by CPP reveals the physicochemical signature of γ-secretase substrates*,
-   .. # Link if available
+   *Charting γ-secretase substrates by explainable AI*, .. # Link if available
 
 **dPULearn**:
    Breimann and Kamp *et al.* (2024c),
-   *Interpretable feature engineering by CPP reveals the physicochemical signature of γ-secretase substrates*,
-   .. # Link if available
+   *Charting γ-secretase substrates by explainable AI*, .. # Link if available
