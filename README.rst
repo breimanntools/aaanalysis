@@ -42,7 +42,7 @@ Welcome to the AAanalysis documentation!
 
 ..
     Missing badges
-     |Conda Version|
+    |Conda Version|
 
 .. list-table::
    :widths: 25 75
