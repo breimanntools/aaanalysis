@@ -24,6 +24,10 @@ Welcome to the AAanalysis documentation!
    :target: https://github.com/breimanntools/aaanalysis/blob/master/LICENSE
    :alt: License
 
+.. |Documentation Status| image:: https://readthedocs.org/projects/aaanalysis/badge/?version=latest
+   :target: https://aaanalysis.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
 .. |CI/CD pipeline| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/main.yml/badge.svg
    :target: https://github.com/breimanntools/aaanalysis/actions/workflows/main.yml
    :alt: CI/CD Pipeline
@@ -36,9 +40,6 @@ Welcome to the AAanalysis documentation!
    :target: https://github.com/breimanntools/aaanalysis/actions
    :alt: CodeQL
 
-.. |Documentation Status| image:: https://readthedocs.org/projects/aaanalysis/badge/?version=latest
-   :target: https://aaanalysis.readthedocs.io/en/latest/?badge=latest
-   :alt: Documentation Status
 
 .. |Conda Version| image:: https://anaconda.org/conda-forge/aaanalysis/badges/version.svg
    :target: https://anaconda.org/conda-forge/aaanalysis

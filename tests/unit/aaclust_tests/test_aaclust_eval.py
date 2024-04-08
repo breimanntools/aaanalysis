@@ -10,6 +10,7 @@ import aaanalysis as aa
 import warnings
 import pytest
 
+
 # Helper function
 def check_invalid_conditions(X, labels=None):
     n_samples, n_features = X.shape
@@ -28,6 +29,7 @@ def check_invalid_conditions(X, labels=None):
         if condition:
             return True
     return False
+
 
 # Main function
 class TestAAclustEvaluate:
@@ -74,6 +76,7 @@ class TestAAclustEvaluate:
         with pytest.raises(ValueError):
             aa.AAclust().eval(X)
 
+    @settings(deadline=1000)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=10, max_side=50),
                          elements=some.floats(allow_nan=False, allow_infinity=False, min_value=1)),
         labels_length=some.integers(min_value=10, max_value=50))
@@ -134,6 +137,7 @@ class TestAAclustEvaluateComplex:
                 warnings.simplefilter("ignore", RuntimeWarning)
                 assert isinstance(aa.AAclust().eval(X, list_labels=labels), pd.DataFrame)
 
+    @settings(deadline=1000)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=1, max_side=2),
                          elements=some.floats(allow_nan=False, allow_infinity=False)))
     def test_small_X(self, X):

@@ -41,7 +41,7 @@ jobs:
     - name: Run Tests
       run: pytest tests
       env:
-        HYPOTHESIS_DEADLINE: None
+        HYPOTHESIS_DEADLINE: 10000000
         MPLBACKEND: Agg
 
   code-quality:
