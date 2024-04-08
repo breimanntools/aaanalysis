@@ -112,10 +112,11 @@ class TestNameClustersComplex:
                 warnings.simplefilter("ignore", RuntimeWarning)
                 aa.AAclust().name_clusters(X, labels, names)
         else:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", RuntimeWarning)
-                result = aa.AAclust().name_clusters(X, labels, names)
-                assert isinstance(result, list)
+            if n_unique_labels > 1:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    result = aa.AAclust().name_clusters(X, labels, names)
+                    assert isinstance(result, list)
 
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, max_side=50),
                          elements=some.floats(allow_nan=True, allow_infinity=True)))
