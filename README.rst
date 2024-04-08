@@ -4,41 +4,41 @@ Welcome to the AAanalysis documentation!
     Developer Notes:
     Please update badges in README.rst and vice versa
 
-.. |Build Status| image:: https://github.com/breimanntools/aaanalysis/workflows/Build/badge.svg
-   :target: https://github.com/breimanntools/aaanalysis/actions
-   :alt: Build
-
-.. |Python Check| image:: https://github.com/breimanntools/aaanalysis/workflows/Python-check/badge.svg
-   :target: https://github.com/breimanntools/aaanalysis/actions
-   :alt: Python-check
-
 .. |PyPI Status| image:: https://img.shields.io/pypi/status/aaanalysis.svg
    :target: https://pypi.org/project/aaanalysis/
    :alt: PyPI - Status
-
-.. |Supported Python Versions| image:: https://img.shields.io/pypi/pyversions/aaanalysis.svg
-   :target: https://pypi.python.org/pypi/aaanalysis
-   :alt: Supported Python Versions
 
 .. |PyPI Version| image:: https://img.shields.io/pypi/v/aaanalysis.svg
    :target: https://pypi.python.org/pypi/aaanalysis
    :alt: PyPI - Package Version
 
-.. |Conda Version| image:: https://anaconda.org/conda-forge/aaanalysis/badges/version.svg
-   :target: https://anaconda.org/conda-forge/aaanalysis
-   :alt: Conda - Package Version
+.. |Supported Python Versions| image:: https://img.shields.io/pypi/pyversions/aaanalysis.svg
+   :target: https://pypi.python.org/pypi/aaanalysis
+   :alt: Supported Python Versions
 
-.. |Documentation Status| image:: https://readthedocs.org/projects/aaanalysis/badge/?version=latest
-   :target: https://aaanalysis.readthedocs.io/en/latest/?badge=latest
-   :alt: Documentation Status
+.. |Downloads| image:: https://pepy.tech/badge/aaanalysis
+   :target: https://pepy.tech/project/aaanalysis
+   :alt: Downloads
 
 .. |License| image:: https://img.shields.io/github/license/breimanntools/aaanalysis.svg
    :target: https://github.com/breimanntools/aaanalysis/blob/master/LICENSE
    :alt: License
 
-.. |Downloads| image:: https://pepy.tech/badge/aaanalysis
-   :target: https://pepy.tech/project/aaanalysis
-   :alt: Downloads
+.. |CI/CD pipeline| image:: https://github.com/breimanntools/aaanalysis/workflows/main.yml/badge.svg
+   :target: https://github.com/breimanntools/aaanalysis/actions
+   :alt: Build
+
+.. |Code QL| image:: https://github.com/breimanntools/aaanalysis/workflows/codeql_analysis.yml/badge.svg
+   :target: https://github.com/breimanntools/aaanalysis/actions
+   :alt: Python-check
+
+.. |Documentation Status| image:: https://readthedocs.org/projects/aaanalysis/badge/?version=latest
+   :target: https://aaanalysis.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
+.. |Conda Version| image:: https://anaconda.org/conda-forge/aaanalysis/badges/version.svg
+   :target: https://anaconda.org/conda-forge/aaanalysis
+   :alt: Conda - Package Version
 
 ..
     Missing badges
@@ -51,7 +51,7 @@ Welcome to the AAanalysis documentation!
    * - **Package**
      - |PyPI Status| |PyPI Version| |Supported Python Versions| |Downloads| |License|
    * - **Testing**
-     - |Documentation Status| |Build Status| |Python Check|
+     - |Documentation Status| |CI/CD pipeline| |Code QL|
 
 **AAanalysis** (Amino Acid analysis) is a Python framework for interpretable sequence-based protein prediction.
 Its foundation are the following algorithms:
