@@ -11,17 +11,17 @@ Welcome to the AAanalysis documentation!
 
 Install
 =======
-**AAanalysis** can be installed either from `PyPi <https://pypi.org/project/aaanalysis>`_ or
-`conda-forge <https://anaconda.org/conda-forge/aaanalysis>`_:
+**AAanalysis** can be installed from `PyPi <https://pypi.org/project/aaanalysis>`_:
 
 .. code-block:: bash
 
    pip install -u aaanalysis
-   or
-   conda install -c conda-forge aaanalysis
 
-**Note**: Please use Python 3.9 and pip to avoid any dependency issues. Support for Python 3.10 to 3.12 is
-planned for the next release.
+For extended features, including our explainable AI module, please use the 'professional' version:
+
+.. code-block:: bash
+
+   pip install -u aaanalysis[pro]
 
 .. toctree::
    :maxdepth: 1

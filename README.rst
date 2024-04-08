@@ -2,8 +2,10 @@ Welcome to the AAanalysis documentation!
 ========================================
 ..
     Developer Notes:
-    Please update badges in README.rst and vice versa
+    Please make sure that badges in badges.rst (Read The Docs)
+    and README.rst (GitHub) are the same.
 
+.. Group 1: Package badges
 .. |PyPI Status| image:: https://img.shields.io/pypi/status/aaanalysis.svg
    :target: https://pypi.org/project/aaanalysis/
    :alt: PyPI - Status
@@ -24,6 +26,7 @@ Welcome to the AAanalysis documentation!
    :target: https://github.com/breimanntools/aaanalysis/blob/master/LICENSE
    :alt: License
 
+.. Group 2: Testing badges
 .. |Documentation Status| image:: https://readthedocs.org/projects/aaanalysis/badge/?version=latest
    :target: https://aaanalysis.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
@@ -40,10 +43,11 @@ Welcome to the AAanalysis documentation!
    :target: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml
    :alt: CodeQL
 
-
+.. Group 3: Potential badges for future
 .. |Conda Version| image:: https://anaconda.org/conda-forge/aaanalysis/badges/version.svg
    :target: https://anaconda.org/conda-forge/aaanalysis
    :alt: Conda - Package Version
+
 
 ..
     Missing badges

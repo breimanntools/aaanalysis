@@ -11,9 +11,12 @@ import aaanalysis as aa
 def adjust_vmin_vmax(vmin=None, vmax=None):
     if vmin is not None:
         vmin = -10000 if vmin < -10000 else vmin
+        vmin = 10000 if vmin > 10000 else vmin
     if vmax is not None:
+        vmax = -10000 if vmin < -10000 else vmin
         vmax = 10000 if vmax > 10000 else vmax
     return vmin, vmax
+
 
 
 def call_aaclust_plot_correlation(df_corr=None, **kwargs):
