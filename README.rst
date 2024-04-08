@@ -24,15 +24,15 @@ Welcome to the AAanalysis documentation!
    :target: https://github.com/breimanntools/aaanalysis/blob/master/LICENSE
    :alt: License
 
-.. |CI/CD pipeline| image:: https://github.com/breimanntools/aaanalysis/workflows/main.yml/badge.svg
+.. |CI/CD pipeline| image:: https://github.com/breimanntools/aaanalysis/workflows/main/badge.svg
    :target: https://github.com/breimanntools/aaanalysis/actions
    :alt: CI/CD Pipeline
 
-.. |Test Coverage| image:: https://github.com/breimanntools/aaanalysis/workflows/test_coverage.yml/badge.svg
+.. |Test Coverage| image:: https://github.com/breimanntools/aaanalysis/workflows/test_coverage/badge.svg
    :target: https://github.com/breimanntools/aaanalysis/actions
    :alt: Test Coverage
 
-.. |Code QL| image:: https://github.com/breimanntools/aaanalysis/workflows/codeql_analysis.yml/badge.svg
+.. |Code QL| image:: https://github.com/breimanntools/aaanalysis/workflows/codeql_analysis/badge.svg
    :target: https://github.com/breimanntools/aaanalysis/actions
    :alt: CodeQL
 
