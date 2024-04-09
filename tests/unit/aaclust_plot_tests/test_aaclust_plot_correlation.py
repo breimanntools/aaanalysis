@@ -18,7 +18,6 @@ def adjust_vmin_vmax(vmin=None, vmax=None):
     return vmin, vmax
 
 
-
 def call_aaclust_plot_correlation(df_corr=None, **kwargs):
     """"""
     aac_plot = aa.AAclustPlot(verbose=False)
