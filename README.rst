@@ -35,9 +35,9 @@ Welcome to the AAanalysis documentation!
    :target: https://github.com/breimanntools/aaanalysis/actions/workflows/main.yml
    :alt: CI/CD Pipeline
 
-.. |Test Coverage| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/test_coverage.yml/badge.svg
-   :target: https://github.com/breimanntools/aaanalysis/actions/workflows/test_coverage.yml
-   :alt: Test Coverage
+.. |Codecov| image:: https://codecov.io/gh/breimanntools/aaanalysis/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/breimanntools/aaanalysis
+   :alt: Codecov
 
 .. |Code QL| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml/badge.svg
    :target: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml
@@ -60,7 +60,7 @@ Welcome to the AAanalysis documentation!
    * - **Package**
      - |PyPI Status| |PyPI Version| |Supported Python Versions| |Downloads| |License|
    * - **Testing**
-     - |Documentation Status| |CI/CD pipeline| |Test Coverage| |Code QL|
+     - |Documentation Status| |CI/CD pipeline| |Codecov| |Code QL|
 
 **AAanalysis** (Amino Acid analysis) is a Python framework for interpretable sequence-based protein prediction.
 Its foundation are the following algorithms:
