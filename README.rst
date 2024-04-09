@@ -90,13 +90,13 @@ Install
 
 .. code-block:: bash
 
-   pip install -u aaanalysis
+   pip install aaanalysis
 
 For extended features, including our explainable AI module, please use the 'professional' version:
 
 .. code-block:: bash
 
-   pip install -u aaanalysis[pro]
+   pip install aaanalysis[pro]
 
 Contributing
 ============
