@@ -55,7 +55,7 @@ Welcome to the AAanalysis documentation!
     |Conda Version|
 
 .. list-table::
-   :widths: 15 85
+   :widths: 20 80
    :header-rows: 1
 
    * - **Package**
