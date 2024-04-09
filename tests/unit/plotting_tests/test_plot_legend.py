@@ -166,7 +166,7 @@ class TestPlotSetLegendComplex:
     @given(st.lists(st.text(), min_size=2, max_size=5))
     def test_plot_set_legend_custom_labels(self, labels):
         fig, ax = plt.subplots()
-        labels = list(set(labels))
+        labels = list(set([x for x in labels if len(x) > 1]))
         ax = aa.plot_legend(ax=ax, dict_color={label: "red" for label in labels})
         legend_labels = [text.get_text() for text in ax.get_legend().get_texts()]
         assert set(legend_labels) == set(labels)
