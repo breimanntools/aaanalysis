@@ -27,21 +27,22 @@ Welcome to the AAanalysis documentation!
    :alt: License
 
 .. Group 2: Testing badges
-.. |Documentation Status| image:: https://readthedocs.org/projects/aaanalysis/badge/?version=latest
-   :target: https://aaanalysis.readthedocs.io/en/latest/?badge=latest
-   :alt: Documentation Status
-
 .. |Unit Tests| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/main.yml/badge.svg
    :target: https://github.com/breimanntools/aaanalysis/actions/workflows/main.yml
    :alt: CI/CD Pipeline
+
+.. |CodeQL| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml/badge.svg
+   :target: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml
+   :alt: CodeQL
 
 .. |Codecov| image:: https://codecov.io/gh/breimanntools/aaanalysis/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/breimanntools/aaanalysis
    :alt: Codecov
 
-.. |CodeQL| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml/badge.svg
-   :target: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml
-   :alt: CodeQL
+.. |Documentation Status| image:: https://readthedocs.org/projects/aaanalysis/badge/?version=latest
+   :target: https://aaanalysis.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
 
 .. Group 3: Potential badges for future
 .. |Conda Version| image:: https://anaconda.org/conda-forge/aaanalysis/badges/version.svg
@@ -60,7 +61,7 @@ Welcome to the AAanalysis documentation!
    * - **Package**
      - |PyPI Status| |PyPI Version| |Supported Python Versions| |Downloads| |License|
    * - **Testing**
-     - |Documentation Status| |Unit Tests| |Codecov| |CodeQL|
+     - |Unit Tests| |CodeQL| |Codecov| |Documentation Status|
 
 **AAanalysis** (Amino Acid analysis) is a Python framework for interpretable sequence-based protein prediction.
 Its foundation are the following algorithms:

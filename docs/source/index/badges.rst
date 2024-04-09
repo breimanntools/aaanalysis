@@ -25,26 +25,28 @@
    :alt: License
 
 .. Group 2: Testing badges
+.. |Unit Tests| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/main.yml/badge.svg
+   :target: https://github.com/breimanntools/aaanalysis/actions/workflows/main.yml
+   :alt: CI/CD Pipeline
+
+.. |CodeQL| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml/badge.svg
+   :target: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml
+   :alt: CodeQL
+
+.. |Codecov| image:: https://codecov.io/gh/breimanntools/aaanalysis/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/breimanntools/aaanalysis
+   :alt: Codecov
+
 .. |Documentation Status| image:: https://readthedocs.org/projects/aaanalysis/badge/?version=latest
    :target: https://aaanalysis.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. |CI/CD pipeline| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/main.yml/badge.svg
-   :target: https://github.com/breimanntools/aaanalysis/actions/workflows/main.yml
-   :alt: CI/CD Pipeline
-
-.. |Test Coverage| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/test_coverage.yml/badge.svg
-   :target: https://github.com/breimanntools/aaanalysis/actions/workflows/test_coverage.yml
-   :alt: Test Coverage
-
-.. |Code QL| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml/badge.svg
-   :target: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml
-   :alt: CodeQL
 
 .. Group 3: Potential badges for future
 .. |Conda Version| image:: https://anaconda.org/conda-forge/aaanalysis/badges/version.svg
    :target: https://anaconda.org/conda-forge/aaanalysis
    :alt: Conda - Package Version
+
 
 ..
     Missing badges
@@ -57,4 +59,4 @@
    * - **Package**
      - |PyPI Status| |PyPI Version| |Supported Python Versions| |Downloads| |License|
    * - **Testing**
-     - |Documentation Status| |CI/CD pipeline| |Test Coverage| |Code QL|
+     - |Unit Tests| |CodeQL| |Codecov| |Documentation Status|
