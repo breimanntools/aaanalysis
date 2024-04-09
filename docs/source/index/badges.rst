@@ -53,7 +53,7 @@
     |Conda Version|
 
 .. list-table::
-   :widths: 25 75
+   :widths: 15 85
    :header-rows: 1
 
    * - **Package**
