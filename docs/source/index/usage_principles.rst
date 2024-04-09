@@ -31,6 +31,9 @@ See the primary analysis pipeline of the AAanalysis framework in this diagram:
    :align: center
    :alt: AAanalysis workflow
 
+   AAanalysis pipeline illustrating the typical data flow, represented as data frames, with key
+   methods (Python classes) highlighted by black squares.
+
 Details on the foundational concepts of AAnalysis are provided by the following sections:
 
 .. toctree::
