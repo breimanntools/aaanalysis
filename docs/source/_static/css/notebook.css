@@ -25,6 +25,7 @@ div.output table {
     overflow-y: auto !important;
     display: block !important;
     overflow-x: auto !important;
+    font-size: 90% !important;
 }
 
 div.output table th, div.output table td {

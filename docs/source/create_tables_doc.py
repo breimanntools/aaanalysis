@@ -74,6 +74,7 @@ def _convert_excel_to_rst(df):
             else:
                 new_row.append(str(val))
         rst_output += "   * - " + "\n     - ".join(new_row) + "\n"
+    rst_output += "\n"  # Add a blank line after each table for better spacing.
     return rst_output
 
 
