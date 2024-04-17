@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 import pytest
 import aaanalysis as aa
+import warnings
+
 
 # Helper functions
 def create_labels(size):
@@ -227,7 +229,9 @@ class TestdPULearnFitComplex:
     def test_invalid_combinations(self, X, labels, n_unl_to_neg, n_components):
         """Test invalid combinations of parameters."""
         dpul = aa.dPULearn()
-        is_invalid =  check_invalid_conditions(X=X, labels=labels)
-        if is_invalid:
-            with pytest.raises(ValueError):
-                dpul.fit(X, labels, n_unl_to_neg, n_components)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            is_invalid = check_invalid_conditions(X=X, labels=labels)
+            if is_invalid:
+                with pytest.raises(ValueError):
+                    dpul.fit(X, labels, n_unl_to_neg, n_components)

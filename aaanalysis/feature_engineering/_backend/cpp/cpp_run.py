@@ -6,8 +6,7 @@ This is the key algorithm of CPP and for AAanalysis.
 import os
 import numpy as np
 import pandas as pd
-import multiprocessing as mp
-from itertools import repeat
+from joblib import Parallel, delayed
 import warnings
 
 import aaanalysis.utils as ut
@@ -98,6 +97,8 @@ def _filtering_info(df=None, df_scales=None, check_cat=True):
 
 
 # II Main functions
+
+
 # Filtering methods
 def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None, labels=None, label_test=1, label_ref=0,
                        accept_gaps=False, verbose=True, n_jobs=None):
@@ -106,26 +107,32 @@ def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None, labels=Non
     # Input (df_parts, split_kws, df_scales, y) checked in main method (CPP.run())
     mask_ref = [x == label_ref for x in labels]
     mask_test = [x == label_test for x in labels]
+    # Initial splitting
     part_split, labels_ps = _splitting(split_kws=split_kws, df_parts=df_parts)
     list_scales = list(df_scales)
     dict_all_scales = {col: dict(zip(df_scales.index.to_list(), df_scales[col])) for col in list_scales}
+
+    # Function to be parallelized
+    def compute_pre_filtering_info(scales_chunk):
+        args = [scales_chunk, dict_all_scales, labels_ps, part_split, accept_gaps, mask_ref, mask_test, verbose]
+        return _pre_filtering_info(*args)
+
     # Feature filtering
     if n_jobs == 1:
         # Run in a single process
-        args = [list_scales, dict_all_scales, labels_ps, part_split, accept_gaps, mask_ref, mask_test, verbose]
-        abs_mean_dif, std_test, feat_names = _pre_filtering_info(*args)
+        abs_mean_dif, std_test, feat_names = compute_pre_filtering_info(list_scales)
     else:
         # Run in multiple processes
-        n_jobs = min([os.cpu_count(), len(list_scales)])
-        scale_chunks = np.array_split(list_scales, n_jobs)
-        args = zip(scale_chunks, repeat(dict_all_scales), repeat(labels_ps), repeat(part_split), repeat(accept_gaps),
-                   repeat(mask_ref), repeat(mask_test), repeat(verbose))
-        with mp.get_context("spawn").Pool(processes=n_jobs) as pool:
-            result = pool.starmap(_pre_filtering_info, args)
-        abs_mean_dif = np.concatenate([x[0] for x in result])
-        std_test = np.concatenate([x[1] for x in result])
-        feat_names = np.concatenate([x[2] for x in result])
+        if n_jobs is None:
+            n_jobs = min([os.cpu_count(), len(list_scales)])  # Parallel processing
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(compute_pre_filtering_info)(scales_chunk) for scales_chunk in np.array_split(list_scales, n_jobs))
+        # Concatenate results from all jobs
+        abs_mean_dif = np.concatenate([x[0] for x in results])
+        std_test = np.concatenate([x[1] for x in results])
+        feat_names = np.concatenate([x[2] for x in results])
     return abs_mean_dif, std_test, feat_names
+
 
 def pre_filtering(features=None, abs_mean_dif=None, std_test=None, max_std_test=0.2, n=10000):
     """CPP pre-filtering based on thresholds."""

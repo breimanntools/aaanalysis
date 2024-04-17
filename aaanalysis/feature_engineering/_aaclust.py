@@ -255,21 +255,21 @@ class AAclust(Wrapper):
         else:
             # 1. Step: Estimation of lower bound of k (number of clusters)
             if self._verbose:
-                ut.print_out("1. Estimation of lower bound of k (number of clusters)", end="")
+                ut.print_out("1. Estimation of lower bound of k (number of clusters)")
             n_clusters_lb = estimate_lower_bound_n_clusters(X, **args)
             # 2. Step: Optimization of k by recursive clustering
             if self._verbose:
                 objective_fct = "min_cor_center" if on_center else "min_cor_all"
-                ut.print_out(f"2. Optimization of k by recursive clustering ({objective_fct}, min_th={min_th}, k={n_clusters_lb})", end="")
+                ut.print_out(f"2. Optimization of k by recursive clustering ({objective_fct}, min_th={min_th}, k={n_clusters_lb})")
             n_clusters = optimize_n_clusters(X, n_clusters=n_clusters_lb, **args)
             self.model = self._model_class(n_clusters=n_clusters, **self._model_kwargs)
             labels = self.model.fit(X).labels_.tolist()
             # 3. Step: Cluster merging (optional)
             if metric is not None:
-                if self._verbose:
-                    ut.print_out(f"3. Cluster merging (k={len(labels)})", end="")
                 labels = merge_clusters(X, labels=labels, min_th=min_th, on_center=on_center, metric=metric)
                 n_clusters = len(set(labels))
+                if self._verbose:
+                    ut.print_out(f"3. Cluster merging (k={n_clusters})")
 
         # Obtain cluster centers and medoids
         medoids, medoid_labels, medoid_ind = compute_medoids(X, labels=labels)
@@ -549,9 +549,9 @@ class AAclust(Wrapper):
         return df_corr, labels_sorted
 
     @staticmethod
-    def comp_coverage(names : List[str] = None,
-                      names_ref : List[str] = None
-                      ) -> float :
+    def comp_coverage(names: List[str] = None,
+                      names_ref: List[str] = None
+                      ) -> float:
         """
         Computes the percentage of unique names from ``names`` that are present in ``names_ref``.
 

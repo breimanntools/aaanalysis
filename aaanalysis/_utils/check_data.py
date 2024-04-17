@@ -276,3 +276,9 @@ def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_p
             str_error = add_str(str_error=f"NaN values are not allowed in '{cols_nan_check}'.",
                                 str_add=str_add)
             raise ValueError(str_error)
+    columns = list(df)
+    cols_duplicated = [x for x in columns if columns.count(x) > 1]
+    if len(cols_duplicated) > 0:
+        str_error = add_str(str_error=f"The following columns are duplicated '{cols_duplicated}'.", str_add=str_add)
+        raise ValueError(str_error)
+

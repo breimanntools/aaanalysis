@@ -3,9 +3,8 @@ This is a script for utility feature functions for CPP and SequenceFeature objec
 """
 import os
 import numpy as np
-from itertools import repeat
-import multiprocessing as mp
 import pandas as pd
+from joblib import Parallel, delayed
 
 from ._part import create_parts
 from ._split import Split
@@ -21,6 +20,7 @@ def pre_check_vf_scale(part_split=None):
     # Check if ut.STR_AA_GAP is in the combined string
     if ut.STR_AA_GAP in combined_string:
         raise ValueError("Some input sequences contain gaps ('-').")
+
 
 def post_check_vf_scale(feature_values=None):
     """Check if feature_values/X does contain nans due to gaps"""
@@ -219,24 +219,26 @@ def get_amino_acids_(features=None, tmd_seq="", jmd_n_seq="", jmd_c_seq=""):
 
 def get_feature_matrix_(features=None, df_parts=None, df_scales=None, accept_gaps=False, n_jobs=None):
     """Create feature matrix for given feature ids and sequence parts."""
-    features = [features] if type(features) is str else features
+    features = [features] if isinstance(features, str) else features
     dict_all_scales = _get_dict_all_scales(df_scales=df_scales)
-    # Convert features to list if needed
     features = features.to_list() if isinstance(features, pd.Series) else features
+
+    # Function to be parallelized
+    def compute_feature_matrix(features_subset):
+        return _feature_matrix(features_subset, dict_all_scales, df_parts, accept_gaps)
+
     # Feature creation
     if n_jobs == 1:
-        # Run in a single process
-        feat_matrix = _feature_matrix(features, dict_all_scales, df_parts, accept_gaps)
+        # Process in a single thread/process
+        feat_matrix = compute_feature_matrix(features)
     else:
-        # Run in multiple processes
+        # If n_jobs is not specified, decide it dynamically based on the number of features
         if n_jobs is None:
-            # Optimize n_jobs that each core processes a minimum of 10 features
-            n_jobs = min([os.cpu_count(), max([int(len(features)/10), 1])])
-        feat_chunks = np.array_split(features, n_jobs)
-        args = zip(feat_chunks, repeat(dict_all_scales), repeat(df_parts), repeat(accept_gaps))
-        with mp.get_context("spawn").Pool(processes=n_jobs) as pool:
-            result = pool.starmap(_feature_matrix, args)
-        feat_matrix = np.concatenate(result, axis=1)
+            n_jobs = min(os.cpu_count(), max(int(len(features) / 10), 1))
+        # Use joblib to parallelize the computation
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(compute_feature_matrix)(features_chunk) for features_chunk in np.array_split(features, n_jobs))
+        feat_matrix = np.concatenate(results, axis=1)
     return feat_matrix
 
 
