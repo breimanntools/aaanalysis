@@ -25,6 +25,11 @@ Fixed
   **internal feature matrix** creation. This change prevents a ``RuntimeError`` that occurred when the main function
   is not explicitly used.
 
+Other
+~~~~~
+- **Requirements**: Update the ``seaborn`` dependency to version 0.13.2 or higher to resolve the legend argument
+  error present in versions earlier than 0.13
+
 v0.1.4 (2024-04-09)
 -------------------
 
