@@ -10,13 +10,14 @@ v0.1.5 (Released 2024-04-18)
 Added
 ~~~~~
 - **Code of Conduct**: Introduced a Code of Conduct to foster a welcoming and inclusive community environment.
-  We encourage all contributors to review the `Code of Conduct <link-to-code-of-conduct>`_ to understand the expectations
-  and responsibilities when participating in the project.
+  We encourage all contributors to review the `Code of Conduct <https://github.com/breimanntools/aaanalysis/blob/master/CODE_OF_CONDUCT.md>`_
+  to understand the expectations and responsibilities when participating in the project.
 
 Changed
 ~~~~~~~
-- **License Update**: Transitioned the project license from MIT to BSD-3-Clause to better align with our project's
-  community engagement and protection goals. This change affects how the software can be used and redistributed.
+- **License Update**: Transitioned the project license from MIT to `BSD-3-Clause <https://github.com/breimanntools/aaanalysis/blob/master/LICENSE>`_
+  to better align with our project's community engagement and protection goals. This change affects how the software
+  can be used and redistributed.
 
 Fixed
 ~~~~~
@@ -51,8 +52,9 @@ v0.1.3 (Released 2024-02-09)
 Added
 ~~~~~
 - **TreeModel**: Wrapper class of tree-based models for Monte Carlo estimates of predictions and feature importance.
-- **ShapExplainer**: A wrapper for SHAP (SHapley Additive exPlanations) explainers to obtain Monte Carlo estimates
-  for feature impact.
+  `See TreeModel <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.TreeModel.html>`_.
+- **ShapExplainer**: A wrapper for SHAP (SHapley Additive exPlanations) explainers to obtain Monte Carlo estimates for
+  feature impact. `See ShapExplainer <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.ShapExplainer.html>`_.
 
 Changed
 ~~~~~~~
@@ -68,11 +70,14 @@ v0.1.2 (Released 2023-11-06)
 
 Added
 ~~~~~
-- `CPPPlot <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.CPPPlot.html>`_:
-    Plotting class for CPP features.
+- **CPPPlot**: Plotting class for CPP features.
+  `See CPPPlot <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.CPPPlot.html>`_.
 - **dPULearnPlot**: Plotting class for results of negative identifications by dPULearn.
+  `See dPULearnPlot <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.dPULearnPlot.html>`_.
 - **AAclustPlot**: Plotting class for AAclust clustering results.
+  `See AAclustPlot <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.AAclustPlot.html>`_.
 - **Options**: Set system-level settings by a dictionary-like interface (similar to pandas).
+  `See options <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.options.html>`_.
 
 Changed
 ~~~~~~~
