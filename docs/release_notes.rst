@@ -21,7 +21,7 @@ Changed
 
 Fixed
 ~~~~~
-- **Multiprocessing**: Replaced native multiprocessing with the ``joblib`` module for CPP and internal feature matrix
+- **Multiprocessing**: Replaced native ``multiprocessing`` with the ``joblib`` module for CPP and internal feature matrix
   creation. This change prevents a ``RuntimeError`` that occurred when the main function is not explicitly used.
 
 v0.1.4 (Released 2024-04-09)
@@ -30,9 +30,9 @@ v0.1.4 (Released 2024-04-09)
 Added
 ~~~~~
 - **Installation Options**: Introduced separate installation profiles for the core and professional versions.
-  The core version now has reduced dependencies, enhancing installation robustness. For advanced usage, the
-  professional version includes necessary packages such as SHAP for the AAanalysis explainable AI module
-  (`TreeModel` and `ShapExplainer`), installable using ``pip install aaanalysis[pro]``.
+  The **core version** has reduced dependencies to enhance installation robustness, installable using ``pip install aaanalysis``.
+  The professional version, designed for advanced usage, includes packages required for our explainable AI module
+  such as SHAP, installable using ``pip install aaanalysis[pro]``.
 
 Changed
 ~~~~~~~
