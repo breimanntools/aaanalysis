@@ -21,8 +21,9 @@ Changed
 
 Fixed
 ~~~~~
-- **Multiprocessing**: Replaced native ``multiprocessing`` with the ``joblib`` module for CPP and internal feature matrix
-  creation. This change prevents a ``RuntimeError`` that occurred when the main function is not explicitly used.
+- **Multiprocessing**: Replaced native ``multiprocessing`` with the ``joblib`` module for **CPP** and
+  **internal feature matrix** creation. This change prevents a ``RuntimeError`` that occurred when the main function
+  is not explicitly used.
 
 v0.1.4 (Released 2024-04-09)
 ----------------------------

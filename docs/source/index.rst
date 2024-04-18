@@ -49,6 +49,7 @@ For extended features, including our explainable AI module, please use the 'prof
 
    index/tables.rst
    index/references.rst
+   index/release_notes.rst
 
 Indices and tables
 ==================
