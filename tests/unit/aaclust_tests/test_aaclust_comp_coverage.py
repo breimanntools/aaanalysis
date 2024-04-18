@@ -7,6 +7,10 @@ import numpy as np
 import aaanalysis as aa
 import pytest
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
 
 class TestCompCoverage:
     """Test comp_coverage function of the TARGET FUNCTION"""
@@ -15,7 +19,7 @@ class TestCompCoverage:
     def test_valid_names(self, names):
         """Test a valid 'names' parameter."""
         names_ref = names + ['additional_name']
-        result = aa.AAclust().comp_coverage(names, names_ref)  # Please replace your_class with actual class name
+        result = aa.AAclust().comp_coverage(names, names_ref)
         assert isinstance(result, float)
 
     @given(names=some.lists(elements=some.text(), min_size=2))

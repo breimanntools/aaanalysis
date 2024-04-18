@@ -6,6 +6,12 @@ from hypothesis import given, settings
 import hypothesis.strategies as st
 import aaanalysis as aa
 import hypothesis.extra.numpy as npst
+
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
+
 aa.options["verbose"] = False
 
 
@@ -28,9 +34,11 @@ def check_invalid_conditions(X, min_samples=3, min_unique_features=2, check_uniq
             return True
     return False
 
+
 def create_labels(size):
     labels = np.array([1, 1, 0, 0] + list(np.random.choice([1, 0], size=size-4)))
     return labels
+
 
 def create_list_is_selected(n_features=None, n_rows=1, n_arrays=2, d1=False):
     if d1:
@@ -38,6 +46,7 @@ def create_list_is_selected(n_features=None, n_rows=1, n_arrays=2, d1=False):
     else:
         list_is_selected = [np.random.choice([True, False], size=(n_rows, n_features)) for _ in range(n_arrays)]
     return list_is_selected
+
 
 ARGS = dict(n_cv=2, list_metrics=["accuracy"])
 

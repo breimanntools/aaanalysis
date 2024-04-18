@@ -5,6 +5,7 @@ import pytest
 import pandas as pd
 import aaanalysis as aa
 import random
+
 aa.options["verbose"] = False
 
 

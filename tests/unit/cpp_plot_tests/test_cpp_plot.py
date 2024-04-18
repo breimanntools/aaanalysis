@@ -6,6 +6,10 @@ from hypothesis import given, settings, strategies as st
 import aaanalysis as aa
 from pandas.testing import assert_frame_equal
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
 
 class TestCPPPlot:
     """Positive Test cases for CPPPlot class."""

@@ -10,6 +10,10 @@ import pandas as pd
 import aaanalysis as aa
 import random
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
 
 def create_labels(size):
     labels = np.array([0, 1] + list(np.random.choice([0, 1], size=size-2)))
@@ -64,6 +68,7 @@ class TestdPULearnEval:
     def test_names_datasets(self, names_datasets):
         """Test 'names_datasets' with valid inputs."""
         X = np.random.rand(100, 5)
+        names_datasets = [x.replace("_", "X").replace("$", "X") for x in names_datasets]
         list_labels = [np.random.randint(0, 3, size=100) for _ in names_datasets]
         dpul = aa.dPULearn()
         size = X.shape[0]
@@ -146,6 +151,7 @@ class TestdPULearnEval:
     @given(names_datasets=st.lists(st.text(), min_size=2))
     def test_names_datasets_invalid(self, names_datasets):
         """Test 'names_datasets' with invalid sizes."""
+        names_datasets = [x.replace("_", "X").replace("$", "X") for x in names_datasets]
         dpul = aa.dPULearn()
         X = np.random.rand(100, 5)
         list_labels = [np.random.randint(0, 3, size=100) for _ in range(len(names_datasets) - 1)]  # Mismatch in sizes

@@ -6,6 +6,7 @@ from sklearn.svm import SVC, SVR
 import shap
 
 import aaanalysis as aa
+
 aa.options["verbose"] = "off"
 
 ARGS = dict(explainer_class=shap.TreeExplainer)

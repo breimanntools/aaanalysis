@@ -1,9 +1,14 @@
 """
 This is a script for testing the aa.plot_get_clist function.
 """
-from hypothesis import given, strategies as st
+from hypothesis import given, settings, strategies as st
 import pytest
 import aaanalysis as aa
+
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
 
 class TestPlotGetCList:
     """Test plot_get_clist function"""

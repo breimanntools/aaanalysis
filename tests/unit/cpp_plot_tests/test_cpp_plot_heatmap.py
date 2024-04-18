@@ -8,6 +8,11 @@ import pytest
 import aaanalysis as aa
 import random
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
+
 # Constants and Helper functions
 N_SEQ = 10
 COL_FEAT_IMPACT_TEST = "feat_impact_test"

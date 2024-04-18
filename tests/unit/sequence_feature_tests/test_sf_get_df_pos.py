@@ -4,6 +4,7 @@ import pytest
 import random
 import aaanalysis as aa
 
+
 # Utility function for DataFrame creation
 def _get_df_feat(n_feat=10, n_samples=20, list_parts=None):
     """Create input for sf.get_df_feat()"""

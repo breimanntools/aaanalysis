@@ -7,6 +7,11 @@ import numpy as np
 import aaanalysis as aa
 import random
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
+
 # Sample columns for testing
 COLS_EVAL_REQUIERED = ['name', 'avg_STD', 'avg_IQR', 'avg_abs_AUC_pos', 'avg_abs_AUC_unl']
 COLS_EVAL = COLS_EVAL_REQUIERED + ["avg_abs_AUC_neg", "avg_KLD_pos", "avg_KLD_unl", "avg_KLD_neg"]

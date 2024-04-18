@@ -1,17 +1,21 @@
 """This is a script to test the SequenceFeature().get_feature_names() method ."""
 from hypothesis import given, settings, strategies as st
 import pytest
-import numpy as np
 import random
-import pandas as pd
 import aaanalysis as aa
 aa.options["verbose"] = False
+
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
 
 def get_random_features(n_feat=100):
     """"""
     sf = aa.SequenceFeature()
     features = sf.get_features()
     return random.sample(features, n_feat)
+
 
 class TestGetFeatureNames:
     """Class for testing get_feature_names function in positive scenarios."""

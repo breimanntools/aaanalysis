@@ -9,6 +9,11 @@ import aaanalysis as aa
 from sklearn.decomposition import PCA
 import warnings
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
+
 # Helper function
 def has_sufficient_variability(X=None, labels=None):
     unique_labels = np.unique(labels)

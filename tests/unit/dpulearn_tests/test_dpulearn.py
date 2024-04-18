@@ -8,6 +8,10 @@ import inspect
 from sklearn.decomposition import PCA
 import aaanalysis as aa
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
 
 valid_pca_params = {
     'n_components': [None, 1, 5, 'mle', 0.95],

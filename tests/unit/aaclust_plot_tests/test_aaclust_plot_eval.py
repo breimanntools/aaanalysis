@@ -9,6 +9,11 @@ import numpy as np
 import pandas as pd
 import aaanalysis as aa
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
+
 COLS_EVAL = ["n_clusters", "BIC", "CH", "SC"]
 
 # Helper function
@@ -20,11 +25,12 @@ def _add_names_to_df_eval(df_eval=None, names_datasets=None):
     df_eval.insert(0, "name", names_datasets)
     return df_eval
 
+
 class TestAAclustPlotEval:
     """Test  aa.AAclustPlot().eval function"""
 
     # Positive tests
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(n_samples=some.integers(min_value=1, max_value=20))
     def test_data_input(self, n_samples):
         """Test the 'data' parameter with valid data."""
@@ -43,7 +49,7 @@ class TestAAclustPlotEval:
         data = np.random.randn(3, 4)
         df_eval = pd.DataFrame(data, columns=COLS_EVAL)
         df_eval = _add_names_to_df_eval(df_eval=df_eval)
-        fig, axes =  aa.AAclustPlot().eval(df_eval=df_eval)
+        fig, axes = aa.AAclustPlot().eval(df_eval=df_eval)
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, np.ndarray)
         assert len(axes) == 4

@@ -10,6 +10,11 @@ from sklearn.cluster import (KMeans, AgglomerativeClustering, MiniBatchKMeans,
                              AffinityPropagation)
 from sklearn.mixture import GaussianMixture
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
+
 K_BASED_MODELS = {
     'KMeans': KMeans,
     'AgglomerativeClustering': AgglomerativeClustering,

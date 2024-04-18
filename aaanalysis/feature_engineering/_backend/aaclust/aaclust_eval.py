@@ -21,6 +21,7 @@ def _evaluate_clustering(X, labels=None):
     sc = silhouette_score(X, labels)
     return bic, ch, sc
 
+
 # II Main function
 @ut.catch_runtime_warnings()
 def evaluate_clustering(X, list_labels=None, names_datasets=None):

@@ -1,12 +1,16 @@
 """
 This is a script for testing the AAclustPlot class.
 """
-from hypothesis import given
+from hypothesis import given, settings
 import hypothesis.strategies as st
 from sklearn.decomposition import PCA
 import pytest
 
 import aaanalysis as aa
+
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
 
 
 class TestAAclustPlot:

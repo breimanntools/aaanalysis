@@ -7,6 +7,10 @@ import aaanalysis.utils as ut
 import aaanalysis as aa
 import pytest
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
 
 class TestLoadDataset:
     """Test load_dataset function"""

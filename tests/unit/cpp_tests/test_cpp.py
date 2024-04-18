@@ -8,9 +8,14 @@ import hypothesis.strategies as some
 import aaanalysis as aa
 import pandas as pd
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
 STR_SEGMENT = "Segment"
 STR_PATTERN = "Pattern"
 STR_PERIODIC_PATTERN = "PeriodicPattner"
+
 
 def get_df_parts():
     """"""

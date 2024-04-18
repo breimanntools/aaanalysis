@@ -10,6 +10,10 @@ import random
 import aaanalysis as aa
 
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
 
 def _create_list_labels(size, num_labels):
     return [np.random.choice([0, 1, 2], size=size) for _ in range(num_labels)]

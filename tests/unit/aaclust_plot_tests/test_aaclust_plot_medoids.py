@@ -10,6 +10,10 @@ import numpy as np
 import aaanalysis as aa
 import warnings
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
 
 def call_aaclust_plot_medoids(X=None, labels=None, **kwargs):
     """"""

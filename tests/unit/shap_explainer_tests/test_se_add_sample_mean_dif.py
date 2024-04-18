@@ -7,6 +7,10 @@ import aaanalysis as aa
 from hypothesis import given, settings, strategies as st
 import hypothesis.extra.numpy as npst
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
 
 # Helper functions
 def check_invalid_conditions(X, min_samples=3, min_unique_features=2, check_unique=True):

@@ -7,6 +7,10 @@ import aaanalysis as aa
 import warnings
 import pytest
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
 
 class TestNameClusters:
     """Test name_clusters function of the TARGET FUNCTION"""

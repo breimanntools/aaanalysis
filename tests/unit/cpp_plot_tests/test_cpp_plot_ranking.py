@@ -11,6 +11,11 @@ import hypothesis.strategies as st
 import aaanalysis as aa
 import random
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
+
 # Setup and helper functions
 def create_df_feat(num_features=50):
     """Creates a dummy DataFrame to mimic df_feat input."""

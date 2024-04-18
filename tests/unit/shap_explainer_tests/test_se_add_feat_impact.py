@@ -5,6 +5,7 @@ import pytest
 import random
 import aaanalysis as aa
 
+
 def create_df_feat(drop=True):
     df_feat = aa.load_features(name="DOM_GSEC").head(50)
     if drop:

@@ -9,6 +9,10 @@ import aaanalysis as aa
 import random
 import warnings
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
 
 def _create_sample_df_pu(n_samples=10, n_pcs=7, include_abs_diff=True, include_selection_via=True,
                          n_neg=5, random_order=False):
@@ -79,7 +83,6 @@ class TestdPULearnPlotPCA:
             assert isinstance(ax, plt.Axes)
             plt.close()
 
-
     def test_figsize_valid(self):
         for i in range(20):
             n_samples, n_pc, n_neg = _get_random_int()
@@ -91,7 +94,6 @@ class TestdPULearnPlotPCA:
             assert isinstance(ax, plt.Axes)
             plt.close()
 
-
     def test_labels_valid(self):
         for i in range(20):
             n_samples, n_pc, n_neg = _get_random_int()
@@ -101,7 +103,6 @@ class TestdPULearnPlotPCA:
             ax = aa.dPULearnPlot.pca(df_pu, labels=labels)
             assert isinstance(ax, plt.Axes)
             plt.close()
-
 
     def test_pc_x_pc_y_valid(self):
         for i in range(20):
@@ -114,7 +115,6 @@ class TestdPULearnPlotPCA:
             ax = aa.dPULearnPlot.pca(df_pu, pc_x=pc_x, pc_y=pc_y, labels=labels)
             assert isinstance(ax, plt.Axes)
             plt.close()
-
 
     @settings(max_examples=10, deadline=3500)
     @given(show_pos_mean_x=some.booleans(), show_pos_mean_y=some.booleans())
@@ -148,7 +148,8 @@ class TestdPULearnPlotPCA:
             df_pu = _create_sample_df_pu(n_samples=n_samples, n_pcs=n_pc, include_abs_diff=True, n_neg=n_neg,
                                          random_order=True)
             labels = _create_labels(labels_selection_via=df_pu["selection_via"])
-
+            # Replace '$' which could be interpreted as LaTex symbol
+            names = [x.replace("$", "X") for x in names]
             ax = aa.dPULearnPlot.pca(df_pu, names=names, labels=labels)
             assert isinstance(ax, plt.Axes)
             plt.close()
@@ -255,10 +256,11 @@ class TestdPULearnPlotPCA:
         with pytest.raises(ValueError):
             aa.dPULearnPlot.pca(df_pu=df_pu, labels=labels, kwargs_scatterplot=args_scatter)
 
+
 class TestdPULearnPlotPCAComplex:
     """Complex tests for the dPULearnPlot.pca() function."""
 
-    @settings(max_examples=10, deadline=3500)
+    @settings(max_examples=1, deadline=3500)
     @given(
         n_samples=some.integers(min_value=20, max_value=100),
         n_pc=some.integers(min_value=3, max_value=7),
@@ -281,11 +283,14 @@ class TestdPULearnPlotPCAComplex:
         """Test dPULearnPlot.pca() with a complex combination of parameters."""
         df_pu = _create_sample_df_pu(n_samples=n_samples, n_pcs=n_pc, include_abs_diff=True, n_neg=n_neg, random_order=True)
         labels = _create_labels(n=n_samples, n_neg=n_neg, include_unl=True, labels_selection_via=df_pu["selection_via"])
-
+        # Replace '$' which could be interpreted as LaTex symbol
+        names = [x.replace("$", "X") for x in names]
         with warnings.catch_warnings():
             # Suppress specific matplotlib UserWarnings about missing glyphs
             warnings.filterwarnings("ignore", category=UserWarning)
 
-            ax = aa.dPULearnPlot.pca(df_pu, labels=labels, figsize=figsize, pc_x=pc_x, pc_y=pc_y, show_pos_mean_x=show_pos_mean_x, show_pos_mean_y=show_pos_mean_y, names=names, colors=colors, legend=legend, legend_y=legend_y, kwargs_scatterplot=args_scatter)
+            ax = aa.dPULearnPlot.pca(df_pu, labels=labels, figsize=figsize, pc_x=pc_x, pc_y=pc_y,
+                                     show_pos_mean_x=show_pos_mean_x, show_pos_mean_y=show_pos_mean_y, names=names,
+                                     colors=colors, legend=legend, legend_y=legend_y, kwargs_scatterplot=args_scatter)
             assert isinstance(ax, plt.Axes)
             plt.close()

@@ -11,6 +11,11 @@ import numpy as np
 from matplotlib import pyplot as plt
 import aaanalysis as aa
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
+
 # Required columns for df_eval
 REQUIRED_COLS = ['name', 'n_features', 'avg_ABS_AUC', 'range_ABS_AUC',
                  'avg_MEAN_DIF', 'n_clusters', 'avg_n_feat_per_clust', 'std_n_feat_per_clust']

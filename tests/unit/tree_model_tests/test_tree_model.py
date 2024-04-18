@@ -7,12 +7,17 @@ from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, Gradi
 from sklearn.neighbors import KNeighborsClassifier
 import aaanalysis as aa
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
 aa.options["verbose"] = "off"
 
 # Mock data for testing
 mock_classes = [RandomForestClassifier, ExtraTreesClassifier, GradientBoostingClassifier]
 mock_kwargs = [{'n_estimators': 10}, {'min_samples_split': 2}, {'learning_rate': 0.1}]
 mock_preselected = [True, False, True, False]
+
 
 class TestTreeModel:
     """Test TreeModel class individual parameters"""

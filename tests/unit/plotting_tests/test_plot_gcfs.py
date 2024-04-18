@@ -4,6 +4,7 @@ This is a script for testing the aa.plot_gcfs function.
 import seaborn as sns
 import aaanalysis as aa
 
+
 class TestPlotGCFS:
     """Test plot_gcfs function"""
 

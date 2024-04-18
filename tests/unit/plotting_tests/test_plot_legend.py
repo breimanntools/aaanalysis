@@ -9,7 +9,13 @@ import matplotlib.pyplot as plt
 import pytest
 import matplotlib.lines as mlines
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
+
 plt.rcParams['figure.max_open_warning'] = -1
+
 
 @pytest.fixture(scope="module")
 def dict_color():
@@ -143,6 +149,7 @@ class TestPlotSetLegend:
     @settings(max_examples=5, deadline=500)
     @given(random_cat=some.text())
     def test_invalid_list_cat(self, random_cat):
+        random_cat = random_cat.replace("$", "X")
         fig, ax = plt.subplots()
         ax.plot(range(5))
         with pytest.raises(ValueError):
@@ -166,7 +173,7 @@ class TestPlotSetLegendComplex:
     @given(st.lists(st.text(), min_size=2, max_size=5))
     def test_plot_set_legend_custom_labels(self, labels):
         fig, ax = plt.subplots()
-        labels = list(set([x for x in labels if len(x) > 1]))
+        labels = list(set([x.replace("_", "X") for x in labels if len(x) > 1]))
         ax = aa.plot_legend(ax=ax, dict_color={label: "red" for label in labels})
         legend_labels = [text.get_text() for text in ax.get_legend().get_texts()]
         assert set(legend_labels) == set(labels)

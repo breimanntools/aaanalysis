@@ -9,6 +9,11 @@ import warnings
 import pandas as pd
 from typing import List, Optional
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
+
 # Helper function
 def check_invalid_conditions(X, labels, min_samples=2, check_unique=True):
     n_samples, n_features = X.shape

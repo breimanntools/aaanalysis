@@ -8,6 +8,11 @@ from pandas.testing import assert_frame_equal
 # Import the target function
 import aaanalysis as aa
 
+# Set default deadline from 200 to 400
+settings.register_profile("ci", deadline=400)
+settings.load_profile("ci")
+
+
 # Helper Functions and Constants
 VALID_LETTERS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 VALID_VALUE_TYPES = ["min", "mean", "median", "max"]
