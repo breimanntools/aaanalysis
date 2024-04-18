@@ -75,7 +75,7 @@ Added
 
 Changed
 ~~~~~~~
-- **API Improvements**: General improvement of API (Application Programming Interface).
+- **API Improvements**: General improvement of API.
 
 Fixed
 ~~~~~
@@ -92,7 +92,7 @@ Test release of the first beta version.
 v0.1.0 (Released 2023-09-11)
 ----------------------------
 First release of the beta version including
-`CPP <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.CPP.html>`_,
+**`CPP <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.CPP.html>`_**,
 `dPULearn <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.dPULearn.html>`_,
 and `AAclust <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.AAclust.html>`_ algorithms
 as well as the
