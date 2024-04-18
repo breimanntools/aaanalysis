@@ -4,8 +4,8 @@ Release notes
 Version 0.1 (Beta Version)
 --------------------------
 
-v0.1.5 (Released 2024-04-18)
-----------------------------
+v0.1.5 (2024-04-18)
+-------------------
 
 Added
 ~~~~~
@@ -25,8 +25,8 @@ Fixed
   **internal feature matrix** creation. This change prevents a ``RuntimeError`` that occurred when the main function
   is not explicitly used.
 
-v0.1.4 (Released 2024-04-09)
-----------------------------
+v0.1.4 (2024-04-09)
+-------------------
 
 Added
 ~~~~~
@@ -47,8 +47,8 @@ Other
 ~~~~~
 - **Python Dependency**: Updated the Python version compatibility from <= 3.10 to <= 3.12.
 
-v0.1.3 (Released 2024-02-09)
-----------------------------
+v0.1.3 (2024-02-09)
+-------------------
 
 Added
 ~~~~~
@@ -71,8 +71,8 @@ Fixed
 - **Interface**: Change of internal documentation decorator to hard-coded documentation for better IDE responsiveness.
 - **General Issues**: Fix of different check function related API issues.
 
-v0.1.2 (Released 2023-11-06)
-----------------------------
+v0.1.2 (2023-11-06)
+-------------------
 
 Added
 ~~~~~
@@ -98,12 +98,12 @@ Other
 ~~~~~
 - **Python Dependency**: Supports Python versions 3.9 and 3.10.
 
-v0.1.1 (Released 2023-09-11)
-----------------------------
+v0.1.1 (2023-09-11)
+-------------------
 Test release of the first beta version.
 
-v0.1.0 (Released 2023-09-11)
-----------------------------
+v0.1.0 (2023-09-11)
+-------------------
 First release of the beta version including
 `CPP <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.CPP.html>`_,
 `dPULearn <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.dPULearn.html>`_,
