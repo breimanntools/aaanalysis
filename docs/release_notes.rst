@@ -57,6 +57,9 @@ Added
   feature impact. `See ShapExplainer <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.ShapExplainer.html>`_.
 - **NumericalFeature**: Utility feature engineering class to process and filter numerical data structures.
   `See NumericalFeature <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.NumericalFeature.html>`_.
+- **Load_feature**: Utility function to load feature sets for protein benchmarking datasets.
+  `See load_features <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.load_features.html>`_.
+
 
 Changed
 ~~~~~~~
@@ -107,5 +110,5 @@ and `AAclust <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.A
 as well as the
 `SequenceFeature <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.SequenceFeature.html>`_
 utility class and data loading functions
-`load_data <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.load_data.html>`_
+`load_dataset <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.load_dataset.html>`_
 and `load_scales <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.load_scales.html>`_.
