@@ -298,7 +298,6 @@ STR_DICT_COLOR = "DICT_COLOR"
 STR_DICT_CAT = "DICT_CAT"
 
 
-
 # I Helper functions
 def _retrieve_string_starting_at_end(seq, start=None, end=None):
     """Reverse_string_start_end"""
@@ -328,9 +327,6 @@ def get_dict_part_seq(tmd=None, jmd_n=None, jmd_c=None):
                      'jmd_n_tmd_n': jmd_n + tmd_n, 'tmd_c_jmd_c': tmd_c + jmd_c,
                      'ext_n_tmd_n': ext_n + tmd_n, 'tmd_c_ext_c': tmd_c + ext_c}
     return part_seq_dict
-
-
-
 
 
 # II Main functions
@@ -443,7 +439,7 @@ def plot_get_cmap_(cmap="CPP", n_colors=101, facecolor_dark=None, only_pos=False
     if cmap == STR_CMAP_CPP:
         cmap = _get_diverging_cmap("RdBu_r", **args)
     elif cmap == STR_CMAP_SHAP:
-        cmap =  _get_shap_cmap(**args)
+        cmap = _get_shap_cmap(**args)
     else:
         cmap = _get_diverging_cmap(cmap=cmap, **args)
     return cmap

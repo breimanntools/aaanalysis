@@ -166,5 +166,6 @@ class Settings:
         """Return a string representation of the settings dictionary."""
         return str(self._settings)
 
+
 # Global settings instance
 options = Settings()
