@@ -68,7 +68,8 @@ v0.1.2 (Released 2023-11-06)
 
 Added
 ~~~~~
-- **CPPPlot**: Plotting class for CPP features.
+- `CPPPlot <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.CPPPlot.html>`_:
+    Plotting class for CPP features.
 - **dPULearnPlot**: Plotting class for results of negative identifications by dPULearn.
 - **AAclustPlot**: Plotting class for AAclust clustering results.
 - **Options**: Set system-level settings by a dictionary-like interface (similar to pandas).
@@ -92,7 +93,7 @@ Test release of the first beta version.
 v0.1.0 (Released 2023-09-11)
 ----------------------------
 First release of the beta version including
-**`CPP <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.CPP.html>`_**,
+`CPP <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.CPP.html>`_,
 `dPULearn <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.dPULearn.html>`_,
 and `AAclust <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.AAclust.html>`_ algorithms
 as well as the
