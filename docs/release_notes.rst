@@ -55,6 +55,8 @@ Added
   `See TreeModel <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.TreeModel.html>`_.
 - **ShapExplainer**: A wrapper for SHAP (SHapley Additive exPlanations) explainers to obtain Monte Carlo estimates for
   feature impact. `See ShapExplainer <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.ShapExplainer.html>`_.
+- **NumericalFeature**: Utility feature engineering class to process and filter numerical data structures.
+  `See NumericalFeature <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.NumericalFeature.html>`_.
 
 Changed
 ~~~~~~~
@@ -78,6 +80,7 @@ Added
   `See AAclustPlot <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.AAclustPlot.html>`_.
 - **Options**: Set system-level settings by a dictionary-like interface (similar to pandas).
   `See options <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.options.html>`_.
+- **Plotting functions**: Extension of plotting utility functions.
 
 Changed
 ~~~~~~~
@@ -103,4 +106,6 @@ First release of the beta version including
 and `AAclust <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.AAclust.html>`_ algorithms
 as well as the
 `SequenceFeature <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.SequenceFeature.html>`_
-utility class.
+utility class and data loading functions
+`load_data <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.load_data.html>`_
+and `load_scales <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.load_scales.html>`_.
