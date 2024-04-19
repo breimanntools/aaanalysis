@@ -37,7 +37,7 @@ Added
 ~~~~~
 - **Installation Options**: Introduced separate installation profiles for the core and professional versions.
   The **core version** has reduced dependencies to enhance installation robustness, installable using ``pip install aaanalysis``.
-  The professional version, designed for advanced usage, includes packages required for our explainable AI module
+  The **professional version**, designed for advanced usage, includes packages required for our explainable AI module
   such as SHAP, installable using ``pip install aaanalysis[pro]``.
 
 Changed

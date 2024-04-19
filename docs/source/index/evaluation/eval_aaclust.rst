@@ -37,10 +37,11 @@ AAnalysis focuses on three common clustering quality measures to evaluate cluste
 These measures are essential in assessing the distinct aspects of clustering quality, such as within-cluster cohesion
 and between-cluster separation, depicted below:
 
-.. image:: /_artwork/schemes/scheme_AAclust3.png
+.. figure:: /_artwork/schemes/scheme_AAclust3.png
+   :align: center
+   :alt: Evaluation measures for clustering.
 
-
-Illustration of clustering quality measures from [Breimann24b]_.
+   Illustration of clustering quality measures from [Breimann24b]_.
 
 To learn more about clustering and its evaluation in detail, you may refer to the
 `scikit-learn clustering <https://scikit-learn.org/stable/modules/clustering.html>`_ documentation.

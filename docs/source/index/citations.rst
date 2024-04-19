@@ -14,10 +14,8 @@ If you use **AAanalysis** in your work, please cite the respective publication a
 
 **CPP**:
    [Breimann24c]_  Breimann and Kamp *et al.* (2024c),
-   *Interpretable feature engineering by CPP reveals the physicochemical signature of γ-secretase substrates*,
-   .. # Link if available
+   *Charting γ-secretase substrates by explainable AI*, .. # Link if available
 
 **dPULearn**:
    [Breimann24c]_  Breimann and Kamp *et al.* (2024c),
-   *Interpretable feature engineering by CPP reveals the physicochemical signature of γ-secretase substrates*,
-   .. # Link if available
+   *Charting γ-secretase substrates by explainable AI*, .. # Link if available
