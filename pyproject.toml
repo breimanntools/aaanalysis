@@ -7,7 +7,7 @@ name = "aaanalysis"
 version = "0.1.5"
 description = "Python framework for interpretable protein prediction"
 authors = ["Stephan Breimann <stephanbreimann@gmail.de>"]
-license = "MIT"
+license = "BSD-3-Clause"
 readme = "README.rst"
 include = ["data/*.xlsx", "data/benchmarks/*.tsv", "data/benchmarks/*.xlsx"]
 
