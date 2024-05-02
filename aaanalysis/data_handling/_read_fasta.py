@@ -48,6 +48,9 @@ def _get_entries_from_fasta(file_path, col_id, col_seq, col_db, sep):
     df = pd.DataFrame(list_entries)
     return df
 
+def _adjust_column_names():
+    """Adjust column names to user input"""
+
 
 # II Main Functions
 # TODO test, example ...
@@ -59,10 +62,10 @@ def read_fasta(file_path: str,
                sep: str = "|"
                ) -> pd.DataFrame:
     """
-    Read a FASTA file and translate it into a sequence DataFrame with optional additional columns.
+    Read an FASTA file into a DataFrame.
 
-    Parses FASTA files, splitting each entry header into the main identifier and additional information,
-    based on the specified separator. Sequences and associated information are returned as a DataFrame.
+    Translation of FASTA file by extracting identifiers and further information from headers
+    as well as subsequent sequences.
 
     Parameters
     ----------
@@ -100,8 +103,8 @@ def read_fasta(file_path: str,
 
     See Also
     --------
-    * See further information on FASTA files and examples in
-     `bioperl FASTA sequence<https://bioperl.org/formats/sequence_formats/FASTA_sequence_format>`_.
+    * For further information on FASTA files and examples, see the
+      `BioPerl documentation on FASTA sequence format <https://bioperl.org/formats/sequence_formats/FASTA_sequence_format>`_.
 
     Examples
     --------
