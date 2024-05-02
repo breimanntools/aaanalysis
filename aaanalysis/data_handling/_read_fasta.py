@@ -92,9 +92,9 @@ def read_fasta(file_path: str,
     -----
     Each ``FASTA`` file entry consists of two parts:
 
-    - 'FASTA header': Starting with '>', the header contains the main id and additional information,
+    - **FASTA header**: Starting with '>', the header contains the main id and additional information,
       all separated by a specified separator.
-    - 'Sequence': Sequence of specific entry, directly following the header
+    - **Sequence**: Sequence of specific entry, directly following the header
 
     ``df_seq`` includes at least these columns:
 
@@ -108,6 +108,7 @@ def read_fasta(file_path: str,
 
     Examples
     --------
+    .. include:: examples/read_fasta.rst
 
     """
     # Check input

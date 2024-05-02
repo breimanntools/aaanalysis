@@ -23,7 +23,7 @@ def to_fasta(df=None,
              col_db=None,
              cols_info=None,
              sep="|"):
-        """..."""
+        """"""
         # Check input
         ut.check_file(file_path=file_path)
         ut.check_str(name="col_id", val=col_id, accept_none=False)
