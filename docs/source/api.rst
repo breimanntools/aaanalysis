@@ -26,6 +26,7 @@ Data Handling
     load_dataset
     load_scales
     load_features
+    read_fasta
 
 .. _feature_engineering_api:
 

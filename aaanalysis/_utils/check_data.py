@@ -3,6 +3,7 @@ This is a script for data checking utility functions.
 """
 import pandas as pd
 import numpy as np
+import os
 from sklearn.utils import check_array
 
 from ._utils import add_str
@@ -281,4 +282,11 @@ def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_p
     if len(cols_duplicated) > 0:
         str_error = add_str(str_error=f"The following columns are duplicated '{cols_duplicated}'.", str_add=str_add)
         raise ValueError(str_error)
+
+
+def check_file(file_path=None):
+    """Check if file is valid string and path exists"""
+    check_type.check_str(name="file_path", val=file_path)
+    if not os.path.isfile(file_path):
+        raise ValueError(f"Following 'file_path' does not exist: '{file_path}'")
 

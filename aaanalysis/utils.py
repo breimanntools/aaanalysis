@@ -50,7 +50,8 @@ from ._utils.check_data import (check_X,
                                 check_match_list_labels_names_datasets,
                                 check_array_like,
                                 check_superset_subset,
-                                check_df)
+                                check_df,
+                                check_file)
 from ._utils.check_models import (check_mode_class,
                                   check_model_kwargs)
 from ._utils.check_plots import (check_fig,
@@ -85,6 +86,7 @@ from ._utils.plotting import (plot_gco,
 from ._utils.metrics import (auc_adjusted_,
                              kullback_leibler_divergence_,
                              bic_score_)
+
 
 # Folder structure
 def _folder_path(super_folder, folder_name):
@@ -260,7 +262,7 @@ COLOR_FEAT_NEG = '#326599'  # (50, 101, 133) Mean difference
 COLOR_FEAT_IMP = '#7F7F7F'  # (127, 127, 127) feature importance
 COLOR_TMD = '#00FA9A'       # (0, 250, 154)
 COLOR_JMD = '#0000FF'       # (0, 0, 255)
-COLOR_POS =  "#389d2b"    # (56, 157, 43)
+COLOR_POS = "#389d2b"    # (56, 157, 43)
 COLOR_UNL = "tab:gray"
 COLOR_NEG = "#ad4570"   # (173,69,112)
 COLOR_REL_NEG = "#ad9745" # (173, 151, 69)
