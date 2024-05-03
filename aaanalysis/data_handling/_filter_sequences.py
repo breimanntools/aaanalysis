@@ -41,7 +41,7 @@ def _select_longest_representatives(cluster_tsv, all_sequences_file, output_file
 
 
 # II Main Functions
-# TODO finish, docu, test, example ...
+# TODO finish, docu, test, example ..
 def filter_sequences(method, input_file, output_file, similarity_threshold=0.7, word_size=5,
                      coverage_long=None, coverage_short=None, threads=1, verbose=False):
     """Perform redundancy-reduction of sequences by calling CD-Hit or MMSeq2 algorithm"""

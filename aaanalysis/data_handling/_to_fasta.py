@@ -23,9 +23,9 @@ def to_fasta(df=None,
              col_db=None,
              cols_info=None,
              sep="|"):
-        """"""
+        """ """
         # Check input
-        ut.check_file(file_path=file_path)
+        ut.check_file_path(file_path=file_path)
         ut.check_str(name="col_id", val=col_id, accept_none=False)
         ut.check_str(name="col_seq", val=col_seq, accept_none=False)
         cols_info = ut.check_list_like(name="cols_info", val=cols_info, accept_str=True, accept_none=True)

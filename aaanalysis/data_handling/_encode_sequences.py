@@ -38,7 +38,7 @@ def _one_hot_encode(amino_acid=None, alphabet=None, gap="_"):
 
 
 # II Main Functions
-# TODO finish, docu, test, example ...
+# TODO finish, docu, test, example ..
 def encode_sequences(sequences=None,
                      alphabet='ARNDCEQGHILKMFPSTWYV',
                      gap="_",

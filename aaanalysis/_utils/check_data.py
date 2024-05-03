@@ -284,7 +284,7 @@ def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_p
         raise ValueError(str_error)
 
 
-def check_file(file_path=None):
+def check_file_path(file_path=None):
     """Check if file is valid string and path exists"""
     check_type.check_str(name="file_path", val=file_path)
     if not os.path.isfile(file_path):

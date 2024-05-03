@@ -15,13 +15,21 @@ def post_check_unique_entries(list_entries=None, col_id=None):
     """Check if entries are unique"""
     list_duplicates = list(set([x for x in list_entries if list_entries.count(x) > 1]))
     if len(list_duplicates) > 0:
-        warnings.warn(f"Entries from '{col_id}' should be unique. "
-                      f"\nFollowing entries are duplicated: {list_duplicates}")
+        str_warning = (f"Entries from '{col_id}' should be unique. "
+                       f"\nFollowing entries are duplicated: {list_duplicates}")
+        warnings.warn(str_warning)
+
+
+def post_check_col_db(df_seq=None, col_db=None, sep="|"):
+    """Check if database column is in DataFrame"""
+    columns = list(df_seq)
+    if col_db is not None and col_db not in columns:
+        str_warning = f"'col_db' ('{col_db}') not in 'df_seq'. Check if 'sep' ('{sep}') is matching."
+        warnings.warn(str_warning)
 
 
 def _get_entries_from_fasta(file_path, col_id, col_seq, col_db, sep):
     """Read information from FASTA file and convert to DataFrame"""
-    # Read fasta
     list_entries = []
     dict_current_entry = {}
     with open(file_path, 'r') as file:
@@ -33,13 +41,13 @@ def _get_entries_from_fasta(file_path, col_id, col_seq, col_db, sep):
                     list_entries.append(dict_current_entry)
                 # Parse the header and prepare a new entry
                 list_info = line[1:].split(sep)
-                if col_db:
+                if col_db and len(list_info) > 1:
                     dict_current_entry = {col_id: list_info[1], col_seq: "", col_db: list_info[0]}
                     list_info = list_info[1:]
                 else:
                     dict_current_entry = {col_id: list_info[0], col_seq: ""}
                 if len(list_info) > 1:
-                    for i in range(1, len(list_info[1:])):
+                    for i in range(1, len(list_info[1:])+1):
                         dict_current_entry[f'info{i}'] = list_info[i]
             else:
                 dict_current_entry[col_seq] += line
@@ -48,12 +56,8 @@ def _get_entries_from_fasta(file_path, col_id, col_seq, col_db, sep):
     df = pd.DataFrame(list_entries)
     return df
 
-def _adjust_column_names():
-    """Adjust column names to user input"""
-
 
 # II Main Functions
-# TODO test, example ...
 def read_fasta(file_path: str,
                col_id: str = "entry",
                col_seq: str = "sequence",
@@ -75,13 +79,13 @@ def read_fasta(file_path: str,
         Column name for the sequence identifiers in the resulting DataFrame.
     col_seq : str, default='sequence'
         Column name for the sequences in the resulting DataFrame.
-    col_db : str, optional
-        Column name for databases. First entry of FASTA header if given.
+    sep : str, default='|'
+        Separator used for splitting identifier and additional information in the FASTA headers.
     cols_info : List[str], optional
         Specifies custom column names for the additional info extracted from headers.
         If not provided, defaults to 'info1', 'info2', etc.
-    sep : str, default='|'
-        Separator used for splitting identifier and additional information in the FASTA headers.
+    col_db : str, optional
+        Column name for databases. First entry of FASTA header if given.
 
     Returns
     -------
@@ -103,21 +107,22 @@ def read_fasta(file_path: str,
 
     See Also
     --------
-    * For further information on FASTA files and examples, see the
-      `BioPerl documentation on FASTA sequence format <https://bioperl.org/formats/sequence_formats/FASTA_sequence_format>`_.
+    * Further information and examples on FASTA format in
+      `BioPerl documentation <https://bioperl.org/formats/sequence_formats/FASTA_sequence_format>`_.
+    * Use the FASTA format to create a `BioPython SeqIO object <https://biopython.org/wiki/SeqIO>`_,
+      which supports various file formats in computational biology.
 
     Examples
     --------
     .. include:: examples/read_fasta.rst
-
     """
     # Check input
-    ut.check_file(file_path=file_path)
+    ut.check_file_path(file_path=file_path)
     ut.check_str(name="col_id", val=col_id, accept_none=False)
     ut.check_str(name="col_seq", val=col_seq, accept_none=False)
     ut.check_str(name="col_db", val=col_db, accept_none=True)
     cols_info = ut.check_list_like(name="cols_info", val=cols_info, accept_str=True, accept_none=True)
-
+    ut.check_str(name="sep", val=sep, accept_none=False)
     # Read fasta
     df_seq = _get_entries_from_fasta(file_path, col_id, col_seq, col_db, sep)
     # Adjust column names
@@ -135,4 +140,5 @@ def read_fasta(file_path: str,
         df_seq.columns = columns
     # Post check
     post_check_unique_entries(list_entries=df_seq[col_id].to_list(), col_id=col_id)
+    post_check_col_db(df_seq=df_seq, col_db=col_db, sep=sep)
     return df_seq
