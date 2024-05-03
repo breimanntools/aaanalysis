@@ -290,3 +290,14 @@ def check_file_path(file_path=None):
     if not os.path.isfile(file_path):
         raise ValueError(f"Following 'file_path' does not exist: '{file_path}'")
 
+
+def check_is_fasta(file_path=None):
+    """ Check if the file path is a FASTA file"""
+    check_type.check_str(name="file_path", val=file_path)
+    # Check if the file has a FASTA extension
+    valid_extensions = ['.fasta', '.fa', '.fna', '.ffn', '.faa', '.frn']
+    _, file_ext = os.path.splitext(file_path)
+    if file_ext.lower() not in valid_extensions:
+        raise ValueError(f"The file '{file_path}' is not a FASTA file. Valid extensions are {valid_extensions}")
+
+

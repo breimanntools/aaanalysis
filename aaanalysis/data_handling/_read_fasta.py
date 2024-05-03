@@ -61,9 +61,9 @@ def _get_entries_from_fasta(file_path, col_id, col_seq, col_db, sep):
 def read_fasta(file_path: str,
                col_id: str = "entry",
                col_seq: str = "sequence",
+               sep: str = "|",
                col_db: Optional[str] = None,
                cols_info: Optional[List[str]] = None,
-               sep: str = "|"
                ) -> pd.DataFrame:
     """
     Read an FASTA file into a DataFrame.
@@ -81,11 +81,11 @@ def read_fasta(file_path: str,
         Column name for the sequences in the resulting DataFrame.
     sep : str, default='|'
         Separator used for splitting identifier and additional information in the FASTA headers.
-    cols_info : List[str], optional
-        Specifies custom column names for the additional info extracted from headers.
-        If not provided, defaults to 'info1', 'info2', etc.
     col_db : str, optional
         Column name for databases. First entry of FASTA header if given.
+    cols_info : list of str, optional
+        Specifies custom column names for the additional info extracted from headers.
+        If not provided, defaults to 'info1', 'info2', etc.
 
     Returns
     -------
@@ -107,6 +107,7 @@ def read_fasta(file_path: str,
 
     See Also
     --------
+    * :func:`to_fasta`: the respective FASTA saving function.
     * Further information and examples on FASTA format in
       `BioPerl documentation <https://bioperl.org/formats/sequence_formats/FASTA_sequence_format>`_.
     * Use the FASTA format to create a `BioPython SeqIO object <https://biopython.org/wiki/SeqIO>`_,
@@ -118,6 +119,7 @@ def read_fasta(file_path: str,
     """
     # Check input
     ut.check_file_path(file_path=file_path)
+    ut.check_is_fasta(file_path=file_path)
     ut.check_str(name="col_id", val=col_id, accept_none=False)
     ut.check_str(name="col_seq", val=col_seq, accept_none=False)
     ut.check_str(name="col_db", val=col_db, accept_none=True)

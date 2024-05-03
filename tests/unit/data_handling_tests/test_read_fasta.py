@@ -115,20 +115,4 @@ class TestReadFastaComplex:
         with pytest.raises(ValueError):
             aa.read_fasta(file_path, col_id=col_id, col_seq=col_seq, sep=sep)
 
-    """
-    @given(col_id=st.text(min_size=1), col_seq=st.text(min_size=1), sep=st.text(min_size=1, max_size=1),
-           cols_info=st.lists(st.text(min_size=1), min_size=1,  max_size=1), col_db=st.text(min_size=1))
-    def test_all_parameters(self, col_id, col_seq, sep, cols_info, col_db):
-        file_path = "valid_path_db.fasta"
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=UserWarning)
-            df = aa.read_fasta(file_path, col_id=col_id, col_seq=col_seq, col_db=col_db,
-                               cols_info=cols_info, sep=sep)
-            assert isinstance(df, pd.DataFrame)
-            assert col_id in df.columns and col_seq in df.columns
-            for col in cols_info:
-                assert col in df.columns
-            if col_db:
-                assert col_db in df.columns
-    """
 

@@ -51,7 +51,8 @@ from ._utils.check_data import (check_X,
                                 check_array_like,
                                 check_superset_subset,
                                 check_df,
-                                check_file_path)
+                                check_file_path,
+                                check_is_fasta)
 from ._utils.check_models import (check_mode_class,
                                   check_model_kwargs)
 from ._utils.check_plots import (check_fig,

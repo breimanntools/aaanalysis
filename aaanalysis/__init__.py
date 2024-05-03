@@ -54,7 +54,7 @@ try:
 
 except ImportError as e:
     # Define a factory function to create a class or function placeholder
-    def make_unavailable_feature(feature_name):
+    def make_pro_feature(feature_name):
         str_error = (f"'{feature_name}' needs additional dependencies. Install AAanalysis Professional via:"
                      f"\n\tpip install aaanalysis[pro]")
 
@@ -69,6 +69,6 @@ except ImportError as e:
         return UnavailableFeature
 
     # Use the factory function to create placeholders for pro features
-    TreeModel = make_unavailable_feature("TreeModel")
-    ShapExplainer = make_unavailable_feature("ShapExplainer")
-    display_df = make_unavailable_feature("display_df")
+    TreeModel = make_pro_feature("TreeModel")
+    ShapExplainer = make_pro_feature("ShapExplainer")
+    display_df = make_pro_feature("display_df")
