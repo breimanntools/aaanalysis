@@ -1,6 +1,6 @@
 from .data_handling import (load_dataset, load_scales, load_features,
                             to_fasta, read_fasta,
-                            encode_sequences)
+                            filter_seq, encode_seq)
 from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
 from .pertubation import AAMut, AAMutPlot, SeqMut, SeqMutPlot
@@ -17,7 +17,8 @@ __all__ = [
     "load_features",
     "to_fasta",
     "read_fasta",
-    "encode_sequences",
+    "filter_seq",
+    "encode_seq",
     "AAclust",
     "AAclustPlot",
     "SequenceFeature",

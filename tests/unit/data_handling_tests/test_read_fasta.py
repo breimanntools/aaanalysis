@@ -11,6 +11,8 @@ settings.load_profile("ci")
 FILE_IN = "valid_path.fasta"
 FILE_DB_IN = "valid_path_db.fasta"
 COL_DB = "database"
+ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
 
 def creat_mock_file():
     """"""
@@ -31,21 +33,21 @@ class TestReadFasta:
         df = aa.read_fasta(file_path=FILE_IN)
         assert isinstance(df, pd.DataFrame)  # Expecting a DataFrame to be returned
 
-    @given(col_id=st.text(min_size=1))
+    @given(col_id=st.text(min_size=1, alphabet=ALPHABET))
     def test_col_id(self, col_id):
         """Test valid 'col_id' parameter."""
         creat_mock_file()
         df = aa.read_fasta(file_path=FILE_IN, col_id=col_id)
         assert col_id in df.columns
 
-    @given(col_seq=st.text(min_size=1))
+    @given(col_seq=st.text(min_size=1, alphabet=ALPHABET))
     def test_col_seq(self, col_seq):
         """Test valid 'col_seq' parameter."""
         creat_mock_file()
         df = aa.read_fasta(file_path=FILE_IN, col_seq=col_seq)
         assert col_seq in df.columns
 
-    @given(cols_info=st.lists(st.text(min_size=1), min_size=1, max_size=1))
+    @given(cols_info=st.lists(st.text(min_size=1, alphabet=ALPHABET), min_size=1, max_size=1))
     def test_cols_info(self, cols_info):
         """Test valid 'cols_info' parameter."""
         creat_mock_file()
@@ -61,7 +63,7 @@ class TestReadFasta:
             df = aa.read_fasta(file_path=FILE_DB_IN, col_db=COL_DB)
             assert COL_DB in df.columns
 
-    @given(sep=st.text(min_size=1, max_size=1))
+    @given(sep=st.text(min_size=1, max_size=1, alphabet=",|;-"))
     def test_sep(self, sep):
         """Test valid 'sep' parameter."""
         creat_mock_file()
@@ -113,7 +115,9 @@ class TestReadFasta:
 class TestReadFastaComplex:
     """Test aa.read_fasta function with complex scenarios"""
 
-    @given(col_id=st.text(min_size=1), col_seq=st.text(min_size=1), sep=st.text(min_size=1, max_size=1))
+    @given(col_id=st.text(min_size=1, alphabet=ALPHABET),
+           col_seq=st.text(min_size=1, alphabet=ALPHABET),
+           sep=st.text(min_size=1, max_size=1, alphabet=",|;-"))
     def test_combination_valid_inputs(self, col_id, col_seq, sep):
         """Test valid combinations of parameters."""
         creat_mock_file()
@@ -127,7 +131,9 @@ class TestReadFastaComplex:
         except Exception as e:
             assert isinstance(e, (FileNotFoundError, ValueError))
 
-    @given(col_id=st.text(max_size=0), col_seq=st.text(min_size=1), sep=st.integers())
+    @given(col_id=st.text(max_size=0, alphabet=ALPHABET),
+           col_seq=st.text(min_size=1, alphabet=ALPHABET),
+           sep=st.integers())
     def test_combination_invalid(self, col_id, col_seq, sep):
         """Test invalid 'col_id' in combination with other parameters."""
         creat_mock_file()

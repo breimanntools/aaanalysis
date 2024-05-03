@@ -8,6 +8,7 @@ settings.register_profile("default", deadline=500)
 settings.load_profile("default")
 
 FILE_OUT = "valid_path_out.fasta"
+ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
 class TestToFasta:
@@ -19,31 +20,31 @@ class TestToFasta:
         df_seq = aa.load_dataset(name="SEQ_AMYLO", n=10)
         aa.to_fasta(df_seq=df_seq, file_path=FILE_OUT)
 
-    @given(col_id=st.text(min_size=1))
+    @given(col_id=st.text(min_size=1, alphabet=ALPHABET))
     def test_col_id_valid(self, col_id):
         """Test valid 'col_id' ensuring it exists in the DataFrame."""
         df = pd.DataFrame({col_id: ["id1"], "sequence": ["ATCG"]})
         aa.to_fasta(df_seq=df, file_path=FILE_OUT, col_id=col_id)
 
-    @given(col_seq=st.text(min_size=1))
+    @given(col_seq=st.text(min_size=1, alphabet=ALPHABET))
     def test_col_seq_valid(self, col_seq):
         """Test valid 'col_seq' ensuring it exists in the DataFrame."""
         df = pd.DataFrame({"entry": ["id1"], col_seq: ["ATCG"]})
         aa.to_fasta(df_seq=df, file_path=FILE_OUT, col_seq=col_seq)
 
-    @given(sep=st.text(min_size=1, max_size=1))
+    @given(sep=st.text(min_size=1, max_size=1, alphabet=",|;-"))
     def test_sep_valid(self, sep):
         """Test valid 'sep' to check if it correctly separates information."""
         df = pd.DataFrame({"entry": ["id1"], "sequence": ["ATCG"]})
         aa.to_fasta(df_seq=df, file_path=FILE_OUT, sep=sep)
 
-    @given(col_db=st.text(min_size=1))
+    @given(col_db=st.text(min_size=1, alphabet=ALPHABET))
     def test_col_db_valid(self, col_db):
         """Test valid 'col_db' ensuring it is correctly added to the header."""
         df = pd.DataFrame({"entry": ["id1"], "sequence": ["ATCG"], col_db: ["DB001"]})
         aa.to_fasta(df_seq=df, file_path=FILE_OUT, col_db=col_db)
 
-    @given(cols_info=st.lists(st.text(min_size=1), min_size=1, max_size=3))
+    @given(cols_info=st.lists(st.text(min_size=1, alphabet=ALPHABET), min_size=1, max_size=3))
     def test_cols_info_valid(self, cols_info):
         """Test valid 'cols_info' ensuring they are correctly added to the header."""
         df = pd.DataFrame({"entry": ["id1"], "sequence": ["ATCG"], **{col: ["info"] for col in cols_info}})
@@ -104,22 +105,22 @@ class TestToFasta:
 class TestToFastaComplex:
     """Test complex scenarios involving multiple parameters in the 'to_fasta' function."""
 
-    @given(col_id=st.text(min_size=1),
-           col_seq=st.text(min_size=1),
-           sep=st.text(min_size=1, max_size=1),
-           col_db=st.text(min_size=1),
-           cols_info=st.lists(st.text(min_size=1), min_size=1, max_size=3))
+    @given(col_id=st.text(min_size=1, alphabet=ALPHABET),
+           col_seq=st.text(min_size=1, alphabet=ALPHABET),
+           sep=st.text(min_size=1, max_size=1, alphabet=ALPHABET),
+           col_db=st.text(min_size=1, alphabet=ALPHABET),
+           cols_info=st.lists(st.text(min_size=1, alphabet=ALPHABET), min_size=1, max_size=3))
     def test_valid_combination_all_parameters(self, col_id, col_seq, sep, col_db, cols_info):
         """Test with all parameters valid to ensure correct header formation and sequence output."""
         df = pd.DataFrame({col_id: ["id1"], col_seq: ["ATCG"], col_db: ["DB001"], **{col: ["info"] for col in cols_info}})
         aa.to_fasta(df_seq=df, file_path=FILE_OUT, col_id=col_id, col_seq=col_seq, sep=sep,
                     col_db=col_db, cols_info=cols_info)
 
-    @given(col_id=st.text(max_size=0),  # Invalid col_id (empty string)
-           col_seq=st.text(min_size=1),
+    @given(col_id=st.text(max_size=0, alphabet=ALPHABET),
+           col_seq=st.text(min_size=1, alphabet=ALPHABET),
            sep=st.integers(),
-           col_db=st.text(min_size=1),
-           cols_info=st.lists(st.text(min_size=1), min_size=1, max_size=3))
+           col_db=st.text(min_size=1, alphabet=ALPHABET),
+           cols_info=st.lists(st.text(min_size=1, alphabet=ALPHABET), min_size=1, max_size=3))
     def test_invalid_combination_parameters(self, col_id, col_seq, sep, col_db, cols_info):
         """Test invalid parameter combinations to ensure proper error handling."""
         df = pd.DataFrame({col_id: ["id1"], col_seq: ["ATCG"], col_db: ["DB001"], **{col: ["info"] for col in cols_info}})

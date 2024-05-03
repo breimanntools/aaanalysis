@@ -39,10 +39,10 @@ def _one_hot_encode(amino_acid=None, alphabet=None, gap="_"):
 
 # II Main Functions
 # TODO finish, docu, test, example ..
-def encode_sequences(sequences=None,
-                     alphabet='ARNDCEQGHILKMFPSTWYV',
-                     gap="_",
-                     pad_at='C'):
+def encode_seq(list_seq=None,
+               alphabet='ARNDCEQGHILKMFPSTWYV',
+               gap="_",
+               pad_at='C'):
     """
     One-hot-encode a list of protein sequences into a feature matrix, padding shorter sequences
     with gaps represented as zero vectors.
@@ -71,13 +71,13 @@ def encode_sequences(sequences=None,
         raise ValueError(f"pad_at must be 'N' or 'C', got {pad_at}")
 
     # Validate if all characters in the sequences are within the given alphabet
-    all_chars = set(''.join(sequences))
+    all_chars = set(''.join(list_seq))
     if not all_chars.issubset(set(alphabet + '_')):
         invalid_chars = all_chars - set(alphabet + '_')
         raise ValueError(f"Found invalid amino acid(s) {invalid_chars} not in alphabet.")
 
     # Pad sequences
-    padded_sequences = _pad_sequences(sequences, pad_at=pad_at)
+    padded_sequences = _pad_sequences(list_seq, pad_at=pad_at)
     max_length = len(padded_sequences[0])
     num_amino_acids = len(alphabet)
     feature_matrix = np.zeros((len(padded_sequences), max_length * num_amino_acids), dtype=int)
