@@ -97,13 +97,18 @@ def filter_seq(df_seq: pd.DataFrame = None,
       higher accuracy and is suitable for any dataset size.
 
     * Parameter Comparison:
+    +---------------------+---------------------------------+----------------------------------------+
+    | Parameter           | CD-HIT                          | MMSeqs2                                |
+    +=====================+=================================+========================================+
+    | Similarity Threshold| `-c` (sequence identity)        | `--min-seq-id` (minimum sequence id)   |
+    +---------------------+---------------------------------+----------------------------------------+
+    | Word Size           | `-n` (word length)              | `-k` (k-mer size, auto-optimized)      |
+    +---------------------+---------------------------------+----------------------------------------+
+    | Coverage Long       | `-aL` (coverage of longer seq)  | `--cov-mode 0 -c` (coverage setting)   |
+    +---------------------+---------------------------------+----------------------------------------+
+    | Coverage Short      | `-aS` (coverage of shorter seq) | `--cov-mode 1 -c` (coverage setting)   |
+    +---------------------+---------------------------------+----------------------------------------+
 
-      | Parameter            | CD-HIT                         | MMSeqs2                               |
-      |----------------------|--------------------------------|---------------------------------------|
-      | Similarity Threshold | `-c` (sequence identity)       | `--min-seq-id` (minimum sequence id)  |
-      | Word Size            | `-n` (word length)             | `-k` (k-mer size, auto-optimized)     |
-      | Coverage Long        | `-aL` (coverage of longer seq) | `--cov-mode 0 -c` (coverage setting)  |
-      | Coverage Short       | `-aS` (coverage of shorter seq)| `--cov-mode 1 -c` (coverage setting)  |
 
     * Coverage modes in MMSeqs2:
       - `--cov-mode 0`: Bidirectional, based on the longer of the two sequences.
@@ -111,9 +116,9 @@ def filter_seq(df_seq: pd.DataFrame = None,
 
     See Also
     --------
-    * 'CD-HIT Documentation <https://github.com/weizhongli/cdhit/wiki>'_
-    * MMSeq2 'GitHub Readme <https://github.com/soedinglab/MMseqs2>'_
-      and 'GitHub Wiki <https://github.com/soedinglab/mmseqs2/wiki>'_
+    * `CD-HIT Documentation <https://github.com/weizhongli/cdhit/wiki>`_
+    * MMSeq2 `GitHub Readme <https://github.com/soedinglab/MMseqs2>`_
+      and `GitHub Wiki <https://github.com/soedinglab/mmseqs2/wiki>`_
 
     Examples
     --------
