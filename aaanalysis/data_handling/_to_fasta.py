@@ -6,6 +6,7 @@ import pandas as pd
 from typing import Optional, List
 
 import aaanalysis.utils as ut
+from .backend._parse_fasta import save_entries_to_fasta
 
 
 # I Helper Functions
@@ -72,10 +73,8 @@ def to_fasta(df_seq: pd.DataFrame = None,
     ut.check_str(name="sep", val=sep, accept_none=False)
 
     # Writing to FASTA
-    with open(file_path, 'w') as fasta:
-        for _, row in df_seq.iterrows():
-            header_parts = [str(row.get(col)) for col in [col_db, col_id] + (cols_info if cols_info is not None else []) if
-                            col in row and pd.notna(row[col])]
-            header = sep.join(header_parts)
-            sequence = row[col_seq]
-            fasta.write(f">{header}\n{sequence}\n")
+    save_entries_to_fasta(df_seq=df_seq, file_path=file_path,
+                          col_id=col_id, col_seq=col_seq,
+                          sep=sep,
+                          cols_info=cols_info, col_db=col_db)
+

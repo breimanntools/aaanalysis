@@ -131,10 +131,10 @@ class TreeModel:
     list_models_ : Nested list with objects, shape (n_rounds, n_models)
         List with fitted tree-based models for every round after calling the ``fit`` method.
     feat_importance : array-like, shape (n_features)
-        An arrays containing importance of each feature averaged across all rounds
+        An array containing importance of each feature averaged across all rounds
         and trained models from `list_model_classes`.
     feat_importance_std : array-like, shape (n_features)
-        An arrays containing standard deviation for feature importance across all rounds
+        An array containing standard deviation for feature importance across all rounds
         and trained models from `list_model_classes`. Same order as ``feature_importance``.
     is_selected_ : array-like, shape (n_rounds, n_features)
         2D array indicating features being selected by recursive features selection (True) or not (False) for each round.

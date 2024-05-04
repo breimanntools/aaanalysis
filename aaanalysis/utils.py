@@ -51,7 +51,7 @@ from ._utils.check_data import (check_X,
                                 check_array_like,
                                 check_superset_subset,
                                 check_df,
-                                check_file_path,
+                                check_file_path_exists,
                                 check_is_fasta)
 from ._utils.check_models import (check_mode_class,
                                   check_model_kwargs)
@@ -158,6 +158,12 @@ COL_CAT = "category"
 COL_SUBCAT = "subcategory"
 COL_SCALE_NAME = "scale_name"
 COL_SCALE_DES = "scale_description"
+
+# df_cluster
+# COL_ENTRY = "entry"
+COL_CLUST = "cluster"
+COL_REP_IDEN = "identity_with_rep"
+COL_IS_REP = "is_representative"
 
 # Columns for df_feat
 COL_FEATURE = "feature"

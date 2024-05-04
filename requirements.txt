@@ -1,6 +1,7 @@
 # Requires Python >= 3.9
 
 # Dependecies for core version (pip install aaanalysis)
+biopython>=1.8.3
 cycler>=0.11.0
 et-xmlfile>=1.1.0
 fonttools>=4.37.1

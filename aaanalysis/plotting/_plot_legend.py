@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from aaanalysis import utils as ut
 
 # I Helper functions
-
+# TODO enable two legends (not remove existing one)
 
 # II Main function
 def plot_legend(ax: Optional[plt.Axes] = None,

@@ -6,6 +6,7 @@ import pandas as pd
 from typing import Optional, List
 import warnings
 
+from .backend._parse_fasta import get_entries_from_fasta
 import aaanalysis.utils as ut
 
 
@@ -28,33 +29,21 @@ def post_check_col_db(df_seq=None, col_db=None, sep="|"):
         warnings.warn(str_warning)
 
 
-def _get_entries_from_fasta(file_path, col_id, col_seq, col_db, sep):
-    """Read information from FASTA file and convert to DataFrame"""
-    list_entries = []
-    dict_current_entry = {}
-    with open(file_path, 'r') as file:
-        for line in file:
-            line = line.strip()
-            if line.startswith('>'):
-                if dict_current_entry:
-                    # Save the previous sequence before starting a new one
-                    list_entries.append(dict_current_entry)
-                # Parse the header and prepare a new entry
-                list_info = line[1:].split(sep)
-                if col_db and len(list_info) > 1:
-                    dict_current_entry = {col_id: list_info[1], col_seq: "", col_db: list_info[0]}
-                    list_info = list_info[1:]
-                else:
-                    dict_current_entry = {col_id: list_info[0], col_seq: ""}
-                if len(list_info) > 1:
-                    for i in range(1, len(list_info[1:])+1):
-                        dict_current_entry[f'info{i}'] = list_info[i]
-            else:
-                dict_current_entry[col_seq] += line
-        if dict_current_entry:
-            list_entries.append(dict_current_entry)
-    df = pd.DataFrame(list_entries)
-    return df
+def _adjust_columns(df_seq=None, col_seq=None, col_id=None, cols_info=None, col_db=None):
+    """Adjust columns from fasta reader"""
+    columns = list(df_seq)
+    if cols_info is not None:
+        n_info = len(columns)-2
+        if len(cols_info) >= n_info:
+            cols_info = cols_info[0:n_info]
+        else:
+            cols_info = cols_info + [f"info{i}" for i in range(1, n_info-len(cols_info)+1)]
+        if col_db:
+            columns = [col_id, col_seq, col_db] + cols_info[0:-1]
+        else:
+            columns = [col_id, col_seq] + cols_info
+        df_seq.columns = columns
+    return df_seq
 
 
 # II Main Functions
@@ -118,7 +107,7 @@ def read_fasta(file_path: str,
     .. include:: examples/read_fasta.rst
     """
     # Check input
-    ut.check_file_path(file_path=file_path)
+    ut.check_file_path_exists(file_path=file_path)
     ut.check_is_fasta(file_path=file_path)
     ut.check_str(name="col_id", val=col_id, accept_none=False)
     ut.check_str(name="col_seq", val=col_seq, accept_none=False)
@@ -126,20 +115,9 @@ def read_fasta(file_path: str,
     cols_info = ut.check_list_like(name="cols_info", val=cols_info, accept_str=True, accept_none=True)
     ut.check_str(name="sep", val=sep, accept_none=False)
     # Read fasta
-    df_seq = _get_entries_from_fasta(file_path, col_id, col_seq, col_db, sep)
+    df_seq = get_entries_from_fasta(file_path=file_path, col_id=col_id, col_seq=col_seq, col_db=col_db, sep=sep)
     # Adjust column names
-    columns = list(df_seq)
-    if cols_info is not None:
-        n_info = len(columns)-2
-        if len(cols_info) >= n_info:
-            cols_info = cols_info[0:n_info]
-        else:
-            cols_info = cols_info + [f"info{i}" for i in range(1, n_info-len(cols_info)+1)]
-        if col_db:
-            columns = [col_id, col_seq, col_db] + cols_info[0:-1]
-        else:
-            columns = [col_id, col_seq] + cols_info
-        df_seq.columns = columns
+    df_seq = _adjust_columns(df_seq=df_seq, col_seq=col_seq, col_id=col_id, cols_info=cols_info, col_db=col_db)
     # Post check
     post_check_unique_entries(list_entries=df_seq[col_id].to_list(), col_id=col_id)
     post_check_col_db(df_seq=df_seq, col_db=col_db, sep=sep)

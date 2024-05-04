@@ -2,6 +2,7 @@
 This is a script for creating one-hot-encoding of sequences used as baseline representation.
 """
 import pandas as pd
+from typing import Optional, Dict, Union, List, Tuple, Type, Literal
 import numpy as np
 
 
@@ -39,10 +40,11 @@ def _one_hot_encode(amino_acid=None, alphabet=None, gap="_"):
 
 # II Main Functions
 # TODO finish, docu, test, example ..
-def encode_seq(list_seq=None,
-               alphabet='ARNDCEQGHILKMFPSTWYV',
-               gap="_",
-               pad_at='C'):
+def encode_seq(list_seq: List[str] = None,
+               alphabet: str = "ARNDCEQGHILKMFPSTWYV",
+               gap: str = "_",
+               pad_at: Literal["C", "N"] = "C",
+               ) -> np.array:
     """
     One-hot-encode a list of protein sequences into a feature matrix, padding shorter sequences
     with gaps represented as zero vectors.

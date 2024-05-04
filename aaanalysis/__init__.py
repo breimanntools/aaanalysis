@@ -1,5 +1,5 @@
 from .data_handling import (load_dataset, load_scales, load_features,
-                            to_fasta, read_fasta,
+                            read_fasta, to_fasta,
                             filter_seq, encode_seq)
 from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
@@ -15,8 +15,8 @@ __all__ = [
     "load_dataset",
     "load_scales",
     "load_features",
-    "to_fasta",
     "read_fasta",
+    "to_fasta",
     "filter_seq",
     "encode_seq",
     "AAclust",
