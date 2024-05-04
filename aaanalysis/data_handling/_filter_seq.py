@@ -90,6 +90,7 @@ def filter_seq(df_seq: pd.DataFrame = None,
     Notes
     -----
     * **CD-HIT** and **MMSeqs2** use different methods for clustering sequences:
+
       - **CD-HIT** sorts sequences by length and clusters them using global or local alignments against the longest sequence.
       - **MMSeqs2** employs an index-based approach and optimized algorithms for faster and more sensitive data handling.
 
@@ -104,15 +105,10 @@ def filter_seq(df_seq: pd.DataFrame = None,
     +---------------------+---------------------------------+----------------------------------------+
     | Word Size           | `-n` (word length)              | `-k` (k-mer size, auto-optimized)      |
     +---------------------+---------------------------------+----------------------------------------+
-    | Coverage Long       | `-aL` (coverage of longer seq)  | `--cov-mode 0 -c` (coverage setting)   |
+    | Coverage Long       | `-aL` (coverage of longer seq)  | `--cov-mode 0 -c` (bidirectional)      |
     +---------------------+---------------------------------+----------------------------------------+
-    | Coverage Short      | `-aS` (coverage of shorter seq) | `--cov-mode 1 -c` (coverage setting)   |
+    | Coverage Short      | `-aS` (coverage of shorter seq) | `--cov-mode 1 -c` (target coverage)    |
     +---------------------+---------------------------------+----------------------------------------+
-
-
-    * Coverage modes in MMSeqs2:
-      - `--cov-mode 0`: Bidirectional, based on the longer of the two sequences.
-      - `--cov-mode 1`: Target coverage, based on the target sequence length.
 
     See Also
     --------
