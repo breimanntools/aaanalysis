@@ -114,6 +114,7 @@ def read_fasta(file_path: str,
     ut.check_str(name="col_db", val=col_db, accept_none=True)
     cols_info = ut.check_list_like(name="cols_info", val=cols_info, accept_str=True, accept_none=True)
     ut.check_str(name="sep", val=sep, accept_none=False)
+
     # Read fasta
     df_seq = get_entries_from_fasta(file_path=file_path, col_id=col_id, col_seq=col_seq, col_db=col_db, sep=sep)
     # Adjust column names

@@ -37,23 +37,35 @@ AAanalysis Algorithms
    *Interpretable feature engineering by CPP reveals the physicochemical signature of γ-secretase substrates*,
    .. # Link if available
 
+Sequence Algorithms
+-------------------
+.. [Li06] Li W., Godzik A. (2006),
+   *Cd-hit: a fast program for clustering and comparing large sets of protein or nucleotide sequences*,
+   Bioinformatics, 22(13):1658-1659.
+   `Bioinformatics <https://academic.oup.com/bioinformatics/article/22/13/1658/217479>`__.
+
+.. [Steinegger17] Steinegger M., Söding J. (2017),
+   *MMseqs2 enables high-performance protein sequence searching for data-intensive bioinformatics analysis*,
+   Nature Communications, 8: 1321.
+   `Nature Communications <https://www.nature.com/articles/s41467-017-01467-7>`__.
+
 Machine Learning
 ----------------
 .. [Hastie09] Hastie, Tibshirani, and Friedman (2009),
    *The Elements of Statistical Learning*,
    `Springer <https://www.springer.com/gp/book/9780387848570>`__.
 
-Explainable AI
---------------
-.. [Lundberg20] Lundberg *et al.* (2020),
-   *From local explanations to global understanding with explainable AI for trees*,
-   `Nature Machine Intelligence <https://www.nature.com/articles/s42256-019-0138-9>`__.
-
 Positive-Unlabeled Learning
 ---------------------------
 .. [BekkerDavis20] Bekker and Davis (2020),
    *Learning from positive and unlabeled data: a survey*,
    `Machine Learning <https://doi.org/10.1007/s10994-020-05877-5>`__.
+
+Explainable AI
+--------------
+.. [Lundberg20] Lundberg *et al.* (2020),
+   *From local explanations to global understanding with explainable AI for trees*,
+   `Nature Machine Intelligence <https://www.nature.com/articles/s42256-019-0138-9>`__.
 
 Datasets and Benchmarks
 -----------------------

@@ -26,7 +26,7 @@ def _select_word_size(st=0.5):
     return word_size
 
 
-def get_df_clust_from_cd_hit(file_cd_hit_out):
+def _get_df_clust_cd_hit(file_cd_hit_out):
     """
     Parse the .clstr file from CD-HIT and return a DataFrame with cluster information.
     """
@@ -91,7 +91,7 @@ def run_cd_hit(df_seq=None,
 
     # Convert CD-Hit output to clustering DataFrame
     file_cd_hit_out = file_out + ".clstr"
-    df_clust = get_df_clust_from_cd_hit(file_cd_hit_out=file_cd_hit_out)
+    df_clust = _get_df_clust_cd_hit(file_cd_hit_out=file_cd_hit_out)
 
     # Remove temporary file
     remove_temp(path=temp_dir)

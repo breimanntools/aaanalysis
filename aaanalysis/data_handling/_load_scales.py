@@ -134,10 +134,12 @@ def load_scales(name: str = "scales",
     .. include:: examples/load_scales.rst
     """
     # DEV: every returned must be copied to avoid in-place mutation for newly loaded dataframes
+    # Check input
     check_name_of_scale(name=name)
     ut.check_bool(name="just_aaindex", val=just_aaindex)
     ut.check_bool(name="unclassified_in", val=unclassified_out)
     top60_n = check_top60_n(name=name, top60_n=top60_n)
+
     # Load and filter top60 scales
     if top60_n is not None:
         selected_scales = _get_selected_scales(top60_n=top60_n)

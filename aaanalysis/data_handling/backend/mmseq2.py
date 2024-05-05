@@ -1,4 +1,4 @@
-"""This is a script for the backend of the mmseq2 method for the filtering_seq function."""
+"""This is a script for the backend of the MMseqs2 method for the filtering_seq function."""
 import os
 
 import pandas as pd
@@ -15,13 +15,13 @@ COL_TARGET = "target"
 
 # I Helper functions
 def _get_df_mmseq(cluster_tsv):
-    """Read MMseq2 output to DataFrame"""
+    """Read MMseqs2 output to DataFrame"""
     df = pd.read_csv(cluster_tsv, sep='\t', header=None, names=[COL_QUERY, COL_TARGET, '_'])
     df[ut.COL_IS_REP] = (df[COL_QUERY] == df[COL_TARGET])
     return df
 
 
-def _get_df_clust(df_mmseq=None, df_seq=None, sort_clusters=False):
+def _get_df_clust_mmseq(df_mmseq=None, df_seq=None, sort_clusters=False):
     """Get DataFrame with clustering information (consistent with CD-Hit output)"""
     df_seq = df_seq.copy()
     list_seq = df_seq[ut.COL_SEQ].to_list()
@@ -61,10 +61,10 @@ def _get_df_clust(df_mmseq=None, df_seq=None, sort_clusters=False):
 
 
 # II Main functions
-def run_mmseq2(df_seq=None, similarity_threshold=0.7, word_size=None,
-               coverage_long=None, coverage_short=None,
-               n_jobs=None, sort_clusters=False, verbose=False):
-    """Run MMseq2 command to perform redundancy-reduction via clustering"""
+def run_mmseqs2(df_seq=None, similarity_threshold=0.7, word_size=None,
+                coverage_long=None, coverage_short=None,
+                n_jobs=None, sort_clusters=False, verbose=False):
+    """Run MMseqs2 command to perform redundancy-reduction via clustering"""
     # Create temporary folder for input and temporary output
     result_prefix = "mmseq_"
     temp_dir = make_temp_dir("_temp_mmseqs", remove_existing=True)
@@ -77,7 +77,7 @@ def run_mmseq2(df_seq=None, similarity_threshold=0.7, word_size=None,
     # Create the database
     cmd_db = ["mmseqs", "createdb", file_in, db_name]
     if verbose:
-        ut.print_out("Run MMSeq2 filtering")
+        ut.print_out("Run MMseqs2 filtering")
         ut.print_out("1. Create Database")
     run_command(cmd=cmd_db, verbose=verbose)
 
@@ -101,9 +101,9 @@ def run_mmseq2(df_seq=None, similarity_threshold=0.7, word_size=None,
         ut.print_out("3. Convert results into DataFrame")
     run_command(cmd=cmd_tsv, verbose=verbose)
 
-    # Convert MMSeq2 output to clustering DataFrame
+    # Convert MMseqs2 output to clustering DataFrame
     df_mmseq = _get_df_mmseq(cluster_tsv)
-    df_clust = _get_df_clust(df_mmseq=df_mmseq, df_seq=df_seq, sort_clusters=sort_clusters)
+    df_clust = _get_df_clust_mmseq(df_mmseq=df_mmseq, df_seq=df_seq, sort_clusters=sort_clusters)
 
     # Remove temporary file
     remove_temp(path=temp_dir)

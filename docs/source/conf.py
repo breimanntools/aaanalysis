@@ -129,6 +129,7 @@ intersphinx_mapping = {
     'statsmodels': ('https://www.statsmodels.org/stable/', None),
     'shap': ('https://shap.readthedocs.io/en/latest/', None),
     'upsetplot': ('https://upsetplot.readthedocs.io/en/stable/', None),
+    'biopython': ('https://biopython.org/docs/latest/api/', None),
 }
 
 # -- Options for HTML output -------------------------------------------------

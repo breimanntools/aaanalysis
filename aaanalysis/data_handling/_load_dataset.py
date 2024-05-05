@@ -139,7 +139,7 @@ def load_dataset(name: str = "Overview",
     n : int, optional
         Number of proteins per class, selected by index. If ``None``, the whole dataset will be returned.
     random : bool, default=False
-        If True, ``n`` randomly selected proteins per class will be chosen.
+        If ``True``, ``n`` randomly selected proteins per class will be chosen.
     non_canonical_aa : {'remove', 'keep', 'gap'}, default='remove'
         Options for handling non-canonical amino acids:
 
@@ -179,11 +179,13 @@ def load_dataset(name: str = "Overview",
     --------
     .. include:: examples/load_dataset.rst
     """
+    # Check input
     check_name_of_dataset(name=name, folder_in=FOLDER_BENCHMARKS)
     ut.check_number_range(name="n", val=n, min_val=1, accept_none=True, just_int=True)
     check_non_canonical_aa(non_canonical_aa=non_canonical_aa)
     check_min_max_val(min_len=min_len, max_len=max_len)
     check_aa_window_size(aa_window_size=aa_window_size)
+
     # Load overview table
     if name == "Overview":
         return ut.read_excel_cached(FOLDER_BENCHMARKS + "Overview.xlsx").copy()

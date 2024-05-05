@@ -1,6 +1,6 @@
 """
 This is a script for a wrapper function called filter_seq that provides an Python interface to the
-redundancy-reduction algorithms CD-Hit and MMSeq2.
+redundancy-reduction algorithms CD-Hit and MMseqs2.
 """
 from typing import Optional, List, Literal
 import shutil
@@ -8,8 +8,8 @@ import os
 import pandas as pd
 
 from aaanalysis import utils as ut
-from .backend.cd_hit import run_cd_hit, get_df_clust_from_cd_hit
-from .backend.mmseq2 import run_mmseq2
+from .backend.cd_hit import run_cd_hit
+from .backend.mmseq2 import run_mmseqs2
 
 
 # I Helper functions
@@ -34,7 +34,7 @@ def check_match_identity_coverage(global_identity=True, coverage_short=0.0, cove
 
 
 # II Main function
-# TODO test, adjust, finish
+# TODO test, examples
 def filter_seq(df_seq: pd.DataFrame = None,
                method: Literal['cd-hit', 'mmseqs'] = "cd-hit",
                similarity_threshold: float = 0.9,
@@ -49,26 +49,34 @@ def filter_seq(df_seq: pd.DataFrame = None,
     """
     UNDER CONSTRUCTION: Redundancy reduction of sequences using clustering-based algorithms.
 
-    This functions performs redundancy reduction of sequences by clustering and selecting representative sequences
-    using the CD-HIT or MMSeq2 algorithms. It allows for adjustable filtering strictness:
+    This functions performs redundancy reduction of sequences by clustering and selecting representative sequences using
+    the CD-HIT ([Li06]_) or MMseqs2 ([Steinegger17]_) algorithms locally. It allows for adjustable filtering strictness:
 
-    * Strict filtering results in smaller, more homogeneous clusters, suitable for analyses requiring high sequence similarity.
+    * Strict filtering results in smaller, more homogeneous clusters, suitable when high sequence similarity is required.
     * Non-strict filtering creates larger, more diverse clusters, enhancing sequence representation.
+
+    CD-Hit and MMseq2 are standalone software tools, each requiring separate installation. CD-Hit is more
+    resource-efficient and easier to install, while MMseq2 is a larger, multi-purpose tool. Pairwise sequence similarities
+    for the MMseq2 clustering results were computed using the Biopython :class:`Bio.Align.PairwiseAligner` class.
 
     Parameters
     ----------
     df_seq : pd.DataFrame, shape (n_samples, n>=1)
         DataFrame containing an ``entry`` and ''sequence'' column for unique identifiers and sequences.
-    method : str
-        Specifies the clustering algorithm to use ('cd-hit' or 'mmseqs').
+    method : {'cd-hit', 'mmseqs'}, default='cd-hit'
+        Specifies the clustering algorithm to use:
+
+        - ``cd-hit``: Efficiently clusters sequences, ideal for small to medium datasets.
+        - ``mmseqs``: Advanced algorithm designed for large-scale sequence analysis, offering high accuracy.
+
     similarity_threshold : float, default=0.9
-        Defines the minimum sequence identity for clustering. Higher values increase strictness.
+        Defines the minimum sequence identity [0.0-1.0] for clustering. Higher values increase strictness.
     word_size : int, optional
         The size (>=2) of the 'word' (in CD-Hit) or 'k-mer' (in MMseqs) used for the initial screening step in clustering.
-        Effect on strictness is dataset-dependent. If None, Optimized based on ``similarity_threshold``.
+        Effect on strictness is dataset-dependent. If ``None``, optimized based on ``similarity_threshold`` (CD-Hit).
     global_identity : bool, default=True
         Whether to use global (True) or local (False) sequence identity for clustering. Global is stricter.
-        Only relevant for 'cd-hit' method. MMseq uses only local alignments.
+        Only relevant for 'cd-hit' method. MMseq2 uses only local alignments.
     coverage_long : float, optional
         Minimum percentage [0.0-1.0] of the longer sequence that must be included in the alignment.
         Higher values increase strictness.
@@ -78,9 +86,9 @@ def filter_seq(df_seq: pd.DataFrame = None,
     n_jobs : int, default=1
         Number of CPU threads for processing.
     sort_clusters : bool, default=False
-        If True, sort clusters by the number of contained sequences.
+        If ``True``, sort clusters by the number of contained sequences.
     verbose : bool, default=False
-        If True, enable detailed output.
+       If ``True``, verbose outputs are enabled.
 
     Returns
     -------
@@ -89,47 +97,60 @@ def filter_seq(df_seq: pd.DataFrame = None,
 
     Notes
     -----
-    * **CD-HIT** and **MMSeqs2** use different methods for clustering sequences:
+    * **CD-HIT** and **MMseqs2** use different methods for clustering sequences:
 
       - **CD-HIT** sorts sequences by length and clusters them using global or local alignments against the longest sequence.
-      - **MMSeqs2** employs an index-based approach and optimized algorithms for faster and more sensitive data handling.
+      - **MMseqs2** employs an index-based approach and optimized algorithms for faster and more sensitive data handling.
 
-    * While **CD-HIT** is quick and efficient for small to medium-sized datasets, **MMSeqs2** offers
+    * While **CD-HIT** is quick and efficient for small to medium-sized datasets, **MMseqs2** offers
       higher accuracy and is suitable for any dataset size.
 
     * Parameter Comparison:
-    +---------------------+---------------------------------+----------------------------------------+
-    | Parameter           | CD-HIT                          | MMSeqs2                                |
-    +=====================+=================================+========================================+
-    | Similarity Threshold| `-c` (sequence identity)        | `--min-seq-id` (minimum sequence id)   |
-    +---------------------+---------------------------------+----------------------------------------+
-    | Word Size           | `-n` (word length)              | `-k` (k-mer size, auto-optimized)      |
-    +---------------------+---------------------------------+----------------------------------------+
-    | Coverage Long       | `-aL` (coverage of longer seq)  | `--cov-mode 0 -c` (bidirectional)      |
-    +---------------------+---------------------------------+----------------------------------------+
-    | Coverage Short      | `-aS` (coverage of shorter seq) | `--cov-mode 1 -c` (target coverage)    |
-    +---------------------+---------------------------------+----------------------------------------+
+    +--------------------------+---------------------------------+----------------------------------------+
+    | Parameter                | CD-HIT                          | MMseqs2                                |
+    +==========================+=================================+========================================+
+    | **similarity_threshold** | `-c` (sequence identity)        | `--min-seq-id` (minimum sequence id)   |
+    +--------------------------+---------------------------------+----------------------------------------+
+    | **word_size**            | `-n` (word length)              | `-k` (k-mer size, auto-optimized)      |
+    +--------------------------+---------------------------------+----------------------------------------+
+    | **coverage_Long**        | `-aL` (coverage of longer seq)  | `--cov-mode 0 -c` (bidirectional)      |
+    +--------------------------+---------------------------------+----------------------------------------+
+    | **coverage_short**       | `-aS` (coverage of shorter seq) | `--cov-mode 1 -c` (target coverage)    |
+    +--------------------------+---------------------------------+----------------------------------------+
 
     See Also
     --------
-    * `CD-HIT Documentation <https://github.com/weizhongli/cdhit/wiki>`_
-    * MMSeq2 `GitHub Readme <https://github.com/soedinglab/MMseqs2>`_
-      and `GitHub Wiki <https://github.com/soedinglab/mmseqs2/wiki>`_
+    * `CD-HIT Documentation <https://github.com/weizhongli/cdhit/wiki>`_.
+    * MMseqs2 `GitHub ReadMe <https://github.com/soedinglab/MMseqs2>`_
+      and `GitHub Wiki <https://github.com/soedinglab/mmseqs2/wiki>`_.
+    * Comparison of CD-Hit and MMseqs2 parameters under
+      `Frequently Asked Questions <https://github.com/soedinglab/mmseqs2/wiki#how-do-parameters-of-cd-hit-relate-to-mmseqs2>`_.
 
     Examples
     --------
 
     """
     # Check input
-    ut.check_df(name="df_seq", df=df_seq, cols_requiered=[ut.COL_ENTRY, ut.COL_SEQ],
+    ut.check_df(name="df_seq", df=df_seq,
+                cols_requiered=[ut.COL_ENTRY, ut.COL_SEQ],
                 cols_nan_check=[ut.COL_ENTRY, ut.COL_SEQ])
+    ut.check_str(name="method", val=method, accept_none=False)
     check_valid_method(name=method)
     check_is_tool(name=method)
+    ut.check_number_range(name="similarity_threshold", val=similarity_threshold,
+                          min_val=0, max_val=1, accept_none=False, just_int=False)
+    ut.check_number_range(name="word_size", val=word_size, min_val=2, accept_none=True, just_int=True)
+    ut.check_bool(name="global_identity", val=global_identity)
+    ut.check_number_range(name="coverage_long", val=coverage_long, min_val=0, max_val=1,
+                          accept_none=True, just_int=False)
+    ut.check_number_range(name="coverage_short", val=coverage_short, min_val=0, max_val=1,
+                          accept_none=True, just_int=False)
+    ut.check_number_range(name="n_jobs", val=n_jobs, min_val=1, accept_none=False, just_int=True)
+    ut.check_bool(name="sort_clusters", val=sort_clusters)
+    ut.check_bool(name="verbose", val=sort_clusters)
     check_match_identity_coverage(global_identity=global_identity,
                                   coverage_short=coverage_short,
                                   coverage_long=coverage_long)
-    ut.check_number_range(name="word_size", val=word_size, min_val=2, just_int=True, accept_none=True)
-
     # Run filtering
     args = dict(similarity_threshold=similarity_threshold, word_size=word_size,
                 coverage_long=coverage_long, coverage_short=coverage_short,
@@ -137,5 +158,5 @@ def filter_seq(df_seq: pd.DataFrame = None,
     if method == "cd-hit":
         df = run_cd_hit(df_seq=df_seq, global_identity=global_identity, **args)
     else:
-        df = run_mmseq2(df_seq=df_seq, **args)
+        df = run_mmseqs2(df_seq=df_seq, **args)
     return df
