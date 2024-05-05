@@ -56,7 +56,7 @@ def filter_seq(df_seq: pd.DataFrame = None,
     * Non-strict filtering creates larger, more diverse clusters, enhancing sequence representation.
 
     CD-Hit and MMseq2 are standalone software tools, each requiring separate installation. CD-Hit is more
-    resource-efficient and easier to install, while MMseq2 is a larger, multi-purpose tool. Pairwise sequence similarities
+    resource-efficient and easier to install, while MMseq2 is a larger multi-purpose tool. Pairwise sequence similarities
     for the MMseq2 clustering results were computed using the Biopython :class:`Bio.Align.PairwiseAligner` class.
 
     Parameters
@@ -66,7 +66,7 @@ def filter_seq(df_seq: pd.DataFrame = None,
     method : {'cd-hit', 'mmseqs'}, default='cd-hit'
         Specifies the clustering algorithm to use:
 
-        - ``cd-hit``: Efficiently clusters sequences, ideal for small to medium datasets.
+        - ``cd-hit``: Efficiently clusters sequences, ideal for small- to medium-sized datasets.
         - ``mmseqs``: Advanced algorithm designed for large-scale sequence analysis, offering high accuracy.
 
     similarity_threshold : float, default=0.9
@@ -97,13 +97,10 @@ def filter_seq(df_seq: pd.DataFrame = None,
 
     Notes
     -----
-    * **CD-HIT** and **MMseqs2** use different methods for clustering sequences:
+    * **CD-HIT** and **MMseqs2** use different approaches for clustering sequences:
 
       - **CD-HIT** sorts sequences by length and clusters them using global or local alignments against the longest sequence.
       - **MMseqs2** employs an index-based approach and optimized algorithms for faster and more sensitive data handling.
-
-    * While **CD-HIT** is quick and efficient for small to medium-sized datasets, **MMseqs2** offers
-      higher accuracy and is suitable for any dataset size.
 
     * Parameter Comparison:
     +--------------------------+---------------------------------+----------------------------------------+
