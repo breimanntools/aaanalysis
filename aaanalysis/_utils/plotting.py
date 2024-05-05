@@ -228,9 +228,6 @@ def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
     if ax is None:
         ax = plt.gca()
     list_cat = _check_list_cat(dict_color=dict_color, list_cat=list_cat)
-    print("hit")
-    print(dict_color)
-    print(list_cat)
     labels = _check_labels(list_cat=list_cat, labels=labels)
     marker = _check_marker(marker=marker, list_cat=list_cat, lw=lw)
     hatch = _check_hatches(marker=marker, hatch=hatch, list_cat=list_cat)
