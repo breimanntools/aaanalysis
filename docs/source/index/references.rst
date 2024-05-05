@@ -41,13 +41,11 @@ Sequence Algorithms
 -------------------
 .. [Li06] Li W., Godzik A. (2006),
    *Cd-hit: a fast program for clustering and comparing large sets of protein or nucleotide sequences*,
-   Bioinformatics, 22(13):1658-1659.
-   `Bioinformatics <https://academic.oup.com/bioinformatics/article/22/13/1658/217479>`__.
+   `Bioinformatics <https://academic.oup.com/bioinformatics/article/22/13/1658/194225>`__.
 
 .. [Steinegger17] Steinegger M., Söding J. (2017),
-   *MMseqs2 enables high-performance protein sequence searching for data-intensive bioinformatics analysis*,
-   Nature Communications, 8: 1321.
-   `Nature Communications <https://www.nature.com/articles/s41467-017-01467-7>`__.
+   *MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets*,
+   `Nature Biotechnology <https://www.nature.com/articles/nbt.3988>`__.
 
 Machine Learning
 ----------------

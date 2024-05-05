@@ -34,7 +34,7 @@ def check_match_identity_coverage(global_identity=True, coverage_short=0.0, cove
 
 
 # II Main function
-# TODO test, examples
+# TODO examples, tests
 def filter_seq(df_seq: pd.DataFrame = None,
                method: Literal['cd-hit', 'mmseqs'] = "cd-hit",
                similarity_threshold: float = 0.9,
