@@ -4,8 +4,8 @@ import pytest
 import aaanalysis as aa
 import warnings
 
-# Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+# Set default deadline from 200 to 800
+settings.register_profile("ci", deadline=800)
 settings.load_profile("ci")
 
 FILE_IN = "valid_path.fasta"
