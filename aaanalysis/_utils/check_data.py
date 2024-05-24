@@ -205,7 +205,7 @@ def check_match_X_labels(X=None, X_name="X", labels=None, labels_name="labels", 
 def check_match_X_list_labels(X=None, list_labels=None, check_variability=False, vals_requiered=None, str_add=None):
     """Check if each label set is matching with X"""
     for i, labels in enumerate(list_labels):
-        check_labels(labels=labels, vals_requiered=vals_requiered)
+        labels = check_labels(labels=labels, vals_requiered=vals_requiered)
         check_match_X_labels(X=X, labels=labels, labels_name=f"list_labels (set {i+1})",
                              check_variability=check_variability, str_add=str_add)
 

@@ -119,7 +119,7 @@ def plot_settings(font_scale: Union[int, float] = 1,
 
     # Print all plot settings/runtime configurations of matplotlib
     if show_options:
-        print(plt.rcParams.keys)
+        ut.print_out(plt.rcParams.keys)
 
     # Set all values to matplotlib default
     mpl.rcParams.update(mpl.rcParamsDefault)

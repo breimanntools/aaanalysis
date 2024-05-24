@@ -59,9 +59,11 @@ def _get_tmd_jmd_label(jmd_n_len=10, jmd_c_len=10, space=3):
     name_tmd = ut.options["name_tmd"]
     name_jmd_n = ut.options["name_jmd_n"]
     name_jmd_c = ut.options["name_jmd_c"]
+    if jmd_len == 0:
+        return name_tmd
     # Space factors should be between 1 and max-1
     total_space = space*2
-    space_n_factor = max(min(int(round(jmd_n_len/jmd_len*total_space)), total_space-1), 1)
+    space_n_factor = max(min(int(round(jmd_n_len / jmd_len * total_space)), total_space - 1), 1)
     space_c_factor = total_space - space_n_factor
     x_label = ""
     x_label += name_jmd_n + " " * space_n_factor if jmd_n_len > 0 else " " * (4 + space_c_factor)
@@ -206,7 +208,7 @@ def plot_ranking(df_feat=None,
     """Plot ranking of feature DataFrame"""
     # Adjust df_feat
     if rank:
-        df_feat = df_feat.sort_values(by=col_imp, ascending=False)
+        df_feat = df_feat.sort_values(by=col_imp, key=lambda x: abs(x), ascending=False)
     df_feat = df_feat.head(n_top).copy().reset_index(drop=True)
     df_feat = _adjust_df_feat(df_feat=df_feat, col_dif=col_dif)
     df_feat[ut.COL_POSITION] = get_positions_(features=df_feat[ut.COL_FEATURE],

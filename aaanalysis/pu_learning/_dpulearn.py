@@ -62,6 +62,7 @@ def check_match_list_labels_df_seq(list_labels=None, df_seq=None):
         raise ValueError(f"Number of samples (n={n_samples}) in 'list_labels' does not match with "
                          f"samples in 'df_seq' (n={len(df_seq)})")
 
+
 def check_match_X_X_neg(X=None, X_neg=None):
     """Check if number of features matches in both feature matrices"""
     if X_neg is None:
@@ -214,8 +215,8 @@ class dPULearn:
         .. include:: examples/dpul_fit.rst
         """
         # Check input
-        X= ut.check_X(X=X)
-        ut.check_labels(labels=labels, vals_requiered=[1, 2], allow_other_vals=False)
+        X = ut.check_X(X=X)
+        labels = ut.check_labels(labels=labels, vals_requiered=[1, 2], allow_other_vals=False)
         ut.check_number_range(name="n_unl_to_neg", val=n_unl_to_neg, min_val=1, just_int=True)
         check_n_unl_to_neg(labels=labels, n_unl_to_neg=n_unl_to_neg, label_unl=2)
         check_metric(metric=metric)

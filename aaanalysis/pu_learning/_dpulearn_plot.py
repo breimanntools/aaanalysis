@@ -229,7 +229,7 @@ class dPULearnPlot:
         n_pc = len([x for x in list(df_pu) if "PC" in x and not "abs_dif" in x])
         if n_pc < 2:
             raise ValueError(f"'df_pu' should contain at least two PCs (n={n_pc}).")
-        ut.check_labels(labels=labels) # Pre-check if proper format
+        labels = ut.check_labels(labels=labels) # Pre-check if proper format
         vals_requiered = [0, 1] if 2 not in set(labels) else [0, 1, 2]
         labels = ut.check_labels(labels=labels, vals_requiered=vals_requiered, allow_other_vals=False)
         ut.check_figsize(figsize=figsize, accept_none=True)

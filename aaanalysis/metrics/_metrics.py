@@ -62,7 +62,7 @@ def comp_auc_adjusted(X: ut.ArrayLike2D = None,
     ut.check_X_unique_samples(X=X, min_n_unique_samples=1)
     ut.check_number_val(name="label_test", val=label_test, just_int=True, accept_none=False)
     ut.check_number_val(name="label_ref", val=label_ref, just_int=True, accept_none=False)
-    ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref], allow_other_vals=False)
+    labels = ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref], allow_other_vals=False)
     ut.check_match_X_labels(X=X, labels=labels)
     # Compute adjusted AUC
     auc = auc_adjusted_(X=X, labels=labels, label_test=label_test)
@@ -112,7 +112,7 @@ def comp_bic_score(X: ut.ArrayLike2D = None,
     # Check input
     X = ut.check_X(X=X, min_n_features=1)
     ut.check_X_unique_samples(X=X)
-    ut.check_labels(labels=labels)
+    labels = ut.check_labels(labels=labels)
     ut.check_match_X_labels(X=X, labels=labels)
     _check_n_classes_n_samples(X=X, labels=labels)
     # Compute bic
@@ -177,7 +177,7 @@ def comp_kld(X: ut.ArrayLike2D = None,
     ut.check_X_unique_samples(X=X, min_n_unique_samples=3)
     ut.check_number_val(name="label_test", val=label_test, just_int=True, accept_none=False)
     ut.check_number_val(name="label_ref", val=label_ref, just_int=True, accept_none=False)
-    ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
+    labels = ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
                     n_per_group_requiered=2, allow_other_vals=False)
     ut.check_match_X_labels(X=X, labels=labels, check_variability=True)
     # Compute tge Kullback-Leibler divergence

@@ -15,6 +15,7 @@ import aaanalysis.utils as ut
 FOLDER_BENCHMARKS = ut.FOLDER_DATA + "benchmarks" + ut.SEP
 LIST_CANONICAL_AA = ['N', 'A', 'I', 'V', 'K', 'Q', 'R', 'M', 'H', 'F', 'E', 'D', 'C', 'G', 'L', 'T', 'S', 'Y', 'W', 'P']
 LIST_NON_CANONICAL_OPTIONS = ["remove", "keep", "gap"]
+LIST_CLEAVAGE_SITE_DATA = ["AA_CASPASE3", "AA_FURIN", "AA_MMP2"]
 
 
 # I Helper Functions
@@ -36,6 +37,9 @@ def check_name_of_dataset(name="Overview", folder_in=None):
                          f"\n Domain datasets: {list_dom}")
 
 
+
+
+
 def check_min_max_val(min_len=None, max_len=None):
     """Check if min_val and max_val are valid and match"""
     ut.check_number_range(name="min_len", val=min_len, min_val=1, accept_none=True, just_int=True)
@@ -53,13 +57,14 @@ def check_non_canonical_aa(non_canonical_aa="remove"):
                          f" {LIST_NON_CANONICAL_OPTIONS }")
 
 
-def check_aa_window_size(aa_window_size=None):
+def check_aa_window_size(aa_window_size=None, is_cs_dataset=False):
     """Check if aa_window size is a positive odd integer"""
     if aa_window_size is None:
         return
     ut.check_number_range(name="aa_window_size", val=aa_window_size, min_val=1, just_int=True)
-    if aa_window_size % 2 == 0:
-        raise ValueError(f"'aa_window_size' ({aa_window_size}) must be an odd number.")
+    if aa_window_size % 2 == 0 and not is_cs_dataset:
+        raise ValueError(f"'aa_window_size' ({aa_window_size}) must be an odd number. "
+                         f"Only the following cleavage site datasets can have odd or even sizes: {LIST_CLEAVAGE_SITE_DATA}")
 
 
 def post_check_df_seq(df_seq=None, n=None, name=None):
@@ -75,6 +80,10 @@ def post_check_df_seq(df_seq=None, n=None, name=None):
 # Helper functions
 def _is_aa_level(name=None):
     return name.split("_")[0] == "AA"
+
+
+def _is_cleavage_site_dataset(name=None):
+    return name in LIST_CLEAVAGE_SITE_DATA
 
 
 def _adjust_non_canonical_aa(df=None, non_canonical_aa="remove"):
@@ -94,7 +103,31 @@ def _adjust_non_canonical_aa(df=None, non_canonical_aa="remove"):
     return df
 
 
-def _get_aa_window(df_seq=None, aa_window_size=9):
+def _get_aa_window_even(df_seq=None, aa_window_size=9):
+    """Get amino acid windows from df_seq"""
+    min_seq_len = df_seq[ut.COL_SEQ].apply(len).min()
+    if df_seq[ut.COL_SEQ].apply(len).min() <= aa_window_size:
+        raise ValueError(f"'aa_window_size' ({aa_window_size}) should be smaller than shortest sequence ({min_seq_len})")
+    list_aa = []
+    list_labels = []
+    list_entries = []
+    for entry, seq, _labels in zip(df_seq[ut.COL_ENTRY], df_seq[ut.COL_SEQ], df_seq[ut.COL_LABEL]):
+        for i, in zip(range(len(seq))):
+            n_half = int(aa_window_size/2)
+            start_pos, stop_pos = max(0, i-n_half), min(i+n_half, len(seq))
+            aa_window = seq[start_pos:stop_pos]
+            entry_pos = f"{entry}_{i}|{i+1}"
+            list_aa.append(aa_window)
+            list_entries.append(entry_pos)
+        labels = [int(x) for x in _labels.split(",")]
+        labels = [1 if l == 1 and labels[i-1] == 1 else 0 for i, l in enumerate(labels)]
+        list_labels.extend(labels)
+    df_seq = pd.DataFrame({ut.COL_ENTRY: list_entries, ut.COL_SEQ: list_aa, ut.COL_LABEL: list_labels})
+    df_seq = df_seq[df_seq[ut.COL_SEQ].apply(len) == aa_window_size]    # Remove too short windows at sequence edges
+    return df_seq
+
+
+def _get_aa_window_odd(df_seq=None, aa_window_size=9):
     """Get amino acid windows from df_seq"""
     min_seq_len = df_seq[ut.COL_SEQ].apply(len).min()
     if df_seq[ut.COL_SEQ].apply(len).min() <= aa_window_size:
@@ -108,8 +141,8 @@ def _get_aa_window(df_seq=None, aa_window_size=9):
             start_pre, end_pre = max(i - n_pre, 0), i
             start_post, end_post = i + 1, i + n_post + 1
             aa_window = seq[start_pre:end_pre] + seq[i] + seq[start_post:end_post]
-            list_aa.append(aa_window)
             entry_pos = f"{entry}_pos{i}"
+            list_aa.append(aa_window)
             list_entries.append(entry_pos)
         list_labels.extend(labels.split(","))
     df_seq = pd.DataFrame({ut.COL_ENTRY: list_entries, ut.COL_SEQ: list_aa, ut.COL_LABEL: list_labels})
@@ -153,6 +186,7 @@ def load_dataset(name: str = "Overview",
         Maximum length of sequences for filtering.
     aa_window_size : int, default=9
         Length of amino acid window, only used for the amino acid dataset level (``name='AA_'``). Disabled if ``None``.
+        Must be odd, except for cleavage site datasets (e.g., 'AA_CASPASE3', 'AA_FURIN', 'AA_MMP2').
 
     Returns
     -------
@@ -184,7 +218,8 @@ def load_dataset(name: str = "Overview",
     ut.check_number_range(name="n", val=n, min_val=1, accept_none=True, just_int=True)
     check_non_canonical_aa(non_canonical_aa=non_canonical_aa)
     check_min_max_val(min_len=min_len, max_len=max_len)
-    check_aa_window_size(aa_window_size=aa_window_size)
+    is_cs_dataset = _is_cleavage_site_dataset(name=name)
+    check_aa_window_size(aa_window_size=aa_window_size, is_cs_dataset=is_cs_dataset)
 
     # Load overview table
     if name == "Overview":
@@ -208,7 +243,10 @@ def load_dataset(name: str = "Overview",
         # Special case that unfiltered df_seq is returned
         if aa_window_size is None:
             return df_seq.reset_index(drop=True).copy()
-        df_seq = _get_aa_window(df_seq=df_seq, aa_window_size=aa_window_size)
+        if aa_window_size % 2 != 0:
+            df_seq = _get_aa_window_odd(df_seq=df_seq, aa_window_size=aa_window_size)
+        else:
+            df_seq = _get_aa_window_even(df_seq=df_seq, aa_window_size=aa_window_size)
     # Select balanced groups
     if n is not None:
         labels = set(df_seq[ut.COL_LABEL])
