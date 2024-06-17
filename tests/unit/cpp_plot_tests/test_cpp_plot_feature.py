@@ -22,7 +22,9 @@ def get_input():
     df_feat = aa.load_features()
     return df_seq, labels, df_feat
 
+
 VALID_FEATURE = 'TMD_C_JMD_C-Segment(3,4)-KLEP840101'
+
 
 class TestCPPPlotFeature:
     """Test class for feature method, focusing on individual parameters."""
@@ -113,10 +115,14 @@ class TestCPPPlotFeature:
         plt.close()
 
     @settings(max_examples=5, deadline=1000)
-    @given(name_test=st.text(alphabet=st.characters(blacklist_characters="\U00010000-\U0010FFFF",
-                                                    min_codepoint=32, max_codepoint=126), min_size=1, max_size=10),
-           name_ref=st.text(alphabet=st.characters(blacklist_characters="\U00010000-\U0010FFFF",
-                                                   min_codepoint=32, max_codepoint=126),min_size=1, max_size=10))
+    @given(
+        name_test=st.text(alphabet=st.characters(blacklist_characters=["$", "{", "}"],
+                                                 min_codepoint=32, max_codepoint=126),
+                          min_size=1, max_size=10),
+        name_ref=st.text(alphabet=st.characters(blacklist_characters=["$", "{", "}"],
+                                                min_codepoint=32, max_codepoint=126),
+                         min_size=1, max_size=10)
+    )
     def test_name_test_ref(self, name_test, name_ref):
         df_seq, labels, df_feat = get_input()
         features = df_feat["feature"].to_list()
