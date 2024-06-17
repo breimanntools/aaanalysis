@@ -64,8 +64,8 @@ def check_df_eval(df_eval):
     avg_n_feat_per_clust = df_eval[ut.COL_AVG_N_FEAT_PER_CLUST].values[0]
     std_n_feat_per_clust = df_eval[ut.COL_STD_N_FEAT_PER_CLUST].values[0]
     ut.check_number_val(name=f"{ut.COL_N_FEAT}: n_features", val=list_n_feat[0], just_int=True)
-    ut.check_list_like(name=f"{ut.COL_N_FEAT}: list_n_feat", val=list_n_feat[1], accept_str=False)
-    ut.check_list_like(name=ut.COL_RANGE_ABS_AUC, val=range_abs_auc, accept_str=False)
+    _ = ut.check_list_like(name=f"{ut.COL_N_FEAT}: list_n_feat", val=list_n_feat[1], accept_str=False)
+    _ = ut.check_list_like(name=ut.COL_RANGE_ABS_AUC, val=range_abs_auc, accept_str=False)
     ut.check_number_val(name=f"{ut.COL_AVG_MEAN_DIF} (pos)", val=avg_mean_dif[0], just_int=False)
     ut.check_number_val(name=f"{ut.COL_AVG_MEAN_DIF} (neg)", val=avg_mean_dif[1], just_int=False)
     ut.check_number_range(name=ut.COL_N_CLUST, val=n_clusters, min_val=1, just_int=True)

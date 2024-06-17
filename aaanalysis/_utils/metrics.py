@@ -7,7 +7,7 @@ from scipy.stats import entropy, gaussian_kde
 from collections import OrderedDict
 from scipy.spatial import distance
 
-
+# TODO check if simplify or relax dependencies
 # AUC adjusted
 def auc_adjusted_(X=None, labels=None, label_test=1):
     """Get adjusted Area Under the Receiver Operating Characteristic Curve (ROC AUC)
@@ -37,7 +37,7 @@ def _compute_centers(X, labels=None):
 
 def bic_score_(X, labels=None):
     """Computes the Bayesian Information Criterion (BIC) metric for given clusters."""
-    epsilon = 1e-10 # prevent division by zero
+    epsilon = 1e-10  # prevent division by zero
 
     # Check if labels match to number of clusters
     n_classes = len(set(labels))

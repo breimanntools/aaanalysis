@@ -75,7 +75,7 @@ def check_shap_values(shap_values=None):
     """Check if shap values are properly set"""
     if shap_values is None:
         raise ValueError("'shape_values' are None. Use 'ShapExplainer().fit()' to compute them.")
-    ut.check_array_like(name="shap_values", val=shap_values, dtype="numeric")
+    _ = ut.check_array_like(name="shap_values", val=shap_values, dtype="numeric")
 
 
 def check_match_labels_X_fuzzy_labeling(labels=None, X=None, fuzzy_labeling=False):
@@ -151,7 +151,8 @@ def check_sample_positions(sample_positions=None, n_samples=None):
         sample_positions = list(range(n_samples))
     args = dict(min_val=0, max_val=n_samples-1, just_int=True, str_add=str_add)
     if isinstance(sample_positions, list) or isinstance(sample_positions, np.ndarray):
-        ut.check_list_like(name="sample_positions", val=sample_positions, check_all_non_neg_int=True, str_add=str_add)
+        sample_positions = ut.check_list_like(name="sample_positions", val=sample_positions,
+                                              check_all_non_neg_int=True, str_add=str_add)
         for i in sample_positions:
             ut.check_number_range(name=f"sample_positions: {i}", val=i, **args)
     else:
@@ -211,7 +212,7 @@ def check_match_sample_positions_names(sample_positions=None, names=None, group_
 def check_match_sample_positions_group_average(sample_positions=None, group_average=False):
     """Check if group_average only True if sample_positions is list"""
     if group_average:
-        ut.check_list_like(name="sample_positions", val=sample_positions)
+        sample_positions = ut.check_list_like(name="sample_positions", val=sample_positions)
         if len(sample_positions) == 1:
             raise ValueError
 
@@ -338,7 +339,7 @@ class ShapExplainer:
                                                 val=list_model_classes,
                                                 accept_none=False,
                                                 min_len=1)
-        ut.check_list_like(name="list_model_kwargs", val=list_model_kwargs, accept_none=True)
+        list_model_kwargs = ut.check_list_like(name="list_model_kwargs", val=list_model_kwargs, accept_none=True)
         if list_model_kwargs is None:
             list_model_kwargs = [{} for _ in list_model_classes]
         # Check matching of model parameters

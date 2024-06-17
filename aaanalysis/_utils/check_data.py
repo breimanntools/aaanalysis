@@ -57,7 +57,7 @@ def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan
         else:
             raise ValueError(f"'{name}' should not be None.")
     # Extend dtype to handle a list of dtypes including bool
-    dtype = check_type.check_str(name="dtype", val=dtype, accept_none=True)
+    check_type.check_str(name="dtype", val=dtype, accept_none=True)
     valid_dtypes = ["numeric", "int", "float", "bool", None]
     if dtype not in valid_dtypes:
         str_error = add_str(str_error=f"'dtype' should be one of the following: {valid_dtypes}", str_add=str_add)
@@ -130,7 +130,6 @@ def check_X_unique_samples(X, min_n_unique_samples=3, str_add=None):
     if n_unique_samples < min_n_unique_samples:
         raise ValueError(f"n_unique_samples ({n_unique_samples}) should be >= {min_n_unique_samples}."
                          f"\nX = {X}")
-    return X
 
 
 def check_labels(labels=None, name="labels", vals_requiered=None, len_requiered=None, allow_other_vals=True,
@@ -299,5 +298,3 @@ def check_is_fasta(file_path=None):
     _, file_ext = os.path.splitext(file_path)
     if file_ext.lower() not in valid_extensions:
         raise ValueError(f"The file '{file_path}' is not a FASTA file. Valid extensions are {valid_extensions}")
-
-

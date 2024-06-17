@@ -33,7 +33,6 @@ def check_fig(fig=None, accept_none=False, str_add=None):
         if str_add:
             str_error += " " + str_add
         raise ValueError(str_error)
-    return fig
 
 
 def check_ax(ax=None, accept_none=False, str_add=None, return_first=False):

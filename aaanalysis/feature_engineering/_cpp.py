@@ -405,7 +405,7 @@ class CPP(Tool):
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         check_match_list_df_feat_names_feature_sets(list_df_feat=list_df_feat,
                                                     names_feature_sets=names_feature_sets)
-        ut.check_list_like(name="list_df_parts", val=list_df_parts, accept_none=True)
+        list_df_parts = ut.check_list_like(name="list_df_parts", val=list_df_parts, accept_none=True)
         mask_test = [x == label_test for x in labels]
         if list_df_parts is None:
             list_df_parts = [self.df_parts[mask_test]] * len(list_df_feat)

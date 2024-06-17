@@ -187,7 +187,7 @@ class TreeModel:
             list_model_classes = [list_model_classes]   # Single models are possible as well (but not recommender)
         list_model_classes = ut.check_list_like(name="list_model_classes", val=list_model_classes,
                                                 accept_none=False, min_len=1)
-        ut.check_list_like(name="list_model_kwargs", val=list_model_kwargs, accept_none=True)
+        list_model_kwargs = ut.check_list_like(name="list_model_kwargs", val=list_model_kwargs, accept_none=True)
         if list_model_kwargs is None:
             list_model_kwargs = [{} for _ in list_model_classes]
         check_match_list_model_classes_kwargs(list_model_classes=list_model_classes, list_model_kwargs=list_model_kwargs)
@@ -360,7 +360,7 @@ class TreeModel:
         n_samples, n_feat = X.shape
         ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
         labels = check_match_labels_X(labels=labels, X=X)
-        ut.check_list_like(name="list_is_selected", val=list_is_selected)
+        list_is_selected = ut.check_list_like(name="list_is_selected", val=list_is_selected)
         ut.check_bool(name="convert_1d_to_2d", val=convert_1d_to_2d)
         list_is_selected = check_list_is_selected(list_is_selected=list_is_selected, X=X,
                                                   convert_1d_to_2d=convert_1d_to_2d)

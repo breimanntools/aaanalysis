@@ -58,21 +58,19 @@ def check_number_range(name=None, val=None, min_val=0, max_val=None, exclusive_l
             str_error = add_str(str_error=f"'{name}' should be {type_description} with {range_desc}, but got {val}.",
                                 str_add=str_add)
             raise ValueError(str_error)
-    return val
 
 
-def check_str(name=None, val=None, accept_none=False, return_empty_string=False, str_add=None):
+def check_str(name=None, val=None, accept_none=False, str_add=None):
     """Check type string"""
     if val is None:
         if not accept_none:
             str_error = add_str(str_error=f"'{name}' should not be None.", str_add=str_add)
             raise ValueError(str_error)
-        return "" if return_empty_string else None
+        return
     if not isinstance(val, str):
         str_error = add_str(str_error=f"'{name}' ('{val}') should be string.",
                             str_add=str_add)
         raise ValueError(str_error)
-    return val
 
 
 def check_bool(name=None, val=None, accept_none=False, str_add=None):

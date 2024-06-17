@@ -192,5 +192,5 @@ def adjust_tuple_elements(tuple_in=None, tuple_default=None):
     if tuple_in is not None:
         tuple_out = tuple(i if i is not None else def_i for i, def_i in zip(tuple_in,  tuple_default))
     else:
-        tuple_out =  tuple_default
+        tuple_out = tuple_default
     return tuple_out

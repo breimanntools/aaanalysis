@@ -10,6 +10,11 @@ from .cpp.utils_feature import get_part_positions
 
 
 # Helper functions
+def _return_empty_string(val=None):
+    val = "" if val is None else val
+    return val
+
+
 def _get_max_pos_split(split=None):
     """Get maximum position requiered for split"""
     if ut.STR_SEGMENT in split:
@@ -135,9 +140,12 @@ def check_parts_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None,
                     tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None,
                     check_jmd_seq_len_consistent=False):
     """Check length parameters and if they are matching with sequences if provided"""
-    tmd_seq = ut.check_str(name="tmd_seq", val=tmd_seq, accept_none=True, return_empty_string=True)
-    jmd_n_seq = ut.check_str(name="jmd_n_seq", val=jmd_n_seq, accept_none=True, return_empty_string=True)
-    jmd_c_seq = ut.check_str(name="jmd_c_seq", val=jmd_c_seq, accept_none=True, return_empty_string=True)
+    ut.check_str(name="tmd_seq", val=tmd_seq, accept_none=True)
+    ut.check_str(name="jmd_n_seq", val=jmd_n_seq, accept_none=True)
+    ut.check_str(name="jmd_c_seq", val=jmd_c_seq, accept_none=True)
+    tmd_seq = _return_empty_string(val=tmd_seq)
+    jmd_n_seq = _return_empty_string(val=jmd_n_seq)
+    jmd_c_seq = _return_empty_string(val=jmd_c_seq)
     # If sequences is not None, set length to sequence length
     if len(jmd_n_seq + tmd_seq + jmd_c_seq) > 0:
         if check_jmd_seq_len_consistent:
