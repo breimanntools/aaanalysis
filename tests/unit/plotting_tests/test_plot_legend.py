@@ -174,7 +174,9 @@ class TestPlotSetLegendComplex:
     def test_plot_set_legend_custom_labels(self, labels):
         fig, ax = plt.subplots()
         labels = list(set([x.replace("_", "X") for x in labels if len(x) > 1]))
+        # Use the plot_legend function to create the legend
         ax = aa.plot_legend(ax=ax, dict_color={label: "red" for label in labels})
+        # Extract and verify the legend labels
         legend_labels = [text.get_text() for text in ax.get_legend().get_texts()]
         assert set(legend_labels) == set(labels)
 

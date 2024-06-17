@@ -251,7 +251,7 @@ def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
     handles = [_create_marker(dict_color[cat], labels[i], marker[i], marker_size[i],
                               lw, edgecolor, linestyle[i], hatch[i], hatchcolor)
                for i, cat in enumerate(list_cat)]
-    legend = ax.legend(handles=handles, labels=labels, **args)
+    legend = ax.legend(handles=handles, **args)
     if title_align_left:
         legend._legend_box.align = "left"
     return ax
