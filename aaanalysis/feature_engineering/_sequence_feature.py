@@ -236,6 +236,8 @@ class SequenceFeature:
         .. include:: examples/sf_get_df_parts.rst
         """
         # Check input
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
         check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_none_tmd_len=True)
         ut.check_df_seq(df_seq=df_seq)
         ut.check_bool(name="all_parts", val=all_parts)
@@ -430,6 +432,8 @@ class SequenceFeature:
         labels = ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
                                  len_requiered=len(df_parts), allow_other_vals=False)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         ut.check_bool(name="parametric", val=parametric)
         ut.check_bool(name="accept_gaps", val=accept_gaps)
@@ -615,6 +619,8 @@ class SequenceFeature:
         features = ut.check_features(features=features)
         check_df_cat(df_cat=df_cat)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         check_match_df_cat_features(df_cat=df_cat, features=features)
         check_match_features_seq_parts(features=features, **args_len)
@@ -676,6 +682,8 @@ class SequenceFeature:
         # Check input
         features = ut.check_features(features=features)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
         args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                              tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
         check_match_features_seq_parts(features=features, **args_seq, **args_len)
@@ -743,6 +751,8 @@ class SequenceFeature:
         check_col_cat(col_cat=col_cat)
         check_col_val(col_val=col_val)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         ut.check_bool(name="normalize", val=normalize)
         check_match_features_seq_parts(features=df_feat[ut.COL_FEATURE], **args_len)

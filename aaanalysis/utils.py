@@ -16,7 +16,9 @@ import numpy as np
 from .config import (options,
                      check_verbose,
                      check_n_jobs,
-                     check_random_state)
+                     check_random_state,
+                     check_jmd_n_len,
+                     check_jmd_c_len)
 
 # Data types
 from ._utils.utils_types import (ArrayLike1D,

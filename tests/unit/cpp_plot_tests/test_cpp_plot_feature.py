@@ -116,11 +116,9 @@ class TestCPPPlotFeature:
 
     @settings(max_examples=5, deadline=1000)
     @given(
-        name_test=st.text(alphabet=st.characters(blacklist_characters=["$", "{", "}"],
-                                                 min_codepoint=32, max_codepoint=126),
+        name_test=st.text(alphabet=st.characters(blacklist_characters=["$", "{", "}"], min_codepoint=32, max_codepoint=126),
                           min_size=1, max_size=10),
-        name_ref=st.text(alphabet=st.characters(blacklist_characters=["$", "{", "}"],
-                                                min_codepoint=32, max_codepoint=126),
+        name_ref=st.text(alphabet=st.characters(blacklist_characters=["$", "{", "}"], min_codepoint=32, max_codepoint=126),
                          min_size=1, max_size=10)
     )
     def test_name_test_ref(self, name_test, name_ref):

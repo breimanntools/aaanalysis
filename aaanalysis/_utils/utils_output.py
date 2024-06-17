@@ -44,7 +44,7 @@ def print_start_progress(start_message=None):
 
 def print_progress(i=0, n=0, add_new_line=False):
     """Print progress"""
-    progress = min(np.round(i/n * 100, 2), 100)
+    progress = min(np.round(i/n * 100, 4), 100)
     progress_bar = STR_PROGRESS * int(progress/4) + " " * (25-int(progress/4))
     str_end = "\n" if add_new_line else ""
     print_out(f"\r   |{progress_bar}| {progress:.1f}%", end=str_end)

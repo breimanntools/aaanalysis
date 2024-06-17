@@ -10,7 +10,7 @@ from joblib import Parallel, delayed
 import warnings
 
 import aaanalysis.utils as ut
-from .utils_feature import get_vf_scale, get_feature_matrix_, post_check_vf_scale
+from .utils_feature import get_vf_scale, get_feature_matrix_
 from ._utils_feature_stat import add_stat_
 from ._split import SplitRange
 
@@ -76,8 +76,6 @@ def _pre_filtering_info(list_scales, dict_all_scales, labels_ps, part_split, acc
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)    # Filter numpy warning: "Mean of emtpy slice"
             X = np.round(vf_scale(part_split), 5)
-        if accept_gaps:
-            post_check_vf_scale(feature_values=X)
         # Ranking infos
         abs_mean_dif[start:end] = abs(np.mean(X[mask_1], axis=0) - np.mean(X[mask_0], axis=0))
         std_test[start:end] = np.std(X[mask_1], axis=0)
@@ -97,8 +95,6 @@ def _filtering_info(df=None, df_scales=None, check_cat=True):
 
 
 # II Main functions
-
-
 # Filtering methods
 def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None, labels=None, label_test=1, label_ref=0,
                        accept_gaps=False, verbose=True, n_jobs=None):
@@ -134,11 +130,14 @@ def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None, labels=Non
     return abs_mean_dif, std_test, feat_names
 
 
-def pre_filtering(features=None, abs_mean_dif=None, std_test=None, max_std_test=0.2, n=10000):
+def pre_filtering(features=None, abs_mean_dif=None, std_test=None, max_std_test=0.2, n=10000, accept_gaps=False):
     """CPP pre-filtering based on thresholds."""
     df = pd.DataFrame(zip(features, abs_mean_dif, std_test),
                       columns=[ut.COL_FEATURE, ut.COL_ABS_MEAN_DIF, ut.COL_STD_TEST])
     df = df[df[ut.COL_STD_TEST] <= max_std_test]
+    if accept_gaps:
+        # Remove features resulting in NaN features values due to sequence gaps
+        df = df[~df[ut.COL_ABS_MEAN_DIF].isna()]
     df = df.sort_values(by=ut.COL_ABS_MEAN_DIF, ascending=False).head(n)
     return df
 

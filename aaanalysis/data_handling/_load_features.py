@@ -1,9 +1,6 @@
 """
 This is a script for filtering scales from df_scales, such as using correlation or subcategory coverage.
 """
-import time
-import pandas as pd
-import numpy as np
 
 import aaanalysis.utils as ut
 

@@ -16,6 +16,8 @@ _dict_options = {
     'name_jmd_n': "JMD-N",
     'name_jmd_c': "JMD-C",
     'ext_len': 0,
+    'jmd_n_len': None,
+    'jmd_c_len': None,
     'df_scales': None,
     'df_cat': None,
 }
@@ -65,6 +67,25 @@ def check_n_jobs(n_jobs=None):
     return n_jobs
 
 
+def check_jmd_n_len(jmd_n_len=None):
+    """Check if general JMD-N length is given and adjust it globally."""
+    global_jmd_n_len = options["jmd_n_len"]
+    if global_jmd_n_len is not None:
+        return global_jmd_n_len
+    else:
+        return jmd_n_len
+
+
+def check_jmd_c_len(jmd_c_len=None):
+    """Check if general JMD-C length is given and adjust it globally."""
+    global_jmd_c_len = options["jmd_c_len"]
+    if global_jmd_c_len is not None:
+        return global_jmd_c_len
+    else:
+        return jmd_c_len
+
+
+
 # DEV: Parameters are used as directive to get better documentation style
 # Enables setting of system level variables like in matplotlib
 def _check_option(name_option="", option=None):
@@ -77,6 +98,8 @@ def _check_option(name_option="", option=None):
             check_random_state(random_state=option)
     if name_option == "allow_multiprocessing":
         check_bool(name=name_option, val=option)
+    if "jmd" in name_option:
+        check_number_val(name=name_option, val=option, accept_none=True, just_int=True)
     if "name" in name_option:
         check_str(name=name_option, val=option, accept_none=False)
     if name_option == "ext_len":
@@ -116,6 +139,10 @@ class Settings:
         Name of C-terminal juxta middle domain (JMD-C) used in CPP plots.
     ext_len : int, default=0
         Length of TMD-extending part (starting from C and N terminal part of TMD, >=0). Disabled (set to 0) by default.
+    jmd_n_len: int, default=None
+        Length of N-terminal JMD (JMD-N) in number of amino acids. If ``None``, ``jmd_n_len`` is set locally.
+    jmd_c_len: int, default=None
+        Length of C-terminal JMD (JMD-C) in number of amino acids. If ``None``, ``jmd_c_len`` is set locally.
     df_scales : DataFrame, optional
         Scale DataFrame used in CPP algorithm. Adjust on system level if non-default scales are used.
         If ``None``, AAanalysis framework will use the scale DataFrame loaded by :func:`load_scales` with ``name='scales'``.

@@ -24,8 +24,10 @@ def pre_check_vf_scale(part_split=None):
 
 def post_check_vf_scale(feature_values=None):
     """Check if feature_values/X does contain nans due to gaps"""
+    str_error = ("Some input sequences result in NaN feature values due to gaps ('-')."
+                 "\n\tRemove sequences containing gaps or increase size of sequence splits (Part-Split combination).")
     if np.isnan(feature_values).any():
-        raise ValueError("Some input sequences result in NaN feature values most likely due to gaps ('-').")
+        raise ValueError(str_error)
 
 
 def get_vf_scale(dict_scale=None, accept_gaps=False):

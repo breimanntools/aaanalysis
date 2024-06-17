@@ -241,7 +241,7 @@ def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_p
         else:
             return None
     if not isinstance(df, pd.DataFrame):
-        str_error = add_str(str_error= f"'{name}' ({type(df)}) should be DataFrame",
+        str_error = add_str(str_error=f"'{name}' ({type(df)}) should be DataFrame",
                             str_add=str_add)
         raise ValueError(str_error)
     if not accept_nan and df.isna().any().any():

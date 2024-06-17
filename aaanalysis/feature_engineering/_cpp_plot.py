@@ -265,6 +265,8 @@ class CPPPlot:
         verbose = ut.check_verbose(verbose)
         check_df_scales(df_scales=df_scales)
         check_df_cat(df_cat=df_cat)
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
         check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_none_tmd_len=True)
         ut.check_bool(name="accept_gaps", val=accept_gaps)
         df_scales, df_cat = check_match_df_scales_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
@@ -490,13 +492,15 @@ class CPPPlot:
         ut.check_number_range(name="alpha_hist", val=alpha_hist, accept_none=False, min_val=0, max_val=1, just_int=False)
         ut.check_number_range(name="alpha_dif", val=alpha_dif, accept_none=False, min_val=0, max_val=1, just_int=False)
         check_match_df_seq_names_to_show(df_seq=df_seq, names_to_show=names_to_show)
-        df_seq = check_match_df_seq_jmd_len(df_seq=df_seq, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
+        df_seq = check_match_df_seq_jmd_len(df_seq=df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
 
         # Plot feature
         ax = plot_feature(ax=ax, figsize=figsize,
                           feature=feature, df_scales=self._df_scales, accept_gaps=self._accept_gaps,
                           df_seq=df_seq, labels=labels, label_test=label_test, label_ref=label_ref,
-                          jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                          jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                           names_to_show=names_to_show, show_seq=show_seq,
                           name_test=name_test, name_ref=name_ref,
                           color_test=color_test, color_ref=color_ref,
@@ -628,9 +632,11 @@ class CPPPlot:
         ut.check_number_range(name="n_top", val=n_top, min_val=2, max_val=len(df_feat), just_int=True)
         ut.check_bool(name="rank", val=rank, accept_none=False)
         ut.check_figsize(figsize=figsize, accept_none=True)
-        args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
+        args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         check_match_features_seq_parts(features=df_feat[ut.COL_FEATURE],
-                                       tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len)
+                                       tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         ut.check_number_range(name="tmd_jmd_space", val=tmd_jmd_space, min_val=1, just_int=True, accept_none=False)
         ut.check_color(name="tmd_color", val=tmd_color)
         ut.check_color(name="jmd_color", val=jmd_color)
@@ -654,7 +660,7 @@ class CPPPlot:
                                  col_imp=col_imp,
                                  shap_plot=shap_plot,
                                  figsize=figsize,
-                                 tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                                 tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                  tmd_color=tmd_color, jmd_color=jmd_color,
                                  tmd_jmd_alpha=tmd_jmd_alpha,
                                  name_test=name_test, name_ref=name_ref,
@@ -671,7 +677,6 @@ class CPPPlot:
             fig.tight_layout()
             plt.subplots_adjust(left=0.25, wspace=0.15)
         return fig, axes
-
 
     def profile(self,
                 # Data and Plot Type
@@ -837,7 +842,9 @@ class CPPPlot:
 
         # Check specific TMD-JMD input
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
-        args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
+        args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                              jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
                                              check_jmd_seq_len_consistent=True)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
@@ -849,7 +856,7 @@ class CPPPlot:
         ut.check_bool(name="highlight_tmd_area", val=highlight_tmd_area)
         ut.check_number_range(name="tmd_area_alpha", val=highlight_alpha, min_val=0, max_val=1, just_int=False)
         check_match_features_seq_parts(features=df_feat[ut.COL_FEATURE],
-                                       tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                                       tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                        tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
         check_match_shap_plot_add_legend_cat(shap_plot=shap_plot, add_legend_cat=add_legend_cat)
 
@@ -886,7 +893,6 @@ class CPPPlot:
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
         return fig, ax
-
 
     def heatmap(self,
                 # Data and Plot Type
@@ -1070,7 +1076,9 @@ class CPPPlot:
 
         # Check specific TMD-JMD input
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
-        args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
+        args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                              jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
                                              check_jmd_seq_len_consistent=True)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
@@ -1081,7 +1089,7 @@ class CPPPlot:
         ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd)
         ut.check_bool(name="add_xticks_pos", val=add_xticks_pos)
         check_match_features_seq_parts(features=df_feat[ut.COL_FEATURE],
-                                       tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                                       tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                        tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
 
         # Check plot styling input
@@ -1323,7 +1331,9 @@ class CPPPlot:
 
         # Check specific TMD-JMD input
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
-        args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
+        args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                              jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
                                              check_jmd_seq_len_consistent=True)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
@@ -1337,7 +1347,7 @@ class CPPPlot:
         ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd)
         ut.check_bool(name="add_xticks_pos", val=add_xticks_pos)
         check_match_features_seq_parts(features=df_feat[ut.COL_FEATURE],
-                                       tmd_len=tmd_len, jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                                       tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                        tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
 
         # Check plot styling input
@@ -1394,7 +1404,6 @@ class CPPPlot:
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
         return fig, ax
-
 
     def update_seq_size(self,
                         ax: plt.Axes = None,
@@ -1462,11 +1471,13 @@ class CPPPlot:
         ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
-        check_match_ax_seq_len(ax=ax, jmd_c_len=self._jmd_c_len, jmd_n_len=self._jmd_n_len)
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
+        check_match_ax_seq_len(ax=ax, jmd_c_len=jmd_c_len, jmd_n_len=jmd_n_len)
         # Adjust font size to prevent overlap
-        jmd_n_seq, tmd_seq, jmd_c_seq = get_tmd_jmd_seq(ax=ax, jmd_c_len=self._jmd_c_len, jmd_n_len=self._jmd_n_len)
+        jmd_n_seq, tmd_seq, jmd_c_seq = get_tmd_jmd_seq(ax=ax, jmd_c_len=jmd_c_len, jmd_n_len=jmd_n_len)
         args_len, args_seq = check_parts_len(jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
-                                             jmd_c_len=self._jmd_c_len, jmd_n_len=self._jmd_n_len)
+                                             jmd_c_len=jmd_c_len, jmd_n_len=jmd_n_len)
         ax, seq_size = update_seq_size_(ax=ax, **args_seq, max_x_dist=max_x_dist, **args_part_color, **args_seq_color)
         update_tmd_jmd_labels(fig=fig, seq_size=seq_size,
                               fontsize_tmd_jmd=fontsize_tmd_jmd,

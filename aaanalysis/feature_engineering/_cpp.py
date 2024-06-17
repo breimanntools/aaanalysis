@@ -257,6 +257,8 @@ class CPP(Tool):
         ut.check_bool(name="check_cat", val=check_cat)
         ut.check_bool(name="parametric", val=parametric)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         # Settings and creation of objects
@@ -290,7 +292,8 @@ class CPP(Tool):
                            abs_mean_dif=abs_mean_dif,
                            std_test=std_test,
                            n=n_pre_filter,
-                           max_std_test=max_std_test)
+                           max_std_test=max_std_test,
+                           accept_gaps=self._accept_gaps)
         features = df[ut.COL_FEATURE].to_list()
         # Add feature information
         df = add_stat(df_feat=df, df_scales=self.df_scales, df_parts=self.df_parts,
@@ -309,7 +312,7 @@ class CPP(Tool):
         df_feat.reset_index(drop=True, inplace=True)
         df_feat[ut.COLS_FEAT_STAT] = df_feat[ut.COLS_FEAT_STAT].round(3)
         if self._verbose:
-            ut.print_out(f"4. CPP returns df with {len(df_feat)} unique features including general information and statistics")
+            ut.print_out(f"4. CPP returns df of {len(df_feat)} unique features with general information and statistics")
         return df_feat
 
     def eval(self,
