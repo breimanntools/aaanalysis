@@ -8,8 +8,8 @@ import os
 import pandas as pd
 
 from aaanalysis import utils as ut
-from .backend.cd_hit import run_cd_hit
-from .backend.mmseq2 import run_mmseqs2
+from ._backend.cd_hit import run_cd_hit
+from ._backend.mmseq2 import run_mmseqs2
 
 
 # I Helper functions

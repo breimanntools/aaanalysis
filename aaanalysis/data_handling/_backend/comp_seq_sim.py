@@ -13,7 +13,7 @@ from aaanalysis import utils as ut
 # Main functions
 def comp_seq_sim(seq1=None, seq2=None, alignment_mode='global'):
     """
-    Compute pairwise sequence similarity.
+    Compute sequence similarity between two sequences.
 
     The normalized sequence similarity score between two sequences is computed using the :class:`PairwiseAligner`
     from BioPython with default settings.
@@ -37,8 +37,8 @@ def comp_seq_sim(seq1=None, seq2=None, alignment_mode='global'):
     return identity
 
 
-def comp_pw_sim(df_seq=None):
-    """"""
+def comp_pw_seq_sim(df_seq=None, alignment_mode="global"):
+    """Compute pairwise sequence similarity between all sequences from sequence DataFrame"""
     list_seq = df_seq[ut.COL_SEQ].to_list()
     list_ids = df_seq[ut.COL_ENTRY].to_list()
     dict_id_seq = dict(zip(list_ids, list_seq))
@@ -47,10 +47,12 @@ def comp_pw_sim(df_seq=None):
     # Calculate pairwise similarities
     for (id1, id2) in itertools.combinations(list_ids, 2):
         seq1, seq2 = dict_id_seq[id1], dict_id_seq[id2]
-        sim_score = comp_seq_sim(seq1, seq2)
+        sim_score = comp_seq_sim(seq1=seq1, seq2=seq2, alignment_mode=alignment_mode)
         df_pw_sim.at[id1, id2] = sim_score
         df_pw_sim.at[id2, id1] = sim_score
     # Fill diagonal with 1s for self-similarity
     np.fill_diagonal(df_pw_sim.values, 1)
     df_pw_sim = df_pw_sim.round(4)
     return df_pw_sim
+
+

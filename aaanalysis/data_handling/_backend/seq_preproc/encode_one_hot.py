@@ -5,24 +5,10 @@ import pandas as pd
 from typing import Optional, Dict, Union, List, Tuple, Type, Literal
 import numpy as np
 
+from ._utils import pad_sequences
+
 
 # I Helper Functions
-def _pad_sequences(sequences, pad_at='C'):
-    """
-    Pads all sequences in the list to the length of the longest sequence by adding gaps.
-    """
-    max_length = max(len(seq) for seq in sequences)
-    padded_sequences = []
-    for seq in sequences:
-        gap_length = max_length - len(seq)
-        if pad_at == 'N':
-            padded_seq = '_' * gap_length + seq
-        else:
-            padded_seq = seq + '_' * gap_length
-        padded_sequences.append(padded_seq)
-    return padded_sequences
-
-
 def _one_hot_encode(amino_acid=None, alphabet=None, gap="_"):
     """
     Encodes a single amino acid into a one-hot vector based on a specified alphabet.
@@ -40,11 +26,11 @@ def _one_hot_encode(amino_acid=None, alphabet=None, gap="_"):
 
 # II Main Functions
 # TODO finish, docu, test, example ..
-def encode_seq(list_seq: List[str] = None,
-               alphabet: str = "ARNDCEQGHILKMFPSTWYV",
-               gap: str = "_",
-               pad_at: Literal["C", "N"] = "C",
-               ) -> np.array:
+def encode_one_hot(list_seq: List[str] = None,
+                   alphabet: str = "ARNDCEQGHILKMFPSTWYV",
+                   gap: str = "_",
+                   pad_at: Literal["C", "N"] = "C",
+                   ) -> np.array:
     """
     One-hot-encode a list of protein sequences into a feature matrix, padding shorter sequences
     with gaps represented as zero vectors.
@@ -79,12 +65,13 @@ def encode_seq(list_seq: List[str] = None,
         raise ValueError(f"Found invalid amino acid(s) {invalid_chars} not in alphabet.")
 
     # Pad sequences
-    padded_sequences = _pad_sequences(list_seq, pad_at=pad_at)
+    padded_sequences = pad_sequences(list_seq, pad_at=pad_at)
+
+    # Create one-hot-encoding
     max_length = len(padded_sequences[0])
     num_amino_acids = len(alphabet)
     feature_matrix = np.zeros((len(padded_sequences), max_length * num_amino_acids), dtype=int)
     args = dict(alphabet=alphabet, gap=gap)
-    # Create one-hot-encoding
     for idx, seq in enumerate(padded_sequences):
         encoded_seq = [_one_hot_encode(amino_acid=aa, **args) for aa in seq]
         feature_matrix[idx, :] = np.array(encoded_seq).flatten()

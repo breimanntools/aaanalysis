@@ -1,10 +1,9 @@
 """This is a script for the backend of the cd-hit method for the filtering_seq function."""
 import pandas as pd
-import subprocess
 import os
 
 from ._utils import make_temp_dir, remove_temp, run_command
-from ._parse_fasta import save_entries_to_fasta
+from .parse_fasta import save_entries_to_fasta
 
 from aaanalysis import utils as ut
 

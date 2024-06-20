@@ -13,12 +13,12 @@ import numpy as np
 
 import aaanalysis.utils as ut
 
-from .backend.check_models import (check_match_list_model_classes_kwargs,
-                                   check_match_labels_X,
-                                   check_match_X_is_selected)
-from .backend.tree_model.tree_model_fit import fit_tree_based_models
-from .backend.tree_model.tree_model_predict_proba import monte_carlo_predict_proba
-from .backend.tree_model.tree_model_eval import eval_feature_selections
+from ._backend.check_models import (check_match_list_model_classes_kwargs,
+                                    check_match_labels_X,
+                                    check_match_X_is_selected)
+from ._backend.tree_model.tree_model_fit import fit_tree_based_models
+from ._backend.tree_model.tree_model_predict_proba import monte_carlo_predict_proba
+from ._backend.tree_model.tree_model_eval import eval_feature_selections
 
 
 # I Helper Functions

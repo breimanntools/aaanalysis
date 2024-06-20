@@ -6,7 +6,7 @@ import pandas as pd
 from typing import Optional, List
 
 import aaanalysis.utils as ut
-from .backend._parse_fasta import save_entries_to_fasta
+from ._backend.parse_fasta import save_entries_to_fasta
 
 
 # I Helper Functions

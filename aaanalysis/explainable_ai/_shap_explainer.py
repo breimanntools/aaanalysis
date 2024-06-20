@@ -10,15 +10,15 @@ import warnings
 import shap
 
 import aaanalysis.utils as ut
-from .backend.check_models import (check_match_list_model_classes_kwargs,
-                                   check_match_labels_X,
-                                   check_match_X_is_selected)
-from .backend.shap_explainer.shap_explainer_fit import monte_carlo_shap_estimation
-from .backend.shap_explainer.se_add_feat_impact import (comp_shap_feature_importance,
-                                                        insert_shap_feature_importance,
-                                                        comp_shap_feature_impact,
-                                                        insert_shap_feature_impact)
-from .backend.shap_explainer.se_add_sample_mean_dif import add_sample_mean_dif_
+from ._backend.check_models import (check_match_list_model_classes_kwargs,
+                                    check_match_labels_X,
+                                    check_match_X_is_selected)
+from ._backend.shap_explainer.shap_explainer_fit import monte_carlo_shap_estimation
+from ._backend.shap_explainer.se_add_feat_impact import (comp_shap_feature_importance,
+                                                         insert_shap_feature_importance,
+                                                         comp_shap_feature_impact,
+                                                         insert_shap_feature_impact)
+from ._backend.shap_explainer.se_add_sample_mean_dif import add_sample_mean_dif_
 
 
 # I Helper Functions

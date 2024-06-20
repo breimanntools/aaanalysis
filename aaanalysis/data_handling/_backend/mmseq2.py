@@ -4,8 +4,8 @@ import os
 import pandas as pd
 
 from aaanalysis import utils as ut
-from ._parse_fasta import save_entries_to_fasta
-from ._seq_sim import comp_seq_sim
+from .parse_fasta import save_entries_to_fasta
+from .comp_seq_sim import comp_seq_sim
 from ._utils import make_temp_dir, remove_temp, run_command
 
 

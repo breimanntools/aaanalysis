@@ -6,7 +6,7 @@ import pandas as pd
 from typing import Optional, List
 import warnings
 
-from .backend._parse_fasta import get_entries_from_fasta
+from ._backend.parse_fasta import get_entries_from_fasta
 import aaanalysis.utils as ut
 
 
