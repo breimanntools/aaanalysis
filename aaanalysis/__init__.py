@@ -1,6 +1,6 @@
 from .data_handling import (load_dataset, load_scales, load_features,
                             read_fasta, to_fasta,
-                            filter_seq, SequencePreprocessor)
+                            SequencePreprocessor)
 from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
 from .pertubation import AAMut, AAMutPlot, SeqMut, SeqMutPlot
@@ -17,7 +17,9 @@ __all__ = [
     "load_features",
     "read_fasta",
     "to_fasta",
-    "filter_seq",
+    # "comp_seq_sim",       BioPython
+    # "comp_pw_seq_sim",    BioPython
+    # "filter_seq",         BioPython
     "SequencePreprocessor",
     "AAclust",
     "AAclustPlot",
@@ -31,6 +33,8 @@ __all__ = [
     "AAMutPlot",
     "SeqMut",
     "SeqMutPlot",
+    # "TreeModel"           # SHAP (explainable AI module)
+    # "ShapExplainer"       # SHAP
     "plot_get_clist",
     "plot_get_cmap",
     "plot_get_cdict",
@@ -47,17 +51,20 @@ __all__ = [
 # Import of professional (pro) version features if dependencies are available
 try:
     from .explainable_ai import TreeModel, ShapExplainer
+    from .data_handling_pro import comp_seq_sim, filter_seq
     from .show_html import display_df
     # Extend the __all__ list with pro features if successful
     __all__.extend(["TreeModel",
                     "ShapExplainer",
-                    "display_df"])
+                    "display_df",
+                    "comp_seq_sim",
+                    "filter_seq"])
 
 except ImportError as e:
     # Define a factory function to create a class or function placeholder
     def make_pro_feature(feature_name):
         str_error = (f"'{feature_name}' needs additional dependencies. Install AAanalysis Professional via:"
-                     f"\n\tpip install aaanalysis[pro]")
+                     f"\n\tpip install aaanalysis[pro]: {e}")
 
         class UnavailableFeature:
             def __init__(self, *args, **kwargs):
@@ -70,6 +77,9 @@ except ImportError as e:
         return UnavailableFeature
 
     # Use the factory function to create placeholders for pro features
-    TreeModel = make_pro_feature("TreeModel")
-    ShapExplainer = make_pro_feature("ShapExplainer")
-    display_df = make_pro_feature("display_df")
+    make_pro_feature("TreeModel")
+    make_pro_feature("ShapExplainer")
+    make_pro_feature("display_df")
+    make_pro_feature("comp_seq_sim")
+    make_pro_feature("comp_pw_seq_sim")
+    make_pro_feature("filter_seq")

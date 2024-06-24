@@ -85,7 +85,6 @@ def check_jmd_c_len(jmd_c_len=None):
         return jmd_c_len
 
 
-
 # DEV: Parameters are used as directive to get better documentation style
 # Enables setting of system level variables like in matplotlib
 def _check_option(name_option="", option=None):
