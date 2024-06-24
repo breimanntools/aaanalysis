@@ -64,7 +64,7 @@ except ImportError as e:
     # Define a factory function to create a class or function placeholder
     def make_pro_feature(feature_name):
         str_error = (f"'{feature_name}' needs additional dependencies. Install AAanalysis Professional via:"
-                     f"\n\tpip install aaanalysis[pro]: {e}")
+                     f"\n\tpip install aaanalysis[pro].")
 
         class UnavailableFeature:
             def __init__(self, *args, **kwargs):

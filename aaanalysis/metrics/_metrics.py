@@ -9,6 +9,7 @@ import numpy as np
 from aaanalysis.utils import auc_adjusted_, kullback_leibler_divergence_, bic_score_
 import aaanalysis.utils as ut
 
+
 # Helper functions
 def _check_n_classes_n_samples(X=None, labels=None):
     """Check matching X and labels"""
@@ -20,6 +21,7 @@ def _check_n_classes_n_samples(X=None, labels=None):
         raise ValueError(f"'n_features' should not be 0")
 
 
+# TODO replace scipy.spatial by sklaern.metric (pairwise, see ChatGPT)
 # Adjusted Area Under the Curve (AUC*)
 def comp_auc_adjusted(X: ut.ArrayLike2D = None,
                       labels: ut.ArrayLike1D = None,

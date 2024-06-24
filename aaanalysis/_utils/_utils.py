@@ -8,3 +8,4 @@ def add_str(str_error=None, str_add=None):
     if str_add:
         str_error += "\n  " + str_add
     return str_error
+

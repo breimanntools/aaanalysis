@@ -317,6 +317,10 @@ class ShapExplainer:
         * :class:`sklearn.ensemble.ExtraTreesClassifier` for extra trees model.
         * :meth:`ShapExplainer.add_feat_impact` for details on feature impact and SHAP value-based feature importance.
 
+        Warnings
+        --------
+        * This class requires `SHAP`, which is automatically installed via `pip install aaanalysis[pro]`.
+
         Examples
         --------
         .. include:: examples/shap_explainer.rst

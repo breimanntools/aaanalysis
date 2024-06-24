@@ -10,6 +10,7 @@ from scipy.cluster.hierarchy import linkage, leaves_list
 import aaanalysis.utils as ut
 from ._utils_aaclust import _compute_medoids, _compute_centers
 
+
 # I Helper Functions
 # Computation helper functions
 def _get_mean_rank(data):

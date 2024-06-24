@@ -4,6 +4,7 @@ This is a script for the backend of the CPPPlot.update_seq_size() method.
 import matplotlib.pyplot as plt
 from ._utils_cpp_plot_positions import PlotPartPositions
 
+
 # I Helper functions
 def _get_sorted_x_tick_labels(ax=None):
     # Get all x-axis tick labels

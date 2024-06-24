@@ -16,14 +16,19 @@ from ._backend.seq_preproc.get_sliding_aa_window import get_sliding_aa_window
 
 
 # II Main Functions
-# TODO finish sequecnePreprocessor, test, docu
+# TODO finish SequencePreprocessor, test, docu
+# TODO manage aaanalysis[pro] (add info/warning in docu for every function/module whose dependencies are not installed)
+# TODO e.g., seq_filter, comp_seq_sim, SHAP ...
 class SequencePreprocessor:
     """
     This class provides methods for preprocessing protein sequences, including encoding and window extraction.
     """
 
     @staticmethod
-    def encode_one_hot(sequence: List[str], alphabet: str = "ARNDCEQGHILKMFPSTWYV", gap: str = "_") -> np.ndarray:
+    def encode_one_hot(sequence: List[str],
+                       alphabet: str = "ARNDCEQGHILKMFPSTWYV",
+                       gap: str = "_"
+                       ) -> np.ndarray:
         """
         One-hot encodes a list of protein sequences into a feature matrix.
 

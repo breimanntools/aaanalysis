@@ -19,7 +19,6 @@ LIST_CLEAVAGE_SITE_DATA = ["AA_CASPASE3", "AA_FURIN", "AA_MMP2"]
 
 
 # I Helper Functions
-# TODO add df_cat_pc explaining PCs using loadings (if loadings ready)
 # Check functions
 def check_name_of_dataset(name="Overview", folder_in=None):
     """Check if name of dataset is valid"""
@@ -37,9 +36,6 @@ def check_name_of_dataset(name="Overview", folder_in=None):
                          f"\n Domain datasets: {list_dom}")
 
 
-
-
-
 def check_min_max_val(min_len=None, max_len=None):
     """Check if min_val and max_val are valid and match"""
     ut.check_number_range(name="min_len", val=min_len, min_val=1, accept_none=True, just_int=True)
@@ -48,13 +44,6 @@ def check_min_max_val(min_len=None, max_len=None):
         return
     if isinstance(min_len, int) and isinstance(max_len, int) and min_len > max_len:
         raise ValueError(f"'min_len' ({min_len}) should not be smaller than 'max_len' ({max_len})")
-
-
-def check_non_canonical_aa(non_canonical_aa="remove"):
-    """Check if non_canonical_aa is valid"""
-    if non_canonical_aa not in LIST_NON_CANONICAL_OPTIONS:
-        raise ValueError(f"'non_canonical_aa' ({non_canonical_aa}) should be on of following:"
-                         f" {LIST_NON_CANONICAL_OPTIONS }")
 
 
 def check_aa_window_size(aa_window_size=None, is_cs_dataset=False):
@@ -216,7 +205,8 @@ def load_dataset(name: str = "Overview",
     # Check input
     check_name_of_dataset(name=name, folder_in=FOLDER_BENCHMARKS)
     ut.check_number_range(name="n", val=n, min_val=1, accept_none=True, just_int=True)
-    check_non_canonical_aa(non_canonical_aa=non_canonical_aa)
+    ut.check_str_options(name="non_canonical_aa", val=non_canonical_aa,
+                         list_str_options=LIST_NON_CANONICAL_OPTIONS)
     check_min_max_val(min_len=min_len, max_len=max_len)
     is_cs_dataset = _is_cleavage_site_dataset(name=name)
     check_aa_window_size(aa_window_size=aa_window_size, is_cs_dataset=is_cs_dataset)
@@ -259,4 +249,3 @@ def load_dataset(name: str = "Overview",
     df_seq = df_seq.reset_index(drop=True)
     df_seq[ut.COL_LABEL] = df_seq[ut.COL_LABEL].astype(int)
     return df_seq.copy()
-

@@ -1,6 +1,4 @@
-"""
-This is the backend of the fasta reader function
-"""
+"""This is a script for the for backend of the fasta reader function"""
 import pandas as pd
 
 

@@ -60,26 +60,6 @@ def check_figsize(figsize=None, accept_none=False, str_add=None):
     check_type.check_number_range(name="figsize:height", val=figsize[1], **args)
 
 
-def check_grid_axis(grid_axis="y", accept_none=True, str_add=None):
-    if accept_none and grid_axis is None:
-        return None # Skip test
-    list_grid_axis = ["y", "x", "both"]
-    if grid_axis not in list_grid_axis:
-        str_error = add_str(str_error=f"'grid_axis' ({grid_axis}) should be one of following: {list_grid_axis}",
-                            str_add=str_add)
-        raise ValueError(str_error)
-
-
-def check_font_weight(name="font_weight", font_weight=None, accept_none=False, str_add=None):
-    if accept_none and font_weight is None:
-        return None # Skip test
-    list_weight = ["normal", "bold"]
-    if font_weight not in list_weight:
-        str_error = add_str(str_error=f"'{name}' ({font_weight}) should be one of following: {list_weight}",
-                            str_add=str_add)
-        raise ValueError(str_error)
-
-
 def check_fontsize_args(**kwargs):
     """Check fontsize parameters"""
     args_fs = {}

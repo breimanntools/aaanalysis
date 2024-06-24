@@ -114,7 +114,7 @@ def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, fe
             raise ValueError(f"'{ut.COL_FEAT_IMPORT_STD}' already in 'df_feat' columns. To override, set 'drop=True'.")
 
 
-
+# TODO splite from shap explainer to be installed via aanalysis (not aaanalysis[pro])
 # II Main Functions
 class TreeModel:
     """
@@ -141,7 +141,7 @@ class TreeModel:
         Same order as ``feature_importance``.
     """
     def __init__(self,
-                 list_model_classes : List[Type[Union[ClassifierMixin, BaseEstimator]]] = None,
+                 list_model_classes: List[Type[Union[ClassifierMixin, BaseEstimator]]] = None,
                  list_model_kwargs: Optional[List[Dict]] = None,
                  is_preselected: Optional[ut.ArrayLike1D] = None,
                  verbose: bool = True,
@@ -171,6 +171,11 @@ class TreeModel:
         --------
         * :class:`sklearn.ensemble.RandomForestClassifier` for random forest model.
         * :class:`sklearn.ensemble.ExtraTreesClassifier` for extra trees model.
+
+        Warnings
+        --------
+        * This class belongs to the explainable AI module requiring `SHAP`,
+          which is automatically installed via `pip install aaanalysis[pro]`.
 
         Examples
         --------
@@ -220,7 +225,7 @@ class TreeModel:
             n_feat_min: int = 25,
             n_feat_max: int = 75,
             metric: str = "accuracy",
-            step : Optional[int] = None,
+            step: Optional[int] = None,
             ) -> "TreeModel":
         """
         Fit tree-based models and compute average feature importance [Breimann24c]_.

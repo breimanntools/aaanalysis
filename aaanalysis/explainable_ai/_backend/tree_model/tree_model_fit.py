@@ -5,6 +5,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 import aaanalysis.utils as ut
 
+
 # II Main methods
 # 1. Step: Recursive feature elimination (RFE)
 def _recursive_feature_elimination(X, labels=None, step=None, n_feat_max=50, n_feat_min=25, n_cv=5, scoring="f1",

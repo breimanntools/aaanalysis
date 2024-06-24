@@ -100,7 +100,8 @@ def plot_settings(font_scale: Union[int, float] = 1,
     # Check input
     ut.check_number_range(name="font_scale", val=font_scale, min_val=0, just_int=False)
     check_font(font=font)
-    ut.check_grid_axis(grid_axis=grid_axis)
+    ut.check_str_options(name="grid_axis", val=grid_axis,
+                         list_str_options=["y", "x", "both"])
     args_bool = {"weight_bold": weight_bold, "adjust_only_font": adjust_only_font,
                  "adjust_further_elements": adjust_further_elements, "grid": grid,
                  "short_ticks": short_ticks, "short_ticks_x": short_ticks_x, "short_ticks_y": short_ticks_y,

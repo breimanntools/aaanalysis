@@ -12,12 +12,14 @@ import aaanalysis.utils as ut
 
 from ._backend.check_feature import check_df_scales
 
+
 # I Helper Functions
 def check_value_type(value_type=None):
     """Check if value type is valid"""
     list_value_type = ["min", "mean", "median", "max"]
     if value_type not in list_value_type:
         raise ValueError(f"'value_type' ('{value_type}') should be on of following: {list_value_type}")
+
 
 def check_match_df_scales_letter_new(df_scales=None, letter_new=None):
     """Check if new letter not already in df_scales"""
@@ -26,9 +28,7 @@ def check_match_df_scales_letter_new(df_scales=None, letter_new=None):
         raise ValueError(f"Letter '{letter_new}' already exists in alphabet of 'df_scales': {alphabet}")
 
 
-# TODO add corr filtering
-
-
+# TODO add corr filtering, scale_coverage ...
 # II Main Functions
 class NumericalFeature:
     """
@@ -47,9 +47,9 @@ class NumericalFeature:
     """
 
     @staticmethod
-    def extend_alphabet(df_scales : pd.DataFrame = None,
-                        new_letter : str = None,
-                        value_type : Literal["min", "mean", "median", "max"] = "mean",
+    def extend_alphabet(df_scales: pd.DataFrame = None,
+                        new_letter: str = None,
+                        value_type: Literal["min", "mean", "median", "max"] = "mean",
                         ) -> pd.DataFrame:
         """
         Extend amino acid alphabet of ``df_scales`` by new letter.

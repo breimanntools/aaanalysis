@@ -100,7 +100,7 @@ def check_match_df_seq_names_to_show(df_seq=None, names_to_show=None):
 def check_cmap_for_heatmap(cmap=None):
     """Check if cmap is valid or 'SHAP'"""
     if cmap in [ut.STR_CMAP_SHAP, ut.STR_CMAP_CPP]:
-        return None # Skip test
+        return None     # Skip test
     ut.check_cmap(name="cmap", val=cmap, accept_none=True)
 
 
@@ -129,14 +129,6 @@ def check_col_imp(col_imp=None, shap_plot=False):
         if ut.COL_FEAT_IMPACT not in col_imp:
             raise ValueError(f"If 'shap_plot=True', 'col_imp' ('{col_imp}') must follow '{ut.COL_FEAT_IMPACT}_'name''")
     return col_imp
-
-
-def check_col_cat(col_cat=None):
-    """Check if col_cat is valid"""
-    list_valid_col_cat = [ut.COL_CAT, ut.COL_SUBCAT, ut.COL_SCALE_NAME]
-    ut.check_str(name="col_cat", val=col_cat, str_add=f"Should be one of the following: {list_valid_col_cat}")
-    if col_cat not in list_valid_col_cat:
-        raise ValueError(f"'col_cat' ({col_cat}) should be one of the following: {list_valid_col_cat}")
 
 
 def check_col_val(col_val=None, shap_plot=False, sample_mean_dif=False):
@@ -851,7 +843,8 @@ class CPPPlot:
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
         args_fs = ut.check_fontsize_args(seq_size=seq_size,
                                          fontsize_tmd_jmd=fontsize_tmd_jmd)
-        ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd)
+        ut.check_str_options(name="weight_tmd_jmd", val=weight_tmd_jmd,
+                             list_str_options=["normal", "bold"])
         ut.check_bool(name="add_xticks_pos", val=add_xticks_pos)
         ut.check_bool(name="highlight_tmd_area", val=highlight_tmd_area)
         ut.check_number_range(name="tmd_area_alpha", val=highlight_alpha, min_val=0, max_val=1, just_int=False)
@@ -866,7 +859,8 @@ class CPPPlot:
         dict_color = check_match_dict_color_df(dict_color=dict_color, df=df_feat)
         ut.check_number_range(name="bar_width", val=bar_width, min_val=0, just_int=False)
         ut.check_color(name="edge_color", val=edge_color, accept_none=True)
-        ut.check_grid_axis(grid_axis=grid_axis)
+        ut.check_str_options(name="grid_axis", val=grid_axis, accept_none=True,
+                             list_str_options=["y", "x", "both"])
         ut.check_lim(name="ylim", val=ylim, accept_none=True)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         args_ytick = check_args_ytick(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
@@ -1066,7 +1060,8 @@ class CPPPlot:
         """
         # Check primary input
         ut.check_bool(name="shap_plot", val=shap_plot)
-        check_col_cat(col_cat=col_cat)
+        ut.check_str_options(name="col_cat", val=col_cat,
+                             list_str_options=[ut.COL_CAT, ut.COL_SUBCAT, ut.COL_SCALE_NAME])
         col_val = check_col_val(col_val=col_val, shap_plot=shap_plot)
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot,
                                    cols_requiered=col_val, cols_nan_check=col_val)
@@ -1086,7 +1081,8 @@ class CPPPlot:
         args_fs = ut.check_fontsize_args(seq_size=seq_size,
                                          fontsize_tmd_jmd=fontsize_tmd_jmd,
                                          fontsize_labels=fontsize_labels)
-        ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd)
+        ut.check_str_options(name="weight_tmd_jmd", val=weight_tmd_jmd,
+                             list_str_options=["normal", "bold"])
         ut.check_bool(name="add_xticks_pos", val=add_xticks_pos)
         check_match_features_seq_parts(features=df_feat[ut.COL_FEATURE],
                                        tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
@@ -1318,7 +1314,8 @@ class CPPPlot:
         .. include:: examples/cpp_plot_feature_map.rst
         """
         # Check primary input
-        check_col_cat(col_cat=col_cat)
+        ut.check_str_options(name="col_cat", val=col_cat,
+                             list_str_options=[ut.COL_CAT, ut.COL_SUBCAT, ut.COL_SCALE_NAME])
         col_val = check_col_val(col_val=col_val, sample_mean_dif=True)
         col_imp = check_col_imp(col_imp=col_imp)
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat,
@@ -1344,7 +1341,8 @@ class CPPPlot:
                                          fontsize_labels=fontsize_labels,
                                          fontsize_annotations=fontsize_annotations,
                                          fontsize_imp_bar=fontsize_imp_bar)
-        ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd)
+        ut.check_str_options(name="weight_tmd_jmd", val=weight_tmd_jmd,
+                             list_str_options=["normal", "bold"])
         ut.check_bool(name="add_xticks_pos", val=add_xticks_pos)
         check_match_features_seq_parts(features=df_feat[ut.COL_FEATURE],
                                        tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
@@ -1468,7 +1466,8 @@ class CPPPlot:
         ut.check_fig(fig=fig, accept_none=True)
         ut.check_number_range(name="max_x_dist", val=max_x_dist, min_val=0, just_int=False)
         ut.check_number_range(name="fontsize_tmd_jmd", val=fontsize_tmd_jmd, min_val=0, accept_none=True, just_int=False)
-        ut.check_font_weight(name="weight_tmd_jmd", font_weight=weight_tmd_jmd)
+        ut.check_str_options(name="weight_tmd_jmd", val=weight_tmd_jmd,
+                             list_str_options=["normal", "bold"])
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
         jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)

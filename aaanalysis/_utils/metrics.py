@@ -7,6 +7,7 @@ from scipy.stats import entropy, gaussian_kde
 from collections import OrderedDict
 from scipy.spatial import distance
 
+
 # TODO check if simplify or relax dependencies
 # AUC adjusted
 def auc_adjusted_(X=None, labels=None, label_test=1):
