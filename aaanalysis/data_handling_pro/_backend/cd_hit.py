@@ -2,8 +2,7 @@
 import pandas as pd
 import os
 
-from ._utils import make_temp_dir, remove_temp, run_command
-from .parse_fasta import save_entries_to_fasta
+from ._utils import make_temp_dir, remove_temp, run_command, save_entries_to_fasta
 
 from aaanalysis import utils as ut
 

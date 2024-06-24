@@ -8,6 +8,7 @@ from hypothesis import given, settings, strategies as st
 import hypothesis.extra.numpy as npst
 
 # Set default deadline from 200 to 400
+aa.options["verbose"] = False
 settings.register_profile("ci", deadline=400)
 settings.load_profile("ci")
 

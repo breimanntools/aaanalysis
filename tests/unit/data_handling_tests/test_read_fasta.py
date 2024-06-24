@@ -139,5 +139,3 @@ class TestReadFastaComplex:
         creat_mock_file()
         with pytest.raises(ValueError):
             aa.read_fasta(file_path=FILE_IN, col_id=col_id, col_seq=col_seq, sep=sep)
-
-

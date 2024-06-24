@@ -2,7 +2,7 @@
 import os
 import shutil
 import subprocess
-
+import pandas as pd
 from aaanalysis import utils as ut
 
 
@@ -41,3 +41,15 @@ def run_command(cmd=None, verbose=False, temp_dir=None):
             ut.print_out(out.decode('utf-8'))
     except Exception as e:
         remove_temp(path=temp_dir)
+
+
+def save_entries_to_fasta(df_seq=None, file_path=None, col_id="entry", col_seq="sequence",
+                          sep="|", col_db=None, cols_info=None):
+    """Write sequence DataFrame to a FASTA file."""
+    with open(file_path, 'w') as fasta:
+        for _, row in df_seq.iterrows():
+            header_parts = [str(row.get(col)) for col in [col_db, col_id] + (cols_info if cols_info is not None else []) if
+                            col in row and pd.notna(row[col])]
+            header = sep.join(header_parts)
+            sequence = row[col_seq]
+            fasta.write(f">{header}\n{sequence}\n")

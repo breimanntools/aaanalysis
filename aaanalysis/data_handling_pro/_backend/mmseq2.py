@@ -1,12 +1,10 @@
 """This is a script for the backend of the MMseqs2 method for the filtering_seq function."""
 import os
-
 import pandas as pd
 
 from aaanalysis import utils as ut
-from .parse_fasta import save_entries_to_fasta
-from .comp_seq_sim import comp_seq_sim
-from ._utils import make_temp_dir, remove_temp, run_command
+from .comp_seq_sim import comp_seq_sim_
+from ._utils import make_temp_dir, remove_temp, run_command, save_entries_to_fasta
 
 
 COL_QUERY = "query"     # ID of cluster representative
@@ -49,7 +47,7 @@ def _get_df_clust_mmseq(df_mmseq=None, df_seq=None, sort_clusters=False):
         entry_query = df_mmseq[df_mmseq[COL_TARGET] == entry_target][COL_QUERY].values[0]
         cluster_id = dict_clust[entry_query]
         if entry_target != entry_query:
-            identity = comp_seq_sim(dict_id_seq[entry_target], dict_id_seq[entry_query])
+            identity = comp_seq_sim_(dict_id_seq[entry_target], dict_id_seq[entry_query])
             is_rep = 0
         else:
             identity = 100.0

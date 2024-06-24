@@ -7,7 +7,7 @@ import shap
 
 import aaanalysis as aa
 
-aa.options["verbose"] = "off"
+aa.options["verbose"] = False
 
 ARGS = dict(explainer_class=shap.TreeExplainer)
 

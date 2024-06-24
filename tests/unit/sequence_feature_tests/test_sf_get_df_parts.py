@@ -112,7 +112,6 @@ class TestGetDfParts:
             assert isinstance(sf.get_df_parts(df_seq=df_seq, all_parts=True, jmd_n_len=0, jmd_c_len=10), pd.DataFrame)
             assert isinstance(sf.get_df_parts(df_seq=df_seq, all_parts=True, jmd_n_len=5, jmd_c_len=0), pd.DataFrame)
 
-
     def test_valid_remove_entries_with_gaps(self):
         """Test a valid 'all_parts' parameter."""
         sf = aa.SequenceFeature()

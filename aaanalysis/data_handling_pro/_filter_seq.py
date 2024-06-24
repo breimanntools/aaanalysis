@@ -92,7 +92,7 @@ def filter_seq(df_seq: pd.DataFrame = None,
 
     Returns
     -------
-    Optional[pd.DataFrame]
+    df_clust : pd.DataFrame, optional
         A DataFrame with clustering results if 'file_output' is not specified, otherwise None.
 
     Notes
@@ -123,9 +123,14 @@ def filter_seq(df_seq: pd.DataFrame = None,
     * Comparison of CD-Hit and MMseqs2 parameters under
       `Frequently Asked Questions <https://github.com/soedinglab/mmseqs2/wiki#how-do-parameters-of-cd-hit-relate-to-mmseqs2>`_.
 
+    Warnings
+    --------
+    * CD-Hit and MMseq2 must be installed separately.
+    * This function requires `biopython`, which is automatically installed via `pip install aaanalysis[pro]`.
+
     Examples
     --------
-
+    .. include:: examples/filter_seq.rst
     """
     # Check input
     ut.check_df(name="df_seq", df=df_seq,
@@ -153,7 +158,7 @@ def filter_seq(df_seq: pd.DataFrame = None,
                 coverage_long=coverage_long, coverage_short=coverage_short,
                 n_jobs=n_jobs, sort_clusters=sort_clusters, verbose=verbose)
     if method == "cd-hit":
-        df = run_cd_hit(df_seq=df_seq, global_identity=global_identity, **args)
+        df_clust = run_cd_hit(df_seq=df_seq, global_identity=global_identity, **args)
     else:
-        df = run_mmseqs2(df_seq=df_seq, **args)
-    return df
+        df_clust = run_mmseqs2(df_seq=df_seq, **args)
+    return df_clust
