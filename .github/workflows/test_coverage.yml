@@ -26,6 +26,12 @@ jobs:
         pip install -r requirements.txt
         pip install pytest pytest-cov
 
+    - name: Install cd-hit and mmseqs2
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cd-hit
+        sudo apt-get install -y mmseqs2
+
     - name: Run tests with coverage and generate XML report
       run: |
         pytest --cov=./ --cov-report=xml

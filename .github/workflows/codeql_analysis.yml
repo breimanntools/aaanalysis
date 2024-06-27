@@ -47,6 +47,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 mypy pylint
 
+    - name: Install cd-hit and mmseqs2
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cd-hit
+        sudo apt-get install -y mmseqs2
+
     - name: Run flake8 (check style)
       run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
