@@ -50,9 +50,9 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y mmseqs2
 
- - name: Install cd-hit (Windows)
-      if: runner.os == 'Windows'
-      run: |
+    -  name: Install cd-hit (Windows)
+       if: runner.os == 'Windows'
+       run: |
         curl -L -o cd-hit.tar.gz https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.tar.gz
         New-Item -ItemType Directory -Force -Path $Env:USERPROFILE\cdhit
         tar -xzf cd-hit.tar.gz -C $Env:USERPROFILE\cdhit
