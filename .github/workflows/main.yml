@@ -69,8 +69,6 @@ jobs:
         New-Item -ItemType Directory -Force -Path $Env:USERPROFILE\cdhit
         tar -xzf cd-hit.tar.gz -C $Env:USERPROFILE\cdhit
         echo "$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin" >> $Env:GITHUB_PATH
-        echo "cd-hit directory contents:"
-        dir $Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin
 
     - name: Install mmseqs2 (Windows)
       if: runner.os == 'Windows'
@@ -79,8 +77,6 @@ jobs:
         New-Item -ItemType Directory -Force -Path $Env:USERPROFILE\mmseqs
         Expand-Archive -Path mmseqs2.zip -DestinationPath $Env:USERPROFILE\mmseqs
         echo "$Env:USERPROFILE\mmseqs\mmseqs-win64" >> $Env:GITHUB_PATH
-        echo "mmseqs2 directory contents:"
-        dir $Env:USERPROFILE\mmseqs\mmseqs-win64
 
     - name: Print PATH
       run: echo $PATH
