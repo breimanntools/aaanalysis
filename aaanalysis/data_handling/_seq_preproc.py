@@ -25,28 +25,39 @@ class SequencePreprocessor:
     """
 
     @staticmethod
-    def encode_one_hot(sequence: List[str],
+    def encode_one_hot(list_seq: Union[List[str], str] = None,
                        alphabet: str = "ARNDCEQGHILKMFPSTWYV",
-                       gap: str = "_"
+                       gap: str = "_",
+                       pad_at: Literal["C", "N"] = "C",
                        ) -> np.ndarray:
         """
-        One-hot encodes a list of protein sequences into a feature matrix.
+        One-hot-encode a list of protein sequences into a feature matrix.
+
+        Padding of shorter sequences with gaps represented as zero vectors.
 
         Parameters
         ----------
-        sequence : List[str]
+        list_seq : list of str or str
             List of protein sequences to encode.
         alphabet : str, default='ARNDCEQGHILKMFPSTWYV'
             The alphabet of amino acids used for encoding.
         gap : str, default='_'
             The character used to represent gaps in sequences.
+        pad_at : str, default='C'
+            Specifies where to add the padding:
+            'N' for N-terminus (beginning of the sequence),
+            'C' for C-terminus (end of the sequence).
 
         Returns
         -------
         np.ndarray
             A numpy array where each row represents an encoded sequence.
         """
-        return encode_one_hot(sequence, alphabet, gap)
+        # Check input
+        list_str = ut.check_list_like(name="list_seq", val=list_seq, check_all_str_or_convertible=True,
+                                      accept_none=False, accept_str=True)
+        #
+        return encode_one_hot(list_seq, alphabet, gap)
 
     @staticmethod
     def encode_integer(list_seq: List[str], alphabet: str = "ARNDCEQGHILKMFPSTWYV", gap: str = "_", pad_at: Literal["C", "N"] = "C") -> np.ndarray:

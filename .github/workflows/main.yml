@@ -54,9 +54,9 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         curl -L -o cd-hit.tar.gz https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.tar.gz
-        mkdir $Env:USERPROFILE\cdhit
+        New-Item -ItemType Directory -Force -Path $Env:USERPROFILE\cdhit
         tar -xzf cd-hit.tar.gz -C $Env:USERPROFILE\cdhit
-        echo "$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin" | Out-File -FilePath $Env:GITHUB_PATH -Append
+        echo "$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin" >> $Env:GITHUB_PATH
 
     - name: Install mmseqs2 (Windows)
       if: runner.os == 'Windows'
@@ -64,7 +64,13 @@ jobs:
         curl -L -o mmseqs2.zip https://mmseqs.com/latest/mmseqs-win64.zip
         New-Item -ItemType Directory -Force -Path $Env:USERPROFILE\mmseqs
         Expand-Archive -Path mmseqs2.zip -DestinationPath $Env:USERPROFILE\mmseqs
-        echo "$Env:USERPROFILE\mmseqs\mmseqs-win64" | Out-File -FilePath $Env:GITHUB_PATH -Append
+        echo "$Env:USERPROFILE\mmseqs\mmseqs-win64" >> $Env:GITHUB_PATH
+
+    - name: Update PATH
+      if: runner.os == 'Windows'
+      run: |
+        $env:Path += ";$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin;$Env:USERPROFILE\mmseqs\mmseqs-win64"
+        [System.Environment]::SetEnvironmentVariable('PATH', $env:Path, [System.EnvironmentVariableTarget]::Process)
 
     - name: Run Tests
       run: pytest tests
