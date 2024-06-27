@@ -51,7 +51,7 @@ jobs:
         sudo apt-get install -y mmseqs2
 
     - name: Install cd-hit (Windows)
-      if: runner.os == 'Windows'
+      if: matrix.os == 'windows-latest'
       shell: pwsh
       run: |
         curl -L -o cd-hit.tar.gz https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.tar.gz
@@ -60,13 +60,12 @@ jobs:
         tar -xzf cd-hit.tar.gz -C $cdhitDir
         $cdhitBinPath = "$cdhitDir\cd-hit-v4.8.1-2019-0228\bin"
         Write-Host "cd-hit binary path: $cdhitBinPath"
-        echo "$cdhitBinPath" | Out-File -Append -FilePath $Env:GITHUB_PATH
-        [Environment]::SetEnvironmentVariable("PATH", "$Env:PATH;$cdhitBinPath", "Process")
+        [Environment]::SetEnvironmentVariable("PATH", "$Env:PATH;$cdhitBinPath", [System.EnvironmentVariableTarget]::Machine)
         Write-Host "Contents of cd-hit bin directory:"
         Get-ChildItem $cdhitBinPath
 
     - name: Install mmseqs2 (Windows)
-      if: runner.os == 'Windows'
+      if: matrix.os == 'windows-latest'
       shell: pwsh
       run: |
         curl -L -o mmseqs2.zip https://mmseqs.com/latest/mmseqs-win64.zip
@@ -75,13 +74,12 @@ jobs:
         Expand-Archive -Path mmseqs2.zip -DestinationPath $mmseqsDir
         $mmseqsBinPath = "$mmseqsDir\mmseqs-win64"
         Write-Host "mmseqs2 binary path: $mmseqsBinPath"
-        echo "$mmseqsBinPath" | Out-File -Append -FilePath $Env:GITHUB_PATH
-        [Environment]::SetEnvironmentVariable("PATH", "$Env:PATH;$mmseqsBinPath", "Process")
+        [Environment]::SetEnvironmentVariable("PATH", "$Env:PATH;$mmseqsBinPath", [System.EnvironmentVariableTarget]::Machine)
         Write-Host "Contents of mmseqs2 directory:"
         Get-ChildItem $mmseqsBinPath
 
     - name: Verify mmseqs2 installation
-      if: runner.os == 'Windows'
+      if: matrix.os == 'windows-latest'
       shell: pwsh
       run: |
         $mmseqsBinPath = "$Env:USERPROFILE\mmseqs\mmseqs-win64"
@@ -93,10 +91,9 @@ jobs:
         } else {
           Write-Host "mmseqs found in PATH"
           mmseqs --version
-        }
 
     - name: Verify cd-hit installation
-      if: runner.os == 'Windows'
+      if: matrix.os == 'windows-latest'
       shell: pwsh
       run: |
         $cdhitBinPath = "$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin"
@@ -108,7 +105,6 @@ jobs:
         } else {
           Write-Host "cd-hit found in PATH"
           cd-hit --version
-        }
 
     - name: Run Tests
       run: pytest tests
