@@ -67,22 +67,30 @@ jobs:
       shell: pwsh
       run: |
         curl -L -o cd-hit.tar.gz https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.tar.gz
-        New-Item -ItemType Directory -Force -Path $Env:USERPROFILE\cdhit
-        tar -xzf cd-hit.tar.gz -C $Env:USERPROFILE\cdhit
-        $cdhitBinPath = "$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin"
+        $cdhitDir = "$Env:USERPROFILE\cdhit"
+        New-Item -ItemType Directory -Force -Path $cdhitDir
+        tar -xzf cd-hit.tar.gz -C $cdhitDir
+        $cdhitBinPath = "$cdhitDir\cd-hit-v4.8.1-2019-0228\bin"
+        Write-Host "cd-hit binary path: $cdhitBinPath"
         echo "$cdhitBinPath" | Out-File -Append -FilePath $Env:GITHUB_PATH
         [Environment]::SetEnvironmentVariable("PATH", "$Env:PATH;$cdhitBinPath", "Process")
+        Write-Host "Contents of cd-hit directory:"
+        Get-ChildItem $cdhitDir
 
     - name: Install mmseqs2 (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
         curl -L -o mmseqs2.zip https://mmseqs.com/latest/mmseqs-win64.zip
-        New-Item -ItemType Directory -Force -Path $Env:USERPROFILE\mmseqs
-        Expand-Archive -Path mmseqs2.zip -DestinationPath $Env:USERPROFILE\mmseqs
-        $mmseqsBinPath = "$Env:USERPROFILE\mmseqs\mmseqs-win64"
+        $mmseqsDir = "$Env:USERPROFILE\mmseqs"
+        New-Item -ItemType Directory -Force -Path $mmseqsDir
+        Expand-Archive -Path mmseqs2.zip -DestinationPath $mmseqsDir
+        $mmseqsBinPath = "$mmseqsDir\mmseqs-win64"
+        Write-Host "mmseqs2 binary path: $mmseqsBinPath"
         echo "$mmseqsBinPath" | Out-File -Append -FilePath $Env:GITHUB_PATH
         [Environment]::SetEnvironmentVariable("PATH", "$Env:PATH;$mmseqsBinPath", "Process")
+        Write-Host "Contents of mmseqs directory:"
+        Get-ChildItem $mmseqsDir
 
     - name: Verify cd-hit installation
       if: runner.os == 'Windows'
@@ -110,7 +118,6 @@ jobs:
         } else {
           Write-Host "mmseqs found in PATH"
           mmseqs --version
-        }
 
     - name: Run Tests
       run: pytest tests
