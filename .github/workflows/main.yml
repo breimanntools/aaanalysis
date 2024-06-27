@@ -56,7 +56,7 @@ jobs:
         curl -L -o cd-hit.tar.gz https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.tar.gz
         mkdir $Env:USERPROFILE\cdhit
         tar -xzf cd-hit.tar.gz -C $Env:USERPROFILE\cdhit
-        $Env:Path += ";$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin"
+        echo "$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin" | Out-File -FilePath $Env:GITHUB_PATH -Append
 
     - name: Install mmseqs2 (Windows)
       if: runner.os == 'Windows'
@@ -64,7 +64,7 @@ jobs:
         curl -L -o mmseqs2.zip https://mmseqs.com/latest/mmseqs-win64.zip
         New-Item -ItemType Directory -Force -Path $Env:USERPROFILE\mmseqs
         Expand-Archive -Path mmseqs2.zip -DestinationPath $Env:USERPROFILE\mmseqs
-        $Env:Path += ";$Env:USERPROFILE\mmseqs\mmseqs-win64"
+        echo "$Env:USERPROFILE\mmseqs\mmseqs-win64" | Out-File -FilePath $Env:GITHUB_PATH -Append
 
     - name: Run Tests
       run: pytest tests
