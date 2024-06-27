@@ -62,13 +62,29 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y cd-hit mmseqs2
 
-    - name: Install cd-hit (Windows)
-      if: runner.os == 'Windows'
+    - name: Install cd-hit
+      shell: pwsh
       run: |
         curl -L -o cd-hit.tar.gz https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.tar.gz
         New-Item -ItemType Directory -Force -Path $Env:USERPROFILE\cdhit
         tar -xzf cd-hit.tar.gz -C $Env:USERPROFILE\cdhit
-        echo "$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin" >> $Env:GITHUB_PATH
+        $cdhitBinPath = "$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin"
+        Write-Host "cd-hit binary path: $cdhitBinPath"
+        echo "$cdhitBinPath" | Out-File -Append -FilePath $Env:GITHUB_PATH
+        [Environment]::SetEnvironmentVariable("PATH", "$Env:PATH;$cdhitBinPath", "Process")
+
+    - name: Verify cd-hit installation
+      shell: pwsh
+      run: |
+        $cdhitBinPath = "$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin"
+        $env:Path += ";$cdhitBinPath"
+        Write-Host "Updated PATH: $env:Path"
+        if (-Not (Get-Command cd-hit -ErrorAction SilentlyContinue)) {
+          Write-Error "cd-hit not found in PATH"
+        } else {
+          Write-Host "cd-hit found in PATH"
+          cd-hit --version
+        }
 
     - name: Install mmseqs2 (Windows)
       if: runner.os == 'Windows'
