@@ -1,10 +1,11 @@
-"""This is a script to test the filter_seq() function."""
+"""This is a script to test the filter_seq() function.
+Will only be tested for Linux since CD-HIT not installable on windows"""
 import pandas as pd
 from hypothesis import given, settings
 import hypothesis.strategies as st
 import aaanalysis as aa
 import pytest
-import random
+import platform
 
 aa.options["verbose"] = False
 
@@ -12,8 +13,11 @@ aa.options["verbose"] = False
 settings.register_profile("ci", deadline=20000)
 settings.load_profile("ci")
 
+is_windows = platform.system() == "Windows"
+
 
 # Normal Cases
+@pytest.mark.skipif(is_windows, reason="Skipping tests on Windows")
 class TestFilterSeq:
     """Test filter_seq function."""
 
@@ -157,8 +161,8 @@ class TestFilterSeq:
             with pytest.raises(ValueError):
                 aa.filter_seq(df_seq=df_seq, sort_clusters=sort_cluster, method="mmseqs")
 
-
 # Complex Cases
+@pytest.mark.skipif(is_windows, reason="Skipping tests on Windows")
 class TestFilterSeqComplex:
     """Test filter_seq function for complex cases."""
 
