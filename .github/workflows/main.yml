@@ -62,18 +62,30 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y cd-hit mmseqs2
 
-    - name: Install cd-hit
+    - name: Install cd-hit (Windows)
+      if: runner.os == 'Windows'
       shell: pwsh
       run: |
         curl -L -o cd-hit.tar.gz https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.tar.gz
         New-Item -ItemType Directory -Force -Path $Env:USERPROFILE\cdhit
         tar -xzf cd-hit.tar.gz -C $Env:USERPROFILE\cdhit
         $cdhitBinPath = "$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin"
-        Write-Host "cd-hit binary path: $cdhitBinPath"
         echo "$cdhitBinPath" | Out-File -Append -FilePath $Env:GITHUB_PATH
         [Environment]::SetEnvironmentVariable("PATH", "$Env:PATH;$cdhitBinPath", "Process")
 
+    - name: Install mmseqs2 (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        curl -L -o mmseqs2.zip https://mmseqs.com/latest/mmseqs-win64.zip
+        New-Item -ItemType Directory -Force -Path $Env:USERPROFILE\mmseqs
+        Expand-Archive -Path mmseqs2.zip -DestinationPath $Env:USERPROFILE\mmseqs
+        $mmseqsBinPath = "$Env:USERPROFILE\mmseqs\mmseqs-win64"
+        echo "$mmseqsBinPath" | Out-File -Append -FilePath $Env:GITHUB_PATH
+        [Environment]::SetEnvironmentVariable("PATH", "$Env:PATH;$mmseqsBinPath", "Process")
+
     - name: Verify cd-hit installation
+      if: runner.os == 'Windows'
       shell: pwsh
       run: |
         $cdhitBinPath = "$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin"
@@ -86,26 +98,19 @@ jobs:
           cd-hit --version
         }
 
-    - name: Install mmseqs2 (Windows)
+    - name: Verify mmseqs2 installation
       if: runner.os == 'Windows'
+      shell: pwsh
       run: |
-        curl -L -o mmseqs2.zip https://mmseqs.com/latest/mmseqs-win64.zip
-        New-Item -ItemType Directory -Force -Path $Env:USERPROFILE\mmseqs
-        Expand-Archive -Path mmseqs2.zip -DestinationPath $Env:USERPROFILE\mmseqs
-        echo "$Env:USERPROFILE\mmseqs\mmseqs-win64" >> $Env:GITHUB_PATH
-
-    - name: Print PATH
-      run: echo $PATH
-
-    - name: Check cd-hit Installation
-      run: |
-        echo "Checking cd-hit installation..."
-        which cd-hit || true
-
-    - name: Check mmseqs2 Installation
-      run: |
-        echo "Checking mmseqs2 installation..."
-        which mmseqs || true
+        $mmseqsBinPath = "$Env:USERPROFILE\mmseqs\mmseqs-win64"
+        $env:Path += ";$mmseqsBinPath"
+        Write-Host "Updated PATH: $env:Path"
+        if (-Not (Get-Command mmseqs -ErrorAction SilentlyContinue)) {
+          Write-Error "mmseqs not found in PATH"
+        } else {
+          Write-Host "mmseqs found in PATH"
+          mmseqs --version
+        }
 
     - name: Run Tests
       run: pytest tests
