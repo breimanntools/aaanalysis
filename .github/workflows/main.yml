@@ -63,6 +63,7 @@ jobs:
         sudo apt-get install -y cd-hit mmseqs2
 
     - name: Set up WSL and compile cd-hit
+      if: runner.os == 'Windows'
       shell: bash
       run: |
         sudo apt update
@@ -74,6 +75,7 @@ jobs:
         sudo cp cd-hit /usr/local/bin/
 
     - name: Install mmseqs2 (Windows)
+      if: runner.os == 'Windows'
       shell: pwsh
       run: |
         curl -L -o mmseqs2.zip https://mmseqs.com/latest/mmseqs-win64.zip
@@ -88,6 +90,7 @@ jobs:
         Get-ChildItem $mmseqsBinPath
 
     - name: Verify cd-hit installation (WSL)
+      if: runner.os == 'Windows'
       shell: bash
       run: |
         if ! command -v cd-hit &> /dev/null
@@ -98,6 +101,7 @@ jobs:
         cd-hit --version
 
     - name: Verify mmseqs2 installation
+      if: runner.os == 'Windows'
       shell: pwsh
       run: |
         $mmseqsBinPath = "$Env:USERPROFILE\mmseqs\mmseqs-win64"
@@ -110,7 +114,6 @@ jobs:
           Write-Host "mmseqs found in PATH"
           mmseqs --version
         }
-
 
     - name: Run Tests
       run: pytest tests
