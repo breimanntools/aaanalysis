@@ -1,5 +1,5 @@
 """
-This is a script for a wrapper function called filter_seq that provides an Python interface to the
+This is a script for a wrapper function called filter_seq that provides a Python interface to the
 redundancy-reduction algorithms CD-Hit and MMseqs2.
 """
 from typing import Optional, List, Literal
@@ -39,7 +39,7 @@ def filter_seq(df_seq: pd.DataFrame = None,
                verbose: bool = False
                ) -> pd.DataFrame:
     """
-    UNDER CONSTRUCTION: Redundancy reduction of sequences using clustering-based algorithms.
+    Redundancy reduction of sequences using clustering-based algorithms.
 
     This functions performs redundancy reduction of sequences by clustering and selecting representative sequences using
     the CD-HIT ([Li06]_) or MMseqs2 ([Steinegger17]_) algorithms locally. It allows for adjustable filtering strictness:
@@ -47,7 +47,7 @@ def filter_seq(df_seq: pd.DataFrame = None,
     * Strict filtering results in smaller, more homogeneous clusters, suitable when high sequence similarity is required.
     * Non-strict filtering creates larger, more diverse clusters, enhancing sequence representation.
 
-    CD-Hit and MMseq2 are standalone software tools, each requiring separate installation. CD-Hit is more
+    CD-HIT and MMseq2 are standalone software tools, each requiring separate installation. CD-Hit is more
     resource-efficient and easier to install, while MMseq2 is a larger multi-purpose tool. Pairwise sequence similarities
     for the MMseq2 clustering results were computed using the Biopython :class:`Bio.Align.PairwiseAligner` class.
 
@@ -64,7 +64,7 @@ def filter_seq(df_seq: pd.DataFrame = None,
     similarity_threshold : float, default=0.9
         Defines the minimum sequence identity [0.4-1.0] for clustering. Higher values increase strictness.
     word_size : int, optional
-        The size of the 'word' (in CD-Hit, [2-5]) or 'k-mer' (in MMseqs, [5-7]) used for the initial screening step in clustering.
+        The size of the 'word' (in CD-HIT, [2-5]) or 'k-mer' (in MMseqs, [5-7]) used for the initial screening step in clustering.
         Effect on strictness is dataset-dependent. If ``None``, optimized based on ``similarity_threshold`` (CD-Hit).
     global_identity : bool, default=True
         Whether to use global (True) or local (False) sequence identity for 'cd-hit' clustering. Global is stricter.
@@ -117,7 +117,8 @@ def filter_seq(df_seq: pd.DataFrame = None,
 
     Warnings
     --------
-    * CD-Hit and MMseq2 must be installed separately.
+    * CD-HIT and MMseq2 must be installed separately.
+    * CD-HIT is not available for Windows.
     * This function requires `biopython`, which is automatically installed via `pip install aaanalysis[pro]`.
 
     Examples

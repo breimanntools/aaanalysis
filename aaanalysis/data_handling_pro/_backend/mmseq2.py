@@ -1,4 +1,4 @@
-"""This is a script for the backend of the MMseqs2 method for the filtering_seq function."""
+"""This is a script for the backend of the MMseqs2 method for the filter_seq() function."""
 import os
 import pandas as pd
 

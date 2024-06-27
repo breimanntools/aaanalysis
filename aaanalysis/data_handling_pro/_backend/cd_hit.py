@@ -1,4 +1,4 @@
-"""This is a script for the backend of the cd-hit method for the filtering_seq function."""
+"""This is a script for the backend of the CH-HIT method for the filter_seq() function."""
 import pandas as pd
 import os
 
@@ -64,7 +64,7 @@ def run_cd_hit(df_seq=None,
     file_in = os.path.join(temp_dir, f"_{result_prefix}_in")
     save_entries_to_fasta(df_seq=df_seq, file_path=file_in)
     file_out = os.path.join(temp_dir, f"_{result_prefix}_out")
-    # Create CD-hit command
+    # Create CD-HIT command
     if word_size is None:
         word_size = _select_word_size(st=similarity_threshold)
     cmd = ["cd-hit", "-i", file_in,
@@ -87,9 +87,9 @@ def run_cd_hit(df_seq=None,
     if sort_clusters:
         cmd.extend(["-sc", "1"])
 
-    # Run CD-Hit command
+    # Run CD-HIT command
     if verbose:
-        ut.print_out("Run CD-Hit filtering")
+        ut.print_out("Run CD-HIT filtering")
     run_command(cmd=cmd, verbose=verbose, temp_dir=temp_dir)
 
     # Convert CD-Hit output to clustering DataFrame
@@ -98,6 +98,3 @@ def run_cd_hit(df_seq=None,
     # Remove temporary file
     remove_temp(path=temp_dir)
     return df_clust
-
-
-
