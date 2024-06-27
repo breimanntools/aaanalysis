@@ -65,7 +65,7 @@ def run_mmseqs2(df_seq=None, similarity_threshold=0.7, word_size=None,
     """Run MMseqs2 command to perform redundancy-reduction via clustering"""
     # Create temporary folder for input and temporary output
     result_prefix = "mmseq_"
-    temp_dir = make_temp_dir("_temp_mmseqs", remove_existing=True)
+    temp_dir = make_temp_dir(prefix=result_prefix)
     file_in = os.path.join(temp_dir, "_temp_mmseqs_in.fasta")
     save_entries_to_fasta(df_seq=df_seq, file_path=file_in)
     db_name = os.path.join(temp_dir, result_prefix + "DB")

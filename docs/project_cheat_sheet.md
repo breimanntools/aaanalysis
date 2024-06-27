@@ -106,8 +106,18 @@ Testing frameworks validate that your code works as intended.
 1. `pytest`: Run all tests.
 2. `pytest <file>`: Run specific tests.
 3. `pytest -k <test_name>`: Run specific test.
-4. `pytest --cov=<module>`: Generate coverage.
-5. `pytest --durations=0`: Show all tests sorted by duration.
+4. `pytest --durations=0`: Show all tests sorted by duration.
+5. `pytest -x`: Stop after the first failure.
+6. `pytest --maxfail=<num>`: Stop after the specified number of failures.
+7. `pytest --lf`: Run only the tests that failed at the last run.
+8. `pytest --ff`: Run the last failures first, then all tests.
+9. `pytest --cov`: Generate coverage report for the entire codebase.
+10. `pytest --cov=<module>`: Generate coverage.
+11. `pytest --cov-report=<type>`: Specify the type of coverage report (e.g., html, xml, term).
+12. `pytest -v`: Increase verbosity of the output.
+13. `pytest -q`: Decrease verbosity of the output.
+14. `pytest --tb=short`: Display a shorter traceback format.
+15. `pytest --disable-warnings`: Disable warnings display during test run
 
 ### unittest
 

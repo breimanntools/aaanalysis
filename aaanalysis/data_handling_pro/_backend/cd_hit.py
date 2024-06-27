@@ -59,11 +59,11 @@ def run_cd_hit(df_seq=None,
                n_jobs=None, sort_clusters=False, verbose=False):
     """Run CD-HIT command to perform redundancy-reduction via clustering"""
     # Create temporary folder for input and temporary output
-    temp_dir = make_temp_dir(dir_name="_temp_cd_hit", remove_existing=True)
-    file_in = os.path.join(temp_dir, "_temp_cd_hit_in.fasta")
+    result_prefix = "cdhit_"
+    temp_dir = make_temp_dir(prefix=result_prefix)
+    file_in = os.path.join(temp_dir, f"_{result_prefix}_in")
     save_entries_to_fasta(df_seq=df_seq, file_path=file_in)
-    file_out = os.path.join(temp_dir, "_temp_cd_hit_out")
-
+    file_out = os.path.join(temp_dir, f"_{result_prefix}_out")
     # Create CD-hit command
     if word_size is None:
         word_size = _select_word_size(st=similarity_threshold)
@@ -75,6 +75,11 @@ def run_cd_hit(df_seq=None,
            "-G", "1" if global_identity else "0",
            ]
 
+    if not global_identity:
+        # Use common 80% values for -A, -aS, and -aL options (if not specified)
+        cmd.extend(["-A", "0.8"])
+        coverage_long = 0.8 if coverage_long is None else coverage_long
+        coverage_short = 0.8 if coverage_short is None else coverage_short
     if coverage_long:
         cmd.extend(["-aL", str(coverage_long)])
     if coverage_short:
@@ -90,7 +95,6 @@ def run_cd_hit(df_seq=None,
     # Convert CD-Hit output to clustering DataFrame
     file_cd_hit_out = file_out + ".clstr"
     df_clust = _get_df_clust_cd_hit(file_cd_hit_out=file_cd_hit_out)
-
     # Remove temporary file
     remove_temp(path=temp_dir)
     return df_clust

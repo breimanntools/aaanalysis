@@ -61,9 +61,7 @@ def check_n_jobs(n_jobs=None):
     if n_jobs == -1:
         n_jobs = os.cpu_count()
     # Check which n_jobs are allowed
-    check_number_val(name="j_jobs", val=n_jobs, accept_none=True)
-    if n_jobs is None or n_jobs >= 1:
-        check_number_range(name="n_jobs", val=n_jobs, accept_none=True, just_int=True, min_val=1)
+    check_number_range(name="n_jobs", val=n_jobs, accept_none=True, just_int=True, min_val=1)
     return n_jobs
 
 

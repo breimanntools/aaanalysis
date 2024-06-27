@@ -13,7 +13,6 @@ from ._backend.comp_seq_sim import comp_seq_sim_, comp_pw_seq_sim_
 def comp_seq_sim(seq1: Optional[str] = None,
                  seq2: Optional[str] = None,
                  df_seq: Optional[pd.DataFrame] = None,
-                 alignment: Literal['global', 'local'] = "global",
                  ) -> Union[float, pd.DataFrame]:
     """
     Compute sequence similarity between two sequences or
@@ -31,8 +30,6 @@ def comp_seq_sim(seq1: Optional[str] = None,
         Second sequence to align.
     df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
         DataFrame containing an ``entry`` (unique protein identifier) and an ``sequence`` (protein sequences) column.
-    alignment : {'global', 'local'}, default='global'
-        Type of alignment: ``global`` for global alignment, ``local`` for local alignment.
 
     Returns
     -------
@@ -62,13 +59,11 @@ def comp_seq_sim(seq1: Optional[str] = None,
                     cols_requiered=[ut.COL_SEQ, ut.COL_ENTRY])
         for entry, seq in zip(df_seq[ut.COL_ENTRY], df_seq[ut.COL_SEQ]):
             ut.check_str(name=f"sequence ({entry}", val=seq, accept_none=False)
-    ut.check_str_options(name="alignment", val=alignment,
-                         list_str_options=["global", "local"])
     if df_seq is None:
         # Compute similarity
-        seq_sim = comp_seq_sim_(seq1=seq1, seq2=seq2, alignment=alignment)
+        seq_sim = comp_seq_sim_(seq1=seq1, seq2=seq2)
         return seq_sim
     else:
         # Compute pairwise similarities
-        df_pw_sim = comp_pw_seq_sim_(df_seq=df_seq, alignment=alignment)
+        df_pw_sim = comp_pw_seq_sim_(df_seq=df_seq)
         return df_pw_sim

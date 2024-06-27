@@ -3,7 +3,6 @@ This is a script for the backend of sequence similarity computation functions.
 """
 import pandas as pd
 from Bio.Align import PairwiseAligner
-from Bio.Align import substitution_matrices
 import itertools
 import numpy as np
 
@@ -11,11 +10,11 @@ from aaanalysis import utils as ut
 
 
 # Main functions
-def comp_seq_sim_(seq1=None, seq2=None, alignment='global'):
+def comp_seq_sim_(seq1=None, seq2=None):
     """Compute sequence similarity between two sequences."""
     aligner = PairwiseAligner()
-    # Set alignment mode to global or local
-    aligner.mode = alignment
+    # Set alignment mode to global (no difference to local if default settings)
+    aligner.mode = "global"
     # Compute the alignment score using default scores
     score = aligner.score(seq1, seq2)
     # Determine the longest sequence length for normalization
@@ -25,7 +24,7 @@ def comp_seq_sim_(seq1=None, seq2=None, alignment='global'):
     return identity
 
 
-def comp_pw_seq_sim_(df_seq=None, alignment="global"):
+def comp_pw_seq_sim_(df_seq=None):
     """Compute pairwise sequence similarity between all sequences from sequence DataFrame"""
     list_seq = df_seq[ut.COL_SEQ].to_list()
     list_ids = df_seq[ut.COL_ENTRY].to_list()
@@ -35,7 +34,7 @@ def comp_pw_seq_sim_(df_seq=None, alignment="global"):
     # Calculate pairwise similarities
     for (id1, id2) in itertools.combinations(list_ids, 2):
         seq1, seq2 = dict_id_seq[id1], dict_id_seq[id2]
-        sim_score = comp_seq_sim_(seq1=seq1, seq2=seq2, alignment=alignment)
+        sim_score = comp_seq_sim_(seq1=seq1, seq2=seq2)
         df_pw_sim.at[id1, id2] = sim_score
         df_pw_sim.at[id2, id1] = sim_score
     # Fill diagonal with 1s for self-similarity

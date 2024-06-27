@@ -395,7 +395,7 @@ class SequenceFeature:
         accept_gaps : bool, default=False
             Whether to accept missing values by enabling omitting for computations (if True).
         n_jobs : int, None, or -1, default=1
-            Number of CPU cores used for multiprocessing. If ``None``, the number is optimized automatically.
+            Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized automatically.
             If ``-1``, the number is set to all available cores.
 
         Returns
@@ -480,7 +480,7 @@ class SequenceFeature:
         accept_gaps: bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
         n_jobs : int, None, or -1, default=1
-            Number of CPU cores used for multiprocessing. If ``None``, the number is optimized automatically.
+            Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized automatically.
             If ``-1``, the number is set to all available cores.
 
         Returns

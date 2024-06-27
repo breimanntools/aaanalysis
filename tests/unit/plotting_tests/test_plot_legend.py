@@ -155,6 +155,8 @@ class TestPlotSetLegend:
         with pytest.raises(ValueError):
             if random_cat != "A":
                 aa.plot_legend(ax=ax, dict_color={'A': 'red'}, list_cat=[random_cat])
+            else:
+                aa.plot_legend(ax=ax, dict_color={'A': 'red'}, list_cat=["B"])
 
 
 # II. Complex Cases Test Class

@@ -13,13 +13,6 @@ from ._backend.mmseq2 import run_mmseqs2
 
 
 # I Helper functions
-def check_valid_method(name=None):
-    """Check if method name is valid"""
-    list_valid_methods = ['cd-hit', 'mmseqs']
-    if name not in list_valid_methods:
-        raise ValueError(f"'method' ('{name}') should be one of following: {list_valid_methods}")
-
-
 def check_is_tool(name=None):
     """Check whether `name` is on PATH and marked as executable."""
     if not shutil.which(name):
@@ -34,16 +27,15 @@ def check_match_identity_coverage(global_identity=True, coverage_short=0.0, cove
 
 
 # II Main function
-# TODO examples, tests
 def filter_seq(df_seq: pd.DataFrame = None,
                method: Literal['cd-hit', 'mmseqs'] = "cd-hit",
                similarity_threshold: float = 0.9,
                word_size: Optional[int] = None,
                global_identity: bool = True,
-               coverage_long: float = None,
-               coverage_short: float = None,
-               n_jobs: int = 1,
+               coverage_long: Optional[float] = None,
+               coverage_short: Optional[float] = None,
                sort_clusters: bool = False,
+               n_jobs: int = 1,
                verbose: bool = False
                ) -> pd.DataFrame:
     """
@@ -70,30 +62,30 @@ def filter_seq(df_seq: pd.DataFrame = None,
         - ``mmseqs``: Advanced algorithm designed for large-scale sequence analysis, offering high accuracy.
 
     similarity_threshold : float, default=0.9
-        Defines the minimum sequence identity [0.0-1.0] for clustering. Higher values increase strictness.
+        Defines the minimum sequence identity [0.4-1.0] for clustering. Higher values increase strictness.
     word_size : int, optional
-        The size (>=2) of the 'word' (in CD-Hit) or 'k-mer' (in MMseqs) used for the initial screening step in clustering.
+        The size of the 'word' (in CD-Hit, [2-5]) or 'k-mer' (in MMseqs, [5-7]) used for the initial screening step in clustering.
         Effect on strictness is dataset-dependent. If ``None``, optimized based on ``similarity_threshold`` (CD-Hit).
     global_identity : bool, default=True
-        Whether to use global (True) or local (False) sequence identity for clustering. Global is stricter.
-        Only relevant for 'cd-hit' method. MMseq2 uses only local alignments.
+        Whether to use global (True) or local (False) sequence identity for 'cd-hit' clustering. Global is stricter.
+        80%-coverage is used for local 'cd-hit' clustering if not specified. MMseq2 uses only local alignments.
     coverage_long : float, optional
-        Minimum percentage [0.0-1.0] of the longer sequence that must be included in the alignment.
+        Minimum percentage [0.1-1.0] of the longer sequence that must be included in the alignment.
         Higher values increase strictness.
     coverage_short : float, optional
-        Minimum percentage [0.0-1.0] of the shorter sequence that must be included in the alignment.
+        Minimum percentage [0.1-1.0] of the shorter sequence that must be included in the alignment.
         Higher values increase strictness.
-    n_jobs : int, default=1
-        Number of CPU threads for processing.
     sort_clusters : bool, default=False
         If ``True``, sort clusters by the number of contained sequences.
+    n_jobs : int, None, or -1, default=1
+        Number of CPU cores used for multiprocessing. If ``-1`` or ``None``, the number is set to all available cores.
     verbose : bool, default=False
-       If ``True``, verbose outputs are enabled.
+        If ``True``, verbose outputs are enabled.
 
     Returns
     -------
-    df_clust : pd.DataFrame, optional
-        A DataFrame with clustering results if 'file_output' is not specified, otherwise None.
+    df_clust : pd.DataFrame
+        A DataFrame with clustering results.
 
     Notes
     -----
@@ -136,18 +128,22 @@ def filter_seq(df_seq: pd.DataFrame = None,
     ut.check_df(name="df_seq", df=df_seq,
                 cols_requiered=[ut.COL_ENTRY, ut.COL_SEQ],
                 cols_nan_check=[ut.COL_ENTRY, ut.COL_SEQ])
-    ut.check_str(name="method", val=method, accept_none=False)
-    check_valid_method(name=method)
+    ut.check_str_options(name="method", val=method, accept_none=False,
+                         list_str_options=["cd-hit", "mmseqs"])
     check_is_tool(name=method)
     ut.check_number_range(name="similarity_threshold", val=similarity_threshold,
-                          min_val=0, max_val=1, accept_none=False, just_int=False)
-    ut.check_number_range(name="word_size", val=word_size, min_val=2, accept_none=True, just_int=True)
+                          min_val=0.4, max_val=1, accept_none=False, just_int=False)
+    ut.check_number_range(name="word_size", val=word_size,
+                          min_val=2 if method == "cd-hit" else 5,
+                          max_val=5 if method == "cd-hit" else 7,
+                          accept_none=True, just_int=True,
+                          str_add=f"For the '{method}' method.")
     ut.check_bool(name="global_identity", val=global_identity)
-    ut.check_number_range(name="coverage_long", val=coverage_long, min_val=0, max_val=1,
+    ut.check_number_range(name="coverage_long", val=coverage_long, min_val=0.1, max_val=1,
                           accept_none=True, just_int=False)
-    ut.check_number_range(name="coverage_short", val=coverage_short, min_val=0, max_val=1,
+    ut.check_number_range(name="coverage_short", val=coverage_short, min_val=0.1, max_val=1,
                           accept_none=True, just_int=False)
-    ut.check_number_range(name="n_jobs", val=n_jobs, min_val=1, accept_none=False, just_int=True)
+    n_jobs = ut.check_n_jobs(n_jobs=n_jobs if n_jobs is not None else -1)
     ut.check_bool(name="sort_clusters", val=sort_clusters)
     ut.check_bool(name="verbose", val=sort_clusters)
     check_match_identity_coverage(global_identity=global_identity,

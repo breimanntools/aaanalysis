@@ -38,6 +38,28 @@ jobs:
         pip install -r requirements.txt
         pip install pytest
 
+    - name: Install cd-hit (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cd-hit
+
+    - name: Install mmseqs2 (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y mmseqs2
+
+    - name: Install cd-hit (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        choco install cd-hit  # Example, you might need to provide a custom installation script if not available in Chocolatey
+
+    - name: Install mmseqs2 (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        choco install mmseqs2  # Example, you might need to provide a custom installation script if not available in Chocolatey
+
     - name: Run Tests
       run: pytest tests
       env:

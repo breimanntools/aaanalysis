@@ -205,7 +205,7 @@ class CPP(Tool):
         jmd_c_len : int, default=10
             Length of JMD-C (>=0).
         n_jobs : int, None, or -1, default=None
-            Number of CPU cores used for multiprocessing. If ``None``, the number is optimized automatically.
+            Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized automatically.
             If ``-1``, the number is set to all available cores.
 
         Returns
@@ -354,7 +354,7 @@ class CPP(Tool):
         list_df_parts : list of pd.DataFrames, optional
             List of part DataFrames each of shape (n_samples, n_parts). Must match with ``list_df_feat``.
         n_jobs : int, None, or -1, default=1
-            Number of CPU cores used for multiprocessing. If ``None``, the number is optimized automatically.
+            Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized automatically.
             If ``-1``, the number is set to all available cores.
 
         Returns
@@ -402,7 +402,7 @@ class CPP(Tool):
                                  len_requiered=len(self.df_parts), allow_other_vals=False)
         ut.check_number_range(name="min_th", val=min_th, min_val=-1, max_val=1, just_int=False)
         names_feature_sets = ut.check_list_like(name="names_feature_sets", val=names_feature_sets, accept_none=True,
-                                            accept_str=True, check_all_str_or_convertible=True)
+                                                accept_str=True, check_all_str_or_convertible=True)
         list_cat = ut.check_list_like(name="list_cat", val=list_cat, accept_none=True, accept_str=True,
                                       check_all_str_or_convertible=True)
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)

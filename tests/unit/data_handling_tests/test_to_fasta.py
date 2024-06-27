@@ -83,6 +83,7 @@ class TestToFasta:
         for col_id in [None, [], {}, 34]:
             with pytest.raises(ValueError):
                 aa.to_fasta(df_seq=df, file_path=FILE_OUT, col_id=col_id)
+        delete_mock_file()
 
     def test_col_seq_invalid(self):
         """Test invalid 'col_seq' values."""
@@ -98,6 +99,7 @@ class TestToFasta:
         for sep in [[], {}, 34]:
             with pytest.raises(ValueError):
                 aa.to_fasta(df_seq=df, file_path=FILE_OUT, sep=sep)
+        delete_mock_file()
 
     def test_col_db_invalid(self):
         """Test invalid 'col_db' types."""

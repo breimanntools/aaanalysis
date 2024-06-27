@@ -54,42 +54,25 @@ class TestCompSeqSim:
         with pytest.raises(ValueError):
             aa.comp_seq_sim(df_seq=df_seq)
 
-    def test_valid_alignment(self):
-        """Test valid alignment modes."""
-        seq1 = "ACGT"
-        seq2 = "ACGT"
-        for alignment in ["global", "local"]:
-            result = aa.comp_seq_sim(seq1=seq1, seq2=seq2, alignment=alignment)
-            assert isinstance(result, float)
-            df_seq = aa.load_dataset(name="DOM_GSEC", n=25)
-            result = aa.comp_seq_sim(df_seq=df_seq, alignment=alignment)
-            assert isinstance(result, pd.DataFrame)
-
-    def test_invalid_alignment(self):
-        """Test invalid alignment modes."""
-        seq1 = "ACGT"
-        seq2 = "ACGT"
-        for alignment in [None, 123, "not"]:
-            with pytest.raises(ValueError):
-                aa.comp_seq_sim(seq1=seq1, seq2=seq2, alignment=alignment)
-
 
 class TestCompSeqSimComplex:
     """Complex tests for the 'aa.comp_seq_sim' function."""
 
-    def test_valid_seqs_with_alignment(self):
+    def test_valid_seqs_and_df_seq(self):
         """Test valid sequences with alignment mode."""
         df_seq = aa.load_dataset(name="DOM_GSEC", n=25)
         seq1 = "ACGT"
         seq2 = "ACGT"
-        for alignment in ["global", "local"]:
-            result = aa.comp_seq_sim(df_seq=df_seq, seq1=seq1, seq2=seq2, alignment=alignment)
-            assert isinstance(result, pd.DataFrame)
+        result = aa.comp_seq_sim(df_seq=df_seq, seq1=seq1, seq2=seq2)
+        assert isinstance(result, pd.DataFrame)
 
-    def test_invalid_seqs_with_alignment(self):
+    def test_invalid_seqs_and_df_seq(self):
         """Test valid sequences with alignment mode."""
         seq2 = "ACGT"
-        for alignment in ["global", "local"]:
-            with pytest.raises(ValueError):
-                aa.comp_seq_sim(df_seq=None, seq1=None, seq2=seq2, alignment=alignment)
+        with pytest.raises(ValueError):
+            aa.comp_seq_sim(df_seq=None, seq1=None, seq2=seq2)
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=25)
+        with pytest.raises(ValueError):
+            aa.comp_seq_sim(df_seq=df_seq, seq1=None, seq2=[])
+
 
