@@ -74,8 +74,8 @@ jobs:
         Write-Host "cd-hit binary path: $cdhitBinPath"
         echo "$cdhitBinPath" | Out-File -Append -FilePath $Env:GITHUB_PATH
         [Environment]::SetEnvironmentVariable("PATH", "$Env:PATH;$cdhitBinPath", "Process")
-        Write-Host "Contents of cd-hit directory:"
-        Get-ChildItem $cdhitDir
+        Write-Host "Contents of cd-hit bin directory:"
+        Get-ChildItem $cdhitBinPath
 
     - name: Install mmseqs2 (Windows)
       if: runner.os == 'Windows'
@@ -89,8 +89,8 @@ jobs:
         Write-Host "mmseqs2 binary path: $mmseqsBinPath"
         echo "$mmseqsBinPath" | Out-File -Append -FilePath $Env:GITHUB_PATH
         [Environment]::SetEnvironmentVariable("PATH", "$Env:PATH;$mmseqsBinPath", "Process")
-        Write-Host "Contents of mmseqs directory:"
-        Get-ChildItem $mmseqsDir
+        Write-Host "Contents of mmseqs2 directory:"
+        Get-ChildItem $mmseqsBinPath
 
     - name: Verify cd-hit installation
       if: runner.os == 'Windows'
@@ -99,6 +99,7 @@ jobs:
         $cdhitBinPath = "$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin"
         $env:Path += ";$cdhitBinPath"
         Write-Host "Updated PATH: $env:Path"
+        Write-Host "Checking cd-hit binary in PATH:"
         if (-Not (Get-Command cd-hit -ErrorAction SilentlyContinue)) {
           Write-Error "cd-hit not found in PATH"
         } else {
@@ -113,11 +114,13 @@ jobs:
         $mmseqsBinPath = "$Env:USERPROFILE\mmseqs\mmseqs-win64"
         $env:Path += ";$mmseqsBinPath"
         Write-Host "Updated PATH: $env:Path"
+        Write-Host "Checking mmseqs binary in PATH:"
         if (-Not (Get-Command mmseqs -ErrorAction SilentlyContinue)) {
           Write-Error "mmseqs not found in PATH"
         } else {
           Write-Host "mmseqs found in PATH"
           mmseqs --version
+        }
 
     - name: Run Tests
       run: pytest tests
