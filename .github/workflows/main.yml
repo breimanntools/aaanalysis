@@ -66,11 +66,14 @@ jobs:
         Expand-Archive -Path mmseqs2.zip -DestinationPath $Env:USERPROFILE\mmseqs
         echo "$Env:USERPROFILE\mmseqs\mmseqs-win64" >> $Env:GITHUB_PATH
 
-    - name: Update PATH
-      if: runner.os == 'Windows'
-      run: |
-        $env:Path += ";$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin;$Env:USERPROFILE\mmseqs\mmseqs-win64"
-        [System.Environment]::SetEnvironmentVariable('PATH', $env:Path, [System.EnvironmentVariableTarget]::Process)
+    - name: Print PATH
+      run: echo $PATH
+
+    - name: Check cd-hit Installation
+      run: cd-hit -h
+
+    - name: Check mmseqs2 Installation
+      run: mmseqs -h
 
     - name: Run Tests
       run: pytest tests

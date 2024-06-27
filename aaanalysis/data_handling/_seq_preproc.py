@@ -12,7 +12,26 @@ from ._backend.seq_preproc.encode_integer import encode_integer
 from ._backend.seq_preproc.get_aa_window import get_aa_window
 from ._backend.seq_preproc.get_sliding_aa_window import get_sliding_aa_window
 
+
 # I Helper Functions
+def check_gap(gap="_"):
+    """Check if string of length one"""
+    ut.check_str(name="gap", val=gap, accept_none=False)
+    if len(gap) != 1:
+        raise ValueError(f"'gap' ('{gap}') should be a single character.")
+
+
+def check_match_list_seq_alphabet(list_seq=None, alphabet=None):
+    """Validate if all characters in the sequences are within the given alphabet"""
+    all_chars = set(''.join(list_seq))
+    if not all_chars.issubset(set(alphabet + '_')):
+        invalid_chars = all_chars - set(alphabet + '_')
+        raise ValueError(f"Following amino acid(s) from 'list_seq' are not in 'alphabet': {invalid_chars}")
+
+
+def check_match_gap_alphabet():
+    """"""
+
 
 
 # II Main Functions
@@ -54,10 +73,16 @@ class SequencePreprocessor:
             A numpy array where each row represents an encoded sequence.
         """
         # Check input
-        list_str = ut.check_list_like(name="list_seq", val=list_seq, check_all_str_or_convertible=True,
+        list_seq = ut.check_list_like(name="list_seq", val=list_seq,
+                                      check_all_str_or_convertible=True,
                                       accept_none=False, accept_str=True)
-        #
-        return encode_one_hot(list_seq, alphabet, gap)
+        ut.check_str(name="alphabet", val=alphabet, accept_none=False)
+        ut.check_str(name="gap", val=gap, accept_none=False)
+        ut.check_str_options(name="pad_at", val=pad_at, list_str_options=["N", "C"])
+        check_match_list_seq_alphabet(list_seq=list_seq, alphabet=alphabet)
+        # Create encoding
+        feature_matrix = encode_one_hot(list_seq=list_seq, alphabet=alphabet, gap=gap, pad_at=pad_at)
+        return feature_matrix
 
     @staticmethod
     def encode_integer(list_seq: List[str], alphabet: str = "ARNDCEQGHILKMFPSTWYV", gap: str = "_", pad_at: Literal["C", "N"] = "C") -> np.ndarray:

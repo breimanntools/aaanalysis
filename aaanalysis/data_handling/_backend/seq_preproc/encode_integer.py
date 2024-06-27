@@ -39,22 +39,12 @@ def encode_integer(list_seq: List[str] = None,
         A numpy array where each row represents an encoded sequence, and each column represents a feature.
 
     """
-    # Validate input parameters
-    if pad_at not in ['N', 'C']:
-        raise ValueError(f"pad_at must be 'N' or 'C', got {pad_at}")
-
-    # Validate if all characters in the sequences are within the given alphabet
-    all_chars = set(''.join(list_seq))
-    if not all_chars.issubset(set(alphabet + gap)):
-        invalid_chars = all_chars - set(alphabet + gap)
-        raise ValueError(f"Found invalid amino acid(s) {invalid_chars} not in alphabet.")
-
     # Map amino acids to integers
     aa_to_int = {aa: idx + 1 for idx, aa in enumerate(alphabet)}
     aa_to_int[gap] = 0
 
     # Pad sequences
-    padded_sequences = pad_sequences(list_seq, pad_at=pad_at)
+    padded_sequences = pad_sequences(list_seq, pad_at=pad_at, gap=gap)
 
     # Create integer encoding
     max_length = len(padded_sequences[0])

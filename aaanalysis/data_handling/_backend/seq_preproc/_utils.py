@@ -3,7 +3,7 @@ This is a script for utility sequence padding.
 """
 
 
-def pad_sequences(sequences, pad_at='C'):
+def pad_sequences(sequences, pad_at='C', gap="_"):
     """
     Pads all sequences in the list to the length of the longest sequence by adding gaps.
     """
@@ -12,8 +12,8 @@ def pad_sequences(sequences, pad_at='C'):
     for seq in sequences:
         gap_length = max_length - len(seq)
         if pad_at == 'N':
-            padded_seq = '_' * gap_length + seq
+            padded_seq = gap * gap_length + seq
         else:
-            padded_seq = seq + '_' * gap_length
+            padded_seq = seq + gap * gap_length
         padded_sequences.append(padded_seq)
     return padded_sequences
