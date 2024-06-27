@@ -53,15 +53,17 @@ jobs:
     - name: Install cd-hit (Windows)
       if: runner.os == 'Windows'
       run: |
-        curl -LO https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.zip
-        Expand-Archive -Path cd-hit-v4.8.1-2019-0228.zip -DestinationPath $Env:USERPROFILE\cdhit
+        curl -L -o cd-hit.zip https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.zip
+        New-Item -ItemType Directory -Force -Path $Env:USERPROFILE\cdhit
+        Expand-Archive -Path cd-hit.zip -DestinationPath $Env:USERPROFILE\cdhit
         $Env:Path += ";$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin"
 
     - name: Install mmseqs2 (Windows)
       if: runner.os == 'Windows'
       run: |
-        curl -LO https://mmseqs.com/latest/mmseqs-win64.zip
-        Expand-Archive -Path mmseqs-win64.zip -DestinationPath $Env:USERPROFILE\mmseqs
+        curl -L -o mmseqs2.zip https://mmseqs.com/latest/mmseqs-win64.zip
+        New-Item -ItemType Directory -Force -Path $Env:USERPROFILE\mmseqs
+        Expand-Archive -Path mmseqs2.zip -DestinationPath $Env:USERPROFILE\mmseqs
         $Env:Path += ";$Env:USERPROFILE\mmseqs\mmseqs-win64"
 
     - name: Run Tests
