@@ -29,9 +29,10 @@ def check_match_list_seq_alphabet(list_seq=None, alphabet=None):
         raise ValueError(f"Following amino acid(s) from 'list_seq' are not in 'alphabet': {invalid_chars}")
 
 
-def check_match_gap_alphabet():
-    """"""
-
+def check_match_gap_alphabet(gap="_", alphabet=None):
+    """Check that gap is not in alphabet"""
+    if gap in alphabet:
+        raise ValueError(f"'gap' ('{gap}') should not be contained in the 'alphabet' ('{alphabet}')")
 
 
 # II Main Functions
@@ -77,8 +78,9 @@ class SequencePreprocessor:
                                       check_all_str_or_convertible=True,
                                       accept_none=False, accept_str=True)
         ut.check_str(name="alphabet", val=alphabet, accept_none=False)
-        ut.check_str(name="gap", val=gap, accept_none=False)
+        check_gap(gap=gap)
         ut.check_str_options(name="pad_at", val=pad_at, list_str_options=["N", "C"])
+        check_match_gap_alphabet(gap=gap, alphabet=alphabet)
         check_match_list_seq_alphabet(list_seq=list_seq, alphabet=alphabet)
         # Create encoding
         feature_matrix = encode_one_hot(list_seq=list_seq, alphabet=alphabet, gap=gap, pad_at=pad_at)
