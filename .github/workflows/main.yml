@@ -53,9 +53,9 @@ jobs:
     - name: Install cd-hit (Windows)
       if: runner.os == 'Windows'
       run: |
-        curl -L -o cd-hit.zip https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.zip
-        New-Item -ItemType Directory -Force -Path $Env:USERPROFILE\cdhit
-        Expand-Archive -Path cd-hit.zip -DestinationPath $Env:USERPROFILE\cdhit
+        curl -L -o cd-hit.tar.gz https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.tar.gz
+        mkdir $Env:USERPROFILE\cdhit
+        tar -xzf cd-hit.tar.gz -C $Env:USERPROFILE\cdhit
         $Env:Path += ";$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin"
 
     - name: Install mmseqs2 (Windows)
