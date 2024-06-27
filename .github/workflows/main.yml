@@ -50,29 +50,20 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y mmseqs2
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest
-
-    - name: Install cd-hit and mmseqs2 (Ubuntu)
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cd-hit mmseqs2
-
-    - name: Set up WSL and compile cd-hit
+    - name: Install cd-hit (Windows)
       if: runner.os == 'Windows'
-      shell: bash
+      shell: pwsh
       run: |
-        sudo apt update
-        sudo apt install -y build-essential zlib1g-dev
-        wget https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.tar.gz
-        tar -xzf cd-hit-v4.8.1-2019-0228.tar.gz
-        cd cd-hit-v4.8.1-2019-0228
-        make
-        sudo cp cd-hit /usr/local/bin/
+        curl -L -o cd-hit.tar.gz https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.tar.gz
+        $cdhitDir = "$Env:USERPROFILE\cdhit"
+        New-Item -ItemType Directory -Force -Path $cdhitDir
+        tar -xzf cd-hit.tar.gz -C $cdhitDir
+        $cdhitBinPath = "$cdhitDir\cd-hit-v4.8.1-2019-0228\bin"
+        Write-Host "cd-hit binary path: $cdhitBinPath"
+        echo "$cdhitBinPath" | Out-File -Append -FilePath $Env:GITHUB_PATH
+        [Environment]::SetEnvironmentVariable("PATH", "$Env:PATH;$cdhitBinPath", "Process")
+        Write-Host "Contents of cd-hit bin directory:"
+        Get-ChildItem $cdhitBinPath
 
     - name: Install mmseqs2 (Windows)
       if: runner.os == 'Windows'
@@ -89,17 +80,6 @@ jobs:
         Write-Host "Contents of mmseqs2 directory:"
         Get-ChildItem $mmseqsBinPath
 
-    - name: Verify cd-hit installation (WSL)
-      if: runner.os == 'Windows'
-      shell: bash
-      run: |
-        if ! command -v cd-hit &> /dev/null
-        then
-            echo "cd-hit could not be found"
-            exit 1
-        fi
-        cd-hit --version
-
     - name: Verify mmseqs2 installation
       if: runner.os == 'Windows'
       shell: pwsh
@@ -113,6 +93,21 @@ jobs:
         } else {
           Write-Host "mmseqs found in PATH"
           mmseqs --version
+        }
+
+    - name: Verify cd-hit installation
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        $cdhitBinPath = "$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin"
+        $env:Path += ";$cdhitBinPath"
+        Write-Host "Updated PATH: $env:Path"
+        Write-Host "Checking cd-hit binary in PATH:"
+        if (-Not (Get-Command cd-hit -ErrorAction SilentlyContinue)) {
+          Write-Error "cd-hit not found in PATH"
+        } else {
+          Write-Host "cd-hit found in PATH"
+          cd-hit --version
         }
 
     - name: Run Tests
