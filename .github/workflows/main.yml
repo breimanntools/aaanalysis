@@ -38,7 +38,6 @@ jobs:
         pip install -r requirements.txt
         pip install pytest
 
-
     - name: Install cd-hit (Ubuntu)
       if: runner.os == 'Linux'
       run: |
@@ -55,13 +54,15 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         curl -LO https://github.com/weizhongli/cdhit/releases/download/V4.8.1/cd-hit-v4.8.1-2019-0228.zip
-        tar -xf cd-hit-v4.8.1-2019-0228.zip -C $Env:Path
+        Expand-Archive -Path cd-hit-v4.8.1-2019-0228.zip -DestinationPath $Env:USERPROFILE\cdhit
+        $Env:Path += ";$Env:USERPROFILE\cdhit\cd-hit-v4.8.1-2019-0228\bin"
 
     - name: Install mmseqs2 (Windows)
       if: runner.os == 'Windows'
       run: |
         curl -LO https://mmseqs.com/latest/mmseqs-win64.zip
-        tar -xf mmseqs-win64.zip -C $Env:Path
+        Expand-Archive -Path mmseqs-win64.zip -DestinationPath $Env:USERPROFILE\mmseqs
+        $Env:Path += ";$Env:USERPROFILE\mmseqs\mmseqs-win64"
 
     - name: Run Tests
       run: pytest tests
