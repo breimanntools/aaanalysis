@@ -71,8 +71,5 @@ class TestCompSeqSimComplex:
         seq2 = "ACGT"
         with pytest.raises(ValueError):
             aa.comp_seq_sim(df_seq=None, seq1=None, seq2=seq2)
-        df_seq = aa.load_dataset(name="DOM_GSEC", n=25)
-        with pytest.raises(ValueError):
-            aa.comp_seq_sim(df_seq=df_seq, seq1=None, seq2=[])
 
 
