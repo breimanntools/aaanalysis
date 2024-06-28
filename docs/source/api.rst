@@ -29,9 +29,9 @@ Data Handling
     load_features
     read_fasta
     to_fasta
-    SequencePreprocessor
     comp_seq_sim
     filter_seq
+    SequencePreprocessor
 
 .. _feature_engineering_api:
 
