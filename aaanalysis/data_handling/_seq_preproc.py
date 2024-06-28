@@ -231,7 +231,7 @@ class SequencePreprocessor:
     def get_aa_window(seq: str = None,
                       pos_start: int = 0,
                       pos_stop: Optional[int] = None,
-                      window_size: Optional[int] = 5,
+                      window_size: Optional[int] = None,
                       index1: bool = False,
                       gap: str = '-',
                       accept_gap: bool = True,
@@ -250,7 +250,7 @@ class SequencePreprocessor:
             The starting position (>=0) of the window.
         pos_stop : int, optional
             The ending position (>=``pos_start``) of the window. If ``None``, ``window_size`` is used to determine it.
-        window_size : int, default=5
+        window_size : int, optional
             The size of the window (>=1) to extract. Only used if ``pos_stop`` is ``None``.
         index1 : bool, default=False
             Whether position index starts at 1 (if ``True``) or 0 (if ``False``),
