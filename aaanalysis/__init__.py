@@ -18,7 +18,6 @@ __all__ = [
     "read_fasta",
     "to_fasta",
     # "comp_seq_sim",       BioPython
-    # "comp_pw_seq_sim",    BioPython
     # "filter_seq",         BioPython
     "SequencePreprocessor",
     "AAclust",

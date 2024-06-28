@@ -1,5 +1,5 @@
 """
-This is a script for ...
+This is a script for the backend of the SequenceProcessor().encode_integer() method.
 """
 import time
 import pandas as pd
@@ -11,33 +11,10 @@ from ._utils import pad_sequences
 
 
 # II Main Functions
-def encode_integer(list_seq: List[str] = None,
-                   alphabet: str = "ARNDCEQGHILKMFPSTWYV",
-                   gap: str = "_",
-                   pad_at: Literal["C", "N"] = "C",
-                   ) -> np.array:
+def encode_integer(list_seq=None, alphabet="ARNDCEQGHILKMFPSTWYV", gap="-", pad_at="C"):
     """
     Integer-encode a list of protein sequences into a feature matrix, padding shorter sequences
     with gaps represented as zero vectors.
-
-    Parameters:
-    ----------
-    list_seq : List of str
-        List of protein sequences to encode.
-    alphabet : str, default='ARNDCEQGHILKMFPSTWYV'
-        The alphabet of amino acids used for encoding. The gap character is not part of the alphabet.
-    gap : str, default='_'
-        The character used to represent gaps in sequences.
-    pad_at : Literal['N', 'C'], default='C'
-        Specifies where to add the padding:
-        'N' for N-terminus (beginning of the sequence),
-        'C' for C-terminus (end of the sequence).
-
-    Returns:
-    -------
-    np.array
-        A numpy array where each row represents an encoded sequence, and each column represents a feature.
-
     """
     # Map amino acids to integers
     aa_to_int = {aa: idx + 1 for idx, aa in enumerate(alphabet)}
@@ -45,14 +22,14 @@ def encode_integer(list_seq: List[str] = None,
 
     # Pad sequences
     padded_sequences = pad_sequences(list_seq, pad_at=pad_at, gap=gap)
-
-    # Create integer encoding
+    # Create feature names
     max_length = len(padded_sequences[0])
+    list_features = [f"P{i}" for i in range(1, max_length+1)]
+    # Create integer encoding
     feature_matrix = np.zeros((len(padded_sequences), max_length), dtype=int)
     for idx, seq in enumerate(padded_sequences):
         encoded_seq = [aa_to_int[aa] for aa in seq]
         feature_matrix[idx, :] = encoded_seq
-
-    return feature_matrix
+    return feature_matrix, list_features
 
 

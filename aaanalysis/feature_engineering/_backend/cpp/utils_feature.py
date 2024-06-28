@@ -232,7 +232,7 @@ def get_feature_matrix_(features=None, df_parts=None, df_scales=None, accept_gap
     # Feature creation
     if n_jobs == 1:
         # Process in a single thread/process
-        feat_matrix = compute_feature_matrix(features)
+        feature_matrix = compute_feature_matrix(features)
     else:
         # If n_jobs is not specified, decide it dynamically based on the number of features
         if n_jobs is None:
@@ -240,8 +240,8 @@ def get_feature_matrix_(features=None, df_parts=None, df_scales=None, accept_gap
         # Use joblib to parallelize the computation
         results = Parallel(n_jobs=n_jobs)(
             delayed(compute_feature_matrix)(features_chunk) for features_chunk in np.array_split(features, n_jobs))
-        feat_matrix = np.concatenate(results, axis=1)
-    return feat_matrix
+        feature_matrix = np.concatenate(results, axis=1)
+    return feature_matrix
 
 
 def get_df_pos_(df_feat=None, col_cat="category", col_val=None, value_type="count", start=None, stop=None):

@@ -1,7 +1,6 @@
 """
 This is a script for the frontend of the NumericalFeature class, a supportive class for the CPP feature engineering,
 including scale and feature filtering methods.
-
 """
 import time
 import pandas as pd
@@ -14,13 +13,6 @@ from ._backend.check_feature import check_df_scales
 
 
 # I Helper Functions
-def check_value_type(value_type=None):
-    """Check if value type is valid"""
-    list_value_type = ["min", "mean", "median", "max"]
-    if value_type not in list_value_type:
-        raise ValueError(f"'value_type' ('{value_type}') should be on of following: {list_value_type}")
-
-
 def check_match_df_scales_letter_new(df_scales=None, letter_new=None):
     """Check if new letter not already in df_scales"""
     alphabet = df_scales.index.to_list()
@@ -65,7 +57,7 @@ class NumericalFeature:
         new_letter : str
             The new letter to be added to the alphabet.
         value_type : {'min', 'mean', 'median', 'max'}, default='mean'
-            The type of statistic to compute for the new letter (one of 'min', 'mean', 'median', 'max').
+            The type of statistic to compute for the new letter.
 
         Returns
         -------
@@ -80,7 +72,8 @@ class NumericalFeature:
         df_scales = df_scales.copy()
         check_df_scales(df_scales=df_scales)
         ut.check_str(name="letter_new", val=new_letter)
-        check_value_type(value_type=value_type)
+        ut.check_str_options(name="value_type", val=value_type, accept_none=False,
+                             list_str_options=["min", "mean", "median", "max"])
         check_match_df_scales_letter_new(df_scales=df_scales, letter_new=new_letter)
         # Compute the statistic for each scale
         if value_type == "min":

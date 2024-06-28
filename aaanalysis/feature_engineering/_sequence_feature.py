@@ -485,8 +485,8 @@ class SequenceFeature:
 
         Returns
         -------
-        feat_matrix: array-like , shape (n_samples, n_features)
-            Feature values for samples.
+        X: array-like , shape (n_samples, n_features)
+            Feature matrix containing feature values for samples.
 
         Notes
         -----
@@ -512,12 +512,12 @@ class SequenceFeature:
         if self.verbose:
             warn_creation_of_feature_matrix(features=features, df_parts=df_parts)
         # Create feature matrix using parallel processing
-        feat_matrix = get_feature_matrix_(features=features,
-                                          df_parts=df_parts,
-                                          df_scales=df_scales,
-                                          accept_gaps=accept_gaps,
-                                          n_jobs=n_jobs)
-        return feat_matrix
+        X = get_feature_matrix_(features=features,
+                                df_parts=df_parts,
+                                df_scales=df_scales,
+                                accept_gaps=accept_gaps,
+                                n_jobs=n_jobs)
+        return X
 
     def get_features(self,
                      list_parts: Optional[List[str]] = None,

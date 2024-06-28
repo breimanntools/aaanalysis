@@ -2,9 +2,8 @@
 This is a script for the frontend of the SequencePreprocessor class,
 a supportive class for preprocessing protein sequences.
 """
-from typing import Optional, Union, List, Literal
+from typing import Optional, Union, List, Literal, Tuple
 import numpy as np
-import pandas as pd
 
 import aaanalysis.utils as ut
 from ._backend.seq_preproc.encode_one_hot import encode_one_hot
@@ -21,11 +20,12 @@ def check_gap(gap="_"):
         raise ValueError(f"'gap' ('{gap}') should be a single character.")
 
 
-def check_match_list_seq_alphabet(list_seq=None, alphabet=None):
+# Encoding check functions
+def check_match_list_seq_alphabet(list_seq=None, alphabet=None, gap="-"):
     """Validate if all characters in the sequences are within the given alphabet"""
     all_chars = set(''.join(list_seq))
-    if not all_chars.issubset(set(alphabet + '_')):
-        invalid_chars = all_chars - set(alphabet + '_')
+    if not all_chars.issubset(set(alphabet + gap)):
+        invalid_chars = all_chars - set(alphabet + gap)
         raise ValueError(f"Following amino acid(s) from 'list_seq' are not in 'alphabet': {invalid_chars}")
 
 
@@ -33,6 +33,84 @@ def check_match_gap_alphabet(gap="_", alphabet=None):
     """Check that gap is not in alphabet"""
     if gap in alphabet:
         raise ValueError(f"'gap' ('{gap}') should not be contained in the 'alphabet' ('{alphabet}')")
+
+
+# Window size check functions
+def adjust_positions(start=None, stop=None, index1=False):
+    """Adjust positions depending on indexing mode"""
+    if index1:
+        start -= 1
+        if stop is not None:
+            stop -= 1
+    return start, stop
+
+
+def check_match_pos_start_pos_stop(pos_start=None, pos_stop=None):
+    """Check if start position smaller than stop position"""
+    if pos_stop is not None and pos_start > pos_stop:
+        raise ValueError(f"'pos_start' ({pos_start}) should be smaller than 'pos_stop' ({pos_stop})")
+
+
+def check_match_pos_stop_window_size(pos_stop=None, window_size=None):
+    """Check if one is given"""
+    if pos_stop is None and window_size is None:
+        raise ValueError("Either 'pos_end' or 'window_size' must be specified. Both are 'None'.")
+    if pos_stop is not None and window_size is not None:
+        raise ValueError(f"Either 'pos_end' ({pos_stop}) or 'window_size' ({window_size}) must be specified."
+                         f" Both are given.")
+
+
+def check_match_seq_pos(seq=None, pos_start=None, pos_stop=None):
+    """Check if pos_start matches length of sequence"""
+    seq_len = len(seq)
+    if pos_start >= seq_len:
+        raise ValueError(f"'pos_start' ({pos_start}) must be smaller than the sequence length ({seq_len})")
+    if pos_stop is not None and pos_stop >= seq_len:
+        raise ValueError(f"'pos_stop' ({pos_stop}) must be smaller than the sequence length ({seq_len})")
+
+
+def check_match_seq_pos_start_window_size(seq=None, pos_start=None, window_size=None):
+    """Check if start position and window size do not extend the sequence length"""
+    if window_size is not None:
+        seq_len = len(seq)
+        pos_stop = pos_start + window_size
+        if pos_stop > seq_len:
+            raise ValueError(f"'pos_start' ({pos_start}) + 'window_size' ({window_size}) should be >= "
+                             f"the sequence length ({seq_len})")
+
+
+# Sliding window check functions
+def check_match_slide_start_slide_stop(slide_start=None, slide_stop=None):
+    """Check if start sliding position smaller than stop position"""
+    if slide_stop is not None and slide_start > slide_stop:
+        raise ValueError(f"'slide_start' ({slide_start}) should be smaller than 'slide_stop' ({slide_stop})")
+
+
+def check_match_slide_start_slide_stop_window_size(slide_start=None, slide_stop=None, window_size=None):
+    """Check if one is given"""
+    if slide_stop is not None:
+        min_window_size = slide_stop - slide_stop
+        if window_size < min_window_size:
+            raise ValueError(f"'window_size' ('{window_size}') should be smaller then the distance ({min_window_size})"
+                             f" between 'slide_start' ('{slide_start}') and 'slide_stop' ({slide_stop}).")
+
+
+def check_match_seq_slide(seq=None, slide_start=None, slide_stop=None):
+    """Check if slide_start matches length of sequence"""
+    seq_len = len(seq)
+    if slide_start >= seq_len:
+        raise ValueError(f"'slide_start' ({slide_start}) must be smaller than the sequence length ({seq_len})")
+    if slide_stop is not None and slide_stop >= seq_len:
+        raise ValueError(f"'slide_stop' ({slide_stop}) must be smaller than the sequence length ({seq_len})")
+
+
+def check_match_seq_slide_start_window_size(seq=None, slide_start=None, window_size=None):
+    """Check if start position and window size do not extend the sequence length"""
+    seq_len = len(seq)
+    slide_stop = slide_start + window_size
+    if slide_stop > seq_len:
+        raise ValueError(f"'slide_start' ({slide_start}) + 'window_size' ({window_size}) should be >= "
+                         f"the sequence length ({seq_len})")
 
 
 # II Main Functions
@@ -44,16 +122,20 @@ class SequencePreprocessor:
     This class provides methods for preprocessing protein sequences, including encoding and window extraction.
     """
 
+    # Sequence encoding
     @staticmethod
     def encode_one_hot(list_seq: Union[List[str], str] = None,
                        alphabet: str = "ARNDCEQGHILKMFPSTWYV",
-                       gap: str = "_",
+                       gap: str = "-",
                        pad_at: Literal["C", "N"] = "C",
-                       ) -> np.ndarray:
+                       ) -> Tuple[np.ndarray, List[str]]:
         """
         One-hot-encode a list of protein sequences into a feature matrix.
 
-        Padding of shorter sequences with gaps represented as zero vectors.
+        Each residue is represented by a binary vector of length equal to the alphabet size.
+        For each sequence position, the amino acid is set to 1 in its corresponding position in the vector,
+        while all other positions are set to 0. Gaps are represented by zero vectors. Shorter sequences are
+        padded with gaps either N- or C-terminally.
 
         Parameters
         ----------
@@ -61,17 +143,24 @@ class SequencePreprocessor:
             List of protein sequences to encode.
         alphabet : str, default='ARNDCEQGHILKMFPSTWYV'
             The alphabet of amino acids used for encoding.
-        gap : str, default='_'
+        gap : str, default='-'
             The character used to represent gaps in sequences.
         pad_at : str, default='C'
             Specifies where to add the padding:
-            'N' for N-terminus (beginning of the sequence),
-            'C' for C-terminus (end of the sequence).
+
+            - 'N' for N-terminus (beginning of the sequence),
+            - 'C' for C-terminus (end of the sequence).
 
         Returns
         -------
-        np.ndarray
-            A numpy array where each row represents an encoded sequence.
+        X: array-like, shape (n_samples, n_residues*n_characters)
+            Feature matrix containing one-hot encoded position-wise representation of residues.
+        features : list of str
+            List of feature names corresponding to each position and amino acid in the encoded matrix.
+
+        Examples
+        --------
+        .. include:: examples/sp_encode_one_hot.rst
         """
         # Check input
         list_seq = ut.check_list_like(name="list_seq", val=list_seq,
@@ -81,66 +170,133 @@ class SequencePreprocessor:
         check_gap(gap=gap)
         ut.check_str_options(name="pad_at", val=pad_at, list_str_options=["N", "C"])
         check_match_gap_alphabet(gap=gap, alphabet=alphabet)
-        check_match_list_seq_alphabet(list_seq=list_seq, alphabet=alphabet)
+        check_match_list_seq_alphabet(list_seq=list_seq, alphabet=alphabet, gap=gap)
         # Create encoding
-        feature_matrix = encode_one_hot(list_seq=list_seq, alphabet=alphabet, gap=gap, pad_at=pad_at)
-        return feature_matrix
+        X, features = encode_one_hot(list_seq=list_seq, alphabet=alphabet, gap=gap, pad_at=pad_at)
+        return X, features
 
     @staticmethod
-    def encode_integer(list_seq: List[str], alphabet: str = "ARNDCEQGHILKMFPSTWYV", gap: str = "_", pad_at: Literal["C", "N"] = "C") -> np.ndarray:
+    def encode_integer(list_seq: Union[List[str], str] = None,
+                       alphabet: str = "ARNDCEQGHILKMFPSTWYV",
+                       gap: str = "-",
+                       pad_at: Literal["C", "N"] = "C",
+                       ) -> Tuple[np.ndarray, List[str]]:
         """
-        Integer encodes a list of protein sequences into a feature matrix.
+        Integer-encode a list of protein sequences into a feature matrix.
+
+        Each amino acid is represented by an integer between 1 and n, where n is the number of characters.
+        Gaps are represented by 0. Shorter sequences are padded with gaps either N- or C-terminally.
 
         Parameters
         ----------
-        list_seq : List[str]
+        list_seq : list of str or str
             List of protein sequences to encode.
         alphabet : str, default='ARNDCEQGHILKMFPSTWYV'
             The alphabet of amino acids used for encoding.
-        gap : str, default='_'
+        gap : str, default='-'
             The character used to represent gaps in sequences.
-        pad_at : Literal['C', 'N'], default='C'
-            Specifies where to add the padding.
+        pad_at : str, default='C'
+            Specifies where to add the padding:
+
+            - 'N' for N-terminus (beginning of the sequence),
+            - 'C' for C-terminus (end of the sequence).
 
         Returns
         -------
-        np.ndarray
-            A numpy array where each row represents an encoded sequence.
+        X: array-like, shape (n_samples, n_residues)
+            Feature matrix containing one-hot encoded position-wise representation of residues.
+        features : list of str
+            List of feature names corresponding to each position in the encoded matrix.
+
+        Examples
+        --------
+        .. include:: examples/sp_encode_integer.rst
         """
-        return encode_integer(list_seq, alphabet, gap, pad_at)
+        # Check input
+        list_seq = ut.check_list_like(name="list_seq", val=list_seq,
+                                      check_all_str_or_convertible=True,
+                                      accept_none=False, accept_str=True)
+        ut.check_str(name="alphabet", val=alphabet, accept_none=False)
+        check_gap(gap=gap)
+        ut.check_str_options(name="pad_at", val=pad_at, list_str_options=["N", "C"])
+        check_match_gap_alphabet(gap=gap, alphabet=alphabet)
+        check_match_list_seq_alphabet(list_seq=list_seq, alphabet=alphabet, gap=gap)
+        # Create encoding
+        X, features = encode_integer(list_seq=list_seq, alphabet=alphabet, gap=gap, pad_at=pad_at)
+        return X, features
 
     @staticmethod
-    def get_aa_window(seq: str, pos_start: int, pos_stop: int = None, window_size: int = None, gap: str = '-', accept_gap: bool = True) -> str:
+    def get_aa_window(seq: str,
+                      pos_start: int,
+                      pos_stop: Optional[int] = None,
+                      window_size: Optional[int] = None,
+                      index1: bool = False,
+                      gap: str = '-',
+                      accept_gap: bool = True,
+                      ) -> str:
         """
         Extracts a window of amino acids from a sequence.
+
+        This window starts from a given start position (``pos_start``, starting from 1)
+        and stops either at a defined stop position (``pos_stop``) or after a number of
+        residues defined by ``window_size``.
 
         Parameters
         ----------
         seq : str
             The protein sequence from which to extract the window.
         pos_start : int
-            The starting position of the window (1-based index).
+            The starting position (>=0) of the window.
         pos_stop : int, optional
-            The ending position of the window (1-based index). If None, window_size is used.
+            The ending position (>=``pos_start``) of the window. If ``None``, ``window_size`` is used.
         window_size : int, optional
-            The size of the window to extract. Only used if pos_end is None.
+            The size of the window (>=1) to extract. Only used if ``pos_end`` is ``None``.
+        index1 : bool, default=False
+            Whether position index starts at 1 (if ``True``) or 0 (if ``False``),
+            where first amino acid is at position 1 or 0, respectively.
         gap : str, default='-'
             The character used to represent gaps.
         accept_gap : bool, default=True
-            Whether to accept gaps in the window.
+            Whether to accept gaps in the window. If ``True``, C-terminally padding is enabled.
 
         Returns
         -------
-        str
+        window : str
             The extracted window of amino acids.
+
+        Examples
+        --------
+        .. include:: examples/sp_get_aa_window.rst
         """
-        return get_aa_window(seq, pos_start, pos_stop, window_size, gap, accept_gap)
+        # Check input
+        ut.check_str(name="seq", val=seq, accept_none=False)
+        ut.check_bool(name="index1", val=index1, accept_none=False)
+        min_val_pos = 1 if index1 else 0
+        str_add = f"If 'index1' is '{index1}'."
+        ut.check_number_range(name="pos_start", val=pos_start, min_val=min_val_pos,
+                              accept_none=False, just_int=True, str_add=str_add)
+        ut.check_number_range(name="pos_stop", val=pos_stop, min_val=min_val_pos,
+                              accept_none=True, just_int=True, str_add=str_add)
+        ut.check_number_range(name="window_size", val=window_size, min_val=1, accept_none=True, just_int=True)
+        check_gap(gap=gap)
+        ut.check_bool(name="accept_gap", val=accept_gap, accept_none=False)
+        pos_start, pos_stop = adjust_positions(start=pos_start, stop=pos_stop, index1=index1)
+        check_match_pos_start_pos_stop(pos_start=pos_start, pos_stop=pos_stop)
+        check_match_pos_stop_window_size(pos_stop=pos_stop, window_size=window_size)
+        if not accept_gap:
+            check_match_seq_pos(seq=seq, pos_start=pos_start, pos_stop=pos_stop)
+            check_match_seq_pos_start_window_size(seq=seq, pos_start=pos_start, window_size=window_size)
+        # Get amino acid window
+        window = get_aa_window(seq=seq, pos_start=pos_start, pos_stop=pos_stop,
+                               window_size=window_size, gap=gap)
+        return window
 
     @staticmethod
     def get_sliding_aa_window(seq: str = None,
                               slide_start: int = 1,
-                              slide_stop: int = None,
-                              window_size: int = 10,
+                              slide_stop: Optional[int] = None,
+                              window_size: int = 5,
+                              index1: bool = False,
                               gap: str = '-',
                               accept_gap: bool = False
                               ) -> List[str]:
@@ -152,26 +308,47 @@ class SequencePreprocessor:
         seq : str
             The protein sequence from which to extract the windows.
         slide_start : int, default=1
-            The starting position for sliding window extraction (1-based index).
+            The starting position (>=0) for sliding window extraction.
         slide_stop : int, optional
-            The ending position for sliding window extraction (1-based index). If None, extract all possible windows.
-        window_size : int, default=10
-            The size of each window to extract.
+            The ending position (>=1) for sliding window extraction. If ``None``, extract all possible windows.
+        window_size : int, default=5
+            The size of each window (>=1) to extract.
+        index1 : bool, default=False
+            Whether position index starts at 1 (if ``True``) or 0 (if ``False``),
+            where first amino acid is at position 1 or 0, respectively.
         gap : str, default='-'
             The character used to represent gaps.
-        accept_gap : bool, default=False
-            Whether to accept gaps in the amino acid windows.
+        accept_gap : bool, default=True
+            Whether to accept gaps in the window. If ``True``, C-terminally padding is enabled.
 
         Returns
         -------
-        List[str]
+        list_windows : list of str
             A list of extracted windows of amino acids.
+        Examples
+        --------
+        .. include:: examples/sp_get_sliding_aa_window.rst
         """
         # Check input
         ut.check_str(name="seq", val=seq, accept_none=False)
-        ut.check_number_val(name="slide_start", val=slide_start, accept_none=False, just_int=True)
-        ut.check_number_val(name="slide_stop", val=slide_stop, accept_none=True, just_int=True)
-
+        ut.check_bool(name="index1", val=index1, accept_none=False)
+        min_val_pos = 1 if index1 else 0
+        str_add = f"If 'index1' is '{index1}'."
+        ut.check_number_range(name="slide_start", val=slide_start, min_val=min_val_pos,
+                              accept_none=False, just_int=True, str_add=str_add)
+        ut.check_number_range(name="slide_stop", val=slide_stop, min_val=min_val_pos,
+                              accept_none=True, just_int=True, str_add=str_add)
+        ut.check_number_range(name="window_size", val=window_size, min_val=1, accept_none=False, just_int=True)
+        check_gap(gap=gap)
+        ut.check_bool(name="accept_gap", val=accept_gap, accept_none=False)
+        slide_start, slide_stop = adjust_positions(start=slide_start, stop=slide_stop, index1=index1)
+        check_match_slide_start_slide_stop(slide_start=slide_start, slide_stop=slide_stop)
+        check_match_slide_start_slide_stop_window_size(slide_start=slide_start, slide_stop=slide_stop,
+                                                       window_size=window_size)
+        if not accept_gap:
+            check_match_seq_slide(seq=seq, slide_start=slide_start, slide_stop=slide_stop)
+            check_match_seq_slide_start_window_size(seq=seq, slide_start=slide_start, window_size=window_size)
         # Get sliding windows
-        list_windows = get_sliding_aa_window(seq, slide_start, slide_stop, window_size, gap, accept_gap)
+        list_windows = get_sliding_aa_window(seq=seq, slide_start=slide_start, slide_stop=slide_stop,
+                                             window_size=window_size, gap=gap)
         return list_windows
