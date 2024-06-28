@@ -11,7 +11,7 @@ from ._utils import pad_sequences
 
 
 # II Main Functions
-def encode_integer(list_seq=None, alphabet="ARNDCEQGHILKMFPSTWYV", gap="-", pad_at="C"):
+def encode_integer(list_seq=None, alphabet="ACDEFGHIKLMNPQRSTVWY", gap="-", pad_at="C"):
     """
     Integer-encode a list of protein sequences into a feature matrix, padding shorter sequences
     with gaps represented as zero vectors.

@@ -22,7 +22,7 @@ def _one_hot_encode(amino_acid=None, alphabet=None, gap="_"):
 
 
 # II Main Functions
-def encode_one_hot(list_seq=None, alphabet="ARNDCEQGHILKMFPSTWYV", gap="-", pad_at="C"):
+def encode_one_hot(list_seq=None, alphabet="ACDEFGHIKLMNPQRSTVWY", gap="-", pad_at="C"):
     """
     One-hot-encode a list of protein sequences into a feature matrix with padding shorter sequences
     with gaps represented as zero vectors.

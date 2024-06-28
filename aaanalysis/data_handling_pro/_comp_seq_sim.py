@@ -15,8 +15,7 @@ def comp_seq_sim(seq1: Optional[str] = None,
                  df_seq: Optional[pd.DataFrame] = None,
                  ) -> Union[float, pd.DataFrame]:
     """
-    Compute sequence similarity between two sequences or
-    pairwise sequence similarity between all sequences in a DataFrame.
+    Compute pairwise similarity between two or more sequences.
 
     The normalized sequence similarity score between two sequences is computed as a fraction of the alignment score
     to the length of the longest sequence. The alignment score is obtained using the :class:`Bio.Align.PairwiseAligner`

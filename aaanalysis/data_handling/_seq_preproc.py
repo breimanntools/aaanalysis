@@ -119,13 +119,13 @@ def check_match_seq_slide_start_window_size(seq=None, slide_start=None, window_s
 # TODO e.g., seq_filter, comp_seq_sim, SHAP ...
 class SequencePreprocessor:
     """
-    This class provides methods for preprocessing protein sequences, including encoding and window extraction.
+    Utility data preprocessing class to encode and represent protein sequences.
     """
 
     # Sequence encoding
     @staticmethod
     def encode_one_hot(list_seq: Union[List[str], str] = None,
-                       alphabet: str = "ARNDCEQGHILKMFPSTWYV",
+                       alphabet: str = "ACDEFGHIKLMNPQRSTVWY",
                        gap: str = "-",
                        pad_at: Literal["C", "N"] = "C",
                        ) -> Tuple[np.ndarray, List[str]]:
@@ -140,11 +140,12 @@ class SequencePreprocessor:
         Parameters
         ----------
         list_seq : list of str or str
-            List of protein sequences to encode.
-        alphabet : str, default='ARNDCEQGHILKMFPSTWYV'
+            List of protein sequences to encode. All characters in each sequence must part of the ``alphabet`` or
+            be represented by the ``gap``.
+        alphabet : str, default='ACDEFGHIKLMNPQRSTVWY'
             The alphabet of amino acids used for encoding.
         gap : str, default='-'
-            The character used to represent gaps in sequences.
+            The character used to represent gaps within sequences. It should not be included in the ``alphabet``.
         pad_at : str, default='C'
             Specifies where to add the padding:
 
@@ -177,7 +178,7 @@ class SequencePreprocessor:
 
     @staticmethod
     def encode_integer(list_seq: Union[List[str], str] = None,
-                       alphabet: str = "ARNDCEQGHILKMFPSTWYV",
+                       alphabet: str = "ACDEFGHIKLMNPQRSTVWY",
                        gap: str = "-",
                        pad_at: Literal["C", "N"] = "C",
                        ) -> Tuple[np.ndarray, List[str]]:
@@ -190,11 +191,12 @@ class SequencePreprocessor:
         Parameters
         ----------
         list_seq : list of str or str
-            List of protein sequences to encode.
-        alphabet : str, default='ARNDCEQGHILKMFPSTWYV'
+            List of protein sequences to encode. All characters in each sequence must part of the ``alphabet`` or
+            be represented by the ``gap``.
+        alphabet : str, default='ACDEFGHIKLMNPQRSTVWY'
             The alphabet of amino acids used for encoding.
         gap : str, default='-'
-            The character used to represent gaps in sequences.
+            The character used to represent gaps within sequences. It should not be included in the ``alphabet``.
         pad_at : str, default='C'
             Specifies where to add the padding:
 
@@ -226,8 +228,8 @@ class SequencePreprocessor:
         return X, features
 
     @staticmethod
-    def get_aa_window(seq: str,
-                      pos_start: int,
+    def get_aa_window(seq: str = None,
+                      pos_start: int = 0,
                       pos_stop: Optional[int] = None,
                       window_size: Optional[int] = None,
                       index1: bool = False,
@@ -237,23 +239,22 @@ class SequencePreprocessor:
         """
         Extracts a window of amino acids from a sequence.
 
-        This window starts from a given start position (``pos_start``, starting from 1)
-        and stops either at a defined stop position (``pos_stop``) or after a number of
-        residues defined by ``window_size``.
+        This window starts from a given start position (``pos_start``) and stops either at a defined
+        stop position (``pos_stop``) or after a number of residues defined by ``window_size``.
 
         Parameters
         ----------
         seq : str
             The protein sequence from which to extract the window.
-        pos_start : int
+        pos_start : int, default=0
             The starting position (>=0) of the window.
         pos_stop : int, optional
-            The ending position (>=``pos_start``) of the window. If ``None``, ``window_size`` is used.
+            The ending position (>=``pos_start``) of the window. If ``None``, ``window_size`` is used to determine it.
         window_size : int, optional
-            The size of the window (>=1) to extract. Only used if ``pos_end`` is ``None``.
+            The size of the window (>=1) to extract. Only used if ``pos_stop`` is ``None``.
         index1 : bool, default=False
             Whether position index starts at 1 (if ``True``) or 0 (if ``False``),
-            where first amino acid is at position 1 or 0, respectively.
+            where the first amino acid is at position 1 or 0, respectively.
         gap : str, default='-'
             The character used to represent gaps.
         accept_gap : bool, default=True
@@ -263,6 +264,10 @@ class SequencePreprocessor:
         -------
         window : str
             The extracted window of amino acids.
+
+        Notes
+        -----
+        * A ``ValueError`` is raised if both ``pos_stop`` and ``window_size`` are ``None`` or if both are provided.
 
         Examples
         --------
@@ -298,7 +303,7 @@ class SequencePreprocessor:
                               window_size: int = 5,
                               index1: bool = False,
                               gap: str = '-',
-                              accept_gap: bool = False
+                              accept_gap: bool = True
                               ) -> List[str]:
         """
         Extract sliding windows of amino acids from a sequence.
@@ -325,6 +330,7 @@ class SequencePreprocessor:
         -------
         list_windows : list of str
             A list of extracted windows of amino acids.
+
         Examples
         --------
         .. include:: examples/sp_get_sliding_aa_window.rst
