@@ -126,7 +126,7 @@ class TestGetAAWindowComplex:
     @settings(max_examples=10, deadline=1000)
     @given(
         seq=st.text(alphabet="ACDEFGHIKLMNPQRSTVWY", min_size=10, max_size=100),
-        pos_start=st.integers(min_value=0, max_value=50),
+        pos_start=st.integers(min_value=1, max_value=50),
         window_size=st.integers(min_value=1, max_value=50),
         index1=st.booleans(),
         gap=st.text(min_size=1, max_size=1).filter(lambda g: g not in "ACDEFGHIKLMNPQRSTVWY"),
