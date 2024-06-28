@@ -22,6 +22,7 @@ Data Handling
 -------------
 .. autosummary::
     :toctree: generated/
+    :template: autosummary/class_template.rst
 
     load_dataset
     load_scales

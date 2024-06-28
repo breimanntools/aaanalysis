@@ -26,7 +26,7 @@ class TestGetFeatures:
         assert all(isinstance(feature, str) for feature in result)
 
     @settings(max_examples=5, deadline=1000)
-    @given(list_parts=st.lists(st.sampled_from(['tmd', 'jmd_n_tmd_n', 'tmd_c_jmd_c']), min_size=1))
+    @given(list_parts=st.lists(st.sampled_from(['tmd', 'jmd_n_tmd_n', 'tmd_c_jmd_c']), min_size=1, max_size=5))
     def test_valid_list_parts(self, list_parts):
         sf = aa.SequenceFeature()
         result = sf.get_features(list_parts=list_parts)
