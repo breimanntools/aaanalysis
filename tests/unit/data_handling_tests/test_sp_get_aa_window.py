@@ -8,6 +8,7 @@ import aaanalysis as aa
 settings.register_profile("ci", deadline=400)
 settings.load_profile("ci")
 
+
 # Normal Cases
 class TestGetAAWindow:
     """Test get_aa_window function."""

@@ -60,7 +60,7 @@ class TestGetSlidingAAWindow:
         """Test an invalid 'slide_stop' parameter."""
         sp = aa.SequencePreprocessor()
         with pytest.raises(ValueError):
-            sp.get_sliding_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", slide_stop=0)
+            sp.get_sliding_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", slide_stop=-2)
         with pytest.raises(ValueError):
             sp.get_sliding_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", slide_stop=100, accept_gap=False)
 
@@ -86,7 +86,7 @@ class TestGetSlidingAAWindow:
     def test_index1_valid(self, index1):
         """Test a valid 'index1' parameter."""
         sp = aa.SequencePreprocessor()
-        windows = sp.get_sliding_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", index1=index1)
+        windows = sp.get_sliding_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", slide_start=1, index1=index1)
         assert isinstance(windows, list)
         assert all(isinstance(window, str) for window in windows)
 

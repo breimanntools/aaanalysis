@@ -114,8 +114,9 @@ def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, fe
             raise ValueError(f"'{ut.COL_FEAT_IMPORT_STD}' already in 'df_feat' columns. To override, set 'drop=True'.")
 
 
-# TODO splite from shap explainer to be installed via aanalysis (not aaanalysis[pro])
-# II Main Functions
+# TODO split from shap explainer to be installed via aanalysis (not aaanalysis[pro])
+# TODO manage aaanalysis[pro] (add info/warning in docu for every function/module whose dependencies are not installed)
+# TODO e.g., seq_filter, comp_seq_sim, SHAP ...# II Main Functions
 class TreeModel:
     """
     Tree Model class: A wrapper for tree-based models to obtain Monte Carlo estimates of feature

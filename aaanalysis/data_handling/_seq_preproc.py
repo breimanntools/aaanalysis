@@ -114,9 +114,6 @@ def check_match_seq_slide_start_window_size(seq=None, slide_start=None, window_s
 
 
 # II Main Functions
-# TODO finish SequencePreprocessor, test, docu
-# TODO manage aaanalysis[pro] (add info/warning in docu for every function/module whose dependencies are not installed)
-# TODO e.g., seq_filter, comp_seq_sim, SHAP ...
 class SequencePreprocessor:
     """
     Utility data preprocessing class to encode and represent protein sequences.
@@ -298,7 +295,7 @@ class SequencePreprocessor:
 
     @staticmethod
     def get_sliding_aa_window(seq: str = None,
-                              slide_start: int = 1,
+                              slide_start: int = 0,
                               slide_stop: Optional[int] = None,
                               window_size: int = 5,
                               index1: bool = False,
@@ -312,7 +309,7 @@ class SequencePreprocessor:
         ----------
         seq : str
             The protein sequence from which to extract the windows.
-        slide_start : int, default=1
+        slide_start : int, default=0
             The starting position (>=0) for sliding window extraction.
         slide_stop : int, optional
             The ending position (>=1) for sliding window extraction. If ``None``, extract all possible windows.
