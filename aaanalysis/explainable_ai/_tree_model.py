@@ -1,8 +1,5 @@
 """
 This is a script for the frontend of the TreeModel class used to obtain Mote Carlo estimates of feature importance.
-
-DEV: TODO features
-b) TreeModel.eval: Add n_features to output
 """
 from typing import Optional, Dict, List, Tuple, Type, Union, Callable
 from sklearn.base import ClassifierMixin, BaseEstimator
@@ -112,7 +109,7 @@ def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, fe
             raise ValueError(f"'{ut.COL_FEAT_IMPORT_STD}' already in 'df_feat' columns. To override, set 'drop=True'.")
 
 
-# TODO split from shap explainer to be installed via aanalysis (not aaanalysis[pro])
+# II Main Functions
 class TreeModel:
     """
     Tree Model class: A wrapper for tree-based models to obtain Monte Carlo estimates of feature

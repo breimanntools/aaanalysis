@@ -55,9 +55,9 @@ valid_X = sf.feature_matrix(features=_df_feat["feature"], df_parts=df_parts)
 N_ROUNDS = 2
 ARGS = dict(n_rounds=N_ROUNDS)
 
+
 class TestAddSampleMeanDif:
     """ Test simple positive cases for each parameter of the add_sample_mean_dif method. """
-
 
     # Positive test cases
     @settings(deadline=10000, max_examples=10)

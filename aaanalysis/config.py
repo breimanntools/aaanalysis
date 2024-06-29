@@ -1,5 +1,6 @@
 """
 This is a script for setting system level options for AAanalysis.
+# DEV: Not tested due to effects on plots and user communication -> Only evaluated by examples
 """
 from typing import Dict, Any
 import os
@@ -96,9 +97,10 @@ def _check_option(name_option="", option=None):
     if name_option == "allow_multiprocessing":
         check_bool(name=name_option, val=option)
     if "jmd" in name_option:
-        check_number_val(name=name_option, val=option, accept_none=True, just_int=True)
-    if "name" in name_option:
-        check_str(name=name_option, val=option, accept_none=False)
+        if "len" in name_option:
+            check_number_val(name=name_option, val=option, accept_none=True, just_int=True)
+        if "name" in name_option:
+            check_str(name=name_option, val=option, accept_none=False)
     if name_option == "ext_len":
         check_number_range(name=name_option, val=option, min_val=0, accept_none=False)
     if "df" in name_option:

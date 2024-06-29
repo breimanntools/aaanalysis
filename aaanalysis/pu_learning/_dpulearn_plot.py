@@ -12,7 +12,6 @@ from typing import Optional, Dict, Union, List, Tuple, Type
 
 import aaanalysis.utils as ut
 from ._backend.dpulearn.dpul_plot import (plot_eval, plot_pca)
-# TODO visualize loadings as feature plot (long-term)
 
 
 # I Helper Functions
