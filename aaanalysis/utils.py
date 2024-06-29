@@ -57,7 +57,8 @@ from ._utils.check_data import (check_X,
                                 check_file_path_exists,
                                 check_is_fasta)
 from ._utils.check_models import (check_mode_class,
-                                  check_model_kwargs)
+                                  check_model_kwargs,
+                                  check_match_list_model_classes_kwargs)
 from ._utils.check_plots import (check_fig,
                                  check_ax,
                                  check_figsize,

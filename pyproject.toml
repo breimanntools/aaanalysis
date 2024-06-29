@@ -9,7 +9,15 @@ description = "Python framework for interpretable protein prediction"
 authors = ["Stephan Breimann <stephanbreimann@gmail.de>"]
 license = "BSD-3-Clause"
 readme = "README.rst"
-include = ["data/*.xlsx", "data/benchmarks/*.tsv", "data/benchmarks/*.xlsx"]
+homepage = "https://aaanalysis.readthedocs.io"
+keywords = ["protein", "prediction", "bioinformatics", "machine learning", "interpretable AI"]
+
+# Include additional files
+include = [
+    "data/*.xlsx",
+    "data/benchmarks/*.tsv",
+    "data/benchmarks/*.xlsx"
+]
 
 # Add classifiers to provide more details about the package (used by PyPI)
 classifiers = [
@@ -36,7 +44,6 @@ classifiers = [
 [tool.poetry.dependencies]
 # Core dependencies (via pip install aaanalysis)
 python = "^3.9"
-biopython = "^1.8.3"
 cycler = "^0.11.0"
 et-xmlfile = "^1.1.0"
 fonttools = "^4.37.1"
@@ -59,7 +66,9 @@ scipy = "^1.10.0"
 seaborn = "^0.13.2"
 six = "^1.16.0"
 threadpoolctl = "^3.1.0"
+
 # Optional professional dependencies (via pip install aaanalysis[pro])
+biopython = { version = "^1.8.3", optional = true }
 shap = { version = "^0.44.0", optional = true }
 ipython = { version = "^8.16.1", optional = true }
 hypothesis = { version = "^6.86.2", optional = true }
@@ -67,15 +76,14 @@ pytest = { version = "^7.4.2", optional = true }
 UpSetPlot = { version = "^0.8.0", optional = true }
 
 [tool.poetry.extras]
-pro = ["shap", "ipython", "hypothesis", "pytest", "UpSetPlot"]
+pro = ["shap", "biopython", "ipython", "hypothesis", "pytest", "UpSetPlot"]
 
 # Project URLs
 [tool.poetry.urls]
 "Repository" = "https://github.com/breimanntools/aaanalysis"
 "Documentation" = "https://aaanalysis.readthedocs.io"
 
-# If you use a tool for linting or formatting, you can add its configurations here.
-# For example, if you use `black` for formatting:
+# Configuration for black (code formatter)
 [tool.black]
 line-length = 88
 exclude = '''
@@ -85,8 +93,24 @@ exclude = '''
   | \.eggs
   | \.mypy_cache
   | \.pytest_cache
-  | \__pycache__
+  | __pycache__
   | build
   | dist
 )/
+'''
+
+# Configuration for isort (import sorting)
+[tool.isort]
+profile = "black"
+line_length = 88
+
+# Configuration for flake8 (linting)
+[tool.flake8]
+max-line-length = 88
+exclude = '''
+    .git,
+    __pycache__,
+    build,
+    dist,
+    venv
 '''

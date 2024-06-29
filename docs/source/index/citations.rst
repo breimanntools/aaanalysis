@@ -14,8 +14,8 @@ If you use **AAanalysis** in your work, please cite the respective publication a
 
 **CPP**:
    [Breimann24c]_  Breimann and Kamp *et al.* (2024c),
-   *Complete γ-secretase substrate proteome revealed by explainable AI*, .. # Link if available
+   *Charting γ-secretase substrates by explainable AI*, .. # Link if available
 
 **dPULearn**:
    [Breimann24c]_  Breimann and Kamp *et al.* (2024c),
-   *Complete γ-secretase substrate proteome revealed by explainable AI*, .. # Link if available
+   *Charting γ-secretase substrates by explainable AI*, .. # Link if available

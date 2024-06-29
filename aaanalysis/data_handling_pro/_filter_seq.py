@@ -117,9 +117,9 @@ def filter_seq(df_seq: pd.DataFrame = None,
 
     Warnings
     --------
+    * This function requires `biopython`, which is automatically installed via `pip install aaanalysis[pro]`.
     * CD-HIT and MMseq2 must be installed separately.
     * CD-HIT is not available for Windows.
-    * This function requires `biopython`, which is automatically installed via `pip install aaanalysis[pro]`.
 
     Examples
     --------

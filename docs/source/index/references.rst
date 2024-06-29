@@ -34,8 +34,7 @@ AAanalysis Algorithms
    `bioRxiv <https://www.biorxiv.org/content/10.1101/2023.08.03.551768v1>`__.
 
 .. [Breimann24c] Breimann and Kamp *et al.* (2024c),
-   *Complete γ-secretase substrate proteome revealed by explainable AI*,
-   .. # Link if available
+   *Charting γ-secretase substrates by explainable AI*, .. # Link if available
 
 Sequence Algorithms
 -------------------

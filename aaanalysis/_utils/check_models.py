@@ -1,9 +1,9 @@
 """This is a script for scikit-learn model-specific check functions"""
 import inspect
 from inspect import isclass
+import numpy as np
 
 from ._utils import add_str
-
 # Helper functions
 
 
@@ -72,3 +72,11 @@ def check_model_kwargs(model_class=None, model_kwargs=None, name_model_class="mo
     if "random_state" not in model_kwargs and "random_state" in valid_args:
         model_kwargs.update(dict(random_state=random_state))
     return model_kwargs
+
+
+def check_match_list_model_classes_kwargs(list_model_classes=None, list_model_kwargs=None):
+    """Check length match of list_model_classes and list_model_kwargs"""
+    n_models = len(list_model_classes)
+    n_args = len(list_model_kwargs)
+    if n_models != n_args:
+        raise ValueError(f"Length of 'list_model_kwargs' (n={n_args}) should match to 'list_model_classes' (n{n_models}")

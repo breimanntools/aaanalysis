@@ -3,6 +3,7 @@ from .data_handling import (load_dataset, load_scales, load_features,
                             SequencePreprocessor)
 from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
+from .explainable_ai import TreeModel
 from .pertubation import AAMut, AAMutPlot, SeqMut, SeqMutPlot
 from .plotting import (plot_get_clist, plot_get_cmap, plot_get_cdict,
                        plot_settings, plot_legend, plot_gcfs)
@@ -32,7 +33,7 @@ __all__ = [
     "AAMutPlot",
     "SeqMut",
     "SeqMutPlot",
-    # "TreeModel"           # SHAP (explainable AI module)
+    "TreeModel",
     # "ShapExplainer"       # SHAP
     "plot_get_clist",
     "plot_get_cmap",
@@ -49,12 +50,11 @@ __all__ = [
 
 # Import of professional (pro) version features if dependencies are available
 try:
-    from .explainable_ai import TreeModel, ShapExplainer
+    from .explainable_ai_pro import ShapExplainer
     from .data_handling_pro import comp_seq_sim, filter_seq
     from .show_html import display_df
     # Extend the __all__ list with pro features if successful
-    __all__.extend(["TreeModel",
-                    "ShapExplainer",
+    __all__.extend(["ShapExplainer",
                     "display_df",
                     "comp_seq_sim",
                     "filter_seq"])
@@ -76,9 +76,7 @@ except ImportError as e:
         return UnavailableFeature
 
     # Use the factory function to create placeholders for pro features
-    make_pro_feature("TreeModel")
-    make_pro_feature("ShapExplainer")
-    make_pro_feature("display_df")
-    make_pro_feature("comp_seq_sim")
-    make_pro_feature("comp_pw_seq_sim")
-    make_pro_feature("filter_seq")
+    ShapExplainer = make_pro_feature("ShapExplainer")
+    display_df = make_pro_feature("display_df")
+    comp_seq_sim = make_pro_feature("comp_seq_sim")
+    filter_seq = make_pro_feature("filter_seq")

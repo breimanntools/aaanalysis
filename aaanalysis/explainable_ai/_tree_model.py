@@ -2,7 +2,6 @@
 This is a script for the frontend of the TreeModel class used to obtain Mote Carlo estimates of feature importance.
 
 DEV: TODO features
-a) TreeModel.fit: Add n_jobs as input
 b) TreeModel.eval: Add n_features to output
 """
 from typing import Optional, Dict, List, Tuple, Type, Union, Callable
@@ -13,8 +12,7 @@ import numpy as np
 
 import aaanalysis.utils as ut
 
-from ._backend.check_models import (check_match_list_model_classes_kwargs,
-                                    check_match_labels_X,
+from ._backend.check_models import (check_match_labels_X,
                                     check_match_X_is_selected)
 from ._backend.tree_model.tree_model_fit import fit_tree_based_models
 from ._backend.tree_model.tree_model_predict_proba import monte_carlo_predict_proba
@@ -115,8 +113,6 @@ def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, fe
 
 
 # TODO split from shap explainer to be installed via aanalysis (not aaanalysis[pro])
-# TODO manage aaanalysis[pro] (add info/warning in docu for every function/module whose dependencies are not installed)
-# TODO e.g., seq_filter, comp_seq_sim, SHAP ...# II Main Functions
 class TreeModel:
     """
     Tree Model class: A wrapper for tree-based models to obtain Monte Carlo estimates of feature
@@ -196,7 +192,7 @@ class TreeModel:
         list_model_kwargs = ut.check_list_like(name="list_model_kwargs", val=list_model_kwargs, accept_none=True)
         if list_model_kwargs is None:
             list_model_kwargs = [{} for _ in list_model_classes]
-        check_match_list_model_classes_kwargs(list_model_classes=list_model_classes, list_model_kwargs=list_model_kwargs)
+        ut.check_match_list_model_classes_kwargs(list_model_classes=list_model_classes, list_model_kwargs=list_model_kwargs)
         _list_model_kwargs = []
         for model_class, model_kwargs in zip(list_model_classes, list_model_kwargs):
             ut.check_mode_class(model_class=model_class)

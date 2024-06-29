@@ -1,6 +1,7 @@
 # Requires Python >= 3.9
 
 # Additional dependencies for professional version (pip install aaanalysis[pro])
+biopython>=1.8.3
 shap>=0.44.0
 ipython>=8.16.1
 hypothesis>=6.86.2
