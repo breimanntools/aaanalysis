@@ -10,8 +10,7 @@ import warnings
 import shap
 
 import aaanalysis.utils as ut
-from ._backend.check_models import (check_match_list_model_classes_kwargs,
-                                    check_match_labels_X,
+from ._backend.check_models import (check_match_labels_X,
                                     check_match_X_is_selected)
 from ._backend.shap_explainer.shap_explainer_fit import monte_carlo_shap_estimation
 from ._backend.shap_explainer.se_add_feat_impact import (comp_shap_feature_importance,
@@ -347,8 +346,8 @@ class ShapExplainer:
         if list_model_kwargs is None:
             list_model_kwargs = [{} for _ in list_model_classes]
         # Check matching of model parameters
-        check_match_list_model_classes_kwargs(list_model_classes=list_model_classes,
-                                              list_model_kwargs=list_model_kwargs)
+        ut.check_match_list_model_classes_kwargs(list_model_classes=list_model_classes,
+                                                 list_model_kwargs=list_model_kwargs)
         _list_model_kwargs = []
         for model_class, model_kwargs in zip(list_model_classes, list_model_kwargs):
             ut.check_mode_class(model_class=model_class)
