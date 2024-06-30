@@ -68,7 +68,7 @@ Explainable AI
     :template: autosummary/class_template.rst
 
     TreeModel
-    ShapExplainer
+    ShapModel
 
 .. _protein_design_api:
 
