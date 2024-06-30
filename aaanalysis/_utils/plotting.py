@@ -222,7 +222,7 @@ def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
                  fontsize=None, fontsize_title=None, weight_font="normal", weight_title="normal",
                  marker=None, marker_size=10, lw=0, linestyle=None, edgecolor=None,
                  hatch=None, hatchcolor="white", title=None, title_align_left=True,
-                 frameon=False, **kwargs):
+                 frameon=False, keep_legend=False, **kwargs):
     """Sets an independently customizable plot legend"""
     # Check input
     if ax is None:
@@ -233,7 +233,8 @@ def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
     hatch = _check_hatches(marker=marker, hatch=hatch, list_cat=list_cat)
     linestyle = _check_linestyle(linestyle=linestyle, list_cat=list_cat, marker=marker)
     marker_size = _check_marker_size(marker_size=marker_size, list_cat=list_cat)
-    # Remove existing legend
+    # Save or remove existing legend
+    old_legend = ax.get_legend() if keep_legend else None
     if ax.get_legend() is not None and len(ax.get_legend().get_lines()) > 0:
         ax.legend_.remove()
     # Update legend arguments
@@ -251,7 +252,12 @@ def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
     handles = [_create_marker(dict_color[cat], labels[i], marker[i], marker_size[i],
                               lw, edgecolor, linestyle[i], hatch[i], hatchcolor)
                for i, cat in enumerate(list_cat)]
+    # Create new legend
     legend = ax.legend(handles=handles, **args)
+    ax.add_artist(legend)
     if title_align_left:
         legend._legend_box.align = "left"
+    # Add the legend as an artist if add_legend is True
+    if keep_legend:
+        ax.add_artist(old_legend)
     return ax

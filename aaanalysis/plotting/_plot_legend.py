@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from aaanalysis import utils as ut
 
 # I Helper functions
-# TODO enable two legends (not remove existing one)
+
 
 # II Main function
 def plot_legend(ax: Optional[plt.Axes] = None,
@@ -42,6 +42,8 @@ def plot_legend(ax: Optional[plt.Axes] = None,
                 # Title
                 title: Optional[str] = None,
                 title_align_left: bool = True,
+                # Additional arguments
+                keep_legend: bool = False,
                 **kwargs
                 ) -> Union[plt.Axes, Tuple[List, List[str]]]:
     """
@@ -106,6 +108,8 @@ def plot_legend(ax: Optional[plt.Axes] = None,
         Legend title.
     title_align_left : bool, default=True
         Whether to align the title to the left.
+    keep_legend: bool, default=False
+        If ``True``, keep existing legend and add a new one.
     **kwargs
         Further key word arguments for :attr:`matplotlib.axes.Axes.legend`.
 
@@ -149,6 +153,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
                     "fontsize": fontsize, "fontsize_legend": fontsize_title}
     for key in args_non_neg:
         ut.check_number_range(name=key, val=args_non_neg[key], min_val=0, accept_none=True, just_int=False)
+    ut.check_bool(name="add_legend", val=keep_legend, accept_none=False)
     # Create new legend
     ax = ut.plot_legend_(ax=ax, dict_color=dict_color, list_cat=list_cat, labels=labels,
                          loc=loc, loc_out=loc_out, y=y, x=x, n_cols=n_cols,
@@ -158,5 +163,5 @@ def plot_legend(ax: Optional[plt.Axes] = None,
                          weight_font=weight_font, weight_title=weight_title,
                          marker=marker, marker_size=marker_size, lw=lw, linestyle=linestyle, edgecolor=edgecolor,
                          hatch=hatch, hatchcolor=hatchcolor, title=title, title_align_left=title_align_left,
-                         frameon=frameon, **kwargs)
+                         frameon=frameon, keep_legend=keep_legend, **kwargs)
     return ax
