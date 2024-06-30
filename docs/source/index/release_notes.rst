@@ -4,6 +4,30 @@ Release notes
 Version 0.1 (Beta Version)
 --------------------------
 
+NOT RELEASED v0.1.6 (2024-07-XX)
+--------------------------------
+
+Added
+~~~~~
+- **SequencePreprocessor**: A utility data preprocessing class (data handling module.
+- **comp_seq_sim**: A function for computing pairwise sequence similarity (data handling module).
+- **filter_seq**: A function for redundancy-reduction of sequences (data handling module).
+- **options**: Juxta Middle Domain (JMD) length can now be globally adjusted using the **jmd_n/c_len** options.
+
+Changed
+~~~~~~~
+- **ShapModel**: The **ShapExplainer** class has been renamed to **ShapModel** for consistency with the **TreeModel**
+  class and to avoid confusion with tje ShapExplainer models from the
+  `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ package.
+- **Requirements**: Biopython is now a required dependency only for the **aaanalysis[pro]** version.
+- **Module Renaming**: The **Perturbation** module has been renamed to **Protein Design** module
+  to better reflect its broad functionality.
+
+Fixed
+~~~~~
+- **Multiprocessing**: Now supported directly at the script level, outside of any functions or classes,
+  in the top-level of the script (global namespace).
+
 v0.1.5 (2024-04-18)
 -------------------
 

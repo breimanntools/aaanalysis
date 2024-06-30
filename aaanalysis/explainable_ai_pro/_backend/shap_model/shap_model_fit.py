@@ -1,5 +1,5 @@
 """
-This is a script for the backend of the ShapExplainer.fit() method.
+This is a script for the backend of the ShapModel.fit() method.
 """
 import numpy as np
 import shap
@@ -7,7 +7,7 @@ import shap
 import aaanalysis.utils as ut
 
 
-LIST_VERBOSE_SHAP_EXPLAINERS = [shap.KernelExplainer]
+LIST_VERBOSE_shap_modelS = [shap.KernelExplainer]
 
 
 # I Helper Functions
@@ -105,12 +105,12 @@ def monte_carlo_shap_estimation(X, labels=None, list_model_classes=None, list_mo
     # Compute SHAP values
     list_expected_value = []
     if verbose:
-        ut.print_start_progress(start_message=f"ShapExplainer starts Monte Carlo estimation of SHAP values over {n_rounds} rounds.")
+        ut.print_start_progress(start_message=f"ShapModel starts Monte Carlo estimation of SHAP values over {n_rounds} rounds.")
     for i in range(n_rounds):
         for j, selected_features in enumerate(is_selected):
             if verbose:
                 pct_progress = j / len(is_selected)
-                add_new_line = explainer_class in LIST_VERBOSE_SHAP_EXPLAINERS
+                add_new_line = explainer_class in LIST_VERBOSE_shap_modelS
                 ut.print_progress(i=i+pct_progress, n=n_rounds, add_new_line=add_new_line)
             # Adjust fuzzy labels (labels between 0 and 1, e.g., 0.5 -> 50% 1 and 50% 0)
             if fuzzy_labeling:
@@ -127,7 +127,7 @@ def monte_carlo_shap_estimation(X, labels=None, list_model_classes=None, list_mo
             list_expected_value.append(_exp_val)
     # Averaging over rounds and selections
     if verbose:
-        ut.print_end_progress(end_message=f"ShapExplainer finished Monte Carlo estimation and saved results.")
+        ut.print_end_progress(end_message=f"ShapModel finished Monte Carlo estimation and saved results.")
     shap_values = np.mean(mc_shap_values, axis=(2, 3))
     exp_val = np.mean(list_expected_value)
     return shap_values, exp_val

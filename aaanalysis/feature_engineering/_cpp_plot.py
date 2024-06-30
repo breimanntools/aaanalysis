@@ -239,7 +239,7 @@ class CPPPlot:
         See Also
         --------
         * :class:`CPP`: the respective computation class for the **CPP Analysis**.
-        * :class:`ShapExplainer`: the class combining CPP with the `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_
+        * :class:`ShapModel`: the class combining CPP with the `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_
           explainable Artificial Intelligence (AI) framework.
         * `Anatomy of a figure <https://matplotlib.org/stable/gallery/showcase/anatomy.html>`_ matplotlib guide on
           figure elements.

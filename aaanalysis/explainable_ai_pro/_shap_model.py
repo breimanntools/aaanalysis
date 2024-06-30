@@ -1,7 +1,7 @@
 """
-This is a script for the frontend of the ShapExplainer class used to obtain Mote Carlo estimates of feature impact.
+This is a script for the frontend of the ShapModel class used to obtain Mote Carlo estimates of feature impact.
 """
-from typing import Optional, Dict, List, Tuple, Type, Union, Callable
+from typing import Optional, List, Type, Union, Callable
 import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator
@@ -12,17 +12,17 @@ import shap
 import aaanalysis.utils as ut
 from ._backend.check_models import (check_match_labels_X,
                                     check_match_X_is_selected)
-from ._backend.shap_explainer.shap_explainer_fit import monte_carlo_shap_estimation
-from ._backend.shap_explainer.se_add_feat_impact import (comp_shap_feature_importance,
-                                                         insert_shap_feature_importance,
-                                                         comp_shap_feature_impact,
-                                                         insert_shap_feature_impact)
-from ._backend.shap_explainer.se_add_sample_mean_dif import add_sample_mean_dif_
+from ._backend.shap_model.shap_model_fit import monte_carlo_shap_estimation
+from ._backend.shap_model.sm_add_feat_impact import (comp_shap_feature_importance,
+                                                     insert_shap_feature_importance,
+                                                     comp_shap_feature_impact,
+                                                     insert_shap_feature_impact)
+from ._backend.shap_model.sm_add_sample_mean_dif import add_sample_mean_dif_
 
 
 # I Helper Functions
 # Check init
-def check_shap_explainer(explainer_class=None, explainer_kwargs=None):
+def check_shap_model(explainer_class=None, explainer_kwargs=None):
     """Check if explainer class is a valid shap explainer"""
     ut.check_mode_class(model_class=explainer_class)
     ut.check_dict(name="explainer_kwargs", val=explainer_kwargs, accept_none=True)
@@ -73,7 +73,7 @@ def check_match_class_explainer_and_models(explainer_class=None, explainer_kwarg
 def check_shap_values(shap_values=None):
     """Check if shap values are properly set"""
     if shap_values is None:
-        raise ValueError("'shape_values' are None. Use 'ShapExplainer().fit()' to compute them.")
+        raise ValueError("'shape_values' are None. Use 'ShapModel().fit()' to compute them.")
     _ = ut.check_array_like(name="shap_values", val=shap_values, dtype="numeric")
 
 
@@ -219,7 +219,7 @@ def check_match_sample_positions_group_average(sample_positions=None, group_aver
 def check_match_df_feat_shap_values(df_feat=None, shap_values=None, drop=False, shap_feat_importance=False):
     """Check if df_feat matches with importance values"""
     if shap_values is None:
-        raise ValueError(f"'shap_values' is None. Please fit ShapExplainer before adding feature impact.")
+        raise ValueError(f"'shap_values' is None. Please fit ShapModel before adding feature impact.")
     n_feat = len(df_feat)
     n_samples, n_feat_imp = shap_values.shape
     if n_feat != n_feat_imp:
@@ -237,9 +237,9 @@ def check_match_df_feat_shap_values(df_feat=None, shap_values=None, drop=False, 
 
 
 # II Main Functions
-class ShapExplainer:
+class ShapModel:
     """
-    SHAP Explainer class: A wrapper for SHAP (SHapley Additive exPlanations) explainers to obtain Monte Carlo estimates
+    SHAP Model class: A wrapper for SHAP (SHapley Additive exPlanations) explainers to obtain Monte Carlo estimates
     for feature impact [Breimann24c]_.
 
     `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ is an explainable Artificial Intelligence (AI) framework
@@ -287,7 +287,7 @@ class ShapExplainer:
 
         Notes
         -----
-        * All attributes are set during fitting via the :meth:`ShapExplainer.fit` method and can be directly accessed.
+        * All attributes are set during fitting via the :meth:`ShapModel.fit` method and can be directly accessed.
         * The Explainer models should be provided from the `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_
           package
         * SHAP model fitting messages appear in red and are not controlled by ``verbose``, unlike AAanalysis progress
@@ -314,7 +314,7 @@ class ShapExplainer:
         --------
         * :class:`sklearn.ensemble.RandomForestClassifier` for random forest model.
         * :class:`sklearn.ensemble.ExtraTreesClassifier` for extra trees model.
-        * :meth:`ShapExplainer.add_feat_impact` for details on feature impact and SHAP value-based feature importance.
+        * :meth:`ShapModel.add_feat_impact` for details on feature impact and SHAP value-based feature importance.
 
         Warnings
         --------
@@ -322,7 +322,7 @@ class ShapExplainer:
 
         Examples
         --------
-        .. include:: examples/shap_explainer.rst
+        .. include:: examples/shap_model.rst
         """
         # Global parameters
         verbose = ut.check_verbose(verbose)
@@ -331,7 +331,7 @@ class ShapExplainer:
         if explainer_class is None:
             explainer_class = shap.TreeExplainer
             explainer_kwargs = explainer_kwargs or dict(model_output="probability")
-        explainer_kwargs = check_shap_explainer(explainer_class=explainer_class, explainer_kwargs=explainer_kwargs)
+        explainer_kwargs = check_shap_model(explainer_class=explainer_class, explainer_kwargs=explainer_kwargs)
         # Check model parameters
         if list_model_classes is None:
             list_model_classes = [RandomForestClassifier, ExtraTreesClassifier]
@@ -377,7 +377,7 @@ class ShapExplainer:
             is_selected: ut.ArrayLike2D = None,
             fuzzy_labeling: bool = False,
             n_background_data: Optional[int] = None,
-            ) -> "ShapExplainer":
+            ) -> "ShapModel":
         """
         Obtain SHAP values aggregated across prediction models and training rounds.
 
@@ -403,8 +403,8 @@ class ShapExplainer:
 
         Returns
         -------
-        ShapExplainer
-            The fitted ShapExplainer model instance.
+        ShapModel
+            The fitted ShapModel model instance.
 
         Notes
         -----

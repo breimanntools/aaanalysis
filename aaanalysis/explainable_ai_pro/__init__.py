@@ -1,5 +1,5 @@
-from ._shap_explainer import ShapExplainer
+from ._shap_model import ShapModel
 
 __all__ = [
-    "ShapExplainer",
+    "ShapModel",
 ]

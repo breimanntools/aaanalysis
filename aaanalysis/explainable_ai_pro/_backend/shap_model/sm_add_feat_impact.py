@@ -1,5 +1,5 @@
 """
-This is a script for the backend of the ShapExplainer.add_feat_impact() and ShapExplainer.add_feat_importance() methods.
+This is a script for the backend of the ShapModel.add_feat_impact() and ShapModel.add_feat_importance() methods.
 """
 import numpy as np
 import pandas as pd

@@ -1,4 +1,4 @@
-"""This is the backend for the ShapExplainer().add_sample_mean_dif() method"""
+"""This is the backend for the ShapModel().add_sample_mean_dif() method"""
 import numpy as np
 import pandas as pd
 import aaanalysis.utils as ut

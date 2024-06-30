@@ -34,7 +34,7 @@ __all__ = [
     "SeqMut",
     "SeqMutPlot",
     "TreeModel",
-    # "ShapExplainer"       # SHAP
+    # "ShapModel"       # SHAP
     "plot_get_clist",
     "plot_get_cmap",
     "plot_get_cdict",
@@ -50,11 +50,11 @@ __all__ = [
 
 # Import of professional (pro) version features if dependencies are available
 try:
-    from .explainable_ai_pro import ShapExplainer
+    from .explainable_ai_pro import ShapModel
     from .data_handling_pro import comp_seq_sim, filter_seq
     from .show_html import display_df
     # Extend the __all__ list with pro features if successful
-    __all__.extend(["ShapExplainer",
+    __all__.extend(["ShapModel",
                     "display_df",
                     "comp_seq_sim",
                     "filter_seq"])
@@ -76,7 +76,7 @@ except ImportError as e:
         return UnavailableFeature
 
     # Use the factory function to create placeholders for pro features
-    ShapExplainer = make_pro_feature("ShapExplainer")
+    ShapModel = make_pro_feature("ShapModel")
     display_df = make_pro_feature("display_df")
     comp_seq_sim = make_pro_feature("comp_seq_sim")
     filter_seq = make_pro_feature("filter_seq")

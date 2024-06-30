@@ -1,4 +1,4 @@
-"""This script tests the ShapExplainer.fit() method."""
+"""This script tests the ShapModel.fit() method."""
 import numpy as np
 import pytest
 from hypothesis import given, settings
@@ -62,9 +62,9 @@ df_parts = sf.get_df_parts(df_seq=df_seq)
 valid_X = sf.feature_matrix(features=df_feat["feature"], df_parts=df_parts)
 
 
-class TestShapExplainerFit:
+class TestShapModelFit:
     """
-    Simple Positive Test Cases for ShapExplainer.fit() method.
+    Simple Positive Test Cases for ShapModel.fit() method.
     Each test focuses on one parameter.
     """
 
@@ -73,14 +73,14 @@ class TestShapExplainerFit:
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=st.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
     def test_X_parameter(self, X):
-        se = aa.ShapExplainer(**MODEL_KWARGS)
+        sm = aa.ShapModel(**MODEL_KWARGS)
         size, n_feat = X.shape
         if size > 3 and n_feat > 3:
             labels = create_labels(X.shape[0])
             if not check_invalid_conditions(X):
-                se.fit(X, labels=labels, **ARGS)
-                assert se.shap_values is not None
-                assert se.exp_value is not None
+                sm.fit(X, labels=labels, **ARGS)
+                assert sm.shap_values is not None
+                assert sm.exp_value is not None
 
     @settings(max_examples=5, deadline=100000)
     @given(labels=st.lists(st.integers(0, 1), min_size=10, max_size=20))
@@ -91,20 +91,20 @@ class TestShapExplainerFit:
         min_class_count = min(counts)
         if min_class_count >= 2 and n_feat > 3 and len(set(labels)) == 2:
             if not check_invalid_conditions(X):
-                se = aa.ShapExplainer(**MODEL_KWARGS)
-                se.fit(X, labels=labels, **ARGS)
-                assert se.shap_values is not None
-                assert se.exp_value is not None
+                sm = aa.ShapModel(**MODEL_KWARGS)
+                sm.fit(X, labels=labels, **ARGS)
+                assert sm.shap_values is not None
+                assert sm.exp_value is not None
 
     def test_is_selected_parameter(self):
         for i in range(2):
             size, n_feat = valid_X.shape
             labels = create_labels(valid_X.shape[0])
             list_is_selected = create_list_is_selected(n_features=n_feat)
-            se = aa.ShapExplainer(**MODEL_KWARGS)
-            se.fit(valid_X, labels=labels, is_selected=list_is_selected, **ARGS)
-            assert se.shap_values is not None
-            assert se.exp_value is not None
+            sm = aa.ShapModel(**MODEL_KWARGS)
+            sm.fit(valid_X, labels=labels, is_selected=list_is_selected, **ARGS)
+            assert sm.shap_values is not None
+            assert sm.exp_value is not None
 
     @settings(max_examples=3, deadline=100000)
     @given(n_rounds=st.integers(min_value=1, max_value=3))
@@ -114,112 +114,112 @@ class TestShapExplainerFit:
         unique, counts = np.unique(labels, return_counts=True)
         min_class_count = min(counts)
         if min_class_count >= 2 and n_feat > 3 and not check_invalid_conditions(valid_X):
-            se = aa.ShapExplainer(**MODEL_KWARGS)
-            se.fit(valid_X, labels=labels, n_rounds=n_rounds)
-            assert se.shap_values is not None
-            assert se.exp_value is not None
+            sm = aa.ShapModel(**MODEL_KWARGS)
+            sm.fit(valid_X, labels=labels, n_rounds=n_rounds)
+            assert sm.shap_values is not None
+            assert sm.exp_value is not None
 
     def test_fuzzy_labeling_parameter(self):
-        se = aa.ShapExplainer(**MODEL_KWARGS, verbose=False)
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
         for fuzzy_labeling in [True, False]:
             labels = create_labels(valid_X.shape[0])
-            se.fit(valid_X, labels=labels, fuzzy_labeling=fuzzy_labeling, **ARGS)
-            assert se.shap_values is not None
-            assert se.exp_value is not None
+            sm.fit(valid_X, labels=labels, fuzzy_labeling=fuzzy_labeling, **ARGS)
+            assert sm.shap_values is not None
+            assert sm.exp_value is not None
         labels[0] = 0.5
-        se.fit(valid_X, labels=labels, fuzzy_labeling=True)
-        assert se.shap_values is not None
-        assert se.exp_value is not None
+        sm.fit(valid_X, labels=labels, fuzzy_labeling=True)
+        assert sm.shap_values is not None
+        assert sm.exp_value is not None
 
     def test_label_target_class_parameter(self):
         for label_target_class in [0 ,1]:
-            se = aa.ShapExplainer(**MODEL_KWARGS)
+            sm = aa.ShapModel(**MODEL_KWARGS)
             labels = create_labels(valid_X.shape[0])
-            se.fit(valid_X, labels=labels, label_target_class=label_target_class, **ARGS)
-            assert se.shap_values is not None
+            sm.fit(valid_X, labels=labels, label_target_class=label_target_class, **ARGS)
+            assert sm.shap_values is not None
 
     def test_n_background_data_parameter(self):
         for n_background_data in [None, 5, 45]:
             labels = create_labels(valid_X.shape[0])
-            se = aa.ShapExplainer(**MODEL_KWARGS)
-            se.fit(valid_X, labels=labels, n_background_data=n_background_data, **ARGS)
-            assert se.shap_values is not None
+            sm = aa.ShapModel(**MODEL_KWARGS)
+            sm.fit(valid_X, labels=labels, n_background_data=n_background_data, **ARGS)
+            assert sm.shap_values is not None
 
     # Negative tests
     def test_invalid_X_parameter(self):
-        se = aa.ShapExplainer(**MODEL_KWARGS)
+        sm = aa.ShapModel(**MODEL_KWARGS)
         with pytest.raises(ValueError):
-            se.fit(X="invalid", labels=create_labels(10))
+            sm.fit(X="invalid", labels=create_labels(10))
         with pytest.raises(ValueError):
-            se.fit(X=np.array([]), labels=create_labels(0))
+            sm.fit(X=np.array([]), labels=create_labels(0))
         with pytest.raises(ValueError):
-            se.fit(X=np.array([np.nan, np.nan, np.nan]).reshape(1, -1), labels=create_labels(1))
+            sm.fit(X=np.array([np.nan, np.nan, np.nan]).reshape(1, -1), labels=create_labels(1))
 
     def test_invalid_labels_parameter(self):
-        se = aa.ShapExplainer(**MODEL_KWARGS)
+        sm = aa.ShapModel(**MODEL_KWARGS)
         with pytest.raises(ValueError):
-            se.fit(valid_X, labels="invalid")
+            sm.fit(valid_X, labels="invalid")
         with pytest.raises(ValueError):
-            se.fit(valid_X, labels=np.array([2, -1, 3]))
+            sm.fit(valid_X, labels=np.array([2, -1, 3]))
         with pytest.raises(ValueError):
-            se.fit(valid_X, labels=np.array([1]))
+            sm.fit(valid_X, labels=np.array([1]))
 
     def test_invalid_is_selected_parameter(self):
-        se = aa.ShapExplainer(**MODEL_KWARGS)
+        sm = aa.ShapModel(**MODEL_KWARGS)
         labels = create_labels(valid_X.shape[0])
         with pytest.raises(ValueError):
-            se.fit(valid_X, labels=labels, is_selected="invalid")
+            sm.fit(valid_X, labels=labels, is_selected="invalid")
         with pytest.raises(ValueError):
-            se.fit(valid_X, labels=labels, is_selected=np.array([True, False]))
+            sm.fit(valid_X, labels=labels, is_selected=np.array([True, False]))
         with pytest.raises(ValueError):
             size, n_feat = valid_X.shape
             labels = create_labels(valid_X.shape[0])
             # Wrong dimension
             list_is_selected = create_list_is_selected(n_features=n_feat, d1=False)
-            se = aa.ShapExplainer(**MODEL_KWARGS)
-            se.fit(valid_X, labels=labels, is_selected=list_is_selected, **ARGS)
+            sm = aa.ShapModel(**MODEL_KWARGS)
+            sm.fit(valid_X, labels=labels, is_selected=list_is_selected, **ARGS)
 
     def test_invalid_n_rounds_parameter(self):
-        se = aa.ShapExplainer(**MODEL_KWARGS, verbose=False)
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
         with pytest.raises(ValueError):
-            se.fit(valid_X, labels=create_labels(valid_X.shape[0]), n_rounds="invalid")
+            sm.fit(valid_X, labels=create_labels(valid_X.shape[0]), n_rounds="invalid")
         with pytest.raises(ValueError):
-            se.fit(valid_X, labels=create_labels(valid_X.shape[0]), n_rounds=-1)
+            sm.fit(valid_X, labels=create_labels(valid_X.shape[0]), n_rounds=-1)
 
     def test_invalid_fuzzy_labeling_parameter(self):
-        se = aa.ShapExplainer(**MODEL_KWARGS, verbose=False)
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
         with pytest.raises(ValueError):
-            se.fit(valid_X, labels=create_labels(valid_X.shape[0]), fuzzy_labeling="invalid")
+            sm.fit(valid_X, labels=create_labels(valid_X.shape[0]), fuzzy_labeling="invalid")
         with pytest.raises(ValueError):
             labels = valid_labels.copy()
-            se = aa.ShapExplainer()
+            sm = aa.ShapModel()
             labels[0] = 0.5
-            se.fit(valid_X, labels=labels, fuzzy_labeling=False)
+            sm.fit(valid_X, labels=labels, fuzzy_labeling=False)
 
     def test_invalid_label_target_class_parameter(self):
-        se = aa.ShapExplainer(**MODEL_KWARGS)
+        sm = aa.ShapModel(**MODEL_KWARGS)
         with pytest.raises(ValueError):
-            se.fit(valid_X, labels=create_labels(valid_X.shape[0]), label_target_class="invalid")
+            sm.fit(valid_X, labels=create_labels(valid_X.shape[0]), label_target_class="invalid")
         with pytest.raises(ValueError):
-            se.fit(valid_X, labels=create_labels(valid_X.shape[0]), label_target_class=-1)
+            sm.fit(valid_X, labels=create_labels(valid_X.shape[0]), label_target_class=-1)
 
     def test_invalid_n_background_data_parameter(self):
-        se = aa.ShapExplainer(**MODEL_KWARGS)
+        sm = aa.ShapModel(**MODEL_KWARGS)
         with pytest.raises(ValueError):
-            se.fit(valid_X, labels=create_labels(valid_X.shape[0]), n_background_data="invalid")
+            sm.fit(valid_X, labels=create_labels(valid_X.shape[0]), n_background_data="invalid")
         with pytest.raises(ValueError):
-            se.fit(valid_X, labels=create_labels(valid_X.shape[0]), n_background_data=-5)
+            sm.fit(valid_X, labels=create_labels(valid_X.shape[0]), n_background_data=-5)
 
 
-class TestShapExplainerFitComplex:
+class TestShapModelFitComplex:
     """
-    Complex Test Cases for ShapExplainer.fit() method.
+    Complex Test Cases for ShapModel.fit() method.
     Includes one positive and one negative test case, each combining multiple parameters.
     """
 
     # Complex positive test case
     def test_complex_valid_scenario(self):
-        se = aa.ShapExplainer(**MODEL_KWARGS, verbose=False)
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
         size, n_feat = valid_X.shape
         labels = create_labels(size)
         list_is_selected = create_list_is_selected(n_features=n_feat)
@@ -228,18 +228,18 @@ class TestShapExplainerFitComplex:
         label_target_class = 1
         n_background_data = 10
         # Execute with a combination of valid parameters
-        se.fit(valid_X, labels=labels, is_selected=list_is_selected, n_rounds=n_rounds, fuzzy_labeling=fuzzy_labeling,
+        sm.fit(valid_X, labels=labels, is_selected=list_is_selected, n_rounds=n_rounds, fuzzy_labeling=fuzzy_labeling,
                label_target_class=label_target_class, n_background_data=n_background_data)
         # Assertions to ensure proper functionality
-        assert se.shap_values is not None
-        assert se.exp_value is not None
-        assert len(se.shap_values) == size
-        assert se.shap_values.shape[1] == n_feat
-        assert isinstance(se.exp_value, float)
+        assert sm.shap_values is not None
+        assert sm.exp_value is not None
+        assert len(sm.shap_values) == size
+        assert sm.shap_values.shape[1] == n_feat
+        assert isinstance(sm.exp_value, float)
 
     # Complex negative test case
     def test_complex_invalid_scenario(self):
-        se = aa.ShapExplainer(**MODEL_KWARGS, verbose=False)
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
         size, n_feat = valid_X.shape
         labels = create_labels(size)
         labels[0] = -1  # Invalid label
@@ -250,5 +250,5 @@ class TestShapExplainerFitComplex:
         n_background_data = -10  # Invalid n_background_data
         # Execute with a combination of invalid parameters and expect a ValueError
         with pytest.raises(ValueError):
-            se.fit(valid_X, labels=labels, is_selected=list_is_selected, n_rounds=n_rounds,
+            sm.fit(valid_X, labels=labels, is_selected=list_is_selected, n_rounds=n_rounds,
                    fuzzy_labeling=fuzzy_labeling, label_target_class=label_target_class, n_background_data=n_background_data)
