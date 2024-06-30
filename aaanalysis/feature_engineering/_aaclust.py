@@ -152,7 +152,7 @@ class AAclust(Wrapper):
         self._model_class = model_class
         self._model_kwargs = model_kwargs
         # Output parameters (set during model fitting)
-        self.model : Optional[ClusterMixin] = None
+        self.model: Optional[ClusterMixin] = None
         self.n_clusters: Optional[int] = None
         self.labels_: Optional[ut.ArrayLike1D] = None
         self.centers_: Optional[ut.ArrayLike1D] = None

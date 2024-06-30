@@ -2,9 +2,10 @@
 This is a script for utility functions for statistical measures.
 """
 import numpy as np
-from sklearn.metrics import roc_auc_score, pairwise_distances
+from sklearn.metrics import roc_auc_score
 from scipy.stats import entropy, gaussian_kde
 from collections import OrderedDict
+from scipy.spatial import distance
 
 
 # AUC adjusted
@@ -54,7 +55,7 @@ def bic_score_(X, labels=None):
 
     # Compute variance over all clusters
     list_masks = [labels == label for label in center_labels]
-    sum_squared_dist = sum([sum(pairwise_distances(X[mask], [center], metric='euclidean') ** 2) for mask, center in zip(list_masks, centers)])
+    sum_squared_dist = sum([sum(distance.cdist(X[mask], [center], 'euclidean') ** 2) for mask, center in zip(list_masks, centers)])
 
     # Compute between-cluster variance
     denominator = max((n_samples - n_classes) * n_features, epsilon)

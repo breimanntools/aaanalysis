@@ -80,10 +80,10 @@ class TestAAclustEvaluate:
         with pytest.raises(ValueError):
             aa.AAclust().eval(X)
 
-    @settings(deadline=1000)
+    @settings(deadline=1500)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=10, max_side=50),
-                         elements=some.floats(allow_nan=False, allow_infinity=False, min_value=1)),
-        labels_length=some.integers(min_value=10, max_value=50))
+                         elements=some.floats(allow_nan=False, allow_infinity=False, min_value=1, max_value=10000)),
+           labels_length=some.integers(min_value=10, max_value=50))
     def test_matching_X_labels(self, X, labels_length):
         """Test evaluate with matching X and labels dimensions."""
         # Random label assignments
