@@ -70,10 +70,10 @@ Explainable AI
     TreeModel
     ShapExplainer
 
-.. _perturbation_api:
+.. _protein_design_api:
 
-Perturbation
-------------
+Protein Design
+--------------
 .. autosummary::
     :toctree: generated/
     :template: autosummary/class_template.rst
