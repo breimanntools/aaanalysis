@@ -253,11 +253,11 @@ def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
                               lw, edgecolor, linestyle[i], hatch[i], hatchcolor)
                for i, cat in enumerate(list_cat)]
     # Create new legend
-    legend = ax.legend(handles=handles, **args)
-    ax.add_artist(legend)
+    legend = ax.legend(handles=handles, labels=labels, **args)
     if title_align_left:
         legend._legend_box.align = "left"
-    # Add the legend as an artist if add_legend is True
-    if keep_legend:
+    # Add the legend as an artist (must be inside plot)
+    if keep_legend and old_legend:
+        print("here")
         ax.add_artist(old_legend)
     return ax

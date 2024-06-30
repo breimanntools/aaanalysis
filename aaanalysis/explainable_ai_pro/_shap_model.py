@@ -110,7 +110,6 @@ def check_is_selected(is_selected=None, n_feat=None):
 
 def check_match_labels_fuzzy_labeling(labels=None, fuzzy_labeling=False, verbose=True):
     """Check if only on label is fuzzy labeled and that the remaining sample balanced (best training scenario)"""
-    # TODO adjust for multi-class
     if not fuzzy_labeling:
         return  # Skip check if fuzzy labeling is not enabled
     # Check for one fuzzy label and balance among other labels

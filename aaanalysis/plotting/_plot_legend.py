@@ -109,7 +109,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
     title_align_left : bool, default=True
         Whether to align the title to the left.
     keep_legend: bool, default=False
-        If ``True``, keep existing legend and add a new one.
+        If ``True``, keep existing legend (must be within plot) and add a new one.
     **kwargs
         Further key word arguments for :attr:`matplotlib.axes.Axes.legend`.
 

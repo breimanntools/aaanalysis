@@ -117,5 +117,7 @@ class TestCompCentersComplex:
                               elements=some.floats()))
     def test_combination_invalid_parameters(self, X, labels):
         """Test combination of invalid parameters."""
-        with pytest.raises(ValueError):
-            aa.AAclust().comp_centers(X, labels)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            with pytest.raises(ValueError):
+                aa.AAclust().comp_centers(X, labels)

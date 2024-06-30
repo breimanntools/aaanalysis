@@ -57,6 +57,7 @@ def _sort_X_labels_names(X, labels=None, names=None):
         names = [names[i] for i in sorted_order]
     return X, labels, names
 
+
 def _get_df_corr(X=None, X_ref=None):
     """Get df with correlations"""
     # Temporary labels to avoid any confusion with potential duplicates

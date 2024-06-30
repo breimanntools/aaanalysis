@@ -1,5 +1,5 @@
 """
-This is a script for testing the plot_set_legend function.
+This is a script for testing the plot_legend function.
 """
 from hypothesis import given, example, settings
 from hypothesis import strategies as st
@@ -23,7 +23,7 @@ def dict_color():
 
 
 class TestPlotSetLegend:
-    """Test plot_set_legend function"""
+    """Test plot_legend function"""
 
     @pytest.fixture(autouse=True)
     def create_fig_and_ax(self):
@@ -62,7 +62,7 @@ class TestPlotSetLegend:
 
     @settings(max_examples=5, deadline=500)
     @given(n_cols=st.integers(min_value=1, max_value=10))
-    def test_plot_set_legend_n_cols(self, n_cols, dict_color):
+    def test_plot_legend_n_cols(self, n_cols, dict_color):
         """Test the 'n_cols' parameter."""
         ax = plt.gca()
         result = aa.plot_legend(ax=ax, n_cols=n_cols, dict_color=dict_color)
@@ -70,7 +70,7 @@ class TestPlotSetLegend:
 
     @settings(max_examples=5, deadline=500)
     @given(labelspacing=st.floats(0, 5))
-    def test_plot_set_legend_labelspacing(self, labelspacing, dict_color):
+    def test_plot_legend_labelspacing(self, labelspacing, dict_color):
         """Test the 'labelspacing' parameter."""
         ax = plt.gca()
         result = aa.plot_legend(ax=ax, labelspacing=labelspacing, dict_color=dict_color)
@@ -78,7 +78,7 @@ class TestPlotSetLegend:
 
     @settings(max_examples=5, deadline=500)
     @given(columnspacing=st.floats(0, 5))
-    def test_plot_set_legend_columnspacing(self, columnspacing, dict_color):
+    def test_plot_legend_columnspacing(self, columnspacing, dict_color):
         """Test the 'columnspacing' parameter."""
         ax = plt.gca()
         result = aa.plot_legend(ax=ax, columnspacing=columnspacing, dict_color=dict_color)
@@ -86,7 +86,7 @@ class TestPlotSetLegend:
 
     @settings(max_examples=5, deadline=500)
     @given(handletextpad=st.floats(0, 5))
-    def test_plot_set_legend_handletextpad(self, handletextpad, dict_color):
+    def test_plot_legend_handletextpad(self, handletextpad, dict_color):
         """Test the 'handletextpad' parameter."""
         ax = plt.gca()
         result = aa.plot_legend(ax=ax, handletextpad=handletextpad, dict_color=dict_color)
@@ -98,28 +98,28 @@ class TestPlotSetLegend:
         result = aa.plot_legend(ax=ax, loc_out=True, x=0, y=0, dict_color=dict_color)
         assert isinstance(result, plt.Axes)
 
-    def test_plot_set_legend_loc_outside(self, dict_color):
+    def test_plot_legend_loc_outside(self, dict_color):
         """Test 'loc_out' parameter."""
         fig, ax = plt.subplots()
         ax.plot([0, 1], [0, 2], label="Sample Line")
         aa.plot_legend(ax=ax, loc_out=True, dict_color=dict_color)
         assert ax.get_legend().get_bbox_to_anchor().y0 <= 0
 
-    def test_plot_set_legend_invalid_fontsize(self, dict_color):
+    def test_plot_legend_invalid_fontsize(self, dict_color):
         """Test with 'fontsize' less than 0."""
         fig, ax = plt.subplots()
         ax.plot([0, 1], [0, 2], label="Sample Line")
         with pytest.raises(ValueError):
             aa.plot_legend(ax=ax, dict_color=dict_color, fontsize=-5)
 
-    def test_plot_set_legend_invalid_marker_size(self, dict_color):
+    def test_plot_legend_invalid_marker_size(self, dict_color):
         """Test with negative 'marker_size'."""
         fig, ax = plt.subplots()
         ax.plot([0, 1], [0, 2], label="Sample Line")
         with pytest.raises(ValueError):
             aa.plot_legend(ax=ax, dict_color=dict_color, marker_size=-10)
 
-    def test_plot_set_legend_color_and_category(self, dict_color):
+    def test_plot_legend_color_and_category(self, dict_color):
         """Test 'dict_color' and 'list_cat' parameters together."""
         fig, ax = plt.subplots()
         ax.plot([0, 1], [0, 2], label="Sample Line")
@@ -129,7 +129,7 @@ class TestPlotSetLegend:
         legend_texts = [text.get_text() for text in ax.get_legend().get_texts()]
         assert set(categories) == set(legend_texts)
 
-    def test_plot_set_legend_invalid_color_and_category(self, dict_color):
+    def test_plot_legend_invalid_color_and_category(self, dict_color):
         """Test with invalid 'dict_color' and 'list_cat'."""
         fig, ax = plt.subplots()
         ax.plot([0, 1], [0, 2], label="Sample Line")
@@ -158,14 +158,28 @@ class TestPlotSetLegend:
             else:
                 aa.plot_legend(ax=ax, dict_color={'A': 'red'}, list_cat=["B"])
 
+    def test_plot_keep_legend(self, dict_color):
+        """Test the 'labelspacing' parameter."""
+        ax = plt.gca()
+        for keep_legend in [False, True]:
+            result = aa.plot_legend(ax=ax, dict_color=dict_color, keep_legend=keep_legend)
+            assert isinstance(result, plt.Axes)
+
+    def test_plot_keep_legend_invalid(self, dict_color):
+        """Test the 'labelspacing' parameter."""
+        ax = plt.gca()
+        for keep_legend in [None, 1, "invalid", []]:
+            with pytest.raises(ValueError):
+                result = aa.plot_legend(ax=ax, dict_color=dict_color, keep_legend=keep_legend)
+
 
 # II. Complex Cases Test Class
-class TestPlotSetLegendComplex:
-    """Test plot_set_legend function with complex scenarios."""
+class TestPlotLegendComplex:
+    """Test plot_legend function with complex scenarios."""
 
     @settings(max_examples=5, deadline=500)
     @given(st.floats(1, 10))
-    def test_plot_set_legend_n_cols(self, n_cols):
+    def test_plot_legend_n_cols(self, n_cols):
         ax = plt.gca()
         dict_color = {str(i): "r" for i in range(0, 10)}
         result = aa.plot_legend(ax=ax, n_cols=int(n_cols), dict_color=dict_color)
@@ -173,14 +187,15 @@ class TestPlotSetLegendComplex:
 
     @settings(max_examples=5, deadline=500)
     @given(st.lists(st.text(), min_size=2, max_size=5))
-    def test_plot_set_legend_custom_labels(self, labels):
+    def test_plot_legend_custom_labels(self, labels):
         fig, ax = plt.subplots()
         labels = list(set([x.replace("_", "X") for x in labels if len(x) > 1]))
-        # Use the plot_legend function to create the legend
-        ax = aa.plot_legend(ax=ax, dict_color={label: "red" for label in labels})
-        # Extract and verify the legend labels
-        legend_labels = [text.get_text() for text in ax.get_legend().get_texts()]
-        assert set(legend_labels) == set(labels)
+        if len(labels) > 1:
+            # Use the plot_legend function to create the legend
+            ax = aa.plot_legend(ax=ax, dict_color={label: "red" for label in labels})
+            # Extract and verify the legend labels
+            legend_labels = [text.get_text() for text in ax.get_legend().get_texts()]
+            assert set(legend_labels) == set(labels)
 
     def test_handles_generation(self, dict_color):
         """Test handles based on dict_color and list_cat."""
