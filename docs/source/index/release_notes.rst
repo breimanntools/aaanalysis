@@ -1,10 +1,10 @@
 Release notes
 =============
 
-Version 0.1 (Beta Version)
+Version 1.0 (Alpha Version)
 --------------------------
 
-NOT RELEASED v0.1.6 (2024-07-XX)
+v1.0.0 (2024-07-01)
 --------------------------------
 
 Added
@@ -27,6 +27,9 @@ Fixed
 ~~~~~
 - **Multiprocessing**: Now supported directly at the script level, outside of any functions or classes,
   in the top-level of the script (global namespace).
+
+Version 0.1 (Beta Version)
+--------------------------
 
 v0.1.5 (2024-04-18)
 -------------------

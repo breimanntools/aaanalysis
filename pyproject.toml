@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "aaanalysis"
-version = "0.1.5"
+version = "1.0.0"
 description = "Python framework for interpretable protein prediction"
 authors = ["Stephan Breimann <stephanbreimann@gmail.de>"]
 license = "BSD-3-Clause"
@@ -33,7 +33,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "License :: OSI Approved :: MIT License",
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
+    # 1 - Planning (The project is still in the planning phase)
+    # 2 - Pre-Alpha (Initial development, not yet functional)
     # 3 - Alpha (Early development stage, not feature-complete, may be unstable, intended for early adopters and testers)
     # 4 - Beta (feature complete, may need minor improvements
     # 5 - Prodcution/Stable (softaware is stable & deployed)
