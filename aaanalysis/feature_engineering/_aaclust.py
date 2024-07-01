@@ -621,14 +621,13 @@ class AAclust(Wrapper):
         """
         Select a redundancy-reduced set of numerical scales with defined subcategory coverage.
 
-        This method reduces the number of numerical scales in the feature matrix `X` by clustering them.
-        It ensures that the selected clusters cover a minimum percentage (`min_coverage`) of unique subcategories
-        in `names_ref`.
+        This method reduces the number of numerical scales in the feature matrix ``X``, while
+        ensuring that the selected scales cover a minimum percentage (``min_coverage``) of subcategories.
 
-        The process involves clustering the scales in `X` and selecting one scale per cluster. The initial number of
-        clusters is determined by the number of unique subcategories in `names_ref`. The number of clusters is increased
-        step-wise until the overlap (coverage) between the unique elements in `names_ref` and the subcategories of
-        the selected scales meets or exceeds the defined threshold (`min_coverage`).
+        The process involves clustering the scales in ``X`` and selecting one scale per cluster. The initial number of
+        clusters is determined by the number of unique subcategories in ``names_ref``. The number of clusters is
+        increased step-wise until the overlap (coverage) between the unique elements in ``names_ref`` and the
+        subcategories of the selected scales meets a defined threshold (``min_coverage``).
 
         Parameters
         ----------
