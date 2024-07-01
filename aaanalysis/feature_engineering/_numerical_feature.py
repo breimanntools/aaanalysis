@@ -20,32 +20,8 @@ def check_match_df_scales_letter_new(df_scales=None, letter_new=None):
         raise ValueError(f"Letter '{letter_new}' already exists in alphabet of 'df_scales': {alphabet}")
 
 
-# TODO (see AAclust.comp_coverage, AAclust.comp_correlation),
 # TODO filter_correlation)
-# TODO add filter_coverage
-"""
-def get_select_scales(list_subcat_ref=None):
-    """"""
-    print("top")
-    df_scales = aa.load_scales()
-    df_cat = aa.load_scales(name="scales_cat")
-    df_cat = df_cat[df_cat["subcategory"].isin(list_subcat_ref)]
 
-    df_scales = df_scales[df_cat["scale_id"].to_list()]
-    aac = aa.AAclust()
-    n = len(list_subcat_ref)
-    coverage = 0
-    scales = []
-    while coverage != 100:
-        X = np.array(df_scales).T
-        scales = aac.fit(X, names=list(df_scales), n_clusters=n).medoid_names_
-        list_subcat = df_cat[df_cat["scale_id"].isin(scales)]["subcategory"].to_list()
-        coverage = aac.comp_coverage(names=list_subcat, names_ref=list_subcat_ref)
-        #print(len(list_subcat), coverage, [x for x in list_subcat_ref if x not in list_subcat])
-        n += 1
-    df_scales = df_scales[scales]
-    return df_scales
-"""
 # II Main Functions
 class NumericalFeature:
     """
@@ -53,14 +29,12 @@ class NumericalFeature:
     such as amino acid scales or a feature matrix.
     """
 
-    """
-    @staticmethod
-    def comp_correlation():
 
+    """
     @staticmethod
     def filter_correlation():
-
     """
+
 
     @staticmethod
     def extend_alphabet(df_scales: pd.DataFrame = None,

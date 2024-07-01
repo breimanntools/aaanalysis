@@ -378,7 +378,7 @@ def check_df_cat(df_cat=None, accept_none=True):
     """Check if df_cat is valid"""
     if df_cat is None and accept_none:
         return # Skip check
-    cols_cat = [ut.COL_SCALE_ID, ut.COL_CAT, ut.COL_SUBCAT]
+    cols_cat = [ut.COL_SCALE_ID, ut.COL_CAT, ut.COL_SUBCAT, ut.COL_SCALE_NAME]
     ut.check_df(name="df_cat", df=df_cat, cols_requiered=cols_cat, accept_none=accept_none)
 
 
