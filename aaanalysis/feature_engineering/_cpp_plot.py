@@ -366,7 +366,6 @@ class CPPPlot:
                               dict_color=dict_color, list_cat=list_cat)
         return fig, axes
 
-
     # Plotting method for single feature
     def feature(self,
                 feature: str = None,
