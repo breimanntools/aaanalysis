@@ -23,7 +23,7 @@ sphinx_design>=0.6.1
 sphinx_rtd_theme>=3.0.2
 sphinxext-opengraph>=0.9.1
 urllib3>=2.3.0           # HTTP client library
-UpSetPlot>=0.9.0         # Visualization library for set analysis
+
 
 # Install juypter locally (not included for RTD due to dependency conflicts)
 #jupyter>=1.1.1

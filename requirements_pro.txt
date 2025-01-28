@@ -1,7 +1,0 @@
-# Requires Python >= 3.9
-
-# Installed via pyproject.toml (must both matching when updating!)
-
-# Additional dependencies for professional version (pip install aaanalysis[pro])
-biopython>=1.8.5
-shap>=0.46.0
