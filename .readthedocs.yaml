@@ -18,7 +18,6 @@ sphinx:
 python:
   install:
     - requirements: requirements.txt
-    - requirements: requirements_pro.txt
     - requirements: docs/requirements_dev.txt
 
 #formats: disabled during development
