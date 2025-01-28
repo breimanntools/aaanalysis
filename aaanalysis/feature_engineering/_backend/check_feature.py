@@ -8,6 +8,7 @@ import warnings
 import aaanalysis.utils as ut
 from .cpp.utils_feature import get_part_positions
 
+# TODO!! check tmd_start and tmd_stop within sequence length !!
 
 # Helper functions
 def _return_empty_string(val=None):
@@ -338,7 +339,7 @@ def check_match_df_parts_split_kws(df_parts=None, split_kws=None):
 # Check df_scales & df_cat
 def check_df_scales(df_scales=None, accept_none=False):
     """Check if df_scales is a valid input and matching to df_parts"""
-    ut.check_df(name="df_scales", df=df_scales, accept_none=accept_none)
+    ut.check_df(name=ut.FILE_DF_SCALES, df=df_scales, accept_none=accept_none)
     if df_scales is None and accept_none:
         return  # Skip check
     # Check if columns are unique
@@ -377,9 +378,9 @@ def check_match_df_scales_features(df_scales=None, features=None):
 def check_df_cat(df_cat=None, accept_none=True):
     """Check if df_cat is valid"""
     if df_cat is None and accept_none:
-        return # Skip check
+        return  # Skip check
     cols_cat = [ut.COL_SCALE_ID, ut.COL_CAT, ut.COL_SUBCAT, ut.COL_SCALE_NAME]
-    ut.check_df(name="df_cat", df=df_cat, cols_requiered=cols_cat, accept_none=accept_none)
+    ut.check_df(name=ut.FILE_DF_CAT, df=df_cat, cols_requiered=cols_cat, accept_none=accept_none)
 
 
 def check_match_df_cat_features(df_cat=None, features=None):

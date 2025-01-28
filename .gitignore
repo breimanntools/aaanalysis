@@ -2,10 +2,16 @@
 /venv/
 /venv10/
 /venv11/
+/venv12/
+/venv12_dev/
+
 /dev_scripts/
 /recipe/
 /tutorials/.ipynb_checkpoints/
 /dist/
+
+# Temporary files
+/requirements_temp.txt
 
 # Created documentation
 /docs/build/
@@ -69,7 +75,6 @@ MANIFEST
 # Test & Coverage
 ## General
 htmlcov/
-.coverage
 .coverage.*
 .cache
 nosetests.xml

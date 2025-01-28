@@ -157,7 +157,7 @@ def _plot_inner_heatmap(df_pos=None, ax=None, figsize=(8, 8),
     # Plot with 0 set to NaN
     pe = PlotElements()
     fig, ax = pe.set_figsize(ax=ax, figsize=figsize)
-    data = df_pos.replace(0, np.NaN)
+    data = df_pos.replace(0, np.nan)
     ax = sns.heatmap(data, ax=ax,
                      center=center, vmin=vmin, vmax=vmax,
                      linewidths=grid_linewidth, linecolor=grid_linecolor,

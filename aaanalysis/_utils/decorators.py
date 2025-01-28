@@ -1,6 +1,7 @@
 """
 This a script for general decorators used in AAanalysis.
 # Dev: use runtime decorator only for internal methods since they destroy the signature for some IDEs
+# Dev: use backend processing error decorator only for backend
 """
 import warnings
 import traceback
@@ -9,6 +10,48 @@ import functools
 import re
 
 # Helper functions
+
+
+# Catch backend errors
+class BackendProcessingError(Exception):
+    """Custom exception for backend processing errors."""
+    def __init__(self, message, cause=None):
+        super().__init__(message)
+        self.cause = cause  # Store the original exception
+
+    def __str__(self):
+        if self.cause:
+            return f"{self.args[0]} (Caused by: {self.cause})"
+        return self.args[0]
+
+
+def catch_backend_processing_error():
+    """
+    Decorator to catch all exceptions, wrap them as BackendProcessingError with context.
+
+    This exception is intended for use in main backend functions that are exposed to the frontend.
+    It serves as a catch-all for potential errors originating in the backend, ensuring that issues
+    are encapsulated and communicated effectively to the frontend.
+
+    Note:
+    - This class should be used sparingly and only for backend logic errors or unexpected issues.
+    - Input-dependent errors should be handled directly in the frontend to maintain clear separation
+      of concerns and improve input validation workflows.
+
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                # Execute the decorated function
+                return func(*args, **kwargs)
+            except Exception as error:
+                # Catch any exception and wrap it in BackendProcessingError
+                raise BackendProcessingError(
+                    f"Error in backend function '{func.__name__}'", cause=error
+                ) from error
+        return wrapper
+    return decorator
 
 
 # Catch Runtime
@@ -41,11 +84,7 @@ class CatchRuntimeWarnings:
 
 
 def catch_runtime_warnings():
-    """Decorator to catch RuntimeWarnings and store them in a list.
-
-    Returns:
-        decorated_func: The decorated function
-    """
+    """Decorator to catch RuntimeWarnings and store them in a list."""
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -70,11 +109,7 @@ class ClusteringConvergenceException(Exception):
 
 
 def catch_convergence_warning():
-    """Decorator to catch ConvergenceWarnings and raise custom exceptions.
-
-    Returns:
-        decorated_func: The decorated function.
-    """
+    """Decorator to catch ConvergenceWarnings and raise custom exceptions."""
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -103,11 +138,7 @@ class InvalidDivisionException(Exception):
 
 def catch_invalid_divide_warning():
     """Decorator to catch specific RuntimeWarnings related to invalid division
-       and raise custom exceptions.
-
-    Returns:
-        decorated_func: The decorated function.
-    """
+       and raise custom exceptions."""
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):

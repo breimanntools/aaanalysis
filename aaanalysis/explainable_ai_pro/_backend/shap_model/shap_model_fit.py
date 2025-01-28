@@ -6,7 +6,6 @@ import shap
 
 import aaanalysis.utils as ut
 
-
 LIST_VERBOSE_shap_modelS = [shap.KernelExplainer]
 
 
@@ -21,13 +20,30 @@ def _get_background_data(X, explainer_class=None, n_background_data=None):
         background_data = X
     return background_data
 
+
 def _get_shap_values(shap_output, class_index=1):
     """Retrieve SHAP values for the specified class index from SHAP output."""
-    # For other types of SHAP outputs (like those from specific explainers)
-    if isinstance(shap_output, list) and len(shap_output) > class_index:
-        shap_values = shap_output[class_index]
+    if isinstance(shap_output, list):
+        if len(shap_output) > class_index:
+            shap_values = np.array(shap_output[class_index])
+        else:
+            # Fallback: Return entire list as a NumPy array
+            shap_values = np.array(shap_output)
+    elif isinstance(shap_output, np.ndarray):
+        n_dim = shap_output.ndim
+        if n_dim >= 3 and shap_output.shape[-1] > class_index:
+            # Multi-class: Retrieve SHAP values for the specified class
+            shap_values = shap_output[..., class_index]
+            shap_values = np.expand_dims(shap_values, axis=-1)
+        elif n_dim == 2:
+            # Binary classification or regression
+            shap_values = np.expand_dims(shap_output, axis=-1)
+        else:
+            # Fallback: Return input as np.array
+            shap_values = shap_output
     else:
-        shap_values = shap_output
+        # Fallback: Unsupported input type
+        shap_values = np.array(shap_output)
     return shap_values
 
 
@@ -37,6 +53,7 @@ def _compute_shap_values(X, labels, model_class=None, model_kwargs=None,
     """Fit a model and compute SHAP values using the provided SHAP Explainer."""
     # Fit the model
     model = model_class(**model_kwargs).fit(X, labels)
+
     # Instantiate explainer class
     if explainer_class in [shap.KernelExplainer, shap.DeepExplainer, shap.GradientExplainer]:
         background_data = _get_background_data(X, explainer_class=explainer_class, n_background_data=n_background_data)
@@ -66,7 +83,6 @@ def _aggregate_shap_values(X, labels=None, list_model_classes=None, list_model_k
                            explainer_class=None, explainer_kwargs=None,
                            class_index=1, n_background_data=None):
     """Aggregate SHAP values across multiple models."""
-
     n_samples, n_features = X.shape
     n_models = len(list_model_classes)
     shap_values_rounds = np.empty(shape=(n_samples, n_features, n_models))
@@ -90,6 +106,7 @@ def _aggregate_shap_values(X, labels=None, list_model_classes=None, list_model_k
 
 
 # II Main Functions
+@ut.catch_backend_processing_error()
 def monte_carlo_shap_estimation(X, labels=None, list_model_classes=None, list_model_kwargs=None,
                                 explainer_class=None, explainer_kwargs=None, n_rounds=5,
                                 is_selected=None, fuzzy_labeling=False, verbose=False,
@@ -106,6 +123,7 @@ def monte_carlo_shap_estimation(X, labels=None, list_model_classes=None, list_mo
     list_expected_value = []
     if verbose:
         ut.print_start_progress(start_message=f"ShapModel starts Monte Carlo estimation of SHAP values over {n_rounds} rounds.")
+
     for i in range(n_rounds):
         for j, selected_features in enumerate(is_selected):
             if verbose:
@@ -114,7 +132,7 @@ def monte_carlo_shap_estimation(X, labels=None, list_model_classes=None, list_mo
                 ut.print_progress(i=i+pct_progress, n=n_rounds, add_new_line=add_new_line)
             # Adjust fuzzy labels (labels between 0 and 1, e.g., 0.5 -> 50% 1 and 50% 0)
             if fuzzy_labeling:
-                threshold = (j * (i + 1)) / (n_rounds * n_selection_rounds)
+                threshold = ((j + 1) * (i + 1)) / (n_rounds * n_selection_rounds)
                 labels_ = [x if x in [0, 1] else int(x >= threshold) for x in labels]
             else:
                 labels_ = labels
@@ -125,6 +143,7 @@ def monte_carlo_shap_estimation(X, labels=None, list_model_classes=None, list_mo
             _shap_values, _exp_val = _aggregate_shap_values(X_selected, labels=labels_, **args)
             mc_shap_values[:, selected_features, i, j] = _shap_values
             list_expected_value.append(_exp_val)
+
     # Averaging over rounds and selections
     if verbose:
         ut.print_end_progress(end_message=f"ShapModel finished Monte Carlo estimation and saved results.")

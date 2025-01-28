@@ -38,7 +38,7 @@ def get_vf_scale(dict_scale=None, accept_gaps=False):
     else:
         # Except NaN derived from 'X' in sequence if not just 'X' in sequence (3x slower)
         def get_mean_excepting_nan(x):
-            vals = np.array([dict_scale.get(a, np.NaN) for a in x])
+            vals = np.array([dict_scale.get(a, np.nan) for a in x])
             return vals
         vf_scale = np.vectorize(lambda x: np.nanmean(get_mean_excepting_nan(x)))
     return vf_scale
@@ -115,6 +115,19 @@ def _get_df_pos_long(df=None, col_cat="category", col_val=None):
     return df_pos_long
 
 
+# Get df parts
+def _extract_parts(row, jmd_n_len, jmd_c_len, pos_based, list_parts):
+    """Helper function to extract parts from a single row."""
+    if jmd_c_len is not None and jmd_n_len is not None and pos_based:
+        seq, tmd_start, tmd_stop = row[ut.COLS_SEQ_POS]
+        jmd_n, tmd, jmd_c = create_parts(seq, tmd_start, tmd_stop, jmd_n_len, jmd_c_len)
+    else:
+        jmd_n, tmd, jmd_c = row[ut.COLS_SEQ_PARTS]
+    # Get dictionary of parts and filter by list_parts
+    dict_part_seq = ut.get_dict_part_seq(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c)
+    return {part: dict_part_seq[part] for part in list_parts}
+
+
 # Get feature matrix
 def _get_dict_all_scales(df_scales=None):
     """Get nested dictionary where each scale is a key for an amino acid scale value dictionary"""
@@ -175,19 +188,12 @@ def get_list_parts(features=None):
 def get_df_parts_(df_seq=None, list_parts=None, jmd_n_len=None, jmd_c_len=None):
     """Create DataFrame with sequence parts"""
     pos_based = set(ut.COLS_SEQ_POS).issubset(set(df_seq))
-    dict_parts = {}
-    for i, row in df_seq.iterrows():
-        entry = row[ut.COL_ENTRY]
-        if jmd_c_len is not None and jmd_n_len is not None and pos_based:
-            seq, tmd_start, tmd_stop = row[ut.COLS_SEQ_POS].values
-            jmd_n, tmd, jmd_c = create_parts(seq=seq, tmd_start=tmd_start, tmd_stop=tmd_stop,
-                                             jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
-        else:
-            jmd_n, tmd, jmd_c = row[ut.COLS_SEQ_PARTS].values
-        dict_part_seq = ut.get_dict_part_seq(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c)
-        dict_part_seq = {part: dict_part_seq[part] for part in list_parts}
-        dict_parts[entry] = dict_part_seq
-    df_parts = pd.DataFrame.from_dict(dict_parts).T
+    _df_seq = df_seq.copy()
+    _df_seq['parts'] = df_seq.apply(lambda row:
+                                    _extract_parts(row, jmd_n_len, jmd_c_len, pos_based, list_parts), axis=1)
+    # Convert the extracted parts into a DataFrame
+    df_parts = pd.DataFrame(_df_seq['parts'].to_list(),
+                            index=df_seq[ut.COL_ENTRY])
     # DEV: the following line sorts index if list_parts contains just one element
     # df_parts = pd.DataFrame.from_dict(dict_parts, orient="index")
     return df_parts
@@ -219,6 +225,7 @@ def get_amino_acids_(features=None, tmd_seq="", jmd_n_seq="", jmd_c_seq=""):
     return feat_aa
 
 
+@ut.catch_backend_processing_error()
 def get_feature_matrix_(features=None, df_parts=None, df_scales=None, accept_gaps=False, n_jobs=None):
     """Create feature matrix for given feature ids and sequence parts."""
     features = [features] if isinstance(features, str) else features

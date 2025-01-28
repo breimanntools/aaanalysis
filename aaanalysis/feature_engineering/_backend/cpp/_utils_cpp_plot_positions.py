@@ -7,6 +7,7 @@ import matplotlib as mpl
 
 import aaanalysis.utils as ut
 from .utils_feature import get_positions_, get_df_pos_
+from ._utils_cpp_plot import get_sorted_list_cat_
 
 
 # I Helper Functions
@@ -259,9 +260,9 @@ class PlotPartPositions:
         if normalize:
             df_pos = df_pos / abs(df_pos).sum().sum() * 100
         # Sort according to given categories
-        list_cat = list(df_cat[col_cat].drop_duplicates())
-        list_col = list(df_pos.T)
-        sorted_col = [x for x in list_cat if x in list_col]
+        sorted_col = get_sorted_list_cat_(df_cat=df_cat,
+                                          list_cat=list(df_pos.T),
+                                          col_cat=col_cat)
         df_pos = df_pos.T[sorted_col].T
         return df_pos.round(3)
 

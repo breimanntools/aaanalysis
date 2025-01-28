@@ -126,7 +126,7 @@ def check_match_labels_fuzzy_labeling(labels=None, fuzzy_labeling=False, verbose
 
 def check_match_labels_target_class_labels(label_target_class=None, labels=None):
     """Check if class index matches to classes (unique labels) in labels"""
-    label_classes = sorted(list(dict.fromkeys([x for x in labels if x == int(x)])))
+    label_classes = sorted(list(dict.fromkeys([int(x) for x in labels if x == int(x)])))
     if label_target_class not in label_classes:
         raise ValueError(f"'label_target_class' ({label_target_class}) should be from 'labels' classes: {label_classes}")
 

@@ -74,7 +74,7 @@ def check_match_df_corr_clust_x(df_corr=None, cluster_x=None):
     if cluster_x:
         if len(set(all_vals)) == 1:
             raise ValueError(f"'df_corr' should not contain all same values if 'cluster_x' is True")
-        if None in all_vals or np.NaN in all_vals:
+        if None in all_vals or np.nan in all_vals:
             raise ValueError(f"'df_corr' should not contain missing values")
 
 
@@ -412,7 +412,7 @@ class AAclustPlot:
                     vmin: float = -1.0,
                     vmax: float = 1.0,
                     cmap: str = "viridis",
-                    kwargs_heatmap : Optional[dict] = None
+                    kwargs_heatmap: Optional[dict] = None
                     ) -> plt.Axes:
         """
         Heatmap for correlation matrix with colored sidebar to label clusters.

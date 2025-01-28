@@ -244,6 +244,8 @@ def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
     args.update(kwargs)
     if fontsize_title:
         args["title_fontproperties"] = {"weight": weight_title, "size": fontsize_title}
+    else:
+        args["title_fontproperties"] = {"weight": weight_title}
     if loc_out:
         x, y = x or 0, y or -0.25
     if x or y:
@@ -258,6 +260,5 @@ def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
         legend._legend_box.align = "left"
     # Add the legend as an artist (must be inside plot)
     if keep_legend and old_legend:
-        print("here")
         ax.add_artist(old_legend)
     return ax

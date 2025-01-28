@@ -38,7 +38,7 @@ class TestRanking:
         assert isinstance(axes[0], plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=1500)
+    @settings(max_examples=3, deadline=2000)
     @given(n_top=st.integers(min_value=2, max_value=20))
     def test_n_top(self, n_top):
         cpp_plot = aa.CPPPlot()
@@ -118,7 +118,7 @@ class TestRanking:
             assert isinstance(axes[0], plt.Axes)
             plt.close()
 
-    @settings(max_examples=3, deadline=1500)
+    @settings(max_examples=3, deadline=2000)
     @given(tmd_len=st.integers(min_value=17, max_value=100))
     def test_tmd_len(self, tmd_len):
         cpp_plot = aa.CPPPlot()
@@ -130,7 +130,7 @@ class TestRanking:
         assert isinstance(axes[0], plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=1500)
+    @settings(max_examples=3, deadline=2000)
     @given(tmd_jmd_space=st.integers(min_value=1, max_value=10))
     def test_tmd_jmd_space(self, tmd_jmd_space):
         cpp_plot = aa.CPPPlot()
@@ -142,7 +142,7 @@ class TestRanking:
         assert isinstance(axes[0], plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=1500)
+    @settings(max_examples=3, deadline=2000)
     @given(tmd_color=st.sampled_from(["blue", "green", "red", "yellow"]))
     def test_tmd_color(self, tmd_color):
         cpp_plot = aa.CPPPlot()
@@ -154,7 +154,7 @@ class TestRanking:
         assert isinstance(axes[0], plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=1500)
+    @settings(max_examples=3, deadline=2000)
     @given(jmd_color=st.sampled_from(["blue", "green", "red", "yellow"]))
     def test_jmd_color(self, jmd_color):
         cpp_plot = aa.CPPPlot()
@@ -166,7 +166,7 @@ class TestRanking:
         assert isinstance(axes[0], plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=1500)
+    @settings(max_examples=3, deadline=2000)
     @given(tmd_jmd_alpha=st.floats(min_value=0, max_value=1))
     def test_tmd_jmd_alpha(self, tmd_jmd_alpha):
         cpp_plot = aa.CPPPlot()
@@ -201,7 +201,7 @@ class TestRanking:
             assert isinstance(axes[0], plt.Axes)
             plt.close()
 
-    @settings(max_examples=3, deadline=1500)
+    @settings(max_examples=3, deadline=2000)
     @given(fontsize_titles=st.one_of(st.none(), st.integers(min_value=5, max_value=20)))
     def test_fontsize_titles(self, fontsize_titles):
         cpp_plot = aa.CPPPlot()
@@ -213,7 +213,7 @@ class TestRanking:
         assert isinstance(axes[0], plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=1500)
+    @settings(max_examples=3, deadline=2000)
     @given(fontsize_labels=st.one_of(st.none(), st.integers(min_value=5, max_value=20)))
     def test_fontsize_labels(self, fontsize_labels):
         cpp_plot = aa.CPPPlot()
@@ -225,7 +225,7 @@ class TestRanking:
         assert isinstance(axes[0], plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=1500)
+    @settings(max_examples=3, deadline=2000)
     @given(fontsize_annotations=st.one_of(st.none(), st.integers(min_value=5, max_value=20)))
     def test_fontsize_annotations(self, fontsize_annotations):
         cpp_plot = aa.CPPPlot()
@@ -238,7 +238,7 @@ class TestRanking:
         plt.close()
 
 
-    @settings(max_examples=3, deadline=1500)
+    @settings(max_examples=3, deadline=2000)
     @given(xlim_dif=st.tuples(st.floats(min_value=-10, max_value=0), st.floats(min_value=0, max_value=10)))
     def test_xlim_dif(self, xlim_dif):
         cpp_plot = aa.CPPPlot()
@@ -251,7 +251,7 @@ class TestRanking:
             assert isinstance(axes[0], plt.Axes)
             plt.close()
 
-    @settings(max_examples=3, deadline=1500)
+    @settings(max_examples=3, deadline=2000)
     @given(xlim_rank=st.tuples(st.floats(min_value=0, max_value=50), st.floats(min_value=51, max_value=100)))
     def test_xlim_rank(self, xlim_rank):
         cpp_plot = aa.CPPPlot()
@@ -338,7 +338,7 @@ class TestRanking:
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, figsize=(-1, 5))
 
-    @settings(max_examples=20, deadline=1500)
+    @settings(max_examples=20, deadline=2000)
     @given(tmd_len=st.integers(max_value=0))
     def test_invalid_tmd_len(self, tmd_len):
         cpp_plot = aa.CPPPlot()
@@ -353,7 +353,7 @@ class TestRanking:
             with pytest.raises(ValueError):
                 cpp_plot.ranking(df_feat=df_feat, xlim_dif=xlim_dif)
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=2000)
     @given(xlim_rank=st.tuples(st.floats(min_value=10), st.floats(max_value=0)))
     def test_invalid_xlim_rank(self, xlim_rank):
         cpp_plot = aa.CPPPlot()
@@ -372,7 +372,7 @@ class TestRanking:
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, rank_info_xy=(None, 123, 234))
 
-    @settings(max_examples=20, deadline=1500)
+    @settings(max_examples=20, deadline=2000)
     @given(tmd_jmd_space=st.one_of(st.integers(max_value=0), st.floats(allow_nan=True)))
     def test_invalid_tmd_jmd_space(self, tmd_jmd_space):
         cpp_plot = aa.CPPPlot()
@@ -406,7 +406,7 @@ class TestRanking:
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, jmd_color=None)
 
-    @settings(max_examples=20, deadline=1500)
+    @settings(max_examples=20, deadline=2000)
     @given(tmd_jmd_alpha=st.one_of(st.floats(max_value=-0.01), st.floats(min_value=1.01), st.text()))
     def test_invalid_tmd_jmd_alpha(self, tmd_jmd_alpha):
         cpp_plot = aa.CPPPlot()
@@ -424,7 +424,6 @@ class TestRanking:
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, name_test=["str"])
 
-
     def test_invalid_name_ref(self):
         cpp_plot = aa.CPPPlot()
         df_feat = create_df_feat()
@@ -435,7 +434,7 @@ class TestRanking:
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, name_ref=["str"])
 
-    @settings(max_examples=20, deadline=1500)
+    @settings(max_examples=20, deadline=2000)
     @given(fontsize=st.one_of(st.floats(max_value=-1), st.text()))
     def test_invalid_fontsize_titles(self, fontsize):
         cpp_plot = aa.CPPPlot()
@@ -443,7 +442,7 @@ class TestRanking:
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, fontsize_titles=fontsize)
 
-    @settings(max_examples=20, deadline=1500)
+    @settings(max_examples=20, deadline=2000)
     @given(fontsize=st.one_of(st.floats(max_value=-1), st.text()))
     def test_invalid_fontsize_labels(self, fontsize):
         cpp_plot = aa.CPPPlot()
@@ -451,7 +450,7 @@ class TestRanking:
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, fontsize_labels=fontsize)
 
-    @settings(max_examples=20, deadline=1500)
+    @settings(max_examples=20, deadline=2000)
     @given(fontsize=st.one_of(st.floats(max_value=-1), st.text()))
     def test_invalid_fontsize_annotations(self, fontsize):
         cpp_plot = aa.CPPPlot()

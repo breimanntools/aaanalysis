@@ -77,7 +77,7 @@ def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan
     # Utilize Scikit-learn's check_array for robust checking
     try:
         # Convert list to array
-        val = check_array(val, dtype=expected_dtype, ensure_2d=ensure_2d, force_all_finite=not allow_nan)
+        val = check_array(val, dtype=expected_dtype, ensure_2d=ensure_2d, ensure_all_finite=not allow_nan)
     except Exception as e:
         dtype = "any type" if dtype is None else dtype
         raise ValueError(f"'{name}' should be array-like with '{dtype}' values."

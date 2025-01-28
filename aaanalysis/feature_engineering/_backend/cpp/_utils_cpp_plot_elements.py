@@ -100,7 +100,6 @@ class PlotElements:
             _legend_kws.update(legend_kws)
         return _legend_kws
 
-
     # Colorbar elements
     @staticmethod
     def adjust_cbar_kws(fig=None, cbar_kws=None, cbar_xywh=None,

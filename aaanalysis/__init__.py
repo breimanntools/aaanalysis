@@ -48,35 +48,44 @@ __all__ = [
 ]
 
 
-# Import of professional (pro) version features if dependencies are available
+# Dynamically import professional (pro) features if dependencies are available
+def raise_error(feature_name=None, error_message=None):
+    """Dynamically set the fallback for missing features and raise ImportError"""
+    str_error_message = str(error_message)
+    if "No module named" in str_error_message:
+        str_error = (f"'{feature_name}' needs additional dependencies. Install AAanalysis Professional via: "
+                     f"\n\tpip install aaanalysis[pro].")
+        raise ImportError(str_error)
+    else:
+        raise ImportError(e)
+
+
 try:
     from .explainable_ai_pro import ShapModel
-    from .data_handling_pro import comp_seq_sim, filter_seq
-    from .show_html import display_df
-    # Extend the __all__ list with pro features if successful
-    __all__.extend(["ShapModel",
-                    "display_df",
-                    "comp_seq_sim",
-                    "filter_seq"])
-
+    __all__.append("ShapModel")
 except ImportError as e:
-    # Define a factory function to create a class or function placeholder
-    def make_pro_feature(feature_name):
-        str_error = (f"'{feature_name}' needs additional dependencies. Install AAanalysis Professional via:"
-                     f"\n\tpip install aaanalysis[pro].")
+    ShapModel = None  # For IDE navigation
+    globals()["ShapModel"] = raise_error(feature_name="ShapModel", error_message=e)
 
-        class UnavailableFeature:
-            def __init__(self, *args, **kwargs):
-                raise ImportError(str_error)
 
-            def __call__(self, *args, **kwargs):
-                raise ImportError(str_error)
+try:
+    from .data_handling_pro import comp_seq_sim
+    __all__.append("comp_seq_sim")
+except ImportError as e:
+    comp_seq_sim = None
+    globals()["comp_seq_sim"] = raise_error(feature_name="comp_seq_sim", error_message=e)
 
-        # Return the custom class for the unavailable feature
-        return UnavailableFeature
 
-    # Use the factory function to create placeholders for pro features
-    ShapModel = make_pro_feature("ShapModel")
-    display_df = make_pro_feature("display_df")
-    comp_seq_sim = make_pro_feature("comp_seq_sim")
-    filter_seq = make_pro_feature("filter_seq")
+try:
+    from .data_handling_pro import filter_seq
+    __all__.append("filter_seq")
+except ImportError as e:
+    comp_seq_sim = None
+    globals()["filter_seq"] = raise_error(feature_name="filter_seq", error_message=e)
+
+try:
+    from .show_html import display_df
+    __all__.append("display_df")
+except ImportError as e:
+    comp_seq_sim = None
+    globals()["display_df"] = raise_error(feature_name="display_df", error_message=e)

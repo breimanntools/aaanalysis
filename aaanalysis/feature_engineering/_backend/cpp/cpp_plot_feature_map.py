@@ -12,19 +12,16 @@ import aaanalysis.utils as ut
 from ._utils_cpp_plot_elements import PlotElements
 from ._utils_cpp_plot_positions import PlotPartPositions
 from ._utils_cpp_plot_map import plot_heatmap_
+from ._utils_cpp_plot import get_sorted_list_cat_
+
 
 # I Helper functions
-def _get_sorted_list_cat(df_feat=None, col_cat=None):
-    """Case non-sensitive sorted list of scale categories"""
-    df = df_feat.copy()
-    # Sort case non-sensitive
-    df = df.sort_values(by=[ut.COL_CAT, ut.COL_SUBCAT], key=lambda x: x.str.lower())
-    list_cat = list(df[col_cat].drop_duplicates())
-    return list_cat
 
 
 # Add feature importance plot elements
-def plot_feat_importance_bars(ax=None, df_feat=None, col_cat=None, col_imp=None,
+def plot_feat_importance_bars(ax=None,
+                              df_feat=None, df_cat=None,
+                              col_cat=None, col_imp=None,
                               annotation_th=None, label=None,
                               fontsize_label=12,
                               fontsize_annotations=11,
@@ -34,10 +31,10 @@ def plot_feat_importance_bars(ax=None, df_feat=None, col_cat=None, col_imp=None,
     # Get feature importance per scale class
     df_imp = df_feat[[col_cat, col_imp]].groupby(by=col_cat).sum()
     dict_imp = dict(zip(df_imp.index, df_imp[col_imp]))
-    list_cat = _get_sorted_list_cat(df_feat=df_feat, col_cat=col_cat)
+    list_cat = get_sorted_list_cat_(df_cat=df_cat,
+                                    list_cat=df_feat[col_cat].to_list(),
+                                    col_cat=col_cat)
     list_imp = [dict_imp[x] for x in list_cat]
-
-    # Maximum value
 
     # Plot bars
     plt.sca(ax)
@@ -192,7 +189,8 @@ def plot_feature_map(df_feat=None, df_cat=None,
                                            fontsize_labels=fs_labels)
     # Plot feat importance bars
     label_bars_imp = "Cumulative feature\nimportance [%]"
-    plot_feat_importance_bars(ax=axes[1], df_feat=df_feat.copy(),
+    plot_feat_importance_bars(ax=axes[1],
+                              df_feat=df_feat.copy(), df_cat=df_cat.copy(),
                               col_imp=col_imp, col_cat=col_cat,
                               label=label_bars_imp,
                               annotation_th=imp_bar_th,
@@ -201,7 +199,7 @@ def plot_feature_map(df_feat=None, df_cat=None,
                               fontsize_annotations=fontsize_annotations,
                               weight_annotation="bold")
     # Plot heatmap
-    ax = plot_heatmap_(df_feat=df_feat, df_cat=df_cat,
+    ax = plot_heatmap_(df_feat=df_feat.copy(), df_cat=df_cat,
                        col_cat=col_cat, col_val=col_val,
                        ax=axes[0], figsize=figsize,
                        start=start, **args_len, **args_seq,
@@ -218,7 +216,6 @@ def plot_feature_map(df_feat=None, df_cat=None,
 
     # Add feature position title
     plt.title(ut.LABEL_FEAT_POS, x=0, weight="bold", fontsize=fs_titles)
-
 
     # Add feature importance map
     add_feat_importance_map(df_feat=df_feat, df_cat=df_cat,
@@ -237,6 +234,4 @@ def plot_feature_map(df_feat=None, df_cat=None,
                                label=label_feat_imp,
                                fontsize_title=fs_labels,
                                fontsize_annotations=fs_annotations)
-
-
     return fig, ax

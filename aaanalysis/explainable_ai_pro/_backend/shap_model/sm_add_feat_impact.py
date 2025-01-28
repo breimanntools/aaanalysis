@@ -23,6 +23,7 @@ def _drop_feat_columns(df_feat=None):
     df_feat = df_feat[columns]
     return df_feat
 
+
 def _comp_sample_shap_feat_impact(shap_values=None, i=None, normalize=True):
     """Compute the shap feature impact for the i-th sample"""
     shap_value_sample = shap_values[i]

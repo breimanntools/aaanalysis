@@ -28,7 +28,9 @@ from ._utils.utils_types import (ArrayLike1D,
                                  VALID_INT_FLOAT_TYPES)
 
 # Decorators
-from ._utils.decorators import (catch_runtime_warnings,
+from ._utils.decorators import (catch_backend_processing_error,
+                                BackendProcessingError,
+                                catch_runtime_warnings,
                                 CatchRuntimeWarnings,
                                 catch_convergence_warning,
                                 ClusteringConvergenceException,
@@ -103,6 +105,9 @@ FOLDER_PROJECT = os.path.dirname(os.path.abspath(__file__))
 FOLDER_DATA = _folder_path(FOLDER_PROJECT, '_data')
 URL_DATA = "https://github.com/breimanntools/aaanalysis/tree/master/aaanalysis/data/"
 
+# File names
+FILE_DF_SCALES = "df_scales"
+FILE_DF_CAT = "df_cat"
 
 # Constants
 FONT_AA = "DejaVu Sans Mono"
@@ -359,20 +364,20 @@ def read_csv_cached(name, sep=None):
 def load_default_scales(scale_cat=False):
     """Load default scales sets or categories. Copy is always returned to maintain data integrity."""
     if scale_cat:
-        if options["df_cat"] is None:
+        if options[FILE_DF_CAT] is None:
             df_cat = read_excel_cached(FOLDER_DATA + f"{STR_SCALE_CAT}.xlsx")
-            options["df_cat"] = df_cat
+            options[FILE_DF_CAT] = df_cat
             return df_cat.copy()
         else:
-            return options["df_cat"].copy()
+            return options[FILE_DF_CAT].copy()
     else:
-        if options["df_scales"] is None:
+        if options[FILE_DF_SCALES] is None:
             df_scales = read_excel_cached(FOLDER_DATA + f"{STR_SCALES}.xlsx", index_col=0)
             df_scales = df_scales.astype(float)
-            options["df_scales"] = df_scales
+            options[FILE_DF_SCALES] = df_scales
             return df_scales.copy()
         else:
-            return options["df_scales"].copy()
+            return options[FILE_DF_SCALES].copy()
 
 
 # Adjust df_eval

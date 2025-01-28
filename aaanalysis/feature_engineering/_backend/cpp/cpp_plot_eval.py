@@ -32,7 +32,6 @@ def _plot_n_features(ax=None, df_eval=None, dict_color=None):
     sns.despine()
 
 
-
 def _plot_range_abs_auc(ax=None, df_eval=None):
     """Boxplot for abs AUC ranges"""
     names = df_eval[ut.COL_NAME].to_list()
@@ -40,7 +39,7 @@ def _plot_range_abs_auc(ax=None, df_eval=None):
     # Boxplot
     boxprops = dict(facecolor=COLOR_BASE, color='black')
     arg = dict(color='black')
-    ax.boxplot(range_abs_auc, positions=np.arange(len(names)), vert=False,
+    ax.boxplot(range_abs_auc, positions=np.arange(len(names)), vert=True,
                patch_artist=True, boxprops=boxprops,
                whiskerprops=arg, capprops=arg, medianprops=arg, showfliers=False)
     # Scatter plot for min and max values
@@ -61,7 +60,7 @@ def _plot_range_abs_auc(ax=None, df_eval=None):
     x_adjust = (max_total - min_total)*0.1
     ax.set_xlim(min_total-x_adjust, max_total+x_adjust)
     ax.set_xticks([round(min_total, 2), round(max_total, 2)])
-    ax.set_xticklabels([f'{min_total:.1f}', f'{max_total:.1f}'])
+    ax.set_xticklabels([f'{min_total: .1f}', f'{max_total: .1f}'])
     ax.set_xlabel('abs AUC\n')
     sns.despine()
 
