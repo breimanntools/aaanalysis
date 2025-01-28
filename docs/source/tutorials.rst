@@ -56,9 +56,9 @@ Start positive-Unlabeled (PU) learning to tackle unbalanced and small data throu
 
 Explainable AI
 --------------
-Explaining sample level predictions at single-residue resolution is introduced in our **ShapExplainer** tutorial.
+Explaining sample level predictions at single-residue resolution is introduced in our **ShapModel** tutorial.
 
 .. toctree::
    :maxdepth: 1
 
-   generated/tutorial5a_shap_explainer
+   generated/tutorial5a_shap_model
