@@ -30,7 +30,7 @@ def comp_auc_adjusted(X: ut.ArrayLike2D = None,
     """
     Compute an adjusted Area Under the Curve (AUC) [-0.5, 0.5] assessing the similarity between two groups.
 
-    Introduced in [Breimann24c]_, this adjusted AUC (denoted 'AUC*') is computed for each feature in the
+    Introduced in [Breimann25a]_, this adjusted AUC (denoted 'AUC*') is computed for each feature in the
     dataset ``X``, comparing two groups specified by the labels. It is based on the non-parametric measure of the
     difference between two groups. The adjustment of AUC subtracts 0.5, so it ranges between -0.5 and 0.5.
     An AUC* of 0 indicates an equal distribution between the two groups. This measure is useful for ranking features

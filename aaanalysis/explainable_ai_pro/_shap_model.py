@@ -239,7 +239,7 @@ def check_match_df_feat_shap_values(df_feat=None, shap_values=None, drop=False, 
 class ShapModel:
     """
     SHAP Model class: A wrapper for SHAP (SHapley Additive exPlanations) explainers to obtain Monte Carlo estimates
-    for feature impact [Breimann24c]_.
+    for feature impact [Breimann25a]_.
 
     `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ is an explainable Artificial Intelligence (AI) framework
     and game-theoretic approach to explain the output of any machine learning model using SHAP values. These SHAP values
@@ -417,7 +417,7 @@ class ShapModel:
 
         See Also
         --------
-        * [Breimann24c]_ introduces fuzzy labeling to compute Monte Carlo estimates of SHAP values
+        * [Breimann25a]_ introduces fuzzy labeling to compute Monte Carlo estimates of SHAP values
           for samples with not clearly defined class membership.
 
         Examples

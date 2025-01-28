@@ -21,4 +21,4 @@ AAanalysis offers four different visualizations:
 
 .. figure:: /_artwork/schemes/scheme_CPP_eAI.png
 
-   Overview of explainable AI with single-residue resolution by combining CPP with the SHAP, from [Breimann24c]_.
+   Overview of explainable AI with single-residue resolution by combining CPP with the SHAP, from [Breimann25a]_.

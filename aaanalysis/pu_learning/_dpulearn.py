@@ -76,7 +76,7 @@ def check_match_X_X_neg(X=None, X_neg=None):
 # II Main Functions
 class dPULearn:
     """
-    Deterministic Positive-Unlabeled Learning (**dPULearn**) class for identifying reliable negatives from unlabeled data [Breimann24c]_.
+    Deterministic Positive-Unlabeled Learning (**dPULearn**) class for identifying reliable negatives from unlabeled data [Breimann25a]_.
 
     dPULearn offers a deterministic approach to Positive-Unlabeled (PU) learning, featuring two distinct
     identification approaches:

@@ -108,7 +108,7 @@ def check_col_val(col_val=None):
 class SequenceFeature:
     """
     Utility feature engineering class using sequences to create :class:`CPP` feature components (**Parts**, **Splits**,
-    and  **Scales**) and data structures [Breimann24c]_.
+    and  **Scales**) and data structures [Breimann25a]_.
 
     The three feature components are the primary input for the :class:`aaanalysis.CPP` class and define
     Comparative Physicochemical Profiling (CPP) features.

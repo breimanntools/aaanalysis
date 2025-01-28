@@ -111,17 +111,17 @@ If you use AAanalysis in your work, please cite the respective publication as fo
 **AAclust**:
    Breimann and Frishman (2024a),
    *AAclust: k-optimized clustering for selecting redundancy-reduced sets of amino acid scales*,
-   `bioRxiv <https://www.biorxiv.org/content/10.1101/2024.02.04.578800v1>`__.
+   `Bioinformatics Advances <https://academic.oup.com/bioinformaticsadvances/article/4/1/vbae165/7852846>`__.
 
 **AAontology**:
    Breimann *et al.* (2024b),
    *AAontology: An ontology of amino acid scales for interpretable machine learning*,
-   `bioRxiv <https://www.biorxiv.org/content/10.1101/2023.08.03.551768v1>`__.
+   `JMB <https://www.sciencedirect.com/science/article/pii/S0022283624003267>`__.
 
 **CPP**:
-   Breimann and Kamp *et al.* (2024c),
+   Breimann and Kamp *et al.* (2025a),
    *Charting γ-secretase substrates by explainable AI*, .. # Link if available
 
 **dPULearn**:
-   Breimann and Kamp *et al.* (2024c),
+   Breimann and Kamp *et al.* (2025a),
    *Charting γ-secretase substrates by explainable AI*, .. # Link if available

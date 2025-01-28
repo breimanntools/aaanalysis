@@ -113,7 +113,7 @@ def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, fe
 class TreeModel:
     """
     Tree Model class: A wrapper for tree-based models to obtain Monte Carlo estimates of feature
-    importance and predictions [Breimann24c]_.
+    importance and predictions [Breimann25a]_.
 
     Monte Carlo estimates are derived by averaging feature importance or prediction probabilities across various
     tree-based models and training rounds, enhancing the robustness and reproducibility of these estimates.
@@ -222,7 +222,7 @@ class TreeModel:
             step: Optional[int] = None,
             ) -> "TreeModel":
         """
-        Fit tree-based models and compute average feature importance [Breimann24c]_.
+        Fit tree-based models and compute average feature importance [Breimann25a]_.
 
         The feature importance is calculated across all models and rounds. In each round, the set of features can
         optionally be prefiltered using Recursive Feature Elimination (RFE) with a default RandomForestClassifier,
@@ -261,7 +261,7 @@ class TreeModel:
 
         See Also
         --------
-        * [Breimann24c]_ describes recursive feature elimination algorithm and feature importance aggregation.
+        * [Breimann25a]_ describes recursive feature elimination algorithm and feature importance aggregation.
         * :class:`sklearn.ensemble.RandomForestClassifier` for the random forest model used with default settings
           for recursive feature elimination.
         * :class:`sklearn.feature_selection.RFECV` for similar cross-validation based recursive feature elimination

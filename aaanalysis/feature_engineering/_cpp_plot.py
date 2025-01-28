@@ -186,7 +186,7 @@ def check_match_ax_seq_len(ax=None, jmd_n_len=10, jmd_c_len=10):
 # II Main Functions
 class CPPPlot:
     """
-    Plotting class for :class:`CPP` (Comparative Physicochemical Profiling) results [Breimann24c]_.
+    Plotting class for :class:`CPP` (Comparative Physicochemical Profiling) results [Breimann25a]_.
 
     This class supports multiple plot types for group or sample-level analysis, including ranking plots,
     profiles, heatmaps, and feature maps.
@@ -525,7 +525,7 @@ class CPPPlot:
         """
         Plot CPP/-SHAP feature ranking based on feature importance or sample-specif feature impact.
 
-        Introduced in [Breimann24c]_, this method visualizes the most important features for discriminating between
+        Introduced in [Breimann25a]_, this method visualizes the most important features for discriminating between
         the test and the reference dataset groups. At sample level, the feature impact derived from SHAP values
         of a specific sample can be used for ranking if ``shap_plot=True`` and 'feature_impact' column in ``df_feat``.
 
