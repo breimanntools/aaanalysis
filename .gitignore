@@ -136,3 +136,4 @@ dmypy.json
 # Cython
 cython_debug/
 
+/venv09/

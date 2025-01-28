@@ -6,7 +6,7 @@
 black==24.10.0           # Code formatting
 docutils==0.21.2         # Documentation utilities
 ipykernel==6.29.5        # For Jupyter kernel
-ipython==8.31.0          # Enhanced interactive Python shell
+ipython==8.18.1          # Enhanced interactive Python shell
 nbconvert==7.16.5        # Exporting Jupyter Notebooks
 nbformat==5.10.4         # Notebook format utilities
 nbsphinx==0.9.6          # Sphinx integration with Jupyter Notebooks
