@@ -45,7 +45,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 # Core dependencies (via "pip install aaanalysis")
-python = "^3.9<3.13"
+python = "^3.9,<3.13"
 cycler = "^0.12.1"
 et-xmlfile = "^2.0.0"
 fonttools = "^4.55.6"
