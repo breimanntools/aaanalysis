@@ -57,7 +57,7 @@ def raise_error(feature_name=None, error_message=None):
                      f"\n\tpip install aaanalysis[pro].")
         raise ImportError(str_error)
     else:
-        raise ImportError(e)
+        raise ImportError(error_message)
 
 
 try:
