@@ -10,10 +10,12 @@ on:
 
 jobs:
   test:
+    name: Run Tests and Report Coverage
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v4
