@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "aaanalysis"
-version = "1.0.0"
+version = "1.0.1"
 description = "Python framework for interpretable protein prediction"
 authors = ["Stephan Breimann <stephanbreimann@gmail.de>"]
 license = "BSD-3-Clause"
