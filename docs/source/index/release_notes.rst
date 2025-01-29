@@ -2,7 +2,31 @@ Release notes
 =============
 
 Version 1.0 (Stable Version)
---------------------------
+--------------------------------
+
+v1.0.1 (2025-01-29)
+--------------------------------
+
+Improved
+~~~~~~~~
+- **Pro Feature Accessibility**: Improved integration of **aaanalysis[pro]** features in IDEs. Clicking on a pro
+  feature now directs users to its exact class implementation instead of the main ``__init__.py`` file.
+
+- **Import Error Handling**: Improved error handling for missing dependencies in the **aaanalysis[pro]** version.
+  If dependencies are installed but errors occur during import, users now receive the original import error messages.
+
+Fixed
+~~~~~
+- **Feature Map Plot**: Resolved a potential mismatch in subcategory ordering between heatmap and bar plot
+  in ``aa.plot_featuremap()``. Previously, subcategories with nearly identical names (e.g., "α-helix (C-term)"
+  and "α-helix (C-term, out)") could appear in an inconsistent order.
+- **General Bug Fixes**: Minor bug fixes to improve overall stability and functionality.
+
+Other
+~~~~~
+- **Dependencies**: All dependencies have been updated to ensure compatibility with the latest versions, including
+  full support for ``numpy>=2.0.0``.
+
 
 v1.0.0 (2024-07-01)
 --------------------------------
@@ -19,7 +43,7 @@ Changed
 - **ShapModel**: The **ShapExplainer** class has been renamed to **ShapModel** for consistency with the **TreeModel**
   class and to avoid confusion with the ShapExplainer models from the
   `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ package.
-- **Requirements**: Biopython is now a required dependency only for the **aaanalysis[pro]** version.
+- **Dependencies**: Biopython is now a required dependency only for the **aaanalysis[pro]** version.
 - **Module Renaming**: The **Perturbation** module has been renamed to **Protein Design** module
   to better reflect its broad functionality.
 
@@ -54,7 +78,7 @@ Fixed
 
 Other
 ~~~~~
-- **Requirements**: Update the ``seaborn`` dependency to version 0.13.2 or higher to resolve the legend argument
+- **Dependencies**: Update the ``seaborn`` dependency to version 0.13.2 or higher to resolve the legend argument
   error present in versions earlier than 0.13
 
 v0.1.4 (2024-04-09)
