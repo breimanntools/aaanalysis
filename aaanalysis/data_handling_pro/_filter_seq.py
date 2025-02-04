@@ -26,6 +26,24 @@ def check_match_identity_coverage(global_identity=True, coverage_short=0.0, cove
                          f"or 'coverage_long' ({coverage_long}) should be >0.0")
 
 
+def check_seq_len(df_seq=None, len_min=11):
+    """ Check if the length of each sequence in the specified column is at least `len_min`"""
+    mask_seq_len_is_fine = df_seq[ut.COL_SEQ].str.len() >= len_min
+    list_seq_too_short = df_seq[~mask_seq_len_is_fine][ut.COL_ENTRY].to_list()
+    if len(list_seq_too_short) > 0:
+        raise ValueError(f"Minimum requiered length (n>={len_min}) for sequences in '{ut.COL_SEQ}'"
+                         f"is not meet by the following entries: {list_seq_too_short}")
+
+
+def check_seq_gaps(df_seq):
+    """Check if sequences in the specified column contain gaps ('-')."""
+    mask_has_gaps = df_seq[ut.COL_SEQ].str.contains("-")
+    list_seq_with_gaps = df_seq[mask_has_gaps][ut.COL_ENTRY].to_list()
+    if list_seq_with_gaps:
+        raise ValueError(f"The following sequences in '{ut.COL_SEQ}' should not "
+                         f"contain gaps ('-'): {list_seq_with_gaps}")
+
+
 # II Main function
 def filter_seq(df_seq: pd.DataFrame = None,
                method: Literal['cd-hit', 'mmseqs'] = "cd-hit",
@@ -55,6 +73,7 @@ def filter_seq(df_seq: pd.DataFrame = None,
     ----------
     df_seq : pd.DataFrame, shape (n_samples, n>=1)
         DataFrame containing an ``entry`` and ''sequence'' column for unique identifiers and sequences.
+        Sequence length must be at least 11 amino acids and the sequence should not contain any gaps ('-').
     method : {'cd-hit', 'mmseqs'}, default='cd-hit'
         Specifies the clustering algorithm to use:
 
@@ -129,6 +148,8 @@ def filter_seq(df_seq: pd.DataFrame = None,
     ut.check_df(name="df_seq", df=df_seq,
                 cols_requiered=[ut.COL_ENTRY, ut.COL_SEQ],
                 cols_nan_check=[ut.COL_ENTRY, ut.COL_SEQ])
+    check_seq_len(df_seq=df_seq, len_min=11)
+    check_seq_gaps(df_seq=df_seq)
     ut.check_str_options(name="method", val=method, accept_none=False,
                          list_str_options=["cd-hit", "mmseqs"])
     check_is_tool(name=method)

@@ -15,6 +15,9 @@ settings.load_profile("ci")
 
 is_windows = platform.system() == "Windows"
 
+COL_SEQ = "sequence"
+COL_ENTRY = "entry"
+
 
 # Normal Cases
 @pytest.mark.skipif(is_windows, reason="Skipping tests on Windows")
@@ -32,6 +35,20 @@ class TestFilterSeq:
         """Test an invalid 'method' parameter."""
         df_seq = aa.load_dataset(name="DOM_GSEC", n=50)
         for method in [None, 0, "invalid", "cd_hit"]:
+            with pytest.raises(ValueError):
+                aa.filter_seq(df_seq=df_seq, method=method)
+
+    def test_invalid_df_seq_too_short_sequence(self):
+        """Test that filter_seq raises an error for sequences that are too short."""
+        df_seq = pd.DataFrame({COL_SEQ: ["AGC", "TTTGGGAACCC"], COL_ENTRY: ["entry1", "entry2"]})
+        for method in ["cd-hit", "mmseqs"]:
+            with pytest.raises(ValueError):
+                aa.filter_seq(df_seq=df_seq, method=method)
+
+    def test_invalid_df_seq_sequence_with_gaps(self):
+        """Test that filter_seq raises an error for sequences containing gaps ('-')."""
+        df_seq = pd.DataFrame({COL_SEQ: ["AGCT-AGG", "TTTGGGAACCC"], COL_ENTRY: ["entry1", "entry2"]})
+        for method in ["cd-hit", "mmseqs"]:
             with pytest.raises(ValueError):
                 aa.filter_seq(df_seq=df_seq, method=method)
 
@@ -160,6 +177,7 @@ class TestFilterSeq:
                 aa.filter_seq(df_seq=df_seq, sort_clusters=sort_cluster, method="cd-hit")
             with pytest.raises(ValueError):
                 aa.filter_seq(df_seq=df_seq, sort_clusters=sort_cluster, method="mmseqs")
+
 
 # Complex Cases
 @pytest.mark.skipif(is_windows, reason="Skipping tests on Windows")
