@@ -56,6 +56,7 @@ from ._utils.check_data import (check_X,
                                 check_array_like,
                                 check_superset_subset,
                                 check_df,
+                                check_warning_consecutive_index,
                                 check_file_path_exists,
                                 check_is_fasta)
 from ._utils.check_models import (check_mode_class,
@@ -475,6 +476,7 @@ def check_df_seq(df_seq=None, accept_none=False):
         else:
             raise ValueError("'df_seq' should not be None")
     check_df(name="df_seq", df=df_seq, cols_requiered=[COL_ENTRY])
+    check_warning_consecutive_index(name="df_seq", df=df_seq)
     pos_based = set(COLS_SEQ_POS).issubset(set(df_seq))
     part_based = set(COLS_SEQ_PARTS).issubset(set(df_seq))
     seq_based = COL_SEQ in list(df_seq)

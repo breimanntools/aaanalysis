@@ -38,6 +38,7 @@ def check_match_df_corr_labels(df_corr=None, labels=None):
         raise ValueError(f"Number of 'labels' ({len(labels)}) must match with n_samples in 'df_corr' ({n_samples})")
     return labels
 
+
 def check_match_df_corr_labels_ref(df_corr=None, labels_ref=None, labels=None, pairwise=False, verbose=False):
     """Ensure the number of labels matches the number of samples in df_corr"""
     str_add = ""
@@ -50,9 +51,11 @@ def check_match_df_corr_labels_ref(df_corr=None, labels_ref=None, labels=None, p
         labels_ref = list(df_corr)
         str_add = "(obtained from 'df_corr' columns if not given)"
     if set(labels) != set(labels_ref) and verbose:
-        warnings.warn(f"'labels' and 'labels_ref' {str_add} does not match. Provide 'labels_ref' or adjust 'df_corr' columns."
-                      f"\n 'labels': {set(labels)},"
-                      f"\n 'labels_ref': {set(labels_ref)}")
+        str_warn = (f"Warning: 'labels' and 'labels_ref' {str_add} does not match. "
+                    f"Provide 'labels_ref' or adjust 'df_corr' columns."
+                    f"\n 'labels': {set(labels)}, "
+                    f"\n 'labels_ref': {set(labels_ref)}")
+        warnings.warn(str_warn, UserWarning)
 
     labels_ref = ut.check_labels(labels=labels_ref, name="labels_ref")
     n_samples, n_clusters = df_corr.shape
@@ -101,15 +104,16 @@ def check_bar_colors(bar_colors=None):
     return bar_colors
 
 
-def check_match_bar_colors_labels(bar_colors=None, labels=None):
+def check_warning_match_bar_colors_labels(bar_colors=None, labels=None):
     """Adjust bar_colors to match the number of unique labels and warn if there are insufficient colors provided"""
-    n_clusters = len(set(labels)) # Number of unique labels
+    n_clusters = len(set(labels))   # Number of unique labels
     if len(bar_colors) == 1:
         bar_colors = bar_colors * n_clusters
     if len(bar_colors) < n_clusters:
         n_colors = len(bar_colors)
         bar_colors *= n_clusters
-        warnings.warn(f"Length of 'bar_colors' (n={n_colors}) should be >= n_clusters (n={n_clusters})")
+        str_warn = f"Warning: Length of 'bar_colors' (n={n_colors}) should be >= n_clusters (n={n_clusters})"
+        warnings.warn(str_warn, UserWarning)
     return bar_colors[0:n_clusters]
 
 
@@ -487,7 +491,7 @@ class AAclustPlot:
         ut.check_number_val(name="ytick_label_rotation", val=ytick_label_rotation, just_int=True, accept_none=True)
         bar_position = check_bar_position(bar_position=bar_position)
         bar_colors = check_bar_colors(bar_colors=bar_colors)
-        bar_colors = check_match_bar_colors_labels(bar_colors=bar_colors, labels=labels)
+        bar_colors = check_warning_match_bar_colors_labels(bar_colors=bar_colors, labels=labels)
         dict_float_args = dict(bar_width_x=bar_width_x, bar_spacing_x=bar_spacing_x,
                                bar_width_y=bar_width_y, bar_spacing_y=bar_spacing_y)
         for name in dict_float_args:

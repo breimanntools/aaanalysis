@@ -10,6 +10,8 @@ from ._utils import add_str
 from .utils_types import VALID_INT_TYPES, VALID_INT_FLOAT_TYPES
 import aaanalysis._utils.check_type as check_type
 
+import warnings
+
 
 # Helper functions
 def _convert_2d(val=None, name=None, str_add=None):
@@ -281,6 +283,24 @@ def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_p
     if len(cols_duplicated) > 0:
         str_error = add_str(str_error=f"The following columns are duplicated '{cols_duplicated}'.", str_add=str_add)
         raise ValueError(str_error)
+
+
+def check_warning_consecutive_index(name="df", df=None):
+    """Check if the DataFrame index consists of consecutive numbers."""
+    if pd.api.types.is_numeric_dtype(df.index):
+        sorted_index = df.index.sort_values()
+        expected_index = pd.RangeIndex(start=sorted_index.min(), stop=sorted_index.max() + 1)
+        # Check if originally unsorted
+        if not df.index.equals(sorted_index):
+            str_warn = (f"Warning: '{name}' index is numeric but unsorted."
+                        f"\n Consider '{name}'.reset_index(drop=True)")
+            warnings.warn(str_warn, UserWarning)
+        # Check for missing values
+        if not sorted_index.equals(expected_index):
+            str_warn = (f"Warning: '{name}' index is numeric but has missing values"
+                        f" (expected {sorted_index.min()}–{sorted_index.max()}, but n={len(df)})."
+                        f"\n Consider '{name}'.reset_index(drop=True)")
+            warnings.warn(str_warn, UserWarning)
 
 
 def check_file_path_exists(file_path=None):
