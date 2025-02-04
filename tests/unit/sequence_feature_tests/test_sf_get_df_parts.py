@@ -173,7 +173,6 @@ class TestGetDfParts:
         with pytest.raises(ValueError):
             sf.get_df_parts(df_seq=df_seq[cols_seq_tmd_format], jmd_n_len=None, jmd_c_len=None)
 
-
     def test_invalid_list_parts(self):
         """Test an invalid 'list_parts' parameter."""
         df_seq = aa.load_dataset(name="DOM_GSEC", n=50)
@@ -208,6 +207,39 @@ class TestGetDfParts:
         sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
             sf.get_df_parts(df_seq=df_seq, all_parts=None)
+
+    def test_invalid_tmd_start_pos_tmd_stop_pos(self):
+        """Test if fails when TMD position is >= 0"""
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=50)
+        cols_pos_format = ["entry", "sequence", "tmd_start", "tmd_stop"]
+        # TMD start smaller than 1
+        df_seq_a = df_seq[cols_pos_format].copy()
+        df_seq_a["tmd_start"] = 0
+        sf = aa.SequenceFeature()
+        with pytest.raises(ValueError):
+            sf.get_df_parts(df_seq=df_seq_a)
+        # TMD start higher than sequence length
+        df_seq_b = df_seq[cols_pos_format].copy()
+        df_seq_b["tmd_start"] = 100
+        sf = aa.SequenceFeature()
+        with pytest.raises(ValueError):
+            sf.get_df_parts(df_seq=df_seq_b)
+        # TMD stop higher than sequence length
+        df_seq_b1 = df_seq[cols_pos_format].copy()
+        df_seq_b1["tmd_stop"] = 1000000
+        with pytest.raises(ValueError):
+            sf.get_df_parts(df_seq=df_seq_b1)
+        # TMD stop higher than start
+        df_seq_c = df_seq[cols_pos_format].copy()
+        df_seq_c["tmd_start"] = 1000
+        with pytest.raises(ValueError):
+            sf.get_df_parts(df_seq=df_seq_c)
+        # TMD longer than sequence
+        df_seq_d = df_seq[cols_pos_format].copy().head(1)
+        df_seq_d["tmd_stop"] = 15001
+        df_seq_d["tmd_start"] = 5000
+        with pytest.raises(ValueError):
+            sf.get_df_parts(df_seq=df_seq_d)
 
 
 # Complex Cases

@@ -34,7 +34,7 @@ def _get_df_clust_cd_hit(file_cd_hit_out):
         for line in file:
             line = line.strip()
             if line.startswith('>Cluster'):
-                cluster_id = line.split()[1]  # Capture the cluster number
+                cluster_id = int(line.split()[1])  # Capture the cluster number
             else:
                 parts = line.split(', >')
                 entry = parts[1].split('...')[0]

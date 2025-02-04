@@ -492,9 +492,25 @@ def check_df_seq(df_seq=None, accept_none=False):
         raise ValueError(f"'df_seq' should not contain 'tmd_stop' in columns. Change column to '{COL_TMD_STOP}'.")
     # Check if different formats are valid
     if pos_based:
-        for entry, tmd_start, tmd_stop in zip(df_seq[COL_ENTRY], df_seq[COL_TMD_START], df_seq[COL_TMD_STOP]):
-            check_number_range(name=f"'tmd_start'={tmd_start} (entry: '{entry}')", val=tmd_start, just_int=True)
-            check_number_range(name=f"'tmd_stop'={tmd_stop} (entry: '{entry}')", val=tmd_stop, just_int=True)
+        for entry, tmd_start, tmd_stop, seq in zip(df_seq[COL_ENTRY], df_seq[COL_TMD_START],
+                                                   df_seq[COL_TMD_STOP], df_seq[COL_SEQ]):
+            # Check if valid integers
+            args = dict(min_val=1, just_int=True)
+            check_number_range(name=f"'tmd_start'={tmd_start} (entry: '{entry}')", val=tmd_start, **args)
+            check_number_range(name=f"'tmd_stop'={tmd_stop} (entry: '{entry}')", val=tmd_stop, **args)
+            # Check if tmd_start smaller than tmd_stop
+            if tmd_start > tmd_stop:
+                raise ValueError(f"'tmd_start'={tmd_start} should be <= 'tmd_stop'={tmd_stop} (entry: '{entry}')")
+            # Check if tmd_start and tmd_stop smaller than sequence length
+            len_seq = len(seq)
+            if tmd_start > len_seq:
+                raise ValueError(f"'tmd_start'={tmd_start} should be <= sequence length (n={len_seq}) (entry: '{entry}')")
+            if tmd_stop > len_seq:
+                raise ValueError(f"'tmd_stop'={tmd_stop} should be <= sequence length (n={len_seq}) (entry: '{entry}')")
+            # Check if tmd length matches with sequence length
+            len_tmd = tmd_stop - tmd_start
+            if len_tmd > len_seq:
+                raise ValueError(f"TMD (n={len_tmd}) is longer than sequence (n={len_seq}) (entry: '{entry}')")
     if part_based:
         for col in COLS_SEQ_PARTS:
             if not all(isinstance(x, str) for x in df_seq[col]):
