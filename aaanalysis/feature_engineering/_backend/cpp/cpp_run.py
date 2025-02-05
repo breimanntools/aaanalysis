@@ -86,10 +86,10 @@ def _filtering_info(df=None, df_scales=None, check_cat=True):
     """Get datasets structures for filtering, two dictionaries with feature to scale category resp.
     feature positions and one datasets frame with paired pearson correlations of all scales"""
     if check_cat:
-        dict_c = dict(zip(df[ut.COL_FEATURE], df["category"]))
+        dict_c = dict(zip(df[ut.COL_FEATURE], df[ut.COL_CAT]))
     else:
         dict_c = dict()
-    dict_p = dict(zip(df[ut.COL_FEATURE], [set(x) for x in df["positions"]]))
+    dict_p = dict(zip(df[ut.COL_FEATURE], [set(x) for x in df[ut.COL_POSITION]]))
     df_cor = df_scales.corr()
     return dict_c, dict_p, df_cor
 
