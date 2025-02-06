@@ -32,7 +32,7 @@ def _get_splits(df_parts=None, split_type=None, split_type_args=None):
     part_splits = np.empty([len(df_parts), len(labels_s) * len(list_parts)], dtype=object)
     labels_ps = []  # Part Split labels
     for i, p in enumerate(list_parts):
-        labels_ps.extend(["{}-{}".format(p.upper(), s) for s in labels_s])
+        labels_ps.extend([f"{p.upper()}-{s}" for s in labels_s])
         for j, seq in enumerate(df_parts[p]):
             part_splits[j, i*len(labels_s):(i+1)*len(labels_s)] = f_splitr(seq)
     return part_splits, labels_ps
@@ -70,7 +70,7 @@ def _pre_filtering_info(list_scales, dict_all_scales, labels_ps, part_split, acc
         dict_scale = dict_all_scales[scale]
         start, end = i*len(labels_ps), (i+1)*len(labels_ps)
         # Feature names
-        feat_names[start:end] = ["{}-{}".format(ps, scale) for ps in labels_ps]
+        feat_names[start:end] = [f"{ps}-{scale}" for ps in labels_ps]
         # Feature matrix
         vf_scale = get_vf_scale(dict_scale=dict_scale, accept_gaps=accept_gaps)
         with warnings.catch_warnings():

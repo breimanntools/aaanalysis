@@ -17,7 +17,7 @@ def _plot_neg_homogeneity(ax=None, df_eval=None, col=None, colors=None, val_name
     # Adding the numbers to the end of the bars
     for p in ax.patches:
         val = p.get_width()
-        val = '{:.3f}'.format(val) if val < 1 else int(val)
+        val = round(val, 3) if val < 1 else int(val)
         ax.text(p.get_width() * 0.97, p.get_y() + p.get_height() / 2, val, ha='right', va='center')
     # Customize subplots
     ax.set_ylabel("")

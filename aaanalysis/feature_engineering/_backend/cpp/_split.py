@@ -25,7 +25,7 @@ def _get_pattern_pos(steps=None, repeat=2, len_max=12):
     return list_pattern_pos
 
 
-def get_list_pattern_pos(steps=None, n_min=2, n_max=4, len_max=15):
+def _get_list_pattern_pos(steps=None, n_min=2, n_max=4, len_max=15):
     """Get list of pattern positions using get_pattern_pos"""
     list_pattern_pos = []
     for n in range(n_min, n_max+1):
@@ -154,6 +154,21 @@ class Split:
 class SplitRange:
     """Class for creating range of splits for testing sets of multiple features in CPP"""
 
+    def __init__(self):
+        """"""
+        # Dictionary for caching list_pattern_pos results
+        self.dict_list_pattern_pos = {}
+
+    # Helper method
+    def get_list_pattern_pos(self, steps=None, n_min=2, n_max=4, len_max=15):
+        args_key = tuple(steps) if isinstance(steps, list) else steps
+        if args_key not in self.dict_list_pattern_pos:
+            list_pattern_pos = _get_list_pattern_pos(steps=steps, n_min=n_min, n_max=n_max, len_max=len_max)
+            self.dict_list_pattern_pos[args_key] = list_pattern_pos
+        else:
+            list_pattern_pos = self.dict_list_pattern_pos[args_key]
+        return list_pattern_pos
+
     # Segment methods
     @staticmethod
     def segment(seq=None, n_split_min=1, n_split_max=15):
@@ -173,15 +188,14 @@ class SplitRange:
         labels = []
         for n_split in range(n_split_min, n_split_max+1):
             for i_th in range(1, n_split+1):
-                name = "{}({},{})".format(ut.STR_SEGMENT, i_th, n_split)
+                name = f"{ut.STR_SEGMENT}({i_th},{n_split})"
                 labels.append(name)
         return labels
 
     # Pattern methods
-    @staticmethod
-    def pattern(seq=None, steps=None, n_min=2, n_max=4, len_max=15):
+    def pattern(self, seq=None, steps=None, n_min=2, n_max=4, len_max=15):
         """Get range of all possible Pattern splits for given sequence."""
-        list_pattern_pos = get_list_pattern_pos(steps=steps, n_min=n_min, n_max=n_max, len_max=len_max)
+        list_pattern_pos = self.get_list_pattern_pos(steps=steps, n_min=n_min, n_max=n_max, len_max=len_max)
         sp = Split()
         f = sp.pattern  # Unbound function for higher performance
         seq_splits = []
@@ -191,14 +205,14 @@ class SplitRange:
                 seq_splits.append(seq_pattern)
         return seq_splits
 
-    @staticmethod
-    def labels_pattern(steps=None, n_min=2, n_max=4, len_max=15):
+    def labels_pattern(self, steps=None, n_min=2, n_max=4, len_max=15):
         """Get labels for range of Pattern splits."""
-        list_pattern_pos = get_list_pattern_pos(steps=steps, n_min=n_min, n_max=n_max, len_max=len_max)
+        list_pattern_pos = self.get_list_pattern_pos(steps=steps, n_min=n_min, n_max=n_max, len_max=len_max)
         labels = []
         for terminus in ['N', 'C']:
             for pattern_pos in list_pattern_pos:
-                name = "{}({},{})".format(ut.STR_PATTERN, terminus, ",".join(str(x) for x in pattern_pos))
+                str_pattern_pos = ",".join(str(x) for x in pattern_pos)
+                name = f"{ut.STR_PATTERN}({terminus},{str_pattern_pos}"
                 labels.append(name)
         return labels
 
@@ -223,7 +237,7 @@ class SplitRange:
         for terminus in ['N', 'C']:
             for step1, step2 in itertools.product(steps, repeat=2):
                 for start in range(1, step1+1):
-                    name = "{}({},i+{}/{},{})".format(ut.STR_PERIODIC_PATTERN, terminus, step1, step2, start)
+                    name = f"{ut.STR_PERIODIC_PATTERN}({terminus},i+{step1}/{step2},{start})"
                     labels.append(name)
         return labels
 
