@@ -14,8 +14,8 @@ def auc_adjusted_(X=None, labels=None, label_test=1):
     comparing, for each feature, groups (given by y (labels)) by feature values in X (feature matrix).
     """
     # Convert labels to binary format (1 or 0)
-    labels_binary = [1 if y == label_test else 0 for y in labels]
-    auc = np.apply_along_axis((lambda x: roc_auc_score(labels_binary, x) - 0.5), 0, X)
+    labels_binary = [int(y == label_test) for y in labels]
+    auc = np.array([roc_auc_score(labels_binary, X[:, i]) - 0.5 for i in range(X.shape[1])])
     auc = np.round(auc, 3)
     return auc
 

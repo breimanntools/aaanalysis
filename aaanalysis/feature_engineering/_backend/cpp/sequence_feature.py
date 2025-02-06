@@ -41,8 +41,8 @@ def get_features_(list_parts=None, split_kws=None, list_scales=None):
     for split_type in split_kws:
         args = split_kws[split_type]
         labels_s = getattr(spr, "labels_" + split_type.lower())(**args)
-        features.extend(["{}-{}-{}".format(p.upper(), s, sc) for p in list_parts for s in labels_s
-                         for sc in list_scales])
+        features.extend([f"{part.upper()}-{split}-{scale}" for part in list_parts
+                         for split in labels_s for scale in list_scales])
     return features
 
 
