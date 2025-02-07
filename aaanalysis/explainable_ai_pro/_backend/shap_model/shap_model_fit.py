@@ -129,7 +129,7 @@ def monte_carlo_shap_estimation(X, labels=None, list_model_classes=None, list_mo
             if verbose:
                 pct_progress = j / len(is_selected)
                 add_new_line = explainer_class in LIST_VERBOSE_shap_modelS
-                ut.print_progress(i=i+pct_progress, n=n_rounds, add_new_line=add_new_line)
+                ut.print_progress(i=i+pct_progress, n_total=n_rounds, add_new_line=add_new_line)
             # Adjust fuzzy labels (labels between 0 and 1, e.g., 0.5 -> 50% 1 and 50% 0)
             if fuzzy_labeling:
                 threshold = ((j + 1) * (i + 1)) / (n_rounds * n_selection_rounds)

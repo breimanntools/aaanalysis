@@ -20,7 +20,7 @@ def _recursive_feature_elimination(X, labels=None, step=None, n_feat_max=50, n_f
     while n_features > n_feat_min:
         if verbose:
             pct_progress = abs(1 - (n_features - n_feat_min) / (n_total - n_feat_min))
-            ut.print_progress(i=i+pct_progress, n=n_rounds)
+            ut.print_progress(i=i+pct_progress, n_total=n_rounds)
         rf.fit(X[:, selected_features], labels)
         importances = rf.feature_importances_
         if step is None:

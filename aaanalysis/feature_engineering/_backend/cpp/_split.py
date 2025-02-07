@@ -173,7 +173,7 @@ class SplitRange:
     @staticmethod
     def segment(seq=None, n_split_min=1, n_split_max=15):
         """Get range of all possible Segment splits for given sequences."""
-        sp = Split()
+        sp = Split(type_str=isinstance(seq, str))
         f = sp.segment  # Unbound function for higher performance
         seq_splits = []
         for n_split in range(n_split_min, n_split_max+1):
@@ -196,7 +196,7 @@ class SplitRange:
     def pattern(self, seq=None, steps=None, n_min=2, n_max=4, len_max=15):
         """Get range of all possible Pattern splits for given sequence."""
         list_pattern_pos = self.get_list_pattern_pos(steps=steps, n_min=n_min, n_max=n_max, len_max=len_max)
-        sp = Split()
+        sp = Split(type_str=isinstance(seq, str))
         f = sp.pattern  # Unbound function for higher performance
         seq_splits = []
         for terminus in ['N', 'C']:
@@ -220,7 +220,7 @@ class SplitRange:
     @staticmethod
     def periodicpattern(seq=None, steps=None):
         """Get range of all possible PeriodicPattern splits for given sequence"""
-        sp = Split()
+        sp = Split(type_str=isinstance(seq, str))
         f = sp.periodicpattern  # Unbound function for higher performance
         seq_splits = []
         for terminus in ['N', 'C']:

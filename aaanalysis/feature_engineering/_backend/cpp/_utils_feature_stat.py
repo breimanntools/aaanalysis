@@ -8,26 +8,9 @@ import aaanalysis.utils as ut
 
 
 # I Helper Functions
-# Benjamini Hochberg correction
-def _bh_corrected_pvalues(pvals):
-    """BH correction"""
-    pvals = np.array(pvals)
-    n = len(pvals)
-    sorted_indices = np.argsort(pvals)
-    sorted_pvals = pvals[sorted_indices]
-    ranks = np.arange(1, n+1)
-    corrected_pvals = sorted_pvals * n / ranks
-    corrected_pvals[corrected_pvals > 1] = 1  # p-values cannot exceed 1
-    # Reorder to the original order
-    corrected_pvals_original_order = np.empty(n, dtype=float)
-    corrected_pvals_original_order[sorted_indices] = corrected_pvals
-    return corrected_pvals_original_order
-
-
-def _mann_whitney_u_vectorized(X, mask_test, mask_ref):
-    """Vectorized Mann-Whitney U Test Without Loops, same results as stats.mannwhitneyu (alternative="two-sided")"""
-    # Extract test & reference groups
-    X_test, X_ref = X[mask_test], X[mask_ref]
+def _mann_whitney_u_vectorized(X_test, X_ref):
+    """Vectorized Mann-Whitney U Test Without Loops"""
+    # DEV: Fast implementation of stats.mannwhitneyu (X1, X2, alternative="two-sided")
     # Rank all values together (vectorized)
     combined = np.concatenate([X_test, X_ref], axis=0)
     ranks = stats.rankdata(combined, axis=0)
@@ -42,6 +25,22 @@ def _mann_whitney_u_vectorized(X, mask_test, mask_ref):
     z = (U - mean_U) / std_U
     p_vals = 2 * stats.norm.sf(np.abs(z))  # Two-sided p-value
     return p_vals
+
+
+# Benjamini Hochberg correction
+def _bh_corrected_pvalues(pvals):
+    """BH correction"""
+    pvals = np.array(pvals)
+    n = len(pvals)
+    sorted_indices = np.argsort(pvals)
+    sorted_pvals = pvals[sorted_indices]
+    ranks = np.arange(1, n+1)
+    corrected_pvals = sorted_pvals * n / ranks
+    corrected_pvals[corrected_pvals > 1] = 1  # p-values cannot exceed 1
+    # Reorder to the original order
+    corrected_pvals_original_order = np.empty(n, dtype=float)
+    corrected_pvals_original_order[sorted_indices] = corrected_pvals
+    return corrected_pvals_original_order
 
 
 # Summary and test statistics for feature matrix based on classification by labels
@@ -60,6 +59,19 @@ def _std(X=None, labels=None, group=1):
     return group_std
 
 
+def _mean_stat(X=None, labels=None, parametric=False, label_test=1, label_ref=0):
+    """Statistical comparison of central tendency between two groups for each feature"""
+    mask_test = [x == label_test for x in labels]
+    mask_ref = [x == label_ref for x in labels]
+    if parametric:
+        p_vals = stats.ttest_ind(X[mask_test], X[mask_ref], nan_policy="omit")[1]
+        p_str = "p_val_ttest_indep"
+    else:
+        p_vals = _mann_whitney_u_vectorized(X[mask_test], X[mask_ref])
+        p_str = "p_val_mann_whitney"
+    return p_vals, p_str
+
+
 def _p_correction(p_vals=None):
     """Correct p-values"""
     # Exclude nan from list of corrected p-values
@@ -75,19 +87,6 @@ def _p_correction(p_vals=None):
         else:
             p_corrected.append(np.nan)
     return p_corrected
-
-
-def _mean_stat(X=None, labels=None, parametric=False, label_test=1, label_ref=0):
-    """Statistical comparison of central tendency between two groups for each feature"""
-    mask_test = [x == label_test for x in labels]
-    mask_ref = [x == label_ref for x in labels]
-    if parametric:
-        p_vals = stats.ttest_ind(X[mask_test], X[mask_ref], nan_policy="omit")[1]
-        p_str = "p_val_ttest_indep"
-    else:
-        p_vals = _mann_whitney_u_vectorized(X, mask_test, mask_ref)
-        p_str = "p_val_mann_whitney"
-    return p_vals, p_str
 
 
 # II Main Functions

@@ -25,7 +25,7 @@ def eval_feature_selections(X, labels=None, list_is_selected=None, names_feature
             for k, eval_score in enumerate(list_metrics):
                 if verbose:
                     pct_progress = (j + k/n_metrics)/n_rounds
-                    ut.print_progress(i=i+pct_progress, n=n_feature_sets)
+                    ut.print_progress(i=i+pct_progress, n_total=n_feature_sets)
                 model_scores = [
                     cross_val_score(model_class(**model_kwargs), X_selected, y=labels, cv=n_cv, scoring=eval_score).mean()
                     for model_class, model_kwargs in zip(list_model_classes, list_model_kwargs)
