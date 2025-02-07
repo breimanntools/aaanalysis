@@ -213,8 +213,8 @@ def load_dataset(name: str = "Overview",
 
     # Load overview table
     if name == "Overview":
-        return ut.read_excel_cached(FOLDER_BENCHMARKS + "Overview.xlsx").copy()
-    df = ut.read_csv_cached(FOLDER_BENCHMARKS + name + ".tsv", sep="\t")
+        return ut.read_csv_cached(FOLDER_BENCHMARKS + f"Overview.{ut.STR_FILE_TYPE}").copy()
+    df = ut.read_csv_cached(FOLDER_BENCHMARKS + name + f".{ut.STR_FILE_TYPE}")
     # Filter data
     if min_len is not None:
         mask = [len(x) >= min_len for x in df[ut.COL_SEQ]]

@@ -43,5 +43,5 @@ def load_features(name="DOM_GSEC"):
     # Check input
     check_name(name=name)
     # Load features
-    df_feat = ut.read_excel_cached(FOLDER_FEATURES + f"FEATURES_{name}.xlsx")
+    df_feat = ut.read_csv_cached(FOLDER_FEATURES + f"FEATURES_{name}.{ut.STR_FILE_TYPE}")
     return df_feat

@@ -47,7 +47,7 @@ def _filter_scales(df_cat=None, unclassified_out=False, just_aaindex=False):
 
 def _get_selected_scales(top60_n=None):
     """Get selected top scale set"""
-    df_eval = ut.read_excel_cached(ut.FOLDER_DATA + f"{ut.STR_TOP60}.xlsx").drop("top60_id", axis=1)
+    df_eval = ut.read_csv_cached(ut.FOLDER_DATA + f"{ut.STR_TOP60}.{ut.STR_FILE_TYPE}").drop("top60_id", axis=1)
     # Find the names of the index where the value is not 0
     _df = df_eval.iloc[top60_n - 1]
     selected_scales = _df[_df != 0].index.tolist()
@@ -144,11 +144,11 @@ def load_scales(name: str = "scales",
     if top60_n is not None:
         selected_scales = _get_selected_scales(top60_n=top60_n)
         if name == ut.STR_SCALE_CAT:
-            df_cat = ut.read_excel_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.xlsx")
+            df_cat = ut.read_csv_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.{ut.STR_FILE_TYPE}")
             df_cat = df_cat[df_cat[ut.COL_SCALE_ID].isin(selected_scales)].reset_index(drop=True)
             return df_cat.copy()
         elif name in [ut.STR_SCALES, ut.STR_SCALES_RAW]:
-            df = ut.read_excel_cached(ut.FOLDER_DATA + name + ".xlsx", index_col=0)
+            df = ut.read_csv_cached(ut.FOLDER_DATA + name + f".{ut.STR_FILE_TYPE}", index_col=0)
             df = df[selected_scales]
             df = _adjust_dtypes(df=df, name=name)
             return df.copy()
@@ -158,20 +158,20 @@ def load_scales(name: str = "scales",
     # Load unfiltered data
     if not unclassified_out and not just_aaindex:
         if name == ut.STR_SCALE_CAT:
-            df_cat = ut.read_excel_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.xlsx")
+            df_cat = ut.read_csv_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.{ut.STR_FILE_TYPE}")
             return df_cat
-        df = ut.read_excel_cached(ut.FOLDER_DATA + name + ".xlsx", index_col=0)
+        df = ut.read_csv_cached(ut.FOLDER_DATA + name + f".{ut.STR_FILE_TYPE}", index_col=0)
         df = _adjust_dtypes(df=df, name=name)
         return df.copy()
 
     # Load and filter scale categories
-    df_cat = ut.read_excel_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.xlsx")
+    df_cat = ut.read_csv_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.{ut.STR_FILE_TYPE}")
     df_cat = _filter_scales(df_cat=df_cat, unclassified_out=unclassified_out, just_aaindex=just_aaindex)
     if name == ut.STR_SCALE_CAT:
         return df_cat.reset_index(drop=True).copy()
 
     # Load and filter scales
-    df = ut.read_excel_cached(ut.FOLDER_DATA + name + ".xlsx", index_col=0)
+    df = ut.read_csv_cached(ut.FOLDER_DATA + name + f".{ut.STR_FILE_TYPE}", index_col=0)
     if name in [ut.STR_SCALES, ut.STR_SCALES_RAW]:
         selected_scales = [x for x in list(df) if x in list(df_cat[ut.COL_SCALE_ID])]
         df = df[selected_scales]

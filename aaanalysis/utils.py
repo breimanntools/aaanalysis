@@ -140,6 +140,7 @@ STR_TOP60_EVAL = "top60_eval"  # AAclustTop60 evaluation
 NAMES_SCALE_SETS = [STR_SCALES, STR_SCALES_RAW, STR_SCALE_CAT,
                     STR_SCALES_PC, STR_TOP60, STR_TOP60_EVAL]
 
+STR_FILE_TYPE = "tsv"
 
 # Column names for primary df
 # df_seq
@@ -349,16 +350,9 @@ def get_dict_part_seq(tmd=None, jmd_n=None, jmd_c=None):
 # II Main functions
 # Caching for data loading for better performance (data loaded ones)
 @lru_cache(maxsize=None)
-def read_excel_cached(name, index_col=None):
+def read_csv_cached(name, sep="\t", index_col=None):
     """Load cached dataframe to save loading time"""
-    df = pd.read_excel(name, index_col=index_col)
-    return df.copy()
-
-
-@lru_cache(maxsize=None)
-def read_csv_cached(name, sep=None):
-    """Load cached dataframe to save loading time"""
-    df = pd.read_csv(name, sep=sep)
+    df = pd.read_csv(name, sep=sep, index_col=index_col)
     return df.copy()
 
 
@@ -366,14 +360,14 @@ def load_default_scales(scale_cat=False):
     """Load default scales sets or categories. Copy is always returned to maintain data integrity."""
     if scale_cat:
         if options[FILE_DF_CAT] is None:
-            df_cat = read_excel_cached(FOLDER_DATA + f"{STR_SCALE_CAT}.xlsx")
+            df_cat = read_csv_cached(FOLDER_DATA + f"{STR_SCALE_CAT}.{STR_FILE_TYPE}")
             options[FILE_DF_CAT] = df_cat
             return df_cat.copy()
         else:
             return options[FILE_DF_CAT].copy()
     else:
         if options[FILE_DF_SCALES] is None:
-            df_scales = read_excel_cached(FOLDER_DATA + f"{STR_SCALES}.xlsx", index_col=0)
+            df_scales = read_csv_cached(FOLDER_DATA + f"{STR_SCALES}.{STR_FILE_TYPE}", index_col=0)
             df_scales = df_scales.astype(float)
             options[FILE_DF_SCALES] = df_scales
             return df_scales.copy()
