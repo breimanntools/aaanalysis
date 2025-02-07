@@ -29,9 +29,11 @@ def check_invalid_conditions(X, labels, min_samples=3, check_unique=True):
             return True
     return False
 
+
 def create_labels(size):
     labels = np.array([1, 2] + list(np.random.choice([1, 2], size=size-2)))
     return labels
+
 
 class TestCompAucAdjusted:
 
@@ -40,7 +42,7 @@ class TestCompAucAdjusted:
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=some.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
     def test_X_positive(self, X):
-        """Test with valid X inpaa."""
+        """Test with valid X input"""
         X = np.asarray(X)
         size = X.shape[0]
         if size >= 2:
@@ -48,19 +50,30 @@ class TestCompAucAdjusted:
             is_invalid = check_invalid_conditions(X=X, labels=labels)
             if not is_invalid:
                 label_test, label_ref = list(set(labels))
-                assert isinstance(aa.comp_auc_adjusted(X, labels, label_test=label_test,
-                                                       label_ref=label_ref), np.ndarray)
+                assert isinstance(aa.comp_auc_adjusted(X, labels,
+                                                       label_test=label_test,
+                                                       label_ref=label_ref, n_jobs=1), np.ndarray)
 
     @settings(deadline=350, max_examples=20)
     @given(labels=some.lists(some.integers(min_value=1, max_value=2), min_size=2))
     def test_labels_positive(self, labels):
-        """Test with valid labels inpaa."""
+        """Test with valid labels input"""
         X = np.random.rand(len(labels), 3)
         size = X.shape[0]
         is_invalid = check_invalid_conditions(X=X, labels=labels)
         if not is_invalid and len(set(labels)) > 1 and size >= 2:
             label_test, label_ref = list(set(labels))
-            assert isinstance(aa.comp_auc_adjusted(X, labels, label_test=label_test, label_ref=label_ref), np.ndarray)
+            assert isinstance(aa.comp_auc_adjusted(X, labels, label_test=label_test,
+                                                   label_ref=label_ref, n_jobs=1), np.ndarray)
+
+    def test_valid_n_jobs(self):
+        """Test valid n_jobs input"""
+        labels = create_labels(5)
+        X = np.random.rand(len(labels), 3)
+        label_test, label_ref = list(set(labels))
+        assert isinstance(aa.comp_auc_adjusted(X, labels,
+                                               label_test=label_test,
+                                               label_ref=label_ref, n_jobs=4), np.ndarray)
 
     # Negative tests
     @settings(deadline=350, max_examples=20)
@@ -71,7 +84,7 @@ class TestCompAucAdjusted:
         is_invalid = check_invalid_conditions(X=X, labels=labels)
         if is_invalid:
             with pytest.raises(ValueError):
-                aa.comp_auc_adjusted(X, labels, label_ref=2)
+                aa.comp_auc_adjusted(X, labels, label_ref=2, n_jobs=1)
 
     @settings(deadline=350, max_examples=20)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
@@ -83,7 +96,19 @@ class TestCompAucAdjusted:
         is_invalid = check_invalid_conditions(X=X, labels=labels)
         if is_invalid:
             with pytest.raises(ValueError):
-                aa.comp_auc_adjusted(X, labels, label_ref=2)
+                aa.comp_auc_adjusted(X, labels, label_ref=2, n_jobs=1)
+
+    def test_invalid_n_jobs(self):
+        """Test invalid n_jobs input"""
+        labels = create_labels(5)
+        X = np.random.rand(len(labels), 3)
+        label_test, label_ref = list(set(labels))
+        with pytest.raises(ValueError):
+            aa.comp_auc_adjusted(X, labels, label_test=label_test,
+                                 label_ref=label_ref, n_jobs=0)
+        with pytest.raises(ValueError):
+            aa.comp_auc_adjusted(X, labels, label_test=label_test,
+                                 label_ref=label_ref, n_jobs="Wrong")
 
 
 class TestCompAucAdjustedComplex:
@@ -100,7 +125,8 @@ class TestCompAucAdjustedComplex:
             is_invalid = check_invalid_conditions(X=X, labels=labels)
             if len(X) == len(labels) and not is_invalid:
                 label_test, label_ref = list(set(labels))
-                assert isinstance(aa.comp_auc_adjusted(X, labels, label_test=label_test, label_ref=label_ref), np.ndarray)
+                assert isinstance(aa.comp_auc_adjusted(X, labels, label_test=label_test,
+                                                       label_ref=label_ref, n_jobs=1), np.ndarray)
 
     @settings(deadline=350, max_examples=20)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=1, max_side=10),
@@ -112,4 +138,4 @@ class TestCompAucAdjustedComplex:
         is_invalid = check_invalid_conditions(X=X, labels=labels)
         if is_invalid and len(X) != len(labels):
             with pytest.raises(ValueError):
-                aa.comp_auc_adjusted(X, labels)
+                aa.comp_auc_adjusted(X, labels, n_jobs=1)

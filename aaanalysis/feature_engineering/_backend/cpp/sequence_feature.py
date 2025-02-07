@@ -36,7 +36,7 @@ def get_split_kws_(n_split_min=1, n_split_max=15, steps_pattern=None, n_min=2, n
 # Features
 def get_features_(list_parts=None, split_kws=None, list_scales=None):
     """Create list of all feature ids for given Parts, Splits, and Scales"""
-    spr = SplitRange()
+    spr = SplitRange(split_type_str=True)
     features = []
     for split_type in split_kws:
         args = split_kws[split_type]
@@ -78,7 +78,8 @@ def get_df_feat_(features=None, df_parts=None, labels=None,
     std_test = X[mask_test].std(axis=0)
     df = pd.DataFrame(zip(features, abs_mean_dif, std_test),
                       columns=[ut.COL_FEATURE, ut.COL_ABS_MEAN_DIF, ut.COL_STD_TEST])
-    df = add_stat_(df=df, X=X, labels=labels, parametric=parametric, label_test=label_test, label_ref=label_ref)
+    df = add_stat_(df=df, X=X, labels=labels, parametric=parametric,
+                   label_test=label_test, label_ref=label_ref, n_jobs=n_jobs)
     df = add_scale_info_(df_feat=df, df_cat=df_cat)
     df[ut.COL_POSITION] = get_positions_(features=features, start=start, jmd_n_len=jmd_n_len, tmd_len=tmd_len,
                                          jmd_c_len=jmd_c_len)

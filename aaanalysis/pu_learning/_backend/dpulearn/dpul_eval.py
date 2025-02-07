@@ -29,13 +29,13 @@ def _comp_iqr(X):
 
 
 # Test similarity between identified negatives and other classes
-def _comp_auc(X=None, labels=None, label_test=0, label_ref=1):
+def _comp_auc(X=None, labels=None, label_test=0, label_ref=1, n_jobs=None):
     """Calculate the adjusted Area Under the Curve (AUC) of the given data."""
     X = X.copy()
     # Create a mask for the test and reference labels
     mask = np.asarray([l in [label_test, label_ref] for l in labels])
     # Compute AUC
-    auc_abs_vals = abs(ut.auc_adjusted_(X=X[mask], labels=labels[mask], label_test=label_test))
+    auc_abs_vals = abs(ut.auc_adjusted_(X=X[mask], labels=labels[mask], label_test=label_test, n_jobs=n_jobs))
     # Compute the average AUC
     avg_auc_abs = np.mean(auc_abs_vals)
     return avg_auc_abs
@@ -58,15 +58,15 @@ def _eval_homogeneity(X=None, labels=None, label_test=0):
     return avg_std, avg_iqr
 
 
-def _eval_distribution_alignment(X=None, labels=None, label_test=0, label_ref=1, comp_kld=True):
+def _eval_distribution_alignment(X=None, labels=None, label_test=0, label_ref=1, comp_kld=True, n_jobs=None):
     """Compute the similarity between identified negatives and the other dataset classes (positives, unlabeled)"""
     # Perform tests
-    avg_auc_abs = _comp_auc(X=X, labels=labels, label_test=label_test, label_ref=label_ref)
+    avg_auc_abs = _comp_auc(X=X, labels=labels, label_test=label_test, label_ref=label_ref, n_jobs=n_jobs)
     avg_kld = _comp_kld(X=X, labels=labels, label_test=label_test, label_ref=label_ref) if comp_kld else None
     return avg_auc_abs, avg_kld
 
 
-def _eval_distribution_alignment_X_neg(X=None, labels=None, X_neg=None, comp_kld=True):
+def _eval_distribution_alignment_X_neg(X=None, labels=None, X_neg=None, comp_kld=True, n_jobs=None):
     """Compute the similarity between identified negatives and ground-truth negatives"""
     label_test = 0
     label_ref = 1  # temporary label for ground-truth negatives for comparison
@@ -76,13 +76,13 @@ def _eval_distribution_alignment_X_neg(X=None, labels=None, X_neg=None, comp_kld
     X_combined = np.vstack([X_test, X_neg])
     labels_combined = np.array([label_test] * len(X_test) + [label_ref] * len(X_neg))
     # Perform tests
-    avg_auc = _comp_auc(X=X_combined, labels=labels_combined, label_test=label_test, label_ref=label_ref)
+    avg_auc = _comp_auc(X=X_combined, labels=labels_combined, label_test=label_test, label_ref=label_ref, n_jobs=n_jobs)
     avg_kld = _comp_kld(X=X_combined, labels=labels_combined, label_test=label_test, label_ref=label_ref) if comp_kld else None
     return avg_auc, avg_kld
 
 
 @ut.catch_runtime_warnings()
-def eval_identified_negatives(X=None, list_labels=None, names_datasets=None, X_neg=None, comp_kld=True):
+def eval_identified_negatives(X=None, list_labels=None, names_datasets=None, X_neg=None, comp_kld=True, n_jobs=None):
     """Evaluate set of identified negatives for homogeneity and alignment with other datasets"""
     unl_in = False
     list_evals = []
@@ -92,16 +92,16 @@ def eval_identified_negatives(X=None, list_labels=None, names_datasets=None, X_n
         avg_std, avg_iqr = _eval_homogeneity(X=X, labels=labels)
         # Evaluate distribution alignment with positives
         args = dict(X=X, labels=labels, comp_kld=comp_kld)
-        avg_auc_abs, avg_kld = _eval_distribution_alignment(**args, label_test=0, label_ref=1)
+        avg_auc_abs, avg_kld = _eval_distribution_alignment(**args, label_test=0, label_ref=1, n_jobs=n_jobs)
         list_eval = [n_rel_neg, avg_std, avg_iqr, avg_auc_abs, avg_kld]
         # Evaluate distribution alignment with unlabeled
         if 2 in labels:
-            avg_auc_abs, avg_kld = _eval_distribution_alignment(**args, label_test=0, label_ref=2)
+            avg_auc_abs, avg_kld = _eval_distribution_alignment(**args, label_test=0, label_ref=2, n_jobs=n_jobs)
             list_eval += [avg_auc_abs, avg_kld]
             unl_in = True
         # Evaluate distribution alignment with ground-truth negatives, if provided
         if X_neg is not None:
-            avg_auc_abs, avg_kld = _eval_distribution_alignment_X_neg(**args, X_neg=X_neg)
+            avg_auc_abs, avg_kld = _eval_distribution_alignment_X_neg(**args, X_neg=X_neg, n_jobs=n_jobs)
             list_eval += [avg_auc_abs, avg_kld]
         # Remove kld if disabled
         list_eval = [x for x in list_eval if x is not None]

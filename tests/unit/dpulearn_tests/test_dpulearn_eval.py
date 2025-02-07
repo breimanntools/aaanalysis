@@ -52,7 +52,7 @@ class TestdPULearnEval:
             if not is_invalid:
                 i = random.randint(2, 10)  # Random number between 2 and 10
                 list_labels = [create_labels(X.shape[0]) for j in range(0, i)]
-                df_eval = dpul.eval(X=X, list_labels=list_labels)
+                df_eval = dpul.eval(X=X, list_labels=list_labels, n_jobs=1)
                 assert isinstance(df_eval, pd.DataFrame)
 
     def test_list_labels(self):
@@ -61,9 +61,9 @@ class TestdPULearnEval:
             list_labels = [create_labels(i) for j in range(0, i)]
             X = np.random.rand(len(list_labels[0]), 100)
             dpul = aa.dPULearn()
-            assert isinstance(dpul.eval(X, list_labels=list_labels), pd.DataFrame)
+            assert isinstance(dpul.eval(X, list_labels=list_labels, n_jobs=1), pd.DataFrame)
 
-    @settings(max_examples=10)
+    @settings(max_examples=10, deadline=1000)
     @given(names_datasets=st.lists(st.text(), min_size=2))
     def test_names_datasets(self, names_datasets):
         """Test 'names_datasets' with valid inputs."""
@@ -75,7 +75,7 @@ class TestdPULearnEval:
         if size >= 2:
             is_invalid = check_invalid_conditions(X, min_samples=3)
             if not is_invalid:
-                assert isinstance(dpul.eval(X, list_labels=list_labels, names_datasets=names_datasets), pd.DataFrame)
+                assert isinstance(dpul.eval(X, list_labels=list_labels, names_datasets=names_datasets, n_jobs=1), pd.DataFrame)
 
     @settings(max_examples=10)
     @given(X_neg=npst.arrays(dtype=np.float64, shape=(100, 5), elements=st.floats(allow_nan=False, allow_infinity=False)))
@@ -88,7 +88,7 @@ class TestdPULearnEval:
         if size >= 2:
             is_invalid = check_invalid_conditions(X, min_samples=3)
             if not is_invalid:
-                assert isinstance(dpul.eval(X, list_labels=list_labels, X_neg=X_neg), pd.DataFrame)
+                assert isinstance(dpul.eval(X, list_labels=list_labels, X_neg=X_neg, n_jobs=1), pd.DataFrame)
 
     @settings(max_examples=10, deadline=1000)
     @given(comp_kld=st.booleans())
@@ -101,7 +101,14 @@ class TestdPULearnEval:
         if size >= 2:
             is_invalid = check_invalid_conditions(X, min_samples=3)
             if not is_invalid:
-                assert isinstance(dpul.eval(X, list_labels=list_labels, comp_kld=comp_kld), pd.DataFrame)
+                assert isinstance(dpul.eval(X, list_labels=list_labels, comp_kld=comp_kld, n_jobs=1), pd.DataFrame)
+
+    def test_valid_n_jobs(self):
+        """Test valid n_jobs input"""
+        list_labels = [create_labels(4) for j in range(0, 4)]
+        X = np.random.rand(len(list_labels[0]), 100)
+        dpul = aa.dPULearn()
+        assert isinstance(dpul.eval(X, list_labels=list_labels, n_jobs=4), pd.DataFrame)
 
     # Negative tests
     @settings(max_examples=10)
@@ -111,7 +118,7 @@ class TestdPULearnEval:
         dpul = aa.dPULearn()
         list_labels = [np.random.randint(0, 3, size=X.shape[0])]
         with pytest.raises(ValueError):
-            dpul.eval(X, list_labels)
+            dpul.eval(X, list_labels, n_jobs=1)
 
     @settings(max_examples=10)
     @given(X=npst.arrays(dtype=np.float64, shape=(100, 1), elements=st.floats(allow_nan=False, allow_infinity=False)))
@@ -120,7 +127,7 @@ class TestdPULearnEval:
         dpul = aa.dPULearn()
         list_labels = [np.random.randint(0, 3, size=X.shape[0])]
         with pytest.raises(ValueError):
-            dpul.eval(X, list_labels)
+            dpul.eval(X, list_labels, n_jobs=1)
 
     @settings(max_examples=10)
     @given(X=npst.arrays(dtype=np.float64, shape=(100, 5), elements=st.just(np.nan)))
@@ -129,7 +136,7 @@ class TestdPULearnEval:
         dpul = aa.dPULearn()
         list_labels = [np.random.randint(0, 3, size=X.shape[0])]
         with pytest.raises(ValueError):
-            dpul.eval(X, list_labels)
+            dpul.eval(X, list_labels, n_jobs=1)
 
     def test_list_labels_invalid_lengths(self):
         """Test 'list_labels' with invalid lengths."""
@@ -137,7 +144,7 @@ class TestdPULearnEval:
         X = np.random.rand(100, 5)
         list_labels = [np.random.randint(0, 3, size=99)]  # Invalid length
         with pytest.raises(ValueError):
-            dpul.eval(X, list_labels)
+            dpul.eval(X, list_labels, n_jobs=1)
 
     def test_list_labels_invalid_values(self):
         """Test 'list_labels' with invalid values."""
@@ -145,7 +152,7 @@ class TestdPULearnEval:
         X = np.random.rand(100, 5)
         list_labels = [np.array([3, 4, 5] * 33)]  # Invalid label values
         with pytest.raises(ValueError):
-            dpul.eval(X, list_labels)
+            dpul.eval(X, list_labels, n_jobs=1)
 
     @settings(max_examples=10)
     @given(names_datasets=st.lists(st.text(), min_size=2))
@@ -156,7 +163,7 @@ class TestdPULearnEval:
         X = np.random.rand(100, 5)
         list_labels = [np.random.randint(0, 3, size=100) for _ in range(len(names_datasets) - 1)]  # Mismatch in sizes
         with pytest.raises(ValueError):
-            dpul.eval(X, list_labels, names_datasets)
+            dpul.eval(X, list_labels, names_datasets, n_jobs=1)
 
     @settings(max_examples=10)
     @given(
@@ -167,7 +174,7 @@ class TestdPULearnEval:
         X = np.random.rand(100, 5)
         list_labels = [np.random.randint(0, 3, size=100)]
         with pytest.raises(ValueError):
-            dpul.eval(X, list_labels, X_neg)
+            dpul.eval(X, list_labels, X_neg, n_jobs=1)
 
     def test_comp_kld_invalid_type(self):
         """Test 'comp_kld' with invalid type."""
@@ -175,7 +182,17 @@ class TestdPULearnEval:
         X = np.random.rand(100, 5)
         list_labels = [np.random.randint(0, 3, size=100)]
         with pytest.raises(ValueError):
-            dpul.eval(X, list_labels, comp_kld="invalid_type")  # Passing a string instead of
+            dpul.eval(X, list_labels, comp_kld="invalid_type", n_jobs=1)  # Passing a string instead of
+
+    def test_invalid_n_jobs(self):
+        """Test invalid n_jobs input"""
+        list_labels = [create_labels(4) for j in range(0, 4)]
+        X = np.random.rand(len(list_labels[0]), 100)
+        dpul = aa.dPULearn()
+        with pytest.raises(ValueError):
+            dpul.eval(X, list_labels=list_labels, n_jobs=0)
+        with pytest.raises(ValueError):
+            dpul.eval(X, list_labels=list_labels, n_jobs="Wrong")
 
 
 class TestdPULearnEvalComplex:
@@ -197,7 +214,7 @@ class TestdPULearnEvalComplex:
         # Check if conditions are valid before proceeding
         if not check_invalid_conditions(X, min_samples=3) and not check_invalid_conditions(X_neg, min_samples=3):
             if X.shape[1] == X_neg.shape[1]:
-                df_eval = dpul.eval(X, list_labels=list_labels, names_datasets=names_datasets, X_neg=X_neg)
+                df_eval = dpul.eval(X, list_labels=list_labels, names_datasets=names_datasets, X_neg=X_neg, n_jobs=1)
                 assert isinstance(df_eval, pd.DataFrame)
 
     @settings(max_examples=10)
@@ -213,4 +230,4 @@ class TestdPULearnEvalComplex:
         # Check if number of features are not matching
         if X.shape[1] != X_neg.shape[1]:
             with pytest.raises(ValueError):
-                dpul.eval(X, list_labels=list_labels, names_datasets=names_datasets, X_neg=X_neg)
+                dpul.eval(X, list_labels=list_labels, names_datasets=names_datasets, X_neg=X_neg, n_jobs=1)

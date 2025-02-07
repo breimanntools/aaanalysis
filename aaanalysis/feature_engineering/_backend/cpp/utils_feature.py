@@ -76,7 +76,7 @@ def _get_dict_part_pos(tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1):
     jmd_n = list(range(0, jmd_n_len))
     tmd = list(range(jmd_n_len, tmd_len+jmd_n_len))
     jmd_c = list(range(jmd_n_len + tmd_len, jmd_n_len + tmd_len + jmd_c_len))
-    # Change int to string and adjust length
+    # Change adjust length
     jmd_n = [i + start for i in jmd_n]
     tmd = [i + start for i in tmd]
     jmd_c = [i + start for i in jmd_c]
@@ -137,19 +137,19 @@ def _get_dict_all_scales(df_scales=None):
 
 def _feature_value(df_parts=None, split=None, dict_scale=None, accept_gaps=False):
     """Helper function to create feature values for feature matrix"""
-    sp = Split()
+    is_dtype_str = isinstance(df_parts.values.tolist()[0], str)
+    sp = Split(type_str=is_dtype_str)
     # Get vectorized split function
     split_type, split_kwargs = _get_split_info(split=split)
     f_split = getattr(sp, split_type.lower())
-    # Vectorize split function using anonymous function
-    vf_split = np.vectorize(lambda x: f_split(seq=x, **split_kwargs))
+    # Apply split function to all sequences in df_parts (NumPy optimized)
+    part_split = np.array([f_split(seq=x, **split_kwargs) for x in df_parts])
     # Get vectorized scale function
     vf_scale = get_vf_scale(dict_scale=dict_scale, accept_gaps=accept_gaps)
-    # Combine part split and scale to get feature values
-    part_split = vf_split(df_parts)
+    # Compute feature values using scale function
     if not accept_gaps:
         pre_check_vf_scale(part_split=part_split)
-    feature_value = np.round(vf_scale(part_split), 5)  # feature values
+    feature_value = np.round(vf_scale(part_split), 5)
     if accept_gaps:
         post_check_vf_scale(feature_values=feature_value)
     return feature_value
@@ -158,8 +158,8 @@ def _feature_value(df_parts=None, split=None, dict_scale=None, accept_gaps=False
 def _feature_matrix(features, dict_all_scales, df_parts, accept_gaps):
     """Helper function to create feature matrix via multiple processing"""
     X = np.empty([len(df_parts), len(features)])
-    for i, feat_name in enumerate(features):
-        part, split, scale = feat_name.split("-")
+    feature_info = [feat_name.split("-") for feat_name in features]
+    for i, (part, split, scale) in enumerate(feature_info):
         dict_scale = dict_all_scales[scale]
         X[:, i] = _feature_value(split=split,
                                  dict_scale=dict_scale,

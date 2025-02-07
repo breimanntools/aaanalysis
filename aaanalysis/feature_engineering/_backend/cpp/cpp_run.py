@@ -27,7 +27,7 @@ PRINT_LOCK = manager.Lock()
 # I Helper functions
 def _get_split_labels(split_type=None, split_type_args=None):
     """Fetch split labels dynamically."""
-    spr = SplitRange()
+    spr = SplitRange(split_type_str=False)
     if split_type_args is not None:
         labels_splits = getattr(spr, "labels_" + split_type.lower())(**split_type_args)
     else:
@@ -37,7 +37,7 @@ def _get_split_labels(split_type=None, split_type_args=None):
 
 def _get_f_split(split_type=None, split_type_args=None, len_seq_max=None):
     """Retrieve function for sequence splitting, optimizing lambda performance."""
-    spr = SplitRange()
+    spr = SplitRange(split_type_str=False)
     f = getattr(spr, split_type.lower())
 
     def f_split(seq):
@@ -50,7 +50,7 @@ def _get_f_split(split_type=None, split_type_args=None, len_seq_max=None):
     return f_split
 
 
-# Pre-filtering functions
+# Pre-filtering helper functions
 def _assign_scale_values_to_seq(df_parts=None, dict_all_scales=None, accept_gaps=None):
     """Assign scale values to each sequence with optimized dictionary lookups."""
     dict_scale_vals = {}
@@ -194,7 +194,7 @@ def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None,
     # Run in parallel across scales
     scale_chunks = np.array_split(list(dict_scale_vals.keys()), n_jobs)
 
-    # Define a worker that does pre-filtering info and returns its result.
+    # Define a worker that does pre-filtering info and returns its result
     def _mp_pre_filtering_info(scales_chunk):
         chunked_scale_vals = {scale: dict_scale_vals[scale] for scale in scales_chunk}
         return _pre_filtering_info(dict_scale_vals=chunked_scale_vals, **args)
@@ -254,7 +254,7 @@ def filtering(df=None, df_scales=None, max_overlap=0.5, max_cor=0.5, n_filter=10
     return df_top_feat
 
 
-# Adder methods for CPP analysis (used in run method)
+# Adder method for CPP analysis
 def add_stat(df_feat=None, df_parts=None, df_scales=None, labels=None, parametric=False, accept_gaps=False,
              label_test=1, label_ref=0, n_jobs=None):
         """
@@ -274,5 +274,5 @@ def add_stat(df_feat=None, df_parts=None, df_scales=None, labels=None, parametri
                                 accept_gaps=accept_gaps,
                                 n_jobs=n_jobs)
         df_feat = add_stat_(df=df_feat, X=X, labels=labels, parametric=parametric,
-                            label_test=label_test, label_ref=label_ref)
+                            label_test=label_test, label_ref=label_ref, n_jobs=n_jobs)
         return df_feat

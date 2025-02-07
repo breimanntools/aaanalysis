@@ -5,6 +5,7 @@ such as scikit-learn, scipy, or statsmodels.
 Developer note: Measures are implemented in aanalysis.utils.metrics to access them within the aanalysis package.
 """
 import numpy as np
+from typing import Optional
 
 from aaanalysis.utils import auc_adjusted_, kullback_leibler_divergence_, bic_score_
 import aaanalysis.utils as ut
@@ -26,6 +27,7 @@ def comp_auc_adjusted(X: ut.ArrayLike2D = None,
                       labels: ut.ArrayLike1D = None,
                       label_test: int = 1,
                       label_ref: int = 0,
+                      n_jobs: Optional[int] = None
                       ) -> ut.ArrayLike1D:
     """
     Compute an adjusted Area Under the Curve (AUC) [-0.5, 0.5] assessing the similarity between two groups.
@@ -47,6 +49,9 @@ def comp_auc_adjusted(X: ut.ArrayLike2D = None,
         Class label of test group in ``labels``.
     label_ref : int, default=0,
         Class label of reference group in ``labels``.
+    n_jobs : int, None, or -1, default=None
+        Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized automatically.
+        If ``-1``, the number is set to all available cores.
 
     Returns
     -------
@@ -65,14 +70,15 @@ def comp_auc_adjusted(X: ut.ArrayLike2D = None,
     ut.check_number_val(name="label_ref", val=label_ref, just_int=True, accept_none=False)
     labels = ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref], allow_other_vals=False)
     ut.check_match_X_labels(X=X, labels=labels)
+    n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
     # Compute adjusted AUC
-    auc = auc_adjusted_(X=X, labels=labels, label_test=label_test)
+    auc = auc_adjusted_(X=X, labels=labels, label_test=label_test, n_jobs=n_jobs)
     return auc
 
 
 # BIC score
 def comp_bic_score(X: ut.ArrayLike2D = None,
-                   labels: ut.ArrayLike1D =None
+                   labels: ut.ArrayLike1D = None
                    ) -> float:
     """
     Compute an adjusted Bayesian Information Criterion (BIC) (-∞, ∞) for assessing clustering quality.

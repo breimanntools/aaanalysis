@@ -6,18 +6,38 @@ from sklearn.metrics import roc_auc_score
 from scipy.stats import entropy, gaussian_kde
 from collections import OrderedDict
 from scipy.spatial import distance
+from joblib import Parallel, delayed
+import os
+
+DTYPE = np.float64
 
 
 # AUC adjusted
-def auc_adjusted_(X=None, labels=None, label_test=1):
+def _compute_auc(X, labels_binary):
+    """Compute AUC for a chunk of features."""
+    return np.array([roc_auc_score(labels_binary, X[:, i]) for i in range(X.shape[1])], dtype=DTYPE)
+
+
+def auc_adjusted_(X=None, labels=None, label_test=1, n_jobs=None):
     """Get adjusted Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     comparing, for each feature, groups (given by y (labels)) by feature values in X (feature matrix).
     """
     # Convert labels to binary format (1 or 0)
     labels_binary = [int(y == label_test) for y in labels]
-    auc = np.array([roc_auc_score(labels_binary, X[:, i]) - 0.5 for i in range(X.shape[1])])
-    auc = np.round(auc, 3)
-    return auc
+    # If n_jobs is not specified, decide it dynamically based on the number of features
+    if n_jobs is None:
+        n_jobs = min(os.cpu_count(), max(int(X.shape[1] / 10), 1))
+    # Run one job
+    if n_jobs == 1:
+        auc_values = _compute_auc(X, labels_binary)
+        return np.round(auc_values - 0.5, 3)
+
+    # Run in parallel across features
+    results = (Parallel(n_jobs=n_jobs)
+               (delayed(_compute_auc)(X[:, chunk], labels_binary)
+                for chunk in np.array_split(np.arange(X.shape[1]), n_jobs)))
+    auc_values = np.concatenate(results)
+    return np.round(auc_values - 0.5, 3)
 
 
 # Bayesian Information Criterion for clusters

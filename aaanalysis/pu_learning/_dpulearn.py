@@ -241,6 +241,7 @@ class dPULearn:
              names_datasets: Optional[List[str]] = None,
              X_neg: Optional[ut.ArrayLike2D] = None,
              comp_kld: bool = False,
+             n_jobs: Optional[int] = None
              ) -> pd.DataFrame:
         """
         Evaluates the quality of different sets of identified negatives.
@@ -267,6 +268,9 @@ class dPULearn:
         comp_kld : bool, default=False
             Whether to compute Kullback-Leibler Divergence (KLD) to assess the distribution alignment between
             identified negatives and other data groups. Disable (``False``) if ``X`` is sparse or has low co-variance.
+        n_jobs : int, None, or -1, default=None
+            Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized automatically.
+            If ``-1``, the number is set to all available cores.
 
         Returns
         -------
@@ -310,9 +314,10 @@ class dPULearn:
         ut.check_match_X_list_labels(X=X, list_labels=list_labels, check_variability=comp_kld, vals_requiered=[0])
         ut.check_match_list_labels_names_datasets(list_labels=list_labels, names_datasets=names_datasets)
         check_match_X_X_neg(X=X, X_neg=X_neg)
+        n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         # Evaluation for homogeneity within negatives and alignment of distribution with other datasets
         df_eval = eval_identified_negatives(X=X, list_labels=list_labels, names_datasets=names_datasets,
-                                            X_neg=X_neg, comp_kld=comp_kld)
+                                            X_neg=X_neg, comp_kld=comp_kld, n_jobs=n_jobs)
         return df_eval
 
     @staticmethod

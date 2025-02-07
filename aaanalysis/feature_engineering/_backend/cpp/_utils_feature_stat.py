@@ -90,12 +90,12 @@ def _p_correction(p_vals=None):
 
 
 # II Main Functions
-def add_stat_(df=None, X=None, labels=None, parametric=False, label_test=1, label_ref=0):
+def add_stat_(df=None, X=None, labels=None, parametric=False, label_test=1, label_ref=0, n_jobs=None):
     """Add summary statistics of feature matrix (X) for given labels (y) to df"""
     df = df.copy()
     columns_input = list(df)
     args_labels = dict(labels=labels, label_test=label_test, label_ref=label_ref)
-    df[ut.COL_ABS_AUC] = abs(ut.auc_adjusted_(X=X, labels=labels, label_test=label_test))
+    df[ut.COL_ABS_AUC] = abs(ut.auc_adjusted_(X=X, labels=labels, label_test=label_test, n_jobs=n_jobs))
     df[ut.COL_MEAN_DIF] = _mean_dif(X=X, **args_labels)
     if ut.COL_ABS_MEAN_DIF not in list(df):
         df[ut.COL_ABS_MEAN_DIF] = abs(_mean_dif(X=X, **args_labels))

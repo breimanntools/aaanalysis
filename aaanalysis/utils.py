@@ -113,6 +113,7 @@ FILE_DF_CAT = "df_cat"
 # Constants
 FONT_AA = "DejaVu Sans Mono"
 STR_AA_GAP = "-"
+DTYPE = np.float64
 
 # Part names
 LIST_ALL_PARTS = ["tmd", "tmd_e", "tmd_n", "tmd_c", "jmd_n", "jmd_c", "ext_c", "ext_n",
