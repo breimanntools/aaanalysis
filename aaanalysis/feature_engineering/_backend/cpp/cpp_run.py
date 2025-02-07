@@ -166,7 +166,7 @@ def pre_filtering_info(df_parts=None, split_kws=None, df_scales=None,
                        accept_gaps=False, verbose=False, n_jobs=None):
     """Get n best features in descending order based on the abs(mean(group1) - mean(group0),
     where group 1 is the target group"""
-    # Input (df_parts, split_kws, df_scales, y) checked in main method (CPP.run())
+    # Input (df_parts, split_kws, df_scales) checked in main method (CPP.run())
     mask_ref = [x == label_ref for x in labels]
     mask_test = [x == label_test for x in labels]
 
