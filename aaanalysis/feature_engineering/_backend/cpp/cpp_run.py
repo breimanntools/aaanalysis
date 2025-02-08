@@ -62,6 +62,27 @@ def _assign_scale_values_to_seq(df_parts=None, dict_all_scales=None, accept_gaps
         dict_scale_vals[scale] = np.array(df_parts.map(f))
     return dict_scale_vals
 
+# TODO optimize (memory efficiency for CPP?)
+"""
+def _assign_scale_values_to_seq(df_parts=None, dict_all_scales=None, accept_gaps=None):
+    dict_scale_vals = {}
+    for scale, dict_scale in dict_all_scales.items():
+        # Convert dict_scale to a NumPy array for fast lookups if all keys are ASCII (optional)
+        keys, values = zip(*dict_scale.items())
+        key_to_idx = {k: i for i, k in enumerate(keys)}
+        values_arr = np.array(values)
+        def map_seq(seq):
+            seq_arr = np.array(list(seq))  # Convert sequence to array
+            if accept_gaps:
+                return np.array([dict_scale.get(a, np.nan) for a in seq_arr])  # With NaN handling
+            try:
+                return values_arr[[key_to_idx[s] for s in seq_arr]]  # Vectorized lookup
+            except KeyError:
+                return np.array([dict_scale[s] for s in seq_arr])  # Fallback for missing keys
+        dict_scale_vals[scale] = df_parts.apply(map_seq)
+    return dict_scale_vals
+"""
+
 
 def _pre_filtering_info_split_type(dict_scale_vals=None, list_parts=None, split_type=None, split_kws=None,
                                    mask_ref=None, mask_test=None, len_seq_max=None, verbose=True,

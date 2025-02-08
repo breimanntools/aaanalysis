@@ -2,7 +2,6 @@
 This is a script for utility functions for statistical measures.
 """
 import numpy as np
-from sklearn.metrics import roc_auc_score
 from scipy.stats import entropy, gaussian_kde
 from collections import OrderedDict
 from scipy.spatial import distance
@@ -13,30 +12,47 @@ DTYPE = np.float64
 
 
 # AUC adjusted
-def _compute_auc(X, labels_binary):
-    """Compute AUC for a chunk of features."""
-    return np.array([roc_auc_score(labels_binary, X[:, i]) for i in range(X.shape[1])], dtype=DTYPE)
+def _pre_sort(X):
+    """Pre-sort X in descending order across all features."""
+    # Sort each column (feature-wise) in descending order
+    sorted_indices = np.argsort(-X, axis=0)
+    return sorted_indices
+
+
+def _compute_auc_sorted(sorted_indices, y_true):
+    """Compute AUC using pre-sorted indices for all features."""
+    n_samples, n_features = sorted_indices.shape
+    auc_values = np.empty(n_features, dtype=DTYPE)
+    for j in range(n_features):
+        # Reorder labels using precomputed indices
+        y_true_sorted = np.take(y_true, sorted_indices[:, j])
+        pos = np.sum(y_true_sorted)
+        neg = n_samples - pos
+        if pos == 0 or neg == 0:
+            auc_values[j] = 0.5  # AUC is undefined when there's only one class
+            continue
+        cum_pos = np.cumsum(y_true_sorted)  # Cumulative sum of positive samples
+        auc_values[j] = np.sum(cum_pos * (1 - y_true_sorted)) / (pos * neg)
+    return auc_values
 
 
 def auc_adjusted_(X=None, labels=None, label_test=1, n_jobs=None):
-    """Get adjusted Area Under the Receiver Operating Characteristic Curve (ROC AUC)
-    comparing, for each feature, groups (given by y (labels)) by feature values in X (feature matrix).
-    """
-    # Convert labels to binary format (1 or 0)
-    labels_binary = [int(y == label_test) for y in labels]
-    # If n_jobs is not specified, decide it dynamically based on the number of features
+    """Get adjusted ROC AUC with pre-sorting and parallel computation."""
+    labels_binary = np.array([int(y == label_test) for y in labels], dtype=DTYPE)
+    # Determine the number of parallel jobs
     if n_jobs is None:
         n_jobs = min(os.cpu_count(), max(int(X.shape[1] / 10), 1))
-    # Run one job
+    # Step 1: Pre-sort feature values once for all features
+    sorted_indices = _pre_sort(X)
+    # Step 2: Compute AUC using pre-sorted indices
     if n_jobs == 1:
-        auc_values = _compute_auc(X, labels_binary)
-        return np.round(auc_values - 0.5, 3)
-
-    # Run in parallel across features
-    results = (Parallel(n_jobs=n_jobs)
-               (delayed(_compute_auc)(X[:, chunk], labels_binary)
-                for chunk in np.array_split(np.arange(X.shape[1]), n_jobs)))
-    auc_values = np.concatenate(results)
+        auc_values = _compute_auc_sorted(sorted_indices, labels_binary)
+    else:
+        # Split features into chunks for parallel processing
+        feature_chunks = np.array_split(np.arange(X.shape[1]), n_jobs)
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(_compute_auc_sorted)(sorted_indices[:, chunk], labels_binary) for chunk in feature_chunks)
+        auc_values = np.concatenate(results)
     return np.round(auc_values - 0.5, 3)
 
 
