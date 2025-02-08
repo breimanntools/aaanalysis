@@ -24,7 +24,7 @@ from ._backend.check_feature import (check_split_kws,
                                      check_match_df_parts_df_scales,
                                      check_match_df_scales_df_cat)
 from ._backend.cpp.utils_feature import get_positions_, add_scale_info_
-from ._backend.cpp.cpp_run import pre_filtering_info, pre_filtering, filtering, add_stat
+from ._backend.cpp.cpp_run import assign_scale_values_to_seq, pre_filtering_info, pre_filtering, filtering, add_stat
 from ._backend.cpp.cpp_eval import evaluate_features
 
 
@@ -266,17 +266,26 @@ class CPP(Tool):
                                    split_kws=self.split_kws,
                                    list_scales=list(self.df_scales)))
         n_filter = n_feat if n_feat < n_filter else n_filter
+        # Assign scales values to
         if self._verbose:
-            start_message = f"1. CPP creates {n_feat} features for {len(self.df_parts)} samples"
+            start_message = (f"1. CPP creates {n_feat} features for {len(self.df_parts)} samples"
+                             f"\n1.1 Assigning scales values to parts")
+            ut.print_start_progress(start_message=start_message)
+        dict_scale_vals = assign_scale_values_to_seq(df_parts=self.df_parts,
+                                                     df_scales=self.df_scales,
+                                                     accept_gaps=self._accept_gaps,
+                                                     verbose=self._verbose)
+
+        if self._verbose:
+            start_message = f"\n1.2 Applying splitting to parts"
             ut.print_start_progress(start_message=start_message)
         # Pre-filtering: Select best n % of feature (filter_pct) based std(test set) and mean_dif
         abs_mean_dif, std_test, features = pre_filtering_info(df_parts=self.df_parts,
                                                               split_kws=self.split_kws,
-                                                              df_scales=self.df_scales,
+                                                              dict_scale_vals=dict_scale_vals,
                                                               labels=labels,
                                                               label_test=label_test,
                                                               label_ref=label_ref,
-                                                              accept_gaps=self._accept_gaps,
                                                               verbose=self._verbose,
                                                               n_jobs=n_jobs)
         n_feat = int(len(features))
