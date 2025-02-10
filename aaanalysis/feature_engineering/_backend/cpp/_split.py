@@ -113,16 +113,15 @@ class Split:
             where N or C specifies whether the pattern starts at the N- or C-terminus of the sequence
             and pn denotes the n-th position from list_pos.
         """
-        list_pos = [int(x) for x in list_pos if x is not None]
         if terminus == "C":
             seq = seq[::-1]
         if self.type_str:
-            seq_pattern = "".join([seq[i-1] for i in list_pos])
+            seq_pattern = "".join([seq[int(i)-1] for i in list_pos])
         else:
             # DEV: If 'IndexError: list index out of range',
             #  check in interface that sequence size matches with features
             #  via 'check_match_features_seq_parts'
-            seq_pattern = [seq[i-1] for i in list_pos]
+            seq_pattern = [seq[int(i)-1] for i in list_pos]
         return seq_pattern
 
     def periodicpattern(self, seq=None, terminus="N", step1=None, step2=None, start=1):
@@ -166,6 +165,47 @@ class Split:
         return seq_periodicpattern
 
 
+class SplitVec:
+    """Class for splitting part vectors into Segments, Patterns, and PeriodicPatterns (see Split() doc string)"""
+    def __init__(self, type_str=True):
+        self.type_str = type_str
+        self.dict_list_periodic_pattern_pos = {}
+
+    def get_list_periodic_pattern_pos(self, seq=None, step1=None, step2=None, start=1):
+        args_key = (len(seq), step1, step2, start)
+        if args_key not in self.dict_list_periodic_pattern_pos:
+            list_pos = _get_list_periodic_pattern_pos(len_seq=len(seq), step1=step1, step2=step2, pos=start)
+        else:
+            list_pos = self.dict_list_periodic_pattern_pos[args_key]
+        return list_pos
+
+    @staticmethod
+    def segment(seq=None, i_th=1, n_split=2):
+        """Get i-th segment of sequence that is split into n contiguous segments."""
+        len_segment = len(seq) / n_split
+        start = int(len_segment * (i_th - 1))
+        end = int(len_segment * i_th)
+        seq_segment = seq[start:end]
+        return seq_segment
+
+    @staticmethod
+    def pattern(seq=None, terminus="N", list_pos=None):
+        """Get sequence pattern consisting of n positions given in list_pos"""
+        if terminus == "C":
+            seq = seq[::-1]
+        seq_pattern = [seq[int(i)-1] for i in list_pos]
+        return seq_pattern
+
+    def periodicpattern(self, seq=None, terminus="N", step1=None, step2=None, start=1):
+        """Get a periodic sequence pattern consisting of elements with an alternating step size given by step1, step2
+        and starting at the given start position."""
+        if terminus == "C":
+            seq = seq[::-1]
+        list_pos = self.get_list_periodic_pattern_pos(seq=seq, step1=step1, step2=step2, start=start)
+        seq_periodicpattern = [seq[i-1] for i in list_pos]
+        return seq_periodicpattern
+
+
 class SplitRange:
     """Class for creating range of splits for testing sets of multiple features in CPP"""
 
@@ -173,7 +213,10 @@ class SplitRange:
         """"""
         # Dictionary for caching list_pattern_pos results
         self.dict_list_pattern_pos = {}
-        self.sp = Split(type_str=split_type_str)
+        if split_type_str:
+            self.sp = Split(type_str=split_type_str)
+        else:
+            self.sp = SplitVec()
 
     # Helper method
     def get_list_pattern_pos(self, steps=None, n_min=2, n_max=4, len_max=15):

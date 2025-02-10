@@ -7,54 +7,49 @@ from collections import OrderedDict
 from scipy.spatial import distance
 from joblib import Parallel, delayed
 import os
+from scipy.stats import rankdata
+from sklearn.metrics import roc_auc_score
 
 DTYPE = np.float64
 
 
 # AUC adjusted
-def _pre_sort(X):
-    """Pre-sort X in descending order across all features."""
-    # Sort each column (feature-wise) in descending order
-    sorted_indices = np.argsort(-X, axis=0)
-    return sorted_indices
-
-
-def _compute_auc_sorted(sorted_indices, y_true):
-    """Compute AUC using pre-sorted indices for all features."""
-    n_samples, n_features = sorted_indices.shape
-    auc_values = np.empty(n_features, dtype=DTYPE)
+def _compute_auc_sorted(X, labels):
+    """Compute AUC for a subset of features using the same ranking approach as roc_auc_score."""
+    n_samples, n_features = X.shape
+    auc_values = np.empty(n_features, dtype=np.float64)
     for j in range(n_features):
-        # Reorder labels using precomputed indices
-        y_true_sorted = np.take(y_true, sorted_indices[:, j])
-        pos = np.sum(y_true_sorted)
+        # Rank the feature values, handling ties properly
+        ranks = rankdata(X[:, j])  # Average ranking for ties
+        pos = np.sum(labels)
         neg = n_samples - pos
         if pos == 0 or neg == 0:
-            auc_values[j] = 0.5  # AUC is undefined when there's only one class
+            auc_values[j] = 0.5  # Undefined AUC when only one class is present
             continue
-        cum_pos = np.cumsum(y_true_sorted)  # Cumulative sum of positive samples
-        auc_values[j] = np.sum(cum_pos * (1 - y_true_sorted)) / (pos * neg)
-    return auc_values
+        # Compute AUC using the Mann-Whitney U statistic
+        rank_sum_pos = np.sum(ranks[labels == 1])
+        auc_values[j] = (rank_sum_pos - (pos * (pos + 1) / 2)) / (pos * neg)
+    return np.round(auc_values - 0.5, 3)
 
 
 def auc_adjusted_(X=None, labels=None, label_test=1, n_jobs=None):
     """Get adjusted ROC AUC with pre-sorting and parallel computation."""
+    # Get binary labels and precompute ranks for all features
     labels_binary = np.array([int(y == label_test) for y in labels], dtype=DTYPE)
+    ranked_X = np.apply_along_axis(rankdata, 0, X)
 
     if n_jobs is None:
         n_jobs = min(os.cpu_count(), max(int(X.shape[1] / 10), 1))
-    # Pre-sort feature values once for all features
-    sorted_indices = _pre_sort(X)
-    # Compute AUC using pre-sorted indices
+
     if n_jobs == 1:
-        auc_values = _compute_auc_sorted(sorted_indices, labels_binary)
-    else:
-        # Split features into chunks for parallel processing
-        feature_chunks = np.array_split(np.arange(X.shape[1]), n_jobs)
-        with Parallel(n_jobs=n_jobs) as parallel:
-            results = parallel(delayed(_compute_auc_sorted)(sorted_indices[:, chunk], labels_binary)
-                               for chunk in feature_chunks)
-        auc_values = np.concatenate(results)
-    return np.round(auc_values - 0.5, 3)
+        return _compute_auc_sorted(ranked_X, labels_binary)
+
+    feature_chunks = np.array_split(np.arange(X.shape[1]), n_jobs)
+    with Parallel(n_jobs=n_jobs) as parallel:
+        results = parallel(delayed(_compute_auc_sorted)(ranked_X[:, chunk], labels_binary)
+                           for chunk in feature_chunks)
+    auc_values = np.concatenate(results)
+    return auc_values
 
 
 # Bayesian Information Criterion for clusters

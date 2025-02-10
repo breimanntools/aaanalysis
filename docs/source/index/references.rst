@@ -31,7 +31,7 @@ AAanalysis Algorithms
 
 .. [Breimann24b] Breimann *et al.* (2024b),
    *AAontology: An ontology of amino acid scales for interpretable machine learning*,
-   `JMB <https://www.sciencedirect.com/science/article/pii/S0022283624003267>`__.
+   `Journal of Molecular Biology <https://www.sciencedirect.com/science/article/pii/S0022283624003267>`__.
 
 .. [Breimann25a] Breimann and Kamp *et al.* (2024c),
    *Charting γ-secretase substrates by explainable AI*, .. # Link if available

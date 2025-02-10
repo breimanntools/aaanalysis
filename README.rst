@@ -116,7 +116,7 @@ If you use AAanalysis in your work, please cite the respective publication as fo
 **AAontology**:
    Breimann *et al.* (2024b),
    *AAontology: An ontology of amino acid scales for interpretable machine learning*,
-   `JMB <https://www.sciencedirect.com/science/article/pii/S0022283624003267>`__.
+   `Journal of Molecular Biology <https://www.sciencedirect.com/science/article/pii/S0022283624003267>`__.
 
 **CPP**:
    Breimann and Kamp *et al.* (2025a),
