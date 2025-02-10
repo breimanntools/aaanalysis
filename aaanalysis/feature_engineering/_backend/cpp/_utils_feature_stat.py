@@ -8,8 +8,17 @@ import aaanalysis.utils as ut
 
 
 # I Helper Functions
+def _mann_whitney_u(X, mask_test, mask_ref):
+    """Mann-Whitney U test with Loops (less efficient but less memory consumption)"""
+    t = lambda x1, x2: stats.mannwhitneyu(x1, x2, alternative="two-sided")[1]  # Test statistic
+    c = lambda x1, x2: np.mean(x1) != np.mean(x2) or np.std(x1) != np.std(x2)  # Test condition
+    p_vals = np.round([t(col[mask_test], col[mask_ref]) if c(col[mask_test], col[mask_ref]) else 1
+                       for col in X.T], 10)
+    return p_vals
+
+
 def _mann_whitney_u_vectorized(X_test, X_ref):
-    """Vectorized Mann-Whitney U Test Without Loops"""
+    """Vectorized Mann-Whitney U test (more efficient but high memory consumption)"""
     # DEV: Fast implementation of stats.mannwhitneyu (X1, X2, alternative="two-sided")
     # Rank all values together (vectorized)
     combined = np.concatenate([X_test, X_ref], axis=0)
@@ -59,7 +68,7 @@ def _std(X=None, labels=None, group=1):
     return group_std
 
 
-def _mean_stat(X=None, labels=None, parametric=False, label_test=1, label_ref=0):
+def _mean_stat(X=None, labels=None, parametric=False, label_test=1, label_ref=0, vectorized=True):
     """Statistical comparison of central tendency between two groups for each feature"""
     mask_test = [x == label_test for x in labels]
     mask_ref = [x == label_ref for x in labels]
@@ -67,7 +76,10 @@ def _mean_stat(X=None, labels=None, parametric=False, label_test=1, label_ref=0)
         p_vals = stats.ttest_ind(X[mask_test], X[mask_ref], nan_policy="omit")[1]
         p_str = "p_val_ttest_indep"
     else:
-        p_vals = _mann_whitney_u_vectorized(X[mask_test], X[mask_ref])
+        if vectorized:
+            p_vals = _mann_whitney_u_vectorized(X[mask_test], X[mask_ref])
+        else:
+            p_vals = _mann_whitney_u(X, mask_test, mask_ref)
         p_str = "p_val_mann_whitney"
     return p_vals, p_str
 
@@ -90,7 +102,8 @@ def _p_correction(p_vals=None):
 
 
 # II Main Functions
-def add_stat_(df=None, X=None, labels=None, parametric=False, label_test=1, label_ref=0, n_jobs=None):
+def add_stat_(df=None, X=None, labels=None, parametric=False, label_test=1, label_ref=0,
+              n_jobs=None, vectorized=True):
     """Add summary statistics of feature matrix (X) for given labels (y) to df"""
     df = df.copy()
     columns_input = list(df)
@@ -101,7 +114,7 @@ def add_stat_(df=None, X=None, labels=None, parametric=False, label_test=1, labe
         df[ut.COL_ABS_MEAN_DIF] = abs(_mean_dif(X=X, **args_labels))
     df[ut.COL_STD_TEST] = _std(X=X, labels=labels, group=label_test)
     df[ut.COL_STD_REF] = _std(X=X, labels=labels, group=label_ref)
-    p_vals, p_str = _mean_stat(X=X, parametric=parametric, **args_labels)
+    p_vals, p_str = _mean_stat(X=X, parametric=parametric, vectorized=vectorized, **args_labels)
     df[p_str] = p_vals
     p_vals_fdr = _p_correction(p_vals=p_vals)
     p_str_fdr = "p_val_fdr_bh"

@@ -94,4 +94,4 @@ def print_end_progress(end_message=None, shared_max_progress=None, shared_value_
     args = dict(shared_max_progress=shared_max_progress, shared_value_lock=shared_value_lock)
     shared_max_progress, shared_value_lock, _ = _get_global_shared_variables(**args)
     with shared_value_lock:
-        shared_max_progress.value = 0.0
+        shared_max_progress.value = 0

@@ -163,7 +163,8 @@ class CPP(Tool):
             tmd_len: int = 20,
             jmd_n_len: int = 10,
             jmd_c_len: int = 10,
-            n_jobs: Optional[int] = None
+            n_jobs: Optional[int] = None,
+            vectorized: bool = True,
             ) -> pd.DataFrame:
         """
         Perform Comparative Physicochemical Profiling (CPP) algorithm: creation and two-step filtering of
@@ -195,7 +196,7 @@ class CPP(Tool):
         check_cat : bool, default=True
             Whether to check for redundancy within scale categories during filtering.
         parametric : bool, default=False
-            Whether to use parametric (T-test) or non-parametric (Mann-Whitney-U-test) test for p-value computation.
+            Whether to use parametric (T-test) or non-parametric (Mann-Whitney U test) test for p-value computation.
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
@@ -207,6 +208,9 @@ class CPP(Tool):
         n_jobs : int, None, or -1, default=None
             Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized automatically.
             If ``-1``, the number is set to all available cores.
+        vectorized : bool, default=True
+            Whether to apply sequence splitting and the Mann-Whitney U test in 'vectorized' mode (``True``),
+            improving speed but increasing memory consumption.
 
         Returns
         -------
@@ -217,6 +221,8 @@ class CPP(Tool):
         -----
         * Pre-filtering can be adjusted by the following parameters: {'n_pre_filter', 'pct_pre_filter', 'max_std_test'}.
         * Filtering can be adjusted by the following parameters: {'n_filter', 'max_overlap', 'max_cor', 'check_cat'}.
+        * For large datasets or systems with limited memory, setting ``vectorized=True`` and ``n_jobs=1``
+          can help prevent crashes by reducing memory consumption.
         * ``df_feat`` contains the following 13 columns, including the unique feature id (1), scale information (2-5),
           statistical results for filtering and ranking (6-12), and feature positions (13):
 
@@ -261,6 +267,7 @@ class CPP(Tool):
         jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
+        ut.check_bool(name="vectorized", val=vectorized)
         # Settings and creation of objects
         n_feat = len(get_features_(list_parts=list(self.df_parts),
                                    split_kws=self.split_kws,
@@ -271,10 +278,10 @@ class CPP(Tool):
             start_message = (f"1. CPP creates {n_feat} features for {len(self.df_parts)} samples"
                              f"\n1.1 Assigning scales values to parts")
             ut.print_start_progress(start_message=start_message)
-        dict_scale_vals = assign_scale_values_to_seq(df_parts=self.df_parts,
-                                                     df_scales=self.df_scales,
-                                                     accept_gaps=self._accept_gaps,
-                                                     verbose=self._verbose)
+        dict_scale_part_vals = assign_scale_values_to_seq(df_parts=self.df_parts,
+                                                          df_scales=self.df_scales,
+                                                          verbose=self._verbose,
+                                                          n_jobs=n_jobs)
 
         if self._verbose:
             start_message = f"\n1.2 Applying splitting to parts"
@@ -282,12 +289,13 @@ class CPP(Tool):
         # Pre-filtering: Select best n % of feature (filter_pct) based std(test set) and mean_dif
         abs_mean_dif, std_test, features = pre_filtering_info(df_parts=self.df_parts,
                                                               split_kws=self.split_kws,
-                                                              dict_scale_vals=dict_scale_vals,
+                                                              dict_scale_part_vals=dict_scale_part_vals,
                                                               labels=labels,
                                                               label_test=label_test,
                                                               label_ref=label_ref,
                                                               verbose=self._verbose,
-                                                              n_jobs=n_jobs)
+                                                              n_jobs=n_jobs,
+                                                              vectorized=vectorized)
         n_feat = int(len(features))
         if n_pre_filter is None:
             n_pre_filter = int(n_feat * (pct_pre_filter / 100))
@@ -307,7 +315,7 @@ class CPP(Tool):
         # Add feature information
         df = add_stat(df_feat=df, df_scales=self.df_scales, df_parts=self.df_parts,
                       labels=labels, parametric=parametric, accept_gaps=self._accept_gaps,
-                      label_test=label_test, label_ref=label_ref, n_jobs=n_jobs)
+                      label_test=label_test, label_ref=label_ref, n_jobs=n_jobs, vectorized=vectorized)
         feat_positions = get_positions_(features=features, start=start, **args_len)
         df[ut.COL_POSITION] = feat_positions
         df = add_scale_info_(df_feat=df, df_cat=self.df_cat)

@@ -391,7 +391,7 @@ class SequenceFeature:
         jmd_c_len : int, default=10
             Length of JMD-C (>=0).
         parametric : bool, default=False
-            Whether to use parametric (T-test) or non-parametric (Mann-Whitney-U-test) test for p-value computation.
+            Whether to use parametric (T-test) or non-parametric (Mann-Whitney U test) test for p-value computation.
         accept_gaps : bool, default=False
             Whether to accept missing values by enabling omitting for computations (if True).
         n_jobs : int, None, or -1, default=1

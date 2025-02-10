@@ -8,14 +8,12 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from multiprocessing import Manager
-
-import warnings
+from collections import ChainMap
 
 import aaanalysis.utils as ut
 from .utils_feature import get_feature_matrix_
 from ._utils_feature_stat import add_stat_
 from ._split import SplitRange
-
 
 # Multiprocessing shared progress bar
 manager = Manager()
@@ -25,29 +23,58 @@ PRINT_LOCK = manager.Lock()
 
 
 # I Helper functions
-
-
 # Assign scales values helper function
-def _assign_scale_values_to_seq(df_parts=None, dict_all_scales=None, accept_gaps=None, padding=False, verbose=True):
+def _assign_scale_values_to_seq(df_parts=None, dict_all_scales=None, verbose=True,
+                                shared_max_progress=None, shared_value_lock=None, print_lock=None):
     """Assign scale values to each sequence using optimized NumPy operations"""
-    # DEV TODO: adjust Split for padded vectors (provide meta-data length of each sequence, required for embeddings)
-    len_seq_max = df_parts.map(len).max().max()
-    dict_scale_vals = {}
+    args_p = dict(shared_max_progress=shared_max_progress, shared_value_lock=shared_value_lock, print_lock=print_lock)
+    list_seq_max = df_parts.map(len).max().tolist()
+    list_parts = list(df_parts)
+    dict_scale_part_vals = {scale: {} for scale in dict_all_scales}
     for i, (scale, dict_scale) in enumerate(dict_all_scales.items()):
-        if padding:
-            if accept_gaps:
-                f = lambda seq: np.array([dict_scale.get(a, np.nan) for a in seq] + [np.nan] * (len_seq_max - len(seq)))
-            else:
-                f = lambda seq: np.array([dict_scale[a] for a in seq] + [np.nan] * (len_seq_max - len(seq)))
-        else:
-            if accept_gaps:
-                f = lambda seq: np.array([dict_scale.get(a, np.nan) for a in seq])
-            else:
-                f = lambda seq: np.array([dict_scale[a] for a in seq])
-        dict_scale_vals[scale] = np.array(df_parts.map(f))
+        for part, len_seq_max in zip(list_parts, list_seq_max):
+            f = lambda seq: [dict_scale.get(a, np.nan) for a in seq] + [np.nan] * (len_seq_max - len(seq)) + [len(seq)]
+            X_scale_parts = np.stack(df_parts[part].map(f).tolist(), axis=0)
+            dict_scale_part_vals[scale][part] = X_scale_parts
         if verbose:
-            ut.print_progress(i=i, n_total=len(dict_all_scales))
-    return dict_scale_vals
+            ut.print_progress(i=i, n_total=len(dict_all_scales), **args_p)
+    return dict_scale_part_vals
+
+# TODO
+def _assign_scale_values_to_seq_(df_parts=None, dict_all_scales=None, verbose=True,
+                                shared_max_progress=None, shared_value_lock=None, print_lock=None):
+    """"""
+    args_p = dict(shared_max_progress=shared_max_progress, shared_value_lock=shared_value_lock, print_lock=print_lock)
+    # Determine max sequence length
+    list_seq_max = df_parts.map(len).max().tolist()
+    list_parts = list(df_parts)
+    # Initialize dictionary for output
+    dict_scale_part_vals = {scale: {} for scale in dict_all_scales}
+    # Convert sequences into a padded NumPy matrix
+    seq_lengths = df_parts.map(len).values  # Lengths of sequences
+    seq_matrix = np.full((len(df_parts), max(list_seq_max)), "_", dtype="<U1")  # "_" as padding
+    for i, seq in enumerate(df_parts):
+        seq_matrix[i, :len(seq)] = list(seq)
+    # Assign scale values
+    for i, (scale, dict_scale) in enumerate(dict_all_scales.items()):
+        for j, (part, len_seq_max) in enumerate(zip(list_parts, list_seq_max)):
+            # Create matrix filled with NaN for scale values
+            scale_matrix = np.full((len(df_parts), len_seq_max), np.nan, dtype=np.float32)
+
+            # Efficiently replace values in bulk
+            for aa, value in dict_scale.items():
+                scale_matrix[seq_matrix[:, :len_seq_max] == aa] = value
+
+            # Ensure scale_matrix is 2D before concatenation
+            if scale_matrix.ndim == 3:
+                scale_matrix = scale_matrix.squeeze(axis=2)  # Remove singleton dimension
+            # Append sequence lengths as the last column
+            seq_length_column = seq_lengths[:, j][:, np.newaxis]
+            scale_matrix = np.concatenate([scale_matrix, seq_length_column], axis=1)
+            dict_scale_part_vals[scale][part] = scale_matrix
+        if verbose:
+            ut.print_progress(i=i, n_total=len(dict_all_scales), **args_p)
+    return dict_scale_part_vals
 
 
 # Pre-filtering helper functions
@@ -61,74 +88,110 @@ def _get_split_labels(split_type=None, split_type_args=None, spr=None):
 
 
 def _get_f_split(split_type=None, split_type_args=None, len_seq_max=None, spr=None):
-    """Retrieve function for sequence splitting, optimizing lambda performance."""
+    """
+    Retrieve a function for sequence splitting, applied along an array axis.
+
+    This function is memory-efficient and offers good performance. It is used when `vectorized=False`,
+    meaning it applies the sequence splitting function iteratively along the given axis rather than
+    processing the entire array at once.
+    """
     f = getattr(spr, split_type.lower())
+
     def f_split(seq):
-        """Apply splitting and return a NumPy array (without computing mean)."""
-        splits = f(seq=seq, **(split_type_args or {}))
-        X = np.full((len(splits), len_seq_max), np.nan)  # Pre-allocate
+        seq_len = seq[-1]
+        splits = f(seq=seq[:int(seq_len)], **(split_type_args or {}))
+        # Pre-allocate array for storing splits
+        X = np.full((len(splits), len_seq_max), np.nan, dtype=np.float64)
         for i, x in enumerate(splits):
-            X[i, : len(x)] = x  # Insert split values
-        return X
+            X[i, :len(x)] = x
+        # Compute mean over the last axis
+        return np.nanmean(X, axis=-1)
     return f_split
 
 
-def _pre_filtering_info_split_type(dict_scale_vals=None, list_parts=None, split_type=None, split_kws=None,
-                                   mask_ref=None, mask_test=None, len_seq_max=None, verbose=True,
-                                   shared_max_progress=None, shared_value_lock=None, print_lock=None, spr=None):
+def _get_vf_split(split_type=None, split_type_args=None, len_seq_max=None, spr=None,
+                  list_splits=None, n_samples=None):
+    """
+    Retrieve a vectorized function for sequence splitting, applied to the entire dataset at once.
+
+    This function is **not memory-efficient**, but provides **better performance** for large datasets.
+    It is used when `vectorized=True`, allowing simultaneous processing of multiple sequences.
+    """
+    n_splits = len(list_splits)
+    f = getattr(spr, split_type.lower())
+
+    def vf_split(arr_seq):
+        seq_lengths = arr_seq[:, -1].astype(int)
+        list_split_vals = [f(seq=arr_seq[i, :seq_lengths[i]], **(split_type_args or {})) for i in range(len(arr_seq))]
+        # Pre-allocate array for storing splits
+        X = np.full((n_samples, n_splits, len_seq_max), np.nan, dtype=np.float64)
+        for i, split in enumerate(list_split_vals):
+            for j, x in enumerate(split):
+                X[i, j, :len(x)] = x
+        # Compute mean along the last axis
+        return np.nanmean(X, axis=-1)
+    return vf_split
+
+
+def _pre_filtering_info_split_type(dict_scale_part_vals=None, list_parts=None, split_type=None, split_kws=None,
+                                   mask_ref=None, mask_test=None, len_seq_max=None, spr=None, vectorized=True,
+                                   verbose=True, shared_max_progress=None, shared_value_lock=None, print_lock=None):
     """Optimized computation for absolute mean difference and standard deviation."""
+    args_p = dict(shared_max_progress=shared_max_progress, shared_value_lock=shared_value_lock, print_lock=print_lock)
     split_type_args = split_kws[split_type]
     n_split_types = len(split_kws)
     i_split_types = list(split_kws).index(split_type)
     args_split = dict(split_type=split_type, split_type_args=split_type_args)
     list_splits = _get_split_labels(**args_split, spr=spr)
-
-    n_parts, n_splits, n_scales = len(list_parts), len(list_splits), len(dict_scale_vals)
-
+    n_parts, n_splits, n_scales = len(list_parts), len(list_splits), len(dict_scale_part_vals)
     # Store feature names
     feat_names = [f"{part.upper()}-{split}-{scale}"
-                  for scale in dict_scale_vals
+                  for scale in dict_scale_part_vals
                   for part in list_parts
                   for split in list_splits]
 
     # Process each scale (saved in pre-allocated NumPy arrays)
     abs_mean_dif = np.zeros((len(feat_names)))
     std_test = np.zeros((len(feat_names)))
-    f_split = _get_f_split(**args_split, len_seq_max=len_seq_max, spr=spr)
-    ufunc = np.frompyfunc(f_split, 1, 1)
-    for i, (_, scale_vals) in enumerate(dict_scale_vals.items()):
-        # Print progress bar with shared object for consistency during multiprocessing
-        if verbose:
-            ut.print_progress(i=i * (i_split_types + 1),
-                              n_total=n_scales * n_split_types,
-                              shared_max_progress=shared_max_progress,
-                              shared_value_lock=shared_value_lock,
-                              print_lock=print_lock)
-        # Apply splitting and compute mean via vectorized
-        vals_split = np.nanmean(np.array(ufunc(scale_vals).tolist()), axis=-1)
-        # Get test and ref dataset
-        vals_test = vals_split[mask_test]
-        vals_ref = vals_split[mask_ref]
-        # Compute mean and std
-        _mean_test = np.mean(vals_test, axis=0).ravel()
-        _mean_ref = np.mean(vals_ref, axis=0).ravel()
-        _std_test = np.std(vals_test, axis=0).ravel()
-        # Compute absolute mean difference and std test
-        start = i * n_parts * n_splits
-        stop = (i+1) * n_parts * n_splits
-        abs_mean_dif[start:stop] = np.abs(_mean_test - _mean_ref)
-        std_test[start:stop] = _std_test
+    args_f_split = dict(len_seq_max=len_seq_max, spr=spr)
+    if vectorized:
+        f_split = _get_vf_split(**args_split, **args_f_split, list_splits=list_splits, n_samples=len(mask_test))
+    else:
+        f_split = _get_f_split(**args_split, **args_f_split)
+    start = 0
+    for i, scale in enumerate(dict_scale_part_vals):
+        for j, part in enumerate(list_parts):
+            scale_part_vals = dict_scale_part_vals[scale][part]
+            if vectorized:
+                vals_split = f_split(scale_part_vals)
+            else:
+                vals_split = np.apply_along_axis(f_split, axis=1, arr=scale_part_vals)
+            # Get test and ref dataset
+            vals_test = vals_split[mask_test]
+            vals_ref = vals_split[mask_ref]
+            # Compute mean and std
+            _mean_test = np.mean(vals_test, axis=0).ravel()
+            _mean_ref = np.mean(vals_ref, axis=0).ravel()
+            _std_test = np.std(vals_test, axis=0).ravel()
+            # Compute absolute mean difference and std test
+            stop = start + n_splits
+            abs_mean_dif[start:stop] = np.abs(_mean_test - _mean_ref)
+            std_test[start:stop] = _std_test
+            start = stop
+            if verbose:
+                ut.print_progress(i=i * (i_split_types + 1) + j, n_total=n_scales * n_split_types + j, **args_p)
     return abs_mean_dif, std_test, feat_names
 
 
-def _pre_filtering_info(dict_scale_vals=None, split_kws=None, list_parts=None,
-                        mask_ref=None, mask_test=None, len_seq_max=None, verbose=True,
-                        shared_max_progress=None, shared_value_lock=None, print_lock=None, spr=None):
+def _pre_filtering_info(dict_scale_part_vals=None, split_kws=None, list_parts=None,
+                        mask_ref=None, mask_test=None, len_seq_max=None, spr=None, vectorized=True,
+                        verbose=True, shared_max_progress=None, shared_value_lock=None, print_lock=None):
     """Compute abs(mean_dif) and std(test) to rank features, where mean_dif is the difference
     between the means of the test and the reference protein groups for a feature"""
     # Input (df_parts, split_kws, df_scales, checked in main method (CPP.run())
-    args = dict(list_parts=list_parts, dict_scale_vals=dict_scale_vals,
+    args = dict(dict_scale_part_vals=dict_scale_part_vals, split_kws=split_kws, list_parts=list_parts,
                 mask_test=mask_test, mask_ref=mask_ref, len_seq_max=len_seq_max,
+                spr=spr, vectorized=vectorized,
                 verbose=verbose, shared_max_progress=shared_max_progress,
                 shared_value_lock=shared_value_lock, print_lock=print_lock)
 
@@ -138,17 +201,13 @@ def _pre_filtering_info(dict_scale_vals=None, split_kws=None, list_parts=None,
         split_type_args = split_kws[split_type]
         split_labels.extend(_get_split_labels(split_type=split_type, split_type_args=split_type_args, spr=spr))
 
-    n_parts, n_splits, n_scales = len(split_labels), len(list_parts), len(dict_scale_vals)
+    n_parts, n_splits, n_scales = len(list_parts), len(split_labels), len(dict_scale_part_vals)
     feat_names = []
     abs_mean_dif = np.zeros((n_scales * n_parts * n_splits))
     std_test = np.zeros((n_scales * n_parts * n_splits))
-    start = 0
-    stop = 0
+    start, stop = 0, 0
     for i, split_type in enumerate(split_kws):
-        _abs_mean_dif, _std_test, _feat_names = _pre_filtering_info_split_type(split_type=split_type,
-                                                                               split_kws=split_kws,
-                                                                               spr=spr,
-                                                                               **args)
+        _abs_mean_dif, _std_test, _feat_names = _pre_filtering_info_split_type(split_type=split_type, **args)
         stop += len(_feat_names)
         abs_mean_dif[start:stop] = _abs_mean_dif
         std_test[start:stop] = _std_test
@@ -172,20 +231,45 @@ def filtering_info_(df=None, df_scales=None, check_cat=True):
 
 # II Main functions
 # Assign scales to amino acids
-def assign_scale_values_to_seq(df_parts=None, df_scales=None, accept_gaps=None, verbose=False):
+def assign_scale_values_to_seq(df_parts=None, df_scales=None, verbose=False, n_jobs=None):
     """Assign scale values to each sequence with optimized dictionary lookups"""
     list_scales = list(df_scales)
     dict_all_scales = {col: dict(zip(df_scales.index.to_list(), df_scales[col])) for col in list_scales}
-    args = dict(df_parts=df_parts, accept_gaps=accept_gaps, verbose=verbose)
-    dict_scale_vals = _assign_scale_values_to_seq(dict_all_scales=dict_all_scales, **args)
+    args = dict(df_parts=df_parts, verbose=verbose, print_lock=PRINT_LOCK)
+    args_print = dict(shared_max_progress=SHARED_MAX_PROGRESS, shared_value_lock=SHARED_VALUE_LOCK)
+    if n_jobs is None:
+        n_samples, n_scales = len(df_parts), len(dict_all_scales)
+        n_jobs = min(os.cpu_count(), max(min(int(n_scales/100), int(n_samples/100)), 1))
+
+    if n_jobs == 1:
+        dict_scale_part_vals = _assign_scale_values_to_seq(dict_all_scales=dict_all_scales, **args)
+        if verbose:
+            ut.print_end_progress(add_new_line=False, **args_print)
+        return dict_scale_part_vals
+
+    # Multi-processing function caller
+    def _mp_scale_assignment(scales_chunk):
+        chunked_dict_scales = {scale: dict_all_scales[scale] for scale in scales_chunk}
+        return _assign_scale_values_to_seq(dict_all_scales=chunked_dict_scales, **args)
+
+    scale_chunks = np.array_split(list(dict_all_scales.keys()), n_jobs)
+    with Parallel(n_jobs=n_jobs) as parallel:
+        results = parallel(delayed(_mp_scale_assignment)(scales_chunk)
+                           for scales_chunk in scale_chunks)
+
+    dict_scale_part_vals = {}
+    for _chunk_dict_scale_part_vals in results:
+        dict_scale_part_vals.update(_chunk_dict_scale_part_vals)
+
     if verbose:
-        ut.print_end_progress(add_new_line=False)
-    return dict_scale_vals
+        ut.print_end_progress(add_new_line=False, **args_print)
+    return dict_scale_part_vals
 
 
 # Filtering methods
-def pre_filtering_info(df_parts=None, split_kws=None, dict_scale_vals=None,
-                       labels=None, label_test=1, label_ref=0, verbose=False, n_jobs=None):
+def pre_filtering_info(df_parts=None, split_kws=None, dict_scale_part_vals=None,
+                       labels=None, label_test=1, label_ref=0,
+                       verbose=False, n_jobs=None, vectorized=True):
     """Get n best features in descending order based on the abs(mean(group1) - mean(group0), with group 1 as target"""
     # Input (df_parts, split_kws, df_scales) checked in main method (CPP.run())
     mask_ref = [x == label_ref for x in labels]
@@ -193,26 +277,27 @@ def pre_filtering_info(df_parts=None, split_kws=None, dict_scale_vals=None,
     list_parts = list(df_parts)
     len_seq_max = df_parts.map(len).max().max()
     spr = SplitRange(split_type_str=False)
-    args = dict(list_parts=list_parts, split_kws=split_kws, len_seq_max=len_seq_max,
-                mask_test=mask_test, mask_ref=mask_ref,
+    args = dict(split_kws=split_kws, list_parts=list_parts,
+                mask_test=mask_test, mask_ref=mask_ref, len_seq_max=len_seq_max,
+                spr=spr, vectorized=vectorized,
                 verbose=verbose, shared_max_progress=SHARED_MAX_PROGRESS,
-                shared_value_lock=SHARED_VALUE_LOCK, print_lock=PRINT_LOCK, spr=spr)
-    # Run one job
-    if n_jobs == 1:
-        return _pre_filtering_info(**args, dict_scale_vals=dict_scale_vals)
+                shared_value_lock=SHARED_VALUE_LOCK, print_lock=PRINT_LOCK)
 
-    # Run in parallel across scales
     if n_jobs is None:
-        n_jobs = min(os.cpu_count(), len(dict_scale_vals))
-    scale_chunks = np.array_split(list(dict_scale_vals.keys()), n_jobs)
+        n_jobs = min(os.cpu_count(), len(dict_scale_part_vals))
 
-    # Define a worker that does pre-filtering info and returns its result
+    if n_jobs == 1:
+        return _pre_filtering_info(**args, dict_scale_part_vals=dict_scale_part_vals)
+
+    # Multi-processing function caller
     def _mp_pre_filtering_info(scales_chunk):
-        chunked_scale_vals = {scale: dict_scale_vals[scale] for scale in scales_chunk}
-        return _pre_filtering_info(dict_scale_vals=chunked_scale_vals, **args)
+        chunked_scale_vals = {scale: dict_scale_part_vals[scale] for scale in scales_chunk}
+        return _pre_filtering_info(dict_scale_part_vals=chunked_scale_vals, **args)
 
-    results = Parallel(n_jobs=n_jobs)(delayed(_mp_pre_filtering_info)(scales_chunk)
-                                      for scales_chunk in scale_chunks)
+    scale_chunks = np.array_split(list(dict_scale_part_vals.keys()), n_jobs)
+    with Parallel(n_jobs=n_jobs) as parallel:
+        results = parallel(delayed(_mp_pre_filtering_info)(scales_chunk)
+                           for scales_chunk in scale_chunks)
     if verbose:
         ut.print_end_progress(shared_max_progress=SHARED_MAX_PROGRESS,
                               shared_value_lock=SHARED_VALUE_LOCK,
@@ -268,23 +353,24 @@ def filtering(df=None, df_scales=None, max_overlap=0.5, max_cor=0.5, n_filter=10
 
 # Adder method for CPP analysis
 def add_stat(df_feat=None, df_parts=None, df_scales=None, labels=None, parametric=False, accept_gaps=False,
-             label_test=1, label_ref=0, n_jobs=None):
-        """
-        Add summary statistics for each feature to DataFrame.
+             label_test=1, label_ref=0, n_jobs=None, vectorized=True):
+    """
+    Add summary statistics for each feature to DataFrame.
 
-        Notes
-        -----
-        P-values are calculated Mann-Whitney U test (non-parametric) or T-test (parametric) as implemented in SciPy.
-        For multiple hypothesis correction, the Benjamini-Hochberg FDR correction is applied on all given features
-        as implemented in SciPy.
-        """
-        # Add feature statistics
-        features = list(df_feat[ut.COL_FEATURE])
-        X = get_feature_matrix_(features=features,
-                                df_parts=df_parts,
-                                df_scales=df_scales,
-                                accept_gaps=accept_gaps,
-                                n_jobs=n_jobs)
-        df_feat = add_stat_(df=df_feat, X=X, labels=labels, parametric=parametric,
-                            label_test=label_test, label_ref=label_ref, n_jobs=n_jobs)
-        return df_feat
+    Notes
+    -----
+    P-values are calculated Mann-Whitney U test (non-parametric) or T-test (parametric) as implemented in SciPy.
+    For multiple hypothesis correction, the Benjamini-Hochberg FDR correction is applied on all given features
+    as implemented in SciPy.
+    """
+    # Add feature statistics
+    features = list(df_feat[ut.COL_FEATURE])
+    X = get_feature_matrix_(features=features,
+                            df_parts=df_parts,
+                            df_scales=df_scales,
+                            accept_gaps=accept_gaps,
+                            n_jobs=n_jobs)
+    df_feat = add_stat_(df=df_feat, X=X, labels=labels, parametric=parametric,
+                        label_test=label_test, label_ref=label_ref,
+                        n_jobs=n_jobs, vectorized=vectorized)
+    return df_feat

@@ -39,19 +39,20 @@ def _compute_auc_sorted(sorted_indices, y_true):
 def auc_adjusted_(X=None, labels=None, label_test=1, n_jobs=None):
     """Get adjusted ROC AUC with pre-sorting and parallel computation."""
     labels_binary = np.array([int(y == label_test) for y in labels], dtype=DTYPE)
-    # Determine the number of parallel jobs
+
     if n_jobs is None:
         n_jobs = min(os.cpu_count(), max(int(X.shape[1] / 10), 1))
-    # Step 1: Pre-sort feature values once for all features
+    # Pre-sort feature values once for all features
     sorted_indices = _pre_sort(X)
-    # Step 2: Compute AUC using pre-sorted indices
+    # Compute AUC using pre-sorted indices
     if n_jobs == 1:
         auc_values = _compute_auc_sorted(sorted_indices, labels_binary)
     else:
         # Split features into chunks for parallel processing
         feature_chunks = np.array_split(np.arange(X.shape[1]), n_jobs)
-        results = Parallel(n_jobs=n_jobs)(
-            delayed(_compute_auc_sorted)(sorted_indices[:, chunk], labels_binary) for chunk in feature_chunks)
+        with Parallel(n_jobs=n_jobs) as parallel:
+            results = parallel(delayed(_compute_auc_sorted)(sorted_indices[:, chunk], labels_binary)
+                               for chunk in feature_chunks)
         auc_values = np.concatenate(results)
     return np.round(auc_values - 0.5, 3)
 

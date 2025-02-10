@@ -232,22 +232,21 @@ def get_feature_matrix_(features=None, df_parts=None, df_scales=None, accept_gap
     dict_all_scales = _get_dict_all_scales(df_scales=df_scales)
     features = features.to_list() if isinstance(features, pd.Series) else features
 
-    # Function to be parallelized
-    def compute_feature_matrix(features_subset):
-        return _feature_matrix(features_subset, dict_all_scales, df_parts, accept_gaps)
+    if n_jobs is None:
+        n_jobs = min(os.cpu_count(), max(int(len(features) / 10), 1))
 
-    # Feature creation
     if n_jobs == 1:
-        # Process in a single thread/process
-        feature_matrix = compute_feature_matrix(features)
-    else:
-        # If n_jobs is not specified, decide it dynamically based on the number of features
-        if n_jobs is None:
-            n_jobs = min(os.cpu_count(), max(int(len(features) / 10), 1))
-        # Use joblib to parallelize the computation
-        results = Parallel(n_jobs=n_jobs)(
-            delayed(compute_feature_matrix)(features_chunk) for features_chunk in np.array_split(features, n_jobs))
-        feature_matrix = np.concatenate(results, axis=1)
+        return _feature_matrix(features, dict_all_scales, df_parts, accept_gaps)
+
+    # Multi-processing function caller
+    def _mp_feature_matrix(features_chunk):
+        return _feature_matrix(features_chunk, dict_all_scales, df_parts, accept_gaps)
+
+    feature_chunks = np.array_split(features, n_jobs)
+    with Parallel(n_jobs=n_jobs) as parallel:
+        results = parallel(delayed(_mp_feature_matrix)(features_chunk)
+                           for features_chunk in feature_chunks)
+    feature_matrix = np.concatenate(results, axis=1)
     return feature_matrix
 
 

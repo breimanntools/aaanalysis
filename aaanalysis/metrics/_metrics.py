@@ -185,7 +185,7 @@ def comp_kld(X: ut.ArrayLike2D = None,
     ut.check_number_val(name="label_test", val=label_test, just_int=True, accept_none=False)
     ut.check_number_val(name="label_ref", val=label_ref, just_int=True, accept_none=False)
     labels = ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
-                    n_per_group_requiered=2, allow_other_vals=False)
+                             n_per_group_requiered=2, allow_other_vals=False)
     ut.check_match_X_labels(X=X, labels=labels, check_variability=True)
     # Compute tge Kullback-Leibler divergence
     try:
