@@ -3,28 +3,18 @@ This is a script for the frontend of the CPP class, a sequence-based feature eng
 """
 import numpy as np
 import pandas as pd
-from typing import Optional, List, Union
+from typing import Optional, List
 
 import aaanalysis.utils as ut
 from aaanalysis.template_classes import Tool
 
 # Import supportive class (exception for importing from same sub-package)
-from ._backend.cpp.sequence_feature import get_features_, get_split_kws_
+from ._backend.cpp.sequence_feature import get_split_kws_
 from ._backend.check_feature import (check_split_kws,
-                                     check_parts_len,
-                                     check_match_features_seq_parts,
-                                     check_df_parts,
-                                     check_match_df_parts_features,
-                                     check_match_df_parts_list_parts,
-                                     check_match_df_parts_split_kws,
-                                     check_df_scales,
-                                     check_match_df_scales_features,
-                                     check_df_cat,
-                                     check_match_df_cat_features,
-                                     check_match_df_parts_df_scales,
+                                     check_parts_len, check_df_parts, check_match_df_parts_split_kws,
+                                     check_df_scales, check_df_cat, check_match_df_parts_df_scales,
                                      check_match_df_scales_df_cat)
-from ._backend.cpp.utils_feature import get_positions_, add_scale_info_
-from ._backend.cpp.cpp_run import assign_scale_values_to_seq, pre_filtering_info, pre_filtering, filtering, add_stat
+from ._backend.cpp_run import cpp_run_single, cpp_run_batch
 from ._backend.cpp.cpp_eval import evaluate_features
 
 
@@ -165,6 +155,7 @@ class CPP(Tool):
             jmd_c_len: int = 10,
             n_jobs: Optional[int] = None,
             vectorized: bool = True,
+            n_batches: Optional[int] = None,
             ) -> pd.DataFrame:
         """
         Perform Comparative Physicochemical Profiling (CPP) algorithm: creation and two-step filtering of
@@ -211,6 +202,10 @@ class CPP(Tool):
         vectorized : bool, default=True
             Whether to apply sequence splitting and the Mann-Whitney U test in 'vectorized' mode (``True``),
             improving speed but increasing memory consumption.
+        n_batches : int, None, default=None
+            Number of batches (>=2) used for batch processing. If ``None``, single-processing is used, which is faster
+            but more memory-intensive. Increasing ``n_batches`` (up to the maximum number of scales in ``df_scales``)
+            reduces memory consumption but slows down processing.
 
         Returns
         -------
@@ -221,8 +216,15 @@ class CPP(Tool):
         -----
         * Pre-filtering can be adjusted by the following parameters: {'n_pre_filter', 'pct_pre_filter', 'max_std_test'}.
         * Filtering can be adjusted by the following parameters: {'n_filter', 'max_overlap', 'max_cor', 'check_cat'}.
-        * For large datasets or systems with limited memory, setting ``vectorized=True`` and ``n_jobs=1``
-          can help prevent crashes by reducing memory consumption.
+        * For large datasets (due to long sequences or a high number of samples) or memory-limited systems,
+          memory consumption can be reduced by:
+
+          - Disabling vectorized mode (``vectorized=False``)
+          - Reducing ``n_jobs`` (down to ``n_jobs=1``)
+          - Using batch processing (``n_batches>=2``, with higher values reduce memory usage)
+
+          While this helps to prevent crashes, it may slow down processing.
+
         * ``df_feat`` contains the following 13 columns, including the unique feature id (1), scale information (2-5),
           statistical results for filtering and ranking (6-12), and feature positions (13):
 
@@ -268,68 +270,23 @@ class CPP(Tool):
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         ut.check_bool(name="vectorized", val=vectorized)
-        # Settings and creation of objects
-        n_feat = len(get_features_(list_parts=list(self.df_parts),
-                                   split_kws=self.split_kws,
-                                   list_scales=list(self.df_scales)))
-        n_filter = n_feat if n_feat < n_filter else n_filter
-        # Assign scales values to
-        if self._verbose:
-            start_message = (f"1. CPP creates {n_feat} features for {len(self.df_parts)} samples"
-                             f"\n1.1 Assigning scales values to parts")
-            ut.print_start_progress(start_message=start_message)
-        dict_scale_part_vals = assign_scale_values_to_seq(df_parts=self.df_parts,
-                                                          df_scales=self.df_scales,
-                                                          verbose=self._verbose,
-                                                          n_jobs=n_jobs)
-
-        if self._verbose:
-            start_message = f"\n1.2 Applying splitting to parts"
-            ut.print_start_progress(start_message=start_message)
-        # Pre-filtering: Select best n % of feature (filter_pct) based std(test set) and mean_dif
-        abs_mean_dif, std_test, features = pre_filtering_info(df_parts=self.df_parts,
-                                                              split_kws=self.split_kws,
-                                                              dict_scale_part_vals=dict_scale_part_vals,
-                                                              labels=labels,
-                                                              label_test=label_test,
-                                                              label_ref=label_ref,
-                                                              verbose=self._verbose,
-                                                              n_jobs=n_jobs,
-                                                              vectorized=vectorized)
-        n_feat = int(len(features))
-        if n_pre_filter is None:
-            n_pre_filter = int(n_feat * (pct_pre_filter / 100))
-            n_pre_filter = n_filter if n_pre_filter < n_filter else n_pre_filter
-        if self._verbose:
-            pct_pre_filter = np.round((n_pre_filter/n_feat*100), 2)
-            end_message = (f"2. CPP pre-filters {n_pre_filter} features ({pct_pre_filter}%) with highest "
-                           f"'{ut.COL_ABS_MEAN_DIF}' and 'max_std_test' <= {max_std_test}")
-            ut.print_end_progress(end_message=end_message)
-        df = pre_filtering(features=features,
-                           abs_mean_dif=abs_mean_dif,
-                           std_test=std_test,
-                           n=n_pre_filter,
-                           max_std_test=max_std_test,
-                           accept_gaps=self._accept_gaps)
-        features = df[ut.COL_FEATURE].to_list()
-        # Add feature information
-        df = add_stat(df_feat=df, df_scales=self.df_scales, df_parts=self.df_parts,
-                      labels=labels, parametric=parametric, accept_gaps=self._accept_gaps,
-                      label_test=label_test, label_ref=label_ref, n_jobs=n_jobs, vectorized=vectorized)
-        feat_positions = get_positions_(features=features, start=start, **args_len)
-        df[ut.COL_POSITION] = feat_positions
-        df = add_scale_info_(df_feat=df, df_cat=self.df_cat)
-        # Filtering using CPP algorithm
-        if self._verbose:
-            ut.print_out(f"3. CPP filtering algorithm")
-        df_feat = filtering(df=df, df_scales=self.df_scales,
-                            n_filter=n_filter, check_cat=check_cat,
-                            max_overlap=max_overlap, max_cor=max_cor)
-        # Adjust df_feat
-        df_feat.reset_index(drop=True, inplace=True)
-        df_feat[ut.COLS_FEAT_STAT] = df_feat[ut.COLS_FEAT_STAT].round(3)
-        if self._verbose:
-            ut.print_out(f"4. CPP returns df of {len(df_feat)} unique features with general information and statistics")
+        n_scales = len(list(self.df_scales))
+        ut.check_number_range(name="n_batches", val=n_batches, just_int=True,
+                              accept_none=True, min_val=2, max_val=n_scales)
+        # Run the CPP algorithm on complete dataset
+        args = dict(df_parts=self.df_parts, split_kws=self.split_kws,
+                    df_scales=self.df_scales, df_cat=self.df_cat,
+                    verbose=self._verbose, accept_gaps=self._accept_gaps,
+                    labels=labels, label_test=label_test, label_ref=label_ref,
+                    n_filter=n_filter, n_pre_filter=n_pre_filter, pct_pre_filter=pct_pre_filter,
+                    max_std_test=max_std_test, max_overlap=max_overlap, max_cor=max_cor,
+                    check_cat=check_cat, parametric=parametric,
+                    start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
+                    n_jobs=n_jobs, vectorized=vectorized)
+        if n_batches is None:
+            df_feat = cpp_run_single(**args)
+        else:
+            df_feat = cpp_run_batch(**args, n_batches=n_batches)
         return df_feat
 
     def eval(self,

@@ -8,7 +8,6 @@ from scipy.spatial import distance
 from joblib import Parallel, delayed
 import os
 from scipy.stats import rankdata
-from sklearn.metrics import roc_auc_score
 
 DTYPE = np.float64
 

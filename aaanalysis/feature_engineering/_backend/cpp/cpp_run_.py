@@ -219,7 +219,6 @@ def assign_scale_values_to_seq(df_parts=None, df_scales=None, verbose=False, n_j
     if n_jobs is None:
         n_samples, n_scales = len(df_parts), len(dict_all_scales)
         n_jobs = min(os.cpu_count(), max(min(int(n_scales/100), int(n_samples/100)), 1))
-
     if n_jobs == 1:
         dict_scale_part_vals = _assign_scale_values_to_seq(dict_all_scales=dict_all_scales, **args, **args_print)
         if verbose:
@@ -287,10 +286,12 @@ def pre_filtering_info(df_parts=None, split_kws=None, dict_scale_part_vals=None,
     return abs_mean_dif, std_test, feat_names
 
 
-def pre_filtering(features=None, abs_mean_dif=None, std_test=None, max_std_test=0.2, n=10000, accept_gaps=False):
+def pre_filtering(df=None, features=None, abs_mean_dif=None, std_test=None,
+                  max_std_test=0.2, n=10000, accept_gaps=False):
     """CPP pre-filtering based on thresholds."""
-    df = pd.DataFrame(zip(features, abs_mean_dif, std_test),
-                      columns=[ut.COL_FEATURE, ut.COL_ABS_MEAN_DIF, ut.COL_STD_TEST])
+    if df is None:
+        df = pd.DataFrame(zip(features, abs_mean_dif, std_test),
+                          columns=[ut.COL_FEATURE, ut.COL_ABS_MEAN_DIF, ut.COL_STD_TEST])
     df = df[df[ut.COL_STD_TEST] <= max_std_test]
     if accept_gaps:
         # Remove features resulting in NaN features values due to sequence gaps

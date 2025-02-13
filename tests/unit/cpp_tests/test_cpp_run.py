@@ -159,6 +159,21 @@ class TestCPPRun:
         df_feat = cpp.run(labels=labels, n_jobs=4)
         assert isinstance(df_feat, pd.DataFrame)
 
+    def test_valid_vectorized(self):
+        df_parts, labels, split_kws, df_scales = get_parts_splits_scales()
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws)
+        for vectorized in [True, False]:
+            df_feat = cpp.run(labels=labels, n_jobs=1, vectorized=vectorized)
+            assert isinstance(df_feat, pd.DataFrame)
+
+    def test_valid_n_batches(self):
+        df_parts, labels, split_kws, df_scales = get_parts_splits_scales()
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws)
+        list_n_batches = [random.randint(2, len(list(df_scales))) for _ in range(3)]
+        for n_batches in list_n_batches:
+            df_feat = cpp.run(labels=labels, n_jobs=1, n_batches=n_batches)
+            assert isinstance(df_feat, pd.DataFrame)
+
     # Negative tests
     def test_invalid_n_filter(self):
         df_parts, labels, split_kws, df_scales = get_parts_splits_scales()
@@ -215,3 +230,18 @@ class TestCPPRun:
         cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws)
         with pytest.raises(ValueError):
             cpp.run(labels=labels, n_jobs=0)
+
+    def test_invalid_vectorized(self):
+        df_parts, labels, split_kws, df_scales = get_parts_splits_scales()
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws)
+        for vectorized in ["asdf", None, 1, [True, True]]:
+            with pytest.raises(ValueError):
+                cpp.run(labels=labels, n_jobs=1, vectorized=vectorized)
+
+    def test_invalid_n_batches(self):
+        df_parts, labels, split_kws, df_scales = get_parts_splits_scales()
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws)
+        list_n_batches = [1, "non", True, len(list(df_scales)) + 1, [None, None]]
+        for n_batches in list_n_batches:
+            with pytest.raises(ValueError):
+                cpp.run(labels=labels, n_jobs=1, n_batches=n_batches)

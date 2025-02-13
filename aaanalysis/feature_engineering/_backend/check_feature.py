@@ -10,6 +10,7 @@ from .cpp.utils_feature import get_part_positions
 
 # TODO!! check tmd_start and tmd_stop within sequence length !!
 
+
 # Helper functions
 def _return_empty_string(val=None):
     val = "" if val is None else val
@@ -310,7 +311,7 @@ def check_match_df_parts_features(df_parts=None, features=None):
 
 
 def check_match_df_parts_list_parts(df_parts=None, list_parts=None):
-    """"""
+    """Check match between df_parts and list of parts"""
     if list_parts is not None and df_parts is not None:
         list_parts = ut.check_list_like(name="list_parts", val=list_parts, accept_str=True, convert=True)
         missing_parts = [part.lower() for part in list_parts if part.lower() is not list(df_parts)]
