@@ -221,7 +221,7 @@ class CPP(Tool):
 
           - Disabling vectorized mode (``vectorized=False``)
           - Reducing ``n_jobs`` (down to ``n_jobs=1``)
-          - Using batch processing (``n_batches>=2``, with higher values reduce memory usage)
+          - Using batch processing (``n_batches>=2``, with higher values reducing memory usage)
 
           While this helps to prevent crashes, it may slow down processing.
 
