@@ -11,7 +11,6 @@ import aaanalysis.utils as ut
 from ._backend.check_feature import (check_split_kws,
                                      check_parts_len,
                                      check_match_features_seq_parts,
-                                     check_df_parts,
                                      check_match_df_parts_features,
                                      check_match_df_parts_list_parts,
                                      check_df_scales,
@@ -275,7 +274,7 @@ class CPPPlot:
     @staticmethod
     def eval(df_eval: pd.DataFrame = None,
              figsize: Tuple[int or float, int or float] = (6, 4),
-             dict_xlims: Optional[Union[None, dict]] = None,
+             dict_xlims: Optional[dict] = None,
              legend: bool = True,
              legend_y: float = -0.3,
              dict_color: Optional[dict] = None,
@@ -891,7 +890,7 @@ class CPPPlot:
                 # Data and Plot Type
                 df_feat: pd.DataFrame = None,
                 shap_plot: bool = False,
-                col_cat : Literal['category', 'subcategory', 'scale_name'] = "subcategory",
+                col_cat: Literal['category', 'subcategory', 'scale_name'] = "subcategory",
                 col_val: str = "mean_dif",
                 name_test: str = "TEST",
                 name_ref: str = "REF",

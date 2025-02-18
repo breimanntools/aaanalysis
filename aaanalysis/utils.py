@@ -84,6 +84,10 @@ from ._utils.utils_plot_elements import (plot_add_bars,
                                          adjust_spine_to_middle,
                                          x_ticks_0,
                                          adjust_tuple_elements)
+from ._utils.utils_plot_parts import (add_tmd_jmd_bar,
+                                      add_tmd_jmd_text,
+                                      add_tmd_jmd_xticks,
+                                      highlight_tmd_area)
 
 # External (system-level) utility functions (only backend)
 from ._utils.plotting import (plot_gco,
@@ -562,6 +566,29 @@ def check_list_parts(list_parts=None, return_default=True, all_parts=False, acce
         error = f"{wrong_parts} not valid {str_part}.\n  Select from following parts: {LIST_ALL_PARTS}"
         raise ValueError(error)
     return list_parts
+
+
+def check_df_parts(df_parts=None, accept_none=False):
+    """Check if df_parts is a valid input"""
+    check_df(name="df_parts", df=df_parts, accept_none=accept_none)
+    if df_parts is None and accept_none:
+        return  # Skip check
+    if len(list(df_parts)) == 0 or len(df_parts) == 0:
+        raise ValueError("'df_parts' should not be empty pd.DataFrame")
+    check_list_parts(list_parts=list(df_parts))
+    # Check if columns are unique
+    if len(list(df_parts)) != len(set(df_parts)):
+        raise ValueError("Column names in 'df_parts' must be unique. Drop duplicates!")
+    # Check if index is unique
+    if len(list(df_parts.index)) != len(set(df_parts.index)):
+        raise ValueError("Index in 'df_parts' must be unique. Drop duplicates!")
+    # Check if columns contain strings
+    dict_dtype = dict(df_parts.dtypes)
+    cols_wrong_type = [col for col in dict_dtype if dict_dtype[col] not in [object, str]]
+    if len(cols_wrong_type) > 0:
+        error = "'df_parts' should contain sequences with type string." \
+                f"\n  Following columns contain no values with type string: {cols_wrong_type}"
+        raise ValueError(error)
 
 
 # Check features

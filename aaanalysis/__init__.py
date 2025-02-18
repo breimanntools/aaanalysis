@@ -1,6 +1,7 @@
 from .data_handling import (load_dataset, load_scales, load_features,
                             read_fasta, to_fasta,
                             SequencePreprocessor)
+from .seq_analysis import AALogo, AALogoPlot
 from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
 from .explainable_ai import TreeModel
@@ -18,9 +19,11 @@ __all__ = [
     "load_features",
     "read_fasta",
     "to_fasta",
+    "SequencePreprocessor",
     # "comp_seq_sim",       BioPython
     # "filter_seq",         BioPython
-    "SequencePreprocessor",
+    "AALogo",
+    "AALogoPlot",
     "AAclust",
     "AAclustPlot",
     "SequenceFeature",
@@ -69,7 +72,7 @@ except ImportError as e:
 
 
 try:
-    from .data_handling_pro import comp_seq_sim
+    from .seq_analysis_pro import comp_seq_sim
     __all__.append("comp_seq_sim")
 except ImportError as e:
     comp_seq_sim = None
@@ -77,7 +80,7 @@ except ImportError as e:
 
 
 try:
-    from .data_handling_pro import filter_seq
+    from .seq_analysis_pro import filter_seq
     __all__.append("filter_seq")
 except ImportError as e:
     comp_seq_sim = None

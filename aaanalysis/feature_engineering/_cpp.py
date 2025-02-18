@@ -11,7 +11,7 @@ from aaanalysis.template_classes import Tool
 # Import supportive class (exception for importing from same sub-package)
 from ._backend.cpp.sequence_feature import get_split_kws_
 from ._backend.check_feature import (check_split_kws,
-                                     check_parts_len, check_df_parts, check_match_df_parts_split_kws,
+                                     check_parts_len, check_match_df_parts_split_kws,
                                      check_df_scales, check_df_cat, check_match_df_parts_df_scales,
                                      check_match_df_scales_df_cat)
 from ._backend.cpp_run import cpp_run_single, cpp_run_batch
@@ -118,7 +118,7 @@ class CPP(Tool):
         # Check input
         verbose = ut.check_verbose(verbose)
         random_state = ut.check_random_state(random_state=random_state)
-        check_df_parts(df_parts=df_parts)
+        ut.check_df_parts(df_parts=df_parts)
         check_split_kws(split_kws=split_kws)
         check_df_scales(df_scales=df_scales)
         check_df_cat(df_cat=df_cat)

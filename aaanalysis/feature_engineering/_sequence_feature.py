@@ -10,7 +10,6 @@ from ._backend.check_feature import (check_split_kws,
                                      check_parts_len,
                                      check_match_features_seq_parts,
                                      check_match_df_seq_jmd_len,
-                                     check_df_parts,
                                      check_match_df_parts_features,
                                      check_match_df_parts_df_scales,
                                      check_df_scales,
@@ -424,7 +423,7 @@ class SequenceFeature:
         if df_cat is None:
             df_cat = ut.load_default_scales(scale_cat=True)
         # Check input
-        check_df_parts(df_parts=df_parts)
+        ut.check_df_parts(df_parts=df_parts)
         check_df_scales(df_scales=df_scales)
         features = ut.check_features(features=features, list_parts=list(df_parts), list_scales=list(df_scales))
         ut.check_number_val(name="label_test", val=label_test, just_int=True)
@@ -501,7 +500,7 @@ class SequenceFeature:
             df_scales = ut.load_default_scales()
         # Check input
         check_df_scales(df_scales=df_scales)
-        check_df_parts(df_parts=df_parts)
+        ut.check_df_parts(df_parts=df_parts)
         features = ut.check_features(features=features, list_parts=list(df_parts), list_scales=list(df_scales))
         ut.check_bool(name="accept_gaps", val=accept_gaps)
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)

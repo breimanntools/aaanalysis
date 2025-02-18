@@ -266,30 +266,7 @@ def check_match_df_seq_jmd_len(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     return df_seq
 
 
-# Check df_parts
-def check_df_parts(df_parts=None, accept_none=False):
-    """Check if df_parts is a valid input"""
-    ut.check_df(name="df_parts", df=df_parts, accept_none=accept_none)
-    if df_parts is None and accept_none:
-        return # Skip check
-    if len(list(df_parts)) == 0 or len(df_parts) == 0:
-        raise ValueError("'df_parts' should not be empty pd.DataFrame")
-    ut.check_list_parts(list_parts=list(df_parts))
-    # Check if columns are unique
-    if len(list(df_parts)) != len(set(df_parts)):
-        raise ValueError("Column names in 'df_parts' must be unique. Drop duplicates!")
-    # Check if index is unique
-    if len(list(df_parts.index)) != len(set(df_parts.index)):
-        raise ValueError("Index in 'df_parts' must be unique. Drop duplicates!")
-    # Check if columns contain strings
-    dict_dtype = dict(df_parts.dtypes)
-    cols_wrong_type = [col for col in dict_dtype if dict_dtype[col] not in [object, str]]
-    if len(cols_wrong_type) > 0:
-        error = "'df_parts' should contain sequences with type string." \
-                f"\n  Following columns contain no values with type string: {cols_wrong_type}"
-        raise ValueError(error)
-
-
+# Check df_parts matching
 def check_match_df_parts_features(df_parts=None, features=None):
     """Check if df_parts does match with length requirements of features"""
     if df_parts is None:

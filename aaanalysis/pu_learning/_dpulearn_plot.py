@@ -79,7 +79,7 @@ class dPULearnPlot:
     @staticmethod
     def eval(df_eval: pd.DataFrame = None,
              figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
-             dict_xlims: Optional[Union[None, dict]] = None,
+             dict_xlims: Optional[dict] = None,
              legend: bool = True,
              legend_y: float = -0.175,
              colors: Optional[List[str]] = None,

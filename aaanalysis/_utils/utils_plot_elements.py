@@ -5,6 +5,7 @@ import seaborn as sns
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
+import matplotlib as mpl
 
 
 # Helper functions
