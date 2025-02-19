@@ -9,6 +9,7 @@ fonttools>=4.55.6
 Jinja2>=3.1.5
 joblib>=1.4.2
 kiwisolver>=1.4.7           # Not higher due to python 3.9 compatibility
+logomaker>=0.8.6
 matplotlib>=3.5.3,<=3.9.0   # Pinned due to AttributeError: 'FigureCanvasInterAgg' object has no attribute 'tostring_rgb'.
 numpy>=1.24.4,<=2.1.3       # Pinned due to numba incompatibility with numpy > 2.1.3
 openpyxl>=3.1.5

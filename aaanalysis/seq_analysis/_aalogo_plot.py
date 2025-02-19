@@ -155,7 +155,7 @@ class AALogoPlot:
         ut.add_tmd_jmd_xticks(**args_parts, x_shift=0, xtick_size=15, xtick_length=15, start=start)
         ut.add_tmd_jmd_text(**args_parts, x_shift=-0.5, weight_tmd_jmd=weight_tmd_jmd)
 
-        #ut.highlight_tmd_area(**args_parts, x_shift=-0.5)
+        ut.highlight_tmd_area(**args_parts, x_shift=-0.5)
 
         # Adjust labels and formatting
         ax_logo.set_ylabel(self._y_label)
