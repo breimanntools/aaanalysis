@@ -37,14 +37,8 @@ def _get_list_pattern_pos(steps=None, n_min=2, n_max=4, len_max=15):
 
 def _get_list_periodic_pattern_pos(len_seq=None, step1=None, step2=None, pos=1):
     """Get list of periodic pattern positions"""
-    list_pos = [pos]
-    while pos <= len_seq:
-        if len(list_pos) % 2 != 0:
-            pos += step1
-        else:
-            pos += step2
-        if pos <= len_seq:
-            list_pos.append(pos)
+    stride = step1 + step2
+    list_pos = list(range(pos,len_seq, stride)) + list(range((pos + step1),len_seq, stride))
     return list_pos
 
 
