@@ -32,10 +32,11 @@ def _add_part_bar(ax=None, start=1.0, len_part=40.0, color="blue", bar_height_fa
     ax.add_patch(bar)
 
 
-def _add_part_text(ax=None, text=None, start=1.0, len_part=10.0, fontsize=None, fontweight="normal"):
+def _add_part_text(ax=None, text=None, start=1.0, len_part=10.0, fontsize=None,
+                   fontweight="normal", height_factor=1.3):
     """Place text marking for TMD and JMD sequence parts."""
     bar_height = _get_bar_height(ax=ax)
-    y = _get_y(ax=ax, bar_height=bar_height, height_factor=1.3, reversed_weight=-1)
+    y = _get_y(ax=ax, bar_height=bar_height, height_factor=height_factor, reversed_weight=-1)
     x = start + len_part / 2    # Middle of part
     ax.text(x, y, text,
             horizontalalignment='center',
@@ -88,14 +89,15 @@ def add_tmd_jmd_bar(ax=None, x_shift=0, jmd_color="blue", tmd_color="mediumsprin
 
 def add_tmd_jmd_text(ax=None, x_shift=0, fontsize_tmd_jmd=None, weight_tmd_jmd="normal",
                      name_tmd="TMD", name_jmd_n="JMD-N", name_jmd_c="JMD-C",
-                     tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1):
+                     tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1,
+                     height_factor=1.3):
     """Add text labels for TMD and JMD regions."""
     pp = PlotPart(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
     jmd_n_start, tmd_start, jmd_c_start = pp.get_starts(x_shift=x_shift)
     exists_jmd_n = jmd_n_len > 0
     exists_jmd_c = jmd_c_len > 0
     if fontsize_tmd_jmd is None or fontsize_tmd_jmd > 0:
-        args = dict(ax=ax, fontsize=fontsize_tmd_jmd, fontweight=weight_tmd_jmd)
+        args = dict(ax=ax, fontsize=fontsize_tmd_jmd, fontweight=weight_tmd_jmd, height_factor=height_factor)
         _add_part_text(start=tmd_start, len_part=tmd_len, text=name_tmd, **args)
         if exists_jmd_n:
             _add_part_text(start=jmd_n_start, text=name_jmd_n, len_part=jmd_n_len, **args)
@@ -131,11 +133,12 @@ def add_tmd_jmd_xticks(ax=None, x_shift=0, xtick_size=11.0, xtick_width=2.0, xti
 
 
 def highlight_tmd_area(ax=None, x_shift=0, tmd_color="mediumspringgreen", alpha=0.2,
-                       tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1):
+                       tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1, y_max=None):
     """Highlight the TMD area in the plot."""
     pp = PlotPart(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
     jmd_n_start, tmd_start, jmd_c_start = pp.get_starts(x_shift=x_shift)
-    y_min, y_max = plt.ylim()
+    y_min, _y_max = ax.get_ylim()
+    y_max = _y_max if y_max is None else y_max
     height = abs(y_min) + y_max
     rect = mpl.patches.Rectangle((tmd_start, y_min), width=tmd_len, height=height, linewidth=0,
                                  color=tmd_color, zorder=0.1, clip_on=True, alpha=alpha)

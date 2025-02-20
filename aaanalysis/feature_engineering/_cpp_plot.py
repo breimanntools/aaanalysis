@@ -701,7 +701,7 @@ class CPPPlot:
                 bar_width: Union[int, float] = 0.75,
                 edge_color: Optional[str] = None,
                 grid_axis: Optional[Literal['x', 'y', 'both']] = None,
-                ylim: Tuple[float, float] = None,
+                ylim: Optional[Tuple[float, float]] = None,
                 xtick_size: Union[int, float] = 11.0,
                 xtick_width: Union[int, float] = 2.0,
                 xtick_length: Union[int, float] = 5.0,

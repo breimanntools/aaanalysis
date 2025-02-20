@@ -33,13 +33,16 @@ def _get_sequences(df_parts=None):
     return list_sequences
 
 
+# TODO refactor into backend, add checks, add docstring, tests
 # II Main function
 class AALogo:
     """
     AALogo class for computing sequence logo matrices and conservation scores.
     """
 
-    def __init__(self, logo_type="counts"):
+    def __init__(self,
+                 logo_type: Literal["probability", "weight", "counts", "information"] = "counts"
+                 ):
         list_to_type = ["probability", "weight", "counts", "information"]
         ut.check_str_options(name="to_type", val=logo_type, list_str_options=list_to_type)
         self._logo_type = logo_type

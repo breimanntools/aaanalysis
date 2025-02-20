@@ -1,15 +1,14 @@
 """
-TODO google motif meme
+This is a script for the frontend of the AALogoPlot class.
 """
 
-import logomaker
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 from typing import Optional, Dict, Union, List, Tuple, Type, Literal
 
 import aaanalysis.utils as ut
-
+from ._backend._aalogo.aalogo_plot import single_logo_, multi_logo_
 
 # Settings
 DICT_LOGO_LABELS = {"probability": "Probability [%]",
@@ -34,41 +33,17 @@ def check_parts_len(jmd_n_len=None, jmd_c_len=None, df_logo=None):
     return tmd_len, jmd_n_len, jmd_c_len
 
 
-def add_bit_score_bar(ax_info=None, df_logo_info=None, bar_color="gray", show_right=True):
-    """"""
-    ax_info.bar(df_logo_info.index, df_logo_info.values, color=bar_color)
-    ax_info.spines["top"].set_visible(False)
-    if show_right:
-        ax_info.spines["left"].set_visible(False)
-        ax_info.yaxis.set_label_position("right")
-        ax_info.yaxis.tick_right()
-    else:
-        ax_info.spines["right"].set_visible(False)
-    ax_info.xaxis.set_tick_params(labelbottom=False)
-    ax_info.set_ylabel("Bits")
-
-
-def add_name_test(ax=None, name_test=None, name_data_pos=None, fontsize=None, color="black"):
-    """Add the name_test to the plot at the specified position."""
-    args = dict(transform=ax.transAxes, fontsize=fontsize, color=color, multialignment="center")
-    if name_data_pos == "top":
-        ax.text(0.5, 1.02, name_test, ha="center", va="bottom", **args)
-    elif name_data_pos == "right":
-        ax.text(1.02, 0.5, name_test, ha='left', va='center', **args)
-    elif name_data_pos == "bottom":
-        ax.text(0.5, -0.25, name_test, ha='center', va='top', **args)
-    elif name_data_pos == "left":
-        ax.text(-0.12, 0.5, name_test, ha='right', va='center', **args)
-
-
+# TODO add checks, complete docstring (consistency with cpp_plot functions!), tests for both plots
 # II Main Functions
 class AALogoPlot:
     """
     AALogoPlot class for visualizing sequence logos.
+
+    This class supports single and multiple sequence logo visualizations using different encoding types.
     """
 
     def __init__(self,
-                 logo_type="counts",
+                 logo_type: Literal["probability", "weight", "counts", "information"] = "counts",
                  jmd_n_len: int = 10,
                  jmd_c_len: int = 10,
                  verbose: bool = True
@@ -76,6 +51,14 @@ class AALogoPlot:
         """
         Parameters
         ----------
+        logo_type : {'probability', 'weight', 'counts', 'information'}, default='counts'
+            Type of sequence logo representation:
+
+            - 'probability': Normalized probability distribution of amino acids.
+            - 'weight': Weighted representation.
+            - 'counts': Raw counts of amino acids.
+            - 'information': Information content in bits.
+
         jmd_n_len : int, default=10
             Length of JMD-N (>=0).
         jmd_c_len: int, default=10
@@ -83,6 +66,9 @@ class AALogoPlot:
         verbose: bool, default=True
             If ``True``, verbose outputs are enabled.
 
+        See Also
+        --------
+        * `logomaker <https://logomaker.readthedocs.io/en/latest/>`_: Python package for creating sequence logos.
         """
         # Check input
         verbose = ut.check_verbose(verbose)
@@ -93,97 +79,216 @@ class AALogoPlot:
         # General settings
         self._verbose = verbose
         # Set type of sequence logo
-        self._logo_type = logo_type
         self._y_label = DICT_LOGO_LABELS[logo_type]
         # Set consistent length of JMD-N and JMD-C
         self._jmd_n_len = jmd_n_len
         self._jmd_c_len = jmd_c_len
 
-    def plot_single_logo(self,
-                         # Data and Plot Type
-                         df_logo: pd.DataFrame = None,
-                         df_logo_info: pd.Series = None,
-                         name_data: Optional[str] = None,
-                         name_data_pos: Literal["top", "right", "bottom", "left"] = "top",
-                         name_data_color: str = "black",
-                         name_data_fontsize: Union[int, float] = None,
-                         target_site: Optional[int] = None,
-                         figsize: Tuple[Union[int, float], Union[int, float]] = (8, 3.5),
-                         logo_width: float = 0.96,
-                         logo_vpad: float = 0.05,
-                         logo_vsep: float = 0.0,
-                         logo_font_name: str = "Verdana",
-                         logo_color_scheme: str = "weblogo_protein",
-                         logo_stack_order: Literal["big_on_top", "small_on_top", "fixed"] = "big_on_top",
+    def single_logo(self,
+                    # Data and Plot Type
+                    df_logo: pd.DataFrame = None,
+                    df_logo_info: pd.Series = None,
+                    info_bar_color: str = "gray",
+                    info_bar_ylim: Optional[Tuple[float, float]] = None,
+                    target_p1_site: Optional[int] = None,
+                    figsize: Tuple[Union[int, float], Union[int, float]] = (8, 4),
+                    height_ratio: Tuple[Union[int, float], Union[int, float]] = (1, 6),
+                    fontsize_labels: Union[int, float] = None,
+                    name_data: Optional[str] = None,
+                    name_data_pos: Literal["top", "right", "bottom", "left"] = "top",
+                    name_data_color: str = "black",
+                    name_data_fontsize: Union[int, float] = None,
+                    logo_font_name: str = "Verdana",
+                    logo_color_scheme: str = "weblogo_protein",
+                    logo_stack_order: Literal["big_on_top", "small_on_top", "fixed"] = "big_on_top",
+                    logo_width: float = 0.96,
+                    logo_vpad: float = 0.05,
+                    logo_vsep: float = 0.0,
+                    # Appearance of Parts (TMD-JMD)
+                    start: int = 1,
+                    tmd_color: str = "mediumspringgreen",
+                    jmd_color: str = "blue",
+                    fontsize_tmd_jmd: Optional[Union[int, float]] = None,
+                    weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
+                    highlight_tmd_area: bool = True,
+                    highlight_alpha: float = 0.15,
+                    xtick_size: Optional[Union[int, float]] = None,
+                    xtick_width: Union[int, float] = 2.0,
+                    xtick_length: Union[int, float] = 11.0,
+                    ) -> Tuple[plt.Figure, plt.Axes]:
+        """Plot a single sequence logo with an optional split view for bit-score information.
 
-                         # Appearance of Parts (TMD-JMD)
-                         start: int = 1,
-                         tmd_color: str = "mediumspringgreen",
-                         jmd_color: str = "blue",
-                         fontsize_tmd_jmd: Union[int, float] = None,
-                         weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
-                         fontsize_labels: Union[int, float] = 12,
-                         add_xticks_pos: bool = False,
-                         highlight_tmd_area: bool = True,
-                         highlight_alpha: float = 0.15,
+        Parameters
+        ----------
+        df_logo : pd.DataFrame
+            DataFrame containing sequence logo data (letter heights per position).
+        df_logo_info : pd.Series, optional
+            Additional bit-score information to display as a separate subplot.
+        info_bar_color : str, default='gray'
+            Color of the bit-score bars.
+        info_bar_ylim : tuple, optional
+            Y-axis limits for bit-score bars. If ``None``, y-axis limits are set automatically.
+        target_p1_site : int, optional
+            Position marker for a specific target site in the sequence.
+        figsize : tuple, default=(8, 3.5)
+            Figure dimensions (width, height) in inches.
+        height_ratio : tuple, default=(1, 6)
+            Ratio of heights between the bit-score subplot and the main logo.
+        fontsize_labels : int or float, optional
+            Font size for axis labels.
+        name_data : str, optional
+            Name to annotate the dataset being visualized.
+        name_data_pos : {'top', 'right', 'bottom', 'left'}, default='top'
+            Position of the dataset name label.
+        name_data_color : str, default='black'
+            Color of the dataset name label.
+        name_data_fontsize : int or float, optional
+            Font size of the dataset name label.
+        logo_font_name : str, default='Verdana'
+            Font used for sequence letters.
+        logo_color_scheme : str, default='weblogo_protein'
+            Color scheme applied to the amino acid symbols.
+        logo_stack_order : {'big_on_top', 'small_on_top', 'fixed'}, default='big_on_top'
+            Stacking order of letters in the sequence logo.
+        logo_width : float, default=0.96
+            Width of the sequence logo plot area (relative scale).
+        logo_vpad : float, default=0.05
+            Vertical padding between letters.
+        logo_vsep : float, default=0.0
+            Vertical separation between stacked letters.
+        start : int, default=1
+            Position label of first residue position (starting at N-terminus).
+        tmd_color : str, default='mediumspringgreen'
+            Color for TMD.
+        jmd_color : str, default='blue'
+            Color for JMDs.
+        fontsize_tmd_jmd : int or float, optional
+            Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
+        weight_tmd_jmd : {'normal', 'bold'}, default='normal'
+            Font weight for the part labels: 'JMD-N', 'TMD', 'JMD-C'.
+        xtick_size : int or float, optional
+            Size of x-tick labels (>0).
+        xtick_width : int or float, default=2.0
+            Width of the x-ticks (>0).
+        xtick_length : int or float, default=11.0
+            Length of the x-ticks (>0).
+        highlight_tmd_area : bool, default=True
+            If ``True``, highlights the TMD area in the plot.
+        highlight_alpha : float, default=0.15
+            Transparency level for TMD area highlighting.
 
-                         # Bit-score barplot
-                         bar_color: str = "gray",
-                         ):
-        """Plot a single sequence logo with an optional split view for bit-score information."""
-        # Check input
+        Returns
+        -------
+        fig : plt.Figure
+            The figure object containing the sequence logo plot.
+        axes : plt.Axes
+            The axes object containing the sequence logo plot.
+
+        """
+        # Check primary input
         ut.check_figsize(figsize=figsize)
         tmd_len, jmd_n_len, jmd_c_len = check_parts_len(df_logo=df_logo, jmd_n_len=self._jmd_n_len,
                                                         jmd_c_len=self._jmd_c_len)
 
-        # Set figure and axes layout (ensure zero spacing)
-        if df_logo_info is not None:
-            _args = dict(nrows=2, gridspec_kw={"height_ratios": [0.4, 3]}, figsize=figsize, sharex=True)
-            fig, (ax_info, ax_logo) = plt.subplots(**_args)
-        else:
-            fig, ax_logo = plt.subplots(figsize=figsize)
+        # Plot single logo
+        fig, axes = single_logo_(df_logo=df_logo,
+                                 df_logo_info=df_logo_info,
+                                 info_bar_color=info_bar_color,
+                                 info_bar_ylim=info_bar_ylim,
+                                 target_p1_site=target_p1_site,
+                                 figsize=figsize,
+                                 height_ratio=height_ratio,
+                                 fontsize_labels=fontsize_labels,
+                                 y_label=self._y_label,
+                                 name_data=name_data,
+                                 name_data_pos=name_data_pos,
+                                 name_data_color=name_data_color,
+                                 name_data_fontsize=name_data_fontsize,
+                                 logo_font_name=logo_font_name,
+                                 logo_color_scheme=logo_color_scheme,
+                                 logo_stack_order=logo_stack_order,
+                                 logo_width=logo_width,
+                                 logo_vpad=logo_vpad,
+                                 logo_vsep=logo_vsep,
+                                 start=start,
+                                 tmd_len=tmd_len,
+                                 jmd_n_len=jmd_n_len,
+                                 jmd_c_len=jmd_c_len,
+                                 tmd_color=tmd_color,
+                                 jmd_color=jmd_color,
+                                 xtick_size=xtick_size,
+                                 xtick_width=xtick_width,
+                                 xtick_length=xtick_length,
+                                 fontsize_tmd_jmd=fontsize_tmd_jmd,
+                                 weight_tmd_jmd=weight_tmd_jmd,
+                                 highlight_tmd_area=highlight_tmd_area,
+                                 highlight_alpha=highlight_alpha)
+        return fig, axes
 
-        # Plot sequence logo
-        logomaker.Logo(df_logo, ax=ax_logo, figsize=figsize, font_name=logo_font_name,
-                       color_scheme=logo_color_scheme, width=logo_width,
-                       vpad=logo_vpad, vsep=logo_vsep,
-                       stack_order=logo_stack_order)
-
-        # Add TMD-JMD elements TODO adjust bar_height, TMD, JMD text position
-        args_parts = dict(ax=ax_logo, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
-        ut.add_tmd_jmd_bar(**args_parts, x_shift=-0.5, jmd_color=jmd_color, tmd_color=tmd_color, bar_height_factor=2)
-        ut.add_tmd_jmd_xticks(**args_parts, x_shift=0, xtick_size=15, xtick_length=15, start=start)
-        ut.add_tmd_jmd_text(**args_parts, x_shift=-0.5, weight_tmd_jmd=weight_tmd_jmd)
-
-        ut.highlight_tmd_area(**args_parts, x_shift=-0.5)
-
-        # Adjust labels and formatting
-        ax_logo.set_ylabel(self._y_label)
-        sns.despine(ax=ax_logo, top=False)
-
-        if df_logo_info is not None:
-            add_bit_score_bar(ax_info=ax_info, df_logo_info=df_logo_info, bar_color=bar_color)
-        if name_data is not None:
-            fs = ut.plot_gco() if name_data_fontsize is None else name_data_fontsize
-            ax = ax_info if name_data_pos == "top" else ax_logo
-            add_name_test(ax=ax, name_test=name_data, name_data_pos=name_data_pos, color=name_data_color,
-                          fontsize=fs)
-        plt.tight_layout()
-        plt.subplots_adjust(hspace=0)
-
-    def plot_comparative_logo(self,
-                              list_df_logo=None,
-                              list_names=None,
-                              parts_to_plot=["JMD_N", "TMD", "JMD_C"],
-                              figsize_per_plot=(8, 3.5),
-                              start_tmd_at_n=True):
+    def multi_logo(self,
+                   # Data and Plot Type
+                   list_df_logo: List[pd.DataFrame] = None,
+                   target_p1_site: Optional[int] = None,
+                   figsize_per_logo: Tuple[Union[int, float], Union[int, float]] = (8, 3),
+                   fontsize_labels: Union[int, float] = None,
+                   list_name_data: Optional[List[str]] = None,
+                   name_data_pos: Literal["top", "right", "bottom", "left"] = "top",
+                   list_name_data_color: Optional[Union[str, List[str]]] = "black",
+                   name_data_fontsize: Union[int, float] = None,
+                   logo_font_name: str = "Verdana",
+                   logo_color_scheme: str = "weblogo_protein",
+                   logo_stack_order: Literal["big_on_top", "small_on_top", "fixed"] = "big_on_top",
+                   logo_width: float = 0.96,
+                   logo_vpad: float = 0.05,
+                   logo_vsep: float = 0.0,
+                   # Appearance of Parts (TMD-JMD)
+                   start: int = 1,
+                   tmd_color: str = "mediumspringgreen",
+                   jmd_color: str = "blue",
+                   fontsize_tmd_jmd: Optional[Union[int, float]] = None,
+                   weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
+                   highlight_tmd_area: bool = True,
+                   highlight_alpha: float = 0.15,
+                   xtick_size: Optional[Union[int, float]] = None,
+                   xtick_width: Union[int, float] = 2.0,
+                   xtick_length: Union[int, float] = 11.0,
+                   ):
         """Plot multiple sequence logos for comparison, with adjustable JMD/TMD sizes."""
-        num_datasets = len(list_df_logo)
+        # Check primary input
+        ut.check_figsize(figsize=figsize_per_logo)
+        df_logo1 = list_df_logo[0]
+        tmd_len, jmd_n_len, jmd_c_len = check_parts_len(df_logo=df_logo1,
+                                                        jmd_n_len=self._jmd_n_len,
+                                                        jmd_c_len=self._jmd_c_len)
 
-        figsize = (figsize_per_plot[0] * num_datasets, figsize_per_plot[1])
-        fig, axes = plt.subplots(1, num_datasets, figsize=figsize, sharey=True)
-
-        if num_datasets == 1:
-            axes = [axes]
-
+        # Plot multi logo
+        fig, axes = multi_logo_(list_df_logo=list_df_logo,
+                                target_p1_site=target_p1_site,
+                                figsize_per_logo=figsize_per_logo,
+                                y_label=self._y_label,
+                                fontsize_labels=fontsize_labels,
+                                list_name_data=list_name_data,
+                                name_data_pos=name_data_pos,
+                                list_name_data_color=list_name_data_color,
+                                name_data_fontsize=name_data_fontsize,
+                                logo_font_name=logo_font_name,
+                                logo_color_scheme=logo_color_scheme,
+                                logo_stack_order=logo_stack_order,
+                                logo_width=logo_width,
+                                logo_vpad=logo_vpad,
+                                logo_vsep=logo_vsep,
+                                start=start,
+                                tmd_len=tmd_len,
+                                jmd_n_len=jmd_n_len,
+                                jmd_c_len=jmd_c_len,
+                                tmd_color=tmd_color,
+                                jmd_color=jmd_color,
+                                fontsize_tmd_jmd=fontsize_tmd_jmd,
+                                weight_tmd_jmd=weight_tmd_jmd,
+                                highlight_tmd_area=highlight_tmd_area,
+                                highlight_alpha=highlight_alpha,
+                                xtick_size=xtick_size,
+                                xtick_width=xtick_width,
+                                xtick_length=xtick_length)
+        return fig, axes
 

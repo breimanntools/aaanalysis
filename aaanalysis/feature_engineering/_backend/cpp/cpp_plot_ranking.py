@@ -40,6 +40,7 @@ def _add_position_bars(ax=None, df_feat=None):
             for pos in positions:
                 _add_pos_bars(ax=ax, x=pos - 1, y=y - 0.25)
 
+
 def _add_part_seq(ax=None, jmd_n_len=10, jmd_c_len=10, tmd_len=20, y=-0.75, height=0.2,
                  tmd_color="mediumspringgreen", jmd_color="blue", alpha=1.0, start=0.0):
     """Add colored box for sequence parts in figure"""
