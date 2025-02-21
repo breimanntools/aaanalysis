@@ -135,15 +135,15 @@ def check_col_val(col_val=None, shap_plot=False, sample_mean_dif=False):
     list_valid_col_val = [ut.COL_MEAN_DIF, ut.COL_ABS_MEAN_DIF, ut.COL_ABS_AUC, ut.COL_FEAT_IMPORT]
     str_error_shap = (f"If 'shap_plot=True', 'col_val' ('{col_val}') must follow '{ut.COL_FEAT_IMPACT}_'name'' or "
                       f"'{ut.COL_MEAN_DIF}_name'")
-    str_add = f"Should be one of the following: {list_valid_col_val}" if not shap_plot else str_error_shap
+    str_add = f"Should be one of: {list_valid_col_val}" if not shap_plot else str_error_shap
     ut.check_str(name="col_val", val=col_val, accept_none=False, str_add=str_add)
     if not shap_plot:
         if sample_mean_dif:
             if ut.COL_MEAN_DIF not in col_val and col_val not in list_valid_col_val:
                 raise ValueError(f"'col_val' ('{col_val}') must follow {ut.COL_MEAN_DIF}_name' or "
-                                 f"should be one of the following: {list_valid_col_val}")
+                                 f"should be one of: {list_valid_col_val}")
         elif col_val not in list_valid_col_val:
-            raise ValueError(f"'col_val' ('{col_val}') should be one of the following: {list_valid_col_val}")
+            raise ValueError(f"'col_val' ('{col_val}') should be one of: {list_valid_col_val}")
     else:
         if ut.COL_FEAT_IMPACT not in col_val and ut.COL_MEAN_DIF not in col_val:
             raise ValueError(str_error_shap)
@@ -1142,6 +1142,13 @@ class CPPPlot:
                     name_ref: str = "REF",
                     figsize: Tuple[Union[int, float], Union[int, float]] = (8, 8),
 
+                    # Feature importance
+                    add_imp_bar_top: bool = True,
+                    imp_bar_th: Optional[Union[int, float]] = None,
+                    imp_bar_label_type: Union[Literal['long', 'short'], None] = 'long',
+                    imp_ths: Tuple[Optional[float], Optional[float], Optional[float]] = (0.2, 0.5, 1),
+                    imp_marker_sizes: Tuple[Optional[float], Optional[float], Optional[float]] = (3, 5, 8),
+
                     # Appearance of Parts (TMD-JMD)
                     start: int = 1,
                     tmd_len: int = 20,
@@ -1177,13 +1184,10 @@ class CPPPlot:
                     legend_kws: Optional[dict] = None,
                     legend_xy: Tuple[Optional[float], Optional[float]] = (-0.1, -0.01),
                     legend_imp_xy: Tuple[Optional[float], Optional[float]] = (1.25, 0),
-                    imp_ths: Tuple[Optional[float], Optional[float], Optional[float]] = (0.2, 0.5, 1),
-                    imp_marker_sizes: Tuple[Optional[float], Optional[float], Optional[float]] = (3, 5, 8),
-                    imp_bar_th: Optional[Union[int, float]] = None,
                     xtick_size: Union[int, float] = 11.0,
                     xtick_width: Union[int, float] = 2.0,
                     xtick_length: Union[int, float] = 5.0,
-                    )-> Tuple[plt.Figure, plt.Axes]:
+                    ) -> Tuple[plt.Figure, plt.Axes]:
         """
         Plot CPP feature map showing feature value mean difference and feature importance
         per scale subcategory (y-axis) and residue position (x-axis).
@@ -1205,6 +1209,16 @@ class CPPPlot:
             Name for the reference dataset.
         figsize : tuple, default=(8, 8)
             Figure dimensions (width, height) in inches.
+        add_imp_bar_top : bool, default=True
+            If ``True``, add bars for cumulative feature importance per position (top).
+        imp_bar_th : int or float, optional
+            Threshold for cumulative feature importance per scale (right bars). If ``None``, determined automatically.
+        imp_bar_label_type : {'long', 'short', None} default='long'
+            Label type for cumulative feature importance bar chart. If ``None``, no label is shown.
+        imp_ths : tuple, default=(0.2, 0.5, 1)
+            Three ascending thresholds for feature importance (scale- and position-specific).
+        imp_marker_sizes : tuple, default=(3, 5, 8)
+            Size of three feature importance markers defined by ``impd_th``.
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
@@ -1272,12 +1286,6 @@ class CPPPlot:
             Position for scale category legend: x- and y-axis coordinates. Values are set to default if ``None``.
         legend_imp_xy : tuple, default=(1.25, 0)
             Position for feature importance legend: x- and y-axis coordinates (relative to cbar).
-        imp_ths : tuple, default=(0.2, 0.5, 1)
-            Three ascending thresholds for feature importance (scale- and residue-specific).
-        imp_marker_sizes : tuple, default=(3, 5, 8)
-            Size of three feature importance markers defined by ``impd_th``.
-        imp_bar_th : int or float, optional
-            Threshold for cumulated feature importance to be shown on right bars. If ``None``, determined automatically.
         xtick_size : int or float, default=11.0
             Size of x-tick labels (>0).
         xtick_width : int or float, default=2.0
@@ -1319,10 +1327,17 @@ class CPPPlot:
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat,
                                    cols_requiered=[col_val, col_imp],
                                    cols_nan_check=col_val)
-
         ut.check_str(name="name_test", val=name_test)
         ut.check_str(name="name_ref", val=name_ref)
         ut.check_figsize(figsize=figsize, accept_none=True)
+
+        #  Check feature importance presentation input
+        ut.check_bool(name="add_imp_bar_top", val=add_imp_bar_top)
+        ut.check_number_range(name="imp_bar_th", val=imp_bar_th, accept_none=True, min_val=0, just_int=False)
+        ut.check_str_options(name="imp_bar_label_type", val=imp_bar_label_type, accept_none=True,
+                             list_str_options=["short", "long", None])
+        check_imp_tuples(name="imp_ths", imp_tuples=imp_ths)
+        check_imp_tuples(name="imp_marker_sizes", imp_tuples=imp_marker_sizes)
 
         # Check specific TMD-JMD input
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
@@ -1345,7 +1360,6 @@ class CPPPlot:
         check_match_features_seq_parts(features=df_feat[ut.COL_FEATURE],
                                        tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                        tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
-
         # Check plot styling input
         ut.check_number_range(name="grid_linewidth", val=grid_linewidth, min_val=0, just_int=False)
         ut.check_color(name="grid_linecolor", val=grid_linecolor, accept_none=True)
@@ -1364,10 +1378,6 @@ class CPPPlot:
                        check_number=True, accept_none_number=True)
         ut.check_tuple(name="legend_imp_xy", val=legend_imp_xy, n=2, accept_none=False,
                        check_number=True, accept_none_number=True)
-        check_imp_tuples(name="imp_ths", imp_tuples=imp_ths)
-        check_imp_tuples(name="imp_marker_sizes", imp_tuples=imp_marker_sizes)
-        ut.check_number_range(name="imp_bar_th", val=imp_bar_th,
-                              accept_none=True, min_val=0, just_int=False)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
 
         # Plot feature map
@@ -1375,6 +1385,10 @@ class CPPPlot:
                                    col_cat=col_cat, col_val=col_val, col_imp=col_imp,
                                    name_test=name_test, name_ref=name_ref,
                                    figsize=figsize,
+                                   add_imp_bar_top=add_imp_bar_top,
+                                   imp_bar_th=imp_bar_th,
+                                   imp_bar_label_type=imp_bar_label_type,
+                                   imp_ths=imp_ths, imp_marker_sizes=imp_marker_sizes,
                                    start=start, **args_len, **args_seq,
                                    **args_part_color, **args_seq_color,
                                    **args_fs, weight_tmd_jmd=weight_tmd_jmd,
@@ -1386,8 +1400,6 @@ class CPPPlot:
                                    cbar_pct=cbar_pct, cbar_kws=cbar_kws, cbar_xywh=cbar_xywh,
                                    dict_color=dict_color, legend_kws=legend_kws, legend_xy=legend_xy,
                                    legend_imp_xy=legend_imp_xy,
-                                   imp_ths=imp_ths, imp_marker_sizes=imp_marker_sizes,
-                                   imp_bar_th=imp_bar_th,
                                    **args_xtick)
 
         # Adjust plot

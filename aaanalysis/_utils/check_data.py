@@ -62,7 +62,7 @@ def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan
     check_type.check_str(name="dtype", val=dtype, accept_none=True)
     valid_dtypes = ["numeric", "int", "float", "bool", None]
     if dtype not in valid_dtypes:
-        str_error = add_str(str_error=f"'dtype' should be one of the following: {valid_dtypes}", str_add=str_add)
+        str_error = add_str(str_error=f"'dtype' should be one of: {valid_dtypes}", str_add=str_add)
         raise ValueError(str_error)
     dict_expected_dtype = {"numeric": "numeric", "int": "int64", "float": "float64", "bool": "bool"}
     expected_dtype = dict_expected_dtype[dtype] if dtype is not None else None

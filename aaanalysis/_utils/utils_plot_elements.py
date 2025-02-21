@@ -3,9 +3,10 @@ This is a script for internal plotting utility functions used in the backend.
 """
 import seaborn as sns
 import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 # Helper functions
@@ -177,15 +178,53 @@ def adjust_spine_to_middle(ax=None):
     return ax
 
 
-def x_ticks_0(ax):
+def ticks_0(ax, show_zero=True, axis="x", precision=2):
     """Apply custom formatting for x-axis ticks."""
-    def custom_x_ticks(x, pos):
+    if axis not in ["x", "y"]:
+        raise ValueError("'axis' should be 'x' or 'y'")
+    def custom_ticks(x, pos):
         """Format x-axis ticks."""
-        if x % 1 == 0:  # Check if number is an integer
+        if x == 0 and not show_zero:
+            return ''
+        elif x % 1 == 0:  # Check if number is an integer
             return f'{int(x)}'  # Format as integer
         else:
-            return f'{x:.2f}'  # Format as float with two decimal places
-    ax.xaxis.set_major_formatter(mticker.FuncFormatter(custom_x_ticks))
+            # Format as float with two decimal places
+            return f'{x:.{precision}f}'
+    if axis == "x":
+        ax.xaxis.set_major_formatter(mticker.FuncFormatter(custom_ticks))
+    else:
+        ax.yaxis.set_major_formatter(mticker.FuncFormatter(custom_ticks))
+
+
+def ticks_0(ax, show_zero=True, show_only_max=False, axis="x", precision=2):
+    """Apply custom formatting for axis ticks and ensure max value is shown."""
+    if axis not in ["x", "y"]:
+        raise ValueError("'axis' should be 'x' or 'y'")
+    # Format tick labels
+    def custom_ticks(x, pos):
+        """Format axis ticks."""
+        if x == 0 and not show_zero:
+            return ''
+        elif x % 1 == 0:  # Check if number is an integer
+            return f'{int(x)}'  # Format as integer
+        else:
+            # Format as float with specified precision
+            return f'{x:.{precision}f}'
+
+    # Get the current axis object
+    axis_obj = ax.xaxis if axis == "x" else ax.yaxis
+    axis_obj.set_major_formatter(mticker.FuncFormatter(custom_ticks))
+
+    # Get the current limits
+    if show_only_max:
+        vmax = ax.get_xlim()[1] if axis == "x" else ax.get_ylim()[1]
+        max_val = int(np.ceil(vmax))
+        new_ticks = [max_val]
+        if axis == "x":
+            ax.set_xticks(new_ticks)
+        else:
+            ax.set_yticks(new_ticks)
 
 
 def adjust_tuple_elements(tuple_in=None, tuple_default=None):

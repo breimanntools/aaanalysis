@@ -37,7 +37,7 @@ def _check_show(name="row_to_show", val=None, df=None):
     if isinstance(val, str):
         ut.check_str(name=name, val=val, accept_none=True)
         if val not in rows_or_columns:
-            raise ValueError(f"'{name}' ('{val}') should be one of following: {rows_or_columns}")
+            raise ValueError(f"'{name}' ('{val}') should be one of: {rows_or_columns}")
     elif isinstance(val, int):
         ut.check_number_range(name=name, val=val, accept_none=True, min_val=0, max_val=n, just_int=True)
     else:

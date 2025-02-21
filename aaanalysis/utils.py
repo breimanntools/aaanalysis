@@ -82,7 +82,7 @@ from ._utils.utils_output import (print_out,
                                   print_end_progress)
 from ._utils.utils_plot_elements import (plot_add_bars,
                                          adjust_spine_to_middle,
-                                         x_ticks_0,
+                                         ticks_0,
                                          adjust_tuple_elements)
 from ._utils.utils_plot_parts import (add_tmd_jmd_bar,
                                       add_tmd_jmd_text,

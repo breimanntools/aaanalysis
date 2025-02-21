@@ -77,7 +77,7 @@ def check_str_options(name=None, val=None, accept_none=False, list_str_options=N
     """Check if valid string option"""
     if accept_none and val is None:
         return None  # Skip test
-    str_add = add_str(str_error=f"'{name}' ({val}) should be one of following: {list_str_options}")
+    str_add = add_str(str_error=f"'{name}' ({val}) should be one of: {list_str_options}")
     check_str(name=name, val=val, accept_none=accept_none, str_add=str_add)
     if val not in list_str_options:
         raise ValueError(str_add)

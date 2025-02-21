@@ -96,7 +96,7 @@ def _check_hatches(marker=None, hatch=None, list_cat=None):
         wrong_hatch = [x for x in hatch if x not in valid_hatches]
         if len(wrong_hatch) != 0:
             raise ValueError(
-                f"'hatch' contains wrong values ('{wrong_hatch}')! Should be one of following: {valid_hatches}")
+                f"'hatch' contains wrong values ('{wrong_hatch}')! Should be one of: {valid_hatches}")
         if len(hatch) != len(list_cat):
             raise ValueError(f"Length must match of 'hatch' ({hatch}) and categories ({list_cat}).")  # Check if hatch can be chosen
     # Warn for parameter conflicts
@@ -117,7 +117,7 @@ def _check_marker(marker=None, list_cat=None, lw=0):
     if isinstance(marker, list):
         wrong_markers = [x for x in marker if x not in valid_markers]
         if len(wrong_markers) != 0:
-            raise ValueError(f"'marker' contains wrong values  ('{wrong_markers}'). Should be one of following: {valid_markers}")
+            raise ValueError(f"'marker' contains wrong values  ('{wrong_markers}'). Should be one of: {valid_markers}")
         if len(marker) != len(list_cat):
             raise ValueError(f"Length must match of 'marker' ({marker}) and categories ({list_cat}).")
     # Warn for parameter conflicts
@@ -155,7 +155,7 @@ def _check_linestyle(linestyle=None, list_cat=None, marker=None):
         wrong_mls = [x for x in linestyle if x not in valid_mls]
         if len(wrong_mls) != 0:
             raise ValueError(
-                f"'marker_linestyle' contains wrong values ('{wrong_mls}')! Should be one of following: {valid_mls}")
+                f"'marker_linestyle' contains wrong values ('{wrong_mls}')! Should be one of: {valid_mls}")
         if len(linestyle) != len(list_cat):
             raise ValueError(f"Length must match of 'marker_linestyle' ({linestyle}) and categories ({list_cat}).")
     # Check if marker_linestyle is conflicting with other settings

@@ -32,7 +32,7 @@ def plot_gcfs(option: str = 'font.size') -> int:
     # Check input
     allowed_options = ["font.size", "axes.linewidth"]
     if option not in allowed_options:
-        raise ValueError(f"'option' should be one of following: {allowed_options}")
+        raise ValueError(f"'option' should be one of: {allowed_options}")
     # Get the current plotting context
     current_context = sns.plotting_context()
     option_value = current_context[option]

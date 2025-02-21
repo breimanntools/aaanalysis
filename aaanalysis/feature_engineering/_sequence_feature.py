@@ -93,14 +93,14 @@ def check_match_df_parts_label_test_label_ref(df_parts=None, labels=None, label_
 def check_col_cat(col_cat=None):
     """Check if col_cat valid column from df_feat"""
     if col_cat not in ut.COLS_FEAT_SCALES:
-        raise ValueError(f"'col_cat' {col_cat} should be one of the following: {ut.COLS_FEAT_SCALES}")
+        raise ValueError(f"'col_cat' {col_cat} should be one of: {ut.COLS_FEAT_SCALES}")
 
 
 def check_col_val(col_val=None):
     """Check if col_val valid column from df_feat"""
     cols_feat = ut.COLS_FEAT_STAT + ut.COLS_FEAT_WEIGHT
     if col_val not in cols_feat:
-        raise ValueError(f"'col_val' {col_val} should be one of the following: {cols_feat}")
+        raise ValueError(f"'col_val' {col_val} should be one of: {cols_feat}")
 
 
 # II Main Functions

@@ -12,7 +12,7 @@ FOLDER_FEATURES = ut.FOLDER_DATA + "features" + ut.SEP
 def check_name(name=None):
     """Check provided names of dataset"""
     if name not in LIST_DATASETS_WITH_FEATURES:
-        raise ValueError(f"'name' should be one of the following: {LIST_DATASETS_WITH_FEATURES}")
+        raise ValueError(f"'name' should be one of: {LIST_DATASETS_WITH_FEATURES}")
 
 
 # II Main Functions

@@ -24,7 +24,7 @@ def _plot_neg_homogeneity(ax=None, df_eval=None, col=None, colors=None, val_name
     ax.set_xlabel(val_name)
     # Adjust spines
     ax = ut.adjust_spine_to_middle(ax=ax)
-    ut.x_ticks_0(ax=ax)
+    ut.ticks_0(ax=ax)
     ax.tick_params(axis='y', which='both', left=False)
 
 
@@ -40,7 +40,7 @@ def _plot_dist_dissimilarity(ax=None, df_eval=None, cols=None, colors=None, val_
     ax.set_xlabel(val_name)
     # Adjust spines
     ax = ut.adjust_spine_to_middle(ax=ax)
-    ut.x_ticks_0(ax=ax)
+    ut.ticks_0(ax=ax)
     ax.tick_params(axis='y', which='both', left=False)
     return ax
 

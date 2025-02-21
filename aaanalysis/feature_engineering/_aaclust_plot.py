@@ -68,7 +68,7 @@ def check_method(method=None):
     """Validate the method parameter against a list of valid hierarchical clustering methods"""
     valid_methods = ["single", "complete", "average", "weighted", "centroid", "median", "ward"]
     if method not in valid_methods:
-        raise ValueError(f"'method' ({method}) should be one of following: {valid_methods}")
+        raise ValueError(f"'method' ({method}) should be one of: {valid_methods}")
 
 
 def check_match_df_corr_clust_x(df_corr=None, cluster_x=None):

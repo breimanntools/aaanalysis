@@ -71,7 +71,7 @@ def plot_eval(df_eval=None, dict_xlims=None, figsize=None, colors=None):
             ax.set_title("Quality measures", weight="bold")
         ax.tick_params(axis='y', which='both', left=False)
         if i != 0:
-            ut.x_ticks_0(ax=ax)
+            ut.ticks_0(ax=ax)
     # Set xlims
     if dict_xlims is not None:
         for i in dict_xlims:
