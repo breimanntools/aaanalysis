@@ -43,7 +43,6 @@ def adjust_vmin_vmax(vmin=None, vmax=None):
     return vmin, vmax
 
 
-
 def get_args_seq(n=0):
     aa.options["verbose"] = False
     df_seq = aa.load_dataset(name="DOM_GSEC", n=N_SEQ)

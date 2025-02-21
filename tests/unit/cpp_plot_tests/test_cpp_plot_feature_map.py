@@ -318,8 +318,15 @@ class TestCCPlotFeatureMap:
                                        imp_marker_sizes=valid_imp_marker_sizes)
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
-    
-    
+
+    def test_valid_add_imp_bar_top(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat()
+        for add_imp_bar_top in [True, False]:
+            fig, ax = cpp_plot.feature_map(df_feat=df_feat, add_imp_bar_top=add_imp_bar_top)
+            assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
+            plt.close()
+
     def test_valid_imp_bar_th(self):
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
@@ -327,6 +334,14 @@ class TestCCPlotFeatureMap:
         fig, ax = cpp_plot.feature_map(df_feat=df_feat, imp_bar_th=valid_imp_bar_th)
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
+
+    def test_valid_imp_bar_label_type(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat()
+        for imp_bar_label_type in ["short", "long", None]:
+            fig, ax = cpp_plot.feature_map(df_feat=df_feat, imp_bar_label_type=imp_bar_label_type)
+            assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
+            plt.close()
 
     @settings(max_examples=3, deadline=5000)
     @given(xtick_size=st.floats(min_value=8.0, max_value=14.0), xtick_width=st.floats(min_value=0.5, max_value=2.0),
@@ -656,6 +671,14 @@ class TestCCPlotFeatureMap:
             cpp_plot.feature_map(df_feat=df_feat, imp_marker_sizes=invalid_imp_marker_sizes)
         plt.close()
 
+    def test_invalid_add_imp_bar_top(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat()
+        for add_imp_bar_top in [None, "adsf", 123, pd.DataFrame, {}]:
+            with pytest.raises(ValueError):
+                cpp_plot.feature_map(df_feat=df_feat, add_imp_bar_top=add_imp_bar_top)
+            plt.close()
+
     def test_invalid_imp_bar_th(self):
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
@@ -663,6 +686,14 @@ class TestCCPlotFeatureMap:
         with pytest.raises(ValueError):
             cpp_plot.feature_map(df_feat=df_feat, imp_bar_th=invalid_imp_bar_th)
         plt.close()
+
+    def test_invalid_imp_bar_label_type(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat()
+        for imp_bar_label_type in ["adsf", 123, pd.DataFrame, {}]:
+            with pytest.raises(ValueError):
+                cpp_plot.feature_map(df_feat=df_feat, imp_bar_label_type=imp_bar_label_type)
+            plt.close()
 
     @settings(max_examples=3, deadline=5000)
     @given(xtick_size=st.just(-1), xtick_width=st.just(-1), xtick_length=st.just(-1))

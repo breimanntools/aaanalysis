@@ -160,7 +160,6 @@ def add_feat_importance_legend(ax=None,
 
 
 # II Main Functions
-# TODO in frontend: test (add_imp_bar_top, imp_bar_label_type)
 # TODO stacked bar charts for SHAP (later)
 def plot_feature_map(df_feat=None, df_cat=None,
                      col_cat="subcategory", col_val="mean_dif", col_imp="feat_importance",
@@ -313,7 +312,7 @@ def plot_feature_map(df_feat=None, df_cat=None,
                                fontsize_annotations=fs_annotations)
     if add_imp_bar_top:
         ax_empty.axis("off")
-    plt.sca(ax_hm)
     plt.subplots_adjust(wspace=0.0, hspace=0.0)
-    ax = [ax_hm, ax_br, ax_bt] if add_imp_bar_top else [ax_hm, ax_br]
+    plt.sca(ax_hm)
+    ax = ax_hm
     return fig, ax
