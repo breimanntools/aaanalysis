@@ -86,6 +86,7 @@ def cpp_run_single(df_parts=None, split_kws=None, df_scales=None, df_cat=None, v
     # Adjust df_feat
     df_feat.reset_index(drop=True, inplace=True)
     df_feat[ut.COLS_FEAT_STAT] = df_feat[ut.COLS_FEAT_STAT].round(3)
+    df_feat[ut.COL_FEATURE] = df_feat[ut.COL_FEATURE].astype(str)
     if verbose:
         ut.print_out(f"4. CPP returns df of {len(df_feat)} unique features with general information and statistics")
     return df_feat
@@ -169,6 +170,7 @@ def cpp_run_batch(df_parts=None, split_kws=None, df_scales=None, df_cat=None, ve
     # Adjust df_feat
     df_feat.reset_index(drop=True, inplace=True)
     df_feat[ut.COLS_FEAT_STAT] = df_feat[ut.COLS_FEAT_STAT].round(3)
+    df_feat[ut.COL_FEATURE] = df_feat[ut.COL_FEATURE].astype(str)
     if verbose:
         ut.print_out(f"4. CPP returns df of {len(df_feat)} unique features with general information and statistics")
     return df_feat

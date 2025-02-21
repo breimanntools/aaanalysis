@@ -146,6 +146,8 @@ def multi_logo_(list_df_logo=None, target_p1_site=None, figsize_per_logo=(8, 3),
     figsize = (figsize_per_logo[0], figsize_per_logo[1] * n_plots)
     fig, axes = plt.subplots(nrows=n_plots, figsize=figsize)
     y_max = max([d.T.sum().max() for d in list_df_logo])
+    if y_label == "Probability [%]":
+        y_max *= 100
     for i, df_logo in enumerate(list_df_logo):
         name_data = list_name_data[i] if list_name_data else None
         name_data_color = list_name_data_color[i] if isinstance(list_name_data_color, list) else list_name_data_color
@@ -178,7 +180,8 @@ def multi_logo_(list_df_logo=None, target_p1_site=None, figsize_per_logo=(8, 3),
             else:
                 ax_logo.set_xticks([])
         if highlight_tmd_area:
-            ut.highlight_tmd_area(**args_parts, x_shift=-0.5, alpha=highlight_alpha, y_max=y_max)
+            ut.highlight_tmd_area(**args_parts, x_shift=-0.5,
+                                  alpha=highlight_alpha, y_max=y_max)
 
         # Adjust labels and formatting
         sns.despine(ax=ax_logo, top=True, bottom=True)

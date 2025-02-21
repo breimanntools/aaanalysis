@@ -183,4 +183,6 @@ def check_list_like(name=None, val=None, accept_none=False, convert=True, accept
         str_error = add_str(str_error=f"'{name}' should not contain at least {min_len} elements",
                             str_add=str_add)
         raise ValueError(str_error)
+    # Check for numpy string objects and convert them to Python strings
+    val = [x.item() if hasattr(x, 'item') and isinstance(x, np.str_) else x for x in val]
     return val

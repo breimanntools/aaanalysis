@@ -33,6 +33,7 @@ def check_parts_len(jmd_n_len=None, jmd_c_len=None, df_logo=None):
     return tmd_len, jmd_n_len, jmd_c_len
 
 
+# TODO add if target site to be positions (without P or with, e.g., kinases)
 # TODO add checks, complete docstring (consistency with cpp_plot functions!), tests for both plots
 # II Main Functions
 class AALogoPlot:

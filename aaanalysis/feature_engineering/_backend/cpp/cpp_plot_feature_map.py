@@ -269,7 +269,9 @@ def plot_feature_map(df_feat=None, df_cat=None,
                                       df_feat=df_feat.copy(),
                                       df_cat=df_cat.copy(),
                                       col_imp=col_imp,
-                                      col_cat=col_cat)
+                                      col_cat=col_cat,
+                                      start=start,
+                                      **args_len)
         ut.ticks_0(ax_bt, axis="y", **args_ticks_0)
 
     # Plot heatmap
