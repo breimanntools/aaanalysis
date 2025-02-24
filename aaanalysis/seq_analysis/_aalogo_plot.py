@@ -44,7 +44,7 @@ class AALogoPlot:
     """
 
     def __init__(self,
-                 logo_type: Literal["probability", "weight", "counts", "information"] = "counts",
+                 logo_type: Literal["probability", "weight", "counts", "information"] = "probability",
                  jmd_n_len: int = 10,
                  jmd_c_len: int = 10,
                  verbose: bool = True
@@ -52,7 +52,7 @@ class AALogoPlot:
         """
         Parameters
         ----------
-        logo_type : {'probability', 'weight', 'counts', 'information'}, default='counts'
+        logo_type : {'probability', 'weight', 'counts', 'information'}, default='probability'
             Type of sequence logo representation:
 
             - 'probability': Normalized probability distribution of amino acids.

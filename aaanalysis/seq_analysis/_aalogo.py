@@ -50,7 +50,7 @@ class AALogo:
     """
 
     def __init__(self,
-                 logo_type: Literal["probability", "weight", "counts", "information"] = "counts"
+                 logo_type: Literal["probability", "weight", "counts", "information"] = "probability"
                  ):
         list_to_type = ["probability", "weight", "counts", "information"]
         ut.check_str_options(name="to_type", val=logo_type, list_str_options=list_to_type)
