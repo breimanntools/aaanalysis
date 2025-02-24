@@ -112,6 +112,7 @@ def _get_vf_split(split_type=None, split_type_args=None, len_seq_max=None, spr=N
     return vf_split
 
 
+@ut.catch_runtime_warnings(suppress=True)
 def _pre_filtering_info_split_type(dict_scale_part_vals=None, list_parts=None, split_type=None, split_kws=None,
                                    mask_ref=None, mask_test=None, len_seq_max=None, spr=None, vectorized=True,
                                    verbose=True, shared_max_progress=None, shared_value_lock=None, print_lock=None):

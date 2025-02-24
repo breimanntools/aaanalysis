@@ -83,7 +83,7 @@ class CatchRuntimeWarnings:
         return self._warn_list
 
 
-def catch_runtime_warnings():
+def catch_runtime_warnings(suppress=False):
     """Decorator to catch RuntimeWarnings and store them in a list."""
     def decorator(func):
         @functools.wraps(func)
@@ -94,7 +94,8 @@ def catch_runtime_warnings():
                 list_warnings = crw.get_warnings()
                 n = len(list_warnings)
                 summary_msg = f"The following {n} 'RuntimeWarnings' were caught:\n" + "\nRuntimeWarning: ".join(crw.get_warnings())
-                warnings.warn(summary_msg, RuntimeWarning)
+                if not suppress:
+                    warnings.warn(summary_msg, RuntimeWarning)
             return result
         return wrapper
 

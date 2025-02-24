@@ -129,6 +129,8 @@ def single_logo_(df_logo=None, df_logo_info=None,
     return fig, axes
 
 
+# TODO name_data_color - > color_data?
+# TODO improve checks if wrong df_logo (e.g., _df)
 def multi_logo_(list_df_logo=None, target_p1_site=None, figsize_per_logo=(8, 3),
                 fontsize_labels=None, y_label="Counts",
                 list_name_data=None, list_name_data_color="black",
@@ -146,14 +148,14 @@ def multi_logo_(list_df_logo=None, target_p1_site=None, figsize_per_logo=(8, 3),
     figsize = (figsize_per_logo[0], figsize_per_logo[1] * n_plots)
     fig, axes = plt.subplots(nrows=n_plots, figsize=figsize)
     y_max = max([d.T.sum().max() for d in list_df_logo])
-    if y_label == "Probability [%]":
+    if y_label == "Probability [%]" and y_max < 100:
         y_max *= 100
     for i, df_logo in enumerate(list_df_logo):
         name_data = list_name_data[i] if list_name_data else None
         name_data_color = list_name_data_color[i] if isinstance(list_name_data_color, list) else list_name_data_color
         ax_logo = axes[i]
         # Plot sequence logo
-        if y_label == "Probability [%]":
+        if y_label == "Probability [%]" and df_logo.T.sum().max() < 100:
             df_logo *= 100
         logomaker.Logo(df_logo, ax=ax_logo, font_name=logo_font_name,
                        color_scheme=logo_color_scheme, width=logo_width,
