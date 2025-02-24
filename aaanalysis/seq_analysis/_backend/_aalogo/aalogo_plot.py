@@ -106,8 +106,8 @@ def single_logo_(df_logo=None, df_logo_info=None,
         _add_tmd_jmd_label(**args_parts, x_shift=-0.5, height_factor=2.6, start=start,
                            fontsize_tmd_jmd=fontsize_tmd_jmd, weight_tmd_jmd=weight_tmd_jmd)
     if highlight_tmd_area:
-        ut.highlight_tmd_area(**args_parts, x_shift=-0.5, alpha=highlight_alpha)
-
+        ut.highlight_tmd_area(**args_parts, x_shift=-0.5, tmd_color=tmd_color,
+                              alpha=highlight_alpha, start=start)
     # Adjust labels and formatting
     sns.despine(ax=ax_logo, top=True, bottom=True)
     ax_logo.set_ylabel(y_label, size=fontsize_labels)
@@ -180,9 +180,8 @@ def multi_logo_(list_df_logo=None, target_p1_site=None, figsize_per_logo=(8, 3),
             else:
                 ax_logo.set_xticks([])
         if highlight_tmd_area:
-            ut.highlight_tmd_area(**args_parts, x_shift=-0.5,
-                                  alpha=highlight_alpha, y_max=y_max)
-
+            ut.highlight_tmd_area(**args_parts, x_shift=-0.5, tmd_color=tmd_color,
+                                  alpha=highlight_alpha, start=start, y_max=y_max)
         # Adjust labels and formatting
         sns.despine(ax=ax_logo, top=True, bottom=True)
         ax_logo.set_ylabel(y_label, size=fontsize_labels)
