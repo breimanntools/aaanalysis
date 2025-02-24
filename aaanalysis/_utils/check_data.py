@@ -234,7 +234,8 @@ def check_superset_subset(subset=None, superset=None, name_subset=None, name_sup
 
 # df checking functions
 def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_positive=False,
-             cols_requiered=None, cols_forbidden=None, cols_nan_check=None, str_add=None):
+             check_series=False, cols_requiered=None, cols_forbidden=None, cols_nan_check=None,
+             str_add=None):
     """Check if the provided DataFrame meets various criteria such as NaN values, required/forbidden columns, etc."""
     # Check DataFrame and values
     if df is None:
@@ -242,8 +243,10 @@ def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_p
             raise ValueError(f"'{name}' should not be None")
         else:
             return None
-    if not isinstance(df, pd.DataFrame):
-        str_error = add_str(str_error=f"'{name}' ({type(df)}) should be DataFrame",
+    _check_dtype = pd.DataFrame if not check_series else pd.Series
+    _str_check_dtype = "DataFrame" if not check_series else "Series"
+    if not isinstance(df, _check_dtype):
+        str_error = add_str(str_error=f"'{name}' ({type(df)}) should be {_str_check_dtype}",
                             str_add=str_add)
         raise ValueError(str_error)
     if not accept_nan and df.isna().any().any():
@@ -278,11 +281,12 @@ def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_p
             str_error = add_str(str_error=f"NaN values are not allowed in '{cols_nan_check}'.",
                                 str_add=str_add)
             raise ValueError(str_error)
-    columns = list(df)
-    cols_duplicated = [x for x in columns if columns.count(x) > 1]
-    if len(cols_duplicated) > 0:
-        str_error = add_str(str_error=f"The following columns are duplicated '{cols_duplicated}'.", str_add=str_add)
-        raise ValueError(str_error)
+    if _check_dtype == pd.DataFrame:
+        columns = list(df)
+        cols_duplicated = [x for x in columns if columns.count(x) > 1]
+        if len(cols_duplicated) > 0:
+            str_error = add_str(str_error=f"The following columns are duplicated '{cols_duplicated}'.", str_add=str_add)
+            raise ValueError(str_error)
 
 
 def check_warning_consecutive_index(name="df", df=None):

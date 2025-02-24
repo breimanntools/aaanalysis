@@ -9,6 +9,15 @@ import aaanalysis.utils as ut
 
 
 # I Helper function
+def check_df_logo_info(df_logo_info=None):
+    """Check if df_logo_info has correct format"""
+    ut.check_df(name="df_logo_info", df=df_logo_info,
+                check_series=True, accept_none=False, accept_nan=False)
+    # Additional check specific to logo info: index name
+    if df_logo_info.index.name != "pos":
+        raise ValueError("Index name must be 'pos'")
+
+
 def _adjust_tmd(df_parts=None, tmd_len=None, start_n=False, ):
     """Adjust TMD to have similar length for df logo"""
     if ut.COL_TMD in list(df_parts):
@@ -92,22 +101,19 @@ class AALogo:
         df_logo_info = df_logo.sum(axis=1)  # vals_sum_per_pos
         return df_logo_info
 
-    def get_conservation(self,
-                         df_logo=None,
+    @staticmethod
+    def get_conservation(df_logo_info=None,
                          value_type: Literal["min", "mean", "median", "max"] = "mean"):
         """Compute conservation scores from sequence logos, ranging from 0 (no conservation) to
         4.248 (completely conserved)."""
-
-        if self._logo_type != "information":
-            raise ValueError("Conservation can only be computed for 'logo_type'='information'")
-        vals_sum_per_pos = df_logo.sum(axis=1)
+        check_df_logo_info(df_logo_info=df_logo_info)
         # Compute the statistic for each scale
         if value_type == "min":
-            conservation = vals_sum_per_pos.min()
+            cons_val = df_logo_info.min()
         elif value_type == "mean":
-            conservation = vals_sum_per_pos.mean()
+            cons_val = df_logo_info.mean()
         elif value_type == "median":
-            conservation = vals_sum_per_pos.median()
+            cons_val = df_logo_info.median()
         else:
-            conservation = vals_sum_per_pos.max()
-        return conservation
+            cons_val = df_logo_info.max()
+        return cons_val
