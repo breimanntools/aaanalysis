@@ -241,7 +241,7 @@ def plot_feature_map(df_feat=None, df_cat=None,
     label_imp_bar = "Cumulative\nfeature\nimportance" if add_imp_bar_top else "Cumulative feature\nimportance [%]"
     fs_label_bar = fs_titles - 1 if add_imp_bar_top else fs_titles
     ha_bar = "left" if add_imp_bar_top else "right"
-    position_bar = (0.2, 0) if add_imp_bar_top else (1, 0)
+    position_bar = (0.1, 0) if add_imp_bar_top else (1, 0)
     multialignment_bar = "center" if add_imp_bar_top else "right"
     if add_imp_bar_top and imp_bar_label_type != "long":
         label_imp_bar = "FI" if imp_bar_label_type == "short" else None
