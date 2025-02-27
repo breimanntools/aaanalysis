@@ -25,7 +25,7 @@ def _add_bit_score_bar(ax_info=None, df_logo_info=None, bar_color="gray", size=N
     ax_info.set_ylabel("Bits", size=size)
 
 
-def _add_p_sites(ax_logo=None, df_logo=None, target_p1_site=None):
+def _add_p_sites(ax_logo=None, df_logo=None, target_p1_site=None, xtick_size=None):
     """Add PX to PX' as x-axis"""
     x_ticks = list(range(0, len(df_logo)))
     list_p_n_term = [f"P{target_p1_site - i}" for i in range(0, target_p1_site)]
@@ -33,7 +33,7 @@ def _add_p_sites(ax_logo=None, df_logo=None, target_p1_site=None):
     x_ticks_labels = list_p_n_term + list_p_c_term
     ax_logo.tick_params(axis="x", length=0, color="black", width=0, bottom=True)
     ax_logo.set_xticks(x_ticks)
-    ax_logo.set_xticklabels(x_ticks_labels)
+    ax_logo.set_xticklabels(x_ticks_labels, fontsize=xtick_size)
 
 
 def _add_tmd_jmd_label(ax=None, x_shift=0.0, fontsize_tmd_jmd=None, weight_tmd_jmd="normal",
@@ -97,7 +97,7 @@ def single_logo_(df_logo=None, df_logo_info=None,
     # Adjust plot elements
     args_parts = dict(ax=ax_logo, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     if target_p1_site is not None:
-        _add_p_sites(ax_logo=ax_logo, df_logo=df_logo, target_p1_site=target_p1_site)
+        _add_p_sites(ax_logo=ax_logo, df_logo=df_logo, target_p1_site=target_p1_site, xtick_size=xtick_size)
     else:
         ut.add_tmd_jmd_bar(**args_parts, x_shift=-0.5, jmd_color=jmd_color,
                            tmd_color=tmd_color, bar_height_factor=1.8)
@@ -167,7 +167,7 @@ def multi_logo_(list_df_logo=None, target_p1_site=None, figsize_per_logo=(8, 3),
         # Adjust plot elements
         args_parts = dict(ax=ax_logo, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         if target_p1_site is not None:
-            _add_p_sites(ax_logo=ax_logo, df_logo=df_logo, target_p1_site=target_p1_site)
+            _add_p_sites(ax_logo=ax_logo, df_logo=df_logo, target_p1_site=target_p1_site, xtick_size=xtick_size)
         else:
             ut.add_tmd_jmd_bar(**args_parts, x_shift=-0.5,
                                jmd_color=jmd_color, tmd_color=tmd_color,
