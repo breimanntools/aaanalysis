@@ -204,6 +204,14 @@ class dPULearn:
           - ``cosine``: Recommended for high-dimensional spaces (e.g., n_features >> n_samples), as it evaluates
             the direction of feature vectors between data points rather than the magnitude of their differences.
 
+        Warnings
+        --------
+        * When setting ``n_components`` as a percentage of total variance (i.e., a float between 0.0 and 1.0),
+          caution is needed if the explained variance per principal component (PC) is low. Selecting too many PCs
+          with low explained variance may introduce noise and lead to the selection of outliers rather than true negatives.
+        * To mitigate this, users can alternatively set ``n_components`` as an integer (≥1) to explicitly limit
+          the number of PCs used.
+
         See Also
         --------
         * See `scikit-learn <https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics.pairwise>`_
