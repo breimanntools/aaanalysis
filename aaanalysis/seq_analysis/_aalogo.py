@@ -42,7 +42,7 @@ def _get_sequences(df_parts=None):
     return list_sequences
 
 
-# TODO refactor into backend, add checks, add docstring, tests
+# TODO refactor into backend, add checks, add docstring, tests, with Claude
 # II Main function
 class AALogo:
     """
