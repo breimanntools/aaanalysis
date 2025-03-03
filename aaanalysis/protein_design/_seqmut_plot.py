@@ -13,9 +13,8 @@ class SeqMutPlot:
     """
     UNDER CONSTRUCTION - Plotting class for ``SeqMut`` (Sequence Mutator).
     """
-    def __init__(self, verbose=False, df_scales=None):
+    def __init__(self, verbose=False):
         self._verbose = ut.check_verbose(verbose)
-        self.df_scales = df_scales
 
     # Main method
     def mutation_landscape(self):
