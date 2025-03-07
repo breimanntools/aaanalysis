@@ -23,16 +23,7 @@ def comp_seq_cons():
     """"""
 
 
-# III Test/Caller Functions
+# TODO make own function
+def map_known_mutations():
+    """Mapp known mutations to sequence for selection of target proteins to test"""
 
-
-# IV Main
-def main():
-    t0 = time.time()
-
-    t1 = time.time()
-    print("Time:", t1 - t0)
-
-
-if __name__ == "__main__":
-    main()
