@@ -5,6 +5,7 @@ import os
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
+import re
 
 from ._part import create_parts
 from ._split import Split
@@ -202,6 +203,14 @@ def get_df_parts_(df_seq=None, list_parts=None, jmd_n_len=None, jmd_c_len=None):
 def remove_entries_with_gaps_(df_parts=None):
     """Remove rows where any cell contains '-'"""
     df_parts = df_parts[~df_parts.map(lambda x: '-' in str(x)).any(axis=1)]
+    return df_parts
+
+
+def replace_non_canonical_aa_(df_parts=None):
+    """Replace non-canonical amino acids by gap symbol ('-')"""
+    pattern = f'[^{"".join(ut.LIST_CANONICAL_AA)}]'
+    f = lambda s: re.sub(pattern, ut.STR_AA_GAP, s) if isinstance(s, str) else s
+    df_parts = df_parts.map(f)
     return df_parts
 
 

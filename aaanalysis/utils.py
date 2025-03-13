@@ -117,6 +117,7 @@ FILE_DF_CAT = "df_cat"
 # Constants
 FONT_AA = "DejaVu Sans Mono"
 STR_AA_GAP = "-"
+LIST_CANONICAL_AA = ['N', 'A', 'I', 'V', 'K', 'Q', 'R', 'M', 'H', 'F', 'E', 'D', 'C', 'G', 'L', 'T', 'S', 'Y', 'W', 'P']
 DTYPE = np.float64
 
 # Part names
@@ -503,7 +504,7 @@ def check_df_seq(df_seq=None, accept_none=False):
             if tmd_start > tmd_stop:
                 raise ValueError(f"'tmd_start'={tmd_start} should be <= 'tmd_stop'={tmd_stop} (entry: '{entry}')")
             # Check if tmd_start and tmd_stop smaller than sequence length
-            len_seq = len(seq)
+            len_seq = len(seq)  # TODO check first if seq is string and not float (if nan is given)
             if tmd_start > len_seq:
                 raise ValueError(f"'tmd_start'={tmd_start} should be <= sequence length (n={len_seq}) (entry: '{entry}')")
             if tmd_stop > len_seq:

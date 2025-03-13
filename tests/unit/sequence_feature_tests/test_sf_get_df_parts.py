@@ -138,6 +138,24 @@ class TestGetDfParts:
             if min_n > jmd_n_len + jmd_c_len:
                 assert isinstance(sf.get_df_parts(df_seq=df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len), pd.DataFrame)
 
+    def test_valid_replace_non_canonical_aa(self):
+        """Test a valid 'replace_non_canonical_aa' parameter."""
+        sf = aa.SequenceFeature()
+        df_info = aa.load_dataset()
+        list_name = random.sample(df_info["Dataset"].to_list(), 2)
+        list_parts = ["jmd_n", "tmd", "jmd_c"]
+        # Test all benchmark datasets
+        for name in list_name:
+            df_seq = aa.load_dataset(name=name, n=50)
+            df_seq = df_seq[[x for x in list(df_seq) if x not in list_parts]]
+            df_seq_modified = df_seq.copy()
+            df_seq_modified["sequence"] = df_seq_modified["sequence"].str.replace("A", "X", regex=True)
+            df_seq_modified["sequence"] = df_seq_modified["sequence"].str.replace("G", "Z", regex=True)
+            df_parts = sf.get_df_parts(df_seq=df_seq_modified, replace_non_canonical_aa=True, all_parts=True)
+            for col in list_parts:
+                if col in df_parts.columns:
+                    assert not df_parts[col].str.contains("[^ACDEFGHIKLMNPQRSTVWY-]").any()
+
     # Negative tests for each parameter (not exhaustive)
     def test_invalid_df_seq(self):
         """Test an invalid 'df_seq' parameter."""
@@ -241,6 +259,15 @@ class TestGetDfParts:
         with pytest.raises(ValueError):
             sf.get_df_parts(df_seq=df_seq_d)
 
+    def test_invalid_replace_non_canonical_aa(self):
+        """Test an invalid 'replace_non_canonical_aa' parameter."""
+        sf = aa.SequenceFeature()
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=50)
+        # Test with invalid value type
+        for invalid_args in [None, "True", 1, [True]]:
+            with pytest.raises(ValueError):
+                sf.get_df_parts(df_seq=df_seq, replace_non_canonical_aa=invalid_args)
+
 
 # Complex Cases
 class TestGetDfPartsComplex:
@@ -264,3 +291,4 @@ class TestGetDfPartsComplex:
             min_n = min(df_seq["sequence"].apply(len))
             if min_n > jmd_n_len + jmd_c_len:
                 assert isinstance(sf.get_df_parts(df_seq=df_seq, list_parts=list_parts, all_parts=all_parts, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len), pd.DataFrame)
+

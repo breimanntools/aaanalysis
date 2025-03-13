@@ -17,7 +17,9 @@ from ._backend.check_feature import (check_split_kws,
                                      check_match_df_scales_df_cat,
                                      check_df_cat,
                                      check_match_df_cat_features)
-from ._backend.cpp.utils_feature import (get_df_parts_, remove_entries_with_gaps_,
+from ._backend.cpp.utils_feature import (get_df_parts_,
+                                         remove_entries_with_gaps_,
+                                         replace_non_canonical_aa_,
                                          get_positions_, get_amino_acids_,
                                          get_feature_matrix_, get_df_pos_, get_df_pos_parts_)
 from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_, get_df_feat_)
@@ -175,7 +177,8 @@ class SequenceFeature:
                      all_parts: bool = False,
                      jmd_n_len: Union[int, None] = 10,
                      jmd_c_len: Union[int, None] = 10,
-                     remove_entries_with_gaps: bool = False
+                     remove_entries_with_gaps: bool = False,
+                     replace_non_canonical_aa: bool = False,
                      ) -> pd.DataFrame:
         """
         Create DataFrane with selected sequence parts.
@@ -196,6 +199,8 @@ class SequenceFeature:
         remove_entries_with_gaps: bool, default=False
             Whether to exclude entries containing missing residues in their sequence parts (if ``True``),
             usually resulting from sequences being too short.
+        replace_non_canonical_aa: bool, default=False
+            Whether to replace non-canonical amino acids (e.g., 'X') by gap ('-') symbol.
 
         Returns
         -------
@@ -240,6 +245,7 @@ class SequenceFeature:
         check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_none_tmd_len=True)
         ut.check_df_seq(df_seq=df_seq)
         ut.check_bool(name="all_parts", val=all_parts)
+        ut.check_bool(name="replace_non_canonical_aa", val=replace_non_canonical_aa)
         list_parts = ut.check_list_parts(list_parts=list_parts, all_parts=all_parts, accept_none=True)
         df_seq = check_match_df_seq_jmd_len(df_seq=df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         # Create df parts
@@ -250,6 +256,8 @@ class SequenceFeature:
             n_removed = n_before - len(df_parts)
             if n_removed > 0 and self.verbose:
                 warnings.warn(f"{n_removed} entries have been removed from 'df_seq' due to introduced gaps.")
+        if replace_non_canonical_aa:
+            df_parts = replace_non_canonical_aa_(df_parts=df_parts)
         if len(df_parts) == 0:
             raise ValueError(f"All entries have been removed from 'df_seq'. "
                              f"Reduce 'jmd_n_len' ({jmd_n_len}) and 'jmd_c_len' ({jmd_c_len}) settings.")

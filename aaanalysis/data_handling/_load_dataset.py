@@ -13,7 +13,6 @@ import aaanalysis.utils as ut
 
 # Constants
 FOLDER_BENCHMARKS = ut.FOLDER_DATA + "benchmarks" + ut.SEP
-LIST_CANONICAL_AA = ['N', 'A', 'I', 'V', 'K', 'Q', 'R', 'M', 'H', 'F', 'E', 'D', 'C', 'G', 'L', 'T', 'S', 'Y', 'W', 'P']
 LIST_NON_CANONICAL_OPTIONS = ["remove", "keep", "gap"]
 LIST_CLEAVAGE_SITE_DATA = ["AA_CASPASE3", "AA_FURIN", "AA_MMP2"]
 
@@ -83,7 +82,7 @@ def _adjust_non_canonical_aa(df=None, non_canonical_aa="remove"):
     f = lambda x: set(str(x))
     vf = np.vectorize(f)
     char_seq = set().union(*vf(df.values).flatten())
-    list_non_canonical_aa = [x for x in char_seq if x not in LIST_CANONICAL_AA]
+    list_non_canonical_aa = [x for x in char_seq if x not in ut.LIST_CANONICAL_AA]
     if non_canonical_aa == "remove":
         pattern = '|'.join(list_non_canonical_aa)  # Joining list into a single regex pattern
         df = df[~df[ut.COL_SEQ].str.contains(pattern, regex=True)]
