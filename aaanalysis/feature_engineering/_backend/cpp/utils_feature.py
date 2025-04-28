@@ -186,17 +186,39 @@ def get_list_parts(features=None):
     return list_parts
 
 
-def get_df_parts_(df_seq=None, list_parts=None, jmd_n_len=None, jmd_c_len=None):
-    """Create DataFrame with sequence parts"""
+def get_df_parts_(df_seq=None, list_parts=None, jmd_n_len=None, jmd_c_len=None, handle_duplicates=None):
+    """Create DataFrame with sequence parts, ensuring unique index using serial number if duplicates are present."""
+    
+    # Check if the required column exists in the DataFrame
     pos_based = set(ut.COLS_SEQ_POS).issubset(set(df_seq))
+    
+    # Copy the original DataFrame to avoid altering it
     _df_seq = df_seq.copy()
+    
+    # Extract parts for each row in the DataFrame
     _df_seq['parts'] = df_seq.apply(lambda row:
                                     _extract_parts(row, jmd_n_len, jmd_c_len, pos_based, list_parts), axis=1)
-    # Convert the extracted parts into a DataFrame
-    df_parts = pd.DataFrame(_df_seq['parts'].to_list(),
-                            index=df_seq[ut.COL_ENTRY])
-    # DEV: the following line sorts index if list_parts contains just one element
-    # df_parts = pd.DataFrame.from_dict(dict_parts, orient="index")
+    
+    # Check for duplicates in the specified column (COL_ENTRY)
+    duplicate_entries = _df_seq[ut.COL_ENTRY].duplicated()
+    
+    if duplicate_entries.any():
+        # If the user wants to handle duplicates, proceed as specified
+        if handle_duplicates is not None:
+            if handle_duplicates:
+                print(f"Handling duplicates as per user input: {handle_duplicates}")
+                # Create a unique identifier by adding a serial number to duplicates
+                _df_seq[ut.COL_ENTRY] = _df_seq.groupby(ut.COL_ENTRY).cumcount().astype(str) + "_" + _df_seq[ut.COL_ENTRY]
+            else:
+                print("Duplicates found but not handling them as 'handle_duplicates' is False.")
+        else:
+            # If no user input is provided, issue a warning and handle duplicates by adding a serial number
+            print(f"Warning: Duplicates found in '{ut.COL_ENTRY}'. Adding serial number to make them unique.")
+            _df_seq[ut.COL_ENTRY] = _df_seq.groupby(ut.COL_ENTRY).cumcount().astype(str) + "_" + _df_seq[ut.COL_ENTRY]
+    
+    # Convert the 'parts' into a DataFrame with the unique entries as the index
+    df_parts = pd.DataFrame(_df_seq['parts'].to_list(), index=_df_seq[ut.COL_ENTRY])
+    
     return df_parts
 
 
