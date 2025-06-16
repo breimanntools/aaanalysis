@@ -6,7 +6,7 @@
 cycler>=0.12.1
 et-xmlfile>=2.0.0
 fonttools>=4.55.6
-Jinja2>=3.1.5
+Jinja2>=3.1.6
 joblib>=1.4.2
 kiwisolver>=1.4.7           # Not higher due to python 3.9 compatibility
 logomaker>=0.8.6
