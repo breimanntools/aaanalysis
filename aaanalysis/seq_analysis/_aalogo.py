@@ -46,7 +46,7 @@ def _get_sequences(df_parts=None):
 # II Main function
 class AALogo:
     """
-    AALogo class for computing sequence logo matrices and conservation scores.
+    UNDER CONSTRUCTION - AALogo class for computing sequence logo matrices and conservation scores.
     """
 
     def __init__(self,

@@ -38,7 +38,7 @@ def check_parts_len(jmd_n_len=None, jmd_c_len=None, df_logo=None):
 # II Main Functions
 class AALogoPlot:
     """
-    AALogoPlot class for visualizing sequence logos.
+    UNDER CONSTRUCTION - AALogoPlot class for visualizing sequence logos.
 
     This class supports single and multiple sequence logo visualizations using different encoding types.
     """
