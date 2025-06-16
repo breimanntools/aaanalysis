@@ -151,7 +151,7 @@ html_static_path = [os.path.join(path_source, '_static')]
 html_css_files = ['css/style.css', 'css/notebook.css']
 html_show_sphinx = False
 html_logo = "_artwork/logos/logo_white_large.png"
-html_favicon = "_artwork/logos/favicon_black.svg"
+html_favicon = "_artwork/logos/favicon_white.svg"
 
 html_context = {
     'display_github': True,  # Add the 'Edit on GitHub' link
