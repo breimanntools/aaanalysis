@@ -161,7 +161,8 @@ html_context = {
 }
 
 html_meta = {
-    'google-site-verification': 'Rk3T0-H7cpFf5UxXiL4-LMS0WN7FIyU_3NiomozORV0'
+    'google-site-verification': 'Rk3T0-H7cpFf5UxXiL4-LMS0WN7FIyU_3NiomozORV0',
+    'favicon': "_artwork/logos/favicon_white.png"
 }
 
 """
