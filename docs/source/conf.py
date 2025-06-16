@@ -150,8 +150,8 @@ html_theme_options = {
 html_static_path = [os.path.join(path_source, '_static')]
 html_css_files = ['css/style.css', 'css/notebook.css']
 html_show_sphinx = False
-html_logo = "_artwork/logos/logo_black_large.svg"
-html_favicon = "_artwork/logos/favicon_white.png"
+html_logo = "_artwork/logos/logo_black_large.png"
+html_favicon = "_artwork/logos/favicon_white.svg"
 
 html_context = {
     'display_github': True,  # Add the 'Edit on GitHub' link
