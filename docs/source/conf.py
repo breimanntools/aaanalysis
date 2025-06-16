@@ -180,7 +180,6 @@ texinfo_documents = [
 ]
 
 
-
 # -- Linkcode configuration ---------------------------------------------------
 _module_path = os.path.dirname(importlib.util.find_spec("aaanalysis").origin)  # type: ignore
 

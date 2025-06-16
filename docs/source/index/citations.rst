@@ -13,9 +13,11 @@ If you use **AAanalysis** in your work, please cite the respective publication a
    `Journal of Molecular Biology <https://www.sciencedirect.com/science/article/pii/S0022283624003267>`__.
 
 **CPP**:
-   [Breimann25a]_  Breimann and Kamp *et al.* (2024c),
-   *Charting γ-secretase substrates by explainable AI*, .. # Link if available
+   [Breimann25a]_  Breimann and Kamp *et al.* (2025),
+   *Charting γ-secretase substrates by explainable AI*,
+   **Nature Communications** (link if available)
 
 **dPULearn**:
-   [Breimann25a]_  Breimann and Kamp *et al.* (2024c),
-   *Charting γ-secretase substrates by explainable AI*, .. # Link if available
+   [Breimann25a]_  Breimann and Kamp *et al.* (2025),
+   *Charting γ-secretase substrates by explainable AI*,
+   **Nature Communications** (link if available)
