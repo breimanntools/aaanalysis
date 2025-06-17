@@ -235,7 +235,7 @@ def check_superset_subset(subset=None, superset=None, name_subset=None, name_sup
 # df checking functions
 def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_positive=False,
              check_series=False, cols_requiered=None, cols_forbidden=None, cols_nan_check=None,
-             str_add=None):
+             str_add=None, accept_duplicates=False):
     """Check if the provided DataFrame meets various criteria such as NaN values, required/forbidden columns, etc."""
     # Check DataFrame and values
     if df is None:
@@ -281,7 +281,7 @@ def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_p
             str_error = add_str(str_error=f"NaN values are not allowed in '{cols_nan_check}'.",
                                 str_add=str_add)
             raise ValueError(str_error)
-    if _check_dtype == pd.DataFrame:
+    if _check_dtype == pd.DataFrame and not accept_duplicates:
         columns = list(df)
         cols_duplicated = [x for x in columns if columns.count(x) > 1]
         if len(cols_duplicated) > 0:

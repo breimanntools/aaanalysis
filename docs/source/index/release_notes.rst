@@ -4,6 +4,28 @@ Release notes
 Version 1.0 (Stable Version)
 --------------------------------
 
+v1.0.2 (2025-06-17)
+--------------------------------
+
+Improved
+~~~~~~~~
+- **Faster CPP Pipeline**: Major performance boost in ``CPP.run()`` through optimized generation and filtering of
+  part-split-scale combinations. Depending on the number of scales, runtime is now **3–5× faster** on standard hardware.
+- **Feature Map Enhancement**: ``CPP.feature_map()`` now includes a **top bar plot** showing cumulative feature importance
+  per residue, improving interpretability. This visualization is also included in the CPP profile output.
+
+Fixed
+~~~~~
+- **General Bug Fixes**: Minor fixes related to dependency resolution and edge-case behavior.
+- **Documentation**: Removed inconsistencies in documentation for selected functions and plotting options.
+
+Other
+~~~~~
+- **Branding**: Introduced updated logo and favicon (legacy version preserved under `docs/source/_artwork/logos/legacy/`).
+- **Landing Page Visual**: Added a main conceptual sketch to the documentation landing page illustrating the core CPP idea
+  — comparing two sequence sets to derive their critical difference, the **physicochemical signature**.
+
+
 v1.0.1 (2025-01-29)
 --------------------------------
 
@@ -18,7 +40,7 @@ Improved
 Fixed
 ~~~~~
 - **Feature Map Plot**: Resolved a potential mismatch in subcategory ordering between heatmap and bar plot
-  in ``aa.plot_featuremap()``. Previously, subcategories with nearly identical names (e.g., "α-helix (C-term)"
+  in ``aa.cpp_plot().featuremap()``. Previously, subcategories with nearly identical names (e.g., "α-helix (C-term)"
   and "α-helix (C-term, out)") could appear in an inconsistent order.
 - **General Bug Fixes**: Minor bug fixes to improve overall stability and functionality.
 

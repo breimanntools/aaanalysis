@@ -479,7 +479,7 @@ class AAclustPlot:
         .. include:: examples/aac_plot_correlation.rst
         """
         # Check input
-        ut.check_df(name="df_corr", df=df_corr, accept_none=False, accept_nan=False)
+        ut.check_df(name="df_corr", df=df_corr, accept_none=False, accept_nan=False, accept_duplicates=True)
         labels = check_match_df_corr_labels(df_corr=df_corr, labels=labels)
         pairwise = [str(x) for x in list(df_corr)] == [str(x) for x in list(df_corr.T)]
         labels_ref = check_match_df_corr_labels_ref(df_corr=df_corr, labels_ref=labels_ref, labels=labels,

@@ -422,7 +422,7 @@ class ShapModel:
 
         Examples
         --------
-        .. include:: examples/se_fit.rst
+        .. include:: examples/sm_fit.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -536,7 +536,7 @@ class ShapModel:
 
         Examples
         --------
-        .. include:: examples/se_add_feat_impact.rst
+        .. include:: examples/sm_add_feat_impact.rst
         """
         # Check input
         check_shap_values(shap_values=self.shap_values)
@@ -633,7 +633,7 @@ class ShapModel:
 
         Examples
         --------
-        .. include:: examples/se_add_sample_mean_dif.rst
+        .. include:: examples/sm_add_sample_mean_dif.rst
         """
         # Check input
         X = ut.check_X(X=X)

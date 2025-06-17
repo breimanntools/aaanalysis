@@ -287,6 +287,9 @@ class CPP(Tool):
             df_feat = cpp_run_single(**args)
         else:
             df_feat = cpp_run_batch(**args, n_batches=n_batches)
+        # Cconvert all np.str_ to str in object columns
+        for col in df_feat.select_dtypes(include="object").columns:
+            df_feat[col] = df_feat[col].apply(lambda x: str(x) if isinstance(x, (np.str_, np.generic)) else x)
         return df_feat
 
     def eval(self,
