@@ -35,7 +35,7 @@ AAanalysis Algorithms
 
 .. [Breimann25a] Breimann and Kamp *et al.* (2025),
    *Charting γ-secretase substrates by explainable AI*,
-   **Nature Communications** (link if available)
+  `Nature Communications <https://www.nature.com/articles/s41467-025-60638-z>`__.
 
 Sequence Algorithms
 -------------------
