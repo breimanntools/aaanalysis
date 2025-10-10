@@ -138,7 +138,7 @@ def add_feat_importance_legend(ax=None,
     """Add a custom legend indicating the meaning of feature importance symbols."""
     # Define the sizes for the legend markers
     list_labels = [f"  >{float(x)}%" for x in imp_ths]
-    list_imp_marker_sizes = [3, 5, 7]
+    list_imp_marker_sizes = [3, 5, 6]
 
     # Create the legend handles manually
     legend_handles = [

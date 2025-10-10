@@ -412,7 +412,7 @@ class TreeModel:
         .. include:: examples/tm_predict_proba.rst
         """
         # Check input
-        X = ut.check_X(X=X)
+        X = ut.check_X(X=X, min_n_samples=1)
         check_match_X_is_selected(X=X, is_selected=self.is_selected_)
         # Predictions
         pred, pred_std = monte_carlo_predict_proba(X=X,

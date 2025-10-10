@@ -52,8 +52,8 @@ class AALogo:
     def __init__(self,
                  logo_type: Literal["probability", "weight", "counts", "information"] = "probability"
                  ):
-        list_to_type = ["probability", "weight", "counts", "information"]
-        ut.check_str_options(name="to_type", val=logo_type, list_str_options=list_to_type)
+        list_logo_types = ["probability", "weight", "counts", "information"]
+        ut.check_str_options(name="logo_type", val=logo_type, list_str_options=list_logo_types)
         self._logo_type = logo_type
 
     def get_df_logo(self,
