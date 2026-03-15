@@ -1,6 +1,8 @@
 """
 This script tests the feature method for plotting CPP feature distributions.
 """
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from hypothesis import given, settings
 import hypothesis.strategies as st
