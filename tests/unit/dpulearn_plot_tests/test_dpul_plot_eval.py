@@ -1,6 +1,10 @@
+"""
+This is a script for testing the dPULearnPlot.eval() function.
+"""
 import hypothesis.strategies as some
 from hypothesis import given, settings
 import pytest
+
 from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np

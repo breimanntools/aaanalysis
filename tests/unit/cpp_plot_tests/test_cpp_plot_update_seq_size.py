@@ -1,6 +1,8 @@
 """
 This script tests the CPPPlot().update_seq_size() method.
 """
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import hypothesis.strategies as st
 from hypothesis import given, settings

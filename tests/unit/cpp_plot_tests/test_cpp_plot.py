@@ -1,6 +1,8 @@
 """
 This is a script for testing the CPPPlot class.
 """
+import matplotlib
+matplotlib.use("Agg")
 import pytest
 from hypothesis import given, settings, strategies as st
 import aaanalysis as aa

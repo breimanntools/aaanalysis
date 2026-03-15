@@ -1,7 +1,11 @@
-"""This is a testing script for the dPULearnPlot.pca() method"""
+"""
+This is a testing script for the dPULearnPlot.pca() method
+"""
 import hypothesis.strategies as some
 from hypothesis import given, settings
 import pytest
+import matplotlib
+matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np

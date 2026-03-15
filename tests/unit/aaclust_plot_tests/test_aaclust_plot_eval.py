@@ -4,6 +4,8 @@ This is a script for testing the  aa.AAclustPlot().eval() method.
 import hypothesis.strategies as some
 from hypothesis import given, settings
 import pytest
+import matplotlib
+matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd

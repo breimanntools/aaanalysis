@@ -2,6 +2,8 @@
 This script tests the CPPPlot().profile() method.
 """
 import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from hypothesis import given, settings, strategies as st
 import pytest

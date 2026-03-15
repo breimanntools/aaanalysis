@@ -332,7 +332,6 @@ class TestComplexCPPPlotFeature:
 
     def test_complex_negative(self):
         df_seq, labels, df_feat = get_input()
-        features = df_feat["feature"].to_list()
         cpp_plot = aa.CPPPlot()
 
         # Complex setup: Invalid feature name, incorrect label_test and label_ref types, and invalid figsize
@@ -345,4 +344,5 @@ class TestComplexCPPPlotFeature:
             cpp_plot.feature(feature=invalid_feature, df_seq=df_seq, labels=labels,
                              label_test=invalid_label_test,
                              label_ref=invalid_label_ref, figsize=invalid_figsize)
+            plt.close()
 

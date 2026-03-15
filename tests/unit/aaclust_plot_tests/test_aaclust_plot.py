@@ -1,6 +1,8 @@
 """
 This is a script for testing the AAclustPlot class.
 """
+import matplotlib
+matplotlib.use("Agg")
 from hypothesis import given, settings
 import hypothesis.strategies as st
 from sklearn.decomposition import PCA
