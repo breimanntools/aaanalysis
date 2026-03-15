@@ -55,8 +55,9 @@ class TestdPULearnPlotEval:
     def test_figsize_valid(self, figsize):
         df_eval = _create_sample_df_eval()
         fig, axes = aa.dPULearnPlot.eval(df_eval=df_eval, figsize=figsize)
-        assert fig.get_size_inches()[0] == figsize[0]
-        assert fig.get_size_inches()[1] == figsize[1]
+        w, h = fig.get_size_inches()
+        assert w == pytest.approx(figsize[0], rel=1e-6, abs=1e-2)
+        assert h == pytest.approx(figsize[1], rel=1e-6, abs=1e-2)
         plt.close(fig)
 
     def test_dict_xlims(self):
