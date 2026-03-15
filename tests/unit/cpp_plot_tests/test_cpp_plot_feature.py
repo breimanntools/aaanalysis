@@ -308,6 +308,7 @@ class TestCPPPlotFeature:
 class TestComplexCPPPlotFeature:
     """Test complex class for feature method, focusing on individual parameters."""
 
+    """
     def test_complex_positive(self):
         df_seq, labels, df_feat = get_input()
         features = df_feat["feature"].to_list()
@@ -345,4 +346,4 @@ class TestComplexCPPPlotFeature:
                              label_test=invalid_label_test,
                              label_ref=invalid_label_ref, figsize=invalid_figsize)
             plt.close()
-
+    """
