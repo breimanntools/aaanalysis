@@ -38,13 +38,14 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-3.9-${{ hashFiles('**/requirements.txt') }}
+        key: ${{ runner.os }}-pip-3.9-${{ hashFiles('pyproject.toml') }}
         restore-keys: |
           ${{ runner.os }}-pip-3.9-
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install -e .[pro]
         pip install flake8 mypy pylint
 
     - name: Install cd-hit and mmseqs2
