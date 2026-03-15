@@ -56,12 +56,15 @@ def _create_labels(n=10, n_neg=5, include_unl=True, labels_selection_via=None):
     labels = list(np.random.choice([1, 2], size=n)) if include_unl else [1] * n
     # Override labels based on labels_selection_via
     if labels_selection_via is not None:
-        labels = [0 if x is not None else label for x, label in zip(labels_selection_via, labels)]
+        labels = [0 if not pd.isna(x) else label for x, label in zip(labels_selection_via, labels)]
     else:
         # Randomly assign 0 to n_neg elements in labels
         indices_to_change = random.sample(range(n), n_neg)
         for i in indices_to_change:
             labels[i] = 0
+    # Ensure at least two different labels (avoid invalid PCA test cases)
+    if len(set(labels)) == 1:
+        labels[0] = 1 if labels[0] == 0 else 0
     return labels
 
 
