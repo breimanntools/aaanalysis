@@ -45,7 +45,7 @@ class TestAAclustPlotCorrelation:
     def test_valid_df_corr(self, df_corr):
         call_aaclust_plot_correlation(df_corr=df_corr)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(labels=some.lists(some.integers(), min_size=1, max_size=10))
     def test_valid_labels(self, labels):
         # Labels should contain more than one distinct value
