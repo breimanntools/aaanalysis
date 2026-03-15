@@ -9,6 +9,7 @@ import os
 import platform
 from functools import lru_cache
 import pandas as pd
+from pandas.api.types import is_object_dtype, is_string_dtype
 import seaborn as sns
 import numpy as np
 
@@ -571,7 +572,6 @@ def check_list_parts(list_parts=None, return_default=True, all_parts=False, acce
 
 def check_df_parts(df_parts=None, accept_none=False):
     """Check if df_parts is a valid input"""
-    from pandas.api.types import is_object_dtype, is_string_dtype
     check_df(name="df_parts", df=df_parts, accept_none=accept_none)
     if df_parts is None and accept_none:
         return  # Skip check
@@ -587,8 +587,6 @@ def check_df_parts(df_parts=None, accept_none=False):
     # Check if columns contain strings
     dict_dtype = dict(df_parts.dtypes)
     cols_wrong_type = [col for col in dict_dtype if not (is_object_dtype(df_parts[col]) or is_string_dtype(df_parts[col]))]
-    #dict_dtype = dict(df_parts.dtypes)
-    #cols_wrong_type = [col for col in dict_dtype if dict_dtype[col] not in [object, str]]
     if len(cols_wrong_type) > 0:
         error = "'df_parts' should contain sequences with type string." \
                 f"\n  Following columns contain no values with type string: {cols_wrong_type}"
