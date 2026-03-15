@@ -79,16 +79,17 @@ class TestCPPPlotFeature:
             assert isinstance(ax, plt.Axes)
             plt.close()
 
-    @settings(max_examples=5, deadline=1000)
-    @given(ax=st.one_of(st.none(), st.just(plt.subplots()[1])))
-    def test_ax(self, ax):
+    def test_ax(self):
         df_seq, labels, df_feat = get_input()
-        features = df_feat["feature"].to_list()
-        feature = random.sample(features, 10)[0]
+        feature = df_feat["feature"].to_list()[0]
         cpp_plot = aa.CPPPlot()
-        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, ax=ax)
+        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, ax=None)
         assert isinstance(ax, plt.Axes)
-        plt.close()
+        plt.close(ax.figure)
+        fig, ax_in = plt.subplots()
+        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, ax=ax_in)
+        assert isinstance(ax, plt.Axes)
+        plt.close(fig)
 
     @settings(max_examples=5, deadline=1000)
     @given(figsize=st.tuples(st.floats(min_value=1, max_value=10), st.floats(min_value=1, max_value=20)))
@@ -103,6 +104,7 @@ class TestCPPPlotFeature:
             assert isinstance(ax, plt.Axes)
             plt.close()
 
+    
     def test_names_to_show(self):
         df_seq, labels, df_feat = get_input()
         list_names = [f"Protein {i}" for i in range(len(df_seq))]
@@ -308,7 +310,7 @@ class TestCPPPlotFeature:
 class TestComplexCPPPlotFeature:
     """Test complex class for feature method, focusing on individual parameters."""
 
-    """
+
     def test_complex_positive(self):
         df_seq, labels, df_feat = get_input()
         features = df_feat["feature"].to_list()
@@ -346,4 +348,4 @@ class TestComplexCPPPlotFeature:
                              label_test=invalid_label_test,
                              label_ref=invalid_label_ref, figsize=invalid_figsize)
             plt.close()
-    """
+
