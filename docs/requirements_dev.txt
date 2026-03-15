@@ -1,6 +1,7 @@
 # Requires Python >= 3.9,<3.13
 
 # Installed via pyproject.toml (must both matching when updating!)
+# Following reuqirements.txt files must match: requirements.txt, docs/requirements_dev.txt, docs/requierements_wo_dev.txt
 
 # Additional dependencies for developer version (pip install aaanalysis[dev])
 black==24.10.0           # Code formatting
