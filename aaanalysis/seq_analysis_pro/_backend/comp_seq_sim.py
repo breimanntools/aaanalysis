@@ -38,7 +38,9 @@ def comp_pw_seq_sim_(df_seq=None):
         df_pw_sim.at[id1, id2] = sim_score
         df_pw_sim.at[id2, id1] = sim_score
     # Fill diagonal with 1s for self-similarity
-    np.fill_diagonal(df_pw_sim.values, 1)
+    arr = df_pw_sim.to_numpy(copy=True)
+    np.fill_diagonal(arr, 1)
+    df_pw_sim.iloc[:, :] = arr
     df_pw_sim = df_pw_sim.round(4)
     return df_pw_sim
 
