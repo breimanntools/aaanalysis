@@ -102,7 +102,7 @@ def _get_positions(dict_part_pos=None, features=None, as_str=True):
 
 # Get df positions
 def _get_df_pos_long(df=None, col_cat="category", col_val=None):
-    """Get """
+    """Get long-format DataFrame of feature positions."""
     if col_val is None:
         df_feat = df[[ut.COL_FEATURE, col_cat]].set_index(ut.COL_FEATURE)
     else:
@@ -112,6 +112,10 @@ def _get_df_pos_long(df=None, col_cat="category", col_val=None):
     df_pos_long.index = df[ut.COL_FEATURE]
     df_pos_long = df_pos_long.stack().reset_index(level=1).drop("level_1", axis=1).rename({0: ut.COL_POSITION}, axis=1)
     df_pos_long = df_pos_long.join(df_feat)
+    # Remove missing or empty positions before integer conversion
+    df_pos_long = df_pos_long.dropna(subset=[ut.COL_POSITION]).copy()
+    df_pos_long = df_pos_long[df_pos_long[ut.COL_POSITION] != ""].copy()
+    # Convert position column to integer type
     df_pos_long[ut.COL_POSITION] = df_pos_long[ut.COL_POSITION].astype(int)
     return df_pos_long
 
