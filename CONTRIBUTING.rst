@@ -37,7 +37,7 @@ Objectives
 ----------
 
 - Establish a comprehensive toolkit for interpretable, sequence-based protein prediction.
-- Enable robust learning from small and unbalanced datasets, common in life sciences.
+- Enable robust learning from small and unbalanced datasets, which are common in life sciences.
 - Integrate seamlessly with machine learning and explainable AI libraries such as `scikit-learn <https://scikit-learn.org/stable/>`_
   and `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_.
 - Offer flexible interoperability with other Python packages like `biopython <https://biopython.org/>`_.
@@ -90,50 +90,50 @@ Fork and Clone the Repository
 """""""""""""""""""""""""""""
 
 1. Fork the `repository <https://github.com/breimanntools/aaanalysis>`_
-2. Clone your fork:
+2. Clone your fork and enter the project directory:
 
 .. code-block:: bash
 
   git clone https://github.com/YOUR_USERNAME/aaanalysis.git
+  cd aaanalysis
 
 Install Dependencies
 """"""""""""""""""""
 
-Navigate to the project folder and set up the Python environment.
+Navigate to the project folder and set up a Python environment.
 
-1. Navigate to project folder:
+**1. Navigate to project folder**
 
 .. code-block:: bash
 
     cd aaanalysis
 
-**2a. Using conda for Environment Setup**
-
-Create and activate a new `conda` environment named 'venv', using Python 3.9:
-
-.. code-block:: bash
-
-    conda create -n venv python=3.9
-    conda activate venv
-
-**2b. Using venv for Environment Setup**
-
-Alternatively, create and activate a virtual environment within the project folder using venv:
+**2. Create and activate a virtual environment using ``venv``**
 
 .. code-block:: bash
 
     python -m venv venv
-    source venv/bin/activate  # Use `venv\Scripts\activate` on Windows
+    source venv/bin/activate  # Use ``venv\Scripts\activate`` on Windows
 
-**3a. Installing Dependencies with poetry**
+**3a. Install from ``pyproject.toml`` using pip**
 
-Install dependencies as defined in 'pyproject.toml' using `poetry`:
+This is the recommended installation method for contributors. It installs the package in editable mode
+together with the optional ``pro`` dependencies:
+
+.. code-block:: bash
+
+    pip install -e .[pro]
+
+**3b. Install using Poetry**
+
+Poetry 2.x supports dependencies declared in ``[project]`` in ``pyproject.toml``. If you prefer Poetry,
+you can install the project with:
 
 .. code-block:: bash
 
     poetry install
 
-**3b. Installing Dependencies with pip**
+**3c. Installing using pip**
 
 Alternatively, use `pip` to install dependencies from 'requirements.txt' and additional development requirements:
 
@@ -144,7 +144,9 @@ Alternatively, use `pip` to install dependencies from 'requirements.txt' and add
 
 **General Notes**
 
-- **Additional Requirement**: Some non-Python utilities might to be need installed separately, such as Pandoc.
+- ``pyproject.toml`` is the primary source of dependency information.
+- ``requirements.txt`` is provided as an optional convenience file and should be kept in sync with ``pyproject.toml``.
+- **Additional Requirement**: Some non-Python utilities might need to be installed separately, such as Pandoc.
 - **Manage Dependencies**: Ensure dependencies are updated as specified in 'pyproject.toml' or 'requirements.txt'
   after pulling updates from the repository.
 
@@ -153,9 +155,17 @@ Run Unit Tests
 
 We utilize `pytest <https://docs.pytest.org/en/7.4.x/>`_ and `hypothesis <https://hypothesis.readthedocs.io/en/latest/>`_.
 
+Run the full test suite with:
+
 .. code-block:: bash
 
-  pytest "Name of directory/file/code to be tested"
+  pytest tests
+
+Run a specific file or directory with:
+
+.. code-block:: bash
+
+  pytest path/to/test_file.py
 
 This will execute all the test cases in the tests/ directory. Check out our
 `README on testing <https://github.com/breimanntools/aaanalysis/blob/master/tests/README_TESTING>`_. See further
@@ -171,7 +181,8 @@ Ensure your pull request:
 
 - Is focused and concise.
 - Has a descriptive and clear branch name like ``fix/data-loading-issue`` or ``doc/update-readme``.
-- Is up-to-date with the master branch and passes all tests.
+- Is up-to-date with the ``master`` branch.
+- Passes all tests.
 
 Preview Changes
 ---------------
@@ -181,7 +192,7 @@ To preview documentation changes in pull requests, follow the "docs/readthedocs.
 GitHub Push
 -----------
 
-Before pushing code changes to GitHub, test your changes and updated any relevant documentation.
+Before pushing code changes to GitHub, test your changes and update any relevant documentation.
 It's recommended to work on a separate branch for your changes. Follow these steps for pushing to GitHub:
 
 1. **Create a Branch**: If not already done, create a new branch:
@@ -294,11 +305,16 @@ See our reference order here (exceptions confirm the rules):
 The `API <https://aaanalysis.readthedocs.io/en/latest/api.html>`_ showcases **Docstrings** for our public objects
 and functions. Within these docstrings, scientific
 `References <https://aaanalysis.readthedocs.io/en/latest/index/references.html>`_
-may be mentioned in their extended sections. For additional links in docstrings, use the *See Also* section in this order:
-`Usage Principles <https://aaanalysis.readthedocs.io/en/latest/index/usage_principles.html>`_,
-`Tables <https://aaanalysis.readthedocs.io/en/latest/index/tables.html>`_,
-`Tutorials <https://aaanalysis.readthedocs.io/en/latest/tutorials.html>`_. Only include **External library** references
-when absolutely necessary. Note that the Usage Principles documentation is open for direct linking to References,
+may be mentioned in their extended sections. 
+
+For additional links in docstrings, use the *See Also* section in this order:
+
+- `Usage Principles <https://aaanalysis.readthedocs.io/en/latest/index/usage_principles.html>`_,
+- `Tables <https://aaanalysis.readthedocs.io/en/latest/index/tables.html>`_,
+- `Tutorials <https://aaanalysis.readthedocs.io/en/latest/tutorials.html>`_. 
+
+Only include **External library** references when absolutely necessary. 
+Note that the Usage Principles documentation is open for direct linking to References,
 Tutorials, and Tables, which can as well include links to References.
 
 Building the Docs
@@ -316,28 +332,62 @@ To generate the documentation locally:
 
 - Open `_build/html/index.html` in a browser.
 
-Building new PyPi package version
+Building New PyPi package version
 ---------------------------------
 
-To create a new version of the AAanalysis package for PyPi using Poetry, perform the following steps:
+AAanalysis is packaged and released using Poetry. To create and publish a new version on PyPI, follow these steps:
 
-1. **Ensure Poetry is installed**: Run ``pip install poetry`` if you haven't installed Poetry.
+1. **Ensure Poetry is installed**
 
-2. **Update Version**: Update the `version number` (**MAJOR.MINOR.PATCH**) in the 'pyproject.toml' file, where:
+   If Poetry is not installed, install it with:
 
-   - **MAJOR** version is incremented for incompatible API changes,
-   - **MINOR** version is incremented for functionality in a backward-compatible manner, and
-   - **PATCH** version is incremented for backward-compatible bug fixes.
+   .. code-block:: bash
 
-3. **Build the Package**: Navigate to your project's root directory and execute ``poetry build`` to create the distribution
-   files in the ``dist`` folder.
+      pip install poetry
 
-4. **Publish to PyPI**: Upload the final version to PyPI with ``poetry publish``.
-   You will need to input your PyPI username and API token.
+2. **Update the version**
 
-5. **Verify the Upload**: Check that your package is correctly listed on PyPI, ensuring the information and
-   files are accurate.
+   Update the version number (**MAJOR.MINOR.PATCH**) in ``pyproject.toml``.
 
+   Versioning follows semantic versioning:
+
+   - **MAJOR**: incompatible API changes
+   - **MINOR**: backward-compatible new functionality
+   - **PATCH**: backward-compatible bug fixes
+
+   Alternatively, Poetry can update the version automatically:
+
+   .. code-block:: bash
+
+      poetry version patch
+      # or
+      poetry version minor
+      # or
+      poetry version major
+
+3. **Build the package**
+
+   From the project root directory, build the distribution files:
+
+   .. code-block:: bash
+
+      poetry build
+
+   This creates the source distribution and wheel files in the ``dist`` directory.
+
+4. **Publish to PyPI**
+
+   Upload the package to PyPI:
+
+   .. code-block:: bash
+
+      poetry publish
+
+   You will need valid PyPI credentials or an API token configured for Poetry.
+
+5. **Verify the upload**
+
+   After publishing, verify that the package appears correctly on PyPI and that the metadata and files are accurate.
 
 Test with ChatGPT
 =================
