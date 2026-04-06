@@ -51,34 +51,49 @@ __all__ = [
 ]
 
 
-# Dynamically import professional (pro) features if dependencies are available
-def raise_error(feature_name=None, error_message=None):
+# Dynamically import professional (pro) or development (dev) features if dependencies are available
+def raise_error_pro(feature_name=None, error_message=None):
     """Raise an informative ImportError with optional instructions for missing pro features."""
-    str_error_message = str(error_message)
-    if "No module named" in str_error_message:
-        str_error = (f"'{feature_name}' needs additional dependencies. Install AAanalysis Professional via: "
-                     f"\n\tpip install aaanalysis[pro].")
-        raise ImportError(str_error)
-    else:
-        raise ImportError(error_message)
+    msg = str(error_message)
+    if "No module named" in msg:
+        raise ImportError(
+            f"'{feature_name}' needs additional dependencies. Install AAanalysis Professional via:\n"
+            f"\n\tpip install 'aaanalysis[pro]'"
+        )
+    raise ImportError(error_message)
 
 
-def missing_feature_stub(feature_name, error):
-    """Return a callable that raises an ImportError when used
+def raise_error_dev(feature_name=None, error_message=None):
+    """Raise an informative ImportError with optional instructions for missing dev features."""
+    msg = str(error_message)
+    if "No module named" in msg:
+        raise ImportError(
+            f"'{feature_name}' needs additional dependencies. Install AAanalysis Development via:\n"
+            f"\n\tpip install 'aaanalysis[dev]'"
+        )
+    raise ImportError(error_message)
 
-    This acts as a **stub** — a placeholder function that represents a missing feature.
+
+def missing_feature_stub(feature_name, error, mode="pro"):
+    """Return a callable that raises an ImportError when used.
+
+    This acts as a stub — a placeholder function that represents a missing feature.
     Instead of breaking the import, the stub delays the error until the user tries to use
-    the unavailable feature (e.g., `ShapModel()`), providing a clear message on how to fix it
+    the unavailable feature.
     """
-    return lambda *args, **kwargs: raise_error(feature_name=feature_name, error_message=error)
-
+    if mode == "pro":
+        return lambda *args, **kwargs: raise_error_pro(feature_name, error)
+    elif mode == "dev":
+        return lambda *args, **kwargs: raise_error_dev(feature_name, error)
+    else:
+        raise ValueError("mode must be 'pro' or 'dev'")
 
 try:
     from .explainable_ai_pro import ShapModel
     __all__.append("ShapModel")
 except ImportError as e:
     ShapModel = None
-    globals()["ShapModel"] = missing_feature_stub("ShapModel", e)
+    globals()["ShapModel"] = missing_feature_stub("ShapModel", e, mode="pro")
 
 
 try:
@@ -86,7 +101,7 @@ try:
     __all__.append("comp_seq_sim")
 except ImportError as e:
     comp_seq_sim = None
-    globals()["comp_seq_sim"] = missing_feature_stub("comp_seq_sim", e)
+    globals()["comp_seq_sim"] = missing_feature_stub("comp_seq_sim", e, mode="pro")
 
 
 try:
@@ -94,7 +109,7 @@ try:
     __all__.append("filter_seq")
 except ImportError as e:
     filter_seq = None
-    globals()["filter_seq"] = missing_feature_stub("filter_seq", e)
+    globals()["filter_seq"] = missing_feature_stub("filter_seq", e, mode="pro")
 
 
 try:
@@ -102,4 +117,4 @@ try:
     __all__.append("display_df")
 except ImportError as e:
     display_df = None
-    globals()["display_df"] = missing_feature_stub("display_df", e)
+    globals()["display_df"] = missing_feature_stub("display_df", e, mode="dev")
