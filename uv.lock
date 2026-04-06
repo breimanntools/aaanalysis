@@ -18,6 +18,7 @@ name = "aaanalysis"
 version = "1.0.2"
 source = { editable = "." }
 dependencies = [
+    { name = "biopython" },
     { name = "cycler" },
     { name = "et-xmlfile" },
     { name = "fonttools" },
@@ -104,6 +105,7 @@ pro = [
 
 [package.metadata]
 requires-dist = [
+    { name = "biopython", specifier = "==1.87" },
     { name = "biopython", marker = "extra == 'dev'", specifier = ">=1.85" },
     { name = "biopython", marker = "extra == 'pro'", specifier = ">=1.85" },
     { name = "black", marker = "extra == 'dev'", specifier = "==24.10.0" },
