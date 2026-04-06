@@ -11,10 +11,12 @@ Procedure:
 3. Include the generated RST files in the Sphinx documentation's toctree (Notebooks from examples are excluded).
 
 Before running this script, ensure the project is in 'editable' mode to maintain consistency across documentation:
+- If using `uv` (recommended):
+    uv pip install -e .[dev]
+- If using `pip`:
+    pip install -e .[dev]
 - If using `poetry`:
-    poetry install
-- Alternatively, for traditional projects:
-    pip install -e .
+    poetry install --extras dev
 
 This ensures that when developers run their Jupyter tutorials, they reference the local package version.
 """

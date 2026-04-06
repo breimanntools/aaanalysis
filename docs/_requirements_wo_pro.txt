@@ -1,7 +1,7 @@
 # Requires Python >= 3.9
 
 # Installed via pyproject.toml (must both matching when updating!)
-# Following reuqirements.txt files must match: requirements.txt, docs/requirements_dev.txt, docs/requierements_wo_dev.txt
+# Following reuqirements.txt files must match: _requirements.txt, docs/_requirements_dev.txt, docs/requierements_wo_dev.txt
 
 # Dependencies for core version (pip install aaanalysis)
 cycler>=0.12.1

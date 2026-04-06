@@ -33,8 +33,7 @@ jobs:
     - name: Install package and test dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e .[pro]
-        pip install pytest-cov
+        pip install -e .[dev]
 
     - name: Install cd-hit and mmseqs2
       run: |
@@ -55,4 +54,3 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage.xml
         fail_ci_if_error: true
-

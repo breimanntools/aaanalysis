@@ -11,7 +11,7 @@ name = "aaanalysis"
 version = "1.0.2"
 description = "Python framework for interpretable protein prediction"
 readme = "README.rst"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.9,<3.13"
 license = { text = "BSD-3-Clause" }
 authors = [{ name = "Stephan Breimann", email = "stephanbreimann@gmail.de" }]
 keywords = ["protein", "prediction", "bioinformatics", "machine learning", "interpretable AI"]
@@ -19,6 +19,7 @@ keywords = ["protein", "prediction", "bioinformatics", "machine learning", "inte
 classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -66,28 +67,6 @@ pro = [
   "ipython>=8.18.1",
   "pytest>=8.3.4",
 ]
-docs = [
-  "docutils==0.21.2",
-  "nbconvert==7.16.5",
-  "nbformat==5.10.4",
-  "nbsphinx==0.9.6",
-  "numpydoc==1.8.0",
-  "sphinx==8.1.3",
-  "sphinx-autodoc-typehints==1.15.0",
-  "sphinx-copybutton==0.5.2",
-  "sphinx_design==0.6.1",
-  "sphinx_rtd_theme==3.0.2",
-  "sphinxext-opengraph==0.9.1",
-  "urllib3==2.3.0",
-]
-dev = [
-  "aaanalysis[pro]",
-  "aaanalysis[docs]",
-  "black==24.10.0",
-  "ipykernel==6.29.5",
-  "pandoc==2.4",
-  "pytest-mpl==0.17.0",
-]
 
 [project.urls]
 Homepage = "https://aaanalysis.readthedocs.io"
@@ -99,19 +78,21 @@ Documentation = "https://aaanalysis.readthedocs.io"
 # Poetry config (kept for Poetry packaging behavior)
 # -------------------------
 [tool.poetry]
+# Keep this section for Poetry-specific settings like "include".
+# Metadata & deps are defined in [project] above.
 include = [
   "data/*.xlsx",
   "data/benchmarks/*.tsv",
   "data/benchmarks/*.xlsx",
 ]
+
+# Optional: if you want Poetry to know the homepage explicitly too
 homepage = "https://aaanalysis.readthedocs.io"
 
+# If you still want to support `poetry install --extras "pro"` on older Poetry,
+# you can keep this mapping; it won't hurt modern tooling.
 [tool.poetry.extras]
 pro = ["shap", "biopython", "ipython", "hypothesis", "pytest", "UpSetPlot"]
-docs = ["docutils", "nbconvert", "nbformat", "nbsphinx", "numpydoc", "sphinx",
-        "sphinx-autodoc-typehints", "sphinx-copybutton", "sphinx_design",
-        "sphinx_rtd_theme", "sphinxext-opengraph", "urllib3"]
-dev = ["black", "ipykernel", "pandoc", "pytest-mpl"]
 
 [tool.poetry.urls]
 Repository = "https://github.com/breimanntools/aaanalysis"
