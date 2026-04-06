@@ -4,6 +4,34 @@ Release notes
 Version 1.0 (Stable Version)
 --------------------------------
 
+v1.0.3 (2026-04-06)
+--------------------------------
+
+Added
+~~~~~
+- **AAlogo**: New class for amino acid logo visualization.
+- **AAlogoPlot**: New plotting class for AAlogo visualizations.
+
+Changed
+~~~~~~~
+- **Python Support**: Dropped Python 3.9 (end-of-life) and added Python 3.13 support.
+  Supported versions are now 3.10, 3.11, 3.12, and 3.13.
+- **Dependency Management**: Migrated from ``requirements.txt`` files to a single
+  ``pyproject.toml`` as the source of truth for all dependencies. Introduced structured
+  dependency extras: ``aaanalysis[pro]``, ``aaanalysis[docs]``, and ``aaanalysis[dev]``.
+- **Package Manager**: Added full ``uv`` support alongside existing ``pip`` and ``Poetry``
+  compatibility.
+- **CI/CD**: Updated all GitHub Actions workflows to reflect new Python version matrix
+  and consolidated dependency installation via extras.
+
+Other
+~~~~~
+- **Documentation**: Updated ``ReadTheDocs`` configuration to install dependencies
+  directly from ``pyproject.toml`` via ``aaanalysis[docs]`` extra.
+- **Cleanup**: Removed legacy ``requirements.txt``, ``docs/requirements_dev.txt``,
+  and ``docs/requirements_wo_pro.txt`` files.
+
+
 v1.0.2 (2025-06-17)
 --------------------------------
 
