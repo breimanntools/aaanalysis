@@ -31,7 +31,7 @@ def check_seq_len(df_seq=None, len_min=11):
     mask_seq_len_is_fine = df_seq[ut.COL_SEQ].str.len() >= len_min
     list_seq_too_short = df_seq[~mask_seq_len_is_fine][ut.COL_ENTRY].to_list()
     if len(list_seq_too_short) > 0:
-        raise ValueError(f"Minimum requiered length (n>={len_min}) for sequences in '{ut.COL_SEQ}'"
+        raise ValueError(f"Minimum required length (n>={len_min}) for sequences in '{ut.COL_SEQ}'"
                          f"is not meet by the following entries: {list_seq_too_short}")
 
 
@@ -146,7 +146,7 @@ def filter_seq(df_seq: pd.DataFrame = None,
     """
     # Check input
     ut.check_df(name="df_seq", df=df_seq,
-                cols_requiered=[ut.COL_ENTRY, ut.COL_SEQ],
+                cols_required=[ut.COL_ENTRY, ut.COL_SEQ],
                 cols_nan_check=[ut.COL_ENTRY, ut.COL_SEQ])
     check_seq_len(df_seq=df_seq, len_min=11)
     check_seq_gaps(df_seq=df_seq)

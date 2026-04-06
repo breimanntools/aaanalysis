@@ -217,7 +217,7 @@ class AAclustPlot:
         .. include:: examples/aac_plot_eval.rst
         """
         # Check input
-        ut.check_df(name="df_eval", df=df_eval, cols_requiered=ut.COLS_EVAL_AACLUST, accept_none=False, accept_nan=False)
+        ut.check_df(name="df_eval", df=df_eval, cols_required=ut.COLS_EVAL_AACLUST, accept_none=False, accept_nan=False)
         ut.check_dict_xlims(dict_xlims=dict_xlims, n_ax=4)
         ut.check_figsize(figsize=figsize, accept_none=True)
         # Plotting

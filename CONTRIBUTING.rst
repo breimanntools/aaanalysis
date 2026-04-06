@@ -30,8 +30,8 @@ interpretable protein prediction. Your involvement is invaluable to us. Contribu
 Newcomers can start by tackling issues labeled `good first issue <https://github.com/breimanntools/aaanalysis/issues>`_.
 Please email stephanbreimann@gmail.com for further questions or suggestions?
 
-Vision
-======
+Project Vision
+==============
 
 Objectives
 ----------
@@ -71,8 +71,8 @@ For effective bug reports, please include a Minimal Reproducible Example (MRE):
 Further guidelines can be found `here <https://matthewrocklin.com/minimal-bug-reports>`_.
 
 
-Installation
-============
+Development Installation
+========================
 
 Latest Version
 --------------
@@ -115,39 +115,27 @@ Navigate to the project folder and set up a Python environment.
     python -m venv venv
     source venv/bin/activate  # Use ``venv\Scripts\activate`` on Windows
 
-**3a. Install from ``pyproject.toml`` using pip**
+**3a. Install using uv (recommended)**
 
 This is the recommended installation method for contributors. It installs the package in editable mode
-together with the optional ``pro`` dependencies:
+together with all development dependencies:
 
 .. code-block:: bash
 
-    pip install -e .[pro]
+    uv pip install -e ".[dev]"
 
-**3b. Install using Poetry**
-
-Poetry 2.x supports dependencies declared in ``[project]`` in ``pyproject.toml``. If you prefer Poetry,
-you can install the project with:
+**3b. Install using pip**
 
 .. code-block:: bash
 
-    poetry install
-
-**3c. Installing using pip**
-
-Alternatively, use `pip` to install dependencies from 'requirements.txt' and additional development requirements:
-
-.. code-block:: bash
-
-    pip install -r requirements.txt
-    pip install -r docs/requirements_dev.txt
+    pip install -e ".[dev]"
 
 **General Notes**
 
-- ``pyproject.toml`` is the primary source of dependency information.
-- ``requirements.txt`` is provided as an optional convenience file and should be kept in sync with ``pyproject.toml``.
+- ``pyproject.toml`` is the single source of truth for all dependencies.
+- ``uv.lock`` ensures reproducible installs for contributors using uv.
 - **Additional Requirement**: Some non-Python utilities might need to be installed separately, such as Pandoc.
-- **Manage Dependencies**: Ensure dependencies are updated as specified in 'pyproject.toml' or 'requirements.txt'
+- **Manage Dependencies**: Ensure dependencies are updated as specified in ``pyproject.toml``
   after pulling updates from the repository.
 
 Run Unit Tests
@@ -214,8 +202,8 @@ It's recommended to work on a separate branch for your changes. Follow these ste
 
 For more detailed instructions, see the official `GitHub documentation <https://docs.github.com/en>`_.
 
-Documentation
-=============
+Documentation Standards
+=======================
 
 Documentation is a crucial part of the project. If you make any modifications to the documentation,
 please ensure they render correctly.
@@ -335,7 +323,7 @@ To generate the documentation locally:
 Building New PyPi package version
 ---------------------------------
 
-AAanalysis is packaged and released using Poetry. To create and publish a new version on PyPI, follow these steps:
+AAanalysis is packaged and released using Poetry. To create and publish a new version on PyPi, follow these steps:
 
 1. **Ensure Poetry is installed**
 
@@ -389,8 +377,8 @@ AAanalysis is packaged and released using Poetry. To create and publish a new ve
 
    After publishing, verify that the package appears correctly on PyPI and that the metadata and files are accurate.
 
-Test with ChatGPT
-=================
+Advanced: Test with ChatGPT
+===========================
 To optimize testing, use ChatGPT with the template below and fill in the blank spaces between ``START OF CODE``
 and ``END OF CODE``. Examples of testing templates can be found here:
 `AAanalysis unit tests <https://github.com/breimanntools/aaanalysis/blob/master/tests/unit/>`_.

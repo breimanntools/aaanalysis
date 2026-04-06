@@ -476,7 +476,7 @@ def check_df_seq(df_seq=None, accept_none=False):
             return None
         else:
             raise ValueError("'df_seq' should not be None")
-    check_df(name="df_seq", df=df_seq, cols_requiered=[COL_ENTRY])
+    check_df(name="df_seq", df=df_seq, cols_required=[COL_ENTRY])
     check_warning_consecutive_index(name="df_seq", df=df_seq)
     pos_based = set(COLS_SEQ_POS).issubset(set(df_seq))
     part_based = set(COLS_SEQ_PARTS).issubset(set(df_seq))
@@ -702,13 +702,13 @@ def check_features(features=None, list_parts=None, list_scales=None):
 
 
 def check_df_feat(df_feat=None, df_cat=None, list_parts=None, shap_plot=None,
-                  cols_requiered=None, cols_nan_check=None):
+                  cols_required=None, cols_nan_check=None):
     """Check if df not empty pd.DataFrame"""
     # Check df
     cols_feat = [COL_FEATURE] + COLS_FEAT_SCALES + COLS_FEAT_STAT
-    if cols_requiered is not None:
-        cols_feat += [cols_requiered] if type(cols_requiered) is str else cols_requiered
-    check_df(df=df_feat, name="df_feat", cols_requiered=cols_feat, cols_nan_check=cols_nan_check)
+    if cols_required is not None:
+        cols_feat += [cols_required] if type(cols_required) is str else cols_required
+    check_df(df=df_feat, name="df_feat", cols_required=cols_feat, cols_nan_check=cols_nan_check)
     if len(df_feat) == 0 or len(list(df_feat)) == 0:
         raise ValueError("'df_feat' should be not empty")
     duplicated_columns = df_feat.columns[df_feat.columns.duplicated()]

@@ -18,7 +18,7 @@ def _return_empty_string(val=None):
 
 
 def _get_max_pos_split(split=None):
-    """Get maximum position requiered for split"""
+    """Get maximum position required for split"""
     if ut.STR_SEGMENT in split:
         n_max = int(split.split(",")[1].replace(")", ""))
     elif ut.STR_PERIODIC_PATTERN in split:
@@ -31,7 +31,7 @@ def _get_max_pos_split(split=None):
 
 
 def _get_max_pos_split_kws(split_kws=None):
-    """Get maximum position requiered for splits basd on split_kws"""
+    """Get maximum position required for splits basd on split_kws"""
     list_n_max = []
     if ut.STR_SEGMENT in split_kws:
         n_max = split_kws[ut.STR_SEGMENT]["n_split_max"]
@@ -358,7 +358,7 @@ def check_df_cat(df_cat=None, accept_none=True):
     if df_cat is None and accept_none:
         return  # Skip check
     cols_cat = [ut.COL_SCALE_ID, ut.COL_CAT, ut.COL_SUBCAT, ut.COL_SCALE_NAME]
-    ut.check_df(name=ut.FILE_DF_CAT, df=df_cat, cols_requiered=cols_cat, accept_none=accept_none)
+    ut.check_df(name=ut.FILE_DF_CAT, df=df_cat, cols_required=cols_cat, accept_none=accept_none)
 
 
 def check_match_df_cat_features(df_cat=None, features=None):

@@ -75,17 +75,17 @@ def check_match_labels_label_test_label_ref(labels=None, label_test=1, label_ref
 def check_match_df_parts_label_test_label_ref(df_parts=None, labels=None, label_test=1, label_ref=0):
     """Check if 'jmd_n', 'tmd', and 'jmd_c' in df_parts if amino acid for label_test or label_ref should be retrieved"""
     list_parts = list(df_parts)
-    requiered_parts = ["jmd_n", "tmd", "jmd_c"]
+    required_parts = ["jmd_n", "tmd", "jmd_c"]
     mask_test = [x == label_test for x in labels]
     mask_ref = [x == label_ref for x in labels]
     if sum(mask_test) == 1:
-        missing_parts = [x for x in requiered_parts if x not in list_parts]
+        missing_parts = [x for x in required_parts if x not in list_parts]
         if len(missing_parts) > 0:
             raise ValueError(f"'df_parts' misses '{missing_parts}' parts necessary to retrieve amino acid positions"
                              f" for 'label_test' ({label_test}) if only one sample of it occurs in 'labels'."
                              f"\n Add them to the current parts of 'df_parts': {list_parts}")
     if sum(mask_ref) == 1:
-        missing_parts = [x for x in requiered_parts if x not in list_parts]
+        missing_parts = [x for x in required_parts if x not in list_parts]
         if len(missing_parts) > 0:
             raise ValueError(f"'df_parts' misses '{missing_parts}' parts necessary to retrieve amino acid positions"
                              f" for 'label_ref' ({label_ref}) if only one sample of it occurs in 'labels'."
@@ -436,8 +436,8 @@ class SequenceFeature:
         features = ut.check_features(features=features, list_parts=list(df_parts), list_scales=list(df_scales))
         ut.check_number_val(name="label_test", val=label_test, just_int=True)
         ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
-        labels = ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
-                                 len_requiered=len(df_parts), allow_other_vals=False)
+        labels = ut.check_labels(labels=labels, vals_required=[label_test, label_ref],
+                                 len_required=len(df_parts), allow_other_vals=False)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
         jmd_n_len = ut.check_jmd_n_len(jmd_n_len=jmd_n_len)
         jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)

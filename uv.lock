@@ -94,11 +94,6 @@ docs = [
 ]
 pro = [
     { name = "biopython" },
-    { name = "hypothesis" },
-    { name = "ipython", version = "8.39.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "ipython", version = "9.10.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "ipython", version = "9.12.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "pytest" },
     { name = "shap", version = "0.49.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "shap", version = "0.51.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "upsetplot" },
@@ -114,9 +109,9 @@ requires-dist = [
     { name = "docutils", marker = "extra == 'docs'", specifier = "==0.21.2" },
     { name = "et-xmlfile", specifier = ">=2.0.0" },
     { name = "fonttools", specifier = ">=4.56.0" },
-    { name = "hypothesis", marker = "extra == 'pro'", specifier = ">=6.124.7" },
+    { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.124.7" },
     { name = "ipykernel", marker = "extra == 'dev'", specifier = "==6.29.5" },
-    { name = "ipython", marker = "extra == 'pro'", specifier = ">=8.18.1" },
+    { name = "ipython", marker = "extra == 'dev'", specifier = ">=8.18.1" },
     { name = "ipywidgets", marker = "extra == 'docs'", specifier = ">=8.0.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "joblib", specifier = ">=1.4.2" },
@@ -136,7 +131,7 @@ requires-dist = [
     { name = "pillow", specifier = ">=12.0.0" },
     { name = "poetry", marker = "extra == 'dev'", specifier = ">=2.0.1" },
     { name = "pyparsing", specifier = ">=3.2.1" },
-    { name = "pytest", marker = "extra == 'pro'", specifier = ">=8.3.4" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.4" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0.0" },
     { name = "pytest-mpl", marker = "extra == 'dev'", specifier = "==0.17.0" },
     { name = "python-dateutil", specifier = ">=2.9.0" },
@@ -154,7 +149,7 @@ requires-dist = [
     { name = "sphinxext-opengraph", marker = "extra == 'docs'", specifier = "==0.9.1" },
     { name = "threadpoolctl", specifier = ">=3.5.0" },
     { name = "upsetplot", marker = "extra == 'pro'", specifier = ">=0.9.0" },
-    { name = "urllib3", marker = "extra == 'docs'", specifier = "==2.6.0" },
+    { name = "urllib3", marker = "extra == 'docs'", specifier = ">=2.6.3" },
 ]
 provides-extras = ["pro", "docs", "dev"]
 
@@ -3670,11 +3665,11 @@ sdist = { url = "https://files.pythonhosted.org/packages/fb/63/a5a1628898729bcfb
 
 [[package]]
 name = "urllib3"
-version = "2.6.0"
+version = "2.6.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/1c/43/554c2569b62f49350597348fc3ac70f786e3c32e7f19d266e19817812dd3/urllib3-2.6.0.tar.gz", hash = "sha256:cb9bcef5a4b345d5da5d145dc3e30834f58e8018828cbc724d30b4cb7d4d49f1", size = 432585, upload-time = "2025-12-05T15:08:47.885Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c7/24/5f1b3bdffd70275f6661c76461e25f024d5a38a46f04aaca912426a2b1d3/urllib3-2.6.3.tar.gz", hash = "sha256:1b62b6884944a57dbe321509ab94fd4d3b307075e0c2eae991ac71ee15ad38ed", size = 435556, upload-time = "2026-01-07T16:24:43.925Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/56/1a/9ffe814d317c5224166b23e7c47f606d6e473712a2fad0f704ea9b99f246/urllib3-2.6.0-py3-none-any.whl", hash = "sha256:c90f7a39f716c572c4e3e58509581ebd83f9b59cced005b7db7ad2d22b0db99f", size = 131083, upload-time = "2025-12-05T15:08:45.983Z" },
+    { url = "https://files.pythonhosted.org/packages/39/08/aaaad47bc4e9dc8c725e68f9d04865dbcb2052843ff09c97b08904852d84/urllib3-2.6.3-py3-none-any.whl", hash = "sha256:bf272323e553dfb2e87d9bfd225ca7b0f467b919d7bbd355436d3fd37cb0acd4", size = 131584, upload-time = "2026-01-07T16:24:42.685Z" },
 ]
 
 [[package]]

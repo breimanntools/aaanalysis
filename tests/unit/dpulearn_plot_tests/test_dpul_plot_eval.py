@@ -17,14 +17,14 @@ settings.load_profile("ci")
 
 
 # Sample columns for testing
-COLS_EVAL_REQUIERED = ['name', 'avg_STD', 'avg_IQR', 'avg_abs_AUC_pos', 'avg_abs_AUC_unl']
-COLS_EVAL = COLS_EVAL_REQUIERED + ["avg_abs_AUC_neg", "avg_KLD_pos", "avg_KLD_unl", "avg_KLD_neg"]
+COLS_EVAL_required = ['name', 'avg_STD', 'avg_IQR', 'avg_abs_AUC_pos', 'avg_abs_AUC_unl']
+COLS_EVAL = COLS_EVAL_required + ["avg_abs_AUC_neg", "avg_KLD_pos", "avg_KLD_unl", "avg_KLD_neg"]
 VALID_COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w', 'tab:blue', 'tab:orange', 'tab:green', 'tab:red',
                 'tab:purple', 'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive']
 
 
 def _create_sample_df_eval(n_rows=5, just_ned=True, random_order=False):
-    cols = COLS_EVAL_REQUIERED if just_ned else COLS_EVAL
+    cols = COLS_EVAL_required if just_ned else COLS_EVAL
     # Generate random data
     data_matrix = [[random.uniform(0, 1) for _ in cols] for _ in range(n_rows)]
     df_eval = pd.DataFrame(data_matrix, columns=cols)

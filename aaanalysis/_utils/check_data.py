@@ -134,8 +134,8 @@ def check_X_unique_samples(X, min_n_unique_samples=3, str_add=None):
                          f"\nX = {X}")
 
 
-def check_labels(labels=None, name="labels", vals_requiered=None, len_requiered=None, allow_other_vals=True,
-                 n_per_group_requiered=None, accept_float=False, str_add=None):
+def check_labels(labels=None, name="labels", vals_required=None, len_required=None, allow_other_vals=True,
+                 n_per_group_required=None, accept_float=False, str_add=None):
     """Check the provided labels against various criteria like type, required values, and length."""
     if labels is None:
         raise ValueError(f"'{name}' should not be None.")
@@ -156,29 +156,29 @@ def check_labels(labels=None, name="labels", vals_requiered=None, len_requiered=
         str_error = add_str(str_error=f"Labels in '{name}' should be type int, but contain: {set(map(type, wrong_types))}",
                             str_add=str_add)
         raise ValueError(str_error)
-    if vals_requiered is not None:
-        missing_vals = [x for x in vals_requiered if x not in labels]
+    if vals_required is not None:
+        missing_vals = [x for x in vals_required if x not in labels]
         if len(missing_vals) > 0:
-            str_error = add_str(str_error=f"'{name}' ({unique_labels}) does not contain requiered values: {missing_vals}",
+            str_error = add_str(str_error=f"'{name}' ({unique_labels}) does not contain required values: {missing_vals}",
                                 str_add=str_add)
             raise ValueError(str_error)
         if not allow_other_vals:
-            wrong_vals = [x for x in labels if x not in vals_requiered]
+            wrong_vals = [x for x in labels if x not in vals_required]
             if len(wrong_vals) > 0:
                 str_error = add_str(str_error=f"'{name}' ({unique_labels}) does contain wrong values: {wrong_vals}",
                                     str_add=str_add)
                 raise ValueError(str_error)
-    if len_requiered is not None and len(labels) != len_requiered:
-        str_error = add_str(str_error=f"'{name}' (n={len(labels)}) should contain {len_requiered} values.",
+    if len_required is not None and len(labels) != len_required:
+        str_error = add_str(str_error=f"'{name}' (n={len(labels)}) should contain {len_required} values.",
                             str_add=str_add)
         raise ValueError(str_error)
     # Check for minimum length per group
-    if n_per_group_requiered is not None:
+    if n_per_group_required is not None:
         label_counts = {label: np.sum(labels == label) for label in unique_labels}
         underrepresented_labels = {label: count for label, count in label_counts.items() if
-                                   count < n_per_group_requiered}
+                                   count < n_per_group_required}
         if underrepresented_labels:
-            str_error = add_str(str_error=f"Each label should have at least {n_per_group_requiered} occurrences. "
+            str_error = add_str(str_error=f"Each label should have at least {n_per_group_required} occurrences. "
                                           f"Underrepresented labels: {underrepresented_labels}",
                                 str_add=str_add)
             raise ValueError(str_error)
@@ -203,10 +203,10 @@ def check_match_X_labels(X=None, X_name="X", labels=None, labels_name="labels", 
                 raise ValueError(str_error)
 
 
-def check_match_X_list_labels(X=None, list_labels=None, check_variability=False, vals_requiered=None, str_add=None):
+def check_match_X_list_labels(X=None, list_labels=None, check_variability=False, vals_required=None, str_add=None):
     """Check if each label set is matching with X"""
     for i, labels in enumerate(list_labels):
-        labels = check_labels(labels=labels, vals_requiered=vals_requiered)
+        labels = check_labels(labels=labels, vals_required=vals_required)
         check_match_X_labels(X=X, labels=labels, labels_name=f"list_labels (set {i+1})",
                              check_variability=check_variability, str_add=str_add)
 
@@ -234,7 +234,7 @@ def check_superset_subset(subset=None, superset=None, name_subset=None, name_sup
 
 # df checking functions
 def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_positive=False,
-             check_series=False, cols_requiered=None, cols_forbidden=None, cols_nan_check=None,
+             check_series=False, cols_required=None, cols_forbidden=None, cols_nan_check=None,
              str_add=None, accept_duplicates=False):
     """Check if the provided DataFrame meets various criteria such as NaN values, required/forbidden columns, etc."""
     # Check DataFrame and values
@@ -261,11 +261,11 @@ def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_p
             raise ValueError(str_error)
     # Check columns
     args = dict(accept_str=True, accept_none=True, str_add=str_add)
-    cols_requiered = check_type.check_list_like(name='cols_requiered', val=cols_requiered, **args)
+    cols_required = check_type.check_list_like(name='cols_required', val=cols_required, **args)
     cols_forbidden = check_type.check_list_like(name='cols_forbidden', val=cols_forbidden, **args)
     cols_nan_check = check_type.check_list_like(name='cols_nan_check', val=cols_nan_check, **args)
-    if cols_requiered is not None:
-        missing_cols = [col for col in cols_requiered if col not in df.columns]
+    if cols_required is not None:
+        missing_cols = [col for col in cols_required if col not in df.columns]
         if len(missing_cols) > 0:
             str_error = add_str(str_error=f"'{name}' is missing required columns: {missing_cols}",
                                 str_add=str_add)

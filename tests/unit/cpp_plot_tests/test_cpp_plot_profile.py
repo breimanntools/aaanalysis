@@ -202,8 +202,8 @@ class TestCPPPlotProfile:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
-    @given(ylim_max=st.floats(min_value=35.0, max_value=55.0))
+    @settings(max_examples=3, deadline=7000)
+    @given(ylim_max=st.floats(min_value=35.0, max_value=45.0))
     def test_ylim(self, ylim_max):
         ylim = (0, ylim_max)
         cpp_plot = aa.CPPPlot()

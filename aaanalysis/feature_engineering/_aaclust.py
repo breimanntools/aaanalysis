@@ -642,7 +642,7 @@ class AAclust(Wrapper):
             Minimum coverage percentage of unique subcategories to be achieved by the selected clusters.
         df_cat : pd.DataFrame, optional
             DataFrame containing the categorical information for each scale. Should include columns ``scale_ids`` and
-            the specified ``col_name``. Requiered columns are 'scale_id', 'category', 'subcategory', and 'scale_name'.
+            the specified ``col_name``. required columns are 'scale_id', 'category', 'subcategory', and 'scale_name'.
         col_name : {'category', 'subcategory', 'scale_name'}, default='subcategory'
              Column name in ``df_cat`` that contains the subcategory information (alternatively, category or scale name).
 

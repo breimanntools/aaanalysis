@@ -63,9 +63,6 @@ pro = [
   "biopython>=1.87",
   "shap>=0.46.0",
   "UpSetPlot>=0.9.0",
-  "hypothesis>=6.124.7",
-  "ipython>=8.18.1",
-  "pytest>=8.3.4",
 ]
 docs = [
   "docutils==0.21.2",
@@ -79,16 +76,19 @@ docs = [
   "sphinx_design==0.6.1",
   "sphinx_rtd_theme==3.0.2",
   "sphinxext-opengraph==0.9.1",
-  "urllib3==2.6.0",
+  "urllib3>=2.6.3",
   "ipywidgets>=8.0.0",
 ]
 dev = [
   "aaanalysis[pro]",
   "aaanalysis[docs]",
   "black>=26.3.1",
+  "hypothesis>=6.124.7",
   "ipykernel==6.29.5",
+  "ipython>=8.18.1",
   "pandoc==2.4",
   "poetry>=2.0.1",
+  "pytest>=8.3.4",
   "pytest-cov>=5.0.0",
   "pytest-mpl==0.17.0",
 ]

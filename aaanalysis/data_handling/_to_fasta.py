@@ -69,7 +69,7 @@ def to_fasta(df_seq: pd.DataFrame = None,
     ut.check_str(name="col_db", val=col_db, accept_none=True)
     cols_info = ut.check_list_like(name="cols_info", val=cols_info, accept_str=True, accept_none=True)
     required_columns = [col_id, col_seq] + (cols_info if cols_info is not None else [])
-    ut.check_df(df=df_seq, name="df_seq", cols_requiered=required_columns, accept_none=False, accept_nan=False)
+    ut.check_df(df=df_seq, name="df_seq", cols_required=required_columns, accept_none=False, accept_nan=False)
     ut.check_str(name="sep", val=sep, accept_none=False)
 
     # Writing to FASTA

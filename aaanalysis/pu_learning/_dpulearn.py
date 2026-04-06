@@ -224,7 +224,7 @@ class dPULearn:
         """
         # Check input
         X = ut.check_X(X=X)
-        labels = ut.check_labels(labels=labels, vals_requiered=[1, 2], allow_other_vals=False)
+        labels = ut.check_labels(labels=labels, vals_required=[1, 2], allow_other_vals=False)
         ut.check_number_range(name="n_unl_to_neg", val=n_unl_to_neg, min_val=1, just_int=True)
         check_n_unl_to_neg(labels=labels, n_unl_to_neg=n_unl_to_neg, label_unl=2)
         check_metric(metric=metric)
@@ -319,7 +319,7 @@ class dPULearn:
         list_labels = ut.check_array_like(name="list_labels", val=list_labels, ensure_2d=True, convert_2d=True)
         names_datasets = ut.check_list_like(name="names_datasets", val=names_datasets, accept_none=True, accept_str=True,
                                             check_all_str_or_convertible=True)
-        ut.check_match_X_list_labels(X=X, list_labels=list_labels, check_variability=comp_kld, vals_requiered=[0])
+        ut.check_match_X_list_labels(X=X, list_labels=list_labels, check_variability=comp_kld, vals_required=[0])
         ut.check_match_list_labels_names_datasets(list_labels=list_labels, names_datasets=names_datasets)
         check_match_X_X_neg(X=X, X_neg=X_neg)
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)

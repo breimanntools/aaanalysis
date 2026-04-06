@@ -253,8 +253,8 @@ class CPP(Tool):
         # Check input
         ut.check_number_val(name="label_test", val=label_test, just_int=True)
         ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
-        labels = ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
-                                 len_requiered=len(self.df_parts), allow_other_vals=False)
+        labels = ut.check_labels(labels=labels, vals_required=[label_test, label_ref],
+                                 len_required=len(self.df_parts), allow_other_vals=False)
         ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
         ut.check_number_range(name="n_pre_filter", val=n_pre_filter, min_val=1, accept_none=True, just_int=True)
         ut.check_number_range(name="pct_pre_filter", val=pct_pre_filter, min_val=5, max_val=100, just_int=True)
@@ -375,8 +375,8 @@ class CPP(Tool):
         list_df_feat = ut.check_list_like(name="list_df_feat", val=list_df_feat, min_len=2)
         ut.check_number_val(name="label_test", val=label_test, just_int=True)
         ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
-        labels = ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
-                                 len_requiered=len(self.df_parts), allow_other_vals=False)
+        labels = ut.check_labels(labels=labels, vals_required=[label_test, label_ref],
+                                 len_required=len(self.df_parts), allow_other_vals=False)
         ut.check_number_range(name="min_th", val=min_th, min_val=-1, max_val=1, just_int=False)
         names_feature_sets = ut.check_list_like(name="names_feature_sets", val=names_feature_sets, accept_none=True,
                                                 accept_str=True, check_all_str_or_convertible=True)

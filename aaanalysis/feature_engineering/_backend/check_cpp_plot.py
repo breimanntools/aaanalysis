@@ -49,7 +49,7 @@ def check_seq_color(tmd_seq_color=None, jmd_seq_color=None):
 
 def check_match_dict_color_df(dict_color=None, df=None, name_df="df_feat"):
     """Check if color dictionary is matching to DataFrame with categories"""
-    ut.check_df(name=name_df, df=df, cols_requiered=ut.COL_CAT)
+    ut.check_df(name=name_df, df=df, cols_required=ut.COL_CAT)
     list_cats = list(sorted(set(df[ut.COL_CAT])))
     if dict_color is None:
         dict_color = ut.DICT_COLOR_CAT

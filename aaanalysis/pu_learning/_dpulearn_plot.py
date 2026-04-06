@@ -96,7 +96,7 @@ class dPULearnPlot:
         ----------
         df_eval : pd.DataFrame, shape (n_datasets, n_metrics)
             DataFrame with evaluation measures for sets of identified negatives. Each `row` corresponds to a specific
-            dataset including identified negatives. Requiered 'columns' are:
+            dataset including identified negatives. required 'columns' are:
 
             - 'name': Name of datasets containing identified negatives (typically named by identification approach).
             - 'avg_STD': Average standard deviation (STD) assessing homogeneity of identified negatives.
@@ -144,8 +144,8 @@ class dPULearnPlot:
         .. include:: examples/dpul_plot_eval.rst
         """
         # Check input
-        cols_requiered = [ut.COL_NAME, ut.COL_AVG_STD, ut.COL_AVG_IQR, ut.COL_AVG_ABS_AUC_POS, ut.COL_AVG_ABS_AUC_UNL]
-        ut.check_df(name="df_eval", df=df_eval, cols_requiered=cols_requiered, accept_none=False, accept_nan=False)
+        cols_required = [ut.COL_NAME, ut.COL_AVG_STD, ut.COL_AVG_IQR, ut.COL_AVG_ABS_AUC_POS, ut.COL_AVG_ABS_AUC_UNL]
+        ut.check_df(name="df_eval", df=df_eval, cols_required=cols_required, accept_none=False, accept_nan=False)
         ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_dict_xlims(dict_xlims=dict_xlims, n_ax=4)
         ut.check_bool(name="legend", val=legend)
@@ -224,13 +224,13 @@ class dPULearnPlot:
         .. include:: examples/dpul_plot_pca.rst
         """
         # Check input
-        ut.check_df(name="df_pu", df=df_pu, cols_requiered=[ut.COL_SELECTION_VIA], accept_none=True, accept_nan=True)
+        ut.check_df(name="df_pu", df=df_pu, cols_required=[ut.COL_SELECTION_VIA], accept_none=True, accept_nan=True)
         n_pc = len([x for x in list(df_pu) if "PC" in x and not "abs_dif" in x])
         if n_pc < 2:
             raise ValueError(f"'df_pu' should contain at least two PCs (n={n_pc}).")
         labels = ut.check_labels(labels=labels) # Pre-check if proper format
-        vals_requiered = [0, 1] if 2 not in set(labels) else [0, 1, 2]
-        labels = ut.check_labels(labels=labels, vals_requiered=vals_requiered, allow_other_vals=False)
+        vals_required = [0, 1] if 2 not in set(labels) else [0, 1, 2]
+        labels = ut.check_labels(labels=labels, vals_required=vals_required, allow_other_vals=False)
         ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_number_range(name="pc_x", val=pc_x, min_val=1, max_val=n_pc, just_int=True)
         ut.check_number_range(name="pc_y", val=pc_y, min_val=1, max_val=n_pc, just_int=True)

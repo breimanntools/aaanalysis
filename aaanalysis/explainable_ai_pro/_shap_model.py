@@ -84,7 +84,7 @@ def check_match_labels_X_fuzzy_labeling(labels=None, X=None, fuzzy_labeling=Fals
         return labels
     n_samples = X.shape[0]
     # Accept float if fuzzy_labeling is True
-    labels = ut.check_labels(labels=labels, len_requiered=n_samples, accept_float=fuzzy_labeling)
+    labels = ut.check_labels(labels=labels, len_required=n_samples, accept_float=fuzzy_labeling)
     unique_labels = set(labels)
     if len(unique_labels) < 2:
         raise ValueError(f"'labels' should contain at least 2 unique labels ({unique_labels})")
@@ -640,8 +640,8 @@ class ShapModel:
         n_samples, n_feat = X.shape
         ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
         ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
-        labels = ut.check_labels(labels=labels, vals_requiered=[label_ref],
-                                 len_requiered=n_samples, allow_other_vals=True,
+        labels = ut.check_labels(labels=labels, vals_required=[label_ref],
+                                 len_required=n_samples, allow_other_vals=True,
                                  accept_float=True) # Accept fuzzy labeling by default
         df_feat = ut.check_df_feat(df_feat=df_feat)
         ut.check_bool(name="drop", val=drop)

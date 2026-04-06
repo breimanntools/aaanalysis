@@ -170,7 +170,7 @@ def check_imp_tuples(name="imp_th", imp_tuples=None):
 
 # Check update_seq_size
 def check_match_ax_seq_len(ax=None, jmd_n_len=10, jmd_c_len=10):
-    """Check if ax matches with requiered length"""
+    """Check if ax matches with required length"""
     labels = ax.xaxis.get_ticklabels(which="both")
     f = lambda l: l.get_window_extent(ax.figure.canvas.get_renderer())
     tick_positions = [f(l).x0 for l in labels]
@@ -294,7 +294,7 @@ class CPPPlot:
         ----------
         df_eval : pd.DataFrame, shape (n_feature_sets, n_metrics)
             DataFrame with evaluation measures for sets of identified features. Each `row` corresponds to a specific
-            feature set. Requiered 'columns' are:
+            feature set. required 'columns' are:
 
             - 'name': Name of the feature set.
             - 'n_features': Number of features per scale category given as list.
@@ -341,10 +341,10 @@ class CPPPlot:
         .. include:: examples/cpp_plot_eval.rst
         """
         # Check input
-        cols_requiered = [ut.COL_NAME, ut.COL_N_FEAT,
+        cols_required = [ut.COL_NAME, ut.COL_N_FEAT,
                           ut.COL_RANGE_ABS_AUC, ut.COL_AVG_MEAN_DIF,
                           ut.COL_N_CLUST, ut.COL_AVG_N_FEAT_PER_CLUST, ut.COL_STD_N_FEAT_PER_CLUST]
-        ut.check_df(name="df_eval", df=df_eval, cols_requiered=cols_requiered, accept_none=False, accept_nan=False)
+        ut.check_df(name="df_eval", df=df_eval, cols_required=cols_required, accept_none=False, accept_nan=False)
         check_df_eval(df_eval=df_eval)
         ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_dict_xlims(dict_xlims=dict_xlims, n_ax=5)
@@ -464,8 +464,8 @@ class CPPPlot:
         ut.check_df_seq(df_seq=df_seq, accept_none=False)
         ut.check_number_val(name="label_test", val=label_test, just_int=True)
         ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
-        labels = ut.check_labels(labels=labels, vals_requiered=[label_test, label_ref],
-                                 len_requiered=len(df_seq), allow_other_vals=False)
+        labels = ut.check_labels(labels=labels, vals_required=[label_test, label_ref],
+                                 len_required=len(df_seq), allow_other_vals=False)
         ut.check_ax(ax=ax, accept_none=True)
         ut.check_figsize(figsize=figsize, accept_none=True)
         names_to_show = ut.check_list_like(name="name_to_show", val=names_to_show, accept_str=True, accept_none=True)
@@ -618,7 +618,7 @@ class CPPPlot:
         ut.check_bool(name="shap_plot", val=shap_plot)
         check_col_dif(col_dif=col_dif, shap_plot=shap_plot)
         col_imp = check_col_imp(col_imp=col_imp, shap_plot=shap_plot)
-        df_feat = ut.check_df_feat(df_feat=df_feat, shap_plot=shap_plot, cols_requiered=[col_imp, col_dif])
+        df_feat = ut.check_df_feat(df_feat=df_feat, shap_plot=shap_plot, cols_required=[col_imp, col_dif])
         ut.check_number_range(name="n_top", val=n_top, min_val=2, max_val=len(df_feat), just_int=True)
         ut.check_bool(name="rank", val=rank, accept_none=False)
         ut.check_figsize(figsize=figsize, accept_none=True)
@@ -825,7 +825,7 @@ class CPPPlot:
             df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat)
         else:
             col_imp = check_col_imp(col_imp=col_imp, shap_plot=shap_plot)
-            df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot, cols_requiered=[col_imp])
+            df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot, cols_required=[col_imp])
         ut.check_bool(name="normalize", val=normalize)
         ut.check_ax(ax=ax, accept_none=True)
         ut.check_figsize(figsize=figsize, accept_none=True)
@@ -1062,7 +1062,7 @@ class CPPPlot:
                              list_str_options=[ut.COL_CAT, ut.COL_SUBCAT, ut.COL_SCALE_NAME])
         col_val = check_col_val(col_val=col_val, shap_plot=shap_plot)
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot,
-                                   cols_requiered=col_val, cols_nan_check=col_val)
+                                   cols_required=col_val, cols_nan_check=col_val)
         ut.check_str(name="name_test", val=name_test)
         ut.check_str(name="name_ref", val=name_ref)
         ut.check_figsize(figsize=figsize, accept_none=True)
@@ -1325,7 +1325,7 @@ class CPPPlot:
         col_val = check_col_val(col_val=col_val, sample_mean_dif=True)
         col_imp = check_col_imp(col_imp=col_imp)
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat,
-                                   cols_requiered=[col_val, col_imp],
+                                   cols_required=[col_val, col_imp],
                                    cols_nan_check=col_val)
         ut.check_str(name="name_test", val=name_test)
         ut.check_str(name="name_ref", val=name_ref)

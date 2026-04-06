@@ -69,7 +69,7 @@ class AALogo:
         ut.check_df_parts(df_parts=df_parts)
         if labels is not None:
             n_samples = len(df_parts)
-            labels = ut.check_labels(labels=labels, len_requiered=n_samples)
+            labels = ut.check_labels(labels=labels, len_required=n_samples)
             df_parts = df_parts[labels == label_test]
         args_logo = dict(to_type=self._logo_type, characters_to_ignore=characters_to_ignore,
                          pseudocount=pseudocount)
