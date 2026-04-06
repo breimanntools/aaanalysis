@@ -39,7 +39,7 @@ def _plot_range_abs_auc(ax=None, df_eval=None):
     # Boxplot
     boxprops = dict(facecolor=COLOR_BASE, color='black')
     arg = dict(color='black')
-    ax.boxplot(range_abs_auc, positions=np.arange(len(names)), vert=True,
+    ax.boxplot(range_abs_auc, positions=np.arange(len(names)), orientation="vertical",
                patch_artist=True, boxprops=boxprops,
                whiskerprops=arg, capprops=arg, medianprops=arg, showfliers=False)
     # Scatter plot for min and max values

@@ -1,3 +1,13 @@
+# DEV NOTE:
+# Suppress matplotlib tight_layout warning caused by manual colorbar axes (fig.add_axes).
+# This is intentional for precise layout control in CPPPlot and related visualizations.
+# The layout is correct; the warning is noise in notebooks/docs.
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    message=".*Axes that are not compatible with tight_layout.*"
+)
+
 from ._aaclust import AAclust
 from ._aaclust_plot import AAclustPlot
 from ._cpp_plot import CPPPlot

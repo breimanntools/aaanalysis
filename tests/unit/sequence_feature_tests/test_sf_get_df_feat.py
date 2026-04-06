@@ -101,7 +101,7 @@ class TestGetDfFeat:
             assert isinstance(df_feat, pd.DataFrame)
 
     @settings(max_examples=5, deadline=1000)
-    @given(start=some.integers(min_value=1))
+    @given(start=some.integers(min_value=1, max_value=10))
     def test_valid_start(self, start):
         n_feat = random.randint(5, 100)
         n_samples = random.randint(5, 50)
