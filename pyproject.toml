@@ -86,6 +86,7 @@ dev = [
   "black==24.10.0",
   "ipykernel==6.29.5",
   "pandoc==2.4",
+  "pytest-cov>=5.0.0",
   "pytest-mpl==0.17.0",
 ]
 
@@ -111,7 +112,7 @@ pro = ["shap", "biopython", "ipython", "hypothesis", "pytest", "UpSetPlot"]
 docs = ["docutils", "nbconvert", "nbformat", "nbsphinx", "numpydoc", "sphinx",
         "sphinx-autodoc-typehints", "sphinx-copybutton", "sphinx_design",
         "sphinx_rtd_theme", "sphinxext-opengraph", "urllib3"]
-dev = ["black", "ipykernel", "pandoc", "pytest-mpl"]
+dev = ["black", "ipykernel", "pandoc", "pytest-cov", "pytest-mpl"]
 
 [tool.poetry.urls]
 Repository = "https://github.com/breimanntools/aaanalysis"
