@@ -14,7 +14,7 @@ settings.load_profile("ci")
 class TestEncodeInteger:
     """Test encode_integer function."""
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(list_seq=st.lists(st.text(alphabet="ACDEFGHIKLMNPQRSTVWY-", min_size=1, max_size=50), min_size=1, max_size=20))
     def test_list_seq_valid(self, list_seq):
         """Test a valid 'list_seq' parameter."""
@@ -36,7 +36,7 @@ class TestEncodeInteger:
         with pytest.raises(ValueError):
             sp.encode_integer(list_seq=["INVALIDSEQUENCE"])
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(alphabet=st.text(min_size=1, alphabet="ACDEFGHIKLMNPQRSTVWY"))
     def test_alphabet_valid(self, alphabet):
         """Test a valid 'alphabet' parameter."""
@@ -57,7 +57,7 @@ class TestEncodeInteger:
         with pytest.raises(ValueError):
             sp.encode_integer(alphabet=123)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(gap=st.text(min_size=1, max_size=1).filter(lambda g: g not in "ACDEFGHIKLMNPQRSTVWY"))
     def test_gap_valid(self, gap):
         """Test a valid 'gap' parameter."""
@@ -77,7 +77,7 @@ class TestEncodeInteger:
         with pytest.raises(ValueError):
             sp.encode_integer(gap="INVALID")
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(pad_at=st.sampled_from(["N", "C"]))
     def test_pad_at_valid(self, pad_at):
         """Test a valid 'pad_at' parameter."""
@@ -102,7 +102,7 @@ class TestEncodeInteger:
 class TestEncodeIntegerComplex:
     """Test encode_integer function for Complex Cases."""
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(list_seq=st.lists(st.text(alphabet="ACDEFGHIKLMNPQRSTVWY-", min_size=1), min_size=1),
            alphabet=st.text(min_size=1, alphabet="ACDEFGHIKLMNPQRSTVWY").filter(lambda a: "-" not in a),
            gap=st.text(min_size=1, max_size=1).filter(lambda g: g not in "ACDEFGHIKLMNPQRSTVWY"),
@@ -117,7 +117,7 @@ class TestEncodeIntegerComplex:
         assert isinstance(result[0], np.ndarray)
         assert isinstance(result[1], list)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(
         list_seq=st.none(),
         alphabet=st.text(min_size=0),

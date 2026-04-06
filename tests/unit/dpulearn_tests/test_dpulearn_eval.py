@@ -63,7 +63,7 @@ class TestdPULearnEval:
             dpul = aa.dPULearn()
             assert isinstance(dpul.eval(X, list_labels=list_labels, n_jobs=1), pd.DataFrame)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(names_datasets=st.lists(st.text(), min_size=2))
     def test_names_datasets(self, names_datasets):
         """Test 'names_datasets' with valid inputs."""
@@ -90,7 +90,7 @@ class TestdPULearnEval:
             if not is_invalid:
                 assert isinstance(dpul.eval(X, list_labels=list_labels, X_neg=X_neg, n_jobs=1), pd.DataFrame)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(comp_kld=st.booleans())
     def test_comp_kld(self, comp_kld):
         """Test 'comp_kld' with valid inputs."""

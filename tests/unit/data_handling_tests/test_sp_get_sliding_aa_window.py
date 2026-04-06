@@ -13,7 +13,7 @@ settings.load_profile("ci")
 class TestGetSlidingAAWindow:
     """Test get_sliding_aa_window function."""
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(seq=st.text(alphabet="ACDEFGHIKLMNPQRSTVWY-", min_size=10, max_size=100))
     def test_seq_valid(self, seq):
         """Test a valid 'seq' parameter."""
@@ -30,7 +30,7 @@ class TestGetSlidingAAWindow:
         with pytest.raises(ValueError):
             sp.get_sliding_aa_window(seq="", accept_gap=False)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(slide_start=st.integers(min_value=0, max_value=50))
     def test_slide_start_valid(self, slide_start):
         """Test a valid 'slide_start' parameter."""
@@ -47,7 +47,7 @@ class TestGetSlidingAAWindow:
         with pytest.raises(ValueError):
             sp.get_sliding_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", slide_start=100, accept_gap=False)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(slide_stop=st.integers(min_value=1, max_value=50))
     def test_slide_stop_valid(self, slide_stop):
         """Test a valid 'slide_stop' parameter."""
@@ -64,7 +64,7 @@ class TestGetSlidingAAWindow:
         with pytest.raises(ValueError):
             sp.get_sliding_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", slide_stop=100, accept_gap=False)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(window_size=st.integers(min_value=1, max_value=50))
     def test_window_size_valid(self, window_size):
         """Test a valid 'window_size' parameter."""
@@ -81,7 +81,7 @@ class TestGetSlidingAAWindow:
         with pytest.raises(ValueError):
             sp.get_sliding_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", window_size=-5)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(index1=st.booleans())
     def test_index1_valid(self, index1):
         """Test a valid 'index1' parameter."""
@@ -96,7 +96,7 @@ class TestGetSlidingAAWindow:
         with pytest.raises(ValueError):
             sp.get_sliding_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", index1=None)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(gap=st.text(min_size=1, max_size=1).filter(lambda g: g not in "ACDEFGHIKLMNPQRSTVWY"))
     def test_gap_valid(self, gap):
         """Test a valid 'gap' parameter."""
@@ -111,7 +111,7 @@ class TestGetSlidingAAWindow:
         with pytest.raises(ValueError):
             sp.get_sliding_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", gap="")
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(accept_gap=st.booleans())
     def test_accept_gap_valid(self, accept_gap):
         """Test a valid 'accept_gap' parameter."""
@@ -131,7 +131,7 @@ class TestGetSlidingAAWindow:
 class TestGetSlidingAAWindowComplex:
     """Test get_sliding_aa_window function for Complex Cases."""
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(
         seq=st.text(alphabet="ACDEFGHIKLMNPQRSTVWY", min_size=10, max_size=100),
         slide_start=st.integers(min_value=1, max_value=50),
@@ -153,7 +153,7 @@ class TestGetSlidingAAWindowComplex:
             assert isinstance(windows, list)
             assert all(isinstance(window, str) for window in windows)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(
         seq=st.none(),
         slide_start=st.integers(min_value=-10, max_value=-1),

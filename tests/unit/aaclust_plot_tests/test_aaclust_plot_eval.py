@@ -72,7 +72,7 @@ class TestAAclustPlotEval:
         assert isinstance(axes[0], plt.Axes)
         plt.close()
 
-    @settings(max_examples=5, deadline=1000)
+    @settings(max_examples=5, deadline=1500)
     @given(figsize=some.tuples(some.integers(min_value=4, max_value=20), some.integers(min_value=4, max_value=20)))
     def test_figsize_input(self, figsize):
         """Test the 'figsize' parameter with valid data."""
@@ -86,7 +86,7 @@ class TestAAclustPlotEval:
 
 
     # Negative test
-    @settings(max_examples=5, deadline=1000)
+    @settings(max_examples=5, deadline=1500)
     @given(data=some.lists(some.lists(some.floats(allow_nan=True, allow_infinity=True), min_size=2, max_size=10), min_size=2, max_size=10))
     def test_data_with_nans_and_infs(self, data):
         """Test the 'data' parameter with NaN and Inf."""

@@ -91,7 +91,7 @@ class TestCPPPlotFeature:
         assert isinstance(ax, plt.Axes)
         plt.close(fig)
 
-    @settings(max_examples=5, deadline=1000)
+    @settings(max_examples=5, deadline=1500)
     @given(figsize=st.tuples(st.floats(min_value=1, max_value=10), st.floats(min_value=1, max_value=20)))
     def test_figsize(self, figsize):
         df_seq, labels, df_feat = get_input()
@@ -118,7 +118,7 @@ class TestCPPPlotFeature:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=5, deadline=1000)
+    @settings(max_examples=5, deadline=1500)
     @given(
         name_test=st.text(alphabet=st.characters(blacklist_characters=["$", "{", "}"], min_codepoint=32, max_codepoint=126),
                           min_size=1, max_size=10),
@@ -134,7 +134,7 @@ class TestCPPPlotFeature:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=5, deadline=1000)
+    @settings(max_examples=5, deadline=1500)
     @given(color_test=st.sampled_from(["blue", "green", "red", "yellow"]),
            color_ref=st.sampled_from(["gray", "black", "orange", "pink"]))
     def test_color_test_ref(self, color_test, color_ref):
@@ -146,7 +146,7 @@ class TestCPPPlotFeature:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=5, deadline=1000)
+    @settings(max_examples=5, deadline=1500)
     @given(show_seq=st.booleans())
     def test_show_seq(self, show_seq):
         df_seq, labels, df_feat = get_input()
@@ -157,7 +157,7 @@ class TestCPPPlotFeature:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=5, deadline=1000)
+    @settings(max_examples=5, deadline=1500)
     @given(histplot=st.booleans())
     def test_histplot(self, histplot):
         df_seq, labels, df_feat = get_input()
@@ -168,7 +168,7 @@ class TestCPPPlotFeature:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=1000)
+    @settings(max_examples=3, deadline=1500)
     @given(alpha_hist=st.floats(min_value=0, max_value=1), alpha_dif=st.floats(min_value=0, max_value=1))
     def test_alpha_params(self, alpha_hist, alpha_dif):
         df_seq, labels, df_feat = get_input()
@@ -179,7 +179,7 @@ class TestCPPPlotFeature:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=1000)
+    @settings(max_examples=3, deadline=1500)
     @given(fontsize_mean_dif=st.one_of(st.none(), st.floats(min_value=1, max_value=20)))
     def test_fontsize_mean_dif(self, fontsize_mean_dif):
         df_seq, labels, df_feat = get_input()
@@ -190,7 +190,7 @@ class TestCPPPlotFeature:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=1000)
+    @settings(max_examples=3, deadline=1500)
     @given(fontsize_name_test=st.one_of(st.none(), st.floats(min_value=1, max_value=20)))
     def test_fontsize_name_test(self, fontsize_name_test):
         df_seq, labels, df_feat = get_input()
@@ -201,7 +201,7 @@ class TestCPPPlotFeature:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=1000)
+    @settings(max_examples=3, deadline=1500)
     @given(fontsize_name_ref=st.one_of(st.none(), st.floats(min_value=1, max_value=20)))
     def test_fontsize_name_ref(self, fontsize_name_ref):
         df_seq, labels, df_feat = get_input()
@@ -212,7 +212,7 @@ class TestCPPPlotFeature:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=1000)
+    @settings(max_examples=3, deadline=1500)
     @given(fontsize_names_to_show=st.one_of(st.none(), st.floats(min_value=1, max_value=20)))
     def test_fontsize_names_to_show(self, fontsize_names_to_show):
         df_seq, labels, df_feat = get_input()

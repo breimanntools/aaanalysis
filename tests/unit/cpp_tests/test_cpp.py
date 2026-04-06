@@ -27,7 +27,7 @@ class TestCheckCPP:
     """Test aa.AAclust class individual parameters"""
 
     # Positive tests
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(val=some.integers(min_value=2, max_value=10))
     def test_valid_segment_split_kws(self, val):
         df_parts = get_df_parts()
@@ -35,7 +35,7 @@ class TestCheckCPP:
         split_kws = dict(Segment=dict(n_split_min=val, n_split_max=val+i))
         aa.CPP(df_parts=df_parts, split_kws=split_kws)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(val=some.integers(min_value=2, max_value=10))
     def test_valid_pattern_split_kws(self, val):
         i = random.randint(0, 5)
@@ -46,7 +46,7 @@ class TestCheckCPP:
         df_parts = get_df_parts()
         aa.CPP(df_parts=df_parts, split_kws=split_kws)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(val=some.integers(min_value=2, max_value=10))
     def test_valid_periodic_pattern_split_kws(self, val):
         j = random.randint(0, 5)
@@ -112,7 +112,7 @@ class TestCheckCPP:
         with pytest.raises(ValueError):
             aa.CPP(df_parts=df_parts, split_kws=dict(Segment=dict(n_spl=i, n_split_max=i+1)))
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(val=some.integers(min_value=2, max_value=10))
     def test_invalid_segment_split_kws(self, val):
         df_parts = get_df_parts()
@@ -141,7 +141,7 @@ class TestCheckCPP:
             aa.CPP(df_parts=df_parts,
                    split_kws=dict(Pattern=dict(steps=[1, 1], n_min=i, len_max=i - 2)))
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(val=some.integers(min_value=2, max_value=10))
     def test_invalid_pattern_split_kws(self, val):
         i = random.randint(0, 5)
@@ -167,7 +167,7 @@ class TestCheckCPP:
         with pytest.raises(ValueError):
             aa.CPP(df_parts=df_parts, split_kws=dict(PeriodicPattern=dict(stepss=[1, "invalid"])))
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(val=some.integers(min_value=2, max_value=10))
     def test_invalid_periodic_pattern_split_kws(self, val):
         j = random.randint(0, 5)

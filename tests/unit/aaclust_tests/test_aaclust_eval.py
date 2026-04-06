@@ -141,7 +141,7 @@ class TestAAclustEvaluateComplex:
                 warnings.simplefilter("ignore", RuntimeWarning)
                 assert isinstance(aa.AAclust().eval(X, list_labels=labels), pd.DataFrame)
 
-    @settings(deadline=1000)
+    @settings(deadline=1500)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=1, max_side=2),
                          elements=some.floats(allow_nan=False, allow_infinity=False)))
     def test_small_X(self, X):

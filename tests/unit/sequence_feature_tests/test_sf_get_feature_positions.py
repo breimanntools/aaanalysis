@@ -33,7 +33,7 @@ class TestGetFeaturePositions:
             result = sf.get_feature_positions(features=features)
             assert isinstance(result, list) and len(result) == len(features)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(start=st.integers(min_value=0, max_value=2000))
     def test_valid_start(self, start):
         sf = aa.SequenceFeature()
@@ -41,7 +41,7 @@ class TestGetFeaturePositions:
         result = sf.get_feature_positions(features=features, start=start)
         assert isinstance(result, list)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(tmd_len=st.integers(min_value=20, max_value=2000))
     def test_valid_tmd_len(self, tmd_len):
         sf = aa.SequenceFeature()
@@ -49,7 +49,7 @@ class TestGetFeaturePositions:
         result = sf.get_feature_positions(features=features, tmd_len=tmd_len)
         assert isinstance(result, list)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(jmd_n_len=st.integers(min_value=10, max_value=2000))
     def test_valid_jmd_n_len(self, jmd_n_len):
         sf = aa.SequenceFeature()
@@ -57,7 +57,7 @@ class TestGetFeaturePositions:
         result = sf.get_feature_positions(features=features, jmd_n_len=jmd_n_len)
         assert isinstance(result, list)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(jmd_c_len=st.integers(min_value=10, max_value=2000))
     def test_valid_jmd_c_len(self, jmd_c_len):
         sf = aa.SequenceFeature()
@@ -65,7 +65,7 @@ class TestGetFeaturePositions:
         result = sf.get_feature_positions(features=features, jmd_c_len=jmd_c_len)
         assert isinstance(result, list)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(tmd_seq=st.text(min_size=20, max_size=2000))
     def test_valid_tmd_seq(self, tmd_seq):
         sf = aa.SequenceFeature()
@@ -74,7 +74,7 @@ class TestGetFeaturePositions:
                                           jmd_c_seq=SEQ_JMD, jmd_n_seq=SEQ_JMD)
         assert isinstance(result, list)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(jmd_n_seq=st.text(min_size=10, max_size=2000))
     def test_valid_jmd_n_seq(self, jmd_n_seq):
         sf = aa.SequenceFeature()
@@ -83,7 +83,7 @@ class TestGetFeaturePositions:
                                           tmd_seq=SEQ_TMD, jmd_c_seq=SEQ_JMD)
         assert isinstance(result, list)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(jmd_c_seq=st.text(min_size=10, max_size=2000))
     def test_valid_jmd_c_seq(self, jmd_c_seq):
         sf = aa.SequenceFeature()

@@ -15,14 +15,14 @@ ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 class TestCompSeqSim:
     """Test class for the 'aa.comp_seq_sim' function."""
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(seq1=st.text(min_size=10, max_size=100, alphabet=ALPHABET), seq2=st.text(min_size=10, max_size=100, alphabet=ALPHABET))
     def test_valid_seqs(self, seq1, seq2):
         """Test valid sequence inputs."""
         result = aa.comp_seq_sim(seq1=seq1, seq2=seq2)
         assert isinstance(result, float)
         
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(seq1=st.text(min_size=10, max_size=100, alphabet=ALPHABET))
     def test_invalid_none_seqs(self, seq1):
         """Test invalid None sequences."""

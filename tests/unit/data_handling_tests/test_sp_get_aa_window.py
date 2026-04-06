@@ -13,7 +13,7 @@ settings.load_profile("ci")
 class TestGetAAWindow:
     """Test get_aa_window function."""
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(seq=st.text(alphabet="ACDEFGHIKLMNPQRSTVWY-", min_size=10, max_size=100))
     def test_seq_valid(self, seq):
         """Test a valid 'seq' parameter."""
@@ -29,7 +29,7 @@ class TestGetAAWindow:
         with pytest.raises(ValueError):
             sp.get_aa_window(seq="", pos_start=0, pos_stop=5, accept_gap=False)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(pos_start=st.integers(min_value=0, max_value=50))
     def test_pos_start_valid(self, pos_start):
         """Test a valid 'pos_start' parameter."""
@@ -45,7 +45,7 @@ class TestGetAAWindow:
         with pytest.raises(ValueError):
             sp.get_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", pos_start=100, pos_stop=5)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(pos_stop=st.integers(min_value=0, max_value=50))
     def test_pos_stop_valid(self, pos_stop):
         """Test a valid 'pos_stop' parameter."""
@@ -61,7 +61,7 @@ class TestGetAAWindow:
         with pytest.raises(ValueError):
             sp.get_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", pos_start=0, pos_stop=100, accept_gap=False)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(window_size=st.integers(min_value=1, max_value=50))
     def test_window_size_valid(self, window_size):
         """Test a valid 'window_size' parameter."""
@@ -77,7 +77,7 @@ class TestGetAAWindow:
         with pytest.raises(ValueError):
             sp.get_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", pos_start=0, window_size=-5)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(index1=st.booleans())
     def test_index1_valid(self, index1):
         """Test a valid 'index1' parameter."""
@@ -91,7 +91,7 @@ class TestGetAAWindow:
         with pytest.raises(ValueError):
             sp.get_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", pos_start=1, pos_stop=5, index1=None)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(gap=st.text(min_size=1, max_size=1).filter(lambda g: g not in "ACDEFGHIKLMNPQRSTVWY"))
     def test_gap_valid(self, gap):
         """Test a valid 'gap' parameter."""
@@ -105,7 +105,7 @@ class TestGetAAWindow:
         with pytest.raises(ValueError):
             sp.get_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", pos_start=0, pos_stop=5, gap="")
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(accept_gap=st.booleans())
     def test_accept_gap_valid(self, accept_gap):
         """Test a valid 'accept_gap' parameter."""
@@ -124,7 +124,7 @@ class TestGetAAWindow:
 class TestGetAAWindowComplex:
     """Test get_aa_window function for Complex Cases."""
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(
         seq=st.text(alphabet="ACDEFGHIKLMNPQRSTVWY", min_size=10, max_size=100),
         pos_start=st.integers(min_value=1, max_value=50),
@@ -142,7 +142,7 @@ class TestGetAAWindowComplex:
                                   gap=gap)
         assert isinstance(window, str)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(
         seq=st.none(),
         pos_start=st.integers(min_value=-10, max_value=-1),

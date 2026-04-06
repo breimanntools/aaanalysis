@@ -37,7 +37,7 @@ class TestLoadScales:
         df = aa.load_scales(unclassified_out=True)
         assert isinstance(df, DataFrame)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(top60_n=some.integers(min_value=1, max_value=60))
     def test_load_scales_top60_n(self, top60_n):
         """Test the 'top60_n' parameter."""

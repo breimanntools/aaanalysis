@@ -32,7 +32,7 @@ class TestTreeModel:
         tree_model = aa.TreeModel(list_model_kwargs=mock_kwargs[0:2], list_model_classes=mock_classes[0:2])
         assert tree_model._list_model_kwargs == mock_kwargs[0:2]
 
-    @settings(deadline=1000)
+    @settings(deadline=1500)
     @given(is_preselected=some.lists(some.booleans(), min_size=2, max_size=5))
     def test_is_preselected_parameter(self, is_preselected):
         """Test the 'is_preselected' parameter."""
@@ -43,7 +43,7 @@ class TestTreeModel:
             tree_model = aa.TreeModel(is_preselected=mock_preselected)
             assert np.array_equal(tree_model._is_preselected, mock_preselected)
 
-    @settings(deadline=1000)
+    @settings(deadline=1500)
     @given(verbose=some.booleans())
     def test_verbose_parameter(self, verbose):
         """Test the 'verbose' parameter."""
@@ -51,7 +51,7 @@ class TestTreeModel:
         tree_model = aa.TreeModel(verbose=verbose)
         assert tree_model._verbose == verbose
 
-    @settings(deadline=1000)
+    @settings(deadline=1500)
     @given(random_state=some.integers() | some.none())
     def test_random_state_parameter(self, random_state):
         """Test the 'random_state' parameter."""

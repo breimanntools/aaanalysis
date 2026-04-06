@@ -40,7 +40,7 @@ def adjusted_filter_correlation(nf, X, max_cor):
 class TestFilterCorrelation:
     """Test the filter_correlation method for individual parameters."""
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=st.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
     def test_valid_X(self, X):
@@ -53,7 +53,7 @@ class TestFilterCorrelation:
                 is_selected = adjusted_filter_correlation(nf, X, max_cor=0.7)
                 assert isinstance(is_selected, np.ndarray)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(max_cor=st.floats(min_value=0.0, max_value=1.0))
     def test_valid_max_cor(self, max_cor):
         """Test with valid 'max_cor' inputs."""

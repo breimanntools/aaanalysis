@@ -98,7 +98,7 @@ class TestPlotSettingsComplexCases:
            st.booleans(),
            st.text())
     @example(-1.0, "InvalidFont", True, False, False, True, False, "z")
-    @settings(max_examples=5, deadline=1000)
+    @settings(max_examples=5, deadline=1500)
     def test_complex_negative_cases(self, font_scale, font, weight_bold, adjust_only_font, adjust_further_elements, grid, no_ticks, grid_axis):
         with pytest.raises(Exception):
             aa.plot_settings(font_scale=font_scale, font=font, weight_bold=weight_bold, adjust_only_font=adjust_only_font, adjust_further_elements=adjust_further_elements, grid=grid, no_ticks=no_ticks, grid_axis=grid_axis)

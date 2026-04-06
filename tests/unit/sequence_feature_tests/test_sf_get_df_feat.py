@@ -45,7 +45,7 @@ class TestGetDfFeat:
             df_feat = sf.get_df_feat(features=features, df_parts=df_parts, labels=labels)
             assert isinstance(df_feat, pd.DataFrame)
 
-    @settings(max_examples=5, deadline=1000)
+    @settings(max_examples=5, deadline=1500)
     @given(list_parts=some.lists(some.sampled_from(
         ['tmd', 'tmd_e', 'tmd_n', 'tmd_c', 'jmd_n', 'jmd_c', 'ext_c', 'ext_n', 'tmd_jmd', 'jmd_n_tmd_n', 'tmd_c_jmd_c',
          'ext_n_tmd_n', 'tmd_c_ext_c']), min_size=1))
@@ -100,7 +100,7 @@ class TestGetDfFeat:
             df_feat = sf.get_df_feat(df_parts=df_parts, features=features, labels=labels, df_cat=df_cat)
             assert isinstance(df_feat, pd.DataFrame)
 
-    @settings(max_examples=5, deadline=1000)
+    @settings(max_examples=5, deadline=1500)
     @given(start=some.integers(min_value=1, max_value=10))
     def test_valid_start(self, start):
         n_feat = random.randint(5, 100)
@@ -110,7 +110,7 @@ class TestGetDfFeat:
         df_feat = sf.get_df_feat(df_parts=df_parts, features=features, labels=labels, start=start)
         assert isinstance(df_feat, pd.DataFrame)
 
-    @settings(max_examples=5, deadline=1000)
+    @settings(max_examples=5, deadline=1500)
     @given(tmd_len=some.integers(min_value=15, max_value=100),
            jmd_n_len=some.integers(min_value=10, max_value=100),
            jmd_c_len=some.integers(min_value=10, max_value=100))

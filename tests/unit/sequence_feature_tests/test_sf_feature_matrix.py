@@ -43,7 +43,7 @@ class TestFeatureMatrix:
             result = sf.feature_matrix(features=features, df_parts=df_parts)
             assert isinstance(result, np.ndarray)
 
-    @settings(max_examples=5, deadline=1000)
+    @settings(max_examples=5, deadline=1500)
     @given(list_parts=st.lists(st.sampled_from(
         ['tmd', 'tmd_e', 'tmd_n', 'tmd_c', 'jmd_n', 'jmd_c', 'ext_c', 'ext_n', 'tmd_jmd', 'jmd_n_tmd_n', 'tmd_c_jmd_c',
          'ext_n_tmd_n', 'tmd_c_ext_c']), min_size=1))

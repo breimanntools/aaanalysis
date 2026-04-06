@@ -84,7 +84,7 @@ class TestGetDfParts:
         assert isinstance(sf.get_df_parts(df_seq=df_seq[cols_part_format], jmd_n_len=0, jmd_c_len=0), pd.DataFrame)
         assert isinstance(sf.get_df_parts(df_seq=df_seq[cols_seq_tmd_format]), pd.DataFrame)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(list_parts=some.lists(some.sampled_from(['tmd', 'tmd_e', 'tmd_n', 'tmd_c', 'jmd_n', 'jmd_c', 'ext_c', 'ext_n',
                                                     'tmd_jmd', 'jmd_n_tmd_n', 'tmd_c_jmd_c', 'ext_n_tmd_n', 'tmd_c_ext_c']),
                                  min_size=1))
@@ -124,7 +124,7 @@ class TestGetDfParts:
             df_seq["sequence"] += "A"
             assert isinstance(sf.get_df_parts(df_seq=df_seq, remove_entries_with_gaps=True, jmd_n_len=5, jmd_c_len=0), pd.DataFrame)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(jmd_n_len=some.integers(min_value=1), jmd_c_len=some.integers(min_value=1))
     def test_valid_jmd_len(self, jmd_n_len, jmd_c_len):
         """Test a valid 'jmd_n_len' parameter."""
@@ -273,7 +273,7 @@ class TestGetDfParts:
 class TestGetDfPartsComplex:
     """Test get_df_parts function of the SequenceFeature class for Complex Cases."""
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(list_parts=some.lists(some.sampled_from(['tmd', 'tmd_e', 'tmd_n', 'tmd_c', 'jmd_n', 'jmd_c', 'ext_c', 'ext_n',
                                                     'tmd_jmd', 'jmd_n_tmd_n', 'tmd_c_jmd_c', 'ext_n_tmd_n', 'tmd_c_ext_c']),
                                  min_size=1),

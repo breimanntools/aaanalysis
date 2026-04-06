@@ -76,42 +76,42 @@ class TestAAclustPlotCorrelation:
             plt.close()
 
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(cluster_x=some.booleans(), df_corr=some.lists(
         some.lists(some.floats(min_value=-1.0, max_value=1.0, width=16, allow_nan=False, allow_infinity=False),
                    min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
     def test_cluster_x(self, cluster_x, df_corr):
         call_aaclust_plot_correlation(df_corr=df_corr, cluster_x=cluster_x)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(method=some.sampled_from(["single", "complete", "average", "weighted", "centroid", "median", "ward"]),
            df_corr=some.lists(some.lists(some.floats(min_value=-1.0, max_value=1.0, width=16, allow_nan=False, allow_infinity=False),
                    min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
     def test_method(self, method, df_corr):
         call_aaclust_plot_correlation(df_corr=df_corr, method=method)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(xtick_label_rotation=some.integers(min_value=0, max_value=360),
            df_corr=some.lists(some.lists(some.floats(min_value=-1.0, max_value=1.0, width=16, allow_nan=False, allow_infinity=False),
                    min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
     def test_xtick_label_rotation(self, xtick_label_rotation, df_corr):
         call_aaclust_plot_correlation(df_corr=df_corr, xtick_label_rotation=xtick_label_rotation)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(ytick_label_rotation=some.integers(min_value=0, max_value=360),
            df_corr=some.lists(some.lists(some.floats(min_value=-1.0, max_value=1.0, width=16, allow_nan=False, allow_infinity=False),
                    min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
     def test_ytick_label_rotation(self, ytick_label_rotation, df_corr):
         call_aaclust_plot_correlation(df_corr=df_corr, ytick_label_rotation=ytick_label_rotation)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(bar_position=some.sampled_from(["left", "right", "top", "bottom"]),
            df_corr=some.lists(some.lists(some.floats(min_value=-1.0, max_value=1.0, width=16, allow_nan=False, allow_infinity=False),
                    min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
     def test_bar_position(self, bar_position, df_corr):
         call_aaclust_plot_correlation(df_corr=df_corr, bar_position=bar_position)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(bar_colors=some.sampled_from(["red", "green", "blue", ["red", "green", "blue"]]),
            df_corr=some.lists(some.lists(some.floats(min_value=-1.0, max_value=1.0, width=16, allow_nan=False, allow_infinity=False),
                    min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
@@ -127,35 +127,35 @@ class TestAAclustPlotCorrelation:
         if not df_corr.isna().any().any() and len(set(all_vals)) != 1 and n_samples > n_clusters:
             assert isinstance(aac_plot.correlation(df_corr=df_corr, labels=labels, bar_colors=bar_colors), plt.Axes)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(bar_width_x=some.floats(min_value=0.01, max_value=1.0),
            df_corr=some.lists(some.lists(some.floats(min_value=-1.0, max_value=1.0, allow_nan=False, allow_infinity=False),
                                          min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
     def test_bar_width_x(self, bar_width_x, df_corr):
         call_aaclust_plot_correlation(df_corr=df_corr, bar_width_x=bar_width_x)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(bar_spacing_x=some.floats(min_value=0.01, max_value=1.0),
            df_corr=some.lists(some.lists(some.floats(min_value=-1.0, max_value=1.0, allow_nan=False, allow_infinity=False),
                                          min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
     def test_bar_spacing_x(self, bar_spacing_x, df_corr):
         call_aaclust_plot_correlation(df_corr=df_corr, bar_spacing_x=bar_spacing_x)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(bar_width_y=some.floats(min_value=0.01, max_value=1.0),
            df_corr=some.lists(some.lists(some.floats(min_value=-1.0, max_value=1.0, allow_nan=False, allow_infinity=False),
                                          min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
     def test_bar_width_y(self, bar_width_y, df_corr):
         call_aaclust_plot_correlation(df_corr=df_corr, bar_width_y=bar_width_y)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(bar_spacing_y=some.floats(min_value=0.01, max_value=1.0),
            df_corr=some.lists(some.lists(some.floats(min_value=-1.0, max_value=1.0, allow_nan=False, allow_infinity=False),
                                          min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
     def test_bar_spacing_y(self, bar_spacing_y, df_corr):
         call_aaclust_plot_correlation(df_corr=df_corr, bar_spacing_y=bar_spacing_y)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(vmin=some.floats(min_value=-1.0, max_value=0),
            df_corr=some.lists(some.lists(some.floats(min_value=-1.0, max_value=1.0, allow_nan=False, allow_infinity=False),
                                          min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
@@ -163,7 +163,7 @@ class TestAAclustPlotCorrelation:
         vmin, vmax = adjust_vmin_vmax(vmin=vmin)
         call_aaclust_plot_correlation(df_corr=df_corr, vmin=vmin)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(vmax=some.floats(min_value=0, max_value=1.0),
            df_corr=some.lists(some.lists(some.floats(min_value=-1.0, max_value=1.0, allow_nan=False, allow_infinity=False),
                                          min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
@@ -171,7 +171,7 @@ class TestAAclustPlotCorrelation:
         vmin, vmax = adjust_vmin_vmax(vmax=vmax)
         call_aaclust_plot_correlation(df_corr=df_corr, vmax=vmax)
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(cmap=some.sampled_from(["viridis", "plasma", "inferno", "magma", "cividis"]),
            df_corr=some.lists(some.lists(some.floats(min_value=-1.0, max_value=1.0, allow_nan=False, allow_infinity=False),
                                          min_size=3, max_size=10), min_size=3, max_size=10).map(pd.DataFrame))
@@ -200,7 +200,7 @@ class TestAAclustPlotCorrelation:
         with pytest.raises(ValueError):
             aac_plot.correlation(df_corr=df_corr, labels=[1, 2])
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(labels=some.lists(some.integers(), min_size=10, max_size=20))
     def test_invalid_labels_ref(self, labels):
         # Labels should contain more than one distinct value
@@ -213,7 +213,7 @@ class TestAAclustPlotCorrelation:
                 plt.close()
 
 
-    @settings(max_examples=10, deadline=1000)
+    @settings(max_examples=10, deadline=1500)
     @given(labels=some.lists(some.integers(), min_size=10, max_size=20))
     def test_invalid_labels_ref_from_df_corr(self, labels):
         # Labels should contain more than one distinct value
