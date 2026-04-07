@@ -65,6 +65,7 @@ pro = [
   "UpSetPlot>=0.9.0",
 ]
 docs = [
+  "aaanalysis[pro]",
   "docutils==0.21.2",
   "nbconvert>=7.17.0",
   "nbformat==5.10.4",
@@ -80,7 +81,6 @@ docs = [
   "ipywidgets>=8.0.0",
 ]
 dev = [
-  "aaanalysis[pro]",
   "aaanalysis[docs]",
   "black>=26.3.1",
   "hypothesis>=6.124.7",
