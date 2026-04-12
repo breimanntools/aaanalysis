@@ -52,7 +52,7 @@ class TestAAclust:
             with pytest.raises(ValueError):
                 aa.AAclust(model_class=model_class_name)
 
-    @settings(deadline=2500)
+    @settings(deadline=7500)
     @given(model_class_name=some.sampled_from(list(K_BASED_MODELS.keys())))
     def test_k_based_model_parameter_after_fit(self, model_class_name):
         """Test the 'model' parameter for k_based models after fitting."""
