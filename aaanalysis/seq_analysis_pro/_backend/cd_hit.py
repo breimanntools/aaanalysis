@@ -80,9 +80,9 @@ def run_cd_hit(df_seq=None,
         cmd.extend(["-A", "0.8"])
         coverage_long = 0.8 if coverage_long is None else coverage_long
         coverage_short = 0.8 if coverage_short is None else coverage_short
-    if coverage_long:
+    if coverage_long is not None:
         cmd.extend(["-aL", str(coverage_long)])
-    if coverage_short:
+    if coverage_short is not None:
         cmd.extend(["-aS", str(coverage_short)])
     if sort_clusters:
         cmd.extend(["-sc", "1"])

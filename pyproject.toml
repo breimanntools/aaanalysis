@@ -11,7 +11,7 @@ name = "aaanalysis"
 version = "1.0.2"
 description = "Python framework for interpretable protein prediction"
 readme = "README.rst"
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.10"
 license = { text = "BSD-3-Clause" }
 authors = [{ name = "Stephan Breimann", email = "stephanbreimann@gmail.de" }]
 keywords = ["protein", "prediction", "bioinformatics", "machine learning", "interpretable AI"]
@@ -23,6 +23,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Natural Language :: English",
   "Intended Audience :: Science/Research",
   "Intended Audience :: Developers",

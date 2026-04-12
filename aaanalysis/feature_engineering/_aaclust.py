@@ -133,7 +133,7 @@ class AAclust(Wrapper):
                  model_class: Type[ClusterMixin] = KMeans,
                  model_kwargs: Optional[Dict] = None,
                  verbose: bool = True,
-                 random_state: Optional[str] = None,
+                 random_state: Optional[int] = None,
                  ):
         """
         Parameters
