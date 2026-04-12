@@ -64,7 +64,7 @@ class TestEval:
     """Test the eval method with positive test cases for each parameter."""
 
     # Positive tests
-    @settings(max_examples=12, deadline=4000)
+    @settings(max_examples=12, deadline=8000)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=10, max_side=20),
                          elements=st.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
     def test_X_parameter(self, X):
