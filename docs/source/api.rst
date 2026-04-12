@@ -22,7 +22,6 @@ Data Handling
 -------------
 .. autosummary::
     :toctree: generated/
-    :template: autosummary/class_template.rst
 
     load_dataset
     load_scales
@@ -31,7 +30,29 @@ Data Handling
     to_fasta
     comp_seq_sim
     filter_seq
+
+.. autosummary::
+    :toctree: generated/
+    :template: autosummary/class_template.rst
+
     SequencePreprocessor
+
+.. _sequence_analysis_api:
+
+Sequence Analysis
+-----------------
+.. autosummary::
+    :toctree: generated/
+
+    comp_seq_sim
+    filter_seq
+
+.. autosummary::
+    :toctree: generated/
+    :template: autosummary/class_template.rst
+
+    AAlogo
+    AAlogoPlot
 
 .. _feature_engineering_api:
 

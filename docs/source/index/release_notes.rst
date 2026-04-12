@@ -14,8 +14,8 @@ Added
 
 Changed
 ~~~~~~~
-- **Python Support**: Dropped Python 3.9 (end-of-life) and added Python 3.13 support.
-  Supported versions are now 3.10, 3.11, 3.12, and 3.13.
+- **Python Support**: Dropped Python 3.9 (end-of-life) and added Python 3.13 and 3.14 support.
+  Supported versions are now 3.10, 3.11, 3.12, 3.13, and 3.14.
 - **Dependency Management**: Migrated from ``requirements.txt`` files to a single
   ``pyproject.toml`` as the source of truth for all dependencies. Introduced structured
   dependency extras: ``aaanalysis[pro]``, ``aaanalysis[docs]``, and ``aaanalysis[dev]``.
