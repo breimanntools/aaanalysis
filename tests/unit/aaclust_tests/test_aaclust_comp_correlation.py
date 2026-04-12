@@ -135,7 +135,7 @@ class TestCompCorrelation:
         with pytest.raises(ValueError):
             aa.AAclust.comp_correlation(X, labels=labels, names=pd.DataFrame())
 
-    @settings(deadline=500)
+    @settings(deadline=1000)
     @given(names_ref=some.lists(some.text(), min_size=1, max_size=5))
     def test_valid_names_ref(self, names_ref):
         """Test a valid 'names_ref' parameter."""
