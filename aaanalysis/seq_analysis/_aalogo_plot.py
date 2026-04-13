@@ -6,7 +6,7 @@ import pandas as pd
 from typing import Optional, Union, List, Tuple, Literal
 
 import aaanalysis.utils as ut
-from ._backend._AAlogo.AAlogo_plot import single_logo_, multi_logo_
+from ._backend._aalogo.aalogo_plot import single_logo_, multi_logo_
 
 # Settings
 DICT_LOGO_LABELS = {"probability": "Probability [%]",
