@@ -1,5 +1,5 @@
 """
-This is a script for the frontend of the AALogo class for computing sequence logo matrices
+This is a script for the frontend of the AAlogo class for computing sequence logo matrices
 and conservation scores.
 """
 from typing import Optional, Literal
@@ -49,12 +49,12 @@ def check_characters_to_ignore(characters_to_ignore=None):
 
 # II Main Functions
 # TODO adjust examples, add in index sequence analys
-class AALogo:
+class AAlogo:
     """
-    Amino Acid Logo (**AALogo**) class for computing sequence logo matrices and conservation scores.
+    Amino Acid Logo (**AAlogo**) class for computing sequence logo matrices and conservation scores.
 
     Sequence logos visualize the amino acid composition and conservation at each residue position.
-    AALogo computes logo matrices from sequence parts using the
+    AAlogo computes logo matrices from sequence parts using the
     `logomaker <https://logomaker.readthedocs.io/en/latest/>`_ package.
 
     """
@@ -75,7 +75,7 @@ class AALogo:
 
         See Also
         --------
-        * :class:`AALogoPlot`: the respective plotting class.
+        * :class:`AAlogoPlot`: the respective plotting class.
         * `logomaker <https://logomaker.readthedocs.io/en/latest/>`_: the underlying logo computation package.
         """
         list_logo_types = ["probability", "weight", "counts", "information"]
@@ -129,7 +129,7 @@ class AALogo:
 
         See Also
         --------
-        * :meth:`AALogo.get_df_logo_info`: for per-position information content.
+        * :meth:`AAlogo.get_df_logo_info`: for per-position information content.
         * `logomaker.alignment_to_matrix <https://logomaker.readthedocs.io/en/latest/>`_:
           the underlying matrix computation function.
 
@@ -206,8 +206,8 @@ class AALogo:
 
         See Also
         --------
-        * :meth:`AALogo.get_conservation`: to summarize the per-position scores into a single value.
-        * :meth:`AALogo.get_df_logo`: for the full logo matrix.
+        * :meth:`AAlogo.get_conservation`: to summarize the per-position scores into a single value.
+        * :meth:`AAlogo.get_df_logo`: for the full logo matrix.
 
         Examples
         --------
@@ -251,7 +251,7 @@ class AALogo:
         ----------
         df_logo_info : pd.Series, shape (n_positions,)
             Per-position information content with index name 'pos', as returned by
-            :meth:`AALogo.get_df_logo_info`.
+            :meth:`AAlogo.get_df_logo_info`.
         value_type : {'min', 'mean', 'median', 'max'}, default='mean'
             Aggregation method:
 
@@ -274,7 +274,7 @@ class AALogo:
 
         See Also
         --------
-        * :meth:`AALogo.get_df_logo_info`: to compute the per-position information content.
+        * :meth:`AAlogo.get_df_logo_info`: to compute the per-position information content.
 
         Examples
         --------

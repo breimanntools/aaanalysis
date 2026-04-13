@@ -1,7 +1,7 @@
 from .data_handling import (load_dataset, load_scales, load_features,
                             read_fasta, to_fasta,
                             SequencePreprocessor)
-from .seq_analysis import AALogo, AALogoPlot
+from .seq_analysis import AAlogo, AAlogoPlot
 from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
 from .explainable_ai import TreeModel
@@ -22,8 +22,8 @@ __all__ = [
     "SequencePreprocessor",
     # "comp_seq_sim",       BioPython
     # "filter_seq",         BioPython
-    "AALogo",
-    "AALogoPlot",
+    "AAlogo",
+    "AAlogoPlot",
     "AAclust",
     "AAclustPlot",
     "SequenceFeature",

@@ -1,7 +1,7 @@
-from ._aalogo import AALogo
-from ._aalogo_plot import AALogoPlot
+from ._aalogo import AAlogo
+from ._aalogo_plot import AAlogoPlot
 
 __all__ = [
-    "AALogo",
-    "AALogoPlot",
+    "AAlogo",
+    "AAlogoPlot",
 ]

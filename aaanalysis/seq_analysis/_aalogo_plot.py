@@ -1,12 +1,12 @@
 """
-This is a script for the frontend of the AALogoPlot class.
+This is a script for the frontend of the AAlogoPlot class.
 """
 import matplotlib.pyplot as plt
 import pandas as pd
 from typing import Optional, Union, List, Tuple, Literal
 
 import aaanalysis.utils as ut
-from ._backend._aalogo.aalogo_plot import single_logo_, multi_logo_
+from ._backend._AAlogo.AAlogo_plot import single_logo_, multi_logo_
 
 # Settings
 DICT_LOGO_LABELS = {"probability": "Probability [%]",
@@ -108,14 +108,14 @@ def check_list_name_data_color(list_name_data_color=None, list_df_logo=None):
 
 
 # II Main Functions
-class AALogoPlot:
+class AAlogoPlot:
     """
-    Amino Acid Logo Plot (**AALogoPlot**) class for visualizing sequence logos.
+    Amino Acid Logo Plot (**AAlogoPlot**) class for visualizing sequence logos.
 
     Supports single and stacked multiple sequence logo visualizations with automatic
     TMD/JMD part annotations. The ``logo_type`` set at initialization controls only
     the y-axis label; the logo data itself is provided as a pre-computed ``df_logo``
-    from :class:`AALogo`.
+    from :class:`AAlogo`.
     """
 
     def __init__(self,
@@ -145,7 +145,7 @@ class AALogoPlot:
 
         See Also
         --------
-        * :class:`AALogo`: the corresponding data computation class.
+        * :class:`AAlogo`: the corresponding data computation class.
         * `logomaker <https://logomaker.readthedocs.io/en/latest/>`_: the underlying logo rendering package.
         """
         # Check input
@@ -196,10 +196,10 @@ class AALogoPlot:
         Parameters
         ----------
         df_logo : pd.DataFrame, shape (n_positions, n_amino_acids)
-            Logo matrix as returned by :meth:`AALogo.get_df_logo`. Rows are residue
+            Logo matrix as returned by :meth:`AAlogo.get_df_logo`. Rows are residue
             positions, columns are amino acids.
         df_logo_info : pd.Series, shape (n_positions,), optional
-            Per-position information content as returned by :meth:`AALogo.get_df_logo_info`.
+            Per-position information content as returned by :meth:`AAlogo.get_df_logo_info`.
             If provided, a bit-score bar is rendered above the main logo.
         info_bar_color : str, default='gray'
             Color of the bit-score bars in the optional top panel.
@@ -265,12 +265,12 @@ class AALogoPlot:
 
         See Also
         --------
-        * :meth:`AALogoPlot.multi_logo`: for stacked multi-group comparison.
-        * :class:`AALogo`: to compute ``df_logo`` and ``df_logo_info``.
+        * :meth:`AAlogoPlot.multi_logo`: for stacked multi-group comparison.
+        * :class:`AAlogo`: to compute ``df_logo`` and ``df_logo_info``.
 
         Examples
         --------
-        .. include:: examples/aalogoplot_single_logo.rst
+        .. include:: examples/AAlogoplot_single_logo.rst
         """
         # Check input
         check_df_logo(df_logo=df_logo)
@@ -424,12 +424,12 @@ class AALogoPlot:
 
         See Also
         --------
-        * :meth:`AALogoPlot.single_logo`: for a single-group visualization.
-        * :class:`AALogo`: to compute ``df_logo`` for each group.
+        * :meth:`AAlogoPlot.single_logo`: for a single-group visualization.
+        * :class:`AAlogo`: to compute ``df_logo`` for each group.
 
         Examples
         --------
-        .. include:: examples/aalogoplot_multi_logo.rst
+        .. include:: examples/AAlogoplot_multi_logo.rst
         """
         # Check input
         check_list_df_logo(list_df_logo=list_df_logo)

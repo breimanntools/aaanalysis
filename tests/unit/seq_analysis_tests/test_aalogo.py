@@ -32,7 +32,7 @@ def get_labels(n=10):
 def get_df_logo_info(n=10):
     """Get pre-computed df_logo_info for conservation tests."""
     df_parts = get_df_parts(n=n)
-    aalogo = aa.AALogo()
+    aalogo = aa.AAlogo()
     return aalogo.get_df_logo_info(df_parts=df_parts)
 
 
@@ -45,14 +45,14 @@ class TestAALogoInit:
     def test_valid_logo_type(self):
         """Test valid 'logo_type' parameter."""
         for logo_type in ["probability", "weight", "counts", "information"]:
-            aalogo = aa.AALogo(logo_type=logo_type)
+            aalogo = aa.AAlogo(logo_type=logo_type)
             assert aalogo._logo_type == logo_type
 
     def test_invalid_logo_type(self):
         """Test invalid 'logo_type' parameter."""
         for logo_type in [None, 0, "invalid", "bits", []]:
             with pytest.raises(ValueError):
-                aa.AALogo(logo_type=logo_type)
+                aa.AAlogo(logo_type=logo_type)
 
 
 # ===========================================================================
@@ -64,13 +64,13 @@ class TestGetDfLogo:
     def test_valid_df_parts(self):
         """Test valid 'df_parts' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         df_logo = aalogo.get_df_logo(df_parts=df_parts)
         assert isinstance(df_logo, pd.DataFrame)
 
     def test_invalid_df_parts(self):
         """Test invalid 'df_parts' parameter."""
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for df_parts in [None, pd.DataFrame(), pd.DataFrame({"invalid": ["ACDE", "FGHI"]}), "invalid", 1]:
             with pytest.raises(ValueError):
                 aalogo.get_df_logo(df_parts=df_parts)
@@ -79,14 +79,14 @@ class TestGetDfLogo:
         """Test valid 'labels' parameter."""
         df_parts = get_df_parts()
         labels = get_labels()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         df_logo = aalogo.get_df_logo(df_parts=df_parts, labels=labels, label_test=1)
         assert isinstance(df_logo, pd.DataFrame)
 
     def test_invalid_labels(self):
         """Test invalid 'labels' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for labels in [np.array([1, 0]), "invalid", [1, 2, 3]]:
             with pytest.raises(ValueError):
                 aalogo.get_df_logo(df_parts=df_parts, labels=labels)
@@ -95,7 +95,7 @@ class TestGetDfLogo:
         """Test valid 'label_test' parameter."""
         df_parts = get_df_parts()
         labels = get_labels()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for label_test in [0, 1]:
             df_logo = aalogo.get_df_logo(df_parts=df_parts, labels=labels, label_test=label_test)
             assert isinstance(df_logo, pd.DataFrame)
@@ -104,7 +104,7 @@ class TestGetDfLogo:
         """Test invalid 'label_test' parameter."""
         df_parts = get_df_parts()
         labels = get_labels()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for label_test in [99, "invalid", None]:
             with pytest.raises(ValueError):
                 aalogo.get_df_logo(df_parts=df_parts, labels=labels, label_test=label_test)
@@ -112,7 +112,7 @@ class TestGetDfLogo:
     def test_valid_tmd_len(self):
         """Test valid 'tmd_len' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for tmd_len in [None, 5, 10, 20]:
             df_logo = aalogo.get_df_logo(df_parts=df_parts, tmd_len=tmd_len)
             assert isinstance(df_logo, pd.DataFrame)
@@ -120,7 +120,7 @@ class TestGetDfLogo:
     def test_invalid_tmd_len(self):
         """Test invalid 'tmd_len' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for tmd_len in [0, -1, 99999, "invalid", 1.5]:
             with pytest.raises(ValueError):
                 aalogo.get_df_logo(df_parts=df_parts, tmd_len=tmd_len)
@@ -128,7 +128,7 @@ class TestGetDfLogo:
     def test_valid_start_n(self):
         """Test valid 'start_n' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for start_n in [True, False]:
             df_logo = aalogo.get_df_logo(df_parts=df_parts, start_n=start_n)
             assert isinstance(df_logo, pd.DataFrame)
@@ -136,7 +136,7 @@ class TestGetDfLogo:
     def test_invalid_start_n(self):
         """Test invalid 'start_n' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for start_n in [None, 1, "True", []]:
             with pytest.raises(ValueError):
                 aalogo.get_df_logo(df_parts=df_parts, start_n=start_n)
@@ -144,7 +144,7 @@ class TestGetDfLogo:
     def test_valid_characters_to_ignore(self):
         """Test valid 'characters_to_ignore' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for characters_to_ignore in [".-", ".", "-", ""]:
             df_logo = aalogo.get_df_logo(df_parts=df_parts, characters_to_ignore=characters_to_ignore)
             assert isinstance(df_logo, pd.DataFrame)
@@ -152,7 +152,7 @@ class TestGetDfLogo:
     def test_invalid_characters_to_ignore(self):
         """Test invalid 'characters_to_ignore' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for characters_to_ignore in [None, 123, [], [".", "-"]]:
             with pytest.raises(ValueError):
                 aalogo.get_df_logo(df_parts=df_parts, characters_to_ignore=characters_to_ignore)
@@ -160,7 +160,7 @@ class TestGetDfLogo:
     def test_valid_pseudocount(self):
         """Test valid 'pseudocount' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for pseudocount in [0.0, 0.5, 1.0]:
             df_logo = aalogo.get_df_logo(df_parts=df_parts, pseudocount=pseudocount)
             assert isinstance(df_logo, pd.DataFrame)
@@ -168,7 +168,7 @@ class TestGetDfLogo:
     def test_invalid_pseudocount(self):
         """Test invalid 'pseudocount' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for pseudocount in [-0.1, -1, "invalid", None]:
             with pytest.raises(ValueError):
                 aalogo.get_df_logo(df_parts=df_parts, pseudocount=pseudocount)
@@ -183,14 +183,14 @@ class TestGetDfLogoInfo:
     def test_valid_df_parts(self):
         """Test valid 'df_parts' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         result = aalogo.get_df_logo_info(df_parts=df_parts)
         assert isinstance(result, pd.Series)
         assert result.index.name == "pos"
 
     def test_invalid_df_parts(self):
         """Test invalid 'df_parts' parameter."""
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for df_parts in [None, pd.DataFrame(), pd.DataFrame({"invalid": ["ACDE", "FGHI"]}), "invalid", 1]:
             with pytest.raises(ValueError):
                 aalogo.get_df_logo_info(df_parts=df_parts)
@@ -199,7 +199,7 @@ class TestGetDfLogoInfo:
         """Test valid 'labels' parameter."""
         df_parts = get_df_parts()
         labels = get_labels()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for label_test in [0, 1]:
             result = aalogo.get_df_logo_info(df_parts=df_parts, labels=labels, label_test=label_test)
             assert isinstance(result, pd.Series)
@@ -207,7 +207,7 @@ class TestGetDfLogoInfo:
     def test_invalid_labels(self):
         """Test invalid 'labels' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for labels in [np.array([1, 0]), "invalid", [1, 2, 3]]:
             with pytest.raises(ValueError):
                 aalogo.get_df_logo_info(df_parts=df_parts, labels=labels)
@@ -216,7 +216,7 @@ class TestGetDfLogoInfo:
         """Test valid 'label_test' parameter."""
         df_parts = get_df_parts()
         labels = get_labels()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for label_test in [0, 1]:
             result = aalogo.get_df_logo_info(df_parts=df_parts, labels=labels, label_test=label_test)
             assert isinstance(result, pd.Series)
@@ -225,7 +225,7 @@ class TestGetDfLogoInfo:
         """Test invalid 'label_test' parameter."""
         df_parts = get_df_parts()
         labels = get_labels()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for label_test in [99, "invalid", None]:
             with pytest.raises(ValueError):
                 aalogo.get_df_logo_info(df_parts=df_parts, labels=labels, label_test=label_test)
@@ -233,7 +233,7 @@ class TestGetDfLogoInfo:
     def test_valid_tmd_len(self):
         """Test valid 'tmd_len' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for tmd_len in [None, 5, 10, 20]:
             result = aalogo.get_df_logo_info(df_parts=df_parts, tmd_len=tmd_len)
             assert isinstance(result, pd.Series)
@@ -241,7 +241,7 @@ class TestGetDfLogoInfo:
     def test_invalid_tmd_len(self):
         """Test invalid 'tmd_len' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for tmd_len in [0, -1, 99999, "invalid", 1.5]:
             with pytest.raises(ValueError):
                 aalogo.get_df_logo_info(df_parts=df_parts, tmd_len=tmd_len)
@@ -249,7 +249,7 @@ class TestGetDfLogoInfo:
     def test_valid_start_n(self):
         """Test valid 'start_n' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for start_n in [True, False]:
             result = aalogo.get_df_logo_info(df_parts=df_parts, start_n=start_n)
             assert isinstance(result, pd.Series)
@@ -257,7 +257,7 @@ class TestGetDfLogoInfo:
     def test_invalid_start_n(self):
         """Test invalid 'start_n' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for start_n in [None, 1, "True", []]:
             with pytest.raises(ValueError):
                 aalogo.get_df_logo_info(df_parts=df_parts, start_n=start_n)
@@ -265,7 +265,7 @@ class TestGetDfLogoInfo:
     def test_valid_pseudocount(self):
         """Test valid 'pseudocount' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for pseudocount in [0.0, 0.5, 1.0]:
             result = aalogo.get_df_logo_info(df_parts=df_parts, pseudocount=pseudocount)
             assert isinstance(result, pd.Series)
@@ -273,7 +273,7 @@ class TestGetDfLogoInfo:
     def test_invalid_pseudocount(self):
         """Test invalid 'pseudocount' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         for pseudocount in [-0.1, -1, "invalid", None]:
             with pytest.raises(ValueError):
                 aalogo.get_df_logo_info(df_parts=df_parts, pseudocount=pseudocount)
@@ -282,14 +282,14 @@ class TestGetDfLogoInfo:
         """Test that logo_type attribute is not mutated by get_df_logo_info."""
         df_parts = get_df_parts()
         for logo_type in ["probability", "counts", "weight"]:
-            aalogo = aa.AALogo(logo_type=logo_type)
+            aalogo = aa.AAlogo(logo_type=logo_type)
             aalogo.get_df_logo_info(df_parts=df_parts)
             assert aalogo._logo_type == logo_type
 
     def test_values_non_negative(self):
         """Test that information content values are non-negative."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         result = aalogo.get_df_logo_info(df_parts=df_parts)
         assert (result >= 0).all()
 
@@ -303,30 +303,30 @@ class TestGetConservation:
     def test_valid_df_logo_info(self):
         """Test valid 'df_logo_info' parameter."""
         df_logo_info = get_df_logo_info()
-        result = aa.AALogo.get_conservation(df_logo_info=df_logo_info)
+        result = aa.AAlogo.get_conservation(df_logo_info=df_logo_info)
         assert isinstance(result, float)
 
     def test_invalid_df_logo_info(self):
         """Test invalid 'df_logo_info' parameter."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo()
+        aalogo = aa.AAlogo()
         df_logo = aalogo.get_df_logo(df_parts=df_parts)
         for df_logo_info in [None, df_logo, "invalid", 1]:
             with pytest.raises(ValueError):
-                aa.AALogo.get_conservation(df_logo_info=df_logo_info)
+                aa.AAlogo.get_conservation(df_logo_info=df_logo_info)
 
     def test_invalid_df_logo_info_wrong_index_name(self):
         """Test that df_logo_info with wrong index name raises ValueError."""
         df_logo_info = get_df_logo_info()
         df_logo_info.index.name = "wrong"
         with pytest.raises(ValueError):
-            aa.AALogo.get_conservation(df_logo_info=df_logo_info)
+            aa.AAlogo.get_conservation(df_logo_info=df_logo_info)
 
     def test_valid_value_type(self):
         """Test valid 'value_type' parameter."""
         df_logo_info = get_df_logo_info()
         for value_type in ["min", "mean", "median", "max"]:
-            result = aa.AALogo.get_conservation(df_logo_info=df_logo_info, value_type=value_type)
+            result = aa.AAlogo.get_conservation(df_logo_info=df_logo_info, value_type=value_type)
             assert isinstance(result, float)
 
     def test_invalid_value_type(self):
@@ -334,20 +334,20 @@ class TestGetConservation:
         df_logo_info = get_df_logo_info()
         for value_type in [None, "sum", "average", 0, []]:
             with pytest.raises(ValueError):
-                aa.AALogo.get_conservation(df_logo_info=df_logo_info, value_type=value_type)
+                aa.AAlogo.get_conservation(df_logo_info=df_logo_info, value_type=value_type)
 
     def test_result_non_negative(self):
         """Test that conservation score is non-negative."""
         df_logo_info = get_df_logo_info()
-        result = aa.AALogo.get_conservation(df_logo_info=df_logo_info)
+        result = aa.AAlogo.get_conservation(df_logo_info=df_logo_info)
         assert result >= 0
 
     def test_min_leq_mean_leq_max(self):
         """Test that min <= mean <= max ordering holds."""
         df_logo_info = get_df_logo_info()
-        val_min = aa.AALogo.get_conservation(df_logo_info=df_logo_info, value_type="min")
-        val_mean = aa.AALogo.get_conservation(df_logo_info=df_logo_info, value_type="mean")
-        val_max = aa.AALogo.get_conservation(df_logo_info=df_logo_info, value_type="max")
+        val_min = aa.AAlogo.get_conservation(df_logo_info=df_logo_info, value_type="min")
+        val_mean = aa.AAlogo.get_conservation(df_logo_info=df_logo_info, value_type="mean")
+        val_max = aa.AAlogo.get_conservation(df_logo_info=df_logo_info, value_type="max")
         assert val_min <= val_mean <= val_max
 
 
@@ -365,7 +365,7 @@ class TestAALogoComplex:
     def test_valid_get_df_logo_combinations(self, logo_type, tmd_len, start_n, pseudocount):
         """Test valid combinations of get_df_logo parameters."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo(logo_type=logo_type)
+        aalogo = aa.AAlogo(logo_type=logo_type)
         df_logo = aalogo.get_df_logo(df_parts=df_parts, tmd_len=tmd_len,
                                      start_n=start_n, pseudocount=pseudocount)
         assert isinstance(df_logo, pd.DataFrame)
@@ -378,7 +378,7 @@ class TestAALogoComplex:
     def test_valid_get_df_logo_info_combinations(self, logo_type, tmd_len, start_n, pseudocount):
         """Test valid combinations of get_df_logo_info parameters."""
         df_parts = get_df_parts()
-        aalogo = aa.AALogo(logo_type=logo_type)
+        aalogo = aa.AAlogo(logo_type=logo_type)
         result = aalogo.get_df_logo_info(df_parts=df_parts, tmd_len=tmd_len,
                                          start_n=start_n, pseudocount=pseudocount)
         assert isinstance(result, pd.Series)
@@ -390,6 +390,6 @@ class TestAALogoComplex:
     def test_valid_get_conservation_combinations(self, value_type):
         """Test valid combinations of get_conservation parameters."""
         df_logo_info = get_df_logo_info()
-        result = aa.AALogo.get_conservation(df_logo_info=df_logo_info, value_type=value_type)
+        result = aa.AAlogo.get_conservation(df_logo_info=df_logo_info, value_type=value_type)
         assert isinstance(result, float)
         assert result >= 0

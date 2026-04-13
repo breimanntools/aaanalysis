@@ -1,5 +1,5 @@
 """
-This is a script for the backend of the AALogoPlot class.
+This is a script for the backend of the AAlogoPlot class.
 """
 import logomaker
 import matplotlib.pyplot as plt

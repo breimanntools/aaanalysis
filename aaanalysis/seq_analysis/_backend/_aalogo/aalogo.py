@@ -1,10 +1,8 @@
 """
-This is a script for the backend of the AALogo class methods.
+This is a script for the backend of the AAlogo class methods.
 """
 import warnings
 import logomaker
-import pandas as pd
-import numpy as np
 
 import aaanalysis.utils as ut
 
