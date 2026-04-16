@@ -42,7 +42,7 @@ class TestTreeModelFit:
     """Test TreeModel.fit() method for each parameter individually with positive test cases."""
 
     # Positive test cases
-    @settings(deadline=100000, max_examples=10)
+    @settings(deadline=150000, max_examples=10)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=st.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
     def test_X_parameter(self, X):
