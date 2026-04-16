@@ -110,7 +110,7 @@ def check_list_name_data_color(list_name_data_color=None, list_df_logo=None):
 # II Main Functions
 class AAlogoPlot:
     """
-    Amino Acid Logo Plot (**AAlogoPlot**) class for visualizing sequence logos.
+    Amino Acid logo Plot (**AAlogoPlot**) class for visualizing sequence logos.
 
     Supports single and stacked multiple sequence logo visualizations with automatic
     TMD/JMD part annotations. The ``logo_type`` set at initialization controls only
@@ -270,7 +270,7 @@ class AAlogoPlot:
 
         Examples
         --------
-        .. include:: examples/AAlogoplot_single_logo.rst
+        .. include:: examples/aalogo_plot_single_logo.rst
         """
         # Check input
         check_df_logo(df_logo=df_logo)
@@ -429,7 +429,7 @@ class AAlogoPlot:
 
         Examples
         --------
-        .. include:: examples/AAlogoplot_multi_logo.rst
+        .. include:: examples/aalogo_plot_multi_logo.rst
         """
         # Check input
         check_list_df_logo(list_df_logo=list_df_logo)

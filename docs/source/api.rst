@@ -41,10 +41,10 @@ Sequence Analysis
     :toctree: generated/
     :template: autosummary/class_template.rst
 
-    comp_seq_sim
-    filter_seq
     AAlogo
     AAlogoPlot
+    comp_seq_sim
+    filter_seq
 
 .. _feature_engineering_api:
 

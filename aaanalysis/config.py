@@ -24,7 +24,7 @@ _dict_options = {
 }
 
 
-# Check system level (option) parameters or depending parameters
+# Check system level (option) parameters or depending on parameters
 def check_verbose(verbose=None):
     """Check if general verbosity is on or off. Adjusted based on options setting and value provided to object"""
     global_verbose = options["verbose"]
@@ -70,8 +70,12 @@ def check_jmd_n_len(jmd_n_len=None):
     """Check if general JMD-N length is given and adjust it globally."""
     global_jmd_n_len = options["jmd_n_len"]
     if global_jmd_n_len is not None:
+        check_number_range(name="jmd_n_len (option)", val=global_jmd_n_len,
+                           min_val=0, just_int=True)
         return global_jmd_n_len
     else:
+        check_number_range(name="jmd_n_len", val=jmd_n_len,
+                           min_val=0, just_int=True)
         return jmd_n_len
 
 
@@ -79,8 +83,12 @@ def check_jmd_c_len(jmd_c_len=None):
     """Check if general JMD-C length is given and adjust it globally."""
     global_jmd_c_len = options["jmd_c_len"]
     if global_jmd_c_len is not None:
+        check_number_range(name="jmd_c_len (option)", val=global_jmd_c_len,
+                           min_val=0, just_int=True)
         return global_jmd_c_len
     else:
+        check_number_range(name="jmd_c_len", val=jmd_c_len,
+                           min_val=0, just_int=True)
         return jmd_c_len
 
 
@@ -98,13 +106,14 @@ def _check_option(name_option="", option=None):
         check_bool(name=name_option, val=option)
     if "jmd" in name_option:
         if "len" in name_option:
-            check_number_val(name=name_option, val=option, accept_none=True, just_int=True)
+            check_number_range(name=name_option, val=option,
+                               min_val=0, accept_none=True, just_int=True)
         if "name" in name_option:
             check_str(name=name_option, val=option, accept_none=False)
     if name_option == "ext_len":
         check_number_range(name=name_option, val=option, min_val=0, accept_none=False)
     if "df" in name_option:
-        check_df(name=name_option, df=option, accept_none=False)
+        check_df(name=name_option, df=option, accept_none=True)
 
 
 class Settings:

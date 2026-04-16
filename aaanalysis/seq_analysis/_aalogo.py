@@ -48,10 +48,9 @@ def check_characters_to_ignore(characters_to_ignore=None):
 
 
 # II Main Functions
-# TODO adjust examples, add in index sequence analys
 class AAlogo:
     """
-    Amino Acid Logo (**AAlogo**) class for computing sequence logo matrices and conservation scores.
+    Amino Acid logo (**AAlogo**) class for computing sequence logo matrices and conservation scores.
 
     Sequence logos visualize the amino acid composition and conservation at each residue position.
     AAlogo computes logo matrices from sequence parts using the
