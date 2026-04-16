@@ -198,7 +198,7 @@ def check_match_features_seq_parts(features=None, tmd_seq=None, jmd_n_seq=None, 
                 raise ValueError(
                     f"Sequence 'part' ({seq}, n={len(seq)}) too short for '{feature}' feature (n_max={n_max})")
 
-
+# TODO!! check tmd_start and tmd_stop within sequence length !!
 # Check df_seq
 def _get_tmd_positions(row):
     """Get position of tmd from sequence"""
@@ -209,39 +209,6 @@ def _get_tmd_positions(row):
         raise ValueError(f"'{ut.COL_TMD}' is not contained in '{ut.COL_SEQ}' for '{row[ut.COL_ENTRY]}' entry")
     tmd_start += 1
     return pd.Series([tmd_start, tmd_stop])
-
-
-def _check_jmd_seq_len(df_seq, jmd_n_len=None, jmd_c_len=None):
-    """Check that jmd_n and jmd_c sequence lengths match the expected scalar lengths."""
-    if jmd_n_len is not None:
-        wrong = df_seq[df_seq[ut.COL_JMD_N].apply(len) != jmd_n_len]
-        if len(wrong) > 0:
-            raise ValueError(
-                f"'jmd_n' length does not match 'jmd_n_len' ({jmd_n_len}) "
-                f"for {len(wrong)} entries.")
-    if jmd_c_len is not None:
-        wrong = df_seq[df_seq[ut.COL_JMD_C].apply(len) != jmd_c_len]
-        if len(wrong) > 0:
-            raise ValueError(
-                f"'jmd_c' length does not match 'jmd_c_len' ({jmd_c_len}) "
-                f"for {len(wrong)} entries.")
-
-
-def _check_tmd_positions(df_seq, jmd_n_len=None, jmd_c_len=None):
-    """Check that tmd_start and tmd_stop are consistent with jmd_n_len and jmd_c_len."""
-    if jmd_n_len is not None:
-        wrong = df_seq[df_seq[ut.COL_TMD_START] != jmd_n_len + 1]
-        if len(wrong) > 0:
-            raise ValueError(
-                f"'tmd_start' is inconsistent with 'jmd_n_len' ({jmd_n_len}): "
-                f"expected {jmd_n_len + 1} for {len(wrong)} entries.")
-    if jmd_c_len is not None:
-        seq_lens = df_seq[ut.COL_SEQ].apply(len)
-        wrong = df_seq[(seq_lens - df_seq[ut.COL_TMD_STOP]) != jmd_c_len]
-        if len(wrong) > 0:
-            raise ValueError(
-                f"Residues after 'tmd_stop' do not match 'jmd_c_len' ({jmd_c_len}) "
-                f"for {len(wrong)} entries.")
 
 
 def check_match_df_seq_jmd_len(df_seq=None, jmd_n_len=None, jmd_c_len=None):
@@ -262,21 +229,17 @@ def check_match_df_seq_jmd_len(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     # Get 'tmd_start' and 'tmd_stop'
     elif [jmd_n_len, jmd_c_len].count(None) == 0:
         if part_based and not pos_based:
-            _check_jmd_seq_len(df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
             df_seq[ut.COL_SEQ] = df_seq[ut.COL_JMD_N] + df_seq[ut.COL_TMD] + df_seq[ut.COL_JMD_C]
             df_seq[[ut.COL_TMD_START, ut.COL_TMD_STOP]] = df_seq.apply(_get_tmd_positions, axis=1)
-            _check_tmd_positions(df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     if not pos_based and not part_based:
         if seq_tmd_based:
             df_seq[[ut.COL_TMD_START, ut.COL_TMD_STOP]] = df_seq.apply(_get_tmd_positions, axis=1)
-            _check_tmd_positions(df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         elif seq_based:
             tmd_start = 1 + jmd_n_len
             list_seq = []
             list_tmd_stop = []
             for seq in df_seq[ut.COL_SEQ]:
-                original_len = len(seq)
-                # If 'jmd_n_len' and 'jmd_c_len' exceed the sequence length, sequence is adjusted using gaps.
+                # If 'jmd_n_len' and 'jmd_c_len' exceed the sequence length, sequence is adjusted using gaps
                 dif_jmd_n_len_seq = jmd_n_len - len(seq)
                 if dif_jmd_n_len_seq >= 0:
                     # Add one gap for TMD
@@ -292,11 +255,6 @@ def check_match_df_seq_jmd_len(df_seq=None, jmd_n_len=None, jmd_c_len=None):
                     tmd_stop = tmd_start
                 else:
                     tmd_stop = len(seq) - jmd_c_len
-                # Ensure TMD has at least 1 residue
-                if tmd_stop <= tmd_start:
-                    raise ValueError(
-                        f"Sequence (n={original_len}) is too short for "
-                        f"jmd_n_len={jmd_n_len} + TMD(>=1) + jmd_c_len={jmd_c_len}.")
                 list_seq.append(seq)
                 list_tmd_stop.append(tmd_stop)
             df_seq[ut.COL_TMD_START] = tmd_start
