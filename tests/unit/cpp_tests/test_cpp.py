@@ -14,7 +14,7 @@ settings.load_profile("ci")
 
 STR_SEGMENT = "Segment"
 STR_PATTERN = "Pattern"
-STR_PERIODIC_PATTERN = "PeriodicPattner"
+STR_PERIODIC_PATTERN = "PeriodicPattern"
 
 
 def get_df_parts():
