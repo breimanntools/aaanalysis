@@ -8,9 +8,6 @@ import warnings
 import aaanalysis.utils as ut
 from .cpp.utils_feature import get_part_positions
 
-# TODO!! check tmd_start and tmd_stop within sequence length !!
-
-
 # Helper functions
 def _return_empty_string(val=None):
     val = "" if val is None else val
@@ -23,7 +20,7 @@ def _get_max_pos_split(split=None):
         n_max = int(split.split(",")[1].replace(")", ""))
     elif ut.STR_PERIODIC_PATTERN in split:
         n_max = int(split.split(",")[-1].replace(")", ""))
-    elif ut.STR_PATTERN:
+    elif ut.STR_PATTERN in split:
         n_max = int(split.split(",")[-1].replace(")", ""))
     else:
         raise ValueError(f"Wrong 'split' ({split})")
@@ -105,7 +102,7 @@ def check_split_kws(split_kws=None, accept_none=True):
         steps_pattern, len_max = pattern_args["steps"], pattern_args["len_max"]
         ut.check_number_range(name=f"{ut.STR_PATTERN}[n_min]", val=n_min, just_int=True, min_val=1)
         ut.check_number_range(name=f"{ut.STR_PATTERN}[n_max]", val=n_max, just_int=True, min_val=1)
-        ut.check_number_range(name=f"{ut.STR_PATTERN}[len_max]", val=n_max, just_int=True, min_val=1)
+        ut.check_number_range(name=f"{ut.STR_PATTERN}[len_max]", val=len_max, just_int=True, min_val=1)
         if n_min > n_max:
             raise ValueError(f"For '{ut.STR_PATTERN}', 'n_min' ({n_min}) should be smaller or equal to 'n_max' ({n_max})")
         if not isinstance(steps_pattern, list) or len(steps_pattern) < 1:
@@ -154,7 +151,7 @@ def check_parts_len(tmd_len=None, jmd_n_len=None, jmd_c_len=None,
             if jmd_n_len is None or jmd_n_len != len(jmd_n_seq):
                 raise ValueError(f"Not matching of 'jmd_n_len' ({jmd_n_len}) and 'jmd_n_seq' ({jmd_n_seq})")
             if jmd_c_len is None or jmd_c_len != len(jmd_c_seq):
-                raise ValueError(f"Not matching of 'jmd_c_len' ({jmd_c_len}) and 'jmd_n_seq' ({jmd_c_seq})")
+                raise ValueError(f"Not matching of 'jmd_c_len' ({jmd_c_len}) and 'jmd_c_seq' ({jmd_c_seq})")
         tmd_len, jmd_n_len, jmd_c_len = len(tmd_seq), len(jmd_n_seq), len(jmd_c_seq)
     else:
         tmd_seq = jmd_n_seq = jmd_c_seq = None
@@ -214,6 +211,39 @@ def _get_tmd_positions(row):
     return pd.Series([tmd_start, tmd_stop])
 
 
+def _check_jmd_seq_len(df_seq, jmd_n_len=None, jmd_c_len=None):
+    """Check that jmd_n and jmd_c sequence lengths match the expected scalar lengths."""
+    if jmd_n_len is not None:
+        wrong = df_seq[df_seq[ut.COL_JMD_N].apply(len) != jmd_n_len]
+        if len(wrong) > 0:
+            raise ValueError(
+                f"'jmd_n' length does not match 'jmd_n_len' ({jmd_n_len}) "
+                f"for {len(wrong)} entries.")
+    if jmd_c_len is not None:
+        wrong = df_seq[df_seq[ut.COL_JMD_C].apply(len) != jmd_c_len]
+        if len(wrong) > 0:
+            raise ValueError(
+                f"'jmd_c' length does not match 'jmd_c_len' ({jmd_c_len}) "
+                f"for {len(wrong)} entries.")
+
+
+def _check_tmd_positions(df_seq, jmd_n_len=None, jmd_c_len=None):
+    """Check that tmd_start and tmd_stop are consistent with jmd_n_len and jmd_c_len."""
+    if jmd_n_len is not None:
+        wrong = df_seq[df_seq[ut.COL_TMD_START] != jmd_n_len + 1]
+        if len(wrong) > 0:
+            raise ValueError(
+                f"'tmd_start' is inconsistent with 'jmd_n_len' ({jmd_n_len}): "
+                f"expected {jmd_n_len + 1} for {len(wrong)} entries.")
+    if jmd_c_len is not None:
+        seq_lens = df_seq[ut.COL_SEQ].apply(len)
+        wrong = df_seq[(seq_lens - df_seq[ut.COL_TMD_STOP]) != jmd_c_len]
+        if len(wrong) > 0:
+            raise ValueError(
+                f"Residues after 'tmd_stop' do not match 'jmd_c_len' ({jmd_c_len}) "
+                f"for {len(wrong)} entries.")
+
+
 def check_match_df_seq_jmd_len(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     """Check matching of df_seq and jmd lengths."""
     df_seq = df_seq.copy()
@@ -232,16 +262,20 @@ def check_match_df_seq_jmd_len(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     # Get 'tmd_start' and 'tmd_stop'
     elif [jmd_n_len, jmd_c_len].count(None) == 0:
         if part_based and not pos_based:
+            _check_jmd_seq_len(df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
             df_seq[ut.COL_SEQ] = df_seq[ut.COL_JMD_N] + df_seq[ut.COL_TMD] + df_seq[ut.COL_JMD_C]
             df_seq[[ut.COL_TMD_START, ut.COL_TMD_STOP]] = df_seq.apply(_get_tmd_positions, axis=1)
+            _check_tmd_positions(df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     if not pos_based and not part_based:
         if seq_tmd_based:
             df_seq[[ut.COL_TMD_START, ut.COL_TMD_STOP]] = df_seq.apply(_get_tmd_positions, axis=1)
+            _check_tmd_positions(df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         elif seq_based:
             tmd_start = 1 + jmd_n_len
             list_seq = []
             list_tmd_stop = []
             for seq in df_seq[ut.COL_SEQ]:
+                original_len = len(seq)
                 # If 'jmd_n_len' and 'jmd_c_len' exceed the sequence length, sequence is adjusted using gaps.
                 dif_jmd_n_len_seq = jmd_n_len - len(seq)
                 if dif_jmd_n_len_seq >= 0:
@@ -258,6 +292,11 @@ def check_match_df_seq_jmd_len(df_seq=None, jmd_n_len=None, jmd_c_len=None):
                     tmd_stop = tmd_start
                 else:
                     tmd_stop = len(seq) - jmd_c_len
+                # Ensure TMD has at least 1 residue
+                if tmd_stop <= tmd_start:
+                    raise ValueError(
+                        f"Sequence (n={original_len}) is too short for "
+                        f"jmd_n_len={jmd_n_len} + TMD(>=1) + jmd_c_len={jmd_c_len}.")
                 list_seq.append(seq)
                 list_tmd_stop.append(tmd_stop)
             df_seq[ut.COL_TMD_START] = tmd_start
@@ -285,14 +324,6 @@ def check_match_df_parts_features(df_parts=None, features=None):
                 raise ValueError(
                     f"For '{feature}' feature (n_min={n_min}),"
                     f"\n  following sequence 'parts' are too short: {list_seq}")
-
-
-def check_match_df_parts_list_parts(df_parts=None, list_parts=None):
-    """Check match between df_parts and list of parts"""
-    if list_parts is not None and df_parts is not None:
-        list_parts = ut.check_list_like(name="list_parts", val=list_parts, accept_str=True, convert=True)
-        missing_parts = [part.lower() for part in list_parts if part.lower() is not list(df_parts)]
-        raise ValueError(f"'part' ({missing_parts}) must be in columns of 'df_parts': {list(df_parts)}")
 
 
 def check_match_df_parts_split_kws(df_parts=None, split_kws=None):
