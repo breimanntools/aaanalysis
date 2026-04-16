@@ -161,22 +161,24 @@ class TestFilterSeq:
                 df_clust = aa.filter_seq(df_seq=df_seq, n_jobs=n_jobs, method="mmseqs")
                 assert isinstance(df_clust, pd.DataFrame)
 
-    def test_valid_sort_clusters(self):
-        """Test a valid 'sort_clusters' parameter."""
+    def test_valid_cluster_order(self):
+        """Test a valid 'cluster_order' parameter."""
         df_seq = aa.load_dataset(name="DOM_GSEC", n=50)
-        df_clust = aa.filter_seq(df_seq=df_seq, sort_clusters=True, method="cd-hit")
-        assert isinstance(df_clust, pd.DataFrame)
-        df_clust = aa.filter_seq(df_seq=df_seq, sort_clusters=True, method="mmseqs")
-        assert isinstance(df_clust, pd.DataFrame)
+        list_cluster_order = [None, "size", "input"]
+        for cluster_oder in list_cluster_order:
+            df_clust = aa.filter_seq(df_seq=df_seq, cluster_order=cluster_oder, method="cd-hit")
+            assert isinstance(df_clust, pd.DataFrame)
+            df_clust = aa.filter_seq(df_seq=df_seq, cluster_order=cluster_oder, method="mmseqs")
+            assert isinstance(df_clust, pd.DataFrame)
 
-    def test_invalid_sort_clusters(self):
-        """Test an invalid 'sort_clusters' parameter."""
+    def test_invalid_cluster_order(self):
+        """Test an invalid 'cluster_order' parameter."""
         df_seq = aa.load_dataset(name="DOM_GSEC", n=50)
-        for sort_cluster in [None, 0, "invalid"]:
+        for cluster_order in [False, 0, "invalid"]:
             with pytest.raises(ValueError):
-                aa.filter_seq(df_seq=df_seq, sort_clusters=sort_cluster, method="cd-hit")
+                aa.filter_seq(df_seq=df_seq, cluster_order=cluster_order, method="cd-hit")
             with pytest.raises(ValueError):
-                aa.filter_seq(df_seq=df_seq, sort_clusters=sort_cluster, method="mmseqs")
+                aa.filter_seq(df_seq=df_seq, cluster_order=cluster_order, method="mmseqs")
 
 
 # Complex Cases

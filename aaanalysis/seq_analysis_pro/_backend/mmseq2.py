@@ -19,21 +19,17 @@ def _get_df_mmseq(cluster_tsv):
     return df
 
 
-def _get_df_clust_mmseq(df_mmseq=None, df_seq=None, sort_clusters=False):
+def _get_df_clust_mmseq(df_mmseq=None, df_seq=None, cluster_order=False):
     """Get DataFrame with clustering information (consistent with CD-Hit output)"""
     df_seq = df_seq.copy()
     list_seq = df_seq[ut.COL_SEQ].to_list()
     dict_id_seq = dict(zip(df_seq[ut.COL_ENTRY].to_list(), list_seq))
+
+    # Native MMseqs target order
     list_ids = df_mmseq[COL_TARGET].to_list()
     dict_id_rep = dict(zip(list_ids, df_mmseq[ut.COL_IS_REP]))
 
-    # Pre-process sequence DataFrame
-    if sort_clusters:
-        df_seq["len_seq"] = [len(x) for x in list_seq]
-        df_seq = df_seq.sort_values(by="len_seq", ascending=False)
-        list_ids = df_seq[ut.COL_ENTRY].to_list()
-
-    # Generate clusters
+    # Generate cluster IDs in native representative order
     dict_clust = {}
     clust_id = 0
     for entry_target in list_ids:
@@ -41,7 +37,7 @@ def _get_df_clust_mmseq(df_mmseq=None, df_seq=None, sort_clusters=False):
             dict_clust[entry_target] = clust_id
             clust_id += 1
 
-    # Build the cluster DataFrame
+    # Build the cluster DataFrame in native MMseqs order
     list_entries = []
     for entry_target in list_ids:
         entry_query = df_mmseq[df_mmseq[COL_TARGET] == entry_target][COL_QUERY].values[0]
@@ -53,15 +49,40 @@ def _get_df_clust_mmseq(df_mmseq=None, df_seq=None, sort_clusters=False):
             identity = 100.0
             is_rep = 1
         list_entries.append([entry_target, cluster_id, identity, is_rep])
-    df_clust = pd.DataFrame(list_entries, columns=[ut.COL_ENTRY, ut.COL_CLUST, ut.COL_REP_IDEN, ut.COL_IS_REP])
-    df_clust = df_clust.sort_values(by=ut.COL_CLUST).reset_index(drop=True)
+
+    df_clust = pd.DataFrame(
+        list_entries,
+        columns=[ut.COL_ENTRY, ut.COL_CLUST, ut.COL_REP_IDEN, ut.COL_IS_REP]
+    )
+
+    # Reorder output
+    if cluster_order == "size":
+        clust_sizes = df_clust[ut.COL_CLUST].value_counts().to_dict()
+        df_clust["_clust_size"] = df_clust[ut.COL_CLUST].map(clust_sizes)
+        df_clust = df_clust.sort_values(
+            by=["_clust_size", ut.COL_CLUST],
+            ascending=[False, True],
+            kind="stable"
+        ).drop(columns="_clust_size").reset_index(drop=True)
+
+    elif cluster_order == "input":
+        entry_to_pos = {entry: i for i, entry in enumerate(df_seq[ut.COL_ENTRY])}
+        df_clust["_input_order"] = df_clust[ut.COL_ENTRY].map(entry_to_pos)
+        df_clust = df_clust.sort_values(
+            by="_input_order",
+            kind="stable"
+        ).drop(columns="_input_order").reset_index(drop=True)
+
+    else:
+        df_clust = df_clust.reset_index(drop=True)
+
     return df_clust
 
 
 # II Main functions
 def run_mmseqs2(df_seq=None, similarity_threshold=0.7, word_size=None,
                 coverage_long=None, coverage_short=None,
-                n_jobs=None, sort_clusters=False, verbose=False):
+                n_jobs=None, cluster_order=None, verbose=False):
     """Run MMseqs2 command to perform redundancy-reduction via clustering"""
     # Create temporary folder for input and temporary output
     result_prefix = "mmseq_"
@@ -101,7 +122,7 @@ def run_mmseqs2(df_seq=None, similarity_threshold=0.7, word_size=None,
 
     # Convert MMseqs2 output to clustering DataFrame
     df_mmseq = _get_df_mmseq(cluster_tsv)
-    df_clust = _get_df_clust_mmseq(df_mmseq=df_mmseq, df_seq=df_seq, sort_clusters=sort_clusters)
+    df_clust = _get_df_clust_mmseq(df_mmseq=df_mmseq, df_seq=df_seq, cluster_order=cluster_order)
 
     # Remove temporary file
     remove_temp(path=temp_dir)

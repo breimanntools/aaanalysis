@@ -56,7 +56,7 @@ def run_cd_hit(df_seq=None,
                similarity_threshold=0.7, word_size=None,
                global_identity=True,
                coverage_long=None, coverage_short=None,
-               n_jobs=None, sort_clusters=False, verbose=False):
+               n_jobs=None, cluster_order=None, verbose=False):
     """Run CD-HIT command to perform redundancy-reduction via clustering"""
     # Create temporary folder for input and temporary output
     result_prefix = "cdhit_"
@@ -84,7 +84,7 @@ def run_cd_hit(df_seq=None,
         cmd.extend(["-aL", str(coverage_long)])
     if coverage_short is not None:
         cmd.extend(["-aS", str(coverage_short)])
-    if sort_clusters:
+    if cluster_order == "size":
         cmd.extend(["-sc", "1"])
 
     # Run CD-HIT command
@@ -95,6 +95,14 @@ def run_cd_hit(df_seq=None,
     # Convert CD-Hit output to clustering DataFrame
     file_cd_hit_out = file_out + ".clstr"
     df_clust = _get_df_clust_cd_hit(file_cd_hit_out=file_cd_hit_out)
+
+    # Reorder output if requested
+    if cluster_order == "input":
+        entry_to_pos = {entry: i for i, entry in enumerate(df_seq[ut.COL_ENTRY])}
+        df_clust["_input_order"] = df_clust[ut.COL_ENTRY].map(entry_to_pos)
+        df_clust = df_clust.sort_values("_input_order", kind="stable").drop(columns="_input_order")
+        df_clust = df_clust.reset_index(drop=True)
+
     # Remove temporary file
     remove_temp(path=temp_dir)
     return df_clust

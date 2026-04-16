@@ -52,7 +52,7 @@ def filter_seq(df_seq: pd.DataFrame = None,
                global_identity: bool = True,
                coverage_long: Optional[float] = None,
                coverage_short: Optional[float] = None,
-               sort_clusters: bool = False,
+               cluster_order: Literal[None, "size", "input"] = None,
                n_jobs: int = 1,
                verbose: bool = False
                ) -> pd.DataFrame:
@@ -94,8 +94,15 @@ def filter_seq(df_seq: pd.DataFrame = None,
     coverage_short : float, optional
         Minimum percentage [0.1-1.0] of the shorter sequence that must be included in the alignment.
         Higher values increase strictness.
-    sort_clusters : bool, default=False
-        If ``True``, sort clusters by the number of contained sequences.
+    cluster_order : {None, 'size', 'input'}, default=None
+        Defines the ordering of sequences in the output DataFrame:
+
+        - ``None``: preserve the default order returned by the clustering algorithm.
+        - ``'size'``: group clusters and sort them by decreasing cluster size.
+        - ``'input'``: reorder sequences to match the original input order.
+
+        Use ``'input'`` when clustering results should remain aligned with downstream analyses based on the
+        original sequence order.
     n_jobs : int, None, or -1, default=1
         Number of CPU cores used for multiprocessing. If ``-1`` or ``None``, the number is set to all available cores.
     verbose : bool, default=False
@@ -166,15 +173,20 @@ def filter_seq(df_seq: pd.DataFrame = None,
     ut.check_number_range(name="coverage_short", val=coverage_short, min_val=0.1, max_val=1,
                           accept_none=True, just_int=False)
     n_jobs = ut.check_n_jobs(n_jobs=n_jobs if n_jobs is not None else -1)
-    ut.check_bool(name="sort_clusters", val=sort_clusters)
-    ut.check_bool(name="verbose", val=sort_clusters)
+    ut.check_str_options(name="cluster_order", val=cluster_order, accept_none=True,
+                         list_str_options=["size", "input"])
+    ut.check_bool(name="verbose", val=verbose)
     check_match_identity_coverage(global_identity=global_identity,
                                   coverage_short=coverage_short,
                                   coverage_long=coverage_long)
     # Run filtering
-    args = dict(similarity_threshold=similarity_threshold, word_size=word_size,
-                coverage_long=coverage_long, coverage_short=coverage_short,
-                n_jobs=n_jobs, sort_clusters=sort_clusters, verbose=verbose)
+    args = dict(similarity_threshold=similarity_threshold,
+                word_size=word_size,
+                coverage_long=coverage_long,
+                coverage_short=coverage_short,
+                n_jobs=n_jobs,
+                cluster_order=cluster_order,
+                verbose=verbose)
     if method == "cd-hit":
         df_clust = run_cd_hit(df_seq=df_seq, global_identity=global_identity, **args)
     else:
