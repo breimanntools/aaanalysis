@@ -45,7 +45,7 @@ dependencies = [
   "matplotlib>=3.5.3",
   "numpy>=1.24.4",
   "openpyxl>=3.1.5",
-  "packaging>=24.2",
+  "packaging>=26.1",
   "pandas>=2.2.3",
   "patsy>=1.0.1",
   "Pillow>=12.0.0",
@@ -89,9 +89,9 @@ dev = [
   "ipython>=8.18.1",
   "pandoc==2.4",
   "poetry>=2.0.1",
-  "pytest>=8.3.4",
-  "pytest-cov>=5.0.0",
-  "pytest-mpl==0.17.0",
+  "pytest>=9.0.3",
+  "pytest-cov>=7.1.0",
+  "pytest-mpl==0.19.0",
 ]
 
 [project.urls]
