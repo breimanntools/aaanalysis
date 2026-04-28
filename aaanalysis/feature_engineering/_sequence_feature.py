@@ -216,13 +216,15 @@ class SequenceFeature:
         * If ``ext_len`` in aaanalysis.options is not set to > 0, following parts containing extended tmd are not
           considered for ``all_parts=True``: ['tmd_e', 'ext_c', 'ext_n', 'ext_n_tmd_n', 'tmd_c_ext_c'].
         * ``jmd_n_len`` and ``jmd_c_len`` must be both given, except for the part-based format.
+        * ``tmd_start`` and ``tmd_stop`` use **1-based indexing** to follow standard biological annotation conventions 
+          (e.g., UniProt), where residue positions start at 1. This allows direct use of annotated positions without conversion.
 
         Formats for ``df_seq`` are differentiated by their respective columns:
 
         **Position-based format**
             - 'sequence': The complete amino acid sequence.
-            - 'tmd_start': Starting positions of the TMD in the sequence.
-            - 'tmd_stop': Ending positions of the TMD in the sequence.
+            - 'tmd_start': Starting position of the TMD in the sequence (1-based, inclusive).
+            - 'tmd_stop': Ending position of the TMD in the sequence (1-based, inclusive).
 
         **Part-based format**
             - 'jmd_n': Amino acid sequence for JMD-N.
