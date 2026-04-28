@@ -1,7 +1,7 @@
 ..
    Developer Notes:
 
-    TODO if diagram is ready
+    LEGACY-TODO if diagram is ready
     **Entry Points**:
     Our toolkit bridges seamlessly with external libraries, enhancing its versatility and integration capabilities
     in diverse research environments.

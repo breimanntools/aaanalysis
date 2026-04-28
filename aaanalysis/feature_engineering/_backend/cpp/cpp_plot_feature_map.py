@@ -160,7 +160,6 @@ def add_feat_importance_legend(ax=None,
 
 
 # II Main Functions
-# TODO stacked bar charts for SHAP (later)
 def plot_feature_map(df_feat=None, df_cat=None,
                      col_cat="subcategory", col_val="mean_dif", col_imp="feat_importance",
                      name_test="TEST", name_ref="REF",

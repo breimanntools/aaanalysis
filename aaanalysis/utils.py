@@ -497,6 +497,8 @@ def check_df_seq(df_seq=None, accept_none=False):
     if pos_based:
         for entry, tmd_start, tmd_stop, seq in zip(df_seq[COL_ENTRY], df_seq[COL_TMD_START],
                                                    df_seq[COL_TMD_STOP], df_seq[COL_SEQ]):
+            # Check if sequence is valid
+            check_str(name=f"'sequence' (entry: '{entry}')", val=seq, accept_none=False)
             # Check if valid integers
             args = dict(min_val=1, just_int=True)
             check_number_range(name=f"'tmd_start'={tmd_start} (entry: '{entry}')", val=tmd_start, **args)
@@ -505,7 +507,7 @@ def check_df_seq(df_seq=None, accept_none=False):
             if tmd_start > tmd_stop:
                 raise ValueError(f"'tmd_start'={tmd_start} should be <= 'tmd_stop'={tmd_stop} (entry: '{entry}')")
             # Check if tmd_start and tmd_stop smaller than sequence length
-            len_seq = len(seq)  # TODO check first if seq is string and not float (if nan is given)
+            len_seq = len(seq)
             if tmd_start > len_seq:
                 raise ValueError(f"'tmd_start'={tmd_start} should be <= sequence length (n={len_seq}) (entry: '{entry}')")
             if tmd_stop > len_seq:
