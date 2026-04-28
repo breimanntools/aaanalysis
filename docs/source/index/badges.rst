@@ -5,7 +5,7 @@
 
 
 .. =========================
-.. Row 1: Distribution
+.. Distribution
 .. =========================
 
 .. |PyPI Status| image:: https://img.shields.io/pypi/status/aaanalysis.svg
@@ -20,14 +20,14 @@
    :target: https://pypi.org/project/aaanalysis/
    :alt: Supported Python Versions
 
-
-.. =========================
-.. Row 2: Quality
-.. =========================
-
 .. |License| image:: https://img.shields.io/github/license/breimanntools/aaanalysis.svg
    :target: https://github.com/breimanntools/aaanalysis/blob/master/LICENSE
    :alt: License
+
+
+.. =========================
+.. Status
+.. =========================
 
 .. |Unit Tests| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/main.yml/badge.svg
    :target: https://github.com/breimanntools/aaanalysis/actions/workflows/main.yml
@@ -41,22 +41,17 @@
    :target: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml
    :alt: CodeQL
 
-
-.. =========================
-.. Row 3: Adoption & Docs
-.. =========================
-
-.. |GitHub Stars| image:: https://img.shields.io/github/stars/breimanntools/aaanalysis.svg?style=social
-   :target: https://github.com/breimanntools/aaanalysis
-   :alt: GitHub Stars
+.. |Documentation Status| image:: https://readthedocs.org/projects/aaanalysis/badge/?version=latest
+   :target: https://aaanalysis.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 
 .. |Downloads| image:: https://pepy.tech/badge/aaanalysis
    :target: https://pepy.tech/project/aaanalysis
    :alt: Downloads
 
-.. |Documentation Status| image:: https://readthedocs.org/projects/aaanalysis/badge/?version=latest
-   :target: https://aaanalysis.readthedocs.io/en/latest/?badge=latest
-   :alt: Documentation Status
+.. |GitHub Stars| image:: https://img.shields.io/github/stars/breimanntools/aaanalysis.svg?style=social
+   :target: https://github.com/breimanntools/aaanalysis
+   :alt: GitHub Stars
 
 
 .. =========================
@@ -64,12 +59,10 @@
 .. =========================
 
 .. list-table::
-   :widths: 20 80
+   :widths: 15 85
    :header-rows: 1
 
    * - **Distribution**
-     - |PyPI Status| |PyPI Version| |Supported Python Versions|
-   * - **Quality**
-     - |License| |Unit Tests| |Codecov| |CodeQL|
-   * - **Adoption**
-     - |GitHub Stars| |Downloads| |Documentation Status|
+     - |PyPI Status| |PyPI Version| |Supported Python Versions| |License|
+   * - **Status**
+     - |Unit Tests| |Codecov| |CodeQL| |Documentation Status| |Downloads| |GitHub Stars|

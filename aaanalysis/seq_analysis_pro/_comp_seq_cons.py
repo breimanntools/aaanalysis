@@ -40,8 +40,6 @@ def normalize_scores(scores: list) -> np.ndarray:
     return (max_val - scores) / max_val if max_val else scores
 
 
-# TODO compute sequence conservation per position (input df_seq or df_parts)
-# TODO interface to biopython (use different tools to get MSA, MSA for conersvation)
 # II Main Functions
 def get_msa(uniprot_id: str, output_file: str = "msa.fasta") -> str:
     """
