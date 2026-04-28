@@ -8,9 +8,9 @@
 .. Distribution
 .. =========================
 
-.. |PyPI Status| image:: https://img.shields.io/pypi/status/aaanalysis.svg
-   :target: https://pypi.org/project/aaanalysis/
-   :alt: PyPI - Status
+.. |License| image:: https://img.shields.io/github/license/breimanntools/aaanalysis.svg
+   :target: https://github.com/breimanntools/aaanalysis/blob/master/LICENSE
+   :alt: License
 
 .. |PyPI Version| image:: https://img.shields.io/pypi/v/aaanalysis.svg
    :target: https://pypi.org/project/aaanalysis/
@@ -20,14 +20,21 @@
    :target: https://pypi.org/project/aaanalysis/
    :alt: Supported Python Versions
 
-.. |License| image:: https://img.shields.io/github/license/breimanntools/aaanalysis.svg
-   :target: https://github.com/breimanntools/aaanalysis/blob/master/LICENSE
-   :alt: License
+.. |Downloads| image:: https://pepy.tech/badge/aaanalysis
+   :target: https://pepy.tech/project/aaanalysis
+   :alt: Downloads
 
+.. |GitHub Stars| image:: https://img.shields.io/github/stars/breimanntools/aaanalysis.svg?style=social
+   :target: https://github.com/breimanntools/aaanalysis
+   :alt: GitHub Stars
 
 .. =========================
 .. Status
 .. =========================
+
+.. |PyPI Status| image:: https://img.shields.io/pypi/status/aaanalysis.svg
+   :target: https://pypi.org/project/aaanalysis/
+   :alt: PyPI - Status
 
 .. |Unit Tests| image:: https://github.com/breimanntools/aaanalysis/actions/workflows/main.yml/badge.svg
    :target: https://github.com/breimanntools/aaanalysis/actions/workflows/main.yml
@@ -45,14 +52,6 @@
    :target: https://aaanalysis.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-.. |Downloads| image:: https://pepy.tech/badge/aaanalysis
-   :target: https://pepy.tech/project/aaanalysis
-   :alt: Downloads
-
-.. |GitHub Stars| image:: https://img.shields.io/github/stars/breimanntools/aaanalysis.svg?style=social
-   :target: https://github.com/breimanntools/aaanalysis
-   :alt: GitHub Stars
-
 
 .. =========================
 .. Table
@@ -63,6 +62,6 @@
    :header-rows: 1
 
    * - **Distribution**
-     - |PyPI Status| |PyPI Version| |Supported Python Versions| |License|
-   * - **Status**
-     - |Unit Tests| |Codecov| |CodeQL| |Documentation Status| |Downloads| |GitHub Stars|
+     - |License| |PyPI Version| |Supported Python Versions| |Downloads| |GitHub Stars|
+   * - **Quality**
+     - |PyPI Status| |Unit Tests| |Codecov| |CodeQL| |Documentation Status| 

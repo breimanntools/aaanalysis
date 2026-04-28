@@ -19,7 +19,7 @@ resolution-markers = [
 
 [[package]]
 name = "aaanalysis"
-version = "1.0.2"
+version = "1.0.3"
 source = { editable = "." }
 dependencies = [
     { name = "cycler" },
@@ -2590,7 +2590,7 @@ wheels = [
 
 [[package]]
 name = "patsy"
-version = "1.0.2"
+version = "1.0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
