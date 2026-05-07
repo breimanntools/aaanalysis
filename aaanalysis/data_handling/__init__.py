@@ -4,6 +4,7 @@ from ._load_features import load_features
 from ._read_fasta import read_fasta
 from ._to_fasta import to_fasta
 from ._seq_preproc import SequencePreprocessor
+from ._negative_sampler import NegativeSampler, SamplingFilters
 
 __all__ = [
     "load_dataset",
@@ -12,4 +13,6 @@ __all__ = [
     "read_fasta",
     "to_fasta",
     "SequencePreprocessor",
+    "NegativeSampler",
+    "SamplingFilters",
 ]

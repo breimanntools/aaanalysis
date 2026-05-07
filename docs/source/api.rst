@@ -32,6 +32,8 @@ Data Handling
     comp_seq_sim
     filter_seq
     SequencePreprocessor
+    SamplingFilters
+    NegativeSampler
 
 .. _sequence_analysis_api:
 

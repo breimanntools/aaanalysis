@@ -1,6 +1,7 @@
 from .data_handling import (load_dataset, load_scales, load_features,
                             read_fasta, to_fasta,
-                            SequencePreprocessor)
+                            SequencePreprocessor, NegativeSampler,
+                            SamplingFilters)
 from .seq_analysis import AAlogo, AAlogoPlot
 from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
@@ -20,6 +21,8 @@ __all__ = [
     "read_fasta",
     "to_fasta",
     "SequencePreprocessor",
+    "NegativeSampler",
+    "SamplingFilters",
     # "comp_seq_sim",       BioPython
     # "filter_seq",         BioPython
     "AAlogo",
