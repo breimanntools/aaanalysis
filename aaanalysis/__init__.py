@@ -1,6 +1,6 @@
 from .data_handling import (load_dataset, load_scales, load_features,
                             read_fasta, to_fasta,
-                            SequencePreprocessor)
+                            SequencePreprocessor, AAWindowSampler)
 from .seq_analysis import AAlogo, AAlogoPlot
 from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
@@ -20,6 +20,7 @@ __all__ = [
     "read_fasta",
     "to_fasta",
     "SequencePreprocessor",
+    "AAWindowSampler",
     # "comp_seq_sim",       BioPython
     # "filter_seq",         BioPython
     "AAlogo",
@@ -110,6 +111,23 @@ try:
 except ImportError as e:
     filter_seq = None
     globals()["filter_seq"] = missing_feature_stub("filter_seq", e, mode="pro")
+
+
+try:
+    from .seq_analysis_pro import scan_motif
+    __all__.append("scan_motif")
+except ImportError as e:
+    scan_motif = None
+    globals()["scan_motif"] = missing_feature_stub(
+        "scan_motif", e, mode="pro")
+
+
+try:
+    from .struct_analysis_pro import get_dssp
+    __all__.append("get_dssp")
+except ImportError as e:
+    get_dssp = None
+    globals()["get_dssp"] = missing_feature_stub("get_dssp", e, mode="pro")
 
 
 try:

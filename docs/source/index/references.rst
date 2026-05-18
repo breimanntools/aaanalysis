@@ -47,6 +47,14 @@ Sequence Algorithms
    *MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets*,
    `Nature Biotechnology <https://www.nature.com/articles/nbt.3988>`__.
 
+.. [Bailey09] Bailey T.L., Boden M., Buske F.A., Frith M., Grant C.E., Clementi L., Ren J., Li W.W., Noble W.S. (2009),
+   *MEME SUITE: tools for motif discovery and searching*,
+   `Nucleic Acids Research <https://academic.oup.com/nar/article/37/suppl_2/W202/1135092>`__.
+
+.. [Grant11] Grant C.E., Bailey T.L., Noble W.S. (2011),
+   *FIMO: scanning for occurrences of a given motif*,
+   `Bioinformatics <https://academic.oup.com/bioinformatics/article/27/7/1017/231841>`__.
+
 Machine Learning
 ----------------
 .. [Hastie09] Hastie, Tibshirani, and Friedman (2009),
@@ -55,6 +63,10 @@ Machine Learning
 
 Positive-Unlabeled Learning
 ---------------------------
+.. [ElkanNoto08] Elkan and Noto (2008),
+   *Learning classifiers from only positive and unlabeled data*,
+   `KDD <https://doi.org/10.1145/1401890.1401920>`__.
+
 .. [BekkerDavis20] Bekker and Davis (2020),
    *Learning from positive and unlabeled data: a survey*,
    `Machine Learning <https://doi.org/10.1007/s10994-020-05877-5>`__.
@@ -102,6 +114,32 @@ Datasets and Benchmarks
 .. [Yang21] Yang *et al.* (2021),
    *Granular multiple kernel learning for identifying RNA-binding protein residues via integrating sequence and structure information*,
    `Neural Computation and Applications <https://dl.acm.org/doi/10.1007/s00521-020-05573-4>`__.
+
+Sampling Strategies
+-------------------
+.. [Boyd10Cascleave] Boyd *et al.* (2010),
+   *Cascleave: towards more accurate prediction of caspase substrate cleavage sites*,
+   `Bioinformatics <https://doi.org/10.1093/bioinformatics/btq043>`__.
+
+.. [Song12] Song *et al.* (2012),
+   *PROSPER: an integrated feature-based tool for predicting protease substrate cleavage sites*,
+   `PLoS ONE <https://doi.org/10.1371/journal.pone.0050300>`__.
+
+.. [Fu14ScreenCap3] Fu *et al.* (2014),
+   *ScreenCap3: improving prediction of caspase-3 cleavage sites using experimentally verified non-cleavage sites*,
+   `Proteomics <https://doi.org/10.1002/pmic.201300525>`__.
+
+.. [Rawlings16] Rawlings *et al.* (2016),
+   *Peptidase specificity from the substrate cleavage collection in the MEROPS database and a tool to measure cleavage site conservation*,
+   `Biochimie <https://doi.org/10.1016/j.biochi.2015.10.003>`__.
+
+.. [Li20Procleave] Li *et al.* (2020),
+   *Procleave: predicting protease-specific substrate cleavage sites by combining sequence and structural information*,
+   `Genomics, Proteomics & Bioinformatics <https://doi.org/10.1016/j.gpb.2019.08.002>`__.
+
+.. [LiuDeber99] Liu L.-P., Deber C.M. (1999),
+   *Combining hydrophobicity and helicity: a novel approach to membrane protein structure prediction*,
+   `Bioorganic & Medicinal Chemistry <https://www.sciencedirect.com/science/article/pii/S0968089698002338>`__.
 
 Use Cases
 ---------

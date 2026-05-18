@@ -59,6 +59,7 @@ from ._utils.check_data import (check_X,
                                 check_df,
                                 check_warning_consecutive_index,
                                 check_file_path_exists,
+                                check_folder_path_exists,
                                 check_is_fasta)
 from ._utils.check_models import (check_mode_class,
                                   check_model_kwargs,
@@ -118,7 +119,7 @@ FILE_DF_CAT = "df_cat"
 # Constants
 FONT_AA = "DejaVu Sans Mono"
 STR_AA_GAP = "-"
-LIST_CANONICAL_AA = ['N', 'A', 'I', 'V', 'K', 'Q', 'R', 'M', 'H', 'F', 'E', 'D', 'C', 'G', 'L', 'T', 'S', 'Y', 'W', 'P']
+LIST_CANONICAL_AA = list("ACDEFGHIKLMNPQRSTVWY")
 DTYPE = np.float64
 
 # Part names
@@ -164,6 +165,74 @@ COLS_SEQ_INFO = [COL_ENTRY, COL_SEQ, COL_LABEL]
 COLS_SEQ_POS = [COL_SEQ, COL_TMD_START, COL_TMD_STOP]
 COLS_SEQ_PARTS = [COL_JMD_N, COL_TMD, COL_JMD_C]
 COLS_SEQ_TMD = [COL_SEQ, COL_TMD]
+COL_POS = "pos"   # AAWindowSampler — per-row 1-based positive position(s); list[int] or scalar
+COL_SS = "ss"     # get_dssp — per-residue secondary-structure codes; list[str] (length matches sequence) or None
+COL_DSSP_OK = "dssp_ok"   # get_dssp — DSSP success flag (bool)
+
+# AAWindowSampler — output column names
+COL_ENTRY_WIN = "entry_win"
+COL_WINDOW = "window"
+COL_SOURCE_POS = "source_position"
+COL_LABELS = "labels"
+COL_ROLE = "role"
+COL_STRATEGY = "strategy"
+COLS_SEGMENTS = [COL_ENTRY_WIN, COL_ENTRY, COL_SEQ, COL_WINDOW, COL_SOURCE_POS,
+                 COL_LABEL, COL_ROLE, COL_STRATEGY]
+COLS_SEQUENCES = [COL_ENTRY, COL_SEQ, COL_LABELS]
+
+# AAWindowSampler — output modes
+OUT_SEGMENTS = "segments"
+OUT_SEQUENCES = "sequences"
+LIST_OUTPUT_MODES = [OUT_SEGMENTS, OUT_SEQUENCES]
+
+# AAWindowSampler — role tags (canonical; users may pass any custom string)
+ROLE_TEST = "Test"
+ROLE_NEG = "Negative"
+ROLE_UNL = "Unlabeled"
+ROLE_CTRL = "Control"
+LIST_ROLES = [ROLE_TEST, ROLE_NEG, ROLE_UNL, ROLE_CTRL]
+
+# AAWindowSampler — strategy tags (stored in output for provenance)
+STRATEGY_SAME = "same_protein"
+STRATEGY_DIFF = "different_protein"
+STRATEGY_SYNTH_PREFIX = "synthetic"
+STRATEGY_MOTIF_MATCHED = "motif_matched"
+
+# AAWindowSampler — synthetic sampling modes (built-in; AAontology presets live in
+# the backend ``sample_synthetic.py`` next to the ``PRESETS`` registry; the
+# polymorphic-mode segments below are tag fragments for list/dict shapes)
+MODE_UNIFORM = "uniform"
+MODE_GLOBAL_FREQ = "global_freq"
+MODE_POSITION_SPECIFIC = "position_specific"
+MODE_SCRAMBLED = "scrambled"
+LIST_SYNTH_MODES_BUILTIN = [MODE_UNIFORM, MODE_GLOBAL_FREQ,
+                            MODE_POSITION_SPECIFIC, MODE_SCRAMBLED]
+STR_SYNTH_MIX = "mix"
+STR_SYNTH_CUSTOM = "custom"
+
+# AAWindowSampler — motif-match filter modes (used with ``motif_pwm`` /
+# ``motif_score_threshold`` on sample_same_protein / sample_different_protein)
+STR_MOTIF_IN = "in"
+STR_MOTIF_OUT = "out"
+LIST_MOTIF_MATCHES = [STR_MOTIF_IN, STR_MOTIF_OUT]
+
+# get_dssp — secondary-structure encoding modes
+SS_MODE_3 = "ss3"
+SS_MODE_8 = "ss8"
+LIST_SS_MODES = [SS_MODE_3, SS_MODE_8]
+
+# get_dssp — gap-handling policy when aligning DSSP output to df_seq[sequence]
+GAP_PAD = "pad"
+GAP_OMIT = "omit"
+LIST_GAP_HANDLING = [GAP_PAD, GAP_OMIT]
+
+# get_dssp — DSSP 8-state -> 3-state reduction (H/G/I -> H ; E/B -> E ; rest -> C).
+# DSSP's blank (no SS) maps to "C" in 3-state; "-" stays "-" (alignment gap).
+STR_SS_GAP = "-"
+DICT_DSSP_3STATE = {"H": "H", "G": "H", "I": "H",
+                    "E": "E", "B": "E",
+                    "T": "C", "S": "C", " ": "C",
+                    STR_SS_GAP: STR_SS_GAP}
 
 # df_part
 

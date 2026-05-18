@@ -314,6 +314,13 @@ def check_file_path_exists(file_path=None):
         raise ValueError(f"Following 'file_path' does not exist: '{file_path}'")
 
 
+def check_folder_path_exists(folder_path=None, name="folder_path"):
+    """Check if a folder path is a valid string and the directory exists."""
+    check_type.check_str(name=name, val=folder_path)
+    if not os.path.isdir(folder_path):
+        raise ValueError(f"'{name}' ({folder_path!r}) should be a path to an existing directory")
+
+
 def check_is_fasta(file_path=None):
     """ Check if the file path is a FASTA file"""
     check_type.check_str(name="file_path", val=file_path)
