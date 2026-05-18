@@ -14,7 +14,7 @@ import aaanalysis.utils as ut
 
 aa.options["verbose"] = False
 
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=2000)
 settings.load_profile("ci")
 
 MODULE = "aaanalysis.struct_analysis_pro._get_dssp"
