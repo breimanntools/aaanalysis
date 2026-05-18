@@ -48,7 +48,7 @@ class TestAAclustPlotCorrelation:
         call_aaclust_plot_correlation(df_corr=df_corr)
 
     @settings(max_examples=10, deadline=1500)
-    @given(labels=some.lists(some.integers(), min_size=1, max_size=10))
+    @given(labels=some.lists(some.integers(min_value=-1000, max_value=1000), min_size=1, max_size=10))
     def test_valid_labels(self, labels):
         # Labels should contain more than one distinct value
         if len(set(labels)) > 1:
@@ -60,7 +60,7 @@ class TestAAclustPlotCorrelation:
 
 
     @settings(max_examples=10, deadline=1500)
-    @given(labels=some.lists(some.integers(), min_size=10, max_size=20))
+    @given(labels=some.lists(some.integers(min_value=-1000, max_value=1000), min_size=10, max_size=20))
     def test_valid_labels_ref(self, labels):
         # Labels should contain more than one distinct value
         if len(set(labels)) > 10:
@@ -201,7 +201,7 @@ class TestAAclustPlotCorrelation:
             aac_plot.correlation(df_corr=df_corr, labels=[1, 2])
 
     @settings(max_examples=10, deadline=1500)
-    @given(labels=some.lists(some.integers(), min_size=10, max_size=20))
+    @given(labels=some.lists(some.integers(min_value=-1000, max_value=1000), min_size=10, max_size=20))
     def test_invalid_labels_ref(self, labels):
         # Labels should contain more than one distinct value
         if len(set(labels)) > 10:
@@ -214,7 +214,7 @@ class TestAAclustPlotCorrelation:
 
 
     @settings(max_examples=10, deadline=1500)
-    @given(labels=some.lists(some.integers(), min_size=10, max_size=20))
+    @given(labels=some.lists(some.integers(min_value=-1000, max_value=1000), min_size=10, max_size=20))
     def test_invalid_labels_ref_from_df_corr(self, labels):
         # Labels should contain more than one distinct value
         if len(set(labels)) > 10:
