@@ -5,8 +5,8 @@ import pytest
 from hypothesis import given, settings
 import hypothesis.strategies as some
 import aaanalysis as aa
-from aaanalysis.data_handling._backend.aa_window_sampler._utils import collect_test_windows
-from aaanalysis.data_handling._backend.aa_window_sampler.sample_synthetic import (
+from aaanalysis.seq_analysis._backend.aa_window_sampler._utils import collect_test_windows
+from aaanalysis.seq_analysis._backend.aa_window_sampler.sample_synthetic import (
     LIST_SYNTH_GENERATORS, LIST_PRESET_GENERATORS, PRESETS,
     _mix_preset_aa_freq, _preset_aa_freq,
 )
@@ -155,7 +155,7 @@ class TestSampleSynthetic:
     def test_valid_concat_with_other_methods(self):
         aaws = aa.AAWindowSampler()
         a = aaws.sample_same_protein(df_seq=_df_seq_with_pos(), pos_col="pos",
-                                  n_per_positive=1, window_size=9, seed=0)
+                                  n=3, window_size=9, seed=0)
         b = aaws.sample_synthetic(df_seq=_df_seq_with_pos(), n=5, window_size=9,
                                generator="uniform", seed=0)
         merged = pd.concat([a, b], ignore_index=True)

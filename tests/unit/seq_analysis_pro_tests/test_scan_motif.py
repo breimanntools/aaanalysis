@@ -21,8 +21,9 @@ fimo_required = pytest.mark.skipif(shutil.which("fimo") is None,
 
 # I Helper Functions
 def _pwm_for_a(window_size=3):
-    pwm = np.zeros((window_size, len(ut.LIST_CANONICAL_AA)))
-    pwm[:, AA_IDX["A"]] = 1.0
+    pwm = pd.DataFrame(0.0, index=range(window_size),
+                       columns=list(ut.LIST_CANONICAL_AA))
+    pwm["A"] = 1.0
     return pwm
 
 
@@ -76,7 +77,8 @@ class TestFindMotifMatchedViaFimo:
     def test_invalid_motif_pwm_shape(self):
         with patch("aaanalysis.seq_analysis_pro._scan_motif"
                    ".shutil.which", return_value="/usr/local/bin/fimo"):
-            bad_pwm = np.zeros((4, 20))
+            bad_pwm = pd.DataFrame(0.0, index=range(4),
+                                   columns=list(ut.LIST_CANONICAL_AA))
             with pytest.raises(ValueError, match="motif_pwm"):
                 aa.scan_motif(df_seq=_df_seq_with_aaa(),
                                                  pos_col="pos", n=5,

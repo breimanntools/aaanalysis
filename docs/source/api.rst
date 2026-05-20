@@ -31,6 +31,7 @@ Data Handling
     to_fasta
     comp_seq_sim
     filter_seq
+    EmbeddingPreprocessor
     SequencePreprocessor
 
 .. _sequence_analysis_api:
@@ -43,8 +44,20 @@ Sequence Analysis
 
     AAlogo
     AAlogoPlot
+    AAWindowSampler
     comp_seq_sim
     filter_seq
+    scan_motif
+
+.. _structure_analysis_api:
+
+Structure Analysis
+------------------
+.. autosummary::
+    :toctree: generated/
+    :template: autosummary/class_template.rst
+
+    get_dssp
 
 .. _feature_engineering_api:
 

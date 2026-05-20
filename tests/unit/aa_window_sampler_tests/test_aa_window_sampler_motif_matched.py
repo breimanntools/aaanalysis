@@ -22,8 +22,9 @@ AA_IDX = {a: i for i, a in enumerate(ut.LIST_CANONICAL_AA)}
 # I Helper Functions
 def _pwm_for_a(window_size=3):
     """PWM that scores 'A' at every position. Score of 'AAA' = window_size."""
-    pwm = np.zeros((window_size, len(ut.LIST_CANONICAL_AA)))
-    pwm[:, AA_IDX["A"]] = 1.0
+    pwm = pd.DataFrame(0.0, index=range(window_size),
+                       columns=list(ut.LIST_CANONICAL_AA))
+    pwm["A"] = 1.0
     return pwm
 
 
@@ -411,7 +412,7 @@ class TestSampleMotifMatchedComplex:
         df_seq = _df_seq_with_aaa()
         aaws = aa.AAWindowSampler()
         same = aaws.sample_same_protein(df_seq=df_seq, pos_col="pos",
-                                         n_per_positive=1, window_size=3,
+                                         n=2, window_size=3,
                                          seed=0)
         motif = aaws.sample_motif_matched(df_seq=df_seq, pos_col="pos",
                                             n=2, window_size=3,

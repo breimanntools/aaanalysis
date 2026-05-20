@@ -1,11 +1,5 @@
 """
-This is a script for the frontend of the AAWindowSampler class — a utility for sampling
-amino-acid windows / segments from full protein sequences.
-
-Defaults assume PU-learning and hard-negative-mining workflows:
-``sample_same_protein`` produces ``Negative`` rows, ``sample_different_protein`` produces
-``Unlabeled`` rows, ``sample_motif_matched`` produces ``Negative`` rows. Override
-``role`` and ``label_ref`` if your workflow differs.
+This is a script for the frontend of the AAWindowSampler class.
 """
 from typing import Optional, List, Tuple, Union, Dict
 import math
@@ -41,6 +35,25 @@ def check_output_mode(output_mode):
     """Validate ``output_mode`` is one of the allowed modes."""
     ut.check_str_options(name="output_mode", val=output_mode,
                          list_str_options=ut.LIST_OUTPUT_MODES)
+
+
+def check_distance_to_pos(min_distance_to_pos, max_distance_to_pos):
+    """Validate the ``(min, max)`` distance-to-positive band.
+
+    Each bound is either a non-negative ``int`` or ``None`` (meaning "no bound").
+    If both are set, ``min_distance_to_pos <= max_distance_to_pos``.
+    """
+    if min_distance_to_pos is not None:
+        ut.check_number_range(name="min_distance_to_pos", val=min_distance_to_pos,
+                              min_val=0, just_int=True)
+    if max_distance_to_pos is not None:
+        ut.check_number_range(name="max_distance_to_pos", val=max_distance_to_pos,
+                              min_val=0, just_int=True)
+    if (min_distance_to_pos is not None and max_distance_to_pos is not None
+            and min_distance_to_pos > max_distance_to_pos):
+        raise ValueError(
+            f"'min_distance_to_pos' ({min_distance_to_pos}) should be "
+            f"<= 'max_distance_to_pos' ({max_distance_to_pos})")
 
 
 def check_synth_generator(generator):
@@ -102,22 +115,6 @@ def check_synth_generator(generator):
                      f"list/tuple of str, or dict[str, Real]")
 
 
-def check_context_cols(df_seq, context_cols, reserved):
-    """Validate ``context_cols`` exist in ``df_seq`` and don't clash with reserved output columns."""
-    if context_cols is None:
-        return None
-    context_cols = ut.check_list_like(name="context_cols", val=context_cols,
-                                      accept_str=True, accept_none=False, convert=True)
-    missing = [c for c in context_cols if c not in df_seq.columns]
-    if missing:
-        raise ValueError(f"'context_cols' contains columns not in df_seq: {missing}")
-    clashes = [c for c in context_cols if c in reserved]
-    if clashes:
-        raise ValueError(f"'context_cols' clash with reserved output columns "
-                         f"({reserved}): {clashes}")
-    return context_cols
-
-
 def check_motif_args(motif_pwm, motif_score_threshold, motif_match, window_size):
     """Validate the motif-filter parameter triplet (or pair, when ``motif_match`` is ``None``).
 
@@ -126,12 +123,10 @@ def check_motif_args(motif_pwm, motif_score_threshold, motif_match, window_size)
     ``ut.LIST_CANONICAL_AA`` (alphabetical, ``ACDEFGHIKLMNPQRSTVWY``), or
     ``None`` when no motif filter is requested.
 
-    ``motif_pwm`` may be either an ``np.ndarray`` (columns implicitly in
-    alphabetical order — caller's responsibility) or a ``pd.DataFrame`` whose
-    columns are the 20 canonical AA letters in any order (reindexed
-    internally). Non-canonical columns and missing canonical columns are
-    rejected to preserve parity with :func:`aaanalysis.scan_motif` (FIMO uses
-    the canonical protein alphabet).
+    ``motif_pwm`` must be a ``pd.DataFrame`` whose columns are the 20 canonical
+    AA letters in any order (reindexed internally). Non-canonical columns and
+    missing canonical columns are rejected to preserve parity with
+    :func:`aaanalysis.scan_motif` (FIMO uses the canonical protein alphabet).
 
     Pass ``motif_match=None`` from callers that do not expose ``motif_match``
     (e.g. :meth:`AAWindowSampler.sample_motif_matched`, which only scores and
@@ -144,19 +139,21 @@ def check_motif_args(motif_pwm, motif_score_threshold, motif_match, window_size)
         raise ValueError("'motif_score_threshold' was given without 'motif_pwm'.")
     if motif_score_threshold is None:
         raise ValueError("'motif_pwm' was given without 'motif_score_threshold'.")
-    if isinstance(motif_pwm, pd.DataFrame):
-        canonical = set(ut.LIST_CANONICAL_AA)
-        cols = set(motif_pwm.columns)
-        missing = sorted(canonical - cols)
-        extra = sorted(cols - canonical)
-        if missing or extra:
-            raise ValueError(
-                f"'motif_pwm' (DataFrame columns {sorted(cols)}) should have "
-                f"exactly the 20 canonical AAs as columns "
-                f"({ut.LIST_CANONICAL_AA}); missing={missing}, extra={extra}")
-        pwm = motif_pwm.reindex(columns=ut.LIST_CANONICAL_AA).to_numpy(dtype=float)
-    else:
-        pwm = np.asarray(motif_pwm, dtype=float)
+    if not isinstance(motif_pwm, pd.DataFrame):
+        raise ValueError(
+            f"'motif_pwm' (type {type(motif_pwm).__name__}) should be a "
+            f"pd.DataFrame with the 20 canonical AAs as columns "
+            f"({ut.LIST_CANONICAL_AA}).")
+    canonical = set(ut.LIST_CANONICAL_AA)
+    cols = set(motif_pwm.columns)
+    missing = sorted(canonical - cols)
+    extra = sorted(cols - canonical)
+    if missing or extra:
+        raise ValueError(
+            f"'motif_pwm' (DataFrame columns {sorted(cols)}) should have "
+            f"exactly the 20 canonical AAs as columns "
+            f"({ut.LIST_CANONICAL_AA}); missing={missing}, extra={extra}")
+    pwm = motif_pwm.reindex(columns=ut.LIST_CANONICAL_AA).to_numpy(dtype=float)
     expected_shape = (window_size, len(ut.LIST_CANONICAL_AA))
     if pwm.shape != expected_shape:
         raise ValueError(f"'motif_pwm' (shape {pwm.shape}) should be "
@@ -249,11 +246,6 @@ class AAWindowSampler:
     """
     Utility class for sampling amino-acid windows / segments from full protein sequences.
 
-    Defaults assume PU-learning and hard-negative-mining workflows: ``sample_same_protein``
-    produces ``Negative`` rows, ``sample_different_protein`` produces ``Unlabeled`` rows,
-    ``sample_motif_matched`` produces ``Negative`` rows. Override ``role`` and ``label_ref``
-    if your workflow differs.
-
     Four sampling strategies are provided:
 
     - :meth:`sample_same_protein` — windows from proteins that contain at least one test
@@ -289,12 +281,6 @@ class AAWindowSampler:
         Compute output-quality metrics from the returned DataFrame using
         :func:`aaanalysis.metrics.comp_kld` or the backend ``window_identity`` helper.
 
-    Alphabets:
-        All sampling and scoring paths are amino-acid-centric and use
-        ``ut.LIST_CANONICAL_AA`` (alphabetical, ``ACDEFGHIKLMNPQRSTVWY``). The single
-        exception is :meth:`sample_synthetic` with a custom-dict generator, which
-        accepts any single-character alphabet (e.g., nucleotides).
-
     Identity-based similarity:
         Two filters operate on per-position residue identity of equal-length windows
         (no alignment needed):
@@ -311,14 +297,6 @@ class AAWindowSampler:
         If filtering shrinks the candidate pool below the target, additional draws are
         performed up to ``max_sampling_attempts``. If still insufficient, a warning is
         emitted and the available samples are returned.
-
-    Positive-position input:
-        :meth:`sample_same_protein`, :meth:`sample_different_protein`,
-        :meth:`sample_motif_matched`, and the ``position_specific`` / ``scrambled``
-        synthetic generators read test positions from a column of ``df_seq`` named by
-        ``pos_col`` (default ``"pos"`` via ``ut.COL_POS``). Each cell is a list / tuple /
-        array of 1-based integer positions, a single integer, or empty
-        (``None`` / ``NaN`` / empty list / empty string).
 
     Anchoring convention:
         Positions in ``pos_col`` and the emitted ``source_position`` are interpreted as
@@ -381,19 +359,19 @@ class AAWindowSampler:
     # Sampling methods
     def sample_same_protein(self,
                             df_seq: pd.DataFrame = None,
-                            pos_col: str = ut.COL_POS,
-                            n_per_positive: int = 1,
+                            n: int = 100,
                             window_size: int = 9,
-                            min_distance_to_positive: int = 1,
+                            pos_col: str = ut.COL_POS,
+                            min_distance_to_pos: Optional[int] = None,
+                            max_distance_to_pos: Optional[int] = None,
                             label_test: Union[int, float] = 1,
                             label_ref: Union[int, float] = 0,
                             role: str = ut.ROLE_NEG,
                             output_mode: str = ut.OUT_SEGMENTS,
-                            context_cols: Optional[List[str]] = None,
                             aa_context_col: Optional[str] = None,
                             context_in: Optional[Union[str, List]] = None,
                             context_out: Optional[Union[str, List]] = None,
-                            motif_pwm: Optional[Union[np.ndarray, pd.DataFrame]] = None,
+                            motif_pwm: Optional[pd.DataFrame] = None,
                             motif_score_threshold: Optional[float] = None,
                             motif_match: str = "in",
                             seed: Optional[int] = None,
@@ -405,14 +383,28 @@ class AAWindowSampler:
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
             DataFrame with an ``entry`` column (protein IDs) and a ``sequence``
             column (full protein sequences). See Notes.
-        pos_col : str, default='pos'
-            Column with per-row 1-based positive positions. See Notes.
-        n_per_positive : int, default=1
-            Target number of sampled windows per positive position.
+        n : int, default=100
+            Maximum total number of sampled windows across all eligible proteins.
+            ``n`` is split roughly uniformly across eligible source proteins (each
+            protein gets ~``n / n_proteins`` windows); shortfalls from proteins with
+            small candidate pools are redistributed round-robin. Fewer than ``n``
+            are returned (with a warning) if the eligible space cannot supply.
         window_size : int, default=9
             Length of each sampled window in residues.
-        min_distance_to_positive : int, default=1
-            Minimum residue distance from any positive on the same protein.
+        pos_col : str, default='pos'
+            Column with per-row 1-based positive positions. See Notes.
+        min_distance_to_pos : int, optional
+            Minimum residue distance from the nearest positive on the same protein
+            (a sampled P1 anchor ``c`` is admitted only if
+            ``min(|c - p| for p in positives) >= min_distance_to_pos``).
+            ``None`` (default) drops this lower bound — sampled windows are allowed
+            to overlap positive windows.
+        max_distance_to_pos : int, optional
+            Maximum residue distance from the nearest positive on the same protein
+            (a sampled P1 anchor ``c`` is admitted only if
+            ``min(|c - p| for p in positives) <= max_distance_to_pos``).
+            ``None`` (default) drops this upper bound — sampled windows may sit
+            anywhere on the protein.
         label_test : int or float, default=1
             Label assigned to positives in ``output_mode='sequences'``.
         label_ref : int or float, default=0
@@ -421,21 +413,17 @@ class AAWindowSampler:
             Role tag stored in the output's ``role`` column.
         output_mode : {'segments', 'sequences'}, default='segments'
             Output schema. See Notes.
-        context_cols : list of str, optional
-            Extra ``df_seq`` columns to copy through to the output (provenance).
         aa_context_col : str, optional
             Per-residue context column used with ``context_in`` / ``context_out``.
         context_in : value or list-like, optional
             Whitelist of ``aa_context_col`` tag values for eligible residues.
         context_out : value or list-like, optional
             Blacklist of ``aa_context_col`` tag values for excluded residues.
-        motif_pwm : np.ndarray or pd.DataFrame, optional
-            Position-weight matrix of shape ``(window_size, 20)``. For ``np.ndarray``,
-            columns **must** be in alphabetical order (``ACDEFGHIKLMNPQRSTVWY`` =
-            ``ut.LIST_CANONICAL_AA``); the validator cannot detect a wrong order, so
-            silently incorrect scores will result. For ``pd.DataFrame``, columns are
-            indexed by the canonical AA letters in any order and reindexed internally
-            (preferred — safer).
+        motif_pwm : pd.DataFrame, optional
+            Position-weight matrix of shape ``(window_size, 20)`` whose columns are
+            the 20 canonical AA letters in any order (reindexed internally to
+            ``ut.LIST_CANONICAL_AA``). Required together with ``motif_score_threshold``
+            when motif filtering is desired.
         motif_score_threshold : float, optional
             PWM score threshold; required when ``motif_pwm`` is set.
         motif_match : {'in', 'out'}, default='in'
@@ -452,13 +440,21 @@ class AAWindowSampler:
         Each row of ``df_seq`` whose ``pos_col`` cell is a non-empty list / tuple /
         array of 1-based integer positions is a "positive" row; rows with empty /
         ``None`` / ``NaN`` cells are skipped. Sampled windows are drawn from the
-        same proteins as the positives, at positions at least
-        ``min_distance_to_positive`` residues away from any positive. The positive
-        windows themselves drive the ``max_similarity_to_test`` filter.
-        ``min_distance_to_positive`` is exposed only on this method;
-        :meth:`sample_different_protein` and :meth:`sample_motif_matched` sample
-        from proteins with no listed positives, so there is nothing for the
-        parameter to act on.
+        same proteins as the positives; the positive windows themselves drive the
+        ``max_similarity_to_test`` filter. The
+        ``(min_distance_to_pos, max_distance_to_pos)`` band is exposed only on this
+        method; :meth:`sample_different_protein` and :meth:`sample_motif_matched`
+        sample from proteins with no listed positives, so the band has nothing to
+        act on.
+
+        With the default ``None`` / ``None`` band, sampled centers can sit directly
+        on or adjacent to positive anchors, producing windows that overlap positive
+        windows by up to ``window_size - 1`` residues. For hard-negative-style
+        sampling that excludes positional overlap, set
+        ``min_distance_to_pos=window_size``; to constrain sampled windows to a
+        defined neighborhood of positives (e.g. local hard negatives), pair with a
+        finite ``max_distance_to_pos``. Content-level overlap is controlled
+        separately by ``max_similarity_to_test``.
 
         Protein iteration order is randomized under the seed; output is independent
         of ``df_seq`` row order.
@@ -476,15 +472,11 @@ class AAWindowSampler:
         # Validate
         ut.check_df_seq(df_seq=df_seq)
         ut.check_str(name="pos_col", val=pos_col, accept_none=False)
-        ut.check_number_range(name="n_per_positive", val=n_per_positive,
-                              min_val=1, just_int=True)
+        ut.check_number_range(name="n", val=n, min_val=1, just_int=True)
         ut.check_number_range(name="window_size", val=window_size, min_val=1, just_int=True)
-        ut.check_number_range(name="min_distance_to_positive", val=min_distance_to_positive,
-                              min_val=0, just_int=True)
+        check_distance_to_pos(min_distance_to_pos, max_distance_to_pos)
         check_output_mode(output_mode)
         ut.check_str(name="role", val=role, accept_none=False)
-        reserved = ut.COLS_SEGMENTS if output_mode == ut.OUT_SEGMENTS else ut.COLS_SEQUENCES
-        context_cols = check_context_cols(df_seq, context_cols, reserved)
         check_context_args(aa_context_col, context_in, context_out)
         motif_pwm = check_motif_args(motif_pwm, motif_score_threshold,
                                       motif_match, window_size)
@@ -499,8 +491,9 @@ class AAWindowSampler:
         rng = self._rng(seed)
         rows, source_indices, sampled_centers = sample_same_protein(
             df_seq=df_seq, positions=positions,
-            n_per_positive=n_per_positive, window_size=window_size,
-            min_distance_to_positive=min_distance_to_positive,
+            n=n, window_size=window_size,
+            min_distance_to_pos=min_distance_to_pos,
+            max_distance_to_pos=max_distance_to_pos,
             test_windows=test_windows, allowed_positions=allowed_positions,
             max_similarity_to_test=self._max_similarity_to_test,
             max_similarity_within_ref=self._max_similarity_within_ref,
@@ -514,29 +507,26 @@ class AAWindowSampler:
         # Build output
         if output_mode == ut.OUT_SEGMENTS:
             return build_segments_output(rows, strategy=ut.STRATEGY_SAME, role=role,
-                                          label_value=label_ref, df_seq=df_seq,
-                                          window_size=window_size,
-                                          source_indices=source_indices,
-                                          context_cols=context_cols)
+                                          label_value=label_ref,
+                                          window_size=window_size)
         return build_sequences_output(df_seq, positions, sampled_centers,
                                        label_test=label_test, label_ref=label_ref,
-                                       mark_test=True, context_cols=context_cols)
+                                       mark_test=True)
 
     def sample_different_protein(self,
                                  df_seq: pd.DataFrame = None,
-                                 pos_col: str = ut.COL_POS,
                                  n: int = 100,
                                  window_size: int = 9,
+                                 pos_col: str = ut.COL_POS,
                                  candidate_proteins: Optional[List[str]] = None,
                                  label_test: Union[int, float] = 1,
                                  label_ref: Union[int, float] = 0,
                                  role: str = ut.ROLE_UNL,
                                  output_mode: str = ut.OUT_SEGMENTS,
-                                 context_cols: Optional[List[str]] = None,
                                  aa_context_col: Optional[str] = None,
                                  context_in: Optional[Union[str, List]] = None,
                                  context_out: Optional[Union[str, List]] = None,
-                                 motif_pwm: Optional[Union[np.ndarray, pd.DataFrame]] = None,
+                                 motif_pwm: Optional[pd.DataFrame] = None,
                                  motif_score_threshold: Optional[float] = None,
                                  motif_match: str = "in",
                                  seed: Optional[int] = None,
@@ -548,12 +538,13 @@ class AAWindowSampler:
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
             DataFrame with an ``entry`` column (protein IDs) and a ``sequence``
             column (full protein sequences). See Notes.
-        pos_col : str, default='pos'
-            Column with per-row 1-based positive positions. See Notes.
         n : int, default=100
-            Target total number of sampled windows.
+            Maximum total number of sampled windows. Fewer are returned (with a
+            warning) if the eligible space cannot supply.
         window_size : int, default=9
             Length of each sampled window in residues.
+        pos_col : str, default='pos'
+            Column with per-row 1-based positive positions. See Notes.
         candidate_proteins : list of str, optional
             Restrict the candidate pool to these entries.
         label_test : int or float, default=1
@@ -564,19 +555,16 @@ class AAWindowSampler:
             Role tag stored in the output's ``role`` column.
         output_mode : {'segments', 'sequences'}, default='segments'
             Output schema. See Notes.
-        context_cols : list of str, optional
-            Extra ``df_seq`` columns to copy through to the output (provenance).
         aa_context_col : str, optional
             Per-residue context column used with ``context_in`` / ``context_out``.
         context_in : value or list-like, optional
             Whitelist of ``aa_context_col`` tag values for eligible residues.
         context_out : value or list-like, optional
             Blacklist of ``aa_context_col`` tag values for excluded residues.
-        motif_pwm : np.ndarray or pd.DataFrame, optional
-            Position-weight matrix of shape ``(window_size, 20)``. For ``np.ndarray``,
-            columns **must** be in alphabetical order (``ACDEFGHIKLMNPQRSTVWY``); for
-            ``pd.DataFrame``, columns are indexed by canonical AA letters in any order
-            (preferred).
+        motif_pwm : pd.DataFrame, optional
+            Position-weight matrix of shape ``(window_size, 20)`` whose columns are
+            the 20 canonical AA letters in any order (reindexed internally to
+            ``ut.LIST_CANONICAL_AA``).
         motif_score_threshold : float, optional
             PWM score threshold; required when ``motif_pwm`` is set.
         motif_match : {'in', 'out'}, default='in'
@@ -595,8 +583,6 @@ class AAWindowSampler:
         excluded from the candidate pool and contribute their windows only to the
         ``max_similarity_to_test`` filter. Rows with empty / ``None`` / ``NaN``
         cells form the candidate pool from which the returned windows are drawn.
-        This separation is what makes the result "different proteins from the
-        test set" and naturally suits the unlabeled pool ``U`` for PU learning.
 
         ``output_mode='segments'`` returns one row per sampled window with schema
         ``[entry_win, entry, sequence, window, source_position, label, role, strategy]``;
@@ -621,8 +607,6 @@ class AAWindowSampler:
                                                     val=candidate_proteins,
                                                     accept_str=True, accept_none=False,
                                                     convert=True)
-        reserved = ut.COLS_SEGMENTS if output_mode == ut.OUT_SEGMENTS else ut.COLS_SEQUENCES
-        context_cols = check_context_cols(df_seq, context_cols, reserved)
         check_context_args(aa_context_col, context_in, context_out)
         motif_pwm = check_motif_args(motif_pwm, motif_score_threshold,
                                       motif_match, window_size)
@@ -651,13 +635,11 @@ class AAWindowSampler:
         # Build output
         if output_mode == ut.OUT_SEGMENTS:
             return build_segments_output(rows, strategy=ut.STRATEGY_DIFF, role=role,
-                                          label_value=label_ref, df_seq=df_seq,
-                                          window_size=window_size,
-                                          source_indices=source_indices,
-                                          context_cols=context_cols)
+                                          label_value=label_ref,
+                                          window_size=window_size)
         return build_sequences_output(df_seq, positions, sampled_centers,
                                        label_test=label_test, label_ref=label_ref,
-                                       mark_test=True, context_cols=context_cols)
+                                       mark_test=True)
 
     def sample_synthetic(self,
                          df_seq: pd.DataFrame = None,
@@ -684,7 +666,8 @@ class AAWindowSampler:
             DataFrame with an ``entry`` column (protein IDs) and a ``sequence``
             column (full protein sequences). See Notes.
         n : int, default=100
-            Target number of synthetic windows.
+            Maximum total number of synthetic windows. Fewer are returned (with
+            a warning) if the filters cannot supply.
         window_size : int, default=9
             Length of each synthetic window in residues.
         generator : str, list/tuple of str, or dict, default='global_freq'
@@ -772,6 +755,14 @@ class AAWindowSampler:
         symbol), values must be non-negative and sum to ``1.0``. The sampler
         is then no longer restricted to amino acids.
 
+        **Single polymorphic ``generator``** — the three accepted shapes
+        (built-in / preset ``str``, ``list[str]`` for a multiplicative preset
+        mix, ``dict[str, float]`` for a custom-alphabet frequency table) all
+        answer the same conceptual question ("recipe for one window"), so a
+        single parameter is preferred over three mutually-exclusive named
+        parameters. The dispatch-on-shape complexity is absorbed by the
+        ``check_synth_generator`` validator.
+
         Examples
         --------
         .. include:: examples/aws_sample_synthetic.rst
@@ -821,16 +812,15 @@ class AAWindowSampler:
 
     def sample_motif_matched(self,
                               df_seq: pd.DataFrame = None,
-                              pos_col: str = ut.COL_POS,
                               n: int = 100,
                               window_size: int = 9,
-                              motif_pwm: Optional[Union[np.ndarray, pd.DataFrame]] = None,
+                              motif_pwm: Optional[pd.DataFrame] = None,
                               motif_score_threshold: Optional[float] = None,
+                              pos_col: str = ut.COL_POS,
                               label_test: Union[int, float] = 1,
                               label_ref: Union[int, float] = 0,
                               role: str = ut.ROLE_NEG,
                               output_mode: str = ut.OUT_SEGMENTS,
-                              context_cols: Optional[List[str]] = None,
                               aa_context_col: Optional[str] = None,
                               context_in: Optional[Union[str, List]] = None,
                               context_out: Optional[Union[str, List]] = None,
@@ -846,19 +836,18 @@ class AAWindowSampler:
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
             DataFrame with an ``entry`` column (protein IDs) and a ``sequence``
             column (full protein sequences). See Notes.
-        pos_col : str, default='pos'
-            Column with per-row 1-based positive positions. See Notes.
         n : int, default=100
             Maximum number of motif-matched windows to return.
         window_size : int, default=9
             Window length; must equal the first dimension of ``motif_pwm``.
-        motif_pwm : np.ndarray or pd.DataFrame
-            Position-weight matrix of shape ``(window_size, 20)``. For ``np.ndarray``,
-            columns **must** be in alphabetical order (``ACDEFGHIKLMNPQRSTVWY``); for
-            ``pd.DataFrame``, columns are indexed by canonical AA letters in any order
-            (preferred). Required.
+        motif_pwm : pd.DataFrame
+            Position-weight matrix of shape ``(window_size, 20)`` whose columns are
+            the 20 canonical AA letters in any order (reindexed internally to
+            ``ut.LIST_CANONICAL_AA``). Required.
         motif_score_threshold : float
             Score threshold (sum of per-position PWM values). Required.
+        pos_col : str, default='pos'
+            Column with per-row 1-based positive positions. See Notes.
         label_test : int or float, default=1
             Label assigned to positives in ``output_mode='sequences'``.
         label_ref : int or float, default=0
@@ -867,8 +856,6 @@ class AAWindowSampler:
             Role tag stored in the output's ``role`` column.
         output_mode : {'segments', 'sequences'}, default='segments'
             Output schema; see :meth:`sample_same_protein` Notes.
-        context_cols : list of str, optional
-            Extra ``df_seq`` columns to copy through to the output (provenance).
         aa_context_col : str, optional
             Per-residue context column used with ``context_in`` / ``context_out``.
         context_in : value or list-like, optional
@@ -920,8 +907,6 @@ class AAWindowSampler:
         # keeps high-scoring windows); pass None so the validator skips that check.
         motif_pwm = check_motif_args(motif_pwm, motif_score_threshold,
                                       None, window_size)
-        reserved = ut.COLS_SEGMENTS if output_mode == ut.OUT_SEGMENTS else ut.COLS_SEQUENCES
-        context_cols = check_context_cols(df_seq, context_cols, reserved)
         check_context_args(aa_context_col, context_in, context_out)
         # Build pool
         positions = parse_pos_col(df_seq, pos_col)
@@ -946,12 +931,9 @@ class AAWindowSampler:
         if output_mode == ut.OUT_SEGMENTS:
             df_out = build_segments_output(rows, strategy=ut.STRATEGY_MOTIF_MATCHED,
                                             role=role, label_value=label_ref,
-                                            df_seq=df_seq,
-                                            window_size=window_size,
-                                            source_indices=source_indices,
-                                            context_cols=context_cols)
+                                            window_size=window_size)
             df_out["motif_score"] = sampled_scores
             return df_out
         return build_sequences_output(df_seq, positions, sampled_centers,
                                        label_test=label_test, label_ref=label_ref,
-                                       mark_test=True, context_cols=context_cols)
+                                       mark_test=True)

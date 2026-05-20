@@ -13,8 +13,7 @@ from ._utils import window_offsets
 
 
 # II Main Functions
-def build_segments_output(rows, *, strategy, role, label_value, df_seq,
-                            window_size, source_indices=None, context_cols=None):
+def build_segments_output(rows, *, strategy, role, label_value, window_size):
     """Build the segments-mode DataFrame.
 
     Parameters
@@ -25,14 +24,9 @@ def build_segments_output(rows, *, strategy, role, label_value, df_seq,
     strategy : str
     role : str
     label_value : int or float
-    df_seq : pd.DataFrame
-        Source frame for ``context_cols`` lookups.
     window_size : int
         Used to derive the inclusive ``[start_pos, end_pos]`` span for
         ``entry_win``.
-    source_indices : list of int, optional
-        For each row, the ``df_seq`` row index whose ``context_cols`` should be copied.
-    context_cols : list of str, optional
 
     Notes
     -----
@@ -53,18 +47,11 @@ def build_segments_output(rows, *, strategy, role, label_value, df_seq,
     end = df[ut.COL_SOURCE_POS] + (window_size - half_left) - 1
     df[ut.COL_ENTRY_WIN] = (df[ut.COL_ENTRY].astype(str) + "_"
                             + start.astype(str) + "-" + end.astype(str))
-    df = df[ut.COLS_SEGMENTS].copy()
-    if context_cols:
-        if source_indices:
-            ctx = df_seq.iloc[source_indices][context_cols].reset_index(drop=True)
-        else:
-            ctx = pd.DataFrame(columns=context_cols)
-        df = pd.concat([df.reset_index(drop=True), ctx], axis=1)
-    return df
+    return df[ut.COLS_SEGMENTS].copy()
 
 
 def build_sequences_output(df_seq, positions, sampled_centers, *,
-                             label_test, label_ref, mark_test, context_cols=None):
+                             label_test, label_ref, mark_test):
     """Build the sequences-mode DataFrame.
 
     For each row of ``df_seq``, build a ``labels`` list of length ``len(sequence)``:
@@ -89,8 +76,4 @@ def build_sequences_output(df_seq, positions, sampled_centers, *,
         ut.COL_SEQ: df_seq[ut.COL_SEQ].tolist(),
         ut.COL_LABELS: labels_per_entry,
     })
-    df = df[ut.COLS_SEQUENCES].copy()
-    if context_cols:
-        df = pd.concat([df.reset_index(drop=True),
-                        df_seq[context_cols].reset_index(drop=True)], axis=1)
-    return df
+    return df[ut.COLS_SEQUENCES].copy()

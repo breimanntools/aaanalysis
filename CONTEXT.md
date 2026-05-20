@@ -57,8 +57,12 @@ A row's window identifier, formatted `<entry>_<start_pos>-<end_pos>` with 1-base
 _Avoid_: window_id, row_id.
 
 **candidate pool**:
-The set of eligible windows from which a sampling method draws, defined per strategy. `same_protein`: positions ≥ `min_distance_to_positive` from any positive on a positive-containing protein. `different_protein` / `motif_matched`: any window on a protein with no listed positives. `synthetic`: drawn fresh from the generator distribution.
+The set of eligible windows from which a sampling method draws, defined per strategy. `same_protein`: positions whose distance to the nearest positive on the same protein lies in the `(min_distance_to_pos, max_distance_to_pos)` **distance band**. `different_protein` / `motif_matched`: any window on a protein with no listed positives. `synthetic`: drawn fresh from the generator distribution.
 _Avoid_: candidates, eligible set.
+
+**distance band** (`min_distance_to_pos`, `max_distance_to_pos`):
+A pair of optional residue-distance bounds used by `sample_same_protein` to filter candidate P1 anchors by their L1 distance to the *nearest* positive on the same protein. `min_distance_to_pos` is the lower bound (or `None` for no lower bound); `max_distance_to_pos` is the upper bound (or `None` for no upper bound). Both default to `None`, in which case every fully-fitting window on a positive-containing protein is admissible — so sampled "Negative" windows may overlap positive windows. For non-overlapping hard-negatives, set `min_distance_to_pos=window_size`; for windows targeted near positives, pair with a finite `max_distance_to_pos`.
+_Avoid_: distance-to-positive (singular — misses the band).
 
 ### Synthetic generation vocabulary
 
@@ -77,7 +81,7 @@ _Avoid_: custom freq, custom dist (too generic).
 ### Scoring vocabulary
 
 **PWM (position-weight matrix)**:
-An array of shape `(window_size, 20)` representing per-position residue scores over the 20 canonical AAs. Accepted by `motif_pwm` as either an `np.ndarray` (columns implicitly in alphabetical order `ACDEFGHIKLMNPQRSTVWY`) or a `pd.DataFrame` (columns by AA name, any order, reindexed internally).
+A `pd.DataFrame` of shape `(window_size, 20)` representing per-position residue scores over the 20 canonical AAs. Columns are the canonical AA letters in any order and are reindexed internally to `ut.LIST_CANONICAL_AA` (alphabetical, `ACDEFGHIKLMNPQRSTVWY`). `np.ndarray` PWMs are rejected — wrap with `pd.DataFrame(arr, columns=ut.LIST_CANONICAL_AA)` if you only have an array.
 _Avoid_: scoring matrix (too generic), motif matrix.
 
 **motif filter**:
@@ -87,6 +91,16 @@ _Avoid_: motif gate, PWM filter.
 **identity filter**:
 A pair of filters based on per-position residue identity between fixed-length, aligned windows. `max_similarity_to_test` drops sampled windows too similar to any test window (anti-leakage); `max_similarity_within_ref` drops sampled windows too similar to a previously kept sampled window (redundancy reduction).
 _Avoid_: similarity filter (overloaded), redundancy filter (too narrow — covers only the second).
+
+### Embedding-based feature engineering vocabulary
+
+**pseudo-scale**:
+A (20,)-shaped vector representing one PLM embedding dimension's per-AA average, computed by context-free averaging of the dimension's per-residue values over occurrences of each canonical AA in a reference corpus (typically the user's `df_seq`). Dataset-dependent — pseudo-scales for the same PLM differ across input corpora. Used only to derive pseudo-categories; never used as a residue-value source for feature aggregation in `run_embed` (per-residue embeddings are used directly).
+_Avoid_: dimension scale, AA average, embedding scale.
+
+**pseudo-category**:
+A cluster label assigned to a pseudo-scale by AAclust correlation-based clustering. Carried in `df_cat_emb`'s `cat` (coarser threshold) and `subcat` (finer threshold) columns, mirroring the AAontology two-level hierarchy. Cluster IDs are deterministic given `(pseudo_scales, thresholds, random_state)` but inherit the dataset-dependence of pseudo-scales.
+_Avoid_: PLM cluster, embedding group.
 
 ## Relationships
 
@@ -108,8 +122,8 @@ _Avoid_: similarity filter (overloaded), redundancy filter (too narrow — cover
 > **Dev:** "What's a **control window** for?"
 > **Domain expert:** "A synthetic window with no source protein. Useful as a null baseline, for composition-bias controls, or for benchmarking. It shares the segments-mode schema with the other outputs but its `entry_win` is only unique within one `sample_synthetic` call — dedupe across calls on the `window` string instead."
 >
-> **Dev:** "Why does the **PWM** for `motif_pwm` accept both ndarray and DataFrame?"
-> **Domain expert:** "Foot-gun avoidance. Ndarray columns are implicitly alphabetical — silently wrong if you got the order wrong. DataFrame columns are by AA name and reindexed internally, so the order can't be wrong. Use the DataFrame form unless you've already paid the cost to be careful with the array layout."
+> **Dev:** "Why is `motif_pwm` DataFrame-only — can't I just pass an ndarray?"
+> **Domain expert:** "Ndarray columns are implicitly alphabetical, and a wrong-order array silently gives wrong scores. We rejected that path. Pass `pd.DataFrame(arr, columns=ut.LIST_CANONICAL_AA)` if you only have an array; the column order then can't be wrong because pandas reindexes internally."
 
 ## Flagged ambiguities
 

@@ -1,7 +1,8 @@
 from .data_handling import (load_dataset, load_scales, load_features,
                             read_fasta, to_fasta,
-                            SequencePreprocessor, AAWindowSampler)
-from .seq_analysis import AAlogo, AAlogoPlot
+                            SequencePreprocessor,
+                            EmbeddingPreprocessor)
+from .seq_analysis import AAlogo, AAlogoPlot, AAWindowSampler
 from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
 from .explainable_ai import TreeModel
@@ -20,11 +21,14 @@ __all__ = [
     "read_fasta",
     "to_fasta",
     "SequencePreprocessor",
-    "AAWindowSampler",
+    "EmbeddingPreprocessor",
     # "comp_seq_sim",       BioPython
     # "filter_seq",         BioPython
+    # "scan_motif",         MEME Suite
     "AAlogo",
     "AAlogoPlot",
+    "AAWindowSampler",
+    # "get_dssp",           # DSSP
     "AAclust",
     "AAclustPlot",
     "SequenceFeature",

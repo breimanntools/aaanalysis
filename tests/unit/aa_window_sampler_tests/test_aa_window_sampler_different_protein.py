@@ -245,11 +245,9 @@ class TestSampleDifferentProtein:
     # Motif-match filter (motif_pwm / motif_score_threshold / motif_match)
     @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     def test_valid_motif_match_in_keeps_high_score_windows(self):
-        import numpy as np
         import aaanalysis.utils as ut
-        aa_idx = {a: i for i, a in enumerate(ut.LIST_CANONICAL_AA)}
-        pwm = np.zeros((3, len(ut.LIST_CANONICAL_AA)))
-        pwm[:, aa_idx["A"]] = 1.0
+        pwm = pd.DataFrame(0.0, index=range(3), columns=list(ut.LIST_CANONICAL_AA))
+        pwm["A"] = 1.0
         df_seq = pd.DataFrame({
             "entry": ["P1", "P2"],
             "sequence": ["ACDEFGHIKLMNPQRSTV", "AAACDEFGHIKLMNPQRS"],
@@ -262,16 +260,14 @@ class TestSampleDifferentProtein:
                                             motif_score_threshold=2.5,
                                             motif_match="in", seed=0)
         for w in df["window"]:
-            score = sum(pwm[i, aa_idx.get(c, -1)] if c in aa_idx else 0.0
+            score = sum(float(pwm.loc[i, c]) if c in pwm.columns else 0.0
                         for i, c in enumerate(w))
             assert score >= 2.5
 
     def test_valid_motif_match_out_drops_high_score_windows(self):
-        import numpy as np
         import aaanalysis.utils as ut
-        aa_idx = {a: i for i, a in enumerate(ut.LIST_CANONICAL_AA)}
-        pwm = np.zeros((3, len(ut.LIST_CANONICAL_AA)))
-        pwm[:, aa_idx["A"]] = 1.0
+        pwm = pd.DataFrame(0.0, index=range(3), columns=list(ut.LIST_CANONICAL_AA))
+        pwm["A"] = 1.0
         df_seq = pd.DataFrame({
             "entry": ["P1", "P2"],
             "sequence": ["ACDEFGHIKLMNPQRSTV", "AAACDEFGHIKLMNPQRS"],
@@ -284,15 +280,16 @@ class TestSampleDifferentProtein:
                                             motif_score_threshold=2.5,
                                             motif_match="out", seed=0)
         for w in df["window"]:
-            score = sum(pwm[i, aa_idx.get(c, -1)] if c in aa_idx else 0.0
+            score = sum(float(pwm.loc[i, c]) if c in pwm.columns else 0.0
                         for i, c in enumerate(w))
             assert score < 2.5
 
     def test_invalid_motif_pwm_shape(self):
-        import numpy as np
+        import aaanalysis.utils as ut
         df_seq = _df_seq_mixed()
         aaws = aa.AAWindowSampler()
-        bad_pwm = np.zeros((4, 20))
+        bad_pwm = pd.DataFrame(0.0, index=range(4),
+                               columns=list(ut.LIST_CANONICAL_AA))
         with pytest.raises(ValueError, match="motif_pwm"):
             aaws.sample_different_protein(df_seq=df_seq, pos_col="pos",
                                            n=5, window_size=3,
@@ -300,39 +297,45 @@ class TestSampleDifferentProtein:
                                            motif_score_threshold=1.0, seed=0)
 
     def test_invalid_motif_pwm_without_threshold(self):
-        import numpy as np
+        import aaanalysis.utils as ut
         df_seq = _df_seq_mixed()
         aaws = aa.AAWindowSampler()
-        pwm = np.zeros((3, 20))
+        pwm = pd.DataFrame(0.0, index=range(3), columns=list(ut.LIST_CANONICAL_AA))
         with pytest.raises(ValueError, match="motif_score_threshold"):
             aaws.sample_different_protein(df_seq=df_seq, pos_col="pos",
                                            n=5, window_size=3, motif_pwm=pwm, seed=0)
 
     def test_invalid_motif_match(self):
-        import numpy as np
+        import aaanalysis.utils as ut
         df_seq = _df_seq_mixed()
         aaws = aa.AAWindowSampler()
-        pwm = np.zeros((3, 20))
+        pwm = pd.DataFrame(0.0, index=range(3), columns=list(ut.LIST_CANONICAL_AA))
         with pytest.raises(ValueError, match="motif_match"):
             aaws.sample_different_protein(df_seq=df_seq, pos_col="pos",
                                            n=5, window_size=3, motif_pwm=pwm,
                                            motif_score_threshold=1.0,
                                            motif_match="invalid_mode", seed=0)
 
+    def test_invalid_motif_pwm_ndarray_rejected(self):
+        """ndarray PWM is rejected; DataFrame required."""
+        import numpy as np
+        df_seq = _df_seq_mixed()
+        aaws = aa.AAWindowSampler()
+        ndarray_pwm = np.zeros((3, 20))
+        with pytest.raises(ValueError, match="motif_pwm"):
+            aaws.sample_different_protein(df_seq=df_seq, pos_col="pos",
+                                           n=5, window_size=3,
+                                           motif_pwm=ndarray_pwm,
+                                           motif_score_threshold=1.0, seed=0)
+
     @pytest.mark.filterwarnings("ignore::RuntimeWarning")
-    def test_valid_motif_pwm_dataframe_input(self):
-        """DataFrame PWM with named AA columns (any order) is reindexed internally."""
+    def test_valid_motif_pwm_dataframe_shuffled_columns(self):
+        """DataFrame PWM with shuffled canonical-AA columns is reindexed internally."""
         import numpy as np
         import aaanalysis.utils as ut
-        # Build a DataFrame whose columns are the canonical AAs in a SHUFFLED order.
         cols_shuffled = list(ut.LIST_CANONICAL_AA)
         np.random.RandomState(0).shuffle(cols_shuffled)
-        # PWM that boosts 'A' at every position; alphabetical-order ndarray equivalent.
-        aa_idx = {a: i for i, a in enumerate(ut.LIST_CANONICAL_AA)}
-        ndarray_pwm = np.zeros((3, 20))
-        ndarray_pwm[:, aa_idx["A"]] = 1.0
-        # Same scores expressed as DataFrame with shuffled column order.
-        df_pwm = pd.DataFrame(np.zeros((3, 20)), columns=cols_shuffled)
+        df_pwm = pd.DataFrame(0.0, index=range(3), columns=cols_shuffled)
         df_pwm["A"] = 1.0
         df_seq = pd.DataFrame({
             "entry": ["P1", "P2"],
@@ -340,17 +343,12 @@ class TestSampleDifferentProtein:
             "pos": [[5], []],
         })
         aaws = aa.AAWindowSampler()
-        # ndarray and DataFrame paths should produce identical results given
-        # identical effective PWMs.
-        df_arr = aaws.sample_different_protein(df_seq=df_seq, pos_col="pos",
-                                            n=5, window_size=3,
-                                            motif_pwm=ndarray_pwm,
-                                            motif_score_threshold=2.5, seed=0)
-        df_df = aaws.sample_different_protein(df_seq=df_seq, pos_col="pos",
+        df = aaws.sample_different_protein(df_seq=df_seq, pos_col="pos",
                                             n=5, window_size=3,
                                             motif_pwm=df_pwm,
                                             motif_score_threshold=2.5, seed=0)
-        assert df_arr["window"].tolist() == df_df["window"].tolist()
+        # All returned windows should be 'AAA' (the only score-2.5+ trimer with this PWM).
+        assert (df["window"] == "AAA").all()
 
     def test_invalid_motif_pwm_dataframe_missing_canonical_aa(self):
         """DataFrame PWM missing a canonical AA column is rejected."""

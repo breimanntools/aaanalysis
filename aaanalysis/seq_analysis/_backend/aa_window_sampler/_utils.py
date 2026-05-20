@@ -64,24 +64,45 @@ def parse_pos_col(df_seq, pos_col):
     return parsed
 
 
-def candidate_centers_(seq_len, window_size, exclude_positions=None, min_distance=0):
+def candidate_centers_(seq_len, window_size, exclude_positions=None,
+                       min_distance=None, max_distance=None):
     """Return the 0-based center indices for valid windows of ``window_size``.
 
     A center ``c`` is the **P1** residue under cleavage convention; the window
     spans ``[c - half_left, c + half_right)`` per :func:`window_offsets` and
-    must lie fully within ``[0, seq_len)``. Centers within ``+/- min_distance``
-    of any position in ``exclude_positions`` (1-based) are dropped.
+    must lie fully within ``[0, seq_len)``.
+
+    When ``exclude_positions`` (1-based) is non-empty, the ``(min_distance,
+    max_distance)`` band filters centers by their L1 distance to the *nearest*
+    excluded position:
+
+    - ``min_distance`` (``None`` drops the lower bound): admit ``c`` only if the
+      nearest excluded position is at least ``min_distance`` residues away.
+    - ``max_distance`` (``None`` drops the upper bound): admit ``c`` only if the
+      nearest excluded position is at most ``max_distance`` residues away.
+
+    With both bounds ``None`` (or no excluded positions), every fully-fitting
+    center is returned.
     """
     half_left, half_right = window_offsets(window_size)
     lo, hi = half_left, seq_len - half_right + 1
     if hi <= lo:
         return []
     centers = list(range(lo, hi))
-    if not exclude_positions or min_distance < 0:
+    if not exclude_positions:
         return centers
-    forbidden = {(p - 1) + d for p in exclude_positions
-                 for d in range(-min_distance, min_distance + 1)}
-    return [c for c in centers if c not in forbidden]
+    if min_distance is None and max_distance is None:
+        return centers
+    excl_0based = [p - 1 for p in exclude_positions]
+    result = []
+    for c in centers:
+        d = min(abs(c - p) for p in excl_0based)
+        if min_distance is not None and d < min_distance:
+            continue
+        if max_distance is not None and d > max_distance:
+            continue
+        result.append(c)
+    return result
 
 
 def collect_test_windows(df_seq, pos_col, window_size):

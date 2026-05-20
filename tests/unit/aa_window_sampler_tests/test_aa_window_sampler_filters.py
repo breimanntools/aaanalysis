@@ -1,10 +1,10 @@
 """This is a script to test the backend identity-based similarity / redundancy filters
-in :mod:`aaanalysis.data_handling._backend.aa_window_sampler._utils`."""
+in :mod:`aaanalysis.seq_analysis._backend.aa_window_sampler._utils`."""
 import numpy as np
 import pytest
 from hypothesis import settings
 import aaanalysis as aa
-from aaanalysis.data_handling._backend.aa_window_sampler._utils import (
+from aaanalysis.seq_analysis._backend.aa_window_sampler._utils import (
     filter_similarity_to_test,
     filter_redundancy,
     window_identity,

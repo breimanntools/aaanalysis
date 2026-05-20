@@ -1,21 +1,7 @@
 """
-This is a script for a wrapper around the FIMO CLI (MEME suite). It returns
-the same ``df_seq``-shaped output as
-:meth:`aaanalysis.AAWindowSampler.sample_motif_matched`, with strict parity
-on the returned hit set.
-
-Strategy: run ``fimo --thresh 1.0`` to enumerate every motif occurrence in
-the candidate rows, then re-score each occurrence in Python with the raw
-PWM-sum used by the in-memory method. The user's ``motif_score_threshold``
-is then applied to the Python-side score, so both paths use the same scoring
-formula and the same filter.
-
-Parity contract: same ``df_seq`` + same ``motif_pwm`` + same
-``motif_score_threshold`` ⇒ same set of ``(entry, source_position)`` and
-identical ``motif_score`` values. ``AAWindowSampler``'s class-level
-``max_similarity_to_test`` / ``max_similarity_within_ref`` filters are *not*
-applied by the wrapper (it has no class state); for parity, leave those
-defaults.
+This is a script for the frontend of the scan_motif function, a wrapper
+around the FIMO CLI (MEME suite) that mirrors
+:meth:`aaanalysis.AAWindowSampler.sample_motif_matched`.
 """
 from typing import Optional, List, Union
 import shutil
@@ -26,11 +12,10 @@ import numpy as np
 import pandas as pd
 
 import aaanalysis.utils as ut
-from aaanalysis.data_handling._aa_window_sampler import (check_motif_args,
-                                                          check_context_cols)
-from aaanalysis.data_handling._backend.aa_window_sampler._utils import (
+from aaanalysis.seq_analysis._aa_window_sampler import check_motif_args
+from aaanalysis.seq_analysis._backend.aa_window_sampler._utils import (
     parse_pos_col, score_window_pwm_, window_offsets)
-from aaanalysis.data_handling._backend.aa_window_sampler.build_output import (
+from aaanalysis.seq_analysis._backend.aa_window_sampler.build_output import (
     build_segments_output, build_sequences_output)
 
 
@@ -141,25 +126,24 @@ def scan_motif(df_seq: pd.DataFrame = None,
                                   pos_col: str = "pos",
                                   n: int = 100,
                                   window_size: int = 9,
-                                  motif_pwm: Optional[np.ndarray] = None,
-                                  motif_score_threshold: Optional[float] = None,
+                                  motif_pwm: pd.DataFrame = None,
+                                  motif_score_threshold: float = None,
                                   label_test: Union[int, float] = 1,
                                   label_ref: Union[int, float] = 0,
                                   role: str = ut.ROLE_NEG,
                                   output_mode: str = ut.OUT_SEGMENTS,
-                                  context_cols: Optional[List[str]] = None,
                                   max_stored_scores: Optional[int] = None,
                                   bg_file: Optional[Union[str, Path]] = None,
                                   motif_pseudo: Optional[float] = None,
                                   ) -> pd.DataFrame:
-    """Wrapper around the FIMO CLI [Bailey09]_, [Grant11]_; returns the same hits as
-    :meth:`AAWindowSampler.sample_motif_matched`.
+    """
+    Scan candidate proteins for windows matching a user-supplied PWM (Position Weight Matrix) using the FIMO CLI.
 
-    Raises ``RuntimeError`` if ``fimo`` is not on PATH. The output schema
-    matches :meth:`AAWindowSampler.sample_motif_matched` (including the
-    ``motif_score`` column). Strict parity: same input ⇒ same hit set ⇒ same
-    ``motif_score`` values; see module docstring for the implementation
-    technique.
+    This is a CLI-based wrapper around FIMO [Bailey09]_, [Grant11]_ from the MEME suite that
+    mirrors :meth:`AAWindowSampler.sample_motif_matched` with strict parity on the returned hit
+    set: the same ``df_seq``, ``motif_pwm``, and ``motif_score_threshold`` yield the same hits
+    and identical ``motif_score`` values. The output schema (including the ``motif_score``
+    column) matches :meth:`AAWindowSampler.sample_motif_matched`.
 
     Parameters
     ----------
@@ -176,9 +160,10 @@ def scan_motif(df_seq: pd.DataFrame = None,
         Maximum number of motif-matched windows to return.
     window_size : int, default=9
         Window length; must equal the first dimension of ``motif_pwm``.
-    motif_pwm : np.ndarray
-        Position-weight matrix of shape ``(window_size, 20)``, columns ordered
-        by ``ut.LIST_CANONICAL_AA``. Required.
+    motif_pwm : pd.DataFrame
+        Position-weight matrix of shape ``(window_size, 20)`` whose columns are
+        the 20 canonical AA letters in any order (reindexed internally to
+        ``ut.LIST_CANONICAL_AA``). Required.
     motif_score_threshold : float
         Score threshold (sum of per-position PWM values). Required.
     label_test : int or float, default=1
@@ -189,8 +174,6 @@ def scan_motif(df_seq: pd.DataFrame = None,
         Role tag stored in the output's ``role`` column.
     output_mode : {'segments', 'sequences'}, default='segments'
         Output schema; same as :meth:`AAWindowSampler.sample_motif_matched`.
-    context_cols : list of str, optional
-        Extra ``df_seq`` columns to copy through to the output (provenance).
     max_stored_scores : int, optional
         Maximum number of motif occurrences FIMO may store internally before
         truncating. FIMO's default is 100 000; raise this only when scanning
@@ -205,6 +188,16 @@ def scan_motif(df_seq: pd.DataFrame = None,
     Returns
     -------
     pd.DataFrame
+
+    Raises
+    ------
+    RuntimeError
+        If the ``fimo`` binary is not on PATH.
+    ValueError
+        If ``motif_pwm`` or ``motif_score_threshold`` is not provided, if
+        ``bg_file`` is set but does not point to an existing file, or if
+        ``df_seq`` contains no eligible candidate proteins (rows without
+        test positions).
 
     Notes
     -----
@@ -221,6 +214,9 @@ def scan_motif(df_seq: pd.DataFrame = None,
       by ``entry`` then 0-based center) and capped at ``n``.
     * Protein-only: this wrapper passes the 20 canonical amino acids to MEME
       as the alphabet; gapped or non-protein alphabets are not supported.
+    * ``AAWindowSampler``'s class-level ``max_similarity_to_test`` /
+      ``max_similarity_within_ref`` filters are not applied by this wrapper
+      (it has no class state); leave those at their defaults for parity.
 
     The wrapper sets ``--text``, ``--thresh 1.0``, and ``--no-qvalue``
     unconditionally because they are required for the parity contract with
@@ -241,6 +237,7 @@ def scan_motif(df_seq: pd.DataFrame = None,
       and FIMO `manual <https://meme-suite.org/meme/doc/fimo.html>`__.
     * :meth:`AAWindowSampler.sample_motif_matched` for the pure-Python
       equivalent (no FIMO binary required).
+    
     """
     check_fimo_installed()
     # Validate
@@ -270,8 +267,6 @@ def scan_motif(df_seq: pd.DataFrame = None,
         if not bg_path.is_file():
             raise ValueError(f"'bg_file' ({bg_file!r}) should be a path to "
                              f"an existing file")
-    reserved = ut.COLS_SEGMENTS if output_mode == ut.OUT_SEGMENTS else ut.COLS_SEQUENCES
-    context_cols = check_context_cols(df_seq, context_cols, reserved)
     # Identify candidate rows
     positions = parse_pos_col(df_seq, pos_col)
     eligible_idx = [i for i, p in enumerate(positions) if not p]
@@ -312,15 +307,13 @@ def scan_motif(df_seq: pd.DataFrame = None,
         if output_mode == ut.OUT_SEGMENTS:
             df_out = build_segments_output(
                 [], strategy=ut.STRATEGY_MOTIF_MATCHED, role=role,
-                label_value=label_ref, df_seq=df_seq,
-                window_size=window_size,
-                source_indices=None, context_cols=context_cols)
+                label_value=label_ref, window_size=window_size)
             df_out["motif_score"] = []
             return df_out
         return build_sequences_output(df_seq, positions,
                                        [[] for _ in range(len(df_seq))],
                                        label_test=label_test, label_ref=label_ref,
-                                       mark_test=True, context_cols=context_cols)
+                                       mark_test=True)
     # Rank, cap at n, build output schema
     hits.sort(key=lambda h: (-h["score"], h["entry"], h["start"]))
     hits = hits[:n]
@@ -344,12 +337,9 @@ def scan_motif(df_seq: pd.DataFrame = None,
     if output_mode == ut.OUT_SEGMENTS:
         df_out = build_segments_output(rows, strategy=ut.STRATEGY_MOTIF_MATCHED,
                                         role=role, label_value=label_ref,
-                                        df_seq=df_seq,
-                                        window_size=window_size,
-                                        source_indices=source_indices,
-                                        context_cols=context_cols)
+                                        window_size=window_size)
         df_out["motif_score"] = sampled_scores
         return df_out
     return build_sequences_output(df_seq, positions, sampled_centers,
                                    label_test=label_test, label_ref=label_ref,
-                                   mark_test=True, context_cols=context_cols)
+                                   mark_test=True)
