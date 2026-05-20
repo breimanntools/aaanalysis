@@ -61,6 +61,14 @@ Machine Learning
    *The Elements of Statistical Learning*,
    `Springer <https://www.springer.com/gp/book/9780387848570>`__.
 
+.. [MilliganCooper88] Milligan and Cooper (1988),
+   *A study of standardization of variables in cluster analysis*,
+   `Journal of Classification <https://doi.org/10.1007/BF01897163>`__.
+
+.. [Eisen98] Eisen *et al.* (1998),
+   *Cluster analysis and display of genome-wide expression patterns*,
+   `PNAS <https://doi.org/10.1073/pnas.95.25.14863>`__.
+
 Positive-Unlabeled Learning
 ---------------------------
 .. [ElkanNoto08] Elkan and Noto (2008),

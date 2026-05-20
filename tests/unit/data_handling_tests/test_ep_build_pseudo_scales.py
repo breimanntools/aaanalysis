@@ -182,6 +182,81 @@ class TestBuildPseudoScales:
         with pytest.raises(ValueError, match="consistent embedding dimensionality"):
             aa.EmbeddingPreprocessor.build_pseudo_scales(df_seq=df_seq, embeddings=embeddings)
 
+    # return_std parameter
+    def test_return_std_false_returns_single_dataframe(self):
+        df_seq, embeddings = _make_fixture()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            out = aa.EmbeddingPreprocessor.build_pseudo_scales(
+                df_seq=df_seq, embeddings=embeddings, return_std=False
+            )
+        assert isinstance(out, pd.DataFrame)
+
+    def test_return_std_true_returns_tuple_of_dataframes(self):
+        df_seq, embeddings = _make_fixture(D=6)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            out = aa.EmbeddingPreprocessor.build_pseudo_scales(
+                df_seq=df_seq, embeddings=embeddings, return_std=True
+            )
+        assert isinstance(out, tuple) and len(out) == 2
+        means, stds = out
+        assert isinstance(means, pd.DataFrame) and isinstance(stds, pd.DataFrame)
+        assert means.shape == (20, 6) and stds.shape == (20, 6)
+        assert list(means.index) == list(ALPHABET)
+        assert list(stds.index) == list(ALPHABET)
+
+    def test_return_std_zero_for_single_occurrence_aa(self):
+        """An AA that occurs exactly once should have std=0 (population std)."""
+        df_seq = pd.DataFrame({"entry": ["P0"], "sequence": ["W"]})
+        emb = np.array([[7.0, -2.0]], dtype="float32")
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            means, stds = aa.EmbeddingPreprocessor.build_pseudo_scales(
+                df_seq=df_seq, embeddings={"P0": emb}, return_std=True
+            )
+        assert means.loc["W"].tolist() == [pytest.approx(7.0), pytest.approx(-2.0)]
+        assert stds.loc["W"].tolist() == [pytest.approx(0.0), pytest.approx(0.0)]
+
+    def test_return_std_absent_aa_is_nan(self):
+        df_seq = pd.DataFrame({"entry": ["P0"], "sequence": ["AC"]})
+        emb = np.ones((2, 3), dtype="float32")
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            _, stds = aa.EmbeddingPreprocessor.build_pseudo_scales(
+                df_seq=df_seq, embeddings={"P0": emb}, return_std=True
+            )
+        for letter in ALPHABET:
+            if letter in {"A", "C"}:
+                assert not stds.loc[letter].isna().any()
+            else:
+                assert stds.loc[letter].isna().all()
+
+    def test_return_std_matches_numpy_reference(self):
+        """Hand-computed reference: 'A' appears 4 times with values [1,2,3,4]; std (pop) = ~1.118."""
+        df_seq = pd.DataFrame({"entry": ["P0", "P1"], "sequence": ["AA", "AA"]})
+        embeddings = {
+            "P0": np.array([[1.0], [2.0]], dtype="float32"),
+            "P1": np.array([[3.0], [4.0]], dtype="float32"),
+        }
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            means, stds = aa.EmbeddingPreprocessor.build_pseudo_scales(
+                df_seq=df_seq, embeddings=embeddings, return_std=True
+            )
+        ref = np.array([1.0, 2.0, 3.0, 4.0])
+        assert means.loc["A", "dim_0"] == pytest.approx(ref.mean())
+        assert stds.loc["A", "dim_0"] == pytest.approx(ref.std(ddof=0))
+
+    # Negative cases for return_std
+    def test_invalid_return_std_not_bool(self):
+        df_seq, embeddings = _make_fixture(D=4)
+        for bad in ["yes", 1, 0, None, [True]]:
+            with pytest.raises(ValueError):
+                aa.EmbeddingPreprocessor.build_pseudo_scales(
+                    df_seq=df_seq, embeddings=embeddings, return_std=bad
+                )
+
 
 # Complex / interaction cases ------------------------------------------
 class TestBuildPseudoScalesComplex:
