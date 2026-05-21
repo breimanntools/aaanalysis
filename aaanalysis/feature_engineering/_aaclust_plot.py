@@ -76,9 +76,9 @@ def check_match_df_corr_clust_x(df_corr=None, cluster_x=None):
     all_vals = df_corr.to_numpy().flatten()[1:].tolist()
     if cluster_x:
         if len(set(all_vals)) == 1:
-            raise ValueError(f"'df_corr' should not contain all same values if 'cluster_x' is True")
+            raise ValueError("'df_corr' should not contain all same values if 'cluster_x' is True")
         if None in all_vals or np.nan in all_vals:
-            raise ValueError(f"'df_corr' should not contain missing values")
+            raise ValueError("'df_corr' should not contain missing values")
 
 
 def check_bar_position(bar_position=None):
@@ -230,7 +230,7 @@ class AAclustPlot:
 
     def centers(self,
                 X: ut.ArrayLike2D,
-                labels: ut.ArrayLike1D = None,
+                labels: Optional[Union[np.ndarray, list]] = None,
                 component_x: int = 1,
                 component_y: int = 2,
                 ax: Optional[plt.Axes] = None,
