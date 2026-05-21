@@ -1,6 +1,6 @@
-"""This is a script for the frontend of the EmbeddingPreprocessor class for
+"""
+This is a script for the frontend of the EmbeddingPreprocessor class for
 preparing protein-language-model (PLM) embeddings as inputs to ``CPP.run_embed``.
-
 """
 from typing import Dict, Tuple, Union
 import warnings
@@ -74,13 +74,13 @@ def _check_match_df_scales_emb_df_stds_emb(df_scales_emb, df_stds_emb):
         )
     if not df_stds_emb.index.equals(df_scales_emb.index):
         raise ValueError(
-            f"'df_stds_emb' should have the same index as 'df_scales_emb' "
-            f"(AAs in the same order)."
+            "'df_stds_emb' should have the same index as 'df_scales_emb' "
+            "(AAs in the same order)."
         )
     if not df_stds_emb.columns.equals(df_scales_emb.columns):
         raise ValueError(
-            f"'df_stds_emb' should have the same columns as 'df_scales_emb' "
-            f"(dimension labels in the same order)."
+            "'df_stds_emb' should have the same columns as 'df_scales_emb' "
+            "(dimension labels in the same order)."
         )
 
 

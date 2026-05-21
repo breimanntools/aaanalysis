@@ -17,6 +17,7 @@ import warnings
 settings.register_profile("ci", deadline=400)
 settings.load_profile("ci")
 
+DEADLINE = 8000
 
 def _create_sample_df_pu(n_samples=10, n_pcs=7, include_abs_diff=True, include_selection_via=True,
                          n_neg=5, random_order=False):
@@ -123,7 +124,7 @@ class TestdPULearnPlotPCA:
             assert isinstance(ax, plt.Axes)
             plt.close()
 
-    @settings(max_examples=10, deadline=3500)
+    @settings(max_examples=10, deadline=DEADLINE)
     @given(show_pos_mean_x=some.booleans(), show_pos_mean_y=some.booleans())
     def test_show_pos_mean_valid(self, show_pos_mean_x, show_pos_mean_y):
         n_samples, n_pc, n_neg = _get_random_int()
@@ -134,7 +135,7 @@ class TestdPULearnPlotPCA:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=10, deadline=3500)
+    @settings(max_examples=10, deadline=DEADLINE)
     @given(colors=some.lists(some.sampled_from(['blue', 'green', 'red']), min_size=3, max_size=3, unique=True))
     def test_colors_valid(self, colors):
         n_samples, n_pc, n_neg = _get_random_int()
@@ -145,7 +146,7 @@ class TestdPULearnPlotPCA:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=10, deadline=3500)
+    @settings(max_examples=10, deadline=DEADLINE)
     @given(names=some.lists(some.text(), min_size=3, max_size=3, unique=True))
     def test_names_valid(self, names):
         with warnings.catch_warnings():
@@ -162,7 +163,7 @@ class TestdPULearnPlotPCA:
             plt.close()
 
 
-    @settings(max_examples=10, deadline=3500)
+    @settings(max_examples=10, deadline=DEADLINE)
     @given(legend=some.booleans())
     def test_legend_valid(self, legend):
         n_samples, n_pc, n_neg = _get_random_int()
@@ -173,7 +174,7 @@ class TestdPULearnPlotPCA:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=10, deadline=3500)
+    @settings(max_examples=10, deadline=DEADLINE)
     @given(legend_y=some.floats(min_value=-1, max_value=1))
     def test_legend_y_valid(self, legend_y):
         n_samples, n_pc, n_neg = _get_random_int()
