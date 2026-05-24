@@ -1,9 +1,7 @@
 """
-This is a script for the backend of the StructurePreprocessor: a richer DSSP
-runner that captures per-residue ``(ss, asa_abs, phi, psi)`` for every chain
-in a single PDB file. Mirrors the design of
-``_backend.get_dssp._dssp_runner.run_dssp_for_entry_`` but returns four
-feature streams instead of just the SS code list.
+This is a script for the backend of the StructurePreprocessor: the DSSP
+runner that captures per-residue ``(ss, asa_abs, phi, psi)`` for every
+chain in a single PDB / mmCIF file and returns all four feature streams.
 """
 from typing import List, Tuple
 import shutil

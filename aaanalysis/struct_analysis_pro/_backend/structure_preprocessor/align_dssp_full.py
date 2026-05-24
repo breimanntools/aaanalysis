@@ -1,9 +1,10 @@
 """
 This is a script for the backend of the StructurePreprocessor: picks the
-chain whose ATOM sequence best matches ``df_seq[sequence]``, then aligns the
-full per-residue feature streams (``ss, asa, phi, psi``) from
-:func:`run_dssp_full_for_entry_` onto target positions. Re-uses the
-identity-fraction logic from the SS-only ``_backend.get_dssp._alignment``.
+chain whose ATOM sequence best matches ``df_seq[sequence]``, then aligns
+the full per-residue feature streams (``ss, asa, phi, psi``) from
+:func:`run_dssp_full_for_entry_` onto target positions. Identity-fraction
+scoring uses :class:`Bio.Align.PairwiseAligner` with a global identity
+score and mild gap penalties.
 """
 from typing import List, Tuple, Optional
 
