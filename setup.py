@@ -18,7 +18,7 @@ from setuptools import setup
 setup(
     ext_modules=cythonize(
         [
-            "aaanalysis/feature_engineering/_backend/cpp/_filters_num_c/_inner.pyx",
+            "aaanalysis/feature_engineering/_backend/cpp/_filters_c/_inner.pyx",
         ],
         language_level=3,
         compiler_directives={
