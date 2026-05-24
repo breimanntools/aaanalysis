@@ -5,6 +5,7 @@ from ._read_fasta import read_fasta
 from ._to_fasta import to_fasta
 from ._seq_preproc import SequencePreprocessor
 from ._embed_preproc import EmbeddingPreprocessor
+from ._combine_dict_nums import combine_dict_nums
 
 __all__ = [
     "load_dataset",
@@ -14,4 +15,5 @@ __all__ = [
     "to_fasta",
     "SequencePreprocessor",
     "EmbeddingPreprocessor",
+    "combine_dict_nums",
 ]

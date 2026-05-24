@@ -102,6 +102,28 @@ _Avoid_: dimension scale, AA average, embedding scale.
 A cluster label assigned to a pseudo-scale by AAclust correlation-based clustering. Carried in `df_cat_emb`'s `cat` (coarser threshold) and `subcat` (finer threshold) columns, mirroring the AAontology two-level hierarchy. Cluster IDs are deterministic given `(pseudo_scales, thresholds, random_state)` but inherit the dataset-dependence of pseudo-scales.
 _Avoid_: PLM cluster, embedding group.
 
+### Structure-based feature engineering vocabulary
+
+**dict_dssp**:
+A `Dict[entry, np.ndarray (L, D_dssp)]` of per-residue DSSP-derived numerical features (secondary structure one-hot, ASA, dihedrals). Produced by `StructurePreprocessor().encode_dssp(df_seq, pdb_folder, features=[...])`.
+_Avoid_: ss_dict, dssp_tensor.
+
+**dict_pdb**:
+A `Dict[entry, np.ndarray (L, D_pdb)]` of per-residue features extracted directly from PDB ATOM records (mean B-factor, residue depth). Produced by `StructurePreprocessor().encode_pdb(df_seq, pdb_folder, features=[...])`.
+_Avoid_: pdb_tensor, raw_pdb_dict.
+
+**feature key**:
+A canonical string identifier in the `StructurePreprocessor` registry that maps to a fixed `(num_dims, dim_names, category, subcategory)` tuple. Used in the `features=[...]` parameter of `encode_dssp` / `encode_pdb` and in `build_scales(features=[...])`. Valid keys: `ss3`, `ss8`, `asa`, `rasa`, `phi_psi`, `phi_psi_sincos`, `bfactor`, `depth`.
+_Avoid_: feature_id (collides with the `df_feat.feature` column), dim_key.
+
+**StructurePreprocessor**:
+Public class in `aaanalysis/struct_analysis_pro/` that converts PDB files into [[dict_num]]-shape per-residue numerical tensors for `CPP.run_num`. Mirrors `EmbeddingPreprocessor`'s instance-based pattern (`stp = StructurePreprocessor()`). Four public methods: `get_dssp` (raw DSSP list output), `encode_dssp` (DSSP → dict_num), `encode_pdb` (raw PDB → dict_num), `build_scales` (feature_keys → df_scales + df_cat). Pro-extra gated (biopython); `msms` is a runtime check inside `encode_pdb(features=['depth'])`.
+_Avoid_: PDBPreprocessor, DSSPPreprocessor (too narrow).
+
+**combine_dict_nums**:
+Top-level `aa.combine_dict_nums(dict_nums: List[Dict[entry, ndarray]]) → Dict[entry, ndarray]` that concatenates multiple per-residue tensors along the D axis. Source-agnostic — works with `dict_dssp`, `dict_pdb`, `dict_embeddings`, or any user-supplied dict matching the shape contract. Validates same entry set + same L per entry across all inputs.
+_Avoid_: merge_dict_num, stack_dict_nums.
+
 ### Numerical-mode CPP vocabulary
 
 **dict_num**:

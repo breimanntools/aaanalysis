@@ -1,5 +1,5 @@
-from ._get_dssp import get_dssp
+from ._structure_preprocessor import StructurePreprocessor
 
 __all__ = [
-    "get_dssp",
+    "StructurePreprocessor",
 ]

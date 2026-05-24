@@ -1,4 +1,12 @@
-"""This is a script to test aaanalysis.get_dssp()."""
+"""This is a script to test the internal SS-only ``_get_dssp.get_dssp``.
+
+``aa.get_dssp`` was removed from the public API; the SS-only function now
+lives only as an internal helper at
+``aaanalysis.struct_analysis_pro._get_dssp.get_dssp``. The public DSSP entry
+point is ``aa.StructurePreprocessor().get_dssp(...)`` (covered by
+``test_structure_preprocessor_get_dssp.py``). These tests preserve coverage
+on the internal SS-only path.
+"""
 import shutil
 import warnings
 from pathlib import Path
@@ -11,6 +19,7 @@ import hypothesis.strategies as some
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
+from aaanalysis.struct_analysis_pro._get_dssp import get_dssp as _get_dssp
 
 aa.options["verbose"] = False
 
@@ -62,34 +71,34 @@ class TestGetDssp:
     def test_invalid_no_mkdssp_binary(self):
         with patch(f"{MODULE}.shutil.which", return_value=None):
             with pytest.raises(RuntimeError, match="mkdssp"):
-                aa.get_dssp(df_seq=_df_one(), pdb_folder="/tmp")
+                _get_dssp(df_seq=_df_one(), pdb_folder="/tmp")
 
     def test_invalid_df_seq_none(self, tmp_path):
         with _mock_binary_present():
             with pytest.raises(ValueError, match="df_seq"):
-                aa.get_dssp(df_seq=None, pdb_folder=str(tmp_path))
+                _get_dssp(df_seq=None, pdb_folder=str(tmp_path))
 
     def test_invalid_df_seq_missing_sequence_column(self, tmp_path):
         df = pd.DataFrame({"entry": ["P1"], "tmd": ["ACDE"]})
         with _mock_binary_present():
             with pytest.raises(ValueError):
-                aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
+                _get_dssp(df_seq=df, pdb_folder=str(tmp_path))
 
     def test_invalid_df_seq_missing_entry_column(self, tmp_path):
         df = pd.DataFrame({"sequence": ["ACDE"]})
         with _mock_binary_present():
             with pytest.raises(ValueError):
-                aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
+                _get_dssp(df_seq=df, pdb_folder=str(tmp_path))
 
     def test_invalid_pdb_folder_none(self):
         with _mock_binary_present():
             with pytest.raises(ValueError, match="pdb_folder"):
-                aa.get_dssp(df_seq=_df_one(), pdb_folder=None)
+                _get_dssp(df_seq=_df_one(), pdb_folder=None)
 
     def test_invalid_pdb_folder_nonexistent(self):
         with _mock_binary_present():
             with pytest.raises(ValueError, match="pdb_folder"):
-                aa.get_dssp(df_seq=_df_one(),
+                _get_dssp(df_seq=_df_one(),
                             pdb_folder="/nonexistent/__no_such_dir__")
 
     def test_invalid_pdb_folder_is_file(self, tmp_path):
@@ -97,39 +106,39 @@ class TestGetDssp:
         bogus.write_text("hi")
         with _mock_binary_present():
             with pytest.raises(ValueError, match="pdb_folder"):
-                aa.get_dssp(df_seq=_df_one(), pdb_folder=str(bogus))
+                _get_dssp(df_seq=_df_one(), pdb_folder=str(bogus))
 
     def test_invalid_ss_mode_value(self, tmp_path):
         with _mock_binary_present():
             for bad in ["ss4", "SS3", "", "raw"]:
                 with pytest.raises(ValueError, match="ss_mode"):
-                    aa.get_dssp(df_seq=_df_one(),
+                    _get_dssp(df_seq=_df_one(),
                                 pdb_folder=str(tmp_path), ss_mode=bad)
 
     def test_invalid_ss_mode_none(self, tmp_path):
         with _mock_binary_present():
             with pytest.raises(ValueError, match="ss_mode"):
-                aa.get_dssp(df_seq=_df_one(),
+                _get_dssp(df_seq=_df_one(),
                             pdb_folder=str(tmp_path), ss_mode=None)
 
     def test_invalid_gap_handling_value(self, tmp_path):
         with _mock_binary_present():
             for bad in ["drop", "PAD", "fill", ""]:
                 with pytest.raises(ValueError, match="gap_handling"):
-                    aa.get_dssp(df_seq=_df_one(),
+                    _get_dssp(df_seq=_df_one(),
                                 pdb_folder=str(tmp_path), gap_handling=bad)
 
     def test_invalid_gap_handling_none(self, tmp_path):
         with _mock_binary_present():
             with pytest.raises(ValueError, match="gap_handling"):
-                aa.get_dssp(df_seq=_df_one(),
+                _get_dssp(df_seq=_df_one(),
                             pdb_folder=str(tmp_path), gap_handling=None)
 
     def test_invalid_verbose_non_bool(self, tmp_path):
         with _mock_binary_present():
             for bad in [1, 0, "true", None]:
                 with pytest.raises(ValueError):
-                    aa.get_dssp(df_seq=_df_one(),
+                    _get_dssp(df_seq=_df_one(),
                                 pdb_folder=str(tmp_path), verbose=bad)
 
     def test_invalid_existing_ss_column(self, tmp_path):
@@ -137,20 +146,20 @@ class TestGetDssp:
         df[ut.COL_SS] = [["H"] * 9]
         with _mock_binary_present():
             with pytest.raises(ValueError, match="ss"):
-                aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
+                _get_dssp(df_seq=df, pdb_folder=str(tmp_path))
 
     def test_invalid_existing_dssp_ok_column(self, tmp_path):
         df = _df_one()
         df[ut.COL_DSSP_OK] = [True]
         with _mock_binary_present():
             with pytest.raises(ValueError, match="dssp_ok"):
-                aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
+                _get_dssp(df_seq=df, pdb_folder=str(tmp_path))
 
     def test_invalid_unsafe_entry_path_traversal(self, tmp_path):
         df = pd.DataFrame({"entry": ["../etc"], "sequence": ["ACDE"]})
         with _mock_binary_present():
             with pytest.raises(ValueError, match="entry"):
-                aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
+                _get_dssp(df_seq=df, pdb_folder=str(tmp_path))
 
     # ----- POSITIVES (≥10) -----
     def test_valid_returns_dataframe(self, tmp_path):
@@ -159,7 +168,7 @@ class TestGetDssp:
              patch(RUNNER,
                    side_effect=lambda p: _canned_chains_perfect("ACDEFGHIK")):
             (tmp_path / "P1.pdb").write_text("dummy")
-            out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+            out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                               verbose=False)
         assert isinstance(out, pd.DataFrame)
 
@@ -169,7 +178,7 @@ class TestGetDssp:
              patch(RUNNER,
                    side_effect=lambda p: _canned_chains_perfect("ACDEFGHIK")):
             (tmp_path / "P1.pdb").write_text("dummy")
-            out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+            out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                               verbose=False)
         assert ut.COL_SS in out.columns
         assert ut.COL_DSSP_OK in out.columns
@@ -182,7 +191,7 @@ class TestGetDssp:
         with _mock_binary_present(), \
              patch(RUNNER, side_effect=lambda p: chains):
             (tmp_path / "P1.pdb").write_text("dummy")
-            out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+            out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                               ss_mode="ss3", verbose=False)
         ss = out[ut.COL_SS].iloc[0]
         assert set(ss).issubset({"H", "E", "C", "-"})
@@ -194,7 +203,7 @@ class TestGetDssp:
         with _mock_binary_present(), \
              patch(RUNNER, side_effect=lambda p: chains):
             (tmp_path / "P1.pdb").write_text("dummy")
-            out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+            out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                               ss_mode="ss8", verbose=False)
         ss = out[ut.COL_SS].iloc[0]
         # ss8 returns raw DSSP letters; literal space remapped to '-'
@@ -206,7 +215,7 @@ class TestGetDssp:
              patch(RUNNER,
                    side_effect=lambda p: _canned_chains_perfect("ACDEFGHIK")):
             (tmp_path / "P1.pdb").write_text("dummy")
-            out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+            out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                               gap_handling="pad", verbose=False)
         ss = out[ut.COL_SS].iloc[0]
         assert len(ss) == 9
@@ -218,7 +227,7 @@ class TestGetDssp:
         with _mock_binary_present(), \
              patch(RUNNER, side_effect=lambda p: chains):
             (tmp_path / "P1.pdb").write_text("dummy")
-            out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+            out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                               gap_handling="omit", verbose=False)
         ss = out[ut.COL_SS].iloc[0]
         assert "-" not in ss
@@ -230,7 +239,7 @@ class TestGetDssp:
              patch(RUNNER,
                    side_effect=lambda p: _canned_chains_perfect("ACDEFGHIK")):
             (tmp_path / "P1.pdb").write_text("dummy")
-            out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+            out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                               verbose=True)
         assert bool(out[ut.COL_DSSP_OK].iloc[0])
         captured = capsys.readouterr()
@@ -242,7 +251,7 @@ class TestGetDssp:
              patch(RUNNER,
                    side_effect=lambda p: _canned_chains_perfect("ACDEFGHIK")):
             (tmp_path / "P1.pdb").write_text("dummy")
-            aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path), verbose=False)
+            _get_dssp(df_seq=df, pdb_folder=str(tmp_path), verbose=False)
         captured = capsys.readouterr()
         assert "P1" not in captured.out
 
@@ -250,7 +259,7 @@ class TestGetDssp:
         df = _df_one()
         with _mock_binary_present():
             with pytest.warns(UserWarning, match="not found"):
-                out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+                out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                                   verbose=False)
         assert not bool(out[ut.COL_DSSP_OK].iloc[0])
         assert out[ut.COL_SS].iloc[0] is None
@@ -269,7 +278,7 @@ class TestGetDssp:
         with _mock_binary_present(), patch(RUNNER, side_effect=_runner):
             (tmp_path / "P1.pdb").write_text("dummy")
             (tmp_path / "P2.pdb").write_text("dummy")
-            out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+            out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                               verbose=False)
         assert len(out) == 2
         assert all(out[ut.COL_DSSP_OK])
@@ -281,7 +290,7 @@ class TestGetDssp:
              patch(RUNNER,
                    side_effect=lambda p: _canned_chains_perfect("ACDEFGHIK")):
             (tmp_path / "P1.pdb").write_text("dummy")
-            aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path), verbose=False)
+            _get_dssp(df_seq=df, pdb_folder=str(tmp_path), verbose=False)
         # Original df_seq must not have gained the new columns.
         assert ut.COL_SS not in df.columns
         assert ut.COL_DSSP_OK not in df.columns
@@ -293,7 +302,7 @@ class TestGetDssp:
              patch(RUNNER,
                    side_effect=lambda p: _canned_chains_perfect("ACDEFGHIK")):
             (tmp_path / "P1.pdb").write_text("dummy")
-            out = aa.get_dssp(df_seq=df, pdb_folder=tmp_path, verbose=False)
+            out = _get_dssp(df_seq=df, pdb_folder=tmp_path, verbose=False)
         assert bool(out[ut.COL_DSSP_OK].iloc[0])
 
     @given(seq=some.text(alphabet="ACDEFGHIKLMNPQRSTVWY", min_size=5, max_size=20))
@@ -306,7 +315,7 @@ class TestGetDssp:
             import tempfile
             with tempfile.TemporaryDirectory() as td:
                 (Path(td) / "P1.pdb").write_text("dummy")
-                out = aa.get_dssp(df_seq=df, pdb_folder=td,
+                out = _get_dssp(df_seq=df, pdb_folder=td,
                                   ss_mode="ss3", gap_handling="pad",
                                   verbose=False)
         assert len(out[ut.COL_SS].iloc[0]) == len(seq)
@@ -327,7 +336,7 @@ class TestGetDsspComplex:
         with _mock_binary_present(), \
              patch(RUNNER, side_effect=lambda p: chains):
             (tmp_path / "P1.pdb").write_text("dummy")
-            out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+            out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                               ss_mode="ss3", verbose=False)
         ss = out[ut.COL_SS].iloc[0]
         # The best-matching chain has all-H, which maps to all-H in ss3.
@@ -342,7 +351,7 @@ class TestGetDsspComplex:
             (tmp_path / "P1.pdb").write_text("dummy")
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
-                out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+                out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                                   ss_mode="ss3", gap_handling="pad",
                                   verbose=False)
         ss = out[ut.COL_SS].iloc[0]
@@ -357,7 +366,7 @@ class TestGetDsspComplex:
             (tmp_path / "P1.pdb").write_text("dummy")
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
-                out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+                out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                                   gap_handling="omit", verbose=False)
         ss = out[ut.COL_SS].iloc[0]
         assert "-" not in ss
@@ -380,7 +389,7 @@ class TestGetDsspComplex:
             (tmp_path / "P3.pdb").write_text("dummy")
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
-                out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+                out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                                   verbose=False)
         assert len(out) == 3
         assert [bool(x) for x in out[ut.COL_DSSP_OK]] == [True, False, True]
@@ -395,7 +404,7 @@ class TestGetDsspComplex:
             (tmp_path / "P1.pdb").write_text("dummy")
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
-                out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+                out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                                   ss_mode="ss8", gap_handling="omit",
                                   verbose=False)
         ss = out[ut.COL_SS].iloc[0]
@@ -410,7 +419,7 @@ class TestGetDsspComplex:
             (tmp_path / "P1.pdb").write_text("dummy")
             with warnings.catch_warnings():
                 warnings.simplefilter("error", UserWarning)
-                out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+                out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                                   verbose=False)
         assert bool(out[ut.COL_DSSP_OK].iloc[0])
 
@@ -420,7 +429,7 @@ class TestGetDsspComplex:
              patch(RUNNER, side_effect=lambda p: []):
             (tmp_path / "P1.pdb").write_text("dummy")
             with pytest.warns(UserWarning, match="No chains"):
-                out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+                out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                                   verbose=False)
         assert not bool(out[ut.COL_DSSP_OK].iloc[0])
         assert out[ut.COL_SS].iloc[0] is None
@@ -431,26 +440,26 @@ class TestGetDsspComplex:
         df[ut.COL_SS] = [["H"] * 9]
         with _mock_binary_present():
             with pytest.raises(ValueError):
-                aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
+                _get_dssp(df_seq=df, pdb_folder=str(tmp_path))
 
     def test_complex_negative_collision_dssp_ok_column(self, tmp_path):
         df = _df_one()
         df[ut.COL_DSSP_OK] = [True]
         with _mock_binary_present():
             with pytest.raises(ValueError):
-                aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
+                _get_dssp(df_seq=df, pdb_folder=str(tmp_path))
 
     def test_complex_negative_invalid_ss_and_gap_handling(self, tmp_path):
         with _mock_binary_present():
             with pytest.raises(ValueError, match="ss_mode"):
-                aa.get_dssp(df_seq=_df_one(), pdb_folder=str(tmp_path),
+                _get_dssp(df_seq=_df_one(), pdb_folder=str(tmp_path),
                             ss_mode="bogus", gap_handling="also_bad")
 
     def test_complex_negative_unsafe_entry_with_slash(self, tmp_path):
         df = pd.DataFrame({"entry": ["foo/bar"], "sequence": ["ACDE"]})
         with _mock_binary_present():
             with pytest.raises(ValueError, match="entry"):
-                aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
+                _get_dssp(df_seq=df, pdb_folder=str(tmp_path))
 
     def test_complex_negative_dssp_runtime_failure(self, tmp_path):
         df = _df_one()
@@ -459,7 +468,7 @@ class TestGetDsspComplex:
                    side_effect=RuntimeError("simulated DSSP crash")):
             (tmp_path / "P1.pdb").write_text("dummy")
             with pytest.warns(UserWarning, match="DSSP failed"):
-                out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+                out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                                   verbose=False)
         assert not bool(out[ut.COL_DSSP_OK].iloc[0])
         assert out[ut.COL_SS].iloc[0] is None
@@ -469,7 +478,7 @@ class TestGetDsspComplex:
         df = _df_two()
         with _mock_binary_present():
             with pytest.raises(ValueError, match="pdb_folder"):
-                aa.get_dssp(df_seq=df, pdb_folder="/__definitely_not_a_dir__")
+                _get_dssp(df_seq=df, pdb_folder="/__definitely_not_a_dir__")
 
 
 @mkdssp_required
@@ -509,7 +518,7 @@ class TestGetDsspSmoke:
         ]
         _write_pdb(tmp_path / "AAAA.pdb", pdb_lines)
         df = pd.DataFrame({"entry": ["AAAA"], "sequence": ["AAAA"]})
-        out = aa.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+        out = _get_dssp(df_seq=df, pdb_folder=str(tmp_path),
                           ss_mode="ss3", verbose=False)
         assert isinstance(out, pd.DataFrame)
         assert bool(out[ut.COL_DSSP_OK].iloc[0])

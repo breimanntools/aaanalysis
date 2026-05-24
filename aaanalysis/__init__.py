@@ -1,7 +1,8 @@
 from .data_handling import (load_dataset, load_scales, load_features,
                             read_fasta, to_fasta,
                             SequencePreprocessor,
-                            EmbeddingPreprocessor)
+                            EmbeddingPreprocessor,
+                            combine_dict_nums)
 from .seq_analysis import AAlogo, AAlogoPlot, AAWindowSampler
 from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
@@ -22,13 +23,14 @@ __all__ = [
     "to_fasta",
     "SequencePreprocessor",
     "EmbeddingPreprocessor",
+    "combine_dict_nums",
     # "comp_seq_sim",       BioPython
     # "filter_seq",         BioPython
     # "scan_motif",         MEME Suite
     "AAlogo",
     "AAlogoPlot",
     "AAWindowSampler",
-    # "get_dssp",           # DSSP
+    # "StructurePreprocessor",   # DSSP + biopython (pro)
     "AAclust",
     "AAclustPlot",
     "SequenceFeature",
@@ -127,11 +129,12 @@ except ImportError as e:
 
 
 try:
-    from .struct_analysis_pro import get_dssp
-    __all__.append("get_dssp")
+    from .struct_analysis_pro import StructurePreprocessor
+    __all__.append("StructurePreprocessor")
 except ImportError as e:
-    get_dssp = None
-    globals()["get_dssp"] = missing_feature_stub("get_dssp", e, mode="pro")
+    StructurePreprocessor = None
+    globals()["StructurePreprocessor"] = missing_feature_stub(
+        "StructurePreprocessor", e, mode="pro")
 
 
 try:
