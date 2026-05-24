@@ -53,24 +53,43 @@ ENCODER_PAE = "encode_pae"   # used by v1.1 PAE keys (commit 3)
 # docstring's "raw range -> recipe -> inverse" table is generated from this
 # dict; do not duplicate the constants in encoder code.
 NORMALIZATION_RECIPES: Dict[str, Callable] = {
-    "ss3":              _identity,        # one-hot ∈ {0, 1}
-    "ss8":              _identity,        # one-hot ∈ {0, 1}
-    "rasa":             _clip_unit,       # Tien table can overshoot slightly
-    "phi_psi_sincos":   _shift_half,      # [-1, 1] → [0, 1]
-    "bfactor":          _div(100.0),      # saturates at 100 Å²
-    "depth":            _div(15.0),       # saturates at 15 Å
+    "ss3":                    _identity,        # one-hot ∈ {0, 1}
+    "ss8":                    _identity,        # one-hot ∈ {0, 1}
+    "rasa":                   _clip_unit,       # Tien table can overshoot slightly
+    "phi_psi_sincos":         _shift_half,      # [-1, 1] → [0, 1]
+    "bfactor":                _div(100.0),      # saturates at 100 Å²
+    "depth":                  _div(15.0),       # saturates at 15 Å
+    # AF model-file features (commit 2)
+    "plddt":                  _div(100.0),      # pLDDT ∈ [0, 100] → [0, 1]
+    "plddt_disorder":         _identity,        # boolean ∈ {0, 1}
+    "plddt_tier":             _identity,        # one-hot ∈ {0, 1}
+    "chi1_sincos":            _shift_half,      # [-1, 1] → [0, 1]
+    "chi2_sincos":            _shift_half,      # [-1, 1] → [0, 1]
+    "ca_centroid_dist":       _div(40.0),       # saturates at 40 Å
+    "ca_centroid_dist_norm":  _div(2.0),        # saturates at 2 Rg
+    "contact_count_8A":       _div(30.0),       # saturates at 30
+    "contact_count_12A":      _div(80.0),       # saturates at 80
 }
 
 
 # Human-readable inverse recipes for the class docstring (units + formulas).
 # Kept in sync with NORMALIZATION_RECIPES.
 INVERSE_FORMULAS: Dict[str, str] = {
-    "ss3":              "identity (one-hot)",
-    "ss8":              "identity (one-hot)",
-    "rasa":             "identity (clipped at 1.0)",
-    "phi_psi_sincos":   "x * 2 - 1   (in [-1, 1])",
-    "bfactor":          "x * 100     (lossy when ≥1, B-factors > 100 Å² are clipped)",
-    "depth":            "x * 15      (lossy when ≥1, depths > 15 Å are clipped)",
+    "ss3":                    "identity (one-hot)",
+    "ss8":                    "identity (one-hot)",
+    "rasa":                   "identity (clipped at 1.0)",
+    "phi_psi_sincos":         "x * 2 - 1   (in [-1, 1])",
+    "bfactor":                "x * 100     (lossy when ≥1, B-factors > 100 Å² are clipped)",
+    "depth":                  "x * 15      (lossy when ≥1, depths > 15 Å are clipped)",
+    "plddt":                  "x * 100     (AlphaFold pLDDT ∈ [0, 100])",
+    "plddt_disorder":         "identity (boolean from pLDDT < threshold)",
+    "plddt_tier":             "identity (4-dim one-hot over <50/50-70/70-90/≥90)",
+    "chi1_sincos":            "x * 2 - 1   (in [-1, 1])",
+    "chi2_sincos":            "x * 2 - 1   (in [-1, 1])",
+    "ca_centroid_dist":       "x * 40      (lossy when ≥1, distances > 40 Å are clipped)",
+    "ca_centroid_dist_norm":  "x * 2       (lossy when ≥1, > 2 Rg are clipped)",
+    "contact_count_8A":       "x * 30      (lossy when ≥1, counts > 30 are clipped)",
+    "contact_count_12A":      "x * 80      (lossy when ≥1, counts > 80 are clipped)",
 }
 
 
@@ -106,6 +125,62 @@ REGISTRY: Dict[str, Dict] = {
         "method": ENCODER_PDB, "num_dims": 1,
         "dim_names": ["depth"],
         "category": CATEGORY_STRUCTURE, "subcategory": "Geometry_residue_depth",
+    },
+    # AF model-file features (commit 2). All read from the same AF-style PDB
+    # / CIF file; ``plddt`` and ``bfactor`` are intentionally separate keys
+    # — they share arithmetic (B-factor column read) but carry different
+    # subcategory labels so the redundancy filter / user can tell them apart.
+    "plddt": {
+        "method": ENCODER_PDB, "num_dims": 1,
+        "dim_names": ["plddt"],
+        "category": CATEGORY_STRUCTURE, "subcategory": "AF_plddt_raw",
+    },
+    "plddt_disorder": {
+        "method": ENCODER_PDB, "num_dims": 1,
+        "dim_names": ["is_disordered"],
+        "category": CATEGORY_STRUCTURE, "subcategory": "AF_plddt_disorder",
+    },
+    "plddt_tier": {
+        "method": ENCODER_PDB, "num_dims": 4,
+        "dim_names": ["plddt_very_low", "plddt_low",
+                      "plddt_confident", "plddt_very_high"],
+        "category": CATEGORY_STRUCTURE, "subcategory": "AF_plddt_tier",
+    },
+    "chi1_sincos": {
+        "method": ENCODER_PDB, "num_dims": 2,
+        "dim_names": ["chi1_sin", "chi1_cos"],
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Geometry_chi1_sincos",
+    },
+    "chi2_sincos": {
+        "method": ENCODER_PDB, "num_dims": 2,
+        "dim_names": ["chi2_sin", "chi2_cos"],
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Geometry_chi2_sincos",
+    },
+    "ca_centroid_dist": {
+        "method": ENCODER_PDB, "num_dims": 1,
+        "dim_names": ["ca_centroid_dist"],
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Geometry_centroid_dist",
+    },
+    "ca_centroid_dist_norm": {
+        "method": ENCODER_PDB, "num_dims": 1,
+        "dim_names": ["ca_centroid_dist_norm"],
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Geometry_centroid_dist_norm",
+    },
+    "contact_count_8A": {
+        "method": ENCODER_PDB, "num_dims": 1,
+        "dim_names": ["contact_count_8A"],
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Geometry_contact_count_8A",
+    },
+    "contact_count_12A": {
+        "method": ENCODER_PDB, "num_dims": 1,
+        "dim_names": ["contact_count_12A"],
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Geometry_contact_count_12A",
     },
 }
 

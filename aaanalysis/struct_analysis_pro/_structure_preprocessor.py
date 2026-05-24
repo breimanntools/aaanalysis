@@ -33,7 +33,11 @@ from ._backend.structure_preprocessor.align_dssp_full import (
 from ._backend.structure_preprocessor.encode_dssp import (
     encode_ss, encode_rasa, encode_dihedrals_sincos)
 from ._backend.structure_preprocessor.encode_pdb import (
-    load_structure, encode_bfactor, encode_depth)
+    load_structure, encode_bfactor, encode_depth,
+    encode_plddt, encode_plddt_disorder, encode_plddt_tier,
+    encode_chi1_sincos, encode_chi2_sincos,
+    encode_ca_centroid_dist, encode_ca_centroid_dist_norm,
+    encode_contact_count_8A, encode_contact_count_12A)
 from ._backend.structure_preprocessor._extras import (
     is_msms_available, check_msms_available)
 from ._backend.structure_preprocessor._file_format import (
@@ -342,13 +346,20 @@ class StructurePreprocessor:
       ``phi_psi_sincos``            [-1, 1]                     ``(x + 1) / 2``                            ``x * 2 - 1``  (in [-1, 1])
       ``bfactor``                   [0, 100+] Å²                ``clip(x / 100, 0, 1)``                    ``x * 100``  (lossy when ≥1)
       ``depth``                     [0, ~15] Å                  ``clip(x / 15, 0, 1)``                     ``x * 15``  (lossy when ≥1)
+      ``plddt``                     [0, 100]                    ``x / 100``                                ``x * 100``
+      ``plddt_disorder``            {0, 1}                      identity                                   identity
+      ``plddt_tier``                {0, 1} (4-dim one-hot)      identity                                   identity
+      ``chi1_sincos`` / ``chi2_sincos``  [-1, 1]                ``(x + 1) / 2``                            ``x * 2 - 1``  (in [-1, 1])
+      ``ca_centroid_dist``          [0, ~40] Å                  ``clip(x / 40, 0, 1)``                     ``x * 40``  (lossy when ≥1)
+      ``ca_centroid_dist_norm``     [0, ~2] (Rg units)          ``clip(x / 2, 0, 1)``                      ``x * 2``  (lossy when ≥1)
+      ``contact_count_8A``          [0, ~30]                    ``clip(x / 30, 0, 1)``                     ``x * 30``  (lossy when ≥1)
+      ``contact_count_12A``         [0, ~80]                    ``clip(x / 80, 0, 1)``                     ``x * 80``  (lossy when ≥1)
       ============================  ==========================  =========================================  ====================================
 
       The recipes are the source of truth in
       ``feature_registry.NORMALIZATION_RECIPES``; this table is generated
-      to match. Additional AF-model-file and PAE keys (``plddt``,
-      ``chi1_sincos``, ``pae_row_mean``, …) will land in v1.1's commits 2
-      and 3 with the same ``[0, 1]`` discipline.
+      to match. PAE-sidecar keys (``pae_row_mean``, ``pae_local_mean``, …)
+      will land in v1.1's commit 3 with the same ``[0, 1]`` discipline.
 
     * **Feature categorization.** Every feature key emits
       ``category='Structure'`` (the top-level redundancy / color bucket;
@@ -615,6 +626,7 @@ class StructurePreprocessor:
         df_seq: pd.DataFrame = None,
         pdb_folder: Union[str, Path] = None,
         features: List[str] = None,
+        plddt_disorder_threshold: float = 70.0,
         on_failure: str = "nan",
         verbose: Optional[bool] = None,
     ) -> Tuple[Dict[str, np.ndarray], pd.DataFrame]:
@@ -673,6 +685,9 @@ class StructurePreprocessor:
         validate_feature_keys(features, allowed_method=ENCODER_PDB)
         _check_handle_failure(on_failure)
         ut.check_bool(name="verbose", val=verbose)
+        ut.check_number_range(name="plddt_disorder_threshold",
+                              val=plddt_disorder_threshold,
+                              min_val=0.0, max_val=100.0, just_int=False)
         if "depth" in features:
             check_msms_available()
         pdb_folder = Path(pdb_folder)
@@ -719,6 +734,30 @@ class StructurePreprocessor:
                         block, identity = encode_bfactor(structure, seq)
                     elif key == "depth":
                         block, identity = encode_depth(structure, seq)
+                    elif key == "plddt":
+                        block, identity = encode_plddt(structure, seq)
+                    elif key == "plddt_disorder":
+                        block, identity = encode_plddt_disorder(
+                            structure, seq,
+                            threshold=plddt_disorder_threshold)
+                    elif key == "plddt_tier":
+                        block, identity = encode_plddt_tier(structure, seq)
+                    elif key == "chi1_sincos":
+                        block, identity = encode_chi1_sincos(structure, seq)
+                    elif key == "chi2_sincos":
+                        block, identity = encode_chi2_sincos(structure, seq)
+                    elif key == "ca_centroid_dist":
+                        block, identity = encode_ca_centroid_dist(
+                            structure, seq)
+                    elif key == "ca_centroid_dist_norm":
+                        block, identity = encode_ca_centroid_dist_norm(
+                            structure, seq)
+                    elif key == "contact_count_8A":
+                        block, identity = encode_contact_count_8A(
+                            structure, seq)
+                    elif key == "contact_count_12A":
+                        block, identity = encode_contact_count_12A(
+                            structure, seq)
                     else:
                         raise RuntimeError(
                             f"Internal: feature key {key!r} not in "

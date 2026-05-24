@@ -299,3 +299,334 @@ class TestStpEncodePdbComplex:
                 pdb_folder=str(PDB_FIXTURES),
                 features=["bfactor"])
         assert np.isnan(d["P_missing"]).all()
+
+
+# ----------------------------------------------------------------------
+# v1.1 — AF model-file features
+# ----------------------------------------------------------------------
+AF_FIXTURE_SEQ = "ACDEFGHIKLMNPQRSTVWYACDEFGHIKL"
+
+
+def _df_af():
+    return pd.DataFrame({"entry": ["AF_TINY"], "sequence": [AF_FIXTURE_SEQ]})
+
+
+class TestStpEncodePdbAFFeatures:
+    """v1.1 AF features: plddt, plddt_disorder, plddt_tier, chi1/chi2_sincos,
+    centroid_dist (+norm), contact_count_8A / _12A — single-param positives
+    and negatives. All outputs must lie in [0, 1] (or be NaN)."""
+
+    # ----- NEGATIVES (≥10) -----
+    def test_invalid_plddt_disorder_threshold_below(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError, match="plddt_disorder_threshold"):
+            stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+                           features=["plddt_disorder"],
+                           plddt_disorder_threshold=-1.0)
+
+    def test_invalid_plddt_disorder_threshold_above(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError, match="plddt_disorder_threshold"):
+            stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+                           features=["plddt_disorder"],
+                           plddt_disorder_threshold=150.0)
+
+    def test_invalid_plddt_disorder_threshold_not_number(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError):
+            stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+                           features=["plddt_disorder"],
+                           plddt_disorder_threshold="seventy")
+
+    def test_invalid_af_feature_with_wrong_method(self):
+        # ss3 belongs to encode_dssp, not encode_pdb.
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError):
+            stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+                           features=["ss3"])
+
+    def test_invalid_pdb_folder_for_af(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError, match="pdb_folder"):
+            stp.encode_pdb(df_seq=_df_af(), pdb_folder="/__nope__",
+                           features=["plddt"])
+
+    def test_invalid_features_mix_unknown_with_known(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError):
+            stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+                           features=["plddt", "mystery_key"])
+
+    def test_invalid_features_dropped_key_asa(self):
+        # v1.1: 'asa' (absolute) was removed from the registry.
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError):
+            stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+                           features=["asa"])
+
+    def test_invalid_missing_fixture_raises_on_raise(self, tmp_path):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with pytest.raises(RuntimeError):
+                stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(tmp_path),
+                               features=["plddt"], on_failure="raise")
+
+    def test_invalid_unsafe_entry_for_af(self):
+        df = pd.DataFrame({"entry": ["../etc"], "sequence": ["ACDE"]})
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError, match="entry"):
+            stp.encode_pdb(df_seq=df, pdb_folder=str(PDB_FIXTURES),
+                           features=["plddt"])
+
+    def test_invalid_plddt_disorder_threshold_none(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError):
+            stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+                           features=["plddt_disorder"],
+                           plddt_disorder_threshold=None)
+
+    # ----- POSITIVES (≥10) -----
+    def test_valid_plddt_shape(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["plddt"])
+        assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 1)
+
+    def test_valid_plddt_in_unit_interval(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["plddt"])
+        vals = d["AF_TINY"].ravel()
+        finite = vals[~np.isnan(vals)]
+        assert (finite >= 0).all() and (finite <= 1).all()
+
+    def test_valid_plddt_disorder_binary(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["plddt_disorder"])
+        vals = d["AF_TINY"].ravel()
+        finite = vals[~np.isnan(vals)]
+        assert set(np.unique(finite)).issubset({0.0, 1.0})
+
+    def test_valid_plddt_disorder_threshold_increases_count(self):
+        # A higher threshold should label more residues disordered.
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d_low, _ = stp.encode_pdb(df_seq=_df_af(),
+                                      pdb_folder=str(PDB_FIXTURES),
+                                      features=["plddt_disorder"],
+                                      plddt_disorder_threshold=30.0)
+            d_high, _ = stp.encode_pdb(df_seq=_df_af(),
+                                       pdb_folder=str(PDB_FIXTURES),
+                                       features=["plddt_disorder"],
+                                       plddt_disorder_threshold=95.0)
+        assert np.nansum(d_high["AF_TINY"]) >= np.nansum(d_low["AF_TINY"])
+
+    def test_valid_plddt_tier_shape_and_one_hot(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["plddt_tier"])
+        v = d["AF_TINY"]
+        assert v.shape == (len(AF_FIXTURE_SEQ), 4)
+        # Every non-NaN row should be one-hot (sum=1).
+        rowsum = v.sum(axis=1)
+        finite = rowsum[~np.isnan(rowsum)]
+        np.testing.assert_allclose(finite, 1.0)
+
+    def test_valid_chi1_sincos_shape(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["chi1_sincos"])
+        assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 2)
+
+    def test_valid_chi1_sincos_in_unit_interval(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["chi1_sincos"])
+        vals = d["AF_TINY"]
+        finite = vals[~np.isnan(vals)]
+        assert (finite >= 0).all() and (finite <= 1).all()
+
+    def test_valid_ca_centroid_dist_shape_and_range(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["ca_centroid_dist"])
+        v = d["AF_TINY"]
+        assert v.shape == (len(AF_FIXTURE_SEQ), 1)
+        finite = v[~np.isnan(v)]
+        assert (finite >= 0).all() and (finite <= 1).all()
+
+    def test_valid_centroid_dist_norm_shape(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["ca_centroid_dist_norm"])
+        assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 1)
+
+    def test_valid_contact_count_8A_in_unit_interval(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["contact_count_8A"])
+        vals = d["AF_TINY"].ravel()
+        finite = vals[~np.isnan(vals)]
+        assert (finite >= 0).all() and (finite <= 1).all()
+
+    def test_valid_contact_count_12A_has_more_than_8A(self):
+        # The wider radius should never produce a smaller count per residue.
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["contact_count_8A",
+                                            "contact_count_12A"])
+        v = d["AF_TINY"]
+        # Compare in raw count space: multiply normalized values by their
+        # saturation caps (30 / 80) and check the 12A column ≥ 8A column.
+        c8 = v[:, 0] * 30.0
+        c12 = v[:, 1] * 80.0
+        # NaN-safe compare: ignore positions where either is NaN.
+        mask = ~np.isnan(c8) & ~np.isnan(c12)
+        assert (c12[mask] >= c8[mask] - 1e-9).all()
+
+    def test_valid_combined_AF_features_shape(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        feats = ["plddt", "plddt_disorder", "plddt_tier",
+                 "ca_centroid_dist_norm", "contact_count_8A"]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=feats)
+        # 1 + 1 + 4 + 1 + 1 = 8
+        assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 8)
+
+
+class TestStpEncodePdbAFComplex:
+    """Cross-parameter combinations for the v1.1 AF features."""
+
+    def test_complex_pdb_gz_round_trip(self):
+        # The fixture AF_TINY.pdb.gz exists alongside AF_TINY.pdb; the
+        # resolver should prefer the .pdb file (resolution order favors .pdb).
+        # We test the gz path by giving a folder with ONLY the .gz copy.
+        import gzip
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as td:
+            src = Path(str(PDB_FIXTURES) + "/AF_TINY.pdb.gz")
+            dst = Path(td) / "AF_TINY.pdb.gz"
+            dst.write_bytes(src.read_bytes())
+            stp = aa.StructurePreprocessor(verbose=False)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                d, df_out = stp.encode_pdb(df_seq=_df_af(),
+                                           pdb_folder=td,
+                                           features=["plddt"])
+            assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 1)
+            assert bool(df_out["pdb_ok"].iloc[0])
+
+    def test_complex_plddt_decreases_at_termini(self):
+        # AF_TINY fixture has pLDDT tiered high in middle, low at ends.
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["plddt"])
+        v = d["AF_TINY"].ravel()
+        mid = float(np.nanmean(v[10:20]))
+        ends = float(np.nanmean(np.concatenate([v[:3], v[-3:]])))
+        assert mid > ends
+
+    def test_complex_drop_failed_AF_entry(self, tmp_path):
+        df = pd.DataFrame({"entry": ["AF_TINY", "GONE"],
+                           "sequence": [AF_FIXTURE_SEQ, "ACDE"]})
+        # Copy only AF_TINY.pdb to the tmp folder; second entry missing.
+        from pathlib import Path
+        src = Path(str(PDB_FIXTURES) + "/AF_TINY.pdb")
+        (tmp_path / "AF_TINY.pdb").write_text(src.read_text())
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, df_out = stp.encode_pdb(df_seq=df, pdb_folder=str(tmp_path),
+                                       features=["plddt"],
+                                       on_failure="drop")
+        assert "AF_TINY" in d and "GONE" not in d
+        assert df_out["entry"].tolist() == ["AF_TINY"]
+
+    def test_complex_nan_default_with_missing_AF(self, tmp_path):
+        df = pd.DataFrame({"entry": ["GONE"], "sequence": ["ACDE"]})
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, df_out = stp.encode_pdb(df_seq=df, pdb_folder=str(tmp_path),
+                                       features=["plddt_tier"])
+        assert np.isnan(d["GONE"]).all()
+        assert d["GONE"].shape == (4, 4)
+        assert not bool(df_out["pdb_ok"].iloc[0])
+
+    def test_complex_two_features_concat_order(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["plddt", "ca_centroid_dist"])
+        v = d["AF_TINY"]
+        # plddt is column 0, centroid_dist is column 1
+        # both in [0, 1]
+        assert v.shape[1] == 2
+
+    def test_complex_plddt_and_bfactor_coexist(self):
+        # Both feature keys read the B-factor column but emit DIFFERENT
+        # subcategories — the corpus-derived df_scales lets the redundancy
+        # filter spot the duplication (high corr).
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["plddt", "bfactor"])
+        v = d["AF_TINY"]
+        # Both come from the same raw column → after the same /100
+        # normalization recipe, values should be identical.
+        np.testing.assert_allclose(v[:, 0], v[:, 1], equal_nan=True)
+
+    def test_complex_build_cat_for_all_AF_keys(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        feats = ["plddt", "plddt_disorder", "plddt_tier",
+                 "chi1_sincos", "chi2_sincos",
+                 "ca_centroid_dist", "ca_centroid_dist_norm",
+                 "contact_count_8A", "contact_count_12A"]
+        df_cat = stp.build_cat(features=feats)
+        # 1 + 1 + 4 + 2 + 2 + 1 + 1 + 1 + 1 = 14
+        assert df_cat.shape == (14, 5)
+        assert (df_cat[ut.COL_CAT] == "Structure").all()
