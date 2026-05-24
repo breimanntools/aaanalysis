@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 import re
 import shutil
+import tempfile
 import warnings
 
 import numpy as np
@@ -21,7 +22,7 @@ import pandas as pd
 import aaanalysis.utils as ut
 from ._backend.structure_preprocessor.feature_registry import (
     REGISTRY, VALID_FEATURE_KEYS, ENCODER_DSSP, ENCODER_PDB,
-    validate_feature_keys, get_total_dims, get_dim_names,
+    INVERSE_FORMULAS, validate_feature_keys, get_total_dims, get_dim_names,
     get_categories, get_subcategories)
 from ._backend.structure_preprocessor.run_dssp_full import (
     run_dssp_full_for_entry_)
@@ -30,11 +31,13 @@ from ._backend.structure_preprocessor.align_dssp_full import (
     align_chain_full_to_sequence_, apply_ss_mode_full_,
     apply_gap_handling_full_)
 from ._backend.structure_preprocessor.encode_dssp import (
-    encode_ss, encode_asa, encode_dihedrals)
+    encode_ss, encode_rasa, encode_dihedrals_sincos)
 from ._backend.structure_preprocessor.encode_pdb import (
     load_structure, encode_bfactor, encode_depth)
 from ._backend.structure_preprocessor._extras import (
     is_msms_available, check_msms_available)
+from ._backend.structure_preprocessor._file_format import (
+    resolve_structure_path)
 
 
 # Same path-safety regex used by the existing get_dssp; reject characters
@@ -48,10 +51,11 @@ _COL_PHI = "phi"
 _COL_PSI = "psi"
 _COL_PDB_OK = "pdb_ok"
 
-# Encoder-supplied options that ``get_dssp`` consumes.
+# Encoder-supplied options that ``get_dssp`` consumes. (These are the raw
+# DSSP stream kinds, distinct from the registry's user-facing feature keys —
+# e.g. registry key 'rasa' / 'phi_psi_sincos' both pull from the 'asa' /
+# 'phi_psi' raw streams.)
 _LIST_GET_DSSP_FEATURES = ["ss", "asa", "phi_psi"]
-_LIST_ASA_KINDS = ["asa", "rasa"]
-_LIST_DIHEDRAL_ENCODINGS = ["raw", "sin_cos"]
 _LIST_ON_FAILURE = ["nan", "drop", "raise"]
 
 
@@ -129,9 +133,9 @@ def _dssp_features_to_get_dssp_kinds(features):
     for f in features:
         if f in ("ss3", "ss8"):
             kinds.add("ss")
-        elif f in ("asa", "rasa"):
+        elif f == "rasa":
             kinds.add("asa")
-        elif f in ("phi_psi", "phi_psi_sincos"):
+        elif f == "phi_psi_sincos":
             kinds.add("phi_psi")
     return sorted(kinds)
 
@@ -194,13 +198,20 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
     phi_per_row: List[Optional[List[float]]] = []
     psi_per_row: List[Optional[List[float]]] = []
     ok_per_row: List[bool] = []
+    # Session-scoped temp dir for any gz decompression done by the resolver.
+    # Inner per-entry tempdir copying (for DSSP intermediates) is still
+    # handled by run_dssp_full_for_entry_.
+    session_tmp = tempfile.TemporaryDirectory()
+    session_tmp_path = Path(session_tmp.name)
 
     for entry, target_seq in zip(entries, sequences):
         _check_entry_is_filesystem_safe(entry)
-        pdb_path = pdb_folder / f"{entry}.pdb"
-        if not pdb_path.is_file():
+        pdb_path, _file_fmt = resolve_structure_path(
+            folder=pdb_folder, entry=entry, temp_dir=session_tmp_path)
+        if pdb_path is None:
             warnings.warn(
-                f"PDB file for entry '{entry}' not found at '{pdb_path}'; "
+                f"Structure file for entry '{entry}' not found in "
+                f"'{pdb_folder}' (tried .pdb/.pdb.gz/.cif/.cif.gz); "
                 f"row will have dssp_ok=False",
                 UserWarning)
             ss_per_row.append(None)
@@ -268,6 +279,7 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
         df_out[_COL_PHI] = phi_per_row
         df_out[_COL_PSI] = psi_per_row
     df_out[ut.COL_DSSP_OK] = ok_per_row
+    session_tmp.cleanup()
     return df_out
 
 
@@ -281,19 +293,25 @@ class StructurePreprocessor:
     :meth:`CPP.run_num`, plus the ``(df_scales, df_cat)`` metadata pair that
     names the D dimensions.
 
-    Four public methods, each returning ONE tightly-typed value:
+    Five public methods, each returning ONE tightly-typed value:
 
     1. :meth:`get_dssp` runs DSSP and appends list columns to ``df_seq``
        (``ss``, ``asa``, ``phi``, ``psi`` — only the requested ones).
        Pre-compute once and reuse, or skip and let :meth:`encode_dssp`
        run DSSP internally.
     2. :meth:`encode_dssp` returns a single ``dict_dssp`` of per-residue
-       DSSP-derived numerical features (SS one-hot, ASA, dihedrals).
+       DSSP-derived numerical features (SS one-hot, rASA, dihedral
+       sin/cos) — all normalized to ``[0, 1]``.
     3. :meth:`encode_pdb` returns a single ``dict_pdb`` of per-residue
        features extracted directly from PDB ATOM records (mean B-factor,
        residue depth — the latter gated on the external ``msms`` binary).
-    4. :meth:`build_scales` returns the ``(df_scales, df_cat)`` metadata pair
-       matching a list of feature keys, for the :class:`CPP` constructor.
+    4. :meth:`build_pseudo_scales` returns the per-AA-averaged
+       ``df_scales`` (and optionally ``df_stds``) from a user corpus.
+       Required by :meth:`CPP.run_num`'s redundancy filter to make
+       ``max_cor`` meaningful (the v1 all-zero df_scales silently
+       disabled that gate).
+    5. :meth:`build_cat` returns the corpus-free ``df_cat`` metadata
+       frame from the feature-key registry.
 
     Use :func:`aaanalysis.combine_dict_nums` to stitch the encoder outputs
     (and optional PLM embeddings) into a single ``dict_num`` before passing
@@ -312,6 +330,34 @@ class StructurePreprocessor:
 
     Notes
     -----
+    * **Feature value range — always normalized to ``[0, 1]``** (NaN for
+      unresolved positions). Use the table below to de-normalize back to
+      raw units if needed:
+
+      ============================  ==========================  =========================================  ====================================
+      Feature key                   Raw range                   Recipe → normalized                        Inverse (de-normalize)
+      ============================  ==========================  =========================================  ====================================
+      ``ss3`` / ``ss8``             {0, 1} (one-hot)            identity                                   identity
+      ``rasa``                      [0, ~1.2]                   ``clip(x, 0, 1)``                          identity (clipped)
+      ``phi_psi_sincos``            [-1, 1]                     ``(x + 1) / 2``                            ``x * 2 - 1``  (in [-1, 1])
+      ``bfactor``                   [0, 100+] Å²                ``clip(x / 100, 0, 1)``                    ``x * 100``  (lossy when ≥1)
+      ``depth``                     [0, ~15] Å                  ``clip(x / 15, 0, 1)``                     ``x * 15``  (lossy when ≥1)
+      ============================  ==========================  =========================================  ====================================
+
+      The recipes are the source of truth in
+      ``feature_registry.NORMALIZATION_RECIPES``; this table is generated
+      to match. Additional AF-model-file and PAE keys (``plddt``,
+      ``chi1_sincos``, ``pae_row_mean``, …) will land in v1.1's commits 2
+      and 3 with the same ``[0, 1]`` discipline.
+
+    * **Feature categorization.** Every feature key emits
+      ``category='Structure'`` (the top-level redundancy / color bucket;
+      see ``ut.DICT_COLOR_CAT['Structure']`` = ``#2E6E5E`` deep teal-green).
+      The fine-grained split (``DSSP_SS_3state``, ``Flexibility_bfactor``,
+      etc.) lives in ``subcategory``. The redundancy filter's
+      ``check_cat=True`` arm therefore groups all Structure features into
+      one bucket; ``build_pseudo_scales`` populates ``df_scales`` so the
+      ``max_cor`` gate can discriminate within that bucket.
     * Requires ``aaanalysis[pro]`` (biopython) plus a ``mkdssp`` / ``dssp``
       binary on PATH. The ``depth`` feature additionally requires the
       ``msms`` binary; install via ``conda install -c bioconda msms``.
@@ -413,13 +459,11 @@ class StructurePreprocessor:
         pdb_folder: Union[str, Path] = None,
         features: List[str] = None,
         ss_mode: str = "ss3",
-        asa_kind: str = "rasa",
-        dihedral_encoding: str = "sin_cos",
         gap_handling: str = "pad",
         on_failure: str = "nan",
         verbose: Optional[bool] = None,
     ) -> Tuple[Dict[str, np.ndarray], pd.DataFrame]:
-        """Run DSSP + per-feature encoders → ``dict_dssp``.
+        """Run DSSP + per-feature encoders → ``dict_dssp`` (normalized to ``[0, 1]``).
 
         Parameters
         ----------
@@ -434,22 +478,13 @@ class StructurePreprocessor:
             columns.
         features : list of str
             Feature keys from the StructurePreprocessor registry that belong
-            to ``encode_dssp``: any subset of ``{ss3, ss8, asa, rasa,
-            phi_psi, phi_psi_sincos}``.
+            to ``encode_dssp``: any subset of
+            ``{'ss3', 'ss8', 'rasa', 'phi_psi_sincos'}``. Each key's output is
+            normalized to ``[0, 1]`` per the table in the class docstring.
         ss_mode : {'ss3', 'ss8'}, default='ss3'
-            Forwarded to :meth:`get_dssp` when DSSP is run inline. Ignored
-            otherwise. Note: the chosen SS feature key (``'ss3'`` or
-            ``'ss8'``) drives the actual one-hot dimensionality independently
-            of this option.
-        asa_kind : {'rasa', 'asa'}, default='rasa'
-            Whether the ``asa``/``rasa`` feature key produces absolute or
-            relative ASA. ``'rasa'`` divides by per-AA max ASA (Tien et al.
-            2013); ``'asa'`` returns the DSSP-reported absolute value in Å².
-        dihedral_encoding : {'sin_cos', 'raw'}, default='sin_cos'
-            Forwarded to :func:`encode_dihedrals` when encoding ``phi_psi`` /
-            ``phi_psi_sincos``. Note: the chosen feature key (``'phi_psi'``
-            or ``'phi_psi_sincos'``) drives the actual dimensionality
-            independently of this option.
+            Forwarded to :meth:`get_dssp` when DSSP is run inline. The chosen
+            SS feature key (``'ss3'`` / ``'ss8'``) drives the actual one-hot
+            dimensionality independently of this option.
         gap_handling : {'pad', 'omit'}, default='pad'
             Forwarded to :meth:`get_dssp` when DSSP is run inline.
         on_failure : {'nan', 'drop', 'raise'}, default='nan'
@@ -464,7 +499,8 @@ class StructurePreprocessor:
         -------
         dict_dssp : dict[str, np.ndarray]
             ``{entry: (L_entry, D_total) ndarray}`` per-residue DSSP
-            features concatenated in the order of ``features``.
+            features concatenated in the order of ``features``. Values are in
+            ``[0, 1]`` (NaN for unresolved positions).
         df_seq_out : pd.DataFrame
             Echo of the (possibly DSSP-augmented) ``df_seq`` plus an
             ``encode_dssp_ok`` column flagging per-row success. Rows are
@@ -488,10 +524,6 @@ class StructurePreprocessor:
         validate_feature_keys(features, allowed_method=ENCODER_DSSP)
         ut.check_str_options(name="ss_mode", val=ss_mode,
                              list_str_options=ut.LIST_SS_MODES)
-        ut.check_str_options(name="asa_kind", val=asa_kind,
-                             list_str_options=_LIST_ASA_KINDS)
-        ut.check_str_options(name="dihedral_encoding", val=dihedral_encoding,
-                             list_str_options=_LIST_DIHEDRAL_ENCODINGS)
         ut.check_str_options(name="gap_handling", val=gap_handling,
                              list_str_options=ut.LIST_GAP_HANDLING)
         _check_handle_failure(on_failure)
@@ -549,28 +581,22 @@ class StructurePreprocessor:
                         raise RuntimeError(
                             f"Internal: 'ss' column missing for feature "
                             f"key {key!r}")
-                    ss_list = ss_col[i]
                     blocks.append(encode_ss(
-                        ss_list=ss_list,
-                        ss_mode=ut.SS_MODE_3 if key == "ss3" else ut.SS_MODE_8))
-                elif key in ("asa", "rasa"):
+                        ss_list=ss_col[i], feature_key=key))
+                elif key == "rasa":
                     if asa_col is None:
                         raise RuntimeError(
                             f"Internal: 'asa' column missing for feature "
                             f"key {key!r}")
-                    asa_list = asa_col[i]
-                    blocks.append(encode_asa(
-                        asa_list=asa_list, sequence=seq,
-                        kind="rasa" if key == "rasa" else "asa"))
-                elif key in ("phi_psi", "phi_psi_sincos"):
+                    blocks.append(encode_rasa(
+                        asa_list=asa_col[i], sequence=seq))
+                elif key == "phi_psi_sincos":
                     if phi_col is None or psi_col is None:
                         raise RuntimeError(
                             f"Internal: 'phi'/'psi' columns missing for "
                             f"feature key {key!r}")
-                    blocks.append(encode_dihedrals(
-                        phi_list=phi_col[i], psi_list=psi_col[i],
-                        encoding="sin_cos" if key == "phi_psi_sincos"
-                                 else "raw"))
+                    blocks.append(encode_dihedrals_sincos(
+                        phi_list=phi_col[i], psi_list=psi_col[i]))
                 else:
                     raise RuntimeError(
                         f"Internal: feature key {key!r} not in encode_dssp "
@@ -655,14 +681,20 @@ class StructurePreprocessor:
         D_total = get_total_dims(features)
         dict_pdb: Dict[str, np.ndarray] = {}
         ok_per_row: List[bool] = []
+        # Session-scoped temp dir for any gz decompression done by the
+        # file-format resolver (.pdb.gz / .cif.gz). Cleaned at function end.
+        session_tmp = tempfile.TemporaryDirectory()
+        session_tmp_path = Path(session_tmp.name)
         for entry, seq in zip(entries, sequences):
             _check_entry_is_filesystem_safe(entry)
             L = len(seq)
-            pdb_path = pdb_folder / f"{entry}.pdb"
-            if not pdb_path.is_file():
+            pdb_path, _file_fmt = resolve_structure_path(
+                folder=pdb_folder, entry=entry, temp_dir=session_tmp_path)
+            if pdb_path is None:
                 warnings.warn(
-                    f"PDB file for entry '{entry}' not found at "
-                    f"'{pdb_path}'; row will have pdb_ok=False",
+                    f"Structure file for entry '{entry}' not found in "
+                    f"'{pdb_folder}' (tried .pdb/.pdb.gz/.cif/.cif.gz); "
+                    f"row will have pdb_ok=False",
                     UserWarning)
                 dict_pdb[entry] = np.full((L, D_total), np.nan,
                                           dtype=np.float64)
@@ -721,75 +753,196 @@ class StructurePreprocessor:
         if on_failure == "drop":
             kept_entries = {entries[i] for i in keep_idx}
             dict_pdb = {k: v for k, v in dict_pdb.items() if k in kept_entries}
+        session_tmp.cleanup()
         return dict_pdb, df_aug
 
     # ------------------------------------------------------------------
-    # build_scales
+    # build_pseudo_scales + build_cat
     # ------------------------------------------------------------------
-    def build_scales(
+    def build_pseudo_scales(
+        self,
+        df_seq: pd.DataFrame = None,
+        dict_num: Dict[str, np.ndarray] = None,
+        features: List[str] = None,
+        return_std: bool = False,
+        dim_names_override: Optional[List[str]] = None,
+    ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
+        """Build ``df_scales`` by context-free per-AA averaging of the encoded corpus.
+
+        Mirrors :meth:`EmbeddingPreprocessor.build_pseudo_scales`: for each
+        canonical amino acid ``a`` and each D dimension ``d``, the pseudo-scale
+        entry is the mean of ``dict_num[entry][i, d]`` over all (entry, i)
+        pairs where ``df_seq[sequence][entry][i] == a``. Non-canonical residues
+        are skipped; AAs absent from the corpus get NaN rows.
+
+        This is the **dataset-dependent** step. The values feed
+        :meth:`CPP.run_num`'s redundancy filter (``df_scales.corr()`` arm); a
+        meaningful corpus is required to make ``max_cor`` discriminative.
+        Compute pseudo-scales once on a fixed reference corpus and reuse for
+        cross-dataset comparability.
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein
+            identifiers and a ``sequence`` column with full protein sequences.
+            Used here as the source of empirical amino-acid contexts.
+        dict_num : dict[str, np.ndarray]
+            Combined per-residue tensors ``{entry: (L_entry, D_total)
+            ndarray}`` — typically the output of
+            :func:`aaanalysis.combine_dict_nums`. Every entry in ``df_seq``
+            must be a key; per entry, ``L_entry == len(sequence)``;
+            ``D_total`` must equal ``sum(REGISTRY[f]['num_dims'] for f in
+            features)`` (i.e. the encoder outputs in feature-key order).
+        features : list of str
+            Feature keys from the StructurePreprocessor registry in the same
+            order as the ``dict_num`` D-axis layout. Used to name the D
+            dimensions of the output and to validate ``D_total``.
+        return_std : bool, default=False
+            If ``True``, also return per-AA standard deviations in a second
+            DataFrame of the same shape. AAs occurring exactly once receive
+            std=0; AAs absent from the corpus receive NaN.
+        dim_names_override : list of str, optional
+            Replacement names for the D columns; length must equal
+            ``D_total``. ``None`` uses the registry default names.
+
+        Returns
+        -------
+        df_scales : pd.DataFrame, shape (20, D_total)
+            Pseudo-scale DataFrame. Rows are the 20 canonical AAs
+            (``ut.LIST_CANONICAL_AA``); columns are dim names. Cells are
+            context-free per-AA means of normalized encoder outputs (each in
+            ``[0, 1]``); NaN where the AA is absent from the corpus.
+        df_stds : pd.DataFrame, shape (20, D_total)
+            Per-AA standard deviations, returned only when ``return_std=True``.
+
+        Raises
+        ------
+        ValueError
+            On missing ``df_seq`` / ``dict_num``, mismatched D, missing
+            entries, or invalid feature keys.
+
+        Warns
+        -----
+        UserWarning
+            Pseudo-scales depend on the content of ``df_seq`` + ``dict_num``.
+        """
+        # Validate
+        if df_seq is None or dict_num is None:
+            raise ValueError(
+                f"'df_seq' / 'dict_num' (None) should both be provided. "
+                f"Pseudo-scales need a real corpus — fall back to "
+                f"build_cat() if you only want the (D, 5) metadata.")
+        ut.check_df_seq(df_seq=df_seq)
+        if ut.COL_SEQ not in df_seq.columns:
+            raise ValueError(
+                f"'df_seq' should contain a '{ut.COL_SEQ}' column for "
+                f"build_pseudo_scales")
+        validate_feature_keys(features)
+        ut.check_bool(name="return_std", val=return_std)
+        D = get_total_dims(features)
+        dim_names = self._resolve_dim_names(features=features, D=D,
+                                            override=dim_names_override)
+        # Validate dict_num shape against df_seq + D
+        entries = df_seq[ut.COL_ENTRY].tolist()
+        sequences = dict(zip(entries, df_seq[ut.COL_SEQ].tolist()))
+        missing = [e for e in entries if e not in dict_num]
+        if missing:
+            preview = missing[:5] + (["..."] if len(missing) > 5 else [])
+            raise ValueError(
+                f"'dict_num' ({len(missing)} missing entries) should contain "
+                f"every entry in 'df_seq'. Missing: {preview}")
+        for entry in entries:
+            arr = dict_num[entry]
+            if not isinstance(arr, np.ndarray) or arr.ndim != 2:
+                raise ValueError(
+                    f"'dict_num[{entry!r}]' should be a 2-D np.ndarray of "
+                    f"shape (L, D)")
+            if arr.shape[0] != len(sequences[entry]):
+                raise ValueError(
+                    f"'dict_num[{entry!r}].shape[0]' ({arr.shape[0]}) "
+                    f"should equal len(sequence) ({len(sequences[entry])})")
+            if arr.shape[1] != D:
+                raise ValueError(
+                    f"'dict_num[{entry!r}].shape[1]' ({arr.shape[1]}) "
+                    f"should equal sum of num_dims across features ({D})")
+        warnings.warn(
+            "Pseudo-scales are dataset-dependent (averaged over df_seq + "
+            "dict_num). For reproducible cross-dataset comparison, compute "
+            "them once on a fixed reference corpus and reuse the resulting "
+            "df_scales.",
+            UserWarning,
+            stacklevel=2,
+        )
+        # Build per-AA accumulators
+        list_aa = list(ut.LIST_CANONICAL_AA)
+        aa_to_idx = {a: i for i, a in enumerate(list_aa)}
+        sums = np.zeros((len(list_aa), D), dtype=np.float64)
+        sqs = np.zeros((len(list_aa), D), dtype=np.float64)
+        counts = np.zeros((len(list_aa), D), dtype=np.float64)
+        for entry in entries:
+            arr = dict_num[entry]
+            seq = sequences[entry]
+            for i, a in enumerate(seq):
+                if a not in aa_to_idx:
+                    continue
+                row = arr[i]
+                mask = ~np.isnan(row)
+                if not mask.any():
+                    continue
+                ai = aa_to_idx[a]
+                sums[ai, mask] += row[mask]
+                sqs[ai, mask] += row[mask] ** 2
+                counts[ai, mask] += 1
+        with np.errstate(divide="ignore", invalid="ignore"):
+            means = np.where(counts > 0, sums / counts, np.nan)
+        df_scales = pd.DataFrame(means, index=list_aa, columns=dim_names)
+        if not return_std:
+            return df_scales
+        with np.errstate(divide="ignore", invalid="ignore"):
+            # population variance: E[x^2] - E[x]^2
+            mean_sq = np.where(counts > 0, sqs / counts, np.nan)
+            var = np.maximum(mean_sq - means ** 2, 0.0)
+            stds = np.where(counts > 0, np.sqrt(var), np.nan)
+        df_stds = pd.DataFrame(stds, index=list_aa, columns=dim_names)
+        return df_scales, df_stds
+
+    def build_cat(
         self,
         features: List[str] = None,
         dim_names_override: Optional[List[str]] = None,
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """Build the ``(df_scales, df_cat)`` metadata pair for the CPP constructor.
+    ) -> pd.DataFrame:
+        """Build the ``df_cat`` metadata frame for ``features``.
+
+        Pure registry lookup — corpus-free. ``df_cat[category]`` is always
+        ``'Structure'`` for every StructurePreprocessor feature in v1.1;
+        the per-key semantics live in ``df_cat[subcategory]`` (see registry).
 
         Parameters
         ----------
         features : list of str
             Feature keys from the StructurePreprocessor registry, in the
-            order they appear along the D axis of the encoder outputs. May
-            mix ``encode_dssp`` and ``encode_pdb`` keys; the order here must
-            match the order in which the corresponding ``dict_num`` blocks
-            are concatenated (typically via :func:`combine_dict_nums`).
+            order they appear along the D axis of the encoder outputs.
         dim_names_override : list of str, optional
             Replacement names for the D columns; length must equal the
-            total dimensionality across ``features``. If ``None``, the
-            registry defaults are used.
+            total dimensionality across ``features``.
 
         Returns
         -------
-        df_scales : pd.DataFrame, shape (20, D_total)
-            AAontology-style scale frame. Rows are the 20 canonical AAs
-            (values unused in numerical mode — :meth:`CPP.run_num` consumes
-            ``dict_num`` directly). Columns name the D dimensions.
         df_cat : pd.DataFrame, shape (D_total, 5)
-            AAontology-style category frame with one row per dimension:
-            ``scale_id``, ``category``, ``subcategory``, ``scale_name``,
-            ``scale_description``. The redundancy filter in :meth:`CPP.run_num`
-            groups dimensions by ``subcategory``.
-
-        Raises
-        ------
-        ValueError
-            On invalid feature keys or override-length mismatch.
+            One row per dimension: ``scale_id``, ``category``, ``subcategory``,
+            ``scale_name``, ``scale_description``. ``category`` is the
+            top-level color/redundancy-bucket bucket; ``subcategory`` carries
+            the fine-grained semantic split (``'DSSP_SS_3state'``,
+            ``'Flexibility_bfactor'``, etc.).
         """
         validate_feature_keys(features)
         D = get_total_dims(features)
-        dim_names = get_dim_names(features)
-        if dim_names_override is not None:
-            if not isinstance(dim_names_override, list):
-                raise ValueError(
-                    f"'dim_names_override' "
-                    f"({type(dim_names_override).__name__}) "
-                    f"should be a list of str of length {D}")
-            if len(dim_names_override) != D:
-                raise ValueError(
-                    f"'dim_names_override' (len={len(dim_names_override)}) "
-                    f"should be a list of {D} str (one per output dim)")
-            for n in dim_names_override:
-                if not isinstance(n, str):
-                    raise ValueError(
-                        f"'dim_names_override' items ({n!r}) should be str")
-            dim_names = list(dim_names_override)
+        dim_names = self._resolve_dim_names(features=features, D=D,
+                                            override=dim_names_override)
         categories = get_categories(features)
         subcategories = get_subcategories(features)
-        # df_scales: (20, D) with the canonical AA index
-        aa_list = list(ut.LIST_CANONICAL_AA)
-        df_scales = pd.DataFrame(
-            np.zeros((len(aa_list), D), dtype=np.float64),
-            index=aa_list, columns=dim_names)
-        # df_cat: (D, 5)
-        df_cat = pd.DataFrame({
+        return pd.DataFrame({
             ut.COL_SCALE_ID: dim_names,
             ut.COL_CAT: categories,
             ut.COL_SUBCAT: subcategories,
@@ -797,4 +950,22 @@ class StructurePreprocessor:
             ut.COL_SCALE_DES: [f"{c}/{s}" for c, s in zip(categories,
                                                           subcategories)],
         })
-        return df_scales, df_cat
+
+    @staticmethod
+    def _resolve_dim_names(features, D, override):
+        """Validate ``dim_names_override`` against D; fall back to registry."""
+        if override is None:
+            return get_dim_names(features)
+        if not isinstance(override, list):
+            raise ValueError(
+                f"'dim_names_override' ({type(override).__name__}) "
+                f"should be a list of {D} str")
+        if len(override) != D:
+            raise ValueError(
+                f"'dim_names_override' (len={len(override)}) "
+                f"should be a list of {D} str (one per output dim)")
+        for n in override:
+            if not isinstance(n, str):
+                raise ValueError(
+                    f"'dim_names_override' items ({n!r}) should be str")
+        return list(override)

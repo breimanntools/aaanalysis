@@ -70,10 +70,17 @@ def cluster_pseudo_scales_(df_scales_emb=None, df_stds_emb=None, cat_min_th=None
     ac_subcat = AAclust(verbose=False, random_state=random_state)
     ac_subcat.fit(X=X, min_th=subcat_min_th, names=dim_names, metric=metric)
 
+    # v1.1 category scheme: all PLM-derived dims share the top-level
+    # ``'Embeddings'`` bucket (paired with ``ut.DICT_COLOR_CAT['Embeddings']``);
+    # the two AAclust cluster labels move into subcategory as a structured
+    # "cat:<i>|subcat:<j>" string so the redundancy filter still sees the
+    # finer split via the subcategory column while CPPPlot resolves a single
+    # color.
     df_cat_emb = pd.DataFrame({
         ut.COL_SCALE_ID: dim_names,
-        ut.COL_CAT: [f"PLM_cat_{c}" for c in ac_cat.labels_],
-        ut.COL_SUBCAT: [f"PLM_subcat_{s}" for s in ac_subcat.labels_],
+        ut.COL_CAT: ["Embeddings" for _ in dim_names],
+        ut.COL_SUBCAT: [f"Embeddings_cat{c}_subcat{s}"
+                        for c, s in zip(ac_cat.labels_, ac_subcat.labels_)],
         ut.COL_SCALE_NAME: dim_names,
         ut.COL_SCALE_DES: ["" for _ in dim_names],
     })

@@ -123,6 +123,13 @@ class EmbeddingPreprocessor:
       positions receives the same scale value. A future ``CPP.run_embed`` will
       consume the per-residue embeddings directly; see the design sketch at
       ``docs/source/design/run_embed.md``.
+    * **Feature categorization.** As of v1.1 every PLM-derived dim emits
+      ``category='Embeddings'`` (paired with
+      ``ut.DICT_COLOR_CAT['Embeddings'] == '#6B4FB5'``). The AAclust-derived
+      coarser/finer cluster IDs move into a structured
+      ``Embeddings_cat<i>_subcat<j>`` string in the ``subcategory`` column,
+      so the redundancy filter still sees the cluster split via
+      ``subcategory`` while ``CPPPlot.heatmap()`` resolves a single color.
     """
 
     @staticmethod

@@ -113,21 +113,32 @@ A `Dict[entry, np.ndarray (L, D_pdb)]` of per-residue features extracted directl
 _Avoid_: pdb_tensor, raw_pdb_dict.
 
 **feature key**:
-A canonical string identifier in the `StructurePreprocessor` registry that maps to a fixed `(num_dims, dim_names, category, subcategory)` tuple. Used in the `features=[...]` parameter of `encode_dssp` / `encode_pdb` and in `build_scales(features=[...])`. Valid keys: `ss3`, `ss8`, `asa`, `rasa`, `phi_psi`, `phi_psi_sincos`, `bfactor`, `depth`.
+A canonical string identifier in the `StructurePreprocessor` registry that maps to a fixed `(num_dims, dim_names, category, subcategory, normalization recipe)` tuple. Used in the `features=[...]` parameter of `encode_dssp` / `encode_pdb` / `encode_pae` and in `build_pseudo_scales(features=[...])` / `build_cat(features=[...])`. v1.1 keys: `ss3`, `ss8`, `rasa`, `phi_psi_sincos`, `bfactor`, `depth` (plus v1.1 AF additions `plddt`, `plddt_disorder`, `plddt_tier`, `chi1_sincos`, `chi2_sincos`, `ca_centroid_dist`, `ca_centroid_dist_norm`, `contact_count_8A`, `contact_count_12A`, `pae_row_mean`, `pae_row_min`, `pae_row_max`, `pae_local_mean`, `pae_distal_mean`, `pae_asymmetry`, `pae_band_means`). v1's `asa` (absolute) and `phi_psi` (raw degrees) are **removed** in v1.1.
 _Avoid_: feature_id (collides with the `df_feat.feature` column), dim_key.
 
 **StructurePreprocessor**:
-Public class in `aaanalysis/struct_analysis_pro/` that converts PDB files into [[dict_num]]-shape per-residue numerical tensors for `CPP.run_num`. Mirrors `EmbeddingPreprocessor`'s instance-based pattern (`stp = StructurePreprocessor()`). Four public methods: `get_dssp` (raw DSSP list output), `encode_dssp` (DSSP → dict_num), `encode_pdb` (raw PDB → dict_num), `build_scales` (feature_keys → df_scales + df_cat). Pro-extra gated (biopython); `msms` is a runtime check inside `encode_pdb(features=['depth'])`.
+Public class in `aaanalysis/struct_analysis_pro/` that converts PDB / CIF / AlphaFold files (and AF PAE sidecars) into [[dict_num]]-shape per-residue numerical tensors for `CPP.run_num`. Mirrors `EmbeddingPreprocessor`'s instance-based pattern (`stp = StructurePreprocessor()`). Five public methods: `get_dssp` (raw DSSP list output), `encode_dssp` (DSSP → dict_num), `encode_pdb` (raw PDB → dict_num, includes AF model-file features), `encode_pae` (AF PAE sidecar → dict_num), `build_pseudo_scales` (corpus-derived per-AA-mean df_scales), `build_cat` (corpus-free df_cat metadata). All encoder outputs are normalized to `[0, 1]` per the registry's `NORMALIZATION_RECIPES`; the inverse formulas are documented in the class docstring. Pro-extra gated (biopython); `msms` is a runtime check inside `encode_pdb(features=['depth'])`.
 _Avoid_: PDBPreprocessor, DSSPPreprocessor (too narrow).
 
 **combine_dict_nums**:
-Top-level `aa.combine_dict_nums(dict_nums: List[Dict[entry, ndarray]]) → Dict[entry, ndarray]` that concatenates multiple per-residue tensors along the D axis. Source-agnostic — works with `dict_dssp`, `dict_pdb`, `dict_embeddings`, or any user-supplied dict matching the shape contract. Validates same entry set + same L per entry across all inputs.
+Top-level `aa.combine_dict_nums(dict_nums: List[Dict[entry, ndarray]]) → Dict[entry, ndarray]` that concatenates multiple per-residue tensors along the D axis. Source-agnostic — works with `dict_dssp`, `dict_pdb`, [[dict_pae]], `dict_embeddings`, or any user-supplied dict matching the shape contract. Validates same entry set + same L per entry across all inputs.
 _Avoid_: merge_dict_num, stack_dict_nums.
+
+**dict_pae**:
+A `Dict[entry, np.ndarray (L, D_pae)]` of per-residue summaries derived from an AlphaFold PAE sidecar (`AF-{uniprot}-F1-predicted_aligned_error_v4.json`). Produced by `StructurePreprocessor().encode_pae(df_seq, pae_folder, features=[...])`. The L×L matrix is collapsed to per-residue summaries — row-mean / row-min / row-max / local-mean (±`local_window`) / distal-mean / asymmetry / band-means. All values normalized to `[0, 1]` by dividing by AlphaFold's PAE saturation cap (31.75 Å).
+_Avoid_: pae_dict, dict_alignment_error.
+
+**Feature-category colors** (locked v1.1 palette; source in `ut.DICT_COLOR_CAT`):
+- `Structure` → `#2E6E5E` (deep teal-green) — all `StructurePreprocessor` outputs (DSSP / PDB / PAE / AF features).
+- `Embeddings` → `#6B4FB5` (indigo-violet) — all `EmbeddingPreprocessor` outputs.
+- `PTMs` → `#B36BCB` (lilac-magenta) — **reserved** for a future PR (PTM-feature preprocessor).
+- Plus the 8 AAontology categories (`ASA/Volume`, `Composition`, `Conformation`, `Energy`, `Others`, `Polarity`, `Shape`, `Structure-Activity`).
+The redundancy filter's `check_cat=True` arm groups features by these top-level buckets; fine-grained semantic splits (e.g. `'DSSP_SS_3state'` vs `'Flexibility_bfactor'`) live in `subcategory`.
 
 ### Numerical-mode CPP vocabulary
 
 **dict_num**:
-A `Dict[str, np.ndarray]` mapping `entry` to a per-residue numerical tensor of shape `(L, D)`. Generic value source for `CPP.run_num`: covers PLM embeddings, DSSP one-hots, PTM dummies, or any other per-residue numerical representation. Same shape contract as the `embeddings` argument of `EmbeddingPreprocessor.build_pseudo_scales`; the rename to `dict_num` signals that the contents need not be PLM embeddings. When `dict_num` is supplied, the AA→scale lookup in `_filters/_assign.py:101` is bypassed; the per-protein tensor is sliced into parts and consumed directly. The accompanying `df_scales`/`df_cat` then *name* the D dimensions (e.g. `dim_0`, `DSSP_H`, `phospho_S`) for the redundancy filter and output columns.
+A `Dict[str, np.ndarray]` mapping `entry` to a per-residue numerical tensor of shape `(L, D)`. Generic value source for `CPP.run_num`: covers PLM embeddings, DSSP one-hots, PTM dummies, or any other per-residue numerical representation. Same shape contract as the `embeddings` argument of `EmbeddingPreprocessor.build_pseudo_scales`; the rename to `dict_num` signals that the contents need not be PLM embeddings. When `dict_num` is supplied, the AA→scale lookup in `_filters/_assign.py:101` is bypassed; the per-protein tensor is sliced into parts and consumed directly. The accompanying `df_scales`/`df_cat` then *name* the D dimensions (e.g. `dim_0`, `DSSP_H`, `phospho_S`) for the redundancy filter and output columns. **Values emitted by `StructurePreprocessor` encoders are normalized to `[0, 1]` per the per-key recipes in `NORMALIZATION_RECIPES`** (with NaN for unresolved positions); user-supplied dicts may use any range, but `CPP.run_num`'s default `max_std_test=0.2` pre-filter is calibrated for the `[0, 1]` convention.
 _Avoid_: embeddings (too narrow — covers only one source), num_tensor, per_residue_dict.
 
 **CPP.run_num**:

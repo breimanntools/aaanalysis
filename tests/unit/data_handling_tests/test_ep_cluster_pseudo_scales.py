@@ -62,13 +62,16 @@ class TestClusterPseudoScales:
         )
         assert df_cat["scale_id"].tolist() == list(df_scales_emb.columns)
 
-    def test_cat_labels_use_plm_cat_prefix(self):
+    def test_cat_labels_use_embeddings_bucket(self):
+        # v1.1 palette: every PLM-derived dim emits category='Embeddings'
+        # (paired with ut.DICT_COLOR_CAT['Embeddings']). The cluster-IDs
+        # move into the subcategory string.
         df_scales_emb = _make_pseudo_scales(D=8)
         df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
-        assert all(c.startswith("PLM_cat_") for c in df_cat["category"])
-        assert all(s.startswith("PLM_subcat_") for s in df_cat["subcategory"])
+        assert all(c == "Embeddings" for c in df_cat["category"])
+        assert all(s.startswith("Embeddings_cat") for s in df_cat["subcategory"])
 
     def test_subcat_has_at_least_as_many_clusters_as_cat(self):
         """Finer threshold should yield ≥ as many clusters as coarser threshold."""
@@ -198,8 +201,8 @@ class TestClusterPseudoScales:
             metric="cosine",
         )
         assert df_cat.shape == (10, 5)
-        assert all(c.startswith("PLM_cat_") for c in df_cat["category"])
-        assert all(s.startswith("PLM_subcat_") for s in df_cat["subcategory"])
+        assert all(c == "Embeddings" for c in df_cat["category"])
+        assert all(s.startswith("Embeddings_cat") for s in df_cat["subcategory"])
 
     def test_metric_correlation_and_cosine_deterministic(self):
         df_scales_emb = _make_pseudo_scales(D=12)
@@ -245,7 +248,7 @@ class TestClusterPseudoScales:
             cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
         assert df_cat.shape == (10, 5)
-        assert all(c.startswith("PLM_cat_") for c in df_cat["category"])
+        assert all(c == "Embeddings" for c in df_cat["category"])
 
     def test_std_aware_deterministic_with_same_random_state(self):
         df_scales_emb = _make_pseudo_scales(D=10, seed=0)
@@ -330,11 +333,13 @@ class TestClusterPseudoScales:
             df_scales_emb=df_scales_emb, df_stds_emb=df_stds_emb,
             cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
-        cat = lambda df, dim: df.loc[df["scale_id"] == dim, "category"].iloc[0]
-        # Mean-only: dim_0 and dim_1 should share the category (means near-identical).
-        assert cat(df_mean_only, "dim_0") == cat(df_mean_only, "dim_1")
-        # Std-aware: with very different stds, they should separate.
-        assert cat(df_std_aware, "dim_0") != cat(df_std_aware, "dim_1")
+        # v1.1: all PLM dims share category='Embeddings'; the cluster-ID lives
+        # in the subcategory now. Mean-only: dim_0 and dim_1 should share the
+        # subcategory (means near-identical). Std-aware: with very different
+        # stds, they should separate.
+        sub = lambda df, dim: df.loc[df["scale_id"] == dim, "subcategory"].iloc[0]
+        assert sub(df_mean_only, "dim_0") == sub(df_mean_only, "dim_1")
+        assert sub(df_std_aware, "dim_0") != sub(df_std_aware, "dim_1")
 
     # Negative cases for df_stds_emb
     def test_invalid_df_stds_emb_wrong_shape(self):

@@ -58,7 +58,7 @@ def run_dssp_full_for_entry_(
         caller is expected to convert this into a per-row UserWarning and
         ``dssp_ok=False``.
     """
-    from Bio.PDB import PDBParser
+    from Bio.PDB import PDBParser, MMCIFParser
     from Bio.PDB.DSSP import DSSP, residue_max_acc
     from Bio.PDB.Polypeptide import is_aa, protein_letters_3to1
 
@@ -66,10 +66,17 @@ def run_dssp_full_for_entry_(
     dssp_bin = _resolve_dssp_binary()
     sander_max = residue_max_acc.get("Sander", {})
 
+    # v1.1 file-format support: dispatch parser by extension. Gz inputs are
+    # decompressed by the caller (`StructurePreprocessor` frontend via
+    # `_file_format.resolve_structure_path`) before reaching this function,
+    # so we never see ``.gz`` here.
+    suffix = pdb_path.suffix.lower()
+    is_cif = suffix in (".cif", ".cifs")
+
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_pdb = Path(tmp_dir) / pdb_path.name
         shutil.copy(pdb_path, tmp_pdb)
-        parser = PDBParser(QUIET=True)
+        parser = MMCIFParser(QUIET=True) if is_cif else PDBParser(QUIET=True)
         structure = parser.get_structure("s", str(tmp_pdb))
         try:
             model = next(structure.get_models())

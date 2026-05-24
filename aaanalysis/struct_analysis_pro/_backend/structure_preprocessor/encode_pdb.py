@@ -11,6 +11,7 @@ import numpy as np
 
 import aaanalysis.utils as ut
 from ._extras import check_msms_available
+from .feature_registry import normalize
 
 
 # I Helper Functions
@@ -99,9 +100,16 @@ def _align_atom_values_to_target(target_seq: str,
 
 # II Main Functions
 def load_structure(pdb_path):
-    """Parse a PDB file and return a Bio.PDB Structure (quiet mode)."""
-    from Bio.PDB import PDBParser
-    parser = PDBParser(QUIET=True)
+    """Parse a PDB or mmCIF file and return a Bio.PDB Structure (quiet mode).
+
+    Dispatches by extension: ``.cif`` uses ``MMCIFParser``; everything else
+    (``.pdb`` etc.) uses ``PDBParser``. Gz inputs are expected to have been
+    decompressed by the file-format resolver before reaching here.
+    """
+    from Bio.PDB import PDBParser, MMCIFParser
+    from pathlib import Path
+    suffix = Path(str(pdb_path)).suffix.lower()
+    parser = MMCIFParser(QUIET=True) if suffix == ".cif" else PDBParser(QUIET=True)
     return parser.get_structure("s", str(pdb_path))
 
 
@@ -132,7 +140,8 @@ def encode_bfactor(structure, sequence: str) -> Tuple[np.ndarray, float]:
         else:
             atom_b.append(float(np.mean(b_values)))
     aligned = _align_atom_values_to_target(sequence, atom_seq, atom_b)
-    return np.asarray(aligned, dtype=np.float64).reshape(-1, 1), identity
+    raw = np.asarray(aligned, dtype=np.float64).reshape(-1, 1)
+    return normalize("bfactor", raw), identity
 
 
 def encode_depth(structure, sequence: str) -> Tuple[np.ndarray, float]:
@@ -168,4 +177,5 @@ def encode_depth(structure, sequence: str) -> Tuple[np.ndarray, float]:
         except Exception:
             atom_depth.append(float("nan"))
     aligned = _align_atom_values_to_target(sequence, atom_seq, atom_depth)
-    return np.asarray(aligned, dtype=np.float64).reshape(-1, 1), identity
+    raw = np.asarray(aligned, dtype=np.float64).reshape(-1, 1)
+    return normalize("depth", raw), identity

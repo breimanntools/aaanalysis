@@ -87,17 +87,18 @@ class TestStpEncodeDssp:
             stp.encode_dssp(df_seq=_df_pre(), features=["ss3"],
                             ss_mode="ss4")
 
-    def test_invalid_asa_kind(self, tmp_path):
+    def test_invalid_dropped_key_asa(self, tmp_path):
+        # v1.1: 'asa' (absolute) is dropped from the registry; only 'rasa'
+        # remains. Passing the dropped key must raise.
         stp = aa.StructurePreprocessor(verbose=False)
-        with pytest.raises(ValueError, match="asa_kind"):
-            stp.encode_dssp(df_seq=_df_pre(), features=["rasa"],
-                            asa_kind="dssp")
+        with pytest.raises(ValueError):
+            stp.encode_dssp(df_seq=_df_pre(), features=["asa"])
 
-    def test_invalid_dihedral_encoding(self, tmp_path):
+    def test_invalid_dropped_key_phi_psi_raw(self, tmp_path):
+        # v1.1: 'phi_psi' (raw degrees) is dropped; only 'phi_psi_sincos'.
         stp = aa.StructurePreprocessor(verbose=False)
-        with pytest.raises(ValueError, match="dihedral_encoding"):
-            stp.encode_dssp(df_seq=_df_pre(), features=["phi_psi"],
-                            dihedral_encoding="degrees")
+        with pytest.raises(ValueError):
+            stp.encode_dssp(df_seq=_df_pre(), features=["phi_psi"])
 
     def test_invalid_gap_handling(self, tmp_path):
         stp = aa.StructurePreprocessor(verbose=False)
@@ -232,26 +233,29 @@ class TestStpEncodeDssp:
 class TestStpEncodeDsspComplex:
     """Cross-parameter combinations for encode_dssp."""
 
-    def test_complex_ss3_plus_phi_psi_total_dims(self):
+    def test_complex_ss3_plus_phi_psi_sincos_total_dims(self):
         seq = "ACDEFGHIK"
         stp = aa.StructurePreprocessor(verbose=False)
         d, _ = stp.encode_dssp(df_seq=_df_pre(seq),
-                               features=["ss3", "phi_psi"])
-        assert d["P1"].shape == (len(seq), 5)
+                               features=["ss3", "phi_psi_sincos"])
+        # 3 (ss3) + 4 (phi_psi_sincos) = 7
+        assert d["P1"].shape == (len(seq), 7)
 
-    def test_complex_asa_absolute_passthrough(self):
-        # asa_kind='asa' uses the raw value from the column.
+    def test_complex_rasa_in_unit_interval_after_normalize(self):
+        # v1.1 normalization: rasa values are clipped to [0, 1].
+        stp = aa.StructurePreprocessor(verbose=False)
+        d, _ = stp.encode_dssp(df_seq=_df_pre(), features=["rasa"])
+        vals = d["P1"].ravel()
+        assert np.all(vals >= 0) and np.all(vals <= 1)
+
+    def test_complex_phi_psi_sincos_shape(self):
         stp = aa.StructurePreprocessor(verbose=False)
         d, _ = stp.encode_dssp(df_seq=_df_pre(),
-                               features=["asa"], asa_kind="asa")
-        assert np.all(d["P1"][:, 0] == 80.0)
-
-    def test_complex_phi_psi_raw_dim_two(self):
-        stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre(),
-                               features=["phi_psi"],
-                               dihedral_encoding="raw")
-        assert d["P1"].shape[1] == 2
+                               features=["phi_psi_sincos"])
+        assert d["P1"].shape[1] == 4
+        # v1.1: sincos values are shifted to [0, 1].
+        vals = d["P1"]
+        assert np.all(vals >= 0) and np.all(vals <= 1)
 
     def test_complex_uses_precomputed_skips_dssp(self):
         # No pdb_folder needed if columns already exist.

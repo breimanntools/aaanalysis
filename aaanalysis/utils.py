@@ -379,10 +379,17 @@ DICT_COLOR_CAT = {"ASA/Volume": "tab:blue",
                   "Others": "tab:gray",
                   "Polarity": "gold",
                   "Shape": "tab:cyan",
-                  "Structure-Activity": "tab:brown"}
+                  "Structure-Activity": "tab:brown",
+                  # Category buckets for source-of-feature classes (one per
+                  # *Preprocessor) — see `StructurePreprocessor`,
+                  # `EmbeddingPreprocessor`. PTMs is reserved for a future PR.
+                  "Structure":  "#2E6E5E",   # deep teal-green
+                  "Embeddings": "#6B4FB5",   # indigo-violet
+                  "PTMs":       "#B36BCB"}   # lilac-magenta (reserved)
 
 LIST_CAT = ['ASA/Volume', 'Composition', 'Conformation', 'Energy',
-            'Others', 'Polarity', 'Shape', 'Structure-Activity']
+            'Others', 'Polarity', 'Shape', 'Structure-Activity',
+            'Structure', 'Embeddings', 'PTMs']
 
 
 # Parameter options for cmaps and color dicts
