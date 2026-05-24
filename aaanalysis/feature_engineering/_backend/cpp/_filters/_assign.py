@@ -1,23 +1,22 @@
 """
-This is a script for the backend of CPP's numerical-mode residue-value assignment
-stage: ``assign_scale_values_to_seq`` looks up scale values for every residue
-in ``df_parts`` and returns one 3D tensor per part (instead of the per-(scale,
-part) 2D dict produced by ``_filters._assign``).
+This is a script for the backend of CPP's residue-value assignment stage.
+``assign_scale_values_to_seq`` looks up scale values for every residue in
+``df_parts`` and returns one 3D tensor per part. The sibling
+``assign_dict_num_to_parts`` produces the same shape from a user-supplied
+``dict_num: Dict[entry, (L, D)]`` tensor instead of the AA-letter scale
+lookup; both functions emit the same output contract so downstream stages
+(``_stat_filter``, ``_pre_filter``, ``_add_stat``, ``_redundancy_filter``)
+are agnostic to the value source.
 
-Output contract (PR1, seq-mode only):
-- ``dict_part_vals[part]`` = ``(n_samples, L_part_max, D)`` float32 ndarray.
-  Positions beyond a sample's sequence length are ``np.nan``; non-canonical
-  residues (or '_' padding chars) also resolve to ``np.nan`` via the
-  ``aa_idx == n_aa`` sentinel row of ``scale_matrix``.
+Output contract:
+- ``dict_part_vals[part]`` = ``(n_samples, L_part_max, D)`` float32 ndarray
+  (seq-mode) or float64 (dict_num mode). Positions beyond a sample's
+  sequence length are ``np.nan``; non-canonical residues (or '_' padding
+  chars) also resolve to ``np.nan`` via the ``aa_idx == n_aa`` sentinel
+  row of ``scale_matrix``.
 - ``dict_part_lens[part]`` = ``(n_samples,)`` int64 ndarray giving each
   sample's real sequence length for that part (lets downstream stages slice
   off the NaN tail without scanning).
-
-# DEV: PR3 adds a sibling ``assign_dict_num_to_parts`` that produces the same
-# shape from a user-supplied ``dict_num: Dict[entry, (L, D)]`` tensor instead
-# of the AA-letter scale lookup. Both functions emit the same output contract
-# so the downstream stages (``_stat_filter``, ``_pre_filter``, ``_add_stat``,
-# ``_redundancy_filter``) are dict_num-agnostic.
 """
 import os
 import numpy as np
@@ -35,12 +34,12 @@ from ._progress import (
 def _build_scale_matrix(dict_all_scales=None):
     """Build (n_aa + 1, n_scales) float32 lookup. Row ``n_aa`` is NaN (padding / unknown).
 
-    Matches legacy ``_filters/_assign.py``'s float32 dtype so the pre-filter
-    stats in seq-mode are bit-identical to ``CPP.run``'s pre-filter stats
-    (both compute means over float32-truncated values promoted to float64).
-    The downstream pass 2 in ``cpp_run`` delegates to legacy
-    ``get_feature_matrix_`` for full-precision add_stat values, so the
-    scale_matrix dtype here only affects pre_filter parity.
+    Float32 dtype is chosen so pre-filter stats compute over float32-truncated
+    values promoted to float64 — same precision contract as the per-sample
+    ``np.mean`` reduction used by ``get_feature_matrix_fast_`` /
+    ``get_feature_matrix_c_`` downstream. This precision unification
+    (collapsing what was historically a dual-precision design) is what makes
+    the pre-filter and add-stat passes bit-exact end-to-end.
     """
     list_scales = list(dict_all_scales)
     list_aa = list(dict_all_scales[list_scales[0]].keys())
@@ -139,8 +138,7 @@ def _assign_scale_values_to_seq_b(df_parts=None, dict_all_scales=None, verbose=T
     Trade-off vs option A (per-part 3D tensors): one contiguous allocation but
     each part is padded to the global L_max across all parts (wastes memory on
     parts shorter than L_global). The dev bench in
-    ``dev_scripts/bench_filters.py`` picks the winner; the loser is removed
-    after one PR cycle (see ADR-0001).
+    ``dev_scripts/bench_filters.py`` can pick the winner empirically.
     """
     list_parts = list(df_parts)
     list_scales = list(dict_all_scales)

@@ -419,12 +419,9 @@ class CPP(Tool):
         n_scales = len(list(self.df_scales))
         ut.check_number_range(name="n_batches", val=n_batches, just_int=True,
                               accept_none=True, min_val=2, max_val=n_scales)
-        # PR5: route through the numerical-mode pipeline + Cython kernel
-        # (with Python fallback). Output is bit-exact with the previous
-        # legacy ``_filters/`` path — guaranteed by ``test_run_num_parity``.
-        # Per ADR-0001 amendment, ``_filters/_assign.py``'s float32→float64
-        # change collapsed the dual-precision design so both pipelines
-        # produce identical ``df_feat`` to the byte.
+        # Route through the unified CPP pipeline + Cython kernel
+        # (with Python fallback) — bit-exact, guaranteed by
+        # ``test_run_num_parity``.
         args = dict(df_parts=self.df_parts, split_kws=self.split_kws,
                     df_scales=self.df_scales, df_cat=self.df_cat,
                     verbose=self._verbose, accept_gaps=self._accept_gaps,
@@ -520,7 +517,7 @@ class CPP(Tool):
         * :meth:`run`: sequence-mode equivalent (no ``dict_num_parts``).
         * :meth:`NumericalFeature.get_parts`: produces ``(df_parts, dict_num_parts)``
           from raw ``df_seq + dict_num``.
-        * ``docs/adr/0001-cpp-run-num.md``: rationale for the dual-method design.
+        * ``docs/adr/0001-cpp-backend-architecture.md``: rationale for the dual-method design.
 
         Examples
         --------

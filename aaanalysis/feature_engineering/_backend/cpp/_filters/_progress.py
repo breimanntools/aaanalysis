@@ -2,10 +2,8 @@
 This is a script for the backend of CPP's shared progress / multiprocessing
 infrastructure.
 
-Canonical home of these helpers (lifted in PR6 from the now-removed
-``_filters/_progress.py``). Shared across the seq-mode and numerical-mode
-pipelines for a single source of truth on Manager lifecycle + shared
-progress state.
+Shared across the seq-mode and numerical-mode pipelines — single source of
+truth on Manager lifecycle + shared progress state.
 
 Dev rules (important for macOS/Windows):
 - Never create multiprocessing.Manager() (or start subprocesses) at import time.

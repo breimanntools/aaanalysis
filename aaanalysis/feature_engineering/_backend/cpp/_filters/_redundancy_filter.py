@@ -4,16 +4,17 @@ This is a script for the backend of CPP's redundancy-reduction stage:
 dropping features that overlap (by position and correlation) with previously
 accepted features.
 
-Canonical home of these helpers (lifted in PR6 from the now-removed
-``_filters/_redundancy_filter.py``). Greedy selection is independent of the
-upstream value source, so both seq-mode (``cpp.run``) and numerical-mode
-(``cpp.run_num``) consume the same implementation.
+Greedy selection is independent of the upstream value source — both
+seq-mode (``cpp.run``) and numerical-mode (``cpp.run_num``) consume the
+same implementation.
 
-# DEV: greedy selection is inherently sequential; a precompute-vectorize pass
-# (per-pair overlap + scale-correlation matrices) was estimated at ~10x and
-# attempted in PR3 — reverted because materializing (n_pre_filter, n_pre_filter)
-# matrices upfront was 44x SLOWER than the legacy "early-exit at n_filter"
-# greedy loop at default settings. See CPP_RUN_NUM_BACKLOG.md PR3 entry.
+# DEV: greedy selection is inherently sequential. A precompute-vectorize
+# pass (per-pair overlap + scale-correlation matrices) was attempted and
+# reverted: materializing (n_pre_filter, n_pre_filter) matrices upfront
+# turned out to be ~44x SLOWER than the current "early-exit at n_filter"
+# greedy loop at default settings (``n_filter=100``), because the early
+# exit cuts pair checks dramatically. See CPP_RUN_NUM_BACKLOG.md for the
+# data.
 """
 import aaanalysis.utils as ut
 

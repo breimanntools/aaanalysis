@@ -8,7 +8,7 @@ it, setuptools doesn't know there's a ``.pyx`` to compile.
 
 End users `pip install aaanalysis` (or `uv add aaanalysis`) get the
 precompiled `.so` inside the wheel — no manual build step. See
-docs/adr/0003-drop-numba-setuptools-cibuildwheel.md.
+docs/adr/0001-cpp-backend-architecture.md.
 """
 import numpy as np
 from Cython.Build import cythonize

@@ -1,6 +1,6 @@
 """This is a script to test CPP.run_num()'s numerical-mode contract.
 
-PR5 contract (post-ADR-0003 amendment):
+Contract (per ADR-0001 — docs/adr/0001-cpp-backend-architecture.md):
 - ``run_num`` ALWAYS requires ``dict_num_parts`` (from ``NumericalFeature.get_parts``);
   seq-mode goes through ``cpp.run`` instead.
 - Round-trip parity: when ``dict_num`` is built by applying the AA→scale lookup
@@ -36,9 +36,8 @@ def _build_fixture(n=10, n_scales=10):
 def _build_dict_num_from_scales(df_seq, df_scales):
     """Build ``dict_num: Dict[entry, (L, D)]`` by applying the AA→scale lookup to df_seq.
 
-    Float64 throughout to match the value source consumed by the seq-mode path
-    (``_filters/_assign.py`` was unified to float64 in PR2 per the ADR-0001
-    precision amendment).
+    Float64 throughout to match the value source consumed by the seq-mode
+    path's scale_matrix (full-precision per-residue values).
     """
     aa_to_idx = {a: i for i, a in enumerate(df_scales.index)}
     n_aa = len(aa_to_idx)

@@ -1,10 +1,13 @@
 # Design sketch: `CPP.run_num`
 
-> **Status:** Design accepted in ADR-0001 (`docs/adr/0001-cpp-run-num.md`); not
-> yet implemented. This file captures the *how*; the ADR captures the *why*
-> and the rejected alternatives. The file is still named `run_embed.md` for
-> git-history continuity — the design itself was renamed `run_num` during the
-> grill-with-docs session on 2026-05-21.
+> **Status:** Implemented (PR4 + PR5 + PR6). The architecture is recorded in
+> ADR-0001 (`docs/adr/0001-cpp-backend-architecture.md`). This file captures
+> the early design sketch — for the *current* implementation see the ADR +
+> `CONTEXT.md`. The file is still named `run_embed.md` for git-history
+> continuity; the design itself was renamed `run_num` during the
+> grill-with-docs session on 2026-05-21. References below to `_filters_num/`
+> describe the design state during PR4-PR5; the folder is now `_filters/`
+> (renamed in PR6).
 
 ## Motivation
 
@@ -196,4 +199,4 @@ dict_num : Dict[entry, (L, D)]                          # supplied or built from
   staging shape head-to-head.
 - Vocabulary: `CONTEXT.md` → "Numerical-mode CPP vocabulary"
   (`dict_num`, `CPP.run_num`, `_filters_num/`).
-- ADR: `docs/adr/0001-cpp-run-num.md`.
+- ADR: `docs/adr/0001-cpp-backend-architecture.md`.

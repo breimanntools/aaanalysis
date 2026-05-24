@@ -3,7 +3,7 @@
 # `_filters_c/_inner.pyx` is compiled into the wheel at build time —
 # end users `pip install aaanalysis` (or `uv add`) and the precompiled
 # `.so` ships with the wheel; no manual `setup_inner.py build_ext` step.
-# See docs/adr/0003-drop-numba-setuptools-cibuildwheel.md.
+# See docs/adr/0001-cpp-backend-architecture.md.
 requires = [
   "setuptools>=68",
   "wheel",

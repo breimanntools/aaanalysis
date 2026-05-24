@@ -29,9 +29,10 @@ from .cpp.sequence_feature import get_features_
 from .cpp.utils_feature import get_positions_, add_scale_info_
 from .cpp._filters._get_feature_matrix_fast import get_feature_matrix_fast_
 
-# Optional Cython-accelerated path. Gated behind try/except so a pure-Python
-# install (no compiler / extension not built) still gets ``CPP.run_num`` —
-# only ``CPP.run_c`` raises an informative error in that case.
+# Optional Cython-accelerated path. Gated behind try/except so installs
+# without the compiled extension (e.g. unsupported platform with no
+# prebuilt wheel) silently fall back to the pure-Python kernel via
+# ``_pick_feature_matrix_builder``.
 try:
     from .cpp._filters_c._get_feature_matrix_c import get_feature_matrix_c_
     _HAS_CYTHON_INNER = True
