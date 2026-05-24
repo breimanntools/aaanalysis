@@ -18,7 +18,7 @@ from joblib import Parallel, delayed
 import aaanalysis.utils as ut
 from .._split import SplitVec
 from ..utils_feature import _get_split_info, post_check_vf_scale
-from .._filters_num._get_feature_matrix_fast import (
+from .._filters._get_feature_matrix_fast import (
     AALookupCache,
     _build_aa_idx_per_part,
     _build_scale_matrix_f64,

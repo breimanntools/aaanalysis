@@ -17,11 +17,11 @@ from ._backend.check_feature import (check_split_kws,
                                      check_parts_len, check_match_df_parts_split_kws,
                                      check_df_scales, check_df_cat, check_match_df_parts_df_scales,
                                      check_match_df_scales_df_cat)
-from ._backend.cpp_run import cpp_run_single, cpp_run_batch
-from ._backend.cpp_run_num import (
-    cpp_run_num_single, cpp_run_num_batch, cpp_run_num_sample_batched,
+from ._backend.cpp_run import (
+    cpp_run_single, cpp_run_batch, cpp_run_sample_batched,
+    _pick_feature_matrix_builder,
 )
-from ._backend.cpp._filters_num._get_feature_matrix_fast import AALookupCache
+from ._backend.cpp._filters._get_feature_matrix_fast import AALookupCache
 from ._backend.cpp.cpp_eval import evaluate_features
 
 
@@ -112,6 +112,77 @@ def check_match_df_seq_df_parts(df_seq=None, df_parts=None, jmd_n_len=None, jmd_
             f"For bit-identical parity with CPP.run, pass the same df_seq that produced "
             f"the constructor's df_parts (and the same jmd_n_len / jmd_c_len)."
         )
+
+
+def _check_dict_num_parts(dict_num_parts=None, df_parts=None):
+    """Layer-2 validation for CPP.run_num: ``dict_num_parts`` must align with ``self.df_parts``.
+
+    Catches the cases where a user constructed ``dict_num_parts`` by hand (without
+    going through ``NumericalFeature.get_parts``) or mixed parts from a different
+    preprocessing run.
+    """
+    if not isinstance(dict_num_parts, dict):
+        raise ValueError(
+            f"'dict_num_parts' ({type(dict_num_parts).__name__}) should be a "
+            f"Dict[part_name, np.ndarray] produced by NumericalFeature.get_parts(...)."
+        )
+    expected_parts = set(df_parts.columns)
+    got_parts = set(dict_num_parts.keys())
+    if got_parts != expected_parts:
+        missing = sorted(expected_parts - got_parts)
+        extra = sorted(got_parts - expected_parts)
+        raise ValueError(
+            f"'dict_num_parts' part names {sorted(got_parts)} should match CPP's "
+            f"df_parts.columns {sorted(expected_parts)} "
+            f"(missing: {missing}, extra: {extra}). Re-run NumericalFeature.get_parts(...) "
+            f"with the same df_seq + jmd_n_len + jmd_c_len that produced the CPP's df_parts."
+        )
+    n_samples = len(df_parts)
+    D_seen = set()
+    for part in sorted(expected_parts):
+        arr = dict_num_parts[part]
+        if not isinstance(arr, np.ndarray):
+            raise ValueError(
+                f"'dict_num_parts[{part!r}]' ({type(arr).__name__}) should be np.ndarray "
+                f"of shape (n_samples, L_part_max, D)."
+            )
+        if arr.ndim != 3:
+            raise ValueError(
+                f"'dict_num_parts[{part!r}]' (ndim={arr.ndim}) should be 3D "
+                f"(n_samples, L_part_max, D)."
+            )
+        if arr.shape[0] != n_samples:
+            raise ValueError(
+                f"'dict_num_parts[{part!r}]' shape {arr.shape} should have "
+                f"n_samples={n_samples} matching CPP's df_parts row count."
+            )
+        D_seen.add(arr.shape[2])
+    if len(D_seen) > 1:
+        raise ValueError(
+            f"'dict_num_parts' has inconsistent D across parts: {sorted(D_seen)} — "
+            f"all parts must share the same dimensionality."
+        )
+    if D_seen and 0 in D_seen:
+        raise ValueError("'dict_num_parts' has D=0; should be >= 1.")
+
+
+def _derive_dict_part_lens(df_parts=None):
+    """Compute per-(entry, part) real residue count from ``df_parts`` strings.
+
+    Tensor backends need per-sample real lengths to know where the NaN padding
+    starts in each row. We re-derive them from the string ``df_parts`` (non-gap
+    character count) rather than threading them through the user-facing API —
+    keeps ``dict_num_parts`` a single-shape dict.
+    """
+    dict_part_lens = {}
+    for part in df_parts.columns:
+        col = df_parts[part].to_list()
+        lens = np.fromiter(
+            (sum(c != ut.STR_AA_GAP for c in s) for s in col),
+            dtype=np.int64, count=len(col),
+        )
+        dict_part_lens[part] = lens
+    return dict_part_lens
 
 
 # II Main Functions
@@ -348,7 +419,12 @@ class CPP(Tool):
         n_scales = len(list(self.df_scales))
         ut.check_number_range(name="n_batches", val=n_batches, just_int=True,
                               accept_none=True, min_val=2, max_val=n_scales)
-        # Run the CPP algorithm on complete dataset
+        # PR5: route through the numerical-mode pipeline + Cython kernel
+        # (with Python fallback). Output is bit-exact with the previous
+        # legacy ``_filters/`` path — guaranteed by ``test_run_num_parity``.
+        # Per ADR-0001 amendment, ``_filters/_assign.py``'s float32→float64
+        # change collapsed the dual-precision design so both pipelines
+        # produce identical ``df_feat`` to the byte.
         args = dict(df_parts=self.df_parts, split_kws=self.split_kws,
                     df_scales=self.df_scales, df_cat=self.df_cat,
                     verbose=self._verbose, accept_gaps=self._accept_gaps,
@@ -358,20 +434,30 @@ class CPP(Tool):
                     check_cat=check_cat, parametric=parametric,
                     start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                     n_jobs=n_jobs, vectorized=vectorized)
+        builder = _pick_feature_matrix_builder()
+        if self._aa_lookup_cache is None:
+            self._aa_lookup_cache = AALookupCache.from_df(
+                df_parts=self.df_parts, df_scales=self.df_scales,
+            )
         if n_batches is None:
-            df_feat = cpp_run_single(**args)
+            df_feat = cpp_run_single(
+                df_seq=None, dict_num=None,
+                aa_lookup_cache=self._aa_lookup_cache,
+                feature_matrix_builder=builder,
+                **args,
+            )
         else:
-            df_feat = cpp_run_batch(**args, n_batches=n_batches)
-        # Cconvert all np.str_ to str in object columns
+            df_feat = cpp_run_batch(
+                **args, n_batches=n_batches,
+                feature_matrix_builder=builder,
+            )
+        # Convert all np.str_ to str in object columns
         for col in df_feat.select_dtypes(include=["object", "string"]).columns:
             df_feat[col] = df_feat[col].apply(lambda x: str(x) if isinstance(x, (np.str_, np.generic)) else x)
         return df_feat
 
     def run_num(self,
-                df_seq: pd.DataFrame = None,
-                dict_num: Optional[Dict[str, np.ndarray]] = None,
-                df_scales: Optional[pd.DataFrame] = None,
-                df_cat: Optional[pd.DataFrame] = None,
+                dict_num_parts: Dict[str, np.ndarray] = None,
                 labels: ut.ArrayLike1D = None,
                 label_test: int = 1,
                 label_ref: int = 0,
@@ -390,68 +476,72 @@ class CPP(Tool):
                 n_jobs: Optional[int] = None,
                 vectorized: bool = True,
                 n_batches: Optional[int] = None,
-                n_sample_batches: Optional[int] = None,
                 ) -> pd.DataFrame:
         """
-        Experimental: run the numerical-mode CPP pipeline.
+        Numerical-mode CPP: same algorithm as :meth:`run`, but per-residue values come
+        from a pre-sliced numerical tensor (`dict_num_parts`) instead of an AA→scale
+        lookup. Use for PLM embeddings, DSSP one-hots, PTM dummies, or any per-residue
+        numerical representation.
 
-        Development twin of :meth:`CPP.run`. In seq-only mode (``dict_num=None``),
-        produces a ``df_feat`` bit-identical to :meth:`CPP.run` over the same
-        inputs — verified by the parity test fixture. The ``dict_num`` path
-        (per-residue numerical tensors for embeddings / DSSP / PTM dummies)
-        is reserved for a follow-up PR and currently raises ``NotImplementedError``.
+        Same pipeline (pre-filter stats, pre-filter, recompute, add_stat, redundancy
+        filter) and same output schema as :meth:`run`. The constructor-bound
+        ``df_scales`` / ``df_cat`` provide DIMENSION NAMES + categories for the D axis
+        of ``dict_num_parts`` (the per-AA values they would normally provide are
+        unused — ``dict_num_parts`` is the value source).
 
         Parameters
         ----------
-        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
-            DataFrame containing an ``entry`` column with unique protein identifiers
-            and a ``sequence`` column with full protein sequences. Used to derive
-            parts; must produce a ``df_parts`` equal to the constructor's
-            ``self.df_parts`` (same ``jmd_n_len`` / ``jmd_c_len``). A mismatch
-            raises ``ValueError`` — there is no fallback.
-        dict_num : dict[str, np.ndarray], optional
-            Reserved for the follow-up PR. Pass ``None`` for PR1 (seq-mode only).
-        df_scales : pd.DataFrame, optional
-            Reserved for the follow-up PR. Pass ``None`` to use ``self.df_scales``.
-        df_cat : pd.DataFrame, optional
-            Reserved for the follow-up PR. Pass ``None`` to use ``self.df_cat``.
+        dict_num_parts : dict[str, np.ndarray], required
+            Per-part NaN-padded numerical tensors, produced by
+            :meth:`NumericalFeature.get_parts`. Each value has shape
+            ``(n_samples, L_part_max, D)`` aligned row-for-row with
+            ``self.df_parts``. Keys must match ``self.df_parts.columns``. ``D`` must
+            equal ``len(self.df_scales.columns)`` (each D dimension names a "scale").
         labels, label_test, label_ref, n_filter, n_pre_filter, pct_pre_filter, max_std_test, max_overlap, max_cor, check_cat, parametric, start, tmd_len, jmd_n_len, jmd_c_len, n_jobs, vectorized, n_batches
-            See :meth:`CPP.run`. Same semantics, same defaults. ``n_batches`` partitions
-            over the D axis (scales / dim chunks) — same axis as ``n_jobs``.
+            See :meth:`run`. Same semantics, same defaults.
 
         Returns
         -------
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
-            Same schema as :meth:`CPP.run`.
-
-        Warns
-        -----
-        UserWarning
-            ``CPP.run_num`` is experimental and may be renamed or folded into
-            :meth:`CPP.run` before v2.
+            Same schema as :meth:`run`.
 
         Raises
         ------
-        NotImplementedError
-            If ``dict_num`` is supplied (reserved for the follow-up PR).
         ValueError
-            If ``df_seq`` derives parts that disagree with ``self.df_parts``.
+            If ``dict_num_parts`` is ``None`` (use :meth:`run` for seq-mode), or if
+            its shape / part names / D don't align with the constructor's
+            ``self.df_parts`` and ``self.df_scales``.
+        NotImplementedError
+            If ``n_batches`` is supplied (batched orchestration over the D axis is
+            not yet implemented for numerical mode; pass ``n_batches=None``).
 
         See Also
         --------
-        * :meth:`CPP.run`: the stable sequence-mode method.
-        * ``docs/source/design/run_embed.md``: full design sketch for the
-          numerical-mode pipeline.
-        * ``docs/adr/0001-cpp-run-num.md``: the ADR recording why
-          ``run_num`` exists as a separate method.
+        * :meth:`run`: sequence-mode equivalent (no ``dict_num_parts``).
+        * :meth:`NumericalFeature.get_parts`: produces ``(df_parts, dict_num_parts)``
+          from raw ``df_seq + dict_num``.
+        * ``docs/adr/0001-cpp-run-num.md``: rationale for the dual-method design.
+
+        Examples
+        --------
+        .. include:: examples/cpp_run.rst
         """
-        warnings.warn(
-            "CPP.run_num is experimental and may be renamed or folded into CPP.run before v2.",
-            UserWarning,
-            stacklevel=2,
-        )
         # Validate
-        ut.check_df_seq(df_seq=df_seq)
+        if dict_num_parts is None:
+            raise ValueError(
+                "'dict_num_parts' (None) is required. Use CPP.run() for seq-mode, or call "
+                "NumericalFeature.get_parts(df_seq, dict_num, ...) to produce "
+                "dict_num_parts from a per-residue tensor input."
+            )
+        _check_dict_num_parts(dict_num_parts=dict_num_parts, df_parts=self.df_parts)
+        # D must match the constructor's df_scales (it names the D dimensions).
+        D = next(iter(dict_num_parts.values())).shape[2]
+        n_df_scales_cols = len(self.df_scales.columns)
+        if D != n_df_scales_cols:
+            raise ValueError(
+                f"'dict_num_parts' D={D} should equal len(self.df_scales.columns)="
+                f"{n_df_scales_cols}. df_scales names the D dimensions in numerical mode."
+            )
         ut.check_number_val(name="label_test", val=label_test, just_int=True)
         ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
         labels = ut.check_labels(labels=labels, vals_required=[label_test, label_ref],
@@ -471,132 +561,17 @@ class CPP(Tool):
         check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         ut.check_bool(name="vectorized", val=vectorized)
-        n_scales = len(list(self.df_scales))
-        ut.check_number_range(name="n_batches", val=n_batches, just_int=True,
-                              accept_none=True, min_val=2, max_val=n_scales)
-
-        # dict_num + per-call df_scales/df_cat validation
-        if dict_num is not None:
-            _check_dict_num(df_seq=df_seq, dict_num=dict_num)
-            # Per-call df_scales/df_cat override the constructor's (D dimension names + categorical filter).
-            active_df_scales = df_scales if df_scales is not None else self.df_scales
-            active_df_cat = df_cat if df_cat is not None else self.df_cat
-            check_df_scales(df_scales=active_df_scales)
-            check_df_cat(df_cat=active_df_cat)
-            _check_dict_num_df_scales_match(dict_num=dict_num, df_scales=active_df_scales)
-            # df_seq must include tmd_start/tmd_stop (position-based) for tensor slicing.
-            if not set(ut.COLS_SEQ_POS).issubset(df_seq.columns):
-                raise ValueError(
-                    f"'df_seq' (cols={list(df_seq.columns)}) should contain "
-                    f"{ut.COLS_SEQ_POS} when 'dict_num' is supplied."
-                )
-        else:
-            if df_scales is not None or df_cat is not None:
-                raise ValueError(
-                    "'df_scales' / 'df_cat' kwargs apply only when 'dict_num' is supplied. "
-                    "Pass dict_num to use per-call scale/category tables."
-                )
-            active_df_scales = self.df_scales
-            active_df_cat = self.df_cat
-            # Parity guard: df_seq must reproduce the constructor's df_parts row-for-row.
-            check_match_df_seq_df_parts(df_seq=df_seq, df_parts=self.df_parts,
-                                        jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
-
-        args = dict(
-            df_parts=self.df_parts, split_kws=self.split_kws,
-            df_scales=active_df_scales, df_cat=active_df_cat,
-            verbose=self._verbose, accept_gaps=self._accept_gaps,
-            labels=labels, label_test=label_test, label_ref=label_ref,
-            n_filter=n_filter, n_pre_filter=n_pre_filter, pct_pre_filter=pct_pre_filter,
-            max_std_test=max_std_test, max_overlap=max_overlap, max_cor=max_cor,
-            check_cat=check_cat, parametric=parametric,
-            start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
-            n_jobs=n_jobs, vectorized=vectorized,
-        )
-        if n_sample_batches is not None:
+        if n_batches is not None:
             raise NotImplementedError(
-                "'n_sample_batches' has been removed because the accumulator-style "
-                "variance it relies on cannot be bit-exact with legacy ``CPP.run`` "
-                "(np.std uses pairwise reduction; batched sum/sum_sq has different "
-                "round-off order). For very large n, use ``n_batches`` (feature batching) "
-                "instead — it is bit-exact."
-            )
-        # Phase A.4: build the AA-lookup cache on first use; reuse on repeat calls.
-        if dict_num is None and self._aa_lookup_cache is None:
-            self._aa_lookup_cache = AALookupCache.from_df(
-                df_parts=self.df_parts, df_scales=self.df_scales,
+                "'n_batches' is not yet supported in numerical mode. Pass n_batches=None; "
+                "batched orchestration over the D axis is a planned follow-up."
             )
 
-        if n_batches is None:
-            df_feat = cpp_run_num_single(
-                df_seq=df_seq, dict_num=dict_num,
-                aa_lookup_cache=self._aa_lookup_cache, **args,
-            )
-        else:
-            if dict_num is not None:
-                raise NotImplementedError(
-                    "'n_batches' with 'dict_num' is not implemented yet. Pass n_batches=None for now."
-                )
-            df_feat = cpp_run_num_batch(**args, n_batches=n_batches)
-        for col in df_feat.select_dtypes(include=["object", "string"]).columns:
-            df_feat[col] = df_feat[col].apply(lambda x: str(x) if isinstance(x, (np.str_, np.generic)) else x)
-        return df_feat
+        # Re-derive per-(entry, part) real lengths from df_parts non-gap chars.
+        # The user-facing dict_num_parts carries only the NaN-padded tensor; lens
+        # are deterministic from the string df_parts (keeps the API one-shape).
+        dict_part_lens = _derive_dict_part_lens(df_parts=self.df_parts)
 
-    def run_c(self,
-              df_seq: pd.DataFrame = None,
-              labels: ut.ArrayLike1D = None,
-              label_test: int = 1,
-              label_ref: int = 0,
-              n_filter: int = 100,
-              n_pre_filter: Optional[int] = None,
-              pct_pre_filter: int = 5,
-              max_std_test: float = 0.2,
-              max_overlap: float = 0.5,
-              max_cor: float = 0.5,
-              check_cat: bool = True,
-              parametric: bool = False,
-              start: int = 1,
-              tmd_len: int = 20,
-              jmd_n_len: int = 10,
-              jmd_c_len: int = 10,
-              n_jobs: Optional[int] = None,
-              vectorized: bool = True,
-              n_batches: Optional[int] = None,
-              ) -> pd.DataFrame:
-        """Cython-accelerated variant of :meth:`run_num` (seq-mode only).
-
-        Same pipeline and output as ``CPP.run`` / ``CPP.run_num(dict_num=None)``
-        — pre-filter stats, pre-filter, recompute, add_stat, redundancy filter —
-        but the per-(sample, feature) inner loop in pass 2 runs in a bit-exact
-        Cython kernel (``_filters_num_c/_inner.pyx``). Output is byte-identical
-        to legacy ``CPP.run`` (``pd.testing.assert_frame_equal(..., check_exact=True)``).
-
-        Requires the compiled extension; raises ``ImportError`` with an install
-        hint when the extension isn't built. Use ``run_num`` for the
-        pure-Python fallback that ships with every install.
-
-        Parameters
-        ----------
-        df_seq : pd.DataFrame
-            Same contract as :meth:`run_num`'s seq-mode input.
-        See :meth:`run_num` for the remaining parameters; ``dict_num`` and
-        ``n_batches`` / ``n_sample_batches`` are NOT accepted by ``run_c``
-        (the Cython path is single-orchestrator, seq-mode only).
-
-        Returns
-        -------
-        df_feat : pd.DataFrame
-            Identical to ``CPP.run(...)``.
-        """
-        from ._backend.cpp_run_num import _HAS_CYTHON_INNER, get_feature_matrix_c_
-        if not _HAS_CYTHON_INNER:
-            raise ImportError(
-                "CPP.run_c requires the compiled Cython extension. Build it via:\n"
-                "    python aaanalysis/feature_engineering/_backend/cpp/_filters_num_c/setup_inner.py build_ext --inplace\n"
-                "Or use CPP.run_num for the pure-Python equivalent."
-            )
-
-        check_match_df_seq_df_parts(df_seq=df_seq, df_parts=self.df_parts)
         args = dict(
             df_parts=self.df_parts, split_kws=self.split_kws,
             df_scales=self.df_scales, df_cat=self.df_cat,
@@ -608,24 +583,18 @@ class CPP(Tool):
             start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
             n_jobs=n_jobs, vectorized=vectorized,
         )
-        if self._aa_lookup_cache is None:
-            self._aa_lookup_cache = AALookupCache.from_df(
-                df_parts=self.df_parts, df_scales=self.df_scales,
-            )
-        if n_batches is None:
-            df_feat = cpp_run_num_single(
-                df_seq=df_seq, dict_num=None,
-                aa_lookup_cache=self._aa_lookup_cache,
-                feature_matrix_builder=get_feature_matrix_c_,
-                **args,
-            )
-        else:
-            # Feature-batched orchestration: pass-2 X is computed one feature
-            # chunk at a time, capping peak RAM at ~(n × n_pre_filter / n_batches × 8 B).
-            df_feat = cpp_run_num_batch(
-                **args, n_batches=n_batches,
-                feature_matrix_builder=get_feature_matrix_c_,
-            )
+
+        # Cython by default; falls back to pure-Python kernel if the compiled `.so`
+        # isn't present (e.g. user installed without the wheel). Same auto-dispatch
+        # as cpp.run — see _pick_feature_matrix_builder docstring.
+        builder = _pick_feature_matrix_builder()
+        df_feat = cpp_run_single(
+            df_seq=None, dict_num=None,
+            dict_part_vals=dict_num_parts, dict_part_lens=dict_part_lens,
+            aa_lookup_cache=None,            # numerical path doesn't use AA lookup
+            feature_matrix_builder=builder,  # consumed by seq-mode only; harmless here
+            **args,
+        )
         for col in df_feat.select_dtypes(include=["object", "string"]).columns:
             df_feat[col] = df_feat[col].apply(lambda x: str(x) if isinstance(x, (np.str_, np.generic)) else x)
         return df_feat

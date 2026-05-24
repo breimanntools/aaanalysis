@@ -361,7 +361,7 @@ def get_feature_matrix_fast_(features=None, df_parts=None, df_scales=None,
 
     The independent parity test in
     ``tests/unit/cpp_tests/test_get_feature_matrix_fast_parity.py`` exercises
-    this end-to-end against legacy. Use through ``cpp_run_num`` for the
+    this end-to-end against legacy. Use through ``cpp_run`` for the
     full ``CPP.run_num`` pipeline.
     """
     features = [features] if isinstance(features, str) else list(features)

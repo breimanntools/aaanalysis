@@ -53,6 +53,41 @@ Specifically:
 Tracked in `docs/v2-followups.md`:
 
 - **V2-1**: Migrate dev workflow from Poetry to uv. Independent of this ADR; end-user `pip install` and `uv add` already work today.
-- **V2-2**: Possibly unify `CPP.run` / `run_num` / `run_c` into a single `run` with auto-dispatch + Python fallback. Revisit once cibuildwheel has been proven in one release cycle.
+- ~~**V2-2**: Possibly unify `CPP.run` / `run_num` / `run_c` into a single `run` with auto-dispatch.~~ **Resolved in PR5 + PR6** (see amendments below).
 
-(Both will be promoted to GitHub Issues when the v2 milestone starts.)
+(Remaining followups will be promoted to GitHub Issues when the v2 milestone starts.)
+
+## Amendment (PR5): API consolidation + Cython auto-dispatch + `NumericalFeature.get_parts`
+
+After ADR-0003 (PR4) landed, PR5 rewired `CPP.run` to route through the same Cython kernel `CPP.run_c` used (with pure-Python fallback when the compiled `.so` isn't available). `CPP.run_c` was then deleted from the public surface — its kernel lives on internally, selected by `cpp_run_num._pick_feature_matrix_builder()`. `CPP.run_num` was repurposed: it now REQUIRES `dict_num_parts` (call `CPP.run` for seq-mode); the only difference between the two public methods is the leading `dict_num_parts` slot.
+
+The "preprocessing is multi-step" pain was solved by adding `NumericalFeature.get_parts(df_seq, dict_num, ...)`, which slices BOTH sequence strings and per-residue tensors with shared boundaries in one call. Eliminates the duplication of `df_seq + jmd_n_len + jmd_c_len` between `sf.get_df_parts` and a separate dict_num slicer.
+
+Public surface after PR5: `CPP.run`, `CPP.run_num`, `CPP.eval` (three methods, down from PR4's four). All bit-exact with legacy `CPP.run` from the pre-PR5 state — verified by the `test_run_num_parity.py` suite.
+
+## Amendment (PR6): remove legacy `_filters/` + rename `_filters_num/` → `_filters/`
+
+After PR5 made the legacy `_filters/` unreachable from any public method, PR6 removed it entirely and collapsed the now-meaningless `_num` suffix from the surviving folder/module/function names. Three phases:
+
+- **Phase A**: lifted `pre_filtering`, `filtering` / `filtering_info_`, and the multiprocessing helpers (`_FloatBox`, `_resolve_shared`, `_reset_progress`, `_get_mp_shared`, `_cleanup_mp_manager`, `_is_main_process`, defaults) from `_filters/*` into the corresponding `_filters_num/*` files as their canonical home. Replaced the thin re-exports.
+
+- **Phase B**: deleted 9 files (~700 LoC of dead code):
+  - `aaanalysis/feature_engineering/_backend/cpp_run.py` (legacy seq-mode orchestrator)
+  - `aaanalysis/feature_engineering/_backend/cpp/cpp_run_.py` (legacy bridge)
+  - All 7 files in `aaanalysis/feature_engineering/_backend/cpp/_filters/`
+
+- **Phase C**: pure namespace operation — renamed folders/modules/functions to drop the `_num` suffix (which only existed as a disambiguator from the now-removed legacy `_filters/`):
+  - `_filters_num/` → `_filters/`
+  - `_filters_num_c/` → `_filters_c/`
+  - `cpp_run_num.py` → `cpp_run.py`
+  - `cpp_run_num_single` → `cpp_run_single` (and `_batch`, `_sample_batched`)
+  - `assign_scale_values_to_seq_num` → `assign_scale_values_to_seq`
+  - `pre_filtering_info_num` → `pre_filtering_info`
+  - `add_stat_num` → `add_stat`
+  - `recompute_feature_matrix_num` → `recompute_feature_matrix`
+
+  **Kept** (the suffix is semantic): `CPP.run_num`, `NumericalFeature`, `assign_dict_num_to_parts`, `dict_num_parts`, `dict_part_vals`.
+
+Net diff: ~+200 LoC lifted, ~−700 LoC deleted, ~150 LoC namespace renames = ~−500 LoC of removed dead code + a cleaner namespace.
+
+Bit-exact verification: the 63-test parity suite (`test_run_num_parity.py` + `test_get_feature_matrix_c_parity.py` + `test_get_feature_matrix_fast_parity.py` + `test_nf_get_parts.py` + `test_cpp_run.py`) passes identically before and after each phase. Broader CPP/NF/SF suite (223 tests) also clean.

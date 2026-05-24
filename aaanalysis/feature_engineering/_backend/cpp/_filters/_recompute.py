@@ -2,8 +2,8 @@
 This is a script for the backend of CPP's numerical-mode survivor-recompute stage.
 
 After PR2.5's streaming pre-filter narrows the candidate set to ~``n_pre_filter``
-features, ``recompute_feature_matrix_num`` builds the
-``(n_samples, n_pre_filter)`` value matrix needed by ``add_stat_num``.
+features, ``recompute_feature_matrix`` builds the
+``(n_samples, n_pre_filter)`` value matrix needed by ``add_stat``.
 
 Implementation (PR2.5+ vectorized): per ``(split_type, part)`` bucket, the
 per-sample list of split-position arrays is computed **once** by applying the
@@ -186,7 +186,7 @@ def gather_means_chunked(arr_3d=None, scale_indices=None, pos_buf=None,
 
 
 # II Main Functions
-def recompute_feature_matrix_num(
+def recompute_feature_matrix(
     dict_part_vals=None,
     dict_part_lens=None,
     list_scales=None,

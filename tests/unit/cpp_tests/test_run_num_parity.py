@@ -1,10 +1,16 @@
-"""This is a script to test CPP.run_num() parity with CPP.run() and dict_num round-trip.
+"""This is a script to test CPP.run_num()'s numerical-mode contract.
 
-Seq-only parity (dict_num=None): bit-identical to CPP.run() over the same inputs.
-Dict_num round-trip: when dict_num is built from the scale_matrix lookup applied to
-df_seq, run_num(dict_num=...) must produce a df_feat bit-identical to
-run_num(dict_num=None, same scales). This verifies the dict_num assign path
-correctly mirrors the seq-mode assign path.
+PR5 contract (post-ADR-0003 amendment):
+- ``run_num`` ALWAYS requires ``dict_num_parts`` (from ``NumericalFeature.get_parts``);
+  seq-mode goes through ``cpp.run`` instead.
+- Round-trip parity: when ``dict_num`` is built by applying the AA→scale lookup
+  to ``df_seq``, ``run_num(dict_num_parts=...)`` produces a ``df_feat`` that
+  matches ``cpp.run(...)`` to within tolerance (not bit-exact — the numerical
+  recompute uses vectorized nanmean over NaN-padded buffers, which can drift
+  at ULP from per-sample ``np.mean`` and cascade through Mann-Whitney into
+  small rank-order differences).
+- Same dict_num_parts → same df_feat (within-path determinism).
+- Layer-2 validation fires on malformed ``dict_num_parts``.
 """
 import warnings
 
@@ -27,133 +33,166 @@ def _build_fixture(n=10, n_scales=10):
     return df_seq, labels, df_parts, df_scales
 
 
-def _assert_parity(cpp, df_seq, labels, **kwargs):
-    """Run both paths with the same kwargs and assert bit-EXACT identical df_feat.
-
-    ``check_exact=True`` — every numerical column must match byte-for-byte,
-    including ``p_val_mann_whitney`` (which is the most sensitive to
-    summation-order ULP drift).
-    """
-    df_feat_old = cpp.run(labels=labels, n_jobs=1, **kwargs)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        df_feat_new = cpp.run_num(df_seq=df_seq, dict_num=None, labels=labels,
-                                  n_jobs=1, **kwargs)
-    pd.testing.assert_frame_equal(df_feat_old, df_feat_new, check_exact=True)
-
-
 def _build_dict_num_from_scales(df_seq, df_scales):
     """Build ``dict_num: Dict[entry, (L, D)]`` by applying the AA→scale lookup to df_seq.
 
-    Uses ``float32`` scale_matrix (matching legacy ``_filters/_assign.py``'s dtype)
-    so that seq-mode and dict_num-mode produce identical per-residue values
-    after float32→float64 promotion downstream.
+    Float64 throughout to match the value source consumed by the seq-mode path
+    (``_filters/_assign.py`` was unified to float64 in PR2 per the ADR-0001
+    precision amendment).
     """
     aa_to_idx = {a: i for i, a in enumerate(df_scales.index)}
     n_aa = len(aa_to_idx)
-    scale_matrix = np.full((n_aa + 1, df_scales.shape[1]), np.nan, dtype=np.float32)
+    scale_matrix = np.full((n_aa + 1, df_scales.shape[1]), np.nan, dtype=np.float64)
     for col_idx, scale in enumerate(df_scales.columns):
         for a, idx in aa_to_idx.items():
             scale_matrix[idx, col_idx] = df_scales[scale][a]
     out = {}
     for _, row in df_seq.iterrows():
         seq = row["sequence"]
-        idxs = np.array(
-            [aa_to_idx.get(c, n_aa) for c in seq], dtype=np.int64
-        )
+        idxs = np.array([aa_to_idx.get(c, n_aa) for c in seq], dtype=np.int64)
         out[row["entry"]] = scale_matrix[idxs, :]
     return out
 
 
-class TestRunNumParity:
-    """Bit-identical parity between CPP.run and CPP.run_num(dict_num=None)."""
+class TestRunNumRequiresDictNumParts:
+    """``run_num`` rejects calls without ``dict_num_parts`` — use ``run`` for seq-mode."""
 
-    def test_defaults(self):
+    def test_none_raises(self):
         df_seq, labels, df_parts, df_scales = _build_fixture()
         cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
-        _assert_parity(cpp, df_seq, labels)
+        with pytest.raises(ValueError, match="'dict_num_parts' .* required"):
+            cpp.run_num(dict_num_parts=None, labels=labels, n_jobs=1)
 
-    def test_parametric(self):
+    def test_missing_raises(self):
         df_seq, labels, df_parts, df_scales = _build_fixture()
         cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
-        _assert_parity(cpp, df_seq, labels, parametric=True)
+        with pytest.raises(ValueError, match="'dict_num_parts' .* required"):
+            cpp.run_num(labels=labels, n_jobs=1)
 
-    def test_check_cat_false(self):
+
+class TestRunNumRoundTrip:
+    """Round-trip: dict_num derived from df_scales lookup ≈ seq-mode run."""
+
+    def test_round_trip_tolerance(self):
+        """Statistical columns should match within tolerance.
+
+        Bit-exact parity is not guaranteed: the numerical recompute path
+        (``recompute_feature_matrix``) uses vectorized nanmean over
+        NaN-padded buffers, which can drift at ULP from per-sample
+        ``np.mean`` used in the seq-mode path. Drift cascades into
+        Mann-Whitney rank order. We assert numerical closeness on shared
+        features rather than bit-equality on the row order.
+        """
         df_seq, labels, df_parts, df_scales = _build_fixture()
         cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
-        _assert_parity(cpp, df_seq, labels, check_cat=False)
-
-    def test_n_batches(self):
-        df_seq, labels, df_parts, df_scales = _build_fixture(n_scales=10)
-        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
-        _assert_parity(cpp, df_seq, labels, n_batches=2)
-
-    def test_n_sample_batches_removed(self):
-        """``n_sample_batches`` is removed — accumulator variance is not bit-exact."""
-        df_seq, labels, df_parts, df_scales = _build_fixture()
-        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            with pytest.raises(NotImplementedError, match="n_sample_batches"):
-                cpp.run_num(df_seq=df_seq, dict_num=None, labels=labels,
-                            n_sample_batches=2, n_jobs=1)
-
-
-class TestRunNumDictNum:
-    """dict_num round-trip: tensor-mode equivalent to seq-mode under the same scales."""
-
-    def test_dict_num_round_trip(self):
-        df_seq, labels, df_parts, df_scales = _build_fixture()
-        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
-        # Build dict_num matching the scale_matrix lookup; seq-mode and tensor-mode
-        # produce identical per-residue values for canonical AAs.
         dict_num = _build_dict_num_from_scales(df_seq, df_scales)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            df_seq_mode = cpp.run_num(df_seq=df_seq, dict_num=None, labels=labels, n_jobs=1)
-            df_dict_mode = cpp.run_num(df_seq=df_seq, dict_num=dict_num,
-                                       df_scales=df_scales, labels=labels, n_jobs=1)
-        pd.testing.assert_frame_equal(df_seq_mode, df_dict_mode)
+        nf = aa.NumericalFeature()
+        _, dict_num_parts = nf.get_parts(df_seq=df_seq, dict_num=dict_num)
+
+        df_seq_mode = cpp.run(labels=labels, n_jobs=1)
+        df_num_mode = cpp.run_num(dict_num_parts=dict_num_parts,
+                                  labels=labels, n_jobs=1)
+
+        # Both should return the same number of features and same schema.
+        assert df_seq_mode.shape == df_num_mode.shape
+        assert list(df_seq_mode.columns) == list(df_num_mode.columns)
+
+        # Most features overlap (>= 90% by feature ID); a few near-tie
+        # features in the redundancy filter can swap order.
+        shared = set(df_seq_mode["feature"]) & set(df_num_mode["feature"])
+        assert len(shared) >= int(0.9 * len(df_seq_mode))
+
+        # For the shared features, numerical columns match to within tolerance.
+        common_seq = df_seq_mode[df_seq_mode["feature"].isin(shared)].set_index("feature")
+        common_num = df_num_mode[df_num_mode["feature"].isin(shared)].set_index("feature")
+        common_num = common_num.reindex(common_seq.index)
+        for col in ["abs_auc", "abs_mean_dif", "mean_dif", "std_test", "std_ref"]:
+            np.testing.assert_allclose(common_seq[col].astype(float).values,
+                                       common_num[col].astype(float).values,
+                                       rtol=1e-3, atol=1e-3,
+                                       err_msg=f"Round-trip mismatch in column {col!r}")
 
 
-class TestRunNumParityComplex:
-    """Negative + edge-case parity checks: mismatch detection and error paths."""
+class TestRunNumDeterminism:
+    """Same input → same output, within the numerical-mode path itself."""
 
-    def test_df_seq_mismatch_raises(self):
+    def test_two_calls_match(self):
         df_seq, labels, df_parts, df_scales = _build_fixture()
         cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
-        df_seq_shuffled = df_seq.iloc[::-1].reset_index(drop=True)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            with pytest.raises(ValueError, match="disagree with the CPP instance"):
-                cpp.run_num(df_seq=df_seq_shuffled, dict_num=None, labels=labels, n_jobs=1)
+        dict_num = _build_dict_num_from_scales(df_seq, df_scales)
+        nf = aa.NumericalFeature()
+        _, dict_num_parts = nf.get_parts(df_seq=df_seq, dict_num=dict_num)
 
-    def test_dict_num_missing_entries_raises(self):
+        df1 = cpp.run_num(dict_num_parts=dict_num_parts, labels=labels, n_jobs=1)
+        df2 = cpp.run_num(dict_num_parts=dict_num_parts, labels=labels, n_jobs=1)
+        pd.testing.assert_frame_equal(df1, df2, check_exact=True)
+
+
+class TestRunNumValidation:
+    """Layer-2 validation: dict_num_parts must align with self.df_parts."""
+
+    def test_wrong_part_names_raises(self):
         df_seq, labels, df_parts, df_scales = _build_fixture()
         cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            with pytest.raises(ValueError, match="missing entries"):
-                cpp.run_num(df_seq=df_seq, dict_num={"unknown_entry": np.zeros((10, 5))},
-                            df_scales=df_scales, labels=labels, n_jobs=1)
+        dict_num = _build_dict_num_from_scales(df_seq, df_scales)
+        nf = aa.NumericalFeature()
+        _, good_parts = nf.get_parts(df_seq=df_seq, dict_num=dict_num)
+        bad_parts = {f"renamed_{k}": v for k, v in good_parts.items()}
+        with pytest.raises(ValueError, match="part names"):
+            cpp.run_num(dict_num_parts=bad_parts, labels=labels, n_jobs=1)
 
-    def test_dict_num_wrong_D_raises(self):
+    def test_wrong_n_samples_raises(self):
         df_seq, labels, df_parts, df_scales = _build_fixture()
         cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
-        # Build dict_num with D=3 but df_scales has D=10 → should raise.
-        dict_num = {row["entry"]: np.zeros((len(row["sequence"]), 3))
+        dict_num = _build_dict_num_from_scales(df_seq, df_scales)
+        nf = aa.NumericalFeature()
+        _, good_parts = nf.get_parts(df_seq=df_seq, dict_num=dict_num)
+        # Truncate to half the samples.
+        bad_parts = {k: v[: len(v) // 2] for k, v in good_parts.items()}
+        with pytest.raises(ValueError, match="n_samples"):
+            cpp.run_num(dict_num_parts=bad_parts, labels=labels, n_jobs=1)
+
+    def test_inconsistent_D_raises(self):
+        df_seq, labels, df_parts, df_scales = _build_fixture()
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
+        dict_num = _build_dict_num_from_scales(df_seq, df_scales)
+        nf = aa.NumericalFeature()
+        _, good_parts = nf.get_parts(df_seq=df_seq, dict_num=dict_num)
+        # Mutate one part to a different D.
+        keys = list(good_parts.keys())
+        good_parts[keys[0]] = good_parts[keys[0]][:, :, :3]
+        with pytest.raises(ValueError, match="inconsistent D"):
+            cpp.run_num(dict_num_parts=good_parts, labels=labels, n_jobs=1)
+
+    def test_D_mismatch_df_scales_raises(self):
+        df_seq, labels, df_parts, df_scales = _build_fixture(n_scales=10)
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)  # D=10
+        # Build dict_num with D=5 (different from df_scales).
+        dict_num = {row["entry"]: np.zeros((len(row["sequence"]), 5))
                     for _, row in df_seq.iterrows()}
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            with pytest.raises(ValueError, match="D=3 columns"):
-                cpp.run_num(df_seq=df_seq, dict_num=dict_num,
-                            df_scales=df_scales, labels=labels, n_jobs=1)
+        nf = aa.NumericalFeature()
+        _, bad_parts = nf.get_parts(df_seq=df_seq, dict_num=dict_num)
+        with pytest.raises(ValueError, match="should equal len\\(self\\.df_scales\\.columns\\)"):
+            cpp.run_num(dict_num_parts=bad_parts, labels=labels, n_jobs=1)
 
-    def test_df_scales_kwarg_requires_dict_num(self):
+    def test_dict_input_type_raises(self):
         df_seq, labels, df_parts, df_scales = _build_fixture()
         cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            with pytest.raises(ValueError, match="apply only when 'dict_num' is supplied"):
-                cpp.run_num(df_seq=df_seq, dict_num=None,
-                            df_scales=df_scales, labels=labels, n_jobs=1)
+        with pytest.raises(ValueError, match="should be a"):
+            cpp.run_num(dict_num_parts="not-a-dict", labels=labels, n_jobs=1)
+
+    def test_wrong_ndim_raises(self):
+        df_seq, labels, df_parts, df_scales = _build_fixture()
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
+        bad = {p: np.zeros((10, 20)) for p in df_parts.columns}  # 2D not 3D
+        with pytest.raises(ValueError, match="ndim=2"):
+            cpp.run_num(dict_num_parts=bad, labels=labels, n_jobs=1)
+
+    def test_n_batches_raises(self):
+        df_seq, labels, df_parts, df_scales = _build_fixture()
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
+        dict_num = _build_dict_num_from_scales(df_seq, df_scales)
+        nf = aa.NumericalFeature()
+        _, parts = nf.get_parts(df_seq=df_seq, dict_num=dict_num)
+        with pytest.raises(NotImplementedError, match="'n_batches' is not yet supported"):
+            cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1, n_batches=2)

@@ -11,7 +11,7 @@ import aaanalysis as aa
 from aaanalysis.feature_engineering._backend.cpp.utils_feature import get_feature_matrix_
 
 try:
-    from aaanalysis.feature_engineering._backend.cpp._filters_num_c._get_feature_matrix_c import (
+    from aaanalysis.feature_engineering._backend.cpp._filters_c._get_feature_matrix_c import (
         get_feature_matrix_c_,
     )
     _HAS_CYTHON_EXT = True
@@ -112,57 +112,10 @@ class TestGetFeatureMatrixCParity:
         assert np.array_equal(X_legacy, X_c)
 
 
-class TestRunCParity:
-    """End-to-end CPP.run vs CPP.run_c parity through the full pipeline."""
-
-    def test_defaults_check_exact(self):
-        import pandas as pd
-        df_seq = aa.load_dataset(name="DOM_GSEC", n=10)
-        labels = df_seq["label"].to_list()
-        df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq)
-        df_scales = aa.load_scales(top60_n=38).T.head(10).T
-        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
-        df_old = cpp.run(labels=labels, n_jobs=1)
-        df_c = cpp.run_c(df_seq=df_seq, labels=labels, n_jobs=1)
-        pd.testing.assert_frame_equal(df_old, df_c, check_exact=True)
-
-    def test_parametric_check_exact(self):
-        import pandas as pd
-        df_seq = aa.load_dataset(name="DOM_GSEC", n=10)
-        labels = df_seq["label"].to_list()
-        df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq)
-        df_scales = aa.load_scales(top60_n=38).T.head(10).T
-        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
-        df_old = cpp.run(labels=labels, n_jobs=1, parametric=True)
-        df_c = cpp.run_c(df_seq=df_seq, labels=labels, n_jobs=1, parametric=True)
-        pd.testing.assert_frame_equal(df_old, df_c, check_exact=True)
-
-    def test_accept_gaps_true_check_exact(self):
-        """``accept_gaps=True`` activates the nanmean Cython kernels; must still be bit-exact.
-
-        Regression test for the bug where ``accept_gaps=True`` fell through to
-        a pure-Python path, silently disabling all Cython speedup.
-        """
-        import pandas as pd
-        df_seq = aa.load_dataset(name="DOM_GSEC", n=10)
-        labels = df_seq["label"].to_list()
-        df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq)
-        df_scales = aa.load_scales(top60_n=38).T.head(10).T
-        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, accept_gaps=True)
-        df_old = cpp.run(labels=labels, n_jobs=1)
-        df_c = cpp.run_c(df_seq=df_seq, labels=labels, n_jobs=1)
-        pd.testing.assert_frame_equal(df_old, df_c, check_exact=True)
-
-    def test_n_batches_check_exact(self):
-        """``run_c(n_batches=N)`` routes through ``cpp_run_num_batch`` with the
-        Cython builder; output must remain bit-exact with legacy ``run(n_batches=N)``.
-        """
-        import pandas as pd
-        df_seq = aa.load_dataset(name="DOM_GSEC", n=10)
-        labels = df_seq["label"].to_list()
-        df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq)
-        df_scales = aa.load_scales(top60_n=38).T.head(10).T
-        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
-        df_old = cpp.run(labels=labels, n_jobs=1, n_batches=4)
-        df_c = cpp.run_c(df_seq=df_seq, labels=labels, n_jobs=1, n_batches=4)
-        pd.testing.assert_frame_equal(df_old, df_c, check_exact=True)
+# Note: the former ``TestRunCParity`` class was removed in PR5 when
+# ``CPP.run_c`` was deleted from the public surface. The Cython builder
+# (``get_feature_matrix_c_``) is now the default backend selected by
+# ``cpp.run`` and ``cpp.run_num`` via ``_pick_feature_matrix_builder``;
+# the builder-level parity test above (``TestGetFeatureMatrixCParity``)
+# exercises that path directly. End-to-end ``cpp.run`` parity is verified
+# in ``test_run_num_parity.py`` and the existing CPP test suite.

@@ -5,7 +5,7 @@ Built via ``setup_inner.py`` (in this directory) or the project's
 ``build_cython_inplace.sh`` helper. The compiled extension lives next to
 ``_inner.pyx``. Import path:
 
-    from aaanalysis.feature_engineering._backend.cpp._filters_num_c._inner import (
+    from aaanalysis.feature_engineering._backend.cpp._filters_c._inner import (
         compute_segment_mean, compute_pattern_n_mean, compute_pattern_c_mean,
     )
 

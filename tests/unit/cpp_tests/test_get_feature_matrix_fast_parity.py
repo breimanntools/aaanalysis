@@ -11,7 +11,7 @@ import pytest
 
 import aaanalysis as aa
 from aaanalysis.feature_engineering._backend.cpp.utils_feature import get_feature_matrix_
-from aaanalysis.feature_engineering._backend.cpp._filters_num._get_feature_matrix_fast import (
+from aaanalysis.feature_engineering._backend.cpp._filters._get_feature_matrix_fast import (
     get_feature_matrix_fast_,
 )
 

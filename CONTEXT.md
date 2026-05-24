@@ -112,9 +112,9 @@ _Avoid_: embeddings (too narrow — covers only one source), num_tensor, per_res
 A development twin of `CPP.run` whose value source is per-call (`df_seq` plus optional `dict_num`) rather than constructor-bound (`df_parts`). With `dict_num=None`, must produce a `df_feat` bit-identical to `CPP.run` over the same seq/scales — the parity contract. With `dict_num` supplied, per-residue values come from the tensor, with `df_scales`/`df_cat` providing dimension names. Lives in the new `_filters_num/` backend folder; the legacy `_filters/` path stays untouched so both pipelines coexist for head-to-head profiling during development. Long-term: may fold back into `CPP.run` once the new path is proven; for now it is an additive method.
 _Avoid_: run_embed (misleading — also handles non-embedding inputs and pure sequences), run_v2.
 
-**_filters_num/**:
-Backend folder mirroring `_filters/`, holding the numerical-mode CPP pipeline. Per-residue values flow between stages as `dict[part] = (n_samples, L_part_max, D)` float32 tensors with NaN padding for short parts; downstream aggregation uses `np.nanmean`. Performance changes scoped to this path only: split-position computation reused across D via numpy broadcasting (collapses the n_dims loop), and a *streaming pre-filter* keeps only the survivors of the `std_test` mask in memory so `add_stat` no longer recomputes feature values from scratch. Batching (`n_batches`) partitions over D, not scales/parts.
-_Avoid_: _embed_filters/ (too narrow), _filters_v2/ (versioning is ephemeral).
+**_filters/**:
+Backend folder holding the canonical CPP pipeline (seq-mode AND numerical-mode). Per-residue values flow between stages as `dict[part] = (n_samples, L_part_max, D)` float32 tensors with NaN padding for short parts; downstream aggregation uses `np.nanmean`. Performance: split-position computation reused across D via numpy broadcasting (collapses the n_dims loop), and a *streaming pre-filter* keeps only the survivors of the `std_test` mask in memory so `add_stat` no longer recomputes feature values from scratch. Batching (`n_batches`) partitions over D, not scales/parts. The Cython acceleration lives in the sibling `_filters_c/` folder. Originally named `_filters_num/` during PR4-PR5 when a parallel legacy `_filters/` still existed; renamed to `_filters/` in PR6 after the legacy was removed.
+_Avoid_: _embed_filters/ (too narrow), _filters_num/ (legacy PR5 name), _filters_v2/ (versioning is ephemeral).
 
 ## Relationships
 

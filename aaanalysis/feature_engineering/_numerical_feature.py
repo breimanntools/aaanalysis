@@ -12,6 +12,7 @@ import aaanalysis.utils as ut
 from ._backend.check_feature import check_df_scales
 from ._backend.num_feat.filter_correlation import filter_correlation_
 from ._backend.num_feat.extend_alphabet import extend_alphabet_
+from ._backend.cpp._filters._assign import assign_dict_num_to_parts
 
 
 # I Helper Functions
@@ -20,6 +21,49 @@ def check_match_df_scales_letter_new(df_scales=None, letter_new=None):
     alphabet = df_scales.index.to_list()
     if letter_new in alphabet:
         raise ValueError(f"Letter '{letter_new}' already exists in alphabet of 'df_scales': {alphabet}")
+
+
+def check_match_df_seq_dict_num(df_seq=None, dict_num=None):
+    """Validate that ``dict_num`` matches ``df_seq`` (Layer-1 contract for ``get_parts``).
+
+    Checks (per entry):
+    * Every ``entry`` in ``df_seq`` is a key in ``dict_num``.
+    * ``dict_num[entry].shape[0] == len(df_seq.loc[entry, 'sequence'])``.
+    * ``D = dict_num[entry].shape[1]`` is consistent across all entries.
+
+    Raises ``ValueError`` at the first failure with the offending entry name
+    and the expected vs. got shape.
+    """
+    entries = df_seq[ut.COL_ENTRY].to_list()
+    seqs = df_seq[ut.COL_SEQ].to_list()
+    missing = [e for e in entries if e not in dict_num]
+    if missing:
+        raise ValueError(
+            f"'dict_num' is missing {len(missing)} entries present in 'df_seq': {missing[:5]}"
+            + (" ..." if len(missing) > 5 else "")
+        )
+    D_seen = set()
+    for i, entry in enumerate(entries):
+        arr = dict_num[entry]
+        if not hasattr(arr, "shape") or arr.ndim != 2:
+            raise ValueError(
+                f"'dict_num[{entry!r}]' should be a 2-D ndarray (L, D); "
+                f"got ndim={getattr(arr, 'ndim', None)}"
+            )
+        L_expected = len(seqs[i])
+        if arr.shape[0] != L_expected:
+            raise ValueError(
+                f"'dict_num[{entry!r}]' shape ({arr.shape[0]}, {arr.shape[1]}) "
+                f"should be ({L_expected}, D) — len(sequence)={L_expected}"
+            )
+        D_seen.add(arr.shape[1])
+    if len(D_seen) > 1:
+        raise ValueError(
+            f"'dict_num' has inconsistent D across entries: {sorted(D_seen)} — "
+            f"all entries must share the same dimensionality."
+        )
+    if D_seen and 0 in D_seen:
+        raise ValueError("'dict_num[*]' has D=0; should be >= 1.")
 
 
 # II Main Functions
@@ -62,6 +106,118 @@ class NumericalFeature:
         # Filter features
         is_selected = filter_correlation_(X, max_cor=max_cor)
         return is_selected
+
+    @staticmethod
+    def get_parts(df_seq: pd.DataFrame = None,
+                  dict_num: Dict[str, np.ndarray] = None,
+                  list_parts: Optional[List[str]] = None,
+                  all_parts: bool = False,
+                  jmd_n_len: int = 10,
+                  jmd_c_len: int = 10,
+                  ) -> Tuple[pd.DataFrame, Dict[str, np.ndarray]]:
+        """
+        Prepare CPP numerical-mode inputs by slicing sequences AND per-residue tensors with shared boundaries.
+
+        Numerical analog of :meth:`SequenceFeature.get_df_parts` for the
+        ``CPP.run_num`` workflow: the same `(start, end)` boundaries used to
+        slice the sequence STRINGS into parts are reused to slice each entry's
+        ``dict_num[entry]`` per-residue tensor along the L axis. Returns both
+        results from one call so the user never has to pass
+        ``df_seq + tmd_len + jmd_n_len + jmd_c_len`` to two separate helpers.
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein identifiers
+            and a ``sequence`` column with full protein sequences. Must also carry
+            ``tmd_start`` / ``tmd_stop`` columns (the position-based schema) so the
+            slicing boundaries can be computed.
+        dict_num : dict[str, np.ndarray]
+            Mapping ``entry -> (L, D)`` per-residue numerical tensor, where ``L``
+            matches ``len(df_seq.loc[entry, 'sequence'])`` and ``D`` is consistent
+            across all entries. Source: PLM embeddings, DSSP one-hots, PTM dummies,
+            or any other per-residue numerical representation.
+        list_parts : list of str, optional
+            Subset of part names to materialize (e.g. ``["tmd", "jmd_n_tmd_n",
+            "tmd_c_jmd_c"]``). Defaults to the same default as
+            :meth:`SequenceFeature.get_df_parts`.
+        all_parts : bool, default=False
+            If ``True``, return all available parts; ignored when ``list_parts``
+            is supplied.
+        jmd_n_len : int, default=10
+            Length of JMD-N (>=0).
+        jmd_c_len : int, default=10
+            Length of JMD-C (>=0).
+
+        Returns
+        -------
+        df_parts : pd.DataFrame, shape (n_samples, n_parts)
+            Per-part sequence STRINGS, same shape as
+            :meth:`SequenceFeature.get_df_parts`'s output. Pass directly to
+            ``CPP(df_parts=df_parts, ...)``.
+        dict_num_parts : dict[str, np.ndarray]
+            Per-part NaN-padded numerical tensors. Each value has shape
+            ``(n_samples, L_part_max, D)`` aligned row-for-row with the
+            ``df_parts`` index. Pass directly to
+            ``cpp.run_num(dict_num_parts=dict_num_parts, ...)``.
+
+        Raises
+        ------
+        ValueError
+            If ``dict_num`` is missing an entry from ``df_seq``, any
+            ``dict_num[entry]`` has the wrong row count vs the sequence length,
+            or D varies across entries.
+
+        Notes
+        -----
+        * ``dict_num_parts`` carries NaN padding at the trailing rows for entries
+          whose JMD doesn't fit the requested length. The corresponding per-part
+          string in ``df_parts`` also pads with ``'-'`` (gap), so the two outputs
+          stay aligned. The real per-(entry, part) length is recoverable as the
+          non-gap character count in ``df_parts``.
+        * For seq-only mode (no per-residue tensor), use
+          :meth:`SequenceFeature.get_df_parts` directly; ``NumericalFeature.get_parts``
+          is only useful when you have a ``dict_num`` to slice.
+
+        See Also
+        --------
+        * :meth:`SequenceFeature.get_df_parts` — string-only analog.
+        * :meth:`CPP.run_num` — consumes ``df_parts`` (via constructor) and
+          ``dict_num_parts`` (per call).
+
+        Examples
+        --------
+        .. include:: examples/nf_get_parts.rst
+        """
+        # Check input
+        ut.check_df_seq(df_seq=df_seq, accept_none=False)
+        if dict_num is None:
+            raise ValueError(
+                "'dict_num' (None) should be a Dict[str, np.ndarray] mapping each "
+                "entry in df_seq to a (L, D) per-residue tensor."
+            )
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
+        ut.check_bool(name="all_parts", val=all_parts)
+        # Layer-1: df_seq ↔ dict_num pairing.
+        check_match_df_seq_dict_num(df_seq=df_seq, dict_num=dict_num)
+
+        # Build df_parts via SequenceFeature (shared with seq-mode users).
+        from ._sequence_feature import SequenceFeature
+        sf = SequenceFeature(verbose=False)
+        df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=list_parts,
+                                   all_parts=all_parts,
+                                   jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+        list_parts_resolved = list(df_parts.columns)
+
+        # Slice the per-residue tensors with the SAME boundaries (backend reused).
+        dict_part_vals, _dict_part_lens = assign_dict_num_to_parts(
+            df_seq=df_seq, dict_num=dict_num, list_parts=list_parts_resolved,
+            jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
+        )
+        # lens are recoverable from df_parts (non-gap char count) in run_num —
+        # no need to expose them as a separate output (keeps the API one-shape).
+        return df_parts, dict_part_vals
 
     @staticmethod
     def extend_alphabet(df_scales: pd.DataFrame = None,

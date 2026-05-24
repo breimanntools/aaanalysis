@@ -2,6 +2,11 @@
 This is a script for the backend of CPP's pre-filtering threshold stage:
 ``pre_filtering`` drops features above ``max_std_test``, sorts by
 absolute mean difference, and returns the top ``n`` features.
+
+Canonical home of this helper (lifted in PR6 from the now-removed
+``_filters/_pre_filter.py``). The threshold + top-K logic is independent
+of the upstream value source, so both seq-mode (``cpp.run``) and
+numerical-mode (``cpp.run_num``) consume it through this module.
 """
 import pandas as pd
 
