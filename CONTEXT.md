@@ -95,12 +95,26 @@ _Avoid_: similarity filter (overloaded), redundancy filter (too narrow — cover
 ### Embedding-based feature engineering vocabulary
 
 **pseudo-scale**:
-A (20,)-shaped vector representing one PLM embedding dimension's per-AA average, computed by context-free averaging of the dimension's per-residue values over occurrences of each canonical AA in a reference corpus (typically the user's `df_seq`). Dataset-dependent — pseudo-scales for the same PLM differ across input corpora. Used only to derive pseudo-categories; never used as a residue-value source for feature aggregation in `run_embed` (per-residue embeddings are used directly).
+A (20,)-shaped vector representing one PLM embedding dimension's per-AA average, computed by context-free averaging of the dimension's per-residue values over occurrences of each canonical AA in a reference corpus (typically the user's `df_seq`). Dataset-dependent — pseudo-scales for the same PLM differ across input corpora. Used only to derive pseudo-categories and to name dimensions in `df_scales_emb`; never used as a residue-value source for feature aggregation in `CPP.run_num` (the per-residue [[dict_num]] tensor is consumed directly when supplied).
 _Avoid_: dimension scale, AA average, embedding scale.
 
 **pseudo-category**:
 A cluster label assigned to a pseudo-scale by AAclust correlation-based clustering. Carried in `df_cat_emb`'s `cat` (coarser threshold) and `subcat` (finer threshold) columns, mirroring the AAontology two-level hierarchy. Cluster IDs are deterministic given `(pseudo_scales, thresholds, random_state)` but inherit the dataset-dependence of pseudo-scales.
 _Avoid_: PLM cluster, embedding group.
+
+### Numerical-mode CPP vocabulary
+
+**dict_num**:
+A `Dict[str, np.ndarray]` mapping `entry` to a per-residue numerical tensor of shape `(L, D)`. Generic value source for `CPP.run_num`: covers PLM embeddings, DSSP one-hots, PTM dummies, or any other per-residue numerical representation. Same shape contract as the `embeddings` argument of `EmbeddingPreprocessor.build_pseudo_scales`; the rename to `dict_num` signals that the contents need not be PLM embeddings. When `dict_num` is supplied, the AA→scale lookup in `_filters/_assign.py:101` is bypassed; the per-protein tensor is sliced into parts and consumed directly. The accompanying `df_scales`/`df_cat` then *name* the D dimensions (e.g. `dim_0`, `DSSP_H`, `phospho_S`) for the redundancy filter and output columns.
+_Avoid_: embeddings (too narrow — covers only one source), num_tensor, per_residue_dict.
+
+**CPP.run_num**:
+A development twin of `CPP.run` whose value source is per-call (`df_seq` plus optional `dict_num`) rather than constructor-bound (`df_parts`). With `dict_num=None`, must produce a `df_feat` bit-identical to `CPP.run` over the same seq/scales — the parity contract. With `dict_num` supplied, per-residue values come from the tensor, with `df_scales`/`df_cat` providing dimension names. Lives in the new `_filters_num/` backend folder; the legacy `_filters/` path stays untouched so both pipelines coexist for head-to-head profiling during development. Long-term: may fold back into `CPP.run` once the new path is proven; for now it is an additive method.
+_Avoid_: run_embed (misleading — also handles non-embedding inputs and pure sequences), run_v2.
+
+**_filters_num/**:
+Backend folder mirroring `_filters/`, holding the numerical-mode CPP pipeline. Per-residue values flow between stages as `dict[part] = (n_samples, L_part_max, D)` float32 tensors with NaN padding for short parts; downstream aggregation uses `np.nanmean`. Performance changes scoped to this path only: split-position computation reused across D via numpy broadcasting (collapses the n_dims loop), and a *streaming pre-filter* keeps only the survivors of the `std_test` mask in memory so `add_stat` no longer recomputes feature values from scratch. Batching (`n_batches`) partitions over D, not scales/parts.
+_Avoid_: _embed_filters/ (too narrow), _filters_v2/ (versioning is ephemeral).
 
 ## Relationships
 

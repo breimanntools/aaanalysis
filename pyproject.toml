@@ -1,6 +1,16 @@
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+# setuptools is the build backend so the Cython kernel in
+# `_filters_num_c/_inner.pyx` is compiled into the wheel at build time —
+# end users `pip install aaanalysis` (or `uv add`) and the precompiled
+# `.so` ships with the wheel; no manual `setup_inner.py build_ext` step.
+# See docs/adr/0003-drop-numba-setuptools-cibuildwheel.md.
+requires = [
+  "setuptools>=68",
+  "wheel",
+  "Cython>=3.0",
+  "numpy>=1.24",
+]
+build-backend = "setuptools.build_meta"
 
 
 # -------------------------
@@ -114,6 +124,53 @@ homepage = "https://aaanalysis.readthedocs.io"
 [tool.poetry.urls]
 Repository = "https://github.com/breimanntools/aaanalysis"
 Documentation = "https://aaanalysis.readthedocs.io"
+
+
+# -------------------------
+# setuptools — package discovery + data files (build backend uses this)
+# -------------------------
+[tool.setuptools.packages.find]
+include = ["aaanalysis*"]
+
+[tool.setuptools.package-data]
+aaanalysis = [
+  "_data/*.xlsx",
+  "_data/*.tsv",
+  "_data/**/*.xlsx",
+  "_data/**/*.tsv",
+]
+
+
+# -------------------------
+# cibuildwheel — runs in the release CI to build per-platform wheels
+# carrying the precompiled Cython extension. Configured here so the
+# release workflow doesn't need inline cibuildwheel options.
+# -------------------------
+[tool.cibuildwheel]
+# Build wheels for the supported Python floor (3.10+) up through 3.14.
+# Skip PyPy (no Cython benefit; numpy + scipy wheels are also limited)
+# and 32-bit linux/win (negligible scientific-Python usage).
+build = "cp310-* cp311-* cp312-* cp313-* cp314-*"
+skip = "*-musllinux_i686 *-manylinux_i686 *-win32 pp*"
+build-verbosity = 1
+# Sanity-check the wheel after install by running the Cython parity test
+# end-to-end against the legacy path. Catches ABI / dtype / dispatch
+# regressions at build time rather than at user-install time.
+test-requires = [
+  "pytest>=9.0.3", "hypothesis>=6.124.7",
+  "pandas>=2.2.3", "scikit-learn>=1.6.1", "biopython>=1.87",
+  "matplotlib>=3.5.3", "seaborn>=0.13.2", "logomaker>=0.8.6",
+]
+test-command = "pytest {project}/tests/unit/cpp_tests/test_get_feature_matrix_c_parity.py -x -q"
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64", "aarch64"]
+
+[tool.cibuildwheel.macos]
+archs = ["x86_64", "arm64"]
+
+[tool.cibuildwheel.windows]
+archs = ["AMD64"]
 
 
 # -------------------------

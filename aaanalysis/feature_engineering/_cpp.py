@@ -1,20 +1,27 @@
 """
 This is a script for the frontend of the CPP class, a sequence-based feature engineering object.
 """
+import warnings
+from typing import Dict, Optional, List
+
 import numpy as np
 import pandas as pd
-from typing import Optional, List
 
 import aaanalysis.utils as ut
 from aaanalysis.template_classes import Tool
 
 # Import supportive class (exception for importing from same sub-package)
 from ._backend.cpp.sequence_feature import get_split_kws_
+from ._backend.cpp.utils_feature import get_df_parts_
 from ._backend.check_feature import (check_split_kws,
                                      check_parts_len, check_match_df_parts_split_kws,
                                      check_df_scales, check_df_cat, check_match_df_parts_df_scales,
                                      check_match_df_scales_df_cat)
 from ._backend.cpp_run import cpp_run_single, cpp_run_batch
+from ._backend.cpp_run_num import (
+    cpp_run_num_single, cpp_run_num_batch, cpp_run_num_sample_batched,
+)
+from ._backend.cpp._filters_num._get_feature_matrix_fast import AALookupCache
 from ._backend.cpp.cpp_eval import evaluate_features
 
 
@@ -41,6 +48,70 @@ def check_match_list_df_feat_names_feature_sets(list_df_feat=None, names_feature
     if len(list_df_feat) != len(names_feature_sets):
         raise ValueError(f"Length of 'list_df_feat' ({len(list_df_feat)}) and 'names_feature_sets'"
                          f" ({len(names_feature_sets)} does not match) ")
+
+
+def _check_dict_num(df_seq=None, dict_num=None):
+    """Validate ``dict_num`` shape/dtype contract."""
+    if not isinstance(dict_num, dict):
+        raise ValueError(
+            f"'dict_num' ({type(dict_num).__name__}) should be a dict mapping entry to "
+            f"np.ndarray of shape (L, D)."
+        )
+    entries = df_seq[ut.COL_ENTRY].to_list()
+    missing = [e for e in entries if e not in dict_num]
+    if missing:
+        preview = missing[:5] + (["..."] if len(missing) > 5 else [])
+        raise ValueError(
+            f"'dict_num' ({len(missing)} missing entries) should contain every entry "
+            f"in 'df_seq'. Missing: {preview}"
+        )
+    ds = []
+    for entry in entries:
+        emb = dict_num[entry]
+        if not isinstance(emb, np.ndarray):
+            raise ValueError(
+                f"'dict_num[{entry!r}]' ({type(emb).__name__}) should be np.ndarray of shape (L, D)."
+            )
+        if emb.ndim != 2:
+            raise ValueError(
+                f"'dict_num[{entry!r}]' (ndim={emb.ndim}) should be 2D of shape (L, D)."
+            )
+        ds.append(emb.shape[1])
+    if len(set(ds)) > 1:
+        raise ValueError(
+            f"'dict_num' (D values: {sorted(set(ds))}) should have a consistent embedding "
+            f"dimensionality D across all entries."
+        )
+
+
+def _check_dict_num_df_scales_match(dict_num=None, df_scales=None):
+    """When ``dict_num`` is supplied, ``df_scales`` columns name the D dimensions."""
+    D = next(iter(dict_num.values())).shape[1]
+    if len(df_scales.columns) != D:
+        raise ValueError(
+            f"'df_scales' (n_columns={len(df_scales.columns)}) should have D={D} columns "
+            f"matching the embedding dimensionality of 'dict_num'."
+        )
+
+
+def check_match_df_seq_df_parts(df_seq=None, df_parts=None, jmd_n_len=None, jmd_c_len=None):
+    """Verify ``df_seq`` derives parts equal to ``df_parts`` (CPP.run_num parity guard)."""
+    list_parts = list(df_parts)
+    try:
+        df_parts_derived = get_df_parts_(
+            df_seq=df_seq, list_parts=list_parts, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len
+        )
+    except Exception as e:
+        raise ValueError(
+            f"'df_seq' could not be turned into parts matching the CPP instance's "
+            f"'df_parts' (jmd_n_len={jmd_n_len}, jmd_c_len={jmd_c_len}): {e}"
+        ) from e
+    if not df_parts_derived.equals(df_parts):
+        raise ValueError(
+            f"'df_seq' derives parts that disagree with the CPP instance's 'df_parts'. "
+            f"For bit-identical parity with CPP.run, pass the same df_seq that produced "
+            f"the constructor's df_parts (and the same jmd_n_len / jmd_c_len)."
+        )
 
 
 # II Main Functions
@@ -135,6 +206,10 @@ class CPP(Tool):
         self.df_scales = df_scales.copy()
         self.df_parts = df_parts.copy()
         self.split_kws = split_kws
+        # Phase A.4: lazy cache for the AA-index + float64 scale_matrix used by
+        # ``get_feature_matrix_fast_`` in ``CPP.run_num`` pass 2. Built on the
+        # first call and reused across repeat calls on this instance.
+        self._aa_lookup_cache = None
 
     # Main method
     def run(self,
@@ -288,6 +363,269 @@ class CPP(Tool):
         else:
             df_feat = cpp_run_batch(**args, n_batches=n_batches)
         # Cconvert all np.str_ to str in object columns
+        for col in df_feat.select_dtypes(include=["object", "string"]).columns:
+            df_feat[col] = df_feat[col].apply(lambda x: str(x) if isinstance(x, (np.str_, np.generic)) else x)
+        return df_feat
+
+    def run_num(self,
+                df_seq: pd.DataFrame = None,
+                dict_num: Optional[Dict[str, np.ndarray]] = None,
+                df_scales: Optional[pd.DataFrame] = None,
+                df_cat: Optional[pd.DataFrame] = None,
+                labels: ut.ArrayLike1D = None,
+                label_test: int = 1,
+                label_ref: int = 0,
+                n_filter: int = 100,
+                n_pre_filter: Optional[int] = None,
+                pct_pre_filter: int = 5,
+                max_std_test: float = 0.2,
+                max_overlap: float = 0.5,
+                max_cor: float = 0.5,
+                check_cat: bool = True,
+                parametric: bool = False,
+                start: int = 1,
+                tmd_len: int = 20,
+                jmd_n_len: int = 10,
+                jmd_c_len: int = 10,
+                n_jobs: Optional[int] = None,
+                vectorized: bool = True,
+                n_batches: Optional[int] = None,
+                n_sample_batches: Optional[int] = None,
+                ) -> pd.DataFrame:
+        """
+        Experimental: run the numerical-mode CPP pipeline.
+
+        Development twin of :meth:`CPP.run`. In seq-only mode (``dict_num=None``),
+        produces a ``df_feat`` bit-identical to :meth:`CPP.run` over the same
+        inputs — verified by the parity test fixture. The ``dict_num`` path
+        (per-residue numerical tensors for embeddings / DSSP / PTM dummies)
+        is reserved for a follow-up PR and currently raises ``NotImplementedError``.
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein identifiers
+            and a ``sequence`` column with full protein sequences. Used to derive
+            parts; must produce a ``df_parts`` equal to the constructor's
+            ``self.df_parts`` (same ``jmd_n_len`` / ``jmd_c_len``). A mismatch
+            raises ``ValueError`` — there is no fallback.
+        dict_num : dict[str, np.ndarray], optional
+            Reserved for the follow-up PR. Pass ``None`` for PR1 (seq-mode only).
+        df_scales : pd.DataFrame, optional
+            Reserved for the follow-up PR. Pass ``None`` to use ``self.df_scales``.
+        df_cat : pd.DataFrame, optional
+            Reserved for the follow-up PR. Pass ``None`` to use ``self.df_cat``.
+        labels, label_test, label_ref, n_filter, n_pre_filter, pct_pre_filter, max_std_test, max_overlap, max_cor, check_cat, parametric, start, tmd_len, jmd_n_len, jmd_c_len, n_jobs, vectorized, n_batches
+            See :meth:`CPP.run`. Same semantics, same defaults. ``n_batches`` partitions
+            over the D axis (scales / dim chunks) — same axis as ``n_jobs``.
+
+        Returns
+        -------
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info)
+            Same schema as :meth:`CPP.run`.
+
+        Warns
+        -----
+        UserWarning
+            ``CPP.run_num`` is experimental and may be renamed or folded into
+            :meth:`CPP.run` before v2.
+
+        Raises
+        ------
+        NotImplementedError
+            If ``dict_num`` is supplied (reserved for the follow-up PR).
+        ValueError
+            If ``df_seq`` derives parts that disagree with ``self.df_parts``.
+
+        See Also
+        --------
+        * :meth:`CPP.run`: the stable sequence-mode method.
+        * ``docs/source/design/run_embed.md``: full design sketch for the
+          numerical-mode pipeline.
+        * ``docs/adr/0001-cpp-run-num.md``: the ADR recording why
+          ``run_num`` exists as a separate method.
+        """
+        warnings.warn(
+            "CPP.run_num is experimental and may be renamed or folded into CPP.run before v2.",
+            UserWarning,
+            stacklevel=2,
+        )
+        # Validate
+        ut.check_df_seq(df_seq=df_seq)
+        ut.check_number_val(name="label_test", val=label_test, just_int=True)
+        ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
+        labels = ut.check_labels(labels=labels, vals_required=[label_test, label_ref],
+                                 len_required=len(self.df_parts), allow_other_vals=False)
+        ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
+        ut.check_number_range(name="n_pre_filter", val=n_pre_filter, min_val=1, accept_none=True, just_int=True)
+        ut.check_number_range(name="pct_pre_filter", val=pct_pre_filter, min_val=5, max_val=100, just_int=True)
+        ut.check_number_range(name="max_std_test", val=max_std_test, min_val=0.0, max_val=1.0,
+                              just_int=False, exclusive_limits=True)
+        ut.check_number_range(name="max_overlap", val=max_overlap, min_val=0.0, max_val=1.0, just_int=False)
+        ut.check_number_range(name="max_cor", val=max_cor, min_val=0.0, max_val=1.0, just_int=False)
+        ut.check_bool(name="check_cat", val=check_cat)
+        ut.check_bool(name="parametric", val=parametric)
+        ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
+        check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+        n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
+        ut.check_bool(name="vectorized", val=vectorized)
+        n_scales = len(list(self.df_scales))
+        ut.check_number_range(name="n_batches", val=n_batches, just_int=True,
+                              accept_none=True, min_val=2, max_val=n_scales)
+
+        # dict_num + per-call df_scales/df_cat validation
+        if dict_num is not None:
+            _check_dict_num(df_seq=df_seq, dict_num=dict_num)
+            # Per-call df_scales/df_cat override the constructor's (D dimension names + categorical filter).
+            active_df_scales = df_scales if df_scales is not None else self.df_scales
+            active_df_cat = df_cat if df_cat is not None else self.df_cat
+            check_df_scales(df_scales=active_df_scales)
+            check_df_cat(df_cat=active_df_cat)
+            _check_dict_num_df_scales_match(dict_num=dict_num, df_scales=active_df_scales)
+            # df_seq must include tmd_start/tmd_stop (position-based) for tensor slicing.
+            if not set(ut.COLS_SEQ_POS).issubset(df_seq.columns):
+                raise ValueError(
+                    f"'df_seq' (cols={list(df_seq.columns)}) should contain "
+                    f"{ut.COLS_SEQ_POS} when 'dict_num' is supplied."
+                )
+        else:
+            if df_scales is not None or df_cat is not None:
+                raise ValueError(
+                    "'df_scales' / 'df_cat' kwargs apply only when 'dict_num' is supplied. "
+                    "Pass dict_num to use per-call scale/category tables."
+                )
+            active_df_scales = self.df_scales
+            active_df_cat = self.df_cat
+            # Parity guard: df_seq must reproduce the constructor's df_parts row-for-row.
+            check_match_df_seq_df_parts(df_seq=df_seq, df_parts=self.df_parts,
+                                        jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+
+        args = dict(
+            df_parts=self.df_parts, split_kws=self.split_kws,
+            df_scales=active_df_scales, df_cat=active_df_cat,
+            verbose=self._verbose, accept_gaps=self._accept_gaps,
+            labels=labels, label_test=label_test, label_ref=label_ref,
+            n_filter=n_filter, n_pre_filter=n_pre_filter, pct_pre_filter=pct_pre_filter,
+            max_std_test=max_std_test, max_overlap=max_overlap, max_cor=max_cor,
+            check_cat=check_cat, parametric=parametric,
+            start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
+            n_jobs=n_jobs, vectorized=vectorized,
+        )
+        if n_sample_batches is not None:
+            raise NotImplementedError(
+                "'n_sample_batches' has been removed because the accumulator-style "
+                "variance it relies on cannot be bit-exact with legacy ``CPP.run`` "
+                "(np.std uses pairwise reduction; batched sum/sum_sq has different "
+                "round-off order). For very large n, use ``n_batches`` (feature batching) "
+                "instead — it is bit-exact."
+            )
+        # Phase A.4: build the AA-lookup cache on first use; reuse on repeat calls.
+        if dict_num is None and self._aa_lookup_cache is None:
+            self._aa_lookup_cache = AALookupCache.from_df(
+                df_parts=self.df_parts, df_scales=self.df_scales,
+            )
+
+        if n_batches is None:
+            df_feat = cpp_run_num_single(
+                df_seq=df_seq, dict_num=dict_num,
+                aa_lookup_cache=self._aa_lookup_cache, **args,
+            )
+        else:
+            if dict_num is not None:
+                raise NotImplementedError(
+                    "'n_batches' with 'dict_num' is not implemented yet. Pass n_batches=None for now."
+                )
+            df_feat = cpp_run_num_batch(**args, n_batches=n_batches)
+        for col in df_feat.select_dtypes(include=["object", "string"]).columns:
+            df_feat[col] = df_feat[col].apply(lambda x: str(x) if isinstance(x, (np.str_, np.generic)) else x)
+        return df_feat
+
+    def run_c(self,
+              df_seq: pd.DataFrame = None,
+              labels: ut.ArrayLike1D = None,
+              label_test: int = 1,
+              label_ref: int = 0,
+              n_filter: int = 100,
+              n_pre_filter: Optional[int] = None,
+              pct_pre_filter: int = 5,
+              max_std_test: float = 0.2,
+              max_overlap: float = 0.5,
+              max_cor: float = 0.5,
+              check_cat: bool = True,
+              parametric: bool = False,
+              start: int = 1,
+              tmd_len: int = 20,
+              jmd_n_len: int = 10,
+              jmd_c_len: int = 10,
+              n_jobs: Optional[int] = None,
+              vectorized: bool = True,
+              n_batches: Optional[int] = None,
+              ) -> pd.DataFrame:
+        """Cython-accelerated variant of :meth:`run_num` (seq-mode only).
+
+        Same pipeline and output as ``CPP.run`` / ``CPP.run_num(dict_num=None)``
+        — pre-filter stats, pre-filter, recompute, add_stat, redundancy filter —
+        but the per-(sample, feature) inner loop in pass 2 runs in a bit-exact
+        Cython kernel (``_filters_num_c/_inner.pyx``). Output is byte-identical
+        to legacy ``CPP.run`` (``pd.testing.assert_frame_equal(..., check_exact=True)``).
+
+        Requires the compiled extension; raises ``ImportError`` with an install
+        hint when the extension isn't built. Use ``run_num`` for the
+        pure-Python fallback that ships with every install.
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame
+            Same contract as :meth:`run_num`'s seq-mode input.
+        See :meth:`run_num` for the remaining parameters; ``dict_num`` and
+        ``n_batches`` / ``n_sample_batches`` are NOT accepted by ``run_c``
+        (the Cython path is single-orchestrator, seq-mode only).
+
+        Returns
+        -------
+        df_feat : pd.DataFrame
+            Identical to ``CPP.run(...)``.
+        """
+        from ._backend.cpp_run_num import _HAS_CYTHON_INNER, get_feature_matrix_c_
+        if not _HAS_CYTHON_INNER:
+            raise ImportError(
+                "CPP.run_c requires the compiled Cython extension. Build it via:\n"
+                "    python aaanalysis/feature_engineering/_backend/cpp/_filters_num_c/setup_inner.py build_ext --inplace\n"
+                "Or use CPP.run_num for the pure-Python equivalent."
+            )
+
+        check_match_df_seq_df_parts(df_seq=df_seq, df_parts=self.df_parts)
+        args = dict(
+            df_parts=self.df_parts, split_kws=self.split_kws,
+            df_scales=self.df_scales, df_cat=self.df_cat,
+            verbose=self._verbose, accept_gaps=self._accept_gaps,
+            labels=labels, label_test=label_test, label_ref=label_ref,
+            n_filter=n_filter, n_pre_filter=n_pre_filter, pct_pre_filter=pct_pre_filter,
+            max_std_test=max_std_test, max_overlap=max_overlap, max_cor=max_cor,
+            check_cat=check_cat, parametric=parametric,
+            start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
+            n_jobs=n_jobs, vectorized=vectorized,
+        )
+        if self._aa_lookup_cache is None:
+            self._aa_lookup_cache = AALookupCache.from_df(
+                df_parts=self.df_parts, df_scales=self.df_scales,
+            )
+        if n_batches is None:
+            df_feat = cpp_run_num_single(
+                df_seq=df_seq, dict_num=None,
+                aa_lookup_cache=self._aa_lookup_cache,
+                feature_matrix_builder=get_feature_matrix_c_,
+                **args,
+            )
+        else:
+            # Feature-batched orchestration: pass-2 X is computed one feature
+            # chunk at a time, capping peak RAM at ~(n × n_pre_filter / n_batches × 8 B).
+            df_feat = cpp_run_num_batch(
+                **args, n_batches=n_batches,
+                feature_matrix_builder=get_feature_matrix_c_,
+            )
         for col in df_feat.select_dtypes(include=["object", "string"]).columns:
             df_feat[col] = df_feat[col].apply(lambda x: str(x) if isinstance(x, (np.str_, np.generic)) else x)
         return df_feat

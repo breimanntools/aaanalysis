@@ -13,11 +13,28 @@ jobs:
       include: ${{ steps.set-matrix.outputs.include }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install cibuildwheel
-        run: pipx install cibuildwheel==2.14.0
+        run: pipx install cibuildwheel==2.21.3
       - id: set-matrix
+        # Build identifiers (e.g. `cp311-manylinux_x86_64`) come from
+        # cibuildwheel itself based on the [tool.cibuildwheel] config in
+        # pyproject.toml. We turn each identifier into a matrix entry
+        # `{only: <id>, os: <runner>}` so `build_wheels` can shard.
         run: |
-          # ... (Keep this section as is in the original SHAP example)
+          MATRIX=$(
+            {
+              cibuildwheel --print-build-identifiers --platform linux \
+                | jq -nRc '[inputs | {only: ., os: "ubuntu-latest"}]'
+              cibuildwheel --print-build-identifiers --platform macos \
+                | jq -nRc '[inputs | {only: ., os: "macos-latest"}]'
+              cibuildwheel --print-build-identifiers --platform windows \
+                | jq -nRc '[inputs | {only: ., os: "windows-latest"}]'
+            } | jq -sc 'add'
+          )
+          echo "include=$MATRIX" >> $GITHUB_OUTPUT
 
   build_wheels:
     name: Build ${{ matrix.only }}
@@ -31,21 +48,27 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
+      - name: Set up QEMU (for Linux aarch64)
         if: runner.os == 'Linux'
         uses: docker/setup-qemu-action@v3
         with:
           platforms: all
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.14.0
+        uses: pypa/cibuildwheel@v2.21.3
         with:
           only: ${{ matrix.only }}
+        # cibuildwheel reads [tool.cibuildwheel] from pyproject.toml,
+        # which installs the wheel into a clean env and runs the parity
+        # test (test_get_feature_matrix_c_parity.py) against the
+        # compiled `_inner.cpython-XYZ.so`. A wheel that doesn't pass
+        # bit-exact parity vs the legacy path fails the build here,
+        # before it ever reaches PyPI.
 
       - uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
-          name: bdist_files
+          name: bdist_${{ matrix.only }}
 
   build_sdist:
     name: Build source distribution
@@ -68,15 +91,16 @@ jobs:
           path: dist/*.tar.gz
 
   publish_wheels:
-    name: Publish wheels on pypi
+    name: Publish wheels on PyPI
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags')
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: bdist_files
+          pattern: bdist_*
           path: dist
+          merge-multiple: true
       - uses: actions/download-artifact@v4
         with:
           name: sdist_files
