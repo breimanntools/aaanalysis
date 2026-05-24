@@ -21,7 +21,7 @@ import pandas as pd
 
 import aaanalysis.utils as ut
 from ._backend.structure_preprocessor.feature_registry import (
-    REGISTRY, VALID_FEATURE_KEYS, ENCODER_DSSP, ENCODER_PDB,
+    REGISTRY, VALID_FEATURE_KEYS, ENCODER_DSSP, ENCODER_PDB, ENCODER_PAE,
     INVERSE_FORMULAS, validate_feature_keys, get_total_dims, get_dim_names,
     get_categories, get_subcategories)
 from ._backend.structure_preprocessor.run_dssp_full import (
@@ -41,7 +41,12 @@ from ._backend.structure_preprocessor.encode_pdb import (
 from ._backend.structure_preprocessor._extras import (
     is_msms_available, check_msms_available)
 from ._backend.structure_preprocessor._file_format import (
-    resolve_structure_path)
+    resolve_structure_path, resolve_pae_path)
+from ._backend.structure_preprocessor._pae_io import load_pae_matrix
+from ._backend.structure_preprocessor.encode_pae import (
+    encode_pae_row_mean, encode_pae_row_min, encode_pae_row_max,
+    encode_pae_local_mean, encode_pae_distal_mean,
+    encode_pae_asymmetry, encode_pae_band_means)
 
 
 # Same path-safety regex used by the existing get_dssp; reject characters
@@ -297,7 +302,7 @@ class StructurePreprocessor:
     :meth:`CPP.run_num`, plus the ``(df_scales, df_cat)`` metadata pair that
     names the D dimensions.
 
-    Five public methods, each returning ONE tightly-typed value:
+    Six public methods, each returning ONE tightly-typed value:
 
     1. :meth:`get_dssp` runs DSSP and appends list columns to ``df_seq``
        (``ss``, ``asa``, ``phi``, ``psi`` — only the requested ones).
@@ -307,14 +312,20 @@ class StructurePreprocessor:
        DSSP-derived numerical features (SS one-hot, rASA, dihedral
        sin/cos) — all normalized to ``[0, 1]``.
     3. :meth:`encode_pdb` returns a single ``dict_pdb`` of per-residue
-       features extracted directly from PDB ATOM records (mean B-factor,
-       residue depth — the latter gated on the external ``msms`` binary).
-    4. :meth:`build_pseudo_scales` returns the per-AA-averaged
+       features extracted directly from the structure file (mean B-factor,
+       residue depth — msms-gated; AlphaFold pLDDT / disorder mask /
+       tier; chi1 / chi2 side-chain dihedrals; CA centroid distance and
+       Rg-normalized variant; CA-CA contact counts at 8 Å and 12 Å).
+    4. :meth:`encode_pae` returns a single ``dict_pae`` of per-residue
+       summaries of the AlphaFold PAE sidecar (row-mean / row-min /
+       row-max; local-vs-distal split with ±``local_window``; asymmetry;
+       three-band sequence-distance means).
+    5. :meth:`build_pseudo_scales` returns the per-AA-averaged
        ``df_scales`` (and optionally ``df_stds``) from a user corpus.
        Required by :meth:`CPP.run_num`'s redundancy filter to make
        ``max_cor`` meaningful (the v1 all-zero df_scales silently
        disabled that gate).
-    5. :meth:`build_cat` returns the corpus-free ``df_cat`` metadata
+    6. :meth:`build_cat` returns the corpus-free ``df_cat`` metadata
        frame from the feature-key registry.
 
     Use :func:`aaanalysis.combine_dict_nums` to stitch the encoder outputs
@@ -354,12 +365,14 @@ class StructurePreprocessor:
       ``ca_centroid_dist_norm``     [0, ~2] (Rg units)          ``clip(x / 2, 0, 1)``                      ``x * 2``  (lossy when ≥1)
       ``contact_count_8A``          [0, ~30]                    ``clip(x / 30, 0, 1)``                     ``x * 30``  (lossy when ≥1)
       ``contact_count_12A``         [0, ~80]                    ``clip(x / 80, 0, 1)``                     ``x * 80``  (lossy when ≥1)
+      ``pae_row_*`` / ``pae_local_mean`` / ``pae_distal_mean`` / ``pae_band_means``
+                                    [0, 31.75] Å                ``clip(x / 31.75, 0, 1)``                  ``x * 31.75``
+      ``pae_asymmetry``             [0, ~10] Å                  ``clip(x / 10, 0, 1)``                     ``x * 10``  (lossy when ≥1)
       ============================  ==========================  =========================================  ====================================
 
       The recipes are the source of truth in
       ``feature_registry.NORMALIZATION_RECIPES``; this table is generated
-      to match. PAE-sidecar keys (``pae_row_mean``, ``pae_local_mean``, …)
-      will land in v1.1's commit 3 with the same ``[0, 1]`` discipline.
+      to match.
 
     * **Feature categorization.** Every feature key emits
       ``category='Structure'`` (the top-level redundancy / color bucket;
@@ -794,6 +807,191 @@ class StructurePreprocessor:
             dict_pdb = {k: v for k, v in dict_pdb.items() if k in kept_entries}
         session_tmp.cleanup()
         return dict_pdb, df_aug
+
+    # ------------------------------------------------------------------
+    # encode_pae
+    # ------------------------------------------------------------------
+    def encode_pae(
+        self,
+        df_seq: pd.DataFrame = None,
+        pae_folder: Union[str, Path] = None,
+        features: List[str] = None,
+        local_window: int = 5,
+        pae_band_edges: Tuple[int, int] = (5, 15),
+        on_failure: str = "nan",
+        verbose: Optional[bool] = None,
+    ) -> Tuple[Dict[str, np.ndarray], pd.DataFrame]:
+        """Load AlphaFold PAE sidecar JSONs and produce ``dict_pae``.
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame with ``entry`` + ``sequence`` columns. The PAE matrix
+            shape ``(L, L)`` must equal ``len(sequence)``; mismatched rows
+            are treated as failures.
+        pae_folder : str or pathlib.Path
+            Directory containing one PAE JSON per row. The resolver tries,
+            in order: ``<entry>.json``, ``<entry>.json.gz``, and the AF-DB
+            canonical ``AF-<entry>-F1-predicted_aligned_error_v4.json``
+            (and its ``.gz`` variant).
+        features : list of str
+            Feature keys belonging to ``encode_pae``: any subset of
+            ``{pae_row_mean, pae_row_min, pae_row_max, pae_local_mean,
+            pae_distal_mean, pae_asymmetry, pae_band_means}``. All outputs
+            normalized to ``[0, 1]`` (divisor 31.75 Å for most keys, 10 Å
+            for ``pae_asymmetry``).
+        local_window : int, default=5
+            Used by ``pae_local_mean`` / ``pae_distal_mean``. The ``±k``
+            window in residue positions for the local mean (self excluded);
+            distal mean takes the complement.
+        pae_band_edges : tuple of (int, int), default=(5, 15)
+            Used by ``pae_band_means`` only. Sequence-distance bins:
+            ``(0, edges[0]]``, ``(edges[0], edges[1]]``, ``(edges[1], L]``.
+        on_failure : {'nan', 'drop', 'raise'}, default='nan'
+            What to do for entries whose PAE load fails (missing sidecar,
+            malformed JSON, shape mismatch).
+        verbose : bool, optional
+            Override instance verbosity for this call only.
+
+        Returns
+        -------
+        dict_pae : dict[str, np.ndarray]
+            ``{entry: (L_entry, D_total) ndarray}`` per-residue PAE
+            features concatenated in the order of ``features``.
+        df_seq_out : pd.DataFrame
+            Echo of ``df_seq`` plus a boolean ``pae_ok`` column.
+
+        Raises
+        ------
+        ValueError
+            On invalid arguments or feature keys not in this method's
+            registry slice.
+        RuntimeError
+            If any entry failed under ``on_failure='raise'``.
+        """
+        verbose = ut.check_verbose(self._verbose if verbose is None else verbose)
+        ut.check_df_seq(df_seq=df_seq)
+        if ut.COL_SEQ not in df_seq.columns:
+            raise ValueError(
+                f"'df_seq' should contain a '{ut.COL_SEQ}' column for "
+                f"encode_pae")
+        if "pae_ok" in df_seq.columns:
+            raise ValueError(
+                f"'df_seq' should not already contain a 'pae_ok' column. "
+                f"Drop it before calling encode_pae.")
+        if pae_folder is None:
+            raise ValueError("'pae_folder' should not be None")
+        ut.check_folder_path_exists(folder_path=str(pae_folder),
+                                    name="pae_folder")
+        validate_feature_keys(features, allowed_method=ENCODER_PAE)
+        _check_handle_failure(on_failure)
+        ut.check_bool(name="verbose", val=verbose)
+        ut.check_number_range(name="local_window", val=local_window,
+                              min_val=0, just_int=True)
+        if (not isinstance(pae_band_edges, (list, tuple))
+                or len(pae_band_edges) != 2):
+            raise ValueError(
+                f"'pae_band_edges' ({pae_band_edges!r}) should be a "
+                f"length-2 tuple of int with 0 < lo < hi")
+        lo, hi = pae_band_edges
+        ut.check_number_range(name="pae_band_edges[0]", val=lo,
+                              min_val=1, just_int=True)
+        ut.check_number_range(name="pae_band_edges[1]", val=hi,
+                              min_val=2, just_int=True)
+        if not lo < hi:
+            raise ValueError(
+                f"'pae_band_edges' ({pae_band_edges}) should satisfy "
+                f"edges[0] < edges[1]")
+        pae_folder = Path(pae_folder)
+        entries = df_seq[ut.COL_ENTRY].tolist()
+        sequences = df_seq[ut.COL_SEQ].tolist()
+        D_total = get_total_dims(features)
+        dict_pae: Dict[str, np.ndarray] = {}
+        ok_per_row: List[bool] = []
+        session_tmp = tempfile.TemporaryDirectory()
+        session_tmp_path = Path(session_tmp.name)
+        for entry, seq in zip(entries, sequences):
+            _check_entry_is_filesystem_safe(entry)
+            L = len(seq)
+            pae_path = resolve_pae_path(folder=pae_folder, entry=entry,
+                                        temp_dir=session_tmp_path)
+            if pae_path is None:
+                warnings.warn(
+                    f"PAE sidecar for entry '{entry}' not found in "
+                    f"'{pae_folder}' (tried .json/.json.gz/AF-DB canonical); "
+                    f"row will have pae_ok=False",
+                    UserWarning)
+                dict_pae[entry] = np.full((L, D_total), np.nan,
+                                          dtype=np.float64)
+                ok_per_row.append(False)
+                continue
+            try:
+                pae = load_pae_matrix(pae_path, expected_L=L)
+            except RuntimeError as e:
+                warnings.warn(
+                    f"PAE load failed for entry '{entry}': {e}; "
+                    f"row will have pae_ok=False",
+                    UserWarning)
+                dict_pae[entry] = np.full((L, D_total), np.nan,
+                                          dtype=np.float64)
+                ok_per_row.append(False)
+                continue
+            blocks: List[np.ndarray] = []
+            entry_ok = True
+            for key in features:
+                try:
+                    if key == "pae_row_mean":
+                        block = encode_pae_row_mean(pae)
+                    elif key == "pae_row_min":
+                        block = encode_pae_row_min(pae)
+                    elif key == "pae_row_max":
+                        block = encode_pae_row_max(pae)
+                    elif key == "pae_local_mean":
+                        block = encode_pae_local_mean(
+                            pae, local_window=local_window)
+                    elif key == "pae_distal_mean":
+                        block = encode_pae_distal_mean(
+                            pae, local_window=local_window)
+                    elif key == "pae_asymmetry":
+                        block = encode_pae_asymmetry(pae)
+                    elif key == "pae_band_means":
+                        block = encode_pae_band_means(
+                            pae, band_edges=tuple(pae_band_edges))
+                    else:
+                        raise RuntimeError(
+                            f"Internal: feature key {key!r} not in "
+                            f"encode_pae alphabet")
+                    blocks.append(block)
+                    if verbose:
+                        ut.print_out(
+                            f"   encode_pae: entry={entry}, key={key}, "
+                            f"L={L}")
+                except RuntimeError as e:
+                    warnings.warn(
+                        f"PAE encoder '{key}' failed for entry '{entry}': "
+                        f"{e}; this row will have pae_ok=False",
+                        UserWarning)
+                    entry_ok = False
+                    break
+            if not entry_ok:
+                dict_pae[entry] = np.full((L, D_total), np.nan,
+                                          dtype=np.float64)
+                ok_per_row.append(False)
+                continue
+            arr = np.concatenate(blocks, axis=1) if len(blocks) > 1 \
+                else blocks[0]
+            dict_pae[entry] = arr
+            ok_per_row.append(True)
+        df_aug = df_seq.copy()
+        df_aug["pae_ok"] = ok_per_row
+        df_aug, ok_after, keep_idx = _drop_or_raise_failed_entries(
+            df_seq=df_aug, ok_per_row=ok_per_row, on_failure=on_failure,
+            source_label="encode_pae")
+        if on_failure == "drop":
+            kept_entries = {entries[i] for i in keep_idx}
+            dict_pae = {k: v for k, v in dict_pae.items() if k in kept_entries}
+        session_tmp.cleanup()
+        return dict_pae, df_aug
 
     # ------------------------------------------------------------------
     # build_pseudo_scales + build_cat

@@ -69,6 +69,17 @@ NORMALIZATION_RECIPES: Dict[str, Callable] = {
     "ca_centroid_dist_norm":  _div(2.0),        # saturates at 2 Rg
     "contact_count_8A":       _div(30.0),       # saturates at 30
     "contact_count_12A":      _div(80.0),       # saturates at 80
+    # AF PAE sidecar features (commit 3). AF documents the PAE saturation
+    # cap at 31.75 Å; we divide by that and clip. ``pae_asymmetry`` is
+    # bounded much lower in practice (asymmetry << absolute PAE) so we use
+    # an empirical cap of 10 Å.
+    "pae_row_mean":           _div(31.75),
+    "pae_row_min":            _div(31.75),
+    "pae_row_max":            _div(31.75),
+    "pae_local_mean":         _div(31.75),
+    "pae_distal_mean":        _div(31.75),
+    "pae_asymmetry":          _div(10.0),
+    "pae_band_means":         _div(31.75),
 }
 
 
@@ -90,6 +101,13 @@ INVERSE_FORMULAS: Dict[str, str] = {
     "ca_centroid_dist_norm":  "x * 2       (lossy when ≥1, > 2 Rg are clipped)",
     "contact_count_8A":       "x * 30      (lossy when ≥1, counts > 30 are clipped)",
     "contact_count_12A":      "x * 80      (lossy when ≥1, counts > 80 are clipped)",
+    "pae_row_mean":           "x * 31.75   (Å, AF PAE saturation cap)",
+    "pae_row_min":            "x * 31.75   (Å)",
+    "pae_row_max":            "x * 31.75   (Å)",
+    "pae_local_mean":         "x * 31.75   (Å)",
+    "pae_distal_mean":        "x * 31.75   (Å)",
+    "pae_asymmetry":          "x * 10      (Å, lossy when ≥1; clipped at 10 Å)",
+    "pae_band_means":         "x * 31.75   (Å, applied per band)",
 }
 
 
@@ -181,6 +199,42 @@ REGISTRY: Dict[str, Dict] = {
         "dim_names": ["contact_count_12A"],
         "category": CATEGORY_STRUCTURE,
         "subcategory": "Geometry_contact_count_12A",
+    },
+    # AF PAE sidecar features (commit 3).
+    "pae_row_mean": {
+        "method": ENCODER_PAE, "num_dims": 1,
+        "dim_names": ["pae_mean"],
+        "category": CATEGORY_STRUCTURE, "subcategory": "AF_PAE_row_mean",
+    },
+    "pae_row_min": {
+        "method": ENCODER_PAE, "num_dims": 1,
+        "dim_names": ["pae_min"],
+        "category": CATEGORY_STRUCTURE, "subcategory": "AF_PAE_row_min",
+    },
+    "pae_row_max": {
+        "method": ENCODER_PAE, "num_dims": 1,
+        "dim_names": ["pae_max"],
+        "category": CATEGORY_STRUCTURE, "subcategory": "AF_PAE_row_max",
+    },
+    "pae_local_mean": {
+        "method": ENCODER_PAE, "num_dims": 1,
+        "dim_names": ["pae_local"],
+        "category": CATEGORY_STRUCTURE, "subcategory": "AF_PAE_local_mean",
+    },
+    "pae_distal_mean": {
+        "method": ENCODER_PAE, "num_dims": 1,
+        "dim_names": ["pae_distal"],
+        "category": CATEGORY_STRUCTURE, "subcategory": "AF_PAE_distal_mean",
+    },
+    "pae_asymmetry": {
+        "method": ENCODER_PAE, "num_dims": 1,
+        "dim_names": ["pae_asymmetry"],
+        "category": CATEGORY_STRUCTURE, "subcategory": "AF_PAE_asymmetry",
+    },
+    "pae_band_means": {
+        "method": ENCODER_PAE, "num_dims": 3,
+        "dim_names": ["pae_band_close", "pae_band_mid", "pae_band_far"],
+        "category": CATEGORY_STRUCTURE, "subcategory": "AF_PAE_band_means",
     },
 }
 
