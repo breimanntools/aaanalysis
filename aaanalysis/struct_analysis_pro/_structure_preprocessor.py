@@ -39,7 +39,7 @@ from ._backend.structure_preprocessor.encode_pdb import (
     encode_chi1_sincos, encode_chi2_sincos,
     encode_ca_centroid_dist, encode_ca_centroid_dist_norm,
     encode_contact_count_8A, encode_contact_count_12A,
-    encode_hse)
+    encode_hse, encode_disulfide)
 from ._backend.structure_preprocessor._extras import (
     is_msms_available, check_msms_available)
 from ._backend.structure_preprocessor._file_format import (
@@ -840,6 +840,9 @@ class StructurePreprocessor:
                             structure, seq)
                     elif key == "hse":
                         block, identity = encode_hse(structure, seq)
+                    elif key == "disulfide":
+                        block, identity = encode_disulfide(
+                            structure, seq)
                     else:
                         raise RuntimeError(
                             f"Internal: feature key {key!r} not in "

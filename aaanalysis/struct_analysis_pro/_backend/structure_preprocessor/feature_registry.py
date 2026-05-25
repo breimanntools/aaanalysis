@@ -54,6 +54,18 @@ def _hbond_offset_energy(arr):
     return out
 
 
+def _disulfide_participates_distance(arr):
+    """Two-dim recipe for [participates, partner_distance] disulfide features.
+
+    Column 0 (boolean ∈ {0, 1}): identity.
+    Column 1 (SG-SG distance Å, 5 Å upper bound): ``clip(x / 5, 0, 1)``.
+    """
+    out = np.empty_like(arr, dtype=np.float64)
+    out[:, 0] = arr[:, 0]
+    out[:, 1] = np.clip(arr[:, 1] / 5.0, 0.0, 1.0)
+    return out
+
+
 # II Main Functions
 ENCODER_DSSP = "encode_dssp"
 ENCODER_PDB = "encode_pdb"
@@ -86,6 +98,7 @@ NORMALIZATION_RECIPES: Dict[str, Callable] = {
     # the two columns; see _hbond_offset_energy.
     "hbond_donor":            _hbond_offset_energy,
     "hbond_acceptor":         _hbond_offset_energy,
+    "disulfide":              _disulfide_participates_distance,
     # AF PAE sidecar features (commit 3). AF documents the PAE saturation
     # cap at 31.75 Å; we divide by that and clip. ``pae_asymmetry`` is
     # bounded much lower in practice (asymmetry << absolute PAE) so we use
@@ -121,6 +134,7 @@ INVERSE_FORMULAS: Dict[str, str] = {
     "hse":                    "x * 30      (HSE half-sphere counts; lossy when ≥1)",
     "hbond_donor":            "[offset: x*100 - 50  ;  energy: -x*10 kcal/mol]",
     "hbond_acceptor":         "[offset: x*100 - 50  ;  energy: -x*10 kcal/mol]",
+    "disulfide":              "[participates: identity (boolean)  ;  partner_distance: x*5 Å]",
     "pae_row_mean":           "x * 31.75   (Å, AF PAE saturation cap)",
     "pae_row_min":            "x * 31.75   (Å)",
     "pae_row_max":            "x * 31.75   (Å)",
@@ -252,6 +266,13 @@ REGISTRY: Dict[str, Dict] = {
         "dim_names": ["hbond_acceptor_offset", "hbond_acceptor_energy"],
         "category": CATEGORY_STRUCTURE,
         "subcategory": "Hydrogen bond (O-NH acceptor)",
+    },
+    # Disulfide-bond participation (v1.2). CYS-CYS SG-SG distance < 2.5 Å.
+    "disulfide": {
+        "method": ENCODER_PDB, "num_dims": 2,
+        "dim_names": ["disulfide_participates", "disulfide_partner_distance"],
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Disulfide bond (CYS-CYS)",
     },
     # AF PAE sidecar features.
     "pae_row_mean": {

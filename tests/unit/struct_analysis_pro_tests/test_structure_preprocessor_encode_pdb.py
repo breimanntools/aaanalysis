@@ -771,3 +771,191 @@ class TestStpEncodePdbHSE:
                 df_seq=_df_af(), dict_num=d, features=["hse"])
         assert df_scales.shape == (20, 2)
         assert list(df_scales.columns) == ["hse_up", "hse_down"]
+
+
+# ----------------------------------------------------------------------
+# v1.2 — Disulfide-bond participation
+# ----------------------------------------------------------------------
+SS_BOND_SEQ = "ACAACA"
+
+
+def _df_ss():
+    return pd.DataFrame({"entry": ["SS_BOND"], "sequence": [SS_BOND_SEQ]})
+
+
+class TestStpEncodePdbDisulfide:
+    """encode_pdb feature key 'disulfide' (v1.2).
+
+    Detects CYS-CYS SG-SG distances < 2.5 Å. Per residue:
+      column 0 (participates): 1.0 if CYS in bond, 0.0 if free CYS, NaN otherwise
+      column 1 (partner_distance): SG-SG distance in Å normalized by /5, NaN otherwise
+    Fixture SS_BOND.pdb has two bonded CYS at positions 2 and 5
+    (sequence ACAACA).
+    """
+
+    # ----- NEGATIVES (≥5) -----
+    def test_invalid_disulfide_with_wrong_method(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError):
+            stp.encode_dssp(df_seq=_df_ss(), pdb_folder=str(PDB_FIXTURES),
+                            features=["disulfide"])
+
+    def test_invalid_disulfide_in_pae_method(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError):
+            stp.encode_pae(df_seq=_df_ss(), pae_folder=str(PDB_FIXTURES),
+                           features=["disulfide"])
+
+    def test_invalid_disulfide_pdb_folder_nonexistent(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError, match="pdb_folder"):
+            stp.encode_pdb(df_seq=_df_ss(), pdb_folder="/__nope__",
+                           features=["disulfide"])
+
+    def test_invalid_disulfide_features_empty(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError):
+            stp.encode_pdb(df_seq=_df_ss(), pdb_folder=str(PDB_FIXTURES),
+                           features=[])
+
+    def test_invalid_disulfide_raise_on_missing_pdb(self, tmp_path):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with pytest.raises(RuntimeError):
+                stp.encode_pdb(df_seq=_df_ss(), pdb_folder=str(tmp_path),
+                               features=["disulfide"], on_failure="raise")
+
+    # ----- POSITIVES (≥10) -----
+    def test_valid_disulfide_shape(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_ss(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["disulfide"])
+        assert d["SS_BOND"].shape == (len(SS_BOND_SEQ), 2)
+
+    def test_valid_disulfide_in_unit_interval(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_ss(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["disulfide"])
+        vals = d["SS_BOND"]
+        finite = vals[~np.isnan(vals)]
+        assert (finite >= 0).all() and (finite <= 1).all()
+
+    def test_valid_disulfide_non_cys_are_nan(self):
+        # Non-CYS residues must be NaN in both columns.
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_ss(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["disulfide"])
+        v = d["SS_BOND"]
+        for i, a in enumerate(SS_BOND_SEQ):
+            if a != "C":
+                assert np.isnan(v[i]).all()
+
+    def test_valid_disulfide_bonded_cys_participates_one(self):
+        # Both CYS in SS_BOND should participate (=1.0).
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_ss(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["disulfide"])
+        v = d["SS_BOND"]
+        cys_indices = [i for i, a in enumerate(SS_BOND_SEQ) if a == "C"]
+        for i in cys_indices:
+            assert v[i, 0] == 1.0
+
+    def test_valid_disulfide_partner_distance_finite(self):
+        # Bonded CYS get a finite partner_distance (≤ 1.0 after /5 norm).
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_ss(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["disulfide"])
+        v = d["SS_BOND"]
+        cys_indices = [i for i, a in enumerate(SS_BOND_SEQ) if a == "C"]
+        for i in cys_indices:
+            assert np.isfinite(v[i, 1])
+            assert 0 < v[i, 1] <= 1.0
+
+    def test_valid_disulfide_free_cys_participates_zero(self):
+        # AF_TINY has 2 CYS that are too far apart (helical, 20 residues
+        # apart) to form a disulfide → participates=0.0, distance=NaN.
+        df = pd.DataFrame({"entry": ["AF_TINY"],
+                           "sequence": ["ACDEFGHIKLMNPQRSTVWYACDEFGHIKL"]})
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=df, pdb_folder=str(PDB_FIXTURES),
+                                  features=["disulfide"])
+        v = d["AF_TINY"]
+        # CYS at positions 2 and 22 (1-indexed) = idx 1 and 21.
+        for i in (1, 21):
+            assert v[i, 0] == 0.0
+            assert np.isnan(v[i, 1])
+
+    def test_valid_disulfide_build_cat(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        df_cat = stp.build_cat(features=["disulfide"])
+        assert df_cat.shape == (2, 5)
+        assert (df_cat[ut.COL_CAT] == "Structure").all()
+        assert (df_cat[ut.COL_SUBCAT] == "Disulfide bond (CYS-CYS)").all()
+
+    def test_valid_disulfide_combined_with_other_features(self):
+        # disulfide composes cleanly with bfactor / plddt.
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_ss(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["disulfide", "bfactor"])
+        # 2 (disulfide) + 1 (bfactor) = 3
+        assert d["SS_BOND"].shape == (len(SS_BOND_SEQ), 3)
+
+    def test_valid_disulfide_missing_pdb_nan_default(self, tmp_path):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, df_out = stp.encode_pdb(df_seq=_df_ss(),
+                                       pdb_folder=str(tmp_path),
+                                       features=["disulfide"])
+        assert np.isnan(d["SS_BOND"]).all()
+        assert not bool(df_out["pdb_ok"].iloc[0])
+
+    def test_valid_disulfide_drop_on_missing(self, tmp_path):
+        df = pd.DataFrame({"entry": ["SS_BOND", "GONE"],
+                           "sequence": [SS_BOND_SEQ, "ACDE"]})
+        # Copy SS_BOND.pdb to tmp; GONE is missing.
+        from pathlib import Path
+        (tmp_path / "SS_BOND.pdb").write_text(
+            (PDB_FIXTURES / "SS_BOND.pdb").read_text())
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, df_out = stp.encode_pdb(df_seq=df, pdb_folder=str(tmp_path),
+                                       features=["disulfide"],
+                                       on_failure="drop")
+        assert "SS_BOND" in d and "GONE" not in d
+        assert df_out["entry"].tolist() == ["SS_BOND"]
+
+    def test_valid_disulfide_partner_distance_normalized(self):
+        # SS_BOND fixture has SG-SG distance ≈ 1.308 Å → normalized ≈ 0.262.
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_ss(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["disulfide"])
+        v = d["SS_BOND"]
+        # Both bonded CYS should have the same partner distance ≈ 0.262.
+        np.testing.assert_allclose(v[1, 1], 0.262, atol=0.01)
+        np.testing.assert_allclose(v[4, 1], 0.262, atol=0.01)

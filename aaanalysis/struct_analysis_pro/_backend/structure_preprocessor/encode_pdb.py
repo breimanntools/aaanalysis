@@ -5,7 +5,7 @@ and from biopython's surface tools (``Bio.PDB.ResidueDepth``, which needs
 the external ``msms`` binary). The frontend ``encode_pdb`` validates inputs,
 opens the PDB once per entry, then dispatches by feature key.
 """
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -483,3 +483,76 @@ def encode_hse(structure, sequence: str) -> Tuple[np.ndarray, float]:
     raw = np.column_stack([np.asarray(aligned_up, dtype=np.float64),
                            np.asarray(aligned_down, dtype=np.float64)])
     return normalize("hse", raw), identity
+
+
+# --- Disulfide-bond encoder (v1.2) -------------------------------------------
+def encode_disulfide(structure, sequence: str
+                     ) -> Tuple[np.ndarray, float]:
+    """Per-residue disulfide bond as ``(L, 2)``: [participates, partner_distance].
+
+    Detects disulfide bonds by finding pairs of CYS residues whose SG
+    sulfur atoms are within 2.5 Å of each other (the standard SS-bond
+    threshold). For each residue:
+      - column 0 (`participates`): 1.0 if the residue is a CYS engaged in
+        a disulfide bond, 0.0 if it's a CYS that is NOT in a disulfide,
+        NaN for non-CYS residues.
+      - column 1 (`partner_distance`): SG-SG distance to the nearest CYS
+        partner within 2.5 Å, in Å; NaN for non-CYS residues or
+        unbonded CYS.
+
+    Both columns are normalized by the registry's `disulfide` recipe to
+    `[0, 1]`: the participates dim is identity (already boolean), and the
+    distance dim is `clip(x / 5, 0, 1)` (5 Å as a generous upper bound).
+    """
+    chains = _collect_chain_residues(structure)
+    if not chains:
+        return np.full((len(sequence), 2), np.nan), 0.0
+    chain, residues, atom_seq, identity = _pick_best_chain_records(
+        sequence, chains)
+    if chain is None:
+        return np.full((len(sequence), 2), np.nan), 0.0
+    # Build per-residue SG coordinates (NaN for non-CYS).
+    sg_coords: List[Optional[np.ndarray]] = []
+    is_cys: List[bool] = []
+    for residue, _ in residues:
+        if residue.get_resname() != "CYS":
+            sg_coords.append(None)
+            is_cys.append(False)
+            continue
+        is_cys.append(True)
+        sg = None
+        for atom in residue.get_atoms():
+            if atom.get_name() == "SG":
+                sg = np.asarray(atom.get_coord(), dtype=np.float64)
+                break
+        sg_coords.append(sg)
+    # Pairwise SG-SG distance: find each CYS's nearest partner within 2.5 Å.
+    n_res = len(residues)
+    atom_participates: List[float] = []
+    atom_partner_dist: List[float] = []
+    for i in range(n_res):
+        if not is_cys[i] or sg_coords[i] is None:
+            atom_participates.append(float("nan"))
+            atom_partner_dist.append(float("nan"))
+            continue
+        # Search for nearest CYS partner within 2.5 Å.
+        best_dist = float("inf")
+        for j in range(n_res):
+            if i == j or not is_cys[j] or sg_coords[j] is None:
+                continue
+            d = float(np.linalg.norm(sg_coords[i] - sg_coords[j]))
+            if d <= 2.5 and d < best_dist:
+                best_dist = d
+        if np.isfinite(best_dist):
+            atom_participates.append(1.0)
+            atom_partner_dist.append(best_dist)
+        else:
+            atom_participates.append(0.0)
+            atom_partner_dist.append(float("nan"))
+    aligned_part = _align_atom_values_to_target(
+        sequence, atom_seq, atom_participates)
+    aligned_dist = _align_atom_values_to_target(
+        sequence, atom_seq, atom_partner_dist)
+    raw = np.column_stack([np.asarray(aligned_part, dtype=np.float64),
+                           np.asarray(aligned_dist, dtype=np.float64)])
+    return normalize("disulfide", raw), identity
