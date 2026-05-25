@@ -37,7 +37,8 @@ from ._backend.structure_preprocessor.encode_pdb import (
     encode_plddt, encode_plddt_disorder, encode_plddt_tier,
     encode_chi1_sincos, encode_chi2_sincos,
     encode_ca_centroid_dist, encode_ca_centroid_dist_norm,
-    encode_contact_count_8A, encode_contact_count_12A)
+    encode_contact_count_8A, encode_contact_count_12A,
+    encode_hse)
 from ._backend.structure_preprocessor._extras import (
     is_msms_available, check_msms_available)
 from ._backend.structure_preprocessor._file_format import (
@@ -365,6 +366,7 @@ class StructurePreprocessor:
       ``ca_centroid_dist_norm``     [0, ~2] (Rg units)          ``clip(x / 2, 0, 1)``                      ``x * 2``  (lossy when ≥1)
       ``contact_count_8A``          [0, ~30]                    ``clip(x / 30, 0, 1)``                     ``x * 30``  (lossy when ≥1)
       ``contact_count_12A``         [0, ~80]                    ``clip(x / 80, 0, 1)``                     ``x * 80``  (lossy when ≥1)
+      ``hse``                       [0, ~30]                    ``clip(x / 30, 0, 1)``                     ``x * 30``  (lossy when ≥1)
       ``pae_row_*`` / ``pae_local_mean`` / ``pae_distal_mean`` / ``pae_band_means``
                                     [0, 31.75] Å                ``clip(x / 31.75, 0, 1)``                  ``x * 31.75``
       ``pae_asymmetry``             [0, ~10] Å                  ``clip(x / 10, 0, 1)``                     ``x * 10``  (lossy when ≥1)
@@ -771,6 +773,8 @@ class StructurePreprocessor:
                     elif key == "contact_count_12A":
                         block, identity = encode_contact_count_12A(
                             structure, seq)
+                    elif key == "hse":
+                        block, identity = encode_hse(structure, seq)
                     else:
                         raise RuntimeError(
                             f"Internal: feature key {key!r} not in "

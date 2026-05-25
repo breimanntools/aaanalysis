@@ -439,3 +439,47 @@ def encode_contact_count_12A(structure, sequence: str
     return _encode_contact_count(structure, sequence,
                                  radius_A=12.0, min_seq_sep=5,
                                  feature_key="contact_count_12A")
+
+
+def encode_hse(structure, sequence: str) -> Tuple[np.ndarray, float]:
+    """Per-residue half-sphere exposure (HSE-Cα) as ``(L, 2)`` in ``[0, 1]``.
+
+    Uses :class:`Bio.PDB.HSExposure.HSExposureCA` with the standard 13 Å
+    radius (Hamelryck 2005). Returns ``[hse_up, hse_down]`` per residue:
+    counts of Cα atoms in the upper / lower half-sphere defined by the
+    pseudo-Cβ direction (mean of N and C neighbors, so the metric is
+    defined for glycine too — unlike HSExposureCB which requires a real
+    Cβ).
+
+    Counts are normalized by the registry recipe ``clip(x / 30, 0, 1)``;
+    real counts above 30 are rare (typical 13 Å sphere holds 10-20
+    neighbors).
+    """
+    from Bio.PDB.HSExposure import HSExposureCA
+    chains = _collect_chain_residues(structure)
+    if not chains:
+        return np.full((len(sequence), 2), np.nan), 0.0
+    try:
+        model = next(structure.get_models())
+    except StopIteration:
+        return np.full((len(sequence), 2), np.nan), 0.0
+    try:
+        HSExposureCA(model, radius=13.0)
+    except Exception as e:
+        raise RuntimeError(f"HSExposureCA failed: {e}") from e
+    chain, residues, atom_seq, identity = _pick_best_chain_records(
+        sequence, chains)
+    if chain is None:
+        return np.full((len(sequence), 2), np.nan), 0.0
+    atom_up: List[float] = []
+    atom_down: List[float] = []
+    for residue, _ in residues:
+        up = residue.xtra.get("EXP_HSE_A_U")
+        down = residue.xtra.get("EXP_HSE_A_D")
+        atom_up.append(float(up) if up is not None else float("nan"))
+        atom_down.append(float(down) if down is not None else float("nan"))
+    aligned_up = _align_atom_values_to_target(sequence, atom_seq, atom_up)
+    aligned_down = _align_atom_values_to_target(sequence, atom_seq, atom_down)
+    raw = np.column_stack([np.asarray(aligned_up, dtype=np.float64),
+                           np.asarray(aligned_down, dtype=np.float64)])
+    return normalize("hse", raw), identity

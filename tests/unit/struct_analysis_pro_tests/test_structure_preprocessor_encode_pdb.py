@@ -666,3 +666,108 @@ class TestStpEncodePdbAFComplex:
         # 1 + 1 + 4 + 2 + 2 + 1 + 1 + 1 + 1 = 14
         assert df_cat.shape == (14, 5)
         assert (df_cat[ut.COL_CAT] == "Structure").all()
+
+
+# ----------------------------------------------------------------------
+# v1.1 — HSE (half-sphere exposure, Hamelryck 2005)
+# ----------------------------------------------------------------------
+class TestStpEncodePdbHSE:
+    """encode_pdb feature key 'hse' — Bio.PDB.HSExposureCA-based.
+
+    HSE is the Hamelryck-2005 directional ASA-like signal: counts of Cα atoms
+    in the upper / lower half-sphere defined by the pseudo-Cβ direction at a
+    13 Å radius. Computed via biopython's HSExposureCA (no Cβ requirement —
+    works on glycines too, unlike HSExposureCB).
+    """
+
+    def test_invalid_hse_with_wrong_method(self):
+        # 'hse' belongs to encode_pdb, not encode_dssp.
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError):
+            stp.encode_dssp(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+                            features=["hse"])
+
+    def test_valid_hse_shape(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["hse"])
+        assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 2)
+
+    def test_valid_hse_in_unit_interval(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["hse"])
+        vals = d["AF_TINY"]
+        finite = vals[~np.isnan(vals)]
+        assert (finite >= 0).all() and (finite <= 1).all()
+
+    def test_valid_hse_finite_for_internal_residues(self):
+        # HSExposureCA needs at least one neighbor on each side to define
+        # the pseudo-Cβ direction, so terminal residues come back NaN.
+        # The middle residues (≥ 2 from each terminus) should be finite.
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["hse"])
+        v = d["AF_TINY"]
+        # Middle 20 residues (rows 5-25) must all have finite hse_up + hse_down.
+        mid = v[5:25]
+        assert np.isfinite(mid).all()
+
+    def test_valid_hse_up_plus_down_correlates_with_cn(self):
+        # At the same radius, hse_up + hse_down ≈ total Cα contact number.
+        # On the helical AF_TINY fixture this should land in a sensible range
+        # (sum > 0 for internal residues).
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["hse"])
+        v = d["AF_TINY"]
+        mid = v[5:25]
+        total = mid.sum(axis=1)
+        # On a 30-residue helix, each interior residue sees ~10 neighbors
+        # within 13 Å → /30 normalization → values around 0.3-0.5.
+        assert (total > 0).all()
+        assert float(total.mean()) > 0.1
+
+    def test_valid_hse_combined_with_other_pdb_features(self):
+        # hse should compose cleanly with other encode_pdb keys.
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["hse", "plddt", "bfactor"])
+        # 2 + 1 + 1 = 4
+        assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 4)
+
+    def test_valid_hse_in_build_cat_resolves_to_structure(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        df_cat = stp.build_cat(features=["hse"])
+        # 2 rows (hse_up + hse_down), both under category='Structure'.
+        assert df_cat.shape == (2, 5)
+        assert (df_cat[ut.COL_CAT] == "Structure").all()
+        assert (df_cat[ut.COL_SUBCAT] == "Geometry_hse_ca").all()
+
+    def test_valid_hse_in_build_pseudo_scales(self):
+        # hse values get per-AA averaged for the corpus df_scales.
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["hse"])
+            df_scales = stp.build_pseudo_scales(
+                df_seq=_df_af(), dict_num=d, features=["hse"])
+        assert df_scales.shape == (20, 2)
+        assert list(df_scales.columns) == ["hse_up", "hse_down"]

@@ -69,6 +69,7 @@ NORMALIZATION_RECIPES: Dict[str, Callable] = {
     "ca_centroid_dist_norm":  _div(2.0),        # saturates at 2 Rg
     "contact_count_8A":       _div(30.0),       # saturates at 30
     "contact_count_12A":      _div(80.0),       # saturates at 80
+    "hse":                    _div(30.0),       # half-sphere counts, ~30 ceiling
     # AF PAE sidecar features (commit 3). AF documents the PAE saturation
     # cap at 31.75 Å; we divide by that and clip. ``pae_asymmetry`` is
     # bounded much lower in practice (asymmetry << absolute PAE) so we use
@@ -101,6 +102,7 @@ INVERSE_FORMULAS: Dict[str, str] = {
     "ca_centroid_dist_norm":  "x * 2       (lossy when ≥1, > 2 Rg are clipped)",
     "contact_count_8A":       "x * 30      (lossy when ≥1, counts > 30 are clipped)",
     "contact_count_12A":      "x * 80      (lossy when ≥1, counts > 80 are clipped)",
+    "hse":                    "x * 30      (HSE half-sphere counts; lossy when ≥1)",
     "pae_row_mean":           "x * 31.75   (Å, AF PAE saturation cap)",
     "pae_row_min":            "x * 31.75   (Å)",
     "pae_row_max":            "x * 31.75   (Å)",
@@ -199,6 +201,12 @@ REGISTRY: Dict[str, Dict] = {
         "dim_names": ["contact_count_12A"],
         "category": CATEGORY_STRUCTURE,
         "subcategory": "Geometry_contact_count_12A",
+    },
+    "hse": {
+        "method": ENCODER_PDB, "num_dims": 2,
+        "dim_names": ["hse_up", "hse_down"],
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Geometry_hse_ca",
     },
     # AF PAE sidecar features (commit 3).
     "pae_row_mean": {
