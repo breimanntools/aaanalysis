@@ -47,9 +47,11 @@ class TestGetSplitKws:
         """Test 'steps_pattern' with various list sizes."""
         sf = aa.SequenceFeature()
         if len(steps_pattern) > 0:
-            result = sf.get_split_kws(steps_pattern=steps_pattern, len_max=steps_pattern[0]+1)
+            # n_min=1 so a single shortest step fits within len_max (avoids the
+            # empty-Pattern-bucket warning when len_max barely exceeds a step)
+            result = sf.get_split_kws(steps_pattern=steps_pattern, len_max=steps_pattern[0]+1, n_min=1)
             assert isinstance(result, dict)
-        result = sf.get_split_kws(steps_pattern=[9, 15], len_max=10)
+        result = sf.get_split_kws(steps_pattern=[9, 15], len_max=10, n_min=1)
         assert isinstance(result, dict)
 
 
@@ -74,7 +76,9 @@ class TestGetSplitKws:
     def test_len_max(self, len_max):
         """Test 'len_max' within valid range."""
         sf = aa.SequenceFeature()
-        result = sf.get_split_kws(len_max=len_max)
+        # n_min=1 so the default steps_pattern fits even at the smallest len_max
+        # (default n_min=2 empties the Pattern bucket when 2*min(steps) > len_max)
+        result = sf.get_split_kws(len_max=len_max, n_min=1)
         assert isinstance(result, dict)
 
     @settings(max_examples=10)
@@ -168,7 +172,7 @@ class TestGetSplitKwsComplex:
         split_types=st.sampled_from([None, "Segment", "Pattern", "PeriodicPattern", ["Segment", "Pattern"], ["Pattern", "PeriodicPattern"], ["Segment", "PeriodicPattern"]]),
         n_split_min=st.integers(min_value=1, max_value=14),
         n_split_max=st.integers(min_value=2, max_value=15),
-        steps_pattern=st.lists(st.integers(min_value=1), min_size=1, max_size=8),
+        steps_pattern=st.lists(st.integers(min_value=1, max_value=5), min_size=1, max_size=8),
         n_min=st.integers(min_value=1, max_value=4),
         n_max=st.integers(min_value=2, max_value=4),
         len_max=st.integers(min_value=4, max_value=15),
@@ -181,8 +185,11 @@ class TestGetSplitKwsComplex:
             n_split_min, n_split_max = n_split_max, n_split_min  # Ensure min <= max
         if n_min > n_max:
             n_min, n_max = n_max, n_min  # Ensure n_min <= n_max
-        if steps_pattern and len_max <= min(steps_pattern):
-            len_max = min(steps_pattern) + 1  # Ensure len_max > min(steps_pattern)
+        if steps_pattern:
+            lo = min(steps_pattern)
+            # len_max must exceed the smallest step (else ValueError) and admit the
+            # shortest pattern span n_min*lo (else the Pattern bucket is empty -> warns)
+            len_max = max(len_max, lo + 1, n_min * lo)
         if len(steps_pattern) > 1 and len(steps_periodicpattern) == 2:
             result = sf.get_split_kws(split_types=split_types, n_split_min=n_split_min, n_split_max=n_split_max,
                                       steps_pattern=steps_pattern, n_min=n_min, n_max=n_max,
@@ -207,6 +214,10 @@ class TestGetSplitKwsComplex:
             n_split_min, n_split_max = n_split_max, n_split_min  # Ensure min <= max
         if n_min > n_max:
             n_min, n_max = n_max, n_min  # Ensure n_min <= n_max
+        lo = min(steps_pattern)
+        # admit the shortest pattern span n_min*lo so the Pattern bucket is
+        # non-empty (else check_split_kws warns about zero Pattern features)
+        len_max = max(len_max, lo + 1, n_min * lo)
         if len(steps_pattern) > 1 and len(steps_periodicpattern) == 2:
             result = sf.get_split_kws(split_types=split_types, n_split_min=n_split_min, n_split_max=n_split_max,
                                       steps_pattern=steps_pattern, n_min=n_min, n_max=n_max,
