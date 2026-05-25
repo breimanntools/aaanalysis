@@ -69,7 +69,8 @@ def _disulfide_participates_distance(arr):
 # II Main Functions
 ENCODER_DSSP = "encode_dssp"
 ENCODER_PDB = "encode_pdb"
-ENCODER_PAE = "encode_pae"   # used by v1.1 PAE keys (commit 3)
+ENCODER_PAE = "encode_pae"      # used by v1.1 PAE keys (commit 3)
+ENCODER_DOMAINS = "encode_domains"   # used by v1.2 domain-segmentation keys
 
 
 # Normalization recipes — keyed by feature_key. Each value is a callable
@@ -99,6 +100,11 @@ NORMALIZATION_RECIPES: Dict[str, Callable] = {
     "hbond_donor":            _hbond_offset_energy,
     "hbond_acceptor":         _hbond_offset_energy,
     "disulfide":              _disulfide_participates_distance,
+    # Domain segmentation features (v1.2 commit 3).
+    "domain_boundary":        _identity,           # binary {0, 1}
+    "domain_relative_position": _identity,         # already in [0, 1]
+    "domain_size":            _div(200.0),         # residues, cap at 200
+    "n_domains_in_protein":   _div(10.0),          # domains per protein, cap at 10
     # AF PAE sidecar features (commit 3). AF documents the PAE saturation
     # cap at 31.75 Å; we divide by that and clip. ``pae_asymmetry`` is
     # bounded much lower in practice (asymmetry << absolute PAE) so we use
@@ -135,6 +141,10 @@ INVERSE_FORMULAS: Dict[str, str] = {
     "hbond_donor":            "[offset: x*100 - 50  ;  energy: -x*10 kcal/mol]",
     "hbond_acceptor":         "[offset: x*100 - 50  ;  energy: -x*10 kcal/mol]",
     "disulfide":              "[participates: identity (boolean)  ;  partner_distance: x*5 Å]",
+    "domain_boundary":         "identity (binary {0, 1})",
+    "domain_relative_position": "identity (already in [0, 1])",
+    "domain_size":             "x * 200  (residues; lossy when ≥1, domains > 200 res are clipped)",
+    "n_domains_in_protein":    "x * 10   (domains; lossy when ≥1, > 10 domains are clipped)",
     "pae_row_mean":           "x * 31.75   (Å, AF PAE saturation cap)",
     "pae_row_min":            "x * 31.75   (Å)",
     "pae_row_max":            "x * 31.75   (Å)",
@@ -273,6 +283,34 @@ REGISTRY: Dict[str, Dict] = {
         "dim_names": ["disulfide_participates", "disulfide_partner_distance"],
         "category": CATEGORY_STRUCTURE,
         "subcategory": "Disulfide bond (CYS-CYS)",
+    },
+    # Domain segmentation (v1.2). Read pre-computed Merizo / ChainSaw /
+    # AFragmenter output from a per-entry text or TSV file; no in-process
+    # PyTorch dependency. Per-residue features derived from the parsed
+    # chopping string.
+    "domain_boundary": {
+        "method": ENCODER_DOMAINS, "num_dims": 1,
+        "dim_names": ["domain_boundary"],
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Domain boundary",
+    },
+    "domain_relative_position": {
+        "method": ENCODER_DOMAINS, "num_dims": 1,
+        "dim_names": ["domain_relative_position"],
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Domain relative position",
+    },
+    "domain_size": {
+        "method": ENCODER_DOMAINS, "num_dims": 1,
+        "dim_names": ["domain_size"],
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Domain size",
+    },
+    "n_domains_in_protein": {
+        "method": ENCODER_DOMAINS, "num_dims": 1,
+        "dim_names": ["n_domains_in_protein"],
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Number of domains in protein",
     },
     # AF PAE sidecar features.
     "pae_row_mean": {

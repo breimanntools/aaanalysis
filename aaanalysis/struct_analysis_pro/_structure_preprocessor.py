@@ -22,6 +22,7 @@ import pandas as pd
 import aaanalysis.utils as ut
 from ._backend.structure_preprocessor.feature_registry import (
     REGISTRY, VALID_FEATURE_KEYS, ENCODER_DSSP, ENCODER_PDB, ENCODER_PAE,
+    ENCODER_DOMAINS,
     INVERSE_FORMULAS, validate_feature_keys, get_total_dims, get_dim_names,
     get_categories, get_subcategories)
 from ._backend.structure_preprocessor.run_dssp_full import (
@@ -49,6 +50,11 @@ from ._backend.structure_preprocessor.encode_pae import (
     encode_pae_row_mean, encode_pae_row_min, encode_pae_row_max,
     encode_pae_local_mean, encode_pae_distal_mean,
     encode_pae_asymmetry, encode_pae_band_means)
+from ._backend.structure_preprocessor._domain_io import (
+    load_chopping, resolve_domain_path)
+from ._backend.structure_preprocessor.encode_domains import (
+    encode_domain_boundary, encode_domain_relative_position,
+    encode_domain_size, encode_n_domains_in_protein)
 
 
 # Same path-safety regex used by the existing get_dssp; reject characters
@@ -1064,6 +1070,179 @@ class StructurePreprocessor:
             dict_pae = {k: v for k, v in dict_pae.items() if k in kept_entries}
         session_tmp.cleanup()
         return dict_pae, df_aug
+
+    # ------------------------------------------------------------------
+    # encode_domains  (v1.2 commit 3)
+    # ------------------------------------------------------------------
+    def encode_domains(
+        self,
+        df_seq: pd.DataFrame = None,
+        domain_folder: Union[str, Path] = None,
+        features: List[str] = None,
+        on_failure: str = "nan",
+        verbose: Optional[bool] = None,
+    ) -> Tuple[Dict[str, np.ndarray], pd.DataFrame]:
+        """Read pre-computed domain segmentation files → ``dict_domains``.
+
+        Bring-your-own-segmentation: the user pre-runs Merizo / ChainSaw /
+        AFragmenter / a hand-curated domain table on their PDB files and
+        saves the **chopping string** (Merizo/ChainSaw native format) to
+        one file per entry in ``domain_folder``. Two file formats are
+        accepted by the resolver (looked up by entry name):
+
+          - ``<entry>.txt`` — first non-empty line is the chopping string,
+            e.g. ``6-18_296-459,19-156``.
+          - ``<entry>.tsv`` — Merizo/ChainSaw TSV output with a
+            ``chopping`` header (first data row used).
+
+        The chopping format: domains separated by commas, segments within
+        a domain separated by underscores; segments are 1-based inclusive
+        ``start-end``. Discontinuous domains supported.
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein
+            identifiers and a ``sequence`` column. ``len(sequence)`` is
+            used as the L for each per-residue output tensor.
+        domain_folder : str or pathlib.Path
+            Directory containing one chopping file per row of ``df_seq``.
+        features : list of str
+            Feature keys belonging to ``encode_domains``: any subset of
+            ``{domain_boundary, domain_relative_position, domain_size,
+            n_domains_in_protein}``. All outputs normalized to ``[0, 1]``
+            (NaN for residues unassigned to any domain).
+        on_failure : {'nan', 'drop', 'raise'}, default='nan'
+            What to do for entries whose chopping file is missing or
+            unparseable. ``'nan'`` fills with NaN-only tensors;
+            ``'drop'`` removes those entries; ``'raise'`` re-raises.
+        verbose : bool, optional
+            Override instance verbosity for this call only.
+
+        Returns
+        -------
+        dict_domains : dict[str, np.ndarray]
+            ``{entry: (L_entry, D_total) ndarray}`` per-residue
+            domain-derived features in the order of ``features``.
+        df_seq_out : pd.DataFrame
+            Echo of ``df_seq`` plus a boolean ``domain_ok`` column.
+
+        Raises
+        ------
+        ValueError
+            On invalid arguments or feature keys not in this method's
+            registry slice.
+        RuntimeError
+            If any entry failed under ``on_failure='raise'``.
+
+        Notes
+        -----
+        - v1.2 deliberately does NOT bundle a segmentation tool runtime
+          (no PyTorch, no model weights, no Merizo / ChainSaw / AFragmenter
+          pinned). Keep ``aaanalysis[pro]`` lean; pre-run the tool of your
+          choice, then ingest its chopping output here.
+        - Merizo: https://github.com/psipred/Merizo (~2 s per 425-residue
+          chain on CPU, bundled weights, pip-installable).
+        - ChainSaw: https://github.com/JudeWells/Chainsaw (manual install).
+        - Output chopping strings: same `chopping` column in both tools'
+          TSV output, drop-in compatible.
+        """
+        verbose = ut.check_verbose(self._verbose if verbose is None else verbose)
+        ut.check_df_seq(df_seq=df_seq)
+        if ut.COL_SEQ not in df_seq.columns:
+            raise ValueError(
+                f"'df_seq' should contain a '{ut.COL_SEQ}' column for "
+                f"encode_domains")
+        if "domain_ok" in df_seq.columns:
+            raise ValueError(
+                f"'df_seq' should not already contain a 'domain_ok' column. "
+                f"Drop it before calling encode_domains.")
+        if domain_folder is None:
+            raise ValueError("'domain_folder' should not be None")
+        ut.check_folder_path_exists(folder_path=str(domain_folder),
+                                    name="domain_folder")
+        validate_feature_keys(features, allowed_method=ENCODER_DOMAINS)
+        _check_handle_failure(on_failure)
+        ut.check_bool(name="verbose", val=verbose)
+        domain_folder = Path(domain_folder)
+        entries = df_seq[ut.COL_ENTRY].tolist()
+        sequences = df_seq[ut.COL_SEQ].tolist()
+        D_total = get_total_dims(features)
+        dict_domains: Dict[str, np.ndarray] = {}
+        ok_per_row: List[bool] = []
+        for entry, seq in zip(entries, sequences):
+            _check_entry_is_filesystem_safe(entry)
+            L = len(seq)
+            dom_path = resolve_domain_path(folder=domain_folder, entry=entry)
+            if dom_path is None:
+                warnings.warn(
+                    f"Domain file for entry '{entry}' not found in "
+                    f"'{domain_folder}' (tried .txt/.tsv/.csv); "
+                    f"row will have domain_ok=False",
+                    UserWarning)
+                dict_domains[entry] = np.full((L, D_total), np.nan,
+                                              dtype=np.float64)
+                ok_per_row.append(False)
+                continue
+            try:
+                domains = load_chopping(dom_path)
+            except RuntimeError as e:
+                warnings.warn(
+                    f"Domain load failed for entry '{entry}': {e}; "
+                    f"row will have domain_ok=False",
+                    UserWarning)
+                dict_domains[entry] = np.full((L, D_total), np.nan,
+                                              dtype=np.float64)
+                ok_per_row.append(False)
+                continue
+            blocks: List[np.ndarray] = []
+            entry_ok = True
+            for key in features:
+                try:
+                    if key == "domain_boundary":
+                        block = encode_domain_boundary(L, domains)
+                    elif key == "domain_relative_position":
+                        block = encode_domain_relative_position(L, domains)
+                    elif key == "domain_size":
+                        block = encode_domain_size(L, domains)
+                    elif key == "n_domains_in_protein":
+                        block = encode_n_domains_in_protein(L, domains)
+                    else:
+                        raise RuntimeError(
+                            f"Internal: feature key {key!r} not in "
+                            f"encode_domains alphabet")
+                    blocks.append(block)
+                    if verbose:
+                        ut.print_out(
+                            f"   encode_domains: entry={entry}, key={key}, "
+                            f"n_domains={len(domains)}, L={L}")
+                except RuntimeError as e:
+                    warnings.warn(
+                        f"Domain encoder '{key}' failed for entry "
+                        f"'{entry}': {e}; this row will have "
+                        f"domain_ok=False",
+                        UserWarning)
+                    entry_ok = False
+                    break
+            if not entry_ok:
+                dict_domains[entry] = np.full((L, D_total), np.nan,
+                                              dtype=np.float64)
+                ok_per_row.append(False)
+                continue
+            arr = np.concatenate(blocks, axis=1) if len(blocks) > 1 \
+                else blocks[0]
+            dict_domains[entry] = arr
+            ok_per_row.append(True)
+        df_aug = df_seq.copy()
+        df_aug["domain_ok"] = ok_per_row
+        df_aug, ok_after, keep_idx = _drop_or_raise_failed_entries(
+            df_seq=df_aug, ok_per_row=ok_per_row, on_failure=on_failure,
+            source_label="encode_domains")
+        if on_failure == "drop":
+            kept_entries = {entries[i] for i in keep_idx}
+            dict_domains = {k: v for k, v in dict_domains.items()
+                            if k in kept_entries}
+        return dict_domains, df_aug
 
     # ------------------------------------------------------------------
     # build_pseudo_scales + build_cat
