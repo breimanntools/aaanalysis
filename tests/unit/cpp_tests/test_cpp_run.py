@@ -245,3 +245,34 @@ class TestCPPRun:
         for n_batches in list_n_batches:
             with pytest.raises(ValueError):
                 cpp.run(labels=labels, n_jobs=1, n_batches=n_batches)
+
+
+class TestCPPRunComplex:
+    """Edge-case and multi-parameter interactions for the CPP.run() method."""
+
+    def test_empty_pattern_bucket_silently_dropped(self):
+        # Regression: a Pattern config whose every repeated-step cumsum exceeds
+        # len_max (steps=[3] -> cumsum([3, 3])=6 > len_max=4) yields zero Pattern
+        # splits for ALL parts. This previously crashed with a ZeroDivisionError
+        # in the vectorized pre-filter (per_scale_bytes == 0). It must now run,
+        # warn at construction, and drop Pattern features silently while keeping
+        # Segment / PeriodicPattern features. Config taken verbatim from a real
+        # downstream grid sweep.
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=6)
+        labels = df_seq["label"].to_list()
+        df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq, list_parts=["tmd_jmd"])
+        df_scales = aa.load_scales().T.head(4).T
+        split_kws = {
+            "Segment": {"n_split_min": 1, "n_split_max": 4},
+            "Pattern": {"steps": [3], "n_min": 2, "n_max": 3, "len_max": 4},
+            "PeriodicPattern": {"steps": [3, 4]},
+        }
+        with pytest.warns(UserWarning, match="Pattern"):
+            cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws)
+        for vectorized in [True, False]:
+            df_feat = cpp.run(labels=labels, n_jobs=1, vectorized=vectorized)
+            assert isinstance(df_feat, pd.DataFrame)
+            assert len(df_feat) > 0
+            # Pattern features were silently dropped; "-Pattern(" excludes the
+            # surviving "-PeriodicPattern(" features (no leading dash inside it).
+            assert not df_feat["feature"].str.contains("-Pattern(", regex=False).any()

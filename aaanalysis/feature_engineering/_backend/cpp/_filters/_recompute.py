@@ -120,7 +120,18 @@ def iter_scale_chunks(arr_3d=None, scale_indices=None, pos_buf=None,
     if K == 0:
         return
 
-    per_scale_bytes = n_samples * pos_buf.shape[1] * max_split_len * 8
+    # Guard: a (split_type, part) bucket can yield zero splits. The labels_*
+    # generators are part-length independent, so n_splits == 0 means the
+    # split-type CONFIG produces no valid splits for ANY part (e.g. a Pattern
+    # config whose every repeated-step cumsum exceeds len_max). Legacy CPP
+    # silently dropped these; the vectorized path must too, otherwise
+    # per_scale_bytes is 0 and the chunk-size computation divides by zero.
+    # (check_split_kws emits a UserWarning at validation time for this config.)
+    n_splits = pos_buf.shape[1]
+    if n_splits == 0 or n_samples == 0:
+        return
+
+    per_scale_bytes = n_samples * n_splits * max_split_len * 8
     chunk_size = max(1, int(max_mem_mb * 1024 * 1024 / per_scale_bytes))
     chunk_size = min(chunk_size, K)
     i_row = np.arange(n_samples)[:, None, None]

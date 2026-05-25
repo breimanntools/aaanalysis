@@ -135,6 +135,40 @@ _Avoid_: pae_dict, dict_alignment_error.
 - Plus the 8 AAontology categories (`ASA/Volume`, `Composition`, `Conformation`, `Energy`, `Others`, `Polarity`, `Shape`, `Structure-Activity`).
 The redundancy filter's `check_cat=True` arm groups features by these top-level buckets; fine-grained semantic splits (e.g. `'DSSP_SS_3state'` vs `'Flexibility_bfactor'`) live in `subcategory`.
 
+### CPP split vocabulary
+
+**split**:
+A rule that selects a subset of residue positions within a sequence **part**
+(`jmd_n` / `tmd` / `jmd_c`), over which a scale's per-residue values are
+averaged to produce one feature value. A feature ID is `PART-SPLIT-SCALE`
+(e.g. `TMD-Segment(2,4)-ANDN920101`). Splits are residue-content-agnostic —
+they map a part length to position indices, independent of the actual amino
+acids.
+_Avoid_: window (reserved for `AAWindowSampler`), segment (only one split type).
+
+**split type**:
+One of three split families, configured per-type via **split_kws**:
+`Segment(i_th, n_split)` (the i-th of `n_split` contiguous chunks),
+`Pattern(terminus, positions)` (fixed offsets from a terminus, bounded by
+`len_max`), and `PeriodicPattern(terminus, step1/step2, start)` (alternating
+periodic offsets). Exposed as `ut.LIST_SPLIT_TYPES`. The label generators
+(`SplitRange.labels_*`) are **part-length independent** — they depend only on
+`split_kws`, not on any part's length.
+_Avoid_: split mode, split kind.
+
+**empty split bucket**:
+A `(split type, part)` pairing that produces zero splits. Because label
+generation is part-length independent, this happens only when the split-type
+*config itself* yields no labels — and in practice only for **Pattern**, when
+`n_min * steps[0] > len_max` (the shortest pattern already overflows `len_max`;
+Segment always yields ≥1, PeriodicPattern always yields splits once its two
+steps validate). Such buckets are **silently dropped** from feature generation
+(legacy CPP behavior, preserved for parity), so the run proceeds with the
+remaining split types rather than erroring. `check_split_kws` emits a
+`UserWarning` at validation time naming the offending Pattern config, since a
+whole-type drop is almost always a user misconfiguration of `len_max` / `steps`.
+_Avoid_: empty split, dropped feature.
+
 ### Numerical-mode CPP vocabulary
 
 **dict_num**:
@@ -157,6 +191,7 @@ _Avoid_: _embed_filters/ (too narrow), _filters_num/ (legacy PR5 name), _filters
 - A **control window** is a **reference window** produced by the **generator** in `sample_synthetic` (no source entry).
 - Every row in a `segments`-mode output has an **entry_win**; for non-synthetic rows it is globally unique by construction across calls; for **control windows** it is unique per call only.
 - The **identity filter** uses **test windows** as the anti-leakage reference; the **motif filter** uses a **PWM** as the gate.
+- A CPP feature is one **split** applied to one **part** scored by one scale; an **empty split bucket** contributes no features and is silently dropped (with a validation-time warning for the Pattern case).
 
 ## Example dialogue
 

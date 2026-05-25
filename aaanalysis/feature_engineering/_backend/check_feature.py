@@ -116,6 +116,18 @@ def check_split_kws(split_kws=None, accept_none=True):
         for i, step in enumerate(steps_pattern):
             ut.check_number_range(name=f"{ut.STR_PATTERN}[steps_pattern](step{i+1})", val=step, just_int=True,
                                   min_val=1)
+        # A Pattern config can pass every per-argument check yet still yield zero
+        # valid splits. A pattern of n repeats spans at minimum n * steps[0]
+        # (smallest step used throughout); since labels are part-length
+        # independent, the config produces no splits for ANY part when even the
+        # smallest repeat count exceeds len_max: n_min * steps[0] > len_max
+        # (e.g. steps=[3], n_min=2, len_max=4 -> 6 > 4). Such a config silently
+        # contributes zero Pattern features downstream — warn so the user can fix
+        # 'len_max'/'steps'/'n_min' rather than silently losing the split type.
+        if n_min * steps_pattern[0] > len_max:
+            warnings.warn(f"'{ut.STR_PATTERN}' split config (steps={steps_pattern}, n_min={n_min}, "
+                          f"n_max={n_max}, len_max={len_max}) yields no valid splits and will contribute "
+                          f"zero features. Increase 'len_max' or adjust 'steps'/'n_min'.", UserWarning)
     # Check PeriodicPattern
     if ut.STR_PERIODIC_PATTERN in split_kws:
         periodicpattern_args = split_kws[ut.STR_PERIODIC_PATTERN]
