@@ -31,10 +31,13 @@ def _df_one(seq="ACDEFGHIK"):
 
 
 def _canned_full(seq, ss_char="H", asa_val=80.0, phi_val=-60.0,
-                 psi_val=-45.0):
+                 psi_val=-45.0, hb_d_off=-4, hb_d_en=-2.0,
+                 hb_a_off=4, hb_a_en=-2.0):
     L = len(seq)
     return [("A", seq, [ss_char] * L,
-             [asa_val] * L, [phi_val] * L, [psi_val] * L)]
+             [asa_val] * L, [phi_val] * L, [psi_val] * L,
+             [hb_d_off] * L, [hb_d_en] * L,
+             [hb_a_off] * L, [hb_a_en] * L)]
 
 
 def _df_pre(seq="ACDEFGHIK"):
@@ -309,3 +312,162 @@ class TestStpEncodeDsspComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
             stp.encode_dssp(df_seq=_df_pre(), features=[3])
+
+
+# ----------------------------------------------------------------------
+# v1.2 — DSSP H-bonds (hbond_donor, hbond_acceptor)
+# ----------------------------------------------------------------------
+def _df_pre_with_hbonds(seq="ACDEFGHIK"):
+    """A df_seq with pre-populated DSSP list columns INCLUDING H-bonds."""
+    L = len(seq)
+    return pd.DataFrame({
+        "entry": ["P1"],
+        "sequence": [seq],
+        ut.COL_SS: [["H"] * L],
+        "asa": [[80.0] * L],
+        "phi": [[-60.0] * L],
+        "psi": [[-45.0] * L],
+        "hbond_donor_offset": [[-4] * L],
+        "hbond_donor_energy": [[-2.0] * L],
+        "hbond_acceptor_offset": [[4] * L],
+        "hbond_acceptor_energy": [[-2.0] * L],
+        ut.COL_DSSP_OK: [True],
+    })
+
+
+class TestStpEncodeDsspHBonds:
+    """encode_dssp feature keys 'hbond_donor' / 'hbond_acceptor' (v1.2).
+
+    DSSP exposes the primary NH→O (donor) and primary O→HN (acceptor)
+    partner residue offset + energy per residue. v1.2 surfaces these as
+    two (L, 2) feature keys, both normalized to [0, 1] via the per-key
+    recipe (offset shifted by +50/100, energy negated and divided by 10).
+    """
+
+    # ----- NEGATIVES (≥10) -----
+    def test_invalid_hbond_donor_wrong_method(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError):
+            stp.encode_pdb(df_seq=_df_pre_with_hbonds(),
+                           pdb_folder="/tmp",
+                           features=["hbond_donor"])
+
+    def test_invalid_hbond_acceptor_wrong_method(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError):
+            stp.encode_pdb(df_seq=_df_pre_with_hbonds(),
+                           pdb_folder="/tmp",
+                           features=["hbond_acceptor"])
+
+    def test_invalid_hbond_donor_unknown_key_collision(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError):
+            stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
+                            features=["hbond_donor_typo"])
+
+    def test_invalid_hbond_missing_pdb_folder_no_precomputed(self):
+        # When df_seq lacks H-bond columns and no pdb_folder, must raise.
+        stp = aa.StructurePreprocessor(verbose=False)
+        with pytest.raises(ValueError, match="pdb_folder"):
+            stp.encode_dssp(df_seq=_df_pre(), pdb_folder=None,
+                            features=["hbond_donor"])
+
+    def test_invalid_hbond_existing_collision_column(self, tmp_path):
+        df = _df_pre_with_hbonds()
+        stp = aa.StructurePreprocessor(verbose=False)
+        # get_dssp would refuse to overwrite a pre-existing hbond column.
+        with _mock_binary_present():
+            with pytest.raises(ValueError):
+                stp.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+                             features=["hbonds"])
+
+    # ----- POSITIVES (≥10) -----
+    def test_valid_hbond_donor_shape(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        d, _ = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
+                               features=["hbond_donor"])
+        assert d["P1"].shape == (9, 2)
+
+    def test_valid_hbond_acceptor_shape(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        d, _ = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
+                               features=["hbond_acceptor"])
+        assert d["P1"].shape == (9, 2)
+
+    def test_valid_hbond_in_unit_interval(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        d, _ = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
+                               features=["hbond_donor", "hbond_acceptor"])
+        v = d["P1"]
+        finite = v[~np.isnan(v)]
+        assert (finite >= 0).all() and (finite <= 1).all()
+
+    def test_valid_hbond_offset_normalization(self):
+        # donor offset = -4 → (x+50)/100 = 0.46
+        stp = aa.StructurePreprocessor(verbose=False)
+        d, _ = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
+                               features=["hbond_donor"])
+        v = d["P1"]
+        np.testing.assert_allclose(v[:, 0], 0.46, atol=1e-9)
+
+    def test_valid_hbond_energy_normalization(self):
+        # donor energy = -2.0 kcal/mol → clip(-(-2)/10, 0, 1) = 0.2
+        stp = aa.StructurePreprocessor(verbose=False)
+        d, _ = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
+                               features=["hbond_donor"])
+        v = d["P1"]
+        np.testing.assert_allclose(v[:, 1], 0.2, atol=1e-9)
+
+    def test_valid_hbond_combined_donor_acceptor(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        d, _ = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
+                               features=["hbond_donor", "hbond_acceptor"])
+        # 2 (donor) + 2 (acceptor) = 4
+        assert d["P1"].shape == (9, 4)
+
+    def test_valid_hbond_acceptor_offset_normalization(self):
+        # acceptor offset = +4 → (x+50)/100 = 0.54
+        stp = aa.StructurePreprocessor(verbose=False)
+        d, _ = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
+                               features=["hbond_acceptor"])
+        v = d["P1"]
+        np.testing.assert_allclose(v[:, 0], 0.54, atol=1e-9)
+
+    def test_valid_hbond_runs_dssp_inline(self, tmp_path):
+        # No pre-computed H-bond columns; DSSP is run inline.
+        df = _df_one()
+        stp = aa.StructurePreprocessor(verbose=False)
+        with _mock_binary_present(), \
+             patch(RUNNER, side_effect=lambda p: _canned_full("ACDEFGHIK")):
+            (tmp_path / "P1.pdb").write_text("dummy")
+            d, _ = stp.encode_dssp(
+                df_seq=df, pdb_folder=str(tmp_path),
+                features=["hbond_donor"])
+        assert d["P1"].shape == (9, 2)
+
+    def test_valid_hbond_build_cat(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        df_cat = stp.build_cat(features=["hbond_donor", "hbond_acceptor"])
+        # 2 + 2 = 4 dims, all under category='Structure'
+        assert df_cat.shape == (4, 5)
+        assert (df_cat[ut.COL_CAT] == "Structure").all()
+
+    def test_valid_hbond_subcategory_distinguishes(self):
+        stp = aa.StructurePreprocessor(verbose=False)
+        df_cat = stp.build_cat(features=["hbond_donor", "hbond_acceptor"])
+        unique = set(df_cat[ut.COL_SUBCAT].tolist())
+        assert {"Hydrogen bond (NH-O donor)",
+                "Hydrogen bond (O-NH acceptor)"}.issubset(unique)
+
+    def test_valid_hbond_get_dssp_extracts_hbond_cols(self, tmp_path):
+        # get_dssp(features=['hbonds']) appends 4 list columns.
+        df = _df_one()
+        stp = aa.StructurePreprocessor(verbose=False)
+        with _mock_binary_present(), \
+             patch(RUNNER, side_effect=lambda p: _canned_full("ACDEFGHIK")):
+            (tmp_path / "P1.pdb").write_text("dummy")
+            out = stp.get_dssp(df_seq=df, pdb_folder=str(tmp_path),
+                               features=["hbonds"])
+        for col in ("hbond_donor_offset", "hbond_donor_energy",
+                    "hbond_acceptor_offset", "hbond_acceptor_energy"):
+            assert col in out.columns

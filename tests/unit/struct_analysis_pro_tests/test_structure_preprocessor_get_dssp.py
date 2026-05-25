@@ -38,14 +38,23 @@ def _df_two():
 
 
 def _canned_full(seq, ss_char="H", asa_val=80.0, phi_val=-60.0,
-                 psi_val=-45.0):
-    """Stub run_dssp_full_for_entry_: one chain, full feature streams."""
+                 psi_val=-45.0, hb_d_off=-4, hb_d_en=-2.0,
+                 hb_a_off=4, hb_a_en=-2.0):
+    """Stub run_dssp_full_for_entry_: one chain, 8 numerical feature streams.
+
+    Defaults mimic a helix with i→i+4 H-bonds (donor offset -4, acceptor
+    offset +4; energy ~-2 kcal/mol = typical i+4 helix H-bond).
+    """
     L = len(seq)
     return [("A", seq,
              [ss_char] * L,
              [asa_val] * L,
              [phi_val] * L,
-             [psi_val] * L)]
+             [psi_val] * L,
+             [hb_d_off] * L,
+             [hb_d_en] * L,
+             [hb_a_off] * L,
+             [hb_a_en] * L)]
 
 
 # II Test Classes
@@ -211,7 +220,8 @@ class TestStpGetDssp:
         df = _df_one()
         chains = [("A", "ACDEFGHIK",
                    ["H", "G", "I", "E", "B", "T", "S", " ", "H"],
-                   [50.0] * 9, [-60.0] * 9, [-45.0] * 9)]
+                   [50.0] * 9, [-60.0] * 9, [-45.0] * 9,
+                   [-4] * 9, [-2.0] * 9, [4] * 9, [-2.0] * 9)]
         stp = aa.StructurePreprocessor(verbose=False)
         with _mock_binary_present(), \
              patch(RUNNER, side_effect=lambda p: chains):
@@ -224,7 +234,8 @@ class TestStpGetDssp:
     def test_valid_gap_omit_drops_unresolved(self, tmp_path):
         df = _df_one("ACDEFGHIK")
         chains = [("A", "ACDEF",
-                   ["H"] * 5, [80.0] * 5, [-60.0] * 5, [-45.0] * 5)]
+                   ["H"] * 5, [80.0] * 5, [-60.0] * 5, [-45.0] * 5,
+                   [-4] * 5, [-2.0] * 5, [4] * 5, [-2.0] * 5)]
         stp = aa.StructurePreprocessor(verbose=False)
         with _mock_binary_present(), \
              patch(RUNNER, side_effect=lambda p: chains):
@@ -309,7 +320,8 @@ class TestStpGetDsspComplex:
     def test_complex_gap_pad_keeps_length(self, tmp_path):
         df = _df_one("ACDEFGHIK")
         chains = [("A", "ACDEF",
-                   ["H"] * 5, [80.0] * 5, [-60.0] * 5, [-45.0] * 5)]
+                   ["H"] * 5, [80.0] * 5, [-60.0] * 5, [-45.0] * 5,
+                   [-4] * 5, [-2.0] * 5, [4] * 5, [-2.0] * 5)]
         stp = aa.StructurePreprocessor(verbose=False)
         with _mock_binary_present(), \
              patch(RUNNER, side_effect=lambda p: chains):

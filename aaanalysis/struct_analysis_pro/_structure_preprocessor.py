@@ -31,7 +31,8 @@ from ._backend.structure_preprocessor.align_dssp_full import (
     align_chain_full_to_sequence_, apply_ss_mode_full_,
     apply_gap_handling_full_)
 from ._backend.structure_preprocessor.encode_dssp import (
-    encode_ss, encode_rasa, encode_dihedrals_sincos)
+    encode_ss, encode_rasa, encode_dihedrals_sincos,
+    encode_hbond_donor, encode_hbond_acceptor)
 from ._backend.structure_preprocessor.encode_pdb import (
     load_structure, encode_bfactor, encode_depth,
     encode_plddt, encode_plddt_disorder, encode_plddt_tier,
@@ -60,12 +61,17 @@ _COL_ASA = "asa"
 _COL_PHI = "phi"
 _COL_PSI = "psi"
 _COL_PDB_OK = "pdb_ok"
+_COL_HBOND_DONOR_OFFSET = "hbond_donor_offset"
+_COL_HBOND_DONOR_ENERGY = "hbond_donor_energy"
+_COL_HBOND_ACCEPTOR_OFFSET = "hbond_acceptor_offset"
+_COL_HBOND_ACCEPTOR_ENERGY = "hbond_acceptor_energy"
 
 # Encoder-supplied options that ``get_dssp`` consumes. (These are the raw
 # DSSP stream kinds, distinct from the registry's user-facing feature keys —
 # e.g. registry key 'rasa' / 'phi_psi_sincos' both pull from the 'asa' /
-# 'phi_psi' raw streams.)
-_LIST_GET_DSSP_FEATURES = ["ss", "asa", "phi_psi"]
+# 'phi_psi' raw streams. Registry keys 'hbond_donor' / 'hbond_acceptor'
+# both pull from the 'hbonds' raw stream.)
+_LIST_GET_DSSP_FEATURES = ["ss", "asa", "phi_psi", "hbonds"]
 _LIST_ON_FAILURE = ["nan", "drop", "raise"]
 
 
@@ -90,6 +96,8 @@ def _check_entry_is_filesystem_safe(entry):
 def _check_no_get_dssp_collisions(df_seq):
     """Refuse to overwrite pre-existing get_dssp output columns."""
     existing = [c for c in (ut.COL_SS, _COL_ASA, _COL_PHI, _COL_PSI,
+                            _COL_HBOND_DONOR_OFFSET, _COL_HBOND_DONOR_ENERGY,
+                            _COL_HBOND_ACCEPTOR_OFFSET, _COL_HBOND_ACCEPTOR_ENERGY,
                             ut.COL_DSSP_OK)
                 if c in df_seq.columns]
     if existing:
@@ -147,6 +155,8 @@ def _dssp_features_to_get_dssp_kinds(features):
             kinds.add("asa")
         elif f == "phi_psi_sincos":
             kinds.add("phi_psi")
+        elif f in ("hbond_donor", "hbond_acceptor"):
+            kinds.add("hbonds")
     return sorted(kinds)
 
 
@@ -182,6 +192,9 @@ def _ensure_dssp_columns(df_seq, features_get_dssp, pdb_folder, ss_mode,
         needed_cols.append(_COL_ASA)
     if "phi_psi" in features_get_dssp:
         needed_cols.extend([_COL_PHI, _COL_PSI])
+    if "hbonds" in features_get_dssp:
+        needed_cols.extend([_COL_HBOND_DONOR_OFFSET, _COL_HBOND_DONOR_ENERGY,
+                            _COL_HBOND_ACCEPTOR_OFFSET, _COL_HBOND_ACCEPTOR_ENERGY])
     have_all = all(c in df_seq.columns for c in needed_cols)
     if have_all:
         return df_seq
@@ -207,12 +220,28 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
     asa_per_row: List[Optional[List[float]]] = []
     phi_per_row: List[Optional[List[float]]] = []
     psi_per_row: List[Optional[List[float]]] = []
+    hb_d_off_per_row: List[Optional[List[float]]] = []
+    hb_d_en_per_row: List[Optional[List[float]]] = []
+    hb_a_off_per_row: List[Optional[List[float]]] = []
+    hb_a_en_per_row: List[Optional[List[float]]] = []
     ok_per_row: List[bool] = []
     # Session-scoped temp dir for any gz decompression done by the resolver.
     # Inner per-entry tempdir copying (for DSSP intermediates) is still
     # handled by run_dssp_full_for_entry_.
     session_tmp = tempfile.TemporaryDirectory()
     session_tmp_path = Path(session_tmp.name)
+
+    def _append_nan_row():
+        """Push NaN/None onto every per-row list for a failed entry."""
+        ss_per_row.append(None)
+        asa_per_row.append(None)
+        phi_per_row.append(None)
+        psi_per_row.append(None)
+        hb_d_off_per_row.append(None)
+        hb_d_en_per_row.append(None)
+        hb_a_off_per_row.append(None)
+        hb_a_en_per_row.append(None)
+        ok_per_row.append(False)
 
     for entry, target_seq in zip(entries, sequences):
         _check_entry_is_filesystem_safe(entry)
@@ -224,11 +253,7 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
                 f"'{pdb_folder}' (tried .pdb/.pdb.gz/.cif/.cif.gz); "
                 f"row will have dssp_ok=False",
                 UserWarning)
-            ss_per_row.append(None)
-            asa_per_row.append(None)
-            phi_per_row.append(None)
-            psi_per_row.append(None)
-            ok_per_row.append(False)
+            _append_nan_row()
             continue
         try:
             chains = run_dssp_full_for_entry_(pdb_path)
@@ -237,11 +262,7 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
                 f"DSSP failed for entry '{entry}': {e}; "
                 f"row will have dssp_ok=False",
                 UserWarning)
-            ss_per_row.append(None)
-            asa_per_row.append(None)
-            phi_per_row.append(None)
-            psi_per_row.append(None)
-            ok_per_row.append(False)
+            _append_nan_row()
             continue
         best = pick_best_chain_full_(target_seq, chains)
         if best is None:
@@ -249,14 +270,12 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
                 f"No chains with assigned secondary structure for entry "
                 f"'{entry}'; row will have dssp_ok=False",
                 UserWarning)
-            ss_per_row.append(None)
-            asa_per_row.append(None)
-            phi_per_row.append(None)
-            psi_per_row.append(None)
-            ok_per_row.append(False)
+            _append_nan_row()
             continue
         record, identity = best
-        chain_id, atom_seq, atom_ss, atom_asa, atom_phi, atom_psi = record
+        (chain_id, atom_seq, atom_ss, atom_asa, atom_phi, atom_psi,
+         atom_hb_d_off, atom_hb_d_en,
+         atom_hb_a_off, atom_hb_a_en) = record
         n_mismatch = count_mismatches_full_(target_seq, atom_seq)
         if n_mismatch > 0:
             warnings.warn(
@@ -264,16 +283,27 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
                 f"{n_mismatch} residue mismatch(es) against df_seq[sequence] "
                 f"(identity={identity:.3f}).",
                 UserWarning)
-        aligned_ss, aligned_asa, aligned_phi, aligned_psi = \
+        (aligned_ss, aligned_asa, aligned_phi, aligned_psi,
+         aligned_hb_d_off, aligned_hb_d_en,
+         aligned_hb_a_off, aligned_hb_a_en) = \
             align_chain_full_to_sequence_(
-                target_seq, atom_seq, atom_ss, atom_asa, atom_phi, atom_psi)
+                target_seq, atom_seq, atom_ss, atom_asa, atom_phi, atom_psi,
+                atom_hb_d_off, atom_hb_d_en, atom_hb_a_off, atom_hb_a_en)
         encoded_ss = apply_ss_mode_full_(aligned_ss, ss_mode)
-        final_ss, final_asa, final_phi, final_psi = apply_gap_handling_full_(
-            encoded_ss, aligned_asa, aligned_phi, aligned_psi, gap_handling)
+        (final_ss, final_asa, final_phi, final_psi,
+         final_hb_d_off, final_hb_d_en,
+         final_hb_a_off, final_hb_a_en) = apply_gap_handling_full_(
+            encoded_ss, aligned_asa, aligned_phi, aligned_psi,
+            aligned_hb_d_off, aligned_hb_d_en,
+            aligned_hb_a_off, aligned_hb_a_en, gap_handling)
         ss_per_row.append(final_ss)
         asa_per_row.append(final_asa)
         phi_per_row.append(final_phi)
         psi_per_row.append(final_psi)
+        hb_d_off_per_row.append(final_hb_d_off)
+        hb_d_en_per_row.append(final_hb_d_en)
+        hb_a_off_per_row.append(final_hb_a_off)
+        hb_a_en_per_row.append(final_hb_a_en)
         ok_per_row.append(True)
         if verbose:
             ut.print_out(
@@ -288,6 +318,11 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
     if "phi_psi" in features:
         df_out[_COL_PHI] = phi_per_row
         df_out[_COL_PSI] = psi_per_row
+    if "hbonds" in features:
+        df_out[_COL_HBOND_DONOR_OFFSET] = hb_d_off_per_row
+        df_out[_COL_HBOND_DONOR_ENERGY] = hb_d_en_per_row
+        df_out[_COL_HBOND_ACCEPTOR_OFFSET] = hb_a_off_per_row
+        df_out[_COL_HBOND_ACCEPTOR_ENERGY] = hb_a_en_per_row
     df_out[ut.COL_DSSP_OK] = ok_per_row
     session_tmp.cleanup()
     return df_out
@@ -566,6 +601,9 @@ class StructurePreprocessor:
                 needed.append(_COL_ASA)
             if "phi_psi" in get_dssp_kinds:
                 needed.extend([_COL_PHI, _COL_PSI])
+            if "hbonds" in get_dssp_kinds:
+                needed.extend([_COL_HBOND_DONOR_OFFSET, _COL_HBOND_DONOR_ENERGY,
+                               _COL_HBOND_ACCEPTOR_OFFSET, _COL_HBOND_ACCEPTOR_ENERGY])
             missing = [c for c in needed if c not in df_seq.columns]
             if missing:
                 raise ValueError(
@@ -595,6 +633,14 @@ class StructurePreprocessor:
         asa_col = df_aug[_COL_ASA].tolist() if _COL_ASA in df_aug.columns else None
         phi_col = df_aug[_COL_PHI].tolist() if _COL_PHI in df_aug.columns else None
         psi_col = df_aug[_COL_PSI].tolist() if _COL_PSI in df_aug.columns else None
+        hb_d_off_col = (df_aug[_COL_HBOND_DONOR_OFFSET].tolist()
+                        if _COL_HBOND_DONOR_OFFSET in df_aug.columns else None)
+        hb_d_en_col = (df_aug[_COL_HBOND_DONOR_ENERGY].tolist()
+                       if _COL_HBOND_DONOR_ENERGY in df_aug.columns else None)
+        hb_a_off_col = (df_aug[_COL_HBOND_ACCEPTOR_OFFSET].tolist()
+                        if _COL_HBOND_ACCEPTOR_OFFSET in df_aug.columns else None)
+        hb_a_en_col = (df_aug[_COL_HBOND_ACCEPTOR_ENERGY].tolist()
+                       if _COL_HBOND_ACCEPTOR_ENERGY in df_aug.columns else None)
         D_total = get_total_dims(features)
         dict_dssp: Dict[str, np.ndarray] = {}
         for i, (entry, seq, is_ok) in enumerate(zip(entries, sequences, ok)):
@@ -626,6 +672,22 @@ class StructurePreprocessor:
                             f"feature key {key!r}")
                     blocks.append(encode_dihedrals_sincos(
                         phi_list=phi_col[i], psi_list=psi_col[i]))
+                elif key == "hbond_donor":
+                    if hb_d_off_col is None or hb_d_en_col is None:
+                        raise RuntimeError(
+                            f"Internal: H-bond donor columns missing for "
+                            f"feature key {key!r}")
+                    blocks.append(encode_hbond_donor(
+                        offset_list=hb_d_off_col[i],
+                        energy_list=hb_d_en_col[i]))
+                elif key == "hbond_acceptor":
+                    if hb_a_off_col is None or hb_a_en_col is None:
+                        raise RuntimeError(
+                            f"Internal: H-bond acceptor columns missing for "
+                            f"feature key {key!r}")
+                    blocks.append(encode_hbond_acceptor(
+                        offset_list=hb_a_off_col[i],
+                        energy_list=hb_a_en_col[i]))
                 else:
                     raise RuntimeError(
                         f"Internal: feature key {key!r} not in encode_dssp "

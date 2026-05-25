@@ -42,6 +42,18 @@ def _shift_half(x):
     return (x + 1.0) / 2.0
 
 
+def _hbond_offset_energy(arr):
+    """Two-dim recipe for [offset, energy] H-bond features.
+
+    Column 0 (partner-residue offset, signed int): ``clip((x + 50) / 100, 0, 1)``
+    Column 1 (energy, kcal/mol, ≤0 = stronger): ``clip(-x / 10, 0, 1)``
+    """
+    out = np.empty_like(arr, dtype=np.float64)
+    out[:, 0] = np.clip((arr[:, 0] + 50.0) / 100.0, 0.0, 1.0)
+    out[:, 1] = np.clip(-arr[:, 1] / 10.0, 0.0, 1.0)
+    return out
+
+
 # II Main Functions
 ENCODER_DSSP = "encode_dssp"
 ENCODER_PDB = "encode_pdb"
@@ -70,6 +82,10 @@ NORMALIZATION_RECIPES: Dict[str, Callable] = {
     "contact_count_8A":       _div(30.0),       # saturates at 30
     "contact_count_12A":      _div(80.0),       # saturates at 80
     "hse":                    _div(30.0),       # half-sphere counts, ~30 ceiling
+    # DSSP H-bond fields (v1.2). Per-key recipes apply different formulas to
+    # the two columns; see _hbond_offset_energy.
+    "hbond_donor":            _hbond_offset_energy,
+    "hbond_acceptor":         _hbond_offset_energy,
     # AF PAE sidecar features (commit 3). AF documents the PAE saturation
     # cap at 31.75 Å; we divide by that and clip. ``pae_asymmetry`` is
     # bounded much lower in practice (asymmetry << absolute PAE) so we use
@@ -103,6 +119,8 @@ INVERSE_FORMULAS: Dict[str, str] = {
     "contact_count_8A":       "x * 30      (lossy when ≥1, counts > 30 are clipped)",
     "contact_count_12A":      "x * 80      (lossy when ≥1, counts > 80 are clipped)",
     "hse":                    "x * 30      (HSE half-sphere counts; lossy when ≥1)",
+    "hbond_donor":            "[offset: x*100 - 50  ;  energy: -x*10 kcal/mol]",
+    "hbond_acceptor":         "[offset: x*100 - 50  ;  energy: -x*10 kcal/mol]",
     "pae_row_mean":           "x * 31.75   (Å, AF PAE saturation cap)",
     "pae_row_min":            "x * 31.75   (Å)",
     "pae_row_max":            "x * 31.75   (Å)",
@@ -220,6 +238,20 @@ REGISTRY: Dict[str, Dict] = {
         "dim_names": ["hse_up", "hse_down"],
         "category": CATEGORY_STRUCTURE,
         "subcategory": "Half-sphere exposure (HSE-CA)",
+    },
+    # DSSP H-bond features (v1.2). Primary donor (NH→O) and primary
+    # acceptor (O→HN) partner offset + energy per residue.
+    "hbond_donor": {
+        "method": ENCODER_DSSP, "num_dims": 2,
+        "dim_names": ["hbond_donor_offset", "hbond_donor_energy"],
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Hydrogen bond (NH-O donor)",
+    },
+    "hbond_acceptor": {
+        "method": ENCODER_DSSP, "num_dims": 2,
+        "dim_names": ["hbond_acceptor_offset", "hbond_acceptor_energy"],
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Hydrogen bond (O-NH acceptor)",
     },
     # AF PAE sidecar features.
     "pae_row_mean": {

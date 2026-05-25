@@ -1,7 +1,8 @@
 """
 This is a script for the backend of the StructurePreprocessor: picks the
 chain whose ATOM sequence best matches ``df_seq[sequence]``, then aligns
-the full per-residue feature streams (``ss, asa, phi, psi``) from
+the full per-residue feature streams (``ss, asa, phi, psi`` + the four
+H-bond fields added in v1.2: donor/acceptor partner offset + energy) from
 :func:`run_dssp_full_for_entry_` onto target positions. Identity-fraction
 scoring uses :class:`Bio.Align.PairwiseAligner` with a global identity
 score and mild gap penalties.
@@ -36,7 +37,10 @@ def _identity_fraction(target_seq: str, atom_seq: str,
 
 
 # II Main Functions
-ChainFull = Tuple[str, str, List[str], List[float], List[float], List[float]]
+ChainFull = Tuple[
+    str, str, List[str], List[float], List[float], List[float],
+    List[float], List[float], List[float], List[float],
+]
 
 
 def pick_best_chain_full_(
@@ -73,12 +77,19 @@ def align_chain_full_to_sequence_(
     atom_asa: List[float],
     atom_phi: List[float],
     atom_psi: List[float],
-) -> Tuple[List[str], List[float], List[float], List[float]]:
+    atom_hb_d_off: List[float],
+    atom_hb_d_en: List[float],
+    atom_hb_a_off: List[float],
+    atom_hb_a_en: List[float],
+) -> Tuple[List[str], List[float], List[float], List[float],
+           List[float], List[float], List[float], List[float]]:
     """Map each ``target_seq`` position to its DSSP feature values.
 
     For positions where the alignment produces a gap on the ATOM side,
-    ``ss`` becomes ``ut.STR_SS_GAP`` and the three float streams become
-    ``float('nan')``. Returns four lists, each of length ``len(target_seq)``.
+    ``ss`` becomes ``ut.STR_SS_GAP`` and all seven float streams become
+    ``float('nan')``. Returns eight lists, each of length
+    ``len(target_seq)``: ``(ss, asa, phi, psi, hb_donor_off, hb_donor_en,
+    hb_acceptor_off, hb_acceptor_en)``.
     """
     aligner = _make_aligner()
     alignment = aligner.align(target_seq, atom_seq)[0]
@@ -87,6 +98,10 @@ def align_chain_full_to_sequence_(
     out_asa: List[float] = []
     out_phi: List[float] = []
     out_psi: List[float] = []
+    out_hb_d_off: List[float] = []
+    out_hb_d_en: List[float] = []
+    out_hb_a_off: List[float] = []
+    out_hb_a_en: List[float] = []
     atom_idx = 0
     for ta, ab in zip(a_aln, b_aln):
         if ta == "-":
@@ -98,13 +113,22 @@ def align_chain_full_to_sequence_(
             out_asa.append(float("nan"))
             out_phi.append(float("nan"))
             out_psi.append(float("nan"))
+            out_hb_d_off.append(float("nan"))
+            out_hb_d_en.append(float("nan"))
+            out_hb_a_off.append(float("nan"))
+            out_hb_a_en.append(float("nan"))
         else:
             out_ss.append(atom_ss[atom_idx])
             out_asa.append(atom_asa[atom_idx])
             out_phi.append(atom_phi[atom_idx])
             out_psi.append(atom_psi[atom_idx])
+            out_hb_d_off.append(atom_hb_d_off[atom_idx])
+            out_hb_d_en.append(atom_hb_d_en[atom_idx])
+            out_hb_a_off.append(atom_hb_a_off[atom_idx])
+            out_hb_a_en.append(atom_hb_a_en[atom_idx])
             atom_idx += 1
-    return out_ss, out_asa, out_phi, out_psi
+    return (out_ss, out_asa, out_phi, out_psi,
+            out_hb_d_off, out_hb_d_en, out_hb_a_off, out_hb_a_en)
 
 
 def apply_ss_mode_full_(ss_list: List[str], ss_mode: str) -> List[str]:
@@ -116,19 +140,28 @@ def apply_ss_mode_full_(ss_list: List[str], ss_mode: str) -> List[str]:
 
 
 def apply_gap_handling_full_(
-    ss_list: List[str], asa_list: List[float], phi_list: List[float],
-    psi_list: List[float], gap_handling: str
-) -> Tuple[List[str], List[float], List[float], List[float]]:
-    """Either keep gap-pad positions or drop them across all four streams.
+    ss_list: List[str],
+    asa_list: List[float], phi_list: List[float], psi_list: List[float],
+    hb_d_off_list: List[float], hb_d_en_list: List[float],
+    hb_a_off_list: List[float], hb_a_en_list: List[float],
+    gap_handling: str,
+) -> Tuple[List[str], List[float], List[float], List[float],
+           List[float], List[float], List[float], List[float]]:
+    """Either keep gap-pad positions or drop them across all eight streams.
 
     When ``gap_handling='omit'``, positions whose SS code is
-    ``ut.STR_SS_GAP`` are dropped from all four lists simultaneously so they
-    remain length-aligned.
+    ``ut.STR_SS_GAP`` are dropped from all eight lists simultaneously so
+    they remain length-aligned.
     """
     if gap_handling == ut.GAP_OMIT:
         keep = [i for i, c in enumerate(ss_list) if c != ut.STR_SS_GAP]
         return ([ss_list[i] for i in keep],
                 [asa_list[i] for i in keep],
                 [phi_list[i] for i in keep],
-                [psi_list[i] for i in keep])
-    return ss_list, asa_list, phi_list, psi_list
+                [psi_list[i] for i in keep],
+                [hb_d_off_list[i] for i in keep],
+                [hb_d_en_list[i] for i in keep],
+                [hb_a_off_list[i] for i in keep],
+                [hb_a_en_list[i] for i in keep])
+    return (ss_list, asa_list, phi_list, psi_list,
+            hb_d_off_list, hb_d_en_list, hb_a_off_list, hb_a_en_list)

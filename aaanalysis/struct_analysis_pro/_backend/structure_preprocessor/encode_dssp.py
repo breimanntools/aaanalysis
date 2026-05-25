@@ -181,3 +181,39 @@ def encode_dihedrals_sincos(phi_list: List[float],
             out[i, 2] = np.sin(psi_rad)
             out[i, 3] = np.cos(psi_rad)
     return normalize("phi_psi_sincos", out)
+
+
+# --- DSSP H-bond encoders (v1.2) ---------------------------------------------
+def _stack_offset_energy(off_list, en_list):
+    """Pack two equal-length lists into an (L, 2) ndarray, NaN-preserving."""
+    if len(off_list) != len(en_list):
+        raise RuntimeError(
+            f"hbond offset/energy length mismatch: "
+            f"len(off)={len(off_list)}, len(en)={len(en_list)}")
+    L = len(off_list)
+    out = np.full((L, 2), np.nan, dtype=np.float64)
+    for i, (off, en) in enumerate(zip(off_list, en_list)):
+        out[i, 0] = _safe_float(off)
+        out[i, 1] = _safe_float(en)
+    return out
+
+
+def encode_hbond_donor(offset_list, energy_list) -> np.ndarray:
+    """Per-residue donor (NH→O) H-bond as ``(L, 2)`` ``[offset, energy]``.
+
+    Both dims are normalized to ``[0, 1]`` by the registry recipe for
+    ``hbond_donor``: offset ``(x + 50) / 100`` (signed partner-residue
+    distance, clipped to ±50), energy ``clip(-x / 10, 0, 1)`` (kcal/mol;
+    more negative = stronger H-bond → larger normalized value).
+    """
+    raw = _stack_offset_energy(offset_list, energy_list)
+    return normalize("hbond_donor", raw)
+
+
+def encode_hbond_acceptor(offset_list, energy_list) -> np.ndarray:
+    """Per-residue acceptor (O→HN) H-bond as ``(L, 2)`` ``[offset, energy]``.
+
+    Same recipe as :func:`encode_hbond_donor` (different feature key).
+    """
+    raw = _stack_offset_energy(offset_list, energy_list)
+    return normalize("hbond_acceptor", raw)
