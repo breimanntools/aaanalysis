@@ -2,7 +2,7 @@
 ChainSaw + AFragmenter wrappers (v1.2 commit 4).
 
 Both upstream tools are mocked so the test suite does NOT require the
-actual ``protein-domain-segmentation`` package or a local ChainSaw clone.
+actual ``afragmenter`` package or a local ChainSaw clone.
 The wrappers' subprocess / lazy-import boundaries are the targets.
 """
 import json

@@ -1120,9 +1120,9 @@ class StructurePreprocessor:
 
             - ``'afragmenter'``: pip-installable PAE-based segmenter
               (Verwimp et al. 2025). Requires the optional extra
-              ``pip install aaanalysis[pro-domains]`` (lazy-import; the
-              friendly install hint fires only when this tool is
-              requested). Operates on the PAE matrix from ``pae_folder``.
+              ``pip install aaanalysis[pro]`` (lazy-import; the friendly
+              install hint fires only when this tool is requested).
+              Operates on the PAE matrix from ``pae_folder``.
             - ``'chainsaw'``: PDB-based segmenter (Wells et al. 2024,
               Bioinformatics; https://github.com/JudeWells/Chainsaw).
               Not on PyPI; clone the repo locally and pass its directory
@@ -1160,8 +1160,8 @@ class StructurePreprocessor:
             On invalid arguments or missing per-tool kwargs.
         RuntimeError
             If the tool's Python dependency is not installed (AFragmenter
-            via ``[pro-domains]``), if ``chainsaw_path`` is invalid, or
-            if any entry failed under ``on_failure='raise'``.
+            via ``[pro]``), if ``chainsaw_path`` is invalid, or if any
+            entry failed under ``on_failure='raise'``.
         """
         verbose = ut.check_verbose(self._verbose if verbose is None else verbose)
         ut.check_df_seq(df_seq=df_seq)

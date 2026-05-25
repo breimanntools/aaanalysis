@@ -18,7 +18,7 @@ Three domain-segmentation tools were on the table. Comparative facts
 |---|---|---|---|---|---|
 | **Merizo** (PSIPRED) | ~51 (Nat Commun 2023) | No (git clone) | No (CLI-only) | PDB | ✗ awkward |
 | **ChainSaw** (Wells et al.) | ~51 (Bioinformatics 2024) | No (git clone + stride binary) | Importable Python modules | PDB / mmCIF | ✓ via subprocess |
-| **AFragmenter** (Verwimp et al.) | New (Bioinformatics 2025) | **Yes** (`protein-domain-segmentation`) | **Yes** (`AFragmenter.cluster(...)`) | PAE matrix | ✓ via pip |
+| **AFragmenter** (Verwimp et al.) | New (Bioinformatics 2025) | **Yes** (`afragmenter`) | **Yes** (`AFragmenter.cluster(...)`) | PAE matrix | ✓ via pip |
 
 ## Decisions
 
@@ -61,12 +61,31 @@ the in-memory string per row. Same dual-mode pattern as
 `encode_dssp` / `encode_pdb` (use pre-computed list columns if present,
 fall back to the file path otherwise).
 
-### D4 — Dependency layering: new `[pro-domains]` extra
+### D4 — Dependency layering: AFragmenter ships in `[pro]`
 
-AFragmenter is added as a new optional extra `aaanalysis[pro-domains]`
-in `pyproject.toml` (just `protein-domain-segmentation>=0.0.6`). Lazy-
-imported by the wrapper; absence raises a `RuntimeError` with a
-friendly install hint when `tool='afragmenter'` is requested.
+AFragmenter is added to the existing `aaanalysis[pro]` extra as
+`afragmenter>=0.0.6` (its actual PyPI distribution name). Lazy-imported
+by the wrapper; absence raises a `RuntimeError` with a friendly install
+hint when `tool='afragmenter'` is requested.
+
+The added transitive footprint is ~10–15 MB (`python-igraph` ~10 MB
+native binary, `rich` + `rich-click` pure-Python; `numpy`, `matplotlib`,
+`biopython`, `requests` are already in core or `[pro]`). `[pro]` already
+carries `shap` (numba + llvmlite, ~150 MB), so AFragmenter is not
+categorically different in weight class and does not warrant its own
+sub-extra. The repo has no precedent for sub-extras beyond
+`pro` / `docs` / `dev`.
+
+**Historical note — wrong-PyPI-name incident (2026-05-25).** v1.2 commit
+4 originally introduced a sub-extra `[pro-domains]` pinning
+`protein-domain-segmentation>=0.0.6` as "AFragmenter's PyPI name." PyPI
+verification a day later showed that `protein-domain-segmentation` is
+an *unrelated* 185 MB torch-based segmenter (transitive deps include
+`torch`, `rotary_embedding_torch`, `einops`, `MDAnalysis`). The real
+AFragmenter ships as `afragmenter`. v1.2 commit 7 fixes the name and
+folds the dep into `[pro]` in the same commit. Lesson: when adding a
+new PyPI dep, verify wheel size + transitive deps + repo identity on
+PyPI before pinning.
 
 ChainSaw is NOT a Python dependency. Users clone it themselves and
 pass the path as `chainsaw_path=...`. The wrapper validates the path

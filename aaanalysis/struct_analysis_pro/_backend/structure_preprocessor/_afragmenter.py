@@ -1,8 +1,7 @@
 """
 This is a script for the backend of the StructurePreprocessor: a thin
 wrapper around AFragmenter (Verwimp et al. 2025,
-https://github.com/sverwimp/AFragmenter, PyPI package name
-``protein-domain-segmentation``).
+https://github.com/sverwimp/AFragmenter, PyPI package ``afragmenter``).
 
 AFragmenter clusters AlphaFold PAE matrices into domain segments via Leiden
 community detection. The wrapper lazy-imports the optional dependency and
@@ -10,7 +9,7 @@ returns a chopping string compatible with the v1.2 ``encode_domains`` reader
 format: domains separated by commas, discontinuous segments within a domain
 separated by underscores, segments are ``start-end`` 1-based inclusive.
 
-Install hint: ``pip install aaanalysis[pro-domains]``.
+Install hint: ``pip install aaanalysis[pro]``.
 """
 from pathlib import Path
 from typing import List, Tuple
@@ -20,18 +19,14 @@ from typing import List, Tuple
 def _try_import_afragmenter():
     """Lazy-import AFragmenter; return the module or None.
 
-    PyPI distributes the package as ``protein-domain-segmentation`` but
-    the import name is ``afragmenter`` (per the upstream repo). We try
-    the documented name first and fall back to the package-name underscore
-    variant to be defensive.
+    PyPI distributes the package as ``afragmenter`` (matching the import
+    name).
     """
-    for mod_name in ("afragmenter", "protein_domain_segmentation"):
-        try:
-            import importlib
-            return importlib.import_module(mod_name)
-        except ImportError:
-            continue
-    return None
+    try:
+        import importlib
+        return importlib.import_module("afragmenter")
+    except ImportError:
+        return None
 
 
 # II Main Functions
@@ -40,11 +35,10 @@ def check_afragmenter_available() -> None:
     is not importable."""
     if _try_import_afragmenter() is None:
         raise RuntimeError(
-            "'afragmenter' (PyPI 'protein-domain-segmentation') is not "
-            "installed. Install via:\n"
-            "  pip install aaanalysis[pro-domains]\n"
+            "'afragmenter' is not installed. Install via:\n"
+            "  pip install aaanalysis[pro]\n"
             "or directly:\n"
-            "  pip install protein-domain-segmentation\n"
+            "  pip install afragmenter\n"
             "See https://github.com/sverwimp/AFragmenter for details.")
 
 
