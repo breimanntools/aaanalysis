@@ -65,9 +65,12 @@ PTMs        '#B36BCB'  lilac-magenta     — reserved (no v1.1 implementation)
 ```
 
 All StructurePreprocessor feature keys re-categorize under
-`category='Structure'`; the fine-grained names (`DSSP_SS_3state`,
-`AF_plddt_raw`, `Flexibility_bfactor`, `Geometry_centroid_dist`, …) move
-into `subcategory`. EmbeddingPreprocessor's `cluster_pseudo_scales`
+`category='Structure'`; the fine-grained names (`Secondary structure
+(3-state)`, `AlphaFold pLDDT (raw)`, `B-factor (CA mean)`,
+`CA centroid distance`, `Half-sphere exposure (HSE-CA)`, …) move into
+`subcategory` and follow the AAontology convention (descriptive name
+with source / detail in parentheses) so `CPPPlot.feature_map` y-axis
+labels read cleanly. EmbeddingPreprocessor's `cluster_pseudo_scales`
 becomes `category='Embeddings'` with AAclust IDs combined into a
 `Embeddings_cat<i>_subcat<j>` subcategory string.
 

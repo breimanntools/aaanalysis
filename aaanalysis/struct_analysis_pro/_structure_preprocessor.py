@@ -379,8 +379,11 @@ class StructurePreprocessor:
     * **Feature categorization.** Every feature key emits
       ``category='Structure'`` (the top-level redundancy / color bucket;
       see ``ut.DICT_COLOR_CAT['Structure']`` = ``#2E6E5E`` deep teal-green).
-      The fine-grained split (``DSSP_SS_3state``, ``Flexibility_bfactor``,
-      etc.) lives in ``subcategory``. The redundancy filter's
+      The fine-grained split (``Secondary structure (3-state)``,
+      ``B-factor (CA mean)``, ``AlphaFold pLDDT (raw)``, etc.) lives in
+      ``subcategory`` and is what ``CPPPlot.feature_map`` displays on the
+      y-axis. Subcategory names follow the AAontology convention
+      (descriptive name with source / detail in parentheses). The redundancy filter's
       ``check_cat=True`` arm therefore groups all Structure features into
       one bucket; ``build_pseudo_scales`` populates ``df_scales`` so the
       ``max_cor`` gate can discriminate within that bucket.

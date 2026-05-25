@@ -416,7 +416,7 @@ class TestStpEncodePaeComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         df_cat = stp.build_cat(features=["pae_band_means"])
         assert df_cat.shape == (3, 5)
-        assert (df_cat[ut.COL_SUBCAT] == "AF_PAE_band_means").all()
+        assert (df_cat[ut.COL_SUBCAT] == "AlphaFold PAE (3-band means)").all()
 
     def test_complex_pae_and_structural_combine_dict_nums(self):
         # End-to-end: PDB features + PAE features stitched via combine_dict_nums.

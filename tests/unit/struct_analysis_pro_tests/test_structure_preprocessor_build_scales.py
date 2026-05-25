@@ -449,12 +449,13 @@ class TestStpBuildCat:
         stp = aa.StructurePreprocessor(verbose=False)
         df_cat = stp.build_cat(features=["ss3", "ss8"])
         unique = set(df_cat[ut.COL_SUBCAT].tolist())
-        assert {"DSSP_SS_3state", "DSSP_SS_8state"}.issubset(unique)
+        assert {"Secondary structure (3-state)",
+                "Secondary structure (8-state)"}.issubset(unique)
 
     def test_valid_subcategory_uses_registry_strings(self):
         stp = aa.StructurePreprocessor(verbose=False)
         df_cat = stp.build_cat(features=["bfactor"])
-        assert df_cat[ut.COL_SUBCAT].iloc[0] == "Flexibility_bfactor"
+        assert df_cat[ut.COL_SUBCAT].iloc[0] == "B-factor (CA mean)"
 
     def test_valid_scale_id_matches_dim_names(self):
         stp = aa.StructurePreprocessor(verbose=False)

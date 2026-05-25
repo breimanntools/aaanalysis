@@ -114,135 +114,155 @@ INVERSE_FORMULAS: Dict[str, str] = {
 
 
 REGISTRY: Dict[str, Dict] = {
+    # ``subcategory`` follows the AAontology naming convention
+    # (descriptive name, source / detail in parentheses) so the
+    # CPPPlot.feature_map y-axis label reads cleanly. ``dim_names`` stay
+    # short — they become per-column labels in df_scales and the per-row
+    # labels of the feature map's y-axis when CPPPlot uses scale_name.
     "ss3": {
         "method": ENCODER_DSSP, "num_dims": 3,
         "dim_names": ["ss_helix", "ss_strand", "ss_coil"],
-        "category": CATEGORY_STRUCTURE, "subcategory": "DSSP_SS_3state",
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Secondary structure (3-state)",
     },
     "ss8": {
         "method": ENCODER_DSSP, "num_dims": 8,
         "dim_names": ["ss_H", "ss_B", "ss_E", "ss_G",
                       "ss_I", "ss_T", "ss_S", "ss_blank"],
-        "category": CATEGORY_STRUCTURE, "subcategory": "DSSP_SS_8state",
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Secondary structure (8-state)",
     },
     "rasa": {
         "method": ENCODER_DSSP, "num_dims": 1,
         "dim_names": ["rasa"],
-        "category": CATEGORY_STRUCTURE, "subcategory": "DSSP_ASA_relative",
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Relative ASA (Tien)",
     },
     "phi_psi_sincos": {
         "method": ENCODER_DSSP, "num_dims": 4,
         "dim_names": ["phi_sin", "phi_cos", "psi_sin", "psi_cos"],
         "category": CATEGORY_STRUCTURE,
-        "subcategory": "Geometry_dihedral_sincos",
+        "subcategory": "Backbone dihedral (sin/cos)",
     },
     "bfactor": {
         "method": ENCODER_PDB, "num_dims": 1,
         "dim_names": ["bfactor"],
-        "category": CATEGORY_STRUCTURE, "subcategory": "Flexibility_bfactor",
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "B-factor (CA mean)",
     },
     "depth": {
         "method": ENCODER_PDB, "num_dims": 1,
         "dim_names": ["depth"],
-        "category": CATEGORY_STRUCTURE, "subcategory": "Geometry_residue_depth",
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "Residue depth (MSMS)",
     },
-    # AF model-file features (commit 2). All read from the same AF-style PDB
-    # / CIF file; ``plddt`` and ``bfactor`` are intentionally separate keys
-    # — they share arithmetic (B-factor column read) but carry different
-    # subcategory labels so the redundancy filter / user can tell them apart.
+    # AF model-file features. ``plddt`` and ``bfactor`` are intentionally
+    # separate keys — they share arithmetic (B-factor column read) but
+    # carry different subcategory labels so the redundancy filter / user
+    # can tell them apart.
     "plddt": {
         "method": ENCODER_PDB, "num_dims": 1,
         "dim_names": ["plddt"],
-        "category": CATEGORY_STRUCTURE, "subcategory": "AF_plddt_raw",
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "AlphaFold pLDDT (raw)",
     },
     "plddt_disorder": {
         "method": ENCODER_PDB, "num_dims": 1,
-        "dim_names": ["is_disordered"],
-        "category": CATEGORY_STRUCTURE, "subcategory": "AF_plddt_disorder",
+        "dim_names": ["plddt_low"],
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "AlphaFold disorder (pLDDT<70)",
     },
     "plddt_tier": {
         "method": ENCODER_PDB, "num_dims": 4,
-        "dim_names": ["plddt_very_low", "plddt_low",
+        "dim_names": ["plddt_very_low", "plddt_low_tier",
                       "plddt_confident", "plddt_very_high"],
-        "category": CATEGORY_STRUCTURE, "subcategory": "AF_plddt_tier",
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "AlphaFold pLDDT (4-tier)",
     },
     "chi1_sincos": {
         "method": ENCODER_PDB, "num_dims": 2,
         "dim_names": ["chi1_sin", "chi1_cos"],
         "category": CATEGORY_STRUCTURE,
-        "subcategory": "Geometry_chi1_sincos",
+        "subcategory": "Side-chain chi1 (sin/cos)",
     },
     "chi2_sincos": {
         "method": ENCODER_PDB, "num_dims": 2,
         "dim_names": ["chi2_sin", "chi2_cos"],
         "category": CATEGORY_STRUCTURE,
-        "subcategory": "Geometry_chi2_sincos",
+        "subcategory": "Side-chain chi2 (sin/cos)",
     },
     "ca_centroid_dist": {
         "method": ENCODER_PDB, "num_dims": 1,
-        "dim_names": ["ca_centroid_dist"],
+        "dim_names": ["centroid_dist"],
         "category": CATEGORY_STRUCTURE,
-        "subcategory": "Geometry_centroid_dist",
+        "subcategory": "CA centroid distance",
     },
     "ca_centroid_dist_norm": {
         "method": ENCODER_PDB, "num_dims": 1,
-        "dim_names": ["ca_centroid_dist_norm"],
+        "dim_names": ["centroid_dist_norm"],
         "category": CATEGORY_STRUCTURE,
-        "subcategory": "Geometry_centroid_dist_norm",
+        "subcategory": "CA centroid distance (Rg-norm)",
     },
     "contact_count_8A": {
         "method": ENCODER_PDB, "num_dims": 1,
-        "dim_names": ["contact_count_8A"],
+        "dim_names": ["contacts_8A"],
         "category": CATEGORY_STRUCTURE,
-        "subcategory": "Geometry_contact_count_8A",
+        "subcategory": "CA-CA contacts (8 A)",
     },
     "contact_count_12A": {
         "method": ENCODER_PDB, "num_dims": 1,
-        "dim_names": ["contact_count_12A"],
+        "dim_names": ["contacts_12A"],
         "category": CATEGORY_STRUCTURE,
-        "subcategory": "Geometry_contact_count_12A",
+        "subcategory": "CA-CA contacts (12 A)",
     },
     "hse": {
         "method": ENCODER_PDB, "num_dims": 2,
         "dim_names": ["hse_up", "hse_down"],
         "category": CATEGORY_STRUCTURE,
-        "subcategory": "Geometry_hse_ca",
+        "subcategory": "Half-sphere exposure (HSE-CA)",
     },
-    # AF PAE sidecar features (commit 3).
+    # AF PAE sidecar features.
     "pae_row_mean": {
         "method": ENCODER_PAE, "num_dims": 1,
         "dim_names": ["pae_mean"],
-        "category": CATEGORY_STRUCTURE, "subcategory": "AF_PAE_row_mean",
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "AlphaFold PAE (row mean)",
     },
     "pae_row_min": {
         "method": ENCODER_PAE, "num_dims": 1,
         "dim_names": ["pae_min"],
-        "category": CATEGORY_STRUCTURE, "subcategory": "AF_PAE_row_min",
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "AlphaFold PAE (row min)",
     },
     "pae_row_max": {
         "method": ENCODER_PAE, "num_dims": 1,
         "dim_names": ["pae_max"],
-        "category": CATEGORY_STRUCTURE, "subcategory": "AF_PAE_row_max",
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "AlphaFold PAE (row max)",
     },
     "pae_local_mean": {
         "method": ENCODER_PAE, "num_dims": 1,
         "dim_names": ["pae_local"],
-        "category": CATEGORY_STRUCTURE, "subcategory": "AF_PAE_local_mean",
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "AlphaFold PAE (local mean)",
     },
     "pae_distal_mean": {
         "method": ENCODER_PAE, "num_dims": 1,
         "dim_names": ["pae_distal"],
-        "category": CATEGORY_STRUCTURE, "subcategory": "AF_PAE_distal_mean",
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "AlphaFold PAE (distal mean)",
     },
     "pae_asymmetry": {
         "method": ENCODER_PAE, "num_dims": 1,
         "dim_names": ["pae_asymmetry"],
-        "category": CATEGORY_STRUCTURE, "subcategory": "AF_PAE_asymmetry",
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "AlphaFold PAE (asymmetry)",
     },
     "pae_band_means": {
         "method": ENCODER_PAE, "num_dims": 3,
         "dim_names": ["pae_band_close", "pae_band_mid", "pae_band_far"],
-        "category": CATEGORY_STRUCTURE, "subcategory": "AF_PAE_band_means",
+        "category": CATEGORY_STRUCTURE,
+        "subcategory": "AlphaFold PAE (3-band means)",
     },
 }
 

@@ -757,7 +757,7 @@ class TestStpEncodePdbHSE:
         # 2 rows (hse_up + hse_down), both under category='Structure'.
         assert df_cat.shape == (2, 5)
         assert (df_cat[ut.COL_CAT] == "Structure").all()
-        assert (df_cat[ut.COL_SUBCAT] == "Geometry_hse_ca").all()
+        assert (df_cat[ut.COL_SUBCAT] == "Half-sphere exposure (HSE-CA)").all()
 
     def test_valid_hse_in_build_pseudo_scales(self):
         # hse values get per-AA averaged for the corpus df_scales.
