@@ -467,6 +467,42 @@ class TestStpEncodePdbAFFeatures:
         finite = vals[~np.isnan(vals)]
         assert (finite >= 0).all() and (finite <= 1).all()
 
+    def test_valid_chi1_finite_for_non_ala_gly(self):
+        # The AF_TINY fixture is stereochemically valid: chi1 is defined for
+        # every residue except ALA and GLY (which have no CG / CB).
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["chi1_sincos"])
+        v = d["AF_TINY"]
+        finite_per_res = ~np.isnan(v[:, 0])
+        expected = np.array([aa_letter not in ("A", "G")
+                              for aa_letter in AF_FIXTURE_SEQ])
+        # All non-A/G residues should have finite chi1; A/G must be NaN.
+        np.testing.assert_array_equal(finite_per_res, expected)
+
+    def test_valid_chi2_finite_for_chi2_eligible(self):
+        # chi2 requires N-CA-CB-CG-CD (or equivalent). Standard chi2-eligible
+        # residues: R, N, D, E, F, H, I, K, L, M, P, Q, W, Y. C/S/T/V have
+        # chi1 only; A/G have neither.
+        chi2_eligible = set("RNDEFHIKLMPQWY")
+        stp = aa.StructurePreprocessor(verbose=False)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            d, _ = stp.encode_pdb(df_seq=_df_af(),
+                                  pdb_folder=str(PDB_FIXTURES),
+                                  features=["chi2_sincos"])
+        v = d["AF_TINY"]
+        finite_per_res = ~np.isnan(v[:, 0])
+        expected = np.array([aa_letter in chi2_eligible
+                              for aa_letter in AF_FIXTURE_SEQ])
+        np.testing.assert_array_equal(finite_per_res, expected)
+        # And the finite count must be non-zero — the fixture must actually
+        # exercise chi2 (was 0/30 with the v1.1 sidechain-less fixture).
+        assert finite_per_res.sum() >= 14
+
     def test_valid_ca_centroid_dist_shape_and_range(self):
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
