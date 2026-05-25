@@ -74,6 +74,13 @@ pro = [
   "biopython>=1.87",
   "shap>=0.46.0",
   "UpSetPlot>=0.9.0",
+  "requests>=2.0",
+]
+pro-domains = [
+  # Domain-segmentation tool (Verwimp et al. 2025, Bioinformatics):
+  # PAE-based Leiden clustering. Lazy-imported by
+  # StructurePreprocessor.get_domains(tool='afragmenter').
+  "protein-domain-segmentation>=0.0.6",
 ]
 docs = [
   "aaanalysis[pro]",

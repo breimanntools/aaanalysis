@@ -51,10 +51,14 @@ from ._backend.structure_preprocessor.encode_pae import (
     encode_pae_local_mean, encode_pae_distal_mean,
     encode_pae_asymmetry, encode_pae_band_means)
 from ._backend.structure_preprocessor._domain_io import (
-    load_chopping, resolve_domain_path)
+    load_chopping, resolve_domain_path, _parse_chopping)
 from ._backend.structure_preprocessor.encode_domains import (
     encode_domain_boundary, encode_domain_relative_position,
     encode_domain_size, encode_n_domains_in_protein)
+from ._backend.structure_preprocessor._afragmenter import (
+    check_afragmenter_available, run_afragmenter_on_pae)
+from ._backend.structure_preprocessor._chainsaw import (
+    resolve_chainsaw_path, run_chainsaw_on_entry)
 
 
 # Same path-safety regex used by the existing get_dssp; reject characters
@@ -71,6 +75,11 @@ _COL_HBOND_DONOR_OFFSET = "hbond_donor_offset"
 _COL_HBOND_DONOR_ENERGY = "hbond_donor_energy"
 _COL_HBOND_ACCEPTOR_OFFSET = "hbond_acceptor_offset"
 _COL_HBOND_ACCEPTOR_ENERGY = "hbond_acceptor_energy"
+_COL_CHOPPING = "chopping"
+_COL_DOMAIN_OK = "domain_ok"
+
+# Tool dispatch alphabet for get_domains.
+_LIST_DOMAIN_TOOLS = ["chainsaw", "afragmenter"]
 
 # Encoder-supplied options that ``get_dssp`` consumes. (These are the raw
 # DSSP stream kinds, distinct from the registry's user-facing feature keys —
@@ -1072,6 +1081,184 @@ class StructurePreprocessor:
         return dict_pae, df_aug
 
     # ------------------------------------------------------------------
+    # get_domains  (v1.2 commit 4) — runtime tool wrapper
+    # ------------------------------------------------------------------
+    def get_domains(
+        self,
+        df_seq: pd.DataFrame = None,
+        pdb_folder: Union[str, Path] = None,
+        pae_folder: Union[str, Path] = None,
+        tool: str = "afragmenter",
+        chainsaw_path: Optional[Union[str, Path]] = None,
+        resolution: float = 0.7,
+        threshold: float = 2.0,
+        on_failure: str = "nan",
+        verbose: Optional[bool] = None,
+    ) -> pd.DataFrame:
+        """Run a domain-segmentation tool and append a ``chopping`` column.
+
+        Mirrors the ``get_dssp`` → ``encode_dssp`` pattern: this method
+        runs the external tool inline, returns a copy of ``df_seq`` with
+        appended ``chopping`` (Merizo/ChainSaw common format) and
+        ``domain_ok`` boolean columns. The result feeds into
+        :meth:`encode_domains` (which now accepts the in-memory
+        ``chopping`` column directly).
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame with ``entry`` + ``sequence`` columns.
+        pdb_folder : str or pathlib.Path, optional
+            Directory with one ``<entry>.pdb`` / ``.cif`` / ``.pdb.gz`` /
+            ``.cif.gz`` per row. Required when ``tool='chainsaw'``.
+        pae_folder : str or pathlib.Path, optional
+            Directory with one PAE JSON per row (same canonical filename
+            resolution as :meth:`encode_pae`). Required when
+            ``tool='afragmenter'``.
+        tool : {'chainsaw', 'afragmenter'}, default='afragmenter'
+            Which segmentation tool to run.
+
+            - ``'afragmenter'``: pip-installable PAE-based segmenter
+              (Verwimp et al. 2025). Requires the optional extra
+              ``pip install aaanalysis[pro-domains]`` (lazy-import; the
+              friendly install hint fires only when this tool is
+              requested). Operates on the PAE matrix from ``pae_folder``.
+            - ``'chainsaw'``: PDB-based segmenter (Wells et al. 2024,
+              Bioinformatics; https://github.com/JudeWells/Chainsaw).
+              Not on PyPI; clone the repo locally and pass its directory
+              as ``chainsaw_path``. Operates on PDB / CIF from
+              ``pdb_folder`` via subprocess.
+        chainsaw_path : str or pathlib.Path, optional
+            Local clone of the ChainSaw repository. Required when
+            ``tool='chainsaw'`` (ignored otherwise).
+        resolution : float, default=0.7
+            AFragmenter Leiden-resolution knob (only used when
+            ``tool='afragmenter'``).
+        threshold : float, default=2.0
+            AFragmenter PAE graph-edge threshold in Å (only used when
+            ``tool='afragmenter'``).
+        on_failure : {'nan', 'drop', 'raise'}, default='nan'
+            What to do for entries where the tool fails / file is
+            missing. ``'nan'`` fills ``chopping`` with an empty string
+            and marks ``domain_ok=False``; ``'drop'`` removes the row;
+            ``'raise'`` re-raises.
+        verbose : bool, optional
+            Override instance verbosity for this call only.
+
+        Returns
+        -------
+        df_out : pd.DataFrame
+            A copy of ``df_seq`` with two appended columns:
+            - ``chopping`` (str): the Merizo/ChainSaw common-format
+              chopping string, or ``''`` on failure.
+            - ``domain_ok`` (bool): ``True`` if the tool returned a
+              non-empty chopping for this entry.
+
+        Raises
+        ------
+        ValueError
+            On invalid arguments or missing per-tool kwargs.
+        RuntimeError
+            If the tool's Python dependency is not installed (AFragmenter
+            via ``[pro-domains]``), if ``chainsaw_path`` is invalid, or
+            if any entry failed under ``on_failure='raise'``.
+        """
+        verbose = ut.check_verbose(self._verbose if verbose is None else verbose)
+        ut.check_df_seq(df_seq=df_seq)
+        if ut.COL_SEQ not in df_seq.columns:
+            raise ValueError(
+                f"'df_seq' should contain a '{ut.COL_SEQ}' column for "
+                f"get_domains")
+        if _COL_CHOPPING in df_seq.columns:
+            raise ValueError(
+                f"'df_seq' should not already contain a "
+                f"'{_COL_CHOPPING}' column. Drop it before calling "
+                f"get_domains.")
+        ut.check_str_options(name="tool", val=tool,
+                             list_str_options=_LIST_DOMAIN_TOOLS)
+        _check_handle_failure(on_failure)
+        ut.check_bool(name="verbose", val=verbose)
+        # Tool-specific argument validation.
+        if tool == "afragmenter":
+            if pae_folder is None:
+                raise ValueError(
+                    "'pae_folder' is required when tool='afragmenter'")
+            ut.check_folder_path_exists(folder_path=str(pae_folder),
+                                        name="pae_folder")
+            ut.check_number_range(name="resolution", val=resolution,
+                                  min_val=0.0, max_val=10.0,
+                                  just_int=False, exclusive_limits=False)
+            ut.check_number_range(name="threshold", val=threshold,
+                                  min_val=0.0, max_val=31.75,
+                                  just_int=False, exclusive_limits=False)
+            check_afragmenter_available()
+            pae_folder = Path(pae_folder)
+        else:  # chainsaw
+            if pdb_folder is None:
+                raise ValueError(
+                    "'pdb_folder' is required when tool='chainsaw'")
+            ut.check_folder_path_exists(folder_path=str(pdb_folder),
+                                        name="pdb_folder")
+            # Validate chainsaw_path up-front (cheap; saves N per-row
+            # failures if the path is wrong).
+            resolve_chainsaw_path(chainsaw_path)
+            pdb_folder = Path(pdb_folder)
+        entries = df_seq[ut.COL_ENTRY].tolist()
+        chopping_per_row: List[str] = []
+        ok_per_row: List[bool] = []
+        session_tmp = tempfile.TemporaryDirectory()
+        session_tmp_path = Path(session_tmp.name)
+        for entry in entries:
+            _check_entry_is_filesystem_safe(entry)
+            try:
+                if tool == "afragmenter":
+                    pae_path = resolve_pae_path(
+                        folder=pae_folder, entry=entry,
+                        temp_dir=session_tmp_path)
+                    if pae_path is None:
+                        raise RuntimeError(
+                            f"PAE sidecar for entry '{entry}' not found "
+                            f"in '{pae_folder}' (tried .json/.json.gz/"
+                            f"AF-DB canonical)")
+                    chopping = run_afragmenter_on_pae(
+                        pae_path, resolution=resolution,
+                        threshold=threshold)
+                else:  # chainsaw
+                    pdb_path, _fmt = resolve_structure_path(
+                        folder=pdb_folder, entry=entry,
+                        temp_dir=session_tmp_path)
+                    if pdb_path is None:
+                        raise RuntimeError(
+                            f"Structure file for entry '{entry}' not "
+                            f"found in '{pdb_folder}' "
+                            f"(tried .pdb/.pdb.gz/.cif/.cif.gz)")
+                    chopping = run_chainsaw_on_entry(
+                        pdb_path, chainsaw_path=chainsaw_path)
+            except RuntimeError as e:
+                warnings.warn(
+                    f"get_domains[{tool}] failed for entry '{entry}': "
+                    f"{e}; row will have domain_ok=False",
+                    UserWarning)
+                chopping_per_row.append("")
+                ok_per_row.append(False)
+                continue
+            chopping_per_row.append(chopping)
+            ok_per_row.append(bool(chopping))
+            if verbose:
+                ut.print_out(
+                    f"   get_domains[{tool}]: entry={entry}, "
+                    f"chopping={chopping[:60]}"
+                    f"{'...' if len(chopping) > 60 else ''}")
+        df_out = df_seq.copy()
+        df_out[_COL_CHOPPING] = chopping_per_row
+        df_out[_COL_DOMAIN_OK] = ok_per_row
+        df_out, _ok_after, _keep_idx = _drop_or_raise_failed_entries(
+            df_seq=df_out, ok_per_row=ok_per_row, on_failure=on_failure,
+            source_label=f"get_domains[{tool}]")
+        session_tmp.cleanup()
+        return df_out
+
+    # ------------------------------------------------------------------
     # encode_domains  (v1.2 commit 3)
     # ------------------------------------------------------------------
     def encode_domains(
@@ -1153,48 +1340,86 @@ class StructurePreprocessor:
             raise ValueError(
                 f"'df_seq' should contain a '{ut.COL_SEQ}' column for "
                 f"encode_domains")
-        if "domain_ok" in df_seq.columns:
-            raise ValueError(
-                f"'df_seq' should not already contain a 'domain_ok' column. "
-                f"Drop it before calling encode_domains.")
-        if domain_folder is None:
-            raise ValueError("'domain_folder' should not be None")
-        ut.check_folder_path_exists(folder_path=str(domain_folder),
-                                    name="domain_folder")
+        # v1.2 commit 4: dual-mode like encode_dssp — if df_seq already
+        # has a 'chopping' column (typically populated by get_domains),
+        # use it directly and skip the folder lookup.
+        has_inline_chopping = _COL_CHOPPING in df_seq.columns
+        if not has_inline_chopping:
+            if _COL_DOMAIN_OK in df_seq.columns:
+                raise ValueError(
+                    f"'df_seq' should not already contain a "
+                    f"'{_COL_DOMAIN_OK}' column. Drop it before calling "
+                    f"encode_domains.")
+            if domain_folder is None:
+                raise ValueError(
+                    "'domain_folder' should not be None when 'df_seq' "
+                    "lacks a 'chopping' column. Either pass a folder of "
+                    "chopping files, or run get_domains(...) first.")
+            ut.check_folder_path_exists(folder_path=str(domain_folder),
+                                        name="domain_folder")
+            domain_folder = Path(domain_folder)
         validate_feature_keys(features, allowed_method=ENCODER_DOMAINS)
         _check_handle_failure(on_failure)
         ut.check_bool(name="verbose", val=verbose)
-        domain_folder = Path(domain_folder)
         entries = df_seq[ut.COL_ENTRY].tolist()
         sequences = df_seq[ut.COL_SEQ].tolist()
+        chopping_col = (df_seq[_COL_CHOPPING].tolist()
+                        if has_inline_chopping else [None] * len(entries))
         D_total = get_total_dims(features)
         dict_domains: Dict[str, np.ndarray] = {}
         ok_per_row: List[bool] = []
-        for entry, seq in zip(entries, sequences):
+        for entry, seq, inline_chopping in zip(entries, sequences,
+                                               chopping_col):
             _check_entry_is_filesystem_safe(entry)
             L = len(seq)
-            dom_path = resolve_domain_path(folder=domain_folder, entry=entry)
-            if dom_path is None:
-                warnings.warn(
-                    f"Domain file for entry '{entry}' not found in "
-                    f"'{domain_folder}' (tried .txt/.tsv/.csv); "
-                    f"row will have domain_ok=False",
-                    UserWarning)
-                dict_domains[entry] = np.full((L, D_total), np.nan,
-                                              dtype=np.float64)
-                ok_per_row.append(False)
-                continue
-            try:
-                domains = load_chopping(dom_path)
-            except RuntimeError as e:
-                warnings.warn(
-                    f"Domain load failed for entry '{entry}': {e}; "
-                    f"row will have domain_ok=False",
-                    UserWarning)
-                dict_domains[entry] = np.full((L, D_total), np.nan,
-                                              dtype=np.float64)
-                ok_per_row.append(False)
-                continue
+            # Two source paths: inline 'chopping' column OR file lookup.
+            if has_inline_chopping:
+                if (inline_chopping is None
+                        or (isinstance(inline_chopping, float)
+                            and np.isnan(inline_chopping))):
+                    warnings.warn(
+                        f"Inline chopping for entry '{entry}' is missing "
+                        f"(NaN/None); row will have domain_ok=False",
+                        UserWarning)
+                    dict_domains[entry] = np.full((L, D_total), np.nan,
+                                                  dtype=np.float64)
+                    ok_per_row.append(False)
+                    continue
+                try:
+                    domains = _parse_chopping(str(inline_chopping))
+                except RuntimeError as e:
+                    warnings.warn(
+                        f"Inline chopping parse failed for entry "
+                        f"'{entry}': {e}; row will have domain_ok=False",
+                        UserWarning)
+                    dict_domains[entry] = np.full((L, D_total), np.nan,
+                                                  dtype=np.float64)
+                    ok_per_row.append(False)
+                    continue
+            else:
+                dom_path = resolve_domain_path(folder=domain_folder,
+                                               entry=entry)
+                if dom_path is None:
+                    warnings.warn(
+                        f"Domain file for entry '{entry}' not found in "
+                        f"'{domain_folder}' (tried .txt/.tsv/.csv); "
+                        f"row will have domain_ok=False",
+                        UserWarning)
+                    dict_domains[entry] = np.full((L, D_total), np.nan,
+                                                  dtype=np.float64)
+                    ok_per_row.append(False)
+                    continue
+                try:
+                    domains = load_chopping(dom_path)
+                except RuntimeError as e:
+                    warnings.warn(
+                        f"Domain load failed for entry '{entry}': {e}; "
+                        f"row will have domain_ok=False",
+                        UserWarning)
+                    dict_domains[entry] = np.full((L, D_total), np.nan,
+                                                  dtype=np.float64)
+                    ok_per_row.append(False)
+                    continue
             blocks: List[np.ndarray] = []
             entry_ok = True
             for key in features:
@@ -1234,7 +1459,10 @@ class StructurePreprocessor:
             dict_domains[entry] = arr
             ok_per_row.append(True)
         df_aug = df_seq.copy()
-        df_aug["domain_ok"] = ok_per_row
+        # When inline-chopping is the source, df_seq may already carry a
+        # 'domain_ok' column from get_domains; overwrite it with the
+        # per-feature-encode outcome (more informative).
+        df_aug[_COL_DOMAIN_OK] = ok_per_row
         df_aug, ok_after, keep_idx = _drop_or_raise_failed_entries(
             df_seq=df_aug, ok_per_row=ok_per_row, on_failure=on_failure,
             source_label="encode_domains")
