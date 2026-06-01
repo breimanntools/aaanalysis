@@ -345,43 +345,13 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
 
 # II Main Functions
 class StructurePreprocessor:
-    """Preprocess PDB-derived per-residue features for ``CPP.run_num``.
+    """Preprocess structure-derived (PDB / CIF / AlphaFold) per-residue features for ``CPP.run_num``.
 
     Mirrors :class:`EmbeddingPreprocessor`'s instance-based shape but is a
-    PDB-side companion: produces the ``dict_num`` tensor that
+    structure-side companion: produces the ``dict_num`` tensor that
     :meth:`NumericalFeature.get_parts` slices into per-part inputs for
     :meth:`CPP.run_num`, plus the ``(df_scales, df_cat)`` metadata pair that
     names the D dimensions.
-
-    Six public methods, each returning ONE tightly-typed value:
-
-    1. :meth:`get_dssp` runs DSSP and appends list columns to ``df_seq``
-       (``ss``, ``asa``, ``phi``, ``psi`` — only the requested ones).
-       Pre-compute once and reuse, or skip and let :meth:`encode_dssp`
-       run DSSP internally.
-    2. :meth:`encode_dssp` returns a single ``dict_dssp`` of per-residue
-       DSSP-derived numerical features (SS one-hot, rASA, dihedral
-       sin/cos) — all normalized to ``[0, 1]``.
-    3. :meth:`encode_pdb` returns a single ``dict_pdb`` of per-residue
-       features extracted directly from the structure file (mean B-factor,
-       residue depth — msms-gated; AlphaFold pLDDT / disorder mask /
-       tier; chi1 / chi2 side-chain dihedrals; CA centroid distance and
-       Rg-normalized variant; CA-CA contact counts at 8 Å and 12 Å).
-    4. :meth:`encode_pae` returns a single ``dict_pae`` of per-residue
-       summaries of the AlphaFold PAE sidecar (row-mean / row-min /
-       row-max; local-vs-distal split with ±``local_window``; asymmetry;
-       three-band sequence-distance means).
-    5. :meth:`build_pseudo_scales` returns the per-AA-averaged
-       ``df_scales`` (and optionally ``df_stds``) from a user corpus.
-       Required by :meth:`CPP.run_num`'s redundancy filter to make
-       ``max_cor`` meaningful (the v1 all-zero df_scales silently
-       disabled that gate).
-    6. :meth:`build_cat` returns the corpus-free ``df_cat`` metadata
-       frame from the feature-key registry.
-
-    Use :func:`aaanalysis.combine_dict_nums` to stitch the encoder outputs
-    (and optional PLM embeddings) into a single ``dict_num`` before passing
-    to :meth:`NumericalFeature.get_parts`.
 
     .. versionadded:: 1.1.0
 
@@ -1354,7 +1324,7 @@ class StructurePreprocessor:
 
         Notes
         -----
-        - v1.2 deliberately does NOT bundle a segmentation tool runtime
+        - AAanalysis deliberately does NOT bundle a segmentation tool runtime
           (no PyTorch, no model weights, no Merizo / ChainSaw / AFragmenter
           pinned). Keep ``aaanalysis[pro]`` lean; pre-run the tool of your
           choice, then ingest its chopping output here.
@@ -1662,7 +1632,7 @@ class StructurePreprocessor:
         """Build the ``df_cat`` metadata frame for ``features``.
 
         Pure registry lookup — corpus-free. ``df_cat[category]`` is always
-        ``'Structure'`` for every StructurePreprocessor feature in v1.1;
+        ``'Structure'`` for every StructurePreprocessor feature;
         the per-key semantics live in ``df_cat[subcategory]`` (see registry).
 
         Parameters

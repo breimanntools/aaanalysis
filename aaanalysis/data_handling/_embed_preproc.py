@@ -90,19 +90,9 @@ class EmbeddingPreprocessor:
     Utility data preprocessing class for protein-language-model (PLM) embeddings.
 
     Instance-based, mirroring :class:`StructurePreprocessor` and
-    :class:`AnnotationPreprocessor` (``ep = EmbeddingPreprocessor()``). The
-    two-step workflow turns per-residue PLM embeddings into the
-    (df_scales, df_cat) pair that :meth:`CPP.run` consumes:
-
-    1. :meth:`build_pseudo_scales` averages per-residue embedding values per
-       canonical AA, producing a (20, D) ``df_scales_emb`` analog of
-       AAontology ``df_scales``.
-    2. :meth:`cluster_pseudo_scales` runs AAclust at two correlation
-       thresholds to produce a (D, 5) ``df_cat_emb`` analog of AAontology
-       ``df_cat`` with ``cat`` / ``subcat`` columns.
-
-    The resulting pair is drop-in compatible with the existing
-    :meth:`CPP.run` constructor (``df_scales=df_scales_emb``,
+    :class:`AnnotationPreprocessor` (``ep = EmbeddingPreprocessor()``). Turns
+    per-residue PLM embeddings into the ``(df_scales, df_cat)`` pair that
+    :meth:`CPP.run` consumes (drop-in as ``df_scales=df_scales_emb``,
     ``df_cat=df_cat_emb``). See the *Notes* on the semantic compromise of
     context-free averaging.
 
@@ -129,7 +119,7 @@ class EmbeddingPreprocessor:
       positions receives the same scale value. To preserve positional context,
       pass the per-residue ``dict_num`` to :meth:`CPP.run_num` directly instead
       of routing through pseudo-scales.
-    * **Feature categorization.** As of v1.1 every PLM-derived dim emits
+    * **Feature categorization.** As of v1.1.0 every PLM-derived dim emits
       ``category='Embeddings'`` (paired with
       ``ut.DICT_COLOR_CAT['Embeddings'] == '#6B4FB5'``). The AAclust-derived
       coarser/finer cluster IDs move into a structured

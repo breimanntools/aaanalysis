@@ -95,6 +95,17 @@ class AnnotationPreprocessor:
 
     .. versionadded:: 1.1.0
 
+    See Also
+    --------
+    * :class:`StructurePreprocessor` : sibling per-residue ``dict_num`` source
+      (PDB / DSSP / AlphaFold features).
+    * :class:`EmbeddingPreprocessor` : sibling per-residue ``dict_num`` source
+      (PLM embeddings).
+    * :func:`aaanalysis.combine_dict_nums` : stitch this output with the sibling
+      tensors along the D axis.
+    * :meth:`CPP.run_num` : consumes ``dict_num_parts`` from
+      :meth:`NumericalFeature.get_parts`.
+
     Notes
     -----
     * ``df_annot`` is the canonical per-residue schema with columns
@@ -110,17 +121,6 @@ class AnnotationPreprocessor:
       ``'Functional sites'`` vocabulary (structure's registry is closed), and
       :meth:`to_df_seq` exports a seq-mode window-split because here an
       annotation *is* the window label (a structure feature never is).
-
-    See Also
-    --------
-    * :class:`StructurePreprocessor` : sibling per-residue ``dict_num`` source
-      (PDB / DSSP / AlphaFold features).
-    * :class:`EmbeddingPreprocessor` : sibling per-residue ``dict_num`` source
-      (PLM embeddings).
-    * :func:`aaanalysis.combine_dict_nums` : stitch this output with the sibling
-      tensors along the D axis.
-    * :meth:`CPP.run_num` : consumes ``dict_num_parts`` from
-      :meth:`NumericalFeature.get_parts`.
     """
 
     def __init__(self, verbose: bool = True):
