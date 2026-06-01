@@ -94,7 +94,7 @@ docs = [
   "sphinx_design==0.6.1",
   "sphinx_rtd_theme==3.0.2",
   "sphinxext-opengraph==0.9.1",
-  "urllib3>=2.6.3",
+  "urllib3>=2.7.0",
   "ipywidgets>=8.0.0",
 ]
 dev = [
