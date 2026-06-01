@@ -62,11 +62,14 @@ class TestStpGetDssp:
     """Single-parameter normal + invalid cases for StructurePreprocessor.get_dssp()."""
 
     # ----- NEGATIVES (≥10) -----
-    def test_invalid_no_mkdssp_binary(self):
+    def test_invalid_no_mkdssp_binary(self, tmp_path):
+        # Use an existing dir (tmp_path) so the missing-mkdssp check is reached on every
+        # platform; a hardcoded "/tmp" does not exist on Windows and would raise the
+        # folder-existence ValueError first.
         stp = aa.StructurePreprocessor(verbose=False)
         with patch(f"{MODULE}.shutil.which", return_value=None):
             with pytest.raises(RuntimeError, match="mkdssp"):
-                stp.get_dssp(df_seq=_df_one(), pdb_folder="/tmp")
+                stp.get_dssp(df_seq=_df_one(), pdb_folder=str(tmp_path))
 
     def test_invalid_df_seq_none(self, tmp_path):
         stp = aa.StructurePreprocessor(verbose=False)
