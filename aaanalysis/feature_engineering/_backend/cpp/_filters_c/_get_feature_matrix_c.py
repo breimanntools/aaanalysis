@@ -104,7 +104,11 @@ def _compute_features_into_c(X_out=None, features=None,
 
         scale_idx = scale_to_idx[scale]
         aa_idx = aa_idx_per_part[part]
-        seq_lens = seq_lens_per_part[part]
+        # The Cython kernels declare ``long[::1]`` buffers (C long: 32-bit on Windows,
+        # 64-bit on Unix). numpy arrays are int64, so cast to the C-long typecode 'l' to
+        # match the buffer on every platform (avoids the Windows-only "expected 'long' but
+        # got 'long long'" mismatch). Lengths/positions are tiny -> no int32 overflow.
+        seq_lens = np.ascontiguousarray(seq_lens_per_part[part], dtype="l")
         arr_2d = np.ascontiguousarray(scale_matrix_f64[aa_idx, scale_idx])
 
         if split_type == "Segment":
@@ -119,13 +123,13 @@ def _compute_features_into_c(X_out=None, features=None,
                     int(split_kwargs["n_split"]),
                 )
         elif split_type == "Pattern" and split_kwargs["terminus"] == "N":
-            positions = np.asarray(split_kwargs["list_pos"], dtype=np.int64) - 1
+            positions = np.ascontiguousarray(np.asarray(split_kwargs["list_pos"]) - 1, dtype="l")
             if accept_gaps:
                 col = compute_pattern_n_nanmean(arr_2d, positions)
             else:
                 col = compute_pattern_n_mean(arr_2d, positions)
         elif split_type == "Pattern" and split_kwargs["terminus"] == "C":
-            list_pos_arr = np.asarray(split_kwargs["list_pos"], dtype=np.int64)
+            list_pos_arr = np.ascontiguousarray(split_kwargs["list_pos"], dtype="l")
             if accept_gaps:
                 col = compute_pattern_c_nanmean(arr_2d, seq_lens, list_pos_arr)
             else:
