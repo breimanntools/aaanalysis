@@ -42,7 +42,7 @@ def _labels(n=10):
 
 
 def _get_run_num_args(n=6, d=4):
-    """Build (df_parts, dict_num_parts, df_scales_emb, df_cat_emb, labels) for run_num."""
+    """Build (df_parts, dict_num_parts, df_scales, df_cat, labels) for run_num."""
     seqs = ["ACDEFGHIKLMNPQRSTVWY" * 3, "MKTAYIAKQRQISFVKSHFSRQ" * 3,
             "GAVLIMFWPSTCYNQDEKRHG" * 3, "LLLLLKKKKKDDDDDEEEEEAA" * 3,
             "WYWYWYWYWYWYWYWYWYWY" * 3, "QQQQQNNNNNSSSSSTTTTTT" * 3][:n]
@@ -53,13 +53,13 @@ def _get_run_num_args(n=6, d=4):
     dict_num = {e: rng.random((len(s), d)) for e, s in zip(df_seq["entry"], df_seq["sequence"])}
     nf = aa.NumericalFeature()
     df_parts, dict_num_parts = nf.get_parts(df_seq=df_seq, dict_num=dict_num, jmd_n_len=10, jmd_c_len=10)
-    df_scales_emb = pd.DataFrame(rng.random((20, d)), index=list(ut.LIST_CANONICAL_AA),
+    df_scales = pd.DataFrame(rng.random((20, d)), index=list(ut.LIST_CANONICAL_AA),
                                  columns=[f"d{i}" for i in range(d)])
-    df_cat_emb = pd.DataFrame({"scale_id": [f"d{i}" for i in range(d)], "category": ["X"] * d,
+    df_cat = pd.DataFrame({"scale_id": [f"d{i}" for i in range(d)], "category": ["X"] * d,
                               "subcategory": ["x"] * d, "scale_name": [f"d{i}" for i in range(d)],
                               "scale_description": ["d"] * d})
     labels = [1] * (n // 2) + [0] * (n - n // 2)
-    return df_parts, dict_num_parts, df_scales_emb, df_cat_emb, labels
+    return df_parts, dict_num_parts, df_scales, df_cat, labels
 
 
 def _gapped_df_parts():

@@ -7,7 +7,7 @@ tensors for :meth:`CPP.run_num`.
 
 The class is pro-extra gated: ``requests`` is required for the UniProt fetch.
 It mirrors :class:`StructurePreprocessor`'s instance-based pattern — one source
-per encoder, a registry of feature keys, ``build_pseudo_scales`` (corpus-derived
+per encoder, a registry of feature keys, ``build_scales`` (corpus-derived
 ``df_scales``) + ``build_cat`` (corpus-free ``df_cat``) — so its output stacks
 with DSSP / PAE / embedding tensors via :func:`aaanalysis.combine_dict_nums`.
 
@@ -450,9 +450,9 @@ class AnnotationPreprocessor:
         return dict_num
 
     # ------------------------------------------------------------------
-    # build_pseudo_scales
+    # build_scales
     # ------------------------------------------------------------------
-    def build_pseudo_scales(
+    def build_scales(
         self,
         df_seq: pd.DataFrame = None,
         dict_num: Dict[str, np.ndarray] = None,
@@ -462,7 +462,7 @@ class AnnotationPreprocessor:
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
         """Build ``df_scales`` by context-free per-AA averaging of the corpus.
 
-        Mirrors :meth:`StructurePreprocessor.build_pseudo_scales`: for each
+        Mirrors :meth:`StructurePreprocessor.build_scales`: for each
         canonical amino acid and each D dimension, the pseudo-scale entry is the
         mean of the normalized per-residue values over occurrences of that AA.
         Required so :meth:`CPP.run_num`'s ``cor > max_cor`` redundancy gate is
@@ -513,7 +513,7 @@ class AnnotationPreprocessor:
         if ut.COL_SEQ not in df_seq.columns:
             raise ValueError(
                 f"'df_seq' should contain a '{ut.COL_SEQ}' column for "
-                f"build_pseudo_scales"
+                f"build_scales"
             )
         validate_feature_keys(features, registry=self._registry)
         ut.check_bool(name="return_std", val=return_std)

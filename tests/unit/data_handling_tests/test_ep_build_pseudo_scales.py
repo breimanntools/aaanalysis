@@ -1,4 +1,4 @@
-"""This is a script to test EmbeddingPreprocessor.build_pseudo_scales()."""
+"""This is a script to test EmbeddingPreprocessor.build_scales()."""
 import warnings
 
 import numpy as np
@@ -39,21 +39,21 @@ def _make_fixture(n=5, D=8, seed=0, alphabet=ALPHABET):
 
 # Normal cases ---------------------------------------------------------
 class TestBuildPseudoScales:
-    """Positive and parameter-level negative tests for build_pseudo_scales."""
+    """Positive and parameter-level negative tests for build_scales."""
 
     # Positive cases
     def test_returns_dataframe(self):
         df_seq, embeddings = _make_fixture()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df = aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            df = aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
         assert isinstance(df, pd.DataFrame)
 
     def test_shape_is_20_by_D(self):
         df_seq, embeddings = _make_fixture(n=5, D=8)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df = aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            df = aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
         assert df.shape == (20, 8)
 
     @given(D=some.integers(min_value=1, max_value=64))
@@ -61,28 +61,28 @@ class TestBuildPseudoScales:
         df_seq, embeddings = _make_fixture(n=5, D=D)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df = aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            df = aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
         assert df.shape == (20, D)
 
     def test_index_is_canonical_aa_alphabetical(self):
         df_seq, embeddings = _make_fixture()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df = aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            df = aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
         assert list(df.index) == list(ALPHABET)
 
     def test_columns_are_dim_labels(self):
         df_seq, embeddings = _make_fixture(D=5)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df = aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            df = aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
         assert list(df.columns) == [f"dim_{i}" for i in range(5)]
 
     def test_emits_user_warning_about_dataset_dependence(self):
         df_seq, embeddings = _make_fixture()
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
         user_warns = [x for x in w if issubclass(x.category, UserWarning)]
         assert len(user_warns) == 1
         assert "dataset-dependent" in str(user_warns[0].message).lower()
@@ -93,7 +93,7 @@ class TestBuildPseudoScales:
         embeddings = {"P0": np.ones((3, 4), dtype="float32")}
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df = aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            df = aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
         present = {"A", "C", "G"}
         for aa_letter in ALPHABET:
             row = df.loc[aa_letter]
@@ -108,7 +108,7 @@ class TestBuildPseudoScales:
         emb = np.array([[1.0], [10.0], [3.0], [20.0]], dtype="float32")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df = aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num={"P0": emb})
+            df = aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num={"P0": emb})
         assert df.loc["A", "dim_0"] == pytest.approx(2.0)
         assert df.loc["G", "dim_0"] == pytest.approx(15.0)
 
@@ -118,7 +118,7 @@ class TestBuildPseudoScales:
         emb = np.array([[1.0], [999.0], [3.0]], dtype="float32")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df = aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num={"P0": emb})
+            df = aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num={"P0": emb})
         assert df.loc["A", "dim_0"] == pytest.approx(2.0)
         # All non-A rows that aren't in the corpus stay NaN — X is silently dropped
         for aa_letter in ALPHABET:
@@ -129,65 +129,65 @@ class TestBuildPseudoScales:
         df_seq, embeddings = _make_fixture()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df1 = aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
-            df2 = aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            df1 = aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
+            df2 = aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
         pd.testing.assert_frame_equal(df1, df2)
 
     # Negative cases
     def test_invalid_df_seq_none(self):
         _, embeddings = _make_fixture()
         with pytest.raises(ValueError):
-            aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=None, dict_num=embeddings)
+            aa.EmbeddingPreprocessor().build_scales(df_seq=None, dict_num=embeddings)
 
     def test_invalid_embeddings_none(self):
         df_seq, _ = _make_fixture()
         with pytest.raises(ValueError):
-            aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=None)
+            aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=None)
 
     def test_invalid_embeddings_not_dict(self):
         df_seq, _ = _make_fixture()
         for bad in ["not a dict", 42, [1, 2, 3], np.zeros((3, 3))]:
             with pytest.raises(ValueError):
-                aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=bad)
+                aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=bad)
 
     def test_invalid_embeddings_missing_entry(self):
         df_seq, embeddings = _make_fixture()
         del embeddings["P3"]
         with pytest.raises(ValueError, match="missing"):
-            aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
 
     def test_invalid_embeddings_value_not_ndarray(self):
         df_seq, embeddings = _make_fixture()
         embeddings["P0"] = [[1.0, 2.0]] * 10  # nested list, not ndarray
         with pytest.raises(ValueError, match="np.ndarray"):
-            aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
 
     def test_invalid_embeddings_value_wrong_ndim(self):
         df_seq, embeddings = _make_fixture()
         embeddings["P0"] = np.zeros((10,), dtype="float32")  # 1D, expected 2D
         with pytest.raises(ValueError, match="2D"):
-            aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
 
     def test_invalid_embeddings_length_mismatch(self):
         df_seq, embeddings = _make_fixture()
         seq_len = len(df_seq.iloc[0]["sequence"])
         embeddings["P0"] = np.zeros((seq_len + 5, 8), dtype="float32")
         with pytest.raises(ValueError, match="sequence length"):
-            aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
 
     def test_invalid_embeddings_inconsistent_D(self):
         df_seq, embeddings = _make_fixture()
         seq_len = len(df_seq.iloc[1]["sequence"])
         embeddings["P1"] = np.zeros((seq_len, 16), dtype="float32")  # D=16 vs others' D=8
         with pytest.raises(ValueError, match="consistent embedding dimensionality"):
-            aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
 
     # return_std parameter
     def test_return_std_false_returns_single_dataframe(self):
         df_seq, embeddings = _make_fixture()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            out = aa.EmbeddingPreprocessor().build_pseudo_scales(
+            out = aa.EmbeddingPreprocessor().build_scales(
                 df_seq=df_seq, dict_num=embeddings, return_std=False
             )
         assert isinstance(out, pd.DataFrame)
@@ -196,7 +196,7 @@ class TestBuildPseudoScales:
         df_seq, embeddings = _make_fixture(D=6)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            out = aa.EmbeddingPreprocessor().build_pseudo_scales(
+            out = aa.EmbeddingPreprocessor().build_scales(
                 df_seq=df_seq, dict_num=embeddings, return_std=True
             )
         assert isinstance(out, tuple) and len(out) == 2
@@ -212,7 +212,7 @@ class TestBuildPseudoScales:
         emb = np.array([[7.0, -2.0]], dtype="float32")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            means, stds = aa.EmbeddingPreprocessor().build_pseudo_scales(
+            means, stds = aa.EmbeddingPreprocessor().build_scales(
                 df_seq=df_seq, dict_num={"P0": emb}, return_std=True
             )
         assert means.loc["W"].tolist() == [pytest.approx(7.0), pytest.approx(-2.0)]
@@ -223,7 +223,7 @@ class TestBuildPseudoScales:
         emb = np.ones((2, 3), dtype="float32")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            _, stds = aa.EmbeddingPreprocessor().build_pseudo_scales(
+            _, stds = aa.EmbeddingPreprocessor().build_scales(
                 df_seq=df_seq, dict_num={"P0": emb}, return_std=True
             )
         for letter in ALPHABET:
@@ -241,7 +241,7 @@ class TestBuildPseudoScales:
         }
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            means, stds = aa.EmbeddingPreprocessor().build_pseudo_scales(
+            means, stds = aa.EmbeddingPreprocessor().build_scales(
                 df_seq=df_seq, dict_num=embeddings, return_std=True
             )
         ref = np.array([1.0, 2.0, 3.0, 4.0])
@@ -253,21 +253,21 @@ class TestBuildPseudoScales:
         df_seq, embeddings = _make_fixture(D=4)
         for bad in ["yes", 1, 0, None, [True]]:
             with pytest.raises(ValueError):
-                aa.EmbeddingPreprocessor().build_pseudo_scales(
+                aa.EmbeddingPreprocessor().build_scales(
                     df_seq=df_seq, dict_num=embeddings, return_std=bad
                 )
 
 
 # Complex / interaction cases ------------------------------------------
 class TestBuildPseudoScalesComplex:
-    """Combinations and edge interactions for build_pseudo_scales."""
+    """Combinations and edge interactions for build_scales."""
 
     def test_single_entry_single_aa(self):
         df_seq = pd.DataFrame({"entry": ["P0"], "sequence": ["W"]})
         emb = np.array([[5.0, -3.0]], dtype="float32")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df = aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num={"P0": emb})
+            df = aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num={"P0": emb})
         assert df.shape == (20, 2)
         assert df.loc["W", "dim_0"] == pytest.approx(5.0)
         assert df.loc["W", "dim_1"] == pytest.approx(-3.0)
@@ -285,7 +285,7 @@ class TestBuildPseudoScalesComplex:
         }
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df = aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            df = aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
         # A occurs 4 times total: values [1,2,3,4], mean = 2.5
         assert df.loc["A", "dim_0"] == pytest.approx(2.5)
 
@@ -294,7 +294,7 @@ class TestBuildPseudoScalesComplex:
         df_seq, embeddings = _make_fixture(n=3, D=128)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df = aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            df = aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
         assert df.shape == (20, 128)
         # Result should have no Infs from any normalization step
         assert not np.isinf(df.values).any()
@@ -307,16 +307,16 @@ class TestBuildPseudoScalesComplex:
         }
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df = aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
+            df = aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
         # Only A, C, G should be filled (from P1); shape is still (20, 4)
         assert df.shape == (20, 4)
         assert not df.loc["A"].isna().any()
 
     def test_invalid_combined_none_inputs(self):
         with pytest.raises(ValueError):
-            aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=None, dict_num=None)
+            aa.EmbeddingPreprocessor().build_scales(df_seq=None, dict_num=None)
 
     def test_invalid_combined_empty_dict_and_valid_df_seq(self):
         df_seq, _ = _make_fixture()
         with pytest.raises(ValueError):
-            aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num={})
+            aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num={})

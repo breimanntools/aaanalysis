@@ -587,18 +587,19 @@ class CPP(Tool):
 
         Notes
         -----
-        * **Your PLM embeddings ARE the ``dict_num``.** No conversion step exists or is
-          needed: a ``{entry: (L, D)}`` embedding tensor feeds straight into
-          :meth:`NumericalFeature.get_parts`. ``EmbeddingPreprocessor.build_pseudo_scales`` /
-          ``cluster_pseudo_scales`` only *name* the D dimensions (producing ``df_scales`` /
-          ``df_cat``); they are never a per-residue value source here.
-        * **Three arms, one entry point.** *structure-only* (``dict_num`` from
-          :class:`StructurePreprocessor`), *embedding* (a PLM tensor), and *fused*
-          (concatenate sources with :func:`aaanalysis.combine_dict_nums` first) all flow
-          through ``get_parts`` → ``run_num`` — only the ``dict_num`` differs.
-        * Per-residue values are expected in ``[0, 1]`` (the ``StructurePreprocessor`` /
+        * **Raw PLM embeddings are not directly usable — normalize them first.**
+          Per-residue values are expected in ``[0, 1]`` (the ``StructurePreprocessor`` /
           ``AnnotationPreprocessor`` normalization convention), since the default
-          ``max_std_test=0.2`` pre-filter is calibrated for that range.
+          ``max_std_test=0.2`` pre-filter is calibrated for that range. Raw embeddings
+          (unbounded floats) must be passed through
+          :meth:`EmbeddingPreprocessor.encode` to obtain a ``[0, 1]``-normalized
+          ``{entry: (L, D)}`` ``dict_num`` before :meth:`NumericalFeature.get_parts`.
+          (``EmbeddingPreprocessor.build_scales`` / ``build_cat`` serve the *other*,
+          AA-scale path via :meth:`run`; they are not a per-residue value source here.)
+        * **Three arms, one entry point.** *structure-only* (``dict_num`` from
+          :class:`StructurePreprocessor`), *embedding* (``EmbeddingPreprocessor.encode``),
+          and *fused* (concatenate sources with :func:`aaanalysis.combine_dict_nums` first)
+          all flow through ``get_parts`` → ``run_num`` — only the ``dict_num`` differs.
 
         See Also
         --------

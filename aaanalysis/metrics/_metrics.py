@@ -250,6 +250,10 @@ def comp_per_protein_ap(list_scores: list = None,
     See Also
     --------
     * :func:`comp_detection_metrics` for fixed-threshold detection scores.
+
+    Examples
+    --------
+    .. include:: examples/comp_per_protein_ap.rst
     """
     # Check input
     list_scores, list_positions = _check_list_scores_positions(
@@ -297,6 +301,10 @@ def comp_detection_metrics(list_scores: list = None,
     See Also
     --------
     * :func:`comp_per_protein_ap` for the ranking-based site-localization score.
+
+    Examples
+    --------
+    .. include:: examples/comp_detection_metrics.rst
     """
     # Check input
     list_scores, list_positions = _check_list_scores_positions(
@@ -313,7 +321,7 @@ def comp_bootstrap_ci(values: ut.ArrayLike1D = None,
                       n_rounds: int = 1000,
                       ci: float = 0.95,
                       seed: Optional[int] = None,
-                      ) -> tuple:
+                      ) -> dict:
     """
     Compute a percentile bootstrap confidence interval of the mean.
 
@@ -336,12 +344,18 @@ def comp_bootstrap_ci(values: ut.ArrayLike1D = None,
 
     Returns
     -------
-    mean : float
-        Mean of the finite ``values``.
-    low : float
-        Lower bound of the ``ci`` interval.
-    high : float
-        Upper bound of the ``ci`` interval.
+    dict
+        Dictionary with keys ``'mean'`` (mean of the finite ``values``),
+        ``'ci_low'`` (lower bound of the ``ci`` interval), and ``'ci_high'``
+        (upper bound of the ``ci`` interval).
+
+    See Also
+    --------
+    * :func:`comp_per_protein_ap` for the per-protein metric vector this summarizes.
+
+    Examples
+    --------
+    .. include:: examples/comp_bootstrap_ci.rst
     """
     # Check input
     values = ut.check_array_like(name="values", val=values, allow_nan=True)
@@ -350,16 +364,17 @@ def comp_bootstrap_ci(values: ut.ArrayLike1D = None,
                           just_int=False, exclusive_limits=True)
     ut.check_number_range(name="seed", val=seed, min_val=0, accept_none=True, just_int=True)
     # Compute bootstrap CI
-    return bootstrap_ci_(values=values, n_rounds=n_rounds, ci=ci, seed=seed)
+    mean, low, high = bootstrap_ci_(values=values, n_rounds=n_rounds, ci=ci, seed=seed)
+    return {"mean": mean, "ci_low": low, "ci_high": high}
 
 
 # Peak-preserving score smoothing
-def smooth_scores(scores: ut.ArrayLike1D = None,
-                  method: str = "triangular",
-                  window: int = 2,
-                  sigma: Optional[float] = None,
-                  peak_preserving: bool = True,
-                  ) -> ut.ArrayLike1D:
+def comp_smooth_scores(scores: ut.ArrayLike1D = None,
+                       method: str = "triangular",
+                       window: int = 2,
+                       sigma: Optional[float] = None,
+                       peak_preserving: bool = True,
+                       ) -> ut.ArrayLike1D:
     """
     Smooth a per-residue score vector with a NaN-aware, peak-preserving kernel.
 
@@ -388,6 +403,14 @@ def smooth_scores(scores: ut.ArrayLike1D = None,
     -------
     smoothed : array-like, shape (n_residues,)
         Smoothed score vector, same length as ``scores``.
+
+    See Also
+    --------
+    * :func:`plot_rank` for visualizing per-protein score tracks.
+
+    Examples
+    --------
+    .. include:: examples/comp_smooth_scores.rst
     """
     # Check input
     scores = ut.check_array_like(name="scores", val=scores, allow_nan=True)

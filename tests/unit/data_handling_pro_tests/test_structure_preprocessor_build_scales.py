@@ -1,4 +1,4 @@
-"""This is a script to test StructurePreprocessor.build_pseudo_scales()
+"""This is a script to test StructurePreprocessor.build_scales()
 and StructurePreprocessor.build_cat() — v1.1 split of the v1 ``build_scales``
 into a corpus-derived (per-AA-mean) pseudo-scales method and a corpus-free
 metadata method.
@@ -38,26 +38,26 @@ def _dict_num(df_seq, D, fill=0.5):
 
 # II Test Classes
 class TestStpBuildPseudoScales:
-    """Single-parameter normal + invalid cases for build_pseudo_scales."""
+    """Single-parameter normal + invalid cases for build_scales."""
 
     # ----- NEGATIVES (≥10) -----
     def test_invalid_df_seq_none(self):
         stp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.build_pseudo_scales(features=["bfactor"])
+            stp.build_scales(features=["bfactor"])
 
     def test_invalid_dict_num_none(self):
         df = _df_seq()
         stp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.build_pseudo_scales(df_seq=df, dict_num=None,
+            stp.build_scales(df_seq=df, dict_num=None,
                                     features=["bfactor"])
 
     def test_invalid_features_empty(self):
         df = _df_seq()
         stp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.build_pseudo_scales(df_seq=df,
+            stp.build_scales(df_seq=df,
                                     dict_num=_dict_num(df, D=1),
                                     features=[])
 
@@ -65,7 +65,7 @@ class TestStpBuildPseudoScales:
         df = _df_seq()
         stp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.build_pseudo_scales(df_seq=df,
+            stp.build_scales(df_seq=df,
                                     dict_num=_dict_num(df, D=1),
                                     features=["mystery"])
 
@@ -73,7 +73,7 @@ class TestStpBuildPseudoScales:
         df = _df_seq()
         stp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.build_pseudo_scales(df_seq=df,
+            stp.build_scales(df_seq=df,
                                     dict_num=_dict_num(df, D=1),
                                     features="bfactor")
 
@@ -83,7 +83,7 @@ class TestStpBuildPseudoScales:
         del d["P1"]
         stp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.build_pseudo_scales(df_seq=df, dict_num=d,
+            stp.build_scales(df_seq=df, dict_num=d,
                                     features=["bfactor"])
 
     def test_invalid_dict_num_L_mismatch(self):
@@ -92,7 +92,7 @@ class TestStpBuildPseudoScales:
         d["P0"] = np.zeros((len(df["sequence"][0]) + 1, 1))
         stp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.build_pseudo_scales(df_seq=df, dict_num=d,
+            stp.build_scales(df_seq=df, dict_num=d,
                                     features=["bfactor"])
 
     def test_invalid_dict_num_D_mismatch(self):
@@ -100,7 +100,7 @@ class TestStpBuildPseudoScales:
         d = _dict_num(df, D=3)
         stp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.build_pseudo_scales(df_seq=df, dict_num=d,
+            stp.build_scales(df_seq=df, dict_num=d,
                                     features=["bfactor"])
 
     def test_invalid_dict_num_not_2d(self):
@@ -109,7 +109,7 @@ class TestStpBuildPseudoScales:
              for _, row in df.iterrows()}
         stp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.build_pseudo_scales(df_seq=df, dict_num=d,
+            stp.build_scales(df_seq=df, dict_num=d,
                                     features=["bfactor"])
 
     def test_invalid_dim_names_override_wrong_length(self):
@@ -117,7 +117,7 @@ class TestStpBuildPseudoScales:
         d = _dict_num(df, D=1)
         stp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.build_pseudo_scales(df_seq=df, dict_num=d,
+            stp.build_scales(df_seq=df, dict_num=d,
                                     features=["bfactor"],
                                     dim_names_override=["a", "b"])
 
@@ -126,7 +126,7 @@ class TestStpBuildPseudoScales:
         d = _dict_num(df, D=1)
         stp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.build_pseudo_scales(df_seq=df, dict_num=d,
+            stp.build_scales(df_seq=df, dict_num=d,
                                     features=["bfactor"],
                                     dim_names_override="abc")
 
@@ -135,7 +135,7 @@ class TestStpBuildPseudoScales:
         d = _dict_num(df, D=1)
         stp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.build_pseudo_scales(df_seq=df, dict_num=d,
+            stp.build_scales(df_seq=df, dict_num=d,
                                     features=["bfactor"], return_std="yes")
 
     # ----- POSITIVES (≥10) -----
@@ -145,7 +145,7 @@ class TestStpBuildPseudoScales:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_pseudo_scales(df_seq=df, dict_num=d,
+            df_scales = stp.build_scales(df_seq=df, dict_num=d,
                                                 features=["bfactor"])
         assert isinstance(df_scales, pd.DataFrame)
 
@@ -155,7 +155,7 @@ class TestStpBuildPseudoScales:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_pseudo_scales(
+            df_scales = stp.build_scales(
                 df_seq=df, dict_num=d, features=["phi_psi_sincos"])
         assert df_scales.shape == (20, 4)
 
@@ -165,7 +165,7 @@ class TestStpBuildPseudoScales:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_pseudo_scales(
+            df_scales = stp.build_scales(
                 df_seq=df, dict_num=d, features=["bfactor"])
         assert list(df_scales.index) == list(ut.LIST_CANONICAL_AA)
 
@@ -175,7 +175,7 @@ class TestStpBuildPseudoScales:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_pseudo_scales(
+            df_scales = stp.build_scales(
                 df_seq=df, dict_num=d, features=["ss3"])
         assert list(df_scales.columns) == ["ss_helix", "ss_strand", "ss_coil"]
 
@@ -185,7 +185,7 @@ class TestStpBuildPseudoScales:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            stp.build_pseudo_scales(df_seq=df, dict_num=d,
+            stp.build_scales(df_seq=df, dict_num=d,
                                     features=["bfactor"])
         user_warns = [x for x in w if issubclass(x.category, UserWarning)]
         assert any("dataset-dependent" in str(x.message).lower()
@@ -197,7 +197,7 @@ class TestStpBuildPseudoScales:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_pseudo_scales(
+            df_scales = stp.build_scales(
                 df_seq=df, dict_num=d, features=["bfactor"])
         # AAs present in the corpus get 0.42; AAs absent get NaN.
         for v in df_scales["bfactor"]:
@@ -211,7 +211,7 @@ class TestStpBuildPseudoScales:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_pseudo_scales(
+            df_scales = stp.build_scales(
                 df_seq=df, dict_num=d, features=["bfactor"])
         present = {"A", "C", "G"}
         for aa_letter in ut.LIST_CANONICAL_AA:
@@ -226,7 +226,7 @@ class TestStpBuildPseudoScales:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            result = stp.build_pseudo_scales(
+            result = stp.build_scales(
                 df_seq=df, dict_num=d, features=["bfactor"], return_std=True)
         assert isinstance(result, tuple) and len(result) == 2
         df_scales, df_stds = result
@@ -238,7 +238,7 @@ class TestStpBuildPseudoScales:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            _, df_stds = stp.build_pseudo_scales(
+            _, df_stds = stp.build_scales(
                 df_seq=df, dict_num=d, features=["bfactor"], return_std=True)
         # Present AAs should have std=0 (constant fill); absent NaN.
         for v in df_stds["bfactor"]:
@@ -250,7 +250,7 @@ class TestStpBuildPseudoScales:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_pseudo_scales(
+            df_scales = stp.build_scales(
                 df_seq=df, dict_num=d, features=["ss3"],
                 dim_names_override=["A", "B", "C"])
         assert list(df_scales.columns) == ["A", "B", "C"]
@@ -268,7 +268,7 @@ class TestStpBuildPseudoScales:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_pseudo_scales(
+            df_scales = stp.build_scales(
                 df_seq=df, dict_num=d, features=["phi_psi_sincos", "bfactor"])
         corr = df_scales.corr()
         # Diagonal should be 1.0, off-diagonal finite (not NaN).
@@ -279,7 +279,7 @@ class TestStpBuildPseudoScales:
 
 
 class TestStpBuildPseudoScalesComplex:
-    """Cross-parameter combinations for build_pseudo_scales."""
+    """Cross-parameter combinations for build_scales."""
 
     def test_complex_multiple_features_D_matches(self):
         df = _df_seq()
@@ -288,7 +288,7 @@ class TestStpBuildPseudoScalesComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_pseudo_scales(
+            df_scales = stp.build_scales(
                 df_seq=df, dict_num=d, features=["ss3", "bfactor"])
         assert df_scales.shape == (20, D)
 
@@ -298,7 +298,7 @@ class TestStpBuildPseudoScalesComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales, df_stds = stp.build_pseudo_scales(
+            df_scales, df_stds = stp.build_scales(
                 df_seq=df, dict_num=d, features=["phi_psi_sincos"],
                 return_std=True)
         assert list(df_scales.columns) == list(df_stds.columns)
@@ -309,10 +309,10 @@ class TestStpBuildPseudoScalesComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            a = stp.build_pseudo_scales(df_seq=df, dict_num=d,
+            a = stp.build_scales(df_seq=df, dict_num=d,
                                         features=["ss3"],
                                         dim_names_override=["x", "y", "z"])
-            b = stp.build_pseudo_scales(df_seq=df, dict_num=d,
+            b = stp.build_scales(df_seq=df, dict_num=d,
                                         features=["ss3"],
                                         dim_names_override=["x", "y", "z"])
         assert list(a.columns) == list(b.columns)
@@ -324,7 +324,7 @@ class TestStpBuildPseudoScalesComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_pseudo_scales(
+            df_scales = stp.build_scales(
                 df_seq=df, dict_num=d, features=["bfactor"])
         # Only A has a value.
         assert df_scales.loc["A", "bfactor"] == 0.7
@@ -337,7 +337,7 @@ class TestStpBuildPseudoScalesComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_pseudo_scales(
+            df_scales = stp.build_scales(
                 df_seq=df, dict_num=d, features=["bfactor"])
         assert df_scales.loc["A", "bfactor"] == 0.5
         assert df_scales.loc["C", "bfactor"] == 0.7
@@ -348,7 +348,7 @@ class TestStpBuildPseudoScalesComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_pseudo_scales(
+            df_scales = stp.build_scales(
                 df_seq=df, dict_num=d, features=["bfactor"])
         # A appears twice (one NaN, one 0.5) → mean over non-NaN = 0.5
         assert df_scales.loc["A", "bfactor"] == 0.5
@@ -363,7 +363,7 @@ class TestStpBuildPseudoScalesComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_pseudo_scales(
+            df_scales = stp.build_scales(
                 df_seq=df, dict_num=d, features=["phi_psi_sincos"])
         corr = df_scales.corr().values
         np.testing.assert_allclose(np.diag(corr), 1.0)

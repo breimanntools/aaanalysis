@@ -239,7 +239,10 @@ def scan_motif(df_seq: pd.DataFrame = None,
       and FIMO `manual <https://meme-suite.org/meme/doc/fimo.html>`__.
     * :meth:`AAWindowSampler.sample_motif_matched` for the pure-Python
       equivalent (no FIMO binary required).
-    
+
+    Examples
+    --------
+    .. include:: examples/scan_motif.rst
     """
     check_fimo_installed()
     # Validate

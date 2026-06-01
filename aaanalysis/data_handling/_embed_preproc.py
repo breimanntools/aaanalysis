@@ -9,36 +9,37 @@ import numpy as np
 import pandas as pd
 
 import aaanalysis.utils as ut
+from ._backend.embed_preproc.encode import encode_
 from ._backend.embed_preproc.build_pseudo_scales import build_pseudo_scales_
 from ._backend.embed_preproc.cluster_pseudo_scales import cluster_pseudo_scales_
 
 
 # I Helper Functions
-def _check_dict_num(df_seq, dict_num):
-    """Validate that ``dict_num`` is a dict keyed by entry, each value a
+def _check_per_residue_dict(name, df_seq, arrays):
+    """Validate that ``arrays`` is a dict keyed by entry, each value a
     2D ndarray whose first axis matches the corresponding sequence length,
     and that all entries share the same D."""
-    if not isinstance(dict_num, dict):
-        raise ValueError(f"'dict_num' ({type(dict_num).__name__}) should be a dict mapping entry to np.ndarray of shape (L, D).")
+    if not isinstance(arrays, dict):
+        raise ValueError(f"'{name}' ({type(arrays).__name__}) should be a dict mapping entry to np.ndarray of shape (L, D).")
     entries = df_seq[ut.COL_ENTRY].tolist()
-    missing = [e for e in entries if e not in dict_num]
+    missing = [e for e in entries if e not in arrays]
     if missing:
         preview = missing[:5] + (["..."] if len(missing) > 5 else [])
-        raise ValueError(f"'dict_num' ({len(missing)} missing entries) should contain every entry in 'df_seq'. Missing: {preview}")
+        raise ValueError(f"'{name}' ({len(missing)} missing entries) should contain every entry in 'df_seq'. Missing: {preview}")
     seqs = dict(zip(df_seq[ut.COL_ENTRY], df_seq[ut.COL_SEQ]))
     ds = []
     for entry in entries:
-        emb = dict_num[entry]
+        emb = arrays[entry]
         if not isinstance(emb, np.ndarray):
-            raise ValueError(f"'dict_num[{entry!r}]' ({type(emb).__name__}) should be np.ndarray of shape (L, D).")
+            raise ValueError(f"'{name}[{entry!r}]' ({type(emb).__name__}) should be np.ndarray of shape (L, D).")
         if emb.ndim != 2:
-            raise ValueError(f"'dict_num[{entry!r}]' (ndim={emb.ndim}) should be 2D of shape (L, D).")
+            raise ValueError(f"'{name}[{entry!r}]' (ndim={emb.ndim}) should be 2D of shape (L, D).")
         seq_len = len(seqs[entry])
         if emb.shape[0] != seq_len:
-            raise ValueError(f"'dict_num[{entry!r}].shape[0]' ({emb.shape[0]}) should equal sequence length ({seq_len}).")
+            raise ValueError(f"'{name}[{entry!r}].shape[0]' ({emb.shape[0]}) should equal sequence length ({seq_len}).")
         ds.append(emb.shape[1])
     if len(set(ds)) > 1:
-        raise ValueError(f"'dict_num' (D values: {sorted(set(ds))}) should have a consistent embedding dimensionality D across all entries.")
+        raise ValueError(f"'{name}' (D values: {sorted(set(ds))}) should have a consistent embedding dimensionality D across all entries.")
 
 
 def _check_match_cat_subcat_thresholds(cat_min_th, subcat_min_th):
@@ -50,36 +51,36 @@ def _check_match_cat_subcat_thresholds(cat_min_th, subcat_min_th):
         )
 
 
-def _check_df_scales_emb_min_dims(df_scales_emb, min_dims=3):
+def _check_df_scales_min_dims(df_scales, min_dims=3):
     """At least ``min_dims`` pseudo-scales (columns) are required: AAclust needs
     ≥3 samples to estimate the lower bound of k."""
-    D = df_scales_emb.shape[1]
+    D = df_scales.shape[1]
     if D < min_dims:
         raise ValueError(
-            f"'df_scales_emb' (D={D}, shape={df_scales_emb.shape}) should have at least "
+            f"'df_scales' (D={D}, shape={df_scales.shape}) should have at least "
             f"{min_dims} columns — AAclust requires ≥{min_dims} pseudo-scales to cluster."
         )
 
 
-def _check_match_df_scales_emb_df_stds_emb(df_scales_emb, df_stds_emb):
-    """If ``df_stds_emb`` is supplied, its shape, index, and columns must match
-    ``df_scales_emb`` exactly — they describe the same dimensions across the
+def _check_match_df_scales_df_stds(df_scales, df_stds):
+    """If ``df_stds`` is supplied, its shape, index, and columns must match
+    ``df_scales`` exactly — they describe the same dimensions across the
     same AAs."""
-    if df_stds_emb is None:
+    if df_stds is None:
         return
-    if df_stds_emb.shape != df_scales_emb.shape:
+    if df_stds.shape != df_scales.shape:
         raise ValueError(
-            f"'df_stds_emb' (shape={df_stds_emb.shape}) should have the same shape as "
-            f"'df_scales_emb' (shape={df_scales_emb.shape})."
+            f"'df_stds' (shape={df_stds.shape}) should have the same shape as "
+            f"'df_scales' (shape={df_scales.shape})."
         )
-    if not df_stds_emb.index.equals(df_scales_emb.index):
+    if not df_stds.index.equals(df_scales.index):
         raise ValueError(
-            "'df_stds_emb' should have the same index as 'df_scales_emb' "
+            "'df_stds' should have the same index as 'df_scales' "
             "(AAs in the same order)."
         )
-    if not df_stds_emb.columns.equals(df_scales_emb.columns):
+    if not df_stds.columns.equals(df_scales.columns):
         raise ValueError(
-            "'df_stds_emb' should have the same columns as 'df_scales_emb' "
+            "'df_stds' should have the same columns as 'df_scales' "
             "(dimension labels in the same order)."
         )
 
@@ -90,11 +91,13 @@ class EmbeddingPreprocessor:
     Utility data preprocessing class for protein-language-model (PLM) embeddings.
 
     Instance-based, mirroring :class:`StructurePreprocessor` and
-    :class:`AnnotationPreprocessor` (``ep = EmbeddingPreprocessor()``). Turns
-    per-residue PLM embeddings into the ``(df_scales, df_cat)`` pair that
-    :meth:`CPP.run` consumes (drop-in as ``df_scales=df_scales_emb``,
-    ``df_cat=df_cat_emb``). See the *Notes* on the semantic compromise of
-    context-free averaging.
+    :class:`AnnotationPreprocessor` (``ep = EmbeddingPreprocessor()``). The
+    family-symmetric entry point is :meth:`encode`, which turns raw per-residue
+    PLM embeddings into a ``[0, 1]``-normalized ``dict_num`` ready for
+    :meth:`CPP.run_num` (the per-residue, position-preserving path). The
+    secondary :meth:`build_scales` / :meth:`build_cat` pair collapses the same
+    embeddings into the ``(df_scales, df_cat)`` that :meth:`CPP.run` consumes
+    (the context-free, AA-scale path). See the *Notes* on that compromise.
 
     .. versionadded:: 1.1.0
 
@@ -131,7 +134,100 @@ class EmbeddingPreprocessor:
     def __init__(self, verbose: bool = True):
         self._verbose = ut.check_verbose(verbose)
 
-    def build_pseudo_scales(
+    def encode(
+        self,
+        df_seq: pd.DataFrame = None,
+        embeddings: Dict[str, np.ndarray] = None,
+        method: str = "minmax",
+        clip: Tuple[float, float] = (1.0, 99.0),
+        return_df: bool = False,
+    ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
+        """
+        Encode raw per-residue PLM embeddings into a ``[0, 1]``-normalized ``dict_num``.
+
+        Raw PLM embeddings (ESM, ProtT5, …) are unbounded floats, whereas
+        :meth:`CPP.run_num` expects per-residue values in ``[0, 1]`` (the same
+        normalization convention as :class:`StructurePreprocessor` and
+        :class:`AnnotationPreprocessor`). ``encode`` fits one normalizer **per
+        embedding dimension** over the whole corpus (all residues of all
+        proteins in ``df_seq``) and applies it to every entry, returning a
+        ``dict_num`` that feeds straight into
+        :meth:`NumericalFeature.get_parts` → :meth:`CPP.run_num`. The fitted
+        parameters are stored on the instance (``self.norm_params_``) so the
+        identical transform can be reproduced.
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein
+            identifiers and a ``sequence`` column with full protein sequences.
+            Defines which entries are encoded and validates that each embedding
+            array's length matches its sequence.
+        embeddings : dict[str, np.ndarray]
+            Mapping from entry to a raw per-residue embedding array of shape
+            ``(L, D)`` where ``L`` is the protein length and ``D`` is the
+            embedding dimensionality. Every entry in ``df_seq`` must be a key;
+            all arrays must share the same ``D``. You compute these externally
+            with your PLM of choice — AAanalysis does not run the model.
+        method : {'minmax', 'quantile', 'sigmoid'}, default='minmax'
+            Per-dimension normalization to ``[0, 1]``. ``'minmax'`` linearly
+            rescales each dim between its corpus min and max; ``'quantile'``
+            does the same between robust percentiles (see ``clip``) so outlier
+            residues do not crush the range; ``'sigmoid'`` z-scores each dim
+            and applies a logistic squash.
+        clip : tuple of float, default=(1.0, 99.0)
+            Lower / upper percentiles used only when ``method='quantile'``.
+        return_df : bool, default=False
+            If ``True``, also return an echo of ``df_seq`` as a second element.
+
+        Returns
+        -------
+        dict_num : dict[str, np.ndarray]
+            ``{entry: (L, D) ndarray}`` with all values in ``[0, 1]``, same
+            shape as ``embeddings``. Stack with other per-residue tensors via
+            :func:`aaanalysis.combine_dict_nums`, slice with
+            :meth:`NumericalFeature.get_parts`, then run :meth:`CPP.run_num`.
+        df_seq_out : pd.DataFrame
+            Returned only when ``return_df=True``. Echo of ``df_seq``.
+
+        Notes
+        -----
+        * The normalizer is fit over the supplied corpus, so it is
+          **dataset-dependent**: the same embeddings normalized against a
+          different ``df_seq`` yield different values. For reproducible
+          cross-dataset comparison, fit once on a fixed reference corpus.
+
+        See Also
+        --------
+        build_scales : the secondary context-free AA-scale path (for CPP.run).
+        * :meth:`CPP.run_num` : the per-residue consumer of the returned dict_num.
+        * :func:`aaanalysis.combine_dict_nums` : stitch several dict_nums together.
+
+        Examples
+        --------
+        .. include:: examples/ep_encode.rst
+        """
+        # Validate
+        ut.check_df_seq(df_seq=df_seq)
+        _check_per_residue_dict(name="embeddings", df_seq=df_seq, arrays=embeddings)
+        ut.check_str_options(name="method", val=method,
+                             list_str_options=["minmax", "quantile", "sigmoid"])
+        ut.check_bool(name="return_df", val=return_df)
+        if method == "quantile":
+            q_lo, q_hi = clip
+            ut.check_number_range(name="clip[0]", val=q_lo, min_val=0.0, max_val=100.0, just_int=False)
+            ut.check_number_range(name="clip[1]", val=q_hi, min_val=0.0, max_val=100.0, just_int=False)
+            if q_lo >= q_hi:
+                raise ValueError(f"'clip' ({clip}) should be (lower, upper) with lower < upper.")
+        # Encode
+        entries = df_seq[ut.COL_ENTRY].tolist()
+        dict_num, params = encode_(dict_num=embeddings, entries=entries, method=method, clip=clip)
+        self.norm_params_ = params
+        if return_df:
+            return dict_num, df_seq.copy()
+        return dict_num
+
+    def build_scales(
         self,
         df_seq: pd.DataFrame = None,
         dict_num: Dict[str, np.ndarray] = None,
@@ -166,14 +262,15 @@ class EmbeddingPreprocessor:
 
         Returns
         -------
-        df_scales_emb : pd.DataFrame, shape (20, D)
+        df_scales : pd.DataFrame, shape (20, D)
             Pseudo-scale DataFrame. Rows are the 20 canonical amino acids in
             alphabetical order (``ACDEFGHIKLMNPQRSTVWY``); columns are
             dimension labels (``dim_0``, ``dim_1``, …, ``dim_{D-1}``). Cells
-            are context-free per-AA means of embedding values.
-        df_stds_emb : pd.DataFrame, shape (20, D)
+            are context-free per-AA means of embedding values. Drop-in for the
+            ``df_scales`` argument of :meth:`CPP.__init__`.
+        df_stds : pd.DataFrame, shape (20, D)
             Per-AA standard deviations, returned only when ``return_std=True``.
-            Same index and columns as ``df_scales_emb``.
+            Same index and columns as ``df_scales``.
 
         Warns
         -----
@@ -184,16 +281,21 @@ class EmbeddingPreprocessor:
 
         See Also
         --------
-        cluster_pseudo_scales : derive a two-level pseudo-category table from this output.
+        build_cat : derive a two-level pseudo-category table from this output.
+        encode : the primary per-residue path (raw embeddings -> [0, 1] dict_num).
+
+        Examples
+        --------
+        .. include:: examples/ep_build_scales.rst
         """
         # Validate
         ut.check_df_seq(df_seq=df_seq)
-        _check_dict_num(df_seq=df_seq, dict_num=dict_num)
+        _check_per_residue_dict(name="dict_num", df_seq=df_seq, arrays=dict_num)
         ut.check_bool(name="return_std", val=return_std)
         warnings.warn(
             "Pseudo-scales are dataset-dependent (averaged over df_seq). "
             "For reproducible cross-dataset comparison, compute them once on a "
-            "fixed reference corpus and reuse the resulting df_scales_emb.",
+            "fixed reference corpus and reuse the resulting df_scales.",
             UserWarning,
             stacklevel=2,
         )
@@ -213,23 +315,23 @@ class EmbeddingPreprocessor:
             means = result
         D = means.shape[1]
         cols = [f"dim_{i}" for i in range(D)]
-        df_scales_emb = pd.DataFrame(means, index=list_aa, columns=cols)
+        df_scales = pd.DataFrame(means, index=list_aa, columns=cols)
         if not return_std:
-            return df_scales_emb
-        df_stds_emb = pd.DataFrame(stds, index=list_aa, columns=cols)
-        return df_scales_emb, df_stds_emb
+            return df_scales
+        df_stds = pd.DataFrame(stds, index=list_aa, columns=cols)
+        return df_scales, df_stds
 
-    def cluster_pseudo_scales(
+    def build_cat(
         self,
-        df_scales_emb: pd.DataFrame = None,
-        df_stds_emb: pd.DataFrame = None,
+        df_scales: pd.DataFrame = None,
+        df_stds: pd.DataFrame = None,
         cat_min_th: float = 0.5,
         subcat_min_th: float = 0.7,
         metric: str = "correlation",
         random_state: int = 0,
     ) -> pd.DataFrame:
         """
-        Cluster pseudo-scales into a two-level pseudo-category table via AAclust.
+        Build a two-level pseudo-category table by clustering pseudo-scales via AAclust.
 
         Two independent :class:`AAclust` runs at different correlation
         thresholds produce coarser ``cat`` labels and finer ``subcat`` labels
@@ -237,7 +339,7 @@ class EmbeddingPreprocessor:
         so the result is a drop-in for the ``df_cat`` argument of
         :meth:`CPP.__init__`.
 
-        When ``df_stds_emb`` is supplied, clustering becomes **std-aware**:
+        When ``df_stds`` is supplied, clustering becomes **std-aware**:
         each dimension is represented by the per-column z-scored concatenation
         of its per-AA ``(mean, std)`` (shape ``(D, 40)`` instead of
         ``(D, 20)``). Two dimensions with similar per-AA means but very
@@ -245,17 +347,17 @@ class EmbeddingPreprocessor:
 
         Parameters
         ----------
-        df_scales_emb : pd.DataFrame, shape (20, D)
-            Pseudo-scale DataFrame produced by :meth:`build_pseudo_scales`
+        df_scales : pd.DataFrame, shape (20, D)
+            Pseudo-scale DataFrame produced by :meth:`build_scales`
             (or a user-supplied analog with the same shape). Must have at
             least 3 columns.
-        df_stds_emb : pd.DataFrame, shape (20, D), optional
-            Per-AA standard deviations matching ``df_scales_emb`` exactly in
+        df_stds : pd.DataFrame, shape (20, D), optional
+            Per-AA standard deviations matching ``df_scales`` exactly in
             shape, index, and columns. Produce via
-            ``build_pseudo_scales(..., return_std=True)``. When supplied,
+            ``build_scales(..., return_std=True)``. When supplied,
             enables std-aware clustering (see Notes); when ``None`` (default),
             mean-only clustering is used. Must contain no NaN — drop the same
-            rows you dropped from ``df_scales_emb``.
+            rows you dropped from ``df_scales``.
         cat_min_th : float, default=0.5
             AAclust correlation threshold for the coarser (``cat``) level.
             Lower values produce fewer, larger clusters.
@@ -271,11 +373,12 @@ class EmbeddingPreprocessor:
 
         Returns
         -------
-        df_cat_emb : pd.DataFrame, shape (D, 5)
+        df_cat : pd.DataFrame, shape (D, 5)
             Pseudo-category DataFrame with columns ``scale_id``, ``category``
             (``"PLM_cat_<k>"``), ``subcategory`` (``"PLM_subcat_<k>"``),
             ``scale_name``, ``scale_description``. The ``scale_id`` column
-            matches the column labels of ``df_scales_emb``.
+            matches the column labels of ``df_scales``. Drop-in for the
+            ``df_cat`` argument of :meth:`CPP.__init__`.
 
         Notes
         -----
@@ -303,8 +406,8 @@ class EmbeddingPreprocessor:
         See Also
         --------
         :class:`AAclust` : the underlying clustering algorithm.
-        build_pseudo_scales : produces the expected input(s); pass
-            ``return_std=True`` to get ``df_stds_emb`` for std-aware mode.
+        build_scales : produces the expected input(s); pass
+            ``return_std=True`` to get ``df_stds`` for std-aware mode.
 
         References
         ----------
@@ -312,24 +415,28 @@ class EmbeddingPreprocessor:
            variables in cluster analysis*, J. Classification 5(2):181-204.
         .. [Eisen98] Eisen et al. 1998, *Cluster analysis and display of
            genome-wide expression patterns*, PNAS 95(25):14863-14868.
+
+        Examples
+        --------
+        .. include:: examples/ep_build_cat.rst
         """
         # Validate
-        ut.check_df(name="df_scales_emb", df=df_scales_emb, accept_none=False)
-        _check_df_scales_emb_min_dims(df_scales_emb=df_scales_emb)
-        ut.check_df(name="df_stds_emb", df=df_stds_emb, accept_none=True, accept_nan=False)
-        _check_match_df_scales_emb_df_stds_emb(df_scales_emb=df_scales_emb, df_stds_emb=df_stds_emb)
+        ut.check_df(name="df_scales", df=df_scales, accept_none=False)
+        _check_df_scales_min_dims(df_scales=df_scales)
+        ut.check_df(name="df_stds", df=df_stds, accept_none=True, accept_nan=False)
+        _check_match_df_scales_df_stds(df_scales=df_scales, df_stds=df_stds)
         ut.check_number_range(name="cat_min_th", val=cat_min_th, min_val=0.0, max_val=1.0, just_int=False)
         ut.check_number_range(name="subcat_min_th", val=subcat_min_th, min_val=0.0, max_val=1.0, just_int=False)
         ut.check_str_options(name="metric", val=metric, list_str_options=["correlation", "cosine"])
         ut.check_number_range(name="random_state", val=random_state, min_val=0, just_int=True)
         _check_match_cat_subcat_thresholds(cat_min_th=cat_min_th, subcat_min_th=subcat_min_th)
         # Cluster
-        df_cat_emb = cluster_pseudo_scales_(
-            df_scales_emb=df_scales_emb,
-            df_stds_emb=df_stds_emb,
+        df_cat = cluster_pseudo_scales_(
+            df_scales_emb=df_scales,
+            df_stds_emb=df_stds,
             cat_min_th=cat_min_th,
             subcat_min_th=subcat_min_th,
             random_state=random_state,
             metric=metric,
         )
-        return df_cat_emb
+        return df_cat

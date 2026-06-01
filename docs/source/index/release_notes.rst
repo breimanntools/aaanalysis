@@ -17,29 +17,35 @@ Added
 
 **Data Handling**
 
-- **EmbeddingPreprocessor**: Instance-based class turning per-residue protein
-  language model (PLM) embeddings into pseudo-scales and pseudo-categories
-  (``build_pseudo_scales``, ``cluster_pseudo_scales``) for ``CPP.run_num``.
+- **EmbeddingPreprocessor**: Instance-based class for per-residue protein
+  language model (PLM) embeddings. The primary ``encode`` method normalizes raw
+  embeddings into a ``[0, 1]`` per-residue ``dict_num`` (``method='minmax' |
+  'quantile' | 'sigmoid'``) ready for ``CPP.run_num``; the secondary
+  ``build_scales`` / ``build_cat`` pair collapses them into pseudo-scales /
+  pseudo-categories for ``CPP.run``.
 - **StructurePreprocessor** (``aaanalysis[pro]``): Converts PDB / CIF / AlphaFold
   files (and AlphaFold PAE sidecars) into ``[0, 1]``-normalized per-residue
   numerical tensors. Methods: ``get_dssp``, ``encode_dssp``, ``encode_pdb``,
-  ``encode_pae``, ``get_domains``, ``encode_domains``, ``build_pseudo_scales``,
+  ``encode_pae``, ``get_domains``, ``encode_domains``, ``build_scales``,
   ``build_cat``.
 - **AnnotationPreprocessor** (``aaanalysis[pro]``): Fetches from UniProt (or
   ingests user / predictor labels) per-residue PTM and functional-site
   annotations and encodes them into per-residue tensors. Methods:
   ``fetch_uniprot``, ``ingest``, ``register_feature``, ``encode``,
-  ``build_pseudo_scales``, ``build_cat``, ``to_df_seq``.
+  ``build_scales``, ``build_cat``, ``to_df_seq``.
 - **combine_dict_nums**: Concatenates multiple per-residue tensors
   (embeddings / structure / annotation) along the feature axis to build a
   combined ``CPP.run_num`` input.
 
 **Feature Engineering**
 
-- **CPPGrid**: Tool-style wrapper that runs a grid sweep of ``CPP``
-  configurations in one call, parallelized across configurations. Configurations
-  that differ only in ``n_filter`` are collapsed into a single CPP run, with the
-  remaining configurations served as exact ``head(n)`` slices.
+- **CPPGrid**: ``Tool``-style wrapper (``run`` + ``eval``) that runs a grid sweep
+  of ``CPP`` configurations in one call, parallelized across configurations.
+  Configurations that differ only in ``n_filter`` are collapsed into a single CPP
+  run, with the remaining configurations served as exact ``head(n)`` slices.
+  ``run`` also stores ``list_df_feat_`` / ``df_params_``; ``eval(sort_by=...)``
+  scores the configurations (by ``avg_ABS_AUC`` by default) and returns them
+  best-first.
 - **CPP.run_num**: New numerical-mode method whose per-residue value source is a
   pre-sliced numerical tensor (``dict_num_parts``) rather than an amino-acid →
   scale lookup, enabling embedding / structure / annotation features through the
@@ -59,8 +65,9 @@ Added
 - **comp_detection_metrics**: Recall / precision / F1 / MCC at a fixed score
   threshold, pooled across per-residue predictions.
 - **comp_bootstrap_ci**: Seeded percentile confidence interval over a
-  per-protein metric vector for small-N uncertainty reporting.
-- **smooth_scores**: Peak-preserving (``max(smoothed, raw)``), NaN-aware
+  per-protein metric vector for small-N uncertainty reporting. Returns a dict
+  ``{'mean', 'ci_low', 'ci_high'}``.
+- **comp_smooth_scores**: Peak-preserving (``max(smoothed, raw)``), NaN-aware
   smoothing of per-residue score tracks.
 
 **Plotting**

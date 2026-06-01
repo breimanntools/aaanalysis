@@ -1,6 +1,14 @@
 # ADR-0005 — Feature-preprocessor family: consolidate into `data_handling_pro`, unify the protocol
 
-Status: Accepted — 2026-05-29
+Status: Accepted — 2026-05-29 (partially superseded by ADR-0011, 2026-06-01)
+
+> **Update (ADR-0011, 2026-06-01):** before the v1.1.0 release, two decisions
+> below were revised. `EmbeddingPreprocessor` gained an `encode` method (raw
+> embeddings → `[0, 1]` `dict_num`), so the "Embedding has no acquire/encode step"
+> premise no longer holds. The builder methods were renamed for output-matching
+> uniformity: `build_pseudo_scales` → `build_scales`, and Embedding's
+> `cluster_pseudo_scales` → `build_cat` (reversing the "Force … `build_cat` —
+> false symmetry" rejection below). See ADR-0011.
 
 ## Context
 

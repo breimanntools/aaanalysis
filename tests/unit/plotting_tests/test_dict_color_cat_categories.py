@@ -1,6 +1,6 @@
 """This is a script to test that every feature ``category`` value emitted
 by ``StructurePreprocessor.build_cat`` and
-``EmbeddingPreprocessor.cluster_pseudo_scales`` resolves to a color in
+``EmbeddingPreprocessor.build_cat`` resolves to a color in
 ``ut.DICT_COLOR_CAT`` — closing the v1 defect where these categories
 caused ``CPPPlot.heatmap()`` to raise ``ValueError``.
 """
@@ -88,30 +88,30 @@ class TestStructurePreprocessorCategoriesResolve:
 
 
 class TestEmbeddingPreprocessorCategoriesResolve:
-    """Every category produced by cluster_pseudo_scales must be in DICT_COLOR_CAT."""
+    """Every category produced by build_cat must be in DICT_COLOR_CAT."""
 
     def test_mean_only_category_resolves(self):
-        df_scales_emb = _make_pseudo_scales(D=8)
-        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
-            df_scales_emb=df_scales_emb,
+        df_scales = _make_pseudo_scales(D=8)
+        df_cat = aa.EmbeddingPreprocessor().build_cat(
+            df_scales=df_scales,
             cat_min_th=0.3, subcat_min_th=0.6, random_state=0)
         for c in df_cat[ut.COL_CAT].unique():
             assert c in ut.DICT_COLOR_CAT
 
     def test_std_aware_category_resolves(self):
-        df_scales_emb = _make_pseudo_scales(D=8, seed=0)
-        df_stds_emb = _make_pseudo_scales(D=8, seed=1).abs()
-        df_stds_emb.index = df_scales_emb.index
-        df_stds_emb.columns = df_scales_emb.columns
-        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
-            df_scales_emb=df_scales_emb, df_stds_emb=df_stds_emb,
+        df_scales = _make_pseudo_scales(D=8, seed=0)
+        df_stds = _make_pseudo_scales(D=8, seed=1).abs()
+        df_stds.index = df_scales.index
+        df_stds.columns = df_scales.columns
+        df_cat = aa.EmbeddingPreprocessor().build_cat(
+            df_scales=df_scales, df_stds=df_stds,
             cat_min_th=0.3, subcat_min_th=0.6, random_state=0)
         for c in df_cat[ut.COL_CAT].unique():
             assert c in ut.DICT_COLOR_CAT
 
     def test_all_categories_are_embeddings(self):
-        df_scales_emb = _make_pseudo_scales(D=10)
-        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
-            df_scales_emb=df_scales_emb,
+        df_scales = _make_pseudo_scales(D=10)
+        df_cat = aa.EmbeddingPreprocessor().build_cat(
+            df_scales=df_scales,
             cat_min_th=0.3, subcat_min_th=0.6, random_state=0)
         assert set(df_cat[ut.COL_CAT].unique()) == {"Embeddings"}

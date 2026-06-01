@@ -408,7 +408,7 @@ class StructurePreprocessor:
       y-axis. Subcategory names follow the AAontology convention
       (descriptive name with source / detail in parentheses). The redundancy filter's
       ``check_cat=True`` arm therefore groups all Structure features into
-      one bucket; ``build_pseudo_scales`` populates ``df_scales`` so the
+      one bucket; ``build_scales`` populates ``df_scales`` so the
       ``max_cor`` gate can discriminate within that bucket.
     * Requires ``aaanalysis[pro]`` (biopython) plus a ``mkdssp`` / ``dssp``
       binary on PATH. The ``depth`` feature additionally requires the
@@ -1474,9 +1474,9 @@ class StructurePreprocessor:
         return (dict_domains, df_aug) if return_df else dict_domains
 
     # ------------------------------------------------------------------
-    # build_pseudo_scales + build_cat
+    # build_scales + build_cat
     # ------------------------------------------------------------------
-    def build_pseudo_scales(
+    def build_scales(
         self,
         df_seq: pd.DataFrame = None,
         dict_num: Dict[str, np.ndarray] = None,
@@ -1486,7 +1486,7 @@ class StructurePreprocessor:
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
         """Build ``df_scales`` by context-free per-AA averaging of the encoded corpus.
 
-        Mirrors :meth:`EmbeddingPreprocessor.build_pseudo_scales`: for each
+        Mirrors :meth:`EmbeddingPreprocessor.build_scales`: for each
         canonical amino acid ``a`` and each D dimension ``d``, the pseudo-scale
         entry is the mean of ``dict_num[entry][i, d]`` over all (entry, i)
         pairs where ``df_seq[sequence][entry][i] == a``. Non-canonical residues
@@ -1554,7 +1554,7 @@ class StructurePreprocessor:
         if ut.COL_SEQ not in df_seq.columns:
             raise ValueError(
                 f"'df_seq' should contain a '{ut.COL_SEQ}' column for "
-                f"build_pseudo_scales")
+                f"build_scales")
         validate_feature_keys(features)
         ut.check_bool(name="return_std", val=return_std)
         D = get_total_dims(features)

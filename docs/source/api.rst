@@ -123,4 +123,4 @@ Utility Functions
     plot_legend
     plot_rank
     plot_settings
-    smooth_scores
+    comp_smooth_scores

@@ -759,7 +759,7 @@ class TestStpEncodePdbHSE:
         assert (df_cat[ut.COL_CAT] == "Structure").all()
         assert (df_cat[ut.COL_SUBCAT] == "Half-sphere exposure (HSE-CA)").all()
 
-    def test_valid_hse_in_build_pseudo_scales(self):
+    def test_valid_hse_in_build_scales(self):
         # hse values get per-AA averaged for the corpus df_scales.
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
@@ -767,7 +767,7 @@ class TestStpEncodePdbHSE:
             d = stp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["hse"])
-            df_scales = stp.build_pseudo_scales(
+            df_scales = stp.build_scales(
                 df_seq=_df_af(), dict_num=d, features=["hse"])
         assert df_scales.shape == (20, 2)
         assert list(df_scales.columns) == ["hse_up", "hse_down"]
