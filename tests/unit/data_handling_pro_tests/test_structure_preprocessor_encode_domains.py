@@ -114,7 +114,7 @@ class TestStpEncodeDomains:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_domains(df_seq=_df_one(),
+            d, df_out = stp.encode_domains(return_df=True, df_seq=_df_one(),
                                            domain_folder=str(tmp_path),
                                            features=["domain_boundary"])
         assert np.isnan(d["P1"]).all()
@@ -124,7 +124,7 @@ class TestStpEncodeDomains:
     def test_valid_basic_two_domains_shape(self, tmp_path):
         _write_chopping(tmp_path, "P1", "1-10,15-25")
         stp = aa.StructurePreprocessor(verbose=False)
-        d, df_out = stp.encode_domains(
+        d, df_out = stp.encode_domains(return_df=True, 
             df_seq=_df_one(), domain_folder=str(tmp_path),
             features=["domain_boundary"])
         assert d["P1"].shape == (30, 1)
@@ -134,7 +134,7 @@ class TestStpEncodeDomains:
         # Domains 1-10 and 15-25. Boundaries at 1, 10, 15, 25 (1-based).
         _write_chopping(tmp_path, "P1", "1-10,15-25")
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_domains(
+        d = stp.encode_domains(
             df_seq=_df_one(), domain_folder=str(tmp_path),
             features=["domain_boundary"])
         v = d["P1"][:, 0]
@@ -149,7 +149,7 @@ class TestStpEncodeDomains:
         # are unassigned → NaN.
         _write_chopping(tmp_path, "P1", "1-10,15-25")
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_domains(
+        d = stp.encode_domains(
             df_seq=_df_one(), domain_folder=str(tmp_path),
             features=["domain_boundary"])
         v = d["P1"][:, 0]
@@ -160,7 +160,7 @@ class TestStpEncodeDomains:
         # D1: residues 1-10. rel_pos for res 1 → 0.0, res 10 → 1.0, res 5 → ~0.44.
         _write_chopping(tmp_path, "P1", "1-10")
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_domains(
+        d = stp.encode_domains(
             df_seq=_df_one(), domain_folder=str(tmp_path),
             features=["domain_relative_position"])
         v = d["P1"][:, 0]
@@ -172,7 +172,7 @@ class TestStpEncodeDomains:
         # Domain of 10 residues → normalized 10/200 = 0.05.
         _write_chopping(tmp_path, "P1", "1-10")
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_domains(
+        d = stp.encode_domains(
             df_seq=_df_one(), domain_folder=str(tmp_path),
             features=["domain_size"])
         v = d["P1"][:, 0]
@@ -183,7 +183,7 @@ class TestStpEncodeDomains:
         # 2 domains → n_domains = 2/10 = 0.2 for all assigned residues.
         _write_chopping(tmp_path, "P1", "1-10,15-25")
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_domains(
+        d = stp.encode_domains(
             df_seq=_df_one(), domain_folder=str(tmp_path),
             features=["n_domains_in_protein"])
         v = d["P1"][:, 0]
@@ -195,7 +195,7 @@ class TestStpEncodeDomains:
         stp = aa.StructurePreprocessor(verbose=False)
         feats = ["domain_boundary", "domain_relative_position",
                  "domain_size", "n_domains_in_protein"]
-        d, _ = stp.encode_domains(
+        d = stp.encode_domains(
             df_seq=_df_one(), domain_folder=str(tmp_path),
             features=feats)
         # 4 dims, all in [0, 1] (or NaN).
@@ -207,7 +207,7 @@ class TestStpEncodeDomains:
         # Discontinuous D1: residues 1-5 ∪ 10-15. Boundaries: 1, 5, 10, 15.
         _write_chopping(tmp_path, "P1", "1-5_10-15")
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_domains(
+        d = stp.encode_domains(
             df_seq=_df_one(), domain_folder=str(tmp_path),
             features=["domain_boundary"])
         v = d["P1"][:, 0]
@@ -217,7 +217,7 @@ class TestStpEncodeDomains:
     def test_valid_tsv_format_with_chopping_column(self, tmp_path):
         (tmp_path / "P1.tsv").write_text("chopping\n1-10,15-25\n")
         stp = aa.StructurePreprocessor(verbose=False)
-        d, df_out = stp.encode_domains(
+        d, df_out = stp.encode_domains(return_df=True, 
             df_seq=_df_one(), domain_folder=str(tmp_path),
             features=["domain_boundary"])
         assert bool(df_out["domain_ok"].iloc[0])
@@ -227,7 +227,7 @@ class TestStpEncodeDomains:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_domains(
+            d, df_out = stp.encode_domains(return_df=True, 
                 df_seq=_df_one(), domain_folder=str(tmp_path),
                 features=["domain_boundary"])
         assert np.isnan(d["P1"]).all()
@@ -240,7 +240,7 @@ class TestStpEncodeDomains:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_domains(
+            d, df_out = stp.encode_domains(return_df=True, 
                 df_seq=df, domain_folder=str(tmp_path),
                 features=["domain_boundary"], on_failure="drop")
         assert "P1" in d and "GONE" not in d
@@ -265,7 +265,7 @@ class TestStpEncodeDomainsComplex:
         # Domain of size 1 (just residue 5): rel_pos = 0.5 (midpoint convention).
         _write_chopping(tmp_path, "P1", "5-5")
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_domains(
+        d = stp.encode_domains(
             df_seq=_df_one(seq_len=10), domain_folder=str(tmp_path),
             features=["domain_relative_position"])
         v = d["P1"][:, 0]
@@ -275,7 +275,7 @@ class TestStpEncodeDomainsComplex:
         # Domain larger than 200 residues → normalized clips to 1.0.
         _write_chopping(tmp_path, "P1", "1-250")
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_domains(
+        d = stp.encode_domains(
             df_seq=_df_one(seq_len=250), domain_folder=str(tmp_path),
             features=["domain_size"])
         assert d["P1"][0, 0] == 1.0
@@ -285,7 +285,7 @@ class TestStpEncodeDomainsComplex:
         chops = ",".join(f"{i}-{i}" for i in range(1, 13))
         _write_chopping(tmp_path, "P1", chops)
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_domains(
+        d = stp.encode_domains(
             df_seq=_df_one(seq_len=15), domain_folder=str(tmp_path),
             features=["n_domains_in_protein"])
         assert d["P1"][0, 0] == 1.0   # clipped from 12/10
@@ -296,7 +296,7 @@ class TestStpEncodeDomainsComplex:
         df = pd.DataFrame({"entry": ["P1", "P2"],
                            "sequence": ["A" * 30, "A" * 15]})
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_domains(
+        d = stp.encode_domains(
             df_seq=df, domain_folder=str(tmp_path),
             features=["n_domains_in_protein"])
         # P1 has 1 domain → 0.1; P2 has 2 domains → 0.2.
@@ -310,7 +310,7 @@ class TestStpEncodeDomainsComplex:
             stp = aa.StructurePreprocessor(verbose=False)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                d, df_out = stp.encode_domains(
+                d, df_out = stp.encode_domains(return_df=True, 
                     df_seq=_df_one(seq_len=10),
                     domain_folder=str(tmp_path),
                     features=["domain_boundary"])

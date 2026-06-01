@@ -275,6 +275,72 @@ def check_match_df_seq_jmd_len(df_seq=None, jmd_n_len=None, jmd_c_len=None):
     return df_seq
 
 
+# Anchor (pos) input mode — D5a
+def _parse_anchor_cell(entry=None, val=None):
+    """Parse one ``pos`` cell into a list of 1-based int anchors (scalar or iterable).
+
+    DEV: mirrors ``seq_analysis/_backend/aa_window_sampler/_utils.py:_parse_pos_value``
+    — unify into a shared ``ut`` parser on the next touch of that file.
+    """
+    if val is None or (isinstance(val, float) and np.isnan(val)) \
+            or (isinstance(val, str) and val.strip() == ""):
+        return []
+    if isinstance(val, (list, tuple, np.ndarray, pd.Series)):
+        try:
+            return [int(v) for v in val]
+        except (TypeError, ValueError):
+            raise ValueError(f"'{ut.COL_POS}' for entry '{entry}' should contain "
+                             f"int-castable positions; got {val!r}")
+    try:
+        return [int(val)]
+    except (TypeError, ValueError):
+        raise ValueError(f"'{ut.COL_POS}' for entry '{entry}' should be an int or an "
+                         f"iterable of ints; got {type(val).__name__}")
+
+
+def expand_pos_anchors_(df_seq=None, tmd_len=None, jmd_n_len=None, jmd_c_len=None):
+    """Explode a (``sequence`` + ``pos``) df_seq into the position-based schema (D5a).
+
+    Each 1-based anchor in a row's ``pos`` cell becomes one row whose
+    ``tmd_start``/``tmd_stop`` come from the P1-anchor geometry
+    (``ut.get_window_offsets``; right-heavy for even ``tmd_len``), then the
+    existing position-based ``jmd_n_len``/``jmd_c_len`` extension applies
+    downstream. Returns the exploded position-based df_seq (columns
+    ``entry``/``sequence``/``tmd_start``/``tmd_stop``, fresh ``RangeIndex``) plus
+    the aligned ``entry_win`` ids ``<entry>_<win_start>-<win_stop>`` (the full
+    jmd_n|tmd|jmd_c span, 1-based inclusive). Raises if an anchor leaves no room
+    for the full window inside the sequence.
+    """
+    half_left, half_right = ut.get_window_offsets(tmd_len)
+    rows, list_entry_win, bad = [], [], []
+    for entry, seq, pos_cell in zip(df_seq[ut.COL_ENTRY], df_seq[ut.COL_SEQ], df_seq[ut.COL_POS]):
+        for c in _parse_anchor_cell(entry=entry, val=pos_cell):
+            tmd_start = c - half_left
+            tmd_stop = c + half_right - 1
+            win_start = tmd_start - jmd_n_len
+            win_stop = tmd_stop + jmd_c_len
+            if win_start < 1 or win_stop > len(seq):
+                bad.append((entry, c))
+                continue
+            rows.append([entry, seq, tmd_start, tmd_stop])
+            list_entry_win.append(f"{entry}_{win_start}-{win_stop}")
+    if bad:
+        preview = bad[:10]
+        more = "..." if len(bad) > 10 else ""
+        raise ValueError(
+            f"'pos' anchors {preview}{more} leave no room for the full "
+            f"jmd_n|tmd|jmd_c window (tmd_len={tmd_len}, jmd_n_len={jmd_n_len}, "
+            f"jmd_c_len={jmd_c_len}) inside the sequence. Provide anchors with "
+            f"enough flanking residues or reduce the lengths."
+        )
+    if not rows:
+        raise ValueError(f"'{ut.COL_POS}' contains no usable anchors "
+                         f"(all cells empty/missing).")
+    df_seq_pos = pd.DataFrame(
+        rows, columns=[ut.COL_ENTRY, ut.COL_SEQ, ut.COL_TMD_START, ut.COL_TMD_STOP])
+    return df_seq_pos, list_entry_win
+
+
 # Check df_parts matching
 def check_match_df_parts_features(df_parts=None, features=None):
     """Check if df_parts does match with length requirements of features"""

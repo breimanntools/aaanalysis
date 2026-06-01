@@ -12,6 +12,7 @@ from ._utils.check_data import check_df
 _dict_options = {
     'verbose': "off",
     'random_state': "off",
+    'n_jobs': "off",
     'allow_multiprocessing': True,
     'name_tmd': "TMD",
     'name_jmd_n': "JMD-N",
@@ -51,7 +52,19 @@ def check_random_state(random_state=None):
 
 
 def check_n_jobs(n_jobs=None):
-    """Adjust n_jobs to 1 if multiprocessing is not allowed"""
+    """Normalize ``n_jobs`` per the parallelism contract and the global override.
+
+    Contract: ``1`` runs serially; ``-1`` uses all cores (``os.cpu_count()``);
+    ``N > 1`` uses exactly ``N``; ``None`` is deferred to :func:`resolve_n_jobs`
+    (optimized for the job size at the call site). When ``options['n_jobs']`` is
+    set (not ``'off'``) it overrides the per-call value; ``allow_multiprocessing
+    =False`` forces serial and wins over everything.
+    """
+    # System-level override (mirrors verbose / random_state): a concrete option
+    # value wins over the per-call argument.
+    global_n_jobs = options["n_jobs"]
+    if global_n_jobs != "off":
+        n_jobs = global_n_jobs
     allow_multiprocessing = options["allow_multiprocessing"]
     check_bool(name="allow_multiprocessing (options)", val=allow_multiprocessing)
     # Disable multiprocessing
@@ -61,9 +74,26 @@ def check_n_jobs(n_jobs=None):
     # Set n_jobs to maximum number of CPUs
     if n_jobs == -1:
         n_jobs = os.cpu_count()
-    # Check which n_jobs are allowed
+    # Check which n_jobs are allowed (None is resolved later by resolve_n_jobs)
     check_number_range(name="n_jobs", val=n_jobs, accept_none=True, just_int=True, min_val=1)
     return n_jobs
+
+
+def resolve_n_jobs(n_jobs=None, n_work=None):
+    """Resolve ``n_jobs=None`` to an optimized worker count for a job of size ``n_work``.
+
+    Single source of truth for the ``None`` → "optimized" rule shared across the
+    CPP feature-matrix builders and the metrics backend: never more workers than
+    ``os.cpu_count()``, and roughly one worker per 10 units of work, so small
+    jobs stay near-serial and avoid joblib spawn overhead. Any non-``None``
+    ``n_jobs`` (already normalized by :func:`check_n_jobs`) passes through
+    unchanged.
+    """
+    if n_jobs is not None:
+        return n_jobs
+    if n_work is None:
+        n_work = 1
+    return min(os.cpu_count() or 1, max(int(n_work / 10), 1))
 
 
 def check_jmd_n_len(jmd_n_len=None):
@@ -102,6 +132,14 @@ def _check_option(name_option="", option=None):
     if name_option == "random_state":
         if option != "off":
             check_random_state(random_state=option)
+    if name_option == "n_jobs":
+        if option != "off":
+            # Concrete override: -1 (all cores) or a positive int. None is not a
+            # valid option value (per-call None means "optimize"; use 'off' to
+            # defer to the per-call argument).
+            if option != -1:
+                check_number_range(name=name_option, val=option, min_val=1,
+                                   accept_none=False, just_int=True)
     if name_option == "allow_multiprocessing":
         check_bool(name=name_option, val=option)
     if "jmd" in name_option:
@@ -136,6 +174,13 @@ class Settings:
         * If set to ``None``, stochastic processes will be truly random.
         * If set to 'off', no global random state variable will be set, allowing the underlying libraries to use
           their default random state behavior.
+    n_jobs : int, None, or 'off', default='off'
+        Global override for the per-call ``n_jobs`` of parallel-capable methods.
+
+        * If set to a positive integer, that many CPU cores are used.
+        * If set to ``-1``, all available cores are used.
+        * If set to 'off', the per-call ``n_jobs`` argument is used (where ``None``
+          is optimized automatically for the job size, and ``-1`` uses all cores).
 
     allow_multiprocessing : bool, default=True
         Whether multiprocessing is allowed in general. If ``False``, ``n_jobs`` is automatically set to 1.

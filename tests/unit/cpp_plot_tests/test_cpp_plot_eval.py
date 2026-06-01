@@ -12,6 +12,7 @@ import matplotlib
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 import aaanalysis as aa
+import aaanalysis.utils as ut
 
 # Set default deadline from 200 to 400
 settings.register_profile("ci", deadline=400)
@@ -36,7 +37,12 @@ def get_df_eval_default():
     df_eval = cpp.eval(list_df_feat=list_df_feat, labels=labels, label_ref=2, min_th=0)
     return df_eval
 
-def create_valid_df_eval(n_rows=5, n_cat=8):
+def create_valid_df_eval(n_rows=5, n_cat=None):
+    # Default to the live number of CPP categories so the per-category
+    # feature-count list always matches CPPPlot.eval's default ``list_cat``
+    # (= ``ut.LIST_CAT``); this keeps the fixture valid as categories grow.
+    if n_cat is None:
+        n_cat = len(ut.LIST_CAT)
     data = {
         'name': [f'Set {i+1}' for i in range(n_rows)],
         'n_features': [(np.random.randint(20, 150), np.random.randint(0, 60, size=n_cat).tolist()) for _ in range(n_rows)],

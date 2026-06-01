@@ -245,8 +245,7 @@ def get_feature_matrix_(features=None, df_parts=None, df_scales=None, accept_gap
     dict_all_scales = _get_dict_all_scales(df_scales=df_scales)
     features = features.to_list() if isinstance(features, pd.Series) else features
 
-    if n_jobs is None:
-        n_jobs = min(os.cpu_count(), max(int(len(features) / 10), 1))
+    n_jobs = ut.resolve_n_jobs(n_jobs=n_jobs, n_work=len(features))
 
     if n_jobs == 1:
         return _feature_matrix(features, dict_all_scales, df_parts, accept_gaps)

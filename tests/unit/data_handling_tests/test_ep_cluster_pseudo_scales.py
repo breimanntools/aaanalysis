@@ -36,28 +36,28 @@ class TestClusterPseudoScales:
     # Positive cases
     def test_returns_dataframe(self):
         df_scales_emb = _make_pseudo_scales(D=8)
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
         assert isinstance(df_cat, pd.DataFrame)
 
     def test_shape_rows_match_D(self):
         df_scales_emb = _make_pseudo_scales(D=12)
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
         assert df_cat.shape == (12, 5)
 
     def test_columns_mirror_aaontology_df_cat(self):
         df_scales_emb = _make_pseudo_scales(D=8)
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
         assert list(df_cat.columns) == ["scale_id", "category", "subcategory", "scale_name", "scale_description"]
 
     def test_scale_id_matches_df_scales_emb_columns(self):
         df_scales_emb = _make_pseudo_scales(D=8)
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
         assert df_cat["scale_id"].tolist() == list(df_scales_emb.columns)
@@ -67,7 +67,7 @@ class TestClusterPseudoScales:
         # (paired with ut.DICT_COLOR_CAT['Embeddings']). The cluster-IDs
         # move into the subcategory string.
         df_scales_emb = _make_pseudo_scales(D=8)
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
         assert all(c == "Embeddings" for c in df_cat["category"])
@@ -76,17 +76,17 @@ class TestClusterPseudoScales:
     def test_subcat_has_at_least_as_many_clusters_as_cat(self):
         """Finer threshold should yield ≥ as many clusters as coarser threshold."""
         df_scales_emb = _make_pseudo_scales(D=16)
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.2, subcat_min_th=0.8, random_state=0,
         )
         assert df_cat["subcategory"].nunique() >= df_cat["category"].nunique()
 
     def test_deterministic_with_same_random_state(self):
         df_scales_emb = _make_pseudo_scales(D=10)
-        df1 = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df1 = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
-        df2 = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df2 = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
         pd.testing.assert_frame_equal(df1, df2)
@@ -95,21 +95,21 @@ class TestClusterPseudoScales:
     @settings(max_examples=5)
     def test_accepts_any_nonneg_random_state(self, rs):
         df_scales_emb = _make_pseudo_scales(D=6)
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=rs,
         )
         assert df_cat.shape == (6, 5)
 
     def test_scale_name_equals_scale_id(self):
         df_scales_emb = _make_pseudo_scales(D=8)
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
         assert (df_cat["scale_id"] == df_cat["scale_name"]).all()
 
     def test_scale_description_is_empty_string(self):
         df_scales_emb = _make_pseudo_scales(D=6)
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
         assert (df_cat["scale_description"] == "").all()
@@ -117,42 +117,42 @@ class TestClusterPseudoScales:
     # Negative cases
     def test_invalid_df_scales_emb_none(self):
         with pytest.raises(ValueError):
-            aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+            aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                 df_scales_emb=None, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
             )
 
     def test_invalid_df_scales_emb_not_dataframe(self):
         for bad in ["str", 1, np.zeros((20, 5))]:
             with pytest.raises(ValueError):
-                aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+                aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                     df_scales_emb=bad, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
                 )
 
     def test_invalid_cat_min_th_negative(self):
         df_scales_emb = _make_pseudo_scales(D=6)
         with pytest.raises(ValueError):
-            aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+            aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                 df_scales_emb=df_scales_emb, cat_min_th=-0.1, subcat_min_th=0.6, random_state=0,
             )
 
     def test_invalid_cat_min_th_above_one(self):
         df_scales_emb = _make_pseudo_scales(D=6)
         with pytest.raises(ValueError):
-            aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+            aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                 df_scales_emb=df_scales_emb, cat_min_th=1.5, subcat_min_th=0.6, random_state=0,
             )
 
     def test_invalid_subcat_min_th_negative(self):
         df_scales_emb = _make_pseudo_scales(D=6)
         with pytest.raises(ValueError):
-            aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+            aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                 df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=-0.1, random_state=0,
             )
 
     def test_invalid_subcat_min_th_above_one(self):
         df_scales_emb = _make_pseudo_scales(D=6)
         with pytest.raises(ValueError):
-            aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+            aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                 df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=1.5, random_state=0,
             )
 
@@ -161,14 +161,14 @@ class TestClusterPseudoScales:
         df_scales_emb = _make_pseudo_scales(D=6)
         for cat_th, sub_th in [(0.5, 0.5), (0.7, 0.3)]:
             with pytest.raises(ValueError, match="should be <"):
-                aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+                aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                     df_scales_emb=df_scales_emb, cat_min_th=cat_th, subcat_min_th=sub_th, random_state=0,
                 )
 
     def test_invalid_random_state_negative(self):
         df_scales_emb = _make_pseudo_scales(D=6)
         with pytest.raises(ValueError):
-            aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+            aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                 df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=-1,
             )
 
@@ -177,7 +177,7 @@ class TestClusterPseudoScales:
         for D in [1, 2]:
             df_scales_emb = _make_pseudo_scales(D=D)
             with pytest.raises(ValueError, match="at least 3"):
-                aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+                aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                     df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
                 )
 
@@ -185,10 +185,10 @@ class TestClusterPseudoScales:
     def test_metric_default_is_correlation(self):
         """Omitting metric should match metric='correlation' exactly."""
         df_scales_emb = _make_pseudo_scales(D=10)
-        df_default = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_default = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
-        df_explicit = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_explicit = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
             metric="correlation",
         )
@@ -196,7 +196,7 @@ class TestClusterPseudoScales:
 
     def test_metric_cosine_returns_valid_table(self):
         df_scales_emb = _make_pseudo_scales(D=10)
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
             metric="cosine",
         )
@@ -207,11 +207,11 @@ class TestClusterPseudoScales:
     def test_metric_correlation_and_cosine_deterministic(self):
         df_scales_emb = _make_pseudo_scales(D=12)
         for metric in ["correlation", "cosine"]:
-            df1 = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+            df1 = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                 df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
                 metric=metric,
             )
-            df2 = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+            df2 = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                 df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
                 metric=metric,
             )
@@ -222,7 +222,7 @@ class TestClusterPseudoScales:
         df_scales_emb = _make_pseudo_scales(D=8)
         for bad in ["euclidean", "manhattan", "pearson", "", "Correlation"]:
             with pytest.raises(ValueError):
-                aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+                aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                     df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
                     metric=bad,
                 )
@@ -231,7 +231,7 @@ class TestClusterPseudoScales:
         df_scales_emb = _make_pseudo_scales(D=8)
         for bad in [None, 1, 0.5, ["correlation"]]:
             with pytest.raises(ValueError):
-                aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+                aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                     df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
                     metric=bad,
                 )
@@ -243,7 +243,7 @@ class TestClusterPseudoScales:
         df_stds_emb = _make_pseudo_scales(D=10, seed=1).abs()  # nonneg stds
         df_stds_emb.index = df_scales_emb.index
         df_stds_emb.columns = df_scales_emb.columns
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, df_stds_emb=df_stds_emb,
             cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
@@ -255,11 +255,11 @@ class TestClusterPseudoScales:
         df_stds_emb = _make_pseudo_scales(D=10, seed=2).abs()
         df_stds_emb.index = df_scales_emb.index
         df_stds_emb.columns = df_scales_emb.columns
-        df1 = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df1 = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, df_stds_emb=df_stds_emb,
             cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
-        df2 = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df2 = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, df_stds_emb=df_stds_emb,
             cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
@@ -290,10 +290,10 @@ class TestClusterPseudoScales:
             index=[f"feat_{i}" for i in range(40)],
             columns=df_scales_emb.columns,
         )
-        df_via_mean_only_on_manual = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_via_mean_only_on_manual = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_manual, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
-        df_via_std_aware = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_via_std_aware = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, df_stds_emb=df_stds_emb,
             cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
@@ -326,10 +326,10 @@ class TestClusterPseudoScales:
             stds, index=list(ALPHABET),
             columns=["dim_0", "dim_1", "dim_2", "dim_3"],
         )
-        df_mean_only = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_mean_only = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
-        df_std_aware = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_std_aware = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, df_stds_emb=df_stds_emb,
             cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
@@ -347,7 +347,7 @@ class TestClusterPseudoScales:
         df_stds_emb = _make_pseudo_scales(D=8).abs()  # D mismatch
         df_stds_emb.index = df_scales_emb.index
         with pytest.raises(ValueError, match="same shape"):
-            aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+            aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                 df_scales_emb=df_scales_emb, df_stds_emb=df_stds_emb,
                 cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
             )
@@ -358,7 +358,7 @@ class TestClusterPseudoScales:
         df_stds_emb_bad_idx = df_scales_emb.abs().copy()
         df_stds_emb_bad_idx.index = list(reversed(df_scales_emb.index))
         with pytest.raises(ValueError, match="same index"):
-            aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+            aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                 df_scales_emb=df_scales_emb, df_stds_emb=df_stds_emb_bad_idx,
                 cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
             )
@@ -366,7 +366,7 @@ class TestClusterPseudoScales:
         df_stds_emb_bad_cols = df_scales_emb.abs().copy()
         df_stds_emb_bad_cols.columns = [f"X_{i}" for i in range(df_scales_emb.shape[1])]
         with pytest.raises(ValueError, match="same columns"):
-            aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+            aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                 df_scales_emb=df_scales_emb, df_stds_emb=df_stds_emb_bad_cols,
                 cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
             )
@@ -376,7 +376,7 @@ class TestClusterPseudoScales:
         df_stds_emb = df_scales_emb.abs().copy()
         df_stds_emb.iloc[3, 2] = np.nan
         with pytest.raises(ValueError, match="NaN"):
-            aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+            aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                 df_scales_emb=df_scales_emb, df_stds_emb=df_stds_emb,
                 cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
             )
@@ -400,10 +400,10 @@ class TestClusterPseudoScalesComplex:
         }
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales_emb = aa.EmbeddingPreprocessor.build_pseudo_scales(df_seq=df_seq, embeddings=embeddings)
+            df_scales_emb = aa.EmbeddingPreprocessor().build_pseudo_scales(df_seq=df_seq, dict_num=embeddings)
         # Skip rows with NaN (AAs absent from corpus) — AAclust needs complete rows
         df_scales_emb = df_scales_emb.dropna()
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
         assert df_cat.shape == (D, 5)
@@ -412,7 +412,7 @@ class TestClusterPseudoScalesComplex:
     def test_thresholds_yield_different_partitions(self):
         """At very different thresholds, cat and subcat partitions should differ."""
         df_scales_emb = _make_pseudo_scales(D=20)
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.2, subcat_min_th=0.9, random_state=0,
         )
         # Subcategory should produce more clusters than category
@@ -420,7 +420,7 @@ class TestClusterPseudoScalesComplex:
 
     def test_large_D_still_works(self):
         df_scales_emb = _make_pseudo_scales(D=64)
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
         assert df_cat.shape == (64, 5)
@@ -438,7 +438,7 @@ class TestClusterPseudoScalesComplex:
             index=list(ALPHABET),
             columns=["dim_0", "dim_1", "dim_2"],
         )
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
         # The two highly-correlated dims should be in the same category at threshold 0.3
@@ -447,14 +447,14 @@ class TestClusterPseudoScalesComplex:
     # Combined-invalid negative cases
     def test_invalid_combined_none_inputs(self):
         with pytest.raises(ValueError):
-            aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+            aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                 df_scales_emb=None, cat_min_th=-1, subcat_min_th=0.6, random_state=0,
             )
 
     def test_invalid_combined_reversed_thresholds(self):
         df_scales_emb = _make_pseudo_scales(D=6)
         with pytest.raises(ValueError, match="should be <"):
-            aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+            aa.EmbeddingPreprocessor().cluster_pseudo_scales(
                 df_scales_emb=df_scales_emb, cat_min_th=0.9, subcat_min_th=0.1, random_state=0,
             )
 
@@ -474,12 +474,12 @@ class TestClusterPseudoScalesComplex:
         }
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales_emb = aa.EmbeddingPreprocessor.build_pseudo_scales(
-                df_seq=df_seq, embeddings=embeddings,
+            df_scales_emb = aa.EmbeddingPreprocessor().build_pseudo_scales(
+                df_seq=df_seq, dict_num=embeddings,
             )
         # Drop AAs absent from corpus (CPP rejects NaN values in df_scales)
         df_scales_emb = df_scales_emb.dropna()
-        df_cat_emb = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat_emb = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )
         df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq)
@@ -501,12 +501,12 @@ class TestClusterPseudoScalesComplex:
         }
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales_emb, df_stds_emb = aa.EmbeddingPreprocessor.build_pseudo_scales(
-                df_seq=df_seq, embeddings=embeddings, return_std=True,
+            df_scales_emb, df_stds_emb = aa.EmbeddingPreprocessor().build_pseudo_scales(
+                df_seq=df_seq, dict_num=embeddings, return_std=True,
             )
         df_scales_emb = df_scales_emb.dropna()
         df_stds_emb = df_stds_emb.loc[df_scales_emb.index]  # drop the same rows
-        df_cat_emb = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat_emb = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, df_stds_emb=df_stds_emb,
             cat_min_th=0.3, subcat_min_th=0.6, random_state=0,
         )

@@ -23,6 +23,7 @@ from .._filters._get_feature_matrix_fast import (
     _build_aa_idx_per_part,
     _build_scale_matrix_f64,
     _hoisted_gap_check,
+    build_scale_lookup,
 )
 
 from ._inner import (
@@ -179,14 +180,12 @@ def get_feature_matrix_c_(features=None, df_parts=None, df_scales=None,
         scale_matrix_f64 = aa_lookup_cache.scale_matrix_f64
         scale_to_idx = aa_lookup_cache.scale_to_idx
     else:
-        dict_all_scales = {col: dict(zip(df_scales.index.to_list(), df_scales[col]))
-                           for col in list(df_scales)}
-        scale_to_idx = {s: i for i, s in enumerate(list(df_scales))}
-        aa_idx_per_part, seq_lens_per_part, _, n_aa = _build_aa_idx_per_part(
-            df_parts=df_parts, dict_all_scales=dict_all_scales,
+        # Content-cached scale-matrix reuse even without an AALookupCache.
+        dict_all_scales, scale_to_idx, scale_matrix_f64, _ = build_scale_lookup(
+            df_scales=df_scales,
         )
-        scale_matrix_f64 = _build_scale_matrix_f64(
-            dict_all_scales=dict_all_scales, n_aa=n_aa,
+        aa_idx_per_part, seq_lens_per_part, _, _ = _build_aa_idx_per_part(
+            df_parts=df_parts, dict_all_scales=dict_all_scales,
         )
 
     sp_vec = SplitVec(type_str=False)

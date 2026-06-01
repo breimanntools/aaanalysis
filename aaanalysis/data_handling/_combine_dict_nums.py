@@ -75,10 +75,11 @@ def combine_dict_nums(
     """Concatenate multiple per-residue ``dict_num`` inputs along the D axis.
 
     Source-agnostic: works with any combination of dicts whose values are
-    ``(L_entry, D_i)`` ndarrays — typically
-    :meth:`StructurePreprocessor.encode_dssp` /
-    :meth:`StructurePreprocessor.encode_pdb` outputs, but also user-supplied
-    per-residue embeddings or other per-residue numerical representations.
+    ``(L_entry, D_i)`` ndarrays — typically the outputs of the three
+    per-residue feature-source preprocessors
+    (:class:`EmbeddingPreprocessor`, :class:`StructurePreprocessor`,
+    :class:`AnnotationPreprocessor`), but also user-supplied per-residue
+    embeddings or other per-residue numerical representations.
 
     Parameters
     ----------
@@ -100,6 +101,13 @@ def combine_dict_nums(
         If ``dict_nums`` is not a non-empty list of dicts, if the entry sets
         diverge across inputs, if any value is not a 2D ``np.ndarray``, or
         if the per-entry ``L`` differs across inputs.
+
+    See Also
+    --------
+    * :class:`EmbeddingPreprocessor`, :class:`StructurePreprocessor`,
+      :class:`AnnotationPreprocessor`: the per-residue ``dict_num`` sources
+      whose outputs this stitches together.
+    * :meth:`CPP.run_num`: downstream consumer of the combined tensor.
 
     Examples
     --------

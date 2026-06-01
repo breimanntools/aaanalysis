@@ -16,7 +16,7 @@ aa.options["verbose"] = False
 settings.register_profile("ci", deadline=2000)
 settings.load_profile("ci")
 
-MODULE = "aaanalysis.struct_analysis_pro._structure_preprocessor"
+MODULE = "aaanalysis.data_handling_pro._structure_preprocessor"
 RUNNER = f"{MODULE}.run_dssp_full_for_entry_"
 
 

@@ -8,9 +8,9 @@ Skips the duplicate per-feature compute of a naive ``get_feature_matrix_``
 loop: the cached survivor matrix from ``pre_filtering_info`` is sufficient
 because both compute paths reduce to ``mean(scale_matrix[aa_idx_in_segment, d])``
 over the same residues. The Cython kernel in ``_filters_c/_inner.pyx``
-preserves the bit-exact ``np.mean`` summation tree so Mann-Whitney p-values
-land on the same ranks as a reference numpy implementation. See
-``docs/adr/0001-cpp-backend-architecture.md`` for the full parity contract.
+preserves the bit-exact ``np.mean`` summation tree (8-way unrolled pairwise
+summation, ``np.round(_, 5)`` boundary) so Mann-Whitney p-values land on the
+same ranks as a reference numpy implementation.
 """
 import numpy as np
 

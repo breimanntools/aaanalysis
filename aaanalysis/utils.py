@@ -17,6 +17,7 @@ import numpy as np
 from .config import (options,
                      check_verbose,
                      check_n_jobs,
+                     resolve_n_jobs,
                      check_random_state,
                      check_jmd_n_len,
                      check_jmd_c_len)
@@ -97,7 +98,11 @@ from ._utils.plotting import (plot_gco,
                               plot_legend_)
 from ._utils.metrics import (auc_adjusted_,
                              kullback_leibler_divergence_,
-                             bic_score_)
+                             bic_score_,
+                             per_protein_ap_,
+                             detection_metrics_,
+                             bootstrap_ci_,
+                             smooth_scores_)
 
 
 # Folder structure
@@ -244,6 +249,25 @@ COL_SUBCAT = "subcategory"
 COL_SCALE_NAME = "scale_name"
 COL_SCALE_DES = "scale_description"
 
+# df_annot (canonical per-residue annotation schema; AnnotationPreprocessor)
+COL_PROTEIN_ID = "protein_id"   # UniProt accession (mirrors COL_ENTRY)
+COL_START = "start"             # 1-based, UniProt-canonical frame
+COL_STOP = "end"               # 1-based inclusive; single residue -> start==end
+COL_AA = "aa"                   # expected residue identity (encode-time guard)
+COL_FEATURE_TYPE = "feature_type"   # registry key (e.g. 'phospho', 'binding')
+COL_SOURCE = "source"           # 'UniProt' | user source name
+COL_EVIDENCE = "evidence"       # ECO code (e.g. 'ECO:0000269')
+COL_SCORE = "score"             # nullable float in [0, 1]
+COL_BOND_ID = "bond_id"         # pairing id for DISULFID / CROSSLNK endpoints
+COLS_ANNOT = [COL_PROTEIN_ID, COL_START, COL_STOP, COL_AA, COL_FEATURE_TYPE,
+              COL_CAT, COL_SOURCE, COL_EVIDENCE, COL_SCORE, COL_BOND_ID]
+
+# Evidence allow-sets (ECO codes); AnnotationPreprocessor evidence= toggle
+STR_ECO_EXPERIMENTAL = "ECO:0000269"   # experimental, manual assertion
+STR_ECO_COMBINATORIAL = "ECO:0007744"  # combinatorial, manual assertion
+LIST_ECO_EXPERIMENTAL = [STR_ECO_EXPERIMENTAL]
+LIST_ECO_MANUAL = [STR_ECO_EXPERIMENTAL, STR_ECO_COMBINATORIAL]
+
 # df_cluster
 # COL_ENTRY = "entry"
 COL_CLUST = "cluster"
@@ -382,14 +406,15 @@ DICT_COLOR_CAT = {"ASA/Volume": "tab:blue",
                   "Structure-Activity": "tab:brown",
                   # Category buckets for source-of-feature classes (one per
                   # *Preprocessor) — see `StructurePreprocessor`,
-                  # `EmbeddingPreprocessor`. PTMs is reserved for a future PR.
-                  "Structure":  "#2E6E5E",   # deep teal-green
-                  "Embeddings": "#6B4FB5",   # indigo-violet
-                  "PTMs":       "#B36BCB"}   # lilac-magenta (reserved)
+                  # `EmbeddingPreprocessor`, `AnnotationPreprocessor`.
+                  "Structure":        "#2E6E5E",   # deep teal-green
+                  "Embeddings":       "#6B4FB5",   # indigo-violet
+                  "PTMs":             "#B36BCB",   # lilac-magenta
+                  "Functional sites": "#2C6E9E"}   # deep ocean-blue
 
 LIST_CAT = ['ASA/Volume', 'Composition', 'Conformation', 'Energy',
             'Others', 'Polarity', 'Shape', 'Structure-Activity',
-            'Structure', 'Embeddings', 'PTMs']
+            'Structure', 'Embeddings', 'PTMs', 'Functional sites']
 
 
 # Parameter options for cmaps and color dicts
@@ -428,6 +453,22 @@ def get_dict_part_seq(tmd=None, jmd_n=None, jmd_c=None):
                      'jmd_n_tmd_n': jmd_n + tmd_n, 'tmd_c_jmd_c': tmd_c + jmd_c,
                      'ext_n_tmd_n': ext_n + tmd_n, 'tmd_c_ext_c': tmd_c + ext_c}
     return part_seq_dict
+
+
+def get_window_offsets(window_size=None):
+    """Return ``(half_left, half_right)`` summing to ``window_size`` for a window
+    anchored at a 1-based **P1** position (Schechter–Berger convention).
+
+    Floors left, ceils right — for even ``window_size`` the window is right-heavy.
+    For an anchor ``c`` the window covers the 1-based inclusive span
+    ``[c - half_left, c + half_right - 1]``. Canonical source of the P1-anchor
+    geometry shared by ``SequenceFeature.get_df_parts`` / ``NumericalFeature.get_parts``
+    (the ``pos`` anchor input mode).
+    DEV: ``seq_analysis/_backend/aa_window_sampler/_utils.py:window_offsets`` is an
+    equivalent local twin — unify on the next touch of that file.
+    """
+    half_left = (window_size - 1) // 2
+    return half_left, window_size - half_left
 
 
 # II Main functions

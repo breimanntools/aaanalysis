@@ -71,7 +71,7 @@ class TestStructuralRunNum:
     def test_encode_dssp_plus_combine_then_run_num(self):
         df_seq = _build_df_seq_with_dssp(n_per_label=3, L=40)
         stp = aa.StructurePreprocessor(verbose=False)
-        dict_dssp, _ = stp.encode_dssp(
+        dict_dssp = stp.encode_dssp(
             df_seq=df_seq, pdb_folder=None,
             features=["ss3", "rasa", "phi_psi_sincos"])
         dict_pdb = _build_synthetic_dict_pdb(df_seq, D=1)
@@ -111,7 +111,7 @@ class TestStructuralRunNum:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pdb(df_seq=df_seq,
+            d, df_out = stp.encode_pdb(return_df=True, df_seq=df_seq,
                                        pdb_folder=str(PDB_FIXTURES),
                                        features=["bfactor"])
         assert d["P1"].shape == (16, 1)
@@ -120,7 +120,7 @@ class TestStructuralRunNum:
     def test_build_pseudo_scales_matches_combined_D(self):
         df_seq = _build_df_seq_with_dssp(n_per_label=2, L=30)
         stp = aa.StructurePreprocessor(verbose=False)
-        dict_dssp, _ = stp.encode_dssp(df_seq=df_seq, pdb_folder=None,
+        dict_dssp = stp.encode_dssp(df_seq=df_seq, pdb_folder=None,
                                        features=["ss3", "rasa"])
         feats = ["ss3", "rasa"]
         with warnings.catch_warnings():

@@ -10,6 +10,7 @@ from ._backend.check_feature import (check_split_kws,
                                      check_parts_len,
                                      check_match_features_seq_parts,
                                      check_match_df_seq_jmd_len,
+                                     expand_pos_anchors_,
                                      check_match_df_parts_features,
                                      check_match_df_parts_df_scales,
                                      check_df_scales,
@@ -21,8 +22,9 @@ from ._backend.cpp.utils_feature import (get_df_parts_,
                                          remove_entries_with_gaps_,
                                          replace_non_canonical_aa_,
                                          get_positions_, get_amino_acids_,
-                                         get_feature_matrix_, get_df_pos_, get_df_pos_parts_)
+                                         get_df_pos_, get_df_pos_parts_)
 from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_, get_df_feat_)
+from ._backend.cpp_run import _pick_feature_matrix_builder
 
 
 # I Helper Functions
@@ -177,6 +179,7 @@ class SequenceFeature:
                      all_parts: bool = False,
                      jmd_n_len: Union[int, None] = 10,
                      jmd_c_len: Union[int, None] = 10,
+                     tmd_len: Optional[int] = None,
                      remove_entries_with_gaps: bool = False,
                      replace_non_canonical_aa: bool = False,
                      ) -> pd.DataFrame:
@@ -194,6 +197,10 @@ class SequenceFeature:
             Length of JMD-N in number of amino acids. If ``None``, ``jmd_n`` and ``jmd_c`` should be given.
         jmd_c_len: int, default=10
             Length of JMD-N in number of amino acids. If ``None``, ``jmd_n`` and ``jmd_c`` should be given.
+        tmd_len: int, optional
+            TMD length in amino acids for the **Anchor-based format** only (a ``sequence`` + ``pos`` ``df_seq``).
+            Each 1-based anchor in ``pos`` is placed at the P1 position of a length-``tmd_len`` TMD
+            (right-heavy for even ``tmd_len``); ignored for the other formats.
         all_parts: bool, default=False
             Whether to create DataFrame with all possible sequence parts (if ``True``) or parts given by ``list_parts``.
         remove_entries_with_gaps: bool, default=False
@@ -237,6 +244,12 @@ class SequenceFeature:
         **Sequence-based format**
             - Only the 'sequence' column.
 
+        **Anchor-based format**
+            - 'sequence' and 'pos' columns, together with the ``tmd_len`` argument.
+            - 'pos': per-row 1-based P1 anchor position(s) — a single ``int`` or a ``list[int]``. Each anchor
+              is exploded into one row whose TMD is centered (right-heavy for even ``tmd_len``) on the anchor;
+              multi-anchor rows yield multiple rows, ided in the index by ``<entry>_<win_start>-<win_stop>``.
+
         Examples
         --------
         .. include:: examples/sf_get_df_parts.rst
@@ -245,6 +258,20 @@ class SequenceFeature:
         jmd_n_len = ut.check_jmd_n_len(jmd_n_len=jmd_n_len)
         jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
         check_parts_len(jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, accept_none_tmd_len=True)
+        # Anchor-based format ('sequence' + 'pos' + tmd_len): explode to position-based, then reuse the normal path
+        anchor_mode = (isinstance(df_seq, pd.DataFrame)
+                       and ut.COL_SEQ in df_seq.columns and ut.COL_POS in df_seq.columns
+                       and not set(ut.COLS_SEQ_POS).issubset(df_seq.columns)
+                       and not set(ut.COLS_SEQ_PARTS).issubset(df_seq.columns)
+                       and not set(ut.COLS_SEQ_TMD).issubset(df_seq.columns))
+        list_entry_win = None
+        if anchor_mode:
+            ut.check_number_range(name="tmd_len", val=tmd_len, min_val=1, just_int=True)
+            if jmd_n_len is None or jmd_c_len is None:
+                raise ValueError("'jmd_n_len' and 'jmd_c_len' should both be given (not None) "
+                                 "for the anchor-based ('sequence' + 'pos') format.")
+            df_seq, list_entry_win = expand_pos_anchors_(df_seq=df_seq, tmd_len=tmd_len,
+                                                         jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         ut.check_df_seq(df_seq=df_seq)
         ut.check_bool(name="all_parts", val=all_parts)
         ut.check_bool(name="replace_non_canonical_aa", val=replace_non_canonical_aa)
@@ -252,6 +279,8 @@ class SequenceFeature:
         df_seq = check_match_df_seq_jmd_len(df_seq=df_seq, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         # Create df parts
         df_parts = get_df_parts_(df_seq=df_seq, list_parts=list_parts, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+        if anchor_mode:
+            df_parts.index = list_entry_win
         if remove_entries_with_gaps:
             n_before = len(df_parts)
             df_parts = remove_entries_with_gaps_(df_parts=df_parts)
@@ -405,7 +434,7 @@ class SequenceFeature:
             Whether to accept missing values by enabling omitting for computations (if True).
         n_jobs : int, None, or -1, default=1
             Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized automatically.
-            If ``-1``, the number is set to all available cores.
+            If ``-1``, the number is set to all available cores. Overridden by ``options['n_jobs']`` when set.
 
         Returns
         -------
@@ -469,11 +498,12 @@ class SequenceFeature:
 
     def feature_matrix(self,
                        features: ut.ArrayLike1D = None,
-                       df_parts: pd.DataFrame = None,
+                       df_parts: Union[pd.DataFrame, List[pd.DataFrame]] = None,
                        df_scales: Optional[pd.DataFrame] = None,
                        accept_gaps: bool = False,
                        n_jobs: Union[int, None] = 1,
-                       ) -> ut.ArrayLike2D:
+                       batch: bool = False,
+                       ) -> Union[ut.ArrayLike2D, List[ut.ArrayLike2D]]:
         """
         Create feature matrix for given feature ids and sequence parts.
 
@@ -482,7 +512,8 @@ class SequenceFeature:
         features : array-like, shape (n_features,)
             Ids of features for which matrix of feature values should be created.
         df_parts : pd.DataFrame, shape (n_samples, n_parts)
-            DataFrame with sequence parts.
+            DataFrame with sequence parts. If ``batch=True``, instead a **list of such
+            DataFrames** (one per batch; all must share the same part columns).
         df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
             DataFrame of scales with letters typically representing amino acids. Default from :meth:`load_scales`
             unless specified in ``options['df_scales']``.
@@ -490,16 +521,24 @@ class SequenceFeature:
             Whether to accept missing values by enabling omitting for computations (if ``True``).
         n_jobs : int, None, or -1, default=1
             Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized automatically.
-            If ``-1``, the number is set to all available cores.
+            If ``-1``, the number is set to all available cores. Overridden by ``options['n_jobs']`` when set.
+        batch : bool, default=False
+            If ``True``, ``df_parts`` is a list of part DataFrames processed in one amortized call
+            (concatenated → Cython builder runs **once** → split back), returning one matrix per batch.
+            Use for per-protein sliding scoring where the same ``features`` are applied to many small
+            ``df_parts`` in a tight loop; the result is **byte-identical** to calling this per batch.
 
         Returns
         -------
         X: array-like , shape (n_samples, n_features)
-            Feature matrix containing feature values for samples.
+            Feature matrix containing feature values for samples. If ``batch=True``, a **list** of such
+            matrices aligned to the input list of ``df_parts``.
 
         Notes
         -----
         * Use parallel processing only for high number of features (>~1000 features per core)
+        * ``batch=True`` amortizes the per-call scale-lookup build and kernel warm-up that dominate when
+          this method is called thousands of times on small ``df_parts``.
 
         Examples
         --------
@@ -510,23 +549,46 @@ class SequenceFeature:
             df_scales = ut.load_default_scales()
         # Check input
         check_df_scales(df_scales=df_scales)
-        ut.check_df_parts(df_parts=df_parts)
-        features = ut.check_features(features=features, list_parts=list(df_parts), list_scales=list(df_scales))
         ut.check_bool(name="accept_gaps", val=accept_gaps)
+        ut.check_bool(name="batch", val=batch)
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
-        check_match_df_parts_features(df_parts=df_parts, features=features)
+        # Normalize to a list of df_parts; remember whether to unwrap the single result.
+        if batch:
+            if isinstance(df_parts, pd.DataFrame):
+                raise ValueError("With 'batch=True', 'df_parts' should be a list of part "
+                                 "DataFrames, not a single DataFrame.")
+            list_df_parts = ut.check_list_like(name="df_parts", val=df_parts, accept_none=False)
+            if len(list_df_parts) == 0:
+                raise ValueError("'df_parts' should contain at least one DataFrame when 'batch=True'.")
+        else:
+            ut.check_df_parts(df_parts=df_parts)
+            list_df_parts = [df_parts]
+        for i, dfp in enumerate(list_df_parts):
+            ut.check_df_parts(df_parts=dfp)
+        cols0 = list(list_df_parts[0].columns)
+        features = ut.check_features(features=features, list_parts=cols0, list_scales=list(df_scales))
         check_match_df_scales_features(df_scales=df_scales, features=features)
-        df_parts = check_match_df_parts_df_scales(df_scales=df_scales, df_parts=df_parts, accept_gaps=accept_gaps)
-        # User warning
-        if self.verbose:
-            warn_creation_of_feature_matrix(features=features, df_parts=df_parts)
-        # Create feature matrix using parallel processing
-        X = get_feature_matrix_(features=features,
-                                df_parts=df_parts,
-                                df_scales=df_scales,
-                                accept_gaps=accept_gaps,
-                                n_jobs=n_jobs)
-        return X
+        for i, dfp in enumerate(list_df_parts):
+            if list(dfp.columns) != cols0:
+                raise ValueError(f"'df_parts' entry {i} parts {list(dfp.columns)} should match "
+                                 f"the first entry's parts {cols0}.")
+            check_match_df_parts_features(df_parts=dfp, features=features)
+        # User warning (single-mode parity with the historical behavior)
+        if self.verbose and not batch:
+            warn_creation_of_feature_matrix(features=features, df_parts=list_df_parts[0])
+        # Concatenate -> build ONCE (same Cython/fast builder as CPP.run; byte-identical to
+        # the legacy ``get_feature_matrix_``, parity-tested) -> split back per batch.
+        lengths = [len(dfp) for dfp in list_df_parts]
+        df_all = pd.concat(list_df_parts, axis=0, ignore_index=True)
+        df_all = check_match_df_parts_df_scales(df_scales=df_scales, df_parts=df_all, accept_gaps=accept_gaps)
+        builder = _pick_feature_matrix_builder()
+        X_all = builder(features=features, df_parts=df_all, df_scales=df_scales,
+                        accept_gaps=accept_gaps, n_jobs=n_jobs)
+        list_X, start = [], 0
+        for n in lengths:
+            list_X.append(X_all[start:start + n])
+            start += n
+        return list_X if batch else list_X[0]
 
     def get_features(self,
                      list_parts: Optional[List[str]] = None,

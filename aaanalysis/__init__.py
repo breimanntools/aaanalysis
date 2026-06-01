@@ -4,14 +4,23 @@ from .data_handling import (load_dataset, load_scales, load_features,
                             EmbeddingPreprocessor,
                             combine_dict_nums)
 from .seq_analysis import AAlogo, AAlogoPlot, AAWindowSampler
-from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPPlot
+from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPGrid, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
 from .explainable_ai import TreeModel
 from .protein_design import AAMut, AAMutPlot, SeqMut, SeqMutPlot
 from .plotting import (plot_get_clist, plot_get_cmap, plot_get_cdict,
-                       plot_settings, plot_legend, plot_gcfs)
-from .metrics import (comp_auc_adjusted, comp_bic_score, comp_kld)
+                       plot_settings, plot_legend, plot_gcfs, plot_rank)
+from .metrics import (comp_auc_adjusted, comp_bic_score, comp_kld,
+                      comp_per_protein_ap, comp_detection_metrics,
+                      comp_bootstrap_ci, smooth_scores)
 from .config import options
+
+from importlib.metadata import version as _version, PackageNotFoundError
+
+try:
+    __version__ = _version("aaanalysis")
+except PackageNotFoundError:        # not installed (e.g. source tree without metadata)
+    __version__ = "0.0.0+unknown"
 
 
 # Import of base version features
@@ -31,11 +40,13 @@ __all__ = [
     "AAlogoPlot",
     "AAWindowSampler",
     # "StructurePreprocessor",   # DSSP + biopython (pro)
+    # "AnnotationPreprocessor",  # UniProt fetch + requests (pro)
     "AAclust",
     "AAclustPlot",
     "SequenceFeature",
     "NumericalFeature",
     "CPP",
+    "CPPGrid",
     "CPPPlot",
     "dPULearn",
     "dPULearnPlot",
@@ -51,9 +62,14 @@ __all__ = [
     "plot_settings",
     "plot_legend",
     "plot_gcfs",
+    "plot_rank",
     "comp_auc_adjusted",
     "comp_bic_score",
     "comp_kld",
+    "comp_per_protein_ap",
+    "comp_detection_metrics",
+    "comp_bootstrap_ci",
+    "smooth_scores",
     "options"
 ]
 
@@ -129,12 +145,21 @@ except ImportError as e:
 
 
 try:
-    from .struct_analysis_pro import StructurePreprocessor
+    from .data_handling_pro import StructurePreprocessor
     __all__.append("StructurePreprocessor")
 except ImportError as e:
     StructurePreprocessor = None
     globals()["StructurePreprocessor"] = missing_feature_stub(
         "StructurePreprocessor", e, mode="pro")
+
+
+try:
+    from .data_handling_pro import AnnotationPreprocessor
+    __all__.append("AnnotationPreprocessor")
+except ImportError as e:
+    AnnotationPreprocessor = None
+    globals()["AnnotationPreprocessor"] = missing_feature_stub(
+        "AnnotationPreprocessor", e, mode="pro")
 
 
 try:

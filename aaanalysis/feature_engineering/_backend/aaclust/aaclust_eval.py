@@ -13,12 +13,18 @@ import aaanalysis.utils as ut
 # I Helper Functions
 def _evaluate_clustering(X, labels=None):
     """Evaluate clustering results using BIC, CH, SC scores"""
-    # Bayesian Information Criterion
-    bic = bic_score_(X, labels)
-    # Calinski-Harabasz Index
-    ch = calinski_harabasz_score(X, labels)
-    # Silhouette Coefficient
-    sc = silhouette_score(X, labels)
+    # Extreme-but-finite feature values can overflow inside the metric reductions
+    # (e.g. ``(mean_k - mean) ** 2`` -> inf -> ``inf - inf`` -> NaN in a reduce). The
+    # resulting NaN/inf scores are handled by the caller (NaN -> 0/-1 + warn_ch/warn_sc),
+    # so silence the low-level numpy floating-point noise here (np.errstate gates emission
+    # only; the computed values are unchanged).
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+        # Bayesian Information Criterion
+        bic = bic_score_(X, labels)
+        # Calinski-Harabasz Index
+        ch = calinski_harabasz_score(X, labels)
+        # Silhouette Coefficient
+        sc = silhouette_score(X, labels)
     return bic, ch, sc
 
 

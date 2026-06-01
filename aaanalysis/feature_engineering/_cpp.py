@@ -2,7 +2,7 @@
 This is a script for the frontend of the CPP class, a sequence-based feature engineering object.
 """
 import warnings
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -21,11 +21,44 @@ from ._backend.cpp_run import (
     cpp_run_single, cpp_run_batch, cpp_run_sample_batched,
     _pick_feature_matrix_builder,
 )
-from ._backend.cpp._filters._get_feature_matrix_fast import AALookupCache
+from ._backend.cpp._filters._get_feature_matrix_fast import (AALookupCache,
+                                                             clear_scale_lookup_cache)
 from ._backend.cpp.cpp_eval import evaluate_features
 
 
 # I Helper Functions
+def _warn_gaps_encountered(df_parts=None, accept_gaps=False):
+    """Warn when ``accept_gaps=True`` and a gap symbol is actually present.
+
+    With ``accept_gaps=True`` the gap-symbol guard is bypassed and all-gap
+    splits produce ``NaN`` feature values, which downstream scorers may skip
+    or fail on. Surface a ``UserWarning`` only when a gap is truly encountered
+    (not merely allowed)."""
+    if not accept_gaps:
+        return
+    has_gap = any(df_parts[p].astype(str).str.contains(ut.STR_AA_GAP, regex=False).any()
+                  for p in list(df_parts))
+    if has_gap:
+        warnings.warn(
+            f"'accept_gaps' (True) encountered the gap symbol "
+            f"('{ut.STR_AA_GAP}') in 'df_parts'; affected feature values may be "
+            f"NaN. Ensure downstream scorers handle NaN.",
+            UserWarning,
+        )
+
+
+def _finalize_run_output(df_feat=None, return_stats=False):
+    """Shared tail for ``run`` / ``run_num``: stringify object columns, capture
+    ``last_filter_stats_``, and optionally return the stats dict alongside."""
+    for col in df_feat.select_dtypes(include=["object", "string"]).columns:
+        df_feat[col] = df_feat[col].apply(
+            lambda x: str(x) if isinstance(x, (np.str_, np.generic)) else x)
+    stats = df_feat.attrs.get("last_filter_stats")
+    if return_stats:
+        return df_feat, stats
+    return df_feat
+
+
 def check_sample_in_df_seq(sample_name=None, df_seq=None):
     """Check if sample name in df_seq"""
     list_names = list(df_seq[ut.COL_NAME])
@@ -281,6 +314,9 @@ class CPP(Tool):
         # ``get_feature_matrix_fast_`` in ``CPP.run_num`` pass 2. Built on the
         # first call and reused across repeat calls on this instance.
         self._aa_lookup_cache = None
+        # Filter-funnel counts from the most recent ``run`` / ``run_num``
+        # (sklearn trailing-underscore convention: set during the call).
+        self.last_filter_stats_ = None
 
     # Main method
     def run(self,
@@ -302,7 +338,8 @@ class CPP(Tool):
             n_jobs: Optional[int] = None,
             vectorized: bool = True,
             n_batches: Optional[int] = None,
-            ) -> pd.DataFrame:
+            return_stats: bool = False,
+            ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
         """
         Perform Comparative Physicochemical Profiling (CPP) algorithm: creation and two-step filtering of
         interpretable sequence-based features.
@@ -344,7 +381,15 @@ class CPP(Tool):
             Length of JMD-C (>=0).
         n_jobs : int, None, or -1, default=None
             Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized automatically.
-            If ``-1``, the number is set to all available cores.
+            If ``-1``, the number is set to all available cores. Overridden by ``options['n_jobs']`` when set.
+
+            .. warning::
+               On Python 3.14 + macOS, calling this with ``n_jobs > 1`` (or ``-1`` /
+               ``None``) from a script that lacks an ``if __name__ == "__main__":``
+               guard (or from a bare REPL / heredoc) can trigger a recursive process
+               spawn (``FileNotFoundError`` / ``EOFError`` / ``cannot pickle '_thread.RLock'``).
+               Guard your entry point, or run serially with ``n_jobs=1``. See also
+               :class:`CPPGrid` (default ``backend="threads"``), which sidesteps this.
         vectorized : bool, default=True
             Whether to apply sequence splitting and the Mann-Whitney U test in 'vectorized' mode (``True``),
             improving speed but increasing memory consumption.
@@ -362,6 +407,12 @@ class CPP(Tool):
         -----
         * Pre-filtering can be adjusted by the following parameters: {'n_pre_filter', 'pct_pre_filter', 'max_std_test'}.
         * Filtering can be adjusted by the following parameters: {'n_filter', 'max_overlap', 'max_cor', 'check_cat'}.
+        * **Cost** scales as ``O(n_scales x n_parts x n_splits)`` (the candidate feature count), so larger
+          scale sets / wider ``split_kws`` are proportionally slower — budget a sweep accordingly, or use
+          :class:`CPPGrid` (which runs CPP once per ``n_filter`` group and slices the rest).
+        * **Classifier head tracks the metric** when training a downstream model on ``df_feat``: in practice
+          SVM tends to be best for AP (ranking), logistic regression for balanced accuracy, and random forest
+          for MCC at a fixed threshold (detection). Pick the head to match the objective you report.
         * For large datasets (due to long sequences or a high number of samples) or memory-limited systems,
           memory consumption can be reduced by:
 
@@ -416,9 +467,11 @@ class CPP(Tool):
         args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         ut.check_bool(name="vectorized", val=vectorized)
+        ut.check_bool(name="return_stats", val=return_stats)
         n_scales = len(list(self.df_scales))
         ut.check_number_range(name="n_batches", val=n_batches, just_int=True,
                               accept_none=True, min_val=2, max_val=n_scales)
+        _warn_gaps_encountered(df_parts=self.df_parts, accept_gaps=self._accept_gaps)
         # Route through the unified CPP pipeline + Cython kernel
         # (with Python fallback) — bit-exact, guaranteed by
         # ``test_run_num_parity``.
@@ -448,10 +501,20 @@ class CPP(Tool):
                 **args, n_batches=n_batches,
                 feature_matrix_builder=builder,
             )
-        # Convert all np.str_ to str in object columns
-        for col in df_feat.select_dtypes(include=["object", "string"]).columns:
-            df_feat[col] = df_feat[col].apply(lambda x: str(x) if isinstance(x, (np.str_, np.generic)) else x)
-        return df_feat
+        self.last_filter_stats_ = df_feat.attrs.get("last_filter_stats")
+        return _finalize_run_output(df_feat=df_feat, return_stats=return_stats)
+
+    @classmethod
+    def clear_cache(cls):
+        """Evict the process-wide scale-lookup cache.
+
+        ``CPP`` memoizes the float64 scale-matrix derived from ``df_scales``
+        (keyed by content) so repeated constructions across a sweep reuse it.
+        The cache is bounded (``maxsize=32``) and normally needs no manual
+        eviction, but long-running processes that cycle through many distinct
+        scale sets can call this to release the held DataFrames eagerly.
+        """
+        clear_scale_lookup_cache()
 
     def run_num(self,
                 dict_num_parts: Dict[str, np.ndarray] = None,
@@ -473,7 +536,8 @@ class CPP(Tool):
                 n_jobs: Optional[int] = None,
                 vectorized: bool = True,
                 n_batches: Optional[int] = None,
-                ) -> pd.DataFrame:
+                return_stats: bool = False,
+                ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
         """
         Numerical-mode CPP: same algorithm as :meth:`run`, but per-residue values come
         from a pre-sliced numerical tensor (`dict_num_parts`) instead of an AA→scale
@@ -512,12 +576,30 @@ class CPP(Tool):
             If ``n_batches`` is supplied (batched orchestration over the D axis is
             not yet implemented for numerical mode; pass ``n_batches=None``).
 
+        Notes
+        -----
+        * **Your PLM embeddings ARE the ``dict_num``.** No conversion step exists or is
+          needed: a ``{entry: (L, D)}`` embedding tensor feeds straight into
+          :meth:`NumericalFeature.get_parts`. ``EmbeddingPreprocessor.build_pseudo_scales`` /
+          ``cluster_pseudo_scales`` only *name* the D dimensions (producing ``df_scales`` /
+          ``df_cat``); they are never a per-residue value source here.
+        * **Three arms, one entry point.** *structure-only* (``dict_num`` from
+          :class:`StructurePreprocessor`), *embedding* (a PLM tensor), and *fused*
+          (concatenate sources with :func:`aaanalysis.combine_dict_nums` first) all flow
+          through ``get_parts`` → ``run_num`` — only the ``dict_num`` differs.
+        * Per-residue values are expected in ``[0, 1]`` (the ``StructurePreprocessor`` /
+          ``AnnotationPreprocessor`` normalization convention), since the default
+          ``max_std_test=0.2`` pre-filter is calibrated for that range.
+
         See Also
         --------
         * :meth:`run`: sequence-mode equivalent (no ``dict_num_parts``).
         * :meth:`NumericalFeature.get_parts`: produces ``(df_parts, dict_num_parts)``
           from raw ``df_seq + dict_num``.
-        * ``docs/adr/0001-cpp-backend-architecture.md``: rationale for the dual-method design.
+        * :class:`EmbeddingPreprocessor`, :class:`StructurePreprocessor`,
+          :class:`AnnotationPreprocessor`: the per-residue ``dict_num`` sources
+          (PLM embeddings / structure / annotations), combinable via
+          :func:`aaanalysis.combine_dict_nums`.
 
         Examples
         --------
@@ -558,6 +640,7 @@ class CPP(Tool):
         check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         ut.check_bool(name="vectorized", val=vectorized)
+        ut.check_bool(name="return_stats", val=return_stats)
         if n_batches is not None:
             raise NotImplementedError(
                 "'n_batches' is not yet supported in numerical mode. Pass n_batches=None; "
@@ -592,9 +675,8 @@ class CPP(Tool):
             feature_matrix_builder=builder,  # consumed by seq-mode only; harmless here
             **args,
         )
-        for col in df_feat.select_dtypes(include=["object", "string"]).columns:
-            df_feat[col] = df_feat[col].apply(lambda x: str(x) if isinstance(x, (np.str_, np.generic)) else x)
-        return df_feat
+        self.last_filter_stats_ = df_feat.attrs.get("last_filter_stats")
+        return _finalize_run_output(df_feat=df_feat, return_stats=return_stats)
 
     def eval(self,
              list_df_feat: List[pd.DataFrame] = None,
@@ -636,7 +718,7 @@ class CPP(Tool):
             List of part DataFrames each of shape (n_samples, n_parts). Must match with ``list_df_feat``.
         n_jobs : int, None, or -1, default=1
             Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized automatically.
-            If ``-1``, the number is set to all available cores.
+            If ``-1``, the number is set to all available cores. Overridden by ``options['n_jobs']`` when set.
 
         Returns
         -------

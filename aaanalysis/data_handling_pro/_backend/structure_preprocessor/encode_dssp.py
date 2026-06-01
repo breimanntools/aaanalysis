@@ -3,7 +3,7 @@ This is a script for the backend of the StructurePreprocessor: per-feature
 encoders that turn the DSSP per-residue list output (``ss``, ``asa``,
 ``phi``, ``psi``) into ``(L, D)`` numerical tensors normalized to ``[0, 1]``
 per the recipes in
-``aaanalysis.struct_analysis_pro._backend.structure_preprocessor.feature_registry.NORMALIZATION_RECIPES``.
+``aaanalysis.data_handling_pro._backend.structure_preprocessor.feature_registry.NORMALIZATION_RECIPES``.
 
 One private helper per feature kind; the frontend ``encode_dssp`` orchestrates
 dispatch + concatenation. v1.1 drops the raw-`asa` and raw-`phi_psi` paths —

@@ -156,7 +156,9 @@ def load_dataset(name: str = "Overview",
     Parameters
     ----------
     name : str, default='Overview'
-        The name of the loaded dataset, from the 'Dataset' column in the overview table.
+        The dataset to load, given as its 'Dataset' name (see Notes for the full
+        list grouped by level). The default ``'Overview'`` returns the benchmark
+        overview table instead of a single dataset.
     n : int, optional
         Number of proteins per class, selected by index. If ``None``, the whole dataset will be returned.
     random : bool, default=False
@@ -184,6 +186,17 @@ def load_dataset(name: str = "Overview",
 
     Notes
     -----
+    Available datasets (pass as ``name``), grouped by level:
+
+    - Amino acid level (``'AA_*'``): 'AA_CASPASE3', 'AA_FURIN', 'AA_LDR',
+      'AA_MMP2', 'AA_RNABIND', 'AA_SA'.
+    - Sequence level (``'SEQ_*'``): 'SEQ_AMYLO', 'SEQ_CAPSID', 'SEQ_DISULFIDE',
+      'SEQ_LOCATION', 'SEQ_SOLUBLE', 'SEQ_TAIL'.
+    - Domain level (``'DOM_*'``): 'DOM_GSEC', 'DOM_GSEC_PU'.
+
+    See :ref:`t1_overview_benchmarks` for the size, class balance, and reference
+    predictor of each dataset.
+
     ``df_seq`` includes these columns:
 
     - 'entry': Protein identifier, either the UniProt accession number or an id based on index.

@@ -31,6 +31,8 @@ bit-identical to legacy's ``dict_scale[c]`` lookups. Output is rounded to 5
 decimals to match legacy ``_feature_value``.
 """
 import os
+import hashlib
+from functools import lru_cache
 import numpy as np
 from joblib import Parallel, delayed
 
@@ -40,6 +42,58 @@ from ..utils_feature import _get_split_info, post_check_vf_scale
 
 
 # I Helper Functions
+class _ScalesKey:
+    """Content-hash wrapper making ``df_scales`` usable as an ``lru_cache`` key.
+
+    Two distinct ``df_scales`` objects with identical columns / index / values
+    hash equal, so sweeps that rebuild the same scale set across thousands of
+    configs reuse one cached scale-matrix instead of recomputing it per
+    construction. Holds a reference to ``df_scales`` so the cached entry can
+    rebuild on a miss.
+    """
+
+    __slots__ = ("df_scales", "_hash")
+
+    def __init__(self, df_scales):
+        self.df_scales = df_scales
+        cols = tuple(map(str, df_scales.columns))
+        idx = tuple(map(str, df_scales.index))
+        vals = np.ascontiguousarray(df_scales.to_numpy(dtype=np.float64)).tobytes()
+        self._hash = hash((cols, idx, hashlib.blake2b(vals).digest()))
+
+    def __hash__(self):
+        return self._hash
+
+    def __eq__(self, other):
+        return isinstance(other, _ScalesKey) and self._hash == other._hash
+
+
+@lru_cache(maxsize=32)
+def _build_scale_lookup_cached(key):
+    """Build ``(dict_all_scales, scale_to_idx, scale_matrix_f64, n_aa)`` from a
+    ``_ScalesKey``; memoized by ``df_scales`` content (see :class:`_ScalesKey`).
+
+    The scale-matrix derives purely from ``df_scales`` (independent of
+    ``df_parts``), so it is the one piece worth caching across configs. Cleared
+    via :meth:`CPP.clear_cache`.
+    """
+    df_scales = key.df_scales
+    dict_all_scales = {col: dict(zip(df_scales.index.to_list(), df_scales[col]))
+                       for col in list(df_scales)}
+    scale_to_idx = {s: i for i, s in enumerate(list(df_scales))}
+    n_aa = len(df_scales.index)
+    scale_matrix_f64 = _build_scale_matrix_f64(dict_all_scales=dict_all_scales, n_aa=n_aa)
+    return dict_all_scales, scale_to_idx, scale_matrix_f64, n_aa
+
+
+def build_scale_lookup(df_scales=None):
+    """Public-to-backend entry: content-cached scale lookup for ``df_scales``."""
+    return _build_scale_lookup_cached(_ScalesKey(df_scales))
+
+
+def clear_scale_lookup_cache():
+    """Evict the module-level scale-lookup LRU (backs :meth:`CPP.clear_cache`)."""
+    _build_scale_lookup_cached.cache_clear()
 def _build_aa_idx_per_part(df_parts=None, dict_all_scales=None):
     """Per-part (n_samples, L_max) int32 AA-index matrix; ``n_aa`` is the NaN sentinel."""
     list_aa = list(next(iter(dict_all_scales.values())).keys())
@@ -323,14 +377,13 @@ class AALookupCache:
 
     @classmethod
     def from_df(cls, df_parts, df_scales):
-        dict_all_scales = {col: dict(zip(df_scales.index.to_list(), df_scales[col]))
-                           for col in list(df_scales)}
-        scale_to_idx = {s: i for i, s in enumerate(list(df_scales))}
-        aa_idx_per_part, seq_lens_per_part, _, n_aa = _build_aa_idx_per_part(
-            df_parts=df_parts, dict_all_scales=dict_all_scales,
+        # Scale-matrix is content-cached across configs (see build_scale_lookup);
+        # the per-part AA-index matrix depends on df_parts so stays per-call.
+        dict_all_scales, scale_to_idx, scale_matrix_f64, _ = build_scale_lookup(
+            df_scales=df_scales,
         )
-        scale_matrix_f64 = _build_scale_matrix_f64(
-            dict_all_scales=dict_all_scales, n_aa=n_aa,
+        aa_idx_per_part, seq_lens_per_part, _, _ = _build_aa_idx_per_part(
+            df_parts=df_parts, dict_all_scales=dict_all_scales,
         )
         return cls(aa_idx_per_part, seq_lens_per_part, scale_matrix_f64,
                    scale_to_idx, id(df_parts), id(df_scales))
@@ -390,8 +443,7 @@ def get_feature_matrix_fast_(features=None, df_parts=None, df_scales=None,
     sp_vec = SplitRange_sp_vec()  # one shared instance, hoisted out of loop
 
     n_samples = len(df_parts)
-    if n_jobs is None:
-        n_jobs = min(os.cpu_count() or 1, max(int(len(features) / 10), 1))
+    n_jobs = ut.resolve_n_jobs(n_jobs=n_jobs, n_work=len(features))
 
     if n_jobs == 1 or len(features) <= 1:
         X = np.empty((n_samples, len(features)), dtype=np.float64)

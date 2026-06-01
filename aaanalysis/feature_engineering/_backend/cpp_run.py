@@ -21,6 +21,8 @@ faster at large fixtures (no cache write).
 DEV: Bridge layers should be used only in exceptional cases to preserve the
 primary backend-frontend architecture.
 """
+import warnings
+
 import numpy as np
 import pandas as pd
 import aaanalysis.utils as ut
@@ -63,6 +65,55 @@ def _get_n_pre_filter(n_pre_filter=None, n_filter=None, n_feat=None, pct_pre_fil
         n_pre_filter = n_filter if n_pre_filter < n_filter else n_pre_filter
     pct_pre_filter = np.round((n_pre_filter / n_feat * 100), 2)
     return n_pre_filter, pct_pre_filter
+
+
+def _attach_filter_stats(df_feat=None, n_candidates=None, n_after_prefilter=None,
+                         n_after_redundancy=None, n_requested=None):
+    """Attach the CPP filter-funnel counts to ``df_feat.attrs`` and warn on a
+    feature shortfall.
+
+    ``n_requested`` is the user's pre-cap ``n_filter`` (before it is clipped to
+    ``n_candidates``). Two distinct shortfalls are surfaced, mutually exclusive
+    so the run never double-warns:
+
+    * **D5b — sparse config (``UserWarning``):** when ``n_candidates`` itself is
+      below ``n_filter``, the ``split_kws`` × parts × scales expansion cannot
+      generate enough features *regardless of filtering* (the small-``n_jmd`` /
+      narrow-``split_kws`` footgun). This is an input-shaped issue the user can
+      fix, so it points at ``split_kws`` / part lengths.
+    * **D7 — filter shortfall (``RuntimeWarning``):** enough candidates existed,
+      but the pre-filter / redundancy steps removed too many; points at the
+      filter strictness.
+
+    The stats are a plain dict — no typed record, per the backend house style.
+    """
+    n_final = len(df_feat)
+    df_feat.attrs["last_filter_stats"] = {
+        "n_candidates": int(n_candidates),
+        "n_after_prefilter": int(n_after_prefilter),
+        "n_after_redundancy": int(n_after_redundancy),
+        "n_final": int(n_final),
+    }
+    if n_requested is not None and n_candidates < n_requested:
+        warnings.warn(
+            f"'n_filter' ({n_requested}) should be <= the number of candidate "
+            f"features the configuration can generate ({n_candidates}); the "
+            f"'split_kws' × parts × 'df_scales' expansion is too sparse for "
+            f"these part lengths (small 'n_jmd' / 'tmd_len' or narrow "
+            f"'split_kws'). Adjust 'split_kws' (e.g. 'len_max'/'steps'), enlarge "
+            f"the parts, or lower 'n_filter'.",
+            UserWarning,
+        )
+    elif n_requested is not None and n_final < n_requested:
+        warnings.warn(
+            f"'n_filter' ({n_requested}) should be <= the number of features the "
+            f"filter could deliver ({n_final}); returning fewer features than "
+            f"requested. Inspect ``df_feat.attrs['last_filter_stats']`` and "
+            f"consider a larger 'df_scales' / 'n_jmd' / less strict "
+            f"'max_overlap'/'max_cor'.",
+            RuntimeWarning,
+        )
+    return df_feat
 
 
 # Module-level guard so the "using Python fallback" notice fires at most once
@@ -122,6 +173,7 @@ def cpp_run_single(df_parts=None, split_kws=None, df_scales=None, df_cat=None, v
     n_feat = len(get_features_(list_parts=list(df_parts),
                                split_kws=split_kws,
                                list_scales=list_scales))
+    n_requested = n_filter
     n_filter = n_feat if n_feat < n_filter else n_filter
 
     # PR5: numerical-mode input has THREE possible shapes:
@@ -216,6 +268,10 @@ def cpp_run_single(df_parts=None, split_kws=None, df_scales=None, df_cat=None, v
     df_feat.reset_index(drop=True, inplace=True)
     df_feat[ut.COLS_FEAT_STAT] = df_feat[ut.COLS_FEAT_STAT].round(3)
     df_feat[ut.COL_FEATURE] = df_feat[ut.COL_FEATURE].astype(str)
+    df_feat = _attach_filter_stats(
+        df_feat=df_feat, n_candidates=n_feat, n_after_prefilter=len(df),
+        n_after_redundancy=len(df_feat), n_requested=n_requested,
+    )
     if verbose:
         ut.print_out(f"4. CPP returns df of {len(df_feat)} unique features with general information and statistics")
     return df_feat
@@ -240,6 +296,7 @@ def cpp_run_batch(df_parts=None, split_kws=None, df_scales=None, df_cat=None, ve
     n_feat = len(get_features_(list_parts=list(df_parts),
                                split_kws=split_kws,
                                list_scales=list_scales))
+    n_requested = n_filter
     n_filter = n_feat if n_feat < n_filter else n_filter
     if verbose:
         ut.print_out(f"1. CPP creates {n_feat} features for {len(df_parts)} samples in {n_batches} batches")
@@ -332,6 +389,10 @@ def cpp_run_batch(df_parts=None, split_kws=None, df_scales=None, df_cat=None, ve
     df_feat.reset_index(drop=True, inplace=True)
     df_feat[ut.COLS_FEAT_STAT] = df_feat[ut.COLS_FEAT_STAT].round(3)
     df_feat[ut.COL_FEATURE] = df_feat[ut.COL_FEATURE].astype(str)
+    df_feat = _attach_filter_stats(
+        df_feat=df_feat, n_candidates=n_feat, n_after_prefilter=len(df),
+        n_after_redundancy=len(df_feat), n_requested=n_requested,
+    )
     if verbose:
         ut.print_out(f"4. CPP returns df of {len(df_feat)} unique features with general information and statistics")
     return df_feat

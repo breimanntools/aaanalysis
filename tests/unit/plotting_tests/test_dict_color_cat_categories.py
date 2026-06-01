@@ -92,7 +92,7 @@ class TestEmbeddingPreprocessorCategoriesResolve:
 
     def test_mean_only_category_resolves(self):
         df_scales_emb = _make_pseudo_scales(D=8)
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb,
             cat_min_th=0.3, subcat_min_th=0.6, random_state=0)
         for c in df_cat[ut.COL_CAT].unique():
@@ -103,7 +103,7 @@ class TestEmbeddingPreprocessorCategoriesResolve:
         df_stds_emb = _make_pseudo_scales(D=8, seed=1).abs()
         df_stds_emb.index = df_scales_emb.index
         df_stds_emb.columns = df_scales_emb.columns
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb, df_stds_emb=df_stds_emb,
             cat_min_th=0.3, subcat_min_th=0.6, random_state=0)
         for c in df_cat[ut.COL_CAT].unique():
@@ -111,7 +111,7 @@ class TestEmbeddingPreprocessorCategoriesResolve:
 
     def test_all_categories_are_embeddings(self):
         df_scales_emb = _make_pseudo_scales(D=10)
-        df_cat = aa.EmbeddingPreprocessor.cluster_pseudo_scales(
+        df_cat = aa.EmbeddingPreprocessor().cluster_pseudo_scales(
             df_scales_emb=df_scales_emb,
             cat_min_th=0.3, subcat_min_th=0.6, random_state=0)
         assert set(df_cat[ut.COL_CAT].unique()) == {"Embeddings"}

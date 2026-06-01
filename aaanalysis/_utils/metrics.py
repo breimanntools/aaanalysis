@@ -9,6 +9,8 @@ from joblib import Parallel, delayed
 import os
 from scipy.stats import rankdata
 
+from ..config import resolve_n_jobs
+
 DTYPE = np.float64
 
 
@@ -37,8 +39,7 @@ def auc_adjusted_(X=None, labels=None, label_test=1, n_jobs=None):
     labels_binary = np.array([int(y == label_test) for y in labels], dtype=DTYPE)
     ranked_X = np.apply_along_axis(rankdata, 0, X)
 
-    if n_jobs is None:
-        n_jobs = min(os.cpu_count(), max(int(X.shape[1] / 10), 1))
+    n_jobs = resolve_n_jobs(n_jobs=n_jobs, n_work=X.shape[1])
 
     if n_jobs == 1:
         return _compute_auc_sorted(ranked_X, labels_binary)
@@ -129,3 +130,166 @@ def kullback_leibler_divergence_(X=None, labels=None, label_test=0, label_ref=1)
     # Compute KLD for each feature
     kld = np.array([_comp_kld_for_feature(arg) for arg in args])
     return kld
+
+
+# Per-protein site-localization metrics (windowed protease / PTM prediction)
+def _avg_precision_at_positions(scores, pos_idx, tolerance=0):
+    """Average precision for one protein's per-residue ``scores`` where the
+    0-based indices in ``pos_idx`` are positive sites.
+
+    NaN scores are dropped before ranking. With ``tolerance > 0`` a predicted
+    rank counts as a hit if it lies within ``tolerance`` residues of any
+    positive (off-by-one positional jitter). Returns ``np.nan`` when the protein
+    has no positives or no finite scores."""
+    scores = np.asarray(scores, dtype=DTYPE)
+    finite = ~np.isnan(scores)
+    if not finite.any():
+        return np.nan
+    pos_set = set(int(p) for p in pos_idx)
+    if not pos_set:
+        return np.nan
+    idx_finite = np.flatnonzero(finite)
+    # Rank finite positions by descending score (stable for ties).
+    order = idx_finite[np.argsort(-scores[idx_finite], kind="stable")]
+    n_pos = len(pos_set)
+    hits = 0
+    sum_prec = 0.0
+    matched = set()
+    for rank, idx in enumerate(order, start=1):
+        idx = int(idx)
+        # A position is a true hit if within +/- tolerance of an unmatched positive.
+        target = None
+        for d in range(-tolerance, tolerance + 1):
+            cand = idx + d
+            if cand in pos_set and cand not in matched:
+                target = cand
+                break
+        if target is not None:
+            matched.add(target)
+            hits += 1
+            sum_prec += hits / rank
+    if hits == 0:
+        return 0.0
+    return sum_prec / n_pos
+
+
+def per_protein_ap_(list_scores=None, list_positions=None, tolerance=0):
+    """Per-protein average precision over a list of (scores, positive-positions).
+
+    ``list_positions`` holds 0-based positive indices per protein. Returns a 1D
+    array of per-protein AP (``np.nan`` for proteins with no positives / no
+    finite scores), so callers can ``np.nanmean`` for the dataset score."""
+    out = []
+    for scores, positions in zip(list_scores, list_positions):
+        out.append(_avg_precision_at_positions(scores, positions, tolerance=tolerance))
+    return np.asarray(out, dtype=DTYPE)
+
+
+# Detection metrics at a fixed score threshold (pooled over proteins)
+def detection_metrics_(list_scores=None, list_positions=None, threshold=0.5, tolerance=0):
+    """Pool TP/FP/FN/TN across proteins at a fixed ``threshold`` and return
+    ``dict(recall, precision, f1, mcc, tp, fp, fn, tn)``.
+
+    A residue scoring ``>= threshold`` is a positive call. With ``tolerance>0``
+    a call within ``tolerance`` of a true site counts as TP and that site is
+    consumed (so each true site is credited at most once). NaN scores are
+    ignored (neither called nor counted as residues)."""
+    tp = fp = fn = tn = 0
+    for scores, positions in zip(list_scores, list_positions):
+        scores = np.asarray(scores, dtype=DTYPE)
+        finite = ~np.isnan(scores)
+        pos_set = set(int(p) for p in positions)
+        called = set(int(i) for i in np.flatnonzero(finite & (scores >= threshold)))
+        matched_sites = set()
+        matched_calls = set()
+        for c in called:
+            for d in range(-tolerance, tolerance + 1):
+                cand = c + d
+                if cand in pos_set and cand not in matched_sites:
+                    matched_sites.add(cand)
+                    matched_calls.add(c)
+                    break
+        tp += len(matched_sites)
+        fp += len(called - matched_calls)
+        fn += len(pos_set - matched_sites)
+        # Negatives = finite residues that are neither a positive site nor a call.
+        n_finite = int(finite.sum())
+        tn += n_finite - len(called) - len(pos_set - matched_sites)
+    recall = tp / (tp + fn) if (tp + fn) else np.nan
+    precision = tp / (tp + fp) if (tp + fp) else np.nan
+    f1 = (2 * precision * recall / (precision + recall)
+          if precision and recall and not np.isnan(precision) and not np.isnan(recall)
+          else (0.0 if (tp + fp + fn) else np.nan))
+    denom = float((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+    mcc = ((tp * tn - fp * fn) / np.sqrt(denom)) if denom > 0 else np.nan
+    return {"recall": recall, "precision": precision, "f1": f1, "mcc": mcc,
+            "tp": int(tp), "fp": int(fp), "fn": int(fn), "tn": int(tn)}
+
+
+# Bootstrap confidence interval over a per-protein metric vector
+def bootstrap_ci_(values=None, n_rounds=1000, ci=0.95, seed=None):
+    """Percentile bootstrap CI of the mean of ``values`` (NaN-aware).
+
+    Resamples proteins with replacement ``n_rounds`` times; returns
+    ``(mean, low, high)`` for the central ``ci`` interval. Deterministic given
+    ``seed``."""
+    values = np.asarray(values, dtype=DTYPE)
+    values = values[~np.isnan(values)]
+    if values.size == 0:
+        return np.nan, np.nan, np.nan
+    rng = np.random.default_rng(seed)
+    n = values.size
+    means = np.empty(n_rounds, dtype=DTYPE)
+    for i in range(n_rounds):
+        means[i] = np.mean(values[rng.integers(0, n, size=n)])
+    alpha = (1.0 - ci) / 2.0
+    low, high = np.percentile(means, [100 * alpha, 100 * (1 - alpha)])
+    return float(np.mean(values)), float(low), float(high)
+
+
+# Peak-preserving score smoothing (NaN-aware, pure numpy)
+def _triangular_kernel(window):
+    """Normalized triangular weights of length ``2*window+1``."""
+    ramp = np.arange(1, window + 1, dtype=DTYPE)
+    w = np.concatenate([ramp, [window + 1.0], ramp[::-1]])
+    return w / w.sum()
+
+
+def _gaussian_kernel(window, sigma):
+    """Normalized Gaussian weights of length ``2*window+1``."""
+    x = np.arange(-window, window + 1, dtype=DTYPE)
+    w = np.exp(-(x ** 2) / (2.0 * sigma ** 2))
+    return w / w.sum()
+
+
+def smooth_scores_(scores=None, method="triangular", window=2, sigma=None,
+                   peak_preserving=True):
+    """Smooth a 1D per-residue ``scores`` vector with a triangular or Gaussian
+    kernel, NaN-aware, optionally peak-preserving.
+
+    NaNs are ignored in the weighted average (weights renormalized over finite
+    neighbours); positions with no finite neighbour stay NaN. When
+    ``peak_preserving`` the output is ``max(smoothed, raw)`` elementwise so true
+    peaks are never attenuated below their original height."""
+    scores = np.asarray(scores, dtype=DTYPE)
+    n = scores.size
+    if method == "triangular":
+        kernel = _triangular_kernel(window)
+    else:
+        kernel = _gaussian_kernel(window, sigma if sigma is not None else max(window / 2.0, 1e-6))
+    finite = ~np.isnan(scores)
+    filled = np.where(finite, scores, 0.0)
+    out = np.full(n, np.nan, dtype=DTYPE)
+    for i in range(n):
+        lo = max(0, i - window)
+        hi = min(n, i + window + 1)
+        k_lo = lo - (i - window)
+        k_hi = k_lo + (hi - lo)
+        w = kernel[k_lo:k_hi] * finite[lo:hi]
+        wsum = w.sum()
+        if wsum > 0:
+            out[i] = np.dot(w, filled[lo:hi]) / wsum
+    if peak_preserving:
+        out = np.where(np.isnan(out), scores,
+                       np.where(np.isnan(scores), out, np.maximum(out, scores)))
+    return out

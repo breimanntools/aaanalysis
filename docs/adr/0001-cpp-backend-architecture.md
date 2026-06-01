@@ -1,8 +1,6 @@
----
-status: accepted
----
+# ADR-0001 — CPP backend architecture: unified numerical pipeline + Cython acceleration
 
-# CPP backend architecture: unified numerical pipeline + Cython acceleration via setuptools/cibuildwheel
+Status: Accepted — 2026-05-25
 
 ## Context
 

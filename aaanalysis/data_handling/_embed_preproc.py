@@ -1,6 +1,6 @@
 """
 This is a script for the frontend of the EmbeddingPreprocessor class for
-preparing protein-language-model (PLM) embeddings as inputs to ``CPP.run_embed``.
+preparing protein-language-model (PLM) embeddings as inputs to ``CPP.run_num``.
 """
 from typing import Dict, Tuple, Union
 import warnings
@@ -14,31 +14,31 @@ from ._backend.embed_preproc.cluster_pseudo_scales import cluster_pseudo_scales_
 
 
 # I Helper Functions
-def _check_embeddings(df_seq, embeddings):
-    """Validate that ``embeddings`` is a dict keyed by entry, each value a
+def _check_dict_num(df_seq, dict_num):
+    """Validate that ``dict_num`` is a dict keyed by entry, each value a
     2D ndarray whose first axis matches the corresponding sequence length,
     and that all entries share the same D."""
-    if not isinstance(embeddings, dict):
-        raise ValueError(f"'embeddings' ({type(embeddings).__name__}) should be a dict mapping entry to np.ndarray of shape (L, D).")
+    if not isinstance(dict_num, dict):
+        raise ValueError(f"'dict_num' ({type(dict_num).__name__}) should be a dict mapping entry to np.ndarray of shape (L, D).")
     entries = df_seq[ut.COL_ENTRY].tolist()
-    missing = [e for e in entries if e not in embeddings]
+    missing = [e for e in entries if e not in dict_num]
     if missing:
         preview = missing[:5] + (["..."] if len(missing) > 5 else [])
-        raise ValueError(f"'embeddings' ({len(missing)} missing entries) should contain every entry in 'df_seq'. Missing: {preview}")
+        raise ValueError(f"'dict_num' ({len(missing)} missing entries) should contain every entry in 'df_seq'. Missing: {preview}")
     seqs = dict(zip(df_seq[ut.COL_ENTRY], df_seq[ut.COL_SEQ]))
     ds = []
     for entry in entries:
-        emb = embeddings[entry]
+        emb = dict_num[entry]
         if not isinstance(emb, np.ndarray):
-            raise ValueError(f"'embeddings[{entry!r}]' ({type(emb).__name__}) should be np.ndarray of shape (L, D).")
+            raise ValueError(f"'dict_num[{entry!r}]' ({type(emb).__name__}) should be np.ndarray of shape (L, D).")
         if emb.ndim != 2:
-            raise ValueError(f"'embeddings[{entry!r}]' (ndim={emb.ndim}) should be 2D of shape (L, D).")
+            raise ValueError(f"'dict_num[{entry!r}]' (ndim={emb.ndim}) should be 2D of shape (L, D).")
         seq_len = len(seqs[entry])
         if emb.shape[0] != seq_len:
-            raise ValueError(f"'embeddings[{entry!r}].shape[0]' ({emb.shape[0]}) should equal sequence length ({seq_len}).")
+            raise ValueError(f"'dict_num[{entry!r}].shape[0]' ({emb.shape[0]}) should equal sequence length ({seq_len}).")
         ds.append(emb.shape[1])
     if len(set(ds)) > 1:
-        raise ValueError(f"'embeddings' (D values: {sorted(set(ds))}) should have a consistent embedding dimensionality D across all entries.")
+        raise ValueError(f"'dict_num' (D values: {sorted(set(ds))}) should have a consistent embedding dimensionality D across all entries.")
 
 
 def _check_match_cat_subcat_thresholds(cat_min_th, subcat_min_th):
@@ -89,9 +89,10 @@ class EmbeddingPreprocessor:
     """
     Utility data preprocessing class for protein-language-model (PLM) embeddings.
 
-    Mirrors the :class:`SequencePreprocessor` pattern: a stateless namespace of
-    ``@staticmethod`` utilities. The two-step workflow turns per-residue PLM
-    embeddings into the (df_scales, df_cat) pair that :meth:`CPP.run` consumes:
+    Instance-based, mirroring :class:`StructurePreprocessor` and
+    :class:`AnnotationPreprocessor` (``ep = EmbeddingPreprocessor()``). The
+    two-step workflow turns per-residue PLM embeddings into the
+    (df_scales, df_cat) pair that :meth:`CPP.run` consumes:
 
     1. :meth:`build_pseudo_scales` averages per-residue embedding values per
        canonical AA, producing a (20, D) ``df_scales_emb`` analog of
@@ -108,8 +109,11 @@ class EmbeddingPreprocessor:
     See Also
     --------
     * :class:`SequencePreprocessor` for sequence-side preprocessing utilities.
+    * :class:`StructurePreprocessor` for the PDB / DSSP / AlphaFold analog.
+    * :class:`AnnotationPreprocessor` for the PTM / functional-site analog.
     * :class:`AAclust` for the correlation-based clustering used internally.
     * :class:`CPP` for the downstream feature-engineering consumer.
+    * :func:`aaanalysis.combine_dict_nums` for stitching multiple dict_nums.
 
     Notes
     -----
@@ -120,9 +124,9 @@ class EmbeddingPreprocessor:
     * **Per-AA averaging discards positional context.** Pseudo-scales collapse
       a PLM's contextual per-residue embedding into a single per-AA value, so
       when used through :meth:`CPP.run` the same AA in different sequence
-      positions receives the same scale value. A future ``CPP.run_embed`` will
-      consume the per-residue embeddings directly; see the design sketch at
-      ``docs/source/design/run_embed.md``.
+      positions receives the same scale value. To preserve positional context,
+      pass the per-residue ``dict_num`` to :meth:`CPP.run_num` directly instead
+      of routing through pseudo-scales.
     * **Feature categorization.** As of v1.1 every PLM-derived dim emits
       ``category='Embeddings'`` (paired with
       ``ut.DICT_COLOR_CAT['Embeddings'] == '#6B4FB5'``). The AAclust-derived
@@ -132,10 +136,13 @@ class EmbeddingPreprocessor:
       ``subcategory`` while ``CPPPlot.heatmap()`` resolves a single color.
     """
 
-    @staticmethod
+    def __init__(self, verbose: bool = True):
+        self._verbose = ut.check_verbose(verbose)
+
     def build_pseudo_scales(
+        self,
         df_seq: pd.DataFrame = None,
-        embeddings: Dict[str, np.ndarray] = None,
+        dict_num: Dict[str, np.ndarray] = None,
         return_std: bool = False,
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
         """
@@ -154,11 +161,12 @@ class EmbeddingPreprocessor:
             identifiers and a ``sequence`` column with full protein sequences.
             Used here as the source of empirical amino-acid contexts over
             which embedding dimensions are averaged.
-        embeddings : dict[str, np.ndarray]
+        dict_num : dict[str, np.ndarray]
             Mapping from entry to a per-residue embedding array of shape
             ``(L, D)`` where ``L`` is the protein length and ``D`` is the
             embedding dimensionality. Every entry in ``df_seq`` must be a key;
-            all arrays must share the same ``D``.
+            all arrays must share the same ``D``. Same shape contract as the
+            ``dict_num`` consumed by :meth:`CPP.run_num`.
         return_std : bool, default=False
             If ``True``, also return per-AA population standard deviations in a
             second DataFrame of the same shape. AAs occurring exactly once
@@ -188,7 +196,7 @@ class EmbeddingPreprocessor:
         """
         # Validate
         ut.check_df_seq(df_seq=df_seq)
-        _check_embeddings(df_seq=df_seq, embeddings=embeddings)
+        _check_dict_num(df_seq=df_seq, dict_num=dict_num)
         ut.check_bool(name="return_std", val=return_std)
         warnings.warn(
             "Pseudo-scales are dataset-dependent (averaged over df_seq). "
@@ -201,7 +209,7 @@ class EmbeddingPreprocessor:
         list_aa = list(ut.LIST_CANONICAL_AA)
         result = build_pseudo_scales_(
             df_seq=df_seq,
-            embeddings=embeddings,
+            dict_num=dict_num,
             list_aa=list_aa,
             col_entry=ut.COL_ENTRY,
             col_seq=ut.COL_SEQ,
@@ -219,8 +227,8 @@ class EmbeddingPreprocessor:
         df_stds_emb = pd.DataFrame(stds, index=list_aa, columns=cols)
         return df_scales_emb, df_stds_emb
 
-    @staticmethod
     def cluster_pseudo_scales(
+        self,
         df_scales_emb: pd.DataFrame = None,
         df_stds_emb: pd.DataFrame = None,
         cat_min_th: float = 0.5,
@@ -284,8 +292,7 @@ class EmbeddingPreprocessor:
           same pseudo-scales at different correlation thresholds.
         * The ``metric`` parameter only affects post-hoc merging. To
           experiment with non-Pearson similarity during k-optimization, a
-          deeper AAclust change is required — tracked under "Open questions"
-          in ``docs/source/design/run_embed.md``.
+          deeper AAclust change is required.
         * **Std-aware recipe (when ``df_stds_emb`` is supplied).** A
           composition of three textbook ingredients, not a single named
           method: (i) each dimension is represented by its per-AA

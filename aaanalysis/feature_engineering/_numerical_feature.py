@@ -9,7 +9,7 @@ from typing import Optional, Literal, Dict, Union, List, Tuple, Type
 
 import aaanalysis.utils as ut
 
-from ._backend.check_feature import check_df_scales
+from ._backend.check_feature import check_df_scales, expand_pos_anchors_
 from ._backend.num_feat.filter_correlation import filter_correlation_
 from ._backend.num_feat.extend_alphabet import extend_alphabet_
 from ._backend.cpp._filters._assign import assign_dict_num_to_parts
@@ -114,6 +114,7 @@ class NumericalFeature:
                   all_parts: bool = False,
                   jmd_n_len: int = 10,
                   jmd_c_len: int = 10,
+                  tmd_len: Optional[int] = None,
                   ) -> Tuple[pd.DataFrame, Dict[str, np.ndarray]]:
         """
         Prepare CPP numerical-mode inputs by slicing sequences AND per-residue tensors with shared boundaries.
@@ -148,6 +149,11 @@ class NumericalFeature:
             Length of JMD-N (>=0).
         jmd_c_len : int, default=10
             Length of JMD-C (>=0).
+        tmd_len : int, optional
+            TMD length for the **anchor-based format** only (a ``sequence`` + ``pos`` ``df_seq``): each 1-based
+            anchor in ``pos`` is exploded into one row with the TMD centered (right-heavy for even ``tmd_len``)
+            on the anchor, and the matching ``dict_num`` tensor is sliced with the same boundaries. Ignored for
+            the position-based schema.
 
         Returns
         -------
@@ -199,10 +205,24 @@ class NumericalFeature:
         jmd_n_len = ut.check_jmd_n_len(jmd_n_len=jmd_n_len)
         jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
         ut.check_bool(name="all_parts", val=all_parts)
-        # Layer-1: df_seq ↔ dict_num pairing.
+        # Layer-1: df_seq ↔ dict_num pairing (on the original, one-row-per-entry df_seq).
         check_match_df_seq_dict_num(df_seq=df_seq, dict_num=dict_num)
 
-        # Build df_parts via SequenceFeature (shared with seq-mode users).
+        # Anchor-based format ('sequence' + 'pos' + tmd_len): explode to position-based
+        # so the SAME exploded boundaries drive both string parts AND tensor slices (D5a).
+        anchor_mode = (isinstance(df_seq, pd.DataFrame)
+                       and ut.COL_SEQ in df_seq.columns and ut.COL_POS in df_seq.columns
+                       and not set(ut.COLS_SEQ_POS).issubset(df_seq.columns)
+                       and not set(ut.COLS_SEQ_PARTS).issubset(df_seq.columns)
+                       and not set(ut.COLS_SEQ_TMD).issubset(df_seq.columns))
+        list_entry_win = None
+        if anchor_mode:
+            ut.check_number_range(name="tmd_len", val=tmd_len, min_val=1, just_int=True)
+            df_seq, list_entry_win = expand_pos_anchors_(df_seq=df_seq, tmd_len=tmd_len,
+                                                         jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+
+        # Build df_parts via SequenceFeature (shared with seq-mode users). df_seq is now
+        # position-based, so get_df_parts does not re-explode.
         from ._sequence_feature import SequenceFeature
         sf = SequenceFeature(verbose=False)
         df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=list_parts,
@@ -210,11 +230,14 @@ class NumericalFeature:
                                    jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         list_parts_resolved = list(df_parts.columns)
 
-        # Slice the per-residue tensors with the SAME boundaries (backend reused).
+        # Slice the per-residue tensors with the SAME boundaries (backend reused). With the
+        # exploded df_seq, repeated entries reuse one tensor sliced at per-row boundaries.
         dict_part_vals, _dict_part_lens = assign_dict_num_to_parts(
             df_seq=df_seq, dict_num=dict_num, list_parts=list_parts_resolved,
             jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
         )
+        if anchor_mode:
+            df_parts.index = list_entry_win
         # lens are recoverable from df_parts (non-gap char count) in run_num —
         # no need to expose them as a separate output (keeps the API one-shape).
         return df_parts, dict_part_vals

@@ -16,7 +16,7 @@ aa.options["verbose"] = False
 settings.register_profile("ci", deadline=2000)
 settings.load_profile("ci")
 
-MODULE = "aaanalysis.struct_analysis_pro._structure_preprocessor"
+MODULE = "aaanalysis.data_handling_pro._structure_preprocessor"
 RUNNER = f"{MODULE}.run_dssp_full_for_entry_"
 
 
@@ -141,44 +141,44 @@ class TestStpEncodeDssp:
     # ----- POSITIVES (≥10) -----
     def test_valid_returns_dict(self):
         stp = aa.StructurePreprocessor(verbose=False)
-        d, df_out = stp.encode_dssp(df_seq=_df_pre(), features=["ss3"])
+        d, df_out = stp.encode_dssp(return_df=True, df_seq=_df_pre(), features=["ss3"])
         assert isinstance(d, dict)
 
     def test_valid_ss3_shape_is_L_by_3(self):
         seq = "ACDEFGHIK"
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre(seq), features=["ss3"])
+        d = stp.encode_dssp(df_seq=_df_pre(seq), features=["ss3"])
         assert d["P1"].shape == (len(seq), 3)
 
     def test_valid_ss8_shape_is_L_by_8(self):
         seq = "ACDEFGHIK"
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre(seq), features=["ss8"])
+        d = stp.encode_dssp(df_seq=_df_pre(seq), features=["ss8"])
         assert d["P1"].shape == (len(seq), 8)
 
     def test_valid_rasa_shape_is_L_by_1(self):
         seq = "ACDEFGHIK"
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre(seq), features=["rasa"])
+        d = stp.encode_dssp(df_seq=_df_pre(seq), features=["rasa"])
         assert d["P1"].shape == (len(seq), 1)
 
     def test_valid_phi_psi_sincos_shape_is_L_by_4(self):
         seq = "ACDEFGHIK"
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre(seq),
+        d = stp.encode_dssp(df_seq=_df_pre(seq),
                                features=["phi_psi_sincos"])
         assert d["P1"].shape == (len(seq), 4)
 
     def test_valid_multi_features_concat(self):
         seq = "ACDEFGHIK"
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre(seq),
+        d = stp.encode_dssp(df_seq=_df_pre(seq),
                                features=["ss3", "rasa", "phi_psi_sincos"])
         assert d["P1"].shape == (len(seq), 3 + 1 + 4)
 
     def test_valid_ss3_onehot_is_binary(self):
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre(), features=["ss3"])
+        d = stp.encode_dssp(df_seq=_df_pre(), features=["ss3"])
         vals = d["P1"]
         nonnan = vals[~np.isnan(vals).any(axis=1)]
         assert set(np.unique(nonnan)).issubset({0.0, 1.0})
@@ -186,13 +186,13 @@ class TestStpEncodeDssp:
     def test_valid_helix_lands_in_helix_column(self):
         # All-H should activate column 0 (ss_helix)
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre(), features=["ss3"])
+        d = stp.encode_dssp(df_seq=_df_pre(), features=["ss3"])
         assert np.all(d["P1"][:, 0] == 1.0)
 
     def test_valid_rasa_in_unit_interval_when_valid(self):
         # 80 / max_ASA_AA values must yield finite values; all in [0, ~1]
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre(), features=["rasa"])
+        d = stp.encode_dssp(df_seq=_df_pre(), features=["rasa"])
         vals = d["P1"].ravel()
         assert np.all(np.isfinite(vals))
         assert np.all(vals >= 0)
@@ -204,7 +204,7 @@ class TestStpEncodeDssp:
              patch(RUNNER,
                    side_effect=lambda p: _canned_full("ACDEFGHIK")):
             (tmp_path / "P1.pdb").write_text("dummy")
-            d, df_out = stp.encode_dssp(
+            d, df_out = stp.encode_dssp(return_df=True, 
                 df_seq=df, pdb_folder=str(tmp_path), features=["ss3"])
         assert d["P1"].shape == (9, 3)
 
@@ -214,7 +214,7 @@ class TestStpEncodeDssp:
         with _mock_binary_present(), \
              warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_dssp(
+            d, df_out = stp.encode_dssp(return_df=True, 
                 df_seq=df, pdb_folder=str(tmp_path), features=["ss3"],
                 on_failure="nan")
         assert d["P1"].shape == (9, 3)
@@ -226,7 +226,7 @@ class TestStpEncodeDssp:
         with _mock_binary_present(), \
              warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_dssp(
+            d, df_out = stp.encode_dssp(return_df=True, 
                 df_seq=df, pdb_folder=str(tmp_path), features=["ss3"],
                 on_failure="drop")
         assert "P1" not in d
@@ -239,7 +239,7 @@ class TestStpEncodeDsspComplex:
     def test_complex_ss3_plus_phi_psi_sincos_total_dims(self):
         seq = "ACDEFGHIK"
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre(seq),
+        d = stp.encode_dssp(df_seq=_df_pre(seq),
                                features=["ss3", "phi_psi_sincos"])
         # 3 (ss3) + 4 (phi_psi_sincos) = 7
         assert d["P1"].shape == (len(seq), 7)
@@ -247,13 +247,13 @@ class TestStpEncodeDsspComplex:
     def test_complex_rasa_in_unit_interval_after_normalize(self):
         # v1.1 normalization: rasa values are clipped to [0, 1].
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre(), features=["rasa"])
+        d = stp.encode_dssp(df_seq=_df_pre(), features=["rasa"])
         vals = d["P1"].ravel()
         assert np.all(vals >= 0) and np.all(vals <= 1)
 
     def test_complex_phi_psi_sincos_shape(self):
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre(),
+        d = stp.encode_dssp(df_seq=_df_pre(),
                                features=["phi_psi_sincos"])
         assert d["P1"].shape[1] == 4
         # v1.1: sincos values are shifted to [0, 1].
@@ -263,7 +263,7 @@ class TestStpEncodeDsspComplex:
     def test_complex_uses_precomputed_skips_dssp(self):
         # No pdb_folder needed if columns already exist.
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre(), pdb_folder=None,
+        d = stp.encode_dssp(df_seq=_df_pre(), pdb_folder=None,
                                features=["ss3"])
         assert d["P1"].shape == (9, 3)
 
@@ -276,7 +276,7 @@ class TestStpEncodeDsspComplex:
             ut.COL_DSSP_OK: [True],
         })
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=df, features=["ss3"])
+        d = stp.encode_dssp(df_seq=df, features=["ss3"])
         # Rows 1 and 3 should be NaN; the rest should be valid one-hot.
         assert np.isnan(d["P1"][1]).all()
         assert np.isnan(d["P1"][3]).all()
@@ -292,7 +292,7 @@ class TestStpEncodeDsspComplex:
             (tmp_path / "P1.pdb").write_text("dummy")  # P2 missing
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                d, df_out = stp.encode_dssp(
+                d, df_out = stp.encode_dssp(return_df=True, 
                     df_seq=df, pdb_folder=str(tmp_path),
                     features=["ss3"], on_failure="drop")
         assert "P1" in d and "P2" not in d
@@ -384,19 +384,19 @@ class TestStpEncodeDsspHBonds:
     # ----- POSITIVES (≥10) -----
     def test_valid_hbond_donor_shape(self):
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
+        d = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
                                features=["hbond_donor"])
         assert d["P1"].shape == (9, 2)
 
     def test_valid_hbond_acceptor_shape(self):
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
+        d = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
                                features=["hbond_acceptor"])
         assert d["P1"].shape == (9, 2)
 
     def test_valid_hbond_in_unit_interval(self):
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
+        d = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
                                features=["hbond_donor", "hbond_acceptor"])
         v = d["P1"]
         finite = v[~np.isnan(v)]
@@ -405,7 +405,7 @@ class TestStpEncodeDsspHBonds:
     def test_valid_hbond_offset_normalization(self):
         # donor offset = -4 → (x+50)/100 = 0.46
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
+        d = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
                                features=["hbond_donor"])
         v = d["P1"]
         np.testing.assert_allclose(v[:, 0], 0.46, atol=1e-9)
@@ -413,14 +413,14 @@ class TestStpEncodeDsspHBonds:
     def test_valid_hbond_energy_normalization(self):
         # donor energy = -2.0 kcal/mol → clip(-(-2)/10, 0, 1) = 0.2
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
+        d = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
                                features=["hbond_donor"])
         v = d["P1"]
         np.testing.assert_allclose(v[:, 1], 0.2, atol=1e-9)
 
     def test_valid_hbond_combined_donor_acceptor(self):
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
+        d = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
                                features=["hbond_donor", "hbond_acceptor"])
         # 2 (donor) + 2 (acceptor) = 4
         assert d["P1"].shape == (9, 4)
@@ -428,7 +428,7 @@ class TestStpEncodeDsspHBonds:
     def test_valid_hbond_acceptor_offset_normalization(self):
         # acceptor offset = +4 → (x+50)/100 = 0.54
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
+        d = stp.encode_dssp(df_seq=_df_pre_with_hbonds(),
                                features=["hbond_acceptor"])
         v = d["P1"]
         np.testing.assert_allclose(v[:, 0], 0.54, atol=1e-9)
@@ -440,7 +440,7 @@ class TestStpEncodeDsspHBonds:
         with _mock_binary_present(), \
              patch(RUNNER, side_effect=lambda p: _canned_full("ACDEFGHIK")):
             (tmp_path / "P1.pdb").write_text("dummy")
-            d, _ = stp.encode_dssp(
+            d = stp.encode_dssp(
                 df_seq=df, pdb_folder=str(tmp_path),
                 features=["hbond_donor"])
         assert d["P1"].shape == (9, 2)

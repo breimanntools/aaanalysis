@@ -14,7 +14,7 @@ import numpy as np
 
 
 # II Main Functions
-def build_pseudo_scales_(df_seq=None, embeddings=None, list_aa=None, col_entry=None, col_seq=None,
+def build_pseudo_scales_(df_seq=None, dict_num=None, list_aa=None, col_entry=None, col_seq=None,
                          return_std=False):
     """Compute context-free per-AA averages (and optionally stds) of embedding dimensions.
 
@@ -31,14 +31,14 @@ def build_pseudo_scales_(df_seq=None, embeddings=None, list_aa=None, col_entry=N
     aa_to_idx = {aa: i for i, aa in enumerate(list_aa)}
 
     entries = df_seq[col_entry].tolist()
-    D = embeddings[entries[0]].shape[1]
+    D = dict_num[entries[0]].shape[1]
 
     sums = np.zeros((n_aa, D), dtype=np.float64)
     counts = np.zeros(n_aa, dtype=np.int64)
     sums_sq = np.zeros((n_aa, D), dtype=np.float64) if return_std else None
 
     for entry, seq in zip(df_seq[col_entry], df_seq[col_seq]):
-        emb = embeddings[entry]
+        emb = dict_num[entry]
         # Map each character to its AA index, -1 for non-canonical
         aa_idx = np.fromiter((aa_to_idx.get(c, -1) for c in seq), dtype=np.int64, count=len(seq))
         mask = aa_idx >= 0

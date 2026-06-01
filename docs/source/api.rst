@@ -29,10 +29,9 @@ Data Handling
     load_features
     read_fasta
     to_fasta
-    comp_seq_sim
-    filter_seq
     EmbeddingPreprocessor
     SequencePreprocessor
+    combine_dict_nums
 
 .. _sequence_analysis_api:
 
@@ -57,7 +56,17 @@ Structure Analysis
     :toctree: generated/
     :template: autosummary/class_template.rst
 
-    get_dssp
+    StructurePreprocessor
+
+.. _annotation_analysis_api:
+
+Annotation Analysis
+-------------------
+.. autosummary::
+    :toctree: generated/
+    :template: autosummary/class_template.rst
+
+    AnnotationPreprocessor
 
 .. _feature_engineering_api:
 

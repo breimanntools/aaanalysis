@@ -278,7 +278,7 @@ class dPULearn:
             identified negatives and other data groups. Disable (``False``) if ``X`` is sparse or has low co-variance.
         n_jobs : int, None, or -1, default=None
             Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized automatically.
-            If ``-1``, the number is set to all available cores.
+            If ``-1``, the number is set to all available cores. Overridden by ``options['n_jobs']`` when set.
 
         Returns
         -------

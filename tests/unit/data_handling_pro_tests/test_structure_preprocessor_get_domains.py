@@ -27,7 +27,7 @@ settings.register_profile("ci", deadline=2000)
 settings.load_profile("ci")
 
 # Patch targets — use the same module path the frontend imports from.
-MODULE = "aaanalysis.struct_analysis_pro._structure_preprocessor"
+MODULE = "aaanalysis.data_handling_pro._structure_preprocessor"
 RUN_AF = f"{MODULE}.run_afragmenter_on_pae"
 RUN_CS = f"{MODULE}.run_chainsaw_on_entry"
 RESOLVE_CS = f"{MODULE}.resolve_chainsaw_path"
@@ -197,7 +197,7 @@ class TestGetDomainsAfragmenter:
             df_out = stp.get_domains(df_seq=_df_one(),
                                      pae_folder=str(tmp_path),
                                      tool="afragmenter")
-            d, df_aug = stp.encode_domains(
+            d, df_aug = stp.encode_domains(return_df=True, 
                 df_seq=df_out,
                 features=["domain_boundary",
                           "domain_relative_position"])
@@ -331,7 +331,7 @@ class TestGetDomainsChainsaw:
                                      pdb_folder=str(tmp_path),
                                      tool="chainsaw",
                                      chainsaw_path="/fake")
-            d, df_aug = stp.encode_domains(
+            d, df_aug = stp.encode_domains(return_df=True, 
                 df_seq=df_out,
                 features=["domain_boundary",
                           "n_domains_in_protein"])
@@ -351,7 +351,7 @@ class TestEncodeDomainsInlineChoppingColumn:
         })
         stp = aa.StructurePreprocessor(verbose=False)
         # No domain_folder needed when 'chopping' column present.
-        d, _ = stp.encode_domains(df_seq=df,
+        d = stp.encode_domains(df_seq=df,
                                   features=["domain_boundary"])
         v = d["P1"][:, 0]
         for endpoint_1based in (1, 10, 15, 25):
@@ -365,7 +365,7 @@ class TestEncodeDomainsInlineChoppingColumn:
             "chopping": ["1-30"],
         })
         stp = aa.StructurePreprocessor(verbose=False)
-        d, _ = stp.encode_domains(df_seq=df, domain_folder=None,
+        d = stp.encode_domains(df_seq=df, domain_folder=None,
                                   features=["domain_boundary"])
         assert d["P1"].shape == (30, 1)
 
@@ -378,7 +378,7 @@ class TestEncodeDomainsInlineChoppingColumn:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_aug = stp.encode_domains(
+            d, df_aug = stp.encode_domains(return_df=True, 
                 df_seq=df, features=["domain_boundary"])
         assert np.isnan(d["P1"]).all()
         assert not bool(df_aug["domain_ok"].iloc[0])
@@ -390,7 +390,7 @@ class TestEncodeDomainsInlineChoppingColumn:
             "chopping": [""],
         })
         stp = aa.StructurePreprocessor(verbose=False)
-        d, df_aug = stp.encode_domains(
+        d, df_aug = stp.encode_domains(return_df=True, 
             df_seq=df, features=["domain_boundary"])
         # Empty chopping → 0 domains → all residues unassigned (NaN).
         assert np.isnan(d["P1"]).all()

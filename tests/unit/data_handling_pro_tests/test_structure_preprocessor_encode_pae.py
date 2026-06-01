@@ -173,7 +173,7 @@ class TestStpEncodePae:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, _ = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+            d = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                                   features=["pae_row_mean"])
         td.cleanup()
         assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 1)
@@ -183,7 +183,7 @@ class TestStpEncodePae:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, _ = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+            d = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                                   features=["pae_row_mean"])
         td.cleanup()
         vals = d["AF_TINY"].ravel()
@@ -194,7 +194,7 @@ class TestStpEncodePae:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, _ = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+            d = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                                   features=["pae_row_min", "pae_row_max"])
         td.cleanup()
         v = d["AF_TINY"]
@@ -208,7 +208,7 @@ class TestStpEncodePae:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, _ = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+            d = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                                   features=["pae_local_mean",
                                             "pae_distal_mean"],
                                   local_window=5)
@@ -223,7 +223,7 @@ class TestStpEncodePae:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, _ = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+            d = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                                   features=["pae_asymmetry"])
         td.cleanup()
         v = d["AF_TINY"].ravel()
@@ -234,7 +234,7 @@ class TestStpEncodePae:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, _ = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+            d = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                                   features=["pae_band_means"])
         td.cleanup()
         assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 3)
@@ -246,7 +246,7 @@ class TestStpEncodePae:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, _ = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+            d = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                                   features=["pae_band_means"])
         td.cleanup()
         # Middle residues have all three bands populated.
@@ -263,7 +263,7 @@ class TestStpEncodePae:
                  "pae_asymmetry", "pae_band_means"]
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, _ = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+            d = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                                   features=feats)
         td.cleanup()
         # 1 + 1 + 1 + 1 + 3 = 7
@@ -274,7 +274,7 @@ class TestStpEncodePae:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            _, df_out = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+            _, df_out = stp.encode_pae(return_df=True, df_seq=_df_af(), pae_folder=td.name,
                                        features=["pae_row_mean"])
         td.cleanup()
         assert bool(df_out["pae_ok"].iloc[0])
@@ -283,7 +283,7 @@ class TestStpEncodePae:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pae(df_seq=_df_af(),
+            d, df_out = stp.encode_pae(return_df=True, df_seq=_df_af(),
                                        pae_folder=str(tmp_path),
                                        features=["pae_row_mean"])
         assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 1)
@@ -297,7 +297,7 @@ class TestStpEncodePae:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pae(df_seq=_df_af(),
+            d, df_out = stp.encode_pae(return_df=True, df_seq=_df_af(),
                                        pae_folder=str(tmp_path),
                                        features=["pae_row_mean"])
         assert bool(df_out["pae_ok"].iloc[0])
@@ -312,7 +312,7 @@ class TestStpEncodePaeComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, _ = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+            d = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                                   features=["pae_local_mean"],
                                   local_window=0)
         td.cleanup()
@@ -328,7 +328,7 @@ class TestStpEncodePaeComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pae(df_seq=df, pae_folder=str(tmp_path),
+            d, df_out = stp.encode_pae(return_df=True, df_seq=df, pae_folder=str(tmp_path),
                                        features=["pae_row_mean"],
                                        on_failure="drop")
         assert "AF_TINY" in d and "GONE" not in d
@@ -342,7 +342,7 @@ class TestStpEncodePaeComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pae(df_seq=df, pae_folder=str(tmp_path),
+            d, df_out = stp.encode_pae(return_df=True, df_seq=df, pae_folder=str(tmp_path),
                                        features=["pae_row_mean"])
         assert df_out["pae_ok"].tolist() == [True, False]
         assert np.isnan(d["GONE"]).all()
@@ -353,7 +353,7 @@ class TestStpEncodePaeComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, _ = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+            d = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                                   features=["pae_band_means"],
                                   pae_band_edges=(2, 8))
         td.cleanup()
@@ -369,7 +369,7 @@ class TestStpEncodePaeComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pae(df_seq=_df_af(),
+            d, df_out = stp.encode_pae(return_df=True, df_seq=_df_af(),
                                        pae_folder=str(tmp_path),
                                        features=["pae_row_mean"])
         assert bool(df_out["pae_ok"].iloc[0])
@@ -380,7 +380,7 @@ class TestStpEncodePaeComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pae(df_seq=_df_af(),
+            d, df_out = stp.encode_pae(return_df=True, df_seq=_df_af(),
                                        pae_folder=str(tmp_path),
                                        features=["pae_row_mean"])
         assert not bool(df_out["pae_ok"].iloc[0])
@@ -391,7 +391,7 @@ class TestStpEncodePaeComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pae(df_seq=_df_af(),
+            d, df_out = stp.encode_pae(return_df=True, df_seq=_df_af(),
                                        pae_folder=str(tmp_path),
                                        features=["pae_row_mean"])
         assert not bool(df_out["pae_ok"].iloc[0])
@@ -403,7 +403,7 @@ class TestStpEncodePaeComplex:
                  "pae_asymmetry"]
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, _ = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+            d = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                                   features=feats, local_window=4,
                                   pae_band_edges=(3, 10))
         td.cleanup()
@@ -424,10 +424,10 @@ class TestStpEncodePaeComplex:
         stp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d_pdb, _ = stp.encode_pdb(df_seq=_df_af(),
+            d_pdb = stp.encode_pdb(df_seq=_df_af(),
                                       pdb_folder=str(PDB_FIXTURES),
                                       features=["plddt"])
-            d_pae, _ = stp.encode_pae(df_seq=_df_af(),
+            d_pae = stp.encode_pae(df_seq=_df_af(),
                                       pae_folder=td.name,
                                       features=["pae_row_mean"])
         td.cleanup()

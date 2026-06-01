@@ -391,6 +391,7 @@ class StructurePreprocessor:
     See Also
     --------
     * :class:`EmbeddingPreprocessor` for the PLM-embedding analog.
+    * :class:`AnnotationPreprocessor` for the PTM / functional-site analog.
     * :class:`NumericalFeature` and :class:`CPP` for the downstream consumers.
     * :func:`aaanalysis.combine_dict_nums` for stitching multiple dict_nums.
 
@@ -540,8 +541,9 @@ class StructurePreprocessor:
         ss_mode: str = "ss3",
         gap_handling: str = "pad",
         on_failure: str = "nan",
+        return_df: bool = False,
         verbose: Optional[bool] = None,
-    ) -> Tuple[Dict[str, np.ndarray], pd.DataFrame]:
+    ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Run DSSP + per-feature encoders → ``dict_dssp`` (normalized to ``[0, 1]``).
 
         Parameters
@@ -571,6 +573,10 @@ class StructurePreprocessor:
             with NaN-only tensors; ``'drop'`` removes failed entries from
             the output dict; ``'raise'`` raises ``RuntimeError`` if any
             entry failed.
+        return_df : bool, default=False
+            If ``True``, also return the per-row status DataFrame as a second
+            element ``(dict_num, df_seq_out)``. If ``False`` (default), return
+            only ``dict_num``.
         verbose : bool, optional
             Override instance verbosity for this call only.
 
@@ -581,9 +587,10 @@ class StructurePreprocessor:
             features concatenated in the order of ``features``. Values are in
             ``[0, 1]`` (NaN for unresolved positions).
         df_seq_out : pd.DataFrame
-            Echo of the (possibly DSSP-augmented) ``df_seq`` plus an
-            ``encode_dssp_ok`` column flagging per-row success. Rows are
-            dropped when ``on_failure='drop'``.
+            Returned only when ``return_df=True``. Echo of the (possibly
+            DSSP-augmented) ``df_seq`` plus an ``encode_dssp_ok`` column
+            flagging per-row success. Rows are dropped when
+            ``on_failure='drop'``.
 
         Raises
         ------
@@ -607,6 +614,7 @@ class StructurePreprocessor:
                              list_str_options=ut.LIST_GAP_HANDLING)
         _check_handle_failure(on_failure)
         ut.check_bool(name="verbose", val=verbose)
+        ut.check_bool(name="return_df", val=return_df)
         get_dssp_kinds = _dssp_features_to_get_dssp_kinds(features)
         if pdb_folder is None:
             needed = []
@@ -711,7 +719,7 @@ class StructurePreprocessor:
                 if len(blocks) > 1 else blocks[0]
         df_out = df_aug.copy()
         df_out["encode_dssp_ok"] = list(ok)
-        return dict_dssp, df_out
+        return (dict_dssp, df_out) if return_df else dict_dssp
 
     # ------------------------------------------------------------------
     # encode_pdb
@@ -723,8 +731,9 @@ class StructurePreprocessor:
         features: List[str] = None,
         plddt_disorder_threshold: float = 70.0,
         on_failure: str = "nan",
+        return_df: bool = False,
         verbose: Optional[bool] = None,
-    ) -> Tuple[Dict[str, np.ndarray], pd.DataFrame]:
+    ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Extract per-residue features from PDB ATOM records → ``dict_pdb``.
 
         Parameters
@@ -747,6 +756,10 @@ class StructurePreprocessor:
             unparseable structure, no matched chain). ``'nan'`` fills with
             NaN-only tensors; ``'drop'`` removes those entries; ``'raise'``
             re-raises.
+        return_df : bool, default=False
+            If ``True``, also return the per-row status DataFrame as a second
+            element ``(dict_num, df_seq_out)``. If ``False`` (default), return
+            only ``dict_num``.
         verbose : bool, optional
             Override instance verbosity for this call only.
 
@@ -756,7 +769,8 @@ class StructurePreprocessor:
             ``{entry: (L_entry, D_total) ndarray}`` per-residue PDB
             features concatenated in the order of ``features``.
         df_seq_out : pd.DataFrame
-            Echo of ``df_seq`` plus a boolean ``pdb_ok`` column.
+            Returned only when ``return_df=True``. Echo of ``df_seq`` plus a
+            boolean ``pdb_ok`` column.
 
         Raises
         ------
@@ -780,6 +794,7 @@ class StructurePreprocessor:
         validate_feature_keys(features, allowed_method=ENCODER_PDB)
         _check_handle_failure(on_failure)
         ut.check_bool(name="verbose", val=verbose)
+        ut.check_bool(name="return_df", val=return_df)
         ut.check_number_range(name="plddt_disorder_threshold",
                               val=plddt_disorder_threshold,
                               min_val=0.0, max_val=100.0, just_int=False)
@@ -893,7 +908,7 @@ class StructurePreprocessor:
             kept_entries = {entries[i] for i in keep_idx}
             dict_pdb = {k: v for k, v in dict_pdb.items() if k in kept_entries}
         session_tmp.cleanup()
-        return dict_pdb, df_aug
+        return (dict_pdb, df_aug) if return_df else dict_pdb
 
     # ------------------------------------------------------------------
     # encode_pae
@@ -906,8 +921,9 @@ class StructurePreprocessor:
         local_window: int = 5,
         pae_band_edges: Tuple[int, int] = (5, 15),
         on_failure: str = "nan",
+        return_df: bool = False,
         verbose: Optional[bool] = None,
-    ) -> Tuple[Dict[str, np.ndarray], pd.DataFrame]:
+    ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Load AlphaFold PAE sidecar JSONs and produce ``dict_pae``.
 
         Parameters
@@ -937,6 +953,10 @@ class StructurePreprocessor:
         on_failure : {'nan', 'drop', 'raise'}, default='nan'
             What to do for entries whose PAE load fails (missing sidecar,
             malformed JSON, shape mismatch).
+        return_df : bool, default=False
+            If ``True``, also return the per-row status DataFrame as a second
+            element ``(dict_num, df_seq_out)``. If ``False`` (default), return
+            only ``dict_num``.
         verbose : bool, optional
             Override instance verbosity for this call only.
 
@@ -946,7 +966,8 @@ class StructurePreprocessor:
             ``{entry: (L_entry, D_total) ndarray}`` per-residue PAE
             features concatenated in the order of ``features``.
         df_seq_out : pd.DataFrame
-            Echo of ``df_seq`` plus a boolean ``pae_ok`` column.
+            Returned only when ``return_df=True``. Echo of ``df_seq`` plus a
+            boolean ``pae_ok`` column.
 
         Raises
         ------
@@ -973,6 +994,7 @@ class StructurePreprocessor:
         validate_feature_keys(features, allowed_method=ENCODER_PAE)
         _check_handle_failure(on_failure)
         ut.check_bool(name="verbose", val=verbose)
+        ut.check_bool(name="return_df", val=return_df)
         ut.check_number_range(name="local_window", val=local_window,
                               min_val=0, just_int=True)
         if (not isinstance(pae_band_edges, (list, tuple))
@@ -1078,7 +1100,7 @@ class StructurePreprocessor:
             kept_entries = {entries[i] for i in keep_idx}
             dict_pae = {k: v for k, v in dict_pae.items() if k in kept_entries}
         session_tmp.cleanup()
-        return dict_pae, df_aug
+        return (dict_pae, df_aug) if return_df else dict_pae
 
     # ------------------------------------------------------------------
     # get_domains  (v1.2 commit 4) — runtime tool wrapper
@@ -1267,8 +1289,9 @@ class StructurePreprocessor:
         domain_folder: Union[str, Path] = None,
         features: List[str] = None,
         on_failure: str = "nan",
+        return_df: bool = False,
         verbose: Optional[bool] = None,
-    ) -> Tuple[Dict[str, np.ndarray], pd.DataFrame]:
+    ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Read pre-computed domain segmentation files → ``dict_domains``.
 
         Bring-your-own-segmentation: the user pre-runs Merizo / ChainSaw /
@@ -1303,6 +1326,10 @@ class StructurePreprocessor:
             What to do for entries whose chopping file is missing or
             unparseable. ``'nan'`` fills with NaN-only tensors;
             ``'drop'`` removes those entries; ``'raise'`` re-raises.
+        return_df : bool, default=False
+            If ``True``, also return the per-row status DataFrame as a second
+            element ``(dict_num, df_seq_out)``. If ``False`` (default), return
+            only ``dict_num``.
         verbose : bool, optional
             Override instance verbosity for this call only.
 
@@ -1312,7 +1339,8 @@ class StructurePreprocessor:
             ``{entry: (L_entry, D_total) ndarray}`` per-residue
             domain-derived features in the order of ``features``.
         df_seq_out : pd.DataFrame
-            Echo of ``df_seq`` plus a boolean ``domain_ok`` column.
+            Returned only when ``return_df=True``. Echo of ``df_seq`` plus a
+            boolean ``domain_ok`` column.
 
         Raises
         ------
@@ -1361,6 +1389,7 @@ class StructurePreprocessor:
         validate_feature_keys(features, allowed_method=ENCODER_DOMAINS)
         _check_handle_failure(on_failure)
         ut.check_bool(name="verbose", val=verbose)
+        ut.check_bool(name="return_df", val=return_df)
         entries = df_seq[ut.COL_ENTRY].tolist()
         sequences = df_seq[ut.COL_SEQ].tolist()
         chopping_col = (df_seq[_COL_CHOPPING].tolist()
@@ -1470,7 +1499,7 @@ class StructurePreprocessor:
             kept_entries = {entries[i] for i in keep_idx}
             dict_domains = {k: v for k, v in dict_domains.items()
                             if k in kept_entries}
-        return dict_domains, df_aug
+        return (dict_domains, df_aug) if return_df else dict_domains
 
     # ------------------------------------------------------------------
     # build_pseudo_scales + build_cat

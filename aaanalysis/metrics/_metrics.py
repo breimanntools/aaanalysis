@@ -7,7 +7,9 @@ Developer note: Measures are implemented in aanalysis.utils.metrics to access th
 import numpy as np
 from typing import Optional
 
-from aaanalysis.utils import auc_adjusted_, kullback_leibler_divergence_, bic_score_
+from aaanalysis.utils import (auc_adjusted_, kullback_leibler_divergence_, bic_score_,
+                              per_protein_ap_, detection_metrics_, bootstrap_ci_,
+                              smooth_scores_)
 import aaanalysis.utils as ut
 
 
@@ -51,7 +53,7 @@ def comp_auc_adjusted(X: ut.ArrayLike2D = None,
         Class label of reference group in ``labels``.
     n_jobs : int, None, or -1, default=None
         Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized automatically.
-        If ``-1``, the number is set to all available cores.
+        If ``-1``, the number is set to all available cores. Overridden by ``options['n_jobs']`` when set.
 
     Returns
     -------
@@ -193,3 +195,193 @@ def comp_kld(X: ut.ArrayLike2D = None,
     except Exception as e:
         raise ValueError(f"Following error occurred during the computation of Kullback-Leibler Divergence: {e}")
     return kld
+
+
+# Helper functions (site-localization metrics)
+def _check_list_scores_positions(list_scores=None, list_positions=None):
+    """Validate the (scores, positions) per-protein lists used by the
+    site-localization metrics."""
+    list_scores = ut.check_list_like(name="list_scores", val=list_scores)
+    list_positions = ut.check_list_like(name="list_positions", val=list_positions)
+    if len(list_scores) != len(list_positions):
+        raise ValueError(f"'list_scores' (n={len(list_scores)}) and 'list_positions' "
+                         f"(n={len(list_positions)}) should have the same length.")
+    if len(list_scores) == 0:
+        raise ValueError("'list_scores' should not be empty.")
+    return list_scores, list_positions
+
+
+# Per-protein average precision (site localization)
+def comp_per_protein_ap(list_scores: list = None,
+                        list_positions: list = None,
+                        tolerance: int = 0,
+                        ) -> ut.ArrayLike1D:
+    """
+    Compute per-protein average precision (AP) for windowed site prediction.
+
+    The canonical site-localization metric in protease / PTM prediction: for each
+    protein, residues are ranked by score and AP is computed against the known
+    positive sites. ``tolerance`` allows off-by-``k`` positional jitter — a
+    ranked residue within ``tolerance`` of an unmatched positive counts as a hit.
+
+    Parameters
+    ----------
+    list_scores : list of array-like
+        Per-protein per-residue score vectors. ``NaN`` scores are ignored.
+    list_positions : list of array-like
+        Per-protein 0-based indices of positive sites (empty if none).
+    tolerance : int, default=0
+        Positional tolerance (in residues) for counting a hit.
+
+    Returns
+    -------
+    ap : array-like, shape (n_proteins,)
+        Per-protein AP. ``np.nan`` for proteins with no positives or no finite
+        scores; take ``np.nanmean`` for the dataset-level score.
+
+    See Also
+    --------
+    * :func:`comp_detection_metrics` for fixed-threshold detection scores.
+    """
+    # Check input
+    list_scores, list_positions = _check_list_scores_positions(
+        list_scores=list_scores, list_positions=list_positions)
+    ut.check_number_range(name="tolerance", val=tolerance, min_val=0, just_int=True)
+    # Compute per-protein AP
+    return per_protein_ap_(list_scores=list_scores, list_positions=list_positions,
+                           tolerance=tolerance)
+
+
+# Detection metrics at a fixed threshold
+def comp_detection_metrics(list_scores: list = None,
+                           list_positions: list = None,
+                           threshold: float = 0.5,
+                           tolerance: int = 0,
+                           ) -> dict:
+    """
+    Compute pooled detection metrics at a fixed score threshold.
+
+    Answers "is the true site actually called?" (distinct from ranking): residues
+    scoring ``>= threshold`` are positive calls, pooled across proteins into
+    TP/FP/FN/TN, then reduced to recall / precision / F1 / MCC. ``tolerance``
+    credits a call within ``tolerance`` residues of a true site (each site at
+    most once).
+
+    Parameters
+    ----------
+    list_scores : list of array-like
+        Per-protein per-residue score vectors. ``NaN`` scores are ignored.
+    list_positions : list of array-like
+        Per-protein 0-based indices of positive sites.
+    threshold : float, default=0.5
+        Score threshold for a positive call.
+    tolerance : int, default=0
+        Positional tolerance (in residues) for counting a TP.
+
+    Returns
+    -------
+    metrics : dict
+        Keys ``recall``, ``precision``, ``f1``, ``mcc`` (floats) and ``tp``,
+        ``fp``, ``fn``, ``tn`` (ints).
+
+    See Also
+    --------
+    * :func:`comp_per_protein_ap` for the ranking-based site-localization score.
+    """
+    # Check input
+    list_scores, list_positions = _check_list_scores_positions(
+        list_scores=list_scores, list_positions=list_positions)
+    ut.check_number_val(name="threshold", val=threshold, accept_none=False, just_int=False)
+    ut.check_number_range(name="tolerance", val=tolerance, min_val=0, just_int=True)
+    # Compute detection metrics
+    return detection_metrics_(list_scores=list_scores, list_positions=list_positions,
+                              threshold=threshold, tolerance=tolerance)
+
+
+# Bootstrap confidence interval
+def comp_bootstrap_ci(values: ut.ArrayLike1D = None,
+                      n_rounds: int = 1000,
+                      ci: float = 0.95,
+                      seed: Optional[int] = None,
+                      ) -> tuple:
+    """
+    Compute a percentile bootstrap confidence interval of the mean.
+
+    Standard small-N uncertainty quantification over a per-protein metric vector
+    (e.g. the output of :func:`comp_per_protein_ap`). Resamples with replacement;
+    ``NaN`` values are dropped first. Deterministic given ``seed``.
+
+    Parameters
+    ----------
+    values : array-like, shape (n_proteins,)
+        Per-protein metric values.
+    n_rounds : int, default=1000
+        Number of bootstrap resamples.
+    ci : float, default=0.95
+        Central confidence level in ``(0, 1)``.
+    seed : int, optional
+        Random seed for reproducibility.
+
+    Returns
+    -------
+    mean : float
+        Mean of the finite ``values``.
+    low : float
+        Lower bound of the ``ci`` interval.
+    high : float
+        Upper bound of the ``ci`` interval.
+    """
+    # Check input
+    values = ut.check_array_like(name="values", val=values, allow_nan=True)
+    ut.check_number_range(name="n_rounds", val=n_rounds, min_val=1, just_int=True)
+    ut.check_number_range(name="ci", val=ci, min_val=0.0, max_val=1.0,
+                          just_int=False, exclusive_limits=True)
+    ut.check_number_range(name="seed", val=seed, min_val=0, accept_none=True, just_int=True)
+    # Compute bootstrap CI
+    return bootstrap_ci_(values=values, n_rounds=n_rounds, ci=ci, seed=seed)
+
+
+# Peak-preserving score smoothing
+def smooth_scores(scores: ut.ArrayLike1D = None,
+                  method: str = "triangular",
+                  window: int = 2,
+                  sigma: Optional[float] = None,
+                  peak_preserving: bool = True,
+                  ) -> ut.ArrayLike1D:
+    """
+    Smooth a per-residue score vector with a NaN-aware, peak-preserving kernel.
+
+    Off-by-one positional jitter is universal in windowed protease / PTM
+    prediction; smoothing the per-residue score makes nearby high scores
+    reinforce a site. The peak-preserving form takes ``max(smoothed, raw)`` so a
+    true peak is never attenuated below its original height. Pure-numpy, no SciPy.
+
+    Parameters
+    ----------
+    scores : array-like, shape (n_residues,)
+        Per-residue score vector. ``NaN`` positions are ignored in the weighted
+        average and renormalized over finite neighbours.
+    method : str, default='triangular'
+        Smoothing kernel: ``'triangular'`` or ``'gaussian'``.
+    window : int, default=2
+        Half-width of the kernel (covers ``+/- window`` residues).
+    sigma : float, optional
+        Gaussian standard deviation; defaults to ``window / 2`` when ``None``.
+    peak_preserving : bool, default=True
+        If ``True``, return ``max(smoothed, raw)`` elementwise.
+
+    Returns
+    -------
+    smoothed : array-like, shape (n_residues,)
+        Smoothed score vector, same length as ``scores``.
+    """
+    # Check input
+    scores = ut.check_array_like(name="scores", val=scores, allow_nan=True)
+    ut.check_str_options(name="method", val=method, list_str_options=["triangular", "gaussian"])
+    ut.check_number_range(name="window", val=window, min_val=1, just_int=True)
+    ut.check_number_range(name="sigma", val=sigma, min_val=0.0, accept_none=True,
+                          just_int=False, exclusive_limits=True)
+    ut.check_bool(name="peak_preserving", val=peak_preserving)
+    # Compute smoothed scores
+    return smooth_scores_(scores=scores, method=method, window=window, sigma=sigma,
+                          peak_preserving=peak_preserving)
