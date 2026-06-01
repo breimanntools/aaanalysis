@@ -31,6 +31,8 @@ Data Handling
     to_fasta
     EmbeddingPreprocessor
     SequencePreprocessor
+    StructurePreprocessor
+    AnnotationPreprocessor
     combine_dict_nums
 
 .. _sequence_analysis_api:
@@ -48,26 +50,6 @@ Sequence Analysis
     filter_seq
     scan_motif
 
-.. _structure_analysis_api:
-
-Structure Analysis
-------------------
-.. autosummary::
-    :toctree: generated/
-    :template: autosummary/class_template.rst
-
-    StructurePreprocessor
-
-.. _annotation_analysis_api:
-
-Annotation Analysis
--------------------
-.. autosummary::
-    :toctree: generated/
-    :template: autosummary/class_template.rst
-
-    AnnotationPreprocessor
-
 .. _feature_engineering_api:
 
 Feature Engineering
@@ -81,6 +63,7 @@ Feature Engineering
     SequenceFeature
     NumericalFeature
     CPP
+    CPPGrid
     CPPPlot
 
 .. _pu_learning_api:
@@ -127,7 +110,10 @@ Utility Functions
 
     comp_auc_adjusted
     comp_bic_score
+    comp_bootstrap_ci
+    comp_detection_metrics
     comp_kld
+    comp_per_protein_ap
     display_df
     options
     plot_gcfs
@@ -135,4 +121,6 @@ Utility Functions
     plot_get_clist
     plot_get_cmap
     plot_legend
+    plot_rank
     plot_settings
+    smooth_scores
