@@ -40,6 +40,8 @@ def comp_auc_adjusted(X: ut.ArrayLike2D = None,
     An AUC* of 0 indicates an equal distribution between the two groups. This measure is useful for ranking features
     based on their ability to distinguish between the two groups.
 
+    .. versionadded:: 1.0.0
+
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
@@ -92,6 +94,8 @@ def comp_bic_score(X: ut.ArrayLike2D = None,
     Silhouette coefficient and the Calinski-Harabasz score. In this adjusted version, higher values indicate
     better clustering.
 
+    .. versionadded:: 1.0.0
+
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
@@ -142,6 +146,8 @@ def comp_kld(X: ut.ArrayLike2D = None,
     by ``label_test`` and ``label_ref`` in labels. Generally, the KLD measures how one probability distribution
     diverges from a second, expected probability distribution. Higher KLD values indicate more divergence. The observed
     upper limit lies around 200 indicating complete divergence of two non-overlapping distributions.
+
+    .. versionadded:: 1.0.0
 
     Parameters
     ----------
@@ -224,6 +230,8 @@ def comp_per_protein_ap(list_scores: list = None,
     positive sites. ``tolerance`` allows off-by-``k`` positional jitter — a
     ranked residue within ``tolerance`` of an unmatched positive counts as a hit.
 
+    .. versionadded:: 1.1.0
+
     Parameters
     ----------
     list_scores : list of array-like
@@ -266,6 +274,8 @@ def comp_detection_metrics(list_scores: list = None,
     TP/FP/FN/TN, then reduced to recall / precision / F1 / MCC. ``tolerance``
     credits a call within ``tolerance`` residues of a true site (each site at
     most once).
+
+    .. versionadded:: 1.1.0
 
     Parameters
     ----------
@@ -311,6 +321,8 @@ def comp_bootstrap_ci(values: ut.ArrayLike1D = None,
     (e.g. the output of :func:`comp_per_protein_ap`). Resamples with replacement;
     ``NaN`` values are dropped first. Deterministic given ``seed``.
 
+    .. versionadded:: 1.1.0
+
     Parameters
     ----------
     values : array-like, shape (n_proteins,)
@@ -355,6 +367,8 @@ def smooth_scores(scores: ut.ArrayLike1D = None,
     prediction; smoothing the per-residue score makes nearby high scores
     reinforce a site. The peak-preserving form takes ``max(smoothed, raw)`` so a
     true peak is never attenuated below its original height. Pure-numpy, no SciPy.
+
+    .. versionadded:: 1.1.0
 
     Parameters
     ----------

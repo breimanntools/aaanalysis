@@ -21,6 +21,8 @@ def comp_seq_sim(seq1: Optional[str] = None,
     to the length of the longest sequence. The alignment score is obtained using the :class:`Bio.Align.PairwiseAligner`
     from ´BioPython <https://biopython.org/>´ with default settings.
 
+    .. versionadded:: 1.0.0
+
     Parameters
     ----------
     seq1 : str, optional

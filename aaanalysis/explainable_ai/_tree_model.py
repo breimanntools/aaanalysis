@@ -120,6 +120,8 @@ class TreeModel:
     Additionally, the class supports feature selection through recursive feature elimination (RFE) and offers
     comprehensive evaluation of feature selections.
 
+    .. versionadded:: 0.1.3
+
     Attributes
     ----------
     list_models_ : Nested list with objects, shape (n_rounds, n_models)

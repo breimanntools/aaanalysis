@@ -13,6 +13,9 @@ class SeqMut:
     """
     UNDER CONSTRUCTION - Sequence Mutator (SeqMut) class for analyzing the impact of amino acid substitutions
     in protein sequences.
+
+    .. versionadded:: 1.0.0
+
     """
     def __init__(self, verbose=False):
         self._verbose = ut.check_verbose(verbose)

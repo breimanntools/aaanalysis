@@ -274,6 +274,8 @@ class AAWindowSampler:
       ``len(sequence)`` carrying ``label_test`` at known test positions, ``label_ref`` at
       sampled positions, and ``None`` elsewhere.
 
+    .. versionadded:: 1.1.0
+
     Notes
     -----
     Class type:

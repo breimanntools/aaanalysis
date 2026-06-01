@@ -25,6 +25,8 @@ def load_features(name="DOM_GSEC"):
 
         - 'DOM_GSEC' ([Breimann25a]_)
 
+    .. versionadded:: 0.1.3
+
     Parameters
     ----------
     name : str, default='DOM_GSEC'

@@ -14,6 +14,8 @@ def plot_get_clist(n_colors: int = 3) -> List[str]:
     This functions returns one of eight different color lists optimized for appealing visualization of categories.
     If more than 9 colors are selected, :func:`seaborn.color_palette` with 'husl' palette will be used.
 
+    .. versionadded:: 0.1.2
+
     Parameters
     ----------
     n_colors : int, default=3

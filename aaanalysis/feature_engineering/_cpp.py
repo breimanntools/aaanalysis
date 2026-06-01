@@ -227,6 +227,8 @@ class CPP(Tool):
     CPP aims at identifying a set of non-redundant features that are most discriminant between the
     test and reference group of sequences.
 
+    .. versionadded:: 0.1.0
+
     Attributes
     ----------
     df_parts
@@ -346,6 +348,9 @@ class CPP(Tool):
 
         The aim of the CPP algorithm is to identify a set of unique, non-redundant features that are most
         discriminant between the test and reference group of sequences. See [Breimann25a]_ for details on the algorithm.
+
+        .. versionchanged:: 1.1.0
+            Added the ``return_stats`` parameter, returning the filter-funnel statistics alongside ``df_feat``.
 
         Parameters
         ----------
@@ -513,6 +518,8 @@ class CPP(Tool):
         The cache is bounded (``maxsize=32``) and normally needs no manual
         eviction, but long-running processes that cycle through many distinct
         scale sets can call this to release the held DataFrames eagerly.
+
+        .. versionadded:: 1.1.0
         """
         clear_scale_lookup_cache()
 
@@ -549,6 +556,8 @@ class CPP(Tool):
         ``df_scales`` / ``df_cat`` provide DIMENSION NAMES + categories for the D axis
         of ``dict_num_parts`` (the per-AA values they would normally provide are
         unused — ``dict_num_parts`` is the value source).
+
+        .. versionadded:: 1.1.0
 
         Parameters
         ----------

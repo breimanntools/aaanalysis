@@ -106,6 +106,8 @@ class EmbeddingPreprocessor:
     ``df_cat=df_cat_emb``). See the *Notes* on the semantic compromise of
     context-free averaging.
 
+    .. versionadded:: 1.1.0
+
     See Also
     --------
     * :class:`SequencePreprocessor` for sequence-side preprocessing utilities.

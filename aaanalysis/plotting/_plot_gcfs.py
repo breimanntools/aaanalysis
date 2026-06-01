@@ -11,6 +11,8 @@ def plot_gcfs(option: str = 'font.size') -> int:
 
     This font size can be set by :func:`plot_settings` function.
 
+    .. versionadded:: 0.1.0
+
     Parameters
     ----------
     option : str, default='font.size'

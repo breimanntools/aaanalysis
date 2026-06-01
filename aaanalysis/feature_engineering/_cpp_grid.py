@@ -130,6 +130,8 @@ class CPPGrid:
     ``dict_num`` for the numerical arm) is bound at construction; :meth:`run` takes four
     stage-grouped parameter dictionaries whose list-valued entries are swept.
 
+    .. versionadded:: 1.1.0
+
     Notes
     -----
     * Inside each configuration ``CPP.run`` / ``run_num`` runs serially (``n_jobs=1``);

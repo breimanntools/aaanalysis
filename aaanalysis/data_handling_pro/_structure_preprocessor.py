@@ -383,6 +383,8 @@ class StructurePreprocessor:
     (and optional PLM embeddings) into a single ``dict_num`` before passing
     to :meth:`NumericalFeature.get_parts`.
 
+    .. versionadded:: 1.1.0
+
     Parameters
     ----------
     verbose : bool, default=True

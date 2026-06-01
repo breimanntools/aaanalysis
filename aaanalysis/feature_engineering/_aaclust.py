@@ -108,6 +108,8 @@ class AAclust(Wrapper):
     It optimizes the value of k by utilizing Pearson correlation and then selects a representative sample ('medoid')
     for each cluster closest to the center, resulting in a redundancy-reduced sample set.
 
+    .. versionadded:: 0.1.0
+
     Attributes
     ----------
     model : object

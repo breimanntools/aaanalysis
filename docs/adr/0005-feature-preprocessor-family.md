@@ -7,12 +7,12 @@ Status: Accepted — 2026-05-29
 Four public `*Preprocessor` classes had drifted into two jobs and three shapes:
 
 - **Input encoder (Family A):** `SequencePreprocessor` (seq → one-hot / integer
-  / windows). Released in v1.0.3 — frozen.
+  / windows). Released in v1.0.0 — frozen.
 - **Feature preprocessors (Family B):** `EmbeddingPreprocessor`,
   `StructurePreprocessor`, `AnnotationPreprocessor` — each turns a per-residue
   data source into a `dict_num` (+ `df_scales` / `df_cat`) for `CPP.run_num`.
-  All three were **unreleased** (only on the v1.1 / v1.2 branches), so reshaping
-  them carried no semver cost.
+  All three were **unreleased** (only on the feature branch; they first ship in
+  package v1.1.0 — see ADR-0010), so reshaping them carried no semver cost.
 
 Two problems: (1) the Family-B classes were scattered — `Embedding` in core
 `data_handling`, `Structure` in `struct_analysis_pro`, `Annotation` in

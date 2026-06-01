@@ -68,6 +68,8 @@ class dPULearnPlot:
     This plotting class visualizes the by ``dPULearn`` reliably identified negative samples in a compressed feature
     space.
 
+    .. versionadded:: 0.1.2
+
     """
     def __int__(self):
         """

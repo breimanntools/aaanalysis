@@ -71,6 +71,8 @@ class NumericalFeature:
     """
     Utility feature engineering class to process and filter numerical data structures,
     such as amino acid scales or a feature matrix.
+
+    .. versionadded:: 0.1.3
     """
 
     @staticmethod
@@ -125,6 +127,8 @@ class NumericalFeature:
         ``dict_num[entry]`` per-residue tensor along the L axis. Returns both
         results from one call so the user never has to pass
         ``df_seq + tmd_len + jmd_n_len + jmd_c_len`` to two separate helpers.
+
+        .. versionadded:: 1.1.0
 
         Parameters
         ----------

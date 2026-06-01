@@ -1,13 +1,19 @@
-# ADR-0002 — StructurePreprocessor v1.1: AlphaFold per-residue features
+# ADR-0002 — StructurePreprocessor: AlphaFold per-residue features (feature-set rev 1.1)
 
 Status: Accepted — 2026-05-25
 
+> **Note on versioning.** "v1" / "v1.1" in this ADR denote the
+> **StructurePreprocessor feature-set revision** (rev 1 = DSSP + raw-PDB
+> encoders; rev 1.1 = + AlphaFold per-residue features), *not* the package
+> version. The class as a whole first ships in **package v1.1.0** (see
+> ADR-0010); both feature-set revisions were unreleased before then.
+
 ## Context
 
-StructurePreprocessor v1 shipped DSSP + raw-PDB encoders. Three pre-existing
-defects, plus a directive to "extend StructurePreprocessor to work with any
-per-residue information we can get from AlphaFold output," motivated this
-revision before v1 was released.
+StructurePreprocessor feature-set rev 1 shipped DSSP + raw-PDB encoders. Three
+pre-existing defects, plus a directive to "extend StructurePreprocessor to work
+with any per-residue information we can get from AlphaFold output," motivated
+this revision before the class was released.
 
 ### Defect inventory (the *why* behind the API shape)
 
@@ -71,7 +77,7 @@ public `encode_pae(...)` keeps the "one source per encoder" contract.
 - **One color per fine-grained category** (~8 buckets): too noisy; the locked
   3-bucket palette is cleaner and leaves room for future categories.
 
-## Out of scope for v1.1
+## Out of scope for feature-set rev 1.1
 
 HSE-up / HSE-down; DSSP H-bond partner offsets; disulfide participation;
 side-chain χ3/χ4; multi-chain PDBs; promoting defaults into `aa.options`; a

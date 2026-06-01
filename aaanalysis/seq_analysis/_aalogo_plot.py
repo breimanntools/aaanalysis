@@ -116,6 +116,9 @@ class AAlogoPlot:
     TMD/JMD part annotations. The ``logo_type`` set at initialization controls only
     the y-axis label; the logo data itself is provided as a pre-computed ``df_logo``
     from :class:`AAlogo`.
+
+    .. versionadded:: 1.0.3
+
     """
 
     def __init__(self,

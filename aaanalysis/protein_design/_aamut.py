@@ -13,6 +13,9 @@ class AAMut:
     """
     UNDER CONSTRUCTION - Amino Acid Mutator (AAMut) class for analyzing the impact of amino acid substitutions
     on amino acid scales.
+
+    .. versionadded:: 1.0.0
+
     """
     def __init__(self, verbose=False, df_scales=None):
         self._verbose = ut.check_verbose(verbose)

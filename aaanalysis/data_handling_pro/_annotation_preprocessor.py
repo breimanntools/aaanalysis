@@ -93,6 +93,8 @@ def _check_scores_unit_range(scores, name="score"):
 class AnnotationPreprocessor:
     """Fetch, ingest, and encode per-residue PTM / functional-site annotations.
 
+    .. versionadded:: 1.1.0
+
     Notes
     -----
     * ``df_annot`` is the canonical per-residue schema with columns

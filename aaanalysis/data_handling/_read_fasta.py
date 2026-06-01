@@ -60,6 +60,8 @@ def read_fasta(file_path: str,
     Translation of FASTA file by extracting identifiers and further information from headers
     as well as subsequent sequences.
 
+    .. versionadded:: 1.0.0
+
     Parameters
     ----------
     file_path : str

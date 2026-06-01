@@ -14,6 +14,8 @@ def plot_get_cmap(name: str = "CPP",
     """
     Get colormaps specified for AAanalysis.
 
+    .. versionadded:: 0.1.2
+
     Parameters
     ----------
     name : {'CPP', 'SHAP'}, default='CPP'

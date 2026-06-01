@@ -12,6 +12,9 @@ import aaanalysis.utils as ut
 class SeqMutPlot:
     """
     UNDER CONSTRUCTION - Plotting class for ``SeqMut`` (Sequence Mutator).
+
+    .. versionadded:: 1.0.0
+
     """
     def __init__(self, verbose=False):
         self._verbose = ut.check_verbose(verbose)

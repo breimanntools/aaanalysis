@@ -189,6 +189,8 @@ class CPPPlot:
     This class supports multiple plot types for group or sample-level analysis, including ranking plots,
     profiles, heatmaps, and feature maps.
 
+    .. versionadded:: 0.1.2
+
     """
     def __init__(self,
                  df_scales: Optional[pd.DataFrame] = None,

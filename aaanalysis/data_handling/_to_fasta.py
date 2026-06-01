@@ -27,6 +27,8 @@ def to_fasta(df_seq: pd.DataFrame = None,
     Saving a DataFrame to a FASTA file that includes sequence identifiers, the sequences themselves,
     and additional selected information.
 
+    .. versionadded:: 1.0.0
+
     Parameters
     ----------
     df_seq : pd.DataFrame

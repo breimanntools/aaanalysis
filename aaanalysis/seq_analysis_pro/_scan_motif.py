@@ -145,6 +145,8 @@ def scan_motif(df_seq: pd.DataFrame = None,
     and identical ``motif_score`` values. The output schema (including the ``motif_score``
     column) matches :meth:`AAWindowSampler.sample_motif_matched`.
 
+    .. versionadded:: 1.1.0
+
     Parameters
     ----------
     df_seq : pd.DataFrame, shape (n_samples, n_seq_info)

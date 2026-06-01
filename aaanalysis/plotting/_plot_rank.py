@@ -63,6 +63,8 @@ def plot_rank(df_rank: pd.DataFrame = None,
     ranked by their maximum score and colored by membership in groups such as substrate /
     hold-out / non-substrate, with optional threshold lines for the deployment caller.
 
+    .. versionadded:: 1.1.0
+
     Parameters
     ----------
     df_rank : pd.DataFrame, shape (n_proteins, n_info)
