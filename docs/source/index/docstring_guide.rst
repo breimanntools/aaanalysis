@@ -213,25 +213,42 @@ Conformance checklist
 A docstring is house-style if every applicable item holds. The right column is
 the code emitted by the internal checker.
 
-============================================================  ======================
-Rule                                                          Checker code
-============================================================  ======================
-Class summary is a noun phrase (not a verb)                   ``CLASS-SUMMARY-VERB``
-Class summary ends with a ``[Key]_`` citation                 ``CLASS-NO-CITATION``
-``.. versionadded::`` present                                 ``NO-VERSIONADDED``
-``Parameters`` in ``__init__``, not the class docstring       ``CLASS-HAS-PARAMETERS``
-``__init__`` has a docstring                                  ``INIT-NO-DOCSTRING``
-Public symbol has a docstring                                 ``MISSING-DOCSTRING``
-Method summary has no ``→``/arrow shorthand                   ``SUMMARY-ARROW``
-``Returns`` is named (``name : type``)                        ``RETURNS-UNNAMED``
-Public method ends with an ``Examples`` include               ``METHOD-NO-EXAMPLES``
-Recurring params reuse the baseline sentence                  ``DFSEQ-BASELINE``
-Citations are ``[Key]_`` only                                 ``INLINE-CITATION`` / ``FREETEXT-CITATION``
-``See Also`` entries are ``* :role:`` bullets                 ``SEEALSO-NO-BULLET``
-``See Also`` gloss uses ``: `` not ``  :  ``                  ``SEEALSO-SPACE-COLON``
-``Warnings`` header (not ``Warns``)                           ``WARNS-SECTION``
-``Notes`` list items use ``*`` not ``-``                      ``NOTES-DASH-BULLET``
-============================================================  ======================
+.. list-table::
+   :header-rows: 1
+   :widths: 70 30
+
+   * - Rule
+     - Checker code
+   * - Class summary is a noun phrase (not a verb)
+     - ``CLASS-SUMMARY-VERB``
+   * - Class summary ends with a ``[Key]_`` citation
+     - ``CLASS-NO-CITATION``
+   * - ``.. versionadded::`` present
+     - ``NO-VERSIONADDED``
+   * - ``Parameters`` in ``__init__``, not the class docstring
+     - ``CLASS-HAS-PARAMETERS``
+   * - ``__init__`` has a docstring
+     - ``INIT-NO-DOCSTRING``
+   * - Public symbol has a docstring
+     - ``MISSING-DOCSTRING``
+   * - Method summary has no arrow shorthand
+     - ``SUMMARY-ARROW``
+   * - ``Returns`` is named (``name : type``)
+     - ``RETURNS-UNNAMED``
+   * - Public method ends with an ``Examples`` include
+     - ``METHOD-NO-EXAMPLES``
+   * - Recurring params reuse the baseline sentence
+     - ``DFSEQ-BASELINE``
+   * - Citations use ``[Key]_`` only
+     - ``INLINE-CITATION`` / ``FREETEXT-CITATION``
+   * - ``See Also`` entries are role bullets
+     - ``SEEALSO-NO-BULLET``
+   * - ``See Also`` gloss uses colon-space, not space-colon-space
+     - ``SEEALSO-SPACE-COLON``
+   * - ``Warnings`` header (not ``Warns``)
+     - ``WARNS-SECTION``
+   * - ``Notes`` list items use ``*`` not ``-``
+     - ``NOTES-DASH-BULLET``
 
 Tooling
 -------
