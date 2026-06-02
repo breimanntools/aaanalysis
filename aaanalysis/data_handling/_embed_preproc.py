@@ -86,50 +86,23 @@ def _check_match_df_scales_df_stds(df_scales, df_stds):
 
 
 # II Main Functions
-# TODO THE
 class EmbeddingPreprocessor:
-    """
-    Utility data preprocessing class for protein-language-model (PLM) embeddings.
-
-    Instance-based, mirroring :class:`StructurePreprocessor` and
-    :class:`AnnotationPreprocessor` (``ep = EmbeddingPreprocessor()``). The
-    family-symmetric entry point is :meth:`encode`, which turns raw per-residue
-    PLM embeddings into a ``[0, 1]``-normalized ``dict_num`` ready for
-    :meth:`CPP.run_num` (the per-residue, position-preserving path). The
-    secondary :meth:`build_scales` / :meth:`build_cat` pair collapses the same
-    embeddings into the ``(df_scales, df_cat)`` that :meth:`CPP.run` consumes
-    (the context-free, AA-scale path). See the *Notes* on that compromise.
+    """Encode protein-language-model (PLM) embeddings into per-residue features for ``CPP.run_num``.
 
     .. versionadded:: 1.1.0
 
     See Also
     --------
-    * :class:`SequencePreprocessor` for sequence-side preprocessing utilities.
-    * :class:`StructurePreprocessor` for the PDB / DSSP / AlphaFold analog.
-    * :class:`AnnotationPreprocessor` for the PTM / functional-site analog.
-    * :class:`AAclust` for the correlation-based clustering used internally.
-    * :class:`CPP` for the downstream feature-engineering consumer.
-    * :func:`aaanalysis.combine_dict_nums` for stitching multiple dict_nums.
+    * :class:`StructurePreprocessor`, :class:`AnnotationPreprocessor` : sibling
+      per-residue ``dict_num`` sources.
+    * :func:`aaanalysis.combine_dict_nums` : stitch multiple dict_nums.
+    * :meth:`CPP.run_num` : downstream consumer.
 
     Notes
     -----
-    * **Pseudo-scales are dataset-dependent.** The same PLM applied to
-      different protein corpora yields different pseudo-scales (and therefore
-      different pseudo-categories). For reproducible cross-dataset comparison,
-      compute pseudo-scales once on a fixed reference corpus and reuse them.
-    * **Per-AA averaging discards positional context.** Pseudo-scales collapse
-      a PLM's contextual per-residue embedding into a single per-AA value, so
-      when used through :meth:`CPP.run` the same AA in different sequence
-      positions receives the same scale value. To preserve positional context,
-      pass the per-residue ``dict_num`` to :meth:`CPP.run_num` directly instead
-      of routing through pseudo-scales.
-    * **Feature categorization.** As of v1.1.0 every PLM-derived dim emits
-      ``category='Embeddings'`` (paired with
-      ``ut.DICT_COLOR_CAT['Embeddings'] == '#6B4FB5'``). The AAclust-derived
-      coarser/finer cluster IDs move into a structured
-      ``Embeddings_cat<i>_subcat<j>`` string in the ``subcategory`` column,
-      so the redundancy filter still sees the cluster split via
-      ``subcategory`` while ``CPPPlot.heatmap()`` resolves a single color.
+    * :meth:`encode` is the primary path (raw embeddings → ``[0, 1]`` ``dict_num``
+      for :meth:`CPP.run_num`); :meth:`build_scales` / :meth:`build_cat` are the
+      secondary scale path for :meth:`CPP.run`.
     """
 
     def __init__(self, verbose: bool = True):
