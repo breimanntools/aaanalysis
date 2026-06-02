@@ -255,7 +255,10 @@ Documentation Style
 -------------------
 
 - **Docstring Style**: We use the `Numpy Docstring style <https://numpydoc.readthedocs.io/en/latest/format.html>`_ and
-  adhere to the `PEP 257 <https://peps.python.org/pep-0257/>`_ docstring conventions.
+  adhere to the `PEP 257 <https://peps.python.org/pep-0257/>`_ docstring conventions. The authoritative,
+  worked-out conventions (class/method templates, recurring-parameter baselines, citation rules, versioning,
+  examples, and the rule → checker-code table) live in the :ref:`Docstring Style Guide <docstring_guide>`;
+  it is the single source of truth and is enforced by an internal checker.
 
 - **Code Style**: Please follow the `PEP 8 <https://peps.python.org/pep-0008/>`_ and
   `PEP 20 <https://peps.python.org/pep-0020/>`_ style guides for Python code.

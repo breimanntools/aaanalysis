@@ -29,6 +29,7 @@ For extended features, including our explainable AI module, please use the 'prof
 
    index/introduction.rst
    index/CONTRIBUTING_COPY.rst
+   index/docstring_guide.rst
    index/usage_principles.rst
    index/evaluation.rst
 

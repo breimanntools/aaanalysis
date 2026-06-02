@@ -5,11 +5,17 @@ description: Audit and author AAanalysis docstrings against the house style set 
 
 # AAanalysis Docstring Consistency
 
+> **Authoritative rules:** the **Docstring Style Guide** at
+> `docs/source/index/docstring_guide.rst` (published on Read the Docs) is the single
+> source of truth for templates, baselines, citations, versioning, examples, and the
+> rule → checker-code table. This skill *enforces* that guide via
+> `scripts/check_docstrings.py`; it defines no rules of its own. The notes below are a
+> quick operational summary — when in doubt, the guide wins.
+
 The mature classes **CPP** (`feature_engineering/_cpp.py`), **dPULearn**
 (`pu_learning/_dpulearn.py`), and **AAclust** (`feature_engineering/_aaclust.py`)
 are the gold standard. Every other public symbol should read as if written by the
-same hand. This skill complements `.claude/rules/docstrings.md` (the always-on
-style rule) with an invokable cross-API audit + authoring workflow.
+same hand.
 
 ## Quick start
 
