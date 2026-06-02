@@ -74,8 +74,9 @@ def _build_scale_lookup_cached(key):
     ``_ScalesKey``; memoized by ``df_scales`` content (see :class:`_ScalesKey`).
 
     The scale-matrix derives purely from ``df_scales`` (independent of
-    ``df_parts``), so it is the one piece worth caching across configs. Cleared
-    via :meth:`CPP.clear_cache`.
+    ``df_parts``), so it is the one piece worth caching across configs. The cache
+    is self-bounding (``maxsize=32``); clear it eagerly via
+    :func:`clear_scale_lookup_cache` (internal utility — see ADR-0014).
     """
     df_scales = key.df_scales
     dict_all_scales = {col: dict(zip(df_scales.index.to_list(), df_scales[col]))
@@ -92,7 +93,12 @@ def build_scale_lookup(df_scales=None):
 
 
 def clear_scale_lookup_cache():
-    """Evict the module-level scale-lookup LRU (backs :meth:`CPP.clear_cache`)."""
+    """Evict the module-level scale-lookup LRU.
+
+    Internal utility (not public API — see ADR-0014). The cache self-bounds at
+    ``maxsize=32``; call this only to release the held scale matrices eagerly in
+    a long-running process that cycles through many distinct scale sets.
+    """
     _build_scale_lookup_cached.cache_clear()
 def _build_aa_idx_per_part(df_parts=None, dict_all_scales=None):
     """Per-part (n_samples, L_max) int32 AA-index matrix; ``n_aa`` is the NaN sentinel."""

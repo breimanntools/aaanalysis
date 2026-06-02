@@ -48,6 +48,24 @@ class TestExtendAlphabet:
             assert len(result) == original_len + 1
             assert letter_new in result.index
 
+    @pytest.mark.parametrize("value_type", VALID_VALUE_TYPES)
+    def test_value_type_branches_compute_expected_statistic(self, value_type):
+        """Deterministically exercise every 'value_type' branch and check the new
+        row equals the corresponding column statistic of the existing scales."""
+        df_scales = generate_random_df()
+        nf = aa.NumericalFeature()
+        result = nf.extend_alphabet(df_scales=df_scales, new_letter="1", value_type=value_type)
+        new_row = result.loc["1"]
+        if value_type == "min":
+            expected = df_scales.min()
+        elif value_type == "mean":
+            expected = df_scales.mean()
+        elif value_type == "median":
+            expected = df_scales.median()
+        else:
+            expected = df_scales.max()
+        assert np.allclose(new_row.values, expected.values)
+
     def test_change_default_scales(self):
         df_scales = aa.load_scales()
         nf = aa.NumericalFeature()

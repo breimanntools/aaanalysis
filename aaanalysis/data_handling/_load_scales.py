@@ -109,7 +109,7 @@ def load_scales(name: str = "scales",
 
     Returns
     -------
-    pandas.DataFrame
+    df : pandas.DataFrame
         DataFrame containing the chosen dataset, recommended to be named by their name suffix (``df_scales``, ``df_cat``).
 
     Notes

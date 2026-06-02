@@ -1,10 +1,10 @@
-"""This is a script to test the df_scales content-hash lookup cache and CPP.clear_cache().
+"""This is a script to test the df_scales content-hash lookup cache.
 
 Covers the Stage-1 scale-tensor reuse (D3): the module-level ``@lru_cache`` on
-``build_scale_lookup`` keyed by ``df_scales`` content (via ``_ScalesKey``), the
-``clear_scale_lookup_cache`` evictor, and the public ``CPP.clear_cache()``
-classmethod. The cached scale-matrix must stay bit-exact, so ``CPP.run`` results
-are identical whether the cache is cold or warm.
+``build_scale_lookup`` keyed by ``df_scales`` content (via ``_ScalesKey``) and the
+internal ``clear_scale_lookup_cache`` evictor (the cache is self-bounding, so eviction
+is an internal utility, not public API — see ADR-0014). The cached scale-matrix must
+stay bit-exact, so ``CPP.run`` results are identical whether the cache is cold or warm.
 """
 import numpy as np
 import pandas as pd
@@ -97,23 +97,23 @@ class TestBuildScaleLookup:
         assert fm._ScalesKey(ds) != fm._ScalesKey(ds_mut)
 
 
-class TestCPPClearCache:
-    """Tests for the public CPP.clear_cache() classmethod (D3)."""
+class TestClearScaleLookupCache:
+    """Tests for the internal clear_scale_lookup_cache() evictor (ADR-0014)."""
 
     def test_clear_cache_empties(self):
         fm.build_scale_lookup(df_scales=aa.load_scales(top60_n=38))
         assert fm._build_scale_lookup_cached.cache_info().currsize >= 1
-        aa.CPP.clear_cache()
+        fm.clear_scale_lookup_cache()
         assert fm._build_scale_lookup_cached.cache_info().currsize == 0
 
-    def test_clear_cache_is_classmethod_callable_on_class(self):
-        # Callable on the class itself (no instance needed).
-        aa.CPP.clear_cache()
+    def test_clear_cache_callable_without_instance(self):
+        # Module-level utility; no CPP instance needed.
+        fm.clear_scale_lookup_cache()
         assert fm._build_scale_lookup_cached.cache_info().currsize == 0
 
     def test_clear_cache_idempotent(self):
-        aa.CPP.clear_cache()
-        aa.CPP.clear_cache()
+        fm.clear_scale_lookup_cache()
+        fm.clear_scale_lookup_cache()
         assert fm._build_scale_lookup_cached.cache_info().currsize == 0
 
 
@@ -123,7 +123,7 @@ class TestScaleLookupCacheComplex:
     def test_run_identical_cold_vs_warm(self):
         df_parts, labels = _get_parts_labels(n=10)
         df_scales = aa.load_scales(top60_n=38)
-        aa.CPP.clear_cache()
+        fm.clear_scale_lookup_cache()
         df_cold = aa.CPP(df_parts=df_parts, df_scales=df_scales).run(labels=labels, n_filter=20, n_jobs=1)
         # Cache is now warm; a fresh instance must produce identical features.
         df_warm = aa.CPP(df_parts=df_parts, df_scales=df_scales).run(labels=labels, n_filter=20, n_jobs=1)
@@ -133,7 +133,7 @@ class TestScaleLookupCacheComplex:
         df_parts, labels = _get_parts_labels(n=10)
         df_scales = aa.load_scales(top60_n=38)
         df_a = aa.CPP(df_parts=df_parts, df_scales=df_scales).run(labels=labels, n_filter=20, n_jobs=1)
-        aa.CPP.clear_cache()
+        fm.clear_scale_lookup_cache()
         df_b = aa.CPP(df_parts=df_parts, df_scales=df_scales).run(labels=labels, n_filter=20, n_jobs=1)
         assert df_a["feature"].tolist() == df_b["feature"].tolist()
         for col in ["abs_auc", "abs_mean_dif", "mean_dif"]:
@@ -143,7 +143,7 @@ class TestScaleLookupCacheComplex:
         df_parts, labels = _get_parts_labels(n=10)
         ds_full = aa.load_scales(top60_n=38)
         ds_small = ds_full.T.head(8).T
-        aa.CPP.clear_cache()
+        fm.clear_scale_lookup_cache()
         aa.CPP(df_parts=df_parts, df_scales=ds_full).run(labels=labels, n_filter=10, n_jobs=1)
         aa.CPP(df_parts=df_parts, df_scales=ds_small).run(labels=labels, n_filter=10, n_jobs=1)
         assert fm._build_scale_lookup_cached.cache_info().currsize == 2
@@ -155,7 +155,7 @@ class TestScaleLookupCacheComplex:
     def test_warm_cache_hit_increments_on_repeat_run(self):
         df_parts, labels = _get_parts_labels(n=10)
         df_scales = aa.load_scales(top60_n=38)
-        aa.CPP.clear_cache()
+        fm.clear_scale_lookup_cache()
         aa.CPP(df_parts=df_parts, df_scales=df_scales).run(labels=labels, n_filter=10, n_jobs=1)
         hits_before = fm._build_scale_lookup_cached.cache_info().hits
         aa.CPP(df_parts=df_parts, df_scales=df_scales).run(labels=labels, n_filter=10, n_jobs=1)

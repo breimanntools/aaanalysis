@@ -196,6 +196,22 @@ Examples & verification
   tiny self-contained snippets may additionally use ``>>>`` doctests run with
   ``--doctest-modules``.
 
+Notebook content & structure
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An example notebook *teaches* the symbol, it does not merely call it. Use this order:
+
+1. **Concept first** (opening markdown cell). State the high-level mental model:
+   what the method/class does, when and why to use it, and what it returns —
+   *before* any code.
+2. **Minimal example** (code cell). The smallest seeded, runnable call, with output.
+3. **Parameter walkthrough** (markdown + code). Introduce **every** public parameter,
+   with **one cell per parameter group**: parameters that belong together share a
+   cell (e.g. ``jmd_n_len`` / ``jmd_c_len``, or a family of ``max_*`` thresholds).
+   Each group gets a short markdown note (what it controls) and a code cell showing
+   its effect on the result. **No parameter may be left uncovered.**
+4. Show output so the docs render it; keep every cell small, seeded, deterministic.
+
 Glossary cross-links
 --------------------
 

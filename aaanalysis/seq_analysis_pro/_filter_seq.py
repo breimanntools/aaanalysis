@@ -74,7 +74,8 @@ def filter_seq(df_seq: pd.DataFrame = None,
     Parameters
     ----------
     df_seq : pd.DataFrame, shape (n_samples, n>=1)
-        DataFrame containing an ``entry`` and ''sequence'' column for unique identifiers and sequences.
+        DataFrame containing an ``entry`` column with unique protein identifiers
+        and a ``sequence`` column with full protein sequences.
         Sequence length must be at least 11 amino acids and the sequence should not contain any gaps ('-').
     method : {'cd-hit', 'mmseqs'}, default='cd-hit'
         Specifies the clustering algorithm to use:

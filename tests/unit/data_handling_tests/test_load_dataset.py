@@ -145,3 +145,69 @@ class TestLoadDatasetComplex:
         with pytest.raises(ValueError):
             aa.load_dataset(name="SEQ_LOCATION", n=-1, min_len=10, max_len=5, non_canonical_aa="invalid_option")
 
+    # Invalid dataset name (lists valid options)
+    def test_load_dataset_invalid_name(self):
+        """Unknown 'name' raises a ValueError listing valid datasets."""
+        with pytest.raises(ValueError):
+            aa.load_dataset(name="NOT_A_DATASET")
+
+    # Non-canonical amino acid handling
+    def test_load_dataset_non_canonical_keep(self):
+        """non_canonical_aa='keep' returns the dataset unchanged (no filtering)."""
+        df_keep = aa.load_dataset(name="SEQ_LOCATION", non_canonical_aa="keep")
+        df_remove = aa.load_dataset(name="SEQ_LOCATION", non_canonical_aa="remove")
+        assert len(df_keep) >= len(df_remove)
+
+    def test_load_dataset_non_canonical_gap(self):
+        """non_canonical_aa='gap' replaces non-canonical residues with the gap symbol."""
+        df = aa.load_dataset(name="SEQ_LOCATION", non_canonical_aa="gap")
+        allowed = set(ut.LIST_CANONICAL_AA) | {ut.STR_AA_GAP}
+        assert all(set(seq).issubset(allowed) for seq in df[ut.COL_SEQ])
+
+    # AA-level windowing
+    def test_load_dataset_aa_window_size_none_returns_unwindowed(self):
+        """aa_window_size=None on an AA dataset returns the unfiltered residue table."""
+        df = aa.load_dataset(name="AA_LDR", aa_window_size=None)
+        assert set(ut.COLS_SEQ_INFO).issubset(set(df))
+        assert len(df) > 0
+
+    def test_load_dataset_aa_window_odd(self):
+        """Odd aa_window_size on a non-cleavage AA dataset yields fixed-length windows."""
+        size = 9
+        df = aa.load_dataset(name="AA_LDR", aa_window_size=size, n=20)
+        assert all(len(seq) == size for seq in df[ut.COL_SEQ])
+
+    def test_load_dataset_aa_window_even_cleavage_site(self):
+        """Even aa_window_size is allowed for cleavage-site datasets and yields fixed windows."""
+        size = 8
+        df = aa.load_dataset(name="AA_CASPASE3", aa_window_size=size, n=20)
+        assert all(len(seq) == size for seq in df[ut.COL_SEQ])
+
+    def test_load_dataset_aa_window_even_non_cleavage_invalid(self):
+        """Even aa_window_size on a non-cleavage AA dataset raises ValueError."""
+        with pytest.raises(ValueError):
+            aa.load_dataset(name="AA_LDR", aa_window_size=8)
+
+    def test_load_dataset_aa_window_too_large_invalid(self):
+        """aa_window_size larger than the shortest sequence raises ValueError (odd path)."""
+        with pytest.raises(ValueError):
+            aa.load_dataset(name="AA_LDR", aa_window_size=9999)
+
+    def test_load_dataset_aa_window_even_too_large_invalid(self):
+        """Even aa_window_size larger than the shortest sequence raises (cleavage even path)."""
+        with pytest.raises(ValueError):
+            aa.load_dataset(name="AA_CASPASE3", aa_window_size=9998)
+
+    # Filters that remove everything
+    def test_load_dataset_max_len_removes_all(self):
+        """A max_len below every sequence length removes all rows and raises."""
+        with pytest.raises(ValueError):
+            aa.load_dataset(name="SEQ_LOCATION", max_len=1)
+
+    # Random balanced selection
+    def test_load_dataset_random_selection(self):
+        """random=True returns n balanced samples per class."""
+        df = aa.load_dataset(name="SEQ_LOCATION", n=5, random=True)
+        assert len(df) == 5 * 2
+        assert set(df[ut.COL_LABEL]) == {0, 1}
+

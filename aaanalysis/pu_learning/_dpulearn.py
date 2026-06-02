@@ -81,11 +81,11 @@ class dPULearn:
     dPULearn offers a deterministic approach to Positive-Unlabeled (PU) learning, featuring two distinct
     identification approaches:
 
-    - **PCA-based identification**: This is the primary method where Principal Component Analysis (PCA) is utilized
+    * **PCA-based identification**: This is the primary method where Principal Component Analysis (PCA) is utilized
       to reduce the dimensionality of the feature space. Based on the most informative principal components (PCs),
       the model iteratively identifies reliable negatives (labeled by 0) from the set of unlabeled samples (2).
       These reliable negatives are those that are most distant from the positive samples (1) in the feature space.
-    - **Distance-based identification**: As a simple alternative, reliable negatives can also be identified using
+    * **Distance-based identification**: As a simple alternative, reliable negatives can also be identified using
       similarity measures like ``euclidean``, ``manhattan``, or ``cosine`` distance.
 
     .. versionadded:: 0.1.0
@@ -97,10 +97,10 @@ class dPULearn:
     df_pu_ : pd.DataFrame, shape (n_samples, pca_features)
         A DataFrame with the PCA-transformed features of 'X' containing the following groups of columns:
 
-        - 'selection_via': Column indicating how reliable negatives were identified (either giving the distance metric
+        * 'selection_via': Column indicating how reliable negatives were identified (either giving the distance metric
            or the i-th PC based on which the respective sample was selected).
-        - 'PCi': Value columns for the i-th principal component (PC).
-        - 'PCi_abs_dif': Absolute difference columns for each PC, representing the absolute deviation of each sample
+        * 'PCi': Value columns for the i-th principal component (PC).
+        * 'PCi_abs_dif': Absolute difference columns for each PC, representing the absolute deviation of each sample
           from the mean of positives.
 
         For distance-based identification, 'PCi' columns are replaced with the results for the selected metric.
@@ -177,15 +177,15 @@ class dPULearn:
             The distance metric to use. If ``None``, PCA-based identification is performed. For distance-based
             identification one of the following measures can be selected:
 
-            - ``euclidean``: Euclidean distance (minimum)
-            - ``manhattan``: Manhattan distance (minimum)
-            - ``cosine``: Cosine distance (minimum)
+            * ``euclidean``: Euclidean distance (minimum)
+            * ``manhattan``: Manhattan distance (minimum)
+            * ``cosine``: Cosine distance (minimum)
 
         n_components : int or float, default=0.80
             Number of principal components (a) or the percentage of total variance to be covered (b) when PCA is applied.
 
-            - In case (a): it should be an integer >= 1.
-            - In case (b): it should be a float with  0.0 < ``n_components`` < 1.0.
+            * In case (a): it should be an integer >= 1.
+            * In case (b): it should be a float with  0.0 < ``n_components`` < 1.0.
 
         Returns
         -------
@@ -201,9 +201,9 @@ class dPULearn:
           whereas a high-dimensional space has significantly more features than samples (n_features >> n_samples).
           The choice of metric depends on the specific application, with the following general guidelines:
 
-          - ``euclidean``: Effective in low-dimensional spaces or when direct distances are meaningful.
-          - ``manhattan``: Useful when differences along individual dimensions are important, or in the presence of outliers.
-          - ``cosine``: Recommended for high-dimensional spaces (e.g., n_features >> n_samples), as it evaluates
+          * ``euclidean``: Effective in low-dimensional spaces or when direct distances are meaningful.
+          * ``manhattan``: Useful when differences along individual dimensions are important, or in the presence of outliers.
+          * ``cosine``: Recommended for high-dimensional spaces (e.g., n_features >> n_samples), as it evaluates
             the direction of feature vectors between data points rather than the magnitude of their differences.
 
         Warnings
@@ -258,8 +258,8 @@ class dPULearn:
 
         The quality is assessed regarding two quality groups:
 
-        - **Homogeneity** within the reliably identified negatives (0)
-        - **Dissimilarity** between the reliably identified negatives and the groups
+        * **Homogeneity** within the reliably identified negatives (0)
+        * **Dissimilarity** between the reliably identified negatives and the groups
           of positive samples ('pos'), unlabeled samples ('unl'), and a ground-truth negative
           ('neg') sample group if provided by ``X_neg``
 
@@ -292,16 +292,16 @@ class dPULearn:
         -----
         ``df_eval`` includes the following columns:
 
-        - 'name': Name of the dataset if ``names`` is provided (typically named by identification approach).
-        - 'n_rel_neg': Number of identified negatives.
-        - 'avg_std': Average standard deviation (STD) assessing homogeneity of identified negatives.
+        * 'name': Name of the dataset if ``names`` is provided (typically named by identification approach).
+        * 'n_rel_neg': Number of identified negatives.
+        * 'avg_std': Average standard deviation (STD) assessing homogeneity of identified negatives.
           Lower values indicate greater homogeneity.
-        - 'avg_iqr': Average interquartile range (IQR) assessing homogeneity of identified negatives.
+        * 'avg_iqr': Average interquartile range (IQR) assessing homogeneity of identified negatives.
           Lower values suggest greater homogeneity.
-        - 'avg_abs_auc_DATASET': Average absolute area under the curve (AUC) assessing the dissimilarity between the
+        * 'avg_abs_auc_DATASET': Average absolute area under the curve (AUC) assessing the dissimilarity between the
           set of identified negatives with other groups (positives, unlabeled, ground-truth negatives).
           Separate columns are provided for each comparison. Higher values indicate greater dissimilarity.
-        - 'avg_kld_DATASET': Average Kullback-Leibler Divergence (KLD) assessing the dissimilarity of distributions
+        * 'avg_kld_DATASET': Average Kullback-Leibler Divergence (KLD) assessing the dissimilarity of distributions
           between the set of identified negatives and the other groups. Higher values indicate greater dissimilarity.
           These columns are omitted if ``kld`` is set to ``False``.
 
@@ -351,7 +351,9 @@ class dPULearn:
         names_datasets : list, optional
             List of dataset names corresponding to ``list_labels``.
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
-            DataFrame with sequence information for entries corresponding to 'labels' of ``list_labels``.
+            DataFrame containing an ``entry`` column with unique protein identifiers
+            and a ``sequence`` column with full protein sequences, for the entries
+            corresponding to the ``labels`` of ``list_labels``.
         remove_non_neg : bool, default=True
             If ``True``, all rows are removed that do not contain identified negatives in any provided dataset.
         return_upset_data : bool, default=False
@@ -360,10 +362,10 @@ class dPULearn:
         Returns
         -------
         pd.DataFrame or pd.Series
-            - If ``return_upset_data=False`` (default):
+            * If ``return_upset_data=False`` (default):
               Returns a pd.DataFrame (`df_neg_comp`) that combines ``df_seq`` (if provided) with a comparison of the
               negative sets for a general analysis.
-            - If ``return_upset_data=True``:
+            * If ``return_upset_data=True``:
               Returns a pd.Series DataFrame (`upset_data`) formatted for generating  Upset Plots, containing group
               size information for the intersection and unique elements across the label sets.
 

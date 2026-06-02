@@ -80,21 +80,21 @@ def read_fasta(file_path: str,
 
     Returns
     -------
-    pandas.DataFrame
+    df_seq : pandas.DataFrame
         A DataFrame (``df_seq``) where each row corresponds to a sequence entry from the FASTA file.
 
     Notes
     -----
     Each ``FASTA`` file entry consists of two parts:
 
-    - **FASTA header**: Starting with '>', the header contains the main id and additional information,
+    * **FASTA header**: Starting with '>', the header contains the main id and additional information,
       all separated by a specified separator.
-    - **Sequence**: Sequence of specific entry, directly following the header
+    * **Sequence**: Sequence of specific entry, directly following the header
 
     ``df_seq`` includes at least these columns:
 
-    - 'entry': Protein identifier, either the UniProt accession number or an id based on index.
-    - 'sequence': Amino acid sequence.
+    * 'entry': Protein identifier, either the UniProt accession number or an id based on index.
+    * 'sequence': Amino acid sequence.
 
     See Also
     --------

@@ -189,7 +189,7 @@ class EmbeddingPreprocessor:
 
         See Also
         --------
-        build_scales : the secondary context-free AA-scale path (for CPP.run).
+        * :meth:`build_scales`: the secondary context-free AA-scale path (for CPP.run).
         * :meth:`CPP.run_num`: the per-residue consumer of the returned dict_num.
         * :func:`aaanalysis.combine_dict_nums`: stitch several dict_nums together.
 
@@ -271,8 +271,8 @@ class EmbeddingPreprocessor:
 
         See Also
         --------
-        build_cat : derive a two-level pseudo-category table from this output.
-        encode : the primary per-residue path (raw embeddings -> [0, 1] dict_num).
+        * :meth:`build_cat`: derive a two-level pseudo-category table from this output.
+        * :meth:`encode`: the primary per-residue path (raw embeddings to a [0, 1] dict_num).
 
         Examples
         --------
@@ -395,16 +395,9 @@ class EmbeddingPreprocessor:
 
         See Also
         --------
-        :class:`AAclust`: the underlying clustering algorithm.
-        build_scales : produces the expected input(s); pass
-            ``return_std=True`` to get ``df_stds`` for std-aware mode.
-
-        References
-        ----------
-        .. [MilliganCooper88] Milligan & Cooper 1988, *A study of standardization of
-           variables in cluster analysis*, J. Classification 5(2):181-204.
-        .. [Eisen98] Eisen et al. 1998, *Cluster analysis and display of
-           genome-wide expression patterns*, PNAS 95(25):14863-14868.
+        * :class:`AAclust`: the underlying clustering algorithm.
+        * :meth:`build_scales`: produces the expected input(s); pass
+          ``return_std=True`` to get ``df_stds`` for std-aware mode.
 
         Examples
         --------

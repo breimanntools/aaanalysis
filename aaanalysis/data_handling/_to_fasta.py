@@ -32,7 +32,8 @@ def to_fasta(df_seq: pd.DataFrame = None,
     Parameters
     ----------
     df_seq : pd.DataFrame
-        DataFrame containing the identifiers, sequences and additional information.
+        DataFrame containing an ``entry`` column with unique protein identifiers
+        and a ``sequence`` column with full protein sequences, plus any additional columns.
     file_path : str
         Path where the FASTA file will be saved.
     col_id : str, default='entry'

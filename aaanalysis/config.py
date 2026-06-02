@@ -149,7 +149,7 @@ def _check_option(name_option="", option=None):
         if "name" in name_option:
             check_str(name=name_option, val=option, accept_none=False)
     if name_option == "ext_len":
-        check_number_range(name=name_option, val=option, min_val=0, accept_none=False)
+        check_number_range(name=name_option, val=option, min_val=0, accept_none=False, just_int=True)
     if "df" in name_option:
         check_df(name=name_option, df=option, accept_none=True)
 

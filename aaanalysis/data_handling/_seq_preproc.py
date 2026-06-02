@@ -153,7 +153,7 @@ class SequencePreprocessor:
 
         Returns
         -------
-        X: array-like, shape (n_samples, n_residues*n_characters)
+        X : array-like, shape (n_samples, n_residues*n_characters)
             Feature matrix containing one-hot encoded position-wise representation of residues.
         features : list of str
             List of feature names corresponding to each position and amino acid in the encoded matrix.
@@ -204,7 +204,7 @@ class SequencePreprocessor:
 
         Returns
         -------
-        X: array-like, shape (n_samples, n_residues)
+        X : array-like, shape (n_samples, n_residues)
             Feature matrix containing one-hot encoded position-wise representation of residues.
         features : list of str
             List of feature names corresponding to each position in the encoded matrix.

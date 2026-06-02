@@ -61,12 +61,12 @@ def check_synth_generator(generator):
 
     Accepts three shapes:
 
-    - ``str``: a built-in generator (``uniform``, ``global_freq``, ``position_specific``,
+    * ``str``: a built-in generator (``uniform``, ``global_freq``, ``position_specific``,
       ``scrambled``) or an AAontology preset name from :data:`PRESETS`.
-    - ``list[str]`` or ``tuple[str, ...]``: at least two **distinct** preset
+    * ``list[str]`` or ``tuple[str, ...]``: at least two **distinct** preset
       names from :data:`PRESETS`. The backend computes the multiplicative mix
       (see ``_mix_preset_aa_freq`` and [LiuDeber99]_).
-    - ``dict[str, Real]``: at least two single-character keys mapped to
+    * ``dict[str, Real]``: at least two single-character keys mapped to
       non-negative probabilities that sum to ``1.0`` (within ``1e-6``). Keys
       define a custom alphabet, so the sampler is not restricted to amino
       acids; keys are case-sensitive (``'A'`` and ``'a'`` are distinct symbols).
@@ -262,7 +262,7 @@ class AAWindowSampler:
 
     Output modes (per method, except :meth:`sample_synthetic` which is segments-only):
 
-    - ``"segments"`` — one row per sampled window, schema
+    * ``"segments"`` — one row per sampled window, schema
       ``[entry_win, entry, sequence, window, source_position, label, role, strategy]``.
       ``entry_win = <entry>_<start_pos>-<end_pos>`` (1-based inclusive); the same biological
       window across calls produces the same ``entry_win``, so
@@ -270,7 +270,7 @@ class AAWindowSampler:
       Synthetic outputs use ``entry_win = "synth_{i}"`` with a per-call counter — concatenating
       multiple :meth:`sample_synthetic` outputs may collide; deduplicate on the ``window``
       column instead.
-    - ``"sequences"`` — one row per source protein with a ``labels`` list of length
+    * ``"sequences"`` — one row per source protein with a ``labels`` list of length
       ``len(sequence)`` carrying ``label_test`` at known test positions, ``label_ref`` at
       sampled positions, and ``None`` elsewhere.
 
@@ -287,9 +287,9 @@ class AAWindowSampler:
         Two filters operate on per-position residue identity of equal-length windows
         (no alignment needed):
 
-        - ``max_similarity_to_test`` — drop sampled windows whose identity to any
+        * ``max_similarity_to_test`` — drop sampled windows whose identity to any
           known test window exceeds the threshold (anti-leakage).
-        - ``max_similarity_within_ref`` — greedily drop sampled windows whose identity
+        * ``max_similarity_within_ref`` — greedily drop sampled windows whose identity
           to a previously kept sampled window exceeds the threshold (redundancy
           reduction). In :meth:`sample_same_protein`, this filter spans protein
           boundaries; protein iteration order is randomized under the seed so output
@@ -383,8 +383,8 @@ class AAWindowSampler:
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
-            DataFrame with an ``entry`` column (protein IDs) and a ``sequence``
-            column (full protein sequences). See Notes.
+            DataFrame containing an ``entry`` column with unique protein identifiers
+            and a ``sequence`` column with full protein sequences. See Notes.
         n : int, default=100
             Maximum total number of sampled windows across all eligible proteins.
             ``n`` is split roughly uniformly across eligible source proteins (each
@@ -435,7 +435,9 @@ class AAWindowSampler:
 
         Returns
         -------
-        pd.DataFrame
+        df_seq : pd.DataFrame
+            Sampled windows; one row per window with ``entry``, ``sequence``,
+            ``role``, ``strategy``, and ``entry_win`` columns.
 
         Notes
         -----
@@ -538,8 +540,8 @@ class AAWindowSampler:
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
-            DataFrame with an ``entry`` column (protein IDs) and a ``sequence``
-            column (full protein sequences). See Notes.
+            DataFrame containing an ``entry`` column with unique protein identifiers
+            and a ``sequence`` column with full protein sequences. See Notes.
         n : int, default=100
             Maximum total number of sampled windows. Fewer are returned (with a
             warning) if the eligible space cannot supply.
@@ -576,7 +578,9 @@ class AAWindowSampler:
 
         Returns
         -------
-        pd.DataFrame
+        df_seq : pd.DataFrame
+            Sampled windows; one row per window with ``entry``, ``sequence``,
+            ``role``, ``strategy``, and ``entry_win`` columns.
 
         Notes
         -----
@@ -665,8 +669,8 @@ class AAWindowSampler:
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
-            DataFrame with an ``entry`` column (protein IDs) and a ``sequence``
-            column (full protein sequences). See Notes.
+            DataFrame containing an ``entry`` column with unique protein identifiers
+            and a ``sequence`` column with full protein sequences. See Notes.
         n : int, default=100
             Maximum total number of synthetic windows. Fewer are returned (with
             a warning) if the filters cannot supply.
@@ -699,28 +703,30 @@ class AAWindowSampler:
 
         Returns
         -------
-        pd.DataFrame
+        df_seq : pd.DataFrame
+            Sampled windows; one row per window with ``entry``, ``sequence``,
+            ``role``, ``strategy``, and ``entry_win`` columns.
 
         Notes
         -----
         ``df_seq`` is consumed differently by each generator:
 
-        - ``generator='global_freq'``: source of empirical amino-acid frequencies
+        * ``generator='global_freq'``: source of empirical amino-acid frequencies
           across all sequences.
-        - ``generator='position_specific'`` / ``'scrambled'``: source of *test windows*
+        * ``generator='position_specific'`` / ``'scrambled'``: source of *test windows*
           extracted at the 1-based positions in ``pos_col``. ``pos_col`` is
           required for these two generators.
-        - ``generator='uniform'``, AAontology preset generators, list-mix generators,
+        * ``generator='uniform'``, AAontology preset generators, list-mix generators,
           and custom dict generators: ``df_seq`` is **not** consumed for synthesis
           itself; ``pos_col`` is still optional and only used as the source of
           test windows for the ``max_similarity_to_test`` filter.
 
         **Built-in generators**
 
-        - ``'uniform'``: each residue drawn uniformly from the 20 canonical AAs.
-        - ``'global_freq'``: residues drawn from the empirical AA frequency in ``df_seq``.
-        - ``'position_specific'``: per-position frequency of the test windows.
-        - ``'scrambled'``: shuffle a randomly chosen test window.
+        * ``'uniform'``: each residue drawn uniformly from the 20 canonical AAs.
+        * ``'global_freq'``: residues drawn from the empirical AA frequency in ``df_seq``.
+        * ``'position_specific'``: per-position frequency of the test windows.
+        * ``'scrambled'``: shuffle a randomly chosen test window.
 
         **AAontology preset generators** load a curated scale via
         :func:`aaanalysis.load_scales` and normalize its per-amino-acid values
@@ -730,19 +736,19 @@ class AAWindowSampler:
 
         *Composition (3)*
 
-        - ``'aa_composition'``: Dayhoff 1978a (canonical baseline)
-        - ``'aa_composition_surface'``: Fukuchi-Nishikawa 2001 (surface composition)
-        - ``'aa_composition_mp'``: Cedano 1997 (membrane proteins)
+        * ``'aa_composition'``: Dayhoff 1978a (canonical baseline)
+        * ``'aa_composition_surface'``: Fukuchi-Nishikawa 2001 (surface composition)
+        * ``'aa_composition_mp'``: Cedano 1997 (membrane proteins)
 
         *Conformation (7)*
 
-        - ``'alpha_helix'``: Chou-Fasman 1978b
-        - ``'beta_sheet'``: Chou-Fasman 1978b
-        - ``'beta_strand'``: Lifson-Sander 1979
-        - ``'beta_turn'``: Chou-Fasman 1978b
-        - ``'coil'``: Nagano 1973
-        - ``'linker'``: George-Heringa 2003 (medium 6-14 AA)
-        - ``'pi_helix'``: Fodje-Al-Karadaghi 2002
+        * ``'alpha_helix'``: Chou-Fasman 1978b
+        * ``'beta_sheet'``: Chou-Fasman 1978b
+        * ``'beta_strand'``: Lifson-Sander 1979
+        * ``'beta_turn'``: Chou-Fasman 1978b
+        * ``'coil'``: Nagano 1973
+        * ``'linker'``: George-Heringa 2003 (medium 6-14 AA)
+        * ``'pi_helix'``: Fodje-Al-Karadaghi 2002
 
         **Mixed-prior generator (list of preset names)** combines the per-AA
         probability vectors of the listed presets via element-wise product
@@ -836,8 +842,8 @@ class AAWindowSampler:
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
-            DataFrame with an ``entry`` column (protein IDs) and a ``sequence``
-            column (full protein sequences). See Notes.
+            DataFrame containing an ``entry`` column with unique protein identifiers
+            and a ``sequence`` column with full protein sequences. See Notes.
         n : int, default=100
             Maximum number of motif-matched windows to return.
         window_size : int, default=9
@@ -869,7 +875,9 @@ class AAWindowSampler:
 
         Returns
         -------
-        pd.DataFrame
+        df_seq : pd.DataFrame
+            Sampled windows; one row per window with ``entry``, ``sequence``,
+            ``role``, ``strategy``, and ``entry_win`` columns.
 
         Notes
         -----

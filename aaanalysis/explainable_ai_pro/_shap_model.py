@@ -514,7 +514,7 @@ class ShapModel:
 
         Returns
         -------
-        df_feat: pd.DataFrame, shape (n_features, n_feature_info+n)
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info+n)
             Feature DataFrame including feature impact. If the feature impact is computed for multiple samples,
             n=number of samples; n=1, otherwise.
 
@@ -632,7 +632,7 @@ class ShapModel:
 
         Returns
         -------
-        df_feat: pd.DataFrame, shape (n_features, n_feature_info+n)
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info+n)
             Feature DataFrame including feature value difference. If the feature value difference is computed for multiple
             samples, n=number of samples; n=1, otherwise.
 

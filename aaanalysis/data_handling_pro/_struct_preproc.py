@@ -522,7 +522,7 @@ class StructurePreprocessor:
         return_df: bool = False,
         verbose: Optional[bool] = None,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
-        """Run DSSP + per-feature encoders → ``dict_dssp`` (normalized to ``[0, 1]``).
+        """Run DSSP and the per-feature encoders to build a ``[0, 1]``-normalized ``dict_dssp``.
 
         Parameters
         ----------
@@ -712,7 +712,7 @@ class StructurePreprocessor:
         return_df: bool = False,
         verbose: Optional[bool] = None,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
-        """Extract per-residue features from PDB ATOM records → ``dict_pdb``.
+        """Extract per-residue features from PDB ATOM records into ``dict_pdb``.
 
         Parameters
         ----------
@@ -907,7 +907,8 @@ class StructurePreprocessor:
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
-            DataFrame with ``entry`` + ``sequence`` columns. The PAE matrix
+            DataFrame containing an ``entry`` column with unique protein identifiers
+            and a ``sequence`` column with full protein sequences. The PAE matrix
             shape ``(L, L)`` must equal ``len(sequence)``; mismatched rows
             are treated as failures.
         pae_folder : str or pathlib.Path
@@ -1107,7 +1108,8 @@ class StructurePreprocessor:
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
-            DataFrame with ``entry`` + ``sequence`` columns.
+            DataFrame containing an ``entry`` column with unique protein identifiers
+            and a ``sequence`` column with full protein sequences.
         pdb_folder : str or pathlib.Path, optional
             Directory with one ``<entry>.pdb`` / ``.cif`` / ``.pdb.gz`` /
             ``.cif.gz`` per row. Required when ``tool='chainsaw'``.
@@ -1118,16 +1120,15 @@ class StructurePreprocessor:
         tool : {'chainsaw', 'afragmenter'}, default='afragmenter'
             Which segmentation tool to run.
 
-            - ``'afragmenter'``: pip-installable PAE-based segmenter
-              (Verwimp et al. 2025). Requires the optional extra
-              ``pip install aaanalysis[pro]`` (lazy-import; the friendly
-              install hint fires only when this tool is requested).
-              Operates on the PAE matrix from ``pae_folder``.
-            - ``'chainsaw'``: PDB-based segmenter (Wells et al. 2024,
-              Bioinformatics; https://github.com/JudeWells/Chainsaw).
-              Not on PyPI; clone the repo locally and pass its directory
-              as ``chainsaw_path``. Operates on PDB / CIF from
-              ``pdb_folder`` via subprocess.
+            * ``'afragmenter'``: pip-installable PAE-based segmenter.
+              Requires the optional extra ``pip install aaanalysis[pro]``
+              (lazy-import; the friendly install hint fires only when this
+              tool is requested). Operates on the PAE matrix from ``pae_folder``.
+            * ``'chainsaw'``: PDB-based segmenter
+              (`Chainsaw <https://github.com/JudeWells/Chainsaw>`__). Not on
+              PyPI; clone the repo locally and pass its directory as
+              ``chainsaw_path``. Operates on PDB / CIF from ``pdb_folder`` via
+              subprocess.
         chainsaw_path : str or pathlib.Path, optional
             Local clone of the ChainSaw repository. Required when
             ``tool='chainsaw'`` (ignored otherwise).
@@ -1149,9 +1150,9 @@ class StructurePreprocessor:
         -------
         df_out : pd.DataFrame
             A copy of ``df_seq`` with two appended columns:
-            - ``chopping`` (str): the Merizo/ChainSaw common-format
+            * ``chopping`` (str): the Merizo/ChainSaw common-format
               chopping string, or ``''`` on failure.
-            - ``domain_ok`` (bool): ``True`` if the tool returned a
+            * ``domain_ok`` (bool): ``True`` if the tool returned a
               non-empty chopping for this entry.
 
         Raises
@@ -1270,7 +1271,7 @@ class StructurePreprocessor:
         return_df: bool = False,
         verbose: Optional[bool] = None,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
-        """Read pre-computed domain segmentation files → ``dict_domains``.
+        """Read pre-computed domain segmentation files into ``dict_domains``.
 
         Bring-your-own-segmentation: the user pre-runs Merizo / ChainSaw /
         AFragmenter / a hand-curated domain table on their PDB files and
@@ -1278,9 +1279,9 @@ class StructurePreprocessor:
         one file per entry in ``domain_folder``. Two file formats are
         accepted by the resolver (looked up by entry name):
 
-          - ``<entry>.txt`` — first non-empty line is the chopping string,
+          * ``<entry>.txt`` — first non-empty line is the chopping string,
             e.g. ``6-18_296-459,19-156``.
-          - ``<entry>.tsv`` — Merizo/ChainSaw TSV output with a
+          * ``<entry>.tsv`` — Merizo/ChainSaw TSV output with a
             ``chopping`` header (first data row used).
 
         The chopping format: domains separated by commas, segments within
@@ -1330,14 +1331,14 @@ class StructurePreprocessor:
 
         Notes
         -----
-        - AAanalysis deliberately does NOT bundle a segmentation tool runtime
+        * AAanalysis deliberately does NOT bundle a segmentation tool runtime
           (no PyTorch, no model weights, no Merizo / ChainSaw / AFragmenter
           pinned). Keep ``aaanalysis[pro]`` lean; pre-run the tool of your
           choice, then ingest its chopping output here.
-        - Merizo: https://github.com/psipred/Merizo (~2 s per 425-residue
+        * Merizo: https://github.com/psipred/Merizo (~2 s per 425-residue
           chain on CPU, bundled weights, pip-installable).
-        - ChainSaw: https://github.com/JudeWells/Chainsaw (manual install).
-        - Output chopping strings: same `chopping` column in both tools'
+        * ChainSaw: https://github.com/JudeWells/Chainsaw (manual install).
+        * Output chopping strings: same `chopping` column in both tools'
           TSV output, drop-in compatible.
         """
         verbose = ut.check_verbose(self._verbose if verbose is None else verbose)

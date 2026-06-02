@@ -168,9 +168,9 @@ def load_dataset(name: str = "Overview",
     non_canonical_aa : {'remove', 'keep', 'gap'}, default='remove'
         Options for handling non-canonical amino acids:
 
-        - ``remove``: Remove sequences containing non-canonical amino acids.
-        - ``keep``: Don't remove sequences containing non-canonical amino acids.
-        - ``gap``: Non-canonical amino acids are replaced by the gap symbol ('X').
+        * ``remove``: Remove sequences containing non-canonical amino acids.
+        * ``keep``: Don't remove sequences containing non-canonical amino acids.
+        * ``gap``: Non-canonical amino acids are replaced by the gap symbol ('X').
 
     min_len : int, optional
         Minimum length of sequences for filtering.
@@ -182,7 +182,7 @@ def load_dataset(name: str = "Overview",
 
     Returns
     -------
-    pandas.DataFrame
+    df : pandas.DataFrame
         A DataFrame of either the selected sequence dataset (``df_seq``) or
         overview on all benchmark datasets (``df_overview``).
 
@@ -190,22 +190,22 @@ def load_dataset(name: str = "Overview",
     -----
     Available datasets (pass as ``name``), grouped by level:
 
-    - Amino acid level (``'AA_*'``): 'AA_CASPASE3', 'AA_FURIN', 'AA_LDR',
+    * Amino acid level (``'AA_*'``): 'AA_CASPASE3', 'AA_FURIN', 'AA_LDR',
       'AA_MMP2', 'AA_RNABIND', 'AA_SA'.
-    - Sequence level (``'SEQ_*'``): 'SEQ_AMYLO', 'SEQ_CAPSID', 'SEQ_DISULFIDE',
+    * Sequence level (``'SEQ_*'``): 'SEQ_AMYLO', 'SEQ_CAPSID', 'SEQ_DISULFIDE',
       'SEQ_LOCATION', 'SEQ_SOLUBLE', 'SEQ_TAIL'.
-    - Domain level (``'DOM_*'``): 'DOM_GSEC', 'DOM_GSEC_PU'.
+    * Domain level (``'DOM_*'``): 'DOM_GSEC', 'DOM_GSEC_PU'.
 
     See :ref:`t1_overview_benchmarks` for the size, class balance, and reference
     predictor of each dataset.
 
     ``df_seq`` includes these columns:
 
-    - 'entry': Protein identifier, either the UniProt accession number or an id based on index.
-    - 'sequence': Amino acid sequence.
-    - 'label': Binary classification label (0 for negatives, 1 for positives).
-    - 'tmd_start', 'tmd_stop': Start and stop positions of TMD (present only at the domain level).
-    - 'jmd_n', 'tmd', 'jmd_c': Sequences for JMD_N, TMD, and JMD_C respectively.
+    * 'entry': Protein identifier, either the UniProt accession number or an id based on index.
+    * 'sequence': Amino acid sequence.
+    * 'label': Binary classification label (0 for negatives, 1 for positives).
+    * 'tmd_start', 'tmd_stop': Start and stop positions of TMD (present only at the domain level).
+    * 'jmd_n', 'tmd', 'jmd_c': Sequences for JMD_N, TMD, and JMD_C respectively.
 
     See Also
     --------

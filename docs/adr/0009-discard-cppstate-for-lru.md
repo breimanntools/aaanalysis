@@ -1,6 +1,6 @@
 # ADR-0009 — Reuse scale tensors via an internal content-hash LRU, not a public `CPPState`
 
-Status: Accepted — 2026-05-31
+Status: Accepted — 2026-05-31 (D2 superseded by ADR-0014, 2026-06-03)
 
 ## Context
 

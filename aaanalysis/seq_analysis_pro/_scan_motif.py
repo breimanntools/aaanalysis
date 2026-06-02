@@ -189,7 +189,8 @@ def scan_motif(df_seq: pd.DataFrame = None,
 
     Returns
     -------
-    pd.DataFrame
+    df_hits : pd.DataFrame
+        Scored motif hits, one row per matched window.
 
     Raises
     ------

@@ -216,7 +216,7 @@ class SequenceFeature:
 
         Returns
         -------
-        df_parts: pd.DataFrame, shape (n_samples, n_parts)
+        df_parts : pd.DataFrame, shape (n_samples, n_parts)
             Sequence parts DataFrame.
 
         See Also
@@ -340,7 +340,7 @@ class SequenceFeature:
 
         Returns
         -------
-        split_kws: dict
+        split_kws : dict
             Nested dictionary with parameters for chosen split_types:
 
             - Segment: {n_split_min:1, n_split_max=15}
@@ -538,7 +538,7 @@ class SequenceFeature:
 
         Returns
         -------
-        X: array-like , shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Feature matrix containing feature values for samples. If ``batch=True``, a **list** of such
             matrices aligned to the input list of ``df_parts``.
 
@@ -620,7 +620,7 @@ class SequenceFeature:
 
         Returns
         -------
-        features: list of str
+        features : list of str
             Ids of all possible features for combination of Parts, Splits, and Scales with form: PART-SPLIT-SCALE
 
         Notes
@@ -675,7 +675,7 @@ class SequenceFeature:
 
         Returns
         -------
-        feat_names: list of str
+        feat_names : list of str
             Names of features.
 
         Notes

@@ -252,3 +252,44 @@ class TestShapModelFitComplex:
         with pytest.raises(ValueError):
             sm.fit(valid_X, labels=labels, is_selected=list_is_selected, n_rounds=n_rounds,
                    fuzzy_labeling=fuzzy_labeling, label_target_class=label_target_class, n_background_data=n_background_data)
+
+
+class TestShapModelFitExplainers:
+    """Exercise non-default SHAP explainer classes (Kernel / Linear) on small data."""
+
+    @staticmethod
+    def _small_data(n_samples=14, n_feat=4, seed=0):
+        rng = np.random.default_rng(seed)
+        X = rng.random((n_samples, n_feat))
+        labels = np.array([1, 0] * (n_samples // 2))
+        return X, labels
+
+    def test_kernel_explainer_with_background_data(self):
+        """KernelExplainer + n_background_data triggers the kmeans background path."""
+        import shap
+        from sklearn.ensemble import RandomForestClassifier
+        X, labels = self._small_data()
+        sm = aa.ShapModel(explainer_class=shap.KernelExplainer,
+                          list_model_classes=[RandomForestClassifier], verbose=False)
+        sm.fit(X, labels=labels, n_rounds=1, n_background_data=3)
+        assert sm.shap_values.shape == X.shape
+
+    def test_kernel_explainer_without_background_data(self):
+        """KernelExplainer without n_background_data uses the full matrix as background."""
+        import shap
+        from sklearn.ensemble import RandomForestClassifier
+        X, labels = self._small_data(seed=1)
+        sm = aa.ShapModel(explainer_class=shap.KernelExplainer,
+                          list_model_classes=[RandomForestClassifier], verbose=False)
+        sm.fit(X, labels=labels, n_rounds=1)
+        assert sm.shap_values.shape == X.shape
+
+    def test_linear_explainer(self):
+        """LinearExplainer routes through the model-only explainer branch."""
+        import shap
+        from sklearn.linear_model import LogisticRegression
+        X, labels = self._small_data(seed=2)
+        sm = aa.ShapModel(explainer_class=shap.LinearExplainer,
+                          list_model_classes=[LogisticRegression], verbose=False)
+        sm.fit(X, labels=labels, n_rounds=1)
+        assert sm.shap_values.shape == X.shape

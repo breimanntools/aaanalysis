@@ -316,3 +316,62 @@ class TestTreeModelFit:
             tree_model.fit(X=X, labels=labels, use_rfe=[])
         with pytest.raises(ValueError):
             tree_model.fit(X=X, labels=labels, use_rfe="asrter")
+
+
+class TestTreeModelFitComplex:
+    """Combination tests that actually exercise recursive feature elimination."""
+
+    @staticmethod
+    def _rfe_data(n_samples=30, n_feat=20, seed=0):
+        rng = np.random.default_rng(seed)
+        X = rng.random((n_samples, n_feat))
+        labels = np.array([1, 0] * (n_samples // 2))
+        return X, labels
+
+    def test_use_rfe_true_step_none(self):
+        """use_rfe=True with step=None removes all minimum-importance features per round."""
+        X, labels = self._rfe_data()
+        tree_model = aa.TreeModel()
+        tree_model.fit(X=X, labels=labels, use_rfe=True, step=None,
+                       n_feat_min=5, n_feat_max=15, n_cv=2, n_rounds=2)
+        assert tree_model.is_selected_.shape == (2, X.shape[1])
+        # RFE keeps at least n_feat_min features in each round
+        assert all(row.sum() >= 5 for row in tree_model.is_selected_)
+
+    def test_use_rfe_true_step_int(self):
+        """use_rfe=True with a fixed step removes 'step' least-important features per round."""
+        X, labels = self._rfe_data(seed=1)
+        tree_model = aa.TreeModel()
+        tree_model.fit(X=X, labels=labels, use_rfe=True, step=2,
+                       n_feat_min=5, n_feat_max=15, n_cv=2, n_rounds=2)
+        assert tree_model.is_selected_.shape == (2, X.shape[1])
+        assert len(tree_model.feat_importance) == X.shape[1]
+
+    def test_use_rfe_true_verbose_prints_progress(self):
+        """verbose=True drives the RFE start/progress/end messages."""
+        X, labels = self._rfe_data(seed=2)
+        aa.options["verbose"] = True
+        tree_model = aa.TreeModel(verbose=True)
+        tree_model.fit(X=X, labels=labels, use_rfe=True, step=2,
+                       n_feat_min=5, n_feat_max=15, n_cv=2, n_rounds=1)
+        assert tree_model.list_models_ is not None
+
+    def test_use_rfe_true_with_is_preselected(self):
+        """A preselected feature mask is honoured as the RFE starting set."""
+        X, labels = self._rfe_data(seed=3)
+        is_preselected = np.ones(X.shape[1], dtype=bool)
+        is_preselected[:4] = False  # start from 16 of 20 features
+        tree_model = aa.TreeModel(is_preselected=is_preselected)
+        tree_model.fit(X=X, labels=labels, use_rfe=True, step=2,
+                       n_feat_min=5, n_feat_max=12, n_cv=2, n_rounds=2)
+        assert tree_model.is_selected_.shape == (2, X.shape[1])
+
+    def test_preselected_without_rfe_used_as_selection(self):
+        """With use_rfe=False, the preselected mask is the selected set each round."""
+        X, labels = self._rfe_data(seed=4)
+        is_preselected = np.ones(X.shape[1], dtype=bool)
+        is_preselected[:3] = False
+        tree_model = aa.TreeModel(is_preselected=is_preselected)
+        tree_model.fit(X=X, labels=labels, use_rfe=False, n_cv=2, n_rounds=2)
+        for row in tree_model.is_selected_:
+            assert np.array_equal(row, is_preselected)

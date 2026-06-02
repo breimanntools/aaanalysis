@@ -21,8 +21,7 @@ from ._backend.cpp_run import (
     cpp_run_single, cpp_run_batch, cpp_run_sample_batched,
     _pick_feature_matrix_builder,
 )
-from ._backend.cpp._filters._get_feature_matrix_fast import (AALookupCache,
-                                                             clear_scale_lookup_cache)
+from ._backend.cpp._filters._get_feature_matrix_fast import AALookupCache
 from ._backend.cpp.cpp_eval import evaluate_features
 
 
@@ -340,6 +339,7 @@ class CPP(Tool):
             n_jobs: Optional[int] = None,
             vectorized: bool = True,
             n_batches: Optional[int] = None,
+            n_sample_batches: Optional[int] = None,
             return_stats: bool = False,
             ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
         """
@@ -351,6 +351,9 @@ class CPP(Tool):
 
         .. versionchanged:: 1.1.0
             Added the ``return_stats`` parameter, returning the filter-funnel statistics alongside ``df_feat``.
+
+        .. versionchanged:: 1.1.0
+            Added the ``n_sample_batches`` parameter for sample-axis batching (memory bounded by batch size, not n).
 
         Parameters
         ----------
@@ -402,6 +405,10 @@ class CPP(Tool):
             Number of batches (>=2) used for batch processing. If ``None``, single-processing is used, which is faster
             but more memory-intensive. Increasing ``n_batches`` (up to the maximum number of scales in ``df_scales``)
             reduces memory consumption but slows down processing.
+        n_sample_batches : int, None, default=None
+            Number of sample-axis batches (>=2, up to the number of samples) for sample-batched processing. If ``None``,
+            sample-batching is disabled. Bounds peak memory by the batch size rather than the full sample count ``n``,
+            so it is the option for very large ``n``. Mutually exclusive with ``n_batches`` (which batches over scales).
 
         Returns
         -------
@@ -476,6 +483,11 @@ class CPP(Tool):
         n_scales = len(list(self.df_scales))
         ut.check_number_range(name="n_batches", val=n_batches, just_int=True,
                               accept_none=True, min_val=2, max_val=n_scales)
+        ut.check_number_range(name="n_sample_batches", val=n_sample_batches, just_int=True,
+                              accept_none=True, min_val=2, max_val=len(self.df_parts))
+        if n_batches is not None and n_sample_batches is not None:
+            raise ValueError(f"'n_batches' ({n_batches}) and 'n_sample_batches' ({n_sample_batches}) "
+                             f"should not be set together; choose scale-batching or sample-batching, not both.")
         _warn_gaps_encountered(df_parts=self.df_parts, accept_gaps=self._accept_gaps)
         # Route through the unified CPP pipeline + Cython kernel
         # (with Python fallback) — bit-exact, guaranteed by
@@ -494,7 +506,11 @@ class CPP(Tool):
             self._aa_lookup_cache = AALookupCache.from_df(
                 df_parts=self.df_parts, df_scales=self.df_scales,
             )
-        if n_batches is None:
+        if n_sample_batches is not None:
+            df_feat = cpp_run_sample_batched(
+                **args, n_sample_batches=n_sample_batches,
+            )
+        elif n_batches is None:
             df_feat = cpp_run_single(
                 df_seq=None, dict_num=None,
                 aa_lookup_cache=self._aa_lookup_cache,
@@ -508,20 +524,6 @@ class CPP(Tool):
             )
         self.last_filter_stats_ = df_feat.attrs.get("last_filter_stats")
         return _finalize_run_output(df_feat=df_feat, return_stats=return_stats)
-
-    @classmethod
-    def clear_cache(cls):
-        """Evict the process-wide scale-lookup cache.
-
-        ``CPP`` memoizes the float64 scale-matrix derived from ``df_scales``
-        (keyed by content) so repeated constructions across a sweep reuse it.
-        The cache is bounded (``maxsize=32``) and normally needs no manual
-        eviction, but long-running processes that cycle through many distinct
-        scale sets can call this to release the held DataFrames eagerly.
-
-        .. versionadded:: 1.1.0
-        """
-        clear_scale_lookup_cache()
 
     def run_num(self,
                 dict_num_parts: Dict[str, np.ndarray] = None,

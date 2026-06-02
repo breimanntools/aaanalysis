@@ -30,7 +30,8 @@ def comp_seq_sim(seq1: Optional[str] = None,
     seq2 : str, optional
         Second sequence to align.
     df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
-        DataFrame containing an ``entry`` (unique protein identifier) and an ``sequence`` (protein sequences) column.
+        DataFrame containing an ``entry`` column with unique protein identifiers
+        and a ``sequence`` column with full protein sequences.
 
     Returns
     -------

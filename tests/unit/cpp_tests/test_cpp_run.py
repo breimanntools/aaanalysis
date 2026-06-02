@@ -174,6 +174,14 @@ class TestCPPRun:
             df_feat = cpp.run(labels=labels, n_jobs=1, n_batches=n_batches)
             assert isinstance(df_feat, pd.DataFrame)
 
+    def test_valid_n_sample_batches(self):
+        df_parts, labels, split_kws, df_scales = get_parts_splits_scales()
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws)
+        for n_sample_batches in [2, len(df_parts)]:
+            df_feat = cpp.run(labels=labels, n_jobs=1, n_sample_batches=n_sample_batches)
+            assert isinstance(df_feat, pd.DataFrame)
+            assert len(df_feat) > 0
+
     # Negative tests
     def test_invalid_n_filter(self):
         df_parts, labels, split_kws, df_scales = get_parts_splits_scales()
@@ -246,9 +254,33 @@ class TestCPPRun:
             with pytest.raises(ValueError):
                 cpp.run(labels=labels, n_jobs=1, n_batches=n_batches)
 
+    def test_invalid_n_sample_batches(self):
+        df_parts, labels, split_kws, df_scales = get_parts_splits_scales()
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws)
+        list_invalid = [1, "non", True, len(df_parts) + 1, 2.5]
+        for n_sample_batches in list_invalid:
+            with pytest.raises(ValueError):
+                cpp.run(labels=labels, n_jobs=1, n_sample_batches=n_sample_batches)
+
 
 class TestCPPRunComplex:
     """Edge-case and multi-parameter interactions for the CPP.run() method."""
+
+    def test_n_sample_batches_matches_single_pass(self):
+        """Sample-batched run returns the same feature set as the single-pass run."""
+        df_parts, labels, split_kws, df_scales = get_parts_splits_scales()
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws)
+        df_single = cpp.run(labels=labels, n_jobs=1, n_filter=20)
+        df_sb = cpp.run(labels=labels, n_jobs=1, n_filter=20, n_sample_batches=2)
+        assert list(df_single.columns) == list(df_sb.columns)
+        assert set(df_single["feature"]) == set(df_sb["feature"])
+
+    def test_n_batches_and_n_sample_batches_mutually_exclusive(self):
+        """Setting both scale- and sample-batching at once raises ValueError."""
+        df_parts, labels, split_kws, df_scales = get_parts_splits_scales()
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws)
+        with pytest.raises(ValueError):
+            cpp.run(labels=labels, n_jobs=1, n_batches=2, n_sample_batches=2)
 
     def test_empty_pattern_bucket_silently_dropped(self):
         # Regression: a Pattern config whose every repeated-step cumsum exceeds

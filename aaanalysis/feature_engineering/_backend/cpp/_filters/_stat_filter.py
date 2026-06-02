@@ -26,49 +26,61 @@ from ._recompute import build_position_buffer, iter_scale_chunks
 
 
 # I Helper Functions
-def _get_split_labels(split_type=None, split_type_args=None, spr=None):
-    """Fetch split labels dynamically (mirrors _filters._stat_filter helper)."""
-    if split_type_args is not None:
-        labels_splits = getattr(spr, "labels_" + split_type.lower())(**split_type_args)
-    else:
-        labels_splits = getattr(spr, "labels_" + split_type.lower())()
-    return labels_splits
-
-
-def _get_f_split_num(split_type=None, split_type_args=None, len_seq_max=None, spr=None):
-    """Iterative split function for ``vectorized=False`` — applies split per sample row."""
-    f = getattr(spr, split_type.lower())
-
-    def f_split(seq):
-        # seq is a 1D float ndarray already trimmed to its true length by caller.
-        splits = f(seq=seq, **(split_type_args or {}))
-        X = np.full((len(splits), len_seq_max), np.nan, dtype=np.float64)
-        for i, x in enumerate(splits):
-            X[i, : len(x)] = x
-        return np.nanmean(X, axis=-1)
-
-    return f_split
-
-
-def _get_vf_split_num(split_type=None, split_type_args=None, len_seq_max=None, spr=None,
-                     list_splits=None, n_samples=None):
-    """Vectorized split function for ``vectorized=True`` — single (n_samples, n_splits, L_max) buffer."""
-    n_splits = len(list_splits)
-    f = getattr(spr, split_type.lower())
-
-    def vf_split(arr_seq, seq_lengths):
-        # arr_seq: (n, L) float ndarray; seq_lengths: (n,) int ndarray.
-        list_split_vals = [
-            f(seq=arr_seq[i, : int(seq_lengths[i])], **(split_type_args or {}))
-            for i in range(len(arr_seq))
-        ]
-        X = np.full((n_samples, n_splits, len_seq_max), np.nan, dtype=np.float64)
-        for i, split in enumerate(list_split_vals):
-            for j, x in enumerate(split):
-                X[i, j, : len(x)] = x
-        return np.nanmean(X, axis=-1)
-
-    return vf_split
+# DEV (LEGACY — retained, intentionally commented out; do NOT delete): the three
+# split helpers below were the original numerical pre-filter primitives:
+#   * _get_split_labels      — fetch split labels for a split_type from SplitRange
+#   * _get_f_split_num       — per-row split-mean (the vectorized=False path)
+#   * _get_vf_split_num      — per-(scale, part) vectorized split-mean buffer
+# They are SUPERSEDED by build_position_buffer + iter_scale_chunks in _recompute.py
+# (see _pre_filtering_info_split_type), whose comment notes it "Replaces the
+# per-(scale, part) vf_split Python loop". build_position_buffer now returns both
+# the labels_splits and the position buffer these produced. Kept commented for
+# reference because the explicit per-row form documents the math the vectorized
+# buffer encodes — significant CPP design effort; not dead-by-accident.
+#
+# def _get_split_labels(split_type=None, split_type_args=None, spr=None):
+#     """Fetch split labels dynamically (mirrors _filters._stat_filter helper)."""
+#     if split_type_args is not None:
+#         labels_splits = getattr(spr, "labels_" + split_type.lower())(**split_type_args)
+#     else:
+#         labels_splits = getattr(spr, "labels_" + split_type.lower())()
+#     return labels_splits
+#
+#
+# def _get_f_split_num(split_type=None, split_type_args=None, len_seq_max=None, spr=None):
+#     """Iterative split function for ``vectorized=False`` — applies split per sample row."""
+#     f = getattr(spr, split_type.lower())
+#
+#     def f_split(seq):
+#         # seq is a 1D float ndarray already trimmed to its true length by caller.
+#         splits = f(seq=seq, **(split_type_args or {}))
+#         X = np.full((len(splits), len_seq_max), np.nan, dtype=np.float64)
+#         for i, x in enumerate(splits):
+#             X[i, : len(x)] = x
+#         return np.nanmean(X, axis=-1)
+#
+#     return f_split
+#
+#
+# def _get_vf_split_num(split_type=None, split_type_args=None, len_seq_max=None, spr=None,
+#                      list_splits=None, n_samples=None):
+#     """Vectorized split function for ``vectorized=True`` — single (n_samples, n_splits, L_max) buffer."""
+#     n_splits = len(list_splits)
+#     f = getattr(spr, split_type.lower())
+#
+#     def vf_split(arr_seq, seq_lengths):
+#         # arr_seq: (n, L) float ndarray; seq_lengths: (n,) int ndarray.
+#         list_split_vals = [
+#             f(seq=arr_seq[i, : int(seq_lengths[i])], **(split_type_args or {}))
+#             for i in range(len(arr_seq))
+#         ]
+#         X = np.full((n_samples, n_splits, len_seq_max), np.nan, dtype=np.float64)
+#         for i, split in enumerate(list_split_vals):
+#             for j, x in enumerate(split):
+#                 X[i, j, : len(x)] = x
+#         return np.nanmean(X, axis=-1)
+#
+#     return vf_split
 
 
 @ut.catch_runtime_warnings(suppress=True)
