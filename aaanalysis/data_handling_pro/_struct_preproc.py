@@ -345,79 +345,85 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
 
 # II Main Functions
 class StructurePreprocessor:
-    """Preprocess structure-derived (PDB / CIF / AlphaFold) per-residue features for ``CPP.run_num``.
+    """
+    Preprocessing class for protein structure features (PDB / CIF / AlphaFold) [Breimann25a]_.
 
-    Mirrors :class:`EmbeddingPreprocessor`'s instance-based shape but is a
+    Mirrors :class:`EmbeddingPreprocessor`'s instance-based shape but is the
     structure-side companion: produces the ``dict_num`` tensor that
     :meth:`NumericalFeature.get_parts` slices into per-part inputs for
     :meth:`CPP.run_num`, plus the ``(df_scales, df_cat)`` metadata pair that
     names the D dimensions.
 
     .. versionadded:: 1.1.0
-
-    Parameters
-    ----------
-    verbose : bool, default=True
-        If ``True``, emit progress messages via ``ut.print_out``.
-
-    See Also
-    --------
-    * :class:`EmbeddingPreprocessor` for the PLM-embedding analog.
-    * :class:`AnnotationPreprocessor` for the PTM / functional-site analog.
-    * :class:`NumericalFeature` and :class:`CPP` for the downstream consumers.
-    * :func:`aaanalysis.combine_dict_nums` for stitching multiple dict_nums.
-
-    Notes
-    -----
-    * **Feature value range — always normalized to ``[0, 1]``** (NaN for
-      unresolved positions). Use the table below to de-normalize back to
-      raw units if needed:
-
-      ============================  ==========================  =========================================  ====================================
-      Feature key                   Raw range                   Recipe → normalized                        Inverse (de-normalize)
-      ============================  ==========================  =========================================  ====================================
-      ``ss3`` / ``ss8``             {0, 1} (one-hot)            identity                                   identity
-      ``rasa``                      [0, ~1.2]                   ``clip(x, 0, 1)``                          identity (clipped)
-      ``phi_psi_sincos``            [-1, 1]                     ``(x + 1) / 2``                            ``x * 2 - 1``  (in [-1, 1])
-      ``bfactor``                   [0, 100+] Å²                ``clip(x / 100, 0, 1)``                    ``x * 100``  (lossy when ≥1)
-      ``depth``                     [0, ~15] Å                  ``clip(x / 15, 0, 1)``                     ``x * 15``  (lossy when ≥1)
-      ``plddt``                     [0, 100]                    ``x / 100``                                ``x * 100``
-      ``plddt_disorder``            {0, 1}                      identity                                   identity
-      ``plddt_tier``                {0, 1} (4-dim one-hot)      identity                                   identity
-      ``chi1_sincos`` / ``chi2_sincos``  [-1, 1]                ``(x + 1) / 2``                            ``x * 2 - 1``  (in [-1, 1])
-      ``ca_centroid_dist``          [0, ~40] Å                  ``clip(x / 40, 0, 1)``                     ``x * 40``  (lossy when ≥1)
-      ``ca_centroid_dist_norm``     [0, ~2] (Rg units)          ``clip(x / 2, 0, 1)``                      ``x * 2``  (lossy when ≥1)
-      ``contact_count_8A``          [0, ~30]                    ``clip(x / 30, 0, 1)``                     ``x * 30``  (lossy when ≥1)
-      ``contact_count_12A``         [0, ~80]                    ``clip(x / 80, 0, 1)``                     ``x * 80``  (lossy when ≥1)
-      ``hse``                       [0, ~30]                    ``clip(x / 30, 0, 1)``                     ``x * 30``  (lossy when ≥1)
-      ``pae_row_*`` / ``pae_local_mean`` / ``pae_distal_mean`` / ``pae_band_means``
-                                    [0, 31.75] Å                ``clip(x / 31.75, 0, 1)``                  ``x * 31.75``
-      ``pae_asymmetry``             [0, ~10] Å                  ``clip(x / 10, 0, 1)``                     ``x * 10``  (lossy when ≥1)
-      ============================  ==========================  =========================================  ====================================
-
-      The recipes are the source of truth in
-      ``feature_registry.NORMALIZATION_RECIPES``; this table is generated
-      to match.
-
-    * **Feature categorization.** Every feature key emits
-      ``category='Structure'`` (the top-level redundancy / color bucket;
-      see ``ut.DICT_COLOR_CAT['Structure']`` = ``#2E6E5E`` deep teal-green).
-      The fine-grained split (``Secondary structure (3-state)``,
-      ``B-factor (CA mean)``, ``AlphaFold pLDDT (raw)``, etc.) lives in
-      ``subcategory`` and is what ``CPPPlot.feature_map`` displays on the
-      y-axis. Subcategory names follow the AAontology convention
-      (descriptive name with source / detail in parentheses). The redundancy filter's
-      ``check_cat=True`` arm therefore groups all Structure features into
-      one bucket; ``build_scales`` populates ``df_scales`` so the
-      ``max_cor`` gate can discriminate within that bucket.
-    * Requires ``aaanalysis[pro]`` (biopython) plus a ``mkdssp`` / ``dssp``
-      binary on PATH. The ``depth`` feature additionally requires the
-      ``msms`` binary; install via ``conda install -c bioconda msms``.
-    * Single-chain PDBs only — the chain whose ATOM sequence best matches
-      ``df_seq[sequence]`` is selected automatically.
     """
 
     def __init__(self, verbose: bool = True):
+        """
+        Parameters
+        ----------
+        verbose : bool, default=True
+            If ``True``, verbose outputs are enabled.
+
+        Notes
+        -----
+        * **Feature value range — always normalized to ``[0, 1]``** (NaN for
+          unresolved positions). Use the table below to de-normalize back to
+          raw units if needed:
+
+          ============================  ==========================  =========================================  ====================================
+          Feature key                   Raw range                   Recipe → normalized                        Inverse (de-normalize)
+          ============================  ==========================  =========================================  ====================================
+          ``ss3`` / ``ss8``             {0, 1} (one-hot)            identity                                   identity
+          ``rasa``                      [0, ~1.2]                   ``clip(x, 0, 1)``                          identity (clipped)
+          ``phi_psi_sincos``            [-1, 1]                     ``(x + 1) / 2``                            ``x * 2 - 1``  (in [-1, 1])
+          ``bfactor``                   [0, 100+] Å²                ``clip(x / 100, 0, 1)``                    ``x * 100``  (lossy when ≥1)
+          ``depth``                     [0, ~15] Å                  ``clip(x / 15, 0, 1)``                     ``x * 15``  (lossy when ≥1)
+          ``plddt``                     [0, 100]                    ``x / 100``                                ``x * 100``
+          ``plddt_disorder``            {0, 1}                      identity                                   identity
+          ``plddt_tier``                {0, 1} (4-dim one-hot)      identity                                   identity
+          ``chi1_sincos`` / ``chi2_sincos``  [-1, 1]                ``(x + 1) / 2``                            ``x * 2 - 1``  (in [-1, 1])
+          ``ca_centroid_dist``          [0, ~40] Å                  ``clip(x / 40, 0, 1)``                     ``x * 40``  (lossy when ≥1)
+          ``ca_centroid_dist_norm``     [0, ~2] (Rg units)          ``clip(x / 2, 0, 1)``                      ``x * 2``  (lossy when ≥1)
+          ``contact_count_8A``          [0, ~30]                    ``clip(x / 30, 0, 1)``                     ``x * 30``  (lossy when ≥1)
+          ``contact_count_12A``         [0, ~80]                    ``clip(x / 80, 0, 1)``                     ``x * 80``  (lossy when ≥1)
+          ``hse``                       [0, ~30]                    ``clip(x / 30, 0, 1)``                     ``x * 30``  (lossy when ≥1)
+          ``pae_row_*`` / ``pae_local_mean`` / ``pae_distal_mean`` / ``pae_band_means``
+                                        [0, 31.75] Å                ``clip(x / 31.75, 0, 1)``                  ``x * 31.75``
+          ``pae_asymmetry``             [0, ~10] Å                  ``clip(x / 10, 0, 1)``                     ``x * 10``  (lossy when ≥1)
+          ============================  ==========================  =========================================  ====================================
+
+          The recipes are the source of truth in
+          ``feature_registry.NORMALIZATION_RECIPES``; this table is generated
+          to match.
+
+        * **Feature categorization.** Every feature key emits
+          ``category='Structure'`` (the top-level redundancy / color bucket;
+          see ``ut.DICT_COLOR_CAT['Structure']`` = ``#2E6E5E`` deep teal-green).
+          The fine-grained split (``Secondary structure (3-state)``,
+          ``B-factor (CA mean)``, ``AlphaFold pLDDT (raw)``, etc.) lives in
+          ``subcategory`` and is what ``CPPPlot.feature_map`` displays on the
+          y-axis. Subcategory names follow the AAontology convention
+          (descriptive name with source / detail in parentheses). The redundancy filter's
+          ``check_cat=True`` arm therefore groups all Structure features into
+          one bucket; ``build_scales`` populates ``df_scales`` so the
+          ``max_cor`` gate can discriminate within that bucket.
+        * Requires ``aaanalysis[pro]`` (biopython) plus a ``mkdssp`` / ``dssp``
+          binary on PATH. The ``depth`` feature additionally requires the
+          ``msms`` binary; install via ``conda install -c bioconda msms``.
+        * Single-chain PDBs only — the chain whose ATOM sequence best matches
+          ``df_seq[sequence]`` is selected automatically.
+
+        See Also
+        --------
+        * :class:`EmbeddingPreprocessor`: the PLM-embedding analog.
+        * :class:`AnnotationPreprocessor`: the PTM / functional-site analog.
+        * :class:`NumericalFeature` and :class:`CPP`: the downstream consumers.
+        * :func:`aaanalysis.combine_dict_nums`: stitch multiple dict_nums.
+
+        Examples
+        --------
+        .. include:: examples/structure_preprocessor.rst
+        """
         self._verbose = ut.check_verbose(verbose)
 
     # ------------------------------------------------------------------
@@ -1539,8 +1545,8 @@ class StructurePreprocessor:
             On missing ``df_seq`` / ``dict_num``, mismatched D, missing
             entries, or invalid feature keys.
 
-        Warns
-        -----
+        Warnings
+        --------
         UserWarning
             Pseudo-scales depend on the content of ``df_seq`` + ``dict_num``.
         """

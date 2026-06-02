@@ -91,39 +91,52 @@ def _check_scores_unit_range(scores, name="score"):
 
 # II Main Functions
 class AnnotationPreprocessor:
-    """Fetch, ingest, and encode per-residue PTM / functional-site annotations.
+    """
+    Preprocessing class for per-residue PTM / functional-site annotations [Breimann25a]_.
+
+    Mirrors :class:`EmbeddingPreprocessor`'s instance-based shape but is the
+    annotation-side companion: fetches (UniProt) or ingests (user / predictor)
+    annotations and encodes them into the ``dict_num`` tensor that
+    :meth:`NumericalFeature.get_parts` slices into per-part inputs for
+    :meth:`CPP.run_num`, plus the ``(df_scales, df_cat)`` metadata pair.
 
     .. versionadded:: 1.1.0
-
-    See Also
-    --------
-    * :class:`StructurePreprocessor` : sibling per-residue ``dict_num`` source
-      (PDB / DSSP / AlphaFold features).
-    * :class:`EmbeddingPreprocessor` : sibling per-residue ``dict_num`` source
-      (PLM embeddings).
-    * :func:`aaanalysis.combine_dict_nums` : stitch this output with the sibling
-      tensors along the D axis.
-    * :meth:`CPP.run_num` : consumes ``dict_num_parts`` from
-      :meth:`NumericalFeature.get_parts`.
-
-    Notes
-    -----
-    * ``df_annot`` is the canonical per-residue schema with columns
-      ``protein_id, start, end, aa, feature_type, category, source, evidence,
-      score, bond_id`` (positions are 1-based, UniProt-canonical frame).
-    * Encoder values are normalized to ``[0, 1]``; non-annotated in-coverage
-      residues are ``0.0``; ``NaN`` marks genuinely unresolved positions.
-    * Bond features (disulfide / cross-link) expand to two single-residue
-      endpoints sharing a ``bond_id``; cleavage P1 anchors come from
-      SIGNAL / PROPEP / TRANSIT span ends, not from the ``SITE`` grab-bag.
-    * Two methods have no :class:`StructurePreprocessor` analog by design, not
-      oversight: :meth:`register_feature` is the surface of the *open*
-      ``'Functional sites'`` vocabulary (structure's registry is closed), and
-      :meth:`to_df_seq` exports a seq-mode window-split because here an
-      annotation *is* the window label (a structure feature never is).
     """
 
     def __init__(self, verbose: bool = True):
+        """
+        Parameters
+        ----------
+        verbose : bool, default=True
+            If ``True``, verbose outputs are enabled.
+
+        Notes
+        -----
+        * ``df_annot`` is the canonical per-residue schema with columns
+          ``protein_id, start, end, aa, feature_type, category, source, evidence,
+          score, bond_id`` (positions are 1-based, UniProt-canonical frame).
+        * Encoder values are normalized to ``[0, 1]``; non-annotated in-coverage
+          residues are ``0.0``; ``NaN`` marks genuinely unresolved positions.
+        * Bond features (disulfide / cross-link) expand to two single-residue
+          endpoints sharing a ``bond_id``; cleavage P1 anchors come from
+          SIGNAL / PROPEP / TRANSIT span ends, not from the ``SITE`` grab-bag.
+        * Two methods have no :class:`StructurePreprocessor` analog by design, not
+          oversight: :meth:`register_feature` is the surface of the *open*
+          ``'Functional sites'`` vocabulary (structure's registry is closed), and
+          :meth:`to_df_seq` exports a seq-mode window-split because here an
+          annotation *is* the window label (a structure feature never is).
+
+        See Also
+        --------
+        * :class:`StructurePreprocessor`: the structure-side analog (PDB / DSSP / AlphaFold).
+        * :class:`EmbeddingPreprocessor`: the PLM-embedding analog.
+        * :func:`aaanalysis.combine_dict_nums`: stitch multiple dict_nums.
+        * :meth:`CPP.run_num`: the downstream consumer.
+
+        Examples
+        --------
+        .. include:: examples/annotation_preprocessor.rst
+        """
         self._verbose = ut.check_verbose(verbose)
         # Per-instance registry copy so auto-registered Functional keys never
         # leak into the module-global built-ins or other instances.
@@ -497,8 +510,8 @@ class AnnotationPreprocessor:
         ValueError
             On missing corpus, mismatched D, missing entries, or invalid keys.
 
-        Warns
-        -----
+        Warnings
+        --------
         UserWarning
             Pseudo-scales depend on the content of ``df_seq`` + ``dict_num``.
         """
@@ -702,8 +715,8 @@ class AnnotationPreprocessor:
             On invalid arguments, missing schema columns, or a target-column
             name collision with an existing ``df_seq`` column.
 
-        Warns
-        -----
+        Warnings
+        --------
         UserWarning
             If no residue is annotated with ``feature_type`` in ``df_annot``.
 

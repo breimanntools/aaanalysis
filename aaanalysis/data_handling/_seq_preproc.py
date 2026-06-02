@@ -116,7 +116,7 @@ def check_match_seq_slide_start_window_size(seq=None, slide_start=None, window_s
 # II Main Functions
 class SequencePreprocessor:
     """
-    Utility data preprocessing class to encode and represent protein sequences.
+    Utility preprocessing class to encode and represent protein sequences [Breimann25a]_.
 
     .. versionadded:: 1.0.0
     """

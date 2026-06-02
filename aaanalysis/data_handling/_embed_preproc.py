@@ -87,25 +87,41 @@ def _check_match_df_scales_df_stds(df_scales, df_stds):
 
 # II Main Functions
 class EmbeddingPreprocessor:
-    """Encode protein-language-model (PLM) embeddings into per-residue features for ``CPP.run_num``.
+    """
+    Preprocessing class for protein language model (**PLM**) embeddings [Breimann25a]_.
+
+    Turns raw per-residue embeddings into the ``[0, 1]``-normalized ``dict_num``
+    consumed by :meth:`CPP.run_num` (the primary, position-preserving path via
+    :meth:`encode`), with a secondary scale-based path (``df_scales`` / ``df_cat``
+    via :meth:`build_scales` / :meth:`build_cat`) for :meth:`CPP.run`.
 
     .. versionadded:: 1.1.0
 
-    See Also
-    --------
-    * :class:`StructurePreprocessor`, :class:`AnnotationPreprocessor` : sibling
-      per-residue ``dict_num`` sources.
-    * :func:`aaanalysis.combine_dict_nums` : stitch multiple dict_nums.
-    * :meth:`CPP.run_num` : downstream consumer.
-
-    Notes
-    -----
-    * :meth:`encode` is the primary path (raw embeddings → ``[0, 1]`` ``dict_num``
-      for :meth:`CPP.run_num`); :meth:`build_scales` / :meth:`build_cat` are the
-      secondary scale path for :meth:`CPP.run`.
+    Attributes
+    ----------
+    norm_params_ : dict
+        Per-dimension normalization parameters fitted by :meth:`encode`; set after
+        the first ``encode`` call so the identical transform can be reproduced.
     """
 
     def __init__(self, verbose: bool = True):
+        """
+        Parameters
+        ----------
+        verbose : bool, default=True
+            If ``True``, verbose outputs are enabled.
+
+        See Also
+        --------
+        * :class:`StructurePreprocessor`: the structure-side analog.
+        * :class:`AnnotationPreprocessor`: the annotation-side analog.
+        * :func:`aaanalysis.combine_dict_nums`: stitch multiple dict_nums.
+        * :meth:`CPP.run_num`: the downstream consumer.
+
+        Examples
+        --------
+        .. include:: examples/ep_encode.rst
+        """
         self._verbose = ut.check_verbose(verbose)
 
     def encode(
@@ -174,8 +190,8 @@ class EmbeddingPreprocessor:
         See Also
         --------
         build_scales : the secondary context-free AA-scale path (for CPP.run).
-        * :meth:`CPP.run_num` : the per-residue consumer of the returned dict_num.
-        * :func:`aaanalysis.combine_dict_nums` : stitch several dict_nums together.
+        * :meth:`CPP.run_num`: the per-residue consumer of the returned dict_num.
+        * :func:`aaanalysis.combine_dict_nums`: stitch several dict_nums together.
 
         Examples
         --------
@@ -246,8 +262,8 @@ class EmbeddingPreprocessor:
             Per-AA standard deviations, returned only when ``return_std=True``.
             Same index and columns as ``df_scales``.
 
-        Warns
-        -----
+        Warnings
+        --------
         UserWarning
             Pseudo-scales depend on the content of ``df_seq``. The same
             embedding model applied to a different protein corpus produces a
@@ -379,7 +395,7 @@ class EmbeddingPreprocessor:
 
         See Also
         --------
-        :class:`AAclust` : the underlying clustering algorithm.
+        :class:`AAclust`: the underlying clustering algorithm.
         build_scales : produces the expected input(s); pass
             ``return_std=True`` to get ``df_stds`` for std-aware mode.
 
