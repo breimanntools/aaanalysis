@@ -69,6 +69,8 @@ def filter_seq(df_seq: pd.DataFrame = None,
     resource-efficient and easier to install, while MMseq2 is a larger multi-purpose tool. Pairwise sequence similarities
     for the MMseq2 clustering results were computed using the Biopython :class:`Bio.Align.PairwiseAligner` class.
 
+    .. versionadded:: 1.0.0
+
     Parameters
     ----------
     df_seq : pd.DataFrame, shape (n_samples, n>=1)

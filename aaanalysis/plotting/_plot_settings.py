@@ -52,6 +52,8 @@ def plot_settings(font_scale: Union[int, float] = 1,
     It adjusts font embedding for vector formats like PDF and SVG, ensuring compatibility and
     editability across various viewers and editing software.
 
+    .. versionadded:: 0.1.0
+
     Parameters
     ----------
     font_scale : int or float, default=1

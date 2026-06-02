@@ -83,6 +83,8 @@ def load_scales(name: str = "scales",
     this analysis are available either collectively (``name='top60'``) or individually (``top60_n='1-60'``),
     accompanied by their evaluations in the ``'top60_eval'`` dataset.
 
+    .. versionadded:: 0.1.0
+
     Parameters
     ----------
     name : str, default='scales'

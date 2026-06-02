@@ -124,6 +124,9 @@ class AAclustPlot:
 
     This class performs dimensionality reduction for visualization using decomposition models such as
     Principal Component Analysis (PCA).
+
+    .. versionadded:: 0.1.2
+
     """
     def __init__(self,
                  model_class: Type[TransformerMixin] = PCA,

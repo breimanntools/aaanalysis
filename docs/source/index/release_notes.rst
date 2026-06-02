@@ -1,6 +1,101 @@
 Release notes
 =============
 
+Version 1.1
+--------------------------------
+
+v1.1.0 (Unreleased)
+--------------------------------
+
+This release substantially expands the feature-engineering surface: a unified
+**feature-preprocessor family** (embedding / structure / annotation sources),
+a **numerical mode** for CPP, a configuration-sweep wrapper, sequence-window
+sampling, and a suite of site-localization metrics and plotting helpers.
+
+Added
+~~~~~
+
+**Data Handling**
+
+- **EmbeddingPreprocessor**: Instance-based class for per-residue protein
+  language model (PLM) embeddings. The primary ``encode`` method normalizes raw
+  embeddings into a ``[0, 1]`` per-residue ``dict_num`` (``method='minmax' |
+  'quantile' | 'sigmoid'``) ready for ``CPP.run_num``; the secondary
+  ``build_scales`` / ``build_cat`` pair collapses them into pseudo-scales /
+  pseudo-categories for ``CPP.run``.
+- **StructurePreprocessor** (``aaanalysis[pro]``): Converts PDB / CIF / AlphaFold
+  files (and AlphaFold PAE sidecars) into ``[0, 1]``-normalized per-residue
+  numerical tensors. Methods: ``get_dssp``, ``encode_dssp``, ``encode_pdb``,
+  ``encode_pae``, ``get_domains``, ``encode_domains``, ``build_scales``,
+  ``build_cat``.
+- **AnnotationPreprocessor** (``aaanalysis[pro]``): Fetches from UniProt (or
+  ingests user / predictor labels) per-residue PTM and functional-site
+  annotations and encodes them into per-residue tensors. Methods:
+  ``fetch_uniprot``, ``ingest``, ``register_feature``, ``encode``,
+  ``build_scales``, ``build_cat``, ``to_df_seq``.
+- **combine_dict_nums**: Concatenates multiple per-residue tensors
+  (embeddings / structure / annotation) along the feature axis to build a
+  combined ``CPP.run_num`` input.
+
+**Feature Engineering**
+
+- **CPPGrid**: ``Tool``-style wrapper (``run`` + ``eval``) that runs a grid sweep
+  of ``CPP`` configurations in one call, parallelized across configurations.
+  Configurations that differ only in ``n_filter`` are collapsed into a single CPP
+  run, with the remaining configurations served as exact ``head(n)`` slices.
+  ``run`` also stores ``list_df_feat_`` / ``df_params_``; ``eval(sort_by=...)``
+  scores the configurations (by ``avg_ABS_AUC`` by default) and returns them
+  best-first.
+- **CPP.run_num**: New numerical-mode method whose per-residue value source is a
+  pre-sliced numerical tensor (``dict_num_parts``) rather than an amino-acid →
+  scale lookup, enabling embedding / structure / annotation features through the
+  same pipeline and output schema as ``CPP.run``.
+
+**Sequence Analysis**
+
+- **AAWindowSampler**: Samples fixed-length sequence windows for PU-learning and
+  hard-negative-mining workflows (``sample_same_protein``,
+  ``sample_different_protein``, ``sample_motif_matched``, ``sample_synthetic``).
+- **scan_motif** (``aaanalysis[pro]``): MEME/FIMO motif scan over sequences.
+
+**Metrics**
+
+- **comp_per_protein_ap**: Per-protein average precision for site-localization
+  ranking, with an optional ``tolerance=±k`` variant for positional jitter.
+- **comp_detection_metrics**: Recall / precision / F1 / MCC at a fixed score
+  threshold, pooled across per-residue predictions.
+- **comp_bootstrap_ci**: Seeded percentile confidence interval over a
+  per-protein metric vector for small-N uncertainty reporting. Returns a dict
+  ``{'mean', 'ci_low', 'ci_high'}``.
+- **comp_smooth_scores**: Peak-preserving (``max(smoothed, raw)``), NaN-aware
+  smoothing of per-residue score tracks.
+
+**Plotting**
+
+- **plot_rank**: Standalone per-protein max-score-vs-rank scatter with group
+  coloring and optional threshold lines (pairs with the new ``aa.metrics``
+  functions).
+
+**Package**
+
+- **aa.__version__**: The installed package version is now exposed as a
+  top-level attribute via ``importlib.metadata``.
+
+Changed
+~~~~~~~
+
+- **SequenceFeature.feature_matrix**: New ``batch=`` parameter accepts a list of
+  ``df_parts`` and builds them in a single Cython pass, returning a list of
+  feature matrices — faster than per-call construction for many small part tables.
+- **SequenceFeature.get_df_parts / NumericalFeature.get_parts**: New ``pos``-anchor
+  input mode (``tmd_len=``) explodes each 1-based anchor in the ``pos`` column
+  into one three-part (``jmd_n`` / ``tmd`` / ``jmd_c``) row, identified by
+  ``entry_win``.
+- **n_jobs**: Unified parallelism convention across ``CPP`` / ``CPPGrid``
+  (``1`` serial, ``-1`` all cores, ``N>1`` exactly N, ``None`` optimized), with an
+  ``options['n_jobs']`` global override.
+
+
 Version 1.0 (Stable Version)
 --------------------------------
 

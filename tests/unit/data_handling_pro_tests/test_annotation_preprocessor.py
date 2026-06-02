@@ -17,7 +17,7 @@ import pytest
 import aaanalysis as aa
 import aaanalysis.utils as ut
 from aaanalysis.data_handling_pro import AnnotationPreprocessor
-from aaanalysis.data_handling_pro._backend.annotation_preprocessor._uniprot import (
+from aaanalysis.data_handling_pro._backend.annot_preproc._uniprot import (
     map_record_to_rows,
 )
 
@@ -49,7 +49,7 @@ def _annot_rows(rows):
 
 
 # ---------------------------------------------------------------------------
-# Registry + build_cat / build_pseudo_scales
+# Registry + build_cat / build_scales
 # ---------------------------------------------------------------------------
 class TestRegistryAndMetadata:
     def test_builtin_keys_present(self):
@@ -96,7 +96,7 @@ class TestRegistryAndMetadata:
             with pytest.raises(ValueError):
                 ap.build_cat(features=bad)
 
-    def test_build_pseudo_scales_per_aa_mean(self):
+    def test_build_scales_per_aa_mean(self):
         ap = AnnotationPreprocessor(verbose=False)
         df_seq = _df_seq()
         df_annot = _annot_rows(
@@ -105,17 +105,17 @@ class TestRegistryAndMetadata:
         dn = ap.encode(df_seq=df_seq, df_annot=df_annot, features=["phospho"])
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            dfs = ap.build_pseudo_scales(
+            dfs = ap.build_scales(
                 df_seq=df_seq, dict_num=dn, features=["phospho"]
             )
         assert dfs.shape == (20, 1)
         # Two S residues (pos 3, 21); only pos 3 is phospho → mean 0.5
         assert abs(float(dfs.loc["S", "phospho"]) - 0.5) < 1e-9
 
-    def test_build_pseudo_scales_requires_corpus(self):
+    def test_build_scales_requires_corpus(self):
         ap = AnnotationPreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            ap.build_pseudo_scales(df_seq=None, dict_num=None, features=["phospho"])
+            ap.build_scales(df_seq=None, dict_num=None, features=["phospho"])
 
 
 # ---------------------------------------------------------------------------
@@ -434,7 +434,7 @@ class TestEndToEndRunNum:
         dn = ap.encode(df_seq=df_seq, df_annot=df_annot, features=feats)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = ap.build_pseudo_scales(
+            df_scales = ap.build_scales(
                 df_seq=df_seq, dict_num=dn, features=feats
             )
         df_cat = ap.build_cat(features=feats)

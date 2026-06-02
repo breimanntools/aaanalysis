@@ -2,6 +2,14 @@
 
 Status: Accepted — 2026-05-31
 
+> **Update (2026-06-01):** `CPPGrid` now formally subclasses the `Tool` template
+> and implements the `.eval` harness D1 anticipated. `run` stores `list_df_feat_`
+> / `df_params_` on the instance, and `eval(sort_by='avg_ABS_AUC')` joins
+> per-configuration quality (the mean of each feature table's `abs_auc`, matching
+> `CPP.eval`'s `avg_ABS_AUC`) onto `df_params`, sorted best-first. A flat list for
+> a list-valued knob (`steps_pattern`, `list_parts`) now emits a `UserWarning`
+> (the documented double-wrap footgun).
+
 ## Context
 
 A heavy user runs CPP sweeps at the scale of "13 scales × 15 JMD × 7 n_features ×

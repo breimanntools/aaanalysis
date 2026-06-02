@@ -153,6 +153,8 @@ def load_dataset(name: str = "Overview",
     The benchmarks are categorized into amino acid ('AA'), domain ('DOM'), and sequence ('SEQ') level datasets.
     By default, an overview table is provided (``name='Overview'``). For in-depth details, refer to [Breimann24a]_.
 
+    .. versionadded:: 0.1.0
+
     Parameters
     ----------
     name : str, default='Overview'

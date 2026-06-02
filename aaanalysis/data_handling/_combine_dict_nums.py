@@ -81,6 +81,8 @@ def combine_dict_nums(
     :class:`AnnotationPreprocessor`), but also user-supplied per-residue
     embeddings or other per-residue numerical representations.
 
+    .. versionadded:: 1.1.0
+
     Parameters
     ----------
     dict_nums : list of dict[str, np.ndarray]

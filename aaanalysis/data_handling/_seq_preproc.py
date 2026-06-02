@@ -117,6 +117,8 @@ def check_match_seq_slide_start_window_size(seq=None, slide_start=None, window_s
 class SequencePreprocessor:
     """
     Utility data preprocessing class to encode and represent protein sequences.
+
+    .. versionadded:: 1.0.0
     """
 
     # Sequence encoding

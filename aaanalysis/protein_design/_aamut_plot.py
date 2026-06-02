@@ -13,6 +13,8 @@ class AAMutPlot:
     """
     UNDER CONSTRUCTION - Plotting class for ``AAMut`` (Amino Acid Mutator).
 
+    .. versionadded:: 1.0.0
+
     """
     def __init__(self, verbose=False, df_scales=None):
         self._verbose = ut.check_verbose(verbose)

@@ -116,6 +116,8 @@ class SequenceFeature:
     The three feature components are the primary input for the :class:`aaanalysis.CPP` class and define
     Comparative Physicochemical Profiling (CPP) features.
 
+    .. versionadded:: 0.1.0
+
     Notes
     -----
     Feature Components:
@@ -185,6 +187,9 @@ class SequenceFeature:
                      ) -> pd.DataFrame:
         """
         Create DataFrane with selected sequence parts.
+
+        .. versionchanged:: 1.1.0
+            Added the ``pos``-anchor input mode (``tmd_len``).
 
         Parameters
         ----------
@@ -506,6 +511,9 @@ class SequenceFeature:
                        ) -> Union[ut.ArrayLike2D, List[ut.ArrayLike2D]]:
         """
         Create feature matrix for given feature ids and sequence parts.
+
+        .. versionchanged:: 1.1.0
+            Added the ``batch`` parameter for building a list of ``df_parts`` in a single pass.
 
         Parameters
         ----------

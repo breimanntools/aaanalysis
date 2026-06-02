@@ -20,44 +20,44 @@ import numpy as np
 import pandas as pd
 
 import aaanalysis.utils as ut
-from ._backend.structure_preprocessor.feature_registry import (
+from ._backend.struct_preproc.feature_registry import (
     REGISTRY, VALID_FEATURE_KEYS, ENCODER_DSSP, ENCODER_PDB, ENCODER_PAE,
     ENCODER_DOMAINS,
     INVERSE_FORMULAS, validate_feature_keys, get_total_dims, get_dim_names,
     get_categories, get_subcategories)
-from ._backend.structure_preprocessor.run_dssp_full import (
+from ._backend.struct_preproc.run_dssp_full import (
     run_dssp_full_for_entry_)
-from ._backend.structure_preprocessor.align_dssp_full import (
+from ._backend.struct_preproc.align_dssp_full import (
     pick_best_chain_full_, count_mismatches_full_,
     align_chain_full_to_sequence_, apply_ss_mode_full_,
     apply_gap_handling_full_)
-from ._backend.structure_preprocessor.encode_dssp import (
+from ._backend.struct_preproc.encode_dssp import (
     encode_ss, encode_rasa, encode_dihedrals_sincos,
     encode_hbond_donor, encode_hbond_acceptor)
-from ._backend.structure_preprocessor.encode_pdb import (
+from ._backend.struct_preproc.encode_pdb import (
     load_structure, encode_bfactor, encode_depth,
     encode_plddt, encode_plddt_disorder, encode_plddt_tier,
     encode_chi1_sincos, encode_chi2_sincos,
     encode_ca_centroid_dist, encode_ca_centroid_dist_norm,
     encode_contact_count_8A, encode_contact_count_12A,
     encode_hse, encode_disulfide)
-from ._backend.structure_preprocessor._extras import (
+from ._backend.struct_preproc._extras import (
     is_msms_available, check_msms_available)
-from ._backend.structure_preprocessor._file_format import (
+from ._backend.struct_preproc._file_format import (
     resolve_structure_path, resolve_pae_path)
-from ._backend.structure_preprocessor._pae_io import load_pae_matrix
-from ._backend.structure_preprocessor.encode_pae import (
+from ._backend.struct_preproc._pae_io import load_pae_matrix
+from ._backend.struct_preproc.encode_pae import (
     encode_pae_row_mean, encode_pae_row_min, encode_pae_row_max,
     encode_pae_local_mean, encode_pae_distal_mean,
     encode_pae_asymmetry, encode_pae_band_means)
-from ._backend.structure_preprocessor._domain_io import (
+from ._backend.struct_preproc._domain_io import (
     load_chopping, resolve_domain_path, _parse_chopping)
-from ._backend.structure_preprocessor.encode_domains import (
+from ._backend.struct_preproc.encode_domains import (
     encode_domain_boundary, encode_domain_relative_position,
     encode_domain_size, encode_n_domains_in_protein)
-from ._backend.structure_preprocessor._afragmenter import (
+from ._backend.struct_preproc._afragmenter import (
     check_afragmenter_available, run_afragmenter_on_pae)
-from ._backend.structure_preprocessor._chainsaw import (
+from ._backend.struct_preproc._chainsaw import (
     resolve_chainsaw_path, run_chainsaw_on_entry)
 
 
@@ -345,43 +345,15 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
 
 # II Main Functions
 class StructurePreprocessor:
-    """Preprocess PDB-derived per-residue features for ``CPP.run_num``.
+    """Preprocess structure-derived (PDB / CIF / AlphaFold) per-residue features for ``CPP.run_num``.
 
     Mirrors :class:`EmbeddingPreprocessor`'s instance-based shape but is a
-    PDB-side companion: produces the ``dict_num`` tensor that
+    structure-side companion: produces the ``dict_num`` tensor that
     :meth:`NumericalFeature.get_parts` slices into per-part inputs for
     :meth:`CPP.run_num`, plus the ``(df_scales, df_cat)`` metadata pair that
     names the D dimensions.
 
-    Six public methods, each returning ONE tightly-typed value:
-
-    1. :meth:`get_dssp` runs DSSP and appends list columns to ``df_seq``
-       (``ss``, ``asa``, ``phi``, ``psi`` — only the requested ones).
-       Pre-compute once and reuse, or skip and let :meth:`encode_dssp`
-       run DSSP internally.
-    2. :meth:`encode_dssp` returns a single ``dict_dssp`` of per-residue
-       DSSP-derived numerical features (SS one-hot, rASA, dihedral
-       sin/cos) — all normalized to ``[0, 1]``.
-    3. :meth:`encode_pdb` returns a single ``dict_pdb`` of per-residue
-       features extracted directly from the structure file (mean B-factor,
-       residue depth — msms-gated; AlphaFold pLDDT / disorder mask /
-       tier; chi1 / chi2 side-chain dihedrals; CA centroid distance and
-       Rg-normalized variant; CA-CA contact counts at 8 Å and 12 Å).
-    4. :meth:`encode_pae` returns a single ``dict_pae`` of per-residue
-       summaries of the AlphaFold PAE sidecar (row-mean / row-min /
-       row-max; local-vs-distal split with ±``local_window``; asymmetry;
-       three-band sequence-distance means).
-    5. :meth:`build_pseudo_scales` returns the per-AA-averaged
-       ``df_scales`` (and optionally ``df_stds``) from a user corpus.
-       Required by :meth:`CPP.run_num`'s redundancy filter to make
-       ``max_cor`` meaningful (the v1 all-zero df_scales silently
-       disabled that gate).
-    6. :meth:`build_cat` returns the corpus-free ``df_cat`` metadata
-       frame from the feature-key registry.
-
-    Use :func:`aaanalysis.combine_dict_nums` to stitch the encoder outputs
-    (and optional PLM embeddings) into a single ``dict_num`` before passing
-    to :meth:`NumericalFeature.get_parts`.
+    .. versionadded:: 1.1.0
 
     Parameters
     ----------
@@ -436,7 +408,7 @@ class StructurePreprocessor:
       y-axis. Subcategory names follow the AAontology convention
       (descriptive name with source / detail in parentheses). The redundancy filter's
       ``check_cat=True`` arm therefore groups all Structure features into
-      one bucket; ``build_pseudo_scales`` populates ``df_scales`` so the
+      one bucket; ``build_scales`` populates ``df_scales`` so the
       ``max_cor`` gate can discriminate within that bucket.
     * Requires ``aaanalysis[pro]`` (biopython) plus a ``mkdssp`` / ``dssp``
       binary on PATH. The ``depth`` feature additionally requires the
@@ -1352,7 +1324,7 @@ class StructurePreprocessor:
 
         Notes
         -----
-        - v1.2 deliberately does NOT bundle a segmentation tool runtime
+        - AAanalysis deliberately does NOT bundle a segmentation tool runtime
           (no PyTorch, no model weights, no Merizo / ChainSaw / AFragmenter
           pinned). Keep ``aaanalysis[pro]`` lean; pre-run the tool of your
           choice, then ingest its chopping output here.
@@ -1502,9 +1474,9 @@ class StructurePreprocessor:
         return (dict_domains, df_aug) if return_df else dict_domains
 
     # ------------------------------------------------------------------
-    # build_pseudo_scales + build_cat
+    # build_scales + build_cat
     # ------------------------------------------------------------------
-    def build_pseudo_scales(
+    def build_scales(
         self,
         df_seq: pd.DataFrame = None,
         dict_num: Dict[str, np.ndarray] = None,
@@ -1514,7 +1486,7 @@ class StructurePreprocessor:
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
         """Build ``df_scales`` by context-free per-AA averaging of the encoded corpus.
 
-        Mirrors :meth:`EmbeddingPreprocessor.build_pseudo_scales`: for each
+        Mirrors :meth:`EmbeddingPreprocessor.build_scales`: for each
         canonical amino acid ``a`` and each D dimension ``d``, the pseudo-scale
         entry is the mean of ``dict_num[entry][i, d]`` over all (entry, i)
         pairs where ``df_seq[sequence][entry][i] == a``. Non-canonical residues
@@ -1582,7 +1554,7 @@ class StructurePreprocessor:
         if ut.COL_SEQ not in df_seq.columns:
             raise ValueError(
                 f"'df_seq' should contain a '{ut.COL_SEQ}' column for "
-                f"build_pseudo_scales")
+                f"build_scales")
         validate_feature_keys(features)
         ut.check_bool(name="return_std", val=return_std)
         D = get_total_dims(features)
@@ -1660,7 +1632,7 @@ class StructurePreprocessor:
         """Build the ``df_cat`` metadata frame for ``features``.
 
         Pure registry lookup — corpus-free. ``df_cat[category]`` is always
-        ``'Structure'`` for every StructurePreprocessor feature in v1.1;
+        ``'Structure'`` for every StructurePreprocessor feature;
         the per-key semantics live in ``df_cat[subcategory]`` (see registry).
 
         Parameters

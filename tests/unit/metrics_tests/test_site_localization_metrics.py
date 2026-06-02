@@ -8,7 +8,7 @@ protease / PTM prediction:
 * ``comp_detection_metrics`` — pooled TP/FP/FN/TN -> recall / precision / F1 /
   MCC at a fixed threshold.
 * ``comp_bootstrap_ci`` — percentile bootstrap CI of the mean (seeded).
-* ``smooth_scores`` — peak-preserving triangular / Gaussian smoothing, NaN-aware.
+* ``comp_smooth_scores`` — peak-preserving triangular / Gaussian smoothing, NaN-aware.
 """
 import numpy as np
 import pytest
@@ -141,11 +141,11 @@ class TestCompBootstrapCI:
 
     def test_returns_triple(self):
         out = aa.comp_bootstrap_ci(values=np.array([0.2, 0.3, 0.25, 0.28, 0.22]), n_rounds=100, seed=0)
-        assert isinstance(out, tuple) and len(out) == 3
+        assert isinstance(out, dict) and set(out) == {"mean", "ci_low", "ci_high"}
 
     def test_ordered(self):
-        m, lo, hi = aa.comp_bootstrap_ci(values=np.array([0.2, 0.3, 0.25, 0.28, 0.22]), n_rounds=200, seed=0)
-        assert lo <= m <= hi
+        out = aa.comp_bootstrap_ci(values=np.array([0.2, 0.3, 0.25, 0.28, 0.22]), n_rounds=200, seed=0)
+        assert out["ci_low"] <= out["mean"] <= out["ci_high"]
 
     def test_deterministic_with_seed(self):
         v = np.array([0.2, 0.3, 0.25, 0.28, 0.22])
@@ -154,12 +154,12 @@ class TestCompBootstrapCI:
         assert a == b
 
     def test_nan_values_dropped(self):
-        m, lo, hi = aa.comp_bootstrap_ci(values=np.array([0.2, np.nan, 0.3]), n_rounds=50, seed=0)
-        assert not np.isnan(m)
+        out = aa.comp_bootstrap_ci(values=np.array([0.2, np.nan, 0.3]), n_rounds=50, seed=0)
+        assert not np.isnan(out["mean"])
 
     def test_all_nan_is_nan(self):
         out = aa.comp_bootstrap_ci(values=np.array([np.nan, np.nan]), n_rounds=50, seed=0)
-        assert all(np.isnan(x) for x in out)
+        assert all(np.isnan(x) for x in out.values())
 
     # Negative tests
     def test_invalid_n_rounds_zero(self):
@@ -176,54 +176,54 @@ class TestCompBootstrapCI:
 
 
 class TestSmoothScores:
-    """Normal + negative cases for smooth_scores."""
+    """Normal + negative cases for comp_smooth_scores."""
 
     def test_length_preserved(self):
         raw = np.array([0.0, 0.0, 1.0, 0.0, 0.0])
-        assert aa.smooth_scores(scores=raw, window=1).shape == raw.shape
+        assert aa.comp_smooth_scores(scores=raw, window=1).shape == raw.shape
 
     def test_peak_preserved(self):
         raw = np.array([0.0, 0.0, 1.0, 0.0, 0.0])
-        sm = aa.smooth_scores(scores=raw, method="triangular", window=1, peak_preserving=True)
+        sm = aa.comp_smooth_scores(scores=raw, method="triangular", window=1, peak_preserving=True)
         assert sm[2] >= 1.0
 
     def test_non_peak_preserving_attenuates(self):
         raw = np.array([0.0, 0.0, 1.0, 0.0, 0.0])
-        sm = aa.smooth_scores(scores=raw, method="triangular", window=1, peak_preserving=False)
+        sm = aa.comp_smooth_scores(scores=raw, method="triangular", window=1, peak_preserving=False)
         assert sm[2] < 1.0
 
     def test_gaussian_method(self):
         raw = np.array([0.0, 0.0, 1.0, 0.0, 0.0])
-        sm = aa.smooth_scores(scores=raw, method="gaussian", window=2)
+        sm = aa.comp_smooth_scores(scores=raw, method="gaussian", window=2)
         assert sm.shape == raw.shape
 
     def test_nan_aware(self):
         raw = np.array([np.nan, 1.0, 0.0, np.nan])
-        sm = aa.smooth_scores(scores=raw, window=1)
+        sm = aa.comp_smooth_scores(scores=raw, window=1)
         # Finite neighbours fill index 0; an all-NaN neighbourhood stays NaN.
         assert sm.shape == raw.shape
 
     def test_spreads_signal_to_neighbours(self):
         raw = np.array([0.0, 0.0, 1.0, 0.0, 0.0])
-        sm = aa.smooth_scores(scores=raw, method="triangular", window=1, peak_preserving=False)
+        sm = aa.comp_smooth_scores(scores=raw, method="triangular", window=1, peak_preserving=False)
         assert sm[1] > 0.0 and sm[3] > 0.0
 
     # Negative tests
     def test_invalid_method(self):
         with pytest.raises(ValueError):
-            aa.smooth_scores(scores=np.array([1.0, 2.0]), method="boxcar")
+            aa.comp_smooth_scores(scores=np.array([1.0, 2.0]), method="boxcar")
 
     def test_invalid_window_zero(self):
         with pytest.raises(ValueError):
-            aa.smooth_scores(scores=np.array([1.0, 2.0]), window=0)
+            aa.comp_smooth_scores(scores=np.array([1.0, 2.0]), window=0)
 
     def test_invalid_peak_preserving(self):
         with pytest.raises(ValueError):
-            aa.smooth_scores(scores=np.array([1.0, 2.0]), peak_preserving="yes")
+            aa.comp_smooth_scores(scores=np.array([1.0, 2.0]), peak_preserving="yes")
 
     def test_invalid_sigma_negative(self):
         with pytest.raises(ValueError):
-            aa.smooth_scores(scores=np.array([1.0, 2.0]), method="gaussian", sigma=-1.0)
+            aa.comp_smooth_scores(scores=np.array([1.0, 2.0]), method="gaussian", sigma=-1.0)
 
 
 class TestSiteLocalizationComplex:
@@ -232,14 +232,14 @@ class TestSiteLocalizationComplex:
     def test_ap_then_bootstrap(self):
         s, p = _perfect()
         ap = aa.comp_per_protein_ap(list_scores=s, list_positions=p)
-        m, lo, hi = aa.comp_bootstrap_ci(values=ap, n_rounds=100, seed=0)
-        assert lo <= m <= hi
+        out = aa.comp_bootstrap_ci(values=ap, n_rounds=100, seed=0)
+        assert out["ci_low"] <= out["mean"] <= out["ci_high"]
 
     def test_smoothing_lifts_true_site_score(self):
         # A true site adjacent to a high-scoring neighbour: smoothing raises the
         # site's own score (signal bleeds in from the neighbour).
         raw = np.array([0.0, 0.9, 0.1, 0.0, 0.0])  # true site at index 2, peak at 1
-        sm = aa.smooth_scores(scores=raw, method="triangular", window=1, peak_preserving=False)
+        sm = aa.comp_smooth_scores(scores=raw, method="triangular", window=1, peak_preserving=False)
         assert sm[2] > raw[2]
 
     def test_detection_vs_ranking_distinct(self):

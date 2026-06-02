@@ -145,6 +145,8 @@ def scan_motif(df_seq: pd.DataFrame = None,
     and identical ``motif_score`` values. The output schema (including the ``motif_score``
     column) matches :meth:`AAWindowSampler.sample_motif_matched`.
 
+    .. versionadded:: 1.1.0
+
     Parameters
     ----------
     df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -237,7 +239,10 @@ def scan_motif(df_seq: pd.DataFrame = None,
       and FIMO `manual <https://meme-suite.org/meme/doc/fimo.html>`__.
     * :meth:`AAWindowSampler.sample_motif_matched` for the pure-Python
       equivalent (no FIMO binary required).
-    
+
+    Examples
+    --------
+    .. include:: examples/scan_motif.rst
     """
     check_fimo_installed()
     # Validate

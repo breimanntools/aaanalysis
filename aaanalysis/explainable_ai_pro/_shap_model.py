@@ -246,6 +246,8 @@ class ShapModel:
     represent a feature's responsibility for a change in the model output to increase of decrease a sample prediction
     score due to the positive or negative impact of its features, respectively.
 
+    .. versionadded:: 0.1.3
+
     Attributes
     ----------
     shap_values : array-like, shape(n_samples, n_features)

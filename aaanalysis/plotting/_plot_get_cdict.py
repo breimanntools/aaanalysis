@@ -10,6 +10,8 @@ def plot_get_cdict(name: str = "DICT_COLOR") -> dict:
     """
     Get color dictionaries specified for AAanalysis.
 
+    .. versionadded:: 0.1.2
+
     Parameters
     ----------
     name : {'DICT_COLOR', 'DICT_CAT'}, default='DICT_COLOR'

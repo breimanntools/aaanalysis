@@ -27,7 +27,7 @@ settings.register_profile("ci", deadline=2000)
 settings.load_profile("ci")
 
 # Patch targets — use the same module path the frontend imports from.
-MODULE = "aaanalysis.data_handling_pro._structure_preprocessor"
+MODULE = "aaanalysis.data_handling_pro._struct_preproc"
 RUN_AF = f"{MODULE}.run_afragmenter_on_pae"
 RUN_CS = f"{MODULE}.run_chainsaw_on_entry"
 RESOLVE_CS = f"{MODULE}.resolve_chainsaw_path"

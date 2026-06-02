@@ -3,7 +3,7 @@ This is a script for the backend of the StructurePreprocessor: per-feature
 encoders that turn an AlphaFold predicted_aligned_error (PAE) matrix
 ``(L, L)`` into ``(L, D)`` per-residue summaries. Every encoder normalizes
 to ``[0, 1]`` via the recipes in
-``aaanalysis.data_handling_pro._backend.structure_preprocessor.feature_registry.NORMALIZATION_RECIPES``.
+``aaanalysis.data_handling_pro._backend.struct_preproc.feature_registry.NORMALIZATION_RECIPES``.
 
 PAE asymmetry is by AlphaFold's design — ``PAE[i, j] != PAE[j, i]`` in
 general — so a dedicated ``encode_pae_asymmetry`` keeps that signal.

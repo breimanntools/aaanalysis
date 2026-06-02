@@ -1,18 +1,26 @@
 # ADR-0005 — Feature-preprocessor family: consolidate into `data_handling_pro`, unify the protocol
 
-Status: Accepted — 2026-05-29
+Status: Accepted — 2026-05-29 (partially superseded by ADR-0011, 2026-06-01)
+
+> **Update (ADR-0011, 2026-06-01):** before the v1.1.0 release, two decisions
+> below were revised. `EmbeddingPreprocessor` gained an `encode` method (raw
+> embeddings → `[0, 1]` `dict_num`), so the "Embedding has no acquire/encode step"
+> premise no longer holds. The builder methods were renamed for output-matching
+> uniformity: `build_pseudo_scales` → `build_scales`, and Embedding's
+> `cluster_pseudo_scales` → `build_cat` (reversing the "Force … `build_cat` —
+> false symmetry" rejection below). See ADR-0011.
 
 ## Context
 
 Four public `*Preprocessor` classes had drifted into two jobs and three shapes:
 
 - **Input encoder (Family A):** `SequencePreprocessor` (seq → one-hot / integer
-  / windows). Released in v1.0.3 — frozen.
+  / windows). Released in v1.0.0 — frozen.
 - **Feature preprocessors (Family B):** `EmbeddingPreprocessor`,
   `StructurePreprocessor`, `AnnotationPreprocessor` — each turns a per-residue
   data source into a `dict_num` (+ `df_scales` / `df_cat`) for `CPP.run_num`.
-  All three were **unreleased** (only on the v1.1 / v1.2 branches), so reshaping
-  them carried no semver cost.
+  All three were **unreleased** (only on the feature branch; they first ship in
+  package v1.1.0 — see ADR-0010), so reshaping them carried no semver cost.
 
 Two problems: (1) the Family-B classes were scattered — `Embedding` in core
 `data_handling`, `Structure` in `struct_analysis_pro`, `Annotation` in

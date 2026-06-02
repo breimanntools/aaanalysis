@@ -7,7 +7,7 @@ tensors for :meth:`CPP.run_num`.
 
 The class is pro-extra gated: ``requests`` is required for the UniProt fetch.
 It mirrors :class:`StructurePreprocessor`'s instance-based pattern — one source
-per encoder, a registry of feature keys, ``build_pseudo_scales`` (corpus-derived
+per encoder, a registry of feature keys, ``build_scales`` (corpus-derived
 ``df_scales``) + ``build_cat`` (corpus-free ``df_cat``) — so its output stacks
 with DSSP / PAE / embedding tensors via :func:`aaanalysis.combine_dict_nums`.
 
@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 
 import aaanalysis.utils as ut
-from ._backend.annotation_preprocessor.feature_registry import (
+from ._backend.annot_preproc.feature_registry import (
     make_instance_registry,
     register_functional_key,
     validate_feature_keys,
@@ -34,7 +34,7 @@ from ._backend.annotation_preprocessor.feature_registry import (
     get_subcategories,
     NORMALIZATION_RECIPES,
 )
-from ._backend.annotation_preprocessor._uniprot import fetch_and_map
+from ._backend.annot_preproc._uniprot import fetch_and_map
 
 LIST_EVIDENCE_MODES = ["experimental", "manual", "all"]
 LIST_ON_MISMATCH = ["raise", "drop", "warn"]
@@ -93,6 +93,19 @@ def _check_scores_unit_range(scores, name="score"):
 class AnnotationPreprocessor:
     """Fetch, ingest, and encode per-residue PTM / functional-site annotations.
 
+    .. versionadded:: 1.1.0
+
+    See Also
+    --------
+    * :class:`StructurePreprocessor` : sibling per-residue ``dict_num`` source
+      (PDB / DSSP / AlphaFold features).
+    * :class:`EmbeddingPreprocessor` : sibling per-residue ``dict_num`` source
+      (PLM embeddings).
+    * :func:`aaanalysis.combine_dict_nums` : stitch this output with the sibling
+      tensors along the D axis.
+    * :meth:`CPP.run_num` : consumes ``dict_num_parts`` from
+      :meth:`NumericalFeature.get_parts`.
+
     Notes
     -----
     * ``df_annot`` is the canonical per-residue schema with columns
@@ -108,17 +121,6 @@ class AnnotationPreprocessor:
       ``'Functional sites'`` vocabulary (structure's registry is closed), and
       :meth:`to_df_seq` exports a seq-mode window-split because here an
       annotation *is* the window label (a structure feature never is).
-
-    See Also
-    --------
-    * :class:`StructurePreprocessor` : sibling per-residue ``dict_num`` source
-      (PDB / DSSP / AlphaFold features).
-    * :class:`EmbeddingPreprocessor` : sibling per-residue ``dict_num`` source
-      (PLM embeddings).
-    * :func:`aaanalysis.combine_dict_nums` : stitch this output with the sibling
-      tensors along the D axis.
-    * :meth:`CPP.run_num` : consumes ``dict_num_parts`` from
-      :meth:`NumericalFeature.get_parts`.
     """
 
     def __init__(self, verbose: bool = True):
@@ -448,9 +450,9 @@ class AnnotationPreprocessor:
         return dict_num
 
     # ------------------------------------------------------------------
-    # build_pseudo_scales
+    # build_scales
     # ------------------------------------------------------------------
-    def build_pseudo_scales(
+    def build_scales(
         self,
         df_seq: pd.DataFrame = None,
         dict_num: Dict[str, np.ndarray] = None,
@@ -460,7 +462,7 @@ class AnnotationPreprocessor:
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
         """Build ``df_scales`` by context-free per-AA averaging of the corpus.
 
-        Mirrors :meth:`StructurePreprocessor.build_pseudo_scales`: for each
+        Mirrors :meth:`StructurePreprocessor.build_scales`: for each
         canonical amino acid and each D dimension, the pseudo-scale entry is the
         mean of the normalized per-residue values over occurrences of that AA.
         Required so :meth:`CPP.run_num`'s ``cor > max_cor`` redundancy gate is
@@ -511,7 +513,7 @@ class AnnotationPreprocessor:
         if ut.COL_SEQ not in df_seq.columns:
             raise ValueError(
                 f"'df_seq' should contain a '{ut.COL_SEQ}' column for "
-                f"build_pseudo_scales"
+                f"build_scales"
             )
         validate_feature_keys(features, registry=self._registry)
         ut.check_bool(name="return_std", val=return_std)

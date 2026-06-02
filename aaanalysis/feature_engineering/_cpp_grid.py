@@ -3,11 +3,13 @@ This is a script for the frontend CPPGrid class running grid-style CPP configura
 """
 from typing import Optional, List, Dict, Tuple, Union
 import itertools
+import warnings
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 
 import aaanalysis.utils as ut
+from aaanalysis.template_classes import Tool
 
 from ._cpp import CPP
 from ._sequence_feature import SequenceFeature
@@ -16,6 +18,10 @@ from ._numerical_feature import NumericalFeature
 
 # Map the public backend name to the joblib backend.
 _JOBLIB_BACKEND = {"threads": "threading", "loky": "loky"}
+
+# Knobs whose value is itself a list; a *flat* list of scalars here is almost
+# always a mistaken single value being swept element-wise (see _warn_sweep_footgun).
+_LIST_VALUED_KNOBS = {"list_parts", "steps_pattern"}
 
 
 # I Helper Functions
@@ -119,8 +125,29 @@ def _check_params_dict(name=None, params=None):
                          f"knob -> value | [candidates], or None.")
 
 
+def _warn_sweep_footgun(name=None, params=None):
+    """Warn when a list-valued knob (``steps_pattern``, ``list_parts``) gets a flat
+    list of scalars — that is read as an N-way sweep of single values, not one value.
+
+    To use the list as a *single* fixed value, wrap it once (``steps_pattern=[[3, 4]]``);
+    to sweep several, wrap each (``steps_pattern=[[3, 4], [2, 5]]``).
+    """
+    if not params:
+        return
+    for knob in _LIST_VALUED_KNOBS:
+        val = params.get(knob)
+        if isinstance(val, (list, tuple)) and len(val) > 0 \
+                and all(isinstance(v, (int, float, str, bool)) or v is None for v in val):
+            warnings.warn(
+                f"'{name}[{knob!r}]' ({val}) is a flat list, so it is swept as "
+                f"{len(val)} single values. If you meant ONE fixed value, wrap it: "
+                f"{knob}=[{list(val)}]; to sweep several, wrap each candidate.",
+                UserWarning, stacklevel=3,
+            )
+
+
 # II Main Functions
-class CPPGrid:
+class CPPGrid(Tool):
     """
     Grid-style sweep over CPP configurations (Tool).
 
@@ -130,6 +157,8 @@ class CPPGrid:
     ``dict_num`` for the numerical arm) is bound at construction; :meth:`run` takes four
     stage-grouped parameter dictionaries whose list-valued entries are swept.
 
+    .. versionadded:: 1.1.0
+
     Notes
     -----
     * Inside each configuration ``CPP.run`` / ``run_num`` runs serially (``n_jobs=1``);
@@ -138,9 +167,14 @@ class CPPGrid:
       dataframe serialization, and it sidesteps the Python 3.14 / macOS ``__main__``-guard
       spawn footgun). Pass ``backend="loky"`` for process-based parallelism.
 
+    After :meth:`run`, the feature tables and the sweep summary are also kept on the
+    instance as ``list_df_feat_`` and ``df_params_`` (aligned by row index), and
+    :meth:`eval` scores the configurations and returns them best-first.
+
     See Also
     --------
     * :class:`CPP` : the per-configuration engine this class orchestrates.
+    * :meth:`eval` : score the swept configurations and rank them best-first.
     """
 
     def __init__(self,
@@ -196,6 +230,9 @@ class CPPGrid:
         self._random_state = random_state
         self._n_jobs = n_jobs
         self._backend = backend
+        # Set by run(): the feature tables and the sweep summary (sklearn-style trailing _).
+        self.list_df_feat_ = None
+        self.df_params_ = None
 
     # Workers
     def _build_parts(self, parts_kw):
@@ -251,8 +288,15 @@ class CPPGrid:
 
         Notes
         -----
-        * To sweep a list-valued knob (``steps_pattern``, ``list_parts``) wrap it in a
-          list; a bare list is one fixed value.
+        * **List = swept axis.** A ``list``/``tuple`` value is swept element-wise; a
+          scalar is fixed. To sweep a knob that is *itself* list-valued
+          (``steps_pattern``, ``list_parts``) wrap each candidate
+          (``steps_pattern=[[3, 4], [2, 5]]``); to use one such list as a *single* fixed
+          value, wrap it once (``steps_pattern=[[3, 4]]``). Passing a flat list for these
+          knobs (``steps_pattern=[3, 4]``) is swept as two single values and emits a
+          ``UserWarning`` — almost always a mistake.
+        * Results are also stored on the instance (``list_df_feat_``, ``df_params_``);
+          :meth:`eval` ranks the configurations best-first.
         * ``n_warnings`` is derived from each run's filter-funnel counts (sparse-config and
           filter-shortfall conditions); ``n_errors`` counts configurations that raised.
         * **Smart sweeping (no redundant CPP runs).** Sweeping ``n_filter`` does **not**
@@ -262,11 +306,17 @@ class CPPGrid:
           ``df_parts`` are built once per parts-config and ``split_kws`` once per
           split-config, then reused across the grid; the D3 scale-lookup LRU is reused
           across configs sharing a ``df_scales``.
+
+        Examples
+        --------
+        .. include:: examples/cpp_grid.rst
         """
         # Check input
         _check_params_dict(name="params_parts", params=params_parts)
         _check_params_dict(name="params_split", params=params_split)
         _check_params_dict(name="params_cpp", params=params_cpp)
+        _warn_sweep_footgun(name="params_parts", params=params_parts)
+        _warn_sweep_footgun(name="params_split", params=params_split)
         n_jobs = ut.check_n_jobs(n_jobs=self._n_jobs)
         scales_list = _scales_candidates(params_scales)
         for i, ds in enumerate(scales_list):
@@ -368,4 +418,82 @@ class CPPGrid:
             merged.update(gr)
         list_df_feat = [merged[i][0] for i in range(len(combos))]
         df_params = pd.DataFrame([merged[i][1] for i in range(len(combos))])
+        # Store for eval() and post-hoc inspection (aligned by row index).
+        self.list_df_feat_ = list_df_feat
+        self.df_params_ = df_params
         return list_df_feat, df_params
+
+    def eval(self,
+             sort_by: str = "avg_ABS_AUC",
+             ascending: Optional[bool] = None,
+             ) -> pd.DataFrame:
+        """
+        Score the swept configurations and return ``df_params`` joined to per-config quality, best-first.
+
+        Aggregates each configuration's feature table (``list_df_feat_``) into the same
+        discriminative-power columns :meth:`CPP.eval` reports — ``avg_ABS_AUC`` is the
+        mean of the per-feature ``abs_auc`` in that ``df_feat`` — and joins them onto
+        ``df_params``. The result is sorted so the best configuration is ``df.iloc[0]``.
+        Configurations that errored (``df_feat`` is ``None``) get ``NaN`` quality and
+        sort last.
+
+        Parameters
+        ----------
+        sort_by : str, default='avg_ABS_AUC'
+            Quality column to rank by. One of the added columns (``avg_ABS_AUC``,
+            ``avg_abs_mean_dif``, ``n_features``) or any existing ``df_params`` column.
+        ascending : bool, optional
+            Sort direction. ``None`` (default) picks the sensible direction:
+            descending for the higher-is-better metrics (``avg_ABS_AUC``,
+            ``avg_abs_mean_dif``), ascending for everything else.
+
+        Returns
+        -------
+        df_eval : pd.DataFrame
+            ``df_params`` with appended quality columns, sorted best-first. One row per
+            configuration; the original product-order index is preserved so
+            ``self.list_df_feat_[i]`` still maps to row label ``i``.
+
+        Notes
+        -----
+        * Call :meth:`run` first; otherwise a ``RuntimeError`` is raised.
+        * Redundancy (``n_clusters``) is **not** computed here — grid configurations can
+          use different ``df_parts`` / ``df_scales``, so the per-set clustering that
+          :meth:`CPP.eval` performs is not well-defined across the sweep. Use
+          :meth:`CPP.eval` on a single ``df_feat`` if you need it.
+
+        See Also
+        --------
+        * :meth:`run` : produces the ``list_df_feat_`` / ``df_params_`` this consumes.
+        * :meth:`CPP.eval` : the per-configuration evaluator whose ``avg_ABS_AUC`` this matches.
+
+        Examples
+        --------
+        .. include:: examples/cpp_grid_eval.rst
+        """
+        # Check input
+        if self.df_params_ is None or self.list_df_feat_ is None:
+            raise RuntimeError("'eval' requires a prior 'run' call (df_params_/list_df_feat_ are unset).")
+        ut.check_str(name="sort_by", val=sort_by)
+        # Score each configuration directly from its feature table.
+        quality_cols = [ut.COL_AVG_ABS_AUC, "avg_abs_mean_dif", "n_features"]
+        records = []
+        for df_feat in self.list_df_feat_:
+            if df_feat is None or len(df_feat) == 0:
+                records.append({c: np.nan for c in quality_cols})
+                continue
+            rec = {ut.COL_AVG_ABS_AUC: float(df_feat[ut.COL_ABS_AUC].mean()),
+                   "avg_abs_mean_dif": float(df_feat[ut.COL_ABS_MEAN_DIF].mean())
+                   if ut.COL_ABS_MEAN_DIF in df_feat.columns else np.nan,
+                   "n_features": int(len(df_feat))}
+            records.append(rec)
+        df_quality = pd.DataFrame(records, index=self.df_params_.index)
+        df_eval = self.df_params_.join(df_quality)
+        if sort_by not in df_eval.columns:
+            raise ValueError(f"'sort_by' ({sort_by}) should be a column of df_eval "
+                             f"({list(df_eval.columns)}).")
+        if ascending is None:
+            # Only the discriminative-power metrics are higher-is-better.
+            higher_is_better = {ut.COL_AVG_ABS_AUC, "avg_abs_mean_dif"}
+            ascending = sort_by not in higher_is_better
+        return df_eval.sort_values(by=sort_by, ascending=ascending, na_position="last")

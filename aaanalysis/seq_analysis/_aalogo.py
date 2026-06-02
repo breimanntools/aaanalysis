@@ -56,6 +56,8 @@ class AAlogo:
     AAlogo computes logo matrices from sequence parts using the
     `logomaker <https://logomaker.readthedocs.io/en/latest/>`_ package.
 
+    .. versionadded:: 1.0.3
+
     """
 
     def __init__(self,

@@ -227,6 +227,8 @@ class CPP(Tool):
     CPP aims at identifying a set of non-redundant features that are most discriminant between the
     test and reference group of sequences.
 
+    .. versionadded:: 0.1.0
+
     Attributes
     ----------
     df_parts
@@ -346,6 +348,9 @@ class CPP(Tool):
 
         The aim of the CPP algorithm is to identify a set of unique, non-redundant features that are most
         discriminant between the test and reference group of sequences. See [Breimann25a]_ for details on the algorithm.
+
+        .. versionchanged:: 1.1.0
+            Added the ``return_stats`` parameter, returning the filter-funnel statistics alongside ``df_feat``.
 
         Parameters
         ----------
@@ -513,6 +518,8 @@ class CPP(Tool):
         The cache is bounded (``maxsize=32``) and normally needs no manual
         eviction, but long-running processes that cycle through many distinct
         scale sets can call this to release the held DataFrames eagerly.
+
+        .. versionadded:: 1.1.0
         """
         clear_scale_lookup_cache()
 
@@ -550,6 +557,8 @@ class CPP(Tool):
         of ``dict_num_parts`` (the per-AA values they would normally provide are
         unused — ``dict_num_parts`` is the value source).
 
+        .. versionadded:: 1.1.0
+
         Parameters
         ----------
         dict_num_parts : dict[str, np.ndarray], required
@@ -578,18 +587,19 @@ class CPP(Tool):
 
         Notes
         -----
-        * **Your PLM embeddings ARE the ``dict_num``.** No conversion step exists or is
-          needed: a ``{entry: (L, D)}`` embedding tensor feeds straight into
-          :meth:`NumericalFeature.get_parts`. ``EmbeddingPreprocessor.build_pseudo_scales`` /
-          ``cluster_pseudo_scales`` only *name* the D dimensions (producing ``df_scales`` /
-          ``df_cat``); they are never a per-residue value source here.
-        * **Three arms, one entry point.** *structure-only* (``dict_num`` from
-          :class:`StructurePreprocessor`), *embedding* (a PLM tensor), and *fused*
-          (concatenate sources with :func:`aaanalysis.combine_dict_nums` first) all flow
-          through ``get_parts`` → ``run_num`` — only the ``dict_num`` differs.
-        * Per-residue values are expected in ``[0, 1]`` (the ``StructurePreprocessor`` /
+        * **Raw PLM embeddings are not directly usable — normalize them first.**
+          Per-residue values are expected in ``[0, 1]`` (the ``StructurePreprocessor`` /
           ``AnnotationPreprocessor`` normalization convention), since the default
-          ``max_std_test=0.2`` pre-filter is calibrated for that range.
+          ``max_std_test=0.2`` pre-filter is calibrated for that range. Raw embeddings
+          (unbounded floats) must be passed through
+          :meth:`EmbeddingPreprocessor.encode` to obtain a ``[0, 1]``-normalized
+          ``{entry: (L, D)}`` ``dict_num`` before :meth:`NumericalFeature.get_parts`.
+          (``EmbeddingPreprocessor.build_scales`` / ``build_cat`` serve the *other*,
+          AA-scale path via :meth:`run`; they are not a per-residue value source here.)
+        * **Three arms, one entry point.** *structure-only* (``dict_num`` from
+          :class:`StructurePreprocessor`), *embedding* (``EmbeddingPreprocessor.encode``),
+          and *fused* (concatenate sources with :func:`aaanalysis.combine_dict_nums` first)
+          all flow through ``get_parts`` → ``run_num`` — only the ``dict_num`` differs.
 
         See Also
         --------

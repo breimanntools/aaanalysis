@@ -88,6 +88,8 @@ class dPULearn:
     - **Distance-based identification**: As a simple alternative, reliable negatives can also be identified using
       similarity measures like ``euclidean``, ``manhattan``, or ``cosine`` distance.
 
+    .. versionadded:: 0.1.0
+
     Attributes
     ----------
     labels_ : array-like, shape (n_samples,)
