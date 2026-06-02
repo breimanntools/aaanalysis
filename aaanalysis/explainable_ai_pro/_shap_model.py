@@ -457,9 +457,12 @@ class ShapModel:
         return self
 
     def eval(self, shap_values=None, is_selected=None):
+        """Evaluate convergence of the Monte Carlo SHAP-value estimates over rounds.
+
+        .. note::
+           Not yet implemented — this method is under construction.
         """
-        UNDER CONSTRUCTION - Evaluate convergence of Monte Carlo estimates of SHAP values depending on number of rounds
-        """
+        raise NotImplementedError("ShapModel.eval is under construction.")
 
     def add_feat_impact(self,
                         df_feat: pd.DataFrame = None,

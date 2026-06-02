@@ -65,8 +65,11 @@ Class docstrings
 Invariants:
 
 * Summary is a **noun phrase** (``<Full Name> (**ACRONYM**) class ...``) on the
-  line *after* a blank first line, present tense, ending in a ``[Key]_`` project
-  citation. Not an imperative verb.
+  line *after* a blank first line, present tense; not an imperative verb. It ends
+  in a ``[Key]_`` citation **when a matching reference exists** — the method's own
+  paper, or the project paper ``[Breimann25a]_`` for the core algorithms it
+  describes. Utility/helper classes with no matching reference omit it; the
+  checker's ``CLASS-NO-CITATION`` is then **advisory**, not a defect.
 * ``.. versionadded::`` follows the prose, before any section.
 * The class docstring carries **only** ``Attributes`` (scikit-learn ``_``-suffixed
   fit-state), documented as ``name_ : type, shape (...)``. Stateless classes omit it.
@@ -221,7 +224,7 @@ the code emitted by the internal checker.
      - Checker code
    * - Class summary is a noun phrase (not a verb)
      - ``CLASS-SUMMARY-VERB``
-   * - Class summary ends with a ``[Key]_`` citation
+   * - Class summary ends with a ``[Key]_`` citation *when a matching reference exists* (advisory)
      - ``CLASS-NO-CITATION``
    * - ``.. versionadded::`` present
      - ``NO-VERSIONADDED``

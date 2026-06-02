@@ -149,7 +149,7 @@ def _warn_sweep_footgun(name=None, params=None):
 # II Main Functions
 class CPPGrid(Tool):
     """
-    Grid-style sweep over CPP configurations (Tool).
+    Grid-style sweep over CPP configurations (Tool) [Breimann25a]_.
 
     Runs the full **parts → splits → scales → run** pipeline across a Cartesian grid of
     configurations so a sweep needs one call instead of many manual ``get_df_parts`` /
@@ -173,8 +173,8 @@ class CPPGrid(Tool):
 
     See Also
     --------
-    * :class:`CPP` : the per-configuration engine this class orchestrates.
-    * :meth:`eval` : score the swept configurations and rank them best-first.
+    * :class:`CPP`: the per-configuration engine this class orchestrates.
+    * :meth:`eval`: score the swept configurations and rank them best-first.
     """
 
     def __init__(self,
@@ -464,8 +464,8 @@ class CPPGrid(Tool):
 
         See Also
         --------
-        * :meth:`run` : produces the ``list_df_feat_`` / ``df_params_`` this consumes.
-        * :meth:`CPP.eval` : the per-configuration evaluator whose ``avg_ABS_AUC`` this matches.
+        * :meth:`run`: produces the ``list_df_feat_`` / ``df_params_`` this consumes.
+        * :meth:`CPP.eval`: the per-configuration evaluator whose ``avg_ABS_AUC`` this matches.
 
         Examples
         --------

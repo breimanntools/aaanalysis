@@ -18,14 +18,27 @@ class SeqMut:
 
     """
     def __init__(self, verbose=False):
+        """
+        Parameters
+        ----------
+        verbose : bool, default=False
+            If ``True``, verbose outputs are enabled.
+        """
         self._verbose = ut.check_verbose(verbose)
 
     # Main method
     def fit(self, name=None, from_aa=None, to_aa=None):
-        """Compute difference between amino acids for given property scale. """
+        """Compute the difference between amino acids for a given property scale.
+
+        .. note::
+           Not yet implemented — :class:`SeqMut` is under construction.
+        """
+        raise NotImplementedError("SeqMut is under construction.")
 
     def scan(self, df_seq=None, jmd_n_len=10, jmd_c_len=10, show_delta=False):
+        """Run a single-position mutational scan over every amino acid for each sequence.
+
+        .. note::
+           Not yet implemented — :class:`SeqMut` is under construction.
         """
-        Make single position mutational scan for all existing amino acids for each sequence in df_seq
-        using the average prediction for each model (already fitted).
-        """
+        raise NotImplementedError("SeqMut is under construction.")

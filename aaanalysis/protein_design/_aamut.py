@@ -18,12 +18,30 @@ class AAMut:
 
     """
     def __init__(self, verbose=False, df_scales=None):
+        """
+        Parameters
+        ----------
+        verbose : bool, default=False
+            If ``True``, verbose outputs are enabled.
+        df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
+            DataFrame of amino acid scales. Default from :func:`load_scales`.
+        """
         self._verbose = ut.check_verbose(verbose)
         self.df_scales = df_scales
 
     # Main method
     def fit(self, name=None, from_aa=None, to_aa=None):
-        """Compute difference between amino acids for given property scale. """
+        """Compute the difference between amino acids for a given property scale.
+
+        .. note::
+           Not yet implemented — :class:`AAMut` is under construction.
+        """
+        raise NotImplementedError("AAMut is under construction.")
 
     def eval(self):
-        """"""
+        """Evaluate the amino acid substitution impact across scales.
+
+        .. note::
+           Not yet implemented — :class:`AAMut` is under construction.
+        """
+        raise NotImplementedError("AAMut is under construction.")

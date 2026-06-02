@@ -17,11 +17,27 @@ class SeqMutPlot:
 
     """
     def __init__(self, verbose=False):
+        """
+        Parameters
+        ----------
+        verbose : bool, default=False
+            If ``True``, verbose outputs are enabled.
+        """
         self._verbose = ut.check_verbose(verbose)
 
     # Main method
     def mutation_landscape(self):
-        """"""
+        """Plot the per-position mutation-impact landscape across a sequence.
+
+        .. note::
+           Not yet implemented — :class:`SeqMutPlot` is under construction.
+        """
+        raise NotImplementedError("SeqMutPlot is under construction.")
 
     def residue_mutation_impact(self):
-        """"""
+        """Plot the mutation impact for a single residue across substitutions.
+
+        .. note::
+           Not yet implemented — :class:`SeqMutPlot` is under construction.
+        """
+        raise NotImplementedError("SeqMutPlot is under construction.")

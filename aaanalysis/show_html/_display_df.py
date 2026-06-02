@@ -78,6 +78,8 @@ def display_df(df: pd.DataFrame = None,
     """
     Display DataFrame with specific style as HTML output for jupyter notebooks.
 
+    .. versionadded:: 0.1.3
+
     Parameters
     ----------
     df : pd.DataFrame
