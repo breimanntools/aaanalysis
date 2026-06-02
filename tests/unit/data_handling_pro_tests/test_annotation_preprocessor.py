@@ -17,7 +17,7 @@ import pytest
 import aaanalysis as aa
 import aaanalysis.utils as ut
 from aaanalysis.data_handling_pro import AnnotationPreprocessor
-from aaanalysis.data_handling_pro._backend.annotation_preprocessor._uniprot import (
+from aaanalysis.data_handling_pro._backend.annot_preproc._uniprot import (
     map_record_to_rows,
 )
 

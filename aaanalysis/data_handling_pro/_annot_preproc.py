@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 
 import aaanalysis.utils as ut
-from ._backend.annotation_preprocessor.feature_registry import (
+from ._backend.annot_preproc.feature_registry import (
     make_instance_registry,
     register_functional_key,
     validate_feature_keys,
@@ -34,7 +34,7 @@ from ._backend.annotation_preprocessor.feature_registry import (
     get_subcategories,
     NORMALIZATION_RECIPES,
 )
-from ._backend.annotation_preprocessor._uniprot import fetch_and_map
+from ._backend.annot_preproc._uniprot import fetch_and_map
 
 LIST_EVIDENCE_MODES = ["experimental", "manual", "all"]
 LIST_ON_MISMATCH = ["raise", "drop", "warn"]

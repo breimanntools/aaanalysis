@@ -20,44 +20,44 @@ import numpy as np
 import pandas as pd
 
 import aaanalysis.utils as ut
-from ._backend.structure_preprocessor.feature_registry import (
+from ._backend.struct_preproc.feature_registry import (
     REGISTRY, VALID_FEATURE_KEYS, ENCODER_DSSP, ENCODER_PDB, ENCODER_PAE,
     ENCODER_DOMAINS,
     INVERSE_FORMULAS, validate_feature_keys, get_total_dims, get_dim_names,
     get_categories, get_subcategories)
-from ._backend.structure_preprocessor.run_dssp_full import (
+from ._backend.struct_preproc.run_dssp_full import (
     run_dssp_full_for_entry_)
-from ._backend.structure_preprocessor.align_dssp_full import (
+from ._backend.struct_preproc.align_dssp_full import (
     pick_best_chain_full_, count_mismatches_full_,
     align_chain_full_to_sequence_, apply_ss_mode_full_,
     apply_gap_handling_full_)
-from ._backend.structure_preprocessor.encode_dssp import (
+from ._backend.struct_preproc.encode_dssp import (
     encode_ss, encode_rasa, encode_dihedrals_sincos,
     encode_hbond_donor, encode_hbond_acceptor)
-from ._backend.structure_preprocessor.encode_pdb import (
+from ._backend.struct_preproc.encode_pdb import (
     load_structure, encode_bfactor, encode_depth,
     encode_plddt, encode_plddt_disorder, encode_plddt_tier,
     encode_chi1_sincos, encode_chi2_sincos,
     encode_ca_centroid_dist, encode_ca_centroid_dist_norm,
     encode_contact_count_8A, encode_contact_count_12A,
     encode_hse, encode_disulfide)
-from ._backend.structure_preprocessor._extras import (
+from ._backend.struct_preproc._extras import (
     is_msms_available, check_msms_available)
-from ._backend.structure_preprocessor._file_format import (
+from ._backend.struct_preproc._file_format import (
     resolve_structure_path, resolve_pae_path)
-from ._backend.structure_preprocessor._pae_io import load_pae_matrix
-from ._backend.structure_preprocessor.encode_pae import (
+from ._backend.struct_preproc._pae_io import load_pae_matrix
+from ._backend.struct_preproc.encode_pae import (
     encode_pae_row_mean, encode_pae_row_min, encode_pae_row_max,
     encode_pae_local_mean, encode_pae_distal_mean,
     encode_pae_asymmetry, encode_pae_band_means)
-from ._backend.structure_preprocessor._domain_io import (
+from ._backend.struct_preproc._domain_io import (
     load_chopping, resolve_domain_path, _parse_chopping)
-from ._backend.structure_preprocessor.encode_domains import (
+from ._backend.struct_preproc.encode_domains import (
     encode_domain_boundary, encode_domain_relative_position,
     encode_domain_size, encode_n_domains_in_protein)
-from ._backend.structure_preprocessor._afragmenter import (
+from ._backend.struct_preproc._afragmenter import (
     check_afragmenter_available, run_afragmenter_on_pae)
-from ._backend.structure_preprocessor._chainsaw import (
+from ._backend.struct_preproc._chainsaw import (
     resolve_chainsaw_path, run_chainsaw_on_entry)
 
 
