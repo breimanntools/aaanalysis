@@ -187,11 +187,46 @@ class TestRunNumValidation:
         with pytest.raises(ValueError, match="ndim=2"):
             cpp.run_num(dict_num_parts=bad, labels=labels, n_jobs=1)
 
-    def test_n_batches_raises(self):
+    def test_n_batches_too_small_raises(self):
         df_seq, labels, df_parts, df_scales = _build_fixture()
         cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
         dict_num = _build_dict_num_from_scales(df_seq, df_scales)
-        nf = aa.NumericalFeature()
-        _, parts = nf.get_parts(df_seq=df_seq, dict_num=dict_num)
-        with pytest.raises(NotImplementedError, match="'n_batches' is not yet supported"):
-            cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1, n_batches=2)
+        _, parts = aa.NumericalFeature().get_parts(df_seq=df_seq, dict_num=dict_num)
+        with pytest.raises(ValueError):  # n_batches must be >= 2
+            cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1, n_batches=1)
+
+    def test_n_batches_exceeds_D_raises(self):
+        df_seq, labels, df_parts, df_scales = _build_fixture(n_scales=10)
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
+        dict_num = _build_dict_num_from_scales(df_seq, df_scales)
+        _, parts = aa.NumericalFeature().get_parts(df_seq=df_seq, dict_num=dict_num)
+        with pytest.raises(ValueError):  # n_batches must be <= D (=10)
+            cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1, n_batches=999)
+
+
+class TestRunNumBatched:
+    """``n_batches`` partitions the D axis and is bit-exact with single-pass."""
+
+    @staticmethod
+    def _cpp_parts_labels(n_scales=10):
+        df_seq, labels, df_parts, df_scales = _build_fixture(n_scales=n_scales)
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
+        dict_num = _build_dict_num_from_scales(df_seq, df_scales)
+        _, parts = aa.NumericalFeature().get_parts(df_seq=df_seq, dict_num=dict_num)
+        return cpp, parts, labels
+
+    @pytest.mark.parametrize("n_batches", [2, 3, 5, 10])
+    def test_batched_equals_single(self, n_batches):
+        cpp, parts, labels = self._cpp_parts_labels()
+        single = cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1)
+        batched = cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1,
+                              n_batches=n_batches)
+        pd.testing.assert_frame_equal(single, batched)
+
+    def test_batched_return_stats_match(self):
+        cpp, parts, labels = self._cpp_parts_labels()
+        _, stats_single = cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1,
+                                      return_stats=True)
+        _, stats_batched = cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1,
+                                       n_batches=3, return_stats=True)
+        assert stats_single == stats_batched

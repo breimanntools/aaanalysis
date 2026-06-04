@@ -18,7 +18,7 @@ from ._backend.check_feature import (check_split_kws,
                                      check_df_scales, check_df_cat, check_match_df_parts_df_scales,
                                      check_match_df_scales_df_cat)
 from ._backend.cpp_run import (
-    cpp_run_single, cpp_run_batch, cpp_run_sample_batched,
+    cpp_run_single, cpp_run_batch, cpp_run_batch_num, cpp_run_sample_batched,
     _pick_feature_matrix_builder,
 )
 from ._backend.cpp._filters._get_feature_matrix_fast import AALookupCache
@@ -610,8 +610,10 @@ class CPP(Tool):
             Whether to apply sequence splitting and the Mann-Whitney U test in 'vectorized' mode (``True``),
             improving speed but increasing memory consumption.
         n_batches : int, None, default=None
-            Must be ``None`` for numerical mode — batched orchestration over the D axis is not yet
-            implemented and any other value raises ``NotImplementedError``.
+            Number of batches (2 to ``len(df_scales.columns)``) over the D axis of
+            ``dict_num_parts``. If ``None``, single-pass (faster, higher peak memory);
+            a value bounds the pass-1 stat working set to one D-chunk. Output is
+            bit-exact with the single-pass result.
         return_stats : bool, default=False
             If ``True``, also return the filter-funnel statistics (``last_filter_stats_``) as a second
             element ``(df_feat, stats)``; if ``False``, return only ``df_feat``.
@@ -627,9 +629,6 @@ class CPP(Tool):
             If ``dict_num_parts`` is ``None`` (use :meth:`run` for seq-mode), or if
             its shape / part names / D don't align with the constructor's
             ``self.df_parts`` and ``self.df_scales``.
-        NotImplementedError
-            If ``n_batches`` is supplied (batched orchestration over the D axis is
-            not yet implemented for numerical mode; pass ``n_batches=None``).
 
         Notes
         -----
@@ -697,11 +696,8 @@ class CPP(Tool):
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         ut.check_bool(name="vectorized", val=vectorized)
         ut.check_bool(name="return_stats", val=return_stats)
-        if n_batches is not None:
-            raise NotImplementedError(
-                "'n_batches' is not yet supported in numerical mode. Pass n_batches=None; "
-                "batched orchestration over the D axis is a planned follow-up."
-            )
+        ut.check_number_range(name="n_batches", val=n_batches, just_int=True,
+                              accept_none=True, min_val=2, max_val=n_df_scales_cols)
 
         # Re-derive per-(entry, part) real lengths from df_parts non-gap chars.
         # The user-facing dict_num_parts carries only the NaN-padded tensor; lens
@@ -724,13 +720,21 @@ class CPP(Tool):
         # isn't present (e.g. user installed without the wheel). Same auto-dispatch
         # as cpp.run — see _pick_feature_matrix_builder docstring.
         builder = _pick_feature_matrix_builder()
-        df_feat = cpp_run_single(
-            df_seq=None, dict_num=None,
-            dict_part_vals=dict_num_parts, dict_part_lens=dict_part_lens,
-            aa_lookup_cache=None,            # numerical path doesn't use AA lookup
-            feature_matrix_builder=builder,  # consumed by seq-mode only; harmless here
-            **args,
-        )
+        if n_batches is None:
+            df_feat = cpp_run_single(
+                df_seq=None, dict_num=None,
+                dict_part_vals=dict_num_parts, dict_part_lens=dict_part_lens,
+                aa_lookup_cache=None,            # numerical path doesn't use AA lookup
+                feature_matrix_builder=builder,  # consumed by seq-mode only; harmless here
+                **args,
+            )
+        else:
+            # Batch the D axis (the dict_num_parts dimensions). Bit-exact with the
+            # single-pass path — see cpp_run_batch_num.
+            df_feat = cpp_run_batch_num(
+                dict_part_vals=dict_num_parts, dict_part_lens=dict_part_lens,
+                n_batches=n_batches, **args,
+            )
         self.last_filter_stats_ = df_feat.attrs.get("last_filter_stats")
         return _finalize_run_output(df_feat=df_feat, return_stats=return_stats)
 

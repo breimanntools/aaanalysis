@@ -398,6 +398,102 @@ def cpp_run_batch(df_parts=None, split_kws=None, df_scales=None, df_cat=None, ve
     return df_feat
 
 
+def cpp_run_batch_num(df_parts=None, split_kws=None, df_scales=None, df_cat=None, verbose=None,
+                         accept_gaps=True, labels=None, label_test=1, label_ref=0, n_filter=100,
+                         n_pre_filter=None, pct_pre_filter=5, max_std_test=0.2, max_overlap=0.5,
+                         max_cor=0.5, check_cat=True, parametric=False, start=1, tmd_len=20,
+                         jmd_n_len=10, jmd_c_len=10, n_jobs=None, vectorized=True, n_batches=10,
+                         dict_part_vals=None, dict_part_lens=None):
+    """D-chunk batched orchestration for numerical mode (``CPP.run_num``).
+
+    The seq-mode :func:`cpp_run_batch` bounds memory by *assigning* scale values
+    one D-batch at a time. In numerical mode the per-residue values are already
+    supplied (``dict_part_vals``: ``{part: (n, L_part, D)}``), so we instead
+    *slice* the D axis into ``n_batches`` contiguous chunks (zero-copy views) and
+    run the pass-1 streaming pre-filter stats per chunk — bounding the working set
+    of the split/stat computation to one chunk's D dimensions.
+
+    Pass 2 (recompute survivor matrix + ``add_stat``) is run **globally** on the
+    full tensor, exactly as :func:`cpp_run_single`. Output is therefore bit-exact
+    with the single-pass numerical path: per-feature pass-1 stats are independent
+    of how D is chunked, ``pre_filtering`` applies a total deterministic sort
+    (``abs_mean_dif`` → ``std_test`` → feature name), and pass 2 is identical.
+    """
+    args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+    list_scales = list(df_scales)
+    D = len(list_scales)
+    n_feat = len(get_features_(list_parts=list(df_parts),
+                               split_kws=split_kws, list_scales=list_scales))
+    n_requested = n_filter
+    n_filter = n_feat if n_feat < n_filter else n_filter
+
+    # Contiguous D-index chunks -> slicing gives views (no copy of the input).
+    idx_chunks = [c for c in np.array_split(np.arange(D), min(n_batches, D)) if len(c)]
+    if verbose:
+        ut.print_out(f"1. CPP creates {n_feat} features for {len(df_parts)} samples "
+                     f"in {len(idx_chunks)} D-batches")
+    list_amd, list_std, list_feats = [], [], []
+    for i, idx in enumerate(idx_chunks):
+        lo, hi = int(idx[0]), int(idx[-1]) + 1
+        scales_chunk = list_scales[lo:hi]
+        dict_part_vals_chunk = {p: v[:, :, lo:hi] for p, v in dict_part_vals.items()}
+        if verbose:
+            ut.print_start_progress(start_message=(
+                f"\n1.{i + 1} Streaming pre-filter stats (D-batch {i + 1}/{len(idx_chunks)})"))
+        amd_b, std_b, feats_b = pre_filtering_info(
+            df_parts=df_parts, split_kws=split_kws, dict_part_vals=dict_part_vals_chunk,
+            dict_part_lens=dict_part_lens, list_scales=scales_chunk, labels=labels,
+            label_test=label_test, label_ref=label_ref, max_std_test=max_std_test,
+            accept_gaps=accept_gaps, verbose=verbose, n_jobs=n_jobs, vectorized=vectorized,
+        )
+        list_amd.append(amd_b)
+        list_std.append(std_b)
+        list_feats.append(feats_b)
+        del dict_part_vals_chunk
+
+    abs_mean_dif = np.concatenate(list_amd)
+    std_test = np.concatenate(list_std)
+    features_all = np.concatenate(list_feats)
+
+    n_pre_filter, pct_pre_filter = _get_n_pre_filter(
+        n_pre_filter=n_pre_filter, n_filter=n_filter, n_feat=n_feat, pct_pre_filter=pct_pre_filter)
+    if verbose:
+        ut.print_end_progress(end_message=(
+            f"2. CPP pre-filters {n_pre_filter} features ({pct_pre_filter}%) with highest "
+            f"'{ut.COL_ABS_MEAN_DIF}' and 'max_std_test' <= {max_std_test} "
+            f"(kept={len(features_all)} of {n_feat})"))
+    df = pre_filtering(features=features_all, abs_mean_dif=abs_mean_dif, std_test=std_test,
+                       n=n_pre_filter, max_std_test=max_std_test, accept_gaps=accept_gaps)
+    features = df[ut.COL_FEATURE].to_list()
+
+    # Pass 2: global recompute + add_stat (identical to cpp_run_single) -> bit-exact.
+    X_cached = recompute_feature_matrix(
+        dict_part_vals=dict_part_vals, dict_part_lens=dict_part_lens,
+        list_scales=list_scales, features=features, split_kws=split_kws,
+    )
+    df = add_stat(df_feat=df, X_cached=X_cached, labels=labels, parametric=parametric,
+                     label_test=label_test, label_ref=label_ref, n_jobs=n_jobs,
+                     vectorized=vectorized)
+    feat_positions = get_positions_(features=features, start=start, **args_len)
+    df[ut.COL_POSITION] = feat_positions
+    df = add_scale_info_(df_feat=df, df_cat=df_cat)
+
+    if verbose:
+        ut.print_out(f"3. CPP filtering algorithm")
+    df_feat = filtering(df=df, df_scales=df_scales, n_filter=n_filter, check_cat=check_cat,
+                        max_overlap=max_overlap, max_cor=max_cor)
+    df_feat.reset_index(drop=True, inplace=True)
+    df_feat[ut.COLS_FEAT_STAT] = df_feat[ut.COLS_FEAT_STAT].round(3)
+    df_feat[ut.COL_FEATURE] = df_feat[ut.COL_FEATURE].astype(str)
+    df_feat = _attach_filter_stats(
+        df_feat=df_feat, n_candidates=n_feat, n_after_prefilter=len(df),
+        n_after_redundancy=len(df_feat), n_requested=n_requested,
+    )
+    if verbose:
+        ut.print_out(f"4. CPP returns df of {len(df_feat)} unique features with general information and statistics")
+    return df_feat
+
+
 def cpp_run_sample_batched(df_parts=None, split_kws=None, df_scales=None, df_cat=None,
                               verbose=None, accept_gaps=True, labels=None, label_test=1,
                               label_ref=0, n_filter=100, n_pre_filter=None, pct_pre_filter=5,
