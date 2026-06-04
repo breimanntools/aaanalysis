@@ -29,10 +29,24 @@ python .claude/skills/docstring-consistency/scripts/check_docstrings.py aaanalys
 python .claude/skills/docstring-consistency/scripts/check_docstrings.py --fix aaanalysis/
 ```
 
-It flags 17 structural check codes (each printed with a one-line legend). It does
+It flags structural check codes (each printed with a one-line legend). It does
 **not** judge prose quality — pair it with the checklist below and `REFERENCE.md`.
 The public-API filter comes from `aaanalysis/__init__.py` (`--api` to override),
 so file-local `check_*` helpers are never flagged.
+
+**Reading the output — Defects vs Advisory vs skipped:**
+- **Defects** are hard convention violations; **the exit code is non-zero iff
+  there are defects.** `0 defect(s)` means the complete convention is satisfied
+  for every real symbol.
+- **Advisory** (currently only `CLASS-NO-CITATION`) never fails the run: a
+  utility/helper class legitimately has no citation, so this is a *review*
+  prompt, **never** a cue to invent a citation (see rule 7).
+- **Stubs are skipped** (reported only as a count + names): a class whose
+  summary starts `UNDER CONSTRUCTION` / a method whose body is just
+  `raise NotImplementedError` is explicitly not-ready and exempt from the
+  whole convention. A *documented limitation* of a real method (e.g. a `Raises`
+  clause "X not yet implemented for numerical mode") is **not** a stub — the
+  marker must be in the summary line, not buried in a section.
 
 ## Audit workflow
 
@@ -61,8 +75,10 @@ so file-local `check_*` helpers are never flagged.
 
 Copy the matching template from [REFERENCE.md](REFERENCE.md) and fill it in:
 
-- **Class** → noun-phrase summary `<Full Name> (**ACRONYM**) class ... [Breimann2x_]_.`
-  on the line *after* a blank first line; `.. versionadded::` next; then
+- **Class** → noun-phrase summary `<Full Name> (**ACRONYM**) class ...` on the
+  line *after* a blank first line, ending in a `[Key]_` citation **only if that
+  reference genuinely describes the class** (see rule 7 — new data-prep /
+  utility classes usually have none and omit it); `.. versionadded::` next; then
   `Attributes` only (sklearn `_`-state). Put **Parameters / Notes / See Also /
   Examples in `__init__`**, never in the class docstring.
 - **Method** → verb-phrase summary (no `→`/`+` shorthand); sections in order
@@ -73,14 +89,24 @@ Copy the matching template from [REFERENCE.md](REFERENCE.md) and fill it in:
 
 ## House-style rules at a glance
 
-1. Class summary = noun phrase + `**ACRONYM**` + `[Key]_` citation (not a verb).
+1. Class summary = noun phrase + `**ACRONYM**` (not a verb); a `[Key]_` citation
+   only when one genuinely applies (rule 7).
 2. `Parameters` live in `__init__`; the class docstring carries at most `Attributes`.
 3. Every public method ends with one `Examples` `.. include:: examples/<name>.rst`.
 4. `Returns` value is named and matches the returned variable.
 5. Recurring params (`df_seq`, `labels`, `n_jobs`, `random_state`) reuse the
    canonical baseline sentence verbatim; method specifics are a suffix.
 6. `See Also` = `* :role:`Target`: gloss.` bullets (single colon, no bare names).
-7. Citations are `[Key]_` only — no inline `.. [Key]`, raw URL, or `(Author Year)`.
+7. **Verify every citation — never invent one.** A `[Key]_` is valid only when
+   (a) `Key` is defined in `docs/source/index/references.rst` *and* (b) that work
+   actually describes this class/method. **Do NOT reflexively append the project
+   paper `[Breimann25a]_`** — it covers the core γ-secretase CPP/dPULearn
+   algorithms, *not* data-prep utilities (the Structure/Annotation/Embedding/
+   Sequence preprocessors, loaders, …). When in doubt, **OMIT**: `CLASS-NO-CITATION`
+   is advisory; satisfying it with a wrong citation is worse than leaving none.
+   The checker's `CITATION-UNDEFINED` catches typo'd/fabricated keys; relevance is
+   your call. Citations are `[Key]_` only — no inline `.. [Key]`, raw URL, or
+   `(Author Year)`.
 8. Section header is `Warnings`, not `Warns`; no `→`/`+` in any summary line.
 
 Full 15-point checklist, annotated templates, and a worked example of the

@@ -88,7 +88,7 @@ def _check_match_df_scales_df_stds(df_scales, df_stds):
 # II Main Functions
 class EmbeddingPreprocessor:
     """
-    Preprocessing class for protein language model (**PLM**) embeddings [Breimann25a]_.
+    Preprocessing class for protein language model (**PLM**) embeddings.
 
     Turns raw per-residue embeddings into the ``[0, 1]``-normalized ``dict_num``
     consumed by :meth:`CPP.run_num` (the primary, position-preserving path via

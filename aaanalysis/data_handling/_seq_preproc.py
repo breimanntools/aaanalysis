@@ -116,7 +116,16 @@ def check_match_seq_slide_start_window_size(seq=None, slide_start=None, window_s
 # II Main Functions
 class SequencePreprocessor:
     """
-    Utility preprocessing class to encode and represent protein sequences [Breimann25a]_.
+    Preprocessing class for representing protein sequences as numeric inputs [Breimann25a]_.
+
+    Turns raw amino-acid strings into the array forms a downstream model
+    consumes: a one-hot or integer matrix over a fixed alphabet (via
+    :meth:`encode_one_hot` / :meth:`encode_integer`, gap-padded N- or
+    C-terminally), or fixed-length residue windows sliced around a position
+    (via :meth:`get_aa_window` / :meth:`get_sliding_aa_window`). Unlike the
+    per-residue ``dict_num`` preprocessors (:class:`EmbeddingPreprocessor`,
+    :class:`StructurePreprocessor`, :class:`AnnotationPreprocessor`), it works
+    directly on sequence strings and does not feed :meth:`CPP.run_num`.
 
     .. versionadded:: 1.0.0
     """

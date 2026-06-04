@@ -281,14 +281,14 @@ class TestStpGetDssp:
         assert len(out) == 2
         assert all(out[ut.COL_DSSP_OK])
 
-    def test_valid_verbose_override_quiet(self, tmp_path, capsys):
+    def test_valid_verbose_quiet(self, tmp_path, capsys):
         df = _df_one()
-        stp = aa.StructurePreprocessor(verbose=True)
+        stp = aa.StructurePreprocessor(verbose=False)
         with _mock_binary_present(), \
              patch(RUNNER,
                    side_effect=lambda p: _canned_full("ACDEFGHIK")):
             (tmp_path / "P1.pdb").write_text("dummy")
-            stp.get_dssp(df_seq=df, pdb_folder=str(tmp_path), verbose=False)
+            stp.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
         cap = capsys.readouterr()
         assert "P1" not in cap.out
 

@@ -65,11 +65,19 @@ Class docstrings
 Invariants:
 
 * Summary is a **noun phrase** (``<Full Name> (**ACRONYM**) class ...``) on the
-  line *after* a blank first line, present tense; not an imperative verb. It ends
-  in a ``[Key]_`` citation **when a matching reference exists** — the method's own
-  paper, or the project paper ``[Breimann25a]_`` for the core algorithms it
-  describes. Utility/helper classes with no matching reference omit it; the
-  checker's ``CLASS-NO-CITATION`` is then **advisory**, not a defect.
+  line *after* a blank first line, present tense; not an imperative verb.
+* **Citations are the exception, not the default.** A class earns a ``[Key]_``
+  citation only when it is an **important class** that a specific reference
+  describes — its own paper, or the project paper ``[Breimann25a]_`` for the core
+  γ-secretase CPP / dPULearn / TreeModel algorithms it covers. **Most classes —
+  every data-prep / utility / helper class (preprocessors, loaders,
+  ``NumericalFeature``, ``AAlogo``, …) — carry no citation, and that is correct,
+  not a gap.** Never add one to satisfy a checker note. **Verify before adding,
+  and never invent one:** the key must be defined in ``references.rst`` (the
+  checker's ``CITATION-UNDEFINED`` flags typo'd / fabricated keys) *and* the cited
+  work must actually describe this class. ``CLASS-NO-CITATION`` is **advisory** — a
+  reminder to confirm an *important* class isn't missing its citation, **not** a
+  prompt to cite utilities; a wrong citation is worse than none.
 * ``.. versionadded::`` follows the prose, before any section.
 * The class docstring carries **only** ``Attributes`` (scikit-learn ``_``-suffixed
   fit-state), documented as ``name_ : type, shape (...)``. Stateless classes omit it.
@@ -165,7 +173,10 @@ Citations
   two-author ``[FirstSecondYY]`` (``[ElkanNoto08]``), same author/year gets a
   trailing letter (``[Breimann24a]``).
 * Pick the **few most relevant** references per symbol — 1–2 per major method,
-  plus the project paper (``[Breimann25a]_``) at the class level.
+  plus the project paper (``[Breimann25a]_``) at the class level **only for the
+  classes that paper actually describes** (the core CPP / dPULearn / TreeModel
+  pipeline). It is not a default stamp: a class the cited work does not cover
+  carries no class-level citation (see the class-summary rule above).
 
 Versioning & deprecation
 ------------------------
@@ -230,7 +241,13 @@ Conformance checklist
 ---------------------
 
 A docstring is house-style if every applicable item holds. The right column is
-the code emitted by the internal checker.
+the code emitted by the internal checker. The checker separates **defects**
+(hard violations — the run fails only on these) from **advisory** notes
+(``CLASS-NO-CITATION`` — never fails, since utility classes legitimately omit a
+citation), and **skips UNDER CONSTRUCTION stubs** entirely (a class whose summary
+starts ``UNDER CONSTRUCTION``, or a method whose body is just
+``raise NotImplementedError``). ``0 defect(s)`` therefore means the convention is
+satisfied for every implemented public symbol.
 
 .. list-table::
    :header-rows: 1
@@ -242,6 +259,8 @@ the code emitted by the internal checker.
      - ``CLASS-SUMMARY-VERB``
    * - Class summary ends with a ``[Key]_`` citation *when a matching reference exists* (advisory)
      - ``CLASS-NO-CITATION``
+   * - Every ``[Key]_`` is defined in ``references.rst`` (no typo'd / invented keys)
+     - ``CITATION-UNDEFINED``
    * - ``.. versionadded::`` present
      - ``NO-VERSIONADDED``
    * - ``Parameters`` in ``__init__``, not the class docstring

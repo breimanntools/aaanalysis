@@ -79,6 +79,12 @@ preserving the per-entry status DataFrame (the only failure surface for
 
 ## Kept divergences (domain-justified, not cleaned up)
 
+> **Update (ADR-0017, 2026-06-04):** these divergences are now written down as
+> an explicit verb taxonomy (`fetch_`=web / `get_`=local acquisition;
+> `encode`/`encode_*`=pure transform with one `encode_*` per raw source), and a
+> web structure-acquisition method `StructurePreprocessor.fetch_alphafold` was
+> added. Per-call `verbose` was also dropped family-wide (constructor-only).
+
 - `get_` (local tool) vs `fetch_` (web) acquisition verbs.
 - `Structure` fuses acquire+encode (`encode_dssp` runs DSSP); `Annotation`
   separates (`fetch_uniprot` → `encode`) because `df_annot` is a curatable

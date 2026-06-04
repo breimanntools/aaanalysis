@@ -45,6 +45,8 @@ from ._backend.struct_preproc._extras import (
     is_msms_available, check_msms_available)
 from ._backend.struct_preproc._file_format import (
     resolve_structure_path, resolve_pae_path)
+from ._backend.struct_preproc._alphafold import (
+    fetch_alphafold_bulk, COL_ALPHAFOLD_OK)
 from ._backend.struct_preproc._pae_io import load_pae_matrix
 from ._backend.struct_preproc.encode_pae import (
     encode_pae_row_mean, encode_pae_row_min, encode_pae_row_max,
@@ -346,13 +348,18 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
 # II Main Functions
 class StructurePreprocessor:
     """
-    Preprocessing class for protein structure features (PDB / CIF / AlphaFold) [Breimann25a]_.
+    Preprocessing class for protein structure features (PDB / CIF / AlphaFold).
 
-    Mirrors :class:`EmbeddingPreprocessor`'s instance-based shape but is the
-    structure-side companion: produces the ``dict_num`` tensor that
-    :meth:`NumericalFeature.get_parts` slices into per-part inputs for
-    :meth:`CPP.run_num`, plus the ``(df_scales, df_cat)`` metadata pair that
-    names the D dimensions.
+    Turns local structure files into the ``[0, 1]``-normalized per-residue
+    ``dict_num`` consumed by :meth:`CPP.run_num`. Each ``encode_*`` method
+    reads one kind of source from a folder and returns a ``(L, D)`` tensor per
+    protein: DSSP-derived geometry (:meth:`encode_dssp`), PDB ATOM-record
+    features (:meth:`encode_pdb`), AlphaFold PAE summaries
+    (:meth:`encode_pae`), or domain segmentation (:meth:`encode_domains`).
+    :meth:`fetch_alphafold` downloads the input files first when you do not
+    already have them locally. A secondary scale-based path
+    (:meth:`build_scales` / :meth:`build_cat`) feeds the AA-scale
+    :meth:`CPP.run`.
 
     .. versionadded:: 1.1.0
     """
@@ -366,6 +373,15 @@ class StructurePreprocessor:
 
         Notes
         -----
+        * This is the structure-side member of the per-residue ``dict_num``
+          family, alongside :class:`EmbeddingPreprocessor` (PLM embeddings) and
+          :class:`AnnotationPreprocessor` (PTM / functional sites). All three
+          emit ``[0, 1]``-normalized tensors that
+          :meth:`NumericalFeature.get_parts` slices into the per-part inputs of
+          :meth:`CPP.run_num`, and that stack along the D axis via
+          :func:`aaanalysis.combine_dict_nums`. The accompanying
+          ``(df_scales, df_cat)`` pair names the D dimensions for the
+          redundancy filter and output columns.
         * **Feature value range — always normalized to ``[0, 1]``** (NaN for
           unresolved positions). Use the table below to de-normalize back to
           raw units if needed:
@@ -422,9 +438,132 @@ class StructurePreprocessor:
 
         Examples
         --------
-        .. include:: examples/structure_preprocessor.rst
+        .. include:: examples/stp_encode_pdb.rst
         """
         self._verbose = ut.check_verbose(verbose)
+
+    # ------------------------------------------------------------------
+    # fetch_alphafold
+    # ------------------------------------------------------------------
+    def fetch_alphafold(
+        self,
+        df_seq: pd.DataFrame = None,
+        out_folder: Union[str, Path] = None,
+        file_format: str = "pdb",
+        timeout: float = 30.0,
+        skip_existing: bool = True,
+        on_failure: str = "nan",
+        return_df: bool = False,
+    ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
+        """Download AlphaFold model + PAE files for every entry into a folder.
+
+        Fetches each entry's AlphaFold-DB structure
+        (``AF-<entry>-F1-model_v4``) and its PAE sidecar from
+        https://alphafold.ebi.ac.uk, saving them under the canonical filenames
+        :meth:`encode_pdb` / :meth:`encode_pae` / :meth:`get_dssp` already
+        resolve — so a single call populates the ``pdb_folder`` / ``pae_folder``
+        those methods consume. This is the ``fetch_`` (web) acquisition
+        counterpart to the local ``get_`` tools; it downloads all entries in
+        one bulk call.
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein
+            identifiers (UniProt accessions). The ``entry`` values are used as
+            the AlphaFold-DB accessions to download.
+        out_folder : str or pathlib.Path
+            Destination directory for the downloaded files. Its parent must
+            exist; the leaf directory is created if absent.
+        file_format : {'pdb', 'cif'}, default='pdb'
+            Structure file type to download. Both are accepted by the
+            downstream resolvers; ``'pdb'`` matches the ``encode_pdb`` /
+            ``get_dssp`` examples.
+        timeout : float, default=30.0
+            Per-request timeout in seconds.
+        skip_existing : bool, default=True
+            If ``True``, an entry whose model and PAE files both already exist
+            in ``out_folder`` is not re-downloaded; an entry with only one of
+            the two present re-fetches only the missing file.
+        on_failure : {'nan', 'drop', 'raise'}, default='nan'
+            Policy for entries missing from AlphaFold DB (a 404 on either
+            file): ``'nan'`` keeps the row marked not-ok; ``'drop'`` removes it
+            from the returned status; ``'raise'`` raises ``RuntimeError``.
+        return_df : bool, default=False
+            If ``True``, also return an echo of ``df_seq`` with an appended
+            boolean ``alphafold_ok`` column as a second element.
+
+        Returns
+        -------
+        df_status : pd.DataFrame, shape (n_samples, 7)
+            Per-entry download status with columns ``entry, model_ok, pae_ok,
+            alphafold_ok, skipped, model_path, pae_path``.
+        df_seq_out : pd.DataFrame
+            Returned only when ``return_df=True``. Echo of ``df_seq`` plus a
+            boolean ``alphafold_ok`` column.
+
+        Notes
+        -----
+        * Only single-fragment models are fetched (the canonical
+          ``AF-<entry>-F1-…-v4`` filenames). Proteins fragmented across ``F2``,
+          ``F3``, … in AlphaFold DB have no ``F1`` model and are reported as
+          not-ok.
+        * Network failures other than a 404 (timeout, 5xx) raise
+          ``RuntimeError`` and abort the bulk download — they are not absorbed
+          by ``on_failure``, which governs only the missing-from-AF-DB case.
+
+        Raises
+        ------
+        ValueError
+            On invalid arguments.
+        RuntimeError
+            On network / response failure, or if any entry is missing under
+            ``on_failure='raise'``.
+
+        Examples
+        --------
+        .. include:: examples/stp_fetch_alphafold.rst
+        """
+        # Validate
+        verbose = self._verbose
+        ut.check_df_seq(df_seq=df_seq)
+        if out_folder is None:
+            raise ValueError("'out_folder' should not be None")
+        ut.check_str_options(name="file_format", val=file_format,
+                             list_str_options=["pdb", "cif"])
+        ut.check_number_range(name="timeout", val=timeout, min_val=1,
+                              just_int=False)
+        ut.check_bool(name="skip_existing", val=skip_existing)
+        _check_handle_failure(on_failure)
+        ut.check_bool(name="return_df", val=return_df)
+        if COL_ALPHAFOLD_OK in df_seq.columns:
+            raise ValueError(
+                f"'df_seq' should not already contain a "
+                f"'{COL_ALPHAFOLD_OK}' column. Drop it before calling "
+                f"fetch_alphafold.")
+        entries = df_seq[ut.COL_ENTRY].tolist()
+        for entry in entries:
+            _check_entry_is_filesystem_safe(entry)
+        # Prepare output folder (parent must exist; leaf is created)
+        out_folder = Path(out_folder)
+        if not out_folder.parent.exists():
+            raise ValueError(
+                f"'out_folder' ({out_folder}) should have an existing parent "
+                f"directory")
+        out_folder.mkdir(exist_ok=True)
+        # Download
+        df_status = fetch_alphafold_bulk(
+            entries=entries, out_folder=out_folder, file_format=file_format,
+            timeout=timeout, skip_existing=skip_existing, verbose=verbose)
+        ok_per_row = df_status[COL_ALPHAFOLD_OK].tolist()
+        df_status, ok_after, keep_idx = _drop_or_raise_failed_entries(
+            df_seq=df_status, ok_per_row=ok_per_row, on_failure=on_failure,
+            source_label="fetch_alphafold")
+        if not return_df:
+            return df_status
+        df_seq_out = df_seq.iloc[keep_idx].reset_index(drop=True).copy()
+        df_seq_out[COL_ALPHAFOLD_OK] = ok_after
+        return df_status, df_seq_out
 
     # ------------------------------------------------------------------
     # get_dssp
@@ -436,7 +575,6 @@ class StructurePreprocessor:
         features: List[str] = None,
         ss_mode: str = "ss3",
         gap_handling: str = "pad",
-        verbose: Optional[bool] = None,
     ) -> pd.DataFrame:
         """Run DSSP and append per-residue list columns to ``df_seq``.
 
@@ -463,8 +601,6 @@ class StructurePreprocessor:
             preserves length-alignment to ``df_seq[sequence]`` and fills
             with ``ut.STR_SS_GAP`` / NaN; ``'omit'`` drops them across all
             requested streams simultaneously.
-        verbose : bool, optional
-            Override instance verbosity for this call only.
 
         Returns
         -------
@@ -481,10 +617,10 @@ class StructurePreprocessor:
 
         Examples
         --------
-        .. include:: examples/structure_preprocessor_get_dssp.rst
+        .. include:: examples/stp_get_dssp.rst
         """
         # Validate
-        verbose = ut.check_verbose(self._verbose if verbose is None else verbose)
+        verbose = self._verbose
         ut.check_df_seq(df_seq=df_seq)
         if ut.COL_SEQ not in df_seq.columns:
             raise ValueError(
@@ -520,7 +656,6 @@ class StructurePreprocessor:
         gap_handling: str = "pad",
         on_failure: str = "nan",
         return_df: bool = False,
-        verbose: Optional[bool] = None,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Run DSSP and the per-feature encoders to build a ``[0, 1]``-normalized ``dict_dssp``.
 
@@ -555,8 +690,6 @@ class StructurePreprocessor:
             If ``True``, also return the per-row status DataFrame as a second
             element ``(dict_num, df_seq_out)``. If ``False`` (default), return
             only ``dict_num``.
-        verbose : bool, optional
-            Override instance verbosity for this call only.
 
         Returns
         -------
@@ -578,8 +711,12 @@ class StructurePreprocessor:
         RuntimeError
             If ``mkdssp`` is unavailable, or if any entry failed under
             ``on_failure='raise'``.
+
+        Examples
+        --------
+        .. include:: examples/stp_encode_dssp.rst
         """
-        verbose = ut.check_verbose(self._verbose if verbose is None else verbose)
+        verbose = self._verbose
         ut.check_df_seq(df_seq=df_seq)
         if ut.COL_SEQ not in df_seq.columns:
             raise ValueError(
@@ -710,7 +847,6 @@ class StructurePreprocessor:
         plddt_disorder_threshold: float = 70.0,
         on_failure: str = "nan",
         return_df: bool = False,
-        verbose: Optional[bool] = None,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Extract per-residue features from PDB ATOM records into ``dict_pdb``.
 
@@ -738,8 +874,6 @@ class StructurePreprocessor:
             If ``True``, also return the per-row status DataFrame as a second
             element ``(dict_num, df_seq_out)``. If ``False`` (default), return
             only ``dict_num``.
-        verbose : bool, optional
-            Override instance verbosity for this call only.
 
         Returns
         -------
@@ -757,8 +891,12 @@ class StructurePreprocessor:
         RuntimeError
             If ``msms`` is not installed and ``'depth'`` is requested, or if
             any entry failed under ``on_failure='raise'``.
+
+        Examples
+        --------
+        .. include:: examples/stp_encode_pdb.rst
         """
-        verbose = ut.check_verbose(self._verbose if verbose is None else verbose)
+        verbose = self._verbose
         ut.check_df_seq(df_seq=df_seq)
         if ut.COL_SEQ not in df_seq.columns:
             raise ValueError(
@@ -900,7 +1038,6 @@ class StructurePreprocessor:
         pae_band_edges: Tuple[int, int] = (5, 15),
         on_failure: str = "nan",
         return_df: bool = False,
-        verbose: Optional[bool] = None,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Load AlphaFold PAE sidecar JSONs and produce ``dict_pae``.
 
@@ -936,8 +1073,6 @@ class StructurePreprocessor:
             If ``True``, also return the per-row status DataFrame as a second
             element ``(dict_num, df_seq_out)``. If ``False`` (default), return
             only ``dict_num``.
-        verbose : bool, optional
-            Override instance verbosity for this call only.
 
         Returns
         -------
@@ -955,8 +1090,12 @@ class StructurePreprocessor:
             registry slice.
         RuntimeError
             If any entry failed under ``on_failure='raise'``.
+
+        Examples
+        --------
+        .. include:: examples/stp_encode_pae.rst
         """
-        verbose = ut.check_verbose(self._verbose if verbose is None else verbose)
+        verbose = self._verbose
         ut.check_df_seq(df_seq=df_seq)
         if ut.COL_SEQ not in df_seq.columns:
             raise ValueError(
@@ -1094,7 +1233,6 @@ class StructurePreprocessor:
         resolution: float = 0.7,
         threshold: float = 2.0,
         on_failure: str = "nan",
-        verbose: Optional[bool] = None,
     ) -> pd.DataFrame:
         """Run a domain-segmentation tool and append a ``chopping`` column.
 
@@ -1143,8 +1281,6 @@ class StructurePreprocessor:
             missing. ``'nan'`` fills ``chopping`` with an empty string
             and marks ``domain_ok=False``; ``'drop'`` removes the row;
             ``'raise'`` re-raises.
-        verbose : bool, optional
-            Override instance verbosity for this call only.
 
         Returns
         -------
@@ -1163,8 +1299,12 @@ class StructurePreprocessor:
             If the tool's Python dependency is not installed (AFragmenter
             via ``[pro]``), if ``chainsaw_path`` is invalid, or if any
             entry failed under ``on_failure='raise'``.
+
+        Examples
+        --------
+        .. include:: examples/stp_get_domains.rst
         """
-        verbose = ut.check_verbose(self._verbose if verbose is None else verbose)
+        verbose = self._verbose
         ut.check_df_seq(df_seq=df_seq)
         if ut.COL_SEQ not in df_seq.columns:
             raise ValueError(
@@ -1269,7 +1409,6 @@ class StructurePreprocessor:
         features: List[str] = None,
         on_failure: str = "nan",
         return_df: bool = False,
-        verbose: Optional[bool] = None,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Read pre-computed domain segmentation files into ``dict_domains``.
 
@@ -1309,8 +1448,6 @@ class StructurePreprocessor:
             If ``True``, also return the per-row status DataFrame as a second
             element ``(dict_num, df_seq_out)``. If ``False`` (default), return
             only ``dict_num``.
-        verbose : bool, optional
-            Override instance verbosity for this call only.
 
         Returns
         -------
@@ -1340,8 +1477,12 @@ class StructurePreprocessor:
         * ChainSaw: https://github.com/JudeWells/Chainsaw (manual install).
         * Output chopping strings: same `chopping` column in both tools'
           TSV output, drop-in compatible.
+
+        Examples
+        --------
+        .. include:: examples/stp_encode_domains.rst
         """
-        verbose = ut.check_verbose(self._verbose if verbose is None else verbose)
+        verbose = self._verbose
         ut.check_df_seq(df_seq=df_seq)
         if ut.COL_SEQ not in df_seq.columns:
             raise ValueError(
@@ -1550,6 +1691,10 @@ class StructurePreprocessor:
         --------
         UserWarning
             Pseudo-scales depend on the content of ``df_seq`` + ``dict_num``.
+
+        Examples
+        --------
+        .. include:: examples/stp_build_scales.rst
         """
         # Validate
         if df_seq is None or dict_num is None:
@@ -1659,6 +1804,10 @@ class StructurePreprocessor:
             top-level color/redundancy-bucket bucket; ``subcategory`` carries
             the fine-grained semantic split (``'DSSP_SS_3state'``,
             ``'Flexibility_bfactor'``, etc.).
+
+        Examples
+        --------
+        .. include:: examples/stp_build_cat.rst
         """
         validate_feature_keys(features)
         D = get_total_dims(features)

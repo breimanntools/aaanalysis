@@ -82,7 +82,7 @@ class TestGetDsspEdges:
         (tmp_path / "P1.pdb").write_text("dummy")
         with _mock_binary_present(), \
              patch(RUNNER, side_effect=lambda p: _canned("ACDEFGHIK")):
-            stp.get_dssp(df_seq=df, pdb_folder=str(tmp_path), verbose=True)
+            stp.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
         assert "P1" in capsys.readouterr().out
 
 
@@ -139,7 +139,7 @@ class TestEncodePdbEdges:
              patch(f"{MODULE}.encode_bfactor",
                    return_value=(np.zeros((9, 1)), 1.0)):
             stp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
-                           features=["bfactor"], verbose=True)
+                           features=["bfactor"])
         assert "P1" in capsys.readouterr().out
 
 
@@ -193,7 +193,7 @@ class TestEncodePaeSuccess:
         df = _pae_df(tmp_path)
         stp = aa.StructurePreprocessor(verbose=True)
         stp.encode_pae(df_seq=df, pae_folder=str(tmp_path),
-                       features=["pae_row_mean"], verbose=True)
+                       features=["pae_row_mean"])
         assert "AF_TINY" in capsys.readouterr().out
 
     def test_encoder_fail_sets_not_ok(self, tmp_path):
@@ -226,7 +226,7 @@ class TestEncodeDomainsInline:
 
     def test_success_verbose(self, capsys):
         stp = aa.StructurePreprocessor(verbose=True)
-        stp.encode_domains(df_seq=self._df(), features=["domain_boundary"], verbose=True)
+        stp.encode_domains(df_seq=self._df(), features=["domain_boundary"])
         assert "P1" in capsys.readouterr().out
 
     def test_inline_chopping_none(self):

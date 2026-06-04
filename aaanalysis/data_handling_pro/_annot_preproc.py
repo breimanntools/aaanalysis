@@ -92,13 +92,19 @@ def _check_scores_unit_range(scores, name="score"):
 # II Main Functions
 class AnnotationPreprocessor:
     """
-    Preprocessing class for per-residue PTM / functional-site annotations [Breimann25a]_.
+    Preprocessing class for per-residue PTM / functional-site annotations.
 
-    Mirrors :class:`EmbeddingPreprocessor`'s instance-based shape but is the
-    annotation-side companion: fetches (UniProt) or ingests (user / predictor)
-    annotations and encodes them into the ``dict_num`` tensor that
-    :meth:`NumericalFeature.get_parts` slices into per-part inputs for
-    :meth:`CPP.run_num`, plus the ``(df_scales, df_cat)`` metadata pair.
+    Collects per-residue annotations — fetched from UniProt
+    (:meth:`fetch_uniprot`) or ingested from a user / predictor table
+    (:meth:`ingest`) — into one canonical ``df_annot`` schema, then encodes
+    them into the ``[0, 1]``-normalized per-residue ``dict_num`` consumed by
+    :meth:`CPP.run_num` (via :meth:`encode`). Annotations fall into two
+    top-level categories: a closed UniProt ``'PTMs'`` vocabulary and an open
+    ``'Functional sites'`` vocabulary that user keys extend
+    (:meth:`register_feature`). A secondary scale-based path
+    (:meth:`build_scales` / :meth:`build_cat`) feeds the AA-scale
+    :meth:`CPP.run`, and :meth:`to_df_seq` exports annotations as
+    :class:`AAWindowSampler` anchors.
 
     .. versionadded:: 1.1.0
     """
@@ -112,6 +118,14 @@ class AnnotationPreprocessor:
 
         Notes
         -----
+        * This is the annotation-side member of the per-residue ``dict_num``
+          family, alongside :class:`EmbeddingPreprocessor` (PLM embeddings) and
+          :class:`StructurePreprocessor` (PDB / DSSP / AlphaFold). All three
+          emit ``[0, 1]``-normalized tensors that
+          :meth:`NumericalFeature.get_parts` slices into the per-part inputs of
+          :meth:`CPP.run_num`, and that stack along the D axis via
+          :func:`aaanalysis.combine_dict_nums`. The accompanying
+          ``(df_scales, df_cat)`` pair names the D dimensions.
         * ``df_annot`` is the canonical per-residue schema with columns
           ``protein_id, start, end, aa, feature_type, category, source, evidence,
           score, bond_id`` (positions are 1-based, UniProt-canonical frame).
@@ -135,7 +149,7 @@ class AnnotationPreprocessor:
 
         Examples
         --------
-        .. include:: examples/annotation_preprocessor.rst
+        .. include:: examples/ap_encode.rst
         """
         self._verbose = ut.check_verbose(verbose)
         # Per-instance registry copy so auto-registered Functional keys never
@@ -152,7 +166,6 @@ class AnnotationPreprocessor:
         features: Optional[List[str]] = None,
         evidence: str = "manual",
         timeout: float = 30.0,
-        verbose: Optional[bool] = None,
     ) -> pd.DataFrame:
         """Fetch UniProt features for every entry and map to ``df_annot``.
 
@@ -172,8 +185,6 @@ class AnnotationPreprocessor:
             in the ``evidence`` column regardless.
         timeout : float, default=30.0
             Per-request timeout in seconds.
-        verbose : bool, optional
-            Override instance verbosity for this call only.
 
         Returns
         -------
@@ -186,9 +197,13 @@ class AnnotationPreprocessor:
             On invalid arguments.
         RuntimeError
             On UniProt network / response failure.
+
+        Examples
+        --------
+        .. include:: examples/ap_fetch_uniprot.rst
         """
         # Validate
-        verbose = ut.check_verbose(self._verbose if verbose is None else verbose)
+        verbose = self._verbose
         ut.check_df_seq(df_seq=df_seq)
         ut.check_str_options(
             name="evidence", val=evidence, list_str_options=LIST_EVIDENCE_MODES
@@ -238,6 +253,10 @@ class AnnotationPreprocessor:
         ------
         ValueError
             On missing required columns or out-of-range scores.
+
+        Examples
+        --------
+        .. include:: examples/ap_ingest.rst
         """
         # Validate
         if not isinstance(df_user, pd.DataFrame):
@@ -317,6 +336,10 @@ class AnnotationPreprocessor:
         normalization : callable, optional
             Recipe applied to the raw per-residue values; defaults to a clip to
             ``[0, 1]`` (values must already lie in that range).
+
+        Examples
+        --------
+        .. include:: examples/ap_register_feature.rst
         """
         ut.check_str(name="key", val=key, accept_none=False)
         register_functional_key(
@@ -337,7 +360,6 @@ class AnnotationPreprocessor:
         features: List[str] = None,
         on_mismatch: str = "raise",
         return_df: bool = False,
-        verbose: Optional[bool] = None,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Encode ``df_annot`` into a ``[0, 1]``-normalized per-residue ``dict_num``.
 
@@ -381,9 +403,12 @@ class AnnotationPreprocessor:
         ValueError
             On invalid arguments, missing schema columns, or (default) a
             residue-identity mismatch.
+
+        Examples
+        --------
+        .. include:: examples/ap_encode.rst
         """
         # Validate
-        verbose = ut.check_verbose(self._verbose if verbose is None else verbose)
         ut.check_df_seq(df_seq=df_seq)
         if ut.COL_SEQ not in df_seq.columns:
             raise ValueError(
@@ -514,6 +539,10 @@ class AnnotationPreprocessor:
         --------
         UserWarning
             Pseudo-scales depend on the content of ``df_seq`` + ``dict_num``.
+
+        Examples
+        --------
+        .. include:: examples/ap_build_scales.rst
         """
         # Validate
         if df_seq is None or dict_num is None:
@@ -625,6 +654,10 @@ class AnnotationPreprocessor:
         df_cat : pd.DataFrame, shape (D, 5)
             One row per dimension: ``scale_id``, ``category``, ``subcategory``,
             ``scale_name``, ``scale_description``.
+
+        Examples
+        --------
+        .. include:: examples/ap_build_cat.rst
         """
         validate_feature_keys(features, registry=self._registry)
         D = get_total_dims(features, registry=self._registry)
@@ -732,6 +765,10 @@ class AnnotationPreprocessor:
                 df_seq=df_ws, pos_col="pos", window_size=9,
                 aa_context_col="aa_context", context_in="1",
                 min_distance_to_pos=9)
+
+        Examples
+        --------
+        .. include:: examples/ap_to_df_seq.rst
         """
         # Validate
         ut.check_df_seq(df_seq=df_seq)
