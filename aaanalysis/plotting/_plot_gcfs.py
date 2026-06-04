@@ -20,7 +20,7 @@ def plot_gcfs(option: str = 'font.size') -> int:
 
     Returns
     -------
-    option_value : int
+    option_value : float
         Numerical value for selected option.
 
     See Also

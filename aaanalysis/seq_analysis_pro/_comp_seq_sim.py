@@ -36,8 +36,11 @@ def comp_seq_sim(seq1: Optional[str] = None,
     Returns
     -------
     seq_sim : float
-        If ``seq1`` and ``seq2`` are provided, returns the sequence similarity between both sequences.
-        If ``df_seq`` is provided, returns a DataFrame containing pairwise sequence similarity scores.
+        Normalized sequence similarity score in [0, 1], returned when ``seq1`` and ``seq2``
+        are provided (pairwise comparison of two strings).
+    df_pw_sim : pd.DataFrame, shape (n_samples, n_samples)
+        Pairwise similarity matrix with ``entry`` values as both index and columns,
+        returned when ``df_seq`` is provided.
 
     See Also
     --------

@@ -40,13 +40,32 @@ CITATION_KEY_RE = re.compile(r"\[([A-Z][A-Za-z0-9]+)\]_")
 # body just raises NotImplementedError. Stubs are exempt from the whole convention
 # (they are explicitly not ready) and are skipped, not reported as findings.
 STUB_RE = re.compile(r"under construction|not yet implemented", re.IGNORECASE)
-# Advisory finding(s): reported for visibility but never fail the run, because a
-# correct answer can be "no citation" (utility/helper classes legitimately omit).
-ADVISORY_CODES = {"CLASS-NO-CITATION"}
+# Advisory findings: reported for visibility but never fail the run. A correct
+# answer can be "no citation" (utility/helper classes legitimately omit), and the
+# package convention often omits a Raises section for validator-style raises — so
+# RAISES-UNDOCUMENTED is a "consider documenting" prompt, not a hard gate.
+ADVISORY_CODES = {"CLASS-NO-CITATION", "RAISES-UNDOCUMENTED"}
 # Citation keys defined in docs/source/index/references.rst; populated in main().
 # None means references.rst could not be located -> the undefined-citation check
 # is skipped (it cannot be validated without the reference list).
 REF_KEYS = None
+
+# Cross-reference integrity: every :class:/:meth:/:func: role + See-Also target
+# should resolve to a real public AAanalysis symbol. Registry filled in main()
+# from a package-wide scan (so single-file runs still resolve cross-file refs).
+KNOWN_CLASSES: set = set()
+KNOWN_METHODS: set = set()   # "Class.method"
+KNOWN_FUNCS: set = set()
+ROLE_TARGET_RE = re.compile(r":(?:class|meth|func):`([^`]+)`")
+# Roles to external libraries are valid and must not be flagged. A dotted target
+# whose head is here (or a lowercase head we don't recognize) is treated external.
+EXTERNAL_MODULES = {
+    "pandas", "pd", "numpy", "np", "sklearn", "scipy", "matplotlib", "plt", "mpl",
+    "shap", "Bio", "biopython", "requests", "logomaker", "seaborn", "sns",
+    "upsetplot", "typing", "os", "sys", "re", "collections", "itertools",
+    "functools", "pathlib", "warnings", "json", "math", "random", "abc",
+    "python", "self", "cls",
+}
 
 # code -> one-line description (printed as a legend)
 CODES = {
@@ -70,6 +89,10 @@ CODES = {
     "RETURNS-UNNAMED": "Returns value is unnamed (use 'name : type')",
     "NOTES-DASH-BULLET": "Notes uses '- ' bullets; house style is '* '",
     "EXAMPLES-PATH": "Examples include is not 'examples/<name>.rst'",
+    "XREF-UNRESOLVED": "a :class:/:meth:/:func: target does not resolve to a known "
+                       "public AAanalysis symbol (typo or stale cross-reference)",
+    "RAISES-UNDOCUMENTED": "body raises an exception but the docstring has no "
+                           "'Raises' section",
 }
 ROLE_TOKEN_RE = re.compile(r":(class|meth|func|ref|attr):`")
 
@@ -158,6 +181,7 @@ def check_common(doc, sections, first_line, add, *, is_method):
     if re.search(r"\([A-Z][A-Za-z]+ et al\.?,?\s*\d{4}", doc):
         add("FREETEXT-CITATION", "")
     check_citation_keys(doc, add)
+    check_xrefs(doc, add)
     check_seealso(sections, add)
     if "Parameters" in sections:
         d = param_desc(sections["Parameters"], "df_seq")
@@ -215,6 +239,89 @@ def check_citation_keys(doc, add):
     for key in sorted(set(CITATION_KEY_RE.findall(doc))):
         if key not in REF_KEYS:
             add("CITATION-UNDEFINED", key)
+
+
+def collect_symbols(paths, public):
+    """Populate KNOWN_CLASSES / KNOWN_METHODS / KNOWN_FUNCS from a package scan.
+
+    Scans the whole package (located via the scanned paths / cwd) so a single-file
+    run can still resolve cross-file references like ``:meth:`CPP.run_num```.
+    """
+    # Find the package root (the dir containing __init__.py with __all__).
+    seeds = [Path(p).resolve() for p in (paths or [])] + [Path.cwd().resolve()]
+    pkg = None
+    for seed in seeds:
+        for base in [seed] + list(seed.parents):
+            cand = base / "aaanalysis"
+            if (cand / "__init__.py").is_file():
+                pkg = cand
+                break
+            if base.name == "aaanalysis" and (base / "__init__.py").is_file():
+                pkg = base
+                break
+        if pkg:
+            break
+    if pkg is None:
+        return
+    for f in iter_targets([str(pkg)]):
+        try:
+            tree = ast.parse(f.read_text(encoding="utf-8"))
+        except SyntaxError:
+            continue
+        for node in tree.body:
+            if isinstance(node, ast.ClassDef) and (public is None or node.name in public):
+                KNOWN_CLASSES.add(node.name)
+                for sub in node.body:
+                    if isinstance(sub, ast.FunctionDef) and (
+                            not sub.name.startswith("_") or sub.name == "__init__"):
+                        KNOWN_METHODS.add(f"{node.name}.{sub.name}")
+            elif isinstance(node, ast.FunctionDef) and (public is None or node.name in public):
+                KNOWN_FUNCS.add(node.name)
+
+
+def check_xrefs(doc, add):
+    """Flag :class:/:meth:/:func: targets that don't resolve to a known symbol.
+
+    Conservative: external-library refs (``pandas.DataFrame``) and ambiguous bare
+    lowercase names are left alone; the high-value catches are a CamelCase class
+    target that doesn't exist (``AALogo`` vs ``AAlogo``) and a wrong method on a
+    real class.
+    """
+    if not (KNOWN_CLASSES or KNOWN_FUNCS):
+        return
+    for raw in ROLE_TARGET_RE.findall(doc):
+        t = raw.strip().lstrip("~")
+        for pre in ("aaanalysis.", "aa."):
+            if t.startswith(pre):
+                t = t[len(pre):]
+        t = t.split("(")[0]
+        if not t:
+            continue
+        if "." in t:
+            head = t.split(".")[0]
+            if head in EXTERNAL_MODULES or t in KNOWN_METHODS:
+                continue
+            if head in KNOWN_CLASSES:
+                add("XREF-UNRESOLVED", f"{raw} (no such method on {head})")
+            elif head[:1].isupper():            # CamelCase head, not a known class
+                add("XREF-UNRESOLVED", raw)
+            # lowercase unknown head -> assume unlisted external module; skip
+        else:
+            if t in KNOWN_CLASSES or t in KNOWN_FUNCS:
+                continue
+            if any(m.rsplit(".", 1)[1] == t for m in KNOWN_METHODS):
+                continue                         # bare method name of some class
+            if t[:1].isupper():                  # CamelCase looks like a class
+                add("XREF-UNRESOLVED", raw)
+            # bare lowercase -> could be external func/param; skip
+
+
+def body_raises(node):
+    """True if the function body explicitly ``raise``s an exception (not bare re-raise)."""
+    for n in ast.walk(node):
+        if isinstance(n, ast.Raise) and n.exc is not None:
+            return True
+    return False
 
 
 def load_public_names(api_path: Path):
@@ -309,6 +416,7 @@ def _check_class(node, emit, skipped):
     if not CITATION_RE.search(doc):
         add("CLASS-NO-CITATION", first_line[:70])
     check_citation_keys(doc, add)
+    check_xrefs(doc, add)
     if "Parameters" in sections:
         add("CLASS-HAS-PARAMETERS")
     if ".. versionadded::" not in doc:
@@ -340,6 +448,8 @@ def _check_function(node, qualname, emit, *, is_method):
         add("METHOD-NO-EXAMPLES")
     if ".. versionadded::" not in doc and not is_method:
         add("NO-VERSIONADDED")  # top-level public functions carry versionadded
+    if body_raises(node) and "Raises" not in sections:
+        add("RAISES-UNDOCUMENTED")
 
 
 def autofix_file(path: Path) -> int:
@@ -407,6 +517,10 @@ def main(argv=None):
     if REF_KEYS is None:
         print("!! could not locate docs/source/index/references.rst; "
               "skipping the undefined-citation check", file=sys.stderr)
+    collect_symbols(args.paths or ["aaanalysis"], public)
+    if not (KNOWN_CLASSES or KNOWN_FUNCS):
+        print("!! could not build the public-symbol registry; "
+              "skipping the cross-reference check", file=sys.stderr)
 
     findings, skipped = [], []
     files = list(iter_targets(args.paths or ["aaanalysis"]))

@@ -110,7 +110,7 @@ class dPULearn:
     def __init__(self,
                  model_kwargs: Optional[dict] = None,
                  verbose: bool = True,
-                 random_state: Optional[str] = None,
+                 random_state: Optional[int] = None,
                  ):
         """
         Parameters
@@ -161,7 +161,7 @@ class dPULearn:
         Fit the dPULearn model to identify reliable negative samples (labeled by 0) from unlabeled samples (2)
         based on the distance to positive samples (1).
 
-        Use the ``dPUlearn.labels_`` attribute to retrieve the output labels of samples in ``X``
+        Use the ``dPULearn.labels_`` attribute to retrieve the output labels of samples in ``X``
         including identified negatives.
 
         Parameters
@@ -170,7 +170,7 @@ class dPULearn:
             Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
         labels : array-like, shape (n_samples,)
             Dataset labels of samples in ``X``. Should be either 1 (positive) or 2 (unlabeled).
-        n_unl_to_neg : int, default=1
+        n_unl_to_neg : int
             Number of negative samples (0) to be reliably identified from unlabeled samples (2).
             Should be < n unlabeled samples.
         metric : str or None, optional
@@ -194,7 +194,7 @@ class dPULearn:
 
         Notes
         -----
-        * If a distance metric is specified, dPUlearn performs distance-based instead of PCA-based identification.
+        * If a distance metric is specified, dPULearn performs distance-based instead of PCA-based identification.
         * When selecting a distance metric for distance-based identification, consider the dimensionality of the
           feature space, determined by the ratio of the number of features (n_features) to the number of samples
           (n_samples) in `X`. In a low-dimensional space, there are fewer features than samples (n_features < n_samples),
@@ -292,7 +292,7 @@ class dPULearn:
         -----
         ``df_eval`` includes the following columns:
 
-        * 'name': Name of the dataset if ``names`` is provided (typically named by identification approach).
+        * 'name': Name of the dataset if ``names_datasets`` is provided (typically named by identification approach).
         * 'n_rel_neg': Number of identified negatives.
         * 'avg_std': Average standard deviation (STD) assessing homogeneity of identified negatives.
           Lower values indicate greater homogeneity.
@@ -303,7 +303,7 @@ class dPULearn:
           Separate columns are provided for each comparison. Higher values indicate greater dissimilarity.
         * 'avg_kld_DATASET': Average Kullback-Leibler Divergence (KLD) assessing the dissimilarity of distributions
           between the set of identified negatives and the other groups. Higher values indicate greater dissimilarity.
-          These columns are omitted if ``kld`` is set to ``False``.
+          These columns are omitted if ``comp_kld`` is set to ``False``.
 
         See Also
         --------
@@ -366,7 +366,7 @@ class dPULearn:
               Returns a pd.DataFrame (`df_neg_comp`) that combines ``df_seq`` (if provided) with a comparison of the
               negative sets for a general analysis.
             * If ``return_upset_data=True``:
-              Returns a pd.Series DataFrame (`upset_data`) formatted for generating  Upset Plots, containing group
+              Returns a pd.Series (`upset_data`) formatted for generating Upset Plots, containing group
               size information for the intersection and unique elements across the label sets.
 
         See Also

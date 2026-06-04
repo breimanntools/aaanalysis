@@ -325,7 +325,8 @@ class AAWindowSampler:
         Parameters
         ----------
         verbose : bool, default=True
-            Verbose mode.
+            If ``True``, prints sampling progress and warnings when fewer windows
+            than requested are returned.
         random_state : int, optional
             Default seed for all sampling methods. A per-call ``seed`` overrides it.
         max_similarity_to_test : float in [0, 1], optional
@@ -435,7 +436,7 @@ class AAWindowSampler:
 
         Returns
         -------
-        df_seq : pd.DataFrame
+        df_seq_out : pd.DataFrame
             Sampled windows; one row per window with ``entry``, ``sequence``,
             ``role``, ``strategy``, and ``entry_win`` columns.
 
@@ -578,7 +579,7 @@ class AAWindowSampler:
 
         Returns
         -------
-        df_seq : pd.DataFrame
+        df_seq_out : pd.DataFrame
             Sampled windows; one row per window with ``entry``, ``sequence``,
             ``role``, ``strategy``, and ``entry_win`` columns.
 
@@ -703,7 +704,7 @@ class AAWindowSampler:
 
         Returns
         -------
-        df_seq : pd.DataFrame
+        df_seq_out : pd.DataFrame
             Sampled windows; one row per window with ``entry``, ``sequence``,
             ``role``, ``strategy``, and ``entry_win`` columns.
 
@@ -875,9 +876,11 @@ class AAWindowSampler:
 
         Returns
         -------
-        df_seq : pd.DataFrame
+        df_seq_out : pd.DataFrame
             Sampled windows; one row per window with ``entry``, ``sequence``,
             ``role``, ``strategy``, and ``entry_win`` columns.
+            An additional ``motif_score`` column is appended when
+            ``output_mode='segments'``; it is absent in ``'sequences'`` mode.
 
         Notes
         -----

@@ -201,7 +201,7 @@ class SequenceFeature:
         jmd_n_len: int, default=10
             Length of JMD-N in number of amino acids. If ``None``, ``jmd_n`` and ``jmd_c`` should be given.
         jmd_c_len: int, default=10
-            Length of JMD-N in number of amino acids. If ``None``, ``jmd_n`` and ``jmd_c`` should be given.
+            Length of JMD-C in number of amino acids. If ``None``, ``jmd_n`` and ``jmd_c`` should be given.
         tmd_len: int, optional
             TMD length in amino acids for the **Anchor-based format** only (a ``sequence`` + ``pos`` ``df_seq``).
             Each 1-based anchor in ``pos`` is placed at the P1 position of a length-``tmd_len`` TMD
@@ -331,7 +331,7 @@ class SequenceFeature:
             Minimum number of steps for ``Pattern``. Should be <= ``n_max``.
         n_max: int, default=4
             Maximum number of steps for ``Pattern``. Should be >= ``n_min``.
-        len_max: int, default=10
+        len_max: int, default=15
             Maximum length in amino acid position for ``Pattern`` by varying start position.
             Should be > min(``steps_pattern``).
         steps_periodicpattern: list of int, default=[3, 4], optional
@@ -746,8 +746,11 @@ class SequenceFeature:
 
         Returns
         -------
-        list_pos or list_aa
-            List of positions or amino acids for each feature.
+        list_pos : list
+            List of residue positions for each feature. Returned when no sequence arguments are provided.
+        list_aa : list
+            List of amino acid segments or patterns for each feature. Returned when ``tmd_seq``,
+            ``jmd_n_seq``, and ``jmd_c_seq`` are all provided.
 
         Notes
         -----

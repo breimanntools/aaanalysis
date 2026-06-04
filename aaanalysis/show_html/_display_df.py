@@ -101,6 +101,16 @@ def display_df(df: pd.DataFrame = None,
     col_to_show : int or str, optional
         Display only the specified column.
 
+    Returns
+    -------
+    None
+        Renders the styled HTML table directly in the calling Jupyter notebook cell.
+
+    Notes
+    -----
+    * This function is designed for Jupyter notebook display and has no effect in plain Python scripts.
+    * When ``show_shape=True``, the shape of ``df`` is printed to standard output before the table is rendered.
+
     Examples
     --------
     .. include:: examples/display_df.rst

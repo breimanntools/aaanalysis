@@ -246,7 +246,7 @@ class CPP(Tool):
                  df_cat: Optional[pd.DataFrame] = None,
                  accept_gaps: bool = False,
                  verbose: bool = True,
-                 random_state: Optional[str] = None,
+                 random_state: Optional[int] = None,
                  ):
         """
         Parameters
@@ -409,6 +409,9 @@ class CPP(Tool):
             Number of sample-axis batches (>=2, up to the number of samples) for sample-batched processing. If ``None``,
             sample-batching is disabled. Bounds peak memory by the batch size rather than the full sample count ``n``,
             so it is the option for very large ``n``. Mutually exclusive with ``n_batches`` (which batches over scales).
+        return_stats : bool, default=False
+            If ``True``, also return the filter-funnel statistics (``last_filter_stats_``)
+            as a second element ``(df_feat, stats)``; if ``False``, return only ``df_feat``.
 
         Returns
         -------
@@ -569,8 +572,49 @@ class CPP(Tool):
             ``(n_samples, L_part_max, D)`` aligned row-for-row with
             ``self.df_parts``. Keys must match ``self.df_parts.columns``. ``D`` must
             equal ``len(self.df_scales.columns)`` (each D dimension names a "scale").
-        labels, label_test, label_ref, n_filter, n_pre_filter, pct_pre_filter, max_std_test, max_overlap, max_cor, check_cat, parametric, start, tmd_len, jmd_n_len, jmd_c_len, n_jobs, vectorized, n_batches
-            See :meth:`run`. Same semantics, same defaults.
+        labels : array-like, shape (n_samples,)
+            Class labels for samples in sequence DataFrame (typically, test=1, reference=0).
+        label_test : int, default=1
+            Class label of test group in ``labels``.
+        label_ref : int, default=0
+            Class label of reference group in ``labels``.
+        n_filter : int, default=100
+            Number of features to be filtered/selected by CPP algorithm.
+        n_pre_filter : int, optional
+            Number of features to be pre-filtered. If ``None``, a percentage of all features is used.
+        pct_pre_filter : int, default=5
+            Percentage of all features that should remain after the pre-filtering step.
+        max_std_test : float, default=0.2
+            Maximum standard deviation [>0-<1] within the test group used as threshold for pre-filtering.
+        max_overlap : float, default=0.5
+            Maximum positional overlap [0-1] of features used as threshold for filtering.
+        max_cor : float, default=0.5
+            Maximum Pearson correlation [0-1] of feature scales used as threshold for filtering.
+        check_cat : bool, default=True
+            Whether to check for redundancy within scale categories during filtering.
+        parametric : bool, default=False
+            Whether to use parametric (T-test) or non-parametric (Mann-Whitney U test) for p-value computation.
+        start : int, default=1
+            Position label of first residue position (starting at N-terminus).
+        tmd_len : int, default=20
+            Length of TMD (>0).
+        jmd_n_len : int, default=10
+            Length of JMD-N (>=0).
+        jmd_c_len : int, default=10
+            Length of JMD-C (>=0).
+        n_jobs : int, None, or -1, default=None
+            Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized
+            automatically; if ``-1``, all available cores are used. Overridden by ``options['n_jobs']``
+            when set. The Python 3.14 + macOS spawn caveat documented in :meth:`run` applies here too.
+        vectorized : bool, default=True
+            Whether to apply sequence splitting and the Mann-Whitney U test in 'vectorized' mode (``True``),
+            improving speed but increasing memory consumption.
+        n_batches : int, None, default=None
+            Must be ``None`` for numerical mode — batched orchestration over the D axis is not yet
+            implemented and any other value raises ``NotImplementedError``.
+        return_stats : bool, default=False
+            If ``True``, also return the filter-funnel statistics (``last_filter_stats_``) as a second
+            element ``(df_feat, stats)``; if ``False``, return only ``df_feat``.
 
         Returns
         -------

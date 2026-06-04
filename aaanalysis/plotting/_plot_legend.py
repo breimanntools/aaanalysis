@@ -64,7 +64,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
         List of categories to include in the legend (keys of ``dict_color``).
     labels : list of str, optional
         Legend labels corresponding to given categories.
-    loc : int or str
+    loc : int or str, default='upper left'
         Location for the legend.
     loc_out : bool, default=False
         If ``True``, sets automatically ``x=0`` and ``y=-0.25`` if they are ``None``.
@@ -74,7 +74,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
         The y-coordinate for the legend's anchor point.
     x : int or float, optional
         The x-coordinate for the legend's anchor point.
-    n_cols : int, default=1
+    n_cols : int, default=3
         Number of columns in the legend, at least 1.
     labelspacing : int or float, default=0.2
         Vertical spacing between legend items.
@@ -86,7 +86,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
         Length of legend handle.
     fontsize : int or float, optional
         Font size of the legend text.
-    fontsize_title : inf or float, optional
+    fontsize_title : int or float, optional
         Font size of the legend title.
     weight_font : str, default='normal'
         Weight of the font.

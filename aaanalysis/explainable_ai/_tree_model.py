@@ -1,5 +1,5 @@
 """
-This is a script for the frontend of the TreeModel class used to obtain Mote Carlo estimates of feature importance.
+This is a script for the frontend of the TreeModel class used to obtain Monte Carlo estimates of feature importance.
 """
 from typing import Optional, Dict, List, Tuple, Type, Union, Callable
 from sklearn.base import ClassifierMixin, BaseEstimator
@@ -128,13 +128,15 @@ class TreeModel:
         List with fitted tree-based models for every round after calling the ``fit`` method.
     feat_importance : array-like, shape (n_features)
         An array containing importance of each feature averaged across all rounds
-        and trained models from `list_model_classes`.
+        and trained models from `list_model_classes`. Note: unlike sklearn convention, this attribute
+        does not carry a trailing underscore.
     feat_importance_std : array-like, shape (n_features)
         An array containing standard deviation for feature importance across all rounds
-        and trained models from `list_model_classes`. Same order as ``feature_importance``.
+        and trained models from `list_model_classes`. Same order as ``feat_importance``. Note: unlike
+        sklearn convention, this attribute does not carry a trailing underscore.
     is_selected_ : array-like, shape (n_rounds, n_features)
         2D array indicating features being selected by recursive features selection (True) or not (False) for each round.
-        Same order as ``feature_importance``.
+        Same order as ``feat_importance``.
     """
     def __init__(self,
                  list_model_classes: List[Type[Union[ClassifierMixin, BaseEstimator]]] = None,
@@ -167,11 +169,6 @@ class TreeModel:
         --------
         * :class:`sklearn.ensemble.RandomForestClassifier` for random forest model.
         * :class:`sklearn.ensemble.ExtraTreesClassifier` for extra trees model.
-
-        Warnings
-        --------
-        * This class belongs to the explainable AI module requiring `SHAP`,
-          which is automatically installed via `pip install aaanalysis[pro]`.
 
         Examples
         --------
@@ -322,8 +319,8 @@ class TreeModel:
             Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
         labels : array-like, shape (n_samples)
             Class labels for samples in ``X`` (typically, 1=positive, 0=negative).
-        list_is_selected : array-like, shape (n_feature_sets, n_round, n_features)
-            List of 2D boolean arrays with shape (n_rounds, n_features) indicating different feature selections.
+        list_is_selected : list of array-like, each of shape (n_rounds, n_features)
+            List of 2D boolean arrays indicating different feature selections.
         convert_1d_to_2d : bool, default=False
             If ``True``, convert all boolean arrays in `list_is_selected` from 1D to 2D arrays with a single row.
         names_feature_selections : list of str, optional
@@ -337,7 +334,9 @@ class TreeModel:
         Returns
         -------
         df_eval : pd.DataFrame
-            Evaluation results for feature subsets obtained by recursive feature selection give with ``list_is_feature``.
+            Evaluation results for feature subsets obtained by recursive feature selection given by ``list_is_selected``.
+            Columns include the feature selection name, cross-validation metric scores (mean and standard deviation),
+            and the number of selected features.
 
         Notes
         -----
@@ -390,7 +389,10 @@ class TreeModel:
         Obtain Monte Carlo estimate of class prediction probabilities for the positive class in `X`.
 
         Predictions are performed using all tree-based models from the `list_model_classes` attribute and
-        feature selections from the `is_selected` attribute.
+        feature selections from the `is_selected_` attribute.
+
+        .. note::
+           :meth:`TreeModel.fit` must be called before using this method.
 
         Parameters
         ----------

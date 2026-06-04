@@ -153,6 +153,14 @@ pandas/seaborn-style mechanism (a ``_shared_docs`` dict + a ``@doc(...)`` /
 ``Substitution`` decorator) rather than re-typing it. This is the adopted target;
 where injection is not yet wired, copy the baseline **verbatim**.
 
+**A docstring is self-contained — document every parameter as its own entry.**
+DRY means reusing the same *sentence*, not collapsing parameters into a single
+cross-method reference. Never write a lumped entry like
+``labels, n_filter, n_jobs, ... : See :meth:`run`. Same semantics.`` — repeat each
+parameter (with its baseline sentence) so the reader never has to open another
+method to learn what an argument does. The checker's ``PARAM-UNDOCUMENTED`` flags
+the signature parameters such a lump leaves effectively undocumented.
+
 Cross-references (``See Also``)
 -------------------------------
 
@@ -162,6 +170,12 @@ Cross-references (``See Also``)
 * ``See Also`` is a ``*``-bulleted list; each entry is
   ``* :role:`Target`: gloss.`` — single colon, gloss after ``: ``. No bare
   ``name : desc`` numpydoc entries and no ``  :  `` (space-colon-space).
+* **Every cross-reference must resolve.** A ``:class:``/``:meth:``/``:func:``
+  target (in ``See Also`` *or* inline prose) must name a real public symbol —
+  ``CPP``, ``CPP.run_num``, ``aaanalysis.combine_dict_nums``. Watch
+  capitalization (``AAlogo``, not ``AALogo``) and method names on the right
+  class. The checker's ``XREF-UNRESOLVED`` flags an internal target that does
+  not resolve; external refs (``pandas.DataFrame``) are left alone.
 
 Citations
 ---------
@@ -287,6 +301,17 @@ satisfied for every implemented public symbol.
      - ``WARNS-SECTION``
    * - ``Notes`` list items use ``*`` not ``-``
      - ``NOTES-DASH-BULLET``
+   * - Every ``[Key]_`` is defined in ``references.rst``
+     - ``CITATION-UNDEFINED``
+   * - ``:class:``/``:meth:``/``:func:`` targets resolve to a real public symbol
+     - ``XREF-UNRESOLVED``
+   * - A body that raises documents a ``Raises`` section *(advisory)*
+     - ``RAISES-UNDOCUMENTED``
+
+The build itself is the final gate: ``cd docs && make html`` (ideally with
+``SPHINXOPTS="-W"``) must finish without warnings — broken section underlines,
+inline-literal RST errors, and unresolved ``.. include::`` targets surface only
+there, not in the structural checker.
 
 Tooling
 -------

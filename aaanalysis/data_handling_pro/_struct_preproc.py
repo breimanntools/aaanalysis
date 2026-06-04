@@ -590,9 +590,9 @@ class StructurePreprocessor:
             Directory containing one ``<entry>.pdb`` file per row of
             ``df_seq``. Missing files emit a ``UserWarning`` and produce
             ``dssp_ok=False`` for that row.
-        features : list of str, default=['ss', 'asa', 'phi_psi']
+        features : list of str, default=['ss', 'asa', 'phi_psi', 'hbonds']
             Which DSSP feature streams to extract. Any subset of
-            ``{'ss', 'asa', 'phi_psi'}``. Only the requested columns are
+            ``{'ss', 'asa', 'phi_psi', 'hbonds'}``. Only the requested columns are
             appended; ``dssp_ok`` is always appended.
         ss_mode : {'ss3', 'ss8'}, default='ss3'
             Secondary-structure encoding for the ``ss`` column.
@@ -673,8 +673,9 @@ class StructurePreprocessor:
         features : list of str
             Feature keys from the StructurePreprocessor registry that belong
             to ``encode_dssp``: any subset of
-            ``{'ss3', 'ss8', 'rasa', 'phi_psi_sincos'}``. Each key's output is
-            normalized to ``[0, 1]`` per the table in the class docstring.
+            ``{'ss3', 'ss8', 'rasa', 'phi_psi_sincos', 'hbond_donor', 'hbond_acceptor'}``.
+            Each key's output is normalized to ``[0, 1]`` per the registry's
+            ``NORMALIZATION_RECIPES`` (de-normalization table in the class ``Notes``).
         ss_mode : {'ss3', 'ss8'}, default='ss3'
             Forwarded to :meth:`get_dssp` when DSSP is run inline. The chosen
             SS feature key (``'ss3'`` / ``'ss8'``) drives the actual one-hot
@@ -862,9 +863,16 @@ class StructurePreprocessor:
             ``df_seq``.
         features : list of str
             Feature keys from the StructurePreprocessor registry that belong
-            to ``encode_pdb``: any subset of ``{bfactor, depth}``. The
-            ``depth`` feature requires the external ``msms`` binary on PATH;
-            absence raises ``RuntimeError`` with an install hint.
+            to ``encode_pdb``: any subset of ``{bfactor, depth, plddt,
+            plddt_disorder, plddt_tier, chi1_sincos, chi2_sincos,
+            ca_centroid_dist, ca_centroid_dist_norm, contact_count_8A,
+            contact_count_12A, hse, disulfide}``. The ``depth`` feature
+            requires the external ``msms`` binary on PATH; absence raises
+            ``RuntimeError`` with an install hint.
+        plddt_disorder_threshold : float, default=70.0
+            pLDDT cutoff (in ``[0, 100]``) for the ``plddt_disorder`` feature: a
+            residue whose AlphaFold pLDDT is below this value is flagged
+            disordered (``1.0``), else ordered (``0.0``).
         on_failure : {'nan', 'drop', 'raise'}, default='nan'
             Failure policy for entries whose PDB load fails (missing file,
             unparseable structure, no matched chain). ``'nan'`` fills with
@@ -1804,6 +1812,10 @@ class StructurePreprocessor:
             top-level color/redundancy-bucket bucket; ``subcategory`` carries
             the fine-grained semantic split (``'DSSP_SS_3state'``,
             ``'Flexibility_bfactor'``, etc.).
+
+        See Also
+        --------
+        * :meth:`StructurePreprocessor.build_scales`: corpus-derived pseudo-scale companion to ``df_cat``.
 
         Examples
         --------

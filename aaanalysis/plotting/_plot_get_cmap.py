@@ -26,12 +26,12 @@ def plot_get_cmap(name: str = "CPP",
 
     n_colors : int, default=101
         Number of colors. Must be at least 3.
-    facecolor_dark : bool, optional
+    facecolor_dark : bool, default=False
         Whether central color in is black (if ``True``) or white (if ``False``).
 
     Returns
     -------
-    cmap
+    cmap : list
         List with colors given as RGB tuples.
 
     See Also

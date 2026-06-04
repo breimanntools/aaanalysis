@@ -35,8 +35,9 @@ def load_features(name="DOM_GSEC"):
     Returns
     -------
     df_feat : pd.DataFrame, shape (n_features, n_feature_info)
-        A DataFrame with features and their statistical measures as provided :meth:`CPP.run` method,
-        including their feature importance.
+        Feature DataFrame with one row per selected feature and the same
+        columns emitted by :meth:`CPP.run` (feature id, statistical measures,
+        and feature importance). See :meth:`CPP.run` for column definitions.
 
     Examples
     --------

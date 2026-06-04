@@ -86,7 +86,7 @@ class NumericalFeature:
         ----------
         X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
-        max_cor : float, default=0.5
+        max_cor : float, default=0.7
             Maximum Pearson correlation [0-1] of feature scales used as threshold for filtering.
 
         Returns
@@ -104,7 +104,7 @@ class NumericalFeature:
         """
         # Check input
         X = ut.check_X(X=X, min_n_unique_features=2)
-        ut.check_number_range(name="min_cor", val=max_cor, min_val=0, max_val=1, just_int=False, accept_none=False)
+        ut.check_number_range(name="max_cor", val=max_cor, min_val=0, max_val=1, just_int=False, accept_none=False)
         # Filter features
         is_selected = filter_correlation_(X, max_cor=max_cor)
         return is_selected
@@ -271,6 +271,11 @@ class NumericalFeature:
         -------
         df_scales : pd.DataFrame, shape (n_letters + 1, n_scales)
             DataFrame with the extended alphabet including the new amino acid letter.
+
+        Notes
+        -----
+        * If ``new_letter`` is already present in the index of ``df_scales``, a ``ValueError`` is raised.
+          Use this method only to add letters that do not yet appear in the alphabet.
 
         Examples
         --------

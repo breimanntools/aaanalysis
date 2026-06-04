@@ -114,7 +114,10 @@ def filter_seq(df_seq: pd.DataFrame = None,
     Returns
     -------
     df_clust : pd.DataFrame
-        A DataFrame with clustering results.
+        Clustering results with one row per representative sequence.
+        Columns include ``entry`` (sequence identifier), ``cluster``
+        (integer cluster ID), and ``representative`` (entry of the cluster
+        representative).
 
     Notes
     -----

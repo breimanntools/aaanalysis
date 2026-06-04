@@ -214,7 +214,7 @@ class SequencePreprocessor:
         Returns
         -------
         X : array-like, shape (n_samples, n_residues)
-            Feature matrix containing one-hot encoded position-wise representation of residues.
+            Feature matrix containing integer encoded position-wise representation of residues.
         features : list of str
             List of feature names corresponding to each position in the encoded matrix.
 
@@ -276,6 +276,8 @@ class SequencePreprocessor:
         Notes
         -----
         * A ``ValueError`` is raised if both ``pos_stop`` and ``window_size`` are ``None`` or if both are provided.
+        * A ``ValueError`` is raised when ``accept_gap=False`` and the requested window extends beyond the sequence
+          length (out-of-bounds position).
 
         Examples
         --------
@@ -323,7 +325,8 @@ class SequencePreprocessor:
         slide_start : int, default=0
             The starting position (>=0) for sliding window extraction.
         slide_stop : int, optional
-            The ending position (>=1) for sliding window extraction. If ``None``, extract all possible windows.
+            The ending position (>=1) for sliding window extraction. If ``None``, all positions from
+            ``slide_start`` to the end of the sequence are covered.
         window_size : int, default=5
             The size of each window (>=1) to extract.
         index1 : bool, default=False
@@ -338,6 +341,10 @@ class SequencePreprocessor:
         -------
         list_windows : list of str
             A list of extracted windows of amino acids.
+
+        See Also
+        --------
+        * :meth:`get_aa_window`: extract a single fixed window at a specific position.
 
         Examples
         --------

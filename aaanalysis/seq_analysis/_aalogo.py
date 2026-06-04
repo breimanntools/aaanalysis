@@ -55,6 +55,8 @@ class AAlogo:
     Sequence logos visualize the amino acid composition and conservation at each residue position.
     AAlogo computes logo matrices from sequence parts using the
     `logomaker <https://logomaker.readthedocs.io/en/latest/>`_ package.
+    Conservation is summarized per position (:meth:`get_df_logo_info`) or as a single scalar
+    (:meth:`get_conservation`).
 
     .. versionadded:: 1.0.3
 
@@ -193,7 +195,11 @@ class AAlogo:
             Fixed length (>=1) to align all TMD sequences. If ``None``, the maximum TMD
             length in ``df_parts`` is used.
         start_n : bool, default=True
-            Alignment direction for variable-length TMDs.
+            Alignment direction for variable-length TMDs:
+
+            - ``True``: Align from N-terminus (C-terminal padding with gaps).
+            - ``False``: Align from C-terminus (N-terminal padding with gaps).
+
         characters_to_ignore : str, default='.-'
             Characters excluded from the logo matrix computation.
         pseudocount : float, default=0.0
@@ -245,7 +251,7 @@ class AAlogo:
         """
         Summarize per-position information content into a single conservation score.
 
-        Aggregates the per-position information content from :meth:`AALogo.get_df_logo_info`
+        Aggregates the per-position information content from :meth:`AAlogo.get_df_logo_info`
         into a single scalar value representing overall sequence conservation.
 
         Parameters

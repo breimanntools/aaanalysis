@@ -191,6 +191,13 @@ class CPPPlot:
 
     .. versionadded:: 0.1.2
 
+    Notes
+    -----
+    * The ``jmd_n_len`` and ``jmd_c_len`` values supplied at construction are stored as ``_jmd_n_len`` and
+      ``_jmd_c_len`` and are reused by all plot methods (``ranking``, ``profile``, ``heatmap``,
+      ``feature_map``, ``update_seq_size``) so that JMD lengths are consistent across a single
+      :class:`CPPPlot` instance.
+
     """
     def __init__(self,
                  df_scales: Optional[pd.DataFrame] = None,
@@ -1036,7 +1043,7 @@ class CPPPlot:
         fig : plt.Figure
             The Figure object for the CPP heatmap.
         ax : plt.Axes
-            Array of Axes objects for the CPP heatmap.
+            Axes object for the CPP heatmap.
 
         Notes
         -----
@@ -1248,7 +1255,7 @@ class CPPPlot:
             Font size (>= 0) for figure titles. If ``None``, determined automatically.
         fontsize_labels : int or float, default=12
             Font size (>= 0) for figure labels. If ``None``, determined automatically.
-        fontsize_annotations : int or float, default=10
+        fontsize_annotations : int or float, default=11
             Font size (>= 0) for figure annotations. If ``None``, determined automatically.
         fontsize_imp_bar : int or float, default=9
             Font size (>= 0) for feature importance in bars. If ``None``, determined automatically.
@@ -1276,7 +1283,7 @@ class CPPPlot:
             accordingly by multiplying with 100 if necessary.
         cbar_kws : dict of key, value mappings, optional
             Keyword arguments for colorbar passed to :meth:`matplotlib.figure.Figure.colorbar`.
-        cbar_xywh : tuple, default=(0.7, None, 0.2, None)
+        cbar_xywh : tuple, default=(0.5, None, 0.2, None)
             Colorbar position and size: x-axis (left), y-axis (bottom), width, height. Values are optimized if ``None``.
         dict_color : dict, optional
             Color dictionary of scale categories classifying scales shown on y-axis. Default from
@@ -1299,7 +1306,7 @@ class CPPPlot:
         fig : plt.Figure
             The Figure object for the CPP feature map.
         ax : plt.Axes
-            Array of Axes objects for the CPP feature map.
+            Axes object for the CPP feature map.
 
         Notes
         -----
@@ -1432,7 +1439,7 @@ class CPPPlot:
         to ensure that the labels are clearly legible and do not overlap in the plot.
 
         Parameters
-        ---------
+        ----------
         ax : plt.Axes
             CPP plot axes object.
         fig : plt.Figure, optional

@@ -189,7 +189,10 @@ class AnnotationPreprocessor:
         Returns
         -------
         df_annot : pd.DataFrame
-            Canonical per-residue annotation schema (see class Notes).
+            Canonical per-residue annotation schema with columns
+            ``protein_id, start, end, aa, feature_type, category, source,
+            evidence, score, bond_id`` (positions are 1-based, UniProt-canonical
+            frame).
 
         Raises
         ------
@@ -336,6 +339,15 @@ class AnnotationPreprocessor:
         normalization : callable, optional
             Recipe applied to the raw per-residue values; defaults to a clip to
             ``[0, 1]`` (values must already lie in that range).
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        ValueError
+            If ``key`` is not a non-empty string.
 
         Examples
         --------
@@ -654,6 +666,11 @@ class AnnotationPreprocessor:
         df_cat : pd.DataFrame, shape (D, 5)
             One row per dimension: ``scale_id``, ``category``, ``subcategory``,
             ``scale_name``, ``scale_description``.
+
+        Raises
+        ------
+        ValueError
+            On invalid or unregistered feature keys in ``features``.
 
         Examples
         --------

@@ -65,17 +65,18 @@ class dPULearnPlot:
     """
     Plotting class for :class:`dPULearn` (deterministic Positive-Unlabeled Learning) results [Breimann25a]_.
 
-    This plotting class visualizes the by ``dPULearn`` reliably identified negative samples in a compressed feature
-    space.
+    Visualizes ``dPULearn`` results in two ways: the reliable negatives it identifies, shown in a compressed
+    (PCA) feature space (:meth:`pca`), and an evaluation comparing multiple sets of identified negatives
+    (:meth:`eval`).
 
     .. versionadded:: 0.1.2
 
     """
-    def __int__(self):
+    def __init__(self):
         """
         See Also
         --------
-        * :class:`dPULearn`: the respective plotting class.
+        * :class:`dPULearn`: the logic class whose identified negatives this visualizes.
         """
 
     @staticmethod
@@ -121,7 +122,7 @@ class dPULearnPlot:
             If ``True``, legend is set under dissimilarity measures.
         legend_y : float, default=-0.175
             Legend position regarding the plot y-axis applied if ``legend=True``.
-        colors : list of str, optional
+        colors : list of str of length 4, optional
             List of colors for identified negatives and the following reference datasets:
             positive samples ('Pos'), unlabeled samples ('Unl'), and ground-truth negative samples ('Neg').
 
@@ -187,18 +188,18 @@ class dPULearnPlot:
         ----------
         df_pu : pd.DataFrame, shape (n_samples, pca_features)
             A DataFrame with the PCA-transformed features obtained from ``dPULearn.df_pu_``.
-        figsize : tuple, default=(6, 6)
+        figsize : tuple, default=(5, 5)
             Figure dimensions (width, height) in inches.
         labels : array-like, shape (n_samples,)
             Dataset labels of samples in ``df_pu``. Labels should contain 0 (identified negative) and 1 (positive).
             Unlabeled samples (2) can also be provided.
-        pc_x : str, default='PC1'
-            The name of the principal component (PC) to show at the x-axis.
-        pc_y : str, default='PC2'
-            The name of the principal component (PC) to show at the y-axis.
-        show_pos_mean_x : bool, default False
+        pc_x : int, default=1
+            Index of the principal component (PC) to show at the x-axis.
+        pc_y : int, default=2
+            Index of the principal component (PC) to show at the y-axis.
+        show_pos_mean_x : bool, default=True
             If ``True``, the mean of the x-axis PC values across the positive sample group is shown on the plot.
-        show_pos_mean_y : bool, default False
+        show_pos_mean_y : bool, default=True
             If ``True``, the mean of the y-axis PC values across the positive sample group is shown on the plot.
         colors : list of str, optional
             List of colors for identified negatives (0), positive samples (1), and unlabeled samples (2).
@@ -206,7 +207,7 @@ class dPULearnPlot:
             List of dataset names for identified negatives, positive samples, and unlabeled samples.
         legend : bool, default=True
             If ``True``, legend is set under dissimilarity measures.
-        legend_y : float, default=-0.175
+        legend_y : float, default=-0.15
             Legend position regarding the plot y-axis applied if ``legend=True``.
         kwargs_scatterplot : dict, optional
             Dictionary with keyword arguments for adjusting scatter plot (:func:`matplotlib.pyplot.scatter`).
@@ -217,7 +218,7 @@ class dPULearnPlot:
             PCA plot axes object.
 
         See Also
-        -------
+        --------
         * :class:`dPULearn` for details on the data structure of ``df_pu``.
         * :func:`matplotlib.pyplot.scatter` for scatter plot arguments.
 

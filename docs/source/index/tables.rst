@@ -57,6 +57,7 @@ All tables from the AAanalysis documentation are listed here, in chronological o
      - aa.load_scales
 
 
+
 .. _t1_overview_benchmarks:
 
 Protein Benchmark Datasets
@@ -214,7 +215,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 63
      - nan
      - Prediction of gamma-secretase substrates
-     - :ref:`Breimann24c <Breimann24c>`
+     - :ref:`Breimann25a <Breimann25a>`
      - 1 (substrate), 0 (non-substrate)
    * - Domain
      - DOM_GSEC_PU
@@ -224,8 +225,9 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 0
      - nan
      - Prediction of gamma-secretase substrates (PU dataset)
-     - :ref:`Breimann24c <Breimann24c>`
+     - :ref:`Breimann25a <Breimann25a>`
      - 1 (substrate), 2 (unknown substrate status)
+
 
 
 .. _t2_overview_scales:
@@ -267,6 +269,7 @@ Various amino acid scale datasets are provided.
      - Evaluation of top 60 scale subsets
      - 60
      - :ref:`Breimann24a <Breimann24a>`
+
 
 
 AAontology
@@ -360,6 +363,7 @@ Categories
      - 6
      - 3
      - 3
+
 
 
 .. _t3b_aaontology_subcategories:
@@ -747,5 +751,6 @@ Subcategories
      - 1
      - nan
      - nan
+
 
 

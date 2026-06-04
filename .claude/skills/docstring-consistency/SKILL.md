@@ -38,9 +38,22 @@ so file-local `check_*` helpers are never flagged.
 - **Defects** are hard convention violations; **the exit code is non-zero iff
   there are defects.** `0 defect(s)` means the complete convention is satisfied
   for every real symbol.
-- **Advisory** (currently only `CLASS-NO-CITATION`) never fails the run: a
-  utility/helper class legitimately has no citation, so this is a *review*
-  prompt, **never** a cue to invent a citation (see rule 7).
+- **Advisory** (`CLASS-NO-CITATION`, `RAISES-UNDOCUMENTED`) never fails the run.
+  **Citations are the exception, reserved for important classes/methods** (a
+  paper that describes them); the *norm* for utility/helper classes is **no
+  citation**. So that list is **not a to-do** — it is a reminder to confirm an
+  *important* class isn't missing its citation, **never** a cue to add one to
+  utilities or to invent one (see rule 7). `RAISES-UNDOCUMENTED` likewise just
+  flags a body that raises without a `Raises` section — document it if the
+  exception is user-facing; the package omits it for routine validation.
+- **Cross-references are validated** (`XREF-UNRESOLVED`, a defect): every
+  `:class:`/`:meth:`/`:func:` target must resolve to a real public symbol
+  (registry built package-wide, so single-file runs still resolve cross-file
+  refs). External refs like `pandas.DataFrame` are ignored. Watch capitalization
+  (`AAlogo` ≠ `AALogo`) and method-on-class typos.
+- **The build is the final gate** (not run by this checker): `cd docs && make
+  html` (ideally `SPHINXOPTS="-W"`) must finish clean — RST render errors and
+  unresolved `.. include::` targets surface only there.
 - **Stubs are skipped** (reported only as a count + names): a class whose
   summary starts `UNDER CONSTRUCTION` / a method whose body is just
   `raise NotImplementedError` is explicitly not-ready and exempt from the
@@ -95,7 +108,9 @@ Copy the matching template from [REFERENCE.md](REFERENCE.md) and fill it in:
 3. Every public method ends with one `Examples` `.. include:: examples/<name>.rst`.
 4. `Returns` value is named and matches the returned variable.
 5. Recurring params (`df_seq`, `labels`, `n_jobs`, `random_state`) reuse the
-   canonical baseline sentence verbatim; method specifics are a suffix.
+   canonical baseline sentence verbatim; method specifics are a suffix. **Each
+   docstring is self-contained: document every parameter as its own entry** —
+   never lump them into `a, b, c : See :meth:`other`. Same semantics.`
 6. `See Also` = `* :role:`Target`: gloss.` bullets (single colon, no bare names).
 7. **Verify every citation — never invent one.** A `[Key]_` is valid only when
    (a) `Key` is defined in `docs/source/index/references.rst` *and* (b) that work

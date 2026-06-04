@@ -47,6 +47,10 @@ def to_fasta(df_seq: pd.DataFrame = None,
     cols_info : list of str, optional
         List of column names for additional information to include in the FASTA header.
 
+    Returns
+    -------
+    None
+
     Notes
     -----
     The FASTA header for each sequence is composed as follows:

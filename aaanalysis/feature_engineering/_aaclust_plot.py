@@ -120,10 +120,10 @@ def check_warning_match_bar_colors_labels(bar_colors=None, labels=None):
 # II Main Functions
 class AAclustPlot:
     """
-    Plotting class for :class:`AAclust` (Amino Acid clustering) results [Breimann24a]_.
+    Plotting class for :class:`AAclust` (Amino Acid clustering) results, providing dimensionality-reduction
+    scatter plots, correlation heatmaps, and clustering evaluation charts [Breimann24a]_.
 
-    This class performs dimensionality reduction for visualization using decomposition models such as
-    Principal Component Analysis (PCA).
+    Dimensionality reduction is performed using decomposition models such as Principal Component Analysis (PCA).
 
     .. versionadded:: 0.1.2
 
@@ -132,7 +132,7 @@ class AAclustPlot:
                  model_class: Type[TransformerMixin] = PCA,
                  model_kwargs: Optional[Dict] = None,
                  verbose: bool = True,
-                 random_state: Optional[str] = None,
+                 random_state: Optional[int] = None,
                  ):
         """
         Parameters
@@ -194,7 +194,7 @@ class AAclustPlot:
             - 'CH': Calinski-Harabasz Index.
             - 'SC': Silhouette Coefficient.
 
-        figsize : tuple, default=(7, 6)
+        figsize : tuple, default=(6, 4)
             Figure dimensions (width, height) in inches.
         dict_xlims : dict, optional
             A dictionary containing x-axis limits for subplots. Keys should be the subplot axis number ({0, 1, 2, 4})
@@ -244,7 +244,7 @@ class AAclustPlot:
                 palette: Optional[mpl.colors.ListedColormap] = None,
                 ) -> Tuple[plt.Axes, pd.DataFrame]:
         """
-        PCA plot of clustering with centers highlighted
+        Create a PCA plot of clustering results with cluster centers highlighted.
 
         Parameters
         ----------
@@ -336,7 +336,7 @@ class AAclustPlot:
             Cluster labels for each sample in ``X``. If ``None``, no grouping is used.
         component_x : int, default=1
             Index of the PCA component for the x-axis. Must be >= 1.
-        component_y : int, default=1
+        component_y : int, default=2
             Index of the PCA component for the y-axis. Must be >= 1.
         metric : {'correlation', 'euclidean', 'manhattan', 'cosine'}, default='euclidean'
             The distance metric for calculating medoid.
@@ -442,14 +442,14 @@ class AAclustPlot:
         ytick_label_rotation : int, default=0
             Rotation of y-tick labels (names of `samples`).
         bar_position : str or list of str, default='left'
-            Position of the colored sidebar (``left``, ``right``, ``top``, or ``down``). If ``None``, no sidebar is added.
+            Position of the colored sidebar (``left``, ``right``, ``top``, or ``bottom``). If ``None``, no sidebar is added.
         bar_colors : str or list of str, default='tab:gray'
             Either a single color or a list of colors for each unique label in ``labels``.
         bar_width_x : float, default=0.1
             Width of the x-axis sidebar, must be >= 0.
         bar_spacing_x : float, default=0.1
             Space between the heatmap and the colored x-axis sidebar, must be >= 0.
-        bar_width_y : float, default=0,1
+        bar_width_y : float, default=0.1
             Width of the y-axis sidebar, must be >= 0.
         bar_spacing_y : float, default=0.1
             Space between the heatmap and the colored y-axis sidebar, must be >= 0.

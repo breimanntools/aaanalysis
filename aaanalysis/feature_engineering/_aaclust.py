@@ -212,7 +212,7 @@ class AAclust(Wrapper):
         X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
         n_clusters : int, optional
-            Pre-defined number of clusters. If provided, k is not optimized. Must be 0 > n_clusters > n_samples.
+            Pre-defined number of clusters. If provided, k is not optimized. Must be 0 < n_clusters < n_samples.
         min_th : float, default=0.3
             Pearson correlation threshold for clustering optimization (between 0 and 1).
         on_center : bool, default=True
@@ -416,6 +416,11 @@ class AAclust(Wrapper):
         cluster_names : list of str
             A list of renamed clusters based on names.
 
+        Notes
+        -----
+        * A cluster is assigned the label ``'Unclassified'`` when its most frequent name is already used by another
+          cluster, or when the cluster contains only a single sample.
+
         Examples
         --------
         .. include:: examples/aaclust_name_clusters.rst
@@ -448,7 +453,7 @@ class AAclust(Wrapper):
 
         Returns
         -------
-        centers : array-like, shape (n_clusters,)
+        centers : array-like, shape (n_clusters, n_features)
             The computed center for each cluster.
         labels_centers : array-like, shape (n_clusters,)
             The labels associated with each computed center.
@@ -490,7 +495,7 @@ class AAclust(Wrapper):
 
         Returns
         -------
-        medoids : array-like, shape (n_clusters,)
+        medoids : array-like, shape (n_clusters, n_features)
             The medoid for each cluster.
         labels_medoids : array-like, shape (n_clusters,)
             The labels corresponding to each medoid.
@@ -588,9 +593,9 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        names, list of str
+        names : list of str
             List of sample names. Should be subset of ``names_ref``.
-        names_ref, list of str
+        names_ref : list of str
             List of reference sample names. Should be superset of ``names``.
 
         Returns
@@ -642,9 +647,9 @@ class AAclust(Wrapper):
             Must contain the same unique elements as the unique subcategories associated with ``scale_ids``
         min_coverage : int, default=100
             Minimum coverage percentage of unique subcategories to be achieved by the selected clusters.
-        df_cat : pd.DataFrame, optional
+        df_cat : pd.DataFrame
             DataFrame containing the categorical information for each scale. Should include columns ``scale_ids`` and
-            the specified ``col_name``. required columns are 'scale_id', 'category', 'subcategory', and 'scale_name'.
+            the specified ``col_name``. Required columns are 'scale_id', 'category', 'subcategory', and 'scale_name'.
         col_name : {'category', 'subcategory', 'scale_name'}, default='subcategory'
              Column name in ``df_cat`` that contains the subcategory information (alternatively, category or scale name).
 

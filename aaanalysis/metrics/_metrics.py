@@ -87,7 +87,7 @@ def comp_bic_score(X: ut.ArrayLike2D = None,
     """
     Compute an adjusted Bayesian Information Criterion (BIC) (-∞, ∞) for assessing clustering quality.
 
-    Described in [Breimann24b], this adjusted BIC is computed for a given set of clusters in the dataset ``X``.
+    Described in [Breimann24b]_, this adjusted BIC is computed for a given set of clusters in the dataset ``X``.
     The BIC is a clustering model selection criterion that balances the model complexity against the
     likelihood of the data distribution. Unlike the traditional BIC where lower values are better, this adjusted BIC,
     is modified to align with other clustering evaluation measures like the
@@ -106,7 +106,7 @@ def comp_bic_score(X: ut.ArrayLike2D = None,
     Returns
     -------
     bic : float
-        The Bayesian Information Criterion value. A lower BIC value indicates a better model fit to the data.
+        The adjusted Bayesian Information Criterion value. Higher values indicate better clustering quality.
 
     Notes
     -----
@@ -344,7 +344,7 @@ def comp_bootstrap_ci(values: ut.ArrayLike1D = None,
 
     Returns
     -------
-    dict
+    result : dict
         Dictionary with keys ``'mean'`` (mean of the finite ``values``),
         ``'ci_low'`` (lower bound of the ``ci`` interval), and ``'ci_high'``
         (upper bound of the ``ci`` interval).

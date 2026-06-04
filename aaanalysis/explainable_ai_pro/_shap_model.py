@@ -1,5 +1,5 @@
 """
-This is a script for the frontend of the ShapModel class used to obtain Mote Carlo estimates of feature impact.
+This is a script for the frontend of the ShapModel class used to obtain Monte Carlo estimates of feature impact.
 """
 from typing import Optional, List, Type, Union, Callable
 import pandas as pd
@@ -243,7 +243,7 @@ class ShapModel:
 
     `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ is an explainable Artificial Intelligence (AI) framework
     and game-theoretic approach to explain the output of any machine learning model using SHAP values. These SHAP values
-    represent a feature's responsibility for a change in the model output to increase of decrease a sample prediction
+    represent a feature's responsibility for a change in the model output to increase or decrease a sample prediction
     score due to the positive or negative impact of its features, respectively.
 
     .. versionadded:: 0.1.3
@@ -253,8 +253,8 @@ class ShapModel:
     shap_values : array-like, shape(n_samples, n_features)
         2D array with Monte Carlo estimates of SHAP values obtained by SHAP explainer models averaged across all rounds,
         feature selections, and trained models from `list_model_classes`.
-    exp_value : int
-        Expected value for explaining the model output obtained by SHAP explainer model  averaged across all rounds,
+    exp_value : float
+        Expected value for explaining the model output obtained by SHAP explainer model averaged across all rounds,
         feature selections, and trained models from `list_model_classes`. Typically, 0.5 for binary classification
         and balanced dataset.
 
@@ -274,7 +274,7 @@ class ShapModel:
             The `SHAP Explainer model <https://shap.readthedocs.io/en/latest/api.html#explainers>`_.
             Must be one of the following: :class:`shap.TreeExplainer`, :class:`shap.LinearExplainer`,
             :class:`shap.KernelExplainer`, :class:`shap.DeepExplainer`, :class:`shap.GradientExplainer`.
-        explainer_kwargs : dict, default={model_output='probability'}
+        explainer_kwargs : dict, default={'model_output': 'probability'}
             Keyword arguments for the explainer class model.
         list_model_classes : list of Type[BaseEstimator], default=[RandomForestClassifier, ExtraTreesClassifier]
             A list of prediction model classes used to obtain SHAP values.
@@ -368,7 +368,7 @@ class ShapModel:
         self._list_model_kwargs = _list_model_kwargs
         # Output parameters (set during model fitting)
         self.shap_values: Optional[ut.ArrayLike2D] = None
-        self.exp_value: Optional[int] = None
+        self.exp_value: Optional[float] = None
 
     def fit(self,
             X: ut.ArrayLike2D,
@@ -539,6 +539,10 @@ class ShapModel:
         * If ``group_average=True``, warning when the standard deviation of a feature's impact significantly exceeds
           its mean impact, this may indicate an unreliable grouping.
 
+        See Also
+        --------
+        * :meth:`ShapModel.add_sample_mean_dif`: for computing the raw feature value difference between samples and a reference group.
+
         Examples
         --------
         .. include:: examples/sm_add_feat_impact.rst
@@ -616,8 +620,8 @@ class ShapModel:
             If ``True``, allow dropping of already existing sample specific mean difference columns from
             ``df_feat`` before inserting.
         sample_positions : int, list of int, or None
-            Position index/indices for the sample(s) in ``shap_values``.
-            If ``None``, the impact for each sample will be returned.
+            Position index/indices for the sample(s) in ``X``.
+            If ``None``, the difference for each sample will be returned.
         names: str or list of str, optional
             Unique name(s) used for the feature value differences columns. When provided, they should align with
             ``sample_positions`` as follows:
