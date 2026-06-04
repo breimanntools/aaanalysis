@@ -52,7 +52,10 @@ jobs:
         sudo apt-get install -y mmseqs2
 
     - name: Run Tests
-      run: pytest tests -x -vv --durations=20
+      # The exact-value regression anchor (-m regression) runs in the nightly
+      # job, not in this fail-fast matrix (ADR-0015) — its frozen values are
+      # canonical-cell-specific and must not gate every cell.
+      run: pytest tests -m "not regression" -x -vv --durations=20
       env:
         HYPOTHESIS_DEADLINE: 10000000
         MPLBACKEND: Agg

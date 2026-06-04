@@ -28,6 +28,21 @@ cd docs && make html
 python dev_scripts/dev_aa_window_sampler.py
 ```
 
+## Dev gotchas (repo-wide)
+
+- **Run with `-c tests/pytest.ini`.** It carries the `filterwarnings` that
+  silence the deliberate D5b/D7 CPP advisories on tiny fixtures and registers
+  the `regression` / `slow` markers. Without it those advisories surface as
+  noise and the markers warn as unknown.
+- **`aa.load_dataset(name=..., n=N)` returns `2N` rows** (n per class). To get
+  labels use `df_seq["label"].to_list()`, not `len(df_seq)`-based assumptions.
+- **Coverage is measured on the package only** — `--cov=aaanalysis`, never
+  `--cov=./` (that counts the test files and inflates the number). See ADR-0016.
+- **Pushing to `master` triggers 3 workflows** (Unit Tests, Test Coverage,
+  CodeQL); feature-branch pushes trigger none (CI is gated to master push/PR).
+  The exact-value CPP regression anchor (`-m regression`) runs only in the
+  nightly, not the blocking matrix (ADR-0015).
+
 ## Git / PR workflow
 
 - Branch names: `fix/...`, `feat/...`, `doc/...`, `refactor/...`.

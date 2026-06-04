@@ -46,7 +46,7 @@ jobs:
         MPLBACKEND: Agg
         HYPOTHESIS_DEADLINE: 10000000
       run: |
-        pytest tests --cov=./ --cov-report=xml -x -vv --durations=20
+        pytest tests -m "not regression" --cov=aaanalysis --cov-report=xml --cov-fail-under=88 -x -vv --durations=20
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4

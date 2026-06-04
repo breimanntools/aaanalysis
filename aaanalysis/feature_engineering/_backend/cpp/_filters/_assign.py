@@ -228,8 +228,8 @@ def assign_scale_values_to_seq(df_parts=None, df_scales=None, verbose=False, n_j
                 shared_max_progress=shared_max_progress,
                 shared_value_lock=shared_value_lock,
             )
-        if prefer_mp_progress:
-            _cleanup_mp_manager()
+        # n_jobs == 1 here, so prefer_mp_progress is always False — no mp manager
+        # was created, nothing to clean up.
         return out
 
     def _mp_scale_assignment(scales_chunk, shared_max_progress, shared_value_lock, print_lock):

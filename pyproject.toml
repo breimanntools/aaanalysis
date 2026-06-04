@@ -108,6 +108,7 @@ dev = [
   "pytest>=9.0.3",
   "pytest-cov>=7.1.0",
   "pytest-mpl==0.19.0",
+  "mutmut>=3.0",
 ]
 
 [project.urls]
@@ -217,3 +218,11 @@ build,
 dist,
 venv
 '''
+
+# Mutation testing (ADR-0016) — opt-in dev tool, run in a NON-GATING nightly
+# CI job (mutation_nightly.yml), never as a hard gate. Scoped to the CPP numeric
+# core (filters / ranking) where weak tests matter most; surviving mutants feed
+# the golden/property assertions. Widen paths_to_mutate as the audit expands.
+[tool.mutmut]
+paths_to_mutate = "aaanalysis/feature_engineering/_backend/cpp/_filters/"
+tests_dir = "tests/unit/cpp_tests/"

@@ -375,3 +375,15 @@ class TestTreeModelFitComplex:
         tree_model.fit(X=X, labels=labels, use_rfe=False, n_cv=2, n_rounds=2)
         for row in tree_model.is_selected_:
             assert np.array_equal(row, is_preselected)
+
+class TestTreeModelFitReproducibility:
+    """Same random_state -> identical feature importance (reproducibility.md)."""
+
+    def test_same_random_state_same_importance(self):
+        rng = np.random.default_rng(0)
+        X = rng.random((40, 6))
+        labels = create_labels(40)  # built once, reused for both fits
+        a = aa.TreeModel(random_state=0); a.fit(X=X, labels=labels, **ARGS)
+        b = aa.TreeModel(random_state=0); b.fit(X=X, labels=labels, **ARGS)
+        assert np.allclose(a.feat_importance, b.feat_importance)
+        assert np.array_equal(a.is_selected_, b.is_selected_)

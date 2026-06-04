@@ -1,0 +1,51 @@
+name: Nightly (mutation + regression)
+
+# NON-GATING nightly job (ADR-0015 / ADR-0016). Runs on a schedule and on
+# manual dispatch — never on push/PR, so it never blocks merges. It does two
+# things on the canonical cell (Linux + py3.11):
+#   1. Re-verifies the exact-value CPP regression anchor (`-m regression`).
+#   2. Runs a scoped, non-gating mutmut audit of the CPP numeric core; surviving
+#      mutants are a TODO list for stronger golden/property tests, not a gate.
+
+on:
+  schedule:
+    - cron: "0 4 * * *"   # 04:00 UTC daily
+  workflow_dispatch: {}
+
+jobs:
+  nightly:
+    name: Mutation + regression (Linux/py3.11)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package + dev/pro deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev,pro]
+
+      - name: Verify CPP regression anchor (canonical cell)
+        env:
+          MPLBACKEND: Agg
+          HYPOTHESIS_DEADLINE: 10000000
+        run: pytest tests -m regression -vv
+
+      - name: Mutation audit of CPP numeric core (non-gating)
+        continue-on-error: true
+        run: |
+          mutmut run || true
+          mutmut results || true
+          mutmut html || true
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutmut-report
+          path: html/
+          if-no-files-found: ignore

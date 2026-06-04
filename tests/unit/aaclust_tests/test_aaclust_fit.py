@@ -253,3 +253,15 @@ class TestAAclustComplex:
             with pytest.raises(ValueError):
                 model = aa.AAclust()
                 model.fit([[1, 2], [2, 3]], metric=metric)
+
+
+class TestAAclustFitReproducibility:
+    """Same random_state -> identical clustering (reproducibility.md contract)."""
+
+    def test_same_random_state_same_labels(self):
+        rng = np.random.default_rng(0)
+        X = rng.random((60, 8))
+        a = aa.AAclust(random_state=0); a.fit(X, n_clusters=5)
+        b = aa.AAclust(random_state=0); b.fit(X, n_clusters=5)
+        assert np.array_equal(a.labels_, b.labels_)
+        assert np.allclose(a.centers_, b.centers_)

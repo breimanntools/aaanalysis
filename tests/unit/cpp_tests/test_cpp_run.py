@@ -308,3 +308,51 @@ class TestCPPRunComplex:
             # Pattern features were silently dropped; "-Pattern(" excludes the
             # surviving "-PeriodicPattern(" features (no leading dash inside it).
             assert not df_feat["feature"].str.contains("-Pattern(", regex=False).any()
+
+
+class TestCPPRunProperties:
+    """Output invariants of CPP.run (ranking / filter / range), not just 'is a DataFrame'."""
+
+    @staticmethod
+    def _setup(n=20, n_scales=8):
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=n)
+        labels = df_seq["label"].to_list()
+        df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq)
+        df_scales = aa.load_scales(top60_n=20).T.head(n_scales).T
+        return labels, df_parts, df_scales
+
+    def test_filter_count_invariant(self):
+        labels, df_parts, df_scales = self._setup()
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, verbose=False)
+        for n_filter in (5, 10, 25):
+            df_feat = cpp.run(labels=labels, n_filter=n_filter, n_jobs=1)
+            assert len(df_feat) == n_filter
+
+    def test_returned_features_unique(self):
+        labels, df_parts, df_scales = self._setup()
+        df_feat = aa.CPP(df_parts=df_parts, df_scales=df_scales,
+                         verbose=False).run(labels=labels, n_filter=20, n_jobs=1)
+        assert df_feat["feature"].is_unique
+
+    def test_abs_auc_in_unit_half_range(self):
+        # abs_auc = |AUC - 0.5| so it must lie in [0, 0.5].
+        labels, df_parts, df_scales = self._setup()
+        df_feat = aa.CPP(df_parts=df_parts, df_scales=df_scales,
+                         verbose=False).run(labels=labels, n_filter=15, n_jobs=1)
+        assert df_feat["abs_auc"].min() >= 0.0
+        assert df_feat["abs_auc"].max() <= 0.5
+
+    def test_deterministic_same_input(self):
+        # Same input -> identical selected features in identical order.
+        labels, df_parts, df_scales = self._setup()
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, verbose=False)
+        a = cpp.run(labels=labels, n_filter=15, n_jobs=1)["feature"].tolist()
+        b = cpp.run(labels=labels, n_filter=15, n_jobs=1)["feature"].tolist()
+        assert a == b
+
+    def test_n_jobs_does_not_change_selection(self):
+        labels, df_parts, df_scales = self._setup()
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, verbose=False)
+        s1 = set(cpp.run(labels=labels, n_filter=15, n_jobs=1)["feature"])
+        s2 = set(cpp.run(labels=labels, n_filter=15, n_jobs=2)["feature"])
+        assert s1 == s2

@@ -608,3 +608,16 @@ class TestSampleSameProteinComplex:
         with pytest.raises(ValueError):
             aaws.sample_same_protein(df_seq=df_seq, pos_col="pos",
                                   n=0, window_size=5, seed=0)
+
+
+class TestSampleSameProteinReproducibility:
+    """Same seed -> identical sampled windows (reproducibility.md contract)."""
+
+    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
+    def test_same_seed_same_output(self):
+        df_seq = _add_pos_col(_small_df_seq(), seed=0)
+        sampler = aa.AAWindowSampler()
+        a = sampler.sample_same_protein(df_seq=df_seq, pos_col="pos", window_size=9, seed=0)
+        b = sampler.sample_same_protein(df_seq=df_seq, pos_col="pos", window_size=9, seed=0)
+        assert a["window"].tolist() == b["window"].tolist()
+        assert a["entry_win"].tolist() == b["entry_win"].tolist()

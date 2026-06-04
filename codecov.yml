@@ -1,0 +1,48 @@
+# Codecov configuration (ADR-0016).
+#
+# Measure the PACKAGE only — the CI job uploads coverage for `aaanalysis`
+# (not `--cov=./`, which counted the test files and inflated the badge to ~95%
+# vs the honest ~90%). `ignore` is a belt-and-suspenders guard in case a future
+# job widens the --cov scope.
+#
+# Gates are RATCHETED: enabled now and green at the honest level —
+#   * project: target=auto  -> block any drop vs the base commit (no regression)
+#   * patch:   target=90%   -> new/changed code must be >=90% covered
+# A CI backstop (`--cov-fail-under=88` in test_coverage.yml) enforces an absolute
+# floor independent of Codecov. The aspirational targets (project 95%, the
+# cpp_core component at 100%, patch 95%) are turned on by raising the numbers
+# below once the suite actually reaches them — not in one switch.
+
+ignore:
+  - "tests/**"
+  - "setup.py"
+  - "dev_scripts/**"
+  - "docs/**"
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto          # no regression vs base
+        threshold: 1%         # tolerate <=1% noise
+    patch:
+      default:
+        target: 90%           # new code
+
+# Per-area visibility. cpp_core is the numeric CPP pipeline (the scientific
+# core). Kept INFORMATIONAL for now (it contains files not yet at 100%, e.g.
+# the streaming filters); flip `informational: false` + raise its target to
+# 100% once the component reaches it (ADR-0016 climb).
+component_management:
+  individual_components:
+    - component_id: cpp_core
+      name: cpp_core
+      paths:
+        - "aaanalysis/feature_engineering/_backend/cpp/_filters/**"
+      statuses:
+        - type: project
+          informational: true
+
+comment:
+  layout: "reach, diff, files, components"
+  require_changes: false

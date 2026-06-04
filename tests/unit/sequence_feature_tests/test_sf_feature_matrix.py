@@ -157,3 +157,49 @@ class TestFeatureMatrixComplex:
         # Test with invalid 'accept_gaps' type
         with pytest.raises(ValueError):
             sf.feature_matrix(features=features, df_parts=df_parts, accept_gaps="not_a_boolean")
+
+
+class TestFeatureMatrixGoldenValues:
+    """Hand-computed values + shape invariants (not just 'returns an ndarray')."""
+
+    @staticmethod
+    def _scales():
+        import pandas as pd
+        order = "ACDEFGHIKLMNPQRSTVWY"
+        return pd.DataFrame({"S1": {aa: float(i + 1) for i, aa in enumerate(order)}})
+
+    def test_golden_segment_whole_mean(self):
+        """'AC' over Segment(1,1) -> mean(S1[A]=1, S1[C]=2) == 1.5 exactly."""
+        import pandas as pd
+        sf = aa.SequenceFeature()
+        X = sf.feature_matrix(features=["TMD-Segment(1,1)-S1"],
+                              df_parts=pd.DataFrame({"tmd": ["AC"]}),
+                              df_scales=self._scales())
+        assert np.asarray(X).shape == (1, 1)
+        assert float(np.asarray(X)[0, 0]) == 1.5
+
+    def test_golden_segment_second_half(self):
+        """'ACDE' Segment(2,2) -> 'DE' -> mean(S1[D]=3, S1[E]=4) == 3.5."""
+        import pandas as pd
+        sf = aa.SequenceFeature()
+        X = sf.feature_matrix(features=["TMD-Segment(2,2)-S1"],
+                              df_parts=pd.DataFrame({"tmd": ["ACDE"]}),
+                              df_scales=self._scales())
+        assert float(np.asarray(X)[0, 0]) == 3.5
+
+    def test_property_shape_rows_cols(self):
+        """Invariant: result is (n_samples, n_features) for every input size."""
+        for n_feat, n_samples in [(5, 10), (20, 8), (1, 30)]:
+            features, df_parts, _ = _get_df_feat_input(n_feat=n_feat, n_samples=n_samples)
+            sf = aa.SequenceFeature()
+            X = np.asarray(sf.feature_matrix(features=features, df_parts=df_parts))
+            # DOM_GSEC returns 2*n rows (n per class); assert against df_parts length.
+            assert X.shape == (len(df_parts), len(features))
+
+    def test_property_parallel_equals_serial(self):
+        """Invariant: n_jobs must not change the values (only the schedule)."""
+        features, df_parts, _ = _get_df_feat_input(n_feat=15, n_samples=20)
+        sf = aa.SequenceFeature()
+        X1 = np.asarray(sf.feature_matrix(features=features, df_parts=df_parts, n_jobs=1))
+        X2 = np.asarray(sf.feature_matrix(features=features, df_parts=df_parts, n_jobs=2))
+        assert np.allclose(X1, X2, equal_nan=True)

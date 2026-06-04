@@ -33,7 +33,7 @@ def _ss3_index_for_code(code: str) -> Optional[int]:
     if code == ut.STR_SS_GAP:
         return None
     mapped = ut.DICT_DSSP_3STATE.get(code, code if code in SS3_ORDER else "C")
-    if mapped not in SS3_ORDER:
+    if mapped not in SS3_ORDER:  # pragma: no cover  # defensive: unreachable while all DICT_DSSP_3STATE values are in {H,E,C}
         return None
     return SS3_ORDER.index(mapped)
 

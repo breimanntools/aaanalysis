@@ -241,3 +241,15 @@ class TestdPULearnFitComplex:
             if is_invalid:
                 with pytest.raises(ValueError):
                     dpul.fit(X, labels, n_unl_to_neg, n_components)
+
+
+class TestdPULearnFitReproducibility:
+    """Same random_state -> identical identified negatives (reproducibility.md)."""
+
+    def test_same_random_state_same_labels(self):
+        rng = np.random.default_rng(0)
+        X = rng.random((40, 6))
+        labels = np.array([1, 2] * 20)  # positives (1) + unlabeled (2)
+        a = aa.dPULearn(random_state=0); a.fit(X, labels=labels, n_unl_to_neg=10)
+        b = aa.dPULearn(random_state=0); b.fit(X, labels=labels, n_unl_to_neg=10)
+        assert np.array_equal(a.labels_, b.labels_)
