@@ -9,7 +9,7 @@ paths:
 > **Single source of truth:** the **Docstring Style Guide** at
 > `docs/source/index/docstring_guide.rst` (published on Read the Docs). This file
 > defines no rules of its own — it only flags the always-needed essentials and
-> points there. Enforce with the `docstring-consistency` skill / checker.
+> points there. Enforce with the `docstrings` skill / checker.
 
 numpydoc throughout; mirror `CPP` / `AAclust` / `dPULearn`. Highest-frequency
 traps to keep front-of-mind on touch:
@@ -25,4 +25,4 @@ traps to keep front-of-mind on touch:
 - Module docstring opens with `"""This is a script for ..."""` (CLAUDE.md §3).
 
 Run the checker before/after editing docstrings:
-`python .claude/skills/docstring-consistency/scripts/check_docstrings.py <path>`.
+`python .claude/skills/docstrings/scripts/check_docstrings.py <path>`.

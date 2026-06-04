@@ -300,6 +300,9 @@ class AAlogoPlot:
         tmd_len, jmd_n_len, jmd_c_len = check_parts_len(df_logo=df_logo,
                                                          jmd_n_len=self._jmd_n_len,
                                                          jmd_c_len=self._jmd_c_len)
+        if self._verbose:
+            ut.print_out(f"Plotting single logo (TMD length={tmd_len}, "
+                         f"JMD-N={jmd_n_len}, JMD-C={jmd_c_len})")
         # Plot
         fig, axes = single_logo_(df_logo=df_logo,
                                  df_logo_info=df_logo_info,
@@ -458,6 +461,9 @@ class AAlogoPlot:
         tmd_len, jmd_n_len, jmd_c_len = check_parts_len(df_logo=list_df_logo[0],
                                                          jmd_n_len=self._jmd_n_len,
                                                          jmd_c_len=self._jmd_c_len)
+        if self._verbose:
+            ut.print_out(f"Plotting {len(list_df_logo)} logos (TMD length={tmd_len}, "
+                         f"JMD-N={jmd_n_len}, JMD-C={jmd_c_len})")
         # Plot
         fig, axes = multi_logo_(list_df_logo=list_df_logo,
                                 target_p1_site=target_p1_site,

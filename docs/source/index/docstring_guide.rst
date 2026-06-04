@@ -9,10 +9,10 @@ AAanalysis. The mature classes :class:`~aaanalysis.CPP`,
 standard — every public symbol should read as if written by the same hand.
 
 The guide is *enforced* by an internal checker
-(``.claude/skills/docstring-consistency/scripts/check_docstrings.py``); run it
+(``.claude/skills/docstrings/scripts/check_docstrings.py``); run it
 before and after touching any docstring. All other docstring notes in the
 repository (the always-on ``.claude/rules/docstrings.md``, the
-``docstring-consistency`` skill, and the *Docstring Style* section of
+``docstrings`` skill, and the *Docstring Style* section of
 ``CONTRIBUTING``) are thin pointers to this page and define no rules of their
 own.
 
@@ -319,9 +319,9 @@ Tooling
 .. code-block:: bash
 
     # audit the whole package (or a single file)
-    python .claude/skills/docstring-consistency/scripts/check_docstrings.py aaanalysis/
+    python .claude/skills/docstrings/scripts/check_docstrings.py aaanalysis/
     # auto-fix the safe mechanical drift (Warns→Warnings, See-Also colon spacing)
-    python .claude/skills/docstring-consistency/scripts/check_docstrings.py --fix aaanalysis/
+    python .claude/skills/docstrings/scripts/check_docstrings.py --fix aaanalysis/
 
 ``--fix`` applies only the mechanical subset; every other finding is an
 author-side fix against the templates above.
