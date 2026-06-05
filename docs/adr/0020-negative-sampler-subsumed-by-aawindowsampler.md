@@ -44,7 +44,16 @@ tags; it runs each arm with a deterministic per-arm sub-seed
 **D3 — Add a constructor-level `custom_filter`.** A
 `(window, entry, source_position) -> bool` keep-predicate that composes in the
 per-window iterative filter pipeline of every `sample_*` method; the sanctioned
-escape hatch for the deferred structure/domain decoy rules.
+escape hatch for the deferred structure/domain decoy rules. It runs **last** in
+the pipeline (after the motif and both similarity filters) and inside the
+iterative re-draw, so a strict predicate still fills toward the target `n`.
+Default `custom_filter=None` is a no-op. Synthetic windows have no source
+protein, so the predicate is called with `entry=""`, `source_position=-1`
+(composition-only context). A predicate that **raises** during sampling is
+re-raised as a `RuntimeError` naming the offending window
+(`entry`, `source_position`) with the original exception chained via `from e`,
+so the failure points at the triggering window rather than surfacing as an
+opaque traceback from deep in the draw loop.
 
 ## Rejected alternatives
 

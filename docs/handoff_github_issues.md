@@ -49,7 +49,8 @@ which ripple into these areas.
 5. **#61** — multi-class/regression via random reference (prio:1). Best-specified feature; sizable but self-contained.
 6. ☑️ **#66 — DONE** (General Sampling Strategy). Resolved by **ADR-0020** as *subsumed by
    `AAWindowSampler`* — no new class; added `sample_benchmark_set` (multi-arm orchestrator) +
-   constructor `custom_filter`, with tests + example notebook (`cf28bd69`). **Lane D.**
+   constructor `custom_filter`, with tests + example notebook (`cf28bd69`;
+   `custom_filter` exception-wrap follow-up `55347068`). **Lane D.**
 7. **#37** — finish AAMut/SeqMut (prio:2). **Prerequisite for the protein-design chain #57–60.** **Lane C.**
 8. Quick wins (small, independent): **#24, #32, #33, #29** (#29/#33 after #18).
 9. Docs: **#21, #43, #69 (retarget first), #20**.
@@ -116,7 +117,7 @@ which ripple into these areas.
 ### topic:data
 | # | prio | verdict | scope / standards | already-addressed | implementation note |
 |---|---|---|---|---|---|
-| 66 | 1 | ☑️ | Fits; **closed** (ADR-0020) | Yes | DONE: no `NegativeSampler` class — subsumed by `AAWindowSampler`. Added `sample_benchmark_set` (multi-arm, `SeedSequence` sub-seeds, `arm` column) + constructor `custom_filter`; `COL_ARM`/`LIST_STRATEGIES` in utils. Tests + `aws_sample_benchmark_set.ipynb`. CPP/embedding-similarity decoy deferred (ADR). `cf28bd69`. |
+| 66 | 1 | ☑️ | Fits; **closed** (ADR-0020) | Yes | DONE: no `NegativeSampler` class — subsumed by `AAWindowSampler`. Added `sample_benchmark_set` (multi-arm, `SeedSequence` sub-seeds, `arm` column) + constructor `custom_filter`; `COL_ARM`/`LIST_STRATEGIES` in utils. Tests + `aws_sample_benchmark_set.ipynb`. CPP/embedding-similarity decoy deferred (ADR). A raising `custom_filter` is wrapped in a `RuntimeError` naming the window (ADR-0020 D3). `cf28bd69` + `55347068`. |
 | 65 | 2 | 🔄 | Pro (biopython); structure cluster | No | `get_msa` is misnamed (fetches 1 FASTA). Rename/replace; add real homolog+align backends; relates ADR-0017 fetch verbs. |
 | 33 | 2 | ✅ | Small; fits | No | CSV/parquet/metadata export of `df_feat`/outputs. Do after #18 schema. |
 | 32 | 2 | ✅ | Small; fits | No | Variance/correlation feature filtering on CPP outputs. Good first task. |
