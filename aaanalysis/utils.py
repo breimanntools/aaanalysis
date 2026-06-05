@@ -480,23 +480,27 @@ def read_csv_cached(name, sep="\t", index_col=None):
     return df.copy()
 
 
-def load_default_scales(scale_cat=False):
-    """Load default scales sets or categories. Copy is always returned to maintain data integrity."""
+@lru_cache(maxsize=None)
+def _load_default_scales_cached(scale_cat=False):
+    """Load and memoize the bundled default scales / categories (pure, no global state)."""
     if scale_cat:
-        if options[FILE_DF_CAT] is None:
-            df_cat = read_csv_cached(FOLDER_DATA + f"{STR_SCALE_CAT}.{STR_FILE_TYPE}")
-            options[FILE_DF_CAT] = df_cat
-            return df_cat.copy()
-        else:
-            return options[FILE_DF_CAT].copy()
-    else:
-        if options[FILE_DF_SCALES] is None:
-            df_scales = read_csv_cached(FOLDER_DATA + f"{STR_SCALES}.{STR_FILE_TYPE}", index_col=0)
-            df_scales = df_scales.astype(float)
-            options[FILE_DF_SCALES] = df_scales
-            return df_scales.copy()
-        else:
-            return options[FILE_DF_SCALES].copy()
+        return read_csv_cached(FOLDER_DATA + f"{STR_SCALE_CAT}.{STR_FILE_TYPE}")
+    df_scales = read_csv_cached(FOLDER_DATA + f"{STR_SCALES}.{STR_FILE_TYPE}", index_col=0)
+    return df_scales.astype(float)
+
+
+def load_default_scales(scale_cat=False):
+    """Load default scales sets or categories. Copy is always returned to maintain data integrity.
+
+    Returns the user override ``options['df_cat'|'df_scales']`` when set, else the bundled default.
+    The library never writes to ``options`` here — memoization lives in ``_load_default_scales_cached``
+    (see ADR-0018); those option keys reflect user intent only and stay ``None`` until the user sets them.
+    """
+    key = FILE_DF_CAT if scale_cat else FILE_DF_SCALES
+    override = options[key]
+    if override is not None:
+        return override.copy()
+    return _load_default_scales_cached(scale_cat=scale_cat).copy()
 
 
 # Adjust df_eval
