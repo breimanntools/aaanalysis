@@ -238,8 +238,8 @@ def check_match_df_feat_shap_values(df_feat=None, shap_values=None, drop=False, 
 # II Main Functions
 class ShapModel:
     """
-    SHAP Model class: A wrapper for SHAP (SHapley Additive exPlanations) explainers to obtain Monte Carlo estimates
-    for feature impact [Breimann25a]_.
+    SHAP Model class: A wrapper for SHAP (SHapley Additive exPlanations) [Lundberg20]_ explainers to obtain
+    Monte Carlo estimates for feature impact [Breimann25a]_.
 
     `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ is an explainable Artificial Intelligence (AI) framework
     and game-theoretic approach to explain the output of any machine learning model using SHAP values. These SHAP values
@@ -274,8 +274,9 @@ class ShapModel:
             The `SHAP Explainer model <https://shap.readthedocs.io/en/latest/api.html#explainers>`_.
             Must be one of the following: :class:`shap.TreeExplainer`, :class:`shap.LinearExplainer`,
             :class:`shap.KernelExplainer`, :class:`shap.DeepExplainer`, :class:`shap.GradientExplainer`.
-        explainer_kwargs : dict, default={'model_output': 'probability'}
-            Keyword arguments for the explainer class model.
+        explainer_kwargs : dict, optional
+            Keyword arguments for the explainer class. Defaults to ``None`` (no extra arguments); passing
+            ``explainer_class=None`` selects :class:`shap.TreeExplainer` with ``{'model_output': 'probability'}``.
         list_model_classes : list of Type[BaseEstimator], default=[RandomForestClassifier, ExtraTreesClassifier]
             A list of prediction model classes used to obtain SHAP values.
         list_model_kwargs : list of dict, optional
@@ -309,7 +310,7 @@ class ShapModel:
 
           Proper explainer choice is key for accurate model explanations.
 
-        * By default, :class:`shap.TreeExplainer` is used with random forest, extra trees, and gradient boosting models.
+        * By default, :class:`shap.TreeExplainer` is used with random forest and extra trees models.
 
         See Also
         --------

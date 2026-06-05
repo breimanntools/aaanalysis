@@ -208,7 +208,7 @@ class AAlogo:
         -------
         df_logo_info : pd.Series, shape (n_positions,)
             Per-position information content in bits, with index named 'pos'.
-            Values range from 0 (no conservation) to ~4.248 (fully conserved).
+            Values range from 0 (no conservation) to ~4.32 (fully conserved).
 
         See Also
         --------
@@ -269,11 +269,11 @@ class AAlogo:
         Returns
         -------
         cons_val : float
-            Conservation score ranging from 0 (no conservation) to ~4.248 (fully conserved).
+            Conservation score ranging from 0 (no conservation) to ~4.32 (fully conserved).
 
         Notes
         -----
-        * The maximum theoretical information content per position is log2(20) ≈ 4.248 bits,
+        * The maximum theoretical information content per position is log2(20) ≈ 4.32 bits,
           corresponding to a completely conserved amino acid.
         * Use ``value_type='mean'`` for an overall conservation estimate and
           ``value_type='max'`` to identify the most conserved position.

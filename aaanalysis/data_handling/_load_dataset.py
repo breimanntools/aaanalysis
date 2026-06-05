@@ -170,7 +170,7 @@ def load_dataset(name: str = "Overview",
 
         * ``remove``: Remove sequences containing non-canonical amino acids.
         * ``keep``: Don't remove sequences containing non-canonical amino acids.
-        * ``gap``: Non-canonical amino acids are replaced by the gap symbol ('X').
+        * ``gap``: Non-canonical amino acids are replaced by the gap symbol ('-').
 
     min_len : int, optional
         Minimum length of sequences for filtering.

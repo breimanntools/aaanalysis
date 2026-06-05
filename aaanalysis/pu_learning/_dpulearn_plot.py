@@ -116,7 +116,7 @@ class dPULearnPlot:
         figsize : tuple, default=(6, 4)
             Figure dimensions (width, height) in inches.
         dict_xlims : dict, optional
-            A dictionary containing x-axis limits for subplots. Keys should be the subplot axis number ({0, 1, 2, 4})
+            A dictionary containing x-axis limits for subplots. Keys should be the subplot axis number ({0, 1, 2, 3})
             and values should be tuple specifying (``xmin``, ``xmax``). If ``None``, x-axis limits are auto-scaled.
         legend : bool, default=True
             If ``True``, legend is set under dissimilarity measures.

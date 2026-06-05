@@ -178,7 +178,7 @@ class AAclustPlot:
              dict_xlims: Optional[dict] = None,
              ) -> Tuple[plt.Figure, plt.Axes]:
         """
-        Plots evaluation of ``n_clusters`` and clustering metrics ``BIC``, ``CH``, and ``SC`` from ``df_seq``.
+        Plots evaluation of ``n_clusters`` and clustering metrics ``BIC``, ``CH``, and ``SC`` from ``df_eval``.
 
         The clustering evaluation metrics (BIC, CH, and SC) are ranked by the average of their independent rankings.
 
@@ -197,7 +197,7 @@ class AAclustPlot:
         figsize : tuple, default=(6, 4)
             Figure dimensions (width, height) in inches.
         dict_xlims : dict, optional
-            A dictionary containing x-axis limits for subplots. Keys should be the subplot axis number ({0, 1, 2, 4})
+            A dictionary containing x-axis limits for subplots. Keys should be the subplot axis number ({0, 1, 2, 3})
             and values should be tuple specifying (``xmin``, ``xmax``). If ``None``, x-axis limits are auto-scaled.
 
         Returns

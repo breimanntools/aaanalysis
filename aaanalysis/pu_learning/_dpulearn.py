@@ -294,16 +294,16 @@ class dPULearn:
 
         * 'name': Name of the dataset if ``names_datasets`` is provided (typically named by identification approach).
         * 'n_rel_neg': Number of identified negatives.
-        * 'avg_std': Average standard deviation (STD) assessing homogeneity of identified negatives.
+        * 'avg_STD': Average standard deviation (STD) assessing homogeneity of identified negatives.
           Lower values indicate greater homogeneity.
-        * 'avg_iqr': Average interquartile range (IQR) assessing homogeneity of identified negatives.
+        * 'avg_IQR': Average interquartile range (IQR) assessing homogeneity of identified negatives.
           Lower values suggest greater homogeneity.
-        * 'avg_abs_auc_DATASET': Average absolute area under the curve (AUC) assessing the dissimilarity between the
-          set of identified negatives with other groups (positives, unlabeled, ground-truth negatives).
-          Separate columns are provided for each comparison. Higher values indicate greater dissimilarity.
-        * 'avg_kld_DATASET': Average Kullback-Leibler Divergence (KLD) assessing the dissimilarity of distributions
-          between the set of identified negatives and the other groups. Higher values indicate greater dissimilarity.
-          These columns are omitted if ``comp_kld`` is set to ``False``.
+        * 'avg_abs_AUC_pos' / 'avg_abs_AUC_unl' / 'avg_abs_AUC_neg': Average absolute area under the curve (AUC)
+          assessing the dissimilarity between the set of identified negatives and each other group (positives,
+          unlabeled, ground-truth negatives). Higher values indicate greater dissimilarity.
+        * 'avg_KLD_pos' / 'avg_KLD_unl' / 'avg_KLD_neg': Average Kullback-Leibler Divergence (KLD) assessing the
+          dissimilarity of distributions between the set of identified negatives and each other group. Higher
+          values indicate greater dissimilarity. These columns are omitted if ``comp_kld`` is set to ``False``.
 
         See Also
         --------

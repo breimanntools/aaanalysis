@@ -17,9 +17,9 @@ def comp_seq_sim(seq1: Optional[str] = None,
     """
     Compute pairwise similarity between two or more sequences.
 
-    The normalized sequence similarity score between two sequences is computed as a fraction of the alignment score
-    to the length of the longest sequence. The alignment score is obtained using the :class:`Bio.Align.PairwiseAligner`
-    from ´BioPython <https://biopython.org/>´ with default settings.
+    The sequence similarity score between two sequences is the alignment score expressed as a percentage of
+    the length of the longest sequence (range ``[0, 100]``). The alignment score is obtained using the
+    :class:`Bio.Align.PairwiseAligner` from `BioPython <https://biopython.org/>`_ with default settings.
 
     .. versionadded:: 1.0.0
 
@@ -36,7 +36,7 @@ def comp_seq_sim(seq1: Optional[str] = None,
     Returns
     -------
     seq_sim : float
-        Normalized sequence similarity score in [0, 1], returned when ``seq1`` and ``seq2``
+        Sequence similarity score as a percentage in ``[0, 100]``, returned when ``seq1`` and ``seq2``
         are provided (pairwise comparison of two strings).
     df_pw_sim : pd.DataFrame, shape (n_samples, n_samples)
         Pairwise similarity matrix with ``entry`` values as both index and columns,

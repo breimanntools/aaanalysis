@@ -315,7 +315,7 @@ class CPPPlot:
         figsize : tuple, default=(6, 4)
             Figure dimensions (width, height) in inches.
         dict_xlims : dict, optional
-            A dictionary containing x-axis limits for subplots. Keys should be the subplot axis number ({0, 1, 2, 4})
+            A dictionary containing x-axis limits for subplots. Keys should be the subplot axis number ({0, 1, 2, 3, 4})
             and values should be tuple specifying (``xmin``, ``xmax``). If ``None``, x-axis limits are auto-scaled.
         legend : bool, default=True
             If ``True``, scale category legend is set under number of features measures.
@@ -806,7 +806,7 @@ class CPPPlot:
             Length of the x-ticks (>0).
         ytick_size : int or float, optional
             Size of y-tick labels (>0).
-        ytick_width : int or float, default=2.0
+        ytick_width : int or float, optional
             Width of the y-ticks (>0).
         ytick_length : int or float, default=5.0
             Length of the y-ticks (>0).
@@ -1280,9 +1280,9 @@ class CPPPlot:
             Color for the grid lines. If ``None``, automatically determined based on ``facecolor_dark``.
         border_linewidth : int or float, default=2
             Line width for the TMD-JMD border.
-        facecolor_dark : bool, optional
-            Sets background of heatmap to black (if ``True``) or white. If ``None``, automatically determined from
-            ``shap_plot`` setting. Affects grid cells for missing or near-zero data based on ``col_val``.
+        facecolor_dark : bool, default=False
+            Sets background of the feature map to black (if ``True``) or white. Affects grid cells for
+            missing or near-zero data based on ``col_val``.
         vmin : int or float, optional
             Minimum ``col_val`` value setting the lower end of the colormap. If ``None``, determined automatically.
         vmax : int or float, optional
