@@ -186,7 +186,7 @@ class SequenceFeature:
                      replace_non_canonical_aa: bool = False,
                      ) -> pd.DataFrame:
         """
-        Create DataFrane with selected sequence parts.
+        Create DataFrame with selected sequence parts.
 
         Slices each protein sequence in ``df_seq`` into the requested Parts (TMD,
         JMD-N, JMD-C, and combinations thereof) using the boundary information

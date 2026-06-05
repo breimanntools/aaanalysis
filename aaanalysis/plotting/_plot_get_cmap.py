@@ -28,12 +28,12 @@ def plot_get_cmap(name: str = "CPP",
         The name of the AAanalysis color palettes.
 
          - ``CPP``: Continuous colormap for CPP plots.
-         - ``SHAP``: Continuous colormap for CPP-SHP plots.
+         - ``SHAP``: Continuous colormap for CPP-SHAP plots.
 
     n_colors : int, default=101
         Number of colors. Must be at least 3.
     facecolor_dark : bool, default=False
-        Whether central color in is black (if ``True``) or white (if ``False``).
+        Whether central color is black (if ``True``) or white (if ``False``).
 
     Returns
     -------

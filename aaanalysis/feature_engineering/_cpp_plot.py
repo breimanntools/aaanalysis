@@ -341,7 +341,7 @@ class CPPPlot:
 
         See Also
         --------
-        * :meth:`CPP.eval`: the respective computaton method.
+        * :meth:`CPP.eval`: the respective computation method.
         * :func:`comp_auc_adjusted`.
 
         Examples
@@ -530,7 +530,7 @@ class CPPPlot:
                 rank_info_xy: Optional[Tuple[Optional[Union[int, float]], Optional[Union[int, float]]]] = None,
                 ) -> Tuple[plt.Figure, plt.Axes]:
         """
-        Plot CPP/-SHAP feature ranking based on feature importance or sample-specif feature impact.
+        Plot CPP/-SHAP feature ranking based on feature importance or sample-specific feature impact.
 
         Introduced in [Breimann25a]_, this method visualizes the most important features for discriminating between
         the test and the reference dataset groups. At sample level, the feature impact derived from SHAP values
@@ -1239,7 +1239,7 @@ class CPPPlot:
         imp_ths : tuple, default=(0.2, 0.5, 1)
             Three ascending thresholds for feature importance (scale- and position-specific).
         imp_marker_sizes : tuple, default=(3, 5, 8)
-            Size of three feature importance markers defined by ``impd_th``.
+            Size of three feature importance markers defined by ``imp_ths``.
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20

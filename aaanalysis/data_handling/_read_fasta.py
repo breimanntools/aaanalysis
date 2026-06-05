@@ -55,7 +55,7 @@ def read_fasta(file_path: str,
                cols_info: Optional[List[str]] = None,
                ) -> pd.DataFrame:
     """
-    Read an FASTA file into a DataFrame.
+    Read a FASTA file into a DataFrame.
 
     Translation of FASTA file by extracting identifiers and further information from headers
     as well as subsequent sequences.
