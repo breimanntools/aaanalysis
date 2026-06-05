@@ -41,6 +41,32 @@ jobs:
         sudo apt-get install -y cd-hit
         sudo apt-get install -y mmseqs2
 
+    # FIMO (MEME suite) gates the scan_motif end-to-end / parity / golden tests
+    # (@fimo_required). Built from source (not apt, not conda — ADR-0019) and
+    # cached on the version key so the heavy build runs only on a cache miss.
+    - name: Cache MEME suite (FIMO)
+      id: cache-meme
+      uses: actions/cache@v4
+      with:
+        path: ~/meme-install
+        key: ${{ runner.os }}-meme-5.5.8
+
+    - name: Build FIMO from MEME suite
+      if: steps.cache-meme.outputs.cache-hit != 'true'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential zlib1g-dev
+        MEME_VERSION=5.5.8
+        curl -sSL "https://meme-suite.org/meme/meme-software/${MEME_VERSION}/meme-${MEME_VERSION}.tar.gz" -o meme.tar.gz
+        tar -xzf meme.tar.gz
+        cd "meme-${MEME_VERSION}"
+        ./configure --prefix="$HOME/meme-install" --enable-build-libxml2 --enable-build-libxslt
+        make -j"$(nproc)"
+        make install
+
+    - name: Add FIMO to PATH
+      run: echo "$HOME/meme-install/bin" >> "$GITHUB_PATH"
+
     - name: Run tests with coverage and generate XML report
       env:
         MPLBACKEND: Agg

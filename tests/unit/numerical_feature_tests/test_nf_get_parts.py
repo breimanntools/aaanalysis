@@ -164,3 +164,26 @@ class TestGetPartsRoundTrip:
         # Sanity: same schema as cpp.run, output has at least 1 feature.
         assert df_feat.shape[1] == 13
         assert len(df_feat) >= 1
+
+
+class TestGetPartsConvention:
+    """Issue #17: the 1-based start- & stop-inclusive TMD convention slices the tensor.
+
+    ``tmd_start``/``tmd_stop`` are 1-based and inclusive (CONTEXT.md 'TMD coordinate
+    convention'), so for the per-residue tensor the TMD part must be exactly
+    ``num[tmd_start-1 : tmd_stop]`` — pinning this guards against a future 0-based /
+    exclusive-stop regression on the numerical slicing path.
+    """
+
+    def test_tmd_tensor_slice_is_1based_inclusive(self):
+        seq = "AAAALMVFCCCC"  # jmd_n=AAAA | tmd=LMVF (1-based positions 5..8) | jmd_c=CCCC
+        num = np.arange(len(seq) * 3, dtype=np.float64).reshape(len(seq), 3)
+        nf = aa.NumericalFeature()
+        df_seq = pd.DataFrame({"entry": ["P1"], "sequence": [seq],
+                               "tmd_start": [5], "tmd_stop": [8]})
+        df_parts, dict_num_parts = nf.get_parts(df_seq=df_seq, dict_num={"P1": num},
+                                                list_parts=["tmd"], jmd_n_len=4, jmd_c_len=4)
+        # String part is the 1-based inclusive slice seq[4:8] == 'LMVF'.
+        assert df_parts.iloc[0]["tmd"] == "LMVF"
+        # Tensor part is the matching row slice num[4:8] (no padding for a full TMD).
+        np.testing.assert_array_equal(dict_num_parts["tmd"][0], num[4:8])

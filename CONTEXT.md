@@ -22,6 +22,10 @@ _Avoid_: standard AAs, "the 20 AAs" without specifying order.
 A `df_seq` column whose cells hold per-row 1-based integer positions of interest (typically labeled positives); each cell is a `list[int]`, a single `int`, or empty (`None` / `NaN` / empty list / empty string). Default column name `"pos"`, referenced as `ut.COL_POS`. Two consumers share this column as **P1 anchors**: `AAWindowSampler` explodes it into sampled windows, and `SequenceFeature.get_df_parts` / `NumericalFeature.get_parts` (the **anchor input mode**) explode it into one 3-part row per anchor (TMD placed by `ut.get_window_offsets`, then the `jmd_n_len`/`jmd_c_len` extension), ided by **entry_win**.
 _Avoid_: positions column (collides with `df_feat`'s `COL_POSITION`, which is a CSV string of feature positions).
 
+**TMD coordinate convention**:
+The single rule governing `tmd_start` / `tmd_stop` (`ut.COL_TMD_START` / `ut.COL_TMD_STOP`) in the **position-based** `df_seq` format: **1-based, start-inclusive, stop-inclusive** — matching standard biological annotation (e.g. UniProt), so an annotated TMD spanning residues `s..e` is stored verbatim as `tmd_start=s, tmd_stop=e` and its length is `tmd_stop - tmd_start + 1`. This convention is the *single source of truth*: every construction site that derives these columns (`_get_tmd_positions` from a `tmd` substring, the `seq_based` branch from `jmd_n_len`/`jmd_c_len`, `expand_pos_anchors_` from a P1 anchor) and every consumer that reads them (`Parts.get_tmd` slices `seq[tmd_start-1 : tmd_stop]`, `_slice_dict_num_to_basic_parts`) expresses the *same* convention, even though each uses different arithmetic. The convention is documented, not factored into one shared function, because the sites share a meaning, not a formula.
+_Avoid_: 0-based, half-open / exclusive-stop, `len()`-style stop (a stop equal to `start + length` reads as exclusive — it is not).
+
 ### Window sampling vocabulary
 
 **window**:

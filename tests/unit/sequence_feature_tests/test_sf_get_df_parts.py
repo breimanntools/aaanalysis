@@ -269,6 +269,89 @@ class TestGetDfParts:
                 sf.get_df_parts(df_seq=df_seq, replace_non_canonical_aa=invalid_args)
 
 
+# Golden values & TMD coordinate convention (issue #17)
+class TestGetDfPartsGoldenValues:
+    """Pin the 1-based, start- & stop-inclusive TMD coordinate convention (CONTEXT.md).
+
+    These tests guard against a future edit re-introducing a 0-based / exclusive-stop
+    construction: ``tmd_stop`` is the 1-based inclusive last residue, so a length-L TMD
+    satisfies ``tmd_stop - tmd_start + 1 == L``.
+    """
+
+    def test_get_tmd_positions_golden(self):
+        """Hand-computed 1-based inclusive [tmd_start, tmd_stop] from a tmd substring."""
+        from aaanalysis.feature_engineering._backend.check_feature import _get_tmd_positions
+        import aaanalysis.utils as ut
+        # seq = AAAA | LMVF | CCCC ; TMD 'LMVF' occupies 1-based positions 5..8
+        row = pd.Series({ut.COL_ENTRY: "X", ut.COL_SEQ: "AAAALMVFCCCC", ut.COL_TMD: "LMVF"})
+        start, stop = _get_tmd_positions(row)
+        assert (start, stop) == (5, 8)
+        assert stop - start + 1 == len("LMVF")
+
+    def test_get_tmd_positions_len1_accepted(self):
+        """A length-1 TMD is valid: tmd_start == tmd_stop, not rejected as 'empty'."""
+        from aaanalysis.feature_engineering._backend.check_feature import _get_tmd_positions
+        import aaanalysis.utils as ut
+        row = pd.Series({ut.COL_ENTRY: "X", ut.COL_SEQ: "AAAAMCCCC", ut.COL_TMD: "M"})
+        start, stop = _get_tmd_positions(row)
+        assert (start, stop) == (5, 5)
+
+    def test_get_tmd_positions_boundaries(self):
+        """TMD at the sequence start (tmd_start==1) and end (tmd_stop==len(seq))."""
+        from aaanalysis.feature_engineering._backend.check_feature import _get_tmd_positions
+        import aaanalysis.utils as ut
+        row_start = pd.Series({ut.COL_ENTRY: "X", ut.COL_SEQ: "LMCCCC", ut.COL_TMD: "LM"})
+        assert tuple(_get_tmd_positions(row_start)) == (1, 2)
+        row_end = pd.Series({ut.COL_ENTRY: "X", ut.COL_SEQ: "AAAACC", ut.COL_TMD: "CC"})
+        start, stop = _get_tmd_positions(row_end)
+        assert (start, stop) == (5, 6) and stop == len("AAAACC")
+
+    def test_get_tmd_positions_empty_and_missing_rejected(self):
+        """Empty TMD and a TMD absent from the sequence both raise (same message)."""
+        from aaanalysis.feature_engineering._backend.check_feature import _get_tmd_positions
+        import aaanalysis.utils as ut
+        with pytest.raises(ValueError, match="not contained"):
+            _get_tmd_positions(pd.Series({ut.COL_ENTRY: "X", ut.COL_SEQ: "ABC", ut.COL_TMD: ""}))
+        with pytest.raises(ValueError, match="not contained"):
+            _get_tmd_positions(pd.Series({ut.COL_ENTRY: "X", ut.COL_SEQ: "ABC", ut.COL_TMD: "ZZ"}))
+
+    def test_roundtrip_all_formats_identical(self):
+        """ACCEPTANCE: position / part / seq-TMD / sequence-only formats give identical parts.
+
+        Clean fixture (jmd_n_len == jmd_c_len == 4, no terminal gaps) so all four
+        construction paths must agree residue-for-residue.
+        """
+        sf = aa.SequenceFeature()
+        list_parts = ["jmd_n", "tmd", "jmd_c"]
+        seq = "AAAALMVFCCCC"  # jmd_n=AAAA, tmd=LMVF, jmd_c=CCCC
+        pos = pd.DataFrame({"entry": ["P1"], "sequence": [seq], "tmd_start": [5], "tmd_stop": [8]})
+        part = pd.DataFrame({"entry": ["P1"], "jmd_n": ["AAAA"], "tmd": ["LMVF"], "jmd_c": ["CCCC"]})
+        seq_tmd = pd.DataFrame({"entry": ["P1"], "sequence": [seq], "tmd": ["LMVF"]})
+        seq_only = pd.DataFrame({"entry": ["P1"], "sequence": [seq]})
+        kw = dict(list_parts=list_parts, jmd_n_len=4, jmd_c_len=4)
+        out_pos = sf.get_df_parts(df_seq=pos, **kw).reset_index(drop=True)
+        out_part = sf.get_df_parts(df_seq=part, **kw).reset_index(drop=True)
+        out_seq_tmd = sf.get_df_parts(df_seq=seq_tmd, **kw).reset_index(drop=True)
+        out_seq_only = sf.get_df_parts(df_seq=seq_only, **kw).reset_index(drop=True)
+        expected = pd.Series({"jmd_n": "AAAA", "tmd": "LMVF", "jmd_c": "CCCC"})
+        for out in (out_pos, out_part, out_seq_tmd, out_seq_only):
+            assert (out[list_parts].iloc[0] == expected).all()
+
+    def test_roundtrip_on_benchmark_no_value_shift(self):
+        """Position-, part-, and seq-TMD-derived parts agree on a real dataset (no drift)."""
+        sf = aa.SequenceFeature()
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=25)
+        list_parts = ["jmd_n", "tmd", "jmd_c"]
+        out_pos = sf.get_df_parts(df_seq=df_seq[["entry", "sequence", "tmd_start", "tmd_stop"]],
+                                  list_parts=list_parts).reset_index(drop=True)
+        out_part = sf.get_df_parts(df_seq=df_seq[["entry", "jmd_n", "tmd", "jmd_c"]],
+                                   list_parts=list_parts).reset_index(drop=True)
+        out_seq_tmd = sf.get_df_parts(df_seq=df_seq[["entry", "sequence", "tmd"]],
+                                      list_parts=list_parts).reset_index(drop=True)
+        assert (out_pos[list_parts] == out_part[list_parts]).all().all()
+        assert (out_pos[list_parts] == out_seq_tmd[list_parts]).all().all()
+
+
 # Complex Cases
 class TestGetDfPartsComplex:
     """Test get_df_parts function of the SequenceFeature class for Complex Cases."""

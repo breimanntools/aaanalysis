@@ -9,21 +9,39 @@ protein prediction; `pro` extra for heavy deps; semver-strict v1) and the coding
 under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) · ☑️ Done/Partial.
 
 ## Snapshot
-- **Open issues: 55.** Verdicts: ✅ 11 · 🔄 27 · ⏸️ 4 · ❌ 0 · ☑️ 3 (+#67 = triaged umbrella).
-- **Done on `master`, safe to CLOSE now:** **#71, #72, #73** (this session — `e.name` stub fix,
-  override-only scales cache + ADR-0018, config note + property tests).
-- **Already resolved earlier (context):** #31 (batch processing → `f62ba6e0`, closed); #45 body
-  rewritten (was a #46 copy-paste); #67 triaged + relabeled `prio:3`.
+- **Open issues: 51.** Verdicts: ✅ 11 · 🔄 26 · ⏸️ 4 · ❌ 0 (+#67 = triaged umbrella).
+- **CLOSED (resolved on `master`):** **#17** (tmd_start/tmd_stop convention — zero-output-change
+  clarity refactor + `TMD coordinate convention` glossary entry + golden/round-trip tests),
+  **#71, #72, #73** (`e.name` stub fix, override-only scales cache + ADR-0018, config note +
+  property tests) and **#31** (batch processing → `f62ba6e0`).
+- **Context:** #45 body rewritten (was a #46 copy-paste); #67 triaged + relabeled `prio:3`.
 - **Standing scope rule:** the large XAI items (#50–56) and #40 mostly belong to the downstream
   **ProtXplain** (#26), not core — they're 🔄, not Ready.
+
+## ▶ Next 3 to work on (parallel-safe — different subsystems, no shared files)
+Full session kickoffs in `docs/issue_kickoffs/`. Each is meant to be run in its own session as
+`/github-issue-handoff` (context) → `/grill-with-docs` (resolve the open decisions) → implement.
+
+| # | prio | lane / files | why now | the decision grilling must settle |
+|---|---|---|---|---|
+| ~~**17**~~ | 1 | ~~`_backend/check_feature.py`~~ | ☑️ **DONE** — settled as zero-output-change clarity refactor (algebraic identity, not luck); round-trip-gated | — |
+| **66** | 1 | `seq_analysis/_negative_sampler.py` (new) | prio:1; ~80% reuses `AAWindowSampler` | wrap vs fork `AAWindowSampler`; `SamplingFilters` dataclass OK?; which similarity metric is pro |
+| **61** | 1 | `feature_engineering/_cpp.py` (+`AAWindowSampler`) | prio:1; MVP reuses `run` per class | one-vs-rest reuses `run`?; reference generator location (avoid `__init__.py` CONFIRM-FIRST); quantile-split first |
+
+With #17 landed, the next parallel-safe pair is **#66** and **#61** — they touch **different files**
+(seq_analysis / cpp) → safe to develop in parallel. **Do not** pair either with #18 (schema) or #30
+(perf), which ripple into these areas.
 
 ---
 
 ## Implementation order (do top-down; respect blockers)
 
 1. **Housekeeping — close #71/#72/#73** (already on master).
-2. **#17** — tmd_start/stop inconsistency (prio:1 correctness bug). *Decision first:* inclusive vs
-   exclusive indexing; may be breaking → semver. **Lane A.**
+2. ☑️ **#17 — DONE** (tmd_start/stop convention). Resolved as a **zero-output-change clarity
+   refactor** (patch/minor, no semver break): `_get_tmd_positions` now expresses 1-based
+   start- & stop-inclusive explicitly, the `TMD coordinate convention` is the documented single
+   source of truth (CONTEXT.md, not a shared helper), guarded by golden + round-trip-equivalence
+   tests. **Lane A.**
 3. **#30** — vectorize CPP (prio:1, perf). Primary of the perf cluster; **blocks #19/#39/#62.** **Lane B.**
 4. **#18** — standardize CPP output schema (prio:1). **Unblocks #29/#33/#26**; ripples into plotting. **Lane A.**
 5. **#61** — multi-class/regression via random reference (prio:1). Best-specified feature; sizable but self-contained.
@@ -36,7 +54,7 @@ under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) ·
 
 ## Parallel lanes (safe to run in separate sessions — no shared files)
 
-- **Lane A — CPP core/schema:** #17, #18 (schema work touches `_cpp.py`/output + plotting — keep one owner).
+- **Lane A — CPP core/schema:** ~~#17~~ (done), #18 (schema work touches `_cpp.py`/output + plotting — keep one owner).
 - **Lane B — Performance (SERIALIZE internally):** #30 → #19 → #39 → #62. All edit
   `feature_engineering/_backend/cpp/**`; **never parallelize these with each other.**
 - **Lane C — Protein design (SERIALIZE internally):** #37 → {#57, #58, #59, #60}. Build on
@@ -61,17 +79,14 @@ under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) ·
 
 ## Per-issue audit
 
-### Done / housekeeping
-| # | prio | verdict | note |
-|---|---|---|---|
-| 73 | 3 | ☑️ | Implemented on master (config note + property tests). **Close.** |
-| 72 | 2 | ☑️ | Implemented on master (override-only cache, ADR-0018). **Close.** |
-| 71 | 2 | ☑️ | Implemented on master (`e.name` stub fix). **Close.** |
+### Recently closed (resolved on master — context only)
+- **#71** `0ab2e7ab` (e.name stub) · **#72** `5bcecd66` + ADR-0018 (override-only cache) ·
+  **#73** `7cd3c23f` (config note + property tests) · **#31** `f62ba6e0` (batch processing).
 
 ### topic:core
 | # | prio | verdict | scope / standards | already-addressed | implementation note (complements the issue) |
 |---|---|---|---|---|---|
-| 17 | 1 | 🔄 | Fits; correctness. Breaking-change risk → semver | No | Decide inclusive/exclusive once; fix `SequenceFeature.get_df_parts`; add edge-case golden tests; doc the convention. Order #1. |
+| 17 | 1 | ☑️ | Fits; correctness. **Closed** — no semver break (zero output change) | Yes | DONE: `_get_tmd_positions` rewritten to express 1-based start/stop-inclusive explicitly; `len(tmd)==0` guard; `TMD coordinate convention` glossary entry as SSoT; golden + round-trip + tensor-parity tests (490 passing, 0 docstring defects). |
 | 18 | 1 | 🔄 | Fits; ripples to plotting + ProtXplain | Partial (schema is implicit today) | Define `df_feat` column contract once; refactor outputs; **do before #29/#33/#26**. Owner-serialize with plotting. |
 | 61 | 1 | ✅ | Fits core; sizable, self-contained | No | New `generate_reference_sequences` + `CPP.fit_multiclass`/`fit_regression`; thread `random_state`; SHAP multiclass via pro. |
 | 57 | 1 | 🔄 | Fits; **blocked by #37** | No | Top-k residue selection from feature importance; reduced libraries; build on AAMut. |

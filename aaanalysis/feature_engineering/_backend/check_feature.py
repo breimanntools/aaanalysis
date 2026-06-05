@@ -213,13 +213,19 @@ def check_match_features_seq_parts(features=None, tmd_seq=None, jmd_n_seq=None, 
 
 # Check df_seq
 def _get_tmd_positions(row):
-    """Get position of tmd from sequence"""
+    """Get 1-based, start- & stop-inclusive [tmd_start, tmd_stop] of the TMD within the sequence.
+
+    Both columns express the same convention (see CONTEXT.md 'TMD coordinate convention'):
+    1-based and inclusive on both ends, so a TMD of length L spans ``tmd_stop - tmd_start + 1 == L``
+    residues. ``start0`` is the 0-based offset from ``str.find``; ``start0 + len(tmd)`` is the
+    1-based inclusive last position (algebraically ``tmd_start + len(tmd) - 1``).
+    """
     tmd, seq = row[ut.COL_TMD], row[ut.COL_SEQ]
-    tmd_start = seq.find(tmd)
-    tmd_stop = tmd_start + len(tmd) if tmd_start != -1 else -1
-    if tmd_start == -1 or tmd_start == tmd_stop:
+    start0 = seq.find(tmd)
+    if start0 == -1 or len(tmd) == 0:  # TMD not found in sequence, or empty TMD
         raise ValueError(f"'{ut.COL_TMD}' is not contained in '{ut.COL_SEQ}' for '{row[ut.COL_ENTRY]}' entry")
-    tmd_start += 1
+    tmd_start = start0 + 1             # 1-based inclusive first residue
+    tmd_stop = start0 + len(tmd)       # 1-based inclusive last residue
     return pd.Series([tmd_start, tmd_stop])
 
 
@@ -247,6 +253,9 @@ def check_match_df_seq_jmd_len(df_seq=None, jmd_n_len=None, jmd_c_len=None):
         if seq_tmd_based:
             df_seq[[ut.COL_TMD_START, ut.COL_TMD_STOP]] = df_seq.apply(_get_tmd_positions, axis=1)
         elif seq_based:
+            # tmd_start/tmd_stop stay 1-based & inclusive (CONTEXT.md 'TMD coordinate convention'):
+            # first TMD residue sits just after the jmd_n_len N-terminal residues; last sits just
+            # before the jmd_c_len C-terminal residues. Different arithmetic, same convention.
             tmd_start = 1 + jmd_n_len
             list_seq = []
             list_tmd_stop = []
