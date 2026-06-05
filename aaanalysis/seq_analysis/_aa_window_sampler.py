@@ -388,7 +388,9 @@ class AAWindowSampler:
             ``entry`` its source protein, and ``source_position`` the 1-based P1 anchor.
             The escape hatch for structure- / domain-specific decoy rules. Synthetic
             windows have no source protein, so it is called with ``entry=""`` and
-            ``source_position=-1``.
+            ``source_position=-1``. If the predicate raises during sampling, the error
+            surfaces as a ``RuntimeError`` naming the offending window (the original
+            exception is chained).
         """
         self.verbose = ut.check_verbose(verbose)
         self._random_state = ut.check_random_state(random_state=random_state)

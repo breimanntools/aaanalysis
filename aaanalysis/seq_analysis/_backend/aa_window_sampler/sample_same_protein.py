@@ -16,6 +16,7 @@ import warnings
 
 import aaanalysis.utils as ut
 from ._utils import (candidate_centers_,
+                     make_safe_custom_predicate_,
                      sample_pool_iteratively_,
                      window_offsets)
 
@@ -135,7 +136,8 @@ def sample_same_protein(*, df_seq, positions, n, window_size,
         predicate = None
         if custom_filter is not None:
             entry_i = entries[i]
-            predicate = lambda window, c, _e=entry_i: custom_filter(window, _e, c + 1)
+            predicate = make_safe_custom_predicate_(
+                custom_filter, lambda c, _e=entry_i: (_e, c + 1))
         accepted = sample_pool_iteratively_(
             draw_batch=draw_batch, target_n=target, test_windows=test_windows,
             max_similarity_to_test=max_similarity_to_test,

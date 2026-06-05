@@ -106,3 +106,34 @@ class TestCustomFilterContext:
                            generator="global_freq", seed=1)
         assert seen, "custom_filter was never called for synthetic"
         assert all(e == "" and p == -1 for e, p in seen)
+
+
+class TestCustomFilterRaises:
+    """A predicate that raises surfaces as a RuntimeError naming the window."""
+
+    def _boom(self, w, e, p):
+        raise KeyError("structure lookup failed")
+
+    def test_raising_predicate_wrapped_in_runtimeerror(self):
+        s = aa.AAWindowSampler(random_state=0, custom_filter=self._boom)
+        with pytest.raises(RuntimeError, match="custom_filter"):
+            s.sample_same_protein(df_seq=_df_seq(), n=5, window_size=9, seed=1)
+
+    def test_runtimeerror_names_the_offending_window(self):
+        s = aa.AAWindowSampler(random_state=0, custom_filter=self._boom)
+        with pytest.raises(RuntimeError) as exc_info:
+            s.sample_same_protein(df_seq=_df_seq(), n=5, window_size=9, seed=1)
+        msg = str(exc_info.value)
+        assert "window" in msg and "source_position" in msg
+
+    def test_original_exception_is_chained(self):
+        s = aa.AAWindowSampler(random_state=0, custom_filter=self._boom)
+        with pytest.raises(RuntimeError) as exc_info:
+            s.sample_different_protein(df_seq=_df_seq(), n=5, window_size=9, seed=1)
+        assert isinstance(exc_info.value.__cause__, KeyError)
+
+    def test_synthetic_raising_predicate_wrapped(self):
+        s = aa.AAWindowSampler(random_state=0, custom_filter=self._boom)
+        with pytest.raises(RuntimeError, match="custom_filter"):
+            s.sample_synthetic(df_seq=_df_seq(), n=5, window_size=9,
+                               generator="global_freq", seed=1)

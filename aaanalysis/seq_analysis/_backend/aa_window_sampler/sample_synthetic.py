@@ -21,6 +21,7 @@ import numpy as np
 import aaanalysis.utils as ut
 from aaanalysis.data_handling._load_scales import load_scales
 from ._utils import (collect_test_windows,
+                     make_safe_custom_predicate_,
                      sample_pool_iteratively_)
 
 
@@ -239,7 +240,8 @@ def sample_synthetic(*, df_seq, n, window_size, generator, pos_col,
     # entry="" and source_position=-1 (composition-only context).
     predicate = None
     if custom_filter is not None:
-        predicate = lambda window, _payload: custom_filter(window, "", -1)
+        predicate = make_safe_custom_predicate_(
+            custom_filter, lambda _p: ("", -1))
     accepted = sample_pool_iteratively_(
         draw_batch=draw_batch, target_n=n, test_windows=test_windows,
         max_similarity_to_test=max_similarity_to_test,

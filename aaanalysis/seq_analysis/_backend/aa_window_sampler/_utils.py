@@ -215,6 +215,29 @@ def passes_motif_filter_(window, motif_pwm, motif_score_threshold, motif_match):
     return score < motif_score_threshold
 
 
+def make_safe_custom_predicate_(custom_filter, resolve):
+    """Adapt a user ``(window, entry, source_position) -> bool`` keep-filter into the
+    backend ``(window, payload) -> bool`` predicate consumed by
+    ``sample_pool_iteratively_``.
+
+    ``resolve(payload)`` maps the sampler-specific payload to the user-facing
+    ``(entry, source_position)`` pair (1-based anchor). The return value is
+    ``bool()``-coerced. If the user filter raises, the error is re-raised as a
+    ``RuntimeError`` naming the offending window (chained from the original via
+    ``from e``) so the user sees which window triggered it.
+    """
+    def predicate(window, payload):
+        entry, source_position = resolve(payload)
+        try:
+            return bool(custom_filter(window, entry, source_position))
+        except Exception as e:
+            raise RuntimeError(
+                f"'custom_filter' raised on window {window!r} "
+                f"(entry={entry!r}, source_position={source_position})"
+            ) from e
+    return predicate
+
+
 def sample_pool_iteratively_(*, draw_batch, target_n, test_windows,
                              max_similarity_to_test, max_similarity_within_ref,
                              motif_pwm, motif_score_threshold, motif_match,
