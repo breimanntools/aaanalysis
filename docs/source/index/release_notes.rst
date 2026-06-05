@@ -56,7 +56,10 @@ Added
 - **AAWindowSampler**: Samples fixed-length sequence windows for PU-learning and
   hard-negative-mining workflows (``sample_same_protein``,
   ``sample_different_protein``, ``sample_motif_matched``, ``sample_synthetic``).
-- **scan_motif** (``aaanalysis[pro]``): MEME/FIMO motif scan over sequences.
+- **scan_motif** (``aaanalysis[pro]``): scans candidate proteins for
+  statistically significant PWM occurrences via MEME/FIMO (selection by match
+  p-value against a background model), complementing the pure-Python
+  ``AAWindowSampler.sample_motif_matched`` PWM-sum sampler.
 
 **Metrics**
 

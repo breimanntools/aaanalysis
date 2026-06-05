@@ -45,15 +45,28 @@ Implemented in `aaanalysis/__init__.py` as `_EXTRA_MODULES` + `_raise_missing_fe
   unchanged so real bugs surface with full traceback.
 - Covered by `tests/unit/api_tests/test_missing_feature_stub.py`.
 
-## In-core / in-pro parity pattern
+## In-core / in-pro complementary pattern (not parity)
 
-When a pro wrapper around an external CLI mirrors a core method (e.g.
-`aa.scan_motif` ↔ `AAWindowSampler.sample_motif_matched`), the wrapper
-should return identical hits/results to the in-memory core: use the CLI as
-a primitive (e.g. position scanner), then apply the user-facing
-scoring/filtering in Python so both paths go through the same scoring
-formula. Add a parity test that asserts set-equality of the returned
-identifiers and numeric closeness of scores.
+When a pro wrapper around an external CLI sits next to a related core method,
+it must earn the external dependency by producing a **genuinely different**
+result — never a re-scored mimic of the core (that makes the binary pure
+redundancy; see ADR-0021).
+
+The live example is `aa.scan_motif` (pro, FIMO) alongside
+`AAWindowSampler.sample_motif_matched` (core, pure-Python). Both mine
+motif-matched windows for training data, but by **different selection
+criteria**:
+
+- `sample_motif_matched` (core): keeps windows whose raw per-position **PWM-sum
+  ≥ `motif_score_threshold`**; `motif_score` is that sum.
+- `scan_motif` (pro): lets FIMO do probabilistic matching against the
+  background model and keeps windows with **match p-value < `pvalue_threshold`**;
+  `motif_score` is FIMO's log-odds score and an extra `p_value` column is added.
+
+They share the output schema (so hits compose), but select different windows —
+test the *difference* (an overlapping window carries different `motif_score`;
+only the pro path reports `p_value`), not parity. An ex-CLI feature whose output
+is forced to equal the core's belongs in core, not pro.
 
 ## New extras require approval
 

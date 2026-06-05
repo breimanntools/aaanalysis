@@ -3,7 +3,7 @@ This is a script for the frontend of the scan_motif function, a wrapper
 around the FIMO CLI (MEME suite) that mirrors
 :meth:`aaanalysis.AAWindowSampler.sample_motif_matched`.
 """
-from typing import Optional, List, Union
+from typing import Optional, Union
 import shutil
 import subprocess
 import tempfile
@@ -12,9 +12,9 @@ import numpy as np
 import pandas as pd
 
 import aaanalysis.utils as ut
-from aaanalysis.seq_analysis._aa_window_sampler import check_motif_args
+from aaanalysis.seq_analysis._aa_window_sampler import check_pwm
 from aaanalysis.seq_analysis._backend.aa_window_sampler._utils import (
-    parse_pos_col, score_window_pwm_, window_offsets)
+    parse_pos_col, window_offsets)
 from aaanalysis.seq_analysis._backend.aa_window_sampler.build_output import (
     build_segments_output, build_sequences_output)
 
@@ -67,29 +67,31 @@ def _df_seq_to_fasta(df_seq, out_path):
             fh.write(f">{entry}\n{seq}\n")
 
 
-def _run_fimo(motif_path, fasta_path, *,
-               max_stored_scores=None, bg_file=None, motif_pseudo=None):
-    """Invoke FIMO with a permissive p-value threshold and return all parsed hits.
+def _run_fimo(motif_path, fasta_path, *, pvalue_threshold,
+              max_stored_scores=None, bg_file=None, motif_pseudo=None):
+    """Invoke FIMO at ``pvalue_threshold`` and return its significant hits.
 
-    The wrapper later re-scores each returned position with the raw PWM-sum
-    used by :meth:`AAWindowSampler.sample_motif_matched`, so the FIMO score
-    itself is discarded; we only use FIMO as a position scanner. Running with
-    ``--thresh 1.0`` ensures every motif occurrence is reported (p-values are
-    always in [0, 1]).
+    FIMO performs the match selection itself: ``--thresh <pvalue_threshold>``
+    reports only occurrences whose match p-value (computed against the
+    background model from the motif's letter probabilities) is below the
+    threshold. Both FIMO's ``score`` (log-odds) and ``p-value`` are kept and
+    surfaced by :func:`scan_motif`; unlike the pure-Python
+    :meth:`AAWindowSampler.sample_motif_matched`, no PWM-sum re-scoring is
+    applied.
 
-    The ``--text``, ``--thresh 1.0``, and ``--no-qvalue`` flags are
-    parity-critical and are always set by the wrapper. The optional
-    ``max_stored_scores`` / ``bg_file`` / ``motif_pseudo`` arguments map to
-    the corresponding FIMO flags; see :func:`scan_motif` for the user-facing
-    surface.
+    ``--text`` streams the hit table (no q-values are computed in this mode).
+    The optional ``max_stored_scores`` / ``bg_file`` / ``motif_pseudo``
+    arguments map to the corresponding FIMO flags and genuinely affect the
+    reported hits; see :func:`scan_motif` for the user-facing surface.
 
     Returns
     -------
     list of dict
-        ``{entry, start, stop, fimo_score, matched_sequence}``; positions are
-        1-based as emitted by FIMO.
+        ``{entry, start, stop, fimo_score, p_value, matched_sequence}``;
+        positions are 1-based as emitted by FIMO.
     """
-    cmd = ["fimo", "--text", "--thresh", "1.0", "--no-qvalue"]
+    cmd = ["fimo", "--text", "--thresh", str(float(pvalue_threshold)),
+           "--no-qvalue"]
     if max_stored_scores is not None:
         cmd.extend(["--max-stored-scores", str(int(max_stored_scores))])
     if bg_file is not None:
@@ -109,6 +111,7 @@ def _run_fimo(motif_path, fasta_path, *,
             start = int(parts[3])
             stop = int(parts[4])
             fimo_score = float(parts[6])
+            p_value = float(parts[7])
         except (ValueError, IndexError):
             continue
         hits.append({
@@ -116,6 +119,7 @@ def _run_fimo(motif_path, fasta_path, *,
             "start": start,
             "stop": stop,
             "fimo_score": fimo_score,
+            "p_value": p_value,
             "matched_sequence": parts[-1],
         })
     return hits
@@ -127,7 +131,7 @@ def scan_motif(df_seq: pd.DataFrame = None,
                                   n: int = 100,
                                   window_size: int = 9,
                                   motif_pwm: pd.DataFrame = None,
-                                  motif_score_threshold: float = None,
+                                  pvalue_threshold: float = 1e-4,
                                   label_test: Union[int, float] = 1,
                                   label_ref: Union[int, float] = 0,
                                   role: str = ut.ROLE_NEG,
@@ -137,13 +141,18 @@ def scan_motif(df_seq: pd.DataFrame = None,
                                   motif_pseudo: Optional[float] = None,
                                   ) -> pd.DataFrame:
     """
-    Scan candidate proteins for windows matching a user-supplied PWM (Position Weight Matrix) using the FIMO CLI.
+    Scan candidate proteins for statistically significant occurrences of a PWM using the FIMO CLI.
 
-    This is a CLI-based wrapper around FIMO [Bailey09]_, [Grant11]_ from the MEME suite that
-    mirrors :meth:`AAWindowSampler.sample_motif_matched` with strict parity on the returned hit
-    set: the same ``df_seq``, ``motif_pwm``, and ``motif_score_threshold`` yield the same hits
-    and identical ``motif_score`` values. The output schema (including the ``motif_score``
-    column) matches :meth:`AAWindowSampler.sample_motif_matched`.
+    CLI wrapper around FIMO [Bailey09]_, [Grant11]_ from the MEME suite. Unlike
+    the pure-Python :meth:`AAWindowSampler.sample_motif_matched` (which keeps
+    windows whose raw per-position PWM-sum is ``>= motif_score_threshold``),
+    ``scan_motif`` lets FIMO perform its own probabilistic matching: each window
+    is scored against the background model implied by the PWM and kept only when
+    its match p-value is below ``pvalue_threshold``. The two thus select
+    *different* windows and are complementary ways to mine motif-matched training
+    data. The output schema matches :meth:`AAWindowSampler.sample_motif_matched`,
+    with ``motif_score`` holding FIMO's log-odds score and an added ``p_value``
+    column (segments mode).
 
     .. versionadded:: 1.1.0
 
@@ -166,8 +175,9 @@ def scan_motif(df_seq: pd.DataFrame = None,
         Position-weight matrix of shape ``(window_size, 20)`` whose columns are
         the 20 canonical AA letters in any order (reindexed internally to
         ``ut.LIST_CANONICAL_AA``). Required.
-    motif_score_threshold : float
-        Score threshold (sum of per-position PWM values). Required.
+    pvalue_threshold : float, default=1e-4
+        FIMO match-p-value cutoff (maps to ``fimo --thresh``); only occurrences
+        with a match p-value below this are reported. Smaller is stricter.
     label_test : int or float, default=1
         Label assigned to positives in ``output_mode='sequences'``.
     label_ref : int or float, default=0
@@ -190,56 +200,42 @@ def scan_motif(df_seq: pd.DataFrame = None,
     Returns
     -------
     df_hits : pd.DataFrame
-        Scored motif hits, one row per matched window.
+        Significant motif hits, one row per matched window, ranked by ascending
+        match p-value. In ``output_mode='segments'`` the schema of
+        :meth:`AAWindowSampler.sample_motif_matched` is extended with FIMO's
+        ``motif_score`` and ``p_value`` columns.
 
     Raises
     ------
     RuntimeError
         If the ``fimo`` binary is not on PATH.
     ValueError
-        If ``motif_pwm`` or ``motif_score_threshold`` is not provided, if
-        ``bg_file`` is set but does not point to an existing file, or if
-        ``df_seq`` contains no eligible candidate proteins (rows without
-        test positions).
+        If ``motif_pwm`` is not provided, if ``bg_file`` is set but does not
+        point to an existing file, or if ``df_seq`` contains no eligible
+        candidate proteins (rows without test positions).
 
     Notes
     -----
-    * Candidate sequences are written to a temporary FASTA and passed to
-      ``fimo`` via ``subprocess``.
-    * The PWM is written in MEME letter-probability format (column order
-      remapped to ``ut.STR_MEME_PROTEIN_ALPHABET``) and ``fimo`` runs in
-      ``--text`` mode with ``--thresh 1.0`` so every motif occurrence is
-      reported.
-    * Each FIMO hit is re-scored with the raw PWM-sum used by
-      :meth:`AAWindowSampler.sample_motif_matched`; only positions with
-      ``score >= motif_score_threshold`` are kept.
-    * Surviving hits are ranked by descending score (deterministic tiebreak
-      by ``entry`` then 0-based center) and capped at ``n``.
-    * Protein-only: this wrapper passes the 20 canonical amino acids to MEME
-      as the alphabet; gapped or non-protein alphabets are not supported.
-    * ``AAWindowSampler``'s class-level ``max_similarity_to_test`` /
-      ``max_similarity_within_ref`` filters are not applied by this wrapper
-      (it has no class state); leave those at their defaults for parity.
-
-    The wrapper sets ``--text``, ``--thresh 1.0``, and ``--no-qvalue``
-    unconditionally because they are required for the parity contract with
-    :meth:`AAWindowSampler.sample_motif_matched`. The other AAanalysis
-    parameters above are passed through to FIMO as follows:
-
-    ===================  ======================
-    AAanalysis parameter  FIMO flag
-    ===================  ======================
-    ``max_stored_scores`` ``--max-stored-scores``
-    ``bg_file``           ``--bgfile``
-    ``motif_pseudo``      ``--motif-pseudo``
-    ===================  ======================
+    * Candidate sequences are written to a temporary FASTA and the PWM to a
+      temporary MEME letter-probability file (column order remapped to
+      ``ut.STR_MEME_PROTEIN_ALPHABET``); ``fimo`` runs in ``--text`` mode.
+    * FIMO selects and scores the hits at ``--thresh pvalue_threshold``;
+      AAanalysis only ranks them by ascending p-value (deterministic tiebreak
+      by descending score, then ``entry`` and start) and caps at ``n``.
+      ``motif_score`` is FIMO's log-odds score, not a PWM-sum.
+    * ``max_stored_scores`` / ``bg_file`` / ``motif_pseudo`` map to the FIMO
+      flags ``--max-stored-scores`` / ``--bgfile`` / ``--motif-pseudo`` and
+      genuinely change the reported hits (they tune FIMO's scoring).
+    * Protein-only: the 20 canonical amino acids are passed to MEME as the
+      alphabet; gapped or non-protein alphabets are not supported.
 
     See Also
     --------
     * MEME Suite `documentation <https://meme-suite.org/meme/doc/overview.html>`__
       and FIMO `manual <https://meme-suite.org/meme/doc/fimo.html>`__.
-    * :meth:`AAWindowSampler.sample_motif_matched` for the pure-Python
-      equivalent (no FIMO binary required).
+    * :meth:`AAWindowSampler.sample_motif_matched` for the pure-Python PWM-sum
+      sampler (no FIMO binary required) that selects windows by a different
+      criterion.
 
     Examples
     --------
@@ -256,12 +252,10 @@ def scan_motif(df_seq: pd.DataFrame = None,
                          list_str_options=ut.LIST_OUTPUT_MODES)
     if motif_pwm is None:
         raise ValueError("'motif_pwm' is required for scan_motif.")
-    if motif_score_threshold is None:
-        raise ValueError("'motif_score_threshold' is required for "
-                         "scan_motif.")
-    # `motif_match` is not exposed (scan-only mode); pass None.
-    motif_pwm = check_motif_args(motif_pwm, motif_score_threshold,
-                                  None, window_size)
+    ut.check_number_range(name="pvalue_threshold", val=pvalue_threshold,
+                          min_val=0, max_val=1, accept_none=False,
+                          just_int=False)
+    motif_pwm = check_pwm(motif_pwm, window_size)
     if max_stored_scores is not None:
         ut.check_number_range(name="max_stored_scores", val=max_stored_scores,
                               min_val=1, just_int=True)
@@ -280,8 +274,7 @@ def scan_motif(df_seq: pd.DataFrame = None,
         raise ValueError("No eligible candidate proteins (rows with no test "
                          "positions) for scan_motif.")
     candidate_df = df_seq.iloc[eligible_idx].reset_index(drop=True)
-    # Run FIMO with a permissive threshold; re-score every reported position
-    # in Python so the wrapper returns the same hits as sample_motif_matched.
+    # Let FIMO select and score the significant hits directly (no re-scoring).
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         fasta_path = tmp / "candidates.fasta"
@@ -289,10 +282,11 @@ def scan_motif(df_seq: pd.DataFrame = None,
         _df_seq_to_fasta(candidate_df, fasta_path)
         motif_path.write_text(_pwm_to_meme(motif_pwm))
         raw_hits = _run_fimo(motif_path, fasta_path,
-                              max_stored_scores=max_stored_scores,
-                              bg_file=bg_file,
-                              motif_pseudo=motif_pseudo)
-    # Re-score with the raw PWM-sum and filter by the user's score threshold.
+                             pvalue_threshold=pvalue_threshold,
+                             max_stored_scores=max_stored_scores,
+                             bg_file=bg_file,
+                             motif_pseudo=motif_pseudo)
+    # Keep only hits whose window fits fully inside the candidate sequence.
     seq_by_entry = {df_seq.iloc[i][ut.COL_ENTRY]: df_seq.iloc[i][ut.COL_SEQ]
                     for i in eligible_idx}
     hits = []
@@ -304,28 +298,26 @@ def scan_motif(df_seq: pd.DataFrame = None,
         window = seq[start_0:start_0 + window_size]
         if len(window) != window_size:
             continue
-        score = score_window_pwm_(window, motif_pwm)
-        if score >= motif_score_threshold:
-            h_copy = dict(h)
-            h_copy["score"] = score
-            hits.append(h_copy)
+        hits.append(h)
     if not hits:
         if output_mode == ut.OUT_SEGMENTS:
             df_out = build_segments_output(
                 [], strategy=ut.STRATEGY_MOTIF_MATCHED, role=role,
                 label_value=label_ref, window_size=window_size)
             df_out["motif_score"] = []
+            df_out["p_value"] = []
             return df_out
         return build_sequences_output(df_seq, positions,
                                        [[] for _ in range(len(df_seq))],
                                        label_test=label_test, label_ref=label_ref,
                                        mark_test=True)
-    # Rank, cap at n, build output schema
-    hits.sort(key=lambda h: (-h["score"], h["entry"], h["start"]))
+    # Rank by ascending p-value (most significant first); cap at n.
+    hits.sort(key=lambda h: (h["p_value"], -h["fimo_score"], h["entry"],
+                             h["start"]))
     hits = hits[:n]
     entry_to_idx = {df_seq.iloc[i][ut.COL_ENTRY]: i for i in eligible_idx}
     half_left, _ = window_offsets(window_size)
-    rows, source_indices, sampled_scores = [], [], []
+    rows, sampled_scores, sampled_pvalues = [], [], []
     sampled_centers = [[] for _ in range(len(df_seq))]
     for h in hits:
         entry = h["entry"]
@@ -337,14 +329,15 @@ def scan_motif(df_seq: pd.DataFrame = None,
         seq_i = df_seq.iloc[i][ut.COL_SEQ]
         window = seq_i[center - half_left:center - half_left + window_size]
         rows.append([entry, seq_i, window, center + 1])
-        source_indices.append(i)
         sampled_centers[i].append(center)
-        sampled_scores.append(h["score"])
+        sampled_scores.append(h["fimo_score"])
+        sampled_pvalues.append(h["p_value"])
     if output_mode == ut.OUT_SEGMENTS:
         df_out = build_segments_output(rows, strategy=ut.STRATEGY_MOTIF_MATCHED,
                                         role=role, label_value=label_ref,
                                         window_size=window_size)
         df_out["motif_score"] = sampled_scores
+        df_out["p_value"] = sampled_pvalues
         return df_out
     return build_sequences_output(df_seq, positions, sampled_centers,
                                    label_test=label_test, label_ref=label_ref,

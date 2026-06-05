@@ -115,30 +115,17 @@ def check_synth_generator(generator):
                      f"list/tuple of str, or dict[str, Real]")
 
 
-def check_motif_args(motif_pwm, motif_score_threshold, motif_match, window_size):
-    """Validate the motif-filter parameter triplet (or pair, when ``motif_match`` is ``None``).
+def check_pwm(motif_pwm, window_size):
+    """Validate ``motif_pwm`` and return it reindexed to ``ut.LIST_CANONICAL_AA``.
 
-    Returns the validated PWM as a ``np.ndarray`` of shape
-    ``(window_size, len(ut.LIST_CANONICAL_AA))`` with columns ordered by
-    ``ut.LIST_CANONICAL_AA`` (alphabetical, ``ACDEFGHIKLMNPQRSTVWY``), or
-    ``None`` when no motif filter is requested.
-
-    ``motif_pwm`` must be a ``pd.DataFrame`` whose columns are the 20 canonical
-    AA letters in any order (reindexed internally). Non-canonical columns and
-    missing canonical columns are rejected to preserve parity with
-    :func:`aaanalysis.scan_motif` (FIMO uses the canonical protein alphabet).
-
-    Pass ``motif_match=None`` from callers that do not expose ``motif_match``
-    (e.g. :meth:`AAWindowSampler.sample_motif_matched`, which only scores and
-    keeps high-scoring windows). Raises ``ValueError`` for inconsistent or
-    malformed inputs.
+    Returns an ``np.ndarray`` of shape ``(window_size, len(ut.LIST_CANONICAL_AA))``
+    with columns ordered by ``ut.LIST_CANONICAL_AA`` (alphabetical,
+    ``ACDEFGHIKLMNPQRSTVWY``). ``motif_pwm`` must be a ``pd.DataFrame`` whose
+    columns are the 20 canonical AA letters in any order (reindexed internally);
+    non-canonical or missing canonical columns are rejected (the canonical
+    protein alphabet is required by both the PWM-sum scan and the FIMO engine).
+    Raises ``ValueError`` for malformed inputs.
     """
-    if motif_pwm is None and motif_score_threshold is None:
-        return None
-    if motif_pwm is None:
-        raise ValueError("'motif_score_threshold' was given without 'motif_pwm'.")
-    if motif_score_threshold is None:
-        raise ValueError("'motif_pwm' was given without 'motif_score_threshold'.")
     if not isinstance(motif_pwm, pd.DataFrame):
         raise ValueError(
             f"'motif_pwm' (type {type(motif_pwm).__name__}) should be a "
@@ -158,6 +145,30 @@ def check_motif_args(motif_pwm, motif_score_threshold, motif_match, window_size)
     if pwm.shape != expected_shape:
         raise ValueError(f"'motif_pwm' (shape {pwm.shape}) should be "
                          f"{expected_shape} (window_size, n_aa).")
+    return pwm
+
+
+def check_motif_args(motif_pwm, motif_score_threshold, motif_match, window_size):
+    """Validate the motif-filter parameter triplet (or pair, when ``motif_match`` is ``None``).
+
+    Returns the validated PWM as a ``np.ndarray`` of shape
+    ``(window_size, len(ut.LIST_CANONICAL_AA))`` with columns ordered by
+    ``ut.LIST_CANONICAL_AA`` (alphabetical, ``ACDEFGHIKLMNPQRSTVWY``), or
+    ``None`` when no motif filter is requested (PWM validation delegated to
+    :func:`check_pwm`).
+
+    Pass ``motif_match=None`` from callers that do not expose ``motif_match``
+    (e.g. :meth:`AAWindowSampler.sample_motif_matched`, which only scores and
+    keeps high-scoring windows). Raises ``ValueError`` for inconsistent or
+    malformed inputs.
+    """
+    if motif_pwm is None and motif_score_threshold is None:
+        return None
+    if motif_pwm is None:
+        raise ValueError("'motif_score_threshold' was given without 'motif_pwm'.")
+    if motif_score_threshold is None:
+        raise ValueError("'motif_pwm' was given without 'motif_score_threshold'.")
+    pwm = check_pwm(motif_pwm, window_size)
     ut.check_number_range(name="motif_score_threshold",
                           val=motif_score_threshold,
                           accept_none=False, just_int=False)
