@@ -124,12 +124,16 @@ class AAclust(Wrapper):
         Cluster labels for each cluster center.
     medoids_ : array-like, shape (n_clusters, n_features)
         Representative samples, one for each cluster.
+    medoid_ind_ : array-like, shape (n_clusters)
+        Indices of the medoid samples in ``X``, aligned row-for-row with ``medoids_``,
+        ``labels_medoids_``, and ``medoid_names_``. Always set after fitting.
     labels_medoids_ :  array-like, shape (n_clusters)
         Cluster labels for each medoid.
     is_medoid_ : array-like, shape (n_samples)
         Array indicating samples being medoids (1) or not (0). Same order as ``labels_``.
     medoid_names_ : list
-        Names of the medoids. Set if ``names`` is provided to ``.fit``.
+        Names of the medoid samples, aligned with ``medoid_ind_``. ``None`` unless ``names``
+        is passed to ``.fit``; use ``medoid_ind_`` for integer positions otherwise.
     """
     def __init__(self,
                  model_class: Type[ClusterMixin] = KMeans,
@@ -185,6 +189,7 @@ class AAclust(Wrapper):
         self.centers_: Optional[ut.ArrayLike1D] = None
         self.labels_centers_: Optional[ut.ArrayLike1D] = None
         self.medoids_: Optional[ut.ArrayLike1D] = None
+        self.medoid_ind_: Optional[ut.ArrayLike1D] = None
         self.labels_medoids_: Optional[ut.ArrayLike1D] = None
         self.is_medoid_: Optional[ut.ArrayLike1D] = None
         self.medoid_names_: Optional[List[str]] = None
@@ -309,6 +314,7 @@ class AAclust(Wrapper):
         self.centers_ = centers
         self.labels_centers_ = center_labels
         self.medoids_ = medoids     # Representative scales
+        self.medoid_ind_ = np.array(medoid_ind)     # Cluster-order indices of medoids in X
         self.labels_medoids_ = medoid_labels
         self.is_medoid_ = np.array([i in medoid_ind for i in range(0, len(labels))])
         if names is not None:

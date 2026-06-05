@@ -28,6 +28,7 @@ STR_ADD_TABLE = "ADD-TABLE"
 EXCLUDE_FROM_REF_CHECK = ["t3a_aaontology_categories",
                           "t3b_aaontology_subcategories"]
 
+
 # Helper Functions
 def _f_xlsx(on=True, file=None, ending=".xlsx"):
     if on:

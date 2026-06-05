@@ -142,6 +142,35 @@ class TestAAclust:
         aac.fit(X, n_clusters=5)
         assert aac.medoid_names_ is None
 
+    def test_medoid_ind(self):
+        """
+        Ensure 'medoid_ind_' is always populated and aligned (cluster order) with the
+        other medoid attributes, independent of 'names'.
+        """
+        n_samples, n_clusters = 100, 5
+        X = np.random.rand(n_samples, 10)
+        aac = aa.AAclust()
+        aac.fit(X, n_clusters=n_clusters)
+        # Always set, one index per cluster, integer-valued, in range
+        assert aac.medoid_ind_ is not None
+        assert len(aac.medoid_ind_) == aac.n_clusters
+        assert np.issubdtype(np.asarray(aac.medoid_ind_).dtype, np.integer)
+        assert np.all((aac.medoid_ind_ >= 0) & (aac.medoid_ind_ < n_samples))
+        # Cluster-order alignment: X[medoid_ind_] reproduces medoids_ row-for-row
+        assert np.allclose(X[aac.medoid_ind_], aac.medoids_)
+        # Consistent with the boolean mask (as a set, mask is in sample order)
+        assert set(aac.medoid_ind_.tolist()) == set(np.where(aac.is_medoid_)[0].tolist())
+
+    def test_medoid_ind_aligned_with_names(self):
+        """
+        Ensure 'medoid_ind_' indexes 'names' to reproduce 'medoid_names_' in order.
+        """
+        names = [f"scale_{i}" for i in range(100)]
+        X = np.random.rand(len(names), 10)
+        aac = aa.AAclust()
+        aac.fit(X, names=names, n_clusters=5)
+        assert [names[i] for i in aac.medoid_ind_] == aac.medoid_names_
+
     def test_metric(self):
         """
         Test the 'metric' parameter with its different options.
