@@ -53,8 +53,8 @@ A categorical tag stored in the output's `role` column describing what a sampled
 _Avoid_: class, label_kind, category.
 
 **strategy**:
-A tag stored in the output's `strategy` column identifying which sampling method produced the row. Values: `same_protein`, `different_protein`, `motif_matched`, `synthetic:<generator>`.
-_Avoid_: method, source, origin.
+A tag stored in the output's `strategy` column identifying which sampling method produced the row. Values: `same_protein`, `different_protein`, `motif_matched`, `synthetic:<generator>`. `strategy` (which method) plus `arm` (which named benchmark configuration) together carry full row provenance, so no separate `provenance` column is introduced.
+_Avoid_: method, source, origin, provenance (subsumed by `strategy` + `arm`).
 
 **entry_win**:
 A row's window identifier, formatted `<entry>_<start_pos>-<end_pos>` with 1-based inclusive coordinates for protein-sourced windows, or `synth_{i}` (per-call counter) for synthetic windows. Identical biological windows across calls share the same `entry_win`, making `drop_duplicates(subset="entry_win")` the natural dedupe primitive — except for synthetic outputs, where the per-call counter is not call-stable.
@@ -67,6 +67,18 @@ _Avoid_: candidates, eligible set.
 **distance band** (`min_distance_to_pos`, `max_distance_to_pos`):
 A pair of optional residue-distance bounds used by `sample_same_protein` to filter candidate P1 anchors by their L1 distance to the *nearest* positive on the same protein. `min_distance_to_pos` is the lower bound (or `None` for no lower bound); `max_distance_to_pos` is the upper bound (or `None` for no upper bound). Both default to `None`, in which case every fully-fitting window on a positive-containing protein is admissible — so sampled "Negative" windows may overlap positive windows. For non-overlapping hard-negatives, set `min_distance_to_pos=window_size`; for windows targeted near positives, pair with a finite `max_distance_to_pos`.
 _Avoid_: distance-to-positive (singular — misses the band).
+
+**custom filter**:
+A user-supplied predicate `(window: str, entry: str, source_position: int) -> bool` (keep the window when it returns `True`) set on `AAWindowSampler.__init__` alongside the similarity filters, so it composes in the per-window filter pipeline of every `sample_*` method automatically. It is the sanctioned escape hatch for structure-, domain-, or dataset-specific decoy rules that the built-in filters do not cover (the deferred `match_structure` filter is implemented as a custom-filter recipe). For synthetic windows there is no source protein, so it is called with `entry=""` and `source_position=-1` (composition-only context).
+_Avoid_: user filter, callback (too generic), post-filter (it runs inside the iterative re-draw, not after).
+
+**benchmark set**:
+A single concatenated `segments`-mode DataFrame produced by `AAWindowSampler.sample_benchmark_set(df_seq, arms, seed)`, stacking one or more named **arms** with an extra `arm` column. Multi-arm orchestration only — it adds no new sampling behavior; each arm is one ordinary `sample_*` call. No automatic cross-arm dedupe (every row preserved): dedupe protein-sourced rows on `entry_win` and synthetic rows on `window` if needed.
+_Avoid_: benchmark, sample set, arm set.
+
+**arm**:
+One named sampling configuration inside a **benchmark set**: a dict `{"method": <strategy-tag>, **kwargs}` where the method is one of the four strategy tags (`same_protein`, `different_protein`, `synthetic`, `motif_matched`) and the remaining keys forward to that `sample_*` method. The arm's name is written into the output's `arm` column; reproducibility comes from a per-arm sub-seed derived deterministically from the call's `seed` (`np.random.SeedSequence`).
+_Avoid_: branch, group, configuration (overloaded).
 
 ### Synthetic generation vocabulary
 
@@ -302,6 +314,7 @@ _Avoid_: ranking plot (collides with `CPPPlot.ranking`, which ranks *features* f
 
 - `mode` was used for both `sample_synthetic`'s polymorphic generator parameter AND for `output_mode`. **Resolved**: the synthetic parameter is now **generator**; `output_mode` retains its name (different axis — schema vs. recipe).
 - `negative` was used informally for both labeled-negative rows and any non-test sampled row. **Resolved**: **reference window** is the umbrella term; **role** holds the workflow-specific meaning (`Negative`, `Unlabeled`, `Control`, …).
+- `NegativeSampler` (the class proposed by issue #66) is **not** a separate class. `AAWindowSampler` already provides same-/different-protein/synthetic sampling, the N/U/Control **role** taxonomy, the unified `segments` schema, composable filters, and per-call seeds — i.e. the substance of #66. **Resolved**: the only genuine gaps (`sample_benchmark_set` multi-arm orchestration and a `custom filter` hook) are added to `AAWindowSampler`; `NegativeSampler` as a name/class is dropped. See ADR-0019.
 - `center` is used in backend code for the 0-based window-center index; in user-facing language and outputs we use **P1 anchor** / **source position** (1-based). **Resolved**: backend stays 0-based internally; frontend / output is 1-based throughout.
 - `positions` was a column constant for `df_feat` (CSV string of feature positions); `pos` is the column constant for `df_seq`'s positive positions (list of ints). **Resolved**: distinct constants — `COL_POSITION` (`df_feat`, `str`) and `COL_POS` (`df_seq`, `list[int]`).
 - `label-neutral` was a claim in the `AAWindowSampler` class docstring; in practice the API ships opinionated **role** and `label_ref` defaults. **Resolved**: framing is dropped; class docstring now states defaults explicitly assume PU-learning / hard-negative-mining workflows.
