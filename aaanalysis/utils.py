@@ -493,8 +493,8 @@ def load_default_scales(scale_cat=False):
     """Load default scales sets or categories. Copy is always returned to maintain data integrity.
 
     Returns the user override ``options['df_cat'|'df_scales']`` when set, else the bundled default.
-    The library never writes to ``options`` here — memoization lives in ``_load_default_scales_cached``
-    (see ADR-0018); those option keys reflect user intent only and stay ``None`` until the user sets them.
+    The library never writes to ``options`` here — memoization lives in ``_load_default_scales_cached``,
+    so those option keys reflect user intent only and stay ``None`` until the user sets them.
     """
     key = FILE_DF_CAT if scale_cat else FILE_DF_SCALES
     override = options[key]

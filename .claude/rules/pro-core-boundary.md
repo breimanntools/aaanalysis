@@ -31,12 +31,19 @@ features always go in `*_pro`.
 
 ## `missing_feature_stub` rules
 
-- Maintain `_PRO_MODULES = {"shap", "Bio", "biopython", "upsetplot", ...}`.
+Implemented in `aaanalysis/__init__.py` as `_EXTRA_MODULES` + `_raise_missing_feature`.
+
+- Maintain `_EXTRA_MODULES`, keyed by install extra:
+  `{"pro": {"shap", "Bio", "biopython", "upsetplot", "UpSetPlot", "requests",
+  "afragmenter"}, "dev": {"IPython"}}`. Add a module's **import name** here when a
+  new `*_pro` (or dev) feature gates on it.
 - Decide using `e.name` (the standard `ImportError.name` attribute), never
   by substring-matching `str(e)`.
-- If `e.name in _PRO_MODULES`: raise the friendly install hint.
-- Otherwise: re-raise the original `ImportError` unchanged so real bugs
-  surface with full traceback.
+- If `e.name in _EXTRA_MODULES[mode]`: raise the friendly install hint
+  (chained `from e`).
+- Otherwise (including `e.name is None`): re-raise the original `ImportError`
+  unchanged so real bugs surface with full traceback.
+- Covered by `tests/unit/api_tests/test_missing_feature_stub.py`.
 
 ## In-core / in-pro parity pattern
 
