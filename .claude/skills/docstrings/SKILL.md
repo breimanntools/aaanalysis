@@ -64,6 +64,8 @@ Copy the matching template from the guide / [REFERENCE.md](REFERENCE.md):
 6. `See Also` = `* :role:`Target`: gloss.` bullets. Every `:class:`/`:meth:`/`:func:` target must resolve (`XREF-UNRESOLVED`).
 7. **Verify every citation — never invent one.** Valid only if `Key` is defined in `references.rst` *and* the work describes this symbol. **Citations are the exception** (core algorithm classes); utilities/loaders/preprocessors carry **none** — don't reflexively add `[Breimann25a]_`. When unsure, omit.
 8. Header is `Warnings` (not `Warns`); no `→`/`+` in summaries.
+9. **Every integrated external tool/method is cited + explained in one sentence.** A method wrapping/running an external tool (DSSP, Chainsaw, Merizo, AFragmenter, MEME/FIMO, cd-hit, mmseqs2, logomaker, SHAP, …) names it with a `[Key]_` citation (its paper in `references.rst`, not a bare repo URL) and a one-sentence "what it does".
+10. **Summary + description.** A one-line summary is followed by a short plain-language description (what it does in simple words, the cited tool `[Key]_` if any, key `:role:` cross-refs) — for classes and non-trivial methods/functions. The checker's `SUMMARY-ONLY` (advisory) flags summary-only docstrings.
 
 ## Critical review (audit → tier → refactor)
 

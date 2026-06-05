@@ -53,8 +53,7 @@ class AAlogo:
     Amino Acid logo (**AAlogo**) class for computing sequence logo matrices and conservation scores.
 
     Sequence logos visualize the amino acid composition and conservation at each residue position.
-    AAlogo computes logo matrices from sequence parts using the
-    `logomaker <https://logomaker.readthedocs.io/en/latest/>`_ package.
+    AAlogo computes logo matrices from sequence parts using the logomaker [Tareen20]_ package.
     Conservation is summarized per position (:meth:`get_df_logo_info`) or as a single scalar
     (:meth:`get_conservation`).
 

@@ -381,6 +381,13 @@ class AAWindowSampler:
                             ) -> pd.DataFrame:
         """Sample windows from proteins that contain at least one test position.
 
+        Draws up to ``n`` reference windows from the same proteins that carry a labeled
+        test position, making it the natural source for within-protein hard negatives.
+        Windows are distributed roughly uniformly across eligible proteins and filtered
+        by the similarity thresholds set on :class:`AAWindowSampler`. Complement this
+        method with :meth:`sample_different_protein` when an unlabeled cross-protein
+        pool is also needed.
+
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -537,6 +544,12 @@ class AAWindowSampler:
                                  seed: Optional[int] = None,
                                  ) -> pd.DataFrame:
         """Sample windows from proteins outside the test set (proteins with no test positions).
+
+        Draws up to ``n`` reference windows exclusively from proteins that carry no
+        labeled positive positions, making them naturally unlabeled candidates for
+        positive-unlabeled learning [ElkanNoto08]_, [BekkerDavis20]_. Use this method
+        alongside :meth:`sample_same_protein` to build a combined reference pool that
+        covers both within- and cross-protein negatives.
 
         Parameters
         ----------

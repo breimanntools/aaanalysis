@@ -72,6 +72,11 @@ class NumericalFeature:
     Utility feature engineering class to process and filter numerical data structures,
     such as amino acid scales or a feature matrix.
 
+    It provides numeric helpers for the :class:`CPP` feature engineering pipeline:
+    extending the amino acid alphabet of a scale DataFrame, slicing per-residue tensors
+    into sequence parts (numerical analog of :meth:`SequenceFeature.get_df_parts`),
+    and removing redundant features by Pearson correlation.
+
     .. versionadded:: 0.1.3
     """
 
@@ -81,6 +86,11 @@ class NumericalFeature:
                            ) -> np.array:
         """
         Filter features based on Pearson correlation.
+
+        Removes redundant columns from a feature matrix by iterating through features
+        in order and discarding any feature that exceeds ``max_cor`` Pearson correlation
+        with an already-kept feature. Use this after :meth:`CPP.run` to reduce the
+        selected feature set to a non-redundant subset.
 
         Parameters
         ----------

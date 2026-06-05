@@ -382,6 +382,12 @@ class ShapModel:
         """
         Obtain SHAP values aggregated across prediction models and training rounds.
 
+        For each round and feature-selection subset, the method trains each model in ``list_model_classes``
+        and applies the configured SHAP explainer [Lundberg20]_ to compute per-sample feature attributions.
+        All SHAP values are averaged across rounds, feature selections, and models, then stored in
+        ``shap_values``. Pass the result to :meth:`ShapModel.add_feat_impact` to attach impact scores
+        to a feature DataFrame.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)

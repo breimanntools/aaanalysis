@@ -261,6 +261,11 @@ class CPPGrid(Tool):
         """
         Run the configuration grid and return per-combo feature tables plus a sweep summary.
 
+        Expands the four stage-grouped parameter dicts into a Cartesian product of configurations and
+        runs the full parts → splits → scales → :meth:`CPP.run` pipeline for each one in parallel.
+        Configurations that share all settings except ``n_filter`` are executed once at the largest
+        value and sliced, avoiding redundant work.
+
         Parameters
         ----------
         params_parts : dict, optional

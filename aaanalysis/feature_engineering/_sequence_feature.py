@@ -188,6 +188,12 @@ class SequenceFeature:
         """
         Create DataFrane with selected sequence parts.
 
+        Slices each protein sequence in ``df_seq`` into the requested Parts (TMD,
+        JMD-N, JMD-C, and combinations thereof) using the boundary information
+        supplied with the sequences. The resulting ``df_parts`` DataFrame is the
+        primary sequence input for :class:`CPP` and for
+        :meth:`SequenceFeature.feature_matrix`.
+
         .. versionchanged:: 1.1.0
             Added the ``pos``-anchor input mode (``tmd_len``).
 
@@ -512,6 +518,12 @@ class SequenceFeature:
         """
         Create feature matrix for given feature ids and sequence parts.
 
+        For each sample (row of ``df_parts``) and each feature id, looks up the
+        physicochemical scale values at the residue positions defined by the feature's
+        Part and Split components and averages them into a single feature value.
+        The result is the numerical input ``X`` consumed by :meth:`CPP.run` and
+        by :meth:`NumericalFeature.filter_correlation`.
+
         .. versionchanged:: 1.1.0
             Added the ``batch`` parameter for building a list of ``df_parts`` in a single pass.
 
@@ -607,6 +619,12 @@ class SequenceFeature:
         """
         Create list of all feature ids for given Parts, Splits, and Scales.
 
+        Enumerates every combination of the requested sequence parts, split types
+        (Segment, Pattern, PeriodicPattern from :meth:`SequenceFeature.get_split_kws`),
+        and scale names, returning structured ``PART-SPLIT-SCALE`` feature ids.
+        These ids can be passed directly to :meth:`SequenceFeature.feature_matrix`
+        or used to pre-select a feature space before calling :meth:`CPP.run`.
+
         Parameters
         ----------
         list_parts: list of str, default=["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
@@ -656,6 +674,12 @@ class SequenceFeature:
                           ) -> List[str]:
         """
         Convert feature ids (PART-SPLIT-SCALE) into feature names (scale name [positions]).
+
+        Replaces the compact ``PART-SPLIT-SCALE`` id format produced by
+        :meth:`SequenceFeature.get_features` with a human-readable string that
+        shows the full scale name from ``df_cat`` together with the residue
+        positions covered by the feature's Split, making feature results easier
+        to interpret in :class:`CPP` output DataFrames.
 
         Parameters
         ----------
@@ -725,6 +749,14 @@ class SequenceFeature:
         """
         Create for features a list of corresponding positions or amino acids.
 
+        Resolves each ``PART-SPLIT-SCALE`` feature id produced by
+        :meth:`SequenceFeature.get_features` to the concrete residue positions it
+        covers, using the supplied domain lengths. When sequence strings
+        (``tmd_seq``, ``jmd_n_seq``, ``jmd_c_seq``) are also provided the method
+        returns the actual amino acid segments or patterns instead of position
+        numbers, which is useful for inspecting :class:`CPP` feature results on a
+        specific protein.
+
         Parameters
         ----------
         features : array-like, shape (n_features,)
@@ -790,6 +822,12 @@ class SequenceFeature:
                    ) -> pd.DataFrame:
         """
         Create DataFrame of aggregated (mean or sum) feature values per residue position and scale.
+
+        Projects the per-feature statistics from a ``df_feat`` DataFrame (typically
+        the output of :meth:`CPP.run`) onto individual residue positions by
+        spreading each feature's value across every position its Split covers and
+        then aggregating by scale category. The resulting position-by-category
+        matrix is the direct input for :class:`CPPPlot` position plots.
 
         Parameters
         ----------

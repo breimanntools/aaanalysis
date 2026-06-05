@@ -457,9 +457,9 @@ class StructurePreprocessor:
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
         """Download AlphaFold model + PAE files for every entry into a folder.
 
-        Fetches each entry's AlphaFold-DB structure
-        (``AF-<entry>-F1-model_v4``) and its PAE sidecar from
-        https://alphafold.ebi.ac.uk, saving them under the canonical filenames
+        Fetches each entry's structure (``AF-<entry>-F1-model_v4``) and PAE sidecar
+        from the AlphaFold Protein Structure Database [Varadi22]_
+        (https://alphafold.ebi.ac.uk), saving them under the canonical filenames
         :meth:`encode_pdb` / :meth:`encode_pae` / :meth:`get_dssp` already
         resolve — so a single call populates the ``pdb_folder`` / ``pae_folder``
         those methods consume. This is the ``fetch_`` (web) acquisition
@@ -578,6 +578,14 @@ class StructurePreprocessor:
     ) -> pd.DataFrame:
         """Run DSSP and append per-residue list columns to ``df_seq``.
 
+        Runs the DSSP algorithm [Kabsch83]_ (via the ``mkdssp`` binary
+        [Touw15]_) on each entry's PDB file and aligns the output to the
+        target sequence in ``df_seq``, appending per-residue list columns
+        (secondary structure, ASA, backbone dihedrals, hydrogen bonds) plus
+        a boolean ``dssp_ok`` flag. The result is the intermediate input that
+        :meth:`encode_dssp` consumes; call this method first to inspect the
+        raw DSSP streams before encoding.
+
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -658,6 +666,15 @@ class StructurePreprocessor:
         return_df: bool = False,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Run DSSP and the per-feature encoders to build a ``[0, 1]``-normalized ``dict_dssp``.
+
+        DSSP [Kabsch83]_ assigns per-residue secondary structure, solvent
+        accessibility, and backbone hydrogen-bond geometry from a 3D structure. This
+        method runs it (via the ``mkdssp`` binary [Touw15]_, or reuses the columns
+        already produced by :meth:`get_dssp`) and encodes the chosen ``features``
+        into the ``[0, 1]``-normalized per-residue ``dict_num`` that
+        :meth:`CPP.run_num` consumes. It is the DSSP-side companion of
+        :meth:`encode_pdb` (ATOM-record features) and :meth:`encode_pae` (AlphaFold
+        PAE); stack their outputs with :func:`aaanalysis.combine_dict_nums`.
 
         Parameters
         ----------
@@ -850,6 +867,15 @@ class StructurePreprocessor:
         return_df: bool = False,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Extract per-residue features from PDB ATOM records into ``dict_pdb``.
+
+        Reads geometric and confidence features straight from a structure's ATOM
+        records — experimental ``bfactor`` / residue ``depth`` (the latter via the
+        ``msms`` surface program [Sanner96]_) and AlphaFold [Jumper21]_ model-file
+        features (``plddt`` confidence, sidechain ``chi*_sincos``, contacts, …) —
+        and encodes the chosen ``features`` into the ``[0, 1]``-normalized
+        per-residue ``dict_num`` that :meth:`CPP.run_num` consumes. It is the
+        ATOM-side companion of :meth:`encode_dssp` and :meth:`encode_pae`; stack
+        their outputs with :func:`aaanalysis.combine_dict_nums`.
 
         Parameters
         ----------
@@ -1049,6 +1075,14 @@ class StructurePreprocessor:
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Load AlphaFold PAE sidecar JSONs and produce ``dict_pae``.
 
+        The Predicted Aligned Error (PAE) is AlphaFold's [Jumper21]_ per-residue-pair
+        confidence map (the expected positional error, in Å). This method reads each
+        entry's L×L PAE matrix and collapses it into the ``[0, 1]``-normalized
+        per-residue summaries (row statistics, local vs distal means, asymmetry, band
+        means) that :meth:`CPP.run_num` consumes. It is the PAE-side companion of
+        :meth:`encode_dssp` and :meth:`encode_pdb`; stack their outputs with
+        :func:`aaanalysis.combine_dict_nums`.
+
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -1246,8 +1280,8 @@ class StructurePreprocessor:
 
         Mirrors the ``get_dssp`` → ``encode_dssp`` pattern: this method
         runs the external tool inline, returns a copy of ``df_seq`` with
-        appended ``chopping`` (Merizo/ChainSaw common format) and
-        ``domain_ok`` boolean columns. The result feeds into
+        appended ``chopping`` (the common Merizo [Lau23]_ / Chainsaw [Wells24]_
+        chopping-string format) and ``domain_ok`` boolean columns. The result feeds into
         :meth:`encode_domains` (which now accepts the in-memory
         ``chopping`` column directly).
 
@@ -1266,12 +1300,14 @@ class StructurePreprocessor:
         tool : {'chainsaw', 'afragmenter'}, default='afragmenter'
             Which segmentation tool to run.
 
-            * ``'afragmenter'``: pip-installable PAE-based segmenter.
-              Requires the optional extra ``pip install aaanalysis[pro]``
-              (lazy-import; the friendly install hint fires only when this
-              tool is requested). Operates on the PAE matrix from ``pae_folder``.
-            * ``'chainsaw'``: PDB-based segmenter
-              (`Chainsaw <https://github.com/JudeWells/Chainsaw>`__). Not on
+            * ``'afragmenter'`` ([Verwimp25]_): a schema-free, tuneable segmenter
+              that builds a residue network from the AlphaFold PAE matrix and
+              finds domains by Leiden clustering. Pip-installable; requires the
+              optional extra ``pip install aaanalysis[pro]`` (lazy-import; the
+              friendly install hint fires only when this tool is requested).
+              Operates on the PAE matrix from ``pae_folder``.
+            * ``'chainsaw'`` ([Wells24]_): a fully-convolutional neural network
+              that predicts domain boundaries from a PDB / CIF structure. Not on
               PyPI; clone the repo locally and pass its directory as
               ``chainsaw_path``. Operates on PDB / CIF from ``pdb_folder`` via
               subprocess.
@@ -1480,9 +1516,11 @@ class StructurePreprocessor:
           (no PyTorch, no model weights, no Merizo / ChainSaw / AFragmenter
           pinned). Keep ``aaanalysis[pro]`` lean; pre-run the tool of your
           choice, then ingest its chopping output here.
-        * Merizo: https://github.com/psipred/Merizo (~2 s per 425-residue
-          chain on CPU, bundled weights, pip-installable).
-        * ChainSaw: https://github.com/JudeWells/Chainsaw (manual install).
+        * Merizo [Lau23]_ (invariant-point-attention residue clustering):
+          https://github.com/psipred/Merizo (~2 s per 425-residue chain on CPU,
+          bundled weights, pip-installable).
+        * ChainSaw [Wells24]_ (fully-convolutional boundary prediction):
+          https://github.com/JudeWells/Chainsaw (manual install).
         * Output chopping strings: same `chopping` column in both tools'
           TSV output, drop-in compatible.
 

@@ -169,6 +169,12 @@ class AnnotationPreprocessor:
     ) -> pd.DataFrame:
         """Fetch UniProt features for every entry and map to ``df_annot``.
 
+        Queries the UniProt REST API for each protein accession in ``df_seq``
+        and maps the returned PTM and site annotations into the canonical
+        ``df_annot`` schema, ready to be passed to :meth:`encode`. Evidence
+        can be filtered to retain only experimentally confirmed or manually
+        curated entries.
+
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -330,6 +336,12 @@ class AnnotationPreprocessor:
     ) -> None:
         """Register (or override) an open-vocabulary Functional-sites key.
 
+        Adds a new ``feature_type`` label to the per-instance registry so that
+        :meth:`encode` knows how many output dimensions to allocate and which
+        normalization recipe to apply. Unknown keys that arrive during
+        :meth:`ingest` are auto-registered with default settings; call this
+        method first to supply a custom ``subcategory`` or normalization function.
+
         Parameters
         ----------
         key : str
@@ -374,6 +386,13 @@ class AnnotationPreprocessor:
         return_df: bool = False,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Encode ``df_annot`` into a ``[0, 1]``-normalized per-residue ``dict_num``.
+
+        Converts the canonical annotation table (from :meth:`fetch_uniprot` or
+        :meth:`ingest`) into a ``{entry: (L, D) ndarray}`` tensor where each
+        dimension corresponds to a registered ``feature_type`` and values are
+        normalized to ``[0, 1]``. The result can be stacked with other
+        per-residue tensors via :func:`aaanalysis.combine_dict_nums` and
+        consumed directly by :meth:`CPP.run_num`.
 
         Parameters
         ----------

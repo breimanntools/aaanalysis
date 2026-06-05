@@ -10,6 +10,11 @@ def plot_get_cdict(name: str = "DICT_COLOR") -> dict:
     """
     Get color dictionaries specified for AAanalysis.
 
+    Returns one of two curated name-to-color mappings: the general plot palette
+    (``DICT_COLOR``) or the scale-category palette (``DICT_CAT``). Use the returned
+    dict to pass consistent colors to matplotlib calls or to build custom palettes
+    alongside :func:`plot_get_clist` and :func:`plot_get_cmap`.
+
     .. versionadded:: 0.1.2
 
     Parameters

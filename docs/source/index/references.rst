@@ -55,6 +55,44 @@ Sequence Algorithms
    *FIMO: scanning for occurrences of a given motif*,
    `Bioinformatics <https://academic.oup.com/bioinformatics/article/27/7/1017/231841>`__.
 
+.. [Tareen20] Tareen A., Kinney J.B. (2020),
+   *Logomaker: beautiful sequence logos in Python*,
+   `Bioinformatics <https://academic.oup.com/bioinformatics/article/36/7/2272/5671693>`__.
+
+Structure Algorithms
+--------------------
+.. [Kabsch83] Kabsch W., Sander C. (1983),
+   *Dictionary of protein secondary structure: pattern recognition of hydrogen-bonded and geometrical features*,
+   `Biopolymers <https://onlinelibrary.wiley.com/doi/10.1002/bip.360221211>`__.
+
+.. [Touw15] Touw W.G., Baakman C., Black J., te Beek T.A.H., Krieger E., Joosten R.P., Vriend G. (2015),
+   *A series of PDB-related databanks for everyday needs*,
+   `Nucleic Acids Research <https://academic.oup.com/nar/article/43/D1/D364/2439515>`__.
+
+.. [Sanner96] Sanner M.F., Olson A.J., Spehner J.-C. (1996),
+   *Reduced surface: an efficient way to compute molecular surfaces*,
+   `Biopolymers <https://onlinelibrary.wiley.com/doi/10.1002/(SICI)1097-0282(199603)38:3%3C305::AID-BIP4%3E3.0.CO;2-Y>`__.
+
+.. [Jumper21] Jumper J., Evans R., Pritzel A. *et al.* (2021),
+   *Highly accurate protein structure prediction with AlphaFold*,
+   `Nature <https://www.nature.com/articles/s41586-021-03819-2>`__.
+
+.. [Varadi22] Varadi M., Anyango S., Deshpande M. *et al.* (2022),
+   *AlphaFold Protein Structure Database: massively expanding the structural coverage of protein-sequence space with high-accuracy models*,
+   `Nucleic Acids Research <https://academic.oup.com/nar/article/50/D1/D439/6430488>`__.
+
+.. [Lau23] Lau A.M., Kandathil S.M., Jones D.T. (2023),
+   *Merizo: a rapid and accurate protein domain segmentation method using invariant point attention*,
+   `Nature Communications <https://www.nature.com/articles/s41467-023-43934-4>`__.
+
+.. [Wells24] Wells J., Hawkins-Hooker A., Bordin N., Sillitoe I., Paige B., Orengo C.A. (2024),
+   *Chainsaw: protein domain segmentation with fully convolutional neural networks*,
+   `Bioinformatics <https://academic.oup.com/bioinformatics/article/40/5/btae296/7667299>`__.
+
+.. [Verwimp25] Verwimp S., Lavigne R., Lood C., van Noort V. (2025),
+   *AFragmenter: schema-free, tuneable protein domain segmentation for AlphaFold protein structures*,
+   `Bioinformatics <https://academic.oup.com/bioinformatics/article/41/11/btaf588/8303958>`__.
+
 Machine Learning
 ----------------
 .. [Hastie09] Hastie, Tibshirani, and Friedman (2009),

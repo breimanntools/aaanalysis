@@ -246,6 +246,10 @@ class AAclustPlot:
         """
         Create a PCA plot of clustering results with cluster centers highlighted.
 
+        Projects ``X`` into the chosen PCA components and overlays the computed cluster centers as
+        distinct markers, coloured by cluster label. Use :meth:`AAclust.comp_centers` to obtain the
+        centers shown here, or pass labels directly from :meth:`AAclust.fit`.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -326,7 +330,11 @@ class AAclustPlot:
                 palette: Optional[mpl.colors.ListedColormap] = None,
                 ) -> Tuple[plt.Axes, pd.DataFrame]:
         """
-        PCA plot of clustering with medoids highlighted
+        PCA plot of clustering with medoids highlighted.
+
+        Projects ``X`` into the chosen PCA components and overlays the cluster medoids (computed via
+        :meth:`AAclust.comp_medoids`) as distinct markers, coloured by cluster label, so that the
+        representative sample of each cluster is immediately visible.
 
         Parameters
         ----------
@@ -423,6 +431,10 @@ class AAclustPlot:
                     ) -> plt.Axes:
         """
         Heatmap for correlation matrix with colored sidebar to label clusters.
+
+        Renders the correlation DataFrame produced by :meth:`AAclust.comp_correlation` as a seaborn
+        heatmap, annotating rows and columns with coloured sidebars that group samples by their cluster
+        label. Columns can optionally be hierarchically clustered via ``cluster_x``.
 
         Parameters
         ----------

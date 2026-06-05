@@ -29,9 +29,9 @@ Data Handling
     load_features
     read_fasta
     to_fasta
-    EmbeddingPreprocessor
     SequencePreprocessor
     StructurePreprocessor
+    EmbeddingPreprocessor
     AnnotationPreprocessor
     combine_dict_nums
 
@@ -114,6 +114,7 @@ Utility Functions
     comp_detection_metrics
     comp_kld
     comp_per_protein_ap
+    comp_smooth_scores
     display_df
     options
     plot_gcfs
@@ -123,4 +124,3 @@ Utility Functions
     plot_legend
     plot_rank
     plot_settings
-    comp_smooth_scores

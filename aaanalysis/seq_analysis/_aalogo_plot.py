@@ -112,11 +112,12 @@ class AAlogoPlot:
     """
     Amino Acid logo Plot (**AAlogoPlot**) class for visualizing sequence logos.
 
-    Supports single and stacked multiple sequence logo visualizations with automatic
-    TMD/JMD part annotations. ``jmd_n_len`` and ``jmd_c_len`` are set at initialization
-    and used by all plot methods to derive the TMD region length from the logo DataFrame.
-    The ``logo_type`` set at initialization controls only the y-axis label; the logo
-    data itself is provided as a pre-computed ``df_logo`` from :class:`AAlogo`.
+    Renders single and stacked multiple sequence logos (via the logomaker [Tareen20]_
+    package) with automatic TMD/JMD part annotations. ``jmd_n_len`` and ``jmd_c_len``
+    are set at initialization and used by all plot methods to derive the TMD region
+    length from the logo DataFrame. The ``logo_type`` set at initialization controls
+    only the y-axis label; the logo data itself is provided as a pre-computed
+    ``df_logo`` from :class:`AAlogo`.
 
     .. versionadded:: 1.0.3
 
@@ -196,6 +197,12 @@ class AAlogoPlot:
                     ) -> Tuple[plt.Figure, plt.Axes]:
         """
         Plot a single sequence logo with optional bit-score bar and TMD/JMD annotations.
+
+        Renders a pre-computed logo matrix from :class:`AAlogo` as a letter-stack
+        sequence logo using logomaker [Tareen20]_, and draws colored TMD/JMD part
+        annotations beneath the x-axis. An optional bit-score bar panel can be shown
+        above the logo when ``df_logo_info`` is provided. See
+        :meth:`AAlogoPlot.multi_logo` for stacking multiple logos for group comparison.
 
         Parameters
         ----------

@@ -720,6 +720,11 @@ class CPPPlot:
         """
         Plot CPP/-SHAP profile showing feature importance/impact per residue position.
 
+        Aggregates the ``col_imp`` values from ``df_feat`` per residue position and displays them
+        as a bar chart aligned to the TMD-JMD sequence. This reveals which positions carry the
+        most discriminative signal from :meth:`CPP.run` (group-level) or SHAP-enriched feature tables
+        (sample-level when ``shap_plot=True``).
+
         Parameters
         ----------
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
@@ -942,6 +947,10 @@ class CPPPlot:
         """
         Plot a CPP/-SHAP heatmap showing the feature value mean difference/feature impact
         per scale subcategory (y-axis) and residue position (x-axis).
+
+        For each (subcategory, position) cell the chosen ``col_val`` from ``df_feat`` is colour-coded,
+        giving a two-dimensional view of the physicochemical signature produced by :meth:`CPP.run`.
+        At sample level (``shap_plot=True``) the same layout visualises per-residue SHAP feature impact.
 
         Parameters
         ----------
@@ -1199,6 +1208,10 @@ class CPPPlot:
         """
         Plot CPP feature map showing feature value mean difference and feature importance
         per scale subcategory (y-axis) and residue position (x-axis).
+
+        Extends the heatmap layout by overlaying feature-importance markers on each cell and
+        optionally adding cumulative importance bars at the top and right, providing a combined
+        view of the direction and strength of each feature produced by :meth:`CPP.run`.
 
         Parameters
         ----------

@@ -121,6 +121,13 @@ Invariants:
 
 * Summary is a **verb phrase** (imperative/present); no ``→`` / ``+`` / arrow
   shorthand.
+* **Summary + description.** The one-line summary is followed (after a blank
+  line) by a short **plain-language description** — *what it does* in simple
+  words, the cited tool/method ``[Key]_`` if it integrates one, and the key
+  ``:role:`` cross-references — before the first section. The same holds for
+  classes (the expanded paragraph after the noun-phrase summary). Trivial
+  one-line accessors may keep just the summary; the checker's ``SUMMARY-ONLY``
+  is **advisory**, a prompt to add the description where it helps.
 * ``Returns`` is **named** (``name : type``) and matches the returned variable.
   Two type-only idioms are allowed: a bare class name (scikit-learn self-return,
   e.g. ``AAclust``) and a polymorphic ``X or Y``.
@@ -191,6 +198,13 @@ Citations
   classes that paper actually describes** (the core CPP / dPULearn / TreeModel
   pipeline). It is not a default stamp: a class the cited work does not cover
   carries no class-level citation (see the class-summary rule above).
+* **Every external tool / method AAanalysis integrates must be cited and
+  explained.** When a method wraps or runs an external tool (DSSP, Chainsaw,
+  Merizo, AFragmenter, MEME / FIMO, cd-hit, mmseqs2, logomaker, SHAP, …), name it
+  with a ``[Key]_`` citation (its paper, defined in ``references.rst`` — verify it
+  exists, never a bare repo URL) **and** describe what the tool does in **one
+  plain sentence**. Example: ``'chainsaw' ([Wells24]_): a fully-convolutional
+  neural network that predicts domain boundaries from a PDB / CIF structure.``
 
 Versioning & deprecation
 ------------------------
@@ -307,6 +321,8 @@ satisfied for every implemented public symbol.
      - ``XREF-UNRESOLVED``
    * - A body that raises documents a ``Raises`` section *(advisory)*
      - ``RAISES-UNDOCUMENTED``
+   * - Summary is followed by a plain-language description *(advisory)*
+     - ``SUMMARY-ONLY``
 
 The build itself is the final gate: ``cd docs && make html`` (ideally with
 ``SPHINXOPTS="-W"``) must finish without warnings — broken section underlines,
@@ -325,3 +341,32 @@ Tooling
 
 ``--fix`` applies only the mechanical subset; every other finding is an
 author-side fix against the templates above.
+
+API reference order
+-------------------
+
+The API reference (``docs/source/api.rst``) is ordered to read as the analysis
+**pipeline**, not alphabetically. A newly integrated public symbol must be slotted
+in by these rules:
+
+#. **Sections follow the workflow:** Data Handling → Sequence Analysis → Feature
+   Engineering → PU Learning → Explainable AI → Protein Design → Utility Functions
+   (data in → analyse → engineer features → model → design → helpers).
+#. **Within a section, follow data flow:** inputs/loaders first, then the
+   processing classes, then combiners/outputs (Data Handling = loaders →
+   preprocessors → ``combine_dict_nums``).
+#. **Parallel-modality families go sequence → structure → embedding → annotation**
+   (the sequence-to-structure-to-function logic), e.g. the preprocessors:
+   ``SequencePreprocessor``, ``StructurePreprocessor``, ``EmbeddingPreprocessor``,
+   ``AnnotationPreprocessor``.
+#. **A logic class is immediately followed by its ``*Plot`` pair**, and close
+   variants form one contiguous family: ``AAclust`` → ``AAclustPlot``; the CPP
+   family ``CPP`` → ``CPPGrid`` → ``CPPPlot``; ``dPULearn`` → ``dPULearnPlot``.
+#. **Core before pro** where modality does not dictate otherwise (``TreeModel``
+   before ``ShapModel``).
+#. **Group functions by kind** in Utility Functions: the ``comp_*`` metrics
+   together, then display/options, then the ``plot_*`` helpers.
+#. **Every public symbol appears in ``api.rst`` exactly once** — ``__all__`` (incl.
+   the commented pro entries) and ``api.rst`` must match. The checker's
+   ``API-INDEX-MISSING`` / ``API-INDEX-STALE`` enforces this coverage; placement
+   within the section (rules 1–6) is a human call.

@@ -318,6 +318,12 @@ class SequencePreprocessor:
         """
         Extract sliding windows of amino acids from a sequence.
 
+        Slides a fixed-length window one position at a time from ``slide_start``
+        to ``slide_stop``, collecting each window as a string. This is the
+        multi-position counterpart of :meth:`get_aa_window`: instead of one window
+        at a fixed site, it returns a list covering every slide position in the
+        requested range.
+
         Parameters
         ----------
         seq : str

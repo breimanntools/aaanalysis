@@ -313,6 +313,11 @@ class TreeModel:
         """
         Evaluate the prediction performance for different feature selections.
 
+        For each boolean selection array in ``list_is_selected``, the method applies k-fold cross-validation
+        using the configured tree-based models and averages the resulting metric scores across all rounds
+        and models. The output is a single DataFrame that lets you compare feature subsets side by side.
+        Call :meth:`TreeModel.fit` first to obtain ``is_selected_`` arrays, then pass them here.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)

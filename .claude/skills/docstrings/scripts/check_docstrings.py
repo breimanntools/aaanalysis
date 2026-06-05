@@ -44,7 +44,7 @@ STUB_RE = re.compile(r"under construction|not yet implemented", re.IGNORECASE)
 # answer can be "no citation" (utility/helper classes legitimately omit), and the
 # package convention often omits a Raises section for validator-style raises — so
 # RAISES-UNDOCUMENTED is a "consider documenting" prompt, not a hard gate.
-ADVISORY_CODES = {"CLASS-NO-CITATION", "RAISES-UNDOCUMENTED"}
+ADVISORY_CODES = {"CLASS-NO-CITATION", "RAISES-UNDOCUMENTED", "SUMMARY-ONLY"}
 # Citation keys defined in docs/source/index/references.rst; populated in main().
 # None means references.rst could not be located -> the undefined-citation check
 # is skipped (it cannot be validated without the reference list).
@@ -93,6 +93,8 @@ CODES = {
                        "public AAanalysis symbol (typo or stale cross-reference)",
     "RAISES-UNDOCUMENTED": "body raises an exception but the docstring has no "
                            "'Raises' section",
+    "SUMMARY-ONLY": "docstring is summary-only (ADVISORY — add a short plain-language "
+                    "description: what it does, cited tool [Key]_, key cross-refs)",
 }
 ROLE_TOKEN_RE = re.compile(r":(class|meth|func|ref|attr):`")
 
@@ -134,6 +136,26 @@ def param_desc(param_lines, name):
             break  # next parameter
         desc.append(stripped)
     return " ".join(desc).strip() if capturing else None
+
+
+def has_extended_description(summary_lines) -> bool:
+    """True if the pre-section block has a description paragraph beyond the summary.
+
+    Paragraphs are blank-line-separated blocks; directive blocks (``.. versionadded``,
+    ``.. note``) are not prose. ``>= 2`` prose paragraphs means a one-line (or wrapped)
+    summary IS followed by an expanded plain-language description.
+    """
+    paras, cur = [], []
+    for line in summary_lines:
+        if line.strip():
+            cur.append(line.strip())
+        elif cur:
+            paras.append(cur)
+            cur = []
+    if cur:
+        paras.append(cur)
+    prose = [p for p in paras if not p[0].startswith("..")]
+    return len(prose) >= 2
 
 
 def has_examples_include(sections) -> bool:
@@ -182,6 +204,8 @@ def check_common(doc, sections, first_line, add, *, is_method):
         add("FREETEXT-CITATION", "")
     check_citation_keys(doc, add)
     check_xrefs(doc, add)
+    if not has_extended_description(sections.get("_summary", [])):
+        add("SUMMARY-ONLY", first_line[:70])
     check_seealso(sections, add)
     if "Parameters" in sections:
         d = param_desc(sections["Parameters"], "df_seq")
@@ -417,6 +441,8 @@ def _check_class(node, emit, skipped):
         add("CLASS-NO-CITATION", first_line[:70])
     check_citation_keys(doc, add)
     check_xrefs(doc, add)
+    if not has_extended_description(sections.get("_summary", [])):
+        add("SUMMARY-ONLY", first_line[:70])
     if "Parameters" in sections:
         add("CLASS-HAS-PARAMETERS")
     if ".. versionadded::" not in doc:

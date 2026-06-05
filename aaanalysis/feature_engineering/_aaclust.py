@@ -450,6 +450,9 @@ class AAclust(Wrapper):
         """
         Computes the center of each cluster based on the given labels.
 
+        Each cluster center is the element-wise mean of all samples assigned to that cluster [Breimann24a]_.
+        Use this method independently of :meth:`AAclust.fit` when cluster labels are already available.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -484,6 +487,10 @@ class AAclust(Wrapper):
                      ) -> Tuple[ut.ArrayLike1D, ut.ArrayLike1D]:
         """
         Computes the medoid of each cluster based on the given labels.
+
+        For each cluster, the medoid is the sample closest to the cluster center as measured by the chosen
+        ``metric`` (default Pearson correlation) [Breimann24a]_. Use this method independently of
+        :meth:`AAclust.fit` when cluster labels are already available.
 
         Parameters
         ----------
@@ -530,6 +537,10 @@ class AAclust(Wrapper):
                          ) -> Tuple[pd.DataFrame, ut.ArrayLike1D]:
         """
         Computes the Pearson correlation of given data with reference data.
+
+        Rows of ``X`` (and optionally ``X_ref``) are sorted by their cluster labels before computing
+        pairwise Pearson correlation, producing a labeled DataFrame suitable for visualisation with
+        :meth:`AAclustPlot.correlation` [Breimann24a]_.
 
         Parameters
         ----------

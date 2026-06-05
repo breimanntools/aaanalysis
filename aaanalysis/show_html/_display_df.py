@@ -78,6 +78,12 @@ def display_df(df: pd.DataFrame = None,
     """
     Display DataFrame with specific style as HTML output for jupyter notebooks.
 
+    Renders a pandas DataFrame as a scrollable, styled HTML table directly in a
+    Jupyter notebook cell. Supports slicing by row count, column count, or a single
+    named row or column, and truncates long cell strings to keep the table readable.
+    This is a development-convenience helper and has no visible effect outside of
+    Jupyter.
+
     .. versionadded:: 0.1.3
 
     Parameters
