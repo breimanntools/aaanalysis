@@ -1,4 +1,4 @@
-# ADR-0019 — Issue #66 `NegativeSampler` is subsumed by `AAWindowSampler`
+# ADR-0020 — Issue #66 `NegativeSampler` is subsumed by `AAWindowSampler`
 
 Status: Accepted — 2026-06-05
 
