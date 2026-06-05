@@ -1,6 +1,8 @@
 """
 This is a script for setting system level options for AAanalysis.
-# DEV: Not tested due to effects on plots and user communication -> Only evaluated by examples
+# DEV: Settings + option validation are covered by tests/unit/config_tests/
+# (test_options.py, test_n_jobs.py, test_settings_properties.py). Plot/communication
+# side effects are additionally exercised by the example notebooks.
 """
 from typing import Dict, Any
 import os
