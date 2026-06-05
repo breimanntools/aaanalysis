@@ -219,7 +219,7 @@ def sample_pool_iteratively_(*, draw_batch, target_n, test_windows,
                              max_similarity_to_test, max_similarity_within_ref,
                              motif_pwm, motif_score_threshold, motif_match,
                              max_attempts, filter_iteratively,
-                             accepted_windows=None):
+                             accepted_windows=None, custom_predicate=None):
     """Iteratively draw and filter ``(window, payload)`` candidates.
 
     Parameters
@@ -247,6 +247,11 @@ def sample_pool_iteratively_(*, draw_batch, target_n, test_windows,
         External list used as the within-ref filter buffer. When provided, it is
         mutated in place: newly accepted windows are appended so the caller can
         carry the buffer across multiple invocations (cross-call redundancy).
+    custom_predicate : callable(window, payload) -> bool, optional
+        User-supplied keep-predicate (already bound by the caller to the window's
+        source entry / position). Runs **last** in the per-window pipeline
+        (after motif and both similarity filters); a window is accepted only when
+        it returns ``True``. ``None`` disables the hook.
 
     Returns
     -------
@@ -258,7 +263,8 @@ def sample_pool_iteratively_(*, draw_batch, target_n, test_windows,
         accepted_windows = []
     no_filter = (max_similarity_to_test is None
                  and max_similarity_within_ref is None
-                 and motif_pwm is None)
+                 and motif_pwm is None
+                 and custom_predicate is None)
     attempts = 0
     while len(accepted) < target_n and attempts < max_attempts:
         batch = draw_batch(target_n - len(accepted))
@@ -268,13 +274,16 @@ def sample_pool_iteratively_(*, draw_batch, target_n, test_windows,
             if not passes_motif_filter_(window, motif_pwm,
                                          motif_score_threshold, motif_match):
                 continue
-            if apply_similarity_filters(window, test_windows, accepted_windows,
-                                         max_similarity_to_test,
-                                         max_similarity_within_ref):
-                accepted.append((window, payload))
-                accepted_windows.append(window)
-                if len(accepted) >= target_n:
-                    break
+            if not apply_similarity_filters(window, test_windows, accepted_windows,
+                                            max_similarity_to_test,
+                                            max_similarity_within_ref):
+                continue
+            if custom_predicate is not None and not custom_predicate(window, payload):
+                continue
+            accepted.append((window, payload))
+            accepted_windows.append(window)
+            if len(accepted) >= target_n:
+                break
         attempts += 1
         if not filter_iteratively or no_filter:
             break

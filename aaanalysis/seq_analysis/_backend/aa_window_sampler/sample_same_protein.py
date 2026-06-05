@@ -58,7 +58,8 @@ def sample_same_protein(*, df_seq, positions, n, window_size,
                           test_windows, allowed_positions,
                           max_similarity_to_test, max_similarity_within_ref,
                           motif_pwm, motif_score_threshold, motif_match,
-                          max_sampling_attempts, filter_iteratively, rng, verbose):
+                          max_sampling_attempts, filter_iteratively, rng, verbose,
+                          custom_filter=None):
     """Build the pool of accepted same-protein windows.
 
     Parameters
@@ -129,6 +130,12 @@ def sample_same_protein(*, df_seq, positions, n, window_size,
         if target <= 0:
             return 0
         i, _, draw_batch = prot_data[slot]
+        # ``payload`` is the 0-based center ``c``; bind this protein's entry so
+        # the user filter sees (window, entry, 1-based source_position).
+        predicate = None
+        if custom_filter is not None:
+            entry_i = entries[i]
+            predicate = lambda window, c, _e=entry_i: custom_filter(window, _e, c + 1)
         accepted = sample_pool_iteratively_(
             draw_batch=draw_batch, target_n=target, test_windows=test_windows,
             max_similarity_to_test=max_similarity_to_test,
@@ -139,6 +146,7 @@ def sample_same_protein(*, df_seq, positions, n, window_size,
             max_attempts=max_sampling_attempts,
             filter_iteratively=filter_iteratively,
             accepted_windows=cross_protein_accepted_windows,
+            custom_predicate=predicate,
         )
         accepted_per_protein[slot].extend(accepted)
         return len(accepted)

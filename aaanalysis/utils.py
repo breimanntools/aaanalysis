@@ -181,6 +181,7 @@ COL_SOURCE_POS = "source_position"
 COL_LABELS = "labels"
 COL_ROLE = "role"
 COL_STRATEGY = "strategy"
+COL_ARM = "arm"
 COLS_SEGMENTS = [COL_ENTRY_WIN, COL_ENTRY, COL_SEQ, COL_WINDOW, COL_SOURCE_POS,
                  COL_LABEL, COL_ROLE, COL_STRATEGY]
 COLS_SEQUENCES = [COL_ENTRY, COL_SEQ, COL_LABELS]
@@ -202,6 +203,10 @@ STRATEGY_SAME = "same_protein"
 STRATEGY_DIFF = "different_protein"
 STRATEGY_SYNTH_PREFIX = "synthetic"
 STRATEGY_MOTIF_MATCHED = "motif_matched"
+# Strategy tags double as the ``method`` keys accepted by
+# AAWindowSampler.sample_benchmark_set arms.
+LIST_STRATEGIES = [STRATEGY_SAME, STRATEGY_DIFF, STRATEGY_SYNTH_PREFIX,
+                   STRATEGY_MOTIF_MATCHED]
 
 # AAWindowSampler — synthetic sampling modes (built-in; AAontology presets live in
 # the backend ``sample_synthetic.py`` next to the ``PRESETS`` registry; the

@@ -217,7 +217,8 @@ def _build_synthetic_drawer(*, df_seq, generator, pos_col, window_size,
 # II Main Functions
 def sample_synthetic(*, df_seq, n, window_size, generator, pos_col,
                        test_windows, max_similarity_to_test, max_similarity_within_ref,
-                       max_sampling_attempts, filter_iteratively, rng, verbose):
+                       max_sampling_attempts, filter_iteratively, rng, verbose,
+                       custom_filter=None):
     """Generate ``n`` synthetic windows for the requested ``generator``.
 
     Returns
@@ -234,6 +235,11 @@ def sample_synthetic(*, df_seq, n, window_size, generator, pos_col,
     def draw_batch(needed):
         return [(draw_one(), None) for _ in range(needed)]
 
+    # Synthetic windows have no source protein: the user filter sees
+    # entry="" and source_position=-1 (composition-only context).
+    predicate = None
+    if custom_filter is not None:
+        predicate = lambda window, _payload: custom_filter(window, "", -1)
     accepted = sample_pool_iteratively_(
         draw_batch=draw_batch, target_n=n, test_windows=test_windows,
         max_similarity_to_test=max_similarity_to_test,
@@ -241,6 +247,7 @@ def sample_synthetic(*, df_seq, n, window_size, generator, pos_col,
         motif_pwm=None, motif_score_threshold=None, motif_match=None,
         max_attempts=max_sampling_attempts,
         filter_iteratively=filter_iteratively,
+        custom_predicate=predicate,
     )
     if len(accepted) < n and verbose:
         warnings.warn(f"Only {len(accepted)}/{n} synthetic windows kept after filtering.",

@@ -65,7 +65,7 @@ def sample_motif_matched(*, df_seq, positions, n, window_size,
                           test_windows, allowed_positions,
                           max_similarity_to_test, max_similarity_within_ref,
                           max_sampling_attempts, filter_iteratively,
-                          rng, verbose):
+                          rng, verbose, custom_filter=None):
     """Build the pool of motif-matched candidate windows.
 
     Parameters
@@ -121,6 +121,11 @@ def sample_motif_matched(*, df_seq, positions, n, window_size,
     pool.sort(key=lambda t: (-t[0], t[1], t[3]))
 
     draw_batch = _draw_batch_from_pool_(pool, seqs, half_left, window_size)
+    # ``payload`` is ``(entry_idx, center, score)``; bind it to (window, entry, pos).
+    predicate = None
+    if custom_filter is not None:
+        predicate = lambda window, payload: custom_filter(
+            window, entries[payload[0]], payload[1] + 1)
     accepted = sample_pool_iteratively_(
         draw_batch=draw_batch, target_n=n, test_windows=test_windows,
         max_similarity_to_test=max_similarity_to_test,
@@ -128,6 +133,7 @@ def sample_motif_matched(*, df_seq, positions, n, window_size,
         motif_pwm=None, motif_score_threshold=None, motif_match=None,
         max_attempts=max_sampling_attempts,
         filter_iteratively=filter_iteratively,
+        custom_predicate=predicate,
     )
     if len(accepted) < n and verbose:
         warnings.warn(f"Only {len(accepted)}/{n} motif-matched windows kept "

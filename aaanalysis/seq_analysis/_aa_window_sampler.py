@@ -1,7 +1,7 @@
 """
 This is a script for the frontend of the AAWindowSampler class.
 """
-from typing import Optional, List, Tuple, Union, Dict
+from typing import Optional, List, Tuple, Union, Dict, Callable
 import math
 import numbers
 import numpy as np
@@ -173,6 +173,47 @@ def check_context_args(aa_context_col, context_in, context_out):
         raise ValueError("'context_in'/'context_out' require 'aa_context_col' to be set.")
 
 
+def check_custom_filter(custom_filter):
+    """Validate the ``custom_filter`` hook is a callable (or ``None``)."""
+    if custom_filter is not None and not callable(custom_filter):
+        raise ValueError(f"'custom_filter' (type {type(custom_filter).__name__}) "
+                         f"should be a callable (window, entry, source_position) "
+                         f"-> bool, or None")
+    return custom_filter
+
+
+def check_arms(arms):
+    """Validate the ``arms`` mapping passed to :meth:`AAWindowSampler.sample_benchmark_set`.
+
+    Each value must be a dict carrying a ``"method"`` key whose value is one of
+    :data:`ut.LIST_STRATEGIES`; the remaining keys forward as kwargs to that
+    ``sample_*`` method. Keys managed by ``sample_benchmark_set`` itself
+    (``df_seq``, ``seed``, ``output_mode``) must not appear in an arm config.
+    """
+    if not isinstance(arms, dict) or len(arms) == 0:
+        raise ValueError(f"'arms' ({arms!r}) should be a non-empty dict mapping an "
+                         f"arm name to a {{'method': ..., **kwargs}} config")
+    reserved = {"df_seq", "seed", "output_mode"}
+    for name, spec in arms.items():
+        if not isinstance(name, str):
+            raise ValueError(f"'arms' key ({name!r}) should be a string arm name")
+        if not isinstance(spec, dict):
+            raise ValueError(f"'arms[{name!r}]' (type {type(spec).__name__}) should be "
+                             f"a dict with a 'method' key")
+        if "method" not in spec:
+            raise ValueError(f"'arms[{name!r}]' (keys {sorted(spec)}) should include a "
+                             f"'method' key")
+        method = spec["method"]
+        if method not in ut.LIST_STRATEGIES:
+            raise ValueError(f"'arms[{name!r}][\"method\"]' ({method!r}) should be one "
+                             f"of {ut.LIST_STRATEGIES}")
+        bad = sorted(reserved.intersection(spec))
+        if bad:
+            raise ValueError(f"'arms[{name!r}]' (reserved keys {bad}) should not set "
+                             f"keys managed by sample_benchmark_set "
+                             f"({sorted(reserved)})")
+
+
 def _filter_aa_context(df_seq=None, aa_context_col=None, context_in=None, context_out=None):
     """Return per-row 1-based positions whose per-residue context tag passes the filter.
 
@@ -320,6 +361,7 @@ class AAWindowSampler:
                  max_similarity_within_ref: Optional[float] = None,
                  filter_iteratively: bool = True,
                  max_sampling_attempts: int = 10,
+                 custom_filter: Optional[Callable[[str, str, int], bool]] = None,
                  ):
         """
         Parameters
@@ -339,6 +381,14 @@ class AAWindowSampler:
             Iteratively re-draw if filtering reduces the candidate pool below the target.
         max_sampling_attempts : int, default=10
             Cap on iterative re-draw attempts.
+        custom_filter : callable, optional
+            User-supplied keep-predicate ``(window, entry, source_position) -> bool``
+            applied to every sampled window across all ``sample_*`` methods; a window
+            is kept only when it returns ``True``. ``window`` is the window string,
+            ``entry`` its source protein, and ``source_position`` the 1-based P1 anchor.
+            The escape hatch for structure- / domain-specific decoy rules. Synthetic
+            windows have no source protein, so it is called with ``entry=""`` and
+            ``source_position=-1``.
         """
         self.verbose = ut.check_verbose(verbose)
         self._random_state = ut.check_random_state(random_state=random_state)
@@ -351,6 +401,7 @@ class AAWindowSampler:
         ut.check_number_range(name="max_sampling_attempts", val=max_sampling_attempts,
                               min_val=1, just_int=True)
         self._max_sampling_attempts = max_sampling_attempts
+        self._custom_filter = check_custom_filter(custom_filter)
 
     # Internal helpers
     def _rng(self, seed):
@@ -515,6 +566,7 @@ class AAWindowSampler:
             max_sampling_attempts=self._max_sampling_attempts,
             filter_iteratively=self._filter_iteratively,
             rng=rng, verbose=self.verbose,
+            custom_filter=self._custom_filter,
         )
         # Build output
         if output_mode == ut.OUT_SEGMENTS:
@@ -651,6 +703,7 @@ class AAWindowSampler:
             max_sampling_attempts=self._max_sampling_attempts,
             filter_iteratively=self._filter_iteratively,
             rng=rng, verbose=self.verbose,
+            custom_filter=self._custom_filter,
         )
         # Build output
         if output_mode == ut.OUT_SEGMENTS:
@@ -809,6 +862,7 @@ class AAWindowSampler:
             max_sampling_attempts=self._max_sampling_attempts,
             filter_iteratively=self._filter_iteratively,
             rng=rng, verbose=self.verbose,
+            custom_filter=self._custom_filter,
         )
         # Build output — synthetic has no source protein, so we build inline
         # instead of routing through build_segments_output (entry_win = synth_{i},
@@ -952,6 +1006,7 @@ class AAWindowSampler:
             max_sampling_attempts=self._max_sampling_attempts,
             filter_iteratively=self._filter_iteratively,
             rng=rng, verbose=self.verbose,
+            custom_filter=self._custom_filter,
         )
         # Build output
         if output_mode == ut.OUT_SEGMENTS:
@@ -963,3 +1018,81 @@ class AAWindowSampler:
         return build_sequences_output(df_seq, positions, sampled_centers,
                                        label_test=label_test, label_ref=label_ref,
                                        mark_test=True)
+
+    def sample_benchmark_set(self,
+                             df_seq: pd.DataFrame = None,
+                             arms: Dict[str, Dict] = None,
+                             seed: Optional[int] = None,
+                             ) -> pd.DataFrame:
+        """Run several named sampling arms and concatenate them into one benchmark set.
+
+        Thin multi-arm orchestrator over the individual ``sample_*`` methods: it
+        adds no new sampling behavior. Each arm is one ordinary ``sample_*`` call
+        in ``'segments'`` mode, tagged with its arm name in an extra ``arm``
+        column so a downstream benchmark can consume any mix of arms uniformly.
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein identifiers
+            and a ``sequence`` column with full protein sequences. Passed to every
+            arm.
+        arms : dict
+            Mapping ``{arm_name: {"method": <strategy>, **kwargs}}``. ``method`` is
+            one of ``'same_protein'``, ``'different_protein'``, ``'synthetic'``,
+            ``'motif_matched'`` (``ut.LIST_STRATEGIES``); the remaining keys forward
+            as keyword arguments to the matching ``sample_*`` method. The reserved
+            keys ``df_seq``, ``seed``, and ``output_mode`` are managed here and must
+            not appear in an arm config.
+        seed : int, optional
+            Master seed; falls back to the class-level ``random_state``. Per-arm
+            sub-seeds are derived deterministically via :class:`numpy.random.SeedSequence`,
+            so identical ``seed`` values reproduce identical benchmark sets.
+
+        Returns
+        -------
+        df_seq_out : pd.DataFrame
+            Row-wise concatenation of every arm's ``'segments'`` output with an
+            added ``arm`` column. No automatic cross-arm dedupe — every sampled
+            row is preserved. Deduplicate protein-sourced windows on ``entry_win``
+            and synthetic windows on ``window`` if needed.
+
+        Notes
+        -----
+        ``role`` and ``strategy`` tags set by each arm are preserved through the
+        concatenation; together with ``arm`` they carry full row provenance. A
+        ``motif_matched`` arm adds a ``motif_score`` column, which is ``NaN`` for
+        rows from other arms.
+
+        Examples
+        --------
+        .. include:: examples/aws_sample_benchmark_set.rst
+        """
+        # Validate
+        ut.check_df_seq(df_seq=df_seq)
+        check_arms(arms)
+        if seed is not None:
+            ut.check_number_range(name="seed", val=seed, min_val=0, just_int=True)
+        # Derive deterministic per-arm sub-seeds from the effective master seed.
+        arm_names = list(arms.keys())
+        master = seed if seed is not None else self._random_state
+        if master is not None:
+            sub_seeds = [int(s) for s in
+                         np.random.SeedSequence(master).generate_state(len(arm_names))]
+        else:
+            sub_seeds = [None] * len(arm_names)
+        dispatch = {
+            ut.STRATEGY_SAME: self.sample_same_protein,
+            ut.STRATEGY_DIFF: self.sample_different_protein,
+            ut.STRATEGY_SYNTH_PREFIX: self.sample_synthetic,
+            ut.STRATEGY_MOTIF_MATCHED: self.sample_motif_matched,
+        }
+        # Run each arm and tag it.
+        frames = []
+        for arm_name, sub_seed in zip(arm_names, sub_seeds):
+            spec = dict(arms[arm_name])
+            method = spec.pop("method")
+            df_arm = dispatch[method](df_seq=df_seq, seed=sub_seed, **spec).copy()
+            df_arm[ut.COL_ARM] = arm_name
+            frames.append(df_arm)
+        return pd.concat(frames, ignore_index=True)
