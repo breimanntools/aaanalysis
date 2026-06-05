@@ -9,9 +9,11 @@ protein prediction; `pro` extra for heavy deps; semver-strict v1) and the coding
 under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) · ☑️ Done/Partial.
 
 ## Snapshot
-- **Open issues: 51.** Verdicts: ✅ 11 · 🔄 26 · ⏸️ 4 · ❌ 0 (+#67 = triaged umbrella).
-- **CLOSED (resolved on `master`):** **#17** (tmd_start/tmd_stop convention — zero-output-change
-  clarity refactor + `TMD coordinate convention` glossary entry + golden/round-trip tests),
+- **Open issues: 50.** Verdicts: ✅ 10 · 🔄 26 · ⏸️ 4 · ❌ 0 (+#67 = triaged umbrella).
+- **CLOSED (resolved on `master`):** **#66** (General Sampling Strategy — resolved by ADR-0020 as
+  *subsumed by `AAWindowSampler`*: added `sample_benchmark_set` + constructor `custom_filter`, no
+  new class → `cf28bd69`), **#17** (tmd_start/tmd_stop convention — zero-output-change clarity
+  refactor + `TMD coordinate convention` glossary entry + golden/round-trip tests),
   **#71, #72, #73** (`e.name` stub fix, override-only scales cache + ADR-0018, config note +
   property tests) and **#31** (batch processing → `f62ba6e0`).
 - **Context:** #45 body rewritten (was a #46 copy-paste); #67 triaged + relabeled `prio:3`.
@@ -25,12 +27,12 @@ Full session kickoffs in `docs/issue_kickoffs/`. Each is meant to be run in its 
 | # | prio | lane / files | why now | the decision grilling must settle |
 |---|---|---|---|---|
 | ~~**17**~~ | 1 | ~~`_backend/check_feature.py`~~ | ☑️ **DONE** — settled as zero-output-change clarity refactor (algebraic identity, not luck); round-trip-gated | — |
-| **66** | 1 | `seq_analysis/_negative_sampler.py` (new) | prio:1; ~80% reuses `AAWindowSampler` | wrap vs fork `AAWindowSampler`; `SamplingFilters` dataclass OK?; which similarity metric is pro |
+| ~~**66**~~ | 1 | ~~`seq_analysis/_aa_window_sampler.py`~~ | ☑️ **DONE** — ADR-0020: subsumed by `AAWindowSampler` (no new class); added `sample_benchmark_set` + `custom_filter` | — |
 | **61** | 1 | `feature_engineering/_cpp.py` (+`AAWindowSampler`) | prio:1; MVP reuses `run` per class | one-vs-rest reuses `run`?; reference generator location (avoid `__init__.py` CONFIRM-FIRST); quantile-split first |
 
-With #17 landed, the next parallel-safe pair is **#66** and **#61** — they touch **different files**
-(seq_analysis / cpp) → safe to develop in parallel. **Do not** pair either with #18 (schema) or #30
-(perf), which ripple into these areas.
+With #17 and #66 landed, **#61** (multi-class/regression via random reference) is the next prio:1 —
+self-contained in `feature_engineering/_cpp.py`. **Do not** pair it with #18 (schema) or #30 (perf),
+which ripple into these areas.
 
 ---
 
@@ -45,7 +47,9 @@ With #17 landed, the next parallel-safe pair is **#66** and **#61** — they tou
 3. **#30** — vectorize CPP (prio:1, perf). Primary of the perf cluster; **blocks #19/#39/#62.** **Lane B.**
 4. **#18** — standardize CPP output schema (prio:1). **Unblocks #29/#33/#26**; ripples into plotting. **Lane A.**
 5. **#61** — multi-class/regression via random reference (prio:1). Best-specified feature; sizable but self-contained.
-6. **#66** — `NegativeSampler` (prio:1 data). Scope against existing `AAWindowSampler`. **Lane D.**
+6. ☑️ **#66 — DONE** (General Sampling Strategy). Resolved by **ADR-0020** as *subsumed by
+   `AAWindowSampler`* — no new class; added `sample_benchmark_set` (multi-arm orchestrator) +
+   constructor `custom_filter`, with tests + example notebook (`cf28bd69`). **Lane D.**
 7. **#37** — finish AAMut/SeqMut (prio:2). **Prerequisite for the protein-design chain #57–60.** **Lane C.**
 8. Quick wins (small, independent): **#24, #32, #33, #29** (#29/#33 after #18).
 9. Docs: **#21, #43, #69 (retarget first), #20**.
@@ -59,7 +63,8 @@ With #17 landed, the next parallel-safe pair is **#66** and **#61** — they tou
   `feature_engineering/_backend/cpp/**`; **never parallelize these with each other.**
 - **Lane C — Protein design (SERIALIZE internally):** #37 → {#57, #58, #59, #60}. Build on
   AAMut/SeqMut + the mutation workflow; share `protein_design/`.
-- **Lane D — Data/sampling:** #66, #25, #32. (#66 vs #28 share `AAWindowSampler` → don't parallelize those two.)
+- **Lane D — Data/sampling:** ~~#66~~ (done), #25, #32, **#28** (now unblocked — #66 landed, so the
+  `AAWindowSampler` overlap is gone; #28 builds on it).
 - **Lane E — Docs:** #21, #43, #20, #69, #35, #38 (doc files only; independent of code lanes).
 - **Lane F — Structure/conservation (pro, SERIALIZE):** #65 → #40/#42; **#64 is deferred (ADR-0012).**
   All share `data_handling_pro` + the pending pro-package move.
@@ -72,7 +77,7 @@ With #17 landed, the next parallel-safe pair is **#66** and **#61** — they tou
 | Protein design | #37 → #57, #58, #59, #60 | #37 | shared mutation API in `protein_design/` |
 | Structure/conservation/MSA | #40, #64, #65, #42 | #65 | shared `data_handling_pro` + pending move |
 | Embedding | #22, #23, #47 | #22 | shared embedding-integration surface |
-| Window sampling | #66, #28 | #66 | shared `AAWindowSampler` |
+| ~~Window sampling~~ | ~~#66~~ (done), #28 | — | #66 landed; #28 now builds on `AAWindowSampler` (no parallel conflict left) |
 | Feature-map plotting | #63, #47, #56 | #63 | shared `plot_feature_map` |
 
 ---
@@ -111,12 +116,12 @@ With #17 landed, the next parallel-safe pair is **#66** and **#61** — they tou
 ### topic:data
 | # | prio | verdict | scope / standards | already-addressed | implementation note |
 |---|---|---|---|---|---|
-| 66 | 1 | ✅ | Fits; overlaps `AAWindowSampler` | No | `NegativeSampler` + role taxonomy (N/U/Control); reuse existing same/diff-protein sampling; CPP-similarity decoy is the differentiator. Lane D. |
+| 66 | 1 | ☑️ | Fits; **closed** (ADR-0020) | Yes | DONE: no `NegativeSampler` class — subsumed by `AAWindowSampler`. Added `sample_benchmark_set` (multi-arm, `SeedSequence` sub-seeds, `arm` column) + constructor `custom_filter`; `COL_ARM`/`LIST_STRATEGIES` in utils. Tests + `aws_sample_benchmark_set.ipynb`. CPP/embedding-similarity decoy deferred (ADR). `cf28bd69`. |
 | 65 | 2 | 🔄 | Pro (biopython); structure cluster | No | `get_msa` is misnamed (fetches 1 FASTA). Rename/replace; add real homolog+align backends; relates ADR-0017 fetch verbs. |
 | 33 | 2 | ✅ | Small; fits | No | CSV/parquet/metadata export of `df_feat`/outputs. Do after #18 schema. |
 | 32 | 2 | ✅ | Small; fits | No | Variance/correlation feature filtering on CPP outputs. Good first task. |
 | 29 | 2 | ✅ | Small; fits; depends on #18 | No | z-score/min-max normalization options; align with output schema. |
-| 28 | 2 | 🔄 | Fits; overlaps #66/#27 | Partial (windowing exists) | Sliding-window CPP; reuse `AAWindowSampler`; don't parallelize with #66. |
+| 28 | 2 | 🔄 | Fits; **unblocked** (#66 landed); overlaps #27 | Partial (windowing exists) | Sliding-window CPP; now builds directly on `AAWindowSampler` (incl. `sample_benchmark_set`). Overlap with #66 resolved (ADR-0020); still coordinate with #27/#18. |
 | 23 | 2 | 🔄 | Fits; embedding cluster | No | CPP↔embedding correlation analysis; pairs with #22. |
 | 25 | 3 | 🔄 | Touches `_data/` (CONFIRM-FIRST) | No | Curate benchmark dataset + protocol; needs maintainer sign-off on bundled data. |
 
