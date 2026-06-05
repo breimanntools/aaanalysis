@@ -74,27 +74,26 @@ __all__ = [
 ]
 
 
-# Dynamically import professional (pro) or development (dev) features if dependencies are available
-def raise_error_pro(feature_name=None, error_message=None):
-    """Raise an informative ImportError with optional instructions for missing pro features."""
-    msg = str(error_message)
-    if "No module named" in msg:
-        raise ImportError(
-            f"'{feature_name}' needs additional dependencies. Install AAanalysis Professional via:\n"
-            f"\n\tpip install 'aaanalysis[pro]'"
-        )
-    raise ImportError(error_message)
+# Dynamically import professional (pro) or development (dev) features if dependencies are available.
+# Optional-dependency import names per install extra. missing_feature_stub uses these to tell a
+# genuinely-missing optional dependency apart from a real bug inside an extra module: it branches on
+# the ImportError's ``.name`` (reliable for ModuleNotFoundError on the Python 3.11+ floor), never on a
+# substring of the message. See .claude/rules/pro-core-boundary.md.
+_EXTRA_MODULES = {
+    "pro": {"shap", "Bio", "biopython", "upsetplot", "UpSetPlot", "requests", "afragmenter"},
+    "dev": {"IPython"},
+}
+_EXTRA_INSTALL = {"pro": "aaanalysis[pro]", "dev": "aaanalysis[dev]"}
 
 
-def raise_error_dev(feature_name=None, error_message=None):
-    """Raise an informative ImportError with optional instructions for missing dev features."""
-    msg = str(error_message)
-    if "No module named" in msg:
+def _raise_missing_feature(feature_name, error, mode):
+    """Raise an install hint if ``error`` names a known optional dependency, else re-raise it unchanged."""
+    if getattr(error, "name", None) in _EXTRA_MODULES[mode]:
         raise ImportError(
-            f"'{feature_name}' needs additional dependencies. Install AAanalysis Development via:\n"
-            f"\n\tpip install 'aaanalysis[dev]'"
-        )
-    raise ImportError(error_message)
+            f"'{feature_name}' needs additional dependencies. Install via:\n"
+            f"\n\tpip install '{_EXTRA_INSTALL[mode]}'"
+        ) from error
+    raise error
 
 
 def missing_feature_stub(feature_name, error, mode="pro"):
@@ -102,14 +101,13 @@ def missing_feature_stub(feature_name, error, mode="pro"):
 
     This acts as a stub — a placeholder function that represents a missing feature.
     Instead of breaking the import, the stub delays the error until the user tries to use
-    the unavailable feature.
+    the unavailable feature. When invoked, it raises a friendly install hint only if the
+    original ImportError names a known optional dependency for ``mode`` (via ``error.name``);
+    otherwise it re-raises the original error unchanged so real bugs surface with a full traceback.
     """
-    if mode == "pro":
-        return lambda *args, **kwargs: raise_error_pro(feature_name, error)
-    elif mode == "dev":
-        return lambda *args, **kwargs: raise_error_dev(feature_name, error)
-    else:
+    if mode not in _EXTRA_MODULES:
         raise ValueError("mode must be 'pro' or 'dev'")
+    return lambda *args, **kwargs: _raise_missing_feature(feature_name, error, mode)
 
 try:
     from .explainable_ai_pro import ShapModel
