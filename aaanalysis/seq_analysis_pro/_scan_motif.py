@@ -147,8 +147,9 @@ def scan_motif(df_seq: pd.DataFrame = None,
     the pure-Python :meth:`AAWindowSampler.sample_motif_matched` (which keeps
     windows whose raw per-position PWM-sum is ``>= motif_score_threshold``),
     ``scan_motif`` lets FIMO perform its own probabilistic matching: each window
-    is scored against the background model implied by the PWM and kept only when
-    its match p-value is below ``pvalue_threshold``. The two thus select
+    is scored against FIMO's background model (its built-in protein frequencies,
+    or ``bg_file``) and kept only when its match p-value is below
+    ``pvalue_threshold``. The two thus select
     *different* windows and are complementary ways to mine motif-matched training
     data. The output schema matches :meth:`AAWindowSampler.sample_motif_matched`,
     with ``motif_score`` holding FIMO's log-odds score and an added ``p_value``
@@ -176,8 +177,9 @@ def scan_motif(df_seq: pd.DataFrame = None,
         the 20 canonical AA letters in any order (reindexed internally to
         ``ut.LIST_CANONICAL_AA``). Required.
     pvalue_threshold : float, default=1e-4
-        FIMO match-p-value cutoff (maps to ``fimo --thresh``); only occurrences
-        with a match p-value below this are reported. Smaller is stricter.
+        FIMO match-p-value cutoff in ``[0, 1]`` (maps to ``fimo --thresh``); only
+        occurrences with a match p-value below this are reported. Smaller is
+        stricter.
     label_test : int or float, default=1
         Label assigned to positives in ``output_mode='sequences'``.
     label_ref : int or float, default=0
@@ -210,9 +212,10 @@ def scan_motif(df_seq: pd.DataFrame = None,
     RuntimeError
         If the ``fimo`` binary is not on PATH.
     ValueError
-        If ``motif_pwm`` is not provided, if ``bg_file`` is set but does not
-        point to an existing file, or if ``df_seq`` contains no eligible
-        candidate proteins (rows without test positions).
+        If ``motif_pwm`` is not provided, if ``pvalue_threshold`` is outside
+        ``[0, 1]``, if ``bg_file`` is set but does not point to an existing
+        file, or if ``df_seq`` contains no eligible candidate proteins (rows
+        without test positions).
 
     Notes
     -----
