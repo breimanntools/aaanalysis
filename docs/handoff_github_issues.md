@@ -9,13 +9,15 @@ protein prediction; `pro` extra for heavy deps; semver-strict v1) and the coding
 under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) · ☑️ Done/Partial.
 
 ## Snapshot
-- **Open issues: 50.** Verdicts: ✅ 10 · 🔄 26 · ⏸️ 4 · ❌ 0 (+#67 = triaged umbrella).
-- **CLOSED (resolved on `master`):** **#66** (General Sampling Strategy — resolved by ADR-0020 as
-  *subsumed by `AAWindowSampler`*: added `sample_benchmark_set` + constructor `custom_filter`, no
-  new class → `cf28bd69`), **#17** (tmd_start/tmd_stop convention — zero-output-change clarity
-  refactor + `TMD coordinate convention` glossary entry + golden/round-trip tests),
-  **#71, #72, #73** (`e.name` stub fix, override-only scales cache + ADR-0018, config note +
-  property tests) and **#31** (batch processing → `f62ba6e0`).
+- **Open issues: 49.** Verdicts: ✅ 9 · 🔄 26 · ⏸️ 4 · ❌ 0 (+#67 = triaged umbrella).
+- **CLOSED (resolved on `master`):** **#30** (vectorize CPP — Cython kernel + `vectorized=True`
+  default + scales→sequence→split reorder; documented in **ADR-0001**, correctness anchored by
+  ADR-0015), **#66** (General Sampling Strategy — resolved by ADR-0020 as *subsumed by
+  `AAWindowSampler`*: added `sample_benchmark_set` + constructor `custom_filter`, no new class →
+  `cf28bd69`), **#17** (tmd_start/tmd_stop convention — zero-output-change clarity refactor +
+  `TMD coordinate convention` glossary entry + golden/round-trip tests), **#71, #72, #73**
+  (`e.name` stub fix, override-only scales cache + ADR-0018, config note + property tests) and
+  **#31** (batch processing → `f62ba6e0`).
 - **Context:** #45 body rewritten (was a #46 copy-paste); #67 triaged + relabeled `prio:3`.
 - **Standing scope rule:** the large XAI items (#50–56) and #40 mostly belong to the downstream
   **ProtXplain** (#26), not core — they're 🔄, not Ready.
@@ -30,9 +32,11 @@ Full session kickoffs in `docs/issue_kickoffs/`. Each is meant to be run in its 
 | ~~**66**~~ | 1 | ~~`seq_analysis/_aa_window_sampler.py`~~ | ☑️ **DONE** — ADR-0020: subsumed by `AAWindowSampler` (no new class); added `sample_benchmark_set` + `custom_filter` | — |
 | **61** | 1 | `feature_engineering/_cpp.py` (+`AAWindowSampler`) | prio:1; MVP reuses `run` per class | one-vs-rest reuses `run`?; reference generator location (avoid `__init__.py` CONFIRM-FIRST); quantile-split first |
 
-With #17 and #66 landed, **#61** (multi-class/regression via random reference) is the next prio:1 —
-self-contained in `feature_engineering/_cpp.py`. **Do not** pair it with #18 (schema) or #30 (perf),
-which ripple into these areas.
+With #17, #30 and #66 landed, the next prio:1 items are **#61** (multi-class/regression via random
+reference, self-contained in `feature_engineering/_cpp.py`) and **#18** (standardize CPP output
+schema). These two ripple into the same `_cpp.py`/output area, so **serialize them** (#18 first to
+lock the schema, then #61) rather than running both in parallel. A clean third parallel lane is
+**#37** (finish AAMut/SeqMut, `protein_design/`) — separate subsystem, and it unblocks #57–60.
 
 ---
 
@@ -44,7 +48,10 @@ which ripple into these areas.
    start- & stop-inclusive explicitly, the `TMD coordinate convention` is the documented single
    source of truth (CONTEXT.md, not a shared helper), guarded by golden + round-trip-equivalence
    tests. **Lane A.**
-3. **#30** — vectorize CPP (prio:1, perf). Primary of the perf cluster; **blocks #19/#39/#62.** **Lane B.**
+3. ☑️ **#30 — DONE** (vectorize CPP). Cython kernel (`_filters_c/_inner.pyx`) + `vectorized=True`
+   default + the scales→sequence→split reorder (`_assign.py`/`_get_feature_matrix_fast.py`),
+   exposed via `vectorized`/`n_jobs`/`n_batches`. Documented in **ADR-0001**, correctness anchored
+   by ADR-0015. The perf follow-ons **#19/#39/#62 are no longer blocked** — they're independent now.
 4. **#18** — standardize CPP output schema (prio:1). **Unblocks #29/#33/#26**; ripples into plotting. **Lane A.**
 5. **#61** — multi-class/regression via random reference (prio:1). Best-specified feature; sizable but self-contained.
 6. ☑️ **#66 — DONE** (General Sampling Strategy). Resolved by **ADR-0020** as *subsumed by
@@ -60,8 +67,9 @@ which ripple into these areas.
 ## Parallel lanes (safe to run in separate sessions — no shared files)
 
 - **Lane A — CPP core/schema:** ~~#17~~ (done), #18 (schema work touches `_cpp.py`/output + plotting — keep one owner).
-- **Lane B — Performance (SERIALIZE internally):** #30 → #19 → #39 → #62. All edit
-  `feature_engineering/_backend/cpp/**`; **never parallelize these with each other.**
+- **Lane B — Performance (SERIALIZE internally):** ~~#30~~ (done) → #19 → #39 → #62. All edit
+  `feature_engineering/_backend/cpp/**`; **never parallelize these with each other.** With #30
+  landed these are follow-on optimizations, no longer gated.
 - **Lane C — Protein design (SERIALIZE internally):** #37 → {#57, #58, #59, #60}. Build on
   AAMut/SeqMut + the mutation workflow; share `protein_design/`.
 - **Lane D — Data/sampling:** ~~#66~~ (done), #25, #32, **#28** (now unblocked — #66 landed, so the
@@ -73,7 +81,7 @@ which ripple into these areas.
 ## Overlap clusters — DO NOT develop in parallel
 | Cluster | Issues | Primary | Why they collide |
 |---|---|---|---|
-| CPP perf loop | #30, #19, #39, #62 | #30 | all rewrite `_backend/cpp/**` aggregation |
+| CPP perf loop | ~~#30~~ (done), #19, #39, #62 | #19 | still all edit `_backend/cpp/**`; serialize the remaining three |
 | Output schema | #18 → #29, #33, #26 | #18 | schema change ripples to consumers/plotting |
 | Protein design | #37 → #57, #58, #59, #60 | #37 | shared mutation API in `protein_design/` |
 | Structure/conservation/MSA | #40, #64, #65, #42 | #65 | shared `data_handling_pro` + pending move |
@@ -129,9 +137,9 @@ which ripple into these areas.
 ### topic:performance — SERIALIZE (one owner)
 | # | prio | verdict | scope / standards | already-addressed | implementation note |
 |---|---|---|---|---|---|
-| 30 | 1 | ✅ | Fits; primary of cluster | Partial (`n_batches` landed `f62ba6e0`) | Vectorize the scale→sequence→split path; benchmark; **gate the whole cluster.** |
-| 19 | 2 | ✅ | Fits; perf cluster | No | Optimize `df_parts` build; same-output regression guard. After #30. |
-| 39 | 3 | 🔄 | Vague checklist; perf cluster | Partial | Split into concrete items (plot deadlines, feat matrix, df_parts); some overlap #30/#19. |
+| 30 | 1 | ☑️ | Fits; **closed** | Yes | DONE: Cython kernel `_filters_c/_inner.pyx` + `vectorized=True` default + scales→sequence→split reorder (`_assign.py`/`_get_feature_matrix_fast.py`); exposed via `vectorized`/`n_jobs`/`n_batches`. ADR-0001; correctness anchored by ADR-0015. Only a *formal benchmark harness* is unbuilt (optional follow-up). |
+| 19 | 2 | ✅ | Fits; perf cluster | No | Optimize `df_parts` build; same-output regression guard. (No longer blocked — #30 done.) |
+| 39 | 3 | 🔄 | Vague checklist; perf cluster | Partial | Split into concrete items (plot deadlines, feat matrix, df_parts); some overlap #19. |
 | 62 | 3 | 🔄 | Oversized (CuPy/torch); opt-in only | No | GPU must stay optional, CPU default. Big; do last in Lane B. |
 
 ### topic:XAI — mostly ProtXplain scope (🔄), one quick win
