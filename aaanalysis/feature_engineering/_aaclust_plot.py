@@ -178,7 +178,8 @@ class AAclustPlot:
              dict_xlims: Optional[dict] = None,
              ) -> Tuple[plt.Figure, plt.Axes]:
         """
-        Plots evaluation of ``n_clusters`` and clustering metrics ``BIC``, ``CH``, and ``SC`` from ``df_eval``.
+        Plots evaluation of ``n_clusters`` and clustering metrics Bayesian Information Criterion
+        (``BIC``), Calinski-Harabasz (``CH``), and Silhouette Coefficient (``SC``) from ``df_eval``.
 
         The clustering evaluation metrics (BIC, CH, and SC) are ranked by the average of their independent rankings.
 
@@ -244,7 +245,8 @@ class AAclustPlot:
                 palette: Optional[mpl.colors.ListedColormap] = None,
                 ) -> Tuple[plt.Axes, pd.DataFrame]:
         """
-        Create a PCA plot of clustering results with cluster centers highlighted.
+        Create a Principal Component Analysis (PCA) plot of clustering results with cluster
+        centers highlighted.
 
         Projects ``X`` into the chosen PCA components and overlays the computed cluster centers as
         distinct markers, coloured by cluster label. Use :meth:`AAclust.comp_centers` to obtain the
@@ -330,7 +332,7 @@ class AAclustPlot:
                 palette: Optional[mpl.colors.ListedColormap] = None,
                 ) -> Tuple[plt.Axes, pd.DataFrame]:
         """
-        PCA plot of clustering with medoids highlighted.
+        Principal Component Analysis (PCA) plot of clustering with medoids highlighted.
 
         Projects ``X`` into the chosen PCA components and overlays the cluster medoids (computed via
         :meth:`AAclust.comp_medoids`) as distinct markers, coloured by cluster label, so that the

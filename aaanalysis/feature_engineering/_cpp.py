@@ -382,7 +382,7 @@ class CPP(Tool):
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
-            Length of TMD (>0).
+            Length of target middle domain (TMD) (>0).
         jmd_n_len : int, default=10
             Length of JMD-N (>=0).
         jmd_c_len : int, default=10
@@ -451,7 +451,7 @@ class CPP(Tool):
             9. 'std_test': Standard deviation in test group
             10. 'std_ref': Standard deviation in reference group
             11. 'p_val': Non-parametric (mann_whitney) or parametric (ttest_indep) statistic
-            12. 'p_val_fdr_bh': Benjamini-Hochberg FDR corrected p-values
+            12. 'p_val_fdr_bh': Benjamini-Hochberg False Discovery Rate (FDR) corrected p-values
             13. 'positions': Feature positions for default settings
 
         See Also
@@ -551,10 +551,10 @@ class CPP(Tool):
                 return_stats: bool = False,
                 ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
         """
-        Numerical-mode CPP: same algorithm as :meth:`run`, but per-residue values come
-        from a pre-sliced numerical tensor (`dict_num_parts`) instead of an AA→scale
-        lookup. Use for PLM embeddings, DSSP one-hots, PTM dummies, or any per-residue
-        numerical representation.
+        Numerical-mode Comparative Physicochemical Profiling (CPP): same algorithm as
+        :meth:`run`, but per-residue values come from a pre-sliced numerical tensor
+        (`dict_num_parts`) instead of an AA→scale lookup. Use for PLM embeddings, DSSP
+        one-hots, PTM dummies, or any per-residue numerical representation.
 
         Same pipeline (pre-filter stats, pre-filter, recompute, add_stat, redundancy
         filter) and same output schema as :meth:`run`. The constructor-bound
@@ -597,7 +597,7 @@ class CPP(Tool):
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
-            Length of TMD (>0).
+            Length of target middle domain (TMD) (>0).
         jmd_n_len : int, default=10
             Length of JMD-N (>=0).
         jmd_c_len : int, default=10
@@ -750,7 +750,8 @@ class CPP(Tool):
              n_jobs: Optional[int] = 1,
              ) -> pd.DataFrame:
         """
-        Evaluate the quality of different sets of identified CPP features.
+        Evaluate the quality of different sets of identified Comparative Physicochemical
+        Profiling (CPP) features.
 
         Feature sets are evaluated regarding two quality groups:
 
@@ -792,7 +793,7 @@ class CPP(Tool):
 
             - 'name': Name of the feature set, typically based on CPP run settings, if ``names`` is provided.
             - 'n_features': Tuple with total number of features and list of number of features per scale category from ``list_cat``.
-            - 'avg_ABS_AUC': Absolute AUC averaged across all features.
+            - 'avg_ABS_AUC': Absolute Area Under the Curve (AUC) averaged across all features.
             - 'range_ABS_AUC': Quintile range of absolute AUC among all features (min, 25%, median, 75%, max).
             - 'avg_MEAN_DIF': Tuple of mean differences averaged across all features separately
               for features with positive and negative 'mean_dif'.

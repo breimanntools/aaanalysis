@@ -195,8 +195,8 @@ class CPPPlot:
     -----
     * The ``jmd_n_len`` and ``jmd_c_len`` values supplied at construction are stored as ``_jmd_n_len`` and
       ``_jmd_c_len`` and are reused by all plot methods (``ranking``, ``profile``, ``heatmap``,
-      ``feature_map``, ``update_seq_size``) so that JMD lengths are consistent across a single
-      :class:`CPPPlot` instance.
+      ``feature_map``, ``update_seq_size``) so that juxta middle domain (JMD) lengths are
+      consistent across a single :class:`CPPPlot` instance.
 
     """
     def __init__(self,
@@ -227,8 +227,9 @@ class CPPPlot:
 
         Notes
         -----
-        Several methods provide the ``shap_plot`` parameter, which allows to specify whether a plot visualizes
-        the results of the group-level CPP analysis or the sample-level CPP-SHAP analysis (if ``shap_plot=True``).
+        Several methods provide the ``shap_plot`` parameter, which allows to specify whether a
+        plot visualizes the results of the group-level Comparative Physicochemical Profiling
+        (CPP) analysis or the sample-level CPP-SHAP analysis (if ``shap_plot=True``).
 
         - **CPP Analysis**: Group-level analysis of the most discriminant features between a test and a reference group.
           The overall results are visualized by the :meth:`CPPPlot.feature_map`, revealing the characteristic
@@ -289,7 +290,8 @@ class CPPPlot:
              list_cat: Optional[List[str]] = None,
              ) -> Tuple[plt.Figure, plt.Axes]:
         """
-        Plot evaluation output of CPP comparing multiple sets of identified feature sets.
+        Plot evaluation output of Comparative Physicochemical Profiling (CPP) comparing multiple
+        sets of identified feature sets.
 
         Evaluation measures are categorized into two groups:
 
@@ -306,7 +308,8 @@ class CPPPlot:
 
             - 'name': Name of the feature set.
             - 'n_features': Number of features per scale category given as list.
-            - 'range_ABS_AUC': Quintile range of absolute AUC among all features (min, 25%, median, 75%, max).
+            - 'range_ABS_AUC': Quintile range of absolute Area Under the Curve (AUC) among all
+              features (min, 25%, median, 75%, max).
             - 'avg_MEAN_DIF': Two mean differences averaged across all features (for positive and negative 'mean_dif')
             - 'n_clusters': Optimal number of clusters.
             - 'avg_n_feat_per_clust': Average number of features per cluster.
@@ -397,7 +400,8 @@ class CPPPlot:
                 alpha_dif: int or float = 0.2,
                 ) -> plt.Axes:
         """
-        Plot distributions of CPP feature values for test and reference datasets highlighting their mean difference.
+        Plot distributions of Comparative Physicochemical Profiling (CPP) feature values for test
+        and reference datasets highlighting their mean difference.
 
         Introduced in [Breimann24a]_, a CPP feature is defined as a **Part-Split-Scale** combination. For a sample,
         a feature value is computed in three steps:
@@ -568,9 +572,10 @@ class CPPPlot:
         figsize : tuple, default=(7, 5)
             Figure dimensions (width, height) in inches.
         tmd_len : int, default=20
-            Length of TMD to be depicted (>0).
+            Length of target middle domain (TMD) to be depicted (>0).
         tmd_jmd_space : int, default=2
-            The space between TMD and JMD labels (>0) in the feature position subplot.
+            The space between TMD and juxta middle domain (JMD) labels (>0) in the feature
+            position subplot.
         tmd_color : str, default='mediumspringgreen'
             Color for TMD.
         jmd_color : str, default='blue'
@@ -756,11 +761,13 @@ class CPPPlot:
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
-            Length of TMD to be depicted (>0). Must match with all feature from ``df_feat``.
+            Length of target middle domain (TMD) to be depicted (>0). Must match with all feature
+            from ``df_feat``.
         tmd_seq : str, optional
             TMD sequence for specific sample.
         jmd_n_seq : str, optional
-            JMD N-terminal sequence for specific sample. Length must match with 'jmd_n_len' attribute.
+            Juxta middle domain (JMD) N-terminal sequence for specific sample. Length must match
+            with 'jmd_n_len' attribute.
         jmd_c_seq : str, optional
             JMD C-terminal sequence for specific sample. Length must match with 'jmd_c_len' attribute.
         tmd_color : str, default='mediumspringgreen'
@@ -984,11 +991,13 @@ class CPPPlot:
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
-            Length of TMD to be depicted (>0). Must match with all feature from ``df_feat``.
+            Length of target middle domain (TMD) to be depicted (>0). Must match with all feature
+            from ``df_feat``.
         tmd_seq : str, optional
             TMD sequence for specific sample.
         jmd_n_seq : str, optional
-            JMD N-terminal sequence for specific sample. Length must match with 'jmd_n_len' attribute.
+            Juxta middle domain (JMD) N-terminal sequence for specific sample. Length must match
+            with 'jmd_n_len' attribute.
         jmd_c_seq : str, optional
             JMD C-terminal sequence for specific sample. Length must match with 'jmd_c_len' attribute.
         tmd_color : str, default='mediumspringgreen'
@@ -1206,8 +1215,9 @@ class CPPPlot:
                     xtick_length: Union[int, float] = 5.0,
                     ) -> Tuple[plt.Figure, plt.Axes]:
         """
-        Plot CPP feature map showing feature value mean difference and feature importance
-        per scale subcategory (y-axis) and residue position (x-axis).
+        Plot Comparative Physicochemical Profiling (CPP) feature map showing feature value mean
+        difference and feature importance per scale subcategory (y-axis) and residue position
+        (x-axis).
 
         Extends the heatmap layout by overlaying feature-importance markers on each cell and
         optionally adding cumulative importance bars at the top and right, providing a combined
@@ -1243,11 +1253,13 @@ class CPPPlot:
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
-            Length of TMD to be depicted (>0). Must match with all feature from ``df_feat``.
+            Length of target middle domain (TMD) to be depicted (>0). Must match with all feature
+            from ``df_feat``.
         tmd_seq : str, optional
             TMD sequence for specific sample.
         jmd_n_seq : str, optional
-            JMD N-terminal sequence for specific sample. Length must match with 'jmd_n_len' attribute.
+            Juxta middle domain (JMD) N-terminal sequence for specific sample. Length must match
+            with 'jmd_n_len' attribute.
         jmd_c_seq : str, optional
             JMD C-terminal sequence for specific sample. Length must match with 'jmd_c_len' attribute.
         tmd_color : str, default='mediumspringgreen'
@@ -1454,7 +1466,7 @@ class CPPPlot:
         Parameters
         ----------
         ax : plt.Axes
-            CPP plot axes object.
+            Comparative Physicochemical Profiling (CPP) plot axes object.
         fig : plt.Figure, optional
             CPP plot figure object. If given, ``fontsize_tmd_jmd`` will be automatically adjusted.
         max_x_dist : float, default=0.1
@@ -1465,9 +1477,9 @@ class CPPPlot:
         weight_tmd_jmd : {'normal', 'bold'}, default='normal'
             Font weight for the part labels: 'JMD-N', 'TMD', 'JMD-C'.
         tmd_color : str, default='mediumspringgreen'
-            Color for TMD.
+            Color for target middle domain (TMD).
         jmd_color : str, default='blue'
-            Color for JMDs.
+            Color for juxta middle domains (JMDs).
         tmd_seq_color : str, default='black'
             Color for TMD sequence.
         jmd_seq_color : str, default='white'

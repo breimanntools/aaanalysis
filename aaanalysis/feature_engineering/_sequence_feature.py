@@ -188,10 +188,10 @@ class SequenceFeature:
         """
         Create DataFrame with selected sequence parts.
 
-        Slices each protein sequence in ``df_seq`` into the requested Parts (TMD,
-        JMD-N, JMD-C, and combinations thereof) using the boundary information
-        supplied with the sequences. The resulting ``df_parts`` DataFrame is the
-        primary sequence input for :class:`CPP` and for
+        Slices each protein sequence in ``df_seq`` into the requested Parts
+        (target middle domain (TMD), JMD-N, JMD-C, and combinations thereof) using the
+        boundary information supplied with the sequences. The resulting ``df_parts``
+        DataFrame is the primary sequence input for :class:`CPP` and for
         :meth:`SequenceFeature.feature_matrix`.
 
         .. versionchanged:: 1.1.0
@@ -434,7 +434,7 @@ class SequenceFeature:
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
-            Length of TMD (>0).
+            Length of target middle domain (TMD) (>0).
         jmd_n_len : int, default=10
             Length of JMD-N (>=0).
         jmd_c_len : int, default=10
@@ -460,8 +460,8 @@ class SequenceFeature:
 
         See Also
         --------
-        * The :meth:`CPP.run` method for creating and filtering CPP features for discriminating between
-          two groups of sequences.
+        * The :meth:`CPP.run` method for creating and filtering Comparative Physicochemical
+          Profiling (CPP) features for discriminating between two groups of sequences.
 
         Examples
         --------
@@ -691,7 +691,7 @@ class SequenceFeature:
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
-            Length of TMD (>0).
+            Length of target middle domain (TMD) (>0).
         jmd_n_len : int, default=10
             Length of JMD-N (>=0).
         jmd_c_len : int, default=10
@@ -764,7 +764,7 @@ class SequenceFeature:
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
-            Length of TMD (>0).
+            Length of target middle domain (TMD) (>0).
         jmd_n_len : int, default=10
             Length of JMD-N (>=0).
         jmd_c_len : int, default=10
@@ -841,7 +841,7 @@ class SequenceFeature:
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
-            Length of TMD (>0).
+            Length of target middle domain (TMD) (>0).
         jmd_n_len : int, default=10
             Length of JMD-N (>=0).
         jmd_c_len : int, default=10

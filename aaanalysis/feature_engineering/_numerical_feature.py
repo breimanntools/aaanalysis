@@ -129,7 +129,8 @@ class NumericalFeature:
                   tmd_len: Optional[int] = None,
                   ) -> Tuple[pd.DataFrame, Dict[str, np.ndarray]]:
         """
-        Prepare CPP numerical-mode inputs by slicing sequences AND per-residue tensors with shared boundaries.
+        Prepare Comparative Physicochemical Profiling (CPP) numerical-mode inputs by slicing
+        sequences AND per-residue tensors with shared boundaries.
 
         Numerical analog of :meth:`SequenceFeature.get_df_parts` for the
         ``CPP.run_num`` workflow: the same `(start, end)` boundaries used to
@@ -150,8 +151,9 @@ class NumericalFeature:
         dict_num : dict[str, np.ndarray]
             Mapping ``entry -> (L, D)`` per-residue numerical tensor, where ``L``
             matches ``len(df_seq.loc[entry, 'sequence'])`` and ``D`` is consistent
-            across all entries. Source: PLM embeddings, DSSP one-hots, PTM dummies,
-            or any other per-residue numerical representation.
+            across all entries. Source: protein language model (PLM) embeddings, DSSP one-hots,
+            post-translational modification (PTM) dummies, or any other per-residue numerical
+            representation.
         list_parts : list of str, optional
             Subset of part names to materialize (e.g. ``["tmd", "jmd_n_tmd_n",
             "tmd_c_jmd_c"]``). Defaults to the same default as
@@ -164,10 +166,11 @@ class NumericalFeature:
         jmd_c_len : int, default=10
             Length of JMD-C (>=0).
         tmd_len : int, optional
-            TMD length for the **anchor-based format** only (a ``sequence`` + ``pos`` ``df_seq``): each 1-based
-            anchor in ``pos`` is exploded into one row with the TMD centered (right-heavy for even ``tmd_len``)
-            on the anchor, and the matching ``dict_num`` tensor is sliced with the same boundaries. Ignored for
-            the position-based schema.
+            Target middle domain (TMD) length for the **anchor-based format** only (a ``sequence`` +
+            ``pos`` ``df_seq``): each 1-based anchor in ``pos`` is exploded into one row with the
+            TMD centered (right-heavy for even ``tmd_len``) on the anchor, and the matching
+            ``dict_num`` tensor is sliced with the same boundaries. Ignored for the position-based
+            schema.
 
         Returns
         -------

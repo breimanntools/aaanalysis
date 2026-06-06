@@ -149,7 +149,8 @@ def _warn_sweep_footgun(name=None, params=None):
 # II Main Functions
 class CPPGrid(Tool):
     """
-    Grid-style sweep over CPP configurations (Tool) [Breimann25a]_.
+    Grid-style sweep over Comparative Physicochemical Profiling (CPP) configurations (Tool)
+    [Breimann25a]_.
 
     Runs the full **parts → splits → scales → run** pipeline across a Cartesian grid of
     configurations so a sweep needs one call instead of many manual ``get_df_parts`` /
