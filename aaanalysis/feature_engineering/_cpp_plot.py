@@ -1161,6 +1161,7 @@ class CPPPlot:
     def feature_map(self,
                     # Data and Plot Type
                     df_feat: pd.DataFrame = None,
+                    shap_plot: bool = False,
                     col_cat: Literal['category', 'subcategory', 'scale_name'] = "subcategory",
                     col_val: str = "mean_dif",
                     col_imp: str = "feat_importance",
@@ -1222,18 +1223,41 @@ class CPPPlot:
         Extends the heatmap layout by overlaying feature-importance markers on each cell and
         optionally adding cumulative importance bars at the top and right, providing a combined
         view of the direction and strength of each feature produced by :meth:`CPP.run`.
+        At sample level (``shap_plot=True``) the bars decompose into stacked positive (red) and
+        negative (blue) SHapley Additive exPlanations (SHAP) [Lundberg20]_ feature impact, the
+        per-sample attribution obtained via :class:`ShapModel`.
 
         Parameters
         ----------
         df_feat : pd.DataFrame, shape (n_feature, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
-            Must also include a feature importance column (``col_imp``).
+            Must also include a feature importance/impact column (``col_imp``).
+        shap_plot : bool, default=False
+            Set the analysis type: **CPP Analysis** (if ``False``) for group-level or
+            **CPP-SHAP Analysis** for sample-level (or subgroup-level) results:
+
+             **CPP Analysis**
+
+            - ``col_imp``: Refers to the group-level `feat_importance` column; markers and bars (gray)
+              show the cumulative feature importance per position and scale subcategory.
+            - ``col_val``: Displays the difference of feature values at group-level (`mean_dif`) or
+              sample-level when a `mean_dif_'name'` column is provided.
+
+             **CPP-SHAP Analysis**
+
+            - ``col_imp``: Enables the selection of SHAP feature impacts (per-sample attribution) from a
+              `feat_impact_'name'` column; bars are stacked by sign (positive in red, negative in blue)
+              and markers encode ``abs`` impact (magnitude).
+            - ``col_val``: Enables the selection of specific feature impacts from a `feat_impact_'name'`
+              column for an individual sample, where positive (red) and negative (blue) impacts are shown.
+
         col_cat : {'category', 'subcategory', 'scale_name'}, default='subcategory'
             Column name in ``df_feat`` for scale information (y-axis).
-        col_val : {'mean_dif', 'abs_mean_dif', 'abs_auc'}, default='mean_dif'
-            Column name in ``df_feat`` for numerical values to display.
-        col_imp :  {``feat_importance``, ``feat_importance_'name'``}, default='feat_importance'
-            Column name in ``df_feat`` for feature importance (group-, subgroup- or sample-level).
+        col_val : {'mean_dif', 'abs_mean_dif', 'abs_auc', ``mean_dif_'name'``, ``feat_impact_'name'``}, default='mean_dif'
+            Column name in ``df_feat`` for numerical values to display. Must match with the ``shap_plot`` setting.
+        col_imp :  {``feat_importance``, ``feat_importance_'name'``, ``feat_impact_'name'``}, default='feat_importance'
+            Column name in ``df_feat`` for feature importance (group-, subgroup- or sample-level) or, when
+            ``shap_plot=True``, for sample-level feature impact. Must match with the ``shap_plot`` setting.
         name_test : str, default="TEST"
             Name for the test dataset.
         name_ref : str, default="REF"
@@ -1343,6 +1367,7 @@ class CPPPlot:
         * :meth:`CPP.run` for details on CPP statistical measures of the ``df_feat`` DataFrame.
         * :class:`SequenceFeature` for definition of sequence ``Parts``.
         * :meth:`CPPPlot.feature` for visualization of mean differences for specific features.
+        * :class:`ShapModel` for obtaining the sample-level ``feat_impact_'name'`` columns shown when ``shap_plot=True``.
         * :meth:`seaborn.heatmap` for seaborn heatmap.
         * :meth:`matplotlib.figure.Figure.colorbar` for colorbar arguments.
         * `Matplotlib Colormaps <https://matplotlib.org/stable/users/explain/colors/colormaps.html>`_ for further ``cmap`` options.
@@ -1353,11 +1378,12 @@ class CPPPlot:
         .. include:: examples/cpp_plot_feature_map.rst
         """
         # Check primary input
+        ut.check_bool(name="shap_plot", val=shap_plot)
         ut.check_str_options(name="col_cat", val=col_cat,
                              list_str_options=[ut.COL_CAT, ut.COL_SUBCAT, ut.COL_SCALE_NAME])
-        col_val = check_col_val(col_val=col_val, sample_mean_dif=True)
-        col_imp = check_col_imp(col_imp=col_imp)
-        df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat,
+        col_val = check_col_val(col_val=col_val, shap_plot=shap_plot, sample_mean_dif=True)
+        col_imp = check_col_imp(col_imp=col_imp, shap_plot=shap_plot)
+        df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot,
                                    cols_required=[col_val, col_imp],
                                    cols_nan_check=col_val)
         ut.check_str(name="name_test", val=name_test)
@@ -1415,6 +1441,7 @@ class CPPPlot:
 
         # Plot feature map
         fig, ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat,
+                                   shap_plot=shap_plot,
                                    col_cat=col_cat, col_val=col_val, col_imp=col_imp,
                                    name_test=name_test, name_ref=name_ref,
                                    figsize=figsize,

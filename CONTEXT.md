@@ -350,6 +350,20 @@ _Avoid_: selection mode (collides with `output_mode`), selection method.
 A constructor-level boolean mask on `TreeModel` marking features to keep *before* RFE runs in `fit` — an upstream gate, not a **selection strategy**. Orthogonal to `select_features`, which acts after fitting.
 _Avoid_: preselection strategy (it carries no strategy), prefilter (collides with RFE prefiltering).
 
+### Explainability (CPP-SHAP) vocabulary
+
+**feature importance**:
+A **non-negative, group-level** ranking signal in `df_feat`, column `feat_importance` (`ut.COL_FEAT_IMPORT`), normalized to percent. Produced by `TreeModel.add_feat_importance` (Monte-Carlo tree importances) or by `ShapModel.add_feat_impact(shap_feat_importance=True)` (mean absolute SHAP). It answers *"how important is this feature across all samples?"* — it carries **no direction**. In plots it is the gray cumulative-bar / black-square channel.
+_Avoid_: feature impact (signed and sample-level — the opposite axis), weight, attribution (too generic).
+
+**feature impact**:
+A **signed, sample- or subgroup-level** SHAP attribution in `df_feat`, columns `feat_impact_'name'` (and `feat_impact_std_'name'` for group averages; base `ut.COL_FEAT_IMPACT`). Produced by `ShapModel.add_feat_impact(names=…, sample_positions=…)`. It answers *"how much, and in which direction, did this feature push the prediction for this sample/group?"* — **positive = red (`ut.COLOR_SHAP_POS`), negative = blue (`ut.COLOR_SHAP_NEG`)**. Its magnitude `abs(feat_impact)` is the sample-level analogue of feature importance.
+_Avoid_: feature importance (unsigned, group-level), SHAP value (the raw per-feature attribution before normalization into a `feat_impact_'name'` column).
+
+**shap_plot**:
+The uniform boolean toggle on the `CPPPlot` family (`profile`, `heatmap`, `ranking`, `feature_map`) selecting **CPP analysis** (`False`, group-level **feature importance**, `feat_importance` / `mean_dif`) versus **CPP-SHAP analysis** (`True`, sample-level **feature impact**, `feat_impact_'name'` / `mean_dif_'name'`). `True` switches color encoding to signed red/blue and the colorbar to the diverging SHAP colormap. It selects the *interpretation level*; it does not itself run SHAP (that is `ShapModel`). `feature_map(shap_plot=True)` additionally stacks the importance bars by impact sign.
+_Avoid_: shap_mode, use_shap, sample_plot.
+
 ## Relationships
 
 - A **df_seq** row contains one **entry** and one sequence; optionally a **pos column** cell of 1-based positions.

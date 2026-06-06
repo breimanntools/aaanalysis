@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 from hypothesis import given, settings, strategies as st
 import pytest
 import aaanalysis as aa
@@ -52,12 +53,40 @@ def get_args_seq(n=0):
     return args_seq
 
 
+COL_FEAT_IMPACT_TEST = "feat_impact_test"
+SHAP_POS = mcolors.to_rgba("#FF0D57")
+SHAP_NEG = mcolors.to_rgba("#1E88E5")
+FEAT_IMP_GRAY = mcolors.to_rgba("#7F7F7F")
+
+
 def get_df_feat(n=10):
     aa.options["verbose"] = False
     df_feat = aa.load_features().head(n)
     df_feat.insert(0, COL_FEAT_IMPORTANCE_TEST, [2] * len(df_feat))
     df_feat.insert(0, COL_MEAN_DIF_TEST, [1] * len(df_feat))
     return df_feat
+
+
+def get_df_feat_shap(n=10):
+    """Feature table with a signed sample-level SHAP feature-impact column."""
+    df_feat = get_df_feat(n=n).reset_index(drop=True)
+    # Alternating +/- signed impact so both red and blue stack segments appear
+    signs = [1 if i % 2 == 0 else -1 for i in range(len(df_feat))]
+    df_feat[COL_FEAT_IMPACT_TEST] = [s * (1 + i) for i, s in enumerate(signs)]
+    return df_feat
+
+
+def get_bar_facecolors(fig):
+    """Collect rounded RGBA face colors of all bar patches across a figure."""
+    colors = set()
+    for ax in fig.axes:
+        for patch in ax.patches:
+            colors.add(tuple(round(x, 3) for x in patch.get_facecolor()))
+    return colors
+
+
+def _rgba(color):
+    return tuple(round(x, 3) for x in color)
 
 
 class TestCCPlotFeatureMap:
@@ -767,4 +796,120 @@ class TestCCPlotFeatureMapComplex:
                                  xtick_width=-1,  # Invalid xtick_width
                                  xtick_length=-1,  # Invalid xtick_length
                                  **args_seq)
+        plt.close()
+
+
+class TestCCPlotFeatureMapShap:
+    """Tests for the SHAP mode (shap_plot) of the feature_map method (issue #63)."""
+
+    # Positive tests
+    def test_shap_plot_false_returns_fig_ax(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat()
+        fig, ax = cpp_plot.feature_map(df_feat=df_feat, shap_plot=False)
+        assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
+        plt.close()
+
+    def test_shap_plot_true_returns_fig_ax(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat_shap()
+        fig, ax = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
+                                       col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_FEAT_IMPACT_TEST)
+        assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
+        plt.close()
+
+    def test_default_bars_are_gray_not_signed(self):
+        """shap_plot=False keeps the gray cumulative bars and shows no SHAP +/- colors."""
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat()
+        fig, _ = cpp_plot.feature_map(df_feat=df_feat)
+        colors = get_bar_facecolors(fig)
+        assert _rgba(FEAT_IMP_GRAY) in colors
+        assert _rgba(SHAP_POS) not in colors and _rgba(SHAP_NEG) not in colors
+        plt.close()
+
+    def test_shap_bars_are_red_and_blue(self):
+        """shap_plot=True stacks bars in SHAP positive (red) and negative (blue), no gray."""
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat_shap()
+        fig, _ = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
+                                      col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_FEAT_IMPACT_TEST)
+        colors = get_bar_facecolors(fig)
+        assert _rgba(SHAP_POS) in colors and _rgba(SHAP_NEG) in colors
+        assert _rgba(FEAT_IMP_GRAY) not in colors
+        plt.close()
+
+    def test_shap_markers_present(self):
+        """Magnitude markers (squares) are still drawn in SHAP mode."""
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat_shap()
+        fig, _ = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
+                                      col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_FEAT_IMPACT_TEST)
+        n_squares = sum(1 for ax in fig.axes for t in ax.texts if t.get_text() == "■")
+        assert n_squares > 0
+        plt.close()
+
+    def test_shap_with_top_bar(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat_shap()
+        fig, _ = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True, add_imp_bar_top=True,
+                                      col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_FEAT_IMPACT_TEST)
+        colors = get_bar_facecolors(fig)
+        assert _rgba(SHAP_POS) in colors and _rgba(SHAP_NEG) in colors
+        plt.close()
+
+    def test_shap_without_top_bar(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat_shap()
+        fig, _ = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True, add_imp_bar_top=False,
+                                      col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_FEAT_IMPACT_TEST)
+        colors = get_bar_facecolors(fig)
+        assert _rgba(SHAP_POS) in colors and _rgba(SHAP_NEG) in colors
+        plt.close()
+
+    def test_shap_col_val_mean_dif_name(self):
+        """SHAP impact bars combine with a sample-level mean_dif_'name' heatmap."""
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat_shap()
+        fig, ax = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
+                                       col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_MEAN_DIF_TEST)
+        assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
+        plt.close()
+
+    # Negative tests
+    def test_invalid_shap_plot(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat_shap()
+        for shap_plot in ["yes", 1, None, []]:
+            with pytest.raises(ValueError):
+                cpp_plot.feature_map(df_feat=df_feat, shap_plot=shap_plot,
+                                     col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_FEAT_IMPACT_TEST)
+            plt.close()
+
+    def test_shap_rejects_importance_col_imp(self):
+        """In SHAP mode col_imp must follow feat_impact_'name', not feat_importance."""
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat_shap()
+        with pytest.raises(ValueError):
+            cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
+                                 col_imp=COL_FEAT_IMPORTANCE_TEST, col_val=COL_FEAT_IMPACT_TEST)
+        plt.close()
+
+    def test_shap_rejects_plain_col_val(self):
+        """In SHAP mode col_val must follow feat_impact_'name' / mean_dif_'name'."""
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat_shap()
+        # Values lacking both 'feat_impact' and 'mean_dif' substrings are rejected
+        for col_val in ["abs_auc", "feat_importance"]:
+            with pytest.raises(ValueError):
+                cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
+                                     col_imp=COL_FEAT_IMPACT_TEST, col_val=col_val)
+            plt.close()
+
+    def test_non_shap_rejects_impact_col_imp(self):
+        """Without shap_plot, a feat_impact_'name' col_imp is rejected."""
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat_shap()
+        with pytest.raises(ValueError):
+            cpp_plot.feature_map(df_feat=df_feat, shap_plot=False, col_imp=COL_FEAT_IMPACT_TEST)
         plt.close()
