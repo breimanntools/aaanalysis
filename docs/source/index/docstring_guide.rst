@@ -128,6 +128,12 @@ Invariants:
   classes (the expanded paragraph after the noun-phrase summary). Trivial
   one-line accessors may keep just the summary; the checker's ``SUMMARY-ONLY``
   is **advisory**, a prompt to add the description where it helps.
+  Write the description as **natural flowing prose**; do not prefix it with a
+  bold rhetorical label that names the meta-idea (``**Mental model.**``,
+  ``**When to use.**``, ``**What it returns.**``) — state the content directly.
+  (Bold for genuine emphasis or a structural ``*``-bullet label in ``Notes`` is
+  fine; this rule is only about replacing the explanatory paragraph with a
+  bold heading.)
 * **Expand abbreviations on first use.** The first time an abbreviation or
   acronym appears in a docstring, spell it out with the short form in
   parentheses — *Command Line Interface (CLI)*, *Position Weight Matrix (PWM)*,
@@ -249,9 +255,11 @@ Notebook content & structure
 
 An example notebook *teaches* the symbol, it does not merely call it. Use this order:
 
-1. **Concept first** (opening markdown cell). State the high-level mental model:
-   what the method/class does, when and why to use it, and what it returns —
-   *before* any code.
+1. **Concept first** (opening markdown cell). In natural prose *before* any
+   code, explain what the method/class does, when and why to use it, and what
+   it returns. Write it as flowing text — do **not** prefix the paragraphs with
+   bold rhetorical labels (``**Mental model.**``, ``**When to use.**``,
+   ``**What it returns.**``); state the content directly.
 2. **Minimal example** (code cell). The smallest seeded, runnable call, with output.
 3. **Parameter walkthrough** (markdown + code). Introduce **every** public parameter,
    with **one cell per parameter group**: parameters that belong together share a
