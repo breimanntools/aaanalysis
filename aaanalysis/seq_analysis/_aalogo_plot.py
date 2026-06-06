@@ -113,7 +113,7 @@ class AAlogoPlot:
     Amino Acid logo Plot (**AAlogoPlot**) class for visualizing sequence logos.
 
     Renders single and stacked multiple sequence logos (via the logomaker [Tareen20]_
-    package) with automatic Transmembrane Domain (TMD) / Juxtamembrane Domain (JMD) part
+    package) with automatic target middle domain (TMD) / juxta middle domain (JMD) part
     annotations. ``jmd_n_len`` and ``jmd_c_len`` are set at initialization and used by all
     plot methods to derive the TMD region length from the logo DataFrame. The ``logo_type``
     set at initialization controls
@@ -142,8 +142,8 @@ class AAlogoPlot:
             - ``'information'``: y-axis label is ``'Bits'``.
 
         jmd_n_len : int, default=10
-            Length of the Juxtamembrane Domain (JMD)-N region (>=0). Used together with
-            ``jmd_c_len`` to derive the Transmembrane Domain (TMD) length from the logo
+            Length of the juxta middle domain (JMD)-N region (>=0). Used together with
+            ``jmd_c_len`` to derive the target middle domain (TMD) length from the logo
             DataFrame for part annotations.
         jmd_c_len : int, default=10
             Length of the JMD-C region (>=0).
@@ -198,8 +198,8 @@ class AAlogoPlot:
                     xtick_length: Union[int, float] = 11.0,
                     ) -> Tuple[plt.Figure, plt.Axes]:
         """
-        Plot a single sequence logo with optional bit-score bar and Transmembrane Domain
-        (TMD) / Juxtamembrane Domain (JMD) annotations.
+        Plot a single sequence logo with optional bit-score bar and target middle domain
+        (TMD) / juxta middle domain (JMD) annotations.
 
         Renders a pre-computed logo matrix from :class:`AAlogo` as a letter-stack
         sequence logo using logomaker [Tareen20]_, and draws colored TMD/JMD part
@@ -377,8 +377,8 @@ class AAlogoPlot:
         """
         Plot multiple sequence logos stacked vertically for group comparison.
 
-        All logos share the same y-axis scale. Transmembrane Domain (TMD) / Juxtamembrane
-        Domain (JMD) annotations are shown only on the bottom subplot to avoid repetition.
+        All logos share the same y-axis scale. Target middle domain (TMD) / juxta middle
+        domain (JMD) annotations are shown only on the bottom subplot to avoid repetition.
 
         Parameters
         ----------

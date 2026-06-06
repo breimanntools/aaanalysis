@@ -97,7 +97,7 @@ class AAlogo:
         Compute a sequence logo matrix for the provided sequence parts.
 
         For each residue position, the relative frequency (or another encoding) of each amino acid
-        is computed across all sequences. If variable-length Transmembrane Domain (TMD)
+        is computed across all sequences. If variable-length target middle domain (TMD)
         sequences are provided, they are aligned to a uniform length via N- or C-terminal
         padding before computing the logo.
 
@@ -192,7 +192,7 @@ class AAlogo:
         label_test : int, default=1
             Class label of the test group to select from ``labels``.
         tmd_len : int, optional
-            Fixed length (>=1) to align all Transmembrane Domain (TMD) sequences. If
+            Fixed length (>=1) to align all target middle domain (TMD) sequences. If
             ``None``, the maximum TMD length in ``df_parts`` is used.
         start_n : bool, default=True
             Alignment direction for variable-length TMDs:
