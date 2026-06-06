@@ -9,7 +9,29 @@ protein prediction; `pro` extra for heavy deps; semver-strict v1) and the coding
 under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) · ☑️ Done/Partial.
 
 ## Snapshot
-- **Open issues: 59 · closed: 21** (after the 2026-06-06 bucket triage + doc-architecture pass below).
+- **Open issues: 62 · closed: 24** (after the 2026-06-06 antibody-feedback pass + bucket triage + doc-architecture pass below).
+- **Antibody-feedback triage + quick fixes (2026-06-06, this session):** an external
+  antibody/non-specificity project's `FEEDBACK.md` was triaged against current `master` — most P0/P1
+  asks were **already shipped** (macOS `n_jobs`, caching, batching, embedding fusion, bootstrap CIs,
+  structure parsing); full record in **`docs/feedback_antibody_triage.md`**. Two headline asks
+  collapsed: **prefix-sum `feature_matrix` dropped** (float cumsum breaks the ADR-0015 bit-exact
+  anchor *and* wasn't the real bottleneck — the slow run was a stale/env-starved build); **standalone
+  `select_features(X,y)` deemed already-composable** (`comp_auc_adjusted` + `NumericalFeature.filter_correlation`)
+  → a docs Protocol, not new API. **Charge-patch feature dropped** (empirically weak, MCC ≈ 0.491).
+  - **New issues:** #90 (feature-selection Protocol, dcos) · #91 (**model evaluation & comparison**,
+    prio:1 — 3 design options: helpers / `Tool`-class+Plot / hybrid) · #92 (TreeModel sklearn compat)
+    · #93 (learning-curve diagnostic) · #94 (redundancy truncation warning) · #95 (dPULearn error msgs).
+  - **Scope-notes (comments):** #22 (per-*sequence* pooled-vector fusion + joint scoring is the live
+    gap; per-residue fusion shipped) · #23 (owns CPP↔embedding corr + decorrelation-view ask) · #43
+    (AAclust graceful clamp + `n_clusters` semantics; `random_state` already shipped) · #74 (perf
+    version provenance + promote Cython-fallback notice to `warnings.warn`).
+  - **Closed on `master`:** **#94** (`cae0c8df` — the D5b/D7 warnings already existed; the real fix
+    was `cpp_run_sample_batched` skipping `_attach_filter_stats`, a one-path consistency gap), **#95**
+    (`9d5c4398` — tailored `n_unl_to_neg`/labels errors), **#92** (`438a7cda` — `feature_importances_`
+    property; **partial**, see deferred).
+  - **Deferred (the #92 remainder):** TreeModel's full sklearn estimator interface
+    (`BaseEstimator`/`get_params`/`set_params` + `RFE`/`cross_val_predict`) — blocked by `__init__`
+    storing params under underscore-prefixed attrs; **file a focused issue when picking it up.**
 - **Documentation architecture (2026-06-06, ADR-0022):** a gap analysis + `/grill-with-docs` pass
   settled a doc architecture and filed the missing pieces. **Gap verdict:** the tracker is strong on
   *features* (protein design, XAI, embeddings, structure, conservation, perf, uncertainty, schema);
