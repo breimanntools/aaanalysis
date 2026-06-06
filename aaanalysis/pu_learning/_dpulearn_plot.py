@@ -65,9 +65,9 @@ class dPULearnPlot:
     """
     Plotting class for :class:`dPULearn` (deterministic Positive-Unlabeled Learning) results [Breimann25a]_.
 
-    Visualizes ``dPULearn`` results in two ways: the reliable negatives it identifies, shown in a compressed
-    (PCA) feature space (:meth:`pca`), and an evaluation comparing multiple sets of identified negatives
-    (:meth:`eval`).
+    Visualizes ``dPULearn`` results in two ways: the reliable negatives it identifies, shown in a
+    compressed Principal Component Analysis (PCA) feature space (:meth:`pca`), and an evaluation
+    comparing multiple sets of identified negatives (:meth:`eval`).
 
     .. versionadded:: 0.1.2
 

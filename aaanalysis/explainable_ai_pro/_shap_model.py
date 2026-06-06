@@ -278,7 +278,8 @@ class ShapModel:
             Keyword arguments for the explainer class. Defaults to ``None`` (no extra arguments); passing
             ``explainer_class=None`` selects :class:`shap.TreeExplainer` with ``{'model_output': 'probability'}``.
         list_model_classes : list of Type[BaseEstimator], default=[RandomForestClassifier, ExtraTreesClassifier]
-            A list of prediction model classes used to obtain SHAP values.
+            A list of prediction model classes used to obtain SHapley Additive exPlanations (SHAP)
+            values.
         list_model_kwargs : list of dict, optional
             A list of dictionaries containing keyword arguments for each model in `list_model_classes`.
         verbose : bool, default=True
@@ -381,7 +382,8 @@ class ShapModel:
             n_background_data: Optional[int] = None,
             ) -> "ShapModel":
         """
-        Obtain SHAP values aggregated across prediction models and training rounds.
+        Obtain SHapley Additive exPlanations (SHAP) values aggregated across prediction models and
+        training rounds.
 
         For each round and feature-selection subset, the method trains each model in ``list_model_classes``
         and applies the configured SHAP explainer [Lundberg20]_ to compute per-sample feature attributions.
@@ -481,7 +483,8 @@ class ShapModel:
                         shap_feat_importance: bool = False,
                         ) -> pd.DataFrame:
         """
-        Compute SHAP feature impact (or importance) from SHAP values and add to the feature DataFrame.
+        Compute SHapley Additive exPlanations (SHAP) feature impact (or importance) from SHAP values
+        and add to the feature DataFrame.
 
         Three different scenarios for computing the feature impact are possible:
 

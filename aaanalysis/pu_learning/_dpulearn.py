@@ -174,8 +174,9 @@ class dPULearn:
             Number of negative samples (0) to be reliably identified from unlabeled samples (2).
             Should be < n unlabeled samples.
         metric : str or None, optional
-            The distance metric to use. If ``None``, PCA-based identification is performed. For distance-based
-            identification one of the following measures can be selected:
+            The distance metric to use. If ``None``, Principal Component Analysis (PCA)-based
+            identification is performed. For distance-based identification one of the following
+            measures can be selected:
 
             * ``euclidean``: Euclidean distance (minimum)
             * ``manhattan``: Manhattan distance (minimum)

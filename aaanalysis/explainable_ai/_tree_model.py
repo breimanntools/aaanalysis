@@ -331,7 +331,8 @@ class TreeModel:
         names_feature_selections : list of str, optional
             List of dataset names corresponding to ``list_is_feature``.
         n_cv : int, default=5
-            The number of cross-validation folds for RFE, must be > 1 and ≤ the smallest class's sample count.
+            The number of cross-validation folds for Recursive Feature Elimination (RFE), must be
+            > 1 and ≤ the smallest class's sample count.
         list_metrics : str or list of str, default=['accuracy', 'precision', 'recall', 'f1']
             List of scoring metrics to use for evaluation. Only metrics for binary classification are allowed.
             Valid metrics are: {'accuracy', 'balanced_accuracy', 'precision', 'recall', 'f1', 'roc_auc'}
