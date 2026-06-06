@@ -246,3 +246,38 @@ class TestFilterStatsComplex:
         cpp_num = aa.CPP(df_parts=dp, df_scales=dsc, df_cat=dca)
         cpp_num.run_num(dict_num_parts=dnp, labels=labels, n_filter=3, n_jobs=1)
         assert set(cpp_seq.last_filter_stats_) == set(cpp_num.last_filter_stats_)
+
+
+class TestFilterStatsSampleBatched:
+    """The sample-axis batched path (``n_sample_batches``) attaches the same
+    last_filter_stats_ funnel and fires the D7 shortfall RuntimeWarning, on a
+    par with the single-pass and scale-batched paths."""
+
+    def test_sample_batched_attr_set_with_keys(self):
+        cpp = aa.CPP(df_parts=_get_df_parts(), df_scales=aa.load_scales(top60_n=38))
+        cpp.run(labels=_labels(), n_filter=20, n_jobs=1, n_sample_batches=2)
+        assert set(cpp.last_filter_stats_) == _STATS_KEYS
+
+    def test_sample_batched_funnel_monotonic(self):
+        cpp = aa.CPP(df_parts=_get_df_parts(), df_scales=aa.load_scales(top60_n=38))
+        cpp.run(labels=_labels(), n_filter=20, n_jobs=1, n_sample_batches=2)
+        s = cpp.last_filter_stats_
+        assert s["n_candidates"] >= s["n_after_prefilter"] >= s["n_after_redundancy"] >= s["n_final"]
+
+    def test_sample_batched_n_final_matches_df_len(self):
+        cpp = aa.CPP(df_parts=_get_df_parts(), df_scales=aa.load_scales(top60_n=38))
+        df_feat = cpp.run(labels=_labels(), n_filter=15, n_jobs=1, n_sample_batches=2)
+        assert cpp.last_filter_stats_["n_final"] == len(df_feat)
+
+    def test_sample_batched_shortfall_runtimewarning(self):
+        # Enough candidates exist, but redundancy leaves far fewer than
+        # n_filter=5000 -> D7 RuntimeWarning, same as the single-pass path.
+        cpp = aa.CPP(df_parts=_get_df_parts(), df_scales=aa.load_scales(top60_n=38))
+        with pytest.warns(RuntimeWarning, match="n_filter"):
+            cpp.run(labels=_labels(), n_filter=5000, n_jobs=1, n_sample_batches=2)
+
+    def test_sample_batched_no_shortfall_warning_when_enough(self):
+        cpp = aa.CPP(df_parts=_get_df_parts(), df_scales=aa.load_scales(top60_n=38))
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
+            cpp.run(labels=_labels(), n_filter=5, n_jobs=1, n_sample_batches=2)
