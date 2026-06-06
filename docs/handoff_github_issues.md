@@ -9,7 +9,33 @@ protein prediction; `pro` extra for heavy deps; semver-strict v1) and the coding
 under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) · ☑️ Done/Partial.
 
 ## Snapshot
-- **Open issues: 49.** Verdicts: ✅ 9 · 🔄 26 · ⏸️ 4 · ❌ 0 (+#67 = triaged umbrella).
+- **Open issues: 59 · closed: 21** (after the 2026-06-06 bucket triage + doc-architecture pass below).
+- **Documentation architecture (2026-06-06, ADR-0022):** a gap analysis + `/grill-with-docs` pass
+  settled a doc architecture and filed the missing pieces. **Gap verdict:** the tracker is strong on
+  *features* (protein design, XAI, embeddings, structure, conservation, perf, uncertainty, schema);
+  the real gaps were the *conceptual onboarding layer*, *CPP-strategy exposure*, *code security*, and
+  *residue-pair ergonomics*. Actions:
+  - **ADR-0022** records the **prediction-task taxonomy** — residue (`AA_*`, sub-modes single-residue /
+    between-residues) · domain (`DOM_*`) · protein (`SEQ_*`), defined by *unit of comparison* +
+    *reference construction*, plus cross-cutting **determinant-discovery** & **design** classes and a
+    **relational/interaction scope boundary**. Canonical terms added to `CONTEXT.md`.
+  - **New issues:** #86 (CPP strategies guide: compositional vs positional) · #87 (CPP strategy preset)
+    · #88 (code-security hardening audit — NOT a SECURITY.md) · #89 (residue-pair / bond-centered features).
+  - **Re-scoped (comments):** #35 → 3 level-based protocols (task-oriented); #21 → concept-overview page
+    + class table (the general intro); #80 → gallery mechanism (nbsphinx thumbnails; deps = CONFIRM-FIRST).
+  - **`SECURITY.md` stays rejected** (sharp-edges); #88 is code hardening only. Gallery deps untouched.
+- **Bucket triage (2026-06-06, on GitHub):** the four TODO-dump buckets + the refactor umbrella
+  were **closed** and split into discrete issues:
+  - **#34 Fix Bugs** → #76 (explicit entry removal), #77 (`check_cat` audit), #78 (n_split/n_max
+    guidance), #79 (PSSM); "explain CPP params" folded into #20; TMD-col done via #17, gap-symbol
+    already handled.
+  - **#38 Improve docs** → #80 (tutorial gallery), #81 (cheat sheet), #82 (avg seq length in
+    overview); rest routed to #20/#21/#35.
+  - **#39 Performance** → #83 (plot CI deadline flakiness); df_parts → #19; vectorize/n_jobs → done (#30/#31).
+  - **#41 Testing** → #84 (param + branch coverage); integration/e2e stay v2-deferred (sharp-edges).
+  - **#67 umbrella closed** → extracted #74 (CHANGELOG + deprecation policy), #75 (logging shim);
+    `AAanalysisError`/ruff/`SECURITY.md` = hard-rule Reject, utils-split/mypy/poetry-drop/typed-records = Defer-v2.
+  - Dependency comments posted: #57–60 blocked-by #37; #29/#33/#61 blocked-by #18.
 - **CLOSED (resolved on `master`):** **#30** (vectorize CPP — Cython kernel + `vectorized=True`
   default + scales→sequence→split reorder; documented in **ADR-0001**, correctness anchored by
   ADR-0015), **#66** (General Sampling Strategy — resolved by ADR-0020 as *subsumed by
@@ -23,6 +49,17 @@ under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) ·
   it now emits real FIMO p/q-values, which strengthens #45's "reuse `scan_motif`" path.
 - **Standing scope rule:** the large XAI items (#50–56) and #40 mostly belong to the downstream
   **ProtXplain** (#26), not core — they're 🔄, not Ready.
+- **External assessment reconciliation (2026-06-06):** an outside triage of the tracker was
+  checked against repo state. It was right on the headline (**49 open · 2 PRs** — #14, #11) and
+  on **#18-first**, but it verified only **3 closed** (#2/#8/#13) and is **blind to ~13 more
+  closures** — the recent wave **#15/#17/#30/#31/#66/#71/#72/#73** (+old #1/#3/#4/#5/#12), so it
+  lists already-landed work as roadmap. Two material corrections: (a) it ranks protein-design
+  **#57–60 as "highest priority" but lists their prerequisite #37 as merely "Important"** — #37
+  gates the chain and must land first; (b) it treats **#67 as neutral "refactoring"** when #67
+  bundles `AAanalysisError` / mypy / ruff / SECURITY.md / utils split / typed records / dropping
+  `[tool.poetry]`, all **Reject or Defer-v2** per `sharp-edges.md` + CLAUDE.md §3. Its #56 + XAI
+  "high priority" picks balloon deps → ProtXplain (🔄, not Ready); its #41 in "release hygiene"
+  ignores that integration/e2e is v2-deferred.
 
 ## ▶ Next 3 to work on (parallel-safe — different subsystems, no shared files)
 Full session kickoffs in `docs/issue_kickoffs/`. Each is meant to be run in its own session as
@@ -30,15 +67,15 @@ Full session kickoffs in `docs/issue_kickoffs/`. Each is meant to be run in its 
 
 | # | prio | lane / files | why now | the decision grilling must settle |
 |---|---|---|---|---|
-| ~~**17**~~ | 1 | ~~`_backend/check_feature.py`~~ | ☑️ **DONE** — settled as zero-output-change clarity refactor (algebraic identity, not luck); round-trip-gated | — |
-| ~~**66**~~ | 1 | ~~`seq_analysis/_aa_window_sampler.py`~~ | ☑️ **DONE** — ADR-0020: subsumed by `AAWindowSampler` (no new class); added `sample_benchmark_set` + `custom_filter` | — |
-| **61** | 1 | `feature_engineering/_cpp.py` (+`AAWindowSampler`) | prio:1; MVP reuses `run` per class | one-vs-rest reuses `run`?; reference generator location (avoid `__init__.py` CONFIRM-FIRST); quantile-split first |
+| **18** | 1 | A — `feature_engineering/_cpp.py` + output + plotting | prio:1 foundation; **unblocks #29/#33/#26/#61** | the `df_feat` column contract (names, metadata: feature type/region); refactor existing outputs without breaking plotting |
+| **37** | 2 | C — `protein_design/` (AAMut/SeqMut) | **gate for the entire #57–60 chain**; separate subsystem, parallel-safe | finish residue/region mutation + ΔCPP scoring; what "done" means before the design chain builds on it |
+| **24** *(or **32**)* | 3 | E/D — sklearn wrapper / feature-selection utils | small, self-contained, different files; momentum task | which first; both reuse CPP outputs, neither touches A/C files |
 
-With #17, #30 and #66 landed, the next prio:1 items are **#61** (multi-class/regression via random
-reference, self-contained in `feature_engineering/_cpp.py`) and **#18** (standardize CPP output
-schema). These two ripple into the same `_cpp.py`/output area, so **serialize them** (#18 first to
-lock the schema, then #61) rather than running both in parallel. A clean third parallel lane is
-**#37** (finish AAMut/SeqMut, `protein_design/`) — separate subsystem, and it unblocks #57–60.
+These three share **no files** → safe to run in three separate sessions. With #15/#17/#30/#31/#66
+landed, **#18 is the next prio:1** and must go first because it locks the schema that #29/#33/#26
+and **#61** all consume — so **#61 serializes *behind* #18 in Lane A** (do not run them in parallel;
+they ripple into the same `_cpp.py`/output area). #37 (Lane C) and the quick win (Lane D/E) are the
+genuinely parallel companions.
 
 ---
 
@@ -122,7 +159,7 @@ lock the schema, then #61) rather than running both in parallel. A clean third p
 | 45 | 3 | 🔄 | Fits (body rewritten); reuses `scan_motif` | No | Project motif hits → `df_feat`; overlay on `plot_feature_map`. `scan_motif` now yields real FIMO p/q-values (ADR-0021) → use those as the significance signal, not a raw PWM-sum. |
 | 46 | 3 | 🔄 | Oversized (embedding+structure alignment) | No | Likely split: CPP-distance alignment is the in-scope core; rest → ProtXplain. |
 | 40 | 2 | 🔄 | Oversized; pro; structure cluster | Partial (StructurePreprocessor exists) | Scope down to one slice (e.g. DSSP→scales); coordinate with pending `data_handling_pro` move. |
-| 67 | 3 | 🔄 | v2 umbrella (already triaged) | Partial | Keep as tracking umbrella; extract any remaining genuine bugs as their own issues. |
+| 67 | 3 | ☑️ | **Closed** (2026-06-06 triage) | Yes | Extracted #74 (CHANGELOG), #75 (logging); shipped via #71/#72/#73; rest Reject/Defer-v2 per sharp-edges. |
 
 ### topic:data
 | # | prio | verdict | scope / standards | already-addressed | implementation note |
@@ -141,7 +178,7 @@ lock the schema, then #61) rather than running both in parallel. A clean third p
 |---|---|---|---|---|---|
 | 30 | 1 | ☑️ | Fits; **closed** | Yes | DONE: Cython kernel `_filters_c/_inner.pyx` + `vectorized=True` default + scales→sequence→split reorder (`_assign.py`/`_get_feature_matrix_fast.py`); exposed via `vectorized`/`n_jobs`/`n_batches`. ADR-0001; correctness anchored by ADR-0015. Only a *formal benchmark harness* is unbuilt (optional follow-up). |
 | 19 | 2 | ✅ | Fits; perf cluster | No | Optimize `df_parts` build; same-output regression guard. (No longer blocked — #30 done.) |
-| 39 | 3 | 🔄 | Vague checklist; perf cluster | Partial | Split into concrete items (plot deadlines, feat matrix, df_parts); some overlap #19. |
+| 39 | 3 | ☑️ | **Closed** (2026-06-06 triage) | Yes | Split → #83 (plot CI deadlines); df_parts → #19; vectorize/n_jobs → #30/#31 (done). |
 | 62 | 3 | 🔄 | Oversized (CuPy/torch); opt-in only | No | GPU must stay optional, CPU default. Big; do last in Lane B. |
 
 ### topic:XAI — mostly ProtXplain scope (🔄), one quick win
@@ -162,13 +199,22 @@ lock the schema, then #61) rather than running both in parallel. A clean third p
 ### topic:other / docs
 | # | prio | verdict | scope / standards | already-addressed | implementation note |
 |---|---|---|---|---|---|
-| 34 | 2 | 🔄 | TODO-dump bug list | Partial (some may be done) | Split into discrete issues (TMD col name, gap symbol, n_split info, check_cat); verify each vs current code. |
-| 41 | 3 | ⏸️ | integration/e2e is **v2-deferred** (sharp-edges) | No | Only the non-deferred parts (param coverage, branch coverage) are actionable now. |
+| 34 | 2 | ☑️ | **Closed** (2026-06-06 triage) | Yes | Split → #76/#77/#78/#79 + #20; TMD-col done (#17), gap-symbol already handled. |
+| 41 | 3 | ☑️ | **Closed** (2026-06-06 triage) | Yes | Split → #84 (param + branch coverage); integration/e2e stay v2-deferred (sharp-edges). |
 | 69 | 2 | 🔄 | Docs; **targets don't match real layout** | No | Retarget to real modules (`feature_engineering`, `data_handling`, …); note repo uses `.claude/rules/`, not module READMEs — confirm direction. |
-| 38 | 2 | 🔄 | Vague docs checklist | Partial (docstring passes done) | Split into concrete doc tasks (protocols, gallery, cheatsheet). |
-| 21 | 2 | ✅ | Docs; fits | No | Minimal end-to-end tutorial notebook (load→CPP→plot). Notebook CI gate applies. |
-| 20 | 2 | ✅ | Docs; fits | Partial | Standardize feature descriptions/terminology; pairs with docstrings skill. |
-| 35 | 3 | 🔄 | Docs; under-specified | No | Step-by-step protocols + ML-pipeline scheme. |
+| 38 | 2 | ☑️ | **Closed** (2026-06-06 triage) | Yes | Split → #80 (gallery), #81 (cheat sheet), #82 (avg seq len); rest → #20/#21/#35. |
+| 21 | 2 | ✅ | Docs; **re-scoped** (ADR-0022) | No | Now hosts the **concept-overview page + class table** (the general intro): unit-of-comparison × reference-construction × level. Entry point to #35. |
+| 20 | 2 | ✅ | Docs; fits | Partial | Standardize feature descriptions/terminology; pairs with docstrings skill. Absorbs #34's "explain CPP params". |
+| 35 | 3 | ✅ | Docs; **re-scoped** (ADR-0022) | No | Now the tracker for the **3 level-based protocols** (residue/domain/protein), task-oriented, each relating use-cases. **Blocked-by #21**, loosely #18. |
+
+### Documentation architecture — new (2026-06-06, ADR-0022)
+| # | prio | verdict | scope / standards | already-addressed | implementation note |
+|---|---|---|---|---|---|
+| 86 | 2 | ✅ | Docs; fits | No | CPP strategies guide: compositional (`Segment(1,1)`) vs positional; glossary added to CONTEXT.md; recipe per strategy. Cross-ref #20. |
+| 87 | 3 | 🔄 | Optional API (feature_engineering) | No | Named preset for strategy selection (`strategy=` or helpers); doc-first (#86), add sugar only if it earns surface. |
+| 88 | 2 | ✅ | Fits; code hardening | No | Audit subprocess (FIMO/BLAST/MMseqs2/CD-HIT), network fetch (AlphaFold/UniProt/NCBI), file parsing. **NOT a SECURITY.md** (sharp-edges reject). CodeQL continues. |
+| 89 | 3 | 🔄 | Fits; residue sub-mode ergonomics | No | First-class between-residues/bond-centered features (today implicit via even window + Pattern). Builds on AAWindowSampler; pairs with the residue protocol (#35). |
+| 80 | 3 | ✅ | Docs; gallery; deps=CONFIRM-FIRST | No | nbsphinx-based thumbnail gallery (reuse existing notebook→rst pipeline); index `examples/` + protocols. Any new docs dep is a pyproject CONFIRM-FIRST decision. |
 
 ## Defer / Reject appendix (with cited rule)
 - **#64 ⏸️** — conservation as a first-class feature is **deferred by ADR-0012** (`defer-comp-seq-cons`).
