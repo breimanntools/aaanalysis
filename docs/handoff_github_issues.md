@@ -93,6 +93,8 @@ under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) ·
 New issue-writing standard: **`docs/issue_style_guide.md`** (Problem · Goal · Requirements ·
 **measurable KPIs** · scope · deps · standards), seeded by the strongest issues (**#61**, **#62**).
 - **🟢 Solid from the start (untouched):** #61, #62, #16, #18, #37, #40, #42, #45, #63, #64, #65, #22, #47, #74.
+- **🟢 Born in-contract (2026-06-06 antibody-feedback pass):** #90, #91, #93 (filed directly to the
+  style guide; #92/#94/#95 from the same batch are now **closed** — see Snapshot).
 - **✍️ Rewritten to contract (39 issues, all now have measurable KPIs):** #20, #21, #23–#29, #32,
   #33, #36, #43, #44, #46, #48–#56, #69, #75–#84, #86–#89. Each gained Problem/Goal/Requirements/
   **quantified KPIs**/scope/deps/standards; the originals are preserved in GitHub edit history.
@@ -145,9 +147,12 @@ genuinely parallel companions.
    constructor `custom_filter`, with tests + example notebook (`cf28bd69`;
    `custom_filter` exception-wrap follow-up `55347068`). **Lane D.**
 7. **#37** — finish AAMut/SeqMut (prio:2). **Prerequisite for the protein-design chain #57–60.** **Lane C.**
-8. Quick wins (small, independent): **#24, #32, #33, #29** (#29/#33 after #18).
-9. Docs: **#21, #43, #69 (retarget first), #20**.
-10. Revisit/deferred clusters: structure/conservation (#40/#64/#65/#42), embedding (#22/#23/#47),
+8. **#91** — model evaluation & comparison (prio:1). Self-contained (reuses `aaanalysis.metrics` +
+   `comp_bootstrap_ci`); first settle helpers vs `Tool`-class+Plot vs hybrid. **Lane G**; #93
+   (learning-curve) builds on it.
+9. Quick wins (small, independent): **#24, #32, #33, #29** (#29/#33 after #18).
+10. Docs: **#21, #43, #69 (retarget first), #20, #90** (feature-selection Protocol).
+11. Revisit/deferred clusters: structure/conservation (#40/#64/#65/#42), embedding (#22/#23/#47),
     XAI (#47–56/#63), and the #67 v2 umbrella.
 
 ## Parallel lanes (safe to run in separate sessions — no shared files)
@@ -160,7 +165,12 @@ genuinely parallel companions.
   AAMut/SeqMut + the mutation workflow; share `protein_design/`.
 - **Lane D — Data/sampling:** ~~#66~~ (done), #25, #32, **#28** (now unblocked — #66 landed, so the
   `AAWindowSampler` overlap is gone; #28 builds on it).
-- **Lane E — Docs:** #21, #43, #20, #69, #35, #38 (doc files only; independent of code lanes).
+- **Lane E — Docs:** #21, #43, #20, #69, #35, #38, **#90** (feature-selection Protocol — concept
+  page + notebook; relates #32/ADR-0023) (doc files only; independent of code lanes).
+- **Lane G — Evaluation (new):** **#91** (model evaluation & comparison, prio:1 — decide
+  helpers / `Tool`-class+Plot / hybrid) → **#93** (learning-curve diagnostic, reuses the same
+  CV/CI machinery). Both build on `aaanalysis.metrics` + `comp_bootstrap_ci`; no shared files with
+  Lanes A/C, so parallel-safe.
 - **Lane F — Structure/conservation (pro, SERIALIZE):** #65 → #40/#42; **#64 is deferred (ADR-0012).**
   All share `data_handling_pro` + the pending pro-package move.
 
