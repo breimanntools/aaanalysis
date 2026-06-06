@@ -527,6 +527,7 @@ def cpp_run_sample_batched(df_parts=None, split_kws=None, df_scales=None, df_cat
 
     n_feat_total = len(get_features_(list_parts=list_parts, split_kws=split_kws,
                                      list_scales=list_scales))
+    n_requested = n_filter
     n_filter = n_feat_total if n_feat_total < n_filter else n_filter
 
     if verbose:
@@ -634,6 +635,10 @@ def cpp_run_sample_batched(df_parts=None, split_kws=None, df_scales=None, df_cat
     df_feat.reset_index(drop=True, inplace=True)
     df_feat[ut.COLS_FEAT_STAT] = df_feat[ut.COLS_FEAT_STAT].round(3)
     df_feat[ut.COL_FEATURE] = df_feat[ut.COL_FEATURE].astype(str)
+    df_feat = _attach_filter_stats(
+        df_feat=df_feat, n_candidates=n_feat_total, n_after_prefilter=len(df),
+        n_after_redundancy=len(df_feat), n_requested=n_requested,
+    )
     if verbose:
         ut.print_out(
             f"5. CPP returns df of {len(df_feat)} unique features with general information and statistics"

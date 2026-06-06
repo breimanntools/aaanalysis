@@ -108,6 +108,8 @@ class NumericalFeature:
         -----
         * Features in ``X`` should be provided in decreasing order of importance. The first occurring features
           will be kept, while subsequent features that correlate with them will be removed.
+        * The number of selected features (``True`` entries) can be **fewer** than ``n_features`` when redundant
+          columns are removed; raise ``max_cor`` to retain more (admitting more redundancy).
         Examples
         --------
         .. include:: examples/nf_filter_correlation.rst
