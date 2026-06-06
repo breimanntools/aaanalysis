@@ -92,7 +92,8 @@ def _check_scores_unit_range(scores, name="score"):
 # II Main Functions
 class AnnotationPreprocessor:
     """
-    Preprocessing class for per-residue PTM / functional-site annotations.
+    Preprocessing class for per-residue post-translational modification (PTM) /
+    functional-site annotations.
 
     Collects per-residue annotations — fetched from UniProt
     (:meth:`fetch_uniprot`) or ingested from a user / predictor table
@@ -102,7 +103,7 @@ class AnnotationPreprocessor:
     top-level categories: a closed UniProt ``'PTMs'`` vocabulary and an open
     ``'Functional sites'`` vocabulary that user keys extend
     (:meth:`register_feature`). A secondary scale-based path
-    (:meth:`build_scales` / :meth:`build_cat`) feeds the AA-scale
+    (:meth:`build_scales` / :meth:`build_cat`) feeds the amino acid (AA)-scale
     :meth:`CPP.run`, and :meth:`to_df_seq` exports annotations as
     :class:`AAWindowSampler` anchors.
 
@@ -119,9 +120,10 @@ class AnnotationPreprocessor:
         Notes
         -----
         * This is the annotation-side member of the per-residue ``dict_num``
-          family, alongside :class:`EmbeddingPreprocessor` (PLM embeddings) and
-          :class:`StructurePreprocessor` (PDB / DSSP / AlphaFold). All three
-          emit ``[0, 1]``-normalized tensors that
+          family, alongside :class:`EmbeddingPreprocessor` (protein language
+          model (PLM) embeddings) and :class:`StructurePreprocessor`
+          (PDB / Define Secondary Structure of Proteins (DSSP) / AlphaFold).
+          All three emit ``[0, 1]``-normalized tensors that
           :meth:`NumericalFeature.get_parts` slices into the per-part inputs of
           :meth:`CPP.run_num`, and that stack along the D axis via
           :func:`aaanalysis.combine_dict_nums`. The accompanying
@@ -170,10 +172,10 @@ class AnnotationPreprocessor:
         """Fetch UniProt features for every entry and map to ``df_annot``.
 
         Queries the UniProt REST API for each protein accession in ``df_seq``
-        and maps the returned PTM and site annotations into the canonical
-        ``df_annot`` schema, ready to be passed to :meth:`encode`. Evidence
-        can be filtered to retain only experimentally confirmed or manually
-        curated entries.
+        and maps the returned post-translational modification (PTM) and site
+        annotations into the canonical ``df_annot`` schema, ready to be passed
+        to :meth:`encode`. Evidence can be filtered to retain only
+        experimentally confirmed or manually curated entries.
 
         Parameters
         ----------
@@ -529,7 +531,7 @@ class AnnotationPreprocessor:
         return_std: bool = False,
         dim_names_override: Optional[List[str]] = None,
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
-        """Build ``df_scales`` by context-free per-AA averaging of the corpus.
+        """Build ``df_scales`` by context-free per-amino acid (AA) averaging of the corpus.
 
         Mirrors :meth:`StructurePreprocessor.build_scales`: for each
         canonical amino acid and each D dimension, the pseudo-scale entry is the

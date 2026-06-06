@@ -353,12 +353,13 @@ class StructurePreprocessor:
     Turns local structure files into the ``[0, 1]``-normalized per-residue
     ``dict_num`` consumed by :meth:`CPP.run_num`. Each ``encode_*`` method
     reads one kind of source from a folder and returns a ``(L, D)`` tensor per
-    protein: DSSP-derived geometry (:meth:`encode_dssp`), PDB ATOM-record
-    features (:meth:`encode_pdb`), AlphaFold PAE summaries
-    (:meth:`encode_pae`), or domain segmentation (:meth:`encode_domains`).
+    protein: Define Secondary Structure of Proteins (DSSP)-derived geometry
+    (:meth:`encode_dssp`), PDB ATOM-record features (:meth:`encode_pdb`),
+    AlphaFold Predicted Aligned Error (PAE) summaries (:meth:`encode_pae`), or
+    domain segmentation (:meth:`encode_domains`).
     :meth:`fetch_alphafold` downloads the input files first when you do not
     already have them locally. A secondary scale-based path
-    (:meth:`build_scales` / :meth:`build_cat`) feeds the AA-scale
+    (:meth:`build_scales` / :meth:`build_cat`) feeds the amino acid (AA)-scale
     :meth:`CPP.run`.
 
     .. versionadded:: 1.1.0
@@ -374,8 +375,9 @@ class StructurePreprocessor:
         Notes
         -----
         * This is the structure-side member of the per-residue ``dict_num``
-          family, alongside :class:`EmbeddingPreprocessor` (PLM embeddings) and
-          :class:`AnnotationPreprocessor` (PTM / functional sites). All three
+          family, alongside :class:`EmbeddingPreprocessor` (protein language
+          model (PLM) embeddings) and :class:`AnnotationPreprocessor`
+          (post-translational modification (PTM) / functional sites). All three
           emit ``[0, 1]``-normalized tensors that
           :meth:`NumericalFeature.get_parts` slices into the per-part inputs of
           :meth:`CPP.run_num`, and that stack along the D axis via
@@ -455,7 +457,8 @@ class StructurePreprocessor:
         on_failure: str = "nan",
         return_df: bool = False,
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
-        """Download AlphaFold model + PAE files for every entry into a folder.
+        """Download AlphaFold model + Predicted Aligned Error (PAE) files for
+        every entry into a folder.
 
         Fetches each entry's structure (``AF-<entry>-F1-model_v4``) and PAE sidecar
         from the AlphaFold Protein Structure Database [Varadi22]_
@@ -510,7 +513,8 @@ class StructurePreprocessor:
           not-ok.
         * Network failures other than a 404 (timeout, 5xx) raise
           ``RuntimeError`` and abort the bulk download — they are not absorbed
-          by ``on_failure``, which governs only the missing-from-AF-DB case.
+          by ``on_failure``, which governs only the missing-from-AlphaFold
+          Database (AF-DB) case.
 
         Raises
         ------
@@ -576,15 +580,16 @@ class StructurePreprocessor:
         ss_mode: str = "ss3",
         gap_handling: str = "pad",
     ) -> pd.DataFrame:
-        """Run DSSP and append per-residue list columns to ``df_seq``.
+        """Run Define Secondary Structure of Proteins (DSSP) and append
+        per-residue list columns to ``df_seq``.
 
         Runs the DSSP algorithm [Kabsch83]_ (via the ``mkdssp`` binary
         [Touw15]_) on each entry's PDB file and aligns the output to the
         target sequence in ``df_seq``, appending per-residue list columns
-        (secondary structure, ASA, backbone dihedrals, hydrogen bonds) plus
-        a boolean ``dssp_ok`` flag. The result is the intermediate input that
-        :meth:`encode_dssp` consumes; call this method first to inspect the
-        raw DSSP streams before encoding.
+        (secondary structure, Accessible Surface Area (ASA), backbone
+        dihedrals, hydrogen bonds) plus a boolean ``dssp_ok`` flag. The result
+        is the intermediate input that :meth:`encode_dssp` consumes; call this
+        method first to inspect the raw DSSP streams before encoding.
 
         Parameters
         ----------
@@ -665,16 +670,18 @@ class StructurePreprocessor:
         on_failure: str = "nan",
         return_df: bool = False,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
-        """Run DSSP and the per-feature encoders to build a ``[0, 1]``-normalized ``dict_dssp``.
+        """Run Define Secondary Structure of Proteins (DSSP) and the per-feature
+        encoders to build a ``[0, 1]``-normalized ``dict_dssp``.
 
-        DSSP [Kabsch83]_ assigns per-residue secondary structure, solvent
+        DSSP [Kabsch83]_ assigns per-residue secondary structure (SS), solvent
         accessibility, and backbone hydrogen-bond geometry from a 3D structure. This
         method runs it (via the ``mkdssp`` binary [Touw15]_, or reuses the columns
         already produced by :meth:`get_dssp`) and encodes the chosen ``features``
         into the ``[0, 1]``-normalized per-residue ``dict_num`` that
         :meth:`CPP.run_num` consumes. It is the DSSP-side companion of
-        :meth:`encode_pdb` (ATOM-record features) and :meth:`encode_pae` (AlphaFold
-        PAE); stack their outputs with :func:`aaanalysis.combine_dict_nums`.
+        :meth:`encode_pdb` (ATOM-record features) and :meth:`encode_pae`
+        (AlphaFold Predicted Aligned Error (PAE)); stack their outputs with
+        :func:`aaanalysis.combine_dict_nums`.
 
         Parameters
         ----------
@@ -896,9 +903,10 @@ class StructurePreprocessor:
             requires the external ``msms`` binary on PATH; absence raises
             ``RuntimeError`` with an install hint.
         plddt_disorder_threshold : float, default=70.0
-            pLDDT cutoff (in ``[0, 100]``) for the ``plddt_disorder`` feature: a
-            residue whose AlphaFold pLDDT is below this value is flagged
-            disordered (``1.0``), else ordered (``0.0``).
+            predicted Local Distance Difference Test (pLDDT) cutoff (in
+            ``[0, 100]``) for the ``plddt_disorder`` feature: a residue whose
+            AlphaFold pLDDT is below this value is flagged disordered (``1.0``),
+            else ordered (``0.0``).
         on_failure : {'nan', 'drop', 'raise'}, default='nan'
             Failure policy for entries whose PDB load fails (missing file,
             unparseable structure, no matched chain). ``'nan'`` fills with
@@ -1092,9 +1100,10 @@ class StructurePreprocessor:
             are treated as failures.
         pae_folder : str or pathlib.Path
             Directory containing one PAE JSON per row. The resolver tries,
-            in order: ``<entry>.json``, ``<entry>.json.gz``, and the AF-DB
-            canonical ``AF-<entry>-F1-predicted_aligned_error_v4.json``
-            (and its ``.gz`` variant).
+            in order: ``<entry>.json``, ``<entry>.json.gz``, and the AlphaFold
+            Database (AF-DB) canonical
+            ``AF-<entry>-F1-predicted_aligned_error_v4.json`` (and its ``.gz``
+            variant).
         features : list of str
             Feature keys belonging to ``encode_pae``: any subset of
             ``{pae_row_mean, pae_row_min, pae_row_max, pae_local_mean,
@@ -1301,9 +1310,10 @@ class StructurePreprocessor:
             Which segmentation tool to run.
 
             * ``'afragmenter'`` ([Verwimp25]_): a schema-free, tuneable segmenter
-              that builds a residue network from the AlphaFold PAE matrix and
-              finds domains by Leiden clustering. Pip-installable; requires the
-              optional extra ``pip install aaanalysis[pro]`` (lazy-import; the
+              that builds a residue network from the AlphaFold Predicted Aligned
+              Error (PAE) matrix and finds domains by Leiden clustering.
+              Pip-installable; requires the optional extra
+              ``pip install aaanalysis[pro]`` (lazy-import; the
               friendly install hint fires only when this tool is requested).
               Operates on the PAE matrix from ``pae_folder``.
             * ``'chainsaw'`` ([Wells24]_): a fully-convolutional neural network
@@ -1678,7 +1688,7 @@ class StructurePreprocessor:
         return_std: bool = False,
         dim_names_override: Optional[List[str]] = None,
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
-        """Build ``df_scales`` by context-free per-AA averaging of the encoded corpus.
+        """Build ``df_scales`` by context-free per-amino acid (AA) averaging of the encoded corpus.
 
         Mirrors :meth:`EmbeddingPreprocessor.build_scales`: for each
         canonical amino acid ``a`` and each D dimension ``d``, the pseudo-scale

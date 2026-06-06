@@ -208,8 +208,10 @@ def load_dataset(name: str = "Overview",
     * 'entry': Protein identifier, either the UniProt accession number or an id based on index.
     * 'sequence': Amino acid sequence.
     * 'label': Binary classification label (0 for negatives, 1 for positives).
-    * 'tmd_start', 'tmd_stop': Start and stop positions of TMD (present only at the domain level).
-    * 'jmd_n', 'tmd', 'jmd_c': Sequences for JMD_N, TMD, and JMD_C respectively.
+    * 'tmd_start', 'tmd_stop': Start and stop positions of Transmembrane Domain
+      (TMD) (present only at the domain level).
+    * 'jmd_n', 'tmd', 'jmd_c': Sequences for the N-terminal Juxtamembrane Domain
+      (JMD), the TMD, and the C-terminal JMD respectively.
 
     See Also
     --------

@@ -133,7 +133,8 @@ class EmbeddingPreprocessor:
         return_df: bool = False,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """
-        Encode raw per-residue PLM embeddings into a ``[0, 1]``-normalized ``dict_num``.
+        Encode raw per-residue protein language model (PLM) embeddings into a
+        ``[0, 1]``-normalized ``dict_num``.
 
         Raw PLM embeddings (ESM, ProtT5, …) are unbounded floats, whereas
         :meth:`CPP.run_num` expects per-residue values in ``[0, 1]`` (the same
@@ -189,7 +190,7 @@ class EmbeddingPreprocessor:
 
         See Also
         --------
-        * :meth:`build_scales`: the secondary context-free AA-scale path (for CPP.run).
+        * :meth:`build_scales`: the secondary context-free amino acid (AA)-scale path (for CPP.run).
         * :meth:`CPP.run_num`: the per-residue consumer of the returned dict_num.
         * :func:`aaanalysis.combine_dict_nums`: stitch several dict_nums together.
 
@@ -226,7 +227,7 @@ class EmbeddingPreprocessor:
         """
         Build pseudo-scales by context-free averaging of per-residue embeddings.
 
-        For each canonical amino acid ``a`` and each embedding dimension ``d``,
+        For each canonical amino acid (AA) ``a`` and each embedding dimension ``d``,
         the pseudo-scale entry is the mean of ``embeddings[entry][i, d]`` over
         all (entry, i) pairs where ``seq[i] == a``, taken over the input
         ``df_seq``. Non-canonical residues are skipped; AAs absent from the
@@ -331,7 +332,7 @@ class EmbeddingPreprocessor:
 
         When ``df_stds`` is supplied, clustering becomes **std-aware**:
         each dimension is represented by the per-column z-scored concatenation
-        of its per-AA ``(mean, std)`` (shape ``(D, 40)`` instead of
+        of its per-amino acid (AA) ``(mean, std)`` (shape ``(D, 40)`` instead of
         ``(D, 20)``). Two dimensions with similar per-AA means but very
         different per-AA stds will then *not* collapse into the same cluster.
 
