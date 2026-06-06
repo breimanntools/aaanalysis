@@ -15,10 +15,11 @@ def plot_get_cmap(name: str = "CPP",
     Get colormaps specified for AAanalysis.
 
     Returns a diverging colormap as a list of RGB tuples, sized to ``n_colors``.
-    The ``CPP`` palette is a red-white-blue diverging map suited for CPP feature
-    plots; the ``SHAP`` palette uses the same diverging structure with SHAP-specific
-    hues. Both complement the categorical colors from :func:`plot_get_cdict` and the
-    discrete list from :func:`plot_get_clist`.
+    The ``CPP`` palette is a red-white-blue diverging map suited for Comparative
+    Physicochemical Profiling (CPP) feature plots; the ``SHAP`` palette uses the same
+    diverging structure with SHapley Additive exPlanations (SHAP)-specific hues. Both
+    complement the categorical colors from :func:`plot_get_cdict` and the discrete list
+    from :func:`plot_get_clist`.
 
     .. versionadded:: 0.1.2
 

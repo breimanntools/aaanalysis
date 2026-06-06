@@ -171,7 +171,7 @@ def comp_kld(X: ut.ArrayLike2D = None,
     * For valid KLD calculations, the input matrix `X` must meet certain conditions:
 
       - Ensure adequate variability of features in ``X`` to avoid computational problems like singular
-        covariance matrices in Gaussian KDE.
+        covariance matrices in Gaussian Kernel Density Estimation (KDE).
       - Avoid rows in ``X`` lying in a lower-dimensional subspace; consider dimensionality reduction if necessary.
 
     See Also
@@ -225,10 +225,10 @@ def comp_per_protein_ap(list_scores: list = None,
     """
     Compute per-protein average precision (AP) for windowed site prediction.
 
-    The canonical site-localization metric in protease / PTM prediction: for each
-    protein, residues are ranked by score and AP is computed against the known
-    positive sites. ``tolerance`` allows off-by-``k`` positional jitter — a
-    ranked residue within ``tolerance`` of an unmatched positive counts as a hit.
+    The canonical site-localization metric in protease / Post-Translational Modification
+    (PTM) prediction: for each protein, residues are ranked by score and AP is computed
+    against the known positive sites. ``tolerance`` allows off-by-``k`` positional
+    jitter — a ranked residue within ``tolerance`` of an unmatched positive counts as a hit.
 
     .. versionadded:: 1.1.0
 
@@ -274,10 +274,11 @@ def comp_detection_metrics(list_scores: list = None,
     Compute pooled detection metrics at a fixed score threshold.
 
     Answers "is the true site actually called?" (distinct from ranking): residues
-    scoring ``>= threshold`` are positive calls, pooled across proteins into
-    TP/FP/FN/TN, then reduced to recall / precision / F1 / MCC. ``tolerance``
-    credits a call within ``tolerance`` residues of a true site (each site at
-    most once).
+    scoring ``>= threshold`` are positive calls, pooled across proteins into true
+    positives, false positives, false negatives, and true negatives (TP/FP/FN/TN), then
+    reduced to recall / precision / F1 / Matthews Correlation Coefficient (MCC).
+    ``tolerance`` credits a call within ``tolerance`` residues of a true site (each
+    site at most once).
 
     .. versionadded:: 1.1.0
 
@@ -323,7 +324,7 @@ def comp_bootstrap_ci(values: ut.ArrayLike1D = None,
                       seed: Optional[int] = None,
                       ) -> dict:
     """
-    Compute a percentile bootstrap confidence interval of the mean.
+    Compute a percentile bootstrap Confidence Interval (CI) of the mean.
 
     Standard small-N uncertainty quantification over a per-protein metric vector
     (e.g. the output of :func:`comp_per_protein_ap`). Resamples with replacement;
@@ -378,8 +379,8 @@ def comp_smooth_scores(scores: ut.ArrayLike1D = None,
     """
     Smooth a per-residue score vector with a NaN-aware, peak-preserving kernel.
 
-    Off-by-one positional jitter is universal in windowed protease / PTM
-    prediction; smoothing the per-residue score makes nearby high scores
+    Off-by-one positional jitter is universal in windowed protease / Post-Translational
+    Modification (PTM) prediction; smoothing the per-residue score makes nearby high scores
     reinforce a site. The peak-preserving form takes ``max(smoothed, raw)`` so a
     true peak is never attenuated below its original height. Pure-numpy, no SciPy.
 
