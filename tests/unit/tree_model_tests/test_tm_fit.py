@@ -387,3 +387,47 @@ class TestTreeModelFitReproducibility:
         b = aa.TreeModel(random_state=0); b.fit(X=X, labels=labels, **ARGS)
         assert np.allclose(a.feat_importance, b.feat_importance)
         assert np.array_equal(a.is_selected_, b.is_selected_)
+
+
+class TestTreeModelFeatureImportances:
+    """The sklearn-named feature_importances_ property (#92)."""
+
+    def _fit(self, seed=0, n_feat=6):
+        rng = np.random.default_rng(seed)
+        X = rng.random((40, n_feat))
+        labels = create_labels(40)
+        return aa.TreeModel(random_state=seed).fit(X=X, labels=labels, **ARGS)
+
+    def test_unavailable_before_fit_raises(self):
+        tree_model = aa.TreeModel()
+        with pytest.raises(ValueError, match="fit"):
+            _ = tree_model.feature_importances_
+
+    def test_shape_matches_n_features(self):
+        tm = self._fit(n_feat=6)
+        assert tm.feature_importances_.shape == (6,)
+
+    def test_is_ndarray_float(self):
+        tm = self._fit()
+        fi = tm.feature_importances_
+        assert isinstance(fi, np.ndarray) and fi.dtype == float
+
+    def test_alias_of_feat_importance_over_100(self):
+        tm = self._fit()
+        assert np.allclose(tm.feature_importances_, np.asarray(tm.feat_importance, dtype=float) / 100.0)
+
+    def test_sklearn_convention_nonneg_and_sums_to_one(self):
+        # use_rfe=False -> every feature used each round, per-round importances sum to 1,
+        # so the averaged fractions sum to ~1 (allowing rounding drift).
+        tm = self._fit()
+        fi = tm.feature_importances_
+        assert (fi >= 0).all()
+        assert np.isclose(fi.sum(), 1.0, atol=0.05)
+
+    def test_reproducible_across_same_seed(self):
+        rng = np.random.default_rng(0)
+        X = rng.random((40, 6))
+        labels = create_labels(40)  # built once, reused for both fits
+        a = aa.TreeModel(random_state=0).fit(X=X, labels=labels, **ARGS)
+        b = aa.TreeModel(random_state=0).fit(X=X, labels=labels, **ARGS)
+        assert np.array_equal(a.feature_importances_, b.feature_importances_)
