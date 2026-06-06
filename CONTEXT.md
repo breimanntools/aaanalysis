@@ -26,6 +26,44 @@ _Avoid_: positions column (collides with `df_feat`'s `COL_POSITION`, which is a 
 The single rule governing `tmd_start` / `tmd_stop` (`ut.COL_TMD_START` / `ut.COL_TMD_STOP`) in the **position-based** `df_seq` format: **1-based, start-inclusive, stop-inclusive** — matching standard biological annotation (e.g. UniProt), so an annotated TMD spanning residues `s..e` is stored verbatim as `tmd_start=s, tmd_stop=e` and its length is `tmd_stop - tmd_start + 1`. This convention is the *single source of truth*: every construction site that derives these columns (`_get_tmd_positions` from a `tmd` substring, the `seq_based` branch from `jmd_n_len`/`jmd_c_len`, `expand_pos_anchors_` from a P1 anchor) and every consumer that reads them (`Parts.get_tmd` slices `seq[tmd_start-1 : tmd_stop]`, `_slice_dict_num_to_basic_parts`) expresses the *same* convention, even though each uses different arithmetic. The convention is documented, not factored into one shared function, because the sites share a meaning, not a formula.
 _Avoid_: 0-based, half-open / exclusive-stop, `len()`-style stop (a stop equal to `start + length` reads as exclusive — it is not).
 
+### Prediction-task taxonomy vocabulary
+
+**prediction level**:
+The biological unit a task predicts over, and the organizing backbone of the user-facing docs. Three levels, encoded in the `load_dataset` name-prefix scheme: **residue level** (`AA_*`), **domain level** (`DOM_*`), **protein level** (`SEQ_*`). The level is a convenient label for two deeper axes — the **unit of comparison** and **reference construction** — which actually determine the CPP setup. See ADR-0022.
+_Avoid_: scale (reserved for AA physicochemical scales), granularity, task type (too generic).
+
+**residue level**:
+Per-residue / windowed prediction; datasets `AA_*`; the **unit of comparison** is a fixed-length **window** (`AAWindowSampler`). Two **sub-modes**: **single-residue** (odd `aa_window_size` — a site *on* a residue, e.g. a PTM) and **between-residues** (even window — a scissile bond P1│P1′, e.g. cleavage). Sub-modes, not separate levels: they differ only by window parity.
+_Avoid_: position level, site level (ambiguous across the two sub-modes), residue-pair level (the "between" case is a sub-mode, not a level).
+
+**domain level**:
+Prediction over a defined sub-region of a protein; datasets `DOM_*` (e.g. `DOM_GSEC`); the **unit of comparison** is the **part** set derived from `tmd_start`/`tmd_stop` (`jmd_n` / `tmd` / `jmd_c`). CPP is native here.
+_Avoid_: region level, segment level (segment is a split type).
+
+**protein level**:
+Whole-chain prediction; datasets `SEQ_*`; the whole sequence is the part. "Protein-level" is the **user-facing alias of the `SEQ_` prefix** (`SEQ_` = "sequence", not a third concept). Short peptides are the clean sub-case — the chain *is* the window.
+_Avoid_: sequence level (use only when naming the `SEQ_` prefix spelling itself), global level.
+
+**unit of comparison**:
+The part CPP profiles for a task — a **window** (residue level), a **part** set (domain level), or the **whole chain** (protein level). One of the two axes that genuinely define a use-case class. See ADR-0022 (D3).
+_Avoid_: granularity, scope.
+
+**reference construction**:
+How the contrasting set is built for a CPP / PU workflow — labeled A-vs-B groups, non-site / non-cleaved windows, an unlabeled pool, or a composition-matched shuffled background (#61 / #66). The second class-defining axis.
+_Avoid_: negative set (too narrow — only one of the options).
+
+**determinant discovery**:
+A cross-cutting use-case class with **no prediction target**: CPP contrasts two groups to surface *what physicochemically distinguishes them*, interpreted via AAontology. CPP's purest, most interpretable use; applies at any **prediction level**.
+_Avoid_: feature discovery (collides with feature engineering), profiling (too generic).
+
+**design / engineering**:
+A cross-cutting use-case class that inverts prediction: modify a sequence to move it toward a target CPP profile (AAMut / SeqMut). Same levels, opposite direction.
+_Avoid_: optimization (overloaded), generation.
+
+**relational / interaction (scope boundary)**:
+Tasks about relationships *between* residues or chains (PPI interfaces, residue–residue contacts). AAanalysis profiles interface **segments** only; long-range pairwise contacts are **out of scope** and hand off to structure / PLM tooling. A boundary, **not** a fourth prediction level.
+_Avoid_: pair level, contact level (implies first-class support that does not exist).
+
 ### Window sampling vocabulary
 
 **window**:
@@ -215,6 +253,10 @@ periodic offsets). Exposed as `ut.LIST_SPLIT_TYPES`. The label generators
 `split_kws`, not on any part's length.
 _Avoid_: split mode, split kind.
 
+**compositional vs positional (CPP strategy)**:
+The two ways `split_kws` resolves a feature's locality. **Compositional** uses a single whole-part average — `Segment(1,1)`, obtained via `get_split_kws(split_types="Segment", n_split_min=1, n_split_max=1)` — so the feature is an amino-acid-composition-like mean over the *entire* part (position-agnostic). **Positional** uses `n_split_max>1` (sub-segments) and/or **Pattern** / **PeriodicPattern**, resolving the feature to specific sub-regions/positions. There is no `strategy=` parameter today — the distinction *emerges* from `split_kws`; a named preset is a proposed enhancement. Maps onto **prediction level**: compositional ≈ protein, positional ≈ residue, domain uses both.
+_Avoid_: global vs local, whole vs windowed.
+
 **empty split bucket**:
 A `(split type, part)` pairing that produces zero splits. Because label
 generation is part-length independent, this happens only when the split-type
@@ -286,6 +328,20 @@ _Avoid_: denoising, blurring (attenuates peaks).
 A per-protein **max-score-vs-rank** scatter colored by group (substrate / hold-out / non-substrate) with optional threshold lines — the standard deployed-predictor sanity check. A standalone `aa.plot_rank` (deliberately not a `*Plot` method; pairs with the standalone `aa.metrics` functions).
 _Avoid_: ranking plot (collides with `CPPPlot.ranking`, which ranks *features* from `df_feat`).
 
+### Feature selection vocabulary
+
+**feature selection**:
+The *post-fit* reduction of a `df_feat` to a chosen subset of features, performed by `TreeModel.select_features(df_feat, strategy, param)` after `TreeModel.fit`. It consumes the signals `fit` already produced — the Monte Carlo `feat_importance` and the per-round `is_selected_` masks — and returns a row-filtered `df_feat`. Distinct from **RFE prefiltering**, which happens *inside* `fit(use_rfe=True)` (an iterative re-fit loop), and from CPP **feature engineering**, which *creates* features rather than selecting among them.
+_Avoid_: feature filtering (overloaded with CPP's split/scale filtering), feature extraction, dimensionality reduction.
+
+**selection strategy**:
+One of the tree-native rules `select_features` dispatches on, named by a `STRATEGY_*` constant: `top_k` (keep the `param` highest-`feat_importance` features), `threshold` (keep features with `feat_importance ≥ param`), `frequency` (keep features chosen in `≥ param` fraction of the per-round `is_selected_` masks — meaningful only when `fit` ran with `use_rfe=True`). The single `param` knob is a numeric scalar whose admissible type is fixed by the strategy (or a `dict` for a future multi-knob strategy), mirroring `sample_synthetic`'s polymorphic **generation strategy**. RFE itself is *not* a selection strategy — it is the `fit`-time engine that produces the masks `frequency` aggregates.
+_Avoid_: selection mode (collides with `output_mode`), selection method.
+
+**is_preselected**:
+A constructor-level boolean mask on `TreeModel` marking features to keep *before* RFE runs in `fit` — an upstream gate, not a **selection strategy**. Orthogonal to `select_features`, which acts after fitting.
+_Avoid_: preselection strategy (it carries no strategy), prefilter (collides with RFE prefiltering).
+
 ## Relationships
 
 - A **df_seq** row contains one **entry** and one sequence; optionally a **pos column** cell of 1-based positions.
@@ -295,6 +351,10 @@ _Avoid_: ranking plot (collides with `CPPPlot.ranking`, which ranks *features* f
 - Every row in a `segments`-mode output has an **entry_win**; for non-synthetic rows it is globally unique by construction across calls; for **control windows** it is unique per call only.
 - The **identity filter** uses **test windows** as the anti-leakage reference; the **motif filter** uses a **PWM** as the gate.
 - A CPP feature is one **split** applied to one **part** scored by one scale; an **empty split bucket** contributes no features and is silently dropped (with a validation-time warning for the Pattern case).
+- A **prediction level** fixes the **unit of comparison** (window → residue, part set → domain, whole chain → protein) and constrains **reference construction**; it maps 1:1 to the `load_dataset` prefix (`AA_` / `DOM_` / `SEQ_`). See ADR-0022.
+- **Compositional** CPP strategy is a single `Segment(1,1)` whole-part split; **positional** is `n_split_max>1` / **Pattern** / **PeriodicPattern**. Compositional suits **protein level**, positional suits **residue level**, **domain level** uses both.
+- **Determinant discovery** and **design / engineering** are cross-cutting use-case classes (any level); **relational / interaction** is a documented scope boundary, not a level.
+- **Feature selection** happens *after* `TreeModel.fit`: `top_k` / `threshold` read the Monte Carlo `feat_importance`; `frequency` aggregates the per-round `is_selected_` masks that **RFE prefiltering** (`fit(use_rfe=True)`) produced. **is_preselected** gates features *before* RFE. So the order is: `is_preselected` (pre-RFE) → RFE in `fit` → `select_features` (post-fit).
 
 ## Example dialogue
 
@@ -318,4 +378,5 @@ _Avoid_: ranking plot (collides with `CPPPlot.ranking`, which ranks *features* f
 - `center` is used in backend code for the 0-based window-center index; in user-facing language and outputs we use **P1 anchor** / **source position** (1-based). **Resolved**: backend stays 0-based internally; frontend / output is 1-based throughout.
 - `positions` was a column constant for `df_feat` (CSV string of feature positions); `pos` is the column constant for `df_seq`'s positive positions (list of ints). **Resolved**: distinct constants — `COL_POSITION` (`df_feat`, `str`) and `COL_POS` (`df_seq`, `list[int]`).
 - `label-neutral` was a claim in the `AAWindowSampler` class docstring; in practice the API ships opinionated **role** and `label_ref` defaults. **Resolved**: framing is dropped; class docstring now states defaults explicitly assume PU-learning / hard-negative-mining workflows.
+- `protein level` (user-facing) vs the `SEQ_` dataset prefix ("sequence") named the same thing two ways, risking a spurious third "sequence level". **Resolved**: they are one **prediction level**; "protein-level" is the canonical user-facing term, `SEQ_` is the dataset-prefix spelling, and "sequence" stays reserved for the amino-acid string (`df_seq`, the `sequence` column). The cleavage "between two residues" case is a **sub-mode** of **residue level**, not a separate level. See ADR-0022.
 - `v1.1` / `v1.2` were used for **three different axes**: (a) the **package release version** (`pyproject.toml` / PyPI), (b) the **StructurePreprocessor feature-set revision** (rev 1 = DSSP+PDB; rev 1.1 = +AlphaFold — see ADR-0002 and the **feature key** entry), and (c) **git branch names** (`feat/structure-preprocessor-v1.2`). **Resolved**: the *only* authoritative version line is the **package version**, which follows semver — the line is `1.0.1 → 1.0.2 → 1.0.3 → 1.1.0` (the next, unreleased, minor; it ships the whole preprocessor family + CPPGrid + the site-localization metrics). The StructurePreprocessor's internal "rev 1 / rev 1.1" and any branch-name version are **not** package versions; never write a bare "v1.1" to mean a feature-set revision. See ADR-0010.
