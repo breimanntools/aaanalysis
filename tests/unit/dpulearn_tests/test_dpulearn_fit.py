@@ -175,6 +175,22 @@ class TestdPULearnFit:
         if is_invalid:
             with pytest.raises(ValueError):
                 dpul.fit(X, labels, n_unl_to_neg=n_unl_to_neg)
+
+    def test_n_unl_to_neg_none_message(self):
+        """Omitting 'n_unl_to_neg' gives a tailored message (no opaque default)."""
+        X = np.random.rand(100, 5)
+        labels = create_labels(100)
+        dpul = aa.dPULearn()
+        with pytest.raises(ValueError, match="no default"):
+            dpul.fit(X, labels)
+
+    def test_labels_wrong_encoding_message(self):
+        """Standard {0, 1} labels get the PU-encoding hint (1 = positive, 2 = unlabeled)."""
+        X = np.random.rand(100, 5)
+        labels = np.array([0, 1] * 50)
+        dpul = aa.dPULearn()
+        with pytest.raises(ValueError, match="PU-encoded"):
+            dpul.fit(X, labels, n_unl_to_neg=5)
     
     @settings(deadline=1000, max_examples=10)
     @given(metric=some.just("invalid_metric"))

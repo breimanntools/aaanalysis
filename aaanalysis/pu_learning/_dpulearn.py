@@ -172,7 +172,8 @@ class dPULearn:
             Dataset labels of samples in ``X``. Should be either 1 (positive) or 2 (unlabeled).
         n_unl_to_neg : int
             Number of negative samples (0) to be reliably identified from unlabeled samples (2).
-            Should be < n unlabeled samples.
+            Should be >= 1 and < n unlabeled samples. Required — there is no default; a sensible
+            start is a small value (e.g. ``1``), increased as confidence grows.
         metric : str or None, optional
             The distance metric to use. If ``None``, Principal Component Analysis (PCA)-based
             identification is performed. For distance-based identification one of the following
@@ -227,7 +228,19 @@ class dPULearn:
         """
         # Check input
         X = ut.check_X(X=X)
-        labels = ut.check_labels(labels=labels, vals_required=[1, 2], allow_other_vals=False)
+        labels = ut.check_labels(
+            labels=labels, vals_required=[1, 2], allow_other_vals=False,
+            str_add="dPULearn expects PU-encoded labels: 1 = positive, 2 = unlabeled "
+                    "(reliable negatives 0 are the fitted output, not an input). "
+                    "Convert a standard {0, 1} encoding before calling fit.",
+        )
+        if n_unl_to_neg is None:
+            raise ValueError(
+                "'n_unl_to_neg' (None) should be a positive int — the number of "
+                "unlabeled samples (2) to reclassify as reliable negatives (0). "
+                "There is no default; set it explicitly (e.g. n_unl_to_neg=1 to "
+                "start conservatively, then increase)."
+            )
         ut.check_number_range(name="n_unl_to_neg", val=n_unl_to_neg, min_val=1, just_int=True)
         check_n_unl_to_neg(labels=labels, n_unl_to_neg=n_unl_to_neg, label_unl=2)
         check_metric(metric=metric)
