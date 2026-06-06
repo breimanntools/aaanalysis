@@ -29,9 +29,10 @@ under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) ·
     was `cpp_run_sample_batched` skipping `_attach_filter_stats`, a one-path consistency gap), **#95**
     (`9d5c4398` — tailored `n_unl_to_neg`/labels errors), **#92** (`438a7cda` — `feature_importances_`
     property; **partial**, see deferred).
-  - **Deferred (the #92 remainder):** TreeModel's full sklearn estimator interface
-    (`BaseEstimator`/`get_params`/`set_params` + `RFE`/`cross_val_predict`) — blocked by `__init__`
-    storing params under underscore-prefixed attrs; **file a focused issue when picking it up.**
+  - **#92 remainder — not tracked (out of scope):** the `feature_importances_` property is the
+    delivered scope. The full sklearn estimator interface (`BaseEstimator`/`get_params`/`set_params`
+    + `RFE`/`cross_val_predict`) is **not pursued** (blocked by `__init__` storing params under
+    underscore-prefixed attrs) and is intentionally **not filed as an issue**.
 - **Documentation architecture (2026-06-06, ADR-0022):** a gap analysis + `/grill-with-docs` pass
   settled a doc architecture and filed the missing pieces. **Gap verdict:** the tracker is strong on
   *features* (protein design, XAI, embeddings, structure, conservation, perf, uncertainty, schema);
