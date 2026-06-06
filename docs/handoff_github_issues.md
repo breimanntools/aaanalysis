@@ -24,6 +24,11 @@ under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) ·
   - **Re-scoped (comments):** #35 → 3 level-based protocols (task-oriented); #21 → concept-overview page
     + class table (the general intro); #80 → gallery mechanism (nbsphinx thumbnails; deps = CONFIRM-FIRST).
   - **`SECURITY.md` stays rejected** (sharp-edges); #88 is code hardening only. Gallery deps untouched.
+- **Merged on master (2026-06-06, concurrent session):** **`TreeModel.select_features`** — post-fit
+  tree-based feature selection (`top_k`/`threshold`/`frequency`), with **ADR-0023**, an example
+  notebook, and tests (`325c28ca`). This **partially addresses #32** (model-based selection);
+  variance/correlation filtering remains the open part of #32. The "Feature selection vocabulary"
+  in `CONTEXT.md` now has shipped code behind it.
 - **Bucket triage (2026-06-06, on GitHub):** the four TODO-dump buckets + the refactor umbrella
   were **closed** and split into discrete issues:
   - **#34 Fix Bugs** → #76 (explicit entry removal), #77 (`check_cat` audit), #78 (n_split/n_max
@@ -167,7 +172,7 @@ genuinely parallel companions.
 | 66 | 1 | ☑️ | Fits; **closed** (ADR-0020) | Yes | DONE: no `NegativeSampler` class — subsumed by `AAWindowSampler`. Added `sample_benchmark_set` (multi-arm, `SeedSequence` sub-seeds, `arm` column) + constructor `custom_filter`; `COL_ARM`/`LIST_STRATEGIES` in utils. Tests + `aws_sample_benchmark_set.ipynb`. CPP/embedding-similarity decoy deferred (ADR). A raising `custom_filter` is wrapped in a `RuntimeError` naming the window (ADR-0020 D3). `cf28bd69` + `55347068`. |
 | 65 | 2 | 🔄 | Pro (biopython); structure cluster | No | `get_msa` is misnamed (fetches 1 FASTA). Rename/replace; add real homolog+align backends; relates ADR-0017 fetch verbs. |
 | 33 | 2 | ✅ | Small; fits | No | CSV/parquet/metadata export of `df_feat`/outputs. Do after #18 schema. |
-| 32 | 2 | ✅ | Small; fits | No | Variance/correlation feature filtering on CPP outputs. Good first task. |
+| 32 | 2 | ☑️ Partial | Small; fits | **Partial** | **Model-based** post-fit selection shipped: `TreeModel.select_features` (`top_k`/`threshold`/`frequency`, ADR-0023, `325c28ca`, with example + tests). **Still open:** variance/correlation filtering on CPP outputs. |
 | 29 | 2 | ✅ | Small; fits; depends on #18 | No | z-score/min-max normalization options; align with output schema. |
 | 28 | 2 | 🔄 | Fits; **unblocked** (#66 landed); overlaps #27 | Partial (windowing exists) | Sliding-window CPP; now builds directly on `AAWindowSampler` (incl. `sample_benchmark_set`). Overlap with #66 resolved (ADR-0020); still coordinate with #27/#18. |
 | 23 | 2 | 🔄 | Fits; embedding cluster | No | CPP↔embedding correlation analysis; pairs with #22. |
@@ -205,7 +210,7 @@ genuinely parallel companions.
 | 38 | 2 | ☑️ | **Closed** (2026-06-06 triage) | Yes | Split → #80 (gallery), #81 (cheat sheet), #82 (avg seq len); rest → #20/#21/#35. |
 | 21 | 2 | ✅ | Docs; **re-scoped** (ADR-0022) | No | Now hosts the **concept-overview page + class table** (the general intro): unit-of-comparison × reference-construction × level. Entry point to #35. |
 | 20 | 2 | ✅ | Docs; fits | Partial | Standardize feature descriptions/terminology; pairs with docstrings skill. Absorbs #34's "explain CPP params". |
-| 35 | 3 | ✅ | Docs; **re-scoped** (ADR-0022) | No | Now the tracker for the **3 level-based protocols** (residue/domain/protein), task-oriented, each relating use-cases. **Blocked-by #21**, loosely #18. |
+| 35 | 3 | ✅ | Docs; **re-scoped** (ADR-0022) | No | Now the tracker for the **3 level-based protocols** (residue/domain/protein), task-oriented, each relating use-cases, **+ CPP best-practices** (`n_scales` via AAclust · `n_split_max`/strategy · **level-aware part naming**: domain→specific domain name, cleavage→P1/P1′, protein→whole-chain). **Blocked-by #21**, loosely #18; see #27/#86. |
 
 ### Documentation architecture — new (2026-06-06, ADR-0022)
 | # | prio | verdict | scope / standards | already-addressed | implementation note |

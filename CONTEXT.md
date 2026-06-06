@@ -26,6 +26,14 @@ _Avoid_: positions column (collides with `df_feat`'s `COL_POSITION`, which is a 
 The single rule governing `tmd_start` / `tmd_stop` (`ut.COL_TMD_START` / `ut.COL_TMD_STOP`) in the **position-based** `df_seq` format: **1-based, start-inclusive, stop-inclusive** — matching standard biological annotation (e.g. UniProt), so an annotated TMD spanning residues `s..e` is stored verbatim as `tmd_start=s, tmd_stop=e` and its length is `tmd_stop - tmd_start + 1`. This convention is the *single source of truth*: every construction site that derives these columns (`_get_tmd_positions` from a `tmd` substring, the `seq_based` branch from `jmd_n_len`/`jmd_c_len`, `expand_pos_anchors_` from a P1 anchor) and every consumer that reads them (`Parts.get_tmd` slices `seq[tmd_start-1 : tmd_stop]`, `_slice_dict_num_to_basic_parts`) expresses the *same* convention, even though each uses different arithmetic. The convention is documented, not factored into one shared function, because the sites share a meaning, not a formula.
 _Avoid_: 0-based, half-open / exclusive-stop, `len()`-style stop (a stop equal to `start + length` reads as exclusive — it is not).
 
+**part**:
+A named region of a protein over which a **split** operates and a scale is averaged; the `PART` field of a feature id (`PART-SPLIT-SCALE`). Parts are the columns of `df_parts`, produced by `SequenceFeature.get_df_parts`. The default vocabulary is **TMD-centric** — `jmd_n` / `tmd` / `jmd_c` (plus composites like `jmd_n_tmd_n`) — which fits **domain-level** tasks but is *semantically wrong* for other levels, so part naming should follow the **prediction level**:
+- **Domain level:** replace the generic `tmd` with the **specific domain name** where known (e.g. the Pfam / InterPro domain), rather than the placeholder "tmd".
+- **Residue level (cleavage / between-residues):** name positions by the **Schechter–Berger** convention — `… P2 · P1 │ P1′ · P2′ …` around the scissile bond (`│` = cleavage site; see **P1 anchor / source position**), not "tmd".
+- **Protein level:** the whole chain is a single part; use a neutral name (e.g. `seq`, or N-term / core / C-term thirds), not "tmd".
+First-class user-defined / renamed regions are tracked by **#27** (region abstraction); today a part is chosen from the predefined family.
+_Avoid_: region (reserved for the #27 abstraction), domain (a part may be a window or sub-region, not a whole domain), segment (a split type).
+
 ### Prediction-task taxonomy vocabulary
 
 **prediction level**:
