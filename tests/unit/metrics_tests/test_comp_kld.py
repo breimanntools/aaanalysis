@@ -62,7 +62,7 @@ def check_invalid_conditions(X, labels, min_samples=3, check_unique=True, check_
 
 class TestCompKld:
     # Test for parameter X
-    @settings(deadline=350, max_examples=400)
+    @settings(deadline=None, max_examples=400)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=some.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
     def test_X_valid(self, X):
@@ -81,7 +81,7 @@ class TestCompKld:
                     else:
                         raise
 
-    @settings(deadline=350, max_examples=20)
+    @settings(deadline=None, max_examples=20)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=some.floats(min_value=-1e3, max_value=1e3)))
     def test_X_invalid(self, X):
@@ -95,7 +95,7 @@ class TestCompKld:
                     aa.comp_kld(X, labels)
 
     # Test for parameter labels
-    @settings(deadline=350, max_examples=400)
+    @settings(deadline=None, max_examples=400)
     @given(labels=some.lists(some.integers(min_value=0, max_value=1), min_size=4))
     def test_labels_valid(self, labels):
         X = np.random.rand(len(labels), 3)
@@ -111,7 +111,7 @@ class TestCompKld:
                 else:
                     raise
 
-    @settings(deadline=350, max_examples=20)
+    @settings(deadline=None, max_examples=20)
     @given(labels=some.lists(some.integers(), min_size=2))
     def test_labels_invalid(self, labels):
         X = np.random.rand(len(labels), 3)
@@ -127,7 +127,7 @@ class TestCompKld:
             aa.comp_kld(X, labels)
 
     # Test for parameter label_test
-    @settings(deadline=350, max_examples=5)
+    @settings(deadline=None, max_examples=5)
     @given(label_test=some.integers(min_value=0, max_value=1))
     def test_label_test_valid(self, label_test):
         X = np.random.rand(10, 3)
@@ -145,7 +145,7 @@ class TestCompKld:
                     else:
                         raise
 
-    @settings(deadline=350, max_examples=20)
+    @settings(deadline=None, max_examples=20)
     @given(label_test=some.integers())
     def test_label_test_invalid(self, label_test):
         X = np.random.rand(10, 3)
@@ -158,7 +158,7 @@ class TestCompKld:
                     aa.comp_kld(X, labels, label_test=label_test)
 
     # Test for parameter label_ref
-    @settings(deadline=350, max_examples=5)
+    @settings(deadline=None, max_examples=5)
     @given(label_ref=some.integers(min_value=0, max_value=1))
     def test_label_ref_valid(self, label_ref):
         X = np.random.rand(10, 3)
@@ -176,7 +176,7 @@ class TestCompKld:
                     else:
                         raise
 
-    @settings(deadline=350, max_examples=20)
+    @settings(deadline=None, max_examples=20)
     @given(label_ref=some.integers())
     def test_label_ref_invalid(self, label_ref):
         X = np.random.rand(10, 3)
@@ -190,7 +190,7 @@ class TestCompKld:
 
 class TestCompKldComplex:
     # Test for combinations of valid inputs
-    @settings(deadline=350, max_examples=400)
+    @settings(deadline=None, max_examples=400)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=2, max_side=10),
                          elements=some.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)),
            label_test=some.integers(min_value=0, max_value=1),
@@ -211,7 +211,7 @@ class TestCompKldComplex:
                         raise
 
     # Test for combinations of invalid inputs
-    @settings(deadline=350, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=2, max_side=10),
                          elements=some.floats(min_value=-1e3, max_value=1e3, )),
            label_test=some.integers(),

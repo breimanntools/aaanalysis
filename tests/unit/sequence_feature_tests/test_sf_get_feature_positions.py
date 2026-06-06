@@ -65,7 +65,9 @@ class TestGetFeaturePositions:
         result = sf.get_feature_positions(features=features, jmd_c_len=jmd_c_len)
         assert isinstance(result, list)
 
-    @settings(max_examples=10, deadline=1500)
+    # deadline disabled: generates up to 2000-char text, so first-call/cold-runner timing is
+    # inherently variable (flaked on Windows CI). Correctness, not speed, is what this test guards.
+    @settings(max_examples=10, deadline=None)
     @given(tmd_seq=st.text(min_size=20, max_size=2000))
     def test_valid_tmd_seq(self, tmd_seq):
         sf = aa.SequenceFeature()
