@@ -308,8 +308,9 @@ class AAWindowSampler:
     - :meth:`sample_synthetic` — synthetic control windows from built-in priors,
       AAontology presets [Rawlings16]_, multiplicative preset mixes [LiuDeber99]_, or
       custom-alphabet frequency tables.
-    - :meth:`sample_motif_matched` — in-memory FIMO-style scan against a user-supplied
-      PWM; a CLI parity wrapper that delegates to ``fimo`` lives at
+    - :meth:`sample_motif_matched` — in-memory FIMO (Find Individual Motif Occurrences)-style
+      scan against a user-supplied Position Weight Matrix (PWM); a Command-Line
+      Interface (CLI) parity wrapper that delegates to ``fimo`` lives at
       :func:`aaanalysis.scan_motif`.
 
     Output modes (per method, except :meth:`sample_synthetic` which is segments-only):
@@ -494,10 +495,10 @@ class AAWindowSampler:
         context_out : value or list-like, optional
             Blacklist of ``aa_context_col`` tag values for excluded residues.
         motif_pwm : pd.DataFrame, optional
-            Position-weight matrix of shape ``(window_size, 20)`` whose columns are
-            the 20 canonical AA letters in any order (reindexed internally to
-            ``ut.LIST_CANONICAL_AA``). Required together with ``motif_score_threshold``
-            when motif filtering is desired.
+            Position Weight Matrix (PWM) of shape ``(window_size, 20)`` whose columns
+            are the 20 canonical amino acid (AA) letters in any order (reindexed
+            internally to ``ut.LIST_CANONICAL_AA``). Required together with
+            ``motif_score_threshold`` when motif filtering is desired.
         motif_score_threshold : float, optional
             PWM score threshold; required when ``motif_pwm`` is set.
         motif_match : {'in', 'out'}, default='in'
@@ -645,9 +646,9 @@ class AAWindowSampler:
         context_out : value or list-like, optional
             Blacklist of ``aa_context_col`` tag values for excluded residues.
         motif_pwm : pd.DataFrame, optional
-            Position-weight matrix of shape ``(window_size, 20)`` whose columns are
-            the 20 canonical AA letters in any order (reindexed internally to
-            ``ut.LIST_CANONICAL_AA``).
+            Position Weight Matrix (PWM) of shape ``(window_size, 20)`` whose columns
+            are the 20 canonical amino acid (AA) letters in any order (reindexed
+            internally to ``ut.LIST_CANONICAL_AA``).
         motif_score_threshold : float, optional
             PWM score threshold; required when ``motif_pwm`` is set.
         motif_match : {'in', 'out'}, default='in'
@@ -764,8 +765,8 @@ class AAWindowSampler:
               name (see Notes).
             * ``list[str]`` or ``tuple[str, ...]``: at least two **distinct**
               AAontology preset names. Their priors are combined into a
-              multiplicative joint prior over the 20 canonical AAs (see
-              Notes / [LiuDeber99]_). Duplicate components are rejected.
+              multiplicative joint prior over the 20 canonical amino acids (AAs)
+              (see Notes / [LiuDeber99]_). Duplicate components are rejected.
             * ``dict[str, Real]``: a custom frequency table. Keys are
               single-character symbols and values are non-negative
               probabilities summing to ``1.0`` (within ``1e-6``). Keys define
@@ -915,7 +916,8 @@ class AAWindowSampler:
                               context_out: Optional[Union[str, List]] = None,
                               seed: Optional[int] = None,
                               ) -> pd.DataFrame:
-        """Scan candidate proteins for windows matching a user-supplied PWM (FIMO-equivalent).
+        """Scan candidate proteins for windows matching a user-supplied Position Weight
+        Matrix (PWM); a Find Individual Motif Occurrences (FIMO) equivalent.
 
         Useful for hard-negative mining: candidates that look like positives at
         the local-motif level but were not labeled positive.
@@ -930,9 +932,9 @@ class AAWindowSampler:
         window_size : int, default=9
             Window length; must equal the first dimension of ``motif_pwm``.
         motif_pwm : pd.DataFrame
-            Position-weight matrix of shape ``(window_size, 20)`` whose columns are
-            the 20 canonical AA letters in any order (reindexed internally to
-            ``ut.LIST_CANONICAL_AA``). Required.
+            Position Weight Matrix of shape ``(window_size, 20)`` whose columns are
+            the 20 canonical amino acid (AA) letters in any order (reindexed internally
+            to ``ut.LIST_CANONICAL_AA``). Required.
         motif_score_threshold : float
             Score threshold (sum of per-position PWM values). Required.
         pos_col : str, default='pos'
