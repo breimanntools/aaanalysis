@@ -150,8 +150,12 @@ STR_SCALES_PC = "scales_pc"     # AAclust pc-based scales (pc: principal compone
 STR_SCALE_CAT = "scales_cat"  # AAontology
 STR_TOP60 = "top60"    # AAclustTop60
 STR_TOP60_EVAL = "top60_eval"  # AAclustTop60 evaluation
+STR_TOP_EXPLAIN = "top_explain"  # interpretability-tiered selection table (internal, not a load name)
 NAMES_SCALE_SETS = [STR_SCALES, STR_SCALES_RAW, STR_SCALE_CAT,
                     STR_SCALES_PC, STR_TOP60, STR_TOP60_EVAL]
+# Valid grids for the interpretability-tier selector of load_scales
+LIST_TOP_EXPLAIN_N = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
+LIST_TOP_EXPLAIN_MIN_TH = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
 STR_FILE_TYPE = "tsv"
 
@@ -253,6 +257,8 @@ COL_CAT = "category"
 COL_SUBCAT = "subcategory"
 COL_SCALE_NAME = "scale_name"
 COL_SCALE_DES = "scale_description"
+COL_INTERPRETABILITY = "interpretability"  # 1-10 rating (1 = most interpretable); only on top_explain selection
+COL_TOP_EXPLAIN = "top_explain"            # interpretability tier threshold (NaN for unclassified subcats)
 
 # df_annot (canonical per-residue annotation schema; AnnotationPreprocessor)
 COL_PROTEIN_ID = "protein_id"   # UniProt accession (mirrors COL_ENTRY)
