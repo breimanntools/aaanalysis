@@ -29,12 +29,24 @@ the family missing the toggle. The decision was which API to grow.
 `mean_dif_'name'` column contract, same red/blue colors and diverging SHAP
 colormap. No new public symbol; additive and outside the CONFIRM-FIRST surface.
 
-**D2 — The bars stack by impact *sign*, not by class.** In SHAP mode the
-per-position (top) and per-subcategory (right) bars sum positive impact (red,
-stacked up/right) and negative impact (blue, stacked down/left) from a zero
-baseline — the horizontal/vertical analogues of `_plot_cpp_shap_profile`. The
-sign *is* the decomposition; this is consistent with every other SHAP plot in
-the package.
+**D2 — The bars are a one-direction cumulative stack of per-feature segments,
+colored by impact *sign*.** In SHAP mode the per-position (top) and
+per-subcategory (right) bars keep the cumulative orientation of the group-level
+importance bars (one direction, baseline at zero), but each contributing feature
+is drawn as its own thin white-edged segment (red if its impact is positive,
+blue if negative), positives stacked first then negatives. Total length =
+cumulative |impact|; the thin white edges let a reader trace each one back to its feature.
+Sign *is* the decomposition — not class — consistent with every other SHAP plot
+in the package.
+
+**D2b — `col_val` decides where the impact lives; mean-diff heatmap keeps the
+bars, impact heatmap switches them off.** With `shap_plot=True`, a
+`mean_dif_'name'` `col_val` shows the sample-level feature value difference in
+the heatmap *and* the cumulative impact bars (the default CPP-SHAP view — the map
+looks like a normal CPP map, with the impact moved onto the bars). A
+`feat_impact_'name'` `col_val` instead shows the SHAP impact directly in the
+heatmap cells (diverging SHAP colormap) and **switches the bars off** (a
+heatmap-only layout), so impact is never double-encoded.
 
 **D3 — Markers stay a pure magnitude channel.** The heatmap `■` overlays encode
 `abs(impact)` via the existing `imp_ths` size buckets and stay black; sign is

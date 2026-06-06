@@ -829,14 +829,31 @@ class TestCCPlotFeatureMapShap:
         plt.close()
 
     def test_shap_bars_are_red_and_blue(self):
-        """shap_plot=True stacks bars in SHAP positive (red) and negative (blue), no gray."""
+        """With a mean_dif heatmap, the impact bars stack red (positive) and blue (negative)."""
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat_shap()
         fig, _ = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
-                                      col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_FEAT_IMPACT_TEST)
+                                      col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_MEAN_DIF_TEST)
         colors = get_bar_facecolors(fig)
         assert _rgba(SHAP_POS) in colors and _rgba(SHAP_NEG) in colors
         assert _rgba(FEAT_IMP_GRAY) not in colors
+        plt.close()
+
+    def test_shap_bars_are_one_direction(self):
+        """The cumulative impact bars are stacked in one direction (no negative extent)."""
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat_shap()
+        fig, _ = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
+                                      col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_MEAN_DIF_TEST)
+        # SHAP-colored impact bars start at the zero baseline (one-direction cumulative stack)
+        shap_rgba = {_rgba(SHAP_POS), _rgba(SHAP_NEG)}
+        n_shap_bars = 0
+        for ax in fig.axes:
+            for p in ax.patches:
+                if tuple(round(x, 3) for x in p.get_facecolor()) in shap_rgba:
+                    n_shap_bars += 1
+                    assert round(p.get_x(), 6) >= 0 and round(p.get_y(), 6) >= 0
+        assert n_shap_bars > 0
         plt.close()
 
     def test_shap_markers_present(self):
@@ -853,7 +870,7 @@ class TestCCPlotFeatureMapShap:
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat_shap()
         fig, _ = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True, add_imp_bar_top=True,
-                                      col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_FEAT_IMPACT_TEST)
+                                      col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_MEAN_DIF_TEST)
         colors = get_bar_facecolors(fig)
         assert _rgba(SHAP_POS) in colors and _rgba(SHAP_NEG) in colors
         plt.close()
@@ -862,7 +879,7 @@ class TestCCPlotFeatureMapShap:
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat_shap()
         fig, _ = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True, add_imp_bar_top=False,
-                                      col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_FEAT_IMPACT_TEST)
+                                      col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_MEAN_DIF_TEST)
         colors = get_bar_facecolors(fig)
         assert _rgba(SHAP_POS) in colors and _rgba(SHAP_NEG) in colors
         plt.close()
@@ -874,6 +891,24 @@ class TestCCPlotFeatureMapShap:
         fig, ax = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
                                        col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_MEAN_DIF_TEST)
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
+        plt.close()
+
+    def test_shap_impact_heatmap_switches_bars_off(self):
+        """When col_val is a feat_impact column, impact is shown in the heatmap and the
+        cumulative-impact bars are switched off (heatmap-only layout)."""
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat_shap()
+        # bars on (mean_dif heatmap) -> more axes than bars off (impact heatmap)
+        fig_on, _ = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
+                                         col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_MEAN_DIF_TEST)
+        n_on = len(fig_on.axes)
+        plt.close()
+        fig_off, _ = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
+                                          col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_FEAT_IMPACT_TEST)
+        n_off = len(fig_off.axes)
+        # No SHAP-colored bars in the bars-off layout
+        assert _rgba(SHAP_POS) not in get_bar_facecolors(fig_off)
+        assert n_off < n_on
         plt.close()
 
     # Negative tests

@@ -39,14 +39,24 @@ def plot_feat_importance_bars_subcat(ax=None,
                                     list_cat=df_feat[col_cat].to_list(),
                                     col_cat=col_cat)
     if shap_plot:
-        # Stack signed feature impact per category (positive=red right, negative=blue left)
+        # Cumulative feature impact per category, stacked in one direction with one
+        # thin white-edged segment per feature (red=positive, blue=negative)
         df = df_feat[[col_cat, col_imp]]
-        s_pos = df[df[col_imp] > 0].groupby(by=col_cat)[col_imp].sum()
-        s_neg = df[df[col_imp] < 0].groupby(by=col_cat)[col_imp].sum()
-        list_pos = [s_pos.get(x, 0) for x in list_cat]
-        list_neg = [s_neg.get(x, 0) for x in list_cat]
-        ax.barh(list_cat, list_pos, color=ut.COLOR_SHAP_POS, edgecolor=None, align="edge")
-        ax.barh(list_cat, list_neg, color=ut.COLOR_SHAP_NEG, edgecolor=None, align="edge")
+        dict_total = {}
+        for cat in list_cat:
+            vals = df.loc[df[col_cat] == cat, col_imp].values
+            left = 0.0
+            for v in vals:
+                if v > 0:
+                    ax.barh(cat, v, left=left, color=ut.COLOR_SHAP_POS,
+                            edgecolor="white", linewidth=0.3, align="edge")
+                    left += v
+            for v in vals:
+                if v < 0:
+                    ax.barh(cat, abs(v), left=left, color=ut.COLOR_SHAP_NEG,
+                            edgecolor="white", linewidth=0.3, align="edge")
+                    left += abs(v)
+            dict_total[cat] = left
     else:
         # Get feature importance per scale class
         df_imp = df_feat[[col_cat, col_imp]].groupby(by=col_cat).sum()
@@ -79,7 +89,7 @@ def plot_feat_importance_bars_subcat(ax=None,
         label.set_visible(False)
 
     if shap_plot:
-        ax.set_xlim(min(list_neg + [0]), max(list_pos + [0]))
+        ax.set_xlim(0, max(list(dict_total.values()) + [0]))
     else:
         ax.set_xlim(0, v_max)
     # Adjust plot size
@@ -106,13 +116,24 @@ def plot_feat_importance_bars_pos(ax=None,
                            value_type="sum", normalize=False)
     # Plot bars
     if shap_plot:
-        # Stack signed feature impact per position (positive=red up, negative=blue down)
-        list_pos = list(df_pos[df_pos > 0].sum())
-        list_neg = list(df_pos[df_pos < 0].sum())
-        x_ticks = list(range(0, len(list_pos)))
-        ax.bar(x_ticks, list_pos, color=ut.COLOR_SHAP_POS, edgecolor=None, align="edge")
-        ax.bar(x_ticks, list_neg, color=ut.COLOR_SHAP_NEG, edgecolor=None, align="edge")
-        ax.set_ylim(min(list_neg + [0]), max(list_pos + [0]))
+        # Cumulative feature impact per position, stacked in one direction with one
+        # thin white-edged segment per contributing feature (red=positive, blue=negative)
+        totals = []
+        for j in range(df_pos.shape[1]):
+            vals = df_pos.iloc[:, j].values
+            bottom = 0.0
+            for v in vals:
+                if v > 0:
+                    ax.bar(j, v, bottom=bottom, color=ut.COLOR_SHAP_POS,
+                           edgecolor="white", linewidth=0.3, align="edge")
+                    bottom += v
+            for v in vals:
+                if v < 0:
+                    ax.bar(j, abs(v), bottom=bottom, color=ut.COLOR_SHAP_NEG,
+                           edgecolor="white", linewidth=0.3, align="edge")
+                    bottom += abs(v)
+            totals.append(bottom)
+        ax.set_ylim(0, max(totals + [0]))
     else:
         list_imp = list(df_pos.sum())
         x_ticks = list(range(0, len(list_imp)))
@@ -128,6 +149,7 @@ def plot_feat_importance_bars_pos(ax=None,
 
 def add_feat_importance_map(ax=None, df_feat=None, df_cat=None,
                             col_cat=None, col_imp=None,
+                            shap_plot=False,
                             imp_ths=(0.2, 0.5, 1),
                             imp_marker_size=(3, 5.5, 8),
                             start=None, args_len=None):
@@ -146,11 +168,11 @@ def add_feat_importance_map(ax=None, df_feat=None, df_cat=None,
         for pos, val in enumerate(_dff[col_imp]):
             _symbol = "■"
             color = "black"
-            # Markers encode magnitude; abs() maps signed SHAP impact to size (importance is already >= 0)
-            mag = abs(val)
-            size = ms3 if mag >= th3 else (ms2 if mag >= th2 else ms1)
+            # In SHAP mode the impact is signed; markers encode its magnitude (abs)
+            val = abs(val) if shap_plot else val
+            size = ms3 if val >= th3 else (ms2 if val >= th2 else ms1)
             _args_symbol = dict(ha="center", va="center", color=color, size=size)
-            if mag >= th1:
+            if val >= th1:
                 ax.text(pos + 0.5, i + 0.5, _symbol, **_args_symbol)
 
 
@@ -231,24 +253,34 @@ def plot_feature_map(df_feat=None, df_cat=None,
                    fontsize_tmd_jmd=fontsize_tmd_jmd)
     args_xtick = dict(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
 
-    # Plot
+    # Plot. In SHAP mode, the sample-level impact is shown EITHER as stacked bars
+    # (with the heatmap showing the mean difference) OR, when col_val is a feature
+    # impact column, directly in the heatmap cells with the bars switched off.
+    bars_off = shap_plot and ut.COL_FEAT_IMPACT in col_val
     width, height = figsize
-    width_ratio = [6, min(1*height/width, 1)]
-    height_ratio = (width_ratio[1], width_ratio[0])
-    gridspc_kw = {'width_ratios': width_ratio, "wspace": 0, "hspace": 0}
-    if add_imp_bar_top:
-        gridspc_kw["height_ratios"] = height_ratio
-    fig, axes = plt.subplots(figsize=figsize,
-                             nrows=2 if add_imp_bar_top else 1,
-                             ncols=2,
-                             gridspec_kw=gridspc_kw,
-                             layout="constrained")
-    if add_imp_bar_top:
-        ax_hm, ax_bt, ax_br, ax_empty = axes[1, 0], axes[0, 0], axes[1, 1], axes[0, 1]
-        ax_hm.sharex(ax_bt)
+    if bars_off:
+        # Heatmap-only layout: impact lives in the cells, no cumulative-impact bars
+        # (plain layout like CPPPlot.heatmap, so the frontend's tight_layout is compatible)
+        fig, ax_hm = plt.subplots(figsize=figsize)
+        ax_bt = ax_br = ax_empty = None
     else:
-        ax_hm, ax_br = axes[0], axes[1]
-    ax_hm.sharey(ax_br)
+        width_ratio = [6, min(1*height/width, 1)]
+        height_ratio = (width_ratio[1], width_ratio[0])
+        gridspc_kw = {'width_ratios': width_ratio, "wspace": 0, "hspace": 0}
+        if add_imp_bar_top:
+            gridspc_kw["height_ratios"] = height_ratio
+        fig, axes = plt.subplots(figsize=figsize,
+                                 nrows=2 if add_imp_bar_top else 1,
+                                 ncols=2,
+                                 gridspec_kw=gridspc_kw,
+                                 layout="constrained")
+        if add_imp_bar_top:
+            ax_hm, ax_bt, ax_br, ax_empty = axes[1, 0], axes[0, 0], axes[1, 1], axes[0, 1]
+            ax_hm.sharex(ax_bt)
+        else:
+            ax_hm, ax_br = axes[0], axes[1]
+            ax_bt = ax_empty = None
+        ax_hm.sharey(ax_br)
     # Set colorbar and legend arguments (diverging SHAP colormap for signed sample-level impact)
     if shap_plot and ut.COL_FEAT_IMPACT in col_val:
         cmap = ut.STR_CMAP_SHAP if cmap is None else cmap
@@ -267,45 +299,46 @@ def plot_feature_map(df_feat=None, df_cat=None,
                                            n_cat=n_cat,
                                            legend_xy=legend_xy,
                                            fontsize_labels=fs_labels)
-    # Plot feat importance bars
-    imp_word = "impact" if shap_plot else "importance"
-    label_imp_bar = f"Cumulative\nfeature\n{imp_word}" if add_imp_bar_top else f"Cumulative feature\n{imp_word} [%]"
-    fs_label_bar = fs_titles - 1 if add_imp_bar_top else fs_titles
-    ha_bar = "left" if add_imp_bar_top else "right"
-    position_bar = (0.1, 0) if add_imp_bar_top else (1, 0)
-    multialignment_bar = "center" if add_imp_bar_top else "right"
-    if add_imp_bar_top and imp_bar_label_type != "long":
-        label_imp_bar = "FI" if imp_bar_label_type == "short" else None
-        position_bar = (0.5, 0)
-    plot_feat_importance_bars_subcat(ax=ax_br,
-                                     df_feat=df_feat.copy(),
-                                     df_cat=df_cat.copy(),
-                                     col_imp=col_imp,
-                                     col_cat=col_cat,
-                                     shap_plot=shap_plot,
-                                     label=label_imp_bar,
-                                     annotation_th=imp_bar_th,
-                                     fontsize_label=fs_label_bar,
-                                     fontsize_imp_bar=fs_imp_bar,
-                                     fontsize_annotations=fontsize_annotations,
-                                     ha=ha_bar,
-                                     position=position_bar,
-                                     multialignment=multialignment_bar,
-                                     weight_annotation="bold")
-    show_only_max = add_imp_bar_top != "long"
-    args_ticks_0 = dict(show_zero=False, show_only_max=show_only_max, precision=1)
-    ut.ticks_0(ax_br, **args_ticks_0)
+    # Plot feat importance/impact bars (unless impact is shown in the heatmap)
+    if not bars_off:
+        imp_word = "impact" if shap_plot else "importance"
+        label_imp_bar = f"Cumulative\nfeature\n{imp_word}" if add_imp_bar_top else f"Cumulative feature\n{imp_word} [%]"
+        fs_label_bar = fs_titles - 1 if add_imp_bar_top else fs_titles
+        ha_bar = "left" if add_imp_bar_top else "right"
+        position_bar = (0.1, 0) if add_imp_bar_top else (1, 0)
+        multialignment_bar = "center" if add_imp_bar_top else "right"
+        if add_imp_bar_top and imp_bar_label_type != "long":
+            label_imp_bar = "FI" if imp_bar_label_type == "short" else None
+            position_bar = (0.5, 0)
+        plot_feat_importance_bars_subcat(ax=ax_br,
+                                         df_feat=df_feat.copy(),
+                                         df_cat=df_cat.copy(),
+                                         col_imp=col_imp,
+                                         col_cat=col_cat,
+                                         shap_plot=shap_plot,
+                                         label=label_imp_bar,
+                                         annotation_th=imp_bar_th,
+                                         fontsize_label=fs_label_bar,
+                                         fontsize_imp_bar=fs_imp_bar,
+                                         fontsize_annotations=fontsize_annotations,
+                                         ha=ha_bar,
+                                         position=position_bar,
+                                         multialignment=multialignment_bar,
+                                         weight_annotation="bold")
+        show_only_max = add_imp_bar_top != "long"
+        args_ticks_0 = dict(show_zero=False, show_only_max=show_only_max, precision=1)
+        ut.ticks_0(ax_br, **args_ticks_0)
 
-    if add_imp_bar_top:
-        plot_feat_importance_bars_pos(ax=ax_bt,
-                                      df_feat=df_feat.copy(),
-                                      df_cat=df_cat.copy(),
-                                      col_imp=col_imp,
-                                      col_cat=col_cat,
-                                      shap_plot=shap_plot,
-                                      start=start,
-                                      **args_len)
-        ut.ticks_0(ax_bt, axis="y", **args_ticks_0)
+        if add_imp_bar_top:
+            plot_feat_importance_bars_pos(ax=ax_bt,
+                                          df_feat=df_feat.copy(),
+                                          df_cat=df_cat.copy(),
+                                          col_imp=col_imp,
+                                          col_cat=col_cat,
+                                          shap_plot=shap_plot,
+                                          start=start,
+                                          **args_len)
+            ut.ticks_0(ax_bt, axis="y", **args_ticks_0)
 
     # Plot heatmap
     plot_heatmap_(df_feat=df_feat.copy(), df_cat=df_cat,
@@ -324,13 +357,14 @@ def plot_feature_map(df_feat=None, df_cat=None,
                   **args_xtick)
     # Add feature position title
     sns.despine(ax=ax_hm, top=True, left=True, right=True, bottom=True)
-    if add_imp_bar_top:
+    if add_imp_bar_top and not bars_off:
         ax_hm.set_title("Scale (subcategory)  ", x=0, ha="right", weight="bold", fontsize=fs_titles)
     else:
         ax_hm.set_title(ut.LABEL_FEAT_POS, x=0, weight="bold", fontsize=fs_titles)
     # Add feature importance map
     add_feat_importance_map(df_feat=df_feat, df_cat=df_cat,
                             col_cat=col_cat, col_imp=col_imp,
+                            shap_plot=shap_plot,
                             imp_ths=imp_ths,
                             imp_marker_size=imp_marker_sizes,
                             ax=ax_hm, start=start, args_len=args_len)
@@ -345,7 +379,7 @@ def plot_feature_map(df_feat=None, df_cat=None,
                                label=label_feat_imp,
                                fontsize_title=fs_labels,
                                fontsize_annotations=fs_annotations)
-    if add_imp_bar_top:
+    if add_imp_bar_top and not bars_off:
         ax_empty.axis("off")
     plt.subplots_adjust(wspace=0.0, hspace=0.0)
     plt.sca(ax_hm)

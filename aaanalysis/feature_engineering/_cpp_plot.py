@@ -1223,9 +1223,10 @@ class CPPPlot:
         Extends the heatmap layout by overlaying feature-importance markers on each cell and
         optionally adding cumulative importance bars at the top and right, providing a combined
         view of the direction and strength of each feature produced by :meth:`CPP.run`.
-        At sample level (``shap_plot=True``) the bars decompose into stacked positive (red) and
-        negative (blue) SHapley Additive exPlanations (SHAP) [Lundberg20]_ feature impact, the
-        per-sample attribution obtained via :class:`ShapModel`.
+        At sample level (``shap_plot=True``) the cumulative bars stack the per-feature SHapley
+        Additive exPlanations (SHAP) [Lundberg20]_ feature impact in one direction, colored by sign
+        (positive in red, negative in blue) — the per-sample attribution obtained via
+        :class:`ShapModel`.
 
         Parameters
         ----------
@@ -1245,11 +1246,13 @@ class CPPPlot:
 
              **CPP-SHAP Analysis**
 
-            - ``col_imp``: Enables the selection of SHAP feature impacts (per-sample attribution) from a
-              `feat_impact_'name'` column; bars are stacked by sign (positive in red, negative in blue)
-              and markers encode ``abs`` impact (magnitude).
-            - ``col_val``: Enables the selection of specific feature impacts from a `feat_impact_'name'`
-              column for an individual sample, where positive (red) and negative (blue) impacts are shown.
+            - ``col_imp``: Selects the SHAP feature impact (per-sample attribution) from a
+              `feat_impact_'name'` column. The cumulative bars stack it in one direction colored by
+              sign (positive in red, negative in blue), and the markers encode ``abs`` impact (magnitude).
+            - ``col_val``: When a `mean_dif_'name'` column is given, the heatmap shows the sample-level
+              feature value difference and the impact bars are shown. When a `feat_impact_'name'` column
+              is given instead, the SHAP impact is shown directly in the heatmap (diverging colormap) and
+              the cumulative bars are switched off.
 
         col_cat : {'category', 'subcategory', 'scale_name'}, default='subcategory'
             Column name in ``df_feat`` for scale information (y-axis).

@@ -249,6 +249,17 @@ Examples & verification
   are executed in CI (``pytest --nbmake examples/ tutorials/``) so they cannot rot;
   tiny self-contained snippets may additionally use ``>>>`` doctests run with
   ``--doctest-modules``.
+* **Commit notebooks with their executed outputs.** The docs render the *stored*
+  cell outputs (``nbsphinx_execute = 'never'`` in ``conf.py``), and
+  ``create_notebooks_docs.py`` converts each notebook to ``.rst`` from those saved
+  outputs. A cell with no saved output renders **no figure or table** on Read the
+  Docs — even though the blocking CI (which only checks that cells *run*) stays
+  green, so the gap is invisible until you look at the built page. After editing
+  any example/tutorial cell (including programmatic ``NotebookEdit``, which clears
+  the cell's outputs), re-run the whole notebook and save it with outputs, e.g.
+  ``jupyter nbconvert --to notebook --execute --inplace
+  examples/<subpackage>/<name>.ipynb``, then confirm the figures are embedded
+  before committing.
 
 Notebook content & structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -267,6 +278,8 @@ An example notebook *teaches* the symbol, it does not merely call it. Use this o
    Each group gets a short markdown note (what it controls) and a code cell showing
    its effect on the result. **No parameter may be left uncovered.**
 4. Show output so the docs render it; keep every cell small, seeded, deterministic.
+   The notebook must be committed **with** its executed outputs (figures + tables) —
+   see *Examples & verification* above.
 
 Glossary cross-links
 --------------------
