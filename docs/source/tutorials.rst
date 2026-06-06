@@ -76,3 +76,11 @@ living catalog that grows along the AAanalysis pipeline; see the
    :maxdepth: 1
 
    generated/protocol1_cpp_signature
+   generated/protocol2_prediction_tasks
+   generated/protocol3_sampling
+   generated/protocol4_engineer_features
+   generated/protocol5_compositional_positional
+   generated/protocol6_feature_selection
+   generated/protocol7_classifier
+   generated/protocol8_interpretability
+   generated/protocol9_validation
