@@ -141,19 +141,20 @@ def scan_motif(df_seq: pd.DataFrame = None,
                                   motif_pseudo: Optional[float] = None,
                                   ) -> pd.DataFrame:
     """
-    Scan candidate proteins for statistically significant occurrences of a PWM using the FIMO CLI.
+    Scan candidate proteins for statistically significant Position Weight Matrix (PWM) occurrences using FIMO.
 
-    CLI wrapper around FIMO [Bailey09]_, [Grant11]_ from the MEME suite. Unlike
-    the pure-Python :meth:`AAWindowSampler.sample_motif_matched` (which keeps
-    windows whose raw per-position PWM-sum is ``>= motif_score_threshold``),
-    ``scan_motif`` lets FIMO perform its own probabilistic matching: each window
-    is scored against FIMO's background model (its built-in protein frequencies,
-    or ``bg_file``) and kept only when its match p-value is below
-    ``pvalue_threshold``. The two thus select
-    *different* windows and are complementary ways to mine motif-matched training
-    data. The output schema matches :meth:`AAWindowSampler.sample_motif_matched`,
-    with ``motif_score`` holding FIMO's log-odds score and an added ``p_value``
-    column (segments mode).
+    ``scan_motif`` is a Command-Line Interface (CLI) wrapper around FIMO (Find
+    Individual Motif Occurrences) [Bailey09]_, [Grant11]_ from the MEME (Multiple
+    Em for Motif Elicitation) suite. Unlike the pure-Python
+    :meth:`AAWindowSampler.sample_motif_matched` (which keeps windows whose raw
+    per-position PWM sum is ``>= motif_score_threshold``), ``scan_motif`` lets
+    FIMO perform its own probabilistic matching: each window is scored against
+    FIMO's background model (its built-in protein frequencies, or ``bg_file``)
+    and kept only when its match p-value is below ``pvalue_threshold``. The two
+    thus select *different* windows and are complementary ways to mine
+    motif-matched training data. The output schema matches
+    :meth:`AAWindowSampler.sample_motif_matched`, with ``motif_score`` holding
+    FIMO's log-odds score and an added ``p_value`` column (segments mode).
 
     .. versionadded:: 1.1.0
 
@@ -173,8 +174,8 @@ def scan_motif(df_seq: pd.DataFrame = None,
     window_size : int, default=9
         Window length; must equal the first dimension of ``motif_pwm``.
     motif_pwm : pd.DataFrame
-        Position-weight matrix of shape ``(window_size, 20)`` whose columns are
-        the 20 canonical AA letters in any order (reindexed internally to
+        Position Weight Matrix of shape ``(window_size, 20)`` whose columns are
+        the 20 canonical amino-acid letters in any order (reindexed internally to
         ``ut.LIST_CANONICAL_AA``). Required.
     pvalue_threshold : float, default=1e-4
         FIMO match-p-value cutoff in ``[0, 1]`` (maps to ``fimo --thresh``); only

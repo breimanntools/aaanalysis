@@ -128,6 +128,15 @@ Invariants:
   classes (the expanded paragraph after the noun-phrase summary). Trivial
   one-line accessors may keep just the summary; the checker's ``SUMMARY-ONLY``
   is **advisory**, a prompt to add the description where it helps.
+* **Expand abbreviations on first use.** The first time an abbreviation or
+  acronym appears in a docstring, spell it out with the short form in
+  parentheses — *Command Line Interface (CLI)*, *Position Weight Matrix (PWM)*,
+  *Find Individual Motif Occurrences (FIMO)* — and use the short form
+  afterwards. Each docstring is **self-contained**, so re-introduce the term in
+  every docstring that uses it. The bold ``(**ACRONYM**)`` in a class summary is
+  the class-level form of this rule. Domain terms that have a ``.. glossary::``
+  entry may instead be linked with ``:term:``. Universally standard forms
+  (e.g. DNA, 3D, ID, CPU, PDB) need no expansion.
 * ``Returns`` is **named** (``name : type``) and matches the returned variable.
   Two type-only idioms are allowed: a bare class name (scikit-learn self-return,
   e.g. ``AAclust``) and a polymorphic ``X or Y``.

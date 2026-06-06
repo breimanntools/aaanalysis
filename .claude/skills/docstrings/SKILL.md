@@ -66,6 +66,7 @@ Copy the matching template from the guide / [REFERENCE.md](REFERENCE.md):
 8. Header is `Warnings` (not `Warns`); no `→`/`+` in summaries.
 9. **Every integrated external tool/method is cited + explained in one sentence.** A method wrapping/running an external tool (DSSP, Chainsaw, Merizo, AFragmenter, MEME/FIMO, cd-hit, mmseqs2, logomaker, SHAP, …) names it with a `[Key]_` citation (its paper in `references.rst`, not a bare repo URL) and a one-sentence "what it does".
 10. **Summary + description.** A one-line summary is followed by a short plain-language description (what it does in simple words, the cited tool `[Key]_` if any, key `:role:` cross-refs) — for classes and non-trivial methods/functions. The checker's `SUMMARY-ONLY` (advisory) flags summary-only docstrings.
+11. **Expand abbreviations on first use.** The first time an abbreviation/acronym appears in a docstring, spell it out with the short form in parentheses — e.g. "Command Line Interface (CLI)", "Position Weight Matrix (PWM)" — then use the short form. Each docstring is self-contained (re-introduce per docstring); the bold `(**ACRONYM**)` in a class summary is the class-level form. Glossary terms may use `:term:` instead; universally standard forms (DNA, 3D, ID, CPU, PDB) need no expansion.
 
 ## Critical review (audit → tier → refactor)
 
