@@ -9,7 +9,24 @@ protein prediction; `pro` extra for heavy deps; semver-strict v1) and the coding
 under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) · ☑️ Done/Partial.
 
 ## Snapshot
-- **Open issues: 62 · closed: 24** (after the 2026-06-06 antibody-feedback pass + bucket triage + doc-architecture pass below).
+- **Open issues: 61 · closed: 25** (after the 2026-06-06 antibody-feedback pass + bucket triage + doc-architecture pass + the feature_map-SHAP / scale-sets pass below).
+- **Feature-map SHAP + explainable scale sets (2026-06-06, this session) — merged on `master`:**
+  - **#63 — CLOSED** (`03849725` + `0567abaa`, **ADR-0024**): implemented via the existing
+    **`shap_plot`** convention (mirroring `profile`/`heatmap`/`ranking`), **not** the issue's
+    `stack_by`/`df_imp` proposal. `feature_map(shap_plot=True)` stacks per-feature impact as
+    one-direction, thin-white-edged segments (red=+, blue=−); `col_val=mean_dif_'name'` keeps the
+    mean-diff heatmap + impact bars, `col_val=feat_impact_'name'` shows impact in the heatmap and
+    switches the bars off. `shap_plot=False` is **pixel-identical** to before (verified). Example
+    notebook showcases APP (`P05067`).
+  - **#96 — CLOSED/merged** (`0e83c5cd`, **ADR-0024-interpretability-tiered-explainable-scale-sets**):
+    interpretability-tiered "explainable" scale sets (`top_explain_n`) in `load_scales`; glossary
+    terms (**explainable scale set** / **interpretability tier** / **interpretability rating**) added
+    to `CONTEXT.md`.
+  - **Branch cleanup:** the merged remote branches for **#92 / #94 / #95** were deleted; only
+    `origin/master` remains.
+  - **⚠️ ADR number collision (housekeeping):** both the feature-map and the scale-sets ADRs landed
+    as **`0024`** (`0024-feature-map-shap-via-shap-plot.md` + `0024-interpretability-tiered-explainable-scale-sets.md`).
+    Renumber the scale-sets one to **`0025`** on next touch.
 - **Antibody-feedback triage + quick fixes (2026-06-06, this session):** an external
   antibody/non-specificity project's `FEEDBACK.md` was triaged against current `master` — most P0/P1
   asks were **already shipped** (macOS `n_jobs`, caching, batching, embedding fusion, bootstrap CIs,
@@ -153,7 +170,7 @@ genuinely parallel companions.
 9. Quick wins (small, independent): **#24, #32, #33, #29** (#29/#33 after #18).
 10. Docs: **#21, #43, #69 (retarget first), #20, #90** (feature-selection Protocol).
 11. Revisit/deferred clusters: structure/conservation (#40/#64/#65/#42), embedding (#22/#23/#47),
-    XAI (#47–56/#63), and the #67 v2 umbrella.
+    XAI (#47–56; ~~#63~~ done), and the #67 v2 umbrella.
 
 ## Parallel lanes (safe to run in separate sessions — no shared files)
 
@@ -183,7 +200,7 @@ genuinely parallel companions.
 | Structure/conservation/MSA | #40, #64, #65, #42 | #65 | shared `data_handling_pro` + pending move |
 | Embedding | #22, #23, #47 | #22 | shared embedding-integration surface |
 | ~~Window sampling~~ | ~~#66~~ (done), #28 | — | #66 landed; #28 now builds on `AAWindowSampler` (no parallel conflict left) |
-| Feature-map plotting | #63, #47, #56 | #63 | shared `plot_feature_map` |
+| Feature-map plotting | ~~#63~~ (done), #47, #56 | #47 | shared `plot_feature_map`; #63 shipped the `shap_plot` bars, so #47/#56 build on it |
 
 ---
 
@@ -241,8 +258,8 @@ genuinely parallel companions.
 ### topic:XAI — mostly ProtXplain scope (🔄), one quick win
 | # | prio | verdict | scope / standards | already-addressed | implementation note |
 |---|---|---|---|---|---|
-| 63 | 3 | ✅ | Fits; extends `plot_feature_map`; pro (shap) | No | `stack_by="class"` stacked importance bars; default byte-identical. Smallest XAI win. |
-| 47 | 2 | 🔄 | Pro (shap exists); embedding cluster | Partial (ShapModel pro) | Map attributions → CPP scale space; coordinate with #22/#63. |
+| 63 | 3 | ☑️ | **Closed** (`03849725`+`0567abaa`, ADR-0024) | Yes | DONE via `shap_plot` (not `stack_by`/`df_imp`): per-feature one-direction stacked impact bars (white-edged, red=+/blue=−); `col_val` switches between mean-diff heatmap+bars and impact-in-heatmap (bars off); `shap_plot=False` pixel-identical. Marker `abs()` gated behind `shap_plot`. APP-showcase notebook + tests. |
+| 47 | 2 | 🔄 | Pro (shap exists); embedding cluster | Partial (ShapModel pro) | Map attributions → CPP scale space; build on the shipped #63 `shap_plot` bars; coordinate with #22. |
 | 48 | 2 | 🔄 | Pro; concept aggregation via AAclust | No | Cluster CPP scales → concepts; in-scope-ish but sizable. |
 | 49 | 2 | 🔄 | New deps (FAISS/alibi/dice) → ProtXplain | No | Prototypes/counterfactuals; revisit scope before coding. |
 | 56 | 1 | 🔄 | Oversized (dash/NGLview/PyMOL) → ProtXplain | No | Interactive multi-scale viz is not core; split the static parts only. |
