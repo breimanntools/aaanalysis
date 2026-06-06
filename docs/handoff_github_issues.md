@@ -167,12 +167,12 @@ genuinely parallel companions.
   `AAWindowSampler` overlap is gone; #28 builds on it).
 - **Lane E — Docs:** #21, #43, #20, #69, #35, #38, **#90** (feature-selection Protocol — concept
   page + notebook; relates #32/ADR-0023) (doc files only; independent of code lanes).
+- **Lane F — Structure/conservation (pro, SERIALIZE):** #65 → #40/#42; **#64 is deferred (ADR-0012).**
+  All share `data_handling_pro` + the pending pro-package move.
 - **Lane G — Evaluation (new):** **#91** (model evaluation & comparison, prio:1 — decide
   helpers / `Tool`-class+Plot / hybrid) → **#93** (learning-curve diagnostic, reuses the same
   CV/CI machinery). Both build on `aaanalysis.metrics` + `comp_bootstrap_ci`; no shared files with
   Lanes A/C, so parallel-safe.
-- **Lane F — Structure/conservation (pro, SERIALIZE):** #65 → #40/#42; **#64 is deferred (ADR-0012).**
-  All share `data_handling_pro` + the pending pro-package move.
 
 ## Overlap clusters — DO NOT develop in parallel
 | Cluster | Issues | Primary | Why they collide |
