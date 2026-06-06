@@ -302,6 +302,13 @@ COL_FEAT_IMPACT_STD = "feat_impact_std"
 COLS_FEAT_SCALES = [COL_CAT, COL_SUBCAT, COL_SCALE_NAME]
 COLS_FEAT_STAT = [COL_ABS_AUC, COL_ABS_MEAN_DIF, COL_MEAN_DIF, COL_STD_TEST, COL_STD_REF]
 COLS_FEAT_WEIGHT = [COL_FEAT_IMPORT, COL_FEAT_IMPORT_STD, COL_FEAT_IMPACT]
+
+# TreeModel — post-fit feature-selection strategies (see ADR-0023). RFE is the
+# fit-time engine (fit(use_rfe=True)), not a selection strategy.
+STRATEGY_TOP_K = "top_k"
+STRATEGY_THRESHOLD = "threshold"
+STRATEGY_FREQUENCY = "frequency"
+LIST_SELECTION_STRATEGIES = [STRATEGY_TOP_K, STRATEGY_THRESHOLD, STRATEGY_FREQUENCY]
 DICT_VALUE_TYPE = {COL_ABS_AUC: "mean",
                    COL_ABS_MEAN_DIF: "mean",
                    COL_MEAN_DIF: "mean",

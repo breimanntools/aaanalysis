@@ -2,6 +2,7 @@
 This is a script for the frontend of the TreeModel class used to obtain Monte Carlo estimates of feature importance.
 """
 from typing import Optional, Dict, List, Tuple, Type, Union, Callable
+import warnings
 from sklearn.base import ClassifierMixin, BaseEstimator
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 import pandas as pd
@@ -14,6 +15,7 @@ from ._backend.check_models import (check_match_labels_X,
 from ._backend.tree_model.tree_model_fit import fit_tree_based_models
 from ._backend.tree_model.tree_model_predict_proba import monte_carlo_predict_proba
 from ._backend.tree_model.tree_model_eval import eval_feature_selections
+from ._backend.tree_model.tree_model_select import get_feature_selection_mask
 
 
 # I Helper Functions
@@ -107,6 +109,31 @@ def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, fe
             raise ValueError(f"'{ut.COL_FEAT_IMPORT}' already in 'df_feat' columns. To override, set 'drop=True'.")
         if ut.COL_FEAT_IMPORT_STD in list(df_feat):
             raise ValueError(f"'{ut.COL_FEAT_IMPORT_STD}' already in 'df_feat' columns. To override, set 'drop=True'.")
+
+
+def check_param_matches_strategy(strategy=None, param=None, n_feat=None):
+    """Check that the polymorphic ``param`` has the type/range the strategy requires."""
+    if strategy == ut.STRATEGY_TOP_K:
+        ut.check_number_range(name="param", val=param, min_val=1, max_val=n_feat, just_int=True)
+    elif strategy == ut.STRATEGY_THRESHOLD:
+        ut.check_number_val(name="param", val=param, just_int=False, accept_none=False)
+        if param < 0:
+            raise ValueError(f"'param' ({param}) should be >= 0 for 'strategy'='{ut.STRATEGY_THRESHOLD}' "
+                             f"(feature importance is a non-negative percentage).")
+    elif strategy == ut.STRATEGY_FREQUENCY:
+        ut.check_number_range(name="param", val=param, min_val=0, max_val=1,
+                              exclusive_limits=False, just_int=False)
+        if param == 0:
+            raise ValueError(f"'param' (0) should be > 0 for 'strategy'='{ut.STRATEGY_FREQUENCY}'.")
+
+
+def check_match_df_feat_feat_importance(df_feat=None, feat_importance=None):
+    """Check that df_feat rows align one-to-one with the fitted feature importance."""
+    n_feat = len(df_feat)
+    n_feat_imp = len(feat_importance)
+    if n_feat != n_feat_imp:
+        raise ValueError(f"Mismatch of number of features in 'df_feat' (n={n_feat}) and in fitted "
+                         f"'feat_importance' (n={n_feat_imp}). They must be row-aligned.")
 
 
 # II Main Functions
@@ -476,4 +503,79 @@ class TreeModel:
         args = dict(allow_duplicates=False)
         df_feat.insert(loc=len(df_feat.columns), column=ut.COL_FEAT_IMPORT, value=self.feat_importance, **args)
         df_feat.insert(loc=len(df_feat.columns), column=ut.COL_FEAT_IMPORT_STD, value=self.feat_importance_std, **args)
+        return df_feat
+
+    def select_features(self,
+                        df_feat: pd.DataFrame = None,
+                        strategy: str = None,
+                        param: Union[int, float, dict] = None,
+                        ) -> pd.DataFrame:
+        """
+        Select a subset of features from a feature DataFrame using tree-based feature importance.
+
+        This is a post-fit step that turns the signals computed by :meth:`TreeModel.fit` into a
+        row-filtered feature DataFrame: the Monte Carlo ``feat_importance`` array (for ``'top_k'`` and
+        ``'threshold'``) and the per-round ``is_selected_`` masks (for ``'frequency'``). The retained
+        features are chosen by ``strategy``, sized by the single ``param`` knob:
+
+        * ``'top_k'``: keep the ``param`` features with the highest ``feat_importance``.
+        * ``'threshold'``: keep features whose ``feat_importance`` is at least ``param``.
+        * ``'frequency'``: keep features selected in at least a ``param`` fraction of the per-round
+          ``is_selected_`` masks.
+
+        Recursive feature elimination (RFE) is itself not a selection strategy here: it is the
+        :meth:`TreeModel.fit` engine (``use_rfe=True``) that produces the per-round ``is_selected_``
+        masks the ``'frequency'`` strategy aggregates; without it every round keeps all features.
+
+        Parameters
+        ----------
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info)
+            Feature DataFrame with a unique identifier, scale information, statistics, and positions for
+            each feature. Rows must be aligned one-to-one with the features used in :meth:`TreeModel.fit`.
+        strategy : str
+            The selection strategy to apply. Valid strategies are: {'top_k', 'threshold', 'frequency'}.
+        param : int or float
+            The single selection knob, whose admissible type is fixed by ``strategy``: a positive integer
+            number of features for ``'top_k'``, a minimum importance (``>= 0``) for ``'threshold'``, or a
+            fraction in (0, 1] of rounds for ``'frequency'``.
+
+        Returns
+        -------
+        df_feat : pd.DataFrame, shape (n_selected_features, n_feature_info)
+            Feature DataFrame filtered to the selected features, with a reset index.
+
+        Notes
+        -----
+        * :meth:`TreeModel.fit` must be called before using this method.
+        * ``'frequency'`` without ``fit(use_rfe=True)`` selects every feature (a trivial no-op) and
+          triggers a ``RuntimeWarning``.
+        * A selection that retains no features (e.g. a ``'threshold'`` above every importance) raises
+          a ``ValueError`` rather than returning an empty DataFrame.
+
+        See Also
+        --------
+        * :meth:`TreeModel.fit` for fitting the model and the ``use_rfe`` recursive feature elimination.
+        * :meth:`TreeModel.eval` to compare the resulting feature selection against others.
+
+        Examples
+        --------
+        .. include:: examples/tm_select_features.rst
+        """
+        # Check input
+        if self.feat_importance is None or self.is_selected_ is None:
+            raise ValueError("'TreeModel' is not fitted. Call 'TreeModel.fit' before 'select_features'.")
+        df_feat = ut.check_df_feat(df_feat=df_feat)
+        ut.check_str_options(name="strategy", val=strategy, list_str_options=ut.LIST_SELECTION_STRATEGIES)
+        check_param_matches_strategy(strategy=strategy, param=param, n_feat=len(self.feat_importance))
+        check_match_df_feat_feat_importance(df_feat=df_feat, feat_importance=self.feat_importance)
+        # Warn if frequency selection is trivial (fit ran without RFE -> every round kept all features)
+        if strategy == ut.STRATEGY_FREQUENCY and np.all(self.is_selected_):
+            warnings.warn("'frequency' selection is trivial without recursive feature elimination: every "
+                          "feature was selected in every round. Enable 'use_rfe=True' in 'TreeModel.fit'.",
+                          RuntimeWarning)
+        # Select features
+        is_selected = get_feature_selection_mask(strategy=strategy, param=param,
+                                                 feat_importance=self.feat_importance,
+                                                 is_selected_rounds=self.is_selected_)
+        df_feat = df_feat[is_selected].reset_index(drop=True)
         return df_feat
