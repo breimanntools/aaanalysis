@@ -236,6 +236,25 @@ class TreeModel:
         self.is_selected_: Optional[ut.ArrayLike2D] = None
         self.list_models_: Optional[List[List[Union[ClassifierMixin, BaseEstimator]]]] = None
 
+    @property
+    def feature_importances_(self) -> np.ndarray:
+        """Averaged feature importances in scikit-learn convention (1-D, summing to ~1).
+
+        Alias of :attr:`feat_importance` (expressed in percent) rescaled to fractions and
+        exposed under the standard scikit-learn name, so the Monte-Carlo importances compose
+        with tools that read ``feature_importances_`` (e.g. ranking / selection utilities).
+        Available after :meth:`fit`.
+
+        Returns
+        -------
+        feature_importances_ : array-like, shape (n_features,)
+            Mean importance per feature as a fraction (``feat_importance / 100``), same order
+            as :attr:`feat_importance`.
+        """
+        if self.feat_importance is None:
+            raise ValueError("'feature_importances_' is unavailable; call 'TreeModel.fit' first.")
+        return np.asarray(self.feat_importance, dtype=float) / 100.0
+
     def fit(self,
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D = None,
