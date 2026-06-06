@@ -10,6 +10,26 @@ under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) ·
 
 ## Snapshot
 - **Open issues: 61 · closed: 25** (after the 2026-06-06 antibody-feedback pass + bucket triage + doc-architecture pass + the feature_map-SHAP / scale-sets pass below).
+- **Protocols epic + first protocol (2026-06-06, this session) — on `master`:**
+  - **#35 rewritten** from the thin "Create Protocols" stub into the **Protocols epic**:
+    a task-oriented, **pipeline-ordered** catalog of executable, text-rich notebooks (one
+    per task/concept), `type:dcos · prio:2 · topic:core`. Decisions settled via
+    `/grill-with-docs`: organize by **task/question** (**not** by prediction level — levels
+    become *one* protocol); **notebook-primary** (CI-runnable under `--nbmake`; no separate
+    prose page, so minimal code can't silently rot); 7-field pipeline-chained template
+    (when-to-use · input · run · output · interpret · mistakes · next-step). **Core 4** =
+    P1 CPP signature · P2 prediction tasks/levels · P3 interpretability · P4
+    validate/reliability; open-ended pipeline tail. Children linked from the epic: **#90**
+    (select & reduce), **#86** (compositional vs positional), **#81** (cheat sheet +
+    decision tree), **#91/#93** (validate/reliability), **#20/#21/#80**.
+  - **First protocol shipped:** `tutorials/protocol1_cpp_signature.ipynb` (executed green;
+    feature_map rendered) + a new **Protocols** toctree section in
+    `docs/source/tutorials.rst`. Uses the **real** API path (`SequenceFeature.get_df_parts`
+    → `CPP(df_parts=…).run(labels=…)` → `TreeModel.add_feat_importance` →
+    `CPPPlot().feature_map`), correcting the original plan's non-working
+    `CPP().run(df_seq, labels)` one-liner.
+  - **Supersedes** the old #35 framing (3 level-based protocols); each old bullet
+    (scale selection / prediction tasks / baselines) is mapped into the catalog.
 - **Feature-map SHAP + explainable scale sets (2026-06-06, this session) — merged on `master`:**
   - **#63 — CLOSED** (`03849725` + `0567abaa`, **ADR-0024**): implemented via the existing
     **`shap_plot`** convention (mirroring `profile`/`heatmap`/`ranking`), **not** the issue's
@@ -61,7 +81,8 @@ under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) ·
     **relational/interaction scope boundary**. Canonical terms added to `CONTEXT.md`.
   - **New issues:** #86 (CPP strategies guide: compositional vs positional) · #87 (CPP strategy preset)
     · #88 (code-security hardening audit — NOT a SECURITY.md) · #89 (residue-pair / bond-centered features).
-  - **Re-scoped (comments):** #35 → 3 level-based protocols (task-oriented); #21 → concept-overview page
+  - **Re-scoped (comments):** #35 → **now the Protocols epic** (task-oriented, pipeline-ordered;
+    superseded the level-based framing — see Snapshot top); #21 → concept-overview page
     + class table (the general intro); #80 → gallery mechanism (nbsphinx thumbnails; deps = CONFIRM-FIRST).
   - **`SECURITY.md` stays rejected** (sharp-edges); #88 is code hardening only. Gallery deps untouched.
 - **Merged on master (2026-06-06, concurrent session):** **`TreeModel.select_features`** — post-fit
@@ -279,7 +300,7 @@ genuinely parallel companions.
 | 38 | 2 | ☑️ | **Closed** (2026-06-06 triage) | Yes | Split → #80 (gallery), #81 (cheat sheet), #82 (avg seq len); rest → #20/#21/#35. |
 | 21 | 2 | ✅ | Docs; **re-scoped** (ADR-0022) | No | Now hosts the **concept-overview page + class table** (the general intro): unit-of-comparison × reference-construction × level. Entry point to #35. |
 | 20 | 2 | ✅ | Docs; fits | Partial | Standardize feature descriptions/terminology; pairs with docstrings skill. Absorbs #34's "explain CPP params". |
-| 35 | 3 | ✅ | Docs; **re-scoped** (ADR-0022) | No | Now the tracker for the **3 level-based protocols** (residue/domain/protein), task-oriented, each relating use-cases, **+ CPP best-practices** (`n_scales` via AAclust · `n_split_max`/strategy · **level-aware part naming**: domain→specific domain name, cleavage→P1/P1′, protein→whole-chain). **Blocked-by #21**, loosely #18; see #27/#86. |
+| 35 | 2 | ✅ | Docs; **EPIC** (rewritten this session) | Partial (P1 shipped) | **Protocols epic** — task-oriented, **pipeline-ordered** catalog of executable, text-rich notebooks; one protocol per task/concept (prediction *levels* are now a single protocol, not the organizing axis). **Notebook-primary** (`--nbmake`-runnable), 7-field pipeline-chained template. **Core 4** = P1 CPP signature (✅ `tutorials/protocol1_cpp_signature.ipynb`) · P2 levels · P3 interpretability · P4 validate. Children: #90, #86, #81, #91/#93, #20/#21/#80. Old level-based framing superseded; CPP best-practices (`n_scales` via AAclust · `n_split_max`/strategy · level-aware part naming) fold into P2/#86. |
 
 ### Documentation architecture — new (2026-06-06, ADR-0022)
 | # | prio | verdict | scope / standards | already-addressed | implementation note |
