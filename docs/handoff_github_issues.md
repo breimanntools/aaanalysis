@@ -22,12 +22,18 @@ under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) ·
     validate/reliability; open-ended pipeline tail. Children linked from the epic: **#90**
     (select & reduce), **#86** (compositional vs positional), **#81** (cheat sheet +
     decision tree), **#91/#93** (validate/reliability), **#20/#21/#80**.
-  - **First protocol shipped:** `tutorials/protocol1_cpp_signature.ipynb` (executed green;
-    feature_map rendered) + a new **Protocols** toctree section in
-    `docs/source/tutorials.rst`. Uses the **real** API path (`SequenceFeature.get_df_parts`
-    → `CPP(df_parts=…).run(labels=…)` → `TreeModel.add_feat_importance` →
-    `CPPPlot().feature_map`), correcting the original plan's non-working
-    `CPP().run(df_seq, labels)` one-liner.
+  - **All 9 catalog protocols shipped** (`tutorials/protocol1…9_*.ipynb`) + wired into the new
+    **Protocols** toctree in `docs/source/tutorials.rst`. Built by a two-pass multi-agent workflow
+    (*plan → create → 3× adversarial critic/revise → verify* per protocol; ~85 subagents). Each
+    uses the **real** API (e.g. P1: `SequenceFeature.get_df_parts` → `CPP(df_parts=…).run(labels=…)`
+    → `TreeModel.add_feat_importance` → `CPPPlot().feature_map`), correcting the plan's non-working
+    `CPP().run(df_seq, labels)` one-liner. Catalog: 1 CPP signature · 2 prediction tasks/levels ·
+    3 sampling · 4 engineer features (`run_num`) · 5 compositional vs positional (#86) · 6 select &
+    reduce (#90) · 7 classifier · 8 interpretability (SHAP) · 9 validate/reliability.
+  - **Verified:** independent fresh-kernel execution sweep (`nbconvert --execute`, 120s/cell) —
+    **all 9 green** (`exec_rc=0, saved_errors=0`). Literal `pytest --nbmake` runs in CI (`.[dev]`
+    installs nbmake; not installed locally). **Open-ended tail:** a standalone *Scale selection
+    (AAclust)* protocol is the next extension.
   - **Supersedes** the old #35 framing (3 level-based protocols); each old bullet
     (scale selection / prediction tasks / baselines) is mapped into the catalog.
 - **Feature-map SHAP + explainable scale sets (2026-06-06, this session) — merged on `master`:**
@@ -300,7 +306,7 @@ genuinely parallel companions.
 | 38 | 2 | ☑️ | **Closed** (2026-06-06 triage) | Yes | Split → #80 (gallery), #81 (cheat sheet), #82 (avg seq len); rest → #20/#21/#35. |
 | 21 | 2 | ✅ | Docs; **re-scoped** (ADR-0022) | No | Now hosts the **concept-overview page + class table** (the general intro): unit-of-comparison × reference-construction × level. Entry point to #35. |
 | 20 | 2 | ✅ | Docs; fits | Partial | Standardize feature descriptions/terminology; pairs with docstrings skill. Absorbs #34's "explain CPP params". |
-| 35 | 2 | ✅ | Docs; **EPIC** (rewritten this session) | Partial (P1 shipped) | **Protocols epic** — task-oriented, **pipeline-ordered** catalog of executable, text-rich notebooks; one protocol per task/concept (prediction *levels* are now a single protocol, not the organizing axis). **Notebook-primary** (`--nbmake`-runnable), 7-field pipeline-chained template. **Core 4** = P1 CPP signature (✅ `tutorials/protocol1_cpp_signature.ipynb`) · P2 levels · P3 interpretability · P4 validate. Children: #90, #86, #81, #91/#93, #20/#21/#80. Old level-based framing superseded; CPP best-practices (`n_scales` via AAclust · `n_split_max`/strategy · level-aware part naming) fold into P2/#86. |
+| 35 | 2 | ✅ | Docs; **EPIC** (rewritten this session) | **9/9 shipped + green** | **Protocols epic** — task-oriented, **pipeline-ordered** catalog of executable, text-rich notebooks; one protocol per task/concept (prediction *levels* are a single protocol, not the organizing axis). **Notebook-primary** (`--nbmake`-runnable), 7-field pipeline-chained template. **All 9 authored + verified green** (`tutorials/protocol1…9_*.ipynb`, wired into the Protocols toctree): 1 signature · 2 levels · 3 sampling · 4 engineer features · 5 compositional/positional (#86) · 6 select&reduce (#90) · 7 classifier · 8 interpretability · 9 validate. Children: #90, #86, #81, #91/#93, #20/#21/#80. **Open tail:** standalone *Scale selection (AAclust)* protocol. |
 
 ### Documentation architecture — new (2026-06-06, ADR-0022)
 | # | prio | verdict | scope / standards | already-addressed | implementation note |
