@@ -18,15 +18,15 @@ under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) ·
     mean-diff heatmap + impact bars, `col_val=feat_impact_'name'` shows impact in the heatmap and
     switches the bars off. `shap_plot=False` is **pixel-identical** to before (verified). Example
     notebook showcases APP (`P05067`).
-  - **#96 — CLOSED/merged** (`0e83c5cd`, **ADR-0024-interpretability-tiered-explainable-scale-sets**):
+  - **#96 — CLOSED/merged** (`0e83c5cd`, **ADR-0025-interpretability-tiered-explainable-scale-sets**):
     interpretability-tiered "explainable" scale sets (`top_explain_n`) in `load_scales`; glossary
     terms (**explainable scale set** / **interpretability tier** / **interpretability rating**) added
     to `CONTEXT.md`.
   - **Branch cleanup:** the merged remote branches for **#92 / #94 / #95** were deleted; only
     `origin/master` remains.
-  - **⚠️ ADR number collision (housekeeping):** both the feature-map and the scale-sets ADRs landed
-    as **`0024`** (`0024-feature-map-shap-via-shap-plot.md` + `0024-interpretability-tiered-explainable-scale-sets.md`).
-    Renumber the scale-sets one to **`0025`** on next touch.
+  - **✅ ADR number collision resolved:** the scale-sets ADR was renamed
+    `0024-…` → **`0025-interpretability-tiered-explainable-scale-sets.md`** (with its title);
+    `0024-feature-map-shap-via-shap-plot.md` keeps `0024`. `CONTEXT.md` references updated.
 - **Antibody-feedback triage + quick fixes (2026-06-06, this session):** an external
   antibody/non-specificity project's `FEEDBACK.md` was triaged against current `master` — most P0/P1
   asks were **already shipped** (macOS `n_jobs`, caching, batching, embedding fusion, bootstrap CIs,

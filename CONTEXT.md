@@ -361,7 +361,7 @@ A **signed, sample- or subgroup-level** SHAP attribution in `df_feat`, columns `
 _Avoid_: feature importance (unsigned, group-level), SHAP value (the raw per-feature attribution before normalization into a `feat_impact_'name'` column).
 
 **shap_plot**:
-The uniform boolean toggle on the `CPPPlot` family (`profile`, `heatmap`, `ranking`, `feature_map`) selecting **CPP analysis** (`False`, group-level **feature importance**, `feat_importance` / `mean_dif`) versus **CPP-SHAP analysis** (`True`, sample-level **feature impact**, `feat_impact_'name'` / `mean_dif_'name'`). `True` switches color encoding to signed red/blue and the colorbar to the diverging SHAP colormap. It selects the *interpretation level*; it does not itself run SHAP (that is `ShapModel`). `feature_map(shap_plot=True)` additionally stacks the importance bars by impact sign.
+The uniform boolean toggle on the `CPPPlot` family (`profile`, `heatmap`, `ranking`, `feature_map`) selecting **CPP analysis** (`False`, group-level **feature importance**, `feat_importance` / `mean_dif`) versus **CPP-SHAP analysis** (`True`, sample-level **feature impact**, `feat_impact_'name'` / `mean_dif_'name'`). `True` switches color encoding to signed red/blue and the colorbar to the diverging SHAP colormap. It selects the *interpretation level*; it does not itself run SHAP (that is `ShapModel`). In `feature_map(shap_plot=True)` the cumulative bars stack the per-feature impact in one direction colored by sign; a `mean_dif_'name'` `col_val` keeps the mean-difference heatmap with those bars, while a `feat_impact_'name'` `col_val` moves the impact into the heatmap cells and switches the bars off.
 _Avoid_: shap_mode, use_shap, sample_plot.
 
 ### Scale-set vocabulary
@@ -379,13 +379,13 @@ A per-subcategory 1–10 score (1 = most interpretable) underlying the tiering; 
 _Avoid_: interpretability score (overloaded), explainability.
 
 **top_explain_min_th**:
-The Pearson-correlation threshold (∈ {0.3,…,0.9} or `None`) for an optional `AAclust` redundancy reduction layered on a tier, served from **pre-computed** per-tier selections (AAclust default settings, fixed seed). `None` = no reduction. Reduction is computed **per tier** (medoids are not nested across tiers) and on **dual grids** (with / without AAindex) so `just_aaindex` stays correct. May leave a subcategory with no representative — the reduced set need not cover every tier subcategory. See ADR-0024.
+The Pearson-correlation threshold (∈ {0.3,…,0.9} or `None`) for an optional `AAclust` redundancy reduction layered on a tier, served from **pre-computed** per-tier selections (AAclust default settings, fixed seed). `None` = no reduction. Reduction is computed **per tier** (medoids are not nested across tiers) and on **dual grids** (with / without AAindex) so `just_aaindex` stays correct. May leave a subcategory with no representative — the reduced set need not cover every tier subcategory. See ADR-0025.
 _Avoid_: min_corr, redundancy threshold (use the AAclust term `min_th`).
 
 ## Relationships
 
 - A **df_seq** row contains one **entry** and one sequence; optionally a **pos column** cell of 1-based positions.
-- An **explainable scale set** (`top_explain_n`) ranks AAontology subcategories by **interpretability tier**; **top60** ranks scale *sets* by performance. The two selectors are mutually exclusive, and only the explain path adds `interpretability` / `top_explain` columns to `df_cat`. See ADR-0024.
+- An **explainable scale set** (`top_explain_n`) ranks AAontology subcategories by **interpretability tier**; **top60** ranks scale *sets* by performance. The two selectors are mutually exclusive, and only the explain path adds `interpretability` / `top_explain` columns to `df_cat`. See ADR-0025.
 - A **test window** is extracted at a **P1 anchor** listed in the **pos column**.
 - A **reference window** is sampled from a **candidate pool** and tagged with a **role** (workflow meaning) and a **strategy** (sampling provenance).
 - A **control window** is a **reference window** produced by the **generator** in `sample_synthetic` (no source entry).

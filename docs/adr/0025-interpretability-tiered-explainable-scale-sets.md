@@ -1,4 +1,4 @@
-# ADR-0024 — Interpretability-tiered "explainable" scale sets in `load_scales`
+# ADR-0025 — Interpretability-tiered "explainable" scale sets in `load_scales`
 
 Status: Accepted — 2026-06-06
 
