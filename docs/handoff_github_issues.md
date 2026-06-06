@@ -66,6 +66,25 @@ under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) ·
   "high priority" picks balloon deps → ProtXplain (🔄, not Ready); its #41 in "release hygiene"
   ignores that integration/e2e is v2-deferred.
 
+## Issue quality (style audit + full rewrite — 2026-06-06)
+New issue-writing standard: **`docs/issue_style_guide.md`** (Problem · Goal · Requirements ·
+**measurable KPIs** · scope · deps · standards), seeded by the strongest issues (**#61**, **#62**).
+- **🟢 Solid from the start (untouched):** #61, #62, #16, #18, #37, #40, #42, #45, #63, #64, #65, #22, #47, #74.
+- **✍️ Rewritten to contract (39 issues, all now have measurable KPIs):** #20, #21, #23–#29, #32,
+  #33, #36, #43, #44, #46, #48–#56, #69, #75–#84, #86–#89. Each gained Problem/Goal/Requirements/
+  **quantified KPIs**/scope/deps/standards; the originals are preserved in GitHub edit history.
+- **Premise corrections surfaced during rewrite (verify on pickup):** #82 — `Overview.tsv` *already*
+  has `Avg length` (14/14) → reframed to a non-drift regression test; #88 — subprocess sites already
+  use arg-lists (no `shell=True`); real gap = a missing `requests` timeout in
+  `seq_analysis_pro/_comp_seq_cons.py`; #77 — there is **no `check_cat` validator** (it's a redundancy-
+  filter knob in `_backend/cpp/_filters/_redundancy_filter.py`) → audit retargeted; #79 — CPP already
+  ingests `(L,D)` tensors via `run_num`, so PSSM = a `(L,20)`→`dict_num` glue, not a new pipeline;
+  #32 — scoped down to variance/correlation (model-based half shipped as `select_features`); #75 —
+  closes a code-vs-rule drift (`_utils/utils_output.py` still bare-`print`s).
+- **XAI cluster (#44/#46/#48–#56):** rewrites keep them **🔄 Revisit** and state the core-vs-`pro`/
+  ProtXplain boundary explicitly — each KPI is a *scoped in-core slice* (e.g. "≥1 method, 0 new core
+  deps, validated on DOM_GSEC"), heavy-dep methods (captum/DoWhy/PyMC/dash/NGLview) deferred downstream.
+
 ## ▶ Next 3 to work on (parallel-safe — different subsystems, no shared files)
 Full session kickoffs in `docs/issue_kickoffs/`. Each is meant to be run in its own session as
 `/github-issue-handoff` (context) → `/grill-with-docs` (resolve the open decisions) → implement.
@@ -74,7 +93,7 @@ Full session kickoffs in `docs/issue_kickoffs/`. Each is meant to be run in its 
 |---|---|---|---|---|
 | **18** | 1 | A — `feature_engineering/_cpp.py` + output + plotting | prio:1 foundation; **unblocks #29/#33/#26/#61** | the `df_feat` column contract (names, metadata: feature type/region); refactor existing outputs without breaking plotting |
 | **37** | 2 | C — `protein_design/` (AAMut/SeqMut) | **gate for the entire #57–60 chain**; separate subsystem, parallel-safe | finish residue/region mutation + ΔCPP scoring; what "done" means before the design chain builds on it |
-| **24** *(or **32**)* | 3 | E/D — sklearn wrapper / feature-selection utils | small, self-contained, different files; momentum task | which first; both reuse CPP outputs, neither touches A/C files |
+| **24** *(or **32**-remainder)* | 3 | E/D — sklearn wrapper / variance+correlation filtering | small, self-contained; momentum task. #32's *model-based* half shipped (`select_features`, ADR-0023) — only variance/correlation filtering remains | which first; both reuse CPP outputs, neither touches A/C files |
 
 These three share **no files** → safe to run in three separate sessions. With #15/#17/#30/#31/#66
 landed, **#18 is the next prio:1** and must go first because it locks the schema that #29/#33/#26
