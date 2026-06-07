@@ -42,7 +42,7 @@ FOLDER_IMAGE = FOLDER_GENERATED_RST + "images" + SEP
 
 # Notebooks excluded from the documentation build (e.g. Colab-only notebooks that
 # require GPU/external services and cannot be executed or rendered meaningfully).
-LIST_EXCLUDE = ["colab_protein_embeddings.ipynb"]
+LIST_EXCLUDE = []
 
 
 # Helper functions
