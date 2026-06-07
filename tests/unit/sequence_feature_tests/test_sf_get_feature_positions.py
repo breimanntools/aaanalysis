@@ -9,6 +9,9 @@ import aaanalysis as aa
 # Set default deadline from 200 to 400
 settings.register_profile("ci", deadline=400)
 settings.load_profile("ci")
+# Note: the large-input case below uses deadline=None on purpose: get_feature_positions
+# enumerates positions for wide split configs, so per-example time scales with the generated
+# config size and is not a stable wall-clock target (#83).
 
 
 aa.options["verbose"] = False

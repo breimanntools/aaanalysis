@@ -32,7 +32,19 @@ settings.load_profile("ci")
 - A `tests/conftest.py` autouse fixture resets `aa.options` to defaults
   around every test — once that lands, the `aa.options["verbose"] = False`
   line at the top of every test file becomes drift to fix on touch.
-- Don't remove `HYPOTHESIS_DEADLINE=10000000` from CI.
+- **Plot/render deadlines are finite, backed by a warmup fixture (#83).** A
+  session-scoped `_warm_matplotlib` autouse fixture in `conftest.py` (plus the
+  `Agg` backend) pays matplotlib's font-cache / first-figure cost once, up front,
+  so per-file finite deadlines on rendering tests stay reliable — the flake was
+  cold-start on the first example, not a slow plot path (steady-state render is
+  ~0.1–1.7s). Use `deadline=None` **only** for genuinely input-size-variable
+  tests (e.g. large random arrays) and **only with a one-line written
+  justification** next to it.
+- **`HYPOTHESIS_DEADLINE` is a no-op.** Hypothesis reads `HYPOTHESIS_PROFILE`,
+  not `HYPOTHESIS_DEADLINE`, and nothing in the suite reads it — so the
+  `=10000000` in `main.yml` / `test_coverage.yml` / `mutation_nightly.yml` does
+  nothing (per-file `register_profile` + per-test `@settings` fully determine
+  deadlines). Removing those three lines is a CONFIRM-FIRST workflow cleanup.
 
 ## Test classes per file
 Two classes per public method, no exceptions:

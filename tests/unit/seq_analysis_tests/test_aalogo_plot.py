@@ -4,9 +4,9 @@ This is a script to test the AAlogoPlot class initialization.
 import pytest
 import aaanalysis as aa
 
-# Set default deadline from 200 to 20000
+# Set default deadline from 200 to 4000
 from hypothesis import settings
-settings.register_profile("ci", deadline=20000)
+settings.register_profile("ci", deadline=4000)
 settings.load_profile("ci")
 
 aa.options["verbose"] = False

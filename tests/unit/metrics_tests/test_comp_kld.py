@@ -12,6 +12,9 @@ import warnings
 # Set default deadline from 200 to 400
 settings.register_profile("ci", deadline=400)
 settings.load_profile("ci")
+# Note: several @settings below use deadline=None on purpose: comp_kld draws large random
+# arrays (max_examples up to 400); per-example time scales with input size and is too variable
+# for a wall-clock deadline. Correctness, not timing, is the contract here (#83).
 
 
 # Helper function

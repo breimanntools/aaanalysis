@@ -5,7 +5,7 @@ import pytest
 import aaanalysis as aa
 
 from hypothesis import settings
-settings.register_profile("ci", deadline=20000)
+settings.register_profile("ci", deadline=4000)
 settings.load_profile("ci")
 
 aa.options["verbose"] = False

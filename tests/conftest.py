@@ -1,10 +1,30 @@
 """Shared pytest fixtures for the aaanalysis test suite."""
 import matplotlib as mpl
+mpl.use("Agg")  # headless, deterministic backend -> lower render-time variance
 import matplotlib.pyplot as plt
 import pytest
 
 import aaanalysis as aa
 from aaanalysis.config import _dict_options
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _warm_matplotlib():
+    """Prime matplotlib's font cache + first-figure cost ONCE per session.
+
+    The plotting Hypothesis tests fail intermittently with
+    ``FlakyFailure: DeadlineExceeded`` on the **first (cold) example** (#83):
+    building the FreeType font cache and initialising the first figure in a
+    fresh process can take several seconds, and Hypothesis charges that one-time
+    cost to whichever example happens to render first. Steady-state render is
+    ~0.1-1.7s (well within the per-example deadlines), so the deadlines stay
+    meaningful once the cold cost is paid up front here, outside any timed test.
+    """
+    fig, ax = plt.subplots()
+    ax.text(0.5, 0.5, "warmup AAanalysis 0123")  # force text -> build font cache
+    fig.canvas.draw()
+    plt.close(fig)
+    yield
 
 
 @pytest.fixture(autouse=True)
