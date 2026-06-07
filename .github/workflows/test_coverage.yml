@@ -15,15 +15,15 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.12'
 
     - name: Cache Python dependencies
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-coverage-${{ hashFiles('pyproject.toml') }}
@@ -46,7 +46,7 @@ jobs:
     # cached on the version key so the heavy build runs only on a cache miss.
     - name: Cache MEME suite (FIMO)
       id: cache-meme
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/meme-install
         key: ${{ runner.os }}-meme-5.5.8
@@ -74,7 +74,7 @@ jobs:
         pytest tests -m "not regression" --cov=aaanalysis --cov-report=xml --cov-fail-under=88 -x -vv --durations=20
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v7
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage.xml
