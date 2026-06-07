@@ -86,5 +86,4 @@ jobs:
       # canonical-cell-specific and must not gate every cell.
       run: pytest tests -m "not regression" -x -vv --durations=20
       env:
-        HYPOTHESIS_DEADLINE: 10000000
         MPLBACKEND: Agg

@@ -40,11 +40,12 @@ settings.load_profile("ci")
   ~0.1–1.7s). Use `deadline=None` **only** for genuinely input-size-variable
   tests (e.g. large random arrays) and **only with a one-line written
   justification** next to it.
-- **`HYPOTHESIS_DEADLINE` is a no-op.** Hypothesis reads `HYPOTHESIS_PROFILE`,
-  not `HYPOTHESIS_DEADLINE`, and nothing in the suite reads it — so the
-  `=10000000` in `main.yml` / `test_coverage.yml` / `mutation_nightly.yml` does
-  nothing (per-file `register_profile` + per-test `@settings` fully determine
-  deadlines). Removing those three lines is a CONFIRM-FIRST workflow cleanup.
+- **`HYPOTHESIS_DEADLINE` was a no-op and has been removed.** Hypothesis reads
+  `HYPOTHESIS_PROFILE`, not `HYPOTHESIS_DEADLINE`, and nothing in the suite read
+  it — so the `=10000000` in `main.yml` / `test_coverage.yml` /
+  `mutation_nightly.yml` did nothing and was deleted (#83). Deadlines are fully
+  determined by per-file `register_profile` + per-test `@settings`; CI still
+  sets `MPLBACKEND: Agg` (matching the `conftest.py` backend pin).
 
 ## Test classes per file
 Two classes per public method, no exceptions:

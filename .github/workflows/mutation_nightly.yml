@@ -32,7 +32,6 @@ jobs:
       - name: Verify CPP regression anchor (canonical cell)
         env:
           MPLBACKEND: Agg
-          HYPOTHESIS_DEADLINE: 10000000
         run: pytest tests -m regression -vv
 
       - name: Mutation audit of CPP numeric core (non-gating)

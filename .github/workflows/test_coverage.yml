@@ -70,7 +70,6 @@ jobs:
     - name: Run tests with coverage and generate XML report
       env:
         MPLBACKEND: Agg
-        HYPOTHESIS_DEADLINE: 10000000
       run: |
         pytest tests -m "not regression" --cov=aaanalysis --cov-report=xml --cov-fail-under=88 -x -vv --durations=20
 
