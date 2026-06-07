@@ -9,7 +9,31 @@ protein prediction; `pro` extra for heavy deps; semver-strict v1) and the coding
 under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) · ☑️ Done/Partial.
 
 ## Snapshot
-- **Open issues: 58 · closed: 28** (after the 2026-06-07 protocols-figures + plot-deadline pass below; prior passes: antibody-feedback, bucket triage, doc-architecture, feature_map-SHAP / scale-sets).
+- **Open issues: 58 · closed: 28** (unchanged by the gallery / non-bold / CI-speedup pass below — that work was untracked-by-issue; prior passes: protocols-figures + plot-deadline, antibody-feedback, bucket triage, doc-architecture, feature_map-SHAP / scale-sets).
+- **Protocols gallery + non-bold plots + CI speedup (2026-06-07, later this session) — on `master`:**
+  - **Protocols gallery** is now a seaborn-style **clickable 5×2 thumbnail grid**
+    (`protocols.rst` raw-HTML grid; each tile links to its protocol page; toctree
+    `:hidden:` so the grid is the gallery while the sidebar nav stays). P2 = AALogo
+    with the bits bar on top (standard `jmd=5`); P9 = CPP-SHAP feature map for APP
+    (cumulative impact). Unused montage png removed.
+  - **Non-bold plots:** `plot_settings` default `weight_bold` **True → False** (the
+    root cause of bold/overlapping fonts across the docs); 39 figure notebooks
+    (9 tutorials + 30 examples) re-rendered non-bold. **Public-default behavior
+    change** for downstream users → record when **#74** (CHANGELOG) lands. (2 pro
+    notebooks — `cpp_plot_eval`, `dpul_compare_sets_negatives` — refresh via CI.)
+  - **CI speedup + fixes (all workflows green on `317bde32`):** Node-20 actions →
+    Node-24 majors (`checkout@v6` · `setup-python@v6` · `cache@v5` ·
+    `upload-artifact@v7` · `download-artifact@v8` · `codecov-action@v7` ·
+    `setup-qemu@v4`); Windows runner pinned (`windows-2022`); **`pytest-xdist
+    -n auto`** (installed in both test jobs); matrix trimmed **10 → 7** (Windows
+    brackets min+max only; full Windows range in nightly); **concurrency
+    cancel-in-progress**; coverage on **`COVERAGE_CORE=sysmon`** (~16 → 11 min).
+  - **Hypothesis deadlines disabled suite-wide (`deadline=None`)** — wall-clock
+    per-example deadlines cannot hold under xdist CPU contention (a 1.5s-deadline
+    test ran 2.4s from a co-scheduled worker). This **supersedes #83's
+    finite-deadline approach** (which assumed serial runs); perf/correctness is
+    now guarded by the **CPP regression anchor** (nightly), not deadlines. The
+    `_warm_matplotlib` fixture + `Agg` pin are kept (harmless).
 - **Protocols figures + plot-deadline flake (2026-06-07, this session) — on `master`:**
   - **Protocols catalog finalized (P1–P10).** Reordered (P1 CPP signature · P2 exploratory
     sequence analysis · P3 sampling · P4 prediction levels · P5 engineer features ·
