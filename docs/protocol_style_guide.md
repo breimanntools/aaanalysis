@@ -81,14 +81,14 @@ Use the canonical terms from `CONTEXT.md` verbatim, and say them out loud:
 
 ## 7. Catalog order (pipeline)
 
-CPP signature is P1; the exploratory, no-label first look comes later (P10):
+CPP signature is P1; the exploratory no-label first look is P2:
 
 ```
-1 CPP signature             2 prediction levels        3 sampling
-4 engineer features         5 compositional vs positional
-6 select & reduce features  7 classifier               8 interpretability
-9 validate ("can I trust this?")
-10 exploratory sequence analysis (no labels)
+1 CPP signature                2 exploratory sequence analysis (no labels)
+3 sampling                     4 prediction levels
+5 engineer features            6 compositional vs positional
+7 select & reduce features     8 classifier
+9 interpretability             10 validate ("can I trust this?")
 ```
 
 This is a **living catalog**: append protocols as the package grows.

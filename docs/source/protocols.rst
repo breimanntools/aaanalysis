@@ -34,20 +34,20 @@ distinct with no overlap.
 out the **signature** (the physicochemical features, resolved by position, that
 distinguish them), and the rest of the pipeline helps you sample fairly, engineer
 features, select what matters, predict, explain, and check that the signal is
-real. The catalog follows that data flow, opening with the CPP signature; the
-exploratory, no-label first look (P10) is there for when you do not yet have
-groups to compare.
+real. The catalog follows that data flow, opening with the CPP signature, then an
+exploratory no-label first look, and on through sampling, feature engineering,
+selection, modelling, explanation, and validation.
 
 .. toctree::
    :maxdepth: 1
 
    generated/protocol1_cpp_signature
-   generated/protocol2_prediction_tasks
+   generated/protocol2_sequence_analysis
    generated/protocol3_sampling
-   generated/protocol4_engineer_features
-   generated/protocol5_compositional_positional
-   generated/protocol6_feature_selection
-   generated/protocol7_classifier
-   generated/protocol8_interpretability
-   generated/protocol9_validation
-   generated/protocol10_sequence_analysis
+   generated/protocol4_prediction_tasks
+   generated/protocol5_engineer_features
+   generated/protocol6_compositional_positional
+   generated/protocol7_feature_selection
+   generated/protocol8_classifier
+   generated/protocol9_interpretability
+   generated/protocol10_validation
