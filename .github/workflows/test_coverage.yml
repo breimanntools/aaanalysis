@@ -75,6 +75,9 @@ jobs:
     - name: Run tests with coverage and generate XML report
       env:
         MPLBACKEND: Agg
+        # Use CPython's sys.monitoring coverage backend (py3.12+): much faster
+        # than the default C-tracer, so the coverage job stops being the long pole.
+        COVERAGE_CORE: sysmon
       run: |
         pytest tests -m "not regression" --cov=aaanalysis --cov-report=xml --cov-fail-under=88 -x -n auto --durations=20
 
