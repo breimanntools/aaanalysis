@@ -8,6 +8,21 @@ protein prediction; `pro` extra for heavy deps; semver-strict v1) and the coding
 `CLAUDE.md` + `.claude/rules/sharp-edges.md`. Verdicts: ✅ Ready · 🔄 Revisit (needs a decision /
 under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) · ☑️ Done/Partial.
 
+## Milestones (release scoping — semver-strict v1.x; first cut, re-scope as work lands)
+- **v1.1** (16) — prio:1 output-schema foundation + docs onramp + quick wins:
+  #18, #91, #93, #21, #20, #81, #80, #35, #74, #69, #78, #77, #82, #84, #75, #76.
+- **v1.2** (14) — features building on the v1.1 `df_feat` schema:
+  #61, #37, #32, #24, #33, #29, #23, #22, #28, #27, #36, #43, #19, #16.
+- **v1.3** (17) — structure/conservation (pro), protein-design chain, perf, optional API:
+  #64, #65, #40, #42, #45, #46, #57, #58, #59, #60, #62, #79, #87, #88, #89, #25, #26.
+- **v2.X** (10) — the XAI suite (ProtXplain-scoped) + breaking/heavy work:
+  #47, #48, #49, #50, #51, #52, #53, #54, #55, #56.
+- **Backlog (no milestone):** #44 (time-resolution prediction, research-y).
+
+Respect the dependency order from the lanes below: **#18 before #61** (schema), **#37
+before #57–60** (protein-design chain). Milestones complement the `prio:` labels —
+they answer "additive → which v1.x minor" vs "breaking/heavy → v2.X".
+
 ## Snapshot
 - **Open issues: 58 · closed: 28** (unchanged by the gallery / non-bold / CI-speedup pass below — that work was untracked-by-issue; prior passes: protocols-figures + plot-deadline, antibody-feedback, bucket triage, doc-architecture, feature_map-SHAP / scale-sets).
 - **Protocols gallery + non-bold plots + CI speedup (2026-06-07, later this session) — on `master`:**
