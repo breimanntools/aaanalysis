@@ -11,7 +11,8 @@ under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) ·
 ## Snapshot
 - **Open issues: 58 · closed: 28** (unchanged by the gallery / non-bold / CI-speedup pass below — that work was untracked-by-issue; prior passes: protocols-figures + plot-deadline, antibody-feedback, bucket triage, doc-architecture, feature_map-SHAP / scale-sets).
 - **Protocols gallery + non-bold plots + CI speedup (2026-06-07, later this session) — on `master`:**
-  - **Protocols gallery** is now a seaborn-style **clickable 5×2 thumbnail grid**
+  - **Protocols gallery (first draft; polish tracked in #80, which stays open)** is
+    a seaborn-style **clickable 5×2 thumbnail grid**
     (`protocols.rst` raw-HTML grid; each tile links to its protocol page; toctree
     `:hidden:` so the grid is the gallery while the sidebar nav stays). P2 = AALogo
     with the bits bar on top (standard `jmd=5`); P9 = CPP-SHAP feature map for APP
