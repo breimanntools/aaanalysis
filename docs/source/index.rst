@@ -38,6 +38,7 @@ For extended features, including our explainable AI module, please use the 'prof
    :caption: EXAMPLES
 
    tutorials.rst
+   protocols.rst
 
 .. toctree::
    :maxdepth: 2

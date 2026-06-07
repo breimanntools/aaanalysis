@@ -62,25 +62,3 @@ Explaining sample level predictions at single-residue resolution is introduced i
    :maxdepth: 1
 
    generated/tutorial5a_shap_model
-
-Protocols
----------
-Task-oriented, pipeline-ordered recipes that answer a single biological question
-end-to-end — *when to use it, what goes in, the minimal code, what comes out, how
-to interpret it, common mistakes,* and *what to do next*. Unlike the tutorials
-(which teach one function at a time), protocols teach **workflows**. This is a
-living catalog that grows along the AAanalysis pipeline; see the
-`Protocols epic <https://github.com/breimanntools/aaanalysis/issues/35>`_.
-
-.. toctree::
-   :maxdepth: 1
-
-   generated/protocol1_cpp_signature
-   generated/protocol2_prediction_tasks
-   generated/protocol3_sampling
-   generated/protocol4_engineer_features
-   generated/protocol5_compositional_positional
-   generated/protocol6_feature_selection
-   generated/protocol7_classifier
-   generated/protocol8_interpretability
-   generated/protocol9_validation
