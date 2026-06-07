@@ -4,6 +4,7 @@ Stacked bar of the engineered Arm A feature space: counts per Part (x-axis)
 stacked by Split type (Segment / Pattern / PeriodicPattern).
 """
 import matplotlib.pyplot as plt
+import seaborn as sns
 import aaanalysis as aa
 
 aa.options["verbose"] = False
@@ -48,6 +49,7 @@ ax.set_ylim(0, total * 1.30)
 ax.set_xlabel("Part")
 ax.set_ylabel("Number of features")
 ax.set_title("Engineered feature space", weight="bold", pad=10)
+sns.despine()
 
 # Horizontal legend in the headroom band above the bars (no occlusion).
 leg = ax.legend(title="Split type", loc="upper center",

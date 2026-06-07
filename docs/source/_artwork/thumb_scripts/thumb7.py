@@ -11,15 +11,15 @@ import matplotlib
 matplotlib.use("Agg")
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
 
 import aaanalysis as aa
 
 aa.options["verbose"] = False
 aa.options["random_state"] = 42
 
-GREEN = "#3a9c4e"
-GREY = "#d2d2d2"
+# canonical kept/dropped palette (matches the protocol notebook figure)
+GREEN = "tab:green"
+GREY = "lightgray"
 OUT = "/Users/stephanbreimann/Programming/1Packages/aaanalysis/docs/source/_static/img/thumbs/protocol7.png"
 
 # --- data pipeline (P7 model-free recipe) ----------------------------------
@@ -43,7 +43,7 @@ n_feat = X.shape[1]
 n_keep = int(mask.sum())
 
 # --- plot ------------------------------------------------------------------
-aa.plot_settings(font_scale=1.35, weight_bold=False)
+aa.plot_settings(font_scale=1.3, weight_bold=False, short_ticks=True)
 fig, ax = plt.subplots(figsize=(7, 7))
 
 # zoom y to the data band so the ranked staircase fills the square; baseline
@@ -60,18 +60,17 @@ ax.set_ylim(y_lo, y_hi)
 ax.set_yticks([0.40, 0.45, 0.50])
 ax.set_xticks([0, 20, 40])
 
-ax.set_title("Keep the strong, drop the redundant", fontsize=21,
-             fontweight="bold", color="#222222", pad=12)
+ax.set_title("Keep the strong, drop the redundant",
+             size=aa.plot_gcfs(), pad=12)
 
-ax.legend(
-    handles=[
-        Patch(facecolor=GREEN, label=f"kept  ({n_keep})"),
-        Patch(facecolor=GREY, label=f"dropped  ({n_feat - n_keep})"),
-    ],
-    loc="upper right", frameon=False, handlelength=1.3,
-    handleheight=1.3, borderaxespad=0.4, labelspacing=0.5,
+aa.plot_legend(
+    ax=ax,
+    dict_color={f"kept ({n_keep})": GREEN, f"dropped ({n_feat - n_keep})": GREY},
+    n_cols=1, loc="upper right", marker="s", marker_size=15,
 )
 
+import seaborn as sns
+sns.despine()
 plt.tight_layout()
 fig.savefig(OUT, dpi=150, facecolor="white")
 print("saved", OUT, "| features", n_feat, "-> kept", n_keep)

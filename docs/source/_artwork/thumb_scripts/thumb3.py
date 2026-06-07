@@ -10,6 +10,7 @@ Run:
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
 import aaanalysis as aa
 
@@ -70,15 +71,17 @@ ax.set_ylim(-0.6, len(substrates) - 0.4)
 ax.set_xlim(0, backbone_len + 2)
 ax.set_xlabel("Residue position")
 ax.set_title("Windows on substrate proteins", weight="bold", pad=14)
+sns.despine(ax=ax)
 
-handles = [plt.Rectangle((0, 0), 1, 1, color=c_test),
-           plt.Rectangle((0, 0), 1, 1, color=c_neg)]
-ax.legend(handles, ["Test window (label=1)", "Same-protein negative"],
-          loc="upper center", bbox_to_anchor=(0.5, -0.18), ncol=1,
-          frameon=False, handlelength=1.3, handleheight=1.3, fontsize=15)
+aa.plot_legend(
+    ax=ax,
+    dict_color={"Test window (label=1)": c_test, "Same-protein negative": c_neg},
+    n_cols=1, loc="upper center", x=0.5, y=-0.16,
+    fontsize=15, handlelength=1.3,
+)
 
 plt.tight_layout()
-fig.subplots_adjust(bottom=0.28, top=0.91)
+fig.subplots_adjust(bottom=0.26, top=0.91)
 fig.savefig(
     "/Users/stephanbreimann/Programming/1Packages/aaanalysis/docs/source/_static/img/thumbs/protocol3.png",
     dpi=150, facecolor="white")

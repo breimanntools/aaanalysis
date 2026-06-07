@@ -6,6 +6,7 @@ Compositional vs the Positional feature-engineering recipe.
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import seaborn as sns
 import aaanalysis as aa
 
 OUT = "/Users/stephanbreimann/Programming/1Packages/aaanalysis/docs/source/_static/img/thumbs/protocol6.png"
@@ -56,10 +57,11 @@ ax.set_xticklabels(["Segment", "Pattern", "Periodic\nPattern"])
 ax.set_ylabel("# selected features")
 ax.set_title("Selected features by split type")
 ax.set_ylim(0, max(counts_comp.max(), counts_pos.max()) * 1.28)
-ax.legend(loc="upper right", frameon=False, handlelength=1.0,
-          handletextpad=0.5, fontsize="medium", borderaxespad=0.3)
 ax.grid(axis="y", color="0.85", zorder=0)
 ax.tick_params(axis="x", length=0)
+sns.despine()
+aa.plot_legend(ax=ax, dict_color={"Compositional": colors[0], "Positional": colors[1]},
+               n_cols=1, x=0.33, y=1.0, marker="s", marker_size=14)
 
 fig.set_size_inches(7, 7)
 plt.tight_layout()
