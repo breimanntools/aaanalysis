@@ -37,14 +37,14 @@ def main():
     _args = _df_parts.loc["P05067"].to_dict()
     args_seq = {key + "_seq": _args[key] for key in _args}
 
-    # --- Canonical CPP-SHAP heatmap -----------------------------------
+    # --- CPP-SHAP feature map: cumulative feature impact for APP -------
     fs = aa.plot_gcfs()
     aa.plot_settings(font_scale=0.65, weight_bold=False)
     cpp_plot = aa.CPPPlot()
-    fig, ax = cpp_plot.heatmap(df_feat=df_feat, shap_plot=True,
-                               col_val="feat_impact_APP", name_test="APP",
-                               figsize=(7, 7), **args_seq)
-    plt.title("CPP-SHAP heatmap for APP", fontsize=fs + 5, weight="bold")
+    fig, ax = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
+                                   col_val="mean_dif_APP", col_imp="feat_impact_APP",
+                                   name_test="APP", figsize=(7, 7), **args_seq)
+    plt.title("CPP-SHAP feature map for APP", fontsize=fs + 4, weight="bold")
 
     fig.set_size_inches(7, 7)
     # Leave headroom so the title is not clipped (saved without bbox_inches="tight").
