@@ -9,7 +9,28 @@ protein prediction; `pro` extra for heavy deps; semver-strict v1) and the coding
 under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) · ☑️ Done/Partial.
 
 ## Snapshot
-- **Open issues: 61 · closed: 25** (after the 2026-06-06 antibody-feedback pass + bucket triage + doc-architecture pass + the feature_map-SHAP / scale-sets pass below).
+- **Open issues: 58 · closed: 28** (after the 2026-06-07 protocols-figures + plot-deadline pass below; prior passes: antibody-feedback, bucket triage, doc-architecture, feature_map-SHAP / scale-sets).
+- **Protocols figures + plot-deadline flake (2026-06-07, this session) — on `master`:**
+  - **Protocols catalog finalized (P1–P10).** Reordered (P1 CPP signature · P2 exploratory
+    sequence analysis · P3 sampling · P4 prediction levels · P5 engineer features ·
+    P6 compositional vs positional · P7 select & reduce · P8 classifier · P9 interpretability
+    · P10 validation), short `P<N>:` sidebar labels, **bold field lead-ins** (no sub-section
+    nav level), `aa.display_df` tables, no em dashes, framed distinct from Tutorials. Headline
+    figures + gallery thumbnails upgraded to the **canonical tutorial plots** (CPP
+    `feature_map`, `dPULearnPlot.pca`, CPP-SHAP `heatmap`, `aa.plot_rank`) with
+    `plotting_prelude` styling; **seaborn-style 3-wide gallery** (`_static/img/protocols_gallery.png`
+    + per-protocol thumbs + reproducible `_artwork/thumb_scripts/`). All 10 run green. Added
+    `docs/protocol_style_guide.md`.
+  - **#86 → CLOSED** (delivered as **P6** compositional-vs-positional) · **#90 → CLOSED**
+    (delivered as **P7** select-&-reduce). Epic **#35 stays open** for the open tail
+    (standalone *Scale selection / AAclust* protocol).
+  - **#83 plot-deadline flakiness → FIXED + CLOSED** (`6ff70e37`, `79a14b0b`). Root cause was
+    **cold-start** (FreeType font cache / first-figure), not a slow plot path (steady-state
+    render ~0.1–1.7s). Fix: session `_warm_matplotlib` autouse fixture + `Agg` pin in
+    `conftest.py`; re-enabled **finite** deadlines on the AALogo set (`20000→4000`); justified
+    the few remaining `deadline=None` (large-input / external-tool tests); removed the **dead
+    `HYPOTHESIS_DEADLINE`** env from the 3 workflows (Hypothesis reads `HYPOTHESIS_PROFILE`, not
+    it). Flaky test **20/20** local; **no net increase** in `deadline=None` (KPI 3).
 - **Protocols epic + first protocol (2026-06-06, this session) — on `master`:**
   - **#35 rewritten** from the thin "Create Protocols" stub into the **Protocols epic**:
     a task-oriented, **pipeline-ordered** catalog of executable, text-rich notebooks (one
@@ -195,7 +216,7 @@ genuinely parallel companions.
    `comp_bootstrap_ci`); first settle helpers vs `Tool`-class+Plot vs hybrid. **Lane G**; #93
    (learning-curve) builds on it.
 9. Quick wins (small, independent): **#24, #32, #33, #29** (#29/#33 after #18).
-10. Docs: **#21, #43, #69 (retarget first), #20, #90** (feature-selection Protocol).
+10. Docs: **#21, #43, #69 (retarget first), #20** (~~#90~~ done → P7 feature-selection protocol).
 11. Revisit/deferred clusters: structure/conservation (#40/#64/#65/#42), embedding (#22/#23/#47),
     XAI (#47–56; ~~#63~~ done), and the #67 v2 umbrella.
 
@@ -209,7 +230,7 @@ genuinely parallel companions.
   AAMut/SeqMut + the mutation workflow; share `protein_design/`.
 - **Lane D — Data/sampling:** ~~#66~~ (done), #25, #32, **#28** (now unblocked — #66 landed, so the
   `AAWindowSampler` overlap is gone; #28 builds on it).
-- **Lane E — Docs:** #21, #43, #20, #69, #35, #38, **#90** (feature-selection Protocol — concept
+- **Lane E — Docs:** #21, #43, #20, #69, #35, #38 (~~#90~~ done → P7 feature-selection Protocol — concept
   page + notebook; relates #32/ADR-0023) (doc files only; independent of code lanes).
 - **Lane F — Structure/conservation (pro, SERIALIZE):** #65 → #40/#42; **#64 is deferred (ADR-0012).**
   All share `data_handling_pro` + the pending pro-package move.
@@ -306,12 +327,12 @@ genuinely parallel companions.
 | 38 | 2 | ☑️ | **Closed** (2026-06-06 triage) | Yes | Split → #80 (gallery), #81 (cheat sheet), #82 (avg seq len); rest → #20/#21/#35. |
 | 21 | 2 | ✅ | Docs; **re-scoped** (ADR-0022) | No | Now hosts the **concept-overview page + class table** (the general intro): unit-of-comparison × reference-construction × level. Entry point to #35. |
 | 20 | 2 | ✅ | Docs; fits | Partial | Standardize feature descriptions/terminology; pairs with docstrings skill. Absorbs #34's "explain CPP params". |
-| 35 | 2 | ✅ | Docs; **EPIC** (rewritten this session) | **9/9 shipped + green** | **Protocols epic** — task-oriented, **pipeline-ordered** catalog of executable, text-rich notebooks; one protocol per task/concept (prediction *levels* are a single protocol, not the organizing axis). **Notebook-primary** (`--nbmake`-runnable), 7-field pipeline-chained template. **All 9 authored + verified green** (`tutorials/protocol1…9_*.ipynb`, wired into the Protocols toctree): 1 signature · 2 levels · 3 sampling · 4 engineer features · 5 compositional/positional (#86) · 6 select&reduce (#90) · 7 classifier · 8 interpretability · 9 validate. Children: #90, #86, #81, #91/#93, #20/#21/#80. **Open tail:** standalone *Scale selection (AAclust)* protocol. |
+| 35 | 2 | ✅ | Docs; **EPIC** (living) | **10/10 shipped + green** | **Protocols epic** — task-oriented, **pipeline-ordered** catalog of executable, text-rich notebooks in `protocols/`; one protocol per task/concept. Notebook-primary, 7-field template, short `P<N>:` titles, bold field lead-ins, `aa.display_df`, no em dashes, distinct from Tutorials. **P1–P10 authored + verified green**, tutorial-grade headline figures + **seaborn-style 3-wide gallery**: P1 signature · P2 exploratory seq-analysis · P3 sampling · P4 levels · P5 engineer features · P6 compositional/positional **(closed #86)** · P7 select&reduce **(closed #90)** · P8 classifier · P9 interpretability · P10 validation. Children #81/#91/#93/#20/#21/#80 remain. **Open tail:** standalone *Scale selection (AAclust)* protocol. |
 
 ### Documentation architecture — new (2026-06-06, ADR-0022)
 | # | prio | verdict | scope / standards | already-addressed | implementation note |
 |---|---|---|---|---|---|
-| 86 | 2 | ✅ | Docs; fits | No | CPP strategies guide: compositional (`Segment(1,1)`) vs positional; glossary added to CONTEXT.md; recipe per strategy. Cross-ref #20. |
+| 86 | 2 | ☑️ | Docs; **Closed** (delivered as P6) | Yes | DONE: shipped as `protocols/protocol6_compositional_positional.ipynb` — compositional `Segment(1,1)` vs positional `Pattern`/`PeriodicPattern`, `get_split_kws` recipes, level mapping; runs green. The strategies guide lives as a protocol per the epic (#35). |
 | 87 | 3 | 🔄 | Optional API (feature_engineering) | No | Named preset for strategy selection (`strategy=` or helpers); doc-first (#86), add sugar only if it earns surface. |
 | 88 | 2 | ✅ | Fits; code hardening | No | Audit subprocess (FIMO/BLAST/MMseqs2/CD-HIT), network fetch (AlphaFold/UniProt/NCBI), file parsing. **NOT a SECURITY.md** (sharp-edges reject). CodeQL continues. |
 | 89 | 3 | 🔄 | Fits; residue sub-mode ergonomics | No | First-class between-residues/bond-centered features (today implicit via even window + Pattern). Builds on AAWindowSampler; pairs with the residue protocol (#35). |
