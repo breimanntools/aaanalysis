@@ -8,6 +8,11 @@ on:
     branches:
       - master
 
+# Cancel a superseded in-progress run on the same branch/PR (saves runner minutes).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -18,6 +23,12 @@ jobs:
         # windows-2025 by 2026-06-15) for reproducible runs; bump deliberately.
         os: [ubuntu-latest, windows-2022]
         python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+        # Linux covers the full Python range; Windows only brackets min+max
+        # (3.10 + 3.14) here, full Windows range runs in the nightly. 10 jobs -> 7.
+        exclude:
+          - {os: windows-2022, python-version: '3.11'}
+          - {os: windows-2022, python-version: '3.12'}
+          - {os: windows-2022, python-version: '3.13'}
 
     steps:
     - uses: actions/checkout@v6
@@ -86,6 +97,6 @@ jobs:
       # The exact-value regression anchor (-m regression) runs in the nightly
       # job, not in this fail-fast matrix (ADR-0015) — its frozen values are
       # canonical-cell-specific and must not gate every cell.
-      run: pytest tests -m "not regression" -x -vv --durations=20
+      run: pytest tests -m "not regression" -x -n auto --durations=20
       env:
         MPLBACKEND: Agg

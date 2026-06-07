@@ -8,6 +8,11 @@ on:
     branches:
       - master
 
+# Cancel a superseded in-progress run on the same branch/PR (saves runner minutes).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Run Tests and Report Coverage
@@ -71,7 +76,7 @@ jobs:
       env:
         MPLBACKEND: Agg
       run: |
-        pytest tests -m "not regression" --cov=aaanalysis --cov-report=xml --cov-fail-under=88 -x -vv --durations=20
+        pytest tests -m "not regression" --cov=aaanalysis --cov-report=xml --cov-fail-under=88 -x -n auto --durations=20
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v7
