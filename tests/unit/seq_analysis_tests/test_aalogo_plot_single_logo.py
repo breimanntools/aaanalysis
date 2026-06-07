@@ -12,7 +12,7 @@ import hypothesis.strategies as st
 import aaanalysis as aa
 
 # Set default deadline from 200 to 4000
-settings.register_profile("ci", deadline=4000)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 aa.options["verbose"] = False

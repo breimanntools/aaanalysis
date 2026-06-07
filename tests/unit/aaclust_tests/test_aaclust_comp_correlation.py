@@ -10,7 +10,7 @@ import pandas as pd
 from typing import List, Optional
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -36,7 +36,7 @@ def check_invalid_conditions(X, labels, min_samples=2, check_unique=True):
 class TestCompCorrelation:
     """Test comp_correlation function of the AAclust class."""
 
-    @settings(deadline=500)
+    @settings(deadline=None)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=1, max_side=5),
                          elements=some.floats(allow_nan=True, allow_infinity=True)))
     def test_valid_X(self, X):
@@ -56,7 +56,7 @@ class TestCompCorrelation:
                 assert len(result_df) == len(labels_sorted)
                 assert isinstance(labels_sorted, np.ndarray)
 
-    @settings(deadline=500)
+    @settings(deadline=None)
     @given(X_ref=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=1, max_side=5),
                              elements=some.floats(allow_nan=True, allow_infinity=True)))
     def test_invalid_X_ref(self, X_ref):
@@ -69,7 +69,7 @@ class TestCompCorrelation:
                 warnings.simplefilter("ignore", RuntimeWarning)
                 aa.AAclust.comp_correlation(X, X_ref=X_ref, labels=labels)
 
-    @settings(deadline=300, max_examples=25)
+    @settings(deadline=None, max_examples=25)
     @given(labels_ref=npst.arrays(dtype=np.int32,
                                   shape=npst.array_shapes(min_dims=1, max_dims=1, min_side=10, max_side=30),
                                   elements=some.integers(min_value=0, max_value=30)))
@@ -89,7 +89,7 @@ class TestCompCorrelation:
             assert len(result_df) == len(labels_sorted)
             assert isinstance(labels_sorted, np.ndarray)
 
-    @settings(deadline=500)
+    @settings(deadline=None)
     @given(labels_ref=npst.arrays(dtype=np.float64,
                                   shape=npst.array_shapes(min_dims=1, max_dims=1, min_side=1, max_side=5),
                                   elements=some.floats(allow_nan=True, allow_infinity=True)))
@@ -100,7 +100,7 @@ class TestCompCorrelation:
         with pytest.raises(ValueError):
             aa.AAclust.comp_correlation(X, labels=np.array([1, 2, 1]), X_ref=X_ref, labels_ref=labels_ref)
 
-    @settings(deadline=500)
+    @settings(deadline=None)
     @given(names=some.lists(some.text(), min_size=1, max_size=5))
     def test_valid_names(self, names):
         """Test a valid 'names' parameter."""
@@ -118,7 +118,7 @@ class TestCompCorrelation:
             assert len(result_df) == len(labels_sorted)
             assert isinstance(labels_sorted, np.ndarray)
 
-    @settings(deadline=500)
+    @settings(deadline=None)
     @given(names=some.lists(some.integers(), min_size=1, max_size=5))
     def test_invalid_names_dtype(self, names):
         """Test invalid 'names' datatype."""
@@ -135,7 +135,7 @@ class TestCompCorrelation:
         with pytest.raises(ValueError):
             aa.AAclust.comp_correlation(X, labels=labels, names=pd.DataFrame())
 
-    @settings(deadline=1000)
+    @settings(deadline=None)
     @given(names_ref=some.lists(some.text(), min_size=1, max_size=5))
     def test_valid_names_ref(self, names_ref):
         """Test a valid 'names_ref' parameter."""
@@ -153,7 +153,7 @@ class TestCompCorrelation:
             assert len(result_df) == len(labels_sorted)
             assert isinstance(labels_sorted, np.ndarray)
 
-    @settings(deadline=500)
+    @settings(deadline=None)
     @given(names_ref=some.lists(some.integers(), min_size=1, max_size=5))
     def test_invalid_names_ref_dtype(self, names_ref):
         """Test invalid 'names_ref' datatype."""
@@ -171,7 +171,7 @@ class TestCompCorrelation:
 class TestCompCorrelationComplex:
     """Test comp_correlation function of the AAclust class for Complex Cases."""
 
-    @settings(deadline=1000, max_examples=5)
+    @settings(deadline=None, max_examples=5)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=some.floats(allow_nan=False, allow_infinity=False)))
     def test_combination_valid_parameters(self, X):
@@ -194,7 +194,7 @@ class TestCompCorrelationComplex:
                 assert len(result_df) == len(labels_sorted)
                 assert isinstance(labels_sorted, np.ndarray)
 
-    @settings(deadline=1000, max_examples=5)
+    @settings(deadline=None, max_examples=5)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=some.floats(allow_nan=False, allow_infinity=False)))
     def test_combination_with_missing_labels(self, X):
@@ -204,7 +204,7 @@ class TestCompCorrelationComplex:
         with pytest.raises(ValueError):
             aa.AAclust.comp_correlation(X, X_ref=X_ref, names=names)
 
-    @settings(deadline=1000, max_examples=5)
+    @settings(deadline=None, max_examples=5)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=some.floats(allow_nan=False, allow_infinity=False)))
     def test_combination_with_incompatible_X_and_X_ref(self, X):
@@ -215,7 +215,7 @@ class TestCompCorrelationComplex:
         with pytest.raises(ValueError):
             aa.AAclust.comp_correlation(X, X_ref=X_ref, labels=labels, labels_ref=labels_ref)
 
-    @settings(deadline=1000, max_examples=5)
+    @settings(deadline=None, max_examples=5)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=some.floats(allow_nan=False, allow_infinity=False)))
     def test_combination_with_duplicate_names(self, X):
@@ -232,7 +232,7 @@ class TestCompCorrelationComplex:
             assert len(result_df) == len(labels_sorted)
             assert isinstance(labels_sorted, np.ndarray)
 
-    @settings(deadline=1000, max_examples=5)
+    @settings(deadline=None, max_examples=5)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=some.floats(allow_nan=False, allow_infinity=False)))
     def test_combination_with_mismatched_labels_and_names(self, X):

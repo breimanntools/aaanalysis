@@ -10,7 +10,7 @@ import pytest
 import aaanalysis as aa
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -71,7 +71,7 @@ class TestCPPPlotProfile:
             assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
             plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(figsize=st.tuples(st.floats(min_value=4.0, max_value=20.0), st.floats(min_value=5.0, max_value=20.0)))
     def test_figsize(self, figsize):
         cpp_plot = aa.CPPPlot()
@@ -81,7 +81,7 @@ class TestCPPPlotProfile:
         plt.close()
 
     # Positive tests: Appearance of Parts (TMD-JMD)
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(start=st.integers(min_value=0, max_value=1000))
     def test_start(self, start):
         if start <= 1000:
@@ -91,7 +91,7 @@ class TestCPPPlotProfile:
             assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
             plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(tmd_len=st.integers(min_value=20, max_value=100))
     def test_tmd_len(self, tmd_len):
         if tmd_len <= 1000:
@@ -109,7 +109,7 @@ class TestCPPPlotProfile:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(jmd_color=st.sampled_from(VALID_COLORS), tmd_seq_color=st.sampled_from(VALID_COLORS),
            jmd_seq_color=st.sampled_from(VALID_COLORS))
     def test_color_parameters(self, jmd_color, tmd_seq_color, jmd_seq_color):
@@ -120,7 +120,7 @@ class TestCPPPlotProfile:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(seq_size=st.floats(min_value=8.0, max_value=14.0),
            fontsize_tmd_jmd=st.floats(min_value=8.0, max_value=14.0))
     def test_font_sizes(self, seq_size, fontsize_tmd_jmd):
@@ -130,7 +130,7 @@ class TestCPPPlotProfile:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(add_xticks_pos=st.booleans(),
            highlight_tmd_area=st.booleans(),
            add_legend_cat=st.booleans())
@@ -143,7 +143,7 @@ class TestCPPPlotProfile:
         plt.close()
 
     # Positive tests: Legend, Axis, and Grid Configurations
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(highlight_alpha=st.floats(min_value=0.0, max_value=1.0),
            bar_width=st.floats(min_value=0.1, max_value=2.0))
     def test_numeric_styling_parameters(self, highlight_alpha, bar_width):
@@ -153,7 +153,7 @@ class TestCPPPlotProfile:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(edge_color=st.sampled_from(VALID_COLORS + [None]),
            grid_axis=st.sampled_from(VALID_GRID_AXIS))
     def test_edge_color_and_grid_axis(self, edge_color, grid_axis):
@@ -163,7 +163,7 @@ class TestCPPPlotProfile:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(xtick_size=st.floats(min_value=8.0, max_value=14.0),
            xtick_width=st.floats(min_value=0.5, max_value=2.0),
            xtick_length=st.floats(min_value=3.0, max_value=10.0))
@@ -175,7 +175,7 @@ class TestCPPPlotProfile:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(ytick_size=st.floats(min_value=8.0, max_value=14.0),
            ytick_width=st.floats(min_value=0.5, max_value=2.0),
            ytick_length=st.floats(min_value=3.0, max_value=8.0))
@@ -202,7 +202,7 @@ class TestCPPPlotProfile:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=7000)
+    @settings(max_examples=3, deadline=None)
     @given(ylim_max=st.floats(min_value=35.0, max_value=45.0))
     def test_ylim(self, ylim_max):
         ylim = (0, ylim_max)
@@ -236,7 +236,7 @@ class TestCPPPlotProfile:
             cpp_plot.profile(df_feat=df_feat)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(shap_plot=st.booleans(), col_imp=st.text(min_size=1))
     def test_invalid_col_imp(self, shap_plot, col_imp):
         if col_imp not in [COL_FEAT_IMPACT_TEST, None]:
@@ -246,7 +246,7 @@ class TestCPPPlotProfile:
                 cpp_plot.profile(df_feat=df_feat, shap_plot=shap_plot, col_imp=col_imp)
             plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(normalize=st.text(min_size=1))  # Text input for boolean parameter
     def test_invalid_normalize(self, normalize):
         cpp_plot = aa.CPPPlot()
@@ -255,7 +255,7 @@ class TestCPPPlotProfile:
             cpp_plot.profile(df_feat=df_feat, normalize=normalize)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(figsize=st.tuples(st.just(-10.0), st.just(-10.0)))
     def test_invalid_figsize(self, figsize):
         cpp_plot = aa.CPPPlot()
@@ -273,7 +273,7 @@ class TestCPPPlotProfile:
             plt.close()
 
     # Negative tests: Appearance of Parts (TMD-JMD)
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(start=st.just(-1))
     def test_invalid_start(self, start):
         cpp_plot = aa.CPPPlot()
@@ -282,7 +282,7 @@ class TestCPPPlotProfile:
             cpp_plot.profile(df_feat=df_feat, start=start)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(tmd_len=st.just(-1))  # Negative length
     def test_invalid_tmd_len(self, tmd_len):
         cpp_plot = aa.CPPPlot()
@@ -291,7 +291,7 @@ class TestCPPPlotProfile:
             cpp_plot.profile(df_feat=df_feat, tmd_len=tmd_len)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(tmd_seq=st.text(), jmd_n_seq=st.text(), jmd_c_seq=st.text())
     def test_invalid_sequences(self, tmd_seq, jmd_n_seq, jmd_c_seq):
         if not isinstance(tmd_seq, str) or not isinstance(jmd_n_seq, str) or not isinstance(jmd_c_seq, str):
@@ -301,7 +301,7 @@ class TestCPPPlotProfile:
                 cpp_plot.profile(df_feat=df_feat, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
             plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(color=st.sampled_from(INVALID_COLORS))
     def test_invalid_color_parameters(self, color):
         cpp_plot = aa.CPPPlot()
@@ -318,7 +318,7 @@ class TestCPPPlotProfile:
         plt.close()
 
     # Negative tests: Legend, Axis, and Grid Configurations
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(dict_color=st.just({'invalid_cat': 'blue'}))
     def test_invalid_dict_color(self, dict_color):
         cpp_plot = aa.CPPPlot()
@@ -335,7 +335,7 @@ class TestCPPPlotProfile:
             cpp_plot.profile(df_feat=df_feat, add_legend_cat=True, legend_kws=invalid_legend_kws)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(highlight_alpha=st.just(-1), bar_width=st.just(-1))  # Negative values for alpha and bar_width
     def test_invalid_numeric_styling_parameters(self, highlight_alpha, bar_width):
         cpp_plot = aa.CPPPlot()
@@ -344,7 +344,7 @@ class TestCPPPlotProfile:
             cpp_plot.profile(df_feat=df_feat, highlight_alpha=highlight_alpha, bar_width=bar_width)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(grid_axis=st.sampled_from(INVALID_GRID_AXIS))
     def test_invalid_grid_axis(self, grid_axis):
         cpp_plot = aa.CPPPlot()
@@ -353,7 +353,7 @@ class TestCPPPlotProfile:
             cpp_plot.profile(df_feat=df_feat, grid_axis=grid_axis)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(xtick_size=st.just(-1), xtick_width=st.just(-1), xtick_length=st.just(-1),
            ytick_size=st.just(-1), ytick_width=st.just(-1), ytick_length=st.just(-1))
     def test_invalid_tick_styling(self, xtick_size, xtick_width, xtick_length, ytick_size, ytick_width, ytick_length):

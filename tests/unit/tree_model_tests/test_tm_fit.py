@@ -8,7 +8,7 @@ import aaanalysis as aa
 import hypothesis.extra.numpy as npst
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -42,7 +42,7 @@ class TestTreeModelFit:
     """Test TreeModel.fit() method for each parameter individually with positive test cases."""
 
     # Positive test cases
-    @settings(deadline=150000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=st.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
     def test_X_parameter(self, X):
@@ -60,7 +60,7 @@ class TestTreeModelFit:
                 assert isinstance(tree_model.feat_importance, np.ndarray)
                 assert isinstance(tree_model.feat_importance_std, np.ndarray)
 
-    @settings(max_examples=5, deadline=100000)
+    @settings(max_examples=5, deadline=None)
     @given(labels=st.lists(st.integers(0, 1), min_size=10, max_size=20))
     def test_labels_parameter(self, labels):
         """Test the 'labels' parameter with valid inputs."""
@@ -80,7 +80,7 @@ class TestTreeModelFit:
                 assert isinstance(tree_model.feat_importance, np.ndarray)
                 assert isinstance(tree_model.feat_importance_std, np.ndarray)
 
-    @settings(max_examples=3, deadline=100000)
+    @settings(max_examples=3, deadline=None)
     @given(n_rounds=st.integers(min_value=1, max_value=3))
     def test_n_rounds_parameter(self, n_rounds):
         """Test the 'n_rounds' parameter with valid inputs."""
@@ -119,7 +119,7 @@ class TestTreeModelFit:
             assert isinstance(tree_model.feat_importance, np.ndarray)
             assert isinstance(tree_model.feat_importance_std, np.ndarray)
 
-    @settings(max_examples=10, deadline=100000)
+    @settings(max_examples=10, deadline=None)
     @given(n_cv=st.integers(min_value=2))
     def test_n_cv_parameter(self, n_cv):
         """Test the 'n_cv' parameter with valid inputs."""
@@ -139,7 +139,7 @@ class TestTreeModelFit:
             assert isinstance(tree_model.feat_importance, np.ndarray)
             assert isinstance(tree_model.feat_importance_std, np.ndarray)
 
-    @settings(max_examples=5, deadline=100000)
+    @settings(max_examples=5, deadline=None)
     @given(n_feat_min=st.integers(min_value=1), n_feat_max=st.integers(min_value=2))
     def test_n_feat_min_max_parameter(self, n_feat_min, n_feat_max):
         """Test the 'n_feat_min' and 'n_feat_max' parameters with valid inputs."""
@@ -161,7 +161,7 @@ class TestTreeModelFit:
 
 
 
-    @settings(max_examples=3, deadline=100000)
+    @settings(max_examples=3, deadline=None)
     @given(metric=st.sampled_from(['accuracy', 'balanced_accuracy', 'precision', 'recall', 'f1', 'roc_auc']))
     def test_metric_parameter(self, metric):
         X = np.random.rand(10, 5)
@@ -178,7 +178,7 @@ class TestTreeModelFit:
             assert isinstance(tree_model.feat_importance, np.ndarray)
             assert isinstance(tree_model.feat_importance_std, np.ndarray)
 
-    @settings(max_examples=3, deadline=100000)
+    @settings(max_examples=3, deadline=None)
     @given(step=st.one_of(st.integers(min_value=1, max_value=3), st.none()))
     def test_step_parameter(self, step):
         """Test the 'step' parameter with valid inputs."""

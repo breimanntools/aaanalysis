@@ -11,7 +11,7 @@ import warnings
 import pytest
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -80,7 +80,7 @@ class TestAAclustEvaluate:
         with pytest.raises(ValueError):
             aa.AAclust().eval(X)
 
-    @settings(deadline=1500)
+    @settings(deadline=None)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=10, max_side=50),
                          elements=some.floats(allow_nan=False, allow_infinity=False, min_value=1, max_value=10000)),
            labels_length=some.integers(min_value=10, max_value=50))
@@ -102,7 +102,7 @@ class TestAAclustEvaluate:
 class TestAAclustEvaluateComplex:
     """Test evaluate function of the TARGET FUNCTION for Complex Cases"""
 
-    @settings(deadline=1000, max_examples=25)
+    @settings(deadline=None, max_examples=25)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, max_side=50),
                          elements=some.floats(allow_nan=False, allow_infinity=False)),
            labels=npst.arrays(dtype=np.int32, shape=some.integers(min_value=1, max_value=100).map(lambda x: (x,)),
@@ -125,7 +125,7 @@ class TestAAclustEvaluateComplex:
                 assert 0 <= CH
                 assert -1 <= SC <= 1
 
-    @settings(deadline=1000, max_examples=5)
+    @settings(deadline=None, max_examples=5)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, max_side=50),
                          elements=some.floats(allow_nan=False, allow_infinity=False)),
            labels=npst.arrays(dtype=np.int32, shape=some.integers(min_value=1, max_value=100).map(lambda x: (x,)),
@@ -141,7 +141,7 @@ class TestAAclustEvaluateComplex:
                 warnings.simplefilter("ignore", RuntimeWarning)
                 assert isinstance(aa.AAclust().eval(X, list_labels=labels), pd.DataFrame)
 
-    @settings(deadline=1500)
+    @settings(deadline=None)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=1, max_side=2),
                          elements=some.floats(allow_nan=False, allow_infinity=False)))
     def test_small_X(self, X):

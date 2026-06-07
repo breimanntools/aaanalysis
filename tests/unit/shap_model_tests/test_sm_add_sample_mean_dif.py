@@ -9,7 +9,7 @@ import hypothesis.extra.numpy as npst
 
 # Set default deadline from 200 to 400
 aa.options["verbose"] = False
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -60,7 +60,7 @@ class TestAddSampleMeanDif:
     """ Test simple positive cases for each parameter of the add_sample_mean_dif method. """
 
     # Positive test cases
-    @settings(deadline=10000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=st.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
     def test_X_parameter(self, X):
@@ -73,7 +73,7 @@ class TestAddSampleMeanDif:
                 df_feat = sm.add_sample_mean_dif(X, labels=labels, df_feat=df_feat)
                 assert isinstance(df_feat, pd.DataFrame)
 
-    @settings(max_examples=5, deadline=1500)
+    @settings(max_examples=5, deadline=None)
     @given(labels=st.lists(st.integers(0, 1), min_size=10, max_size=20))
     def test_labels_parameter(self, labels):
         X = np.random.rand(len(labels), 10)

@@ -11,7 +11,7 @@ import aaanalysis as aa
 import warnings
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -45,7 +45,7 @@ class TestdPULearnFit:
     """Test dPULearn.fit() method for each parameter individually."""
 
     # Positive tests
-    @settings(deadline=350, max_examples=100)
+    @settings(deadline=None, max_examples=100)
     @given(X=npst.arrays(dtype=np.float64,
                          shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=some.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
@@ -61,7 +61,7 @@ class TestdPULearnFit:
                 df_pu = dpul.fit(X, labels).df_pu_
                 assert isinstance(df_pu, pd.DataFrame)
 
-    @settings(deadline=1000, max_examples=100)
+    @settings(deadline=None, max_examples=100)
     @given(labels=npst.arrays(dtype=np.int32, shape=(100,)))
     def test_labels_parameter(self, labels):
         """Test the 'labels' parameter with valid inputs."""
@@ -86,7 +86,7 @@ class TestdPULearnFit:
             df_pu = dpul.fit(X, labels).df_pu_
             assert isinstance(df_pu, pd.DataFrame)
 
-    @settings(deadline=1000, max_examples=100)
+    @settings(deadline=None, max_examples=100)
     @given(n_unl_to_neg=some.integers(min_value=1))
     def test_n_unl_to_neg_parameter(self, n_unl_to_neg):
         """Test the 'n_unl_to_neg' parameter with valid inputs."""
@@ -100,7 +100,7 @@ class TestdPULearnFit:
             df_pu = dpul.fit(X, labels, n_unl_to_neg=n_unl_to_neg).df_pu_
             assert isinstance(df_pu, pd.DataFrame)
     
-    @settings(deadline=1000, max_examples=4)
+    @settings(deadline=None, max_examples=4)
     @given(metric=some.none() | some.sampled_from(["euclidean", "manhattan", "cosine", None]))
     def test_metric_parameter(self, metric):
         """Test the 'metric' parameter."""
@@ -113,7 +113,7 @@ class TestdPULearnFit:
                 df_pu = dpul.fit(X, labels, metric=metric, n_unl_to_neg=n).df_pu_
                 assert isinstance(df_pu, pd.DataFrame)
 
-    @settings(deadline=1000, max_examples=100)
+    @settings(deadline=None, max_examples=100)
     @given(n_components=some.one_of(some.floats(min_value=0.1, max_value=1.0), some.integers(min_value=1)))
     def test_n_components_parameter(self, n_components):
         """Test the 'n_components' parameter with valid inputs."""
@@ -129,7 +129,7 @@ class TestdPULearnFit:
                     assert isinstance(df_pu, pd.DataFrame)
 
     # Negative tests
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(X=npst.arrays(dtype=np.float64, shape=(10,)))
     def test_X_invalid_shape(self, X):
         """Test the 'X' parameter with invalid shape."""
@@ -138,7 +138,7 @@ class TestdPULearnFit:
         with pytest.raises(ValueError):
             dpul.fit(X, labels)
 
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(labels=npst.arrays(dtype=np.int32, shape=(99,)))
     def test_labels_invalid_shape(self, labels):
         """Test the 'labels' parameter with invalid shape."""
@@ -164,7 +164,7 @@ class TestdPULearnFit:
             with pytest.raises(ValueError):
                 dpul.fit(X, labels)
 
-    @settings(deadline=1000, max_examples=100)
+    @settings(deadline=None, max_examples=100)
     @given(n_unl_to_neg=some.integers(max_value=0))
     def test_n_unl_to_neg_invalid(self, n_unl_to_neg):
         """Test the 'n_unl_to_neg' parameter with invalid inputs."""
@@ -192,7 +192,7 @@ class TestdPULearnFit:
         with pytest.raises(ValueError, match="PU-encoded"):
             dpul.fit(X, labels, n_unl_to_neg=5)
     
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(metric=some.just("invalid_metric"))
     def test_invalid_metric(self, metric):
         """Test with an invalid 'metric' value."""
@@ -206,7 +206,7 @@ class TestdPULearnFit:
                dpul.fit(X, labels, metric=metric)
 
     
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(n_components=some.one_of(some.floats(max_value=0.0), some.integers(max_value=0)))
     def test_n_components_invalid(self, n_components):
         """Test the 'n_components' parameter with invalid inputs."""
@@ -223,7 +223,7 @@ class TestdPULearnFit:
 class TestdPULearnFitComplex:
     """Test dPULearn.fit() method for combinations of parameters."""
 
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(X=npst.arrays(dtype=np.float64,
                          shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=10, max_side=50)),
            labels=npst.arrays(dtype=np.int32, elements=some.sampled_from([1, 2]), shape=(20,)),
@@ -243,7 +243,7 @@ class TestdPULearnFitComplex:
                 df_pu = dpul.fit(X, labels, n_unl_to_neg, n_components).df_pu_
                 assert isinstance(df_pu, pd.DataFrame)
 
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(X=npst.arrays(dtype=np.float64, shape=(10, 5)),
            labels=npst.arrays(dtype=np.int32, elements=some.integers(min_value=3, max_value=100), shape=(10,)),
            n_unl_to_neg=some.integers(max_value=0),

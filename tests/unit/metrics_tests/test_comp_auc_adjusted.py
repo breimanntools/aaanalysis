@@ -9,7 +9,7 @@ import hypothesis.extra.numpy as npst
 import aaanalysis as aa
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -38,7 +38,7 @@ def create_labels(size):
 class TestCompAucAdjusted:
 
     # Positive tests
-    @settings(deadline=350, max_examples=20)
+    @settings(deadline=None, max_examples=20)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=some.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
     def test_X_positive(self, X):
@@ -54,7 +54,7 @@ class TestCompAucAdjusted:
                                                        label_test=label_test,
                                                        label_ref=label_ref, n_jobs=1), np.ndarray)
 
-    @settings(deadline=350, max_examples=20)
+    @settings(deadline=None, max_examples=20)
     @given(labels=some.lists(some.integers(min_value=1, max_value=2), min_size=2))
     def test_labels_positive(self, labels):
         """Test with valid labels input"""
@@ -76,7 +76,7 @@ class TestCompAucAdjusted:
                                                label_ref=label_ref, n_jobs=4), np.ndarray)
 
     # Negative tests
-    @settings(deadline=350, max_examples=20)
+    @settings(deadline=None, max_examples=20)
     @given(labels=some.lists(some.integers(min_value=1, max_value=2), min_size=2))
     def test_labels_negative(self, labels):
         """Test with invalid labels input (more than two unique values)."""
@@ -86,7 +86,7 @@ class TestCompAucAdjusted:
             with pytest.raises(ValueError):
                 aa.comp_auc_adjusted(X, labels, label_ref=2, n_jobs=1)
 
-    @settings(deadline=350, max_examples=20)
+    @settings(deadline=None, max_examples=20)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=some.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
     def test_X_negative(self, X):
@@ -113,7 +113,7 @@ class TestCompAucAdjusted:
 
 class TestCompAucAdjustedComplex:
 
-    @settings(deadline=350, max_examples=20)
+    @settings(deadline=None, max_examples=20)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=1, max_side=10),
                          elements=some.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
     def test_valid_input_combinations(self, X):
@@ -128,7 +128,7 @@ class TestCompAucAdjustedComplex:
                 assert isinstance(aa.comp_auc_adjusted(X, labels, label_test=label_test,
                                                        label_ref=label_ref, n_jobs=1), np.ndarray)
 
-    @settings(deadline=350, max_examples=20)
+    @settings(deadline=None, max_examples=20)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=1, max_side=10),
                          elements=some.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)),
            labels=some.lists(some.integers(min_value=1, max_value=2), min_size=1, max_size=10))

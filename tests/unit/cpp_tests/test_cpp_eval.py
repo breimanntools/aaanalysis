@@ -9,7 +9,7 @@ import pandas as pd
 import aaanalysis as aa
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -72,7 +72,7 @@ class TestCPPEval:
             df_eval = cpp.eval(list_df_feat=list_df_feat, labels=labels, min_th=min_th)
             assert isinstance(df_eval, pd.DataFrame)
 
-    @settings(max_examples=10, deadline=8000)
+    @settings(max_examples=10, deadline=None)
     @given(st.lists(st.text()))
     def test_valid_names_feature_sets(self, names_feature_sets):
         df_parts, labels, split_kws, df_scales = get_parts_splits_scales()

@@ -6,7 +6,7 @@ import aaanalysis as aa
 aa.options["verbose"] = False
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -35,7 +35,7 @@ class TestGetFeatureNames:
         result = sf.get_feature_names(features=features, df_cat=df_cat)
         assert isinstance(result, list) and all(isinstance(name, str) for name in result)
 
-    @settings(max_examples=5, deadline=1500)
+    @settings(max_examples=5, deadline=None)
     @given(start=st.integers(min_value=1))
     def test_valid_start(self, start):
         """Test valid 'start' input."""
@@ -44,7 +44,7 @@ class TestGetFeatureNames:
         result = sf.get_feature_names(features=features, start=start)
         assert isinstance(result, list) and all(isinstance(name, str) for name in result)
 
-    @settings(max_examples=5, deadline=1500)
+    @settings(max_examples=5, deadline=None)
     @given(tmd_len=st.integers(min_value=20, max_value=2000))
     def test_valid_tmd_len(self, tmd_len):
         """Test valid 'tmd_len' input."""
@@ -53,7 +53,7 @@ class TestGetFeatureNames:
         result = sf.get_feature_names(features=features, tmd_len=tmd_len)
         assert isinstance(result, list) and all(isinstance(name, str) for name in result)
 
-    @settings(max_examples=5, deadline=1500)
+    @settings(max_examples=5, deadline=None)
     @given(jmd_c_len=st.integers(min_value=10, max_value=2000))
     def test_valid_jmd_c_len(self, jmd_c_len):
         """Test valid 'jmd_c_len' input."""
@@ -62,7 +62,7 @@ class TestGetFeatureNames:
         result = sf.get_feature_names(features=features, jmd_c_len=jmd_c_len)
         assert isinstance(result, list) and all(isinstance(name, str) for name in result)
 
-    @settings(max_examples=5, deadline=1500)
+    @settings(max_examples=5, deadline=None)
     @given(jmd_n_len=st.integers(min_value=10, max_value=2000))
     def test_valid_jmd_n_len(self, jmd_n_len):
         """Test valid 'jmd_n_len' input."""
@@ -89,7 +89,7 @@ class TestGetFeatureNames:
             with pytest.raises(ValueError):
                 sf.get_feature_names(features=features, df_cat=df_cat)
 
-    @settings(max_examples=5, deadline=1500)
+    @settings(max_examples=5, deadline=None)
     @given(start=st.one_of(st.none(), st.text(), st.floats()))
     def test_invalid_start(self, start):
         """Negative test for invalid 'start' input."""
@@ -98,7 +98,7 @@ class TestGetFeatureNames:
         with pytest.raises(ValueError):
             sf.get_feature_names(features=features, start=start)
 
-    @settings(max_examples=5, deadline=1500)
+    @settings(max_examples=5, deadline=None)
     @given(tmd_len=st.one_of(st.none(), st.text(), st.floats(), st.integers(max_value=0)))
     def test_invalid_tmd_len(self, tmd_len):
         """Negative test for invalid 'tmd_len' input."""
@@ -107,7 +107,7 @@ class TestGetFeatureNames:
         with pytest.raises(ValueError):
             sf.get_feature_names(features=features, tmd_len=tmd_len)
 
-    @settings(max_examples=5, deadline=1500)
+    @settings(max_examples=5, deadline=None)
     @given(jmd_c_len=st.one_of(st.none(), st.text(), st.floats(), st.integers(max_value=0)))
     def test_invalid_jmd_c_len(self, jmd_c_len):
         """Negative test for invalid 'jmd_c_len' input."""
@@ -116,7 +116,7 @@ class TestGetFeatureNames:
         with pytest.raises(ValueError):
             sf.get_feature_names(features=features, jmd_c_len=jmd_c_len)
 
-    @settings(max_examples=5, deadline=1500)
+    @settings(max_examples=5, deadline=None)
     @given(jmd_n_len=st.one_of(st.none(), st.text(), st.floats(), st.integers(max_value=0)))
     def test_invalid_jmd_n_len(self, jmd_n_len):
         """Negative test for invalid 'jmd_n_len' input."""

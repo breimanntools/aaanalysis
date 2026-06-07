@@ -16,7 +16,7 @@ import aaanalysis.utils as ut
 
 aa.options["verbose"] = False
 
-settings.register_profile("ci", deadline=2000)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 

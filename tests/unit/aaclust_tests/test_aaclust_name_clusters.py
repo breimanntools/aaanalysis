@@ -8,7 +8,7 @@ import warnings
 import pytest
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -100,7 +100,7 @@ class TestNameClusters:
 class TestNameClustersComplex:
     """Test name_clusters function of the TARGET FUNCTION for Complex Cases"""
 
-    @settings(deadline=1000, max_examples=5)
+    @settings(deadline=None, max_examples=5)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=some.floats(allow_nan=False, allow_infinity=False)),
            labels=npst.arrays(dtype=np.int32, shape=npst.array_shapes(min_dims=1, max_dims=1),

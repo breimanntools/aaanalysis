@@ -10,7 +10,7 @@ from aaanalysis.seq_analysis._backend.aa_window_sampler._utils import window_ide
 
 aa.options["verbose"] = False
 
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 SCHEMA_SEGMENTS = ["entry_win", "entry", "sequence", "window", "source_position",
@@ -60,7 +60,7 @@ class TestSampleSameProtein:
         assert isinstance(df, pd.DataFrame)
         assert list(df.columns) == SCHEMA_SEGMENTS
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(n=some.integers(min_value=1, max_value=15))
     def test_valid_n(self, n):
         aaws = aa.AAWindowSampler()
@@ -70,7 +70,7 @@ class TestSampleSameProtein:
         # Returns at most n unique windows total
         assert len(df) <= n
 
-    @settings(max_examples=8, deadline=1500)
+    @settings(max_examples=8, deadline=None)
     @given(n=some.integers(min_value=2, max_value=20))
     def test_valid_uniform_quota_per_protein(self, n):
         """The total budget n is split roughly uniformly across eligible proteins."""
@@ -101,7 +101,7 @@ class TestSampleSameProtein:
         counts = dict(df["entry"].value_counts())
         assert counts.get("P2", 0) > counts.get("P1", 0)
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(window_size=some.integers(min_value=1, max_value=11))
     def test_valid_window_size(self, window_size):
         aaws = aa.AAWindowSampler()
@@ -109,7 +109,7 @@ class TestSampleSameProtein:
                                    n=6, window_size=window_size, seed=0)
         assert (df["window"].str.len() == window_size).all()
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(min_distance=some.integers(min_value=0, max_value=5))
     def test_valid_min_distance_to_pos(self, min_distance):
         aaws = aa.AAWindowSampler()
@@ -122,7 +122,7 @@ class TestSampleSameProtein:
             for c in picks:
                 assert all(abs(c - p) >= min_distance for p in pos_list)
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(max_distance=some.integers(min_value=1, max_value=10))
     def test_valid_max_distance_to_pos(self, max_distance):
         aaws = aa.AAWindowSampler()
@@ -174,7 +174,7 @@ class TestSampleSameProtein:
         labels_p3 = df[df["entry"] == "P3"]["labels"].iloc[0]
         assert all(x is None for x in labels_p3)
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(seed=some.integers(min_value=0, max_value=10000))
     def test_valid_seed_determinism(self, seed):
         aaws = aa.AAWindowSampler()
@@ -528,7 +528,7 @@ class TestSampleSameProtein:
 class TestSampleSameProteinComplex:
     """Test sample_same_protein() with combinations of parameters."""
 
-    @settings(max_examples=10, deadline=2500)
+    @settings(max_examples=10, deadline=None)
     @given(n=some.integers(min_value=1, max_value=10),
            window_size=some.integers(min_value=1, max_value=9),
            min_distance=some.integers(min_value=0, max_value=4),

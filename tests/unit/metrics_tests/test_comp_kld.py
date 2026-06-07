@@ -10,7 +10,7 @@ from sklearn.decomposition import PCA
 import warnings
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 # Note: several @settings below use deadline=None on purpose: comp_kld draws large random
 # arrays (max_examples up to 400); per-example time scales with input size and is too variable

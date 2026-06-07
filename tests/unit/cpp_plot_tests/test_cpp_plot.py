@@ -9,7 +9,7 @@ import aaanalysis as aa
 from pandas.testing import assert_frame_equal
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -34,14 +34,14 @@ class TestCPPPlot:
             cpp_plot = aa.CPPPlot(df_scales=df_scales, df_cat=_df_cat)
             assert_frame_equal(_df_cat, cpp_plot._df_cat)
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(jmd_n_len=st.integers(min_value=0))
     def test_jmd_n_len(self, jmd_n_len):
         """Positive test for jmd_n_len parameter."""
         cpp_plot = aa.CPPPlot(jmd_n_len=jmd_n_len)
         assert cpp_plot._jmd_n_len == jmd_n_len
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(jmd_c_len=st.integers(min_value=0))
     def test_jmd_c_len(self, jmd_c_len):
         """Positive test for jmd_c_len parameter."""

@@ -8,7 +8,7 @@ import aaanalysis as aa
 import hypothesis.extra.numpy as npst
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -64,7 +64,7 @@ class TestEval:
     """Test the eval method with positive test cases for each parameter."""
 
     # Positive tests
-    @settings(max_examples=12, deadline=1500)
+    @settings(max_examples=12, deadline=None)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=10, max_side=20),
                          elements=st.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
     def test_X_parameter(self, X):
@@ -118,7 +118,7 @@ class TestEval:
                               names_feature_selections=names, **ARGS)
             assert isinstance(df_eval, pd.DataFrame)
 
-    @settings(max_examples=3, deadline=7500)
+    @settings(max_examples=3, deadline=None)
     @given(metrics=st.lists(st.sampled_from(["accuracy", "f1", "precision", "recall", "roc_auc"]),
                             min_size=1, max_size=2))
     def test_list_metrics_parameter(self, metrics):

@@ -6,7 +6,7 @@ import hypothesis.strategies as st
 import aaanalysis as aa
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 

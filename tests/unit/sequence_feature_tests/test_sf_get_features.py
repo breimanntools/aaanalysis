@@ -8,7 +8,7 @@ import pandas as pd
 import aaanalysis as aa
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -25,7 +25,7 @@ class TestGetFeatures:
         assert isinstance(result, list)
         assert all(isinstance(feature, str) for feature in result)
 
-    @settings(max_examples=5, deadline=1500)
+    @settings(max_examples=5, deadline=None)
     @given(list_parts=st.lists(st.sampled_from(['tmd', 'jmd_n_tmd_n', 'tmd_c_jmd_c']), min_size=1, max_size=5))
     def test_valid_list_parts(self, list_parts):
         sf = aa.SequenceFeature()

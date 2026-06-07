@@ -8,7 +8,7 @@ import pytest
 import warnings
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -92,7 +92,7 @@ class TestCompCenters:
 class TestCompCentersComplex:
     """Test comp_centers function of the AAclust class for Complex Cases."""
 
-    @settings(deadline=1000, max_examples=5)
+    @settings(deadline=None, max_examples=5)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=some.floats(allow_nan=False, allow_infinity=False)))
     def test_combination_valid_parameters(self, X):
@@ -110,7 +110,7 @@ class TestCompCentersComplex:
                 assert isinstance(result_centers, np.ndarray)
                 assert isinstance(result_labels, np.ndarray)
 
-    @settings(deadline=1000, max_examples=5)
+    @settings(deadline=None, max_examples=5)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, max_side=5),
                          elements=some.floats(allow_nan=True, allow_infinity=True)),
            labels=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=1, max_dims=1),

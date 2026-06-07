@@ -12,7 +12,7 @@ import aaanalysis as aa
 import random
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -38,7 +38,7 @@ class TestdPULearnPlotEval:
     """Test aa.dPULearnPlot.eval() function for individual parameters."""
 
     # Positive tests
-    @settings(max_examples=5, deadline=4000)
+    @settings(max_examples=5, deadline=None)
     @given(n_samples=some.integers(min_value=2, max_value=5))
     def test_df_eval_valid(self, n_samples):
         df_eval = _create_sample_df_eval(n_rows=n_samples)
@@ -54,7 +54,7 @@ class TestdPULearnPlotEval:
         assert isinstance(axes[0], plt.Axes)
         plt.close(fig)
 
-    @settings(max_examples=10, deadline=3500)
+    @settings(max_examples=10, deadline=None)
     @given(figsize=some.tuples(some.floats(min_value=4, max_value=20), some.floats(min_value=4, max_value=20)))
     def test_figsize_valid(self, figsize):
         df_eval = _create_sample_df_eval()
@@ -86,7 +86,7 @@ class TestdPULearnPlotEval:
             plt.close(fig)
 
 
-    @settings(max_examples=10, deadline=3500)
+    @settings(max_examples=10, deadline=None)
     @given(legend_y=some.floats(min_value=-1, max_value=1))
     def test_legend_y_valid(self, legend_y):
         df_eval = _create_sample_df_eval()

@@ -24,22 +24,22 @@ import aaanalysis as aa
 
 aa.options["verbose"] = False
 
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 ```
-- Per-file `register_profile("ci", deadline=...)` blocks **stay**. Deadlines
-  may vary across files; do not centralize them in `conftest.py`.
+- **Hypothesis deadlines are disabled (`deadline=None`) suite-wide.** CI runs the
+  tests under **`pytest-xdist -n auto`** (parallel), where shared-CPU contention
+  makes per-example wall-clock deadlines flake (a 1.5s-deadline test ran 2.4s
+  purely from a co-scheduled worker). Wall-clock timing is not a reliable gate
+  under parallelism, so all `register_profile`/`@settings` use `deadline=None`.
+  Performance/correctness is guarded by the **CPP regression anchor** (nightly),
+  not by these deadlines. New tests: `register_profile("ci", deadline=None)`.
 - A `tests/conftest.py` autouse fixture resets `aa.options` to defaults
-  around every test — once that lands, the `aa.options["verbose"] = False`
-  line at the top of every test file becomes drift to fix on touch.
-- **Plot/render deadlines are finite, backed by a warmup fixture (#83).** A
-  session-scoped `_warm_matplotlib` autouse fixture in `conftest.py` (plus the
-  `Agg` backend) pays matplotlib's font-cache / first-figure cost once, up front,
-  so per-file finite deadlines on rendering tests stay reliable — the flake was
-  cold-start on the first example, not a slow plot path (steady-state render is
-  ~0.1–1.7s). Use `deadline=None` **only** for genuinely input-size-variable
-  tests (e.g. large random arrays) and **only with a one-line written
-  justification** next to it.
+  around every test — the `aa.options["verbose"] = False` line at the top of
+  every test file is drift to fix on touch.
+- A session-scoped `_warm_matplotlib` autouse fixture + the `Agg` backend in
+  `conftest.py` pay matplotlib's font-cache / first-figure cost once up front
+  (kept from #83; harmless now that deadlines are off).
 - **`HYPOTHESIS_DEADLINE` was a no-op and has been removed.** Hypothesis reads
   `HYPOTHESIS_PROFILE`, not `HYPOTHESIS_DEADLINE`, and nothing in the suite read
   it — so the `=10000000` in `main.yml` / `test_coverage.yml` /

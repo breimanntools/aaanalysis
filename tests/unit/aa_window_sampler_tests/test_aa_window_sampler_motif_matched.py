@@ -10,7 +10,7 @@ import aaanalysis.utils as ut
 
 aa.options["verbose"] = False
 
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 SCHEMA_SEGMENTS = ["entry_win", "entry", "sequence", "window", "source_position",
@@ -59,7 +59,7 @@ class TestSampleMotifMatched:
         assert (df["motif_score"] >= 2.5).all()
 
     @pytest.mark.filterwarnings("ignore::RuntimeWarning")
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(n=some.integers(min_value=1, max_value=20))
     def test_valid_n(self, n):
         df_seq = pd.DataFrame({
@@ -75,7 +75,7 @@ class TestSampleMotifMatched:
         assert len(df) <= n
 
     @pytest.mark.filterwarnings("ignore::RuntimeWarning")
-    @settings(max_examples=8, deadline=1500)
+    @settings(max_examples=8, deadline=None)
     @given(window_size=some.integers(min_value=2, max_value=7))
     def test_valid_window_size(self, window_size):
         seq = "A" * 20
@@ -175,7 +175,7 @@ class TestSampleMotifMatched:
         assert (df["label"] == 42).all()
 
     @pytest.mark.filterwarnings("ignore::RuntimeWarning")
-    @settings(max_examples=8, deadline=1500)
+    @settings(max_examples=8, deadline=None)
     @given(seed=some.integers(min_value=0, max_value=10000))
     def test_valid_seed_determinism(self, seed):
         df_seq = _df_seq_with_aaa()
@@ -327,7 +327,7 @@ class TestSampleMotifMatched:
 class TestSampleMotifMatchedComplex:
     """Test sample_motif_matched() with combinations of parameters."""
 
-    @settings(max_examples=10, deadline=2500)
+    @settings(max_examples=10, deadline=None)
     @given(n=some.integers(min_value=1, max_value=10),
            window_size=some.integers(min_value=2, max_value=6),
            seed=some.integers(min_value=0, max_value=10000))

@@ -8,7 +8,7 @@ from pandas import DataFrame
 import pytest
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -37,7 +37,7 @@ class TestLoadScales:
         df = aa.load_scales(unclassified_out=True)
         assert isinstance(df, DataFrame)
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(top60_n=some.integers(min_value=1, max_value=60))
     def test_load_scales_top60_n(self, top60_n):
         """Test the 'top60_n' parameter."""
@@ -132,14 +132,14 @@ class TestLoadScalesTopExplain:
 
     # Positive tests (one parameter per test)
     @given(top_explain_n=some.sampled_from(VALID_TIERS))
-    @settings(max_examples=12, deadline=1500)
+    @settings(max_examples=12, deadline=None)
     def test_top_explain_n_scales(self, top_explain_n):
         """Each valid tier returns a non-empty scales DataFrame."""
         df = aa.load_scales(name="scales", top_explain_n=top_explain_n)
         assert isinstance(df, DataFrame) and df.shape[1] > 0
 
     @given(top_explain_n=some.sampled_from(VALID_TIERS))
-    @settings(max_examples=12, deadline=1500)
+    @settings(max_examples=12, deadline=None)
     def test_top_explain_n_cat_columns_and_threshold(self, top_explain_n):
         """A tier selection on scales_cat adds the two columns and respects the tier."""
         df_cat = aa.load_scales(name="scales_cat", top_explain_n=top_explain_n)
@@ -147,14 +147,14 @@ class TestLoadScalesTopExplain:
         assert (df_cat["top_explain"] <= top_explain_n).all()
 
     @given(top_explain_n=some.sampled_from(VALID_TIERS))
-    @settings(max_examples=12, deadline=1500)
+    @settings(max_examples=12, deadline=None)
     def test_top_explain_n_scales_raw(self, top_explain_n):
         """The tier selector also works for scales_raw."""
         df = aa.load_scales(name="scales_raw", top_explain_n=top_explain_n)
         assert isinstance(df, DataFrame) and df.shape[1] > 0
 
     @given(min_th=some.sampled_from(VALID_MIN_THS))
-    @settings(max_examples=7, deadline=2000)
+    @settings(max_examples=7, deadline=None)
     def test_top_explain_min_th(self, min_th):
         """Each valid min_th returns a redundancy-reduced DataFrame."""
         df = aa.load_scales(name="scales", top_explain_n=40, top_explain_min_th=min_th)

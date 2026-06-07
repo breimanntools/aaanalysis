@@ -14,7 +14,7 @@ import random
 import warnings
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 DEADLINE = 8000
@@ -268,7 +268,7 @@ class TestdPULearnPlotPCA:
 class TestdPULearnPlotPCAComplex:
     """Complex tests for the dPULearnPlot.pca() function."""
 
-    @settings(max_examples=1, deadline=3500)
+    @settings(max_examples=1, deadline=None)
     @given(
         n_samples=some.integers(min_value=20, max_value=100),
         n_pc=some.integers(min_value=3, max_value=7),

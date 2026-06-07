@@ -6,7 +6,7 @@ import warnings
 import os
 
 # Set default deadline from 200 to 800
-settings.register_profile("ci", deadline=800)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 FILE_IN = "valid_path.fasta"

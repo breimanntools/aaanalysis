@@ -8,7 +8,7 @@ from hypothesis import given, settings
 import hypothesis.strategies as st
 import aaanalysis as aa
 
-settings.register_profile("ci", deadline=4000)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 aa.options["verbose"] = False

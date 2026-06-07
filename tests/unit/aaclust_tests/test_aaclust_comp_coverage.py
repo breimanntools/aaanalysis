@@ -8,7 +8,7 @@ import aaanalysis as aa
 import pytest
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -60,7 +60,7 @@ class TestCompCoverage:
 class TestCompCoverageComplex:
     """Test comp_coverage function of the TARGET FUNCTION for Complex Cases"""
 
-    @settings(deadline=1000, max_examples=5)
+    @settings(deadline=None, max_examples=5)
     @given(names=some.lists(elements=some.text(), min_size=1),
            additional=some.lists(elements=some.text(), min_size=1))
     def test_combination_valid_parameters(self, names, additional):

@@ -10,7 +10,7 @@ import aaanalysis.utils as ut
 
 aa.options["verbose"] = False
 
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 SCHEMA_SEGMENTS = ["entry_win", "entry", "sequence", "window", "source_position",

@@ -15,7 +15,7 @@ import aaanalysis.utils as ut_module
 
 aa.options["verbose"] = False
 
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 SCHEMA_SEGMENTS = ["entry_win", "entry", "sequence", "window", "source_position",
@@ -46,7 +46,7 @@ class TestSampleSynthetic:
         assert isinstance(df, pd.DataFrame)
         assert list(df.columns) == SCHEMA_SEGMENTS
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(n=some.integers(min_value=1, max_value=50))
     def test_valid_n(self, n):
         aaws = aa.AAWindowSampler()
@@ -54,7 +54,7 @@ class TestSampleSynthetic:
                                 generator="uniform", seed=0)
         assert len(df) == n
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(window_size=some.integers(min_value=1, max_value=11))
     def test_valid_window_size(self, window_size):
         aaws = aa.AAWindowSampler()
@@ -62,7 +62,7 @@ class TestSampleSynthetic:
                                 window_size=window_size, generator="uniform", seed=0)
         assert (df["window"].str.len() == window_size).all()
 
-    @settings(max_examples=6, deadline=1500)
+    @settings(max_examples=6, deadline=None)
     @given(generator=some.sampled_from(LIST_FREE_GENERATORS))
     def test_valid_generator_free(self, generator):
         aaws = aa.AAWindowSampler()
@@ -71,7 +71,7 @@ class TestSampleSynthetic:
         assert (df["strategy"] == f"synthetic:{generator}").all()
         assert (df["window"].str.len() == 5).all()
 
-    @settings(max_examples=4, deadline=1500)
+    @settings(max_examples=4, deadline=None)
     @given(generator=some.sampled_from(LIST_POS_GENERATORS))
     def test_valid_generator_pos_dependent(self, generator):
         aaws = aa.AAWindowSampler()
@@ -107,7 +107,7 @@ class TestSampleSynthetic:
         for w in df["window"]:
             assert tuple(sorted(w)) in compositions
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(seed=some.integers(min_value=0, max_value=10000))
     def test_valid_seed_determinism(self, seed):
         aaws = aa.AAWindowSampler()
@@ -117,7 +117,7 @@ class TestSampleSynthetic:
                                   generator="global_freq", seed=seed)
         pd.testing.assert_frame_equal(df_a, df_b)
 
-    @settings(max_examples=12, deadline=2000)
+    @settings(max_examples=12, deadline=None)
     @given(generator=some.sampled_from(LIST_PRESET_GENERATORS))
     def test_valid_aaontology_preset_generator(self, generator):
         """Each curated AAontology preset draws canonical AAs and matches the schema."""
@@ -475,7 +475,7 @@ class TestSampleSynthetic:
 class TestSampleSyntheticComplex:
     """Test sample_synthetic() with combinations of parameters."""
 
-    @settings(max_examples=10, deadline=2500)
+    @settings(max_examples=10, deadline=None)
     @given(n=some.integers(min_value=1, max_value=30),
            window_size=some.integers(min_value=1, max_value=9),
            generator=some.sampled_from(LIST_FREE_GENERATORS),
@@ -491,7 +491,7 @@ class TestSampleSyntheticComplex:
         assert (df["window"].str.len() == window_size).all()
         assert (df["role"] == "Control").all()
 
-    @settings(max_examples=10, deadline=2500)
+    @settings(max_examples=10, deadline=None)
     @given(n=some.integers(min_value=1, max_value=30),
            window_size=some.integers(min_value=1, max_value=9),
            generator=some.sampled_from(LIST_POS_GENERATORS),

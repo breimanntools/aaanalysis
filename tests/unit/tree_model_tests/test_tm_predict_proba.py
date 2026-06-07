@@ -8,7 +8,7 @@ import aaanalysis as aa
 import hypothesis.extra.numpy as npst
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -57,7 +57,7 @@ class TestPredictProba:
     """
 
     # Positive tests for X parameter
-    @settings(max_examples=20, deadline=10000)
+    @settings(max_examples=20, deadline=None)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=st.floats(allow_nan=False, allow_infinity=False, max_value=1000, min_value=-1000)))
     def test_positive_X_parameter(self, X):

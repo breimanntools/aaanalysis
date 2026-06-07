@@ -11,7 +11,7 @@ import aaanalysis as aa
 import random
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -90,7 +90,7 @@ class TestCCPlotHeatmap:
             assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
             plt.close()
 
-    @settings(max_examples=3, deadline=2000)
+    @settings(max_examples=3, deadline=None)
     @given(col_val=st.sampled_from(VALID_COL_VALS))
     def test_col_val(self, col_val):
         cpp_plot = aa.CPPPlot()
@@ -107,7 +107,7 @@ class TestCCPlotHeatmap:
             assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
             plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(figsize=st.tuples(st.floats(min_value=4.0, max_value=20.0), st.floats(min_value=5.0, max_value=20.0)))
     def test_figsize(self, figsize):
         cpp_plot = aa.CPPPlot()
@@ -117,7 +117,7 @@ class TestCCPlotHeatmap:
         plt.close()
             
     # Positive tests: Appearance of Parts (TMD-JMD)
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(start=st.integers(min_value=0, max_value=1000))
     def test_start(self, start):
         if start <= 1000:
@@ -127,7 +127,7 @@ class TestCCPlotHeatmap:
             assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
             plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(tmd_len=st.integers(min_value=20, max_value=100))
     def test_tmd_len(self, tmd_len):
         if tmd_len <= 1000:
@@ -145,7 +145,7 @@ class TestCCPlotHeatmap:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(tmd_color=st.sampled_from(VALID_COLORS),
            jmd_color=st.sampled_from(VALID_COLORS),
            tmd_seq_color=st.sampled_from(VALID_COLORS),
@@ -160,7 +160,7 @@ class TestCCPlotHeatmap:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(seq_size=st.floats(min_value=8.0, max_value=14.0),
            fontsize=st.floats(min_value=8.0, max_value=14.0))
     def test_font_sizes(self, seq_size, fontsize):
@@ -172,7 +172,7 @@ class TestCCPlotHeatmap:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=10, deadline=5000)
+    @settings(max_examples=10, deadline=None)
     @given(weight_tmd_jmd=st.sampled_from(VALID_WEIGHT))
     def test_weight_tmd_jmd(self, weight_tmd_jmd):
         cpp_plot = aa.CPPPlot()
@@ -190,7 +190,7 @@ class TestCCPlotHeatmap:
             plt.close()
         
     # Positive tests: Legend, Axis, and Grid Configurations
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(linewidth=st.floats(min_value=0.0, max_value=10.0))
     def test_linewidth(self, linewidth):
         cpp_plot = aa.CPPPlot()
@@ -217,7 +217,7 @@ class TestCCPlotHeatmap:
             assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
             plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(vmin=st.one_of(st.none(), st.integers(min_value=0), st.floats(min_value=0.0)),
            vmax=st.one_of(st.none(), st.integers(min_value=1), st.floats(min_value=1.0)))
     def test_vmin_vmax(self, vmin, vmax):
@@ -229,7 +229,7 @@ class TestCCPlotHeatmap:
             assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
             plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(cmap=st.one_of(st.none(), st.sampled_from(['viridis', 'plasma', 'inferno', 'magma', 'cividis'])))
     def test_cmap(self, cmap):
         cpp_plot = aa.CPPPlot()
@@ -238,7 +238,7 @@ class TestCCPlotHeatmap:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(cmap_n_colors=st.integers(min_value=2, max_value=200))
     def test_cmap_n_colors(self, cmap_n_colors):
         cpp_plot = aa.CPPPlot()
@@ -255,7 +255,7 @@ class TestCCPlotHeatmap:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(cbar_pct=st.booleans())
     def test_cbar_pct(self, cbar_pct):
         cpp_plot = aa.CPPPlot()
@@ -264,7 +264,7 @@ class TestCCPlotHeatmap:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(cbar_xywh=st.tuples(st.floats(min_value=0.0, max_value=1.0),
                                st.one_of(st.none(), st.floats(min_value=0.0, max_value=1.0)),
                                st.floats(min_value=0.0, max_value=1.0),
@@ -291,7 +291,7 @@ class TestCCPlotHeatmap:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(legend_xy=st.tuples(st.floats(min_value=-1.0, max_value=1.0), st.floats(min_value=-1.0, max_value=1.0)))
     def test_legend_xy(self, legend_xy):
         cpp_plot = aa.CPPPlot()
@@ -300,7 +300,7 @@ class TestCCPlotHeatmap:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(xtick_size=st.floats(min_value=8.0, max_value=14.0),
            xtick_width=st.floats(min_value=0.5, max_value=2.0),
            xtick_length=st.floats(min_value=3.0, max_value=10.0))
@@ -328,7 +328,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(shap_plot=st.text(min_size=1))
     def test_invalid_shap_plot(self, shap_plot):
         cpp_plot = aa.CPPPlot()
@@ -337,7 +337,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, shap_plot=shap_plot)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(col_cat=st.sampled_from(INVALID_COL_CATS))
     def test_invalid_col_cat(self, col_cat):
         cpp_plot = aa.CPPPlot()
@@ -346,7 +346,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, col_cat=col_cat)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(col_val=st.sampled_from(INVALID_COL_VALS))
     def test_invalid_col_val(self, col_val):
         cpp_plot = aa.CPPPlot()
@@ -365,7 +365,7 @@ class TestCCPlotHeatmap:
                 cpp_plot.heatmap(df_feat=df_feat, name_test=valid_names, name_ref=valid_names)
             plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(figsize=st.tuples(st.just(-10.0), st.just(-10.0)))
     def test_invalid_figsize(self, figsize):
         cpp_plot = aa.CPPPlot()
@@ -383,7 +383,7 @@ class TestCCPlotHeatmap:
             plt.close()
 
     # Negative tests: Appearance of Parts (TMD-JMD)
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(start=st.integers(max_value=-1))  # Invalid negative start
     def test_invalid_start(self, start):
         cpp_plot = aa.CPPPlot()
@@ -392,7 +392,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, start=start)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(tmd_len=st.integers(max_value=0))  # Invalid non-positive tmd_len
     def test_invalid_tmd_len(self, tmd_len):
         cpp_plot = aa.CPPPlot()
@@ -401,7 +401,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, tmd_len=tmd_len)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(tmd_seq=st.text(), jmd_n_seq=st.text(), jmd_c_seq=st.text())
     def test_invalid_sequences(self, tmd_seq, jmd_n_seq, jmd_c_seq):
         if not isinstance(tmd_seq, str) or not isinstance(jmd_n_seq, str) or not isinstance(jmd_c_seq, str):
@@ -411,7 +411,7 @@ class TestCCPlotHeatmap:
                 cpp_plot.heatmap(df_feat=df_feat, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq)
             plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(color=st.sampled_from(INVALID_COLORS))
     def test_invalid_color_parameters(self, color):
         cpp_plot = aa.CPPPlot()
@@ -421,7 +421,7 @@ class TestCCPlotHeatmap:
         plt.close()
 
     # Negative tests for Appearance of Parts (TMD-JMD)
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(seq_size=st.one_of(st.integers(max_value=-1), st.floats(max_value=-0.1)))
     def test_invalid_seq_size(self, seq_size):
         cpp_plot = aa.CPPPlot()
@@ -430,7 +430,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, seq_size=seq_size)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(fontsize_tmd_jmd=st.one_of(st.integers(max_value=-1), st.floats(max_value=-0.1)))
     def test_invalid_fontsize_tmd_jmd(self, fontsize_tmd_jmd):
         cpp_plot = aa.CPPPlot()
@@ -439,7 +439,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, fontsize_tmd_jmd=fontsize_tmd_jmd)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(weight_tmd_jmd=st.sampled_from(INVALID_WEIGHT))
     def test_invalid_weight_tmd_jmd(self, weight_tmd_jmd):
         cpp_plot = aa.CPPPlot()
@@ -448,7 +448,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, weight_tmd_jmd=weight_tmd_jmd)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(fontsize_labels=st.one_of(st.integers(max_value=-1), st.floats(max_value=-0.1)))
     def test_invalid_fontsize_labels(self, fontsize_labels):
         cpp_plot = aa.CPPPlot()
@@ -457,7 +457,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, fontsize_labels=fontsize_labels)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(add_xticks_pos=st.text(min_size=1))  # Invalid input for boolean parameter
     def test_invalid_add_xticks_pos(self, add_xticks_pos):
         cpp_plot = aa.CPPPlot()
@@ -467,7 +467,7 @@ class TestCCPlotHeatmap:
         plt.close()
 
     # Negative tests: Legend, Axis, and Grid Configurations
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(grid_linewidth=st.floats(max_value=-0.01))  # Invalid negative grid_linewidth
     def test_invalid_grid_linewidth(self, grid_linewidth):
         cpp_plot = aa.CPPPlot()
@@ -476,7 +476,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, grid_linewidth=grid_linewidth)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(grid_linecolor=st.sampled_from(INVALID_COLORS))  # Invalid grid_linecolor
     def test_invalid_grid_linecolor(self, grid_linecolor):
         cpp_plot = aa.CPPPlot()
@@ -485,7 +485,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, grid_linecolor=grid_linecolor)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(border_linewidth=st.floats(max_value=-0.01))  # Invalid negative border_linewidth
     def test_invalid_border_linewidth(self, border_linewidth):
         cpp_plot = aa.CPPPlot()
@@ -494,7 +494,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, border_linewidth=border_linewidth)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(facecolor_dark=st.text(min_size=1))  # Invalid input for optional boolean parameter
     def test_invalid_facecolor_dark(self, facecolor_dark):
         cpp_plot = aa.CPPPlot()
@@ -503,7 +503,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, facecolor_dark=facecolor_dark)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(vmin=st.floats(min_value=10.0), vmax=st.floats(max_value=0.0))  # Invalid vmin > vmax
     def test_invalid_vmin_vmax(self, vmin, vmax):
         vmin, vmax = adjust_vmin_vmax(vmin=vmin, vmax=vmax)
@@ -514,7 +514,7 @@ class TestCCPlotHeatmap:
                 cpp_plot.heatmap(df_feat=df_feat, vmin=vmin, vmax=vmax)
             plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(cmap=st.text(min_size=1))  # Invalid colormap name
     def test_invalid_cmap(self, cmap):
         if cmap not in VALID_COLORS:  # Adjust this condition based on your colormap validation logic
@@ -524,7 +524,7 @@ class TestCCPlotHeatmap:
                 cpp_plot.heatmap(df_feat=df_feat, cmap=cmap)
             plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(cmap_n_colors=st.integers(max_value=0))  # Invalid non-positive cmap_n_colors
     def test_invalid_cmap_n_colors(self, cmap_n_colors):
         cpp_plot = aa.CPPPlot()
@@ -533,7 +533,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, cmap_n_colors=cmap_n_colors)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(cbar_pct=st.text(min_size=1))  # Invalid input for boolean parameter
     def test_invalid_cbar_pct(self, cbar_pct):
         cpp_plot = aa.CPPPlot()
@@ -542,7 +542,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, cbar_pct=cbar_pct)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(cbar_xywh=st.tuples(st.just(-0.1), st.just(-0.1), st.just(-0.1), st.just(-0.1)))  # Invalid cbar_xywh values
     def test_invalid_cbar_xywh(self, cbar_xywh):
         cpp_plot = aa.CPPPlot()
@@ -551,7 +551,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, cbar_xywh=cbar_xywh)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(cbar_kws=st.text(min_size=1))  # Invalid input for dict parameter
     def test_invalid_cbar_kws(self, cbar_kws):
         cpp_plot = aa.CPPPlot()
@@ -560,7 +560,7 @@ class TestCCPlotHeatmap:
             cpp_plot.heatmap(df_feat=df_feat, cbar_kws=cbar_kws)
         plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(dict_color=st.just({'invalid_cat': 'blue'}))
     def test_invalid_dict_color(self, dict_color):
         cpp_plot = aa.CPPPlot()
@@ -593,7 +593,7 @@ class TestCCPlotHeatmap:
                 cpp_plot.heatmap(df_feat=df_feat, legend_xy=legend_xy)
             plt.close()
 
-    @settings(max_examples=3, deadline=5000)
+    @settings(max_examples=3, deadline=None)
     @given(xtick_size=st.just(-1), xtick_width=st.just(-1),
            xtick_length=st.just(-1))
     def test_invalid_tick_styling(self, xtick_size, xtick_width, xtick_length):

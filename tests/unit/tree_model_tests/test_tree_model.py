@@ -8,7 +8,7 @@ from sklearn.neighbors import KNeighborsClassifier
 import aaanalysis as aa
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 aa.options["verbose"] = "off"
@@ -32,7 +32,7 @@ class TestTreeModel:
         tree_model = aa.TreeModel(list_model_kwargs=mock_kwargs[0:2], list_model_classes=mock_classes[0:2])
         assert tree_model._list_model_kwargs == mock_kwargs[0:2]
 
-    @settings(deadline=1500)
+    @settings(deadline=None)
     @given(is_preselected=some.lists(some.booleans(), min_size=2, max_size=5))
     def test_is_preselected_parameter(self, is_preselected):
         """Test the 'is_preselected' parameter."""
@@ -43,7 +43,7 @@ class TestTreeModel:
             tree_model = aa.TreeModel(is_preselected=mock_preselected)
             assert np.array_equal(tree_model._is_preselected, mock_preselected)
 
-    @settings(deadline=1500)
+    @settings(deadline=None)
     @given(verbose=some.booleans())
     def test_verbose_parameter(self, verbose):
         """Test the 'verbose' parameter."""
@@ -51,7 +51,7 @@ class TestTreeModel:
         tree_model = aa.TreeModel(verbose=verbose)
         assert tree_model._verbose == verbose
 
-    @settings(deadline=1500)
+    @settings(deadline=None)
     @given(random_state=some.integers() | some.none())
     def test_random_state_parameter(self, random_state):
         """Test the 'random_state' parameter."""
@@ -117,7 +117,7 @@ class TestTreeModelComplex:
     """Test TreeModel class with complex scenarios"""
 
 
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(verbose=some.booleans(), random_state=some.integers())
     def test_verbose_and_random_state(self, verbose, random_state):
         """Test 'verbose' and 'random_state' parameters together."""
@@ -127,7 +127,7 @@ class TestTreeModelComplex:
             assert tree_model._verbose == verbose
             assert tree_model._random_state == random_state
 
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(is_preselected=some.lists(some.booleans(), min_size=2, max_size=5),
            random_state=some.integers() | some.none())
     def test_is_preselected_and_random_state(self, is_preselected, random_state):
@@ -137,7 +137,7 @@ class TestTreeModelComplex:
             assert np.array_equal(tree_model._is_preselected, is_preselected)
             assert tree_model._random_state == random_state
 
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(list_model_classes=some.lists(some.sampled_from(mock_classes), min_size=1, max_size=3),
            is_preselected=some.lists(some.booleans(), min_size=1, max_size=5))
     def test_model_classes_and_is_preselected(self, list_model_classes, is_preselected):

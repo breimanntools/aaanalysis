@@ -8,7 +8,7 @@ import aaanalysis as aa
 
 aa.options["verbose"] = False
 
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 SCHEMA_SEGMENTS = ["entry_win", "entry", "sequence", "window", "source_position",
@@ -37,7 +37,7 @@ class TestSampleDifferentProtein:
         assert isinstance(df, pd.DataFrame)
         assert list(df.columns) == SCHEMA_SEGMENTS
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(n=some.integers(min_value=1, max_value=20))
     def test_valid_n(self, n):
         aaws = aa.AAWindowSampler()
@@ -45,7 +45,7 @@ class TestSampleDifferentProtein:
                                         n=n, window_size=5, seed=0)
         assert len(df) <= n
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(window_size=some.integers(min_value=1, max_value=11))
     def test_valid_window_size(self, window_size):
         aaws = aa.AAWindowSampler()
@@ -99,7 +99,7 @@ class TestSampleDifferentProtein:
         any_ref = any(0 in lab for lab in eligible["labels"])
         assert any_ref
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(seed=some.integers(min_value=0, max_value=10000))
     def test_valid_seed_determinism(self, seed):
         aaws = aa.AAWindowSampler()
@@ -390,7 +390,7 @@ class TestSampleDifferentProtein:
 class TestSampleDifferentProteinComplex:
     """Test sample_different_protein() with combinations of parameters."""
 
-    @settings(max_examples=10, deadline=2500)
+    @settings(max_examples=10, deadline=None)
     @given(n=some.integers(min_value=1, max_value=30),
            window_size=some.integers(min_value=1, max_value=9),
            role=some.sampled_from(["Negative", "Background", "Unlabeled"]),

@@ -7,7 +7,7 @@ import matplotlib as mpl
 import aaanalysis as aa
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -85,7 +85,7 @@ class TestPlotSettingsComplexCases:
            st.sampled_from(["x", "y", "both"]))
     @example(1.5, "Arial", True, False, False, True, False, "y")
     @example(1.0, "Verdana", False, True, True, False, True, "x")
-    @settings(max_examples=5, deadline=500)
+    @settings(max_examples=5, deadline=None)
     def test_complex_positive_cases(self, font_scale, font, weight_bold, adjust_only_font, adjust_further_elements, grid, no_ticks, grid_axis):
         aa.plot_settings(font_scale=font_scale, font=font, weight_bold=weight_bold, adjust_only_font=adjust_only_font, adjust_further_elements=adjust_further_elements, grid=grid, no_ticks=no_ticks, grid_axis=grid_axis)
 
@@ -98,7 +98,7 @@ class TestPlotSettingsComplexCases:
            st.booleans(),
            st.text())
     @example(-1.0, "InvalidFont", True, False, False, True, False, "z")
-    @settings(max_examples=5, deadline=1500)
+    @settings(max_examples=5, deadline=None)
     def test_complex_negative_cases(self, font_scale, font, weight_bold, adjust_only_font, adjust_further_elements, grid, no_ticks, grid_axis):
         with pytest.raises(Exception):
             aa.plot_settings(font_scale=font_scale, font=font, weight_bold=weight_bold, adjust_only_font=adjust_only_font, adjust_further_elements=adjust_further_elements, grid=grid, no_ticks=no_ticks, grid_axis=grid_axis)

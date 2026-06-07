@@ -9,7 +9,7 @@ from pandas.testing import assert_frame_equal
 import aaanalysis as aa
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -34,7 +34,7 @@ class TestExtendAlphabet:
     """Test class for the 'extend_alphabet' function."""
 
     # Positive tests
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(df_scales=st.just(generate_random_df()),
            letter_new=st.sampled_from(VALID_LETTERS),
            value_type=st.sampled_from(VALID_VALUE_TYPES))
@@ -78,7 +78,7 @@ class TestExtendAlphabet:
         assert_frame_equal(df_scales_new, df_scales_new_default)
 
     # Negative tests
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(df_scales=st.just(generate_random_df()),
            letter_new=st.sampled_from(VALID_LETTERS),
            value_type=st.sampled_from(INVALID_VALUE_TYPES))
@@ -88,7 +88,7 @@ class TestExtendAlphabet:
         with pytest.raises(ValueError):
             nf.extend_alphabet(df_scales, letter_new, value_type)
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(df_scales=st.just(generate_random_df()),
            letter_new=st.text(),
            value_type=st.sampled_from(VALID_VALUE_TYPES))
@@ -104,7 +104,7 @@ class TestExtendAlphabet:
                 nf.extend_alphabet(df_scales, None, value_type)
 
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(df_scales=st.lists(st.floats(), min_size=1),
            letter_new=st.sampled_from(VALID_LETTERS),
            value_type=st.sampled_from(VALID_VALUE_TYPES))
@@ -118,7 +118,7 @@ class TestExtendAlphabet:
 class TestExtendAlphabetComplex:
     """Complex tests for the 'extend_alphabet' function."""
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(df_scales=st.just(generate_random_df()),
            letter_new=st.sampled_from(VALID_LETTERS),
            value_type=st.sampled_from(VALID_VALUE_TYPES))
@@ -131,7 +131,7 @@ class TestExtendAlphabetComplex:
             assert letter_new in result.index
 
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(df_scales=st.just(generate_random_df()),
            letter_new=st.sampled_from(VALID_LETTERS),
            value_type=st.sampled_from(INVALID_VALUE_TYPES))

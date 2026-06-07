@@ -10,7 +10,7 @@ import aaanalysis as aa  # Assuming AAclust is part of aaanalysis module
 import warnings
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -56,7 +56,7 @@ class TestFilterCoverage:
     """Test filter_coverage() method for each parameter individually with positive test cases."""
 
     # Positive test cases
-    @settings(deadline=100000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=st.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
     def test_X_parameter(self, X):
@@ -72,7 +72,7 @@ class TestFilterCoverage:
                 assert isinstance(selected_scale_ids, list)
                 assert all(isinstance(scale_id, str) for scale_id in selected_scale_ids)
 
-    @settings(deadline=100000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(scale_ids=st.lists(st.text(), min_size=2, max_size=10))
     def test_scale_ids_parameter(self, scale_ids):
         aac = aa.AAclust()
@@ -85,7 +85,7 @@ class TestFilterCoverage:
             assert isinstance(selected_scale_ids, list)
             assert all(isinstance(scale_id, str) for scale_id in selected_scale_ids)
 
-    @settings(deadline=100000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(names_ref=st.lists(st.text(), min_size=2, max_size=10))
     def test_names_ref_parameter(self, names_ref):
         aac = aa.AAclust()
@@ -99,7 +99,7 @@ class TestFilterCoverage:
             assert isinstance(selected_scale_ids, list)
             assert all(isinstance(scale_id, str) for scale_id in selected_scale_ids)
 
-    @settings(deadline=100000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(min_coverage=st.integers(min_value=10, max_value=100))
     def test_min_coverage_parameter(self, min_coverage):
         aac = aa.AAclust()
@@ -114,7 +114,7 @@ class TestFilterCoverage:
             assert isinstance(selected_scale_ids, list)
             assert all(isinstance(scale_id, str) for scale_id in selected_scale_ids)
 
-    @settings(deadline=100000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(col_name=st.sampled_from(['category', 'subcategory', 'scale_name']))
     def test_col_name_parameter(self, col_name):
         aac = aa.AAclust()

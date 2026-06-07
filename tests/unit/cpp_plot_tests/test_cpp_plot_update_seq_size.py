@@ -11,7 +11,7 @@ import pytest
 import aaanalysis as aa
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -63,7 +63,7 @@ class TestUpdateSeqSize:
             assert isinstance(result, plt.Axes)
             plt.close()
 
-    @settings(max_examples=2, deadline=10000)
+    @settings(max_examples=2, deadline=None)
     @given(fontsize_tmd_jmd=st.one_of(st.none(), st.integers(min_value=0, max_value=15)))
     def test_fontsize_tmd_jmd(self, fontsize_tmd_jmd):
         cpp_plot = aa.CPPPlot()
@@ -137,7 +137,7 @@ class TestUpdateSeqSize:
                 cpp_plot.update_seq_size(ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd)
             plt.close()
 
-    @settings(max_examples=2, deadline=10000)
+    @settings(max_examples=2, deadline=None)
     @given(weight_tmd_jmd=st.text(min_size=1).filter(lambda x: x not in ['normal', 'bold']))
     def test_weight_tmd_jmd_negative(self, weight_tmd_jmd):
         cpp_plot = aa.CPPPlot()

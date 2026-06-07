@@ -15,7 +15,7 @@ import aaanalysis as aa
 import aaanalysis.utils as ut
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -70,7 +70,7 @@ class TestCPPPlotEval:
         assert isinstance(axes, np.ndarray)
         plt.close()
 
-    @settings(max_examples=5, deadline=5000)
+    @settings(max_examples=5, deadline=None)
     @given(n_rows=st.integers(min_value=2, max_value=7))
     def test_df_eval_input(self, n_rows):
         df_eval = create_valid_df_eval(n_rows=n_rows)
@@ -80,7 +80,7 @@ class TestCPPPlotEval:
         assert isinstance(axes, np.ndarray)
         plt.close()
 
-    @settings(max_examples=5, deadline=2500)
+    @settings(max_examples=5, deadline=None)
     @given(figsize=st.tuples(st.integers(min_value=4, max_value=20), st.integers(min_value=4, max_value=20)))
     def test_figsize_input(self, figsize):
         df_eval = create_valid_df_eval(n_rows=5)
@@ -114,7 +114,7 @@ class TestCPPPlotEval:
             assert isinstance(axes, np.ndarray)
             plt.close()
 
-    @settings(max_examples=5, deadline=2500)
+    @settings(max_examples=5, deadline=None)
     @given(legend_y=st.floats(min_value=-0.5, max_value=0.5))
     def test_legend_y_input(self, legend_y):
         df_eval = create_valid_df_eval(n_rows=5)

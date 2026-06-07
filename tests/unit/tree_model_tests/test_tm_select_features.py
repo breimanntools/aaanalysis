@@ -8,7 +8,7 @@ import aaanalysis as aa
 
 aa.options["verbose"] = False
 
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 # Note: @settings(deadline=None) below is intentional: TreeModel.select_features fits a forest
 # per example; fit time is variable and is not the property under test (#83).

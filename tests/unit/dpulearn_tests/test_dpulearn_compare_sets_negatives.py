@@ -11,7 +11,7 @@ import aaanalysis as aa
 
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -95,7 +95,7 @@ class TestCompareSetsNegativesComplex:
     """Complex test cases for compare_sets_negatives function combining multiple parameters."""
 
     # Positive tests
-    @settings(max_examples=5, deadline=500)
+    @settings(max_examples=5, deadline=None)
     @given(num_labels=st.integers(min_value=1, max_value=10),
            return_upset_data=st.booleans())
     def test_complex_valid_combinations(self, num_labels, return_upset_data):
@@ -111,7 +111,7 @@ class TestCompareSetsNegativesComplex:
         assert isinstance(result, pd.DataFrame) or isinstance(result, pd.Series)
 
     # Negative tests
-    @settings(max_examples=5, deadline=500)
+    @settings(max_examples=5, deadline=None)
     @given(size=st.integers(min_value=1, max_value=100),
            num_labels=st.integers(min_value=1, max_value=10))
     def test_complex_invalid_mismatch(self, size, num_labels):
@@ -120,7 +120,7 @@ class TestCompareSetsNegativesComplex:
         with pytest.raises(ValueError):
             aa.dPULearn.compare_sets_negatives(list_labels=list_labels, names_datasets=names)
 
-    @settings(max_examples=5, deadline=500)
+    @settings(max_examples=5, deadline=None)
     @given(size=st.integers(min_value=1, max_value=100),
            num_labels=st.integers(min_value=1, max_value=10))
     def test_complex_invalid_df_seq(self, size, num_labels):

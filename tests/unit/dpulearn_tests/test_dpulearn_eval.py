@@ -11,7 +11,7 @@ import aaanalysis as aa
 import random
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -40,7 +40,7 @@ class TestdPULearnEval:
     """Test dPULearn.eval() method for each parameter individually."""
 
     # Positive tests
-    @settings(deadline=350, max_examples=100)
+    @settings(deadline=None, max_examples=100)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),
                          elements=st.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)))
     def test_X(self, X):
@@ -63,7 +63,7 @@ class TestdPULearnEval:
             dpul = aa.dPULearn()
             assert isinstance(dpul.eval(X, list_labels=list_labels, n_jobs=1), pd.DataFrame)
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(names_datasets=st.lists(st.text(), min_size=2))
     def test_names_datasets(self, names_datasets):
         """Test 'names_datasets' with valid inputs."""
@@ -90,7 +90,7 @@ class TestdPULearnEval:
             if not is_invalid:
                 assert isinstance(dpul.eval(X, list_labels=list_labels, X_neg=X_neg, n_jobs=1), pd.DataFrame)
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(comp_kld=st.booleans())
     def test_comp_kld(self, comp_kld):
         """Test 'comp_kld' with valid inputs."""
@@ -198,7 +198,7 @@ class TestdPULearnEval:
 class TestdPULearnEvalComplex:
     """Complex test cases for dPULearn.eval() method combining multiple parameters."""
 
-    @settings(max_examples=10, deadline=4000)
+    @settings(max_examples=10, deadline=None)
     @given(
         X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=3, max_side=100),
                       elements=st.floats(min_value=-1e3, max_value=1e3, allow_nan=False, allow_infinity=False)),

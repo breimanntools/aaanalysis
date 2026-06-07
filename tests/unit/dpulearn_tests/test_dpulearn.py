@@ -9,7 +9,7 @@ from sklearn.decomposition import PCA
 import aaanalysis as aa
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -28,7 +28,7 @@ class TestdPULearn:
     """Test dPULearn class individual parameters"""
 
     # Positive tests
-    @settings(deadline=1000, max_examples=2)
+    @settings(deadline=None, max_examples=2)
     @given(verbose=some.booleans())
     def test_verbose_parameter(self, verbose):
         """Test the 'verbose' parameter."""
@@ -36,7 +36,7 @@ class TestdPULearn:
         model = aa.dPULearn(verbose=verbose)
         assert model._verbose == verbose
 
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(data=some.data())
     def test_pca_kwargs_various_combinations(self, data):
         """Test the 'model_kwargs' parameter with various valid combinations."""
@@ -53,7 +53,7 @@ class TestdPULearn:
 
 
     # Negative tests
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(pca_kwargs=some.dictionaries(keys=some.text(), values=some.just("invalid_value")))
     def test_pca_kwargs_negative(self, pca_kwargs):
         """Test the 'pca_kwargs' parameter with invalid PCA arguments."""
@@ -68,7 +68,7 @@ class TestdPULearnComplex:
     """Test dPULearn class with complex scenarios"""
 
     # Positive tests
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(verbose=some.booleans(), model_kwargs=some.dictionaries(keys=some.text(), values=some.integers()))
     def test_verbose_and_pca_kwargs(self, verbose, model_kwargs):
         """Test 'verbose' and 'pca_kwargs' parameters together."""
@@ -82,7 +82,7 @@ class TestdPULearnComplex:
 
 
     # Negative tests
-    @settings(deadline=1000, max_examples=10)
+    @settings(deadline=None, max_examples=10)
     @given(verbose=some.booleans(), model_kwargs=some.dictionaries(keys=some.text(), values=some.just("invalid_value")))
     def test_valid_verbose_and_invalid_pca_and_kwargs(self, verbose, model_kwargs):
         """Test combining valid 'verbose' with invalid 'pca_kwargs'."""

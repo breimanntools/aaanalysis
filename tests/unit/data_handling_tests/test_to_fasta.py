@@ -5,7 +5,7 @@ import os
 import aaanalysis as aa
 
 # Extend default deadline for more complex operations
-settings.register_profile("default", deadline=500)
+settings.register_profile("default", deadline=None)
 settings.load_profile("default")
 
 FILE_OUT = "valid_path_out.fasta"

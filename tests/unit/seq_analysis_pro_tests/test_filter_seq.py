@@ -10,7 +10,7 @@ import platform
 aa.options["verbose"] = False
 
 # Set default deadline from 200 to 20000
-settings.register_profile("ci", deadline=20000)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 # Note: deadline kept loose (20000) on purpose: filter_seq shells out to an external clustering
 # tool, so wall-clock is dominated by the subprocess and is environment-dependent (#83).

@@ -8,7 +8,7 @@ import aaanalysis as aa
 import pytest
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -23,7 +23,7 @@ class TestLoadDataset:
             df = aa.load_dataset(name=name)
             assert set(ut.COLS_SEQ_INFO).issubset(set(df))
 
-    @settings(max_examples=10, deadline=350)
+    @settings(max_examples=10, deadline=None)
     @given(n=some.integers(min_value=1, max_value=100))
     def test_load_dataset_n_value(self, n):
         """Test the 'n' parameter for limiting rows."""
@@ -32,14 +32,14 @@ class TestLoadDataset:
             df = aa.load_dataset(name="SEQ_LOCATION", n=n)
             assert len(df) == (n * 2)
 
-    @settings(max_examples=10, deadline=350)
+    @settings(max_examples=10, deadline=None)
     @given(min_len=some.integers(min_value=400, max_value=1000))
     def test_load_dataset_min_len(self, min_len):
         """Test the 'min_len' parameter for filtering sequences."""
         df = aa.load_dataset(name="SEQ_LOCATION", min_len=min_len)
         assert all(len(seq) >= min_len for seq in df[ut.COL_SEQ])
 
-    @settings(max_examples=10, deadline=350)
+    @settings(max_examples=10, deadline=None)
     @given(max_len=some.integers(min_value=50, max_value=100))
     def test_load_dataset_max_len(self, max_len):
         """Test the 'max_len' parameter for filtering sequences."""
@@ -47,14 +47,14 @@ class TestLoadDataset:
         assert all(len(seq) <= max_len for seq in df[ut.COL_SEQ])
 
     # Property-based testing for negative cases
-    @settings(max_examples=10, deadline=350)
+    @settings(max_examples=10, deadline=None)
     @given(n=some.integers(max_value=0))
     def test_load_dataset_invalid_n(self, n):
         """Test with an invalid 'n' value."""
         with pytest.raises(ValueError):
             aa.load_dataset(name="SEQ_LOCATION", n=n)
 
-    @settings(max_examples=10, deadline=350)
+    @settings(max_examples=10, deadline=None)
     @given(min_len=some.integers(max_value=0))
     def test_load_dataset_invalid_min_len(self, min_len):
         """Test with an invalid 'min_len' value."""
@@ -63,7 +63,7 @@ class TestLoadDataset:
         with pytest.raises(ValueError):
             aa.load_dataset(name="SEQ_AMYLO", min_len=10)
 
-    @settings(max_examples=10, deadline=350)
+    @settings(max_examples=10, deadline=None)
     @given(max_len=some.integers(max_value=0))
     def test_load_dataset_invalid_max_len(self, max_len):
         """Test with an invalid 'max_len' value."""
@@ -71,7 +71,7 @@ class TestLoadDataset:
             aa.load_dataset(name="SEQ_LOCATION", max_len=max_len)
 
     # Additional Negative Tests
-    @settings(max_examples=10, deadline=350)
+    @settings(max_examples=10, deadline=None)
     @given(n=some.integers(min_value=1000, max_value=1050))
     def test_load_dataset_n_value_too_high(self, n):
         """Test the 'n' parameter for limiting rows."""
@@ -80,14 +80,14 @@ class TestLoadDataset:
             with pytest.warns(UserWarning):
                 df = aa.load_dataset(name="SEQ_LOCATION", n=n)
 
-    @settings(max_examples=10, deadline=350)
+    @settings(max_examples=10, deadline=None)
     @given(negative_n=some.integers(min_value=-100, max_value=-1))
     def test_load_dataset_negative_n(self, negative_n):
         """Test with a negative 'n' value."""
         with pytest.raises(ValueError):
             aa.load_dataset(name="SEQ_LOCATION", n=negative_n)
 
-    @settings(max_examples=10, deadline=350)
+    @settings(max_examples=10, deadline=None)
     @given(non_canonical_aa=some.text())
     @example(non_canonical_aa="invalid_option")
     def test_load_dataset_invalid_non_canonical_aa(self, non_canonical_aa):

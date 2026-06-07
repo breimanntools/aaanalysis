@@ -12,7 +12,7 @@ import pandas as pd
 import aaanalysis as aa
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 
@@ -32,7 +32,7 @@ class TestAAclustPlotEval:
     """Test  aa.AAclustPlot().eval function"""
 
     # Positive tests
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(n_samples=some.integers(min_value=1, max_value=20))
     def test_data_input(self, n_samples):
         """Test the 'data' parameter with valid data."""
@@ -72,7 +72,7 @@ class TestAAclustPlotEval:
         assert isinstance(axes[0], plt.Axes)
         plt.close()
 
-    @settings(max_examples=5, deadline=1500)
+    @settings(max_examples=5, deadline=None)
     @given(figsize=some.tuples(some.integers(min_value=4, max_value=20), some.integers(min_value=4, max_value=20)))
     def test_figsize_input(self, figsize):
         """Test the 'figsize' parameter with valid data."""
@@ -86,7 +86,7 @@ class TestAAclustPlotEval:
 
 
     # Negative test
-    @settings(max_examples=5, deadline=1500)
+    @settings(max_examples=5, deadline=None)
     @given(data=some.lists(some.lists(some.floats(allow_nan=True, allow_infinity=True), min_size=2, max_size=10), min_size=2, max_size=10))
     def test_data_with_nans_and_infs(self, data):
         """Test the 'data' parameter with NaN and Inf."""

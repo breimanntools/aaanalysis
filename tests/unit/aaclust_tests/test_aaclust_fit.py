@@ -13,7 +13,7 @@ import warnings
 import aaanalysis as aa
 
 # Set default deadline from 200 to 400
-settings.register_profile("ci", deadline=400)
+settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
 
 aa.options["verbose"] = True
@@ -70,7 +70,7 @@ class TestAAclust:
         aac.fit(X, n_clusters=n_clusters)
         assert len(set(aac.labels_)) == n_clusters
 
-    @settings(deadline=1000, max_examples=5)
+    @settings(deadline=None, max_examples=5)
     @given(min_th=some.floats(min_value=0, max_value=0.3))
     def test_fit_min_th(self, min_th):
         """Test the 'min_th' parameter during the 'fit' method."""
@@ -112,7 +112,7 @@ class TestAAclust:
         assert isinstance(aac.labels_medoids_, np.ndarray)
         assert isinstance(aac.is_medoid_, np.ndarray)
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(names=some.lists(some.text(min_size=1, max_size=10), min_size=10, max_size=50))
     def test_fit_names(self, names):
         """
@@ -181,7 +181,7 @@ class TestAAclust:
         for metric in valid_metrics:
             aac.fit(X, metric=metric)
 
-    @settings(max_examples=10, deadline=1500)
+    @settings(max_examples=10, deadline=None)
     @given(metric=some.text(min_size=1).filter(lambda x: x not in ["correlation", None, "manhattan", "euclidean", "cosine"]))
     def test_invalid_metric(self, metric):
         """
@@ -197,7 +197,7 @@ class TestAAclustComplex:
     """Test AAclust class"""
 
     # Property-based testing for positive cases
-    @settings(deadline=3500, max_examples=20)
+    @settings(deadline=None, max_examples=20)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=12, max_side=100),
                          elements=some.floats(allow_nan=False, allow_infinity=False)),
            n_clusters=some.integers(min_value=2, max_value=5))
@@ -235,7 +235,7 @@ class TestAAclustComplex:
                 assert len(set(model.labels_)) == n_clusters
                 assert len(model.medoids_) == n_clusters
 
-    @settings(deadline=10000, max_examples=20)
+    @settings(deadline=None, max_examples=20)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=15, max_side=30),
                          elements=some.floats(allow_nan=False, allow_infinity=False)))
     def test_fit_without_n_clusters(self, X):
@@ -253,7 +253,7 @@ class TestAAclustComplex:
                 assert len(model.medoids_) == len(set(model.labels_))
 
     # Property-based testing for negative cases
-    @settings(max_examples=20, deadline=1500)
+    @settings(max_examples=20, deadline=None)
     @given(n_clusters=some.integers(max_value=0))
     def test_fit_invalid_n_clusters(self, n_clusters):
         """Test the fit method with an invalid number of clusters."""
