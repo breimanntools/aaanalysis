@@ -32,7 +32,7 @@ def set_tick_size(axis=None, major_size=None, minor_size=None):
 # II Main functions
 def plot_settings(font_scale: Union[int, float] = 1,
                   font: str = "Arial",
-                  weight_bold: bool = True,
+                  weight_bold: bool = False,
                   adjust_only_font: bool = False,
                   adjust_further_elements: bool = True,
                   grid: bool = False,
@@ -60,7 +60,7 @@ def plot_settings(font_scale: Union[int, float] = 1,
        Scaling factor to scale the size of font elements. Consistent with :func:`seaborn.set_context`.
     font : {'Arial', 'Courier New', 'DejaVu Sans', 'Times New Roman', 'Verdana'}, default='Arial'
        Name of text font. Common options are 'Arial' or 'DejaVu Sans' (Matplotlib default).
-    weight_bold : bool, default=True
+    weight_bold : bool, default=False
        If ``True``, font and line elements are bold.
     adjust_only_font : bool, default=False
        If ``True``, only the font style will be adjusted, leaving other elements unchanged.
