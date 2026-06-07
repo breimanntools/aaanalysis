@@ -34,12 +34,15 @@ SEP = os.sep
 FOLDER_PROJECT = str(Path(__file__).parent.parent.parent) + SEP
 FOLDER_SOURCE = os.path.dirname(os.path.abspath(__file__)) + SEP
 FOLDER_TUTORIALS = FOLDER_PROJECT + "tutorials" + SEP
+FOLDER_PROTOCOLS = FOLDER_PROJECT + "protocols" + SEP
 FOLDER_GENERATED_RST = FOLDER_SOURCE + "generated" + SEP  # Saving .rst directly in 'generated'
 FOLDER_EXAMPLES = FOLDER_PROJECT + "examples" + SEP
 FOLDER_EXAMPLES_RST = FOLDER_GENERATED_RST + "examples" + SEP
 FOLDER_IMAGE = FOLDER_GENERATED_RST + "images" + SEP
 
-LIST_EXCLUDE = []
+# Notebooks excluded from the documentation build (e.g. Colab-only notebooks that
+# require GPU/external services and cannot be executed or rendered meaningfully).
+LIST_EXCLUDE = ["colab_protein_embeddings.ipynb"]
 
 
 # Helper functions
@@ -84,6 +87,29 @@ def export_tutorial_notebooks_to_rst():
         if filename.endswith('.ipynb') and filename not in LIST_EXCLUDE:
             notebook_name = filename.replace('.ipynb', '')
             full_path = os.path.join(FOLDER_TUTORIALS, filename)
+            # Load the notebook
+            with open(full_path, 'r') as f:
+                notebook = nbformat.read(f, as_version=4)
+            # Convert to notebook to RST
+            custom_preprocessor = CustomPreprocessor(notebook_name=notebook_name)
+            rst_exporter = nbconvert.RSTExporter(preprocessors=[custom_preprocessor])
+            output, resources = rst_exporter.from_notebook_node(notebook)
+            # Write the RST and any accompanying files (like images)
+            writer = FilesWriter(build_directory=FOLDER_GENERATED_RST)
+            writer.write(output, resources, notebook_name=filename.replace('.ipynb', ''))
+
+
+def export_protocol_notebooks_to_rst():
+    """Export Jupyter protocols to RST without execution.
+
+    Protocol notebooks live flat in the top-level ``protocols/`` folder and are
+    written to the same ``generated/`` directory as the tutorials, so the
+    ``protocols.rst`` toctree references them as ``generated/<name>``.
+    """
+    for filename in os.listdir(FOLDER_PROTOCOLS):
+        if filename.endswith('.ipynb') and filename not in LIST_EXCLUDE:
+            notebook_name = filename.replace('.ipynb', '')
+            full_path = os.path.join(FOLDER_PROTOCOLS, filename)
             # Load the notebook
             with open(full_path, 'r') as f:
                 notebook = nbformat.read(f, as_version=4)
