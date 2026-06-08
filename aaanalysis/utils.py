@@ -326,6 +326,19 @@ STRATEGY_TOP_K = "top_k"
 STRATEGY_THRESHOLD = "threshold"
 STRATEGY_FREQUENCY = "frequency"
 LIST_SELECTION_STRATEGIES = [STRATEGY_TOP_K, STRATEGY_THRESHOLD, STRATEGY_FREQUENCY]
+
+# CPP.simplify — interpretability-guided scale swapping
+STRATEGY_GREEDY = "greedy"            # per-feature swap, RF+CV non-regression gate
+STRATEGY_CONSOLIDATE = "consolidate"  # set-level consolidation (staged)
+STRATEGY_SWAP_ALL = "swap_all"        # swap-all then one CV comparison (staged)
+LIST_SIMPLIFY_STRATEGIES = [STRATEGY_GREEDY, STRATEGY_CONSOLIDATE, STRATEGY_SWAP_ALL]
+ON_UNIMPROVABLE_KEEP = "keep"
+ON_UNIMPROVABLE_DROP = "drop"
+ON_UNIMPROVABLE_DROP_IF_PERF = "drop_if_perf_allows"
+LIST_ON_UNIMPROVABLE = [ON_UNIMPROVABLE_KEEP, ON_UNIMPROVABLE_DROP, ON_UNIMPROVABLE_DROP_IF_PERF]
+TIE_BREAK_INTERPRETABILITY = "interpretability"
+TIE_BREAK_PERFORMANCE = "performance"
+LIST_REDUNDANCY_TIE_BREAK = [TIE_BREAK_INTERPRETABILITY, TIE_BREAK_PERFORMANCE]
 DICT_VALUE_TYPE = {COL_ABS_AUC: "mean",
                    COL_ABS_MEAN_DIF: "mean",
                    COL_MEAN_DIF: "mean",

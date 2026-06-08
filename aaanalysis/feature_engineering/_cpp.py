@@ -16,13 +16,14 @@ from ._backend.cpp.utils_feature import get_df_parts_
 from ._backend.check_feature import (check_split_kws,
                                      check_parts_len, check_match_df_parts_split_kws,
                                      check_df_scales, check_df_cat, check_match_df_parts_df_scales,
-                                     check_match_df_scales_df_cat)
+                                     check_match_df_scales_df_cat, check_match_df_parts_features)
 from ._backend.cpp_run import (
     cpp_run_single, cpp_run_batch, cpp_run_batch_num, cpp_run_sample_batched,
     _pick_feature_matrix_builder,
 )
 from ._backend.cpp._filters._get_feature_matrix_fast import AALookupCache
 from ._backend.cpp.cpp_eval import evaluate_features
+from ._backend.cpp._simplify import simplify_cpp_
 
 
 # I Helper Functions
@@ -71,6 +72,24 @@ def check_match_list_df_feat_list_df_parts(list_df_feat=None, list_df_parts=None
     """Check if all elements in list are valid feature DataFrames"""
     for df_feat, df_parts in zip(list_df_feat, list_df_parts):
         ut.check_df_feat(df_feat=df_feat, list_parts=list(df_parts))
+
+
+def check_match_max_interpretability_top_n(max_interpretability=None, top_n=None):
+    """``simplify`` target selectors are mutually exclusive (at most one set)."""
+    if max_interpretability is not None and top_n is not None:
+        raise ValueError(
+            f"'max_interpretability' ({max_interpretability}) and 'top_n' ({top_n}) are "
+            f"mutually exclusive target selectors; set at most one (or neither to attempt "
+            f"every improvable feature).")
+
+
+def check_n_cv_labels(n_cv=None, labels=None):
+    """Validate ``n_cv`` (>=2, <= smallest class count) for the simplify RF+CV gate."""
+    ut.check_number_range(name="n_cv", val=n_cv, min_val=2, just_int=True)
+    min_class_count = min(pd.Series(labels).value_counts())
+    if n_cv > min_class_count:
+        raise ValueError(f"'n_cv' ({n_cv}) should not be greater than the smallest class "
+                         f"count ({min_class_count}).")
 
 
 def check_match_list_df_feat_names_feature_sets(list_df_feat=None, names_feature_sets=None):
@@ -870,3 +889,157 @@ class CPP(Tool):
                                     n_jobs=n_jobs,
                                     random_state=self._random_state)
         return df_eval
+
+    def simplify(self,
+                 df_feat: pd.DataFrame = None,
+                 labels: ut.ArrayLike1D = None,
+                 X: Optional[ut.ArrayLike2D] = None,
+                 strategy: str = "greedy",
+                 max_interpretability: Optional[int] = None,
+                 top_n: Optional[int] = None,
+                 min_cor: float = 0.7,
+                 metric: str = "balanced_accuracy",
+                 tol: float = 0.0,
+                 n_cv: int = 5,
+                 on_unimprovable: str = "keep",
+                 redundancy_tie_break: str = "interpretability",
+                 label_test: int = 1,
+                 label_ref: int = 0,
+                 max_std_test: float = 0.2,
+                 max_cor: float = 0.5,
+                 max_overlap: float = 0.5,
+                 check_cat: bool = True,
+                 return_details: bool = False,
+                 random_state: Optional[int] = None,
+                 ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
+        """
+        Simplify a feature set by swapping scales for more interpretable correlated ones.
+
+        For each feature (``PART-SPLIT-SCALE``), an alternative scale from a **more
+        interpretable AAontology subcategory** (interpretability rating 1-10, 1 = best;
+        see :func:`load_scales` ``top_explain_n`` and ADR-0025) that **correlates** with the
+        original scale is substituted, keeping ``PART-SPLIT``. The swapped feature's statistics
+        are recomputed; a swap is accepted only if it passes CPP's per-feature filtering
+        (``max_std_test``) and a random-forest cross-validation gate (performance not worse than
+        the current set, within ``tol``). The swapped set is then redundancy-reduced, yielding a
+        more interpretable and ideally smaller ``df_feat``. The candidate pool (the full rated
+        AAontology scale set) is loaded internally.
+
+        Parameters
+        ----------
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info)
+            Feature DataFrame from :meth:`run` (the standardized CPP output schema).
+        labels : array-like, shape (n_samples,)
+            Class labels for samples in sequence DataFrame (typically, test=1, reference=0).
+        X : array-like, shape (n_samples, n_features), optional
+            Feature matrix matching ``df_feat`` (baseline only; row-aligned to ``self.df_parts``).
+            If ``None``, it is recomputed internally. Swapped columns are always recomputed.
+        strategy : str, default='greedy'
+            Simplification strategy. ``'greedy'`` swaps feature-by-feature behind the RF+CV gate.
+            (``'consolidate'`` / ``'swap_all'`` are reserved for a future release.)
+        max_interpretability : int, optional
+            Interpretability ceiling (1-10): every feature whose scale subcategory is rated
+            worse (higher) than this is targeted for replacement. Mutually exclusive with ``top_n``.
+        top_n : int, optional
+            Target the ``top_n`` worst-interpretability features. Mutually exclusive with
+            ``max_interpretability``. If both are ``None``, every improvable feature is attempted.
+        min_cor : float, default=0.7
+            Minimum absolute Pearson correlation between a candidate scale and the original scale
+            (between 0 and 1); anti-correlation is allowed via the absolute value.
+        metric : str, default='balanced_accuracy'
+            Scoring metric for the RF+CV gate (any scikit-learn classification scorer name).
+        tol : float, default=0.0
+            A swap is accepted if its CV score is at least ``baseline - tol`` (>=0).
+        n_cv : int, default=5
+            Number of cross-validation folds (>=2, <= smallest class count).
+        on_unimprovable : str, default='keep'
+            What to do with a targeted feature that cannot be improved: ``'keep'`` (retain the
+            original), ``'drop'`` (remove it), or ``'drop_if_perf_allows'`` (remove only if the
+            CV score does not drop). The last feature is never dropped.
+        redundancy_tie_break : str, default='interpretability'
+            When two swapped features are redundant, keep the ``'interpretability'``-best (then
+            ``abs_auc``) or the ``'performance'``-best (``abs_auc``).
+        label_test : int, default=1
+            Class label of the test group in ``labels``.
+        label_ref : int, default=0
+            Class label of the reference group in ``labels``.
+        max_std_test : float, default=0.2
+            Per-feature pre-filter threshold a swapped feature must satisfy (between 0 and 1).
+        max_cor : float, default=0.5
+            Redundancy correlation threshold for the post-swap reduction (between 0 and 1).
+        max_overlap : float, default=0.5
+            Redundancy position-overlap threshold for the post-swap reduction (between 0 and 1).
+        check_cat : bool, default=True
+            Whether the redundancy reduction only compares features within the same scale category.
+        return_details : bool, default=False
+            If ``True``, also return a long-form ``df_candidates`` reporting every candidate
+            considered (scale, interpretability, correlation, recomputed std, accepted-flag).
+        random_state : int, optional
+            Random state for the random forest. Overrides the constructor's ``random_state``.
+
+        Returns
+        -------
+        df_feat : pd.DataFrame
+            The simplified feature DataFrame (CPP output schema), with swapped scales, recomputed
+            statistics, and redundant features removed.
+        df_candidates : pd.DataFrame
+            Returned only if ``return_details=True``: one row per candidate considered.
+
+        Notes
+        -----
+        * Features whose scale is **not a rated AAontology scale** (e.g. ``run_num`` pseudo-scales
+          or unclassified scales) carry no interpretability rating and are skipped. If no feature
+          is rated, ``df_feat`` is returned unchanged with a ``RuntimeWarning``.
+        * An anti-correlated swap flips the sign of ``mean_dif`` (the feature still discriminates);
+          the correlation sign is reported in ``df_candidates``.
+
+        See Also
+        --------
+        * :meth:`run` for the feature DataFrame produced and its schema.
+        * :func:`load_scales` for the interpretability-tiered explainable scale sets (``top_explain_n``).
+
+        Examples
+        --------
+        .. include:: examples/cpp_simplify.rst
+        """
+        # Check input
+        df_feat = ut.check_df_feat(df_feat=df_feat, list_parts=list(self.df_parts))
+        ut.check_number_val(name="label_test", val=label_test, just_int=True)
+        ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
+        labels = ut.check_labels(labels=labels, vals_required=[label_test, label_ref],
+                                 len_required=len(self.df_parts), allow_other_vals=False)
+        check_match_df_parts_features(df_parts=self.df_parts, features=list(df_feat[ut.COL_FEATURE]))
+        ut.check_str_options(name="strategy", val=strategy, list_str_options=ut.LIST_SIMPLIFY_STRATEGIES)
+        ut.check_str_options(name="on_unimprovable", val=on_unimprovable,
+                             list_str_options=ut.LIST_ON_UNIMPROVABLE)
+        ut.check_str_options(name="redundancy_tie_break", val=redundancy_tie_break,
+                             list_str_options=ut.LIST_REDUNDANCY_TIE_BREAK)
+        ut.check_str(name="metric", val=metric)
+        ut.check_number_range(name="min_cor", val=min_cor, min_val=0, max_val=1, just_int=False)
+        ut.check_number_range(name="max_std_test", val=max_std_test, min_val=0, max_val=1, just_int=False)
+        ut.check_number_range(name="max_cor", val=max_cor, min_val=0, max_val=1, just_int=False)
+        ut.check_number_range(name="max_overlap", val=max_overlap, min_val=0, max_val=1, just_int=False)
+        ut.check_number_val(name="tol", val=tol, just_int=False)
+        ut.check_number_range(name="max_interpretability", val=max_interpretability, min_val=1,
+                              max_val=10, just_int=True, accept_none=True)
+        ut.check_number_range(name="top_n", val=top_n, min_val=1, just_int=True, accept_none=True)
+        ut.check_bool(name="check_cat", val=check_cat)
+        ut.check_bool(name="return_details", val=return_details)
+        check_match_max_interpretability_top_n(max_interpretability=max_interpretability, top_n=top_n)
+        check_n_cv_labels(n_cv=n_cv, labels=labels)
+        if X is not None:
+            X = ut.check_X(X=X, min_n_features=1)
+        random_state = self._random_state if random_state is None else random_state
+        random_state = ut.check_random_state(random_state=random_state)
+        # The recomputed p-value column must match the input df_feat's test choice.
+        parametric = ut.COL_PVAL_TTEST in list(df_feat)
+        _warn_gaps_encountered(df_parts=self.df_parts, accept_gaps=self._accept_gaps)
+        return simplify_cpp_(df_feat=df_feat, df_parts=self.df_parts, df_scales_self=self.df_scales,
+                             labels=labels, X=X, strategy=strategy,
+                             max_interpretability=max_interpretability, top_n=top_n, min_cor=min_cor,
+                             metric=metric, tol=tol, n_cv=n_cv, on_unimprovable=on_unimprovable,
+                             redundancy_tie_break=redundancy_tie_break, label_test=label_test,
+                             label_ref=label_ref, max_std_test=max_std_test, max_cor=max_cor,
+                             max_overlap=max_overlap, check_cat=check_cat, parametric=parametric,
+                             accept_gaps=self._accept_gaps, return_details=return_details,
+                             random_state=random_state)
