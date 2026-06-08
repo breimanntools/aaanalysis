@@ -294,6 +294,7 @@ COL_MEAN_DIF = "mean_dif"
 COL_STD_TEST = "std_test"
 COL_STD_REF = "std_ref"
 COL_PVAL_MW = "p_val_mann_whitney"
+COL_PVAL_TTEST = "p_val_ttest_indep"
 COL_PVAL_FDR = "p_val_fdr_bh"
 COL_POSITION = "positions"
 COL_AA_TEST = "amino_acids_test"
@@ -306,8 +307,18 @@ COL_FEAT_IMPACT = "feat_impact"
 COL_FEAT_IMPACT_STD = "feat_impact_std"
 
 COLS_FEAT_SCALES = [COL_CAT, COL_SUBCAT, COL_SCALE_NAME]
+COLS_FEAT_SCALES_FULL = COLS_FEAT_SCALES + [COL_SCALE_DES]  # incl. scale_description
 COLS_FEAT_STAT = [COL_ABS_AUC, COL_ABS_MEAN_DIF, COL_MEAN_DIF, COL_STD_TEST, COL_STD_REF]
 COLS_FEAT_WEIGHT = [COL_FEAT_IMPORT, COL_FEAT_IMPORT_STD, COL_FEAT_IMPACT]
+
+# Canonical, deterministic df_feat column order (issue #18). This is a LOWER BOUND
+# on the known/fixed columns, not an exhaustive schema: the dynamic p-value column
+# (COL_PVAL_MW vs COL_PVAL_TTEST per 'parametric'), the post-hoc explainable-AI
+# columns (feat_importance*, feat_impact*) and the per-substrate SHAP columns
+# (feat_impact_'name', mean_dif_'name', ...) are NOT listed here — sort_cols_feat
+# appends any unlisted column after 'positions' in stable order (never dropped).
+LIST_COLS_FEAT = ([COL_FEATURE] + COLS_FEAT_SCALES_FULL + COLS_FEAT_STAT
+                  + [COL_PVAL_MW, COL_PVAL_FDR] + [COL_POSITION])
 
 # TreeModel — post-fit feature-selection strategies (see ADR-0023). RFE is the
 # fit-time engine (fit(use_rfe=True)), not a selection strategy.
@@ -735,6 +746,49 @@ def check_df_parts(df_parts=None, accept_none=False):
 
 
 # Check features
+def split_feat_id(feat_id=None):
+    """Split a feature id ``'PART-SPLIT-SCALE'`` into ``(part, split, scale_id)``.
+
+    The single canonical parser for the feature-id grammar (issue #18); callers
+    must use it instead of ad-hoc ``str.split('-')`` so the format stays in one
+    place. Pure split — structural validity (exactly three components) is checked
+    separately in :func:`check_features`.
+    """
+    part, split, scale_id = feat_id.split("-")
+    return part, split, scale_id
+
+
+def join_feat_id(part=None, split=None, scale_id=None):
+    """Join ``part``, ``split``, ``scale_id`` into a ``'PART-SPLIT-SCALE'`` id.
+
+    Inverse of :func:`split_feat_id`. Casing is the caller's responsibility (the
+    part is conventionally upper-cased at feature-generation time) — this does not
+    auto-upper-case, so round-trips stay byte-identical.
+    """
+    return f"{part}-{split}-{scale_id}"
+
+
+def sort_cols_feat(df_feat=None):
+    """Reorder ``df_feat`` columns into the canonical order (``LIST_COLS_FEAT``).
+
+    Tolerant by construction: known columns are placed in canonical order; the
+    dynamic t-test p-value column is slotted where the Mann-Whitney column would
+    sit; and every other column (post-hoc ``feat_importance``/``feat_impact``,
+    per-substrate ``*_'name'`` SHAP columns, single-sample ``amino_acids_*``, any
+    user column) is appended after them in its existing order. No column is ever
+    dropped, so the order is a standardization, not a schema restriction.
+    """
+    cols = list(df_feat.columns)
+    ordered = [c for c in LIST_COLS_FEAT if c in cols]
+    # Slot the dynamic t-test p-value into the canonical p-value position
+    # (before the FDR column if present, else after the stat columns).
+    if COL_PVAL_TTEST in cols and COL_PVAL_MW not in ordered:
+        i = ordered.index(COL_PVAL_FDR) if COL_PVAL_FDR in ordered else len(ordered)
+        ordered.insert(i, COL_PVAL_TTEST)
+    extra = [c for c in cols if c not in ordered]
+    return df_feat[ordered + extra]
+
+
 def _check_part(part=None, feature=None, list_parts=None):
     """Check if feature PART is valid"""
     list_parts = check_list_like(name="list_parts", val=list_parts, accept_str=True)
@@ -834,7 +888,7 @@ def check_features(features=None, list_parts=None, list_scales=None):
     if len(features) == 0:
         raise ValueError("'features' should not be empty.")
     for feature in features:
-        part, split, scale = feature.split("-")
+        part, split, scale = split_feat_id(feat_id=feature)
         _check_part(part=part, feature=feature, list_parts=list_parts)
         _check_split(split=split, feature=feature)
         # Scales is only checked if list_scales is provided
@@ -860,7 +914,7 @@ def check_df_feat(df_feat=None, df_cat=None, list_parts=None, shap_plot=None,
     check_features(features=features, list_parts=list_parts)
     # Check if df_feat matches df_cat
     if df_cat is not None:
-        scales = set([x.split("-")[2] for x in features])
+        scales = set([split_feat_id(feat_id=x)[2] for x in features])
         list_scales = list(df_cat[COL_SCALE_ID])
         missing_scales = [x for x in scales if x not in list_scales]
         if len(missing_scales) > 0:

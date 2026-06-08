@@ -251,6 +251,21 @@ they map a part length to position indices, independent of the actual amino
 acids.
 _Avoid_: window (reserved for `AAWindowSampler`), segment (only one split type).
 
+**df_feat (canonical column schema)**:
+The standardized output of `CPP.run` / `CPP.run_num` (and `SequenceFeature.get_df_feat`):
+one row per feature, columns in a **deterministic canonical order** (`ut.LIST_COLS_FEAT`):
+`feature` (the `PART-SPLIT-SCALE` id), the four scale columns (`category`, `subcategory`,
+`scale_name`, `scale_description`), the five stat columns (`abs_auc`, `abs_mean_dif`,
+`mean_dif`, `std_test`, `std_ref`), the **dynamically-named** p-value column
+(`p_val_mann_whitney` by default, `p_val_ttest_indep` when `parametric=True`),
+`p_val_fdr_bh`, and `positions`. The order is a **lower bound, not a restriction**:
+`ut.sort_cols_feat` appends any other column after `positions` in stable order and never
+drops one, so the post-hoc explainable-AI columns (`feat_importance`, `feat_impact`) and the
+per-substrate SHAP columns (`feat_impact_'name'`, `mean_dif_'name'`) survive unchanged. The
+`feature` id stays an opaque string — parse it only with `ut.split_feat_id` (format with
+`ut.join_feat_id`), never an ad-hoc `str.split("-")`.
+_Avoid_: feature_id (the column is `feature`), region (the `PART` field is a **part**).
+
 **split type**:
 One of three split families, configured per-type via **split_kws**:
 `Segment(i_th, n_split)` (the i-th of `n_split` contiguous chunks),

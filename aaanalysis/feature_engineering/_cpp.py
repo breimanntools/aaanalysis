@@ -379,6 +379,7 @@ class CPP(Tool):
             Whether to check for redundancy within scale categories during filtering.
         parametric : bool, default=False
             Whether to use parametric (T-test) or non-parametric (Mann-Whitney U test) test for p-value computation.
+            This also sets the p-value column name in ``df_feat`` ('p_val_ttest_indep' vs 'p_val_mann_whitney').
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
@@ -437,10 +438,11 @@ class CPP(Tool):
 
           While this helps to prevent crashes, it may slow down processing.
 
-        * ``df_feat`` contains the following 13 columns, including the unique feature id (1), scale information (2-5),
+        * ``df_feat`` follows a **standardized, deterministic column order** (the
+          canonical schema), with the unique feature id (1), scale information (2-5),
           statistical results for filtering and ranking (6-12), and feature positions (13):
 
-            1. 'features': Feature ID (PART-SPLIT-SCALE)
+            1. 'feature': Feature ID (PART-SPLIT-SCALE)
             2. 'category': Scale category
             3. 'subcategory': Sub category of scales
             4. 'scale_name': Name of scales
@@ -450,9 +452,25 @@ class CPP(Tool):
             8. 'mean_dif': Mean differences between test and reference group [-1 to 1]
             9. 'std_test': Standard deviation in test group
             10. 'std_ref': Standard deviation in reference group
-            11. 'p_val': Non-parametric (mann_whitney) or parametric (ttest_indep) statistic
+            11. 'p_val_mann_whitney' or 'p_val_ttest_indep': p-value of the non-parametric
+                Mann-Whitney test (default) or, when ``parametric=True``, the independent
+                t-test. The column **name** reflects which test was run.
             12. 'p_val_fdr_bh': Benjamini-Hochberg False Discovery Rate (FDR) corrected p-values
             13. 'positions': Feature positions for default settings
+
+          The feature id (column 1) is an opaque ``PART-SPLIT-SCALE`` string; split it with
+          :func:`aaanalysis.utils.split_feat_id` rather than parsing it by hand. Columns added
+          downstream — the explainable-AI columns ('feat_importance', 'feat_impact') and the
+          per-substrate SHAP columns ('feat_impact_<name>', 'mean_dif_<name>', ...) added by
+          :class:`TreeModel` / :class:`ShapModel` — are appended after 'positions' in a stable
+          order, so the canonical order is a lower bound, never a restriction.
+
+        * **Compositional vs positional features** are not a separate setting — the distinction
+          emerges from ``split_kws``. A single whole-part average (``n_split_max=1`` with no
+          ``Pattern`` / ``PeriodicPattern``) yields **compositional** features (an
+          amino-acid-composition-like mean over the entire part, position-agnostic); using
+          ``n_split_max>1`` and/or patterns yields **positional** features resolved to specific
+          sub-regions.
 
         See Also
         --------
@@ -645,6 +663,9 @@ class CPP(Tool):
           :class:`StructurePreprocessor`), *embedding* (``EmbeddingPreprocessor.encode``),
           and *fused* (concatenate sources with :func:`aaanalysis.combine_dict_nums` first)
           all flow through ``get_parts`` → ``run_num`` — only the ``dict_num`` differs.
+        * **Compositional vs positional** features emerge from ``split_kws`` exactly as in
+          :meth:`run` (``n_split_max=1`` with no patterns ⇒ compositional whole-part mean;
+          otherwise positional).
 
         See Also
         --------

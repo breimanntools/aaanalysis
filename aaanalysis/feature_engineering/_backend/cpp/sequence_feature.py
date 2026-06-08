@@ -41,8 +41,8 @@ def get_features_(list_parts=None, split_kws=None, list_scales=None):
     for split_type in split_kws:
         args = split_kws[split_type]
         labels_s = getattr(spr, "labels_" + split_type.lower())(**args)
-        features.extend([f"{part.upper()}-{split}-{scale}" for part in list_parts
-                         for split in labels_s for scale in list_scales])
+        features.extend([ut.join_feat_id(part=part.upper(), split=split, scale_id=scale)
+                         for part in list_parts for split in labels_s for scale in list_scales])
     return features
 
 
@@ -53,7 +53,7 @@ def get_feature_names_(features=None, df_cat=None, tmd_len=20, jmd_c_len=10, jmd
     dict_scales = dict(zip(df_cat[ut.COL_SCALE_ID], df_cat[ut.COL_SUBCAT]))
     feat_names = []
     for feat_id, pos in zip(features, feat_positions):
-        part, split, scale = feat_id.split("-")
+        part, split, scale = ut.split_feat_id(feat_id=feat_id)
         split_type = split.split("(")[0]
         if split_type == ut.STR_SEGMENT and len(pos.split(",")) > 2:
             pos = pos.split(",")[0] + "-" + pos.split(",")[-1]
@@ -93,4 +93,6 @@ def get_df_feat_(features=None, df_parts=None, labels=None,
         jmd_n_seq, tmd_seq, jmd_c_seq = df_parts[[ut.COL_JMD_N, ut.COL_TMD, ut.COL_JMD_C]].iloc[position].values
         df[ut.COL_AA_REF] = get_amino_acids_(features=features, jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq,
                                              jmd_c_seq=jmd_c_seq)
+    # Standardize the df_feat column order (issue #18); amino_acids_* append last.
+    df = ut.sort_cols_feat(df_feat=df)
     return df

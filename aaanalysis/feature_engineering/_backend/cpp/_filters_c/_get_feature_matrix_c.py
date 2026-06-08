@@ -91,7 +91,7 @@ def _compute_features_into_c(X_out=None, features=None,
     split_info_cache = {}
 
     for feat_idx, feat_name in enumerate(features):
-        part_upper, split_str, scale = feat_name.split("-")
+        part_upper, split_str, scale = ut.split_feat_id(feat_id=feat_name)
         part = part_upper.lower()
 
         cached = split_info_cache.get(split_str)

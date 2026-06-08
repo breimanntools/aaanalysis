@@ -194,7 +194,7 @@ def check_match_features_seq_parts(features=None, tmd_seq=None, jmd_n_seq=None, 
         jmd_n, tmd, jmd_c = get_part_positions(start=1, jmd_n_len=jmd_n_len, tmd_len=tmd_len, jmd_c_len=jmd_c_len)
         dict_part_seq = ut.get_dict_part_seq(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c)
         for feature in features:
-            part, split, scale = feature.split("-")
+            part, split, scale = ut.split_feat_id(feat_id=feature)
             n_max = _get_max_pos_split(split=split)
             seq = dict_part_seq[part.lower()]
             if len(seq) < n_max:
@@ -203,7 +203,7 @@ def check_match_features_seq_parts(features=None, tmd_seq=None, jmd_n_seq=None, 
     else:
         dict_part_seq = ut.get_dict_part_seq(tmd=tmd_seq, jmd_c=jmd_c_seq, jmd_n=jmd_n_seq)
         for feature in features:
-            part, split, scale = feature.split("-")
+            part, split, scale = ut.split_feat_id(feat_id=feature)
             n_max = _get_max_pos_split(split=split)
             seq = dict_part_seq[part.lower()]
             if len(seq) < n_max:
@@ -356,7 +356,7 @@ def check_match_df_parts_features(df_parts=None, features=None):
     if df_parts is None:
         return # Skip check
     for feature in features:
-        part, split, scale = feature.split("-")
+        part, split, scale = ut.split_feat_id(feat_id=feature)
         n_min = _get_max_pos_split(split=split)
         if any(df_parts[part.lower()].map(len) < n_min):
             mask = df_parts[part.lower()].map(len) < n_min
@@ -421,7 +421,7 @@ def check_match_df_scales_features(df_scales=None, features=None):
     """Check if scale ids from df_scales does match with features"""
     if df_scales is None:
         return # Skip check
-    scales_feat = [x.split("-")[2] for x in features]
+    scales_feat = [ut.split_feat_id(feat_id=x)[2] for x in features]
     scales = list(df_scales)
     missing_scales_in_df_scales = [x for x in scales_feat if x not in scales]
     if len(missing_scales_in_df_scales) > 0:
@@ -441,7 +441,7 @@ def check_match_df_cat_features(df_cat=None, features=None):
     """Check if scale ids from df_cat does match with features"""
     if df_cat is None:
         return # Skip check
-    scales_feat = [x.split("-")[2] for x in features]
+    scales_feat = [ut.split_feat_id(feat_id=x)[2] for x in features]
     scales_cat = list(df_cat[ut.COL_SCALE_ID])
     missing_scales_in_df_cat = [x for x in scales_feat if x not in scales_cat]
     if len(missing_scales_in_df_cat) > 0:

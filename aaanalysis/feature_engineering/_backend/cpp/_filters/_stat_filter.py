@@ -171,7 +171,7 @@ def _pre_filtering_info_split_type(
             for s_idx, local_sc_idx in zip(kept_split_idx, kept_local_scale_idx):
                 global_scale = list_scales[chunk_start + local_sc_idx]
                 kept_feat_names.append(
-                    f"{part_upper}-{labels_splits[s_idx]}-{global_scale}"
+                    ut.join_feat_id(part=part_upper, split=labels_splits[s_idx], scale_id=global_scale)
                 )
 
         if verbose:
@@ -391,7 +391,7 @@ def build_feature_index_map(list_parts=None, split_kws=None, list_scales=None):
             part_upper = part.upper()
             for s_idx, lbl in enumerate(labels_splits):
                 for sc_idx, scale in enumerate(list_scales):
-                    feat_name = f"{part_upper}-{lbl}-{scale}"
+                    feat_name = ut.join_feat_id(part=part_upper, split=lbl, scale_id=scale)
                     mat[s_idx, sc_idx] = len(features_canonical)
                     features_canonical.append(feat_name)
             indices_map[split_type][part] = mat

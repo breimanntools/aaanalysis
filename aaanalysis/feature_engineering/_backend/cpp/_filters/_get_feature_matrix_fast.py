@@ -240,7 +240,7 @@ def _compute_features_into(X_out=None, features=None,
     uniform_positions_cache = {}  # (part, split_str) → np.ndarray of positions
 
     for feat_idx, feat_name in enumerate(features):
-        part_upper, split_str, scale = feat_name.split("-")
+        part_upper, split_str, scale = ut.split_feat_id(feat_id=feat_name)
         part = part_upper.lower()
 
         cached = split_info_cache.get(split_str)

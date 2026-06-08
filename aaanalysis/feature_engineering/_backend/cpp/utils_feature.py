@@ -90,7 +90,7 @@ def _get_positions(dict_part_pos=None, features=None, as_str=True):
     sp = Split(type_str=False)
     list_pos = []
     for feat_id in features:
-        part, split, scale = feat_id.split("-")
+        part, split, scale = ut.split_feat_id(feat_id=feat_id)
         split_type, split_kwargs = _get_split_info(split=split)
         f_split = getattr(sp, split_type.lower())
         pos = sorted(f_split(seq=dict_part_pos[part.lower()], **split_kwargs))
@@ -163,7 +163,7 @@ def _feature_value(df_parts=None, split=None, dict_scale=None, accept_gaps=False
 def _feature_matrix(features, dict_all_scales, df_parts, accept_gaps):
     """Helper function to create feature matrix via multiple processing"""
     X = np.empty([len(df_parts), len(features)])
-    feature_info = [feat_name.split("-") for feat_name in features]
+    feature_info = [ut.split_feat_id(feat_id=feat_name) for feat_name in features]
     for i, (part, split, scale) in enumerate(feature_info):
         dict_scale = dict_all_scales[scale]
         X[:, i] = _feature_value(split=split,
@@ -186,7 +186,7 @@ def get_list_parts(features=None):
     """Get list of parts to cover all features"""
     features = [features] if type(features) is str else features
     # Features are PART-SPLIT-SCALE combinations
-    list_parts = list(set([x.split("-")[0].lower() for x in features]))
+    list_parts = list(set([ut.split_feat_id(feat_id=x)[0].lower() for x in features]))
     return list_parts
 
 
@@ -315,6 +315,6 @@ def add_scale_info_(df_feat=None, df_cat=None):
         if col in list(df_feat):
             df_feat.drop(col, inplace=True, axis=1)
         dict_cat = dict(zip(df_cat[ut.COL_SCALE_ID], df_cat[col]))
-        vals = [dict_cat[s.split("-")[2]] for s in df_feat[ut.COL_FEATURE]]
+        vals = [dict_cat[ut.split_feat_id(feat_id=s)[2]] for s in df_feat[ut.COL_FEATURE]]
         df_feat.insert(i + 1, col, vals)
     return df_feat

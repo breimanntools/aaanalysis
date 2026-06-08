@@ -87,6 +87,10 @@ def _attach_filter_stats(df_feat=None, n_candidates=None, n_after_prefilter=None
 
     The stats are a plain dict — no typed record, per the backend house style.
     """
+    # Standardize the df_feat column order (issue #18). This is the single common
+    # tail of all CPP run/run_num orchestrators, so reordering here covers every
+    # path. Reorder BEFORE the attrs write so ``last_filter_stats`` survives.
+    df_feat = ut.sort_cols_feat(df_feat=df_feat)
     n_final = len(df_feat)
     df_feat.attrs["last_filter_stats"] = {
         "n_candidates": int(n_candidates),
@@ -355,7 +359,7 @@ def cpp_run_batch(df_parts=None, split_kws=None, df_scales=None, df_cat=None, ve
     # Group surviving features by which scale-batch their scale belongs to.
     features_by_batch = [[] for _ in scale_batches]
     for f in features:
-        scale = f.split("-")[2]
+        scale = ut.split_feat_id(feat_id=f)[2]
         features_by_batch[scale_to_batch_idx[scale]].append(f)
 
     # Pass 2 + per feature-batch add_stat. Use legacy ``get_feature_matrix_``

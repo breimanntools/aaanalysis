@@ -47,7 +47,8 @@ def filtering(df=None, df_scales=None, max_overlap=0.5, max_cor=0.5, n_filter=10
                 pos, top_pos = dict_p[feat], dict_p[top_feat]
                 overlap = len(top_pos.intersection(pos)) / len(top_pos.union(pos))
                 if overlap >= max_overlap or pos.issubset(top_pos):
-                    scale, top_scale = feat.split("-")[2], top_feat.split("-")[2]
+                    scale = ut.split_feat_id(feat_id=feat)[2]
+                    top_scale = ut.split_feat_id(feat_id=top_feat)[2]
                     cor = df_cor[top_scale][scale]
                     if cor > max_cor:
                         add_flag = False
