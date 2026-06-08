@@ -1,8 +1,9 @@
 """
 This is a script for the frontend of the SequenceFeature class, a supportive class for the CPP feature engineering.
 """
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Dict, Tuple, Any
 import warnings
+import numpy as np
 import pandas as pd
 
 import aaanalysis.utils as ut
@@ -23,7 +24,9 @@ from ._backend.cpp.utils_feature import (get_df_parts_,
                                          replace_non_canonical_aa_,
                                          get_positions_, get_amino_acids_,
                                          get_df_pos_, get_df_pos_parts_)
-from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_, get_df_feat_)
+from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_, get_df_feat_,
+                                            get_labels_ovr_, get_labels_ovo_, get_labels_quantile_,
+                                            get_df_parts_reference_)
 from ._backend.cpp_run import _pick_feature_matrix_builder
 
 
@@ -887,3 +890,292 @@ class SequenceFeature:
             df_pos = get_df_pos_parts_(df_pos=df_pos, value_type=value_type,
                                        start=start, **args_len, list_parts=list_parts)
         return df_pos
+
+    @staticmethod
+    def get_labels_ovr(labels: ut.ArrayLike1D = None,
+                       label_test: int = 1,
+                       label_ref: int = 0,
+                       ) -> Dict[int, np.ndarray]:
+        """
+        Convert multi-class labels into one-vs-rest binary label vectors.
+
+        Maps each of the K classes to a full-length binary vector in which that
+        class is the test group and all remaining classes are the reference
+        group. Since no samples are dropped, the K vectors can be looped through
+        a single :class:`CPP` instance via :meth:`CPP.run` (the ``df_parts`` is
+        unchanged), yielding one binary feature set per class. Discarding the
+        other classes instead (one-vs-one) requires subsetting ``df_parts`` and
+        is out of scope here.
+
+        Parameters
+        ----------
+        labels : array-like, shape (n_samples,)
+            Multi-class labels for samples (more than one distinct integer value).
+        label_test : int, default=1
+            Value assigned to the target class of each one-vs-rest vector.
+        label_ref : int, default=0
+            Value assigned to all remaining classes.
+
+        Returns
+        -------
+        dict_labels : dict
+            Dictionary mapping each class label to its one-vs-rest binary vector
+            (numpy array of shape (n_samples,)).
+
+        Notes
+        -----
+        * Each returned vector is directly usable as the ``labels`` argument of
+          :meth:`CPP.run` / :meth:`CPP.run_num`.
+        * To aggregate the per-class results, run CPP per vector and concatenate
+          the returned ``df_feat`` frames, tagging each with its class key.
+
+        Examples
+        --------
+        .. include:: examples/sf_get_labels_ovr.rst
+        """
+        # Check input
+        labels = ut.check_labels(labels=labels)
+        ut.check_number_val(name="label_test", val=label_test, just_int=True)
+        ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
+        if label_test == label_ref:
+            raise ValueError(f"'label_test' ({label_test}) should differ from 'label_ref' ({label_ref}).")
+        # Convert labels
+        return get_labels_ovr_(labels=labels, label_test=label_test, label_ref=label_ref)
+
+    @staticmethod
+    def get_labels_ovo(labels: ut.ArrayLike1D = None,
+                       label_test: int = 1,
+                       label_ref: int = 0,
+                       ) -> Dict[Tuple[Any, Any], Tuple[np.ndarray, np.ndarray]]:
+        """
+        Convert multi-class labels into one-vs-one binary label vectors with row masks.
+
+        Maps each unordered pair of classes ``(a, b)`` to the subset of samples
+        belonging to either class together with a binary label vector over that
+        subset (class ``a`` as test, class ``b`` as reference). Because the other
+        classes are discarded, each pair needs its own row subset of ``df_parts``;
+        the caller applies the returned boolean ``row_mask`` to ``df_parts`` (and
+        builds a :class:`CPP` instance on that subset) before calling
+        :meth:`CPP.run`.
+
+        Parameters
+        ----------
+        labels : array-like, shape (n_samples,)
+            Multi-class labels for samples (more than one distinct integer value).
+        label_test : int, default=1
+            Value assigned to the first class of each pair.
+        label_ref : int, default=0
+            Value assigned to the second class of each pair.
+
+        Returns
+        -------
+        dict_labels : dict
+            Dictionary mapping each class pair ``(a, b)`` to a tuple
+            ``(row_mask, labels_subset)``, where ``row_mask`` is a boolean array
+            of shape (n_samples,) selecting the pair's samples and
+            ``labels_subset`` is the binary vector over the masked subset.
+
+        Notes
+        -----
+        * ``row_mask`` selects exactly the samples whose label is ``a`` or ``b``.
+        * Use ``df_parts[row_mask]`` to build the subset input; running CPP on a
+          row-subset without rebuilding the instance is a separate enhancement.
+
+        Examples
+        --------
+        .. include:: examples/sf_get_labels_ovo.rst
+        """
+        # Check input
+        labels = ut.check_labels(labels=labels)
+        ut.check_number_val(name="label_test", val=label_test, just_int=True)
+        ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
+        if label_test == label_ref:
+            raise ValueError(f"'label_test' ({label_test}) should differ from 'label_ref' ({label_ref}).")
+        # Convert labels
+        return get_labels_ovo_(labels=labels, label_test=label_test, label_ref=label_ref)
+
+    @staticmethod
+    def get_labels_quantile(targets: ut.ArrayLike1D = None,
+                            q: float = 0.5,
+                            label_test: int = 1,
+                            label_ref: int = 0,
+                            ) -> np.ndarray:
+        """
+        Convert a continuous target into a binary label vector by a single quantile threshold.
+
+        Splits samples at the ``q``-quantile of ``targets``: samples at or above
+        the cut become the test group and the remainder the reference group. No
+        samples are dropped, so the result is directly usable as the ``labels``
+        argument of :meth:`CPP.run` / :meth:`CPP.run_num`, enabling regression-style
+        tasks (e.g. thermostability, binding affinity) within the binary CPP
+        framework. A banded top-vs-bottom split (dropping the middle) is out of
+        scope here.
+
+        Parameters
+        ----------
+        targets : array-like, shape (n_samples,)
+            Continuous target values for samples.
+        q : float, default=0.5
+            Quantile in the open interval (0, 1) defining the split threshold
+            (``0.5`` splits at the median).
+        label_test : int, default=1
+            Value assigned to samples at or above the threshold.
+        label_ref : int, default=0
+            Value assigned to samples below the threshold.
+
+        Returns
+        -------
+        labels : np.ndarray, shape (n_samples,)
+            Binary label vector.
+
+        Notes
+        -----
+        * If ``targets`` is constant (or ``q`` lands all samples on one side), the
+          result has a single value and :meth:`CPP.run` will reject it.
+
+        Examples
+        --------
+        .. include:: examples/sf_get_labels_quantile.rst
+        """
+        # Check input
+        targets = ut.check_list_like(name="targets", val=targets, accept_none=False)
+        targets = np.asarray(targets, dtype=float)
+        ut.check_number_range(name="q", val=q, min_val=0, max_val=1, exclusive_limits=True, just_int=False)
+        ut.check_number_val(name="label_test", val=label_test, just_int=True)
+        ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
+        if label_test == label_ref:
+            raise ValueError(f"'label_test' ({label_test}) should differ from 'label_ref' ({label_ref}).")
+        # Convert targets
+        return get_labels_quantile_(targets=targets, q=q, label_test=label_test, label_ref=label_ref)
+
+    @staticmethod
+    def get_df_parts_reference(df_parts: pd.DataFrame = None,
+                               method: str = "scrambled",
+                               n: Optional[int] = None,
+                               random_state: Optional[int] = None,
+                               ) -> pd.DataFrame:
+        """
+        Generate a reference ``df_parts`` matching the part lengths and composition of the input.
+
+        Produces background reference rows for use as a negative/reference class
+        when no natural one exists, so :class:`CPP` can be applied to multi-class
+        and regression tasks. Each generated row borrows the per-part lengths of a
+        randomly chosen real row, so references match the real CPP part lengths
+        (e.g. fixed TMD/JMD) by construction. With ``method='scrambled'`` each
+        template part is shuffled in place (exact per-part amino acid composition);
+        with ``method='global_freq'`` residues are drawn from the column's
+        empirical canonical amino acid frequency. Concatenate the result with the
+        real ``df_parts`` and label the two groups before calling :meth:`CPP.run`.
+
+        Parameters
+        ----------
+        df_parts : pd.DataFrame, shape (n_samples, n_parts)
+            DataFrame of sequence parts (e.g. from :meth:`SequenceFeature.get_df_parts`).
+        method : str, default='scrambled'
+            Generation method, one of ``'scrambled'`` (shuffle a template part,
+            preserving composition) or ``'global_freq'`` (draw from the column's
+            empirical amino acid frequency).
+        n : int, optional
+            Number of reference rows to generate. If ``None``, matches the number
+            of rows in ``df_parts``.
+        random_state : int, optional
+            The seed used by the random number generator. If a positive integer, results of stochastic processes are
+            consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.
+
+        Returns
+        -------
+        df_parts_ref : pd.DataFrame, shape (n, n_parts)
+            Reference parts with the same columns as ``df_parts`` and an index of
+            ``'REF<i>'`` identifiers.
+
+        Notes
+        -----
+        * Length matching holds per part column, so the reference rows can be
+          concatenated with ``df_parts`` and split identically by :class:`CPP`.
+
+        Examples
+        --------
+        .. include:: examples/sf_get_df_parts_reference.rst
+        """
+        # Check input
+        ut.check_df_parts(df_parts=df_parts)
+        ut.check_str_options(name="method", val=method,
+                             list_str_options=[ut.MODE_SCRAMBLED, ut.MODE_GLOBAL_FREQ])
+        ut.check_number_range(name="n", val=n, min_val=1, accept_none=True, just_int=True)
+        random_state = ut.check_random_state(random_state=random_state)
+        # Generate reference parts
+        rng = np.random.default_rng(random_state)
+        return get_df_parts_reference_(df_parts=df_parts, method=method, n=n, rng=rng)
+
+    @staticmethod
+    def get_df_parts_from_windows(dict_parts: Dict[str, Union[pd.DataFrame, ut.ArrayLike1D]] = None,
+                                  ) -> pd.DataFrame:
+        """
+        Assemble a ``df_parts`` from per-part window sets (e.g. :class:`AAWindowSampler` outputs).
+
+        Builds a reference ``df_parts`` by stitching one window set per sequence
+        part, so each part can be generated with its **own** recipe. This unlocks
+        biologically-motivated reference backgrounds where the parts differ in
+        physicochemical prior, e.g. a coil-propensity JMD-N, an alpha-helix TMD,
+        and a coil-propensity JMD-C, each produced by a separate call to
+        :meth:`AAWindowSampler.sample_synthetic` with a different ``generator`` and
+        ``window_size``. The assembled frame is used as the reference class for
+        :class:`CPP` exactly like a real ``df_parts``.
+
+        Parameters
+        ----------
+        dict_parts : dict
+            Dictionary mapping each part name (one of :attr:`aaanalysis.utils.LIST_ALL_PARTS`,
+            e.g. ``'jmd_n'``, ``'tmd'``, ``'jmd_c'``) to its window set. Each value is
+            either a DataFrame with a ``'window'`` column (the output of
+            :meth:`AAWindowSampler.sample_synthetic`) or an array-like of equal-length
+            window strings. All parts must supply the same number of windows.
+
+        Returns
+        -------
+        df_parts : pd.DataFrame, shape (n_windows, n_parts)
+            Reference parts with one column per key in ``dict_parts`` and an index of
+            ``'REF<i>'`` identifiers.
+
+        Notes
+        -----
+        * Rows are aligned by position across parts, so the i-th window of every
+          part forms the i-th reference row.
+        * Concatenate the result with a real ``df_parts`` (matching columns) and
+          label the two groups before calling :meth:`CPP.run`.
+
+        Examples
+        --------
+        .. include:: examples/sf_get_df_parts_from_windows.rst
+        """
+        # Check input
+        ut.check_dict(name="dict_parts", val=dict_parts, accept_none=False)
+        if len(dict_parts) == 0:
+            raise ValueError("'dict_parts' should not be empty.")
+        data = {}
+        n_windows = None
+        for part, source in dict_parts.items():
+            if part not in ut.LIST_ALL_PARTS:
+                raise ValueError(f"'dict_parts' key '{part}' should be one of: {ut.LIST_ALL_PARTS}")
+            if isinstance(source, pd.DataFrame):
+                if ut.COL_WINDOW not in source.columns:
+                    raise ValueError(f"'dict_parts['{part}']' DataFrame should contain a "
+                                     f"'{ut.COL_WINDOW}' column (the output of "
+                                     f"AAWindowSampler.sample_synthetic).")
+                windows = source[ut.COL_WINDOW].tolist()
+            else:
+                windows = list(ut.check_list_like(name=f"dict_parts['{part}']", val=source))
+            if len(windows) == 0:
+                raise ValueError(f"'dict_parts['{part}']' should contain at least one window.")
+            if not all(isinstance(w, str) for w in windows):
+                raise ValueError(f"'dict_parts['{part}']' windows should all be strings.")
+            if n_windows is None:
+                n_windows = len(windows)
+            elif len(windows) != n_windows:
+                raise ValueError(f"All parts in 'dict_parts' should have the same number of windows; "
+                                 f"'{part}' has {len(windows)} but expected {n_windows}.")
+            data[part] = windows
+        # Assemble parts
+        df_parts = pd.DataFrame(data, index=[f"REF{i}" for i in range(n_windows)])
+        ut.check_df_parts(df_parts=df_parts)
+        return df_parts
