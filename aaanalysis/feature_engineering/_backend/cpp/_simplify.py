@@ -2,15 +2,17 @@
 This is a script for the backend of CPP's simplify method: interpretability-
 guided scale swapping. For each feature (``PART-SPLIT-SCALE``) a more
 interpretable, correlated scale is substituted (``PART-SPLIT`` preserved), the
-feature stats are recomputed, and the swap is validated by a random-forest
-cross-validation non-regression gate. The set is then redundancy-reduced so the
-result speaks in fewer, more interpretable subcategories.
+feature stats are recomputed, and the swap is validated by a cross-validation
+non-regression gate. The set is then redundancy-reduced so the result speaks in
+fewer, more interpretable subcategories.
 """
 
 import warnings
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 
 import aaanalysis.utils as ut
@@ -57,17 +59,32 @@ def _load_candidate_pool_():
     return df_scales_pool, df_cor, dict_all_scales, dict_interp, dict_meta
 
 
+def _resolve_ml_model_(ml_model=None, random_state=None):
+    """Resolve a string preset or a custom estimator into an sklearn estimator.
+
+    Presets: ``'svm'`` (default), ``'rf'``, ``'log_reg'`` (constructed with the
+    resolved ``random_state``). A non-string ``ml_model`` is a user-configured
+    estimator instance, returned as-is (the user owns its parameters)."""
+    if not isinstance(ml_model, str):
+        return ml_model
+    if ml_model == ut.MODEL_SVM:
+        return SVC(class_weight="balanced", random_state=random_state)
+    if ml_model == ut.MODEL_RF:
+        return RandomForestClassifier(random_state=random_state)
+    return LogisticRegression(max_iter=1000, random_state=random_state)
+
+
 def _score_feature_set_(
-    X=None, labels=None, n_cv=5, metric="balanced_accuracy", random_state=None
+    X=None, labels=None, n_cv=5, metric="balanced_accuracy", estimator=None
 ):
-    """Mean random-forest cross-validation score for a feature matrix ``X``.
+    """Mean cross-validation score of ``estimator`` on a feature matrix ``X``.
 
     Mirrors the ``cross_val_score`` primitive used by ``TreeModel.eval`` so the
-    score is consistent with the rest of the package. Deterministic given
-    ``random_state`` (the only RNG is the forest; ``StratifiedKFold`` does not
-    shuffle)."""
-    rf = RandomForestClassifier(random_state=random_state)
-    return float(cross_val_score(rf, X, y=labels, cv=n_cv, scoring=metric).mean())
+    score is consistent with the rest of the package. ``cross_val_score`` clones
+    the estimator per fold, so one instance can be reused across many calls."""
+    return float(
+        cross_val_score(estimator, X, y=labels, cv=n_cv, scoring=metric).mean()
+    )
 
 
 def _recompute_swapped_row_(
@@ -267,7 +284,6 @@ def _build_df_candidates_(records=None):
 def _greedy_simplify_(
     df_feat=None,
     df_parts=None,
-    df_scales_self=None,
     labels=None,
     X=None,
     df_cor=None,
@@ -286,13 +302,13 @@ def _greedy_simplify_(
     parametric=False,
     accept_gaps=False,
     max_std_test=0.2,
-    random_state=None,
+    estimator=None,
 ):
-    """Per-feature swap with an RF+CV non-regression gate. Returns
+    """Per-feature swap with a CV non-regression gate. Returns
     ``(df_feat_new, X_kept, records, baseline)``."""
     n = len(df_feat)
     baseline = _score_feature_set_(
-        X=X, labels=labels, n_cv=n_cv, metric=metric, random_state=random_state
+        X=X, labels=labels, n_cv=n_cv, metric=metric, estimator=estimator
     )
     targets = _select_targets_(
         df_feat=df_feat,
@@ -346,7 +362,7 @@ def _greedy_simplify_(
                 labels=labels,
                 n_cv=n_cv,
                 metric=metric,
-                random_state=random_state,
+                estimator=estimator,
             )
             if score >= baseline - tol:
                 X[:, i] = col
@@ -392,7 +408,7 @@ def _greedy_simplify_(
                         labels=labels,
                         n_cv=n_cv,
                         metric=metric,
-                        random_state=random_state,
+                        estimator=estimator,
                     )
                     if score_drop >= baseline - tol:
                         dropped.add(i)
@@ -403,6 +419,262 @@ def _greedy_simplify_(
     df_feat_new = pd.concat(rows, ignore_index=True)
     X_kept = X[:, keep_idx]
     return df_feat_new, X_kept, records, baseline
+
+
+def _swap_all_simplify_(
+    df_feat=None,
+    df_parts=None,
+    labels=None,
+    df_cor=None,
+    dict_all_scales=None,
+    dict_interp=None,
+    dict_meta=None,
+    max_interpretability=None,
+    top_n=None,
+    min_cor=0.7,
+    on_unimprovable=ut.ON_UNIMPROVABLE_KEEP,
+    label_test=1,
+    label_ref=0,
+    parametric=False,
+    accept_gaps=False,
+    max_std_test=0.2,
+):
+    """Apply every eligible best-candidate swap, no CV scoring (fastest).
+
+    ``on_unimprovable``: only ``'drop'`` is meaningful without scoring;
+    ``'drop_if_perf_allows'`` degrades to ``'keep'``. Returns
+    ``(df_feat_new, records)``."""
+    n = len(df_feat)
+    targets = _select_targets_(
+        df_feat=df_feat,
+        dict_interp=dict_interp,
+        max_interpretability=max_interpretability,
+        top_n=top_n,
+    )
+    new_rows = {}
+    dropped = set()
+    records = []
+    for i, feat_id, interp_old in targets:
+        positions = df_feat.iloc[i][ut.COL_POSITION]
+        cands = _eligible_candidates_(
+            feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp, min_cor=min_cor
+        )
+        swapped = False
+        for scale_cand, interp_cand, abs_cor, cor in cands:
+            row_df, col = _recompute_swapped_row_(
+                feat_id=feat_id,
+                scale_new=scale_cand,
+                df_parts=df_parts,
+                dict_all_scales=dict_all_scales,
+                dict_meta=dict_meta,
+                labels=labels,
+                label_test=label_test,
+                label_ref=label_ref,
+                parametric=parametric,
+                accept_gaps=accept_gaps,
+                positions=positions,
+            )
+            std_test = float(row_df[ut.COL_STD_TEST].iloc[0])
+            if std_test > max_std_test:
+                records.append(
+                    [
+                        feat_id,
+                        scale_cand,
+                        interp_old,
+                        interp_cand,
+                        cor,
+                        std_test,
+                        False,
+                        np.nan,
+                        "max_std_test",
+                    ]
+                )
+                continue
+            new_rows[i] = row_df
+            swapped = True
+            records.append(
+                [
+                    feat_id,
+                    scale_cand,
+                    interp_old,
+                    interp_cand,
+                    cor,
+                    std_test,
+                    True,
+                    np.nan,
+                    "accepted",
+                ]
+            )
+            break
+        if (
+            not swapped
+            and on_unimprovable == ut.ON_UNIMPROVABLE_DROP
+            and n - len(dropped) > 1
+        ):
+            dropped.add(i)
+    keep_idx = [i for i in range(n) if i not in dropped]
+    rows = [new_rows[i] if i in new_rows else df_feat.iloc[[i]] for i in keep_idx]
+    df_feat_new = pd.concat(rows, ignore_index=True)
+    return df_feat_new, records
+
+
+def _consolidate_simplify_(
+    df_feat=None,
+    df_parts=None,
+    labels=None,
+    X=None,
+    df_cor=None,
+    dict_all_scales=None,
+    dict_interp=None,
+    dict_meta=None,
+    max_interpretability=None,
+    top_n=None,
+    min_cor=0.7,
+    metric="balanced_accuracy",
+    tol=0.0,
+    n_cv=5,
+    on_unimprovable=ut.ON_UNIMPROVABLE_KEEP,
+    label_test=1,
+    label_ref=0,
+    parametric=False,
+    accept_gaps=False,
+    max_std_test=0.2,
+    estimator=None,
+):
+    """Batch-by-subcategory swaps toward the fewest interpretable subcategories.
+
+    Interpretable subcategories are processed best-first; for each, every still-
+    unclaimed target with an eligible candidate in that subcategory is swapped to
+    its best in-subcat candidate, the whole batch is CV-scored, and the batch is
+    accepted only if the set score stays within ``tol`` of the baseline. Returns
+    ``(df_feat_new, X_kept, records)``."""
+    n = len(df_feat)
+    baseline = _score_feature_set_(
+        X=X, labels=labels, n_cv=n_cv, metric=metric, estimator=estimator
+    )
+    targets = _select_targets_(
+        df_feat=df_feat,
+        dict_interp=dict_interp,
+        max_interpretability=max_interpretability,
+        top_n=top_n,
+    )
+    # Per target: (feat_id, interp_old, eligible candidates) + the subcategory rankings.
+    target_cands = {
+        i: (
+            feat_id,
+            interp_old,
+            _eligible_candidates_(
+                feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp, min_cor=min_cor
+            ),
+        )
+        for i, feat_id, interp_old in targets
+    }
+    subcat_rating = {}
+    for i in target_cands:
+        for scale_cand, interp_cand, abs_cor, cor in target_cands[i][2]:
+            subcat_rating.setdefault(dict_meta[scale_cand][1], interp_cand)
+    ranked_subcats = sorted(subcat_rating, key=lambda s: subcat_rating[s])
+    new_rows = {}
+    claimed = set()
+    records = []
+    for sub in ranked_subcats:
+        batch = {}  # i -> (scale_cand, interp_cand, cor, row_df, col, std_test)
+        for i in target_cands:
+            if i in claimed:
+                continue
+            feat_id, interp_old, cands = target_cands[i]
+            best = next(
+                ((sc, ic, ac, c) for sc, ic, ac, c in cands if dict_meta[sc][1] == sub),
+                None,
+            )
+            if best is None:
+                continue
+            scale_cand, interp_cand, abs_cor, cor = best
+            positions = df_feat.iloc[i][ut.COL_POSITION]
+            row_df, col = _recompute_swapped_row_(
+                feat_id=feat_id,
+                scale_new=scale_cand,
+                df_parts=df_parts,
+                dict_all_scales=dict_all_scales,
+                dict_meta=dict_meta,
+                labels=labels,
+                label_test=label_test,
+                label_ref=label_ref,
+                parametric=parametric,
+                accept_gaps=accept_gaps,
+                positions=positions,
+            )
+            std_test = float(row_df[ut.COL_STD_TEST].iloc[0])
+            if std_test > max_std_test:
+                records.append(
+                    [
+                        feat_id,
+                        scale_cand,
+                        interp_old,
+                        interp_cand,
+                        cor,
+                        std_test,
+                        False,
+                        np.nan,
+                        "max_std_test",
+                    ]
+                )
+                continue
+            batch[i] = (scale_cand, interp_cand, cor, row_df, col, std_test)
+        if not batch:
+            continue
+        X_trial = X.copy()
+        for i, (scale_cand, interp_cand, cor, row_df, col, std_test) in batch.items():
+            X_trial[:, i] = col
+        score = _score_feature_set_(
+            X=X_trial, labels=labels, n_cv=n_cv, metric=metric, estimator=estimator
+        )
+        accepted = score >= baseline - tol
+        if accepted:
+            X = X_trial
+            baseline = score
+        for i, (scale_cand, interp_cand, cor, row_df, col, std_test) in batch.items():
+            feat_id, interp_old = target_cands[i][0], target_cands[i][1]
+            if accepted:
+                new_rows[i] = row_df
+                claimed.add(i)
+            records.append(
+                [
+                    feat_id,
+                    scale_cand,
+                    interp_old,
+                    interp_cand,
+                    cor,
+                    std_test,
+                    accepted,
+                    score,
+                    "accepted" if accepted else "cv_drop",
+                ]
+            )
+    # Unclaimed targets -> on_unimprovable.
+    dropped = set()
+    if on_unimprovable != ut.ON_UNIMPROVABLE_KEEP:
+        for i in target_cands:
+            if i in claimed or n - len(dropped) <= 1:
+                continue
+            if on_unimprovable == ut.ON_UNIMPROVABLE_DROP:
+                dropped.add(i)
+            elif on_unimprovable == ut.ON_UNIMPROVABLE_DROP_IF_PERF:
+                keep_idx = [j for j in range(n) if j not in dropped and j != i]
+                score_drop = _score_feature_set_(
+                    X=X[:, keep_idx],
+                    labels=labels,
+                    n_cv=n_cv,
+                    metric=metric,
+                    estimator=estimator,
+                )
+                if score_drop >= baseline - tol:
+                    dropped.add(i)
+                    baseline = score_drop
+    keep_idx = [i for i in range(n) if i not in dropped]
+    rows = [new_rows[i] if i in new_rows else df_feat.iloc[[i]] for i in keep_idx]
+    df_feat_new = pd.concat(rows, ignore_index=True)
+    return df_feat_new, X[:, keep_idx], records
 
 
 def simplify_cpp_(
@@ -429,6 +701,7 @@ def simplify_cpp_(
     parametric=False,
     accept_gaps=False,
     return_details=False,
+    ml_model=ut.MODEL_SVM,
     random_state=None,
 ):
     """Backend entry for ``CPP.simplify``: df_feat or (df_feat, df_candidates)."""
@@ -451,21 +724,40 @@ def simplify_cpp_(
         )
         out = ut.sort_cols_feat(df_feat=df_feat)
         return (out, _build_df_candidates_(records=[])) if return_details else out
-    if X is None:
-        X = _build_base_matrix_(
+    # swap_all needs no feature matrix (no CV scoring); greedy/consolidate do.
+    if strategy == ut.STRATEGY_SWAP_ALL:
+        df_feat_new, records = _swap_all_simplify_(
             df_feat=df_feat,
             df_parts=df_parts,
-            df_scales_self=df_scales_self,
+            labels=labels,
+            df_cor=df_cor,
+            dict_all_scales=dict_all_scales,
+            dict_interp=dict_interp,
+            dict_meta=dict_meta,
+            max_interpretability=max_interpretability,
+            top_n=top_n,
+            min_cor=min_cor,
+            on_unimprovable=on_unimprovable,
+            label_test=label_test,
+            label_ref=label_ref,
+            parametric=parametric,
             accept_gaps=accept_gaps,
+            max_std_test=max_std_test,
         )
     else:
-        X = np.asarray(X, dtype=float).copy()
-
-    if strategy == ut.STRATEGY_GREEDY:
-        df_feat_new, X_kept, records, _ = _greedy_simplify_(
+        if X is None:
+            X = _build_base_matrix_(
+                df_feat=df_feat,
+                df_parts=df_parts,
+                df_scales_self=df_scales_self,
+                accept_gaps=accept_gaps,
+            )
+        else:
+            X = np.asarray(X, dtype=float).copy()
+        estimator = _resolve_ml_model_(ml_model=ml_model, random_state=random_state)
+        common = dict(
             df_feat=df_feat,
             df_parts=df_parts,
-            df_scales_self=df_scales_self,
             labels=labels,
             X=X,
             df_cor=df_cor,
@@ -484,13 +776,12 @@ def simplify_cpp_(
             parametric=parametric,
             accept_gaps=accept_gaps,
             max_std_test=max_std_test,
-            random_state=random_state,
+            estimator=estimator,
         )
-    else:
-        raise NotImplementedError(
-            f"'strategy' ('{strategy}') is staged for a future release; only "
-            f"'{ut.STRATEGY_GREEDY}' is implemented."
-        )
+        if strategy == ut.STRATEGY_GREEDY:
+            df_feat_new, _X_kept, records, _ = _greedy_simplify_(**common)
+        else:  # STRATEGY_CONSOLIDATE
+            df_feat_new, _X_kept, records = _consolidate_simplify_(**common)
 
     # Set-level redundancy reduction ("fewer subcats").
     df_cor_present = _merged_scale_corr_(

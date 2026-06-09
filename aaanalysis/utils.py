@@ -339,6 +339,12 @@ LIST_ON_UNIMPROVABLE = [ON_UNIMPROVABLE_KEEP, ON_UNIMPROVABLE_DROP, ON_UNIMPROVA
 TIE_BREAK_INTERPRETABILITY = "interpretability"
 TIE_BREAK_PERFORMANCE = "performance"
 LIST_REDUNDANCY_TIE_BREAK = [TIE_BREAK_INTERPRETABILITY, TIE_BREAK_PERFORMANCE]
+# CPP.simplify — cross-validation-gate model presets (SVM default; also accepts a
+# custom sklearn estimator instance).
+MODEL_SVM = "svm"
+MODEL_RF = "rf"
+MODEL_LOG_REG = "log_reg"
+LIST_CV_MODELS = [MODEL_SVM, MODEL_RF, MODEL_LOG_REG]
 DICT_VALUE_TYPE = {COL_ABS_AUC: "mean",
                    COL_ABS_MEAN_DIF: "mean",
                    COL_MEAN_DIF: "mean",

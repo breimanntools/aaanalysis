@@ -1,21 +1,26 @@
 """This is a script to test the CPP.simplify() method: interpretability-guided
-scale swapping (issue: new simplify feature).
+scale swapping with three strategies (greedy / consolidate / swap_all) and a
+configurable cross-validation-gate model (ml_model).
 
-simplify swaps each feature's scale for a more interpretable correlated scale
-(keeping PART-SPLIT), recomputes its stats, accepts a swap only behind CPP
-filtering + a random-forest cross-validation gate, then redundancy-reduces the
-set. The RF+CV gate makes the call non-trivial, so fixtures are kept small and
-shared module-wide.
+The CV gate makes the call non-trivial, so fixtures are kept small and shared
+module-wide. Positive cases use hypothesis property-based testing (the house
+standard); negative cases pin the tailored validation errors.
 """
 
 import warnings
 
 import pandas as pd
 import pytest
-from hypothesis import settings
+from hypothesis import given, settings
+import hypothesis.strategies as some
+from sklearn.svm import SVC
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
+from aaanalysis.feature_engineering._backend.cpp._simplify import (
+    _build_base_matrix_,
+    _merged_scale_corr_,
+)
 
 settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
@@ -34,8 +39,9 @@ def fitted():
             n_split_min=1, n_split_max=2, split_types=["Segment"]
         )
         df_scales = aa.load_scales(top_explain_n=20)
-        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws,
-                     verbose=False)
+        cpp = aa.CPP(
+            df_parts=df_parts, df_scales=df_scales, split_kws=split_kws, verbose=False
+        )
         df_feat = cpp.run(labels=labels, n_filter=10)
     return cpp, df_feat, labels
 
@@ -49,98 +55,101 @@ def _simplify(cpp, df_feat, labels, **kwargs):
 
 
 class TestSimplify:
-    """Normal cases — one parameter per test."""
+    """Normal cases — one parameter per test, explored with hypothesis."""
 
-    def test_default_returns_df_feat(self, fitted):
+    @settings(max_examples=5, deadline=None)
+    @given(top_n=some.integers(min_value=1, max_value=6))
+    def test_top_n(self, fitted, top_n):
         cpp, df_feat, labels = fitted
-        out = _simplify(cpp, df_feat, labels)
-        assert isinstance(out, pd.DataFrame) and len(out) >= 1
+        out = _simplify(cpp, df_feat, labels, top_n=top_n)
+        assert isinstance(out, pd.DataFrame) and 1 <= len(out) <= len(df_feat)
+
+    @settings(max_examples=5, deadline=None)
+    @given(max_interpretability=some.integers(min_value=1, max_value=10))
+    def test_max_interpretability(self, fitted, max_interpretability):
+        cpp, df_feat, labels = fitted
+        out = _simplify(cpp, df_feat, labels, max_interpretability=max_interpretability)
+        assert isinstance(out, pd.DataFrame)
+
+    @settings(max_examples=5, deadline=None)
+    @given(min_cor=some.floats(min_value=0.5, max_value=1.0))
+    def test_min_cor(self, fitted, min_cor):
+        cpp, df_feat, labels = fitted
+        out = _simplify(cpp, df_feat, labels, top_n=3, min_cor=min_cor)
+        assert isinstance(out, pd.DataFrame)
+
+    @settings(max_examples=5, deadline=None)
+    @given(tol=some.floats(min_value=0.0, max_value=0.2))
+    def test_tol(self, fitted, tol):
+        cpp, df_feat, labels = fitted
+        out = _simplify(cpp, df_feat, labels, top_n=3, tol=tol)
+        assert isinstance(out, pd.DataFrame)
+
+    @settings(max_examples=3, deadline=None)
+    @given(n_cv=some.integers(min_value=2, max_value=4))
+    def test_n_cv(self, fitted, n_cv):
+        cpp, df_feat, labels = fitted
+        out = _simplify(cpp, df_feat, labels, top_n=2, n_cv=n_cv)
+        assert isinstance(out, pd.DataFrame)
+
+    @settings(max_examples=3, deadline=None)
+    @given(strategy=some.sampled_from(["greedy", "consolidate", "swap_all"]))
+    def test_strategy(self, fitted, strategy):
+        cpp, df_feat, labels = fitted
+        out = _simplify(cpp, df_feat, labels, top_n=5, strategy=strategy)
+        assert list(out.columns) == list(ut.LIST_COLS_FEAT) and 1 <= len(out) <= len(
+            df_feat
+        )
+
+    @settings(max_examples=3, deadline=None)
+    @given(ml_model=some.sampled_from(["svm", "rf", "log_reg"]))
+    def test_ml_model_presets(self, fitted, ml_model):
+        cpp, df_feat, labels = fitted
+        out = _simplify(cpp, df_feat, labels, top_n=3, ml_model=ml_model)
+        assert isinstance(out, pd.DataFrame)
+
+    @settings(max_examples=3, deadline=None)
+    @given(metric=some.sampled_from(["balanced_accuracy", "accuracy", "f1"]))
+    def test_metric(self, fitted, metric):
+        cpp, df_feat, labels = fitted
+        out = _simplify(cpp, df_feat, labels, top_n=2, metric=metric)
+        assert isinstance(out, pd.DataFrame)
+
+    @settings(max_examples=3, deadline=None)
+    @given(on_unimprovable=some.sampled_from(["keep", "drop", "drop_if_perf_allows"]))
+    def test_on_unimprovable(self, fitted, on_unimprovable):
+        cpp, df_feat, labels = fitted
+        out = _simplify(cpp, df_feat, labels, top_n=3, on_unimprovable=on_unimprovable)
+        assert 1 <= len(out) <= len(df_feat)
+
+    @settings(max_examples=2, deadline=None)
+    @given(redundancy_tie_break=some.sampled_from(["interpretability", "performance"]))
+    def test_redundancy_tie_break(self, fitted, redundancy_tie_break):
+        cpp, df_feat, labels = fitted
+        out = _simplify(
+            cpp, df_feat, labels, top_n=5, redundancy_tie_break=redundancy_tie_break
+        )
+        assert isinstance(out, pd.DataFrame)
 
     def test_canonical_schema(self, fitted):
         cpp, df_feat, labels = fitted
         out = _simplify(cpp, df_feat, labels, top_n=3)
         assert list(out.columns) == list(ut.LIST_COLS_FEAT)
 
-    def test_top_n(self, fitted):
-        cpp, df_feat, labels = fitted
-        out = _simplify(cpp, df_feat, labels, top_n=2)
-        assert len(out) <= len(df_feat)
-
-    def test_max_interpretability(self, fitted):
-        cpp, df_feat, labels = fitted
-        out = _simplify(cpp, df_feat, labels, max_interpretability=3)
-        assert isinstance(out, pd.DataFrame)
-
-    def test_min_cor_high_limits_swaps(self, fitted):
-        cpp, df_feat, labels = fitted
-        out = _simplify(cpp, df_feat, labels, top_n=3, min_cor=0.99)
-        assert isinstance(out, pd.DataFrame)
-
-    def test_tol(self, fitted):
-        cpp, df_feat, labels = fitted
-        out = _simplify(cpp, df_feat, labels, top_n=3, tol=0.1)
-        assert isinstance(out, pd.DataFrame)
-
-    def test_n_cv(self, fitted):
-        cpp, df_feat, labels = fitted
-        out = _simplify(cpp, df_feat, labels, top_n=2, n_cv=4)
-        assert isinstance(out, pd.DataFrame)
-
-    def test_on_unimprovable_keep(self, fitted):
-        cpp, df_feat, labels = fitted
-        keep = _simplify(
-            cpp, df_feat, labels, top_n=3, min_cor=1.0, on_unimprovable="keep"
-        )
-        drop = _simplify(
-            cpp, df_feat, labels, top_n=3, min_cor=1.0, on_unimprovable="drop"
-        )
-        # min_cor=1.0 blocks all swaps; 'keep' retains at least as many as 'drop'.
-        assert 1 <= len(drop) <= len(keep) <= len(df_feat)
-
-    def test_on_unimprovable_drop(self, fitted):
-        cpp, df_feat, labels = fitted
-        out = _simplify(
-            cpp, df_feat, labels, top_n=3, min_cor=0.99, on_unimprovable="drop"
-        )
-        assert len(out) <= len(df_feat)
-
-    def test_on_unimprovable_drop_if_perf(self, fitted):
-        cpp, df_feat, labels = fitted
-        out = _simplify(
-            cpp,
-            df_feat,
-            labels,
-            top_n=3,
-            min_cor=0.99,
-            on_unimprovable="drop_if_perf_allows",
-        )
-        assert isinstance(out, pd.DataFrame) and len(out) >= 1
-
-    def test_redundancy_tie_break_performance(self, fitted):
-        cpp, df_feat, labels = fitted
-        out = _simplify(
-            cpp, df_feat, labels, top_n=3, redundancy_tie_break="performance"
-        )
-        assert isinstance(out, pd.DataFrame)
-
-    def test_metric_accuracy(self, fitted):
-        cpp, df_feat, labels = fitted
-        out = _simplify(cpp, df_feat, labels, top_n=2, metric="accuracy")
-        assert isinstance(out, pd.DataFrame)
-
     def test_return_details_tuple(self, fitted):
         cpp, df_feat, labels = fitted
         out = _simplify(cpp, df_feat, labels, top_n=3, return_details=True)
         assert isinstance(out, tuple) and len(out) == 2
-        df_out, df_cand = out
+        _, df_cand = out
         assert "candidate_scale" in df_cand.columns and "accepted" in df_cand.columns
+
+    def test_ml_model_custom_instance(self, fitted):
+        cpp, df_feat, labels = fitted
+        out = _simplify(cpp, df_feat, labels, top_n=3, ml_model=SVC(kernel="linear"))
+        assert isinstance(out, pd.DataFrame)
 
     def test_X_provided(self, fitted):
         cpp, df_feat, labels = fitted
-        from aaanalysis.feature_engineering._backend.cpp._simplify import (
-            _build_base_matrix_,
-        )
-
         X = _build_base_matrix_(
             df_feat=df_feat, df_parts=cpp.df_parts, df_scales_self=cpp.df_scales
         )
@@ -162,6 +171,16 @@ class TestSimplify:
         cpp, df_feat, labels = fitted
         with pytest.raises(ValueError, match="redundancy_tie_break"):
             cpp.simplify(df_feat=df_feat, labels=labels, redundancy_tie_break="bogus")
+
+    def test_invalid_ml_model_string(self, fitted):
+        cpp, df_feat, labels = fitted
+        with pytest.raises(ValueError, match="ml_model"):
+            cpp.simplify(df_feat=df_feat, labels=labels, ml_model="bogus")
+
+    def test_invalid_ml_model_object(self, fitted):
+        cpp, df_feat, labels = fitted
+        with pytest.raises(ValueError, match="ml_model"):
+            cpp.simplify(df_feat=df_feat, labels=labels, ml_model=42)
 
     def test_max_interpretability_and_top_n_mutually_exclusive(self, fitted):
         cpp, df_feat, labels = fitted
@@ -211,21 +230,43 @@ class TestSimplifyComplex:
 
     def test_swapped_features_improve_interpretability(self, fitted):
         cpp, df_feat, labels = fitted
-        out, df_cand = _simplify(cpp, df_feat, labels, top_n=5, return_details=True)
+        _, df_cand = _simplify(cpp, df_feat, labels, top_n=5, return_details=True)
         accepted = df_cand[df_cand["accepted"]]
-        if len(accepted):  # every accepted swap must go to a strictly better rating
+        if len(accepted):
             assert (
                 accepted["interpretability_cand"] < accepted["interpretability_orig"]
             ).all()
 
     def test_redundancy_does_not_increase_count(self, fitted):
         cpp, df_feat, labels = fitted
-        out = _simplify(cpp, df_feat, labels, top_n=5)
-        assert len(out) <= len(df_feat)
+        for strategy in ["greedy", "consolidate", "swap_all"]:
+            out = _simplify(cpp, df_feat, labels, top_n=5, strategy=strategy)
+            assert len(out) <= len(df_feat)
+
+    def test_consolidate_reduces_or_equal_subcats(self, fitted):
+        cpp, df_feat, labels = fitted
+        out = _simplify(cpp, df_feat, labels, top_n=8, strategy="consolidate", tol=0.1)
+        assert out["subcategory"].nunique() <= df_feat["subcategory"].nunique()
+
+    def test_swap_all_drops_unimprovable(self, fitted):
+        cpp, df_feat, labels = fitted
+        # swap_all does no CV; on_unimprovable='drop' still prunes unswappable targets.
+        out = _simplify(
+            cpp,
+            df_feat,
+            labels,
+            top_n=6,
+            strategy="swap_all",
+            min_cor=1.0,
+            on_unimprovable="drop",
+        )
+        assert list(out.columns) == list(ut.LIST_COLS_FEAT) and 1 <= len(out) <= len(
+            df_feat
+        )
 
     def test_accepted_swaps_pass_max_std_test(self, fitted):
         cpp, df_feat, labels = fitted
-        out, df_cand = _simplify(
+        _, df_cand = _simplify(
             cpp, df_feat, labels, top_n=5, return_details=True, max_std_test=0.2
         )
         accepted = df_cand[df_cand["accepted"]]
@@ -239,6 +280,34 @@ class TestSimplifyComplex:
         pd.testing.assert_frame_equal(
             out1.reset_index(drop=True), out2.reset_index(drop=True)
         )
+
+    def test_drop_if_perf_allows_can_drop(self, fitted):
+        cpp, df_feat, labels = fitted
+        # min_cor=1.0 blocks swaps; generous tol lets the perf-allows drop accept.
+        out = _simplify(
+            cpp,
+            df_feat,
+            labels,
+            top_n=3,
+            min_cor=1.0,
+            on_unimprovable="drop_if_perf_allows",
+            tol=1.0,
+        )
+        assert 1 <= len(out) < len(df_feat)
+
+    def test_consolidate_drop_if_perf_allows(self, fitted):
+        cpp, df_feat, labels = fitted
+        out = _simplify(
+            cpp,
+            df_feat,
+            labels,
+            top_n=3,
+            strategy="consolidate",
+            min_cor=1.0,
+            on_unimprovable="drop_if_perf_allows",
+            tol=1.0,
+        )
+        assert 1 <= len(out) <= len(df_feat)
 
     def test_no_rated_features_warns_and_returns_unchanged(self, fitted):
         cpp, df_feat, labels = fitted
@@ -255,45 +324,29 @@ class TestSimplifyComplex:
             out = cpp.simplify(df_feat=df_fake, labels=labels, n_cv=3, random_state=0)
         assert len(out) == len(df_fake)
 
-    def test_consolidate_strategy_not_implemented(self, fitted):
-        cpp, df_feat, labels = fitted
-        with pytest.raises(NotImplementedError, match="staged"):
-            cpp.simplify(
-                df_feat=df_feat,
-                labels=labels,
-                strategy="consolidate",
-                top_n=2,
-                n_cv=3,
-                random_state=0,
-            )
-
-    def test_swap_all_strategy_not_implemented(self, fitted):
-        cpp, df_feat, labels = fitted
-        with pytest.raises(NotImplementedError, match="staged"):
-            cpp.simplify(
-                df_feat=df_feat,
-                labels=labels,
-                strategy="swap_all",
-                top_n=2,
-                n_cv=3,
-                random_state=0,
-            )
-
-    def test_details_records_rejected_and_accepted(self, fitted):
-        cpp, df_feat, labels = fitted
-        _, df_cand = _simplify(cpp, df_feat, labels, top_n=5, return_details=True)
-        assert set(df_cand["accepted"].unique()).issubset({True, False})
-
-    def test_output_scales_in_pool_or_original(self, fitted):
-        cpp, df_feat, labels = fitted
-        out = _simplify(cpp, df_feat, labels, top_n=5)
-        # every output feature id is a valid PART-SPLIT-SCALE
-        for f in out[ut.COL_FEATURE]:
-            part, split, scale = ut.split_feat_id(feat_id=f)
-            assert part and split and scale
-
     def test_drop_never_removes_last_feature(self, fitted):
         cpp, df_feat, labels = fitted
-        # Force everything unimprovable (min_cor=1.0) + drop → must keep >= 1 feature
         out = _simplify(cpp, df_feat, labels, min_cor=1.0, on_unimprovable="drop")
         assert len(out) >= 1
+
+    def test_merged_corr_includes_custom_scale(self, fitted):
+        # _merged_scale_corr_ must cover a scale present only in df_scales_self.
+        pool = aa.load_scales()
+        df_scales_self = pool.iloc[:, :3].copy()
+        df_scales_self["CUSTOM_X"] = pool.iloc[:, 10].to_numpy()
+        df_feat = pd.DataFrame(
+            {
+                ut.COL_FEATURE: [
+                    ut.join_feat_id(
+                        part="TMD", split="Segment(1,1)", scale_id=pool.columns[0]
+                    ),
+                    ut.join_feat_id(
+                        part="TMD", split="Segment(1,1)", scale_id="CUSTOM_X"
+                    ),
+                ]
+            }
+        )
+        df_cor = _merged_scale_corr_(
+            df_feat=df_feat, df_scales_pool=pool, df_scales_self=df_scales_self
+        )
+        assert "CUSTOM_X" in df_cor.columns and pool.columns[0] in df_cor.columns

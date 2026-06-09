@@ -84,12 +84,22 @@ def check_match_max_interpretability_top_n(max_interpretability=None, top_n=None
 
 
 def check_n_cv_labels(n_cv=None, labels=None):
-    """Validate ``n_cv`` (>=2, <= smallest class count) for the simplify RF+CV gate."""
+    """Validate ``n_cv`` (>=2, <= smallest class count) for the simplify CV gate."""
     ut.check_number_range(name="n_cv", val=n_cv, min_val=2, just_int=True)
     min_class_count = min(pd.Series(labels).value_counts())
     if n_cv > min_class_count:
         raise ValueError(f"'n_cv' ({n_cv}) should not be greater than the smallest class "
                          f"count ({min_class_count}).")
+
+
+def check_ml_model(ml_model=None):
+    """Validate the simplify CV-gate model: a string preset or a classifier instance."""
+    if isinstance(ml_model, str):
+        ut.check_str_options(name="ml_model", val=ml_model,
+                             list_str_options=ut.LIST_CV_MODELS)
+    elif not (hasattr(ml_model, "fit") and hasattr(ml_model, "predict")):
+        raise ValueError(f"'ml_model' ({ml_model}) should be one of {ut.LIST_CV_MODELS} "
+                         f"or a scikit-learn classifier with 'fit'/'predict' methods.")
 
 
 def check_match_list_df_feat_names_feature_sets(list_df_feat=None, names_feature_sets=None):
@@ -898,6 +908,7 @@ class CPP(Tool):
                  max_interpretability: Optional[int] = None,
                  top_n: Optional[int] = None,
                  min_cor: float = 0.7,
+                 ml_model: Union[str, object] = "svm",
                  metric: str = "balanced_accuracy",
                  tol: float = 0.0,
                  n_cv: int = 5,
@@ -917,11 +928,11 @@ class CPP(Tool):
 
         For each feature (``PART-SPLIT-SCALE``), an alternative scale from a **more
         interpretable AAontology subcategory** (interpretability rating 1-10, 1 = best;
-        see :func:`load_scales` ``top_explain_n`` and ADR-0025) that **correlates** with the
+        see :func:`load_scales` ``top_explain_n``) that **correlates** with the
         original scale is substituted, keeping ``PART-SPLIT``. The swapped feature's statistics
         are recomputed; a swap is accepted only if it passes CPP's per-feature filtering
-        (``max_std_test``) and a random-forest cross-validation gate (performance not worse than
-        the current set, within ``tol``). The swapped set is then redundancy-reduced, yielding a
+        (``max_std_test``) and a cross-validation gate (performance not worse than the current
+        set, within ``tol``). The swapped set is then redundancy-reduced, yielding a
         more interpretable and ideally smaller ``df_feat``. The candidate pool (the full rated
         AAontology scale set) is loaded internally.
 
@@ -935,8 +946,8 @@ class CPP(Tool):
             Feature matrix matching ``df_feat`` (baseline only; row-aligned to ``self.df_parts``).
             If ``None``, it is recomputed internally. Swapped columns are always recomputed.
         strategy : str, default='greedy'
-            Simplification strategy. ``'greedy'`` swaps feature-by-feature behind the RF+CV gate.
-            (``'consolidate'`` / ``'swap_all'`` are reserved for a future release.)
+            Simplification strategy: ``'greedy'``, ``'consolidate'``, or ``'swap_all'``
+            (see Notes for how each behaves).
         max_interpretability : int, optional
             Interpretability ceiling (1-10): every feature whose scale subcategory is rated
             worse (higher) than this is targeted for replacement. Mutually exclusive with ``top_n``.
@@ -946,8 +957,13 @@ class CPP(Tool):
         min_cor : float, default=0.7
             Minimum absolute Pearson correlation between a candidate scale and the original scale
             (between 0 and 1); anti-correlation is allowed via the absolute value.
+        ml_model : str or sklearn estimator, default='svm'
+            Model for the cross-validation gate (``'greedy'`` / ``'consolidate'``). A string
+            preset ``'svm'`` (default; fast), ``'rf'`` (recommended for non-linear feature
+            relationships, but slower), or ``'log_reg'`` (fastest); or any configured scikit-learn
+            classifier instance (e.g. ``SVC(kernel='poly', C=0.1)``), used as-is.
         metric : str, default='balanced_accuracy'
-            Scoring metric for the RF+CV gate (any scikit-learn classification scorer name).
+            Scoring metric for the CV gate (any scikit-learn classification scorer name).
         tol : float, default=0.0
             A swap is accepted if its CV score is at least ``baseline - tol`` (>=0).
         n_cv : int, default=5
@@ -975,7 +991,8 @@ class CPP(Tool):
             If ``True``, also return a long-form ``df_candidates`` reporting every candidate
             considered (scale, interpretability, correlation, recomputed std, accepted-flag).
         random_state : int, optional
-            Random state for the random forest. Overrides the constructor's ``random_state``.
+            Random state for the CV-gate model (preset estimators). Overrides the constructor's
+            ``random_state``.
 
         Returns
         -------
@@ -987,6 +1004,19 @@ class CPP(Tool):
 
         Notes
         -----
+        * The ``strategy`` controls how swaps are chosen and validated:
+
+          - **'greedy'**: per-feature. Each targeted feature is swapped to its best correlated
+            candidate that keeps the cross-validation score within ``tol`` of the current set;
+            otherwise the next candidate is tried. Each swap is individually justified.
+          - **'consolidate'**: set-level. Interpretable subcategories are taken best-first, and
+            every targeted feature that can move into the current subcategory is swapped as one
+            batch, which is kept only if the set CV score stays within ``tol``. Funnels features
+            into the fewest subcategories.
+          - **'swap_all'**: apply every eligible best-candidate swap with no cross-validation
+            (fastest); ``ml_model`` / ``metric`` / ``tol`` / ``n_cv`` are ignored. A pure
+            interpretability transform to evaluate yourself afterwards.
+
         * Features whose scale is **not a rated AAontology scale** (e.g. ``run_num`` pseudo-scales
           or unclassified scales) carry no interpretability rating and are skipped. If no feature
           is rated, ``df_feat`` is returned unchanged with a ``RuntimeWarning``.
@@ -1015,6 +1045,7 @@ class CPP(Tool):
         ut.check_str_options(name="redundancy_tie_break", val=redundancy_tie_break,
                              list_str_options=ut.LIST_REDUNDANCY_TIE_BREAK)
         ut.check_str(name="metric", val=metric)
+        check_ml_model(ml_model=ml_model)
         ut.check_number_range(name="min_cor", val=min_cor, min_val=0, max_val=1, just_int=False)
         ut.check_number_range(name="max_std_test", val=max_std_test, min_val=0, max_val=1, just_int=False)
         ut.check_number_range(name="max_cor", val=max_cor, min_val=0, max_val=1, just_int=False)
@@ -1042,4 +1073,4 @@ class CPP(Tool):
                              label_ref=label_ref, max_std_test=max_std_test, max_cor=max_cor,
                              max_overlap=max_overlap, check_cat=check_cat, parametric=parametric,
                              accept_gaps=self._accept_gaps, return_details=return_details,
-                             random_state=random_state)
+                             ml_model=ml_model, random_state=random_state)
