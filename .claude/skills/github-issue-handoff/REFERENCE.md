@@ -59,7 +59,7 @@ Typical clusters in this repo:
 For each cluster: pick a *primary* issue, list the rest as blocked-by, and state "serialize."
 Independent issues (different subpackages, no shared files) go in separate **parallel lanes**.
 
-## Handoff file template (`docs/handoff_github_issues.md`)
+## Handoff file template (`docs/guides/handoff_github_issues.md`)
 
 ```markdown
 # GitHub issues — implementation handoff
