@@ -140,11 +140,18 @@ class TestLoadScalesTopExplain:
 
     @given(top_explain_n=some.sampled_from(VALID_TIERS))
     @settings(max_examples=12, deadline=None)
-    def test_top_explain_n_cat_columns_and_threshold(self, top_explain_n):
-        """A tier selection on scales_cat adds the two columns and respects the tier."""
+    def test_top_explain_n_cat_respects_tier(self, top_explain_n):
+        """A tier selection on scales_cat keeps only scales whose subcategory tier <= n.
+
+        interpretability/top_explain now live on df_subcat (single source), not on the
+        per-scale scales_cat table; the selection still respects the tier via the join.
+        """
         df_cat = aa.load_scales(name="scales_cat", top_explain_n=top_explain_n)
-        assert "interpretability" in df_cat.columns and "top_explain" in df_cat.columns
-        assert (df_cat["top_explain"] <= top_explain_n).all()
+        assert "interpretability" not in df_cat.columns and "top_explain" not in df_cat.columns
+        df_sub = aa.load_scales(name="subcat")
+        tier = dict(zip(df_sub["subcategory"], df_sub["top_explain"]))
+        tiers = df_cat["subcategory"].map(tier)
+        assert tiers.notna().all() and (tiers <= top_explain_n).all()
 
     @given(top_explain_n=some.sampled_from(VALID_TIERS))
     @settings(max_examples=12, deadline=None)
@@ -249,3 +256,71 @@ class TestLoadScalesTopExplainComplex:
         """An invalid min_th raises regardless of just_aaindex."""
         with pytest.raises(ValueError):
             aa.load_scales(name="scales", top_explain_n=20, top_explain_min_th=0.55, just_aaindex=True)
+
+
+class TestLoadScalesSubcat:
+    """Test load_scales(name='subcat') — the subcategory overview table."""
+
+    EXPECTED_COLS = ["category", "subcategory", "cluster", "interpretability", "top_explain",
+                     "n_scales", "n_scales_aaindex", "subcategory_description", "key_references"]
+
+    # Normal cases
+    def test_default_shape_and_columns(self):
+        df = aa.load_scales(name="subcat")
+        assert len(df) == 74
+        assert list(df.columns) == self.EXPECTED_COLS
+
+    def test_one_row_per_subcategory(self):
+        df = aa.load_scales(name="subcat")
+        assert df["subcategory"].is_unique
+
+    def test_interpretability_range(self):
+        df = aa.load_scales(name="subcat")
+        assert df["interpretability"].between(1, 10).all()
+
+    def test_n_scales_ge_aaindex(self):
+        """Property: full count is never below the AAindex-only count."""
+        df = aa.load_scales(name="subcat")
+        assert (df["n_scales"] >= df["n_scales_aaindex"]).all()
+
+    def test_n_scales_total_matches_scales_cat(self):
+        df = aa.load_scales(name="subcat")
+        assert df["n_scales"].sum() == len(aa.load_scales(name="scales_cat"))
+
+    def test_just_aaindex_drops_zero_aaindex_rows(self):
+        """just_aaindex drops the single subcategory with no AAindex scales (Hydrophobic ASA)."""
+        df = aa.load_scales(name="subcat", just_aaindex=True)
+        assert len(df) == 73
+        assert (df["n_scales_aaindex"] > 0).all()
+        assert "Hydrophobic ASA" not in set(df["subcategory"])
+
+    def test_unclassified_out_drops_unclassified(self):
+        df = aa.load_scales(name="subcat", unclassified_out=True)
+        assert not df["subcategory"].str.contains("Unclassified").any()
+        assert (df["category"] != "Others").all()
+
+    # Golden values (hand-checked against scales_cat.tsv)
+    def test_golden_counts(self):
+        df = aa.load_scales(name="subcat").set_index("subcategory")
+        assert (df.loc["Volume", "n_scales"], df.loc["Volume", "n_scales_aaindex"]) == (17, 16)
+        assert (df.loc["Accessible surface area (ASA)", "n_scales"],
+                df.loc["Accessible surface area (ASA)", "n_scales_aaindex"]) == (23, 7)
+        assert (df.loc["Hydrophobic ASA", "n_scales"], df.loc["Hydrophobic ASA", "n_scales_aaindex"]) == (3, 0)
+
+    def test_golden_interpretability(self):
+        df = aa.load_scales(name="subcat").set_index("subcategory")
+        assert df.loc["Volume", "interpretability"] == 1
+        assert df.loc["Unclassified (Composition)", "interpretability"] == 10
+
+    # Negative cases
+    def test_top_explain_n_with_subcat_raises(self):
+        with pytest.raises(ValueError):
+            aa.load_scales(name="subcat", top_explain_n=10)
+
+    def test_top60_n_with_subcat_raises(self):
+        with pytest.raises(ValueError):
+            aa.load_scales(name="subcat", top60_n=1)
+
+    def test_bad_name_still_raises(self):
+        with pytest.raises(ValueError):
+            aa.load_scales(name="subcategory")  # not a valid name (it's "subcat")

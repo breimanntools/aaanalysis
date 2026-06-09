@@ -2,7 +2,7 @@
 This is a script for scale loading function. Please define new loading functions by their loaded data by introducing
  a new data table in docs/source/index/tables_templates.rst.
 """
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 import numpy as np
 from pandas import DataFrame
 from aaanalysis import utils as ut
@@ -54,21 +54,48 @@ def check_top_explain(name=None, top_explain_n=None, top_explain_min_th=None, to
 
 
 # Helper functions for load_scales
-def _load_df_cat(keep_explain=False):
-    """Read scales_cat; drop the interpretability/top_explain columns unless explicitly kept."""
-    df_cat = ut.read_csv_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.{ut.STR_FILE_TYPE}")
-    if not keep_explain:
-        df_cat = df_cat.drop(columns=[ut.COL_INTERPRETABILITY, ut.COL_TOP_EXPLAIN], errors="ignore")
-    return df_cat
+def _load_df_cat():
+    """Read the per-scale AAontology classification (scales_cat)."""
+    return ut.read_csv_cached(ut.FOLDER_DATA + f"{ut.STR_SCALE_CAT}.{ut.STR_FILE_TYPE}")
+
+
+def _load_df_subcat_raw():
+    """Read the curated subcategory table (interpretability, tier, cluster, descriptions)."""
+    return ut.read_csv_cached(ut.FOLDER_DATA + f"{ut.STR_SUBCAT}.{ut.STR_FILE_TYPE}")
+
+
+def _subcat_tier_map():
+    """Map each subcategory to its interpretability tier (top_explain); NaN for unclassified."""
+    df_sub = _load_df_subcat_raw()
+    return dict(zip(df_sub[ut.COL_SUBCAT], df_sub[ut.COL_TOP_EXPLAIN]))
+
+
+def _load_df_subcat(just_aaindex=False, unclassified_out=False):
+    """Assemble df_subcat: curated facts + live n_scales / n_scales_aaindex from scales_cat."""
+    df_sub = _load_df_subcat_raw().copy()
+    df_cat = _load_df_cat()
+    n_all = df_cat.groupby(ut.COL_SUBCAT)[ut.COL_SCALE_ID].size()
+    df_aa = _filter_scales(df_cat=df_cat, unclassified_out=False, just_aaindex=True)
+    n_aa = df_aa.groupby(ut.COL_SUBCAT)[ut.COL_SCALE_ID].size()
+    df_sub[ut.COL_N_SCALES] = df_sub[ut.COL_SUBCAT].map(n_all).fillna(0).astype(int)
+    df_sub[ut.COL_N_SCALES_AAINDEX] = df_sub[ut.COL_SUBCAT].map(n_aa).fillna(0).astype(int)
+    if unclassified_out:
+        df_sub = df_sub[~df_sub[ut.COL_SUBCAT].str.contains("Unclassified") & (df_sub[ut.COL_CAT] != "Others")]
+    if just_aaindex:
+        df_sub = df_sub[df_sub[ut.COL_N_SCALES_AAINDEX] > 0]
+    df_sub = df_sub[ut.COLS_SUBCAT].reset_index(drop=True)
+    return df_sub
 
 
 def _get_explain_scales(top_explain_n=None, top_explain_min_th=None, just_aaindex=False):
     """Resolve scale_ids for an interpretability tier (optionally AAclust-reduced)."""
     if top_explain_min_th is None:
-        # Pure subcategory-tier filter (all member scales of the selected subcats)
-        df_cat = _load_df_cat(keep_explain=True)
+        # Pure subcategory-tier filter (all member scales of the selected subcats).
+        # Tier lives on df_subcat (single source); join it onto scales by subcategory.
+        df_cat = _load_df_cat()
         df_cat = _filter_scales(df_cat=df_cat, unclassified_out=False, just_aaindex=just_aaindex)
-        mask = df_cat[ut.COL_TOP_EXPLAIN].notna() & (df_cat[ut.COL_TOP_EXPLAIN] <= top_explain_n)
+        tier = df_cat[ut.COL_SUBCAT].map(_subcat_tier_map())
+        mask = tier.notna() & (tier <= top_explain_n)
         return df_cat.loc[mask, ut.COL_SCALE_ID].tolist()
     # Precomputed AAclust-reduced selection
     df_te = ut.read_csv_cached(ut.FOLDER_DATA + f"{ut.STR_TOP_EXPLAIN}.{ut.STR_FILE_TYPE}")
@@ -118,7 +145,7 @@ def _adjust_dtypes(df=None, name=None):
 
 
 # II Main Functions
-def load_scales(name: str = "scales",
+def load_scales(name: Literal["scales", "scales_raw", "scales_cat", "scales_pc", "top60", "top60_eval", "subcat"] = "scales",
                 just_aaindex: bool = False,
                 unclassified_out: bool = False,
                 top60_n: Optional[Union[int, str]] = None,
@@ -151,6 +178,9 @@ def load_scales(name: str = "scales",
         - ``scales_pc``: First 20 PCs of compressed scales.
         - ``top60``:  Selection of 60 best performing scale sets.
         - ``top60_eval``: Evaluation of 60 best performing scale sets.
+        - ``subcat``: Subcategory overview (one row per subcategory) with its interpretability
+          rating (1-10; 1 = most interpretable), interpretability tier, scale counts
+          (``n_scales`` and ``n_scales_aaindex``), cluster, and descriptions/references.
 
         Or Number between 1 and 60 to select the i-th top60 dataset.
 
@@ -222,6 +252,10 @@ def load_scales(name: str = "scales",
     check_top_explain(name=name, top_explain_n=top_explain_n,
                       top_explain_min_th=top_explain_min_th, top60_n=top60_n)
 
+    # Subcategory overview (interpretability, tier, scale counts, descriptions)
+    if name == ut.STR_SUBCAT:
+        return _load_df_subcat(just_aaindex=just_aaindex, unclassified_out=unclassified_out).copy()
+
     # Load and filter top60 scales
     if top60_n is not None:
         selected_scales = _get_selected_scales(top60_n=top60_n)
@@ -243,7 +277,7 @@ def load_scales(name: str = "scales",
                                                top_explain_min_th=top_explain_min_th,
                                                just_aaindex=just_aaindex)
         if name == ut.STR_SCALE_CAT:
-            df_cat = _load_df_cat(keep_explain=True)
+            df_cat = _load_df_cat()
             df_cat = df_cat[df_cat[ut.COL_SCALE_ID].isin(selected_scales)].reset_index(drop=True)
             return df_cat.copy()
         df = ut.read_csv_cached(ut.FOLDER_DATA + name + f".{ut.STR_FILE_TYPE}", index_col=0)

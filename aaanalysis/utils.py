@@ -151,8 +151,9 @@ STR_SCALE_CAT = "scales_cat"  # AAontology
 STR_TOP60 = "top60"    # AAclustTop60
 STR_TOP60_EVAL = "top60_eval"  # AAclustTop60 evaluation
 STR_TOP_EXPLAIN = "top_explain"  # interpretability-tiered selection table (internal, not a load name)
+STR_SUBCAT = "subcat"  # subcategory overview (interpretability, tier, counts, descriptions)
 NAMES_SCALE_SETS = [STR_SCALES, STR_SCALES_RAW, STR_SCALE_CAT,
-                    STR_SCALES_PC, STR_TOP60, STR_TOP60_EVAL]
+                    STR_SCALES_PC, STR_TOP60, STR_TOP60_EVAL, STR_SUBCAT]
 # Valid grids for the interpretability-tier selector of load_scales
 LIST_TOP_EXPLAIN_N = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
 LIST_TOP_EXPLAIN_MIN_TH = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
@@ -257,8 +258,16 @@ COL_CAT = "category"
 COL_SUBCAT = "subcategory"
 COL_SCALE_NAME = "scale_name"
 COL_SCALE_DES = "scale_description"
-COL_INTERPRETABILITY = "interpretability"  # 1-10 rating (1 = most interpretable); only on top_explain selection
+COL_INTERPRETABILITY = "interpretability"  # 1-10 rating (1 = most interpretable); lives on df_subcat
 COL_TOP_EXPLAIN = "top_explain"            # interpretability tier threshold (NaN for unclassified subcats)
+# Columns for df_subcat (subcategory overview, retrieved by aa.load_scales(name="subcat"))
+COL_CLUSTER = "cluster"
+COL_N_SCALES = "n_scales"
+COL_N_SCALES_AAINDEX = "n_scales_aaindex"
+COL_SUBCAT_DES = "subcategory_description"
+COL_KEY_REFERENCES = "key_references"
+COLS_SUBCAT = [COL_CAT, COL_SUBCAT, COL_CLUSTER, COL_INTERPRETABILITY, COL_TOP_EXPLAIN,
+               COL_N_SCALES, COL_N_SCALES_AAINDEX, COL_SUBCAT_DES, COL_KEY_REFERENCES]
 
 # df_annot (canonical per-residue annotation schema; AnnotationPreprocessor)
 COL_PROTEIN_ID = "protein_id"   # UniProt accession (mirrors COL_ENTRY)
@@ -549,6 +558,17 @@ def load_default_scales(scale_cat=False):
     if override is not None:
         return override.copy()
     return _load_default_scales_cached(scale_cat=scale_cat).copy()
+
+
+@lru_cache(maxsize=None)
+def _load_default_subcat_cached():
+    """Load and memoize the bundled subcategory table (interpretability, tier, descriptions)."""
+    return read_csv_cached(FOLDER_DATA + f"{STR_SUBCAT}.{STR_FILE_TYPE}")
+
+
+def load_default_subcat():
+    """Load the bundled subcategory table (a copy). Single source for per-subcategory interpretability/tier."""
+    return _load_default_subcat_cached().copy()
 
 
 # Adjust df_eval

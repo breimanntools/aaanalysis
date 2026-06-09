@@ -1,7 +1,7 @@
 """
 This is a script for the frontend CPPGrid class running grid-style CPP configuration sweeps.
 """
-from typing import Optional, List, Dict, Tuple, Union
+from typing import Optional, List, Dict, Tuple, Union, Literal
 import itertools
 import warnings
 import numpy as np
@@ -186,7 +186,7 @@ class CPPGrid(Tool):
                  verbose: bool = True,
                  random_state: Optional[int] = None,
                  n_jobs: Optional[int] = -1,
-                 backend: str = "threads",
+                 backend: Literal["threads", "loky"] = "threads",
                  ):
         """
         Parameters

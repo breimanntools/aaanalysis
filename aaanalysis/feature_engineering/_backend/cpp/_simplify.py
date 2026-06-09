@@ -38,14 +38,16 @@ def _load_candidate_pool_():
     ``(category, subcategory, scale_name, scale_description)``.
     """
     df_scales_pool = ut.load_default_scales()  # (20 AA, n_scales)
-    df_cat_pool = ut.load_default_scales(
-        scale_cat=True
-    )  # incl. interpretability/top_explain
+    df_cat_pool = ut.load_default_scales(scale_cat=True)  # per-scale classification
     df_cor = df_scales_pool.corr()  # scale x scale Pearson
     dict_all_scales = _get_dict_all_scales(df_scales=df_scales_pool)
-    dict_interp = dict(
-        zip(df_cat_pool[ut.COL_SCALE_ID], df_cat_pool[ut.COL_INTERPRETABILITY])
-    )
+    # Interpretability is a per-subcategory rating (single source: df_subcat); map it onto scales.
+    df_subcat = ut.load_default_subcat()
+    interp_by_subcat = dict(zip(df_subcat[ut.COL_SUBCAT], df_subcat[ut.COL_INTERPRETABILITY]))
+    dict_interp = {
+        sid: interp_by_subcat.get(sub)
+        for sid, sub in zip(df_cat_pool[ut.COL_SCALE_ID], df_cat_pool[ut.COL_SUBCAT])
+    }
     dict_meta = {
         sid: (cat, sub, name, des)
         for sid, cat, sub, name, des in zip(
@@ -75,7 +77,7 @@ def _resolve_ml_model_(ml_model=None, random_state=None):
 
 
 def _score_feature_set_(
-    X=None, labels=None, n_cv=5, metric="balanced_accuracy", estimator=None
+    X=None, labels=None, ml_cv=5, ml_metric="balanced_accuracy", estimator=None
 ):
     """Mean cross-validation score of ``estimator`` on a feature matrix ``X``.
 
@@ -83,7 +85,7 @@ def _score_feature_set_(
     score is consistent with the rest of the package. ``cross_val_score`` clones
     the estimator per fold, so one instance can be reused across many calls."""
     return float(
-        cross_val_score(estimator, X, y=labels, cv=n_cv, scoring=metric).mean()
+        cross_val_score(estimator, X, y=labels, cv=ml_cv, scoring=ml_metric).mean()
     )
 
 
@@ -157,9 +159,7 @@ def _eligible_candidates_(feat_id=None, df_cor=None, dict_interp=None, min_cor=0
     return candidates
 
 
-def _select_targets_(
-    df_feat=None, dict_interp=None, max_interpretability=None, top_n=None
-):
+def _select_targets_(df_feat=None, dict_interp=None, max_interpret_grade=None):
     """Order of features to attempt (worst-interpretability first).
 
     Only features whose current scale is rated (present in the pool) are
@@ -172,10 +172,8 @@ def _select_targets_(
         if not np.isnan(interp_old):
             rated.append((i, feat_id, interp_old))
     rated.sort(key=lambda t: -t[2])
-    if max_interpretability is not None:
-        return [t for t in rated if t[2] > max_interpretability]
-    if top_n is not None:
-        return rated[:top_n]
+    if max_interpret_grade is not None:
+        return [t for t in rated if t[2] > max_interpret_grade]
     return [t for t in rated if t[2] > 1]
 
 
@@ -214,54 +212,68 @@ def _merged_scale_corr_(df_feat=None, df_scales_pool=None, df_scales_self=None):
     return df_all[present].corr()
 
 
+def _is_redundant_(feat, kept, dict_c, dict_p, df_cor, max_overlap, max_cor, check_cat):
+    """A feature is redundant with one of ``kept`` when their positions overlap
+    (``>= max_overlap`` or one is a subset) AND their scales positively correlate
+    (signed ``cor > max_cor``, matching ``CPP.run``'s ``filtering`` — anti-correlated
+    scales are NOT redundant), within the same category when ``check_cat``."""
+    for top in kept:
+        if check_cat and dict_c[feat] != dict_c[top]:
+            continue
+        pos, top_pos = dict_p[feat], dict_p[top]
+        overlap = len(top_pos.intersection(pos)) / len(top_pos.union(pos))
+        if overlap >= max_overlap or pos.issubset(top_pos):
+            scale = ut.split_feat_id(feat_id=feat)[2]
+            top_scale = ut.split_feat_id(feat_id=top)[2]
+            if scale in df_cor.columns and top_scale in df_cor.columns:
+                if float(df_cor[top_scale][scale]) > max_cor:
+                    return True
+    return False
+
+
 def _apply_redundancy_(
     df_feat=None,
     df_cor=None,
     dict_interp=None,
+    swapped_ids=None,
     max_overlap=0.5,
     max_cor=0.5,
     check_cat=True,
     tie_break=ut.TIE_BREAK_INTERPRETABILITY,
 ):
-    """Greedy redundancy reduction on the swapped set (adapted from ``filtering``).
+    """Drop only *swapped* features that became redundant; **protect originals**.
 
-    Two features are redundant when their positions overlap (``>= max_overlap`` or
-    one is a subset) AND their scales correlate (``> max_cor``), within the same
-    category when ``check_cat``. The kept member of a redundant pair is chosen by
-    ``tie_break``: ``interpretability`` (most interpretable, then ``abs_auc``) or
-    ``performance`` (``abs_auc`` only, CPP's default)."""
+    Original (unswapped) features are always kept — simplify never drops a feature
+    the user already had, it only removes a swapped (new) feature when the swap made
+    it redundant with a kept feature (an original or an already-kept swap). Swapped
+    features are considered in ``tie_break`` order: ``interpretability`` (most
+    interpretable first, then ``abs_auc``) or ``performance`` (``abs_auc``)."""
+    swapped_ids = swapped_ids or set()
     df = df_feat.copy().reset_index(drop=True)
-    dict_c = dict(zip(df[ut.COL_FEATURE], df[ut.COL_CAT])) if check_cat else dict()
-    dict_p = dict(zip(df[ut.COL_FEATURE], [set(x) for x in df[ut.COL_POSITION]]))
+    feats = list(df[ut.COL_FEATURE])
+    dict_c = dict(zip(feats, df[ut.COL_CAT]))
+    dict_p = dict(zip(feats, [set(x) for x in df[ut.COL_POSITION]]))
+    dict_auc = dict(zip(feats, df[ut.COL_ABS_AUC]))
+    originals = [f for f in feats if f not in swapped_ids]
+    swapped = [f for f in feats if f in swapped_ids]
     if tie_break == ut.TIE_BREAK_INTERPRETABILITY:
-        interp = [
-            _interp(scale_id=ut.split_feat_id(feat_id=f)[2], dict_interp=dict_interp)
-            for f in df[ut.COL_FEATURE]
-        ]
-        # NaN (unrated) sorts last (kept last → dropped first if redundant).
-        df = df.assign(_interp=[v if not np.isnan(v) else np.inf for v in interp])
-        df = df.sort_values(by=["_interp", ut.COL_ABS_AUC], ascending=[True, False])
-        df = df.drop(columns="_interp")
+
+        def _key(f):
+            i = _interp(
+                scale_id=ut.split_feat_id(feat_id=f)[2], dict_interp=dict_interp
+            )
+            return (i if not np.isnan(i) else np.inf, -dict_auc[f])
+
+        swapped.sort(key=_key)
     else:
-        df = df.sort_values(by=[ut.COL_ABS_AUC, ut.COL_ABS_MEAN_DIF], ascending=False)
-    df = df.reset_index(drop=True)
-    list_feat = list(df[ut.COL_FEATURE])
-    list_top_feat = [list_feat.pop(0)]
-    for feat in list_feat:
-        add_flag = True
-        for top_feat in list_top_feat:
-            if not check_cat or dict_c[feat] == dict_c[top_feat]:
-                pos, top_pos = dict_p[feat], dict_p[top_feat]
-                overlap = len(top_pos.intersection(pos)) / len(top_pos.union(pos))
-                if overlap >= max_overlap or pos.issubset(top_pos):
-                    scale = ut.split_feat_id(feat_id=feat)[2]
-                    top_scale = ut.split_feat_id(feat_id=top_feat)[2]
-                    if scale in df_cor.columns and top_scale in df_cor.columns:
-                        if abs(float(df_cor[top_scale][scale])) > max_cor:
-                            add_flag = False
-        if add_flag:
-            list_top_feat.append(feat)
-    return df[df[ut.COL_FEATURE].isin(list_top_feat)].reset_index(drop=True)
+        swapped.sort(key=lambda f: -dict_auc[f])
+    kept = list(originals)  # originals are protected — always kept
+    for feat in swapped:
+        if not _is_redundant_(
+            feat, kept, dict_c, dict_p, df_cor, max_overlap, max_cor, check_cat
+        ):
+            kept.append(feat)
+    return df[df[ut.COL_FEATURE].isin(kept)].reset_index(drop=True)
 
 
 def _build_df_candidates_(records=None):
@@ -290,12 +302,11 @@ def _greedy_simplify_(
     dict_all_scales=None,
     dict_interp=None,
     dict_meta=None,
-    max_interpretability=None,
-    top_n=None,
+    max_interpret_grade=None,
     min_cor=0.7,
-    metric="balanced_accuracy",
-    tol=0.0,
-    n_cv=5,
+    ml_metric="balanced_accuracy",
+    ml_th=0.0,
+    ml_cv=5,
     on_unimprovable=ut.ON_UNIMPROVABLE_KEEP,
     label_test=1,
     label_ref=0,
@@ -308,13 +319,12 @@ def _greedy_simplify_(
     ``(df_feat_new, X_kept, records, baseline)``."""
     n = len(df_feat)
     baseline = _score_feature_set_(
-        X=X, labels=labels, n_cv=n_cv, metric=metric, estimator=estimator
+        X=X, labels=labels, ml_cv=ml_cv, ml_metric=ml_metric, estimator=estimator
     )
     targets = _select_targets_(
         df_feat=df_feat,
         dict_interp=dict_interp,
-        max_interpretability=max_interpretability,
-        top_n=top_n,
+        max_interpret_grade=max_interpret_grade,
     )
     new_rows = {}  # row_index -> recomputed one-row df (accepted swaps)
     dropped = set()  # row_index dropped via on_unimprovable
@@ -360,11 +370,11 @@ def _greedy_simplify_(
             score = _score_feature_set_(
                 X=X_trial,
                 labels=labels,
-                n_cv=n_cv,
-                metric=metric,
+                ml_cv=ml_cv,
+                ml_metric=ml_metric,
                 estimator=estimator,
             )
-            if score >= baseline - tol:
+            if score >= baseline - ml_th:
                 X[:, i] = col
                 new_rows[i] = row_df
                 baseline = score
@@ -406,11 +416,11 @@ def _greedy_simplify_(
                     score_drop = _score_feature_set_(
                         X=X[:, keep_idx],
                         labels=labels,
-                        n_cv=n_cv,
-                        metric=metric,
+                        ml_cv=ml_cv,
+                        ml_metric=ml_metric,
                         estimator=estimator,
                     )
-                    if score_drop >= baseline - tol:
+                    if score_drop >= baseline - ml_th:
                         dropped.add(i)
                         baseline = score_drop
     # Assemble simplified df_feat (swapped rows replace originals; drop unimprovable)
@@ -429,8 +439,7 @@ def _swap_all_simplify_(
     dict_all_scales=None,
     dict_interp=None,
     dict_meta=None,
-    max_interpretability=None,
-    top_n=None,
+    max_interpret_grade=None,
     min_cor=0.7,
     on_unimprovable=ut.ON_UNIMPROVABLE_KEEP,
     label_test=1,
@@ -448,8 +457,7 @@ def _swap_all_simplify_(
     targets = _select_targets_(
         df_feat=df_feat,
         dict_interp=dict_interp,
-        max_interpretability=max_interpretability,
-        top_n=top_n,
+        max_interpret_grade=max_interpret_grade,
     )
     new_rows = {}
     dropped = set()
@@ -527,12 +535,11 @@ def _consolidate_simplify_(
     dict_all_scales=None,
     dict_interp=None,
     dict_meta=None,
-    max_interpretability=None,
-    top_n=None,
+    max_interpret_grade=None,
     min_cor=0.7,
-    metric="balanced_accuracy",
-    tol=0.0,
-    n_cv=5,
+    ml_metric="balanced_accuracy",
+    ml_th=0.0,
+    ml_cv=5,
     on_unimprovable=ut.ON_UNIMPROVABLE_KEEP,
     label_test=1,
     label_ref=0,
@@ -546,17 +553,16 @@ def _consolidate_simplify_(
     Interpretable subcategories are processed best-first; for each, every still-
     unclaimed target with an eligible candidate in that subcategory is swapped to
     its best in-subcat candidate, the whole batch is CV-scored, and the batch is
-    accepted only if the set score stays within ``tol`` of the baseline. Returns
+    accepted only if the set score stays within ``ml_th`` of the baseline. Returns
     ``(df_feat_new, X_kept, records)``."""
     n = len(df_feat)
     baseline = _score_feature_set_(
-        X=X, labels=labels, n_cv=n_cv, metric=metric, estimator=estimator
+        X=X, labels=labels, ml_cv=ml_cv, ml_metric=ml_metric, estimator=estimator
     )
     targets = _select_targets_(
         df_feat=df_feat,
         dict_interp=dict_interp,
-        max_interpretability=max_interpretability,
-        top_n=top_n,
+        max_interpret_grade=max_interpret_grade,
     )
     # Per target: (feat_id, interp_old, eligible candidates) + the subcategory rankings.
     target_cands = {
@@ -627,9 +633,13 @@ def _consolidate_simplify_(
         for i, (scale_cand, interp_cand, cor, row_df, col, std_test) in batch.items():
             X_trial[:, i] = col
         score = _score_feature_set_(
-            X=X_trial, labels=labels, n_cv=n_cv, metric=metric, estimator=estimator
+            X=X_trial,
+            labels=labels,
+            ml_cv=ml_cv,
+            ml_metric=ml_metric,
+            estimator=estimator,
         )
-        accepted = score >= baseline - tol
+        accepted = score >= baseline - ml_th
         if accepted:
             X = X_trial
             baseline = score
@@ -664,11 +674,11 @@ def _consolidate_simplify_(
                 score_drop = _score_feature_set_(
                     X=X[:, keep_idx],
                     labels=labels,
-                    n_cv=n_cv,
-                    metric=metric,
+                    ml_cv=ml_cv,
+                    ml_metric=ml_metric,
                     estimator=estimator,
                 )
-                if score_drop >= baseline - tol:
+                if score_drop >= baseline - ml_th:
                     dropped.add(i)
                     baseline = score_drop
     keep_idx = [i for i in range(n) if i not in dropped]
@@ -682,14 +692,12 @@ def simplify_cpp_(
     df_parts=None,
     df_scales_self=None,
     labels=None,
-    X=None,
     strategy=ut.STRATEGY_GREEDY,
-    max_interpretability=None,
-    top_n=None,
+    max_interpret_grade=None,
     min_cor=0.7,
-    metric="balanced_accuracy",
-    tol=0.0,
-    n_cv=5,
+    ml_metric="balanced_accuracy",
+    ml_th=0.0,
+    ml_cv=5,
     on_unimprovable=ut.ON_UNIMPROVABLE_KEEP,
     redundancy_tie_break=ut.TIE_BREAK_INTERPRETABILITY,
     label_test=1,
@@ -703,6 +711,7 @@ def simplify_cpp_(
     return_details=False,
     ml_model=ut.MODEL_SVM,
     random_state=None,
+    verbose=False,
 ):
     """Backend entry for ``CPP.simplify``: df_feat or (df_feat, df_candidates)."""
     df_feat = df_feat.reset_index(drop=True).copy()
@@ -713,15 +722,26 @@ def simplify_cpp_(
     targets = _select_targets_(
         df_feat=df_feat,
         dict_interp=dict_interp,
-        max_interpretability=max_interpretability,
-        top_n=top_n,
+        max_interpret_grade=max_interpret_grade,
     )
     if len(targets) == 0:
-        warnings.warn(
-            "'df_feat' has no AAontology-rated features to simplify (scales are "
-            "unrated / from 'run_num'); returning it unchanged.",
-            RuntimeWarning,
+        # Distinguish "nothing graded" (Case 1) from "all already good enough" (Case 2).
+        n_graded = sum(
+            1 for f in df_feat[ut.COL_FEATURE]
+            if not np.isnan(_interp(scale_id=ut.split_feat_id(feat_id=f)[2], dict_interp=dict_interp))
         )
+        if n_graded == 0:
+            warnings.warn(
+                "'df_feat' has no AAontology-graded features to simplify (scales are "
+                "ungraded / from 'run_num'); returning it unchanged.",
+                RuntimeWarning,
+            )
+        elif verbose:
+            cut = max_interpret_grade if max_interpret_grade is not None else 1
+            ut.print_out(
+                f"{n_graded} graded feature(s), none graded worse than {cut}; "
+                f"returning 'df_feat' unchanged."
+            )
         out = ut.sort_cols_feat(df_feat=df_feat)
         return (out, _build_df_candidates_(records=[])) if return_details else out
     # swap_all needs no feature matrix (no CV scoring); greedy/consolidate do.
@@ -734,8 +754,7 @@ def simplify_cpp_(
             dict_all_scales=dict_all_scales,
             dict_interp=dict_interp,
             dict_meta=dict_meta,
-            max_interpretability=max_interpretability,
-            top_n=top_n,
+            max_interpret_grade=max_interpret_grade,
             min_cor=min_cor,
             on_unimprovable=on_unimprovable,
             label_test=label_test,
@@ -745,15 +764,12 @@ def simplify_cpp_(
             max_std_test=max_std_test,
         )
     else:
-        if X is None:
-            X = _build_base_matrix_(
-                df_feat=df_feat,
-                df_parts=df_parts,
-                df_scales_self=df_scales_self,
-                accept_gaps=accept_gaps,
-            )
-        else:
-            X = np.asarray(X, dtype=float).copy()
+        X = _build_base_matrix_(
+            df_feat=df_feat,
+            df_parts=df_parts,
+            df_scales_self=df_scales_self,
+            accept_gaps=accept_gaps,
+        )
         estimator = _resolve_ml_model_(ml_model=ml_model, random_state=random_state)
         common = dict(
             df_feat=df_feat,
@@ -764,12 +780,11 @@ def simplify_cpp_(
             dict_all_scales=dict_all_scales,
             dict_interp=dict_interp,
             dict_meta=dict_meta,
-            max_interpretability=max_interpretability,
-            top_n=top_n,
+            max_interpret_grade=max_interpret_grade,
             min_cor=min_cor,
-            metric=metric,
-            tol=tol,
-            n_cv=n_cv,
+            ml_metric=ml_metric,
+            ml_th=ml_th,
+            ml_cv=ml_cv,
             on_unimprovable=on_unimprovable,
             label_test=label_test,
             label_ref=label_ref,
@@ -783,7 +798,10 @@ def simplify_cpp_(
         else:  # STRATEGY_CONSOLIDATE
             df_feat_new, _X_kept, records = _consolidate_simplify_(**common)
 
-    # Set-level redundancy reduction ("fewer subcats").
+    # Set-level redundancy reduction: drop only swapped features that became
+    # redundant; original (unswapped) features are protected. Swapped features are
+    # exactly the ones whose feature id is new (a swap changes the SCALE → the id).
+    swapped_ids = set(df_feat_new[ut.COL_FEATURE]) - set(df_feat[ut.COL_FEATURE])
     df_cor_present = _merged_scale_corr_(
         df_feat=df_feat_new,
         df_scales_pool=df_scales_pool,
@@ -793,6 +811,7 @@ def simplify_cpp_(
         df_feat=df_feat_new,
         df_cor=df_cor_present,
         dict_interp=dict_interp,
+        swapped_ids=swapped_ids,
         max_overlap=max_overlap,
         max_cor=max_cor,
         check_cat=check_cat,
