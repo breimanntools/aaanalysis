@@ -223,9 +223,9 @@ def load_scales(name: Literal["scales", "scales_raw", "scales_cat", "scales_pc",
         - 'scale_description': Description of scale (derived from AAindex).
 
     * Scales under the 'Others' category are considered unclassified.
-    * When ``top_explain_n`` is set, the returned ``df_cat`` additionally includes an 'interpretability'
-      column (1-10 rating; 1 = most interpretable) and a 'top_explain' column (the interpretability tier);
-      these columns are absent from the default ``df_cat``.
+    * ``top_explain_n`` only *filters* the returned scales; the per-subcategory interpretability grade
+      (1-10; 1 = most interpretable) and tier are not added as columns here — they live in the
+      subcategory overview ``load_scales(name="subcat")`` (``'interpret_grade'`` / ``'top_explain'``).
     * Unlike ``top60`` (AAclust redundancy-reduced and performance-ranked), ``top_explain_n`` with
       ``top_explain_min_th=None`` returns all scales of the selected subcategories without redundancy
       reduction. With ``top_explain_min_th`` set, the AAclust reduction (and a ``just_aaindex=True``

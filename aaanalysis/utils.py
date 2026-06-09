@@ -258,7 +258,7 @@ COL_CAT = "category"
 COL_SUBCAT = "subcategory"
 COL_SCALE_NAME = "scale_name"
 COL_SCALE_DES = "scale_description"
-COL_INTERPRETABILITY = "interpretability"  # 1-10 rating (1 = most interpretable); lives on df_subcat
+COL_INTERPRET_GRADE = "interpret_grade"  # 1-10 interpretability grade (1 = best); lives on df_subcat
 COL_TOP_EXPLAIN = "top_explain"            # interpretability tier threshold (NaN for unclassified subcats)
 # Columns for df_subcat (subcategory overview, retrieved by aa.load_scales(name="subcat"))
 COL_CLUSTER = "cluster"
@@ -266,7 +266,7 @@ COL_N_SCALES = "n_scales"
 COL_N_SCALES_AAINDEX = "n_scales_aaindex"
 COL_SUBCAT_DES = "subcategory_description"
 COL_KEY_REFERENCES = "key_references"
-COLS_SUBCAT = [COL_CAT, COL_SUBCAT, COL_CLUSTER, COL_INTERPRETABILITY, COL_TOP_EXPLAIN,
+COLS_SUBCAT = [COL_CAT, COL_SUBCAT, COL_CLUSTER, COL_INTERPRET_GRADE, COL_TOP_EXPLAIN,
                COL_N_SCALES, COL_N_SCALES_AAINDEX, COL_SUBCAT_DES, COL_KEY_REFERENCES]
 
 # df_annot (canonical per-residue annotation schema; AnnotationPreprocessor)
