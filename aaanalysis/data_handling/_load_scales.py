@@ -79,6 +79,9 @@ def _load_df_subcat(just_aaindex=False, unclassified_out=False):
     n_aa = df_aa.groupby(ut.COL_SUBCAT)[ut.COL_SCALE_ID].size()
     df_sub[ut.COL_N_SCALES] = df_sub[ut.COL_SUBCAT].map(n_all).fillna(0).astype(int)
     df_sub[ut.COL_N_SCALES_AAINDEX] = df_sub[ut.COL_SUBCAT].map(n_aa).fillna(0).astype(int)
+    for c in (ut.COL_CLUSTER, ut.COL_INTERPRET_GRADE, ut.COL_TOP_EXPLAIN,
+              ut.COL_N_SCALES, ut.COL_N_SCALES_AAINDEX):
+        df_sub[c] = df_sub[c].astype("Int64")  # integer display; Int64 keeps NaN for unclassified
     if unclassified_out:
         df_sub = df_sub[~df_sub[ut.COL_SUBCAT].str.contains("Unclassified") & (df_sub[ut.COL_CAT] != "Others")]
     if just_aaindex:
@@ -192,18 +195,13 @@ def load_scales(name: Literal["scales", "scales_raw", "scales_cat", "scales_pc",
          Select the n-th scale set from top60 sets and return it for 'scales', 'scales_raw', or 'scales_cat'.
          Allowed strings are AAclust ids (e.g., 'AAC01').
     top_explain_n : int, optional
-        Restrict the set to the ``n`` most interpretable AAontology subcategories (one of 5, 10, ..., 60),
-        returning all their member scales (for 'scales', 'scales_raw', or 'scales_cat'). Mutually exclusive
-        with ``top60_n``. The per-subcategory interpretability grade and tier live in
-        ``load_scales(name='subcat')``; see the Notes, the scales-loader tutorial, and the subcategory list
-        in :ref:`t3b_aaontology_subcategories` for the full explanation of the interpretability options.
+        Restrict to the ``n`` most interpretable AAontology subcategories (one of 5, 10, ..., 60);
+        mutually exclusive with ``top60_n``. See Notes.
 
         .. versionadded:: 1.1.0
     top_explain_min_th : float, optional
-        Pearson correlation threshold (one of 0.3, 0.4, ..., 0.9) for an additional :class:`AAclust`
-        redundancy reduction of the ``top_explain_n`` set, using pre-computed selections with AAclust default
-        settings. ``None`` (default) returns the full set without redundancy reduction. Only valid together
-        with ``top_explain_n``.
+        AAclust redundancy-reduction threshold (one of 0.3, ..., 0.9) layered on ``top_explain_n``;
+        ``None`` (default) keeps the full set. See Notes.
 
         .. versionadded:: 1.1.0
 

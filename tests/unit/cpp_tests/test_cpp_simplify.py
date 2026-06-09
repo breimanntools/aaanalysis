@@ -293,6 +293,30 @@ class TestSimplifyComplex:
         out = _simplify(cpp, df_feat, labels, min_cor=1.0, on_unimprovable="drop")
         assert len(out) >= 1
 
+    def test_allow_drop_false_keeps_all_features(self, fitted):
+        """allow_drop=False is swap-only: output keeps every input feature 1:1."""
+        cpp, df_feat, labels = fitted
+        out = _simplify(cpp, df_feat, labels, allow_drop=False, on_unimprovable="drop", ml_cv=3)
+        assert len(out) == len(df_feat)
+
+    def test_allow_drop_false_overrides_redundancy(self, fitted):
+        """Even with aggressive redundancy thresholds, allow_drop=False drops nothing."""
+        cpp, df_feat, labels = fitted
+        out = _simplify(cpp, df_feat, labels, allow_drop=False, max_cor=0.1, max_overlap=0.1, ml_cv=3)
+        assert len(out) == len(df_feat)
+
+    def test_allow_drop_true_default_can_reduce(self, fitted):
+        """allow_drop=True (default) with on_unimprovable='drop' may reduce the set."""
+        cpp, df_feat, labels = fitted
+        out = _simplify(cpp, df_feat, labels, allow_drop=True, min_cor=1.0,
+                        on_unimprovable="drop", ml_cv=3)
+        assert len(out) <= len(df_feat)
+
+    def test_allow_drop_non_bool_raises(self, fitted):
+        cpp, df_feat, labels = fitted
+        with pytest.raises(ValueError, match="allow_drop"):
+            cpp.simplify(df_feat=df_feat, labels=labels, allow_drop="yes", ml_cv=3)
+
     def test_merged_corr_includes_custom_scale(self, fitted):
         pool = aa.load_scales()
         df_scales_self = pool.iloc[:, :3].copy()
