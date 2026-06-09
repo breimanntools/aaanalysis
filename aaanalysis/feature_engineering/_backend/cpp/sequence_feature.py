@@ -12,18 +12,6 @@ from ._utils_feature_stat import add_stat_
 
 
 # I Helper Functions
-def _part_aa_freq(col=None, aa_list=None, aa_index=None):
-    """Empirical canonical-AA frequency over all strings in one part column."""
-    counts = np.zeros(len(aa_list), dtype=np.int64)
-    for s in col:
-        for c in s:
-            j = aa_index.get(c)
-            if j is not None:
-                counts[j] += 1
-    total = counts.sum()
-    if total == 0:
-        raise ValueError("'df_parts' contains no canonical amino acids for composition matching.")
-    return counts / total
 
 
 # II Main Functions
@@ -110,64 +98,56 @@ def get_df_feat_(features=None, df_parts=None, labels=None,
     return df
 
 
-# Multi-class / regression label conversion and reference generation
+# Multi-class / regression label conversion
 def get_labels_ovr_(labels=None, label_test=1, label_ref=0):
-    """One-vs-rest: per class, a full-length binary vector (class -> test, rest -> ref)."""
+    """One-vs-rest: per class, a full-length binary array (class -> test, rest -> ref)."""
     labels = np.asarray(labels)
-    classes = sorted(set(labels.tolist()))
-    return {c: np.where(labels == c, label_test, label_ref).astype(int) for c in classes}
+    classes = np.unique(labels)
+    return {int(c): np.where(labels == c, label_test, label_ref).astype(int) for c in classes}
 
 
 def get_labels_ovo_(labels=None, label_test=1, label_ref=0):
     """One-vs-one: per class pair (a, b), a row mask + binary labels for the masked subset."""
     labels = np.asarray(labels)
-    classes = sorted(set(labels.tolist()))
+    classes = np.unique(labels)
     out = {}
     for i, a in enumerate(classes):
         for b in classes[i + 1:]:
             mask = np.isin(labels, [a, b])
             binary = np.where(labels[mask] == a, label_test, label_ref).astype(int)
-            out[(a, b)] = (mask, binary)
+            out[(int(a), int(b))] = (mask, binary)
     return out
 
 
 def get_labels_quantile_(targets=None, q=0.5, label_test=1, label_ref=0):
-    """Single-threshold split of continuous targets into binary labels (>= q-quantile -> test)."""
+    """Single-threshold split of continuous targets into a binary array (>= q-quantile -> test)."""
     targets = np.asarray(targets, dtype=float)
     cut = float(np.quantile(targets, q))
     return np.where(targets >= cut, label_test, label_ref).astype(int)
 
 
-def get_df_parts_reference_(df_parts=None, method=ut.MODE_SCRAMBLED, n=None, rng=None):
-    """Generate reference ``df_parts`` rows, per-part length- and composition-faithful.
+def get_labels_tiered_(targets=None, q_pos=0.8, list_q_neg=(0.8, 0.5, 0.3), label_test=1, label_ref=0):
+    """Tiered thresholds: fixed positive set, stepwise-lower negative cuts, middle dropped.
 
-    Each generated row borrows the per-part lengths of a randomly chosen real
-    row (so references match the real CPP part lengths by construction).
-    ``scrambled`` shuffles that template part in place (exact per-part
-    composition); ``global_freq`` draws from the column's empirical canonical-AA
-    frequency.
+    Positives are ``targets >= Q(q_pos)`` (fixed across tiers); for each ``q_neg``
+    the negatives are ``targets <= Q(q_neg)`` (positives take precedence on ties),
+    and samples in between are dropped. Returns ``{q_neg: (row_mask, binary)}``.
+    Raises ``ValueError`` if a tier yields only one class.
     """
-    aa_list = list(ut.LIST_CANONICAL_AA)
-    aa_index = {a: i for i, a in enumerate(aa_list)}
-    list_parts = list(df_parts)
-    n_real = len(df_parts)
-    if n is None:
-        n = n_real
-    template_idx = rng.integers(0, n_real, size=n)
-    data = {}
-    for part in list_parts:
-        col = df_parts[part].to_numpy()
-        probs = _part_aa_freq(col=col, aa_list=aa_list, aa_index=aa_index) \
-            if method == ut.MODE_GLOBAL_FREQ else None
-        strings = []
-        for i in range(n):
-            template = col[template_idx[i]]
-            if method == ut.MODE_SCRAMBLED:
-                chars = list(template)
-                rng.shuffle(chars)
-                strings.append("".join(chars))
-            else:
-                strings.append("".join(rng.choice(aa_list, size=len(template), p=probs)))
-        data[part] = strings
-    index = [f"REF{i}" for i in range(n)]
-    return pd.DataFrame(data, index=index)
+    targets = np.asarray(targets, dtype=float)
+    cut_pos = float(np.quantile(targets, q_pos))
+    pos = targets >= cut_pos
+    out = {}
+    for q_neg in list_q_neg:
+        cut_neg = float(np.quantile(targets, q_neg))
+        neg = (targets <= cut_neg) & ~pos
+        mask = pos | neg
+        if pos.sum() == 0 or neg.sum() == 0:
+            raise ValueError(
+                f"tier q_neg={q_neg} yields a single class "
+                f"(n_pos={int(pos.sum())}, n_neg={int(neg.sum())}); "
+                f"choose q_pos/q_neg that keep both groups non-empty."
+            )
+        binary = np.where(pos[mask], label_test, label_ref).astype(int)
+        out[float(q_neg)] = (mask, binary)
+    return out

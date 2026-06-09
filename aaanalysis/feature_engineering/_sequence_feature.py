@@ -1,7 +1,7 @@
 """
 This is a script for the frontend of the SequenceFeature class, a supportive class for the CPP feature engineering.
 """
-from typing import Optional, Union, List, Dict, Tuple, Any
+from typing import Optional, Union, List, Dict, Tuple, Sequence
 import warnings
 import numpy as np
 import pandas as pd
@@ -26,7 +26,7 @@ from ._backend.cpp.utils_feature import (get_df_parts_,
                                          get_df_pos_, get_df_pos_parts_)
 from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_, get_df_feat_,
                                             get_labels_ovr_, get_labels_ovo_, get_labels_quantile_,
-                                            get_df_parts_reference_)
+                                            get_labels_tiered_)
 from ._backend.cpp_run import _pick_feature_matrix_builder
 
 
@@ -163,6 +163,18 @@ class SequenceFeature:
 
     Default parts:
         The following three parts are provided by default: ``tmd``, ``jmd_n_tmd_n``, ``tmd_c_jmd_c``.
+
+    Choosing a label / reference helper:
+        - Multi-class labels, one feature set per class: :meth:`get_labels_ovr` (all
+          samples kept).
+        - Multi-class labels, pairwise comparisons: :meth:`get_labels_ovo` (each pair
+          subsets samples).
+        - Continuous target, single split: :meth:`get_labels_quantile`.
+        - Continuous target, fixed positives vs stepwise-lowered negatives:
+          :meth:`get_labels_tiered`.
+        - No natural reference class: generate windows with :class:`AAWindowSampler`
+          (per part, e.g. coil JMD vs alpha-helix TMD) and assemble them with
+          :meth:`get_df_parts_from_windows`.
 
     """
 
@@ -897,37 +909,45 @@ class SequenceFeature:
                        label_ref: int = 0,
                        ) -> Dict[int, np.ndarray]:
         """
-        Convert multi-class labels into one-vs-rest binary label vectors.
+        Convert multi-class labels into one-vs-rest (OvR) binary label arrays.
 
-        Maps each of the K classes to a full-length binary vector in which that
-        class is the test group and all remaining classes are the reference
-        group. Since no samples are dropped, the K vectors can be looped through
-        a single :class:`CPP` instance via :meth:`CPP.run` (the ``df_parts`` is
-        unchanged), yielding one binary feature set per class. Discarding the
-        other classes instead (one-vs-one) requires subsetting ``df_parts`` and
-        is out of scope here.
+        One-vs-rest (OvR) maps each of the K classes to a full-length binary label
+        array in which that class is the test group and all remaining classes are
+        the reference group. Since no samples are dropped, the K arrays can be
+        looped through a single :class:`CPP` instance via :meth:`CPP.run` (the
+        ``df_parts`` is unchanged), yielding one binary feature set per class.
+        Discarding the other classes instead is :meth:`get_labels_ovo`.
 
         Parameters
         ----------
         labels : array-like, shape (n_samples,)
-            Multi-class labels for samples (more than one distinct integer value).
+            Multi-class labels for samples. Must be integers (more than one distinct
+            value); for continuous targets discretize first with :meth:`get_labels_quantile`.
         label_test : int, default=1
-            Value assigned to the target class of each one-vs-rest vector.
+            Value assigned to the target class of each one-vs-rest array.
         label_ref : int, default=0
             Value assigned to all remaining classes.
 
         Returns
         -------
         dict_labels : dict
-            Dictionary mapping each class label to its one-vs-rest binary vector
-            (numpy array of shape (n_samples,)).
+            Dictionary mapping each class label to its one-vs-rest binary label array
+            (numpy array of shape (n_samples,)), keyed in sorted class order.
 
         Notes
         -----
-        * Each returned vector is directly usable as the ``labels`` argument of
-          :meth:`CPP.run` / :meth:`CPP.run_num`.
-        * To aggregate the per-class results, run CPP per vector and concatenate
-          the returned ``df_feat`` frames, tagging each with its class key.
+        * Each returned binary label array is directly usable as the ``labels``
+          argument of :meth:`CPP.run` / :meth:`CPP.run_num`.
+        * To aggregate the per-class results, run CPP per array and concatenate the
+          returned ``df_feat`` frames, tagging each with its class key.
+        * **Complexity:** O(n_samples x n_classes); scales linearly in both, so OvR
+          stays cheap for large K.
+
+        See Also
+        --------
+        * :class:`aaanalysis.CPP`: consumes each returned binary label array via :meth:`CPP.run`.
+        * :meth:`get_labels_ovo`: pairwise (one-vs-one) alternative that subsets samples.
+        * :meth:`get_labels_quantile`: discretize a continuous target into binary labels.
 
         Examples
         --------
@@ -946,22 +966,21 @@ class SequenceFeature:
     def get_labels_ovo(labels: ut.ArrayLike1D = None,
                        label_test: int = 1,
                        label_ref: int = 0,
-                       ) -> Dict[Tuple[Any, Any], Tuple[np.ndarray, np.ndarray]]:
+                       ) -> Dict[Tuple[int, int], Tuple[np.ndarray, np.ndarray]]:
         """
-        Convert multi-class labels into one-vs-one binary label vectors with row masks.
+        Convert multi-class labels into one-vs-one (OvO) binary label arrays with row masks.
 
-        Maps each unordered pair of classes ``(a, b)`` to the subset of samples
-        belonging to either class together with a binary label vector over that
-        subset (class ``a`` as test, class ``b`` as reference). Because the other
-        classes are discarded, each pair needs its own row subset of ``df_parts``;
-        the caller applies the returned boolean ``row_mask`` to ``df_parts`` (and
-        builds a :class:`CPP` instance on that subset) before calling
-        :meth:`CPP.run`.
+        One-vs-one (OvO) maps each unordered pair of classes ``(a, b)`` to the subset
+        of samples belonging to either class together with a binary label array over
+        that subset (class ``a`` as test, class ``b`` as reference). Because the other
+        classes are discarded, each pair needs its own row subset of ``df_parts``: the
+        caller applies the returned boolean ``row_mask`` to ``df_parts`` and builds a
+        :class:`CPP` instance on that subset before calling :meth:`CPP.run`.
 
         Parameters
         ----------
         labels : array-like, shape (n_samples,)
-            Multi-class labels for samples (more than one distinct integer value).
+            Multi-class labels for samples. Must be integers (more than one distinct value).
         label_test : int, default=1
             Value assigned to the first class of each pair.
         label_ref : int, default=0
@@ -971,15 +990,23 @@ class SequenceFeature:
         -------
         dict_labels : dict
             Dictionary mapping each class pair ``(a, b)`` to a tuple
-            ``(row_mask, labels_subset)``, where ``row_mask`` is a boolean array
-            of shape (n_samples,) selecting the pair's samples and
-            ``labels_subset`` is the binary vector over the masked subset.
+            ``(row_mask, labels_subset)``, where ``row_mask`` is a boolean array of
+            shape (n_samples,) selecting the pair's samples and ``labels_subset`` is
+            the binary label array over the masked subset.
 
         Notes
         -----
         * ``row_mask`` selects exactly the samples whose label is ``a`` or ``b``.
-        * Use ``df_parts[row_mask]`` to build the subset input; running CPP on a
-          row-subset without rebuilding the instance is a separate enhancement.
+        * **Complexity:** O(n_samples x n_classes^2): K classes produce K(K-1)/2 pairs
+          (K=10 -> 45, K=20 -> 190), each needing its own CPP instance. Prefer OvO for
+          small K (~<10) and :meth:`get_labels_ovr` for larger problems.
+        * Running CPP on a row-subset without rebuilding the instance is a separate
+          planned enhancement; for now build one CPP per pair as shown below.
+
+        See Also
+        --------
+        * :class:`aaanalysis.CPP`: consumes each ``labels_subset`` on the ``df_parts`` row-subset.
+        * :meth:`get_labels_ovr`: one-vs-rest alternative that keeps all samples.
 
         Examples
         --------
@@ -1001,15 +1028,15 @@ class SequenceFeature:
                             label_ref: int = 0,
                             ) -> np.ndarray:
         """
-        Convert a continuous target into a binary label vector by a single quantile threshold.
+        Convert a continuous target into a binary label array by a single quantile threshold.
 
-        Splits samples at the ``q``-quantile of ``targets``: samples at or above
-        the cut become the test group and the remainder the reference group. No
-        samples are dropped, so the result is directly usable as the ``labels``
-        argument of :meth:`CPP.run` / :meth:`CPP.run_num`, enabling regression-style
-        tasks (e.g. thermostability, binding affinity) within the binary CPP
-        framework. A banded top-vs-bottom split (dropping the middle) is out of
-        scope here.
+        Splits samples at the ``q``-quantile of ``targets``: samples at or above the
+        cut become the test group and the remainder the reference group. No samples
+        are dropped, so the result is directly usable as the ``labels`` argument of
+        :meth:`CPP.run` / :meth:`CPP.run_num`, enabling regression-style tasks (e.g.
+        thermostability, binding affinity) within the binary CPP framework. For a
+        fixed positive set with stepwise-lowered negative cuts, use
+        :meth:`get_labels_tiered`.
 
         Parameters
         ----------
@@ -1026,12 +1053,20 @@ class SequenceFeature:
         Returns
         -------
         labels : np.ndarray, shape (n_samples,)
-            Binary label vector.
+            Binary label array.
 
         Notes
         -----
-        * If ``targets`` is constant (or ``q`` lands all samples on one side), the
-          result has a single value and :meth:`CPP.run` will reject it.
+        * Targets are converted to ``float64``. Raises ``ValueError`` up front if the
+          split would yield only one class (constant targets, or a cut leaving one
+          side empty), instead of failing later inside :meth:`CPP.run`.
+        * **Complexity:** O(n_samples log n_samples) from the quantile, negligible
+          beside CPP runtime.
+
+        See Also
+        --------
+        * :class:`aaanalysis.CPP`: consumes the returned binary label array via :meth:`CPP.run`.
+        * :meth:`get_labels_tiered`: fixed positive set vs stepwise-lowered negative cuts.
 
         Examples
         --------
@@ -1046,81 +1081,102 @@ class SequenceFeature:
         if label_test == label_ref:
             raise ValueError(f"'label_test' ({label_test}) should differ from 'label_ref' ({label_ref}).")
         # Convert targets
-        return get_labels_quantile_(targets=targets, q=q, label_test=label_test, label_ref=label_ref)
+        labels = get_labels_quantile_(targets=targets, q=q, label_test=label_test, label_ref=label_ref)
+        if len(np.unique(labels)) < 2:
+            raise ValueError(f"'targets' produce a single class at q={q} (all values equal, or the "
+                             f"cut leaves one side empty); adjust 'q' or 'targets'.")
+        return labels
 
     @staticmethod
-    def get_df_parts_reference(df_parts: pd.DataFrame = None,
-                               method: str = "scrambled",
-                               n: Optional[int] = None,
-                               random_state: Optional[int] = None,
-                               ) -> pd.DataFrame:
+    def get_labels_tiered(targets: ut.ArrayLike1D = None,
+                          q_pos: float = 0.8,
+                          list_q_neg: Sequence[float] = (0.8, 0.5, 0.3),
+                          label_test: int = 1,
+                          label_ref: int = 0,
+                          ) -> Dict[float, Tuple[np.ndarray, np.ndarray]]:
         """
-        Generate a reference ``df_parts`` matching the part lengths and composition of the input.
+        Build tiered binary label arrays sharing a fixed positive set across negative cuts.
 
-        Produces background reference rows for use as a negative/reference class
-        when no natural one exists, so :class:`CPP` can be applied to multi-class
-        and regression tasks. Each generated row borrows the per-part lengths of a
-        randomly chosen real row, so references match the real CPP part lengths
-        (e.g. fixed TMD/JMD) by construction. With ``method='scrambled'`` each
-        template part is shuffled in place (exact per-part amino acid composition);
-        with ``method='global_freq'`` residues are drawn from the column's
-        empirical canonical amino acid frequency. Concatenate the result with the
-        real ``df_parts`` and label the two groups before calling :meth:`CPP.run`.
+        Holds the positive set fixed at ``targets >= Q(q_pos)`` and sweeps a series of
+        negative cuts ``targets <= Q(q_neg)`` for each ``q_neg`` in ``list_q_neg``,
+        dropping the middle band each time. This compares CPP settings against the same
+        positives while the negatives move toward more extreme low values. Like
+        :meth:`get_labels_ovo`, each tier drops samples, so the caller applies the
+        returned ``row_mask`` to ``df_parts`` and builds a :class:`CPP` instance per tier.
 
         Parameters
         ----------
-        df_parts : pd.DataFrame, shape (n_samples, n_parts)
-            DataFrame of sequence parts (e.g. from :meth:`SequenceFeature.get_df_parts`).
-        method : str, default='scrambled'
-            Generation method, one of ``'scrambled'`` (shuffle a template part,
-            preserving composition) or ``'global_freq'`` (draw from the column's
-            empirical amino acid frequency).
-        n : int, optional
-            Number of reference rows to generate. If ``None``, matches the number
-            of rows in ``df_parts``.
-        random_state : int, optional
-            The seed used by the random number generator. If a positive integer, results of stochastic processes are
-            consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.
+        targets : array-like, shape (n_samples,)
+            Continuous target values for samples.
+        q_pos : float, default=0.8
+            Quantile in (0, 1) defining the fixed positive cut: positives are
+            ``targets >= Q(q_pos)``.
+        list_q_neg : sequence of float, default=(0.8, 0.5, 0.3)
+            Quantiles in (0, 1); for each, negatives are ``targets <= Q(q_neg)``
+            (positives take precedence on ties) and the middle band is dropped.
+        label_test : int, default=1
+            Value assigned to positive samples.
+        label_ref : int, default=0
+            Value assigned to negative samples.
 
         Returns
         -------
-        df_parts_ref : pd.DataFrame, shape (n, n_parts)
-            Reference parts with the same columns as ``df_parts`` and an index of
-            ``'REF<i>'`` identifiers.
+        dict_labels : dict
+            Dictionary mapping each ``q_neg`` to a tuple ``(row_mask, labels_subset)``,
+            where ``row_mask`` is a boolean array of shape (n_samples,) selecting the
+            tier's samples and ``labels_subset`` is the binary label array over the
+            masked subset.
 
         Notes
         -----
-        * Length matching holds per part column, so the reference rows can be
-          concatenated with ``df_parts`` and split identically by :class:`CPP`.
+        * Raises ``ValueError`` if any tier yields only one class (e.g. ``q_neg`` above
+          ``q_pos`` leaving no negatives).
+        * **Complexity:** O(n_samples log n_samples x n_tiers).
+
+        See Also
+        --------
+        * :class:`aaanalysis.CPP`: consumes each ``labels_subset`` on the ``df_parts`` row-subset.
+        * :meth:`get_labels_quantile`: single-cut variant that keeps all samples.
 
         Examples
         --------
-        .. include:: examples/sf_get_df_parts_reference.rst
+        .. include:: examples/sf_get_labels_tiered.rst
         """
         # Check input
-        ut.check_df_parts(df_parts=df_parts)
-        ut.check_str_options(name="method", val=method,
-                             list_str_options=[ut.MODE_SCRAMBLED, ut.MODE_GLOBAL_FREQ])
-        ut.check_number_range(name="n", val=n, min_val=1, accept_none=True, just_int=True)
-        random_state = ut.check_random_state(random_state=random_state)
-        # Generate reference parts
-        rng = np.random.default_rng(random_state)
-        return get_df_parts_reference_(df_parts=df_parts, method=method, n=n, rng=rng)
+        targets = ut.check_list_like(name="targets", val=targets, accept_none=False)
+        targets = np.asarray(targets, dtype=float)
+        ut.check_number_range(name="q_pos", val=q_pos, min_val=0, max_val=1,
+                              exclusive_limits=True, just_int=False)
+        list_q_neg = ut.check_list_like(name="list_q_neg", val=list_q_neg, accept_none=False)
+        if len(list_q_neg) == 0:
+            raise ValueError("'list_q_neg' should contain at least one quantile.")
+        for q_neg in list_q_neg:
+            ut.check_number_range(name="list_q_neg", val=q_neg, min_val=0, max_val=1,
+                                  exclusive_limits=True, just_int=False)
+        ut.check_number_val(name="label_test", val=label_test, just_int=True)
+        ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
+        if label_test == label_ref:
+            raise ValueError(f"'label_test' ({label_test}) should differ from 'label_ref' ({label_ref}).")
+        # Convert targets
+        return get_labels_tiered_(targets=targets, q_pos=q_pos, list_q_neg=list_q_neg,
+                                  label_test=label_test, label_ref=label_ref)
 
     @staticmethod
-    def get_df_parts_from_windows(dict_parts: Dict[str, Union[pd.DataFrame, ut.ArrayLike1D]] = None,
+    def get_df_parts_from_windows(dict_parts: Dict[str, Union[pd.DataFrame, Sequence[str]]] = None,
                                   ) -> pd.DataFrame:
         """
         Assemble a ``df_parts`` from per-part window sets (e.g. :class:`AAWindowSampler` outputs).
 
-        Builds a reference ``df_parts`` by stitching one window set per sequence
-        part, so each part can be generated with its **own** recipe. This unlocks
+        Builds a reference ``df_parts`` by stitching one window set per sequence part,
+        so each part can be generated with its **own** recipe. This unlocks
         biologically-motivated reference backgrounds where the parts differ in
-        physicochemical prior, e.g. a coil-propensity JMD-N, an alpha-helix TMD,
-        and a coil-propensity JMD-C, each produced by a separate call to
+        physicochemical prior, e.g. a coil-propensity JMD-N, an alpha-helix TMD, and a
+        coil-propensity JMD-C, each produced by a separate call to
         :meth:`AAWindowSampler.sample_synthetic` with a different ``generator`` and
         ``window_size``. The assembled frame is used as the reference class for
-        :class:`CPP` exactly like a real ``df_parts``.
+        :class:`CPP` exactly like a real ``df_parts``. This method does not sample
+        sequences itself; it only consumes window sets produced by
+        :class:`AAWindowSampler`.
 
         Parameters
         ----------
@@ -1128,8 +1184,10 @@ class SequenceFeature:
             Dictionary mapping each part name (one of :attr:`aaanalysis.utils.LIST_ALL_PARTS`,
             e.g. ``'jmd_n'``, ``'tmd'``, ``'jmd_c'``) to its window set. Each value is
             either a DataFrame with a ``'window'`` column (the output of
-            :meth:`AAWindowSampler.sample_synthetic`) or an array-like of equal-length
-            window strings. All parts must supply the same number of windows.
+            :meth:`AAWindowSampler.sample_synthetic`) or a sequence of window strings.
+            All window lists must be in the **same order** across parts (the i-th window
+            of each part forms the i-th reference row); differing orders silently break
+            the biological meaning of the assembled rows.
 
         Returns
         -------
@@ -1139,10 +1197,15 @@ class SequenceFeature:
 
         Notes
         -----
-        * Rows are aligned by position across parts, so the i-th window of every
-          part forms the i-th reference row.
-        * Concatenate the result with a real ``df_parts`` (matching columns) and
-          label the two groups before calling :meth:`CPP.run`.
+        * If the parts supply different numbers of windows, a ``RuntimeWarning`` is
+          issued and all parts are truncated to the smallest count.
+        * Concatenate the result with a real ``df_parts`` (matching columns) and label
+          the two groups before calling :meth:`CPP.run`.
+
+        See Also
+        --------
+        * :class:`aaanalysis.AAWindowSampler`: produces the per-part window sets (``sample_synthetic``).
+        * :class:`aaanalysis.CPP`: consumes the assembled ``df_parts`` via :meth:`CPP.run`.
 
         Examples
         --------
@@ -1153,7 +1216,7 @@ class SequenceFeature:
         if len(dict_parts) == 0:
             raise ValueError("'dict_parts' should not be empty.")
         data = {}
-        n_windows = None
+        counts = {}
         for part, source in dict_parts.items():
             if part not in ut.LIST_ALL_PARTS:
                 raise ValueError(f"'dict_parts' key '{part}' should be one of: {ut.LIST_ALL_PARTS}")
@@ -1169,12 +1232,14 @@ class SequenceFeature:
                 raise ValueError(f"'dict_parts['{part}']' should contain at least one window.")
             if not all(isinstance(w, str) for w in windows):
                 raise ValueError(f"'dict_parts['{part}']' windows should all be strings.")
-            if n_windows is None:
-                n_windows = len(windows)
-            elif len(windows) != n_windows:
-                raise ValueError(f"All parts in 'dict_parts' should have the same number of windows; "
-                                 f"'{part}' has {len(windows)} but expected {n_windows}.")
             data[part] = windows
+            counts[part] = len(windows)
+        # Align by position; on mismatch warn and truncate to the smallest count
+        n_windows = min(counts.values())
+        if len(set(counts.values())) > 1:
+            warnings.warn(f"window counts differ across parts {counts}; truncating to {n_windows}.",
+                          RuntimeWarning)
+            data = {part: windows[:n_windows] for part, windows in data.items()}
         # Assemble parts
         df_parts = pd.DataFrame(data, index=[f"REF{i}" for i in range(n_windows)])
         ut.check_df_parts(df_parts=df_parts)
