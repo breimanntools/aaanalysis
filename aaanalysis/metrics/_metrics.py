@@ -5,7 +5,7 @@ such as scikit-learn, scipy, or statsmodels.
 Developer note: Measures are implemented in aanalysis.utils.metrics to access them within the aanalysis package.
 """
 import numpy as np
-from typing import Optional
+from typing import Optional, Literal
 
 from aaanalysis.utils import (auc_adjusted_, kullback_leibler_divergence_, bic_score_,
                               per_protein_ap_, detection_metrics_, bootstrap_ci_,
@@ -371,7 +371,7 @@ def comp_bootstrap_ci(values: ut.ArrayLike1D = None,
 
 # Peak-preserving score smoothing
 def comp_smooth_scores(scores: ut.ArrayLike1D = None,
-                       method: str = "triangular",
+                       method: Literal["triangular", "gaussian"] = "triangular",
                        window: int = 2,
                        sigma: Optional[float] = None,
                        peak_preserving: bool = True,

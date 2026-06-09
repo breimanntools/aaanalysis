@@ -209,7 +209,14 @@ class CPPGrid(Tool):
         n_jobs : int, default=-1
             Number of workers used **across** configurations (``-1`` = all cores).
         backend : {'threads', 'loky'}, default='threads'
-            Joblib backend used across configurations.
+            Joblib parallelization backend used across configurations:
+
+            - ``'threads'``: shared-memory threading. ``df_seq`` / ``df_scales`` are
+              shared in-process without serialization (the default), and it sidesteps
+              the Python 3.14 / macOS process-spawn footgun.
+            - ``'loky'``: process-based parallelism. Each configuration runs in a
+              separate process — use when the per-configuration work is GIL-bound, at
+              the cost of serializing the shared data to each worker.
         """
         # Check input
         ut.check_df_seq(df_seq=df_seq)

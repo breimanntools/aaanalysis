@@ -17,7 +17,7 @@ predictor keys auto-register at ingest time).
 """
 
 import warnings
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -166,7 +166,7 @@ class AnnotationPreprocessor:
         self,
         df_seq: pd.DataFrame = None,
         features: Optional[List[str]] = None,
-        evidence: str = "manual",
+        evidence: Literal["experimental", "manual", "all"] = "manual",
         timeout: float = 30.0,
     ) -> pd.DataFrame:
         """Fetch UniProt features for every entry and map to ``df_annot``.
@@ -384,7 +384,7 @@ class AnnotationPreprocessor:
         df_seq: pd.DataFrame = None,
         df_annot: pd.DataFrame = None,
         features: List[str] = None,
-        on_mismatch: str = "raise",
+        on_mismatch: Literal["raise", "drop", "warn"] = "raise",
         return_df: bool = False,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Encode ``df_annot`` into a ``[0, 1]``-normalized per-residue ``dict_num``.

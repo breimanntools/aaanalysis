@@ -200,7 +200,7 @@ class AAclust(Wrapper):
             on_center: bool = True,
             min_th: float = 0.3,
             merge: bool = True,
-            metric: str = "euclidean",
+            metric: Literal["correlation", "manhattan", "euclidean", "cosine"] = "euclidean",
             names: Optional[List[str]] = None
             ) -> "AAclust":
         """
@@ -483,7 +483,7 @@ class AAclust(Wrapper):
     @staticmethod
     def comp_medoids(X: ut.ArrayLike2D,
                      labels: ut.ArrayLike1D = None,
-                     metric: str = "correlation"
+                     metric: Literal["correlation", "manhattan", "euclidean", "cosine"] = "correlation"
                      ) -> Tuple[ut.ArrayLike1D, ut.ArrayLike1D]:
         """
         Computes the medoid of each cluster based on the given labels.

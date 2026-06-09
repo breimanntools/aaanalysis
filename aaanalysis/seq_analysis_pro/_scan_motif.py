@@ -3,7 +3,7 @@ This is a script for the frontend of the scan_motif function, a wrapper
 around the FIMO CLI (MEME suite) that mirrors
 :meth:`aaanalysis.AAWindowSampler.sample_motif_matched`.
 """
-from typing import Optional, Union
+from typing import Optional, Union, Literal
 import shutil
 import subprocess
 import tempfile
@@ -135,7 +135,7 @@ def scan_motif(df_seq: pd.DataFrame = None,
                                   label_test: Union[int, float] = 1,
                                   label_ref: Union[int, float] = 0,
                                   role: str = ut.ROLE_NEG,
-                                  output_mode: str = ut.OUT_SEGMENTS,
+                                  output_mode: Literal["segments", "sequences"] = ut.OUT_SEGMENTS,
                                   max_stored_scores: Optional[int] = None,
                                   bg_file: Optional[Union[str, Path]] = None,
                                   motif_pseudo: Optional[float] = None,
@@ -188,7 +188,12 @@ def scan_motif(df_seq: pd.DataFrame = None,
     role : str, default='Negative'
         Role tag stored in the output's ``role`` column.
     output_mode : {'segments', 'sequences'}, default='segments'
-        Output schema; same as :meth:`AAWindowSampler.sample_motif_matched`.
+        Output schema (same as :meth:`AAWindowSampler.sample_motif_matched`); see Notes:
+
+        - ``'segments'``: one row per matched window — the window string plus its
+          provenance columns (``entry``, ``source_position``, ``role``, ...).
+        - ``'sequences'``: one row per source protein with a per-residue ``labels``
+          list (``label_test`` at matched positions, ``label_ref`` elsewhere).
     max_stored_scores : int, optional
         Maximum number of motif occurrences FIMO may store internally before
         truncating. FIMO's default is 100 000; raise this only when scanning

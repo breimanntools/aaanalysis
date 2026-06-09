@@ -1,7 +1,7 @@
 """
 This is a script for the frontend of the TreeModel class used to obtain Monte Carlo estimates of feature importance.
 """
-from typing import Optional, Dict, List, Tuple, Type, Union, Callable
+from typing import Optional, Dict, List, Tuple, Type, Union, Callable, Literal
 import warnings
 from sklearn.base import ClassifierMixin, BaseEstimator
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
@@ -526,7 +526,7 @@ class TreeModel:
 
     def select_features(self,
                         df_feat: pd.DataFrame = None,
-                        strategy: str = None,
+                        strategy: Optional[Literal["top_k", "threshold", "frequency"]] = None,
                         param: Union[int, float, dict] = None,
                         ) -> pd.DataFrame:
         """
