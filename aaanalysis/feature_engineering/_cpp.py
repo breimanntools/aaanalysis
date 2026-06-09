@@ -1,6 +1,7 @@
 """
 This is a script for the frontend of the CPP class, a sequence-based feature engineering object.
 """
+
 import warnings
 from typing import Dict, Optional, List, Tuple, Union
 
@@ -13,12 +14,21 @@ from aaanalysis.template_classes import Tool
 # Import supportive class (exception for importing from same sub-package)
 from ._backend.cpp.sequence_feature import get_split_kws_
 from ._backend.cpp.utils_feature import get_df_parts_
-from ._backend.check_feature import (check_split_kws,
-                                     check_parts_len, check_match_df_parts_split_kws,
-                                     check_df_scales, check_df_cat, check_match_df_parts_df_scales,
-                                     check_match_df_scales_df_cat, check_match_df_parts_features)
+from ._backend.check_feature import (
+    check_split_kws,
+    check_parts_len,
+    check_match_df_parts_split_kws,
+    check_df_scales,
+    check_df_cat,
+    check_match_df_parts_df_scales,
+    check_match_df_scales_df_cat,
+    check_match_df_parts_features,
+)
 from ._backend.cpp_run import (
-    cpp_run_single, cpp_run_batch, cpp_run_batch_num, cpp_run_sample_batched,
+    cpp_run_single,
+    cpp_run_batch,
+    cpp_run_batch_num,
+    cpp_run_sample_batched,
     _pick_feature_matrix_builder,
 )
 from ._backend.cpp._filters._get_feature_matrix_fast import AALookupCache
@@ -36,8 +46,10 @@ def _warn_gaps_encountered(df_parts=None, accept_gaps=False):
     (not merely allowed)."""
     if not accept_gaps:
         return
-    has_gap = any(df_parts[p].astype(str).str.contains(ut.STR_AA_GAP, regex=False).any()
-                  for p in list(df_parts))
+    has_gap = any(
+        df_parts[p].astype(str).str.contains(ut.STR_AA_GAP, regex=False).any()
+        for p in list(df_parts)
+    )
     if has_gap:
         warnings.warn(
             f"'accept_gaps' (True) encountered the gap symbol "
@@ -52,7 +64,8 @@ def _finalize_run_output(df_feat=None, return_stats=False):
     ``last_filter_stats_``, and optionally return the stats dict alongside."""
     for col in df_feat.select_dtypes(include=["object", "string"]).columns:
         df_feat[col] = df_feat[col].apply(
-            lambda x: str(x) if isinstance(x, (np.str_, np.generic)) else x)
+            lambda x: str(x) if isinstance(x, (np.str_, np.generic)) else x
+        )
     stats = df_feat.attrs.get("last_filter_stats")
     if return_stats:
         return df_feat, stats
@@ -63,8 +76,10 @@ def check_sample_in_df_seq(sample_name=None, df_seq=None):
     """Check if sample name in df_seq"""
     list_names = list(df_seq[ut.COL_NAME])
     if sample_name not in list_names:
-        error = f"'sample_name' ('{sample_name}') not in '{ut.COL_NAME}' of 'df_seq'." \
-                f"\nValid names are: {list_names}"
+        error = (
+            f"'sample_name' ('{sample_name}') not in '{ut.COL_NAME}' of 'df_seq'."
+            f"\nValid names are: {list_names}"
+        )
         raise ValueError(error)
 
 
@@ -74,41 +89,41 @@ def check_match_list_df_feat_list_df_parts(list_df_feat=None, list_df_parts=None
         ut.check_df_feat(df_feat=df_feat, list_parts=list(df_parts))
 
 
-def check_match_max_interpretability_top_n(max_interpretability=None, top_n=None):
-    """``simplify`` target selectors are mutually exclusive (at most one set)."""
-    if max_interpretability is not None and top_n is not None:
-        raise ValueError(
-            f"'max_interpretability' ({max_interpretability}) and 'top_n' ({top_n}) are "
-            f"mutually exclusive target selectors; set at most one (or neither to attempt "
-            f"every improvable feature).")
-
-
-def check_n_cv_labels(n_cv=None, labels=None):
-    """Validate ``n_cv`` (>=2, <= smallest class count) for the simplify CV gate."""
-    ut.check_number_range(name="n_cv", val=n_cv, min_val=2, just_int=True)
+def check_ml_cv_labels(ml_cv=None, labels=None):
+    """Validate ``ml_cv`` (>=2, <= smallest class count) for the simplify CV gate."""
+    ut.check_number_range(name="ml_cv", val=ml_cv, min_val=2, just_int=True)
     min_class_count = min(pd.Series(labels).value_counts())
-    if n_cv > min_class_count:
-        raise ValueError(f"'n_cv' ({n_cv}) should not be greater than the smallest class "
-                         f"count ({min_class_count}).")
+    if ml_cv > min_class_count:
+        raise ValueError(
+            f"'ml_cv' ({ml_cv}) should not be greater than the smallest class "
+            f"count ({min_class_count})."
+        )
 
 
 def check_ml_model(ml_model=None):
     """Validate the simplify CV-gate model: a string preset or a classifier instance."""
     if isinstance(ml_model, str):
-        ut.check_str_options(name="ml_model", val=ml_model,
-                             list_str_options=ut.LIST_CV_MODELS)
+        ut.check_str_options(
+            name="ml_model", val=ml_model, list_str_options=ut.LIST_CV_MODELS
+        )
     elif not (hasattr(ml_model, "fit") and hasattr(ml_model, "predict")):
-        raise ValueError(f"'ml_model' ({ml_model}) should be one of {ut.LIST_CV_MODELS} "
-                         f"or a scikit-learn classifier with 'fit'/'predict' methods.")
+        raise ValueError(
+            f"'ml_model' ({ml_model}) should be one of {ut.LIST_CV_MODELS} "
+            f"or a scikit-learn classifier with 'fit'/'predict' methods."
+        )
 
 
-def check_match_list_df_feat_names_feature_sets(list_df_feat=None, names_feature_sets=None):
+def check_match_list_df_feat_names_feature_sets(
+    list_df_feat=None, names_feature_sets=None
+):
     """Check if length of list_df_feat and names match"""
     if names_feature_sets is None:
-        return None # Skip check
+        return None  # Skip check
     if len(list_df_feat) != len(names_feature_sets):
-        raise ValueError(f"Length of 'list_df_feat' ({len(list_df_feat)}) and 'names_feature_sets'"
-                         f" ({len(names_feature_sets)} does not match) ")
+        raise ValueError(
+            f"Length of 'list_df_feat' ({len(list_df_feat)}) and 'names_feature_sets'"
+            f" ({len(names_feature_sets)} does not match) "
+        )
 
 
 def _check_dict_num(df_seq=None, dict_num=None):
@@ -155,12 +170,17 @@ def _check_dict_num_df_scales_match(dict_num=None, df_scales=None):
         )
 
 
-def check_match_df_seq_df_parts(df_seq=None, df_parts=None, jmd_n_len=None, jmd_c_len=None):
+def check_match_df_seq_df_parts(
+    df_seq=None, df_parts=None, jmd_n_len=None, jmd_c_len=None
+):
     """Verify ``df_seq`` derives parts equal to ``df_parts`` (CPP.run_num parity guard)."""
     list_parts = list(df_parts)
     try:
         df_parts_derived = get_df_parts_(
-            df_seq=df_seq, list_parts=list_parts, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len
+            df_seq=df_seq,
+            list_parts=list_parts,
+            jmd_n_len=jmd_n_len,
+            jmd_c_len=jmd_c_len,
         )
     except Exception as e:
         raise ValueError(
@@ -240,7 +260,8 @@ def _derive_dict_part_lens(df_parts=None):
         col = df_parts[part].to_list()
         lens = np.fromiter(
             (sum(c != ut.STR_AA_GAP for c in s) for s in col),
-            dtype=np.int64, count=len(col),
+            dtype=np.int64,
+            count=len(col),
         )
         dict_part_lens[part] = lens
     return dict_part_lens
@@ -268,15 +289,17 @@ class CPP(Tool):
     df_cat
         DataFrame with categories for physicochemical amino acid **Scales**.
     """
-    def __init__(self,
-                 df_parts: pd.DataFrame = None,
-                 split_kws: Optional[dict] = None,
-                 df_scales: Optional[pd.DataFrame] = None,
-                 df_cat: Optional[pd.DataFrame] = None,
-                 accept_gaps: bool = False,
-                 verbose: bool = True,
-                 random_state: Optional[int] = None,
-                 ):
+
+    def __init__(
+        self,
+        df_parts: pd.DataFrame = None,
+        split_kws: Optional[dict] = None,
+        df_scales: Optional[pd.DataFrame] = None,
+        df_cat: Optional[pd.DataFrame] = None,
+        accept_gaps: bool = False,
+        verbose: bool = True,
+        random_state: Optional[int] = None,
+    ):
         """
         Parameters
         ----------
@@ -328,9 +351,13 @@ class CPP(Tool):
         check_df_scales(df_scales=df_scales)
         check_df_cat(df_cat=df_cat)
         ut.check_bool(name="accept_gaps", val=accept_gaps)
-        df_parts = check_match_df_parts_df_scales(df_parts=df_parts, df_scales=df_scales, accept_gaps=accept_gaps)
+        df_parts = check_match_df_parts_df_scales(
+            df_parts=df_parts, df_scales=df_scales, accept_gaps=accept_gaps
+        )
         check_match_df_parts_split_kws(df_parts=df_parts, split_kws=split_kws)
-        df_scales, df_cat = check_match_df_scales_df_cat(df_cat=df_cat, df_scales=df_scales, verbose=verbose)
+        df_scales, df_cat = check_match_df_scales_df_cat(
+            df_cat=df_cat, df_scales=df_scales, verbose=verbose
+        )
         # Internal attributes
         self._accept_gaps = accept_gaps
         self._verbose = verbose
@@ -349,28 +376,29 @@ class CPP(Tool):
         self.last_filter_stats_ = None
 
     # Main method
-    def run(self,
-            labels: ut.ArrayLike1D = None,
-            label_test: int = 1,
-            label_ref: int = 0,
-            n_filter: int = 100,
-            n_pre_filter: Optional[int] = None,
-            pct_pre_filter: int = 5,
-            max_std_test: float = 0.2,
-            max_overlap: float = 0.5,
-            max_cor: float = 0.5,
-            check_cat: bool = True,
-            parametric: bool = False,
-            start: int = 1,
-            tmd_len: int = 20,
-            jmd_n_len: int = 10,
-            jmd_c_len: int = 10,
-            n_jobs: Optional[int] = None,
-            vectorized: bool = True,
-            n_batches: Optional[int] = None,
-            n_sample_batches: Optional[int] = None,
-            return_stats: bool = False,
-            ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
+    def run(
+        self,
+        labels: ut.ArrayLike1D = None,
+        label_test: int = 1,
+        label_ref: int = 0,
+        n_filter: int = 100,
+        n_pre_filter: Optional[int] = None,
+        pct_pre_filter: int = 5,
+        max_std_test: float = 0.2,
+        max_overlap: float = 0.5,
+        max_cor: float = 0.5,
+        check_cat: bool = True,
+        parametric: bool = False,
+        start: int = 1,
+        tmd_len: int = 20,
+        jmd_n_len: int = 10,
+        jmd_c_len: int = 10,
+        n_jobs: Optional[int] = None,
+        vectorized: bool = True,
+        n_batches: Optional[int] = None,
+        n_sample_batches: Optional[int] = None,
+        return_stats: bool = False,
+    ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
         """
         Perform Comparative Physicochemical Profiling (CPP) algorithm: creation and two-step filtering of
         interpretable sequence-based features.
@@ -512,91 +540,158 @@ class CPP(Tool):
         # Check input
         ut.check_number_val(name="label_test", val=label_test, just_int=True)
         ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
-        labels = ut.check_labels(labels=labels, vals_required=[label_test, label_ref],
-                                 len_required=len(self.df_parts), allow_other_vals=False)
+        labels = ut.check_labels(
+            labels=labels,
+            vals_required=[label_test, label_ref],
+            len_required=len(self.df_parts),
+            allow_other_vals=False,
+        )
         ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
-        ut.check_number_range(name="n_pre_filter", val=n_pre_filter, min_val=1, accept_none=True, just_int=True)
-        ut.check_number_range(name="pct_pre_filter", val=pct_pre_filter, min_val=5, max_val=100, just_int=True)
-        ut.check_number_range(name="max_std_test", val=max_std_test, min_val=0.0, max_val=1.0,
-                              just_int=False, exclusive_limits=True)
-        ut.check_number_range(name="max_overlap", val=max_overlap, min_val=0.0, max_val=1.0, just_int=False)
-        ut.check_number_range(name="max_cor", val=max_cor, min_val=0.0, max_val=1.0, just_int=False)
+        ut.check_number_range(
+            name="n_pre_filter",
+            val=n_pre_filter,
+            min_val=1,
+            accept_none=True,
+            just_int=True,
+        )
+        ut.check_number_range(
+            name="pct_pre_filter",
+            val=pct_pre_filter,
+            min_val=5,
+            max_val=100,
+            just_int=True,
+        )
+        ut.check_number_range(
+            name="max_std_test",
+            val=max_std_test,
+            min_val=0.0,
+            max_val=1.0,
+            just_int=False,
+            exclusive_limits=True,
+        )
+        ut.check_number_range(
+            name="max_overlap",
+            val=max_overlap,
+            min_val=0.0,
+            max_val=1.0,
+            just_int=False,
+        )
+        ut.check_number_range(
+            name="max_cor", val=max_cor, min_val=0.0, max_val=1.0, just_int=False
+        )
         ut.check_bool(name="check_cat", val=check_cat)
         ut.check_bool(name="parametric", val=parametric)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
         jmd_n_len = ut.check_jmd_n_len(jmd_n_len=jmd_n_len)
         jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
-        args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+        args_len, _ = check_parts_len(
+            tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len
+        )
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         ut.check_bool(name="vectorized", val=vectorized)
         ut.check_bool(name="return_stats", val=return_stats)
         n_scales = len(list(self.df_scales))
-        ut.check_number_range(name="n_batches", val=n_batches, just_int=True,
-                              accept_none=True, min_val=2, max_val=n_scales)
-        ut.check_number_range(name="n_sample_batches", val=n_sample_batches, just_int=True,
-                              accept_none=True, min_val=2, max_val=len(self.df_parts))
+        ut.check_number_range(
+            name="n_batches",
+            val=n_batches,
+            just_int=True,
+            accept_none=True,
+            min_val=2,
+            max_val=n_scales,
+        )
+        ut.check_number_range(
+            name="n_sample_batches",
+            val=n_sample_batches,
+            just_int=True,
+            accept_none=True,
+            min_val=2,
+            max_val=len(self.df_parts),
+        )
         if n_batches is not None and n_sample_batches is not None:
-            raise ValueError(f"'n_batches' ({n_batches}) and 'n_sample_batches' ({n_sample_batches}) "
-                             f"should not be set together; choose scale-batching or sample-batching, not both.")
+            raise ValueError(
+                f"'n_batches' ({n_batches}) and 'n_sample_batches' ({n_sample_batches}) "
+                f"should not be set together; choose scale-batching or sample-batching, not both."
+            )
         _warn_gaps_encountered(df_parts=self.df_parts, accept_gaps=self._accept_gaps)
         # Route through the unified CPP pipeline + Cython kernel
         # (with Python fallback) — bit-exact, guaranteed by
         # ``test_run_num_parity``.
-        args = dict(df_parts=self.df_parts, split_kws=self.split_kws,
-                    df_scales=self.df_scales, df_cat=self.df_cat,
-                    verbose=self._verbose, accept_gaps=self._accept_gaps,
-                    labels=labels, label_test=label_test, label_ref=label_ref,
-                    n_filter=n_filter, n_pre_filter=n_pre_filter, pct_pre_filter=pct_pre_filter,
-                    max_std_test=max_std_test, max_overlap=max_overlap, max_cor=max_cor,
-                    check_cat=check_cat, parametric=parametric,
-                    start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
-                    n_jobs=n_jobs, vectorized=vectorized)
+        args = dict(
+            df_parts=self.df_parts,
+            split_kws=self.split_kws,
+            df_scales=self.df_scales,
+            df_cat=self.df_cat,
+            verbose=self._verbose,
+            accept_gaps=self._accept_gaps,
+            labels=labels,
+            label_test=label_test,
+            label_ref=label_ref,
+            n_filter=n_filter,
+            n_pre_filter=n_pre_filter,
+            pct_pre_filter=pct_pre_filter,
+            max_std_test=max_std_test,
+            max_overlap=max_overlap,
+            max_cor=max_cor,
+            check_cat=check_cat,
+            parametric=parametric,
+            start=start,
+            tmd_len=tmd_len,
+            jmd_n_len=jmd_n_len,
+            jmd_c_len=jmd_c_len,
+            n_jobs=n_jobs,
+            vectorized=vectorized,
+        )
         builder = _pick_feature_matrix_builder()
         if self._aa_lookup_cache is None:
             self._aa_lookup_cache = AALookupCache.from_df(
-                df_parts=self.df_parts, df_scales=self.df_scales,
+                df_parts=self.df_parts,
+                df_scales=self.df_scales,
             )
         if n_sample_batches is not None:
             df_feat = cpp_run_sample_batched(
-                **args, n_sample_batches=n_sample_batches,
+                **args,
+                n_sample_batches=n_sample_batches,
             )
         elif n_batches is None:
             df_feat = cpp_run_single(
-                df_seq=None, dict_num=None,
+                df_seq=None,
+                dict_num=None,
                 aa_lookup_cache=self._aa_lookup_cache,
                 feature_matrix_builder=builder,
                 **args,
             )
         else:
             df_feat = cpp_run_batch(
-                **args, n_batches=n_batches,
+                **args,
+                n_batches=n_batches,
                 feature_matrix_builder=builder,
             )
         self.last_filter_stats_ = df_feat.attrs.get("last_filter_stats")
         return _finalize_run_output(df_feat=df_feat, return_stats=return_stats)
 
-    def run_num(self,
-                dict_num_parts: Dict[str, np.ndarray] = None,
-                labels: ut.ArrayLike1D = None,
-                label_test: int = 1,
-                label_ref: int = 0,
-                n_filter: int = 100,
-                n_pre_filter: Optional[int] = None,
-                pct_pre_filter: int = 5,
-                max_std_test: float = 0.2,
-                max_overlap: float = 0.5,
-                max_cor: float = 0.5,
-                check_cat: bool = True,
-                parametric: bool = False,
-                start: int = 1,
-                tmd_len: int = 20,
-                jmd_n_len: int = 10,
-                jmd_c_len: int = 10,
-                n_jobs: Optional[int] = None,
-                vectorized: bool = True,
-                n_batches: Optional[int] = None,
-                return_stats: bool = False,
-                ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
+    def run_num(
+        self,
+        dict_num_parts: Dict[str, np.ndarray] = None,
+        labels: ut.ArrayLike1D = None,
+        label_test: int = 1,
+        label_ref: int = 0,
+        n_filter: int = 100,
+        n_pre_filter: Optional[int] = None,
+        pct_pre_filter: int = 5,
+        max_std_test: float = 0.2,
+        max_overlap: float = 0.5,
+        max_cor: float = 0.5,
+        check_cat: bool = True,
+        parametric: bool = False,
+        start: int = 1,
+        tmd_len: int = 20,
+        jmd_n_len: int = 10,
+        jmd_c_len: int = 10,
+        n_jobs: Optional[int] = None,
+        vectorized: bool = True,
+        n_batches: Optional[int] = None,
+        return_stats: bool = False,
+    ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
         """
         Numerical-mode Comparative Physicochemical Profiling (CPP): same algorithm as
         :meth:`run`, but per-residue values come from a pre-sliced numerical tensor
@@ -728,15 +823,45 @@ class CPP(Tool):
             )
         ut.check_number_val(name="label_test", val=label_test, just_int=True)
         ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
-        labels = ut.check_labels(labels=labels, vals_required=[label_test, label_ref],
-                                 len_required=len(self.df_parts), allow_other_vals=False)
+        labels = ut.check_labels(
+            labels=labels,
+            vals_required=[label_test, label_ref],
+            len_required=len(self.df_parts),
+            allow_other_vals=False,
+        )
         ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
-        ut.check_number_range(name="n_pre_filter", val=n_pre_filter, min_val=1, accept_none=True, just_int=True)
-        ut.check_number_range(name="pct_pre_filter", val=pct_pre_filter, min_val=5, max_val=100, just_int=True)
-        ut.check_number_range(name="max_std_test", val=max_std_test, min_val=0.0, max_val=1.0,
-                              just_int=False, exclusive_limits=True)
-        ut.check_number_range(name="max_overlap", val=max_overlap, min_val=0.0, max_val=1.0, just_int=False)
-        ut.check_number_range(name="max_cor", val=max_cor, min_val=0.0, max_val=1.0, just_int=False)
+        ut.check_number_range(
+            name="n_pre_filter",
+            val=n_pre_filter,
+            min_val=1,
+            accept_none=True,
+            just_int=True,
+        )
+        ut.check_number_range(
+            name="pct_pre_filter",
+            val=pct_pre_filter,
+            min_val=5,
+            max_val=100,
+            just_int=True,
+        )
+        ut.check_number_range(
+            name="max_std_test",
+            val=max_std_test,
+            min_val=0.0,
+            max_val=1.0,
+            just_int=False,
+            exclusive_limits=True,
+        )
+        ut.check_number_range(
+            name="max_overlap",
+            val=max_overlap,
+            min_val=0.0,
+            max_val=1.0,
+            just_int=False,
+        )
+        ut.check_number_range(
+            name="max_cor", val=max_cor, min_val=0.0, max_val=1.0, just_int=False
+        )
         ut.check_bool(name="check_cat", val=check_cat)
         ut.check_bool(name="parametric", val=parametric)
         ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
@@ -746,8 +871,14 @@ class CPP(Tool):
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         ut.check_bool(name="vectorized", val=vectorized)
         ut.check_bool(name="return_stats", val=return_stats)
-        ut.check_number_range(name="n_batches", val=n_batches, just_int=True,
-                              accept_none=True, min_val=2, max_val=n_df_scales_cols)
+        ut.check_number_range(
+            name="n_batches",
+            val=n_batches,
+            just_int=True,
+            accept_none=True,
+            min_val=2,
+            max_val=n_df_scales_cols,
+        )
 
         # Re-derive per-(entry, part) real lengths from df_parts non-gap chars.
         # The user-facing dict_num_parts carries only the NaN-padded tensor; lens
@@ -755,15 +886,29 @@ class CPP(Tool):
         dict_part_lens = _derive_dict_part_lens(df_parts=self.df_parts)
 
         args = dict(
-            df_parts=self.df_parts, split_kws=self.split_kws,
-            df_scales=self.df_scales, df_cat=self.df_cat,
-            verbose=self._verbose, accept_gaps=self._accept_gaps,
-            labels=labels, label_test=label_test, label_ref=label_ref,
-            n_filter=n_filter, n_pre_filter=n_pre_filter, pct_pre_filter=pct_pre_filter,
-            max_std_test=max_std_test, max_overlap=max_overlap, max_cor=max_cor,
-            check_cat=check_cat, parametric=parametric,
-            start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
-            n_jobs=n_jobs, vectorized=vectorized,
+            df_parts=self.df_parts,
+            split_kws=self.split_kws,
+            df_scales=self.df_scales,
+            df_cat=self.df_cat,
+            verbose=self._verbose,
+            accept_gaps=self._accept_gaps,
+            labels=labels,
+            label_test=label_test,
+            label_ref=label_ref,
+            n_filter=n_filter,
+            n_pre_filter=n_pre_filter,
+            pct_pre_filter=pct_pre_filter,
+            max_std_test=max_std_test,
+            max_overlap=max_overlap,
+            max_cor=max_cor,
+            check_cat=check_cat,
+            parametric=parametric,
+            start=start,
+            tmd_len=tmd_len,
+            jmd_n_len=jmd_n_len,
+            jmd_c_len=jmd_c_len,
+            n_jobs=n_jobs,
+            vectorized=vectorized,
         )
 
         # Cython by default; falls back to pure-Python kernel if the compiled `.so`
@@ -772,9 +917,11 @@ class CPP(Tool):
         builder = _pick_feature_matrix_builder()
         if n_batches is None:
             df_feat = cpp_run_single(
-                df_seq=None, dict_num=None,
-                dict_part_vals=dict_num_parts, dict_part_lens=dict_part_lens,
-                aa_lookup_cache=None,            # numerical path doesn't use AA lookup
+                df_seq=None,
+                dict_num=None,
+                dict_part_vals=dict_num_parts,
+                dict_part_lens=dict_part_lens,
+                aa_lookup_cache=None,  # numerical path doesn't use AA lookup
                 feature_matrix_builder=builder,  # consumed by seq-mode only; harmless here
                 **args,
             )
@@ -782,23 +929,26 @@ class CPP(Tool):
             # Batch the D axis (the dict_num_parts dimensions). Bit-exact with the
             # single-pass path — see cpp_run_batch_num.
             df_feat = cpp_run_batch_num(
-                dict_part_vals=dict_num_parts, dict_part_lens=dict_part_lens,
-                n_batches=n_batches, **args,
+                dict_part_vals=dict_num_parts,
+                dict_part_lens=dict_part_lens,
+                n_batches=n_batches,
+                **args,
             )
         self.last_filter_stats_ = df_feat.attrs.get("last_filter_stats")
         return _finalize_run_output(df_feat=df_feat, return_stats=return_stats)
 
-    def eval(self,
-             list_df_feat: List[pd.DataFrame] = None,
-             labels: ut.ArrayLike1D = None,
-             label_test: int = 1,
-             label_ref: int = 0,
-             min_th: float = 0.0,
-             names_feature_sets: Optional[List[str]] = None,
-             list_cat: Optional[List[str]] = None,
-             list_df_parts: Optional[List[pd.DataFrame]] = None,
-             n_jobs: Optional[int] = 1,
-             ) -> pd.DataFrame:
+    def eval(
+        self,
+        list_df_feat: List[pd.DataFrame] = None,
+        labels: ut.ArrayLike1D = None,
+        label_test: int = 1,
+        label_ref: int = 0,
+        min_th: float = 0.0,
+        names_feature_sets: Optional[List[str]] = None,
+        list_cat: Optional[List[str]] = None,
+        list_df_parts: Optional[List[pd.DataFrame]] = None,
+        n_jobs: Optional[int] = 1,
+    ) -> pd.DataFrame:
         """
         Evaluate the quality of different sets of identified Comparative Physicochemical
         Profiling (CPP) features.
@@ -869,70 +1019,93 @@ class CPP(Tool):
         .. include:: examples/cpp_eval.rst
         """
         # Check input
-        list_df_feat = ut.check_list_like(name="list_df_feat", val=list_df_feat, min_len=2)
+        list_df_feat = ut.check_list_like(
+            name="list_df_feat", val=list_df_feat, min_len=2
+        )
         ut.check_number_val(name="label_test", val=label_test, just_int=True)
         ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
-        labels = ut.check_labels(labels=labels, vals_required=[label_test, label_ref],
-                                 len_required=len(self.df_parts), allow_other_vals=False)
-        ut.check_number_range(name="min_th", val=min_th, min_val=-1, max_val=1, just_int=False)
-        names_feature_sets = ut.check_list_like(name="names_feature_sets", val=names_feature_sets, accept_none=True,
-                                                accept_str=True, check_all_str_or_convertible=True)
-        list_cat = ut.check_list_like(name="list_cat", val=list_cat, accept_none=True, accept_str=True,
-                                      check_all_str_or_convertible=True)
+        labels = ut.check_labels(
+            labels=labels,
+            vals_required=[label_test, label_ref],
+            len_required=len(self.df_parts),
+            allow_other_vals=False,
+        )
+        ut.check_number_range(
+            name="min_th", val=min_th, min_val=-1, max_val=1, just_int=False
+        )
+        names_feature_sets = ut.check_list_like(
+            name="names_feature_sets",
+            val=names_feature_sets,
+            accept_none=True,
+            accept_str=True,
+            check_all_str_or_convertible=True,
+        )
+        list_cat = ut.check_list_like(
+            name="list_cat",
+            val=list_cat,
+            accept_none=True,
+            accept_str=True,
+            check_all_str_or_convertible=True,
+        )
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
-        check_match_list_df_feat_names_feature_sets(list_df_feat=list_df_feat,
-                                                    names_feature_sets=names_feature_sets)
-        list_df_parts = ut.check_list_like(name="list_df_parts", val=list_df_parts, accept_none=True)
+        check_match_list_df_feat_names_feature_sets(
+            list_df_feat=list_df_feat, names_feature_sets=names_feature_sets
+        )
+        list_df_parts = ut.check_list_like(
+            name="list_df_parts", val=list_df_parts, accept_none=True
+        )
         mask_test = [x == label_test for x in labels]
         if list_df_parts is None:
             list_df_parts = [self.df_parts[mask_test]] * len(list_df_feat)
         if list_cat is None:
             list_cat = ut.LIST_CAT
-        check_match_list_df_feat_list_df_parts(list_df_feat=list_df_feat, list_df_parts=list_df_parts)
-        df_eval = evaluate_features(list_df_feat=list_df_feat,
-                                    names_feature_sets=names_feature_sets,
-                                    list_cat=list_cat,
-                                    list_df_parts=list_df_parts,
-                                    df_scales=self.df_scales,
-                                    accept_gaps=self._accept_gaps,
-                                    min_th=min_th,
-                                    n_jobs=n_jobs,
-                                    random_state=self._random_state)
+        check_match_list_df_feat_list_df_parts(
+            list_df_feat=list_df_feat, list_df_parts=list_df_parts
+        )
+        df_eval = evaluate_features(
+            list_df_feat=list_df_feat,
+            names_feature_sets=names_feature_sets,
+            list_cat=list_cat,
+            list_df_parts=list_df_parts,
+            df_scales=self.df_scales,
+            accept_gaps=self._accept_gaps,
+            min_th=min_th,
+            n_jobs=n_jobs,
+            random_state=self._random_state,
+        )
         return df_eval
 
-    def simplify(self,
-                 df_feat: pd.DataFrame = None,
-                 labels: ut.ArrayLike1D = None,
-                 X: Optional[ut.ArrayLike2D] = None,
-                 strategy: str = "greedy",
-                 max_interpretability: Optional[int] = None,
-                 top_n: Optional[int] = None,
-                 min_cor: float = 0.7,
-                 ml_model: Union[str, object] = "svm",
-                 metric: str = "balanced_accuracy",
-                 tol: float = 0.0,
-                 n_cv: int = 5,
-                 on_unimprovable: str = "keep",
-                 redundancy_tie_break: str = "interpretability",
-                 label_test: int = 1,
-                 label_ref: int = 0,
-                 max_std_test: float = 0.2,
-                 max_cor: float = 0.5,
-                 max_overlap: float = 0.5,
-                 check_cat: bool = True,
-                 return_details: bool = False,
-                 random_state: Optional[int] = None,
-                 ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
+    def simplify(
+        self,
+        df_feat: pd.DataFrame = None,
+        labels: ut.ArrayLike1D = None,
+        strategy: str = "greedy",
+        max_interpret_grade: Optional[int] = None,
+        min_cor: float = 0.7,
+        ml_model: Union[str, object] = "svm",
+        ml_metric: str = "balanced_accuracy",
+        ml_th: float = 0.0,
+        ml_cv: int = 5,
+        on_unimprovable: str = "keep",
+        redundancy_tie_break: str = "interpretability",
+        label_test: int = 1,
+        label_ref: int = 0,
+        max_std_test: float = 0.2,
+        max_cor: float = 0.5,
+        max_overlap: float = 0.5,
+        check_cat: bool = True,
+        return_details: bool = False,
+    ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
         """
         Simplify a feature set by swapping scales for more interpretable correlated ones.
 
         For each feature (``PART-SPLIT-SCALE``), an alternative scale from a **more
-        interpretable AAontology subcategory** (interpretability rating 1-10, 1 = best;
+        interpretable AAontology subcategory** (interpretability grade 1-10, 1 = best;
         see :func:`load_scales` ``top_explain_n``) that **correlates** with the
         original scale is substituted, keeping ``PART-SPLIT``. The swapped feature's statistics
         are recomputed; a swap is accepted only if it passes CPP's per-feature filtering
         (``max_std_test``) and a cross-validation gate (performance not worse than the current
-        set, within ``tol``). The swapped set is then redundancy-reduced, yielding a
+        set, within ``ml_th``). The swapped set is then redundancy-reduced, yielding a
         more interpretable and ideally smaller ``df_feat``. The candidate pool (the full rated
         AAontology scale set) is loaded internally.
 
@@ -942,18 +1115,16 @@ class CPP(Tool):
             Feature DataFrame from :meth:`run` (the standardized CPP output schema).
         labels : array-like, shape (n_samples,)
             Class labels for samples in sequence DataFrame (typically, test=1, reference=0).
-        X : array-like, shape (n_samples, n_features), optional
-            Feature matrix matching ``df_feat`` (baseline only; row-aligned to ``self.df_parts``).
-            If ``None``, it is recomputed internally. Swapped columns are always recomputed.
+        # TODO introduce here with bullet points and then very cocnise description of each. Keep the note info.
+        # TODO we updated the load_scales (check this out
         strategy : str, default='greedy'
             Simplification strategy: ``'greedy'``, ``'consolidate'``, or ``'swap_all'``
             (see Notes for how each behaves).
-        max_interpretability : int, optional
-            Interpretability ceiling (1-10): every feature whose scale subcategory is rated
-            worse (higher) than this is targeted for replacement. Mutually exclusive with ``top_n``.
-        top_n : int, optional
-            Target the ``top_n`` worst-interpretability features. Mutually exclusive with
-            ``max_interpretability``. If both are ``None``, every improvable feature is attempted.
+        max_interpret_grade : int, optional
+            The maximum (worst) interpretability **grade** kept (1-10, where **grade 1 is the
+            best / most interpretable, so lower is better**). Every feature whose scale
+            subcategory is graded worse (higher) than this is targeted for replacement. If
+            ``None`` (default), every improvable feature is attempted.
         min_cor : float, default=0.7
             Minimum absolute Pearson correlation between a candidate scale and the original scale
             (between 0 and 1); anti-correlation is allowed via the absolute value.
@@ -962,11 +1133,12 @@ class CPP(Tool):
             preset ``'svm'`` (default; fast), ``'rf'`` (recommended for non-linear feature
             relationships, but slower), or ``'log_reg'`` (fastest); or any configured scikit-learn
             classifier instance (e.g. ``SVC(kernel='poly', C=0.1)``), used as-is.
-        metric : str, default='balanced_accuracy'
+        ml_metric : str, default='balanced_accuracy'
             Scoring metric for the CV gate (any scikit-learn classification scorer name).
-        tol : float, default=0.0
-            A swap is accepted if its CV score is at least ``baseline - tol`` (>=0).
-        n_cv : int, default=5
+        ml_th : float, default=0.0
+            CV-gate tolerance: a swap is accepted if its CV score is at least ``baseline - ml_th``
+            (>=0).
+        ml_cv : int, default=5
             Number of cross-validation folds (>=2, <= smallest class count).
         on_unimprovable : str, default='keep'
             What to do with a targeted feature that cannot be improved: ``'keep'`` (retain the
@@ -990,9 +1162,6 @@ class CPP(Tool):
         return_details : bool, default=False
             If ``True``, also return a long-form ``df_candidates`` reporting every candidate
             considered (scale, interpretability, correlation, recomputed std, accepted-flag).
-        random_state : int, optional
-            Random state for the CV-gate model (preset estimators). Overrides the constructor's
-            ``random_state``.
 
         Returns
         -------
@@ -1004,21 +1173,26 @@ class CPP(Tool):
 
         Notes
         -----
+        * The CV-gate model is seeded from the CPP instance's ``random_state``; set it once via
+          ``aa.CPP(..., random_state=...)`` for a reproducible result.
+        * Redundancy reduction **protects original features** — it never drops a feature the user
+          already had, it only removes a *swapped* feature when the swap made it redundant with a
+          kept feature (using signed correlation, matching :meth:`run`).
         * The ``strategy`` controls how swaps are chosen and validated:
 
           - **'greedy'**: per-feature. Each targeted feature is swapped to its best correlated
-            candidate that keeps the cross-validation score within ``tol`` of the current set;
+            candidate that keeps the cross-validation score within ``ml_th`` of the current set;
             otherwise the next candidate is tried. Each swap is individually justified.
           - **'consolidate'**: set-level. Interpretable subcategories are taken best-first, and
             every targeted feature that can move into the current subcategory is swapped as one
-            batch, which is kept only if the set CV score stays within ``tol``. Funnels features
+            batch, which is kept only if the set CV score stays within ``ml_th``. Funnels features
             into the fewest subcategories.
           - **'swap_all'**: apply every eligible best-candidate swap with no cross-validation
-            (fastest); ``ml_model`` / ``metric`` / ``tol`` / ``n_cv`` are ignored. A pure
+            (fastest); ``ml_model`` / ``ml_metric`` / ``ml_th`` / ``ml_cv`` are ignored. A pure
             interpretability transform to evaluate yourself afterwards.
 
         * Features whose scale is **not a rated AAontology scale** (e.g. ``run_num`` pseudo-scales
-          or unclassified scales) carry no interpretability rating and are skipped. If no feature
+          or unclassified scales) carry no interpretability grade and are skipped. If no feature
           is rated, ``df_feat`` is returned unchanged with a ``RuntimeWarning``.
         * An anti-correlated swap flips the sign of ``mean_dif`` (the feature still discriminates);
           the correlation sign is reported in ``df_candidates``.
@@ -1036,41 +1210,80 @@ class CPP(Tool):
         df_feat = ut.check_df_feat(df_feat=df_feat, list_parts=list(self.df_parts))
         ut.check_number_val(name="label_test", val=label_test, just_int=True)
         ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
-        labels = ut.check_labels(labels=labels, vals_required=[label_test, label_ref],
-                                 len_required=len(self.df_parts), allow_other_vals=False)
-        check_match_df_parts_features(df_parts=self.df_parts, features=list(df_feat[ut.COL_FEATURE]))
-        ut.check_str_options(name="strategy", val=strategy, list_str_options=ut.LIST_SIMPLIFY_STRATEGIES)
-        ut.check_str_options(name="on_unimprovable", val=on_unimprovable,
-                             list_str_options=ut.LIST_ON_UNIMPROVABLE)
-        ut.check_str_options(name="redundancy_tie_break", val=redundancy_tie_break,
-                             list_str_options=ut.LIST_REDUNDANCY_TIE_BREAK)
-        ut.check_str(name="metric", val=metric)
+        labels = ut.check_labels(
+            labels=labels,
+            vals_required=[label_test, label_ref],
+            len_required=len(self.df_parts),
+            allow_other_vals=False,
+        )
+        check_match_df_parts_features(
+            df_parts=self.df_parts, features=list(df_feat[ut.COL_FEATURE])
+        )
+        ut.check_str_options(
+            name="strategy", val=strategy, list_str_options=ut.LIST_SIMPLIFY_STRATEGIES
+        )
+        ut.check_str_options(
+            name="on_unimprovable",
+            val=on_unimprovable,
+            list_str_options=ut.LIST_ON_UNIMPROVABLE,
+        )
+        ut.check_str_options(
+            name="redundancy_tie_break",
+            val=redundancy_tie_break,
+            list_str_options=ut.LIST_REDUNDANCY_TIE_BREAK,
+        )
+        ut.check_str(name="ml_metric", val=ml_metric)
         check_ml_model(ml_model=ml_model)
-        ut.check_number_range(name="min_cor", val=min_cor, min_val=0, max_val=1, just_int=False)
-        ut.check_number_range(name="max_std_test", val=max_std_test, min_val=0, max_val=1, just_int=False)
-        ut.check_number_range(name="max_cor", val=max_cor, min_val=0, max_val=1, just_int=False)
-        ut.check_number_range(name="max_overlap", val=max_overlap, min_val=0, max_val=1, just_int=False)
-        ut.check_number_val(name="tol", val=tol, just_int=False)
-        ut.check_number_range(name="max_interpretability", val=max_interpretability, min_val=1,
-                              max_val=10, just_int=True, accept_none=True)
-        ut.check_number_range(name="top_n", val=top_n, min_val=1, just_int=True, accept_none=True)
+        ut.check_number_range(
+            name="min_cor", val=min_cor, min_val=0, max_val=1, just_int=False
+        )
+        ut.check_number_range(
+            name="max_std_test", val=max_std_test, min_val=0, max_val=1, just_int=False
+        )
+        ut.check_number_range(
+            name="max_cor", val=max_cor, min_val=0, max_val=1, just_int=False
+        )
+        ut.check_number_range(
+            name="max_overlap", val=max_overlap, min_val=0, max_val=1, just_int=False
+        )
+        ut.check_number_val(name="ml_th", val=ml_th, just_int=False)
+        ut.check_number_range(
+            name="max_interpret_grade",
+            val=max_interpret_grade,
+            min_val=1,
+            max_val=10,
+            just_int=True,
+            accept_none=True,
+        )
         ut.check_bool(name="check_cat", val=check_cat)
         ut.check_bool(name="return_details", val=return_details)
-        check_match_max_interpretability_top_n(max_interpretability=max_interpretability, top_n=top_n)
-        check_n_cv_labels(n_cv=n_cv, labels=labels)
-        if X is not None:
-            X = ut.check_X(X=X, min_n_features=1)
-        random_state = self._random_state if random_state is None else random_state
-        random_state = ut.check_random_state(random_state=random_state)
+        check_ml_cv_labels(ml_cv=ml_cv, labels=labels)
+        random_state = ut.check_random_state(random_state=self._random_state)
         # The recomputed p-value column must match the input df_feat's test choice.
         parametric = ut.COL_PVAL_TTEST in list(df_feat)
         _warn_gaps_encountered(df_parts=self.df_parts, accept_gaps=self._accept_gaps)
-        return simplify_cpp_(df_feat=df_feat, df_parts=self.df_parts, df_scales_self=self.df_scales,
-                             labels=labels, X=X, strategy=strategy,
-                             max_interpretability=max_interpretability, top_n=top_n, min_cor=min_cor,
-                             metric=metric, tol=tol, n_cv=n_cv, on_unimprovable=on_unimprovable,
-                             redundancy_tie_break=redundancy_tie_break, label_test=label_test,
-                             label_ref=label_ref, max_std_test=max_std_test, max_cor=max_cor,
-                             max_overlap=max_overlap, check_cat=check_cat, parametric=parametric,
-                             accept_gaps=self._accept_gaps, return_details=return_details,
-                             ml_model=ml_model, random_state=random_state)
+        return simplify_cpp_(
+            df_feat=df_feat,
+            df_parts=self.df_parts,
+            df_scales_self=self.df_scales,
+            labels=labels,
+            strategy=strategy,
+            max_interpret_grade=max_interpret_grade,
+            min_cor=min_cor,
+            ml_metric=ml_metric,
+            ml_th=ml_th,
+            ml_cv=ml_cv,
+            on_unimprovable=on_unimprovable,
+            redundancy_tie_break=redundancy_tie_break,
+            label_test=label_test,
+            label_ref=label_ref,
+            max_std_test=max_std_test,
+            max_cor=max_cor,
+            max_overlap=max_overlap,
+            check_cat=check_cat,
+            parametric=parametric,
+            accept_gaps=self._accept_gaps,
+            return_details=return_details,
+            ml_model=ml_model,
+            random_state=random_state,
+        )

@@ -400,15 +400,27 @@ _Avoid_: min_corr, redundancy threshold (use the AAclust term `min_th`).
 **feature simplification** (`CPP.simplify`):
 The post-hoc rewriting of a fitted [[df_feat]] into a **more interpretable, and ideally
 smaller** one: each feature's scale is swapped for a *correlated* scale drawn from a
-**strictly better-rated [[interpretability rating]] subcategory** (keeping `PART-SPLIT`), the
-feature stats are recomputed, and the swap is accepted only if it keeps passing CPP filtering
-(`max_std_test`) and does not reduce a random-forest cross-validation score. The swapped set is
-then redundancy-reduced (keeping the most interpretable member of a redundant pair), so the
-result speaks in fewer, clearer physicochemical subcategories. The candidate pool is the full
-rated AAontology scale set, loaded internally. Distinct from **feature selection** (which
-*subsets* features by importance) and CPP **feature engineering** (which *creates* features) —
-simplification *relabels* a feature onto a more interpretable scale while preserving its signal.
+**strictly better-graded subcategory** (a lower **interpretability grade** — see below; keeping
+`PART-SPLIT`), the feature stats are recomputed, and the swap is accepted only if it keeps
+passing CPP filtering (`max_std_test`) and does not reduce a cross-validation score (the CV-gate
+model `ml_model` / `ml_metric` / `ml_th` / `ml_cv`, seeded from the CPP instance's
+`random_state`). The swapped set is then redundancy-reduced — but this **protects original
+features**: it only removes a *swapped* feature that became redundant with a kept feature
+(signed correlation, matching `run`), never a feature the user already had. `max_interpret_grade`
+caps the worst grade kept; `strategy` is `greedy` / `consolidate` / `swap_all`. The candidate
+pool is the full rated AAontology scale set, loaded internally. Distinct from **feature
+selection** (which *subsets* features by importance) and CPP **feature engineering** (which
+*creates* features) — simplification *relabels* a feature onto a more interpretable scale while
+preserving its signal.
 _Avoid_: feature reduction (overloaded with selection), scale substitution (the unit is a feature).
+
+**interpretability grade**:
+The user-facing name for the [[interpretability rating]] (a 1-10 per-subcategory value, **1 =
+best / most interpretable, so lower is better**) when it is used as a *threshold* on the output —
+`CPP.simplify(max_interpret_grade=g)` keeps features graded `<= g` and replaces worse ones. Same
+number as the `interpretability` column; "grade" is chosen so the parameter name signals that
+lower is better.
+_Avoid_: interpretability score (a high score usually reads as good; the grade is inverted).
 
 ## Relationships
 

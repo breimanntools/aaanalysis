@@ -2,6 +2,8 @@
 This is a script for filtering scales from df_scales, such as using correlation or subcategory coverage.
 """
 
+from typing import Literal
+
 import aaanalysis.utils as ut
 
 LIST_DATASETS_WITH_FEATURES = ["DOM_GSEC"]
@@ -16,7 +18,7 @@ def check_name(name=None):
 
 
 # II Main Functions
-def load_features(name="DOM_GSEC"):
+def load_features(name: Literal["DOM_GSEC"] = "DOM_GSEC"):
     """
     Load feature sets for protein benchmarking datasets.
 

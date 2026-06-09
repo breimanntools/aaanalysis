@@ -2,7 +2,7 @@
 This is a script for the frontend of the EmbeddingPreprocessor class for
 preparing protein-language-model (PLM) embeddings as inputs to ``CPP.run_num``.
 """
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple, Union, Literal
 import warnings
 
 import numpy as np
@@ -128,7 +128,7 @@ class EmbeddingPreprocessor:
         self,
         df_seq: pd.DataFrame = None,
         embeddings: Dict[str, np.ndarray] = None,
-        method: str = "minmax",
+        method: Literal["minmax", "quantile", "sigmoid"] = "minmax",
         clip: Tuple[float, float] = (1.0, 99.0),
         return_df: bool = False,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
@@ -318,7 +318,7 @@ class EmbeddingPreprocessor:
         df_stds: pd.DataFrame = None,
         cat_min_th: float = 0.5,
         subcat_min_th: float = 0.7,
-        metric: str = "correlation",
+        metric: Literal["correlation", "cosine"] = "correlation",
         random_state: int = 0,
     ) -> pd.DataFrame:
         """

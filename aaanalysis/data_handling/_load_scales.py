@@ -2,7 +2,7 @@
 This is a script for scale loading function. Please define new loading functions by their loaded data by introducing
  a new data table in docs/source/index/tables_templates.rst.
 """
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 import numpy as np
 from pandas import DataFrame
 from aaanalysis import utils as ut
@@ -118,7 +118,7 @@ def _adjust_dtypes(df=None, name=None):
 
 
 # II Main Functions
-def load_scales(name: str = "scales",
+def load_scales(name: Literal["scales", "scales_raw", "scales_cat", "scales_pc", "top60", "top60_eval"] = "scales",
                 just_aaindex: bool = False,
                 unclassified_out: bool = False,
                 top60_n: Optional[Union[int, str]] = None,
