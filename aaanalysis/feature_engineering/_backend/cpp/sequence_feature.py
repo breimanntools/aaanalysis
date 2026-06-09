@@ -12,21 +12,9 @@ from ._utils_feature_stat import add_stat_
 
 
 # I Helper Functions
-def _part_aa_freq(col=None, aa_list=None, aa_index=None):
-    """Empirical canonical-AA frequency over all strings in one part column."""
-    counts = np.zeros(len(aa_list), dtype=np.int64)
-    for s in col:
-        for c in s:
-            j = aa_index.get(c)
-            if j is not None:
-                counts[j] += 1
-    total = counts.sum()
-    if total == 0:
-        raise ValueError("'df_parts' contains no canonical amino acids for composition matching.")
-    return counts / total
 
 
-# II Main Functions
+# II Main functions
 # Parts and splits
 def get_split_kws_(n_split_min=1, n_split_max=15, steps_pattern=None, n_min=2, n_max=4, len_max=15,
                    steps_periodicpattern=None, split_types=None):
@@ -108,66 +96,3 @@ def get_df_feat_(features=None, df_parts=None, labels=None,
     # Standardize the df_feat column order (issue #18); amino_acids_* append last.
     df = ut.sort_cols_feat(df_feat=df)
     return df
-
-
-# Multi-class / regression label conversion and reference generation
-def get_labels_ovr_(labels=None, label_test=1, label_ref=0):
-    """One-vs-rest: per class, a full-length binary vector (class -> test, rest -> ref)."""
-    labels = np.asarray(labels)
-    classes = sorted(set(labels.tolist()))
-    return {c: np.where(labels == c, label_test, label_ref).astype(int) for c in classes}
-
-
-def get_labels_ovo_(labels=None, label_test=1, label_ref=0):
-    """One-vs-one: per class pair (a, b), a row mask + binary labels for the masked subset."""
-    labels = np.asarray(labels)
-    classes = sorted(set(labels.tolist()))
-    out = {}
-    for i, a in enumerate(classes):
-        for b in classes[i + 1:]:
-            mask = np.isin(labels, [a, b])
-            binary = np.where(labels[mask] == a, label_test, label_ref).astype(int)
-            out[(a, b)] = (mask, binary)
-    return out
-
-
-def get_labels_quantile_(targets=None, q=0.5, label_test=1, label_ref=0):
-    """Single-threshold split of continuous targets into binary labels (>= q-quantile -> test)."""
-    targets = np.asarray(targets, dtype=float)
-    cut = float(np.quantile(targets, q))
-    return np.where(targets >= cut, label_test, label_ref).astype(int)
-
-
-def get_df_parts_reference_(df_parts=None, method=ut.MODE_SCRAMBLED, n=None, rng=None):
-    """Generate reference ``df_parts`` rows, per-part length- and composition-faithful.
-
-    Each generated row borrows the per-part lengths of a randomly chosen real
-    row (so references match the real CPP part lengths by construction).
-    ``scrambled`` shuffles that template part in place (exact per-part
-    composition); ``global_freq`` draws from the column's empirical canonical-AA
-    frequency.
-    """
-    aa_list = list(ut.LIST_CANONICAL_AA)
-    aa_index = {a: i for i, a in enumerate(aa_list)}
-    list_parts = list(df_parts)
-    n_real = len(df_parts)
-    if n is None:
-        n = n_real
-    template_idx = rng.integers(0, n_real, size=n)
-    data = {}
-    for part in list_parts:
-        col = df_parts[part].to_numpy()
-        probs = _part_aa_freq(col=col, aa_list=aa_list, aa_index=aa_index) \
-            if method == ut.MODE_GLOBAL_FREQ else None
-        strings = []
-        for i in range(n):
-            template = col[template_idx[i]]
-            if method == ut.MODE_SCRAMBLED:
-                chars = list(template)
-                rng.shuffle(chars)
-                strings.append("".join(chars))
-            else:
-                strings.append("".join(rng.choice(aa_list, size=len(template), p=probs)))
-        data[part] = strings
-    index = [f"REF{i}" for i in range(n)]
-    return pd.DataFrame(data, index=index)
