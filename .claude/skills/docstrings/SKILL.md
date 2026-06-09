@@ -25,6 +25,8 @@ SK=.claude/skills/docstrings/scripts
 python $SK/check_docstrings.py aaanalysis        # or a single file; --fix for safe edits
 # 2. Doc-vs-signature drift (high-signal, the Necessary tier):
 python $SK/doc_signature_drift.py aaanalysis
+# 3. Example notebooks: every parameter covered + outputs SAVED (else blank on RTD):
+python $SK/check_example_notebooks.py examples/   # or a single .ipynb
 ```
 
 - `check_docstrings.py` flags the structural codes (summary form, Parameters in
@@ -38,6 +40,16 @@ python $SK/doc_signature_drift.py aaanalysis
   `PARAM-EXTRA`. It suppresses intentional patterns (signature default `None` /
   `ut.X` constants / non-literal factories / ambiguous unions), so the drift hits
   are almost always real.
+- `check_example_notebooks.py` enforces the **example-notebook standard**
+  (`docstring_guide.rst` → *Notebook content & structure* / *Examples &
+  verification*): flags `EMPTY-OUTPUT` (a code cell with no saved output — renders
+  **blank** on Read the Docs since docs show *stored* outputs) and
+  `UNCOVERED-PARAM` (a public parameter the notebook never mentions). **Recurring
+  miss** ([[feedback-example-notebook-standard]]): every example must **introduce
+  every parameter** (one cell per group) **and** be committed **with executed
+  `aa.display_df` outputs**. `NotebookEdit` / a fresh `Write` clear outputs, so
+  after any cell edit re-run `jupyter nbconvert --to notebook --execute --inplace
+  examples/<sub>/<name>.ipynb` and confirm outputs before committing.
 - **The docs build is the final gate** neither script sees: `cd docs && make
   html` must succeed (RST render errors, broken `.. include::`, stale autosummary
   stubs surface only there).
