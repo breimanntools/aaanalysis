@@ -1074,7 +1074,6 @@ class CPP(Tool):
             random_state=self._random_state,
         )
         return df_eval
-
     def simplify(
         self,
         df_feat: pd.DataFrame = None,
@@ -1086,6 +1085,7 @@ class CPP(Tool):
         ml_metric: str = "balanced_accuracy",
         ml_th: float = 0.0,
         ml_cv: int = 5,
+        allow_drop: bool = True,
         on_unimprovable: Literal["keep", "drop", "drop_if_perf_allows"] = "keep",
         redundancy_tie_break: Literal["interpretability", "performance"] = "interpretability",
         label_test: int = 1,
@@ -1144,6 +1144,10 @@ class CPP(Tool):
             (>=0).
         ml_cv : int, default=5
             Number of cross-validation folds (>=2, <= smallest class count).
+        allow_drop : bool, default=True
+            Whether ``simplify`` may **drop** features. If ``False``, it only swaps scales and never
+            removes a feature, so the output keeps every input feature 1:1 (the redundancy reduction
+            is skipped and ``on_unimprovable`` is forced to ``'keep'``).
         on_unimprovable : str, default='keep'
             What to do with a targeted feature that cannot be improved: ``'keep'`` (retain the
             original), ``'drop'`` (remove it), or ``'drop_if_perf_allows'`` (remove only if the
@@ -1261,6 +1265,7 @@ class CPP(Tool):
         )
         ut.check_bool(name="check_cat", val=check_cat)
         ut.check_bool(name="return_details", val=return_details)
+        ut.check_bool(name="allow_drop", val=allow_drop)
         check_ml_cv_labels(ml_cv=ml_cv, labels=labels)
         random_state = ut.check_random_state(random_state=self._random_state)
         # The recomputed p-value column must match the input df_feat's test choice.
@@ -1277,6 +1282,7 @@ class CPP(Tool):
             ml_metric=ml_metric,
             ml_th=ml_th,
             ml_cv=ml_cv,
+            allow_drop=allow_drop,
             on_unimprovable=on_unimprovable,
             redundancy_tie_break=redundancy_tie_break,
             label_test=label_test,

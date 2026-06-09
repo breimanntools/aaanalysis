@@ -712,9 +712,14 @@ def simplify_cpp_(
     ml_model=ut.MODEL_SVM,
     random_state=None,
     verbose=False,
+    allow_drop=True,
 ):
     """Backend entry for ``CPP.simplify``: df_feat or (df_feat, df_candidates)."""
     df_feat = df_feat.reset_index(drop=True).copy()
+    # allow_drop=False -> swap-only: never drop a feature (no unimprovable-drop, no
+    # redundancy reduction), so the output keeps every input feature 1:1.
+    if not allow_drop:
+        on_unimprovable = ut.ON_UNIMPROVABLE_KEEP
     df_scales_pool, df_cor, dict_all_scales, dict_interp, dict_meta = (
         _load_candidate_pool_()
     )
@@ -807,16 +812,17 @@ def simplify_cpp_(
         df_scales_pool=df_scales_pool,
         df_scales_self=df_scales_self,
     )
-    df_feat_new = _apply_redundancy_(
-        df_feat=df_feat_new,
-        df_cor=df_cor_present,
-        dict_interp=dict_interp,
-        swapped_ids=swapped_ids,
-        max_overlap=max_overlap,
-        max_cor=max_cor,
-        check_cat=check_cat,
-        tie_break=redundancy_tie_break,
-    )
+    if allow_drop:
+        df_feat_new = _apply_redundancy_(
+            df_feat=df_feat_new,
+            df_cor=df_cor_present,
+            dict_interp=dict_interp,
+            swapped_ids=swapped_ids,
+            max_overlap=max_overlap,
+            max_cor=max_cor,
+            check_cat=check_cat,
+            tie_break=redundancy_tie_break,
+        )
     df_feat_new = ut.sort_cols_feat(df_feat=df_feat_new)
     if return_details:
         return df_feat_new, _build_df_candidates_(records=records)
