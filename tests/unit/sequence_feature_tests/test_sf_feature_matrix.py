@@ -3,6 +3,7 @@ from hypothesis import given, settings
 import hypothesis.strategies as st
 import pytest
 import numpy as np
+import pandas as pd
 import random
 import aaanalysis as aa
 
@@ -126,6 +127,23 @@ class TestFeatureMatrix:
             sf.feature_matrix(features=features, df_parts=df_parts, n_jobs="invalid")
         with pytest.raises(ValueError):
             sf.feature_matrix(features=features, df_parts=df_parts, n_jobs=-2)
+
+    # df_feat DataFrame accepted for 'features'
+    def test_valid_features_df_feat(self):
+        """A df_feat DataFrame is accepted and equals the list-of-ids form."""
+        features, df_parts, labels = _get_df_feat_input(n_feat=15, n_samples=20)
+        sf = aa.SequenceFeature()
+        df_feat = pd.DataFrame({"feature": features})
+        X_df = sf.feature_matrix(features=df_feat, df_parts=df_parts)
+        X_list = sf.feature_matrix(features=features, df_parts=df_parts)
+        assert np.array_equal(X_df, X_list)
+
+    def test_invalid_features_df_feat_missing_col(self):
+        """A DataFrame without a 'feature' column raises ValueError."""
+        features, df_parts = _get_df_feat_input()[:2]
+        sf = aa.SequenceFeature()
+        with pytest.raises(ValueError, match="feature"):
+            sf.feature_matrix(features=pd.DataFrame({"wrong": features}), df_parts=df_parts)
 
 class TestFeatureMatrixComplex:
     """Complex positive tests for the 'feature_matrix' method."""

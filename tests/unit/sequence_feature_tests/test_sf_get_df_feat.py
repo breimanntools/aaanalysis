@@ -152,6 +152,23 @@ class TestGetDfFeat:
         df_feat = sf.get_df_feat(df_parts=df_parts, features=features, labels=labels, n_jobs=None)
         assert isinstance(df_feat, pd.DataFrame)
 
+    # df_feat DataFrame accepted for 'features' (re-score path)
+    def test_valid_features_df_feat(self):
+        """A df_feat DataFrame is accepted for 'features'."""
+        features, df_parts, labels = _get_df_feat_input(n_feat=15, n_samples=20)
+        sf = aa.SequenceFeature()
+        df_in = pd.DataFrame({"feature": features})
+        df_out = sf.get_df_feat(features=df_in, df_parts=df_parts, labels=labels)
+        assert isinstance(df_out, pd.DataFrame)
+        assert list(df_out["feature"]) == features
+
+    def test_invalid_features_df_feat_missing_col(self):
+        """A DataFrame without a 'feature' column raises ValueError."""
+        features, df_parts, labels = _get_df_feat_input()
+        sf = aa.SequenceFeature()
+        with pytest.raises(ValueError, match="feature"):
+            sf.get_df_feat(features=pd.DataFrame({"wrong": features}), df_parts=df_parts, labels=labels)
+
     # Negative test
     def test_invalid_features(self):
         """Test with invalid 'features' inputs."""

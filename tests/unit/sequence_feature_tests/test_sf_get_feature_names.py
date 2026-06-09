@@ -2,6 +2,7 @@
 from hypothesis import given, settings, strategies as st
 import pytest
 import random
+import pandas as pd
 import aaanalysis as aa
 aa.options["verbose"] = False
 
@@ -124,3 +125,18 @@ class TestGetFeatureNames:
         features = get_random_features()
         with pytest.raises(ValueError):
             sf.get_feature_names(features=features, jmd_n_len=jmd_n_len)
+
+    # df_feat DataFrame accepted for 'features'
+    def test_valid_features_df_feat(self):
+        """A df_feat DataFrame is accepted and equals the list-of-ids form."""
+        sf = aa.SequenceFeature()
+        features = get_random_features(n_feat=20)
+        df_feat = pd.DataFrame({"feature": features})
+        assert sf.get_feature_names(features=df_feat) == sf.get_feature_names(features=features)
+
+    def test_invalid_features_df_feat_missing_col(self):
+        """A DataFrame without a 'feature' column raises ValueError."""
+        sf = aa.SequenceFeature()
+        features = get_random_features(n_feat=20)
+        with pytest.raises(ValueError, match="feature"):
+            sf.get_feature_names(features=pd.DataFrame({"wrong": features}))
