@@ -113,7 +113,7 @@ they answer "additive → which v1.x minor" vs "breaking/heavy → v2.X".
     `feature_map`, `dPULearnPlot.pca`, CPP-SHAP `heatmap`, `aa.plot_rank`) with
     `plotting_prelude` styling; **seaborn-style 3-wide gallery** (`_static/img/protocols_gallery.png`
     + per-protocol thumbs + reproducible `_artwork/thumb_scripts/`). All 10 run green. Added
-    `docs/protocol_style_guide.md`.
+    `docs/guides/protocol_style_guide.md`.
   - **#86 → CLOSED** (delivered as **P6** compositional-vs-positional) · **#90 → CLOSED**
     (delivered as **P7** select-&-reduce). Epic **#35 stays open** for the open tail
     (standalone *Scale selection / AAclust* protocol).
@@ -248,7 +248,7 @@ they answer "additive → which v1.x minor" vs "breaking/heavy → v2.X".
   ignores that integration/e2e is v2-deferred.
 
 ## Issue quality (style audit + full rewrite — 2026-06-06)
-New issue-writing standard: **`docs/issue_style_guide.md`** (Problem · Goal · Requirements ·
+New issue-writing standard: **`docs/guides/issue_style_guide.md`** (Problem · Goal · Requirements ·
 **measurable KPIs** · scope · deps · standards), seeded by the strongest issues (**#61**, **#62**).
 - **🟢 Solid from the start (untouched):** #61, #62, #16, #18, #37, #40, #42, #45, #63, #64, #65, #22, #47, #74.
 - **🟢 Born in-contract (2026-06-06 antibody-feedback pass):** #90, #91, #93 (filed directly to the

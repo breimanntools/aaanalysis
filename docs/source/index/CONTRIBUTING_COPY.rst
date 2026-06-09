@@ -157,7 +157,7 @@ Run a specific file or directory with:
 
 This will execute all the test cases in the tests/ directory. Check out our
 `README on testing <https://github.com/breimanntools/aaanalysis/blob/master/tests/README_TESTING>`_. See further
-useful commands in our `Project Cheat Sheet <https://github.com/breimanntools/aaanalysis/blob/master/docs/project_cheat_sheet.md>`_.
+useful commands in our `Project Cheat Sheet <https://github.com/breimanntools/aaanalysis/blob/master/docs/guides/project_cheat_sheet.md>`_.
 
 
 Pull Requests

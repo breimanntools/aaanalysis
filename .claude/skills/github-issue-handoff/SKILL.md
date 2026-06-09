@@ -1,11 +1,11 @@
 ---
 name: github-issue-handoff
-description: Audit all open GitHub issues for the aaanalysis package against its scope and coding standards (CLAUDE.md + .claude/rules/sharp-edges.md), flagging each as ready / needs-revision / conflicts / already-addressed, detecting overlaps that must not be developed in parallel, and writing a prioritized step-by-step implementation plan to docs/handoff_github_issues.md. Use when the user wants to review, triage, audit, or scope GitHub issues, refresh the issue handoff, decide what to implement next, or plan parallel work across issues.
+description: Audit all open GitHub issues for the aaanalysis package against its scope and coding standards (CLAUDE.md + .claude/rules/sharp-edges.md), flagging each as ready / needs-revision / conflicts / already-addressed, detecting overlaps that must not be developed in parallel, and writing a prioritized step-by-step implementation plan to docs/guides/handoff_github_issues.md. Use when the user wants to review, triage, audit, or scope GitHub issues, refresh the issue handoff, decide what to implement next, or plan parallel work across issues.
 ---
 
 # GitHub issue handoff
 
-Produce/refresh `docs/handoff_github_issues.md`: a scope-and-standards audit of every
+Produce/refresh `docs/guides/handoff_github_issues.md`: a scope-and-standards audit of every
 open issue plus a prioritized, parallelization-aware implementation plan. The output is
 a *handoff* — another session (or a parallel one) should be able to pick any lane and run.
 
@@ -32,7 +32,7 @@ a *handoff* — another session (or a parallel one) should be able to pick any l
 5. **Order + lane it.** Produce a numbered implementation order (prio:1 → prio:3, respecting
    dependencies and quick wins) and group independent work into parallel *lanes* that never
    touch the same files.
-6. **Write `docs/handoff_github_issues.md`** using the template in REFERENCE.md. If it already
+6. **Write `docs/guides/handoff_github_issues.md`** using the template in REFERENCE.md. If it already
    exists, update it in place (preserve any human-added notes; refresh the audit + counts).
 
 ## Rules
