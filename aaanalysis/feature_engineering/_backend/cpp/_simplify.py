@@ -38,14 +38,16 @@ def _load_candidate_pool_():
     ``(category, subcategory, scale_name, scale_description)``.
     """
     df_scales_pool = ut.load_default_scales()  # (20 AA, n_scales)
-    df_cat_pool = ut.load_default_scales(
-        scale_cat=True
-    )  # incl. interpretability/top_explain
+    df_cat_pool = ut.load_default_scales(scale_cat=True)  # per-scale classification
     df_cor = df_scales_pool.corr()  # scale x scale Pearson
     dict_all_scales = _get_dict_all_scales(df_scales=df_scales_pool)
-    dict_interp = dict(
-        zip(df_cat_pool[ut.COL_SCALE_ID], df_cat_pool[ut.COL_INTERPRETABILITY])
-    )
+    # Interpretability is a per-subcategory rating (single source: df_subcat); map it onto scales.
+    df_subcat = ut.load_default_subcat()
+    interp_by_subcat = dict(zip(df_subcat[ut.COL_SUBCAT], df_subcat[ut.COL_INTERPRETABILITY]))
+    dict_interp = {
+        sid: interp_by_subcat.get(sub)
+        for sid, sub in zip(df_cat_pool[ut.COL_SCALE_ID], df_cat_pool[ut.COL_SUBCAT])
+    }
     dict_meta = {
         sid: (cat, sub, name, des)
         for sid, cat, sub, name, des in zip(

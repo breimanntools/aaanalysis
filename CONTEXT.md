@@ -386,12 +386,16 @@ A simplified amino-acid scale set restricted to the **n most interpretable AAont
 _Avoid_: simplified scales, interpretable subset, top_subcat (the xlsx-era name — the column and selector are `top_explain`).
 
 **interpretability tier** (`top_explain` column):
-The cumulative inclusion threshold (5,10,…,60) assigned to each classified subcategory; selecting `top_explain_n=n` keeps every scale whose subcategory has `top_explain <= n`. The 7 `Unclassified (...)` subcategories have `top_explain = NaN` and are always excluded by a tier selection (so `unclassified_out` is moot there). Surfaced as a `df_cat` column **only** when `top_explain_n` is set.
+The cumulative inclusion threshold (5,10,…,60) assigned to each classified subcategory; selecting `top_explain_n=n` keeps every scale whose subcategory has `top_explain <= n`. The 7 `Unclassified (...)` subcategories have `top_explain = NaN` and are always excluded by a tier selection (so `unclassified_out` is moot there). Lives on [[subcategory overview]] (`df_subcat`) — its single source; the per-scale `df_cat` no longer carries it, and tier selection joins it on by subcategory.
 _Avoid_: interpretability level, rank, top_subcat.
 
 **interpretability rating** (`interpretability` column):
-A per-subcategory 1–10 score (1 = most interpretable) underlying the tiering; like `top_explain`, present in `df_cat` only under a `top_explain_n` selection. Distinct from a *tier*: the rating is the raw judgement, the tier is the cumulative cut.
+A per-subcategory 1–10 score (1 = most interpretable) underlying the tiering. Lives on [[subcategory overview]] (`df_subcat`), not on the per-scale `df_cat`. Distinct from a *tier*: the rating is the raw judgement, the tier is the cumulative cut.
 _Avoid_: interpretability score (overloaded), explainability.
+
+**subcategory overview** (`df_subcat`, `aa.load_scales(name="subcat")`):
+One row per AAontology subcategory (74) — the single home for per-subcategory [[interpretability rating]] and [[interpretability tier]], plus `cluster`, two scale counts, and `subcategory_description` / `key_references`. The two counts are AAindex-aware: `n_scales` (all member scales) and `n_scales_aaindex` (excluding the non-AAindex `LINS`/`KOEH` scales), computed live — interpretability and tier are AAindex-independent (subcategory-intrinsic). `just_aaindex=True` drops subcategories with no AAindex scales; `unclassified_out=True` drops the `Unclassified (...)` rows. Companion to `scales_cat` (the per-scale classification), which no longer carries the interpretability columns.
+_Avoid_: df_cat_int, subcat table (the object is `df_subcat`).
 
 **top_explain_min_th**:
 The Pearson-correlation threshold (∈ {0.3,…,0.9} or `None`) for an optional `AAclust` redundancy reduction layered on a tier, served from **pre-computed** per-tier selections (AAclust default settings, fixed seed). `None` = no reduction. Reduction is computed **per tier** (medoids are not nested across tiers) and on **dual grids** (with / without AAindex) so `just_aaindex` stays correct. May leave a subcategory with no representative — the reduced set need not cover every tier subcategory. See ADR-0025.
