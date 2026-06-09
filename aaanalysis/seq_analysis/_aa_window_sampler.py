@@ -1,7 +1,7 @@
 """
 This is a script for the frontend of the AAWindowSampler class.
 """
-from typing import Optional, List, Tuple, Union, Dict, Callable
+from typing import Optional, List, Tuple, Union, Dict, Callable, Literal
 import math
 import numbers
 import numpy as np
@@ -435,13 +435,13 @@ class AAWindowSampler:
                             label_test: Union[int, float] = 1,
                             label_ref: Union[int, float] = 0,
                             role: str = ut.ROLE_NEG,
-                            output_mode: str = ut.OUT_SEGMENTS,
+                            output_mode: Literal["segments", "sequences"] = ut.OUT_SEGMENTS,
                             aa_context_col: Optional[str] = None,
                             context_in: Optional[Union[str, List]] = None,
                             context_out: Optional[Union[str, List]] = None,
                             motif_pwm: Optional[pd.DataFrame] = None,
                             motif_score_threshold: Optional[float] = None,
-                            motif_match: str = "in",
+                            motif_match: Literal["in", "out"] = "in",
                             seed: Optional[int] = None,
                             ) -> pd.DataFrame:
         """Sample windows from proteins that contain at least one test position.
@@ -487,7 +487,13 @@ class AAWindowSampler:
         role : str, default='Negative'
             Role tag stored in the output's ``role`` column.
         output_mode : {'segments', 'sequences'}, default='segments'
-            Output schema. See Notes.
+            Output schema (see Notes):
+
+            - ``'segments'``: one row per sampled window with schema ``[entry_win,
+              entry, sequence, window, source_position, label, role, strategy]``.
+            - ``'sequences'``: one row per source protein with a per-residue ``labels``
+              list (``label_test`` at positives, ``label_ref`` at sampled positions,
+              ``None`` elsewhere).
         aa_context_col : str, optional
             Per-residue context column used with ``context_in`` / ``context_out``.
         context_in : value or list-like, optional
@@ -600,13 +606,13 @@ class AAWindowSampler:
                                  label_test: Union[int, float] = 1,
                                  label_ref: Union[int, float] = 0,
                                  role: str = ut.ROLE_UNL,
-                                 output_mode: str = ut.OUT_SEGMENTS,
+                                 output_mode: Literal["segments", "sequences"] = ut.OUT_SEGMENTS,
                                  aa_context_col: Optional[str] = None,
                                  context_in: Optional[Union[str, List]] = None,
                                  context_out: Optional[Union[str, List]] = None,
                                  motif_pwm: Optional[pd.DataFrame] = None,
                                  motif_score_threshold: Optional[float] = None,
-                                 motif_match: str = "in",
+                                 motif_match: Literal["in", "out"] = "in",
                                  seed: Optional[int] = None,
                                  ) -> pd.DataFrame:
         """Sample windows from proteins outside the test set (proteins with no test positions).
@@ -732,7 +738,13 @@ class AAWindowSampler:
                          df_seq: pd.DataFrame = None,
                          n: int = 100,
                          window_size: int = 9,
-                         generator: Union[str, List[str], Tuple[str, ...],
+                         generator: Union[Literal["uniform", "global_freq",
+                                                  "position_specific", "scrambled",
+                                                  "aa_composition", "aa_composition_surface",
+                                                  "aa_composition_mp", "alpha_helix",
+                                                  "beta_sheet", "beta_strand", "beta_turn",
+                                                  "coil", "linker", "pi_helix"],
+                                          List[str], Tuple[str, ...],
                                           Dict[str, float]] = ut.MODE_GLOBAL_FREQ,
                          pos_col: Optional[str] = None,
                          label_ref: Union[int, float] = 0,
@@ -910,7 +922,7 @@ class AAWindowSampler:
                               label_test: Union[int, float] = 1,
                               label_ref: Union[int, float] = 0,
                               role: str = ut.ROLE_NEG,
-                              output_mode: str = ut.OUT_SEGMENTS,
+                              output_mode: Literal["segments", "sequences"] = ut.OUT_SEGMENTS,
                               aa_context_col: Optional[str] = None,
                               context_in: Optional[Union[str, List]] = None,
                               context_out: Optional[Union[str, List]] = None,

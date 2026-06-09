@@ -10,7 +10,7 @@ The class is pro-extra gated: biopython is required (already an
 feature additionally needs the ``msms`` binary, checked at runtime.
 """
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Literal, Optional, Tuple, Union
 import re
 import shutil
 import tempfile
@@ -451,10 +451,10 @@ class StructurePreprocessor:
         self,
         df_seq: pd.DataFrame = None,
         out_folder: Union[str, Path] = None,
-        file_format: str = "pdb",
+        file_format: Literal["pdb", "cif"] = "pdb",
         timeout: float = 30.0,
         skip_existing: bool = True,
-        on_failure: str = "nan",
+        on_failure: Literal["nan", "drop", "raise"] = "nan",
         return_df: bool = False,
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
         """Download AlphaFold model + Predicted Aligned Error (PAE) files for
@@ -479,9 +479,14 @@ class StructurePreprocessor:
             Destination directory for the downloaded files. Its parent must
             exist; the leaf directory is created if absent.
         file_format : {'pdb', 'cif'}, default='pdb'
-            Structure file type to download. Both are accepted by the
-            downstream resolvers; ``'pdb'`` matches the ``encode_pdb`` /
-            ``get_dssp`` examples.
+            Structure file type to download from AlphaFold DB (both are accepted
+            by the downstream resolvers):
+
+            - ``'pdb'``: legacy Protein Data Bank format; matches the
+              ``encode_pdb`` / ``get_dssp`` examples.
+            - ``'cif'``: Crystallographic Information File (mmCIF), the modern
+              format without the line/column limits that constrain ``'pdb'`` for
+              very large structures.
         timeout : float, default=30.0
             Per-request timeout in seconds.
         skip_existing : bool, default=True
@@ -577,8 +582,8 @@ class StructurePreprocessor:
         df_seq: pd.DataFrame = None,
         pdb_folder: Union[str, Path] = None,
         features: List[str] = None,
-        ss_mode: str = "ss3",
-        gap_handling: str = "pad",
+        ss_mode: Literal["ss3", "ss8"] = "ss3",
+        gap_handling: Literal["pad", "omit"] = "pad",
     ) -> pd.DataFrame:
         """Run Define Secondary Structure of Proteins (DSSP) and append
         per-residue list columns to ``df_seq``.
@@ -665,9 +670,9 @@ class StructurePreprocessor:
         df_seq: pd.DataFrame = None,
         pdb_folder: Union[str, Path] = None,
         features: List[str] = None,
-        ss_mode: str = "ss3",
-        gap_handling: str = "pad",
-        on_failure: str = "nan",
+        ss_mode: Literal["ss3", "ss8"] = "ss3",
+        gap_handling: Literal["pad", "omit"] = "pad",
+        on_failure: Literal["nan", "drop", "raise"] = "nan",
         return_df: bool = False,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Run Define Secondary Structure of Proteins (DSSP) and the per-feature
@@ -870,7 +875,7 @@ class StructurePreprocessor:
         pdb_folder: Union[str, Path] = None,
         features: List[str] = None,
         plddt_disorder_threshold: float = 70.0,
-        on_failure: str = "nan",
+        on_failure: Literal["nan", "drop", "raise"] = "nan",
         return_df: bool = False,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Extract per-residue features from PDB ATOM records into ``dict_pdb``.
@@ -1078,7 +1083,7 @@ class StructurePreprocessor:
         features: List[str] = None,
         local_window: int = 5,
         pae_band_edges: Tuple[int, int] = (5, 15),
-        on_failure: str = "nan",
+        on_failure: Literal["nan", "drop", "raise"] = "nan",
         return_df: bool = False,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Load AlphaFold PAE sidecar JSONs and produce ``dict_pae``.
@@ -1279,11 +1284,11 @@ class StructurePreprocessor:
         df_seq: pd.DataFrame = None,
         pdb_folder: Union[str, Path] = None,
         pae_folder: Union[str, Path] = None,
-        tool: str = "afragmenter",
+        tool: Literal["chainsaw", "afragmenter"] = "afragmenter",
         chainsaw_path: Optional[Union[str, Path]] = None,
         resolution: float = 0.7,
         threshold: float = 2.0,
-        on_failure: str = "nan",
+        on_failure: Literal["nan", "drop", "raise"] = "nan",
     ) -> pd.DataFrame:
         """Run a domain-segmentation tool and append a ``chopping`` column.
 
@@ -1461,7 +1466,7 @@ class StructurePreprocessor:
         df_seq: pd.DataFrame = None,
         domain_folder: Union[str, Path] = None,
         features: List[str] = None,
-        on_failure: str = "nan",
+        on_failure: Literal["nan", "drop", "raise"] = "nan",
         return_df: bool = False,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Read pre-computed domain segmentation files into ``dict_domains``.

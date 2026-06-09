@@ -2,7 +2,7 @@
 Plotting utility functions for AAanalysis to create publication ready figures. Can
 be used for any Python project independently of AAanalysis.
 """
-from typing import Union
+from typing import Union, Literal
 import seaborn as sns
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -36,7 +36,7 @@ def plot_settings(font_scale: Union[int, float] = 1,
                   adjust_only_font: bool = False,
                   adjust_further_elements: bool = True,
                   grid: bool = False,
-                  grid_axis: str = "y",
+                  grid_axis: Literal["y", "x", "both"] = "y",
                   no_ticks: bool = False,
                   short_ticks: bool = False,
                   no_ticks_x: bool = False,

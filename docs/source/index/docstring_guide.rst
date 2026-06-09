@@ -146,6 +146,30 @@ Invariants:
 * ``Returns`` is **named** (``name : type``) and matches the returned variable.
   Two type-only idioms are allowed: a bare class name (scikit-learn self-return,
   e.g. ``AAclust``) and a polymorphic ``X or Y``.
+* **Fixed-option parameters use** ``Literal``, **not** ``str``. When a parameter
+  accepts a closed, finite set of string options (the values a ``check_str_options``
+  /membership check validates against), type-hint it in the *signature* as
+  ``typing.Literal["a", "b", ...]`` rather than a bare ``str`` — so the allowed set
+  is self-documenting and IDE-checkable. Spell the members as **inline string
+  literals**: ``Literal`` cannot reference the ``ut.X`` constants, even though the
+  runtime validator still uses them. If the parameter also accepts ``None`` (default
+  ``None`` or ``accept_none=True``), wrap as ``Optional[Literal[...]]`` (never put
+  ``None`` inside ``Literal``); if it also accepts non-string values, use
+  ``Union[Literal[...], <other>]``. In the *docstring*, type the parameter with
+  numpydoc set notation matching the members —
+  ``name : {'remove', 'keep', 'gap'}, default='remove'`` — not ``name : str``.
+  Open or large sets (e.g. system font names) stay ``str``.
+* **Explain each option as a nested bullet.** When the options are not
+  self-evident from their names, follow the set-notation type line with a short
+  lead-in and a nested ``-`` bullet list — **one bullet per option**, each naming
+  the option value (in double backticks) followed by ``:`` and a concise gloss,
+  e.g. an option ``'remove'`` documented as *"drop sequences with non-canonical
+  amino acids"*. Keep the gloss to what the option *is* / when to pick it; defer
+  fuller behaviour to ``Notes`` and point there with ``(see Notes)``. These
+  per-option enumerations are the **exception to the ``*``-bullet rule below**:
+  option sub-lists under a parameter use ``-`` (matching ``name`` /
+  ``non_canonical_aa`` / ``logo_type``), while ``Notes`` and ``See Also`` section
+  bullets use ``*``.
 * The section header is ``Warnings``, never ``Warns``.
 * List items use ``*`` bullets, not ``-``.
 * **Every public method ends with** ``Examples`` → exactly one

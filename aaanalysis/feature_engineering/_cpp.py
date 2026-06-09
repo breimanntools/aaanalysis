@@ -3,7 +3,7 @@ This is a script for the frontend of the CPP class, a sequence-based feature eng
 """
 
 import warnings
-from typing import Dict, Optional, List, Tuple, Union
+from typing import Dict, Literal, Optional, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -1079,15 +1079,15 @@ class CPP(Tool):
         self,
         df_feat: pd.DataFrame = None,
         labels: ut.ArrayLike1D = None,
-        strategy: str = "greedy",
+        strategy: Literal["greedy", "consolidate", "swap_all"] = "greedy",
         max_interpret_grade: Optional[int] = None,
         min_cor: float = 0.7,
-        ml_model: Union[str, object] = "svm",
+        ml_model: Union[Literal["svm", "rf", "log_reg"], object] = "svm",
         ml_metric: str = "balanced_accuracy",
         ml_th: float = 0.0,
         ml_cv: int = 5,
-        on_unimprovable: str = "keep",
-        redundancy_tie_break: str = "interpretability",
+        on_unimprovable: Literal["keep", "drop", "drop_if_perf_allows"] = "keep",
+        redundancy_tie_break: Literal["interpretability", "performance"] = "interpretability",
         label_test: int = 1,
         label_ref: int = 0,
         max_std_test: float = 0.2,
@@ -1101,7 +1101,7 @@ class CPP(Tool):
 
         For each feature (``PART-SPLIT-SCALE``), an alternative scale from a **more
         interpretable AAontology subcategory** (interpretability grade 1-10, 1 = best;
-        see :func:`load_scales` ``top_explain_n``) that **correlates** with the
+        per-subcategory grades are in ``load_scales(name='subcat')``) that **correlates** with the
         original scale is substituted, keeping ``PART-SPLIT``. The swapped feature's statistics
         are recomputed; a swap is accepted only if it passes CPP's per-feature filtering
         (``max_std_test``) and a cross-validation gate (performance not worse than the current
@@ -1115,11 +1115,15 @@ class CPP(Tool):
             Feature DataFrame from :meth:`run` (the standardized CPP output schema).
         labels : array-like, shape (n_samples,)
             Class labels for samples in sequence DataFrame (typically, test=1, reference=0).
-        # TODO introduce here with bullet points and then very cocnise description of each. Keep the note info.
-        # TODO we updated the load_scales (check this out
-        strategy : str, default='greedy'
-            Simplification strategy: ``'greedy'``, ``'consolidate'``, or ``'swap_all'``
-            (see Notes for how each behaves).
+        strategy : {'greedy', 'consolidate', 'swap_all'}, default='greedy'
+            How candidate swaps are chosen and validated (see Notes for full behavior):
+
+            - ``'greedy'``: per-feature — each targeted feature is swapped to its best
+              candidate that keeps the cross-validation (CV) score within ``ml_th``.
+            - ``'consolidate'``: set-level — funnels features into the fewest interpretable
+              subcategories, keeping each batch swap only if the set CV score holds.
+            - ``'swap_all'``: apply every eligible best-candidate swap with no CV gate
+              (fastest; ``ml_model`` / ``ml_metric`` / ``ml_th`` / ``ml_cv`` ignored).
         max_interpret_grade : int, optional
             The maximum (worst) interpretability **grade** kept (1-10, where **grade 1 is the
             best / most interpretable, so lower is better**). Every feature whose scale

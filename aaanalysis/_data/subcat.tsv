@@ -1,4 +1,4 @@
-category	subcategory	cluster	interpretability	top_explain	subcategory_description	key_references
+category	subcategory	cluster	interpret_grade	top_explain	subcategory_description	key_references
 ASA/Volume	Volume	3	1	5	Volume/size of residue	Bigelow, 1967
 Conformation	Coil	6	1	5	Frequency of occurrence in random coil (see window positions given by Qian-Sejnowski)	Robson-Suzuki, 1976; Qian-Sejnowski, 1988
 Conformation	α-helix	2	1	5	Frequency of occurrence in right-handed α-helix, defined as helical structure with 3.6 residues per turn	Chou-Fasman, 1978b; Richardson-Richardson 1988; Aurora-Rose, 1998

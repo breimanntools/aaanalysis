@@ -43,7 +43,7 @@ def _load_candidate_pool_():
     dict_all_scales = _get_dict_all_scales(df_scales=df_scales_pool)
     # Interpretability is a per-subcategory rating (single source: df_subcat); map it onto scales.
     df_subcat = ut.load_default_subcat()
-    interp_by_subcat = dict(zip(df_subcat[ut.COL_SUBCAT], df_subcat[ut.COL_INTERPRETABILITY]))
+    interp_by_subcat = dict(zip(df_subcat[ut.COL_SUBCAT], df_subcat[ut.COL_INTERPRET_GRADE]))
     dict_interp = {
         sid: interp_by_subcat.get(sub)
         for sid, sub in zip(df_cat_pool[ut.COL_SCALE_ID], df_cat_pool[ut.COL_SUBCAT])

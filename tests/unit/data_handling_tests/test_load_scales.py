@@ -147,7 +147,7 @@ class TestLoadScalesTopExplain:
         per-scale scales_cat table; the selection still respects the tier via the join.
         """
         df_cat = aa.load_scales(name="scales_cat", top_explain_n=top_explain_n)
-        assert "interpretability" not in df_cat.columns and "top_explain" not in df_cat.columns
+        assert "interpret_grade" not in df_cat.columns and "top_explain" not in df_cat.columns
         df_sub = aa.load_scales(name="subcat")
         tier = dict(zip(df_sub["subcategory"], df_sub["top_explain"]))
         tiers = df_cat["subcategory"].map(tier)
@@ -175,7 +175,7 @@ class TestLoadScalesTopExplain:
     def test_default_cat_schema_unchanged(self):
         """Without top_explain_n the default df_cat schema has no extra columns."""
         df_cat = aa.load_scales(name="scales_cat")
-        assert "interpretability" not in df_cat.columns
+        assert "interpret_grade" not in df_cat.columns
         assert "top_explain" not in df_cat.columns
 
     # Negative tests
@@ -261,7 +261,7 @@ class TestLoadScalesTopExplainComplex:
 class TestLoadScalesSubcat:
     """Test load_scales(name='subcat') — the subcategory overview table."""
 
-    EXPECTED_COLS = ["category", "subcategory", "cluster", "interpretability", "top_explain",
+    EXPECTED_COLS = ["category", "subcategory", "cluster", "interpret_grade", "top_explain",
                      "n_scales", "n_scales_aaindex", "subcategory_description", "key_references"]
 
     # Normal cases
@@ -276,7 +276,7 @@ class TestLoadScalesSubcat:
 
     def test_interpretability_range(self):
         df = aa.load_scales(name="subcat")
-        assert df["interpretability"].between(1, 10).all()
+        assert df["interpret_grade"].between(1, 10).all()
 
     def test_n_scales_ge_aaindex(self):
         """Property: full count is never below the AAindex-only count."""
@@ -309,8 +309,8 @@ class TestLoadScalesSubcat:
 
     def test_golden_interpretability(self):
         df = aa.load_scales(name="subcat").set_index("subcategory")
-        assert df.loc["Volume", "interpretability"] == 1
-        assert df.loc["Unclassified (Composition)", "interpretability"] == 10
+        assert df.loc["Volume", "interpret_grade"] == 1
+        assert df.loc["Unclassified (Composition)", "interpret_grade"] == 10
 
     # Negative cases
     def test_top_explain_n_with_subcat_raises(self):

@@ -1,7 +1,7 @@
 """
 This is a script for the frontend of the SequenceFeature class, a supportive class for the CPP feature engineering.
 """
-from typing import Optional, Union, List
+from typing import Literal, Optional, Union, List
 import warnings
 import pandas as pd
 
@@ -306,7 +306,8 @@ class SequenceFeature:
         return df_parts
 
     @staticmethod
-    def get_split_kws(split_types: Union[str, List[str]] = None,
+    def get_split_kws(split_types: Optional[Union[Literal["Segment", "Pattern", "PeriodicPattern"],
+                                                   List[Literal["Segment", "Pattern", "PeriodicPattern"]]]] = None,
                       n_split_min: int = 1,
                       n_split_max: int = 15,
                       steps_pattern: Optional[List[int]] = None,

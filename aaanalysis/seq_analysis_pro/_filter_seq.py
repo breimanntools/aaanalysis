@@ -52,7 +52,7 @@ def filter_seq(df_seq: pd.DataFrame = None,
                global_identity: bool = True,
                coverage_long: Optional[float] = None,
                coverage_short: Optional[float] = None,
-               cluster_order: Literal[None, "size", "input"] = None,
+               cluster_order: Optional[Literal["size", "input"]] = None,
                n_jobs: int = 1,
                verbose: bool = False
                ) -> pd.DataFrame:

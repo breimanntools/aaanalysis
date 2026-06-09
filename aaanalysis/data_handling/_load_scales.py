@@ -192,11 +192,11 @@ def load_scales(name: Literal["scales", "scales_raw", "scales_cat", "scales_pc",
          Select the n-th scale set from top60 sets and return it for 'scales', 'scales_raw', or 'scales_cat'.
          Allowed strings are AAclust ids (e.g., 'AAC01').
     top_explain_n : int, optional
-        Select a simplified, more interpretable scale set by restricting it to the ``n`` most interpretable
-        AAontology subcategories (one of 5, 10, ..., 60). Returns *all* member scales of those subcategories
-        for 'scales', 'scales_raw', or 'scales_cat'. Mutually exclusive with ``top60_n``. Subcategories were
-        ranked by interpretability from unsupervised clustering combined with expert domain knowledge of
-        AAontology (no separate publication).
+        Restrict the set to the ``n`` most interpretable AAontology subcategories (one of 5, 10, ..., 60),
+        returning all their member scales (for 'scales', 'scales_raw', or 'scales_cat'). Mutually exclusive
+        with ``top60_n``. The per-subcategory interpretability grade and tier live in
+        ``load_scales(name='subcat')``; see the Notes, the scales-loader tutorial, and the subcategory list
+        in :ref:`t3b_aaontology_subcategories` for the full explanation of the interpretability options.
 
         .. versionadded:: 1.1.0
     top_explain_min_th : float, optional
@@ -223,9 +223,9 @@ def load_scales(name: Literal["scales", "scales_raw", "scales_cat", "scales_pc",
         - 'scale_description': Description of scale (derived from AAindex).
 
     * Scales under the 'Others' category are considered unclassified.
-    * When ``top_explain_n`` is set, the returned ``df_cat`` additionally includes an 'interpretability'
-      column (1-10 rating; 1 = most interpretable) and a 'top_explain' column (the interpretability tier);
-      these columns are absent from the default ``df_cat``.
+    * ``top_explain_n`` only *filters* the returned scales; the per-subcategory interpretability grade
+      (1-10; 1 = most interpretable) and tier are not added as columns here — they live in the
+      subcategory overview ``load_scales(name="subcat")`` (``'interpret_grade'`` / ``'top_explain'``).
     * Unlike ``top60`` (AAclust redundancy-reduced and performance-ranked), ``top_explain_n`` with
       ``top_explain_min_th=None`` returns all scales of the selected subcategories without redundancy
       reduction. With ``top_explain_min_th`` set, the AAclust reduction (and a ``just_aaindex=True``
