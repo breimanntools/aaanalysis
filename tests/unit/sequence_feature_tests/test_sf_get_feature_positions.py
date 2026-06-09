@@ -97,6 +97,21 @@ class TestGetFeaturePositions:
                                           tmd_seq=SEQ_TMD, jmd_n_seq=SEQ_JMD)
         assert isinstance(result, list)
 
+    # df_feat DataFrame accepted for 'features'
+    def test_valid_features_df_feat(self):
+        """A df_feat DataFrame is accepted and equals the list-of-ids form."""
+        sf = aa.SequenceFeature()
+        features = get_random_features(n_feat=20)
+        df_feat = pd.DataFrame({"feature": features})
+        assert sf.get_feature_positions(features=df_feat) == sf.get_feature_positions(features=features)
+
+    def test_invalid_features_df_feat_missing_col(self):
+        """A DataFrame without a 'feature' column raises ValueError."""
+        sf = aa.SequenceFeature()
+        features = get_random_features(n_feat=20)
+        with pytest.raises(ValueError, match="feature"):
+            sf.get_feature_positions(features=pd.DataFrame({"wrong": features}))
+
 class TestGetFeaturePositionsComplex:
     """Class for testing get_feature_positions function in complex scenarios."""
 

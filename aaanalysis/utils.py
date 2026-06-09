@@ -895,6 +895,13 @@ def _check_scale(scale=None, feature=None, list_scales=None):
 
 def check_features(features=None, list_parts=None, list_scales=None):
     """Check if feature names are valid for list of parts  and df_scales"""
+    # Accept a df_feat DataFrame: use its 'feature' column
+    if isinstance(features, pd.DataFrame):
+        if COL_FEATURE not in features.columns:
+            raise ValueError(f"'features' (DataFrame) should contain a "
+                             f"'{COL_FEATURE}' column when passed as a DataFrame. "
+                             f"Got columns: {list(features.columns)}")
+        features = list(features[COL_FEATURE])
     features = check_list_like(name="features", val=features, accept_none=False, accept_str=True, convert=True)
     list_parts = check_list_parts(list_parts=list_parts, all_parts=True, return_default=True)
     # Check elements of features list

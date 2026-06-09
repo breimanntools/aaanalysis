@@ -384,7 +384,7 @@ class SequenceFeature:
 
     # Feature methods
     def get_df_feat(self,
-                    features: ut.ArrayLike1D = None,
+                    features: Union[ut.ArrayLike1D, pd.DataFrame] = None,
                     df_parts: pd.DataFrame = None,
                     labels: ut.ArrayLike1D = None,
                     label_test: int = 1,
@@ -414,8 +414,9 @@ class SequenceFeature:
 
         Parameters
         ----------
-        features : array-like, shape (n_features,)
-            Ids of features for which ``df_feat`` should be created.
+        features : array-like, shape (n_features,) or pd.DataFrame
+            Ids of features (``'PART-SPLIT-SCALE'``) for which ``df_feat`` should be created. Alternatively,
+            a ``df_feat`` DataFrame, in which case its ``'feature'`` column is used.
         df_parts : pd.DataFrame, shape (n_samples, n_parts)
             DataFrame with sequence parts. Must cover all parts in ``features``.
         labels: array-like, shape (n_samples,)
@@ -508,7 +509,7 @@ class SequenceFeature:
         return df_feat
 
     def feature_matrix(self,
-                       features: ut.ArrayLike1D = None,
+                       features: Union[ut.ArrayLike1D, pd.DataFrame] = None,
                        df_parts: Union[pd.DataFrame, List[pd.DataFrame]] = None,
                        df_scales: Optional[pd.DataFrame] = None,
                        accept_gaps: bool = False,
@@ -529,8 +530,9 @@ class SequenceFeature:
 
         Parameters
         ----------
-        features : array-like, shape (n_features,)
-            Ids of features for which matrix of feature values should be created.
+        features : array-like, shape (n_features,) or pd.DataFrame
+            Ids of features (``'PART-SPLIT-SCALE'``) for which matrix of feature values should be created.
+            Alternatively, a ``df_feat`` DataFrame, in which case its ``'feature'`` column is used.
         df_parts : pd.DataFrame, shape (n_samples, n_parts)
             DataFrame with sequence parts. If ``batch=True``, instead a **list of such
             DataFrames** (one per batch; all must share the same part columns).
@@ -665,7 +667,7 @@ class SequenceFeature:
         return features
 
     @staticmethod
-    def get_feature_names(features: ut.ArrayLike1D = None,
+    def get_feature_names(features: Union[ut.ArrayLike1D, pd.DataFrame] = None,
                           df_cat: Optional[pd.DataFrame] = None,
                           start: int = 1,
                           tmd_len: int = 20,
@@ -683,8 +685,9 @@ class SequenceFeature:
 
         Parameters
         ----------
-        features : array-like, shape (n_features,)
-            List of feature ids (>0).
+        features : array-like, shape (n_features,) or pd.DataFrame
+            List of feature ids (``'PART-SPLIT-SCALE'``). Alternatively, a ``df_feat`` DataFrame,
+            in which case its ``'feature'`` column is used.
         df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
             DataFrame of categories for physicochemical scales. Must contain all scales from ``df_scales``.
             Default from :meth:`load_scales` with ``name='scales_cat'``, unless specified in ``options['df_cat']``.
@@ -737,7 +740,7 @@ class SequenceFeature:
         return feat_names
 
     @staticmethod
-    def get_feature_positions(features: ut.ArrayLike1D = None,
+    def get_feature_positions(features: Union[ut.ArrayLike1D, pd.DataFrame] = None,
                               start: int = 1,
                               tmd_len: int = 20,
                               jmd_n_len: int = 10,
@@ -759,8 +762,9 @@ class SequenceFeature:
 
         Parameters
         ----------
-        features : array-like, shape (n_features,)
-            List of feature ids.
+        features : array-like, shape (n_features,) or pd.DataFrame
+            List of feature ids (``'PART-SPLIT-SCALE'``). Alternatively, a ``df_feat`` DataFrame,
+            in which case its ``'feature'`` column is used.
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
