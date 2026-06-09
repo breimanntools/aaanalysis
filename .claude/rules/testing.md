@@ -76,6 +76,15 @@ per-method file** (do not spawn a parallel correctness-suite tree):
 - **Property tests** — `@given(...)` checks of invariants (frequencies sum to 1,
   `len(X) == n_sequences`, scores sorted descending, returned features satisfy
   the overlap/correlation thresholds, same seed → same output).
+- **Property-based testing with hypothesis is the house standard.** Every
+  positive test in `Test<Method>` parametrizes its argument with a
+  `hypothesis.strategies` variant rather than a single hardcoded value, unless
+  the argument is a small categorical enum (e.g. `mode="global"`). Use
+  `@given(arg=some.integers(...) / some.floats(...))` plus
+  `@settings(max_examples=5, deadline=None)` (small `max_examples` keeps the
+  suite fast under xdist). Example:
+  `@settings(max_examples=5, deadline=None)` /
+  `@given(n=some.integers(min_value=2, max_value=5))`.
 - **Error-message tests** — `pytest.raises(ValueError, match="…")` so users get
   the tailored message, not a cryptic pandas/sklearn traceback. When a guard is
   reachable (e.g. a part-based `df_seq` reaching a `'sequence' not in columns`

@@ -220,6 +220,12 @@ Citations
   exists, never a bare repo URL) **and** describe what the tool does in **one
   plain sentence**. Example: ``'chainsaw' ([Wells24]_): a fully-convolutional
   neural network that predicts domain boundaries from a PDB / CIF structure.``
+* **Never reference internal decision records (ADRs) in docstrings.** ADRs
+  (``docs/adr/``) are internal to the development process; docstrings are
+  user-facing. If an ADR documents a user-visible choice (why a parameter exists,
+  how an algorithm was selected), extract the *why* as plain language in the
+  docstring — never cite the ADR number. (Developer-facing notes such as
+  ``CONTEXT.md`` may cite ADRs; user docstrings may not.)
 
 Versioning & deprecation
 ------------------------

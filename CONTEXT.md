@@ -397,6 +397,19 @@ _Avoid_: interpretability score (overloaded), explainability.
 The Pearson-correlation threshold (∈ {0.3,…,0.9} or `None`) for an optional `AAclust` redundancy reduction layered on a tier, served from **pre-computed** per-tier selections (AAclust default settings, fixed seed). `None` = no reduction. Reduction is computed **per tier** (medoids are not nested across tiers) and on **dual grids** (with / without AAindex) so `just_aaindex` stays correct. May leave a subcategory with no representative — the reduced set need not cover every tier subcategory. See ADR-0025.
 _Avoid_: min_corr, redundancy threshold (use the AAclust term `min_th`).
 
+**feature simplification** (`CPP.simplify`):
+The post-hoc rewriting of a fitted [[df_feat]] into a **more interpretable, and ideally
+smaller** one: each feature's scale is swapped for a *correlated* scale drawn from a
+**strictly better-rated [[interpretability rating]] subcategory** (keeping `PART-SPLIT`), the
+feature stats are recomputed, and the swap is accepted only if it keeps passing CPP filtering
+(`max_std_test`) and does not reduce a random-forest cross-validation score. The swapped set is
+then redundancy-reduced (keeping the most interpretable member of a redundant pair), so the
+result speaks in fewer, clearer physicochemical subcategories. The candidate pool is the full
+rated AAontology scale set, loaded internally. Distinct from **feature selection** (which
+*subsets* features by importance) and CPP **feature engineering** (which *creates* features) —
+simplification *relabels* a feature onto a more interpretable scale while preserving its signal.
+_Avoid_: feature reduction (overloaded with selection), scale substitution (the unit is a feature).
+
 ## Relationships
 
 - A **df_seq** row contains one **entry** and one sequence; optionally a **pos column** cell of 1-based positions.
