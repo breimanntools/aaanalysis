@@ -69,12 +69,14 @@ def _expects_output(src):
             name = getattr(f, "attr", None) or getattr(f, "id", None)
             if name in _DISPLAY_CALLS:
                 return True
+    # A trailing bare *value* expression (``df``, ``df.shape``, ``df[0]``) renders
+    # its repr. A trailing bare *call* (``lst.extend(...)``, ``plt.show()``) is
+    # ambiguous — only the display calls above count — so it is not flagged here.
     last = tree.body[-1]
-    if isinstance(last, ast.Expr):
-        # A trailing string literal is a comment-like docstring, not a result.
-        if not (isinstance(last.value, ast.Constant)
-                and isinstance(last.value.value, str)):
-            return True
+    if isinstance(last, ast.Expr) and isinstance(
+        last.value, (ast.Name, ast.Attribute, ast.Subscript)
+    ):
+        return True
     return False
 
 
