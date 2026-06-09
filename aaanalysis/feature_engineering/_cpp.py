@@ -1286,4 +1286,5 @@ class CPP(Tool):
             return_details=return_details,
             ml_model=ml_model,
             random_state=random_state,
+            verbose=self._verbose,
         )

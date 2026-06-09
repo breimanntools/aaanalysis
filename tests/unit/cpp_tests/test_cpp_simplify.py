@@ -274,9 +274,19 @@ class TestSimplifyComplex:
             )
             for f in df_fake[ut.COL_FEATURE]
         ]
-        with pytest.warns(RuntimeWarning, match="no AAontology-rated"):
+        with pytest.warns(RuntimeWarning, match="no AAontology-graded"):
             out = cpp.simplify(df_feat=df_fake, labels=labels, ml_cv=3)
         assert len(out) == len(df_fake)
+
+    def test_already_good_enough_no_warning(self, fitted):
+        """Case 2: graded features all at/under the grade cut -> silent no-op, NOT the Case-1 warning."""
+        import warnings as _w
+        cpp, df_feat, labels = fitted
+        with _w.catch_warnings():
+            _w.simplefilter("error", RuntimeWarning)  # any RuntimeWarning would fail the test
+            # grade 10 is the worst, so no feature is graded *worse* -> no targets (Case 2)
+            out = cpp.simplify(df_feat=df_feat, labels=labels, max_interpret_grade=10, ml_cv=3)
+        assert len(out) == len(df_feat)  # returned unchanged, silently (verbose=False)
 
     def test_drop_never_removes_last_feature(self, fitted):
         cpp, df_feat, labels = fitted

@@ -711,6 +711,7 @@ def simplify_cpp_(
     return_details=False,
     ml_model=ut.MODEL_SVM,
     random_state=None,
+    verbose=False,
 ):
     """Backend entry for ``CPP.simplify``: df_feat or (df_feat, df_candidates)."""
     df_feat = df_feat.reset_index(drop=True).copy()
@@ -724,11 +725,23 @@ def simplify_cpp_(
         max_interpret_grade=max_interpret_grade,
     )
     if len(targets) == 0:
-        warnings.warn(
-            "'df_feat' has no AAontology-rated features to simplify (scales are "
-            "unrated / from 'run_num'); returning it unchanged.",
-            RuntimeWarning,
+        # Distinguish "nothing graded" (Case 1) from "all already good enough" (Case 2).
+        n_graded = sum(
+            1 for f in df_feat[ut.COL_FEATURE]
+            if not np.isnan(_interp(scale_id=ut.split_feat_id(feat_id=f)[2], dict_interp=dict_interp))
         )
+        if n_graded == 0:
+            warnings.warn(
+                "'df_feat' has no AAontology-graded features to simplify (scales are "
+                "ungraded / from 'run_num'); returning it unchanged.",
+                RuntimeWarning,
+            )
+        elif verbose:
+            cut = max_interpret_grade if max_interpret_grade is not None else 1
+            ut.print_out(
+                f"{n_graded} graded feature(s), none graded worse than {cut}; "
+                f"returning 'df_feat' unchanged."
+            )
         out = ut.sort_cols_feat(df_feat=df_feat)
         return (out, _build_df_candidates_(records=[])) if return_details else out
     # swap_all needs no feature matrix (no CV scoring); greedy/consolidate do.
