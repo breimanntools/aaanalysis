@@ -14,7 +14,7 @@ from ._utils_feature_stat import add_stat_
 # I Helper Functions
 
 
-# II Main functions
+# II Main Functions
 # Parts and splits
 def get_split_kws_(n_split_min=1, n_split_max=15, steps_pattern=None, n_min=2, n_max=4, len_max=15,
                    steps_periodicpattern=None, split_types=None):
@@ -96,3 +96,58 @@ def get_df_feat_(features=None, df_parts=None, labels=None,
     # Standardize the df_feat column order (issue #18); amino_acids_* append last.
     df = ut.sort_cols_feat(df_feat=df)
     return df
+
+
+# Multi-class / regression label conversion
+def get_labels_ovr_(labels=None, label_test=1, label_ref=0):
+    """One-vs-rest: per class, a full-length binary array (class -> test, rest -> ref)."""
+    labels = np.asarray(labels)
+    classes = np.unique(labels)
+    return {int(c): np.where(labels == c, label_test, label_ref).astype(int) for c in classes}
+
+
+def get_labels_ovo_(labels=None, label_test=1, label_ref=0):
+    """One-vs-one: per class pair (a, b), a row mask + binary labels for the masked subset."""
+    labels = np.asarray(labels)
+    classes = np.unique(labels)
+    out = {}
+    for i, a in enumerate(classes):
+        for b in classes[i + 1:]:
+            mask = np.isin(labels, [a, b])
+            binary = np.where(labels[mask] == a, label_test, label_ref).astype(int)
+            out[(int(a), int(b))] = (mask, binary)
+    return out
+
+
+def get_labels_quantile_(targets=None, q=0.5, label_test=1, label_ref=0):
+    """Single-threshold split of continuous targets into a binary array (>= q-quantile -> test)."""
+    targets = np.asarray(targets, dtype=float)
+    cut = float(np.quantile(targets, q))
+    return np.where(targets >= cut, label_test, label_ref).astype(int)
+
+
+def get_labels_tiered_(targets=None, q_pos=0.8, list_q_neg=(0.8, 0.5, 0.3), label_test=1, label_ref=0):
+    """Tiered thresholds: fixed positive set, stepwise-lower negative cuts, middle dropped.
+
+    Positives are ``targets >= Q(q_pos)`` (fixed across tiers); for each ``q_neg``
+    the negatives are ``targets <= Q(q_neg)`` (positives take precedence on ties),
+    and samples in between are dropped. Returns ``{q_neg: (row_mask, binary)}``.
+    Raises ``ValueError`` if a tier yields only one class.
+    """
+    targets = np.asarray(targets, dtype=float)
+    cut_pos = float(np.quantile(targets, q_pos))
+    pos = targets >= cut_pos
+    out = {}
+    for q_neg in list_q_neg:
+        cut_neg = float(np.quantile(targets, q_neg))
+        neg = (targets <= cut_neg) & ~pos
+        mask = pos | neg
+        if pos.sum() == 0 or neg.sum() == 0:
+            raise ValueError(
+                f"tier q_neg={q_neg} yields a single class "
+                f"(n_pos={int(pos.sum())}, n_neg={int(neg.sum())}); "
+                f"choose q_pos/q_neg that keep both groups non-empty."
+            )
+        binary = np.where(pos[mask], label_test, label_ref).astype(int)
+        out[float(q_neg)] = (mask, binary)
+    return out

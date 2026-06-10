@@ -34,6 +34,10 @@ A named region of a protein over which a **split** operates and a scale is avera
 First-class user-defined / renamed regions are tracked by **#27** (region abstraction); today a part is chosen from the predefined family.
 _Avoid_: region (reserved for the #27 abstraction), domain (a part may be a window or sub-region, not a whole domain), segment (a split type).
 
+**assembled reference df_parts**:
+A `df_parts` whose rows are **chimeras** of independent per-part windows — each part column is filled from its own window set (e.g. a separate `AAWindowSampler.sample_synthetic` call with its own generator and window size), rather than sliced from one contiguous protein. Built by `SequenceFeature.get_df_parts_from_windows` (windows aligned by position: the i-th window of every part forms the i-th row) and used as the **reference** class for `CPP`. Because a row stitches windows from different sources it has no single source `entry_win`; rows are ided by a per-row `REF{i}` index instead.
+_Avoid_: synthetic df_parts (the windows need not be synthetic), reference window (that is the per-window term, not the assembled table).
+
 ### Prediction-task taxonomy vocabulary
 
 **prediction level**:
@@ -71,6 +75,42 @@ _Avoid_: optimization (overloaded), generation.
 **relational / interaction (scope boundary)**:
 Tasks about relationships *between* residues or chains (PPI interfaces, residue–residue contacts). AAanalysis profiles interface **segments** only; long-range pairwise contacts are **out of scope** and hand off to structure / PLM tooling. A boundary, **not** a fourth prediction level.
 _Avoid_: pair level, contact level (implies first-class support that does not exist).
+
+### Multi-class & regression labeling vocabulary
+
+Helpers on `SequenceFeature` that turn a multi-class or continuous target into the
+binary `labels` CPP consumes — the operational layer of **reference construction**
+for non-binary targets. The row-dropping members (OvO, tiered) take the value source
+(`df_parts` and/or `dict_num_parts`) and return per group the **row-matched copy** plus
+the binary labels, ready to drop into `CPP.run` / `CPP.run_num`; the selection is applied
+internally (no mask is exposed).
+
+**one-vs-rest (OvR)**:
+A multi-class decomposition where each of the K classes in turn is the **test group**
+and all remaining classes form the **reference group**. No samples are dropped, so the
+K binary arrays share one `df_parts` and loop through a single `CPP` instance.
+`SequenceFeature.get_labels_ovr`.
+_Avoid_: one-vs-all (use OvR consistently), binarization (too generic).
+
+**one-vs-one (OvO)**:
+A multi-class decomposition over each unordered class **pair** `(a, b)`: the other
+classes are discarded, so each pair returns its own row-matched `df_parts` / `dict_num_parts`
+subset plus a binary array (`a`=test, `b`=ref). `SequenceFeature.get_labels_ovo`.
+_Avoid_: pairwise comparison (collides with the relational scope boundary), one-vs-each.
+
+**quantile labels**:
+A continuous target discretized into binary labels by a single **quantile cut** — at or
+above the q-quantile is the test group, below is the reference group.
+`SequenceFeature.get_labels_quantile`.
+_Avoid_: threshold labels (ambiguous about which threshold), binning (implies >2 bins).
+
+**tiered labels**:
+A continuous target turned into several binary **tiers** sharing one fixed positive set
+(≥ the `q_pos` quantile) paired with progressively lower negative cuts (≤ each `q_neg`),
+the middle band dropped; returns the row-matched `df_parts` / `dict_num_parts` subset plus
+labels per tier. Lets a regression target be profiled at increasing positive-vs-reference
+separation. `SequenceFeature.get_labels_tiered`.
+_Avoid_: banded regression (reserved for the deferred banded-regression task), graded labels.
 
 ### Window sampling vocabulary
 

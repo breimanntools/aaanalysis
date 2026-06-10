@@ -50,6 +50,19 @@ Added
   pre-sliced numerical tensor (``dict_num_parts``) rather than an amino-acid →
   scale lookup, enabling embedding / structure / annotation features through the
   same pipeline and output schema as ``CPP.run``.
+- **SequenceFeature.get_labels_ovr / get_labels_ovo**: Convert multi-class
+  ``labels`` into binary label sets for ``CPP`` — one-vs-rest (K full-length
+  arrays, all samples kept) or one-vs-one (per class-pair). The row-dropping
+  ``get_labels_ovo`` takes the value source (``df_parts`` and/or ``dict_num_parts``)
+  and returns each pair's row-matched copy ready for ``CPP.run`` / ``CPP.run_num``.
+- **SequenceFeature.get_labels_quantile / get_labels_tiered**: Discretize a
+  continuous target into binary ``labels`` for regression-style ``CPP`` — a single
+  quantile cut (all samples kept), or a fixed positive set swept against
+  stepwise-lowered negative cuts, ``get_labels_tiered`` returning each tier's
+  row-matched ``df_parts`` / ``dict_num_parts`` subset.
+- **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts``
+  from per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output), so
+  each sequence part can be generated with its own recipe.
 
 **Sequence Analysis**
 
