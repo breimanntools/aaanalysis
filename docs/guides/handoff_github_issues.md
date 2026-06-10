@@ -23,11 +23,11 @@ campaigns/loops**):
   scope — fold into v1.1/v1.2 once readable). Reviewer asks: cheat sheet (#81), one
   golden-path notebook + a "CPP/dPULearn/AAclust/ShapModel/TreeModel/CPPGrid?" decision
   tree (fold into #21/#81), and `CPP.run_num` (already in the v1.1 roadmap).
-- **v1.2** (5) — **protein design** (moved up from v1.3; "important and soon"):
-  #37 (AAmut/SeqMut, anchor), #61 (multi-class/regression — done on `feat/issue-61`,
-  awaiting merge), #59 (multi-objective scoring — interpretable, no black-box; **kept in
-  core**), **#57 (merged with #58** → one "feature-importance → ranked minimal mutation
-  set" primitive; **close #58 as duplicate on execution**; campaign-looping → ProtXplain),
+- **v1.2** (4 open; #61 + #58 closed) — **protein design** (moved up from v1.3; "important
+  and soon"): #37 (AAmut/SeqMut, anchor), ~~#61~~ (multi-class/regression — **merged to
+  master `c4fc3c72`, closed**), #59 (multi-objective scoring — interpretable, no black-box;
+  **kept in core**), **#57** (the "feature-importance → ranked minimal mutation set"
+  primitive; **#58 merged in and closed as duplicate**; campaign-looping → ProtXplain),
   #16 (uncertainty estimations — CPP-feature primitive, feeds #60).
 - **v1.3** (14) — **remaining important: core CPP feature & evaluation story** (the
   interpretable-prediction backbone — feature selection/export/normalization, CPP
@@ -55,10 +55,11 @@ Dependency order (from the lanes below): ~~#18 before #61~~ (#18 done; **#61 imp
 awaiting merge**), **#37 before #57/#59** (protein-design chain). Milestones complement
 the `prio:` labels — they answer "additive → which v1.x minor" vs "breaking/heavy → v2.X".
 
-_Execution still pending (no GitHub changes yet): re-assign issue milestones via `gh api`,
-create the **v1.4** and **v1.5** milestones, close **#58** as a duplicate of #57, and
-reconcile the per-issue verdict-table `Milestone` column below. Awaiting approval +
-`read:project` for the board fold-in._
+_Execution status (2026-06-10): **DONE** — created the **v1.4** + **v1.5** milestones,
+re-themed v1.1/v1.2/v1.3/v2.X descriptions, re-assigned 26 issues into the 6 buckets, and
+closed **#58** as a duplicate of #57. **Still pending:** fold the GitHub Project board's
+"key next steps" into v1.1/v1.2 (blocked on `read:project` scope) and reconcile the
+per-issue verdict-table `Milestone` column below._
 
 ## Snapshot
 - **Open issues: 57 · closed: 29.**
