@@ -145,6 +145,8 @@ class SequencePreprocessor:
         while all other positions are set to 0. Gaps are represented by zero vectors. Shorter sequences are
         padded with gaps either N- or C-terminally.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         list_seq : list of str or str
@@ -195,6 +197,8 @@ class SequencePreprocessor:
 
         Each amino acid is represented by an integer between 1 and n, where n is the number of characters.
         Gaps are represented by 0. Shorter sequences are padded with gaps either N- or C-terminally.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------
@@ -249,6 +253,8 @@ class SequencePreprocessor:
 
         This window starts from a given start position (``pos_start``) and stops either at a defined
         stop position (``pos_stop``) or after a number of residues defined by ``window_size``.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------
@@ -323,6 +329,8 @@ class SequencePreprocessor:
         multi-position counterpart of :meth:`get_aa_window`: instead of one window
         at a fixed site, it returns a list covering every slide position in the
         requested range.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------

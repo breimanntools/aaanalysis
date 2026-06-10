@@ -95,6 +95,8 @@ class dPULearnPlot:
         assessing the dissimilarity between the identified negatives and the other reference groups including
         positive samples ('Pos'), unlabeled samples ('Unl'), and ground-truth negative samples ('Neg') if given.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         df_eval : pd.DataFrame, shape (n_datasets, n_metrics)
@@ -183,6 +185,8 @@ class dPULearnPlot:
         positive (1) and the unlabeled (2) sample groups. The selected principal components (PCs) represent
         a lower-dimensional feature space. Optionally, the average PC value for the positive samples can be shown,
         which was used for ``PCA-based identification`` of negatives.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------

@@ -147,6 +147,8 @@ class EmbeddingPreprocessor:
         parameters are stored on the instance (``self.norm_params_``) so the
         identical transform can be reproduced.
 
+        .. versionadded:: 1.1.0
+
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -232,6 +234,8 @@ class EmbeddingPreprocessor:
         all (entry, i) pairs where ``seq[i] == a``, taken over the input
         ``df_seq``. Non-canonical residues are skipped; AAs absent from the
         corpus get NaN rows.
+
+        .. versionadded:: 1.1.0
 
         Parameters
         ----------
@@ -335,6 +339,8 @@ class EmbeddingPreprocessor:
         of its per-amino acid (AA) ``(mean, std)`` (shape ``(D, 40)`` instead of
         ``(D, 20)``). Two dimensions with similar per-AA means but very
         different per-AA stds will then *not* collapse into the same cluster.
+
+        .. versionadded:: 1.1.0
 
         Parameters
         ----------

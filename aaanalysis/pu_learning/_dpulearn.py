@@ -164,6 +164,8 @@ class dPULearn:
         Use the ``dPULearn.labels_`` attribute to retrieve the output labels of samples in ``X``
         including identified negatives.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -277,6 +279,8 @@ class dPULearn:
           of positive samples ('pos'), unlabeled samples ('unl'), and a ground-truth negative
           ('neg') sample group if provided by ``X_neg``
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -356,6 +360,8 @@ class dPULearn:
 
         Optionally, data format can be created for Upset Plots, which are useful for visualizing the intersection
         and unique elements across these sets.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------

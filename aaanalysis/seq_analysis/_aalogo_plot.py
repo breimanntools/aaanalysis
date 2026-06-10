@@ -207,6 +207,8 @@ class AAlogoPlot:
         above the logo when ``df_logo_info`` is provided. See
         :meth:`AAlogoPlot.multi_logo` for stacking multiple logos for group comparison.
 
+        .. versionadded:: 1.1.0
+
         Parameters
         ----------
         df_logo : pd.DataFrame, shape (n_positions, n_amino_acids)
@@ -379,6 +381,8 @@ class AAlogoPlot:
 
         All logos share the same y-axis scale. Target middle domain (TMD) / juxta middle
         domain (JMD) annotations are shown only on the bottom subplot to avoid repetition.
+
+        .. versionadded:: 1.1.0
 
         Parameters
         ----------

@@ -391,6 +391,8 @@ class ShapModel:
         ``shap_values``. Pass the result to :meth:`ShapModel.add_feat_impact` to attach impact scores
         to a feature DataFrame.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -470,6 +472,7 @@ class ShapModel:
 
         .. note::
            Not yet implemented — this method is under construction.
+
         """
         raise NotImplementedError("ShapModel.eval is under construction.")
 
@@ -495,6 +498,8 @@ class ShapModel:
         The calculated feature impacts are added to ``df_feat`` as new columns named ``feat_impact_'name(s)'``,
         corresponding to each sample or group. Additionally, the SHAP value-based feature importance can be included
         as ``feat_importance`` column.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------
@@ -615,6 +620,8 @@ class ShapModel:
 
         The calculated differences are added to ``df_feat`` as new columns named ``mean_dif_'name(s)'``,
         corresponding to each sample or group.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------

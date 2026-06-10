@@ -101,6 +101,8 @@ class AAlogo:
         sequences are provided, they are aligned to a uniform length via N- or C-terminal
         padding before computing the logo.
 
+        .. versionadded:: 1.1.0
+
         Parameters
         ----------
         df_parts : pd.DataFrame, shape (n_samples, n_parts)
@@ -181,6 +183,8 @@ class AAlogo:
         ``logo_type`` set during initialization. The result reflects sequence conservation:
         higher values indicate stronger conservation at that position.
 
+        .. versionadded:: 1.1.0
+
         Parameters
         ----------
         df_parts : pd.DataFrame, shape (n_samples, n_parts)
@@ -253,6 +257,8 @@ class AAlogo:
 
         Aggregates the per-position information content from :meth:`AAlogo.get_df_logo_info`
         into a single scalar value representing overall sequence conservation.
+
+        .. versionadded:: 1.1.0
 
         Parameters
         ----------

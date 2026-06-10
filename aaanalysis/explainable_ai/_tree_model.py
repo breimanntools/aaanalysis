@@ -275,6 +275,8 @@ class TreeModel:
         performance, guided by the metric specified in ``metric``. The reduction continues until reaching
         ``n_feat_min``, with an upper limit of ``n_feat_max`` features considered.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -364,6 +366,8 @@ class TreeModel:
         and models. The output is a single DataFrame that lets you compare feature subsets side by side.
         Call :meth:`TreeModel.fit` first to obtain ``is_selected_`` arrays, then pass them here.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -446,6 +450,8 @@ class TreeModel:
         .. note::
            :meth:`TreeModel.fit` must be called before using this method.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -485,6 +491,8 @@ class TreeModel:
 
         Feature importance is included as ``feat_importance`` column and the standard deviation of
         the feature importance as ``feat_importance_std`` column.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------
@@ -545,6 +553,8 @@ class TreeModel:
         Recursive feature elimination (RFE) is itself not a selection strategy here: it is the
         :meth:`TreeModel.fit` engine (``use_rfe=True``) that produces the per-round ``is_selected_``
         masks the ``'frequency'`` strategy aggregates; without it every round keeps all features.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------

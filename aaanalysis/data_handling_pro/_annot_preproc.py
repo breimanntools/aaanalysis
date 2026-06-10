@@ -177,6 +177,8 @@ class AnnotationPreprocessor:
         to :meth:`encode`. Evidence can be filtered to retain only
         experimentally confirmed or manually curated entries.
 
+        .. versionadded:: 1.1.0
+
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -244,6 +246,8 @@ class AnnotationPreprocessor:
         Every ingested ``feature_type`` is treated as a ``'Functional sites'``
         key; unknown keys auto-register (``num_dims=1``, identity normalization)
         unless previously registered via :meth:`register_feature`.
+
+        .. versionadded:: 1.1.0
 
         Parameters
         ----------
@@ -344,6 +348,8 @@ class AnnotationPreprocessor:
         :meth:`ingest` are auto-registered with default settings; call this
         method first to supply a custom ``subcategory`` or normalization function.
 
+        .. versionadded:: 1.1.0
+
         Parameters
         ----------
         key : str
@@ -395,6 +401,8 @@ class AnnotationPreprocessor:
         normalized to ``[0, 1]``. The result can be stacked with other
         per-residue tensors via :func:`aaanalysis.combine_dict_nums` and
         consumed directly by :meth:`CPP.run_num`.
+
+        .. versionadded:: 1.1.0
 
         Parameters
         ----------
@@ -539,6 +547,8 @@ class AnnotationPreprocessor:
         Required so :meth:`CPP.run_num`'s ``cor > max_cor`` redundancy gate is
         discriminative (an all-equal ``df_scales`` disables it).
 
+        .. versionadded:: 1.1.0
+
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -675,6 +685,8 @@ class AnnotationPreprocessor:
         ``df_cat[category]`` is ``'PTMs'`` or ``'Functional sites'``;
         ``df_cat[subcategory]`` carries the per-key semantic split.
 
+        .. versionadded:: 1.1.0
+
         Parameters
         ----------
         features : list of str
@@ -750,6 +762,8 @@ class AnnotationPreprocessor:
           ``df_annot`` (e.g. {S, T, Y} for phospho) — the residue-type-matched
           negative. Set ``False`` for residue-type-agnostic classes (e.g.
           predictor hotspots): the reference is then any non-annotated residue.
+
+        .. versionadded:: 1.1.0
 
         Parameters
         ----------

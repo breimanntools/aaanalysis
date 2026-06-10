@@ -183,6 +183,8 @@ class AAclustPlot:
 
         The clustering evaluation metrics (BIC, CH, and SC) are ranked by the average of their independent rankings.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         df_eval : pd.DataFrame, shape (n_datasets, n_metrics)
@@ -251,6 +253,8 @@ class AAclustPlot:
         Projects ``X`` into the chosen PCA components and overlays the computed cluster centers as
         distinct markers, coloured by cluster label. Use :meth:`AAclust.comp_centers` to obtain the
         centers shown here, or pass labels directly from :meth:`AAclust.fit`.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------
@@ -337,6 +341,8 @@ class AAclustPlot:
         Projects ``X`` into the chosen PCA components and overlays the cluster medoids (computed via
         :meth:`AAclust.comp_medoids`) as distinct markers, coloured by cluster label, so that the
         representative sample of each cluster is immediately visible.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------
@@ -437,6 +443,8 @@ class AAclustPlot:
         Renders the correlation DataFrame produced by :meth:`AAclust.comp_correlation` as a seaborn
         heatmap, annotating rows and columns with coloured sidebars that group samples by their cluster
         label. Columns can optionally be hierarchically clustered via ``cluster_x``.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------

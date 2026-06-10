@@ -92,6 +92,8 @@ class NumericalFeature:
         with an already-kept feature. Use this after :meth:`CPP.run` to reduce the
         selected feature set to a non-redundant subset.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -272,6 +274,8 @@ class NumericalFeature:
         This function adds a new row to the DataFrame, representing the new amino acid letter.
         For each scale (column), it computes a specific statistic (min, mean, median, max) based on the
         values of existing amino acids (rows) and assigns this computed value to the new amino acid.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------

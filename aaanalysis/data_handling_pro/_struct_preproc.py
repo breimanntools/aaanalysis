@@ -469,6 +469,8 @@ class StructurePreprocessor:
         counterpart to the local ``get_`` tools; it downloads all entries in
         one bulk call.
 
+        .. versionadded:: 1.1.0
+
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -596,6 +598,8 @@ class StructurePreprocessor:
         is the intermediate input that :meth:`encode_dssp` consumes; call this
         method first to inspect the raw DSSP streams before encoding.
 
+        .. versionadded:: 1.1.0
+
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -687,6 +691,8 @@ class StructurePreprocessor:
         :meth:`encode_pdb` (ATOM-record features) and :meth:`encode_pae`
         (AlphaFold Predicted Aligned Error (PAE)); stack their outputs with
         :func:`aaanalysis.combine_dict_nums`.
+
+        .. versionadded:: 1.1.0
 
         Parameters
         ----------
@@ -888,6 +894,8 @@ class StructurePreprocessor:
         per-residue ``dict_num`` that :meth:`CPP.run_num` consumes. It is the
         ATOM-side companion of :meth:`encode_dssp` and :meth:`encode_pae`; stack
         their outputs with :func:`aaanalysis.combine_dict_nums`.
+
+        .. versionadded:: 1.1.0
 
         Parameters
         ----------
@@ -1096,6 +1104,8 @@ class StructurePreprocessor:
         :meth:`encode_dssp` and :meth:`encode_pdb`; stack their outputs with
         :func:`aaanalysis.combine_dict_nums`.
 
+        .. versionadded:: 1.1.0
+
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -1299,6 +1309,8 @@ class StructurePreprocessor:
         :meth:`encode_domains` (which now accepts the in-memory
         ``chopping`` column directly).
 
+        .. versionadded:: 1.1.0
+
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -1485,6 +1497,8 @@ class StructurePreprocessor:
         The chopping format: domains separated by commas, segments within
         a domain separated by underscores; segments are 1-based inclusive
         ``start-end``. Discontinuous domains supported.
+
+        .. versionadded:: 1.1.0
 
         Parameters
         ----------
@@ -1707,6 +1721,8 @@ class StructurePreprocessor:
         Compute pseudo-scales once on a fixed reference corpus and reuse for
         cross-dataset comparability.
 
+        .. versionadded:: 1.1.0
+
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -1847,6 +1863,8 @@ class StructurePreprocessor:
         Pure registry lookup — corpus-free. ``df_cat[category]`` is always
         ``'Structure'`` for every StructurePreprocessor feature;
         the per-key semantics live in ``df_cat[subcategory]`` (see registry).
+
+        .. versionadded:: 1.1.0
 
         Parameters
         ----------

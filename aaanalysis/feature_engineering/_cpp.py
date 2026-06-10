@@ -406,6 +406,8 @@ class CPP(Tool):
         The aim of the CPP algorithm is to identify a set of unique, non-redundant features that are most
         discriminant between the test and reference group of sequences. See [Breimann25a]_ for details on the algorithm.
 
+        .. versionadded:: 0.1.0
+
         .. versionchanged:: 1.1.0
             Added the ``return_stats`` parameter, returning the filter-funnel statistics alongside ``df_feat``.
 
@@ -958,6 +960,8 @@ class CPP(Tool):
         - **Discriminative Power**: The capability of features to distinguish between test and reference datasets.
         - **Redundancy**: Assessed by the optimized number of clusters, based on Pearson correlation among features.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         list_df_feat : list of pd.DataFrames
@@ -1108,6 +1112,8 @@ class CPP(Tool):
         set, within ``ml_th``). The swapped set is then redundancy-reduced, yielding a
         more interpretable and ideally smaller ``df_feat``. The candidate pool (the full rated
         AAontology scale set) is loaded internally.
+
+        .. versionadded:: 1.1.0
 
         Parameters
         ----------

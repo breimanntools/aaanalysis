@@ -212,6 +212,8 @@ class AAclust(Wrapper):
         members (``on_center=False``) or between the cluster center and its members (``on_center=True``),
         using either the ``min_cor_all`` or ``min_cor_center`` correlation measures, respectively.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -339,6 +341,8 @@ class AAclust(Wrapper):
         - ``SC`` (Silhouette Coefficient): Evaluates the proximity of each data point in one cluster to the points in the neighboring clusters.
           The SC score lies between -1 and 1. A value closer to 1 implies better clustering.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -406,6 +410,8 @@ class AAclust(Wrapper):
         Names with higher frequency are prioritized. If a name is already assigned to a cluster,
         or the cluster contains one sample, its name is set to 'Unclassified'.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -453,6 +459,8 @@ class AAclust(Wrapper):
         Each cluster center is the element-wise mean of all samples assigned to that cluster [Breimann24a]_.
         Use this method independently of :meth:`AAclust.fit` when cluster labels are already available.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -491,6 +499,8 @@ class AAclust(Wrapper):
         For each cluster, the medoid is the sample closest to the cluster center as measured by the chosen
         ``metric`` (default Pearson correlation) [Breimann24a]_. Use this method independently of
         :meth:`AAclust.fit` when cluster labels are already available.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------
@@ -541,6 +551,8 @@ class AAclust(Wrapper):
         Rows of ``X`` (and optionally ``X_ref``) are sorted by their cluster labels before computing
         pairwise Pearson correlation, producing a labeled DataFrame suitable for visualisation with
         :meth:`AAclustPlot.correlation` [Breimann24a]_.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------
@@ -608,6 +620,8 @@ class AAclust(Wrapper):
         within a reference set of names (universal set). Each name from both ``names`` and ``names_ref``
         are considered only once, regardless of repetition.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         names : list of str
@@ -652,6 +666,8 @@ class AAclust(Wrapper):
         clusters is determined by the number of unique subcategories in ``names_ref``. The number of clusters is
         increased step-wise until the overlap (coverage) between the unique elements in ``names_ref`` and the
         subcategories of the selected scales meets a defined threshold (``min_coverage``).
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------

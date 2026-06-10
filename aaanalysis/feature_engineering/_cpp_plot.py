@@ -300,6 +300,8 @@ class CPPPlot:
         * **Redundancy** measures ('n_clusters', 'avg_n_feat_per_clust', and 'std_n_feat_per_clust'), which
           evaluate the internal redundancy of a feature set using Pearson correlation-based clustering.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         df_eval : pd.DataFrame, shape (n_feature_sets, n_metrics)
@@ -410,6 +412,8 @@ class CPPPlot:
             2. **Part-Splitting**: Divide the selected part into subsequences, creating a **Part-Split** combination.
             3. **Scale Value Assignment**: For each amino acid in the **Part-Split** subsequence,
                assign its corresponding scale value and calculate the average, which is termed the feature value.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------
@@ -539,6 +543,8 @@ class CPPPlot:
         Introduced in [Breimann25a]_, this method visualizes the most important features for discriminating between
         the test and the reference dataset groups. At sample level, the feature impact derived from SHAP values
         of a specific sample can be used for ranking if ``shap_plot=True`` and 'feature_impact' column in ``df_feat``.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------
@@ -729,6 +735,8 @@ class CPPPlot:
         as a bar chart aligned to the TMD-JMD sequence. This reveals which positions carry the
         most discriminative signal from :meth:`CPP.run` (group-level) or SHAP-enriched feature tables
         (sample-level when ``shap_plot=True``).
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------
@@ -958,6 +966,8 @@ class CPPPlot:
         For each (subcategory, position) cell the chosen ``col_val`` from ``df_feat`` is colour-coded,
         giving a two-dimensional view of the physicochemical signature produced by :meth:`CPP.run`.
         At sample level (``shap_plot=True``) the same layout visualises per-residue SHAP feature impact.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------
@@ -1228,6 +1238,8 @@ class CPPPlot:
         (positive in red, negative in blue) — the per-sample attribution obtained via
         :class:`ShapModel`.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         df_feat : pd.DataFrame, shape (n_feature, n_feature_info)
@@ -1492,6 +1504,8 @@ class CPPPlot:
 
         This method adjusts the font size of TMD-JMD sequence characters based on their provided sequences
         to ensure that the labels are clearly legible and do not overlap in the plot.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------

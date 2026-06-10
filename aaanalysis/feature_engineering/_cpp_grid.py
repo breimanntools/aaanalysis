@@ -274,6 +274,8 @@ class CPPGrid(Tool):
         Configurations that share all settings except ``n_filter`` are executed once at the largest
         value and sliced, avoiding redundant work.
 
+        .. versionadded:: 1.1.0
+
         Parameters
         ----------
         params_parts : dict, optional
@@ -449,6 +451,8 @@ class CPPGrid(Tool):
         ``df_params``. The result is sorted so the best configuration is ``df.iloc[0]``.
         Configurations that errored (``df_feat`` is ``None``) get ``NaN`` quality and
         sort last.
+
+        .. versionadded:: 1.1.0
 
         Parameters
         ----------
