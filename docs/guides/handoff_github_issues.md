@@ -8,20 +8,57 @@ protein prediction; `pro` extra for heavy deps; semver-strict v1) and the coding
 `CLAUDE.md` + `.claude/rules/sharp-edges.md`. Verdicts: ✅ Ready · 🔄 Revisit (needs a decision /
 under-specified / oversized) · ⏸️ Defer-v2 · ❌ Reject (rule conflict) · ☑️ Done/Partial.
 
-## Milestones (release scoping — semver-strict v1.x; first cut, re-scope as work lands)
-- **v1.1** (15 open) — prio:1 output-schema foundation + docs onramp + quick wins:
-  ~~#18~~ (done), #91, #93, #21, #20, #81, #80, #35, #74, #69, #78, #77, #82, #84, #75, #76.
-- **v1.2** (14) — features building on the v1.1 `df_feat` schema:
-  #61 (implemented on `feat/issue-61`, awaiting merge), #37, #32, #24, #33, #29, #23, #22, #28, #27, #36, #43, #19, #16.
-- **v1.3** (17) — structure/conservation (pro), protein-design chain, perf, optional API:
-  #64, #65, #40, #42, #45, #46, #57, #58, #59, #60, #62, #79, #87, #88, #89, #25, #26.
-- **v2.X** (10) — the XAI suite (ProtXplain-scoped) + breaking/heavy work:
-  #47, #48, #49, #50, #51, #52, #53, #54, #55, #56.
-- **Backlog (no milestone):** #44 (time-resolution prediction, research-y).
+## Milestones (release scoping — semver-strict v1.x; re-triaged 2026-06-10, re-scope as work lands)
 
-Respect the dependency order from the lanes below: ~~#18 before #61~~ (#18 done; **#61 implemented on
-`feat/issue-61` (off current master), awaiting merge**), **#37 before #57–60** (protein-design chain). Milestones complement the `prio:` labels —
-they answer "additive → which v1.x minor" vs "breaking/heavy → v2.X".
+**Re-triage 2026-06-10 (5-bucket narrative).** Reworked after an external-reviewer
+assessment ("v1.1 is overloaded / reads like a new package") + a per-issue scope
+interview. New theme per milestone (organizing principle: **AAanalysis ships
+interpretable scientific primitives; ProtXplain orchestrates them into
+campaigns/loops**):
+
+- **v1.1** (~13 + board) — **release-readiness: docs onramp + quick wins + API trust**
+  (slimmed; the two feature-y items #91/#93 moved to v1.3 so v1.1 reads as polish, not a
+  new package): ~~#18~~ (done), #20, #21, #35, #69, #74, #75, #76, #77, #78, #80, #81,
+  #82, #84. **+ "key next steps" from the GitHub Project board** (pending `read:project`
+  scope — fold into v1.1/v1.2 once readable). Reviewer asks: cheat sheet (#81), one
+  golden-path notebook + a "CPP/dPULearn/AAclust/ShapModel/TreeModel/CPPGrid?" decision
+  tree (fold into #21/#81), and `CPP.run_num` (already in the v1.1 roadmap).
+- **v1.2** (5) — **protein design** (moved up from v1.3; "important and soon"):
+  #37 (AAmut/SeqMut, anchor), #61 (multi-class/regression — done on `feat/issue-61`,
+  awaiting merge), #59 (multi-objective scoring — interpretable, no black-box; **kept in
+  core**), **#57 (merged with #58** → one "feature-importance → ranked minimal mutation
+  set" primitive; **close #58 as duplicate on execution**; campaign-looping → ProtXplain),
+  #16 (uncertainty estimations — CPP-feature primitive, feeds #60).
+- **v1.3** (14) — **remaining important: core CPP feature & evaluation story** (the
+  interpretable-prediction backbone — feature selection/export/normalization, CPP
+  regions/presets, scales/AAclust, validation, benchmark, trust): #25 (benchmark), #26
+  (ProtXplain contract), #27 (regions beyond TMD), #28 (sliding-window CPP), #29
+  (normalization), #32 (feature selection), #33 (export formats), #36 (scale selection),
+  #43 (AAclust), #87 (CPP strategy preset), #88 (security audit), #89 (residue-pair
+  features), #91 (model eval: repeated-CV + bootstrap CIs + paired ΔMCC), #93
+  (learning-curve utility).
+- **v1.4** (9) — **remaining important: integrations & advanced primitives** (embeddings,
+  structure/conservation, motif, active learning, static XAI viz, perf): #19 (df_parts
+  perf), #22 (CPP + embedding), #23 (CPP–embedding correlation), #24 (ML pipeline
+  wrapper), #40 (structure), #45 (motif integration), #56 (static-matplotlib viz slice —
+  see split), #60 (active-learning **selection primitive**: uncertainty + diversity;
+  **kept in v1.x**, the iterative campaign loop is ProtXplain), #64 (conservation).
+- **v1.5** (5) — **heavier work** (GPU/infra, big-data rebuilds, heavy `pro` pipelines):
+  #42 (AAontology 2), #46 (functional alignment), #62 (GPU/parallelization), #65 (MSA
+  generation pipeline), #79 (PSSM).
+- **v2.X** (9) — **the XAI suite (ProtXplain-scoped) + breaking/heavy**: #47, #48, #49,
+  #50, #51, #52, #53, #54, #55. **#56 split:** static core slice → v1.4; interactive/
+  structural views (dash/panel/NGLview/PyMOL/ExplainerDashboard) → here / ProtXplain.
+- **Backlog (no milestone):** #44 (time-resolution prediction, research-y, ADR-gated).
+
+Dependency order (from the lanes below): ~~#18 before #61~~ (#18 done; **#61 implemented,
+awaiting merge**), **#37 before #57/#59** (protein-design chain). Milestones complement
+the `prio:` labels — they answer "additive → which v1.x minor" vs "breaking/heavy → v2.X".
+
+_Execution still pending (no GitHub changes yet): re-assign issue milestones via `gh api`,
+create the **v1.4** and **v1.5** milestones, close **#58** as a duplicate of #57, and
+reconcile the per-issue verdict-table `Milestone` column below. Awaiting approval +
+`read:project` for the board fold-in._
 
 ## Snapshot
 - **Open issues: 57 · closed: 29.**
