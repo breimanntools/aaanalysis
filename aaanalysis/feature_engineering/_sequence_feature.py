@@ -226,6 +226,8 @@ class SequenceFeature:
         DataFrame is the primary sequence input for :class:`CPP` and for
         :meth:`SequenceFeature.feature_matrix`.
 
+        .. versionadded:: 0.1.0
+
         .. versionchanged:: 1.1.0
             Added the ``pos``-anchor input mode (``tmd_len``).
 
@@ -355,6 +357,8 @@ class SequenceFeature:
             - **Pattern**: non-periodic discontinuous sub-sequence
             - **PeriodicPattern**: periodic discontinuous sub-sequence.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         split_types: list of str, default=[``Segment``, ``Pattern``, ``PeriodicPattern``]
@@ -444,6 +448,8 @@ class SequenceFeature:
         * For the group vs group comparison, the general feature position will be provided.
         * For sample vs group or sample vs sample comparison, the amino acid segments
           and patterns for the respective sample from the test dataset (label = 1) will be given.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------
@@ -558,6 +564,8 @@ class SequenceFeature:
         The result is the numerical input ``X`` consumed by :meth:`CPP.run` and
         by :meth:`NumericalFeature.filter_correlation`.
 
+        .. versionadded:: 0.1.0
+
         .. versionchanged:: 1.1.0
             Added the ``batch`` parameter for building a list of ``df_parts`` in a single pass.
 
@@ -660,6 +668,8 @@ class SequenceFeature:
         These ids can be passed directly to :meth:`SequenceFeature.feature_matrix`
         or used to pre-select a feature space before calling :meth:`CPP.run`.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         list_parts: list of str, default=["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
@@ -715,6 +725,8 @@ class SequenceFeature:
         shows the full scale name from ``df_cat`` together with the residue
         positions covered by the feature's Split, making feature results easier
         to interpret in :class:`CPP` output DataFrames.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------
@@ -793,6 +805,8 @@ class SequenceFeature:
         numbers, which is useful for inspecting :class:`CPP` feature results on a
         specific protein.
 
+        .. versionadded:: 0.1.0
+
         Parameters
         ----------
         features : array-like, shape (n_features,) or pd.DataFrame
@@ -865,6 +879,8 @@ class SequenceFeature:
         spreading each feature's value across every position its Split covers and
         then aggregating by scale category. The resulting position-by-category
         matrix is the direct input for :class:`CPPPlot` position plots.
+
+        .. versionadded:: 0.1.0
 
         Parameters
         ----------
