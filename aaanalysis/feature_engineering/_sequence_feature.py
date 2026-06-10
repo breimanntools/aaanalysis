@@ -28,6 +28,8 @@ from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_f
                                             get_labels_ovr_, get_labels_ovo_, get_labels_quantile_,
                                             get_labels_tiered_)
 from ._backend.cpp_run import _pick_feature_matrix_builder
+from ._backend.num_feat.filter_correlation import filter_correlation_
+from ._backend.num_feat.filter_variance import filter_variance_
 
 
 # I Helper Functions
@@ -137,6 +139,20 @@ def subset_value_sources(row_mask=None, df_parts=None, dict_num_parts=None):
     else:
         dict_num_parts_sub = None
     return df_parts_sub, dict_num_parts_sub
+
+
+def check_match_df_feat_X(df_feat=None, X=None):
+    """Check that a pre-computed feature matrix X aligns column-wise with df_feat."""
+    X = np.asarray(X)
+    if X.ndim != 2:
+        raise ValueError(f"'X' (ndim={X.ndim}) should be a 2D feature matrix of shape (n_samples, n_features).")
+    n_features = X.shape[1]
+    if n_features != len(df_feat):
+        raise ValueError(f"'X' (n_features={n_features}) should have one column per feature "
+                         f"in 'df_feat' (n_features={len(df_feat)}).")
+    if not np.isfinite(X).all():
+        raise ValueError("'X' should not contain NaN or infinite values.")
+    return X
 
 
 # II Main Functions
@@ -652,6 +668,195 @@ class SequenceFeature:
             list_X.append(X_all[start:start + n])
             start += n
         return list_X if batch else list_X[0]
+
+    def prune_by_variance(self,
+                          df_feat: pd.DataFrame = None,
+                          df_parts: Optional[pd.DataFrame] = None,
+                          df_scales: Optional[pd.DataFrame] = None,
+                          threshold: float = 0.0,
+                          X: Optional[ut.ArrayLike2D] = None,
+                          accept_gaps: bool = False,
+                          n_jobs: Union[int, None] = 1,
+                          ) -> pd.DataFrame:
+        """
+        Prune near-constant features from a feature DataFrame by variance.
+
+        Model-free **feature pruning** step: drops every feature whose column variance in the
+        realized feature matrix (built from ``df_parts``, or supplied directly via ``X``) is at or
+        below ``threshold``, and returns the row-filtered ``df_feat``. Use it on a fitted
+        ``df_feat`` (e.g. from :meth:`CPP.run`) as the first reduction stage, before
+        :meth:`SequenceFeature.prune_by_correlation` and :meth:`TreeModel.select_features`.
+
+        This is distinct from CPP's in-run pre-filter (which screens candidate features by the
+        test-group standard deviation): pruning measures variance over **all** samples of the
+        already-selected features.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info)
+            Feature DataFrame with a unique identifier, scale information, statistics, and positions for
+            each feature.
+        df_parts : pd.DataFrame, shape (n_samples, n_parts), optional
+            DataFrame with sequence parts. Used to build the feature matrix; not required if ``X`` is given.
+        df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
+            DataFrame of scales with letters typically representing amino acids. Default from :meth:`load_scales`
+            unless specified in ``options['df_scales']``.
+        threshold : float, default=0.0
+            Features with column variance ``<= threshold`` are dropped. With the default ``0.0`` only
+            strictly constant features are removed; raise it to prune low-variance features more aggressively.
+        X : array-like, shape (n_samples, n_features), optional
+            Pre-computed feature matrix aligned column-for-column with ``df_feat``. If given, it is used
+            directly and ``df_parts`` / ``df_scales`` are ignored (e.g. to reuse a matrix or to prune a
+            :meth:`CPP.run_num` ``df_feat``).
+        accept_gaps : bool, default=False
+            Whether to accept missing values by enabling omitting for computations (if ``True``).
+        n_jobs : int, None, or -1, default=1
+            Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized automatically.
+            If ``-1``, the number is set to all available cores. Overridden by ``options['n_jobs']`` when set.
+
+        Returns
+        -------
+        df_feat : pd.DataFrame, shape (n_selected_features, n_feature_info)
+            Feature DataFrame filtered to the features with variance above ``threshold``, with a reset index.
+
+        Notes
+        -----
+        * Recommended pruning order: variance (this method) -> correlation
+          (:meth:`SequenceFeature.prune_by_correlation`) -> :meth:`TreeModel.select_features`.
+        * A pruning that retains no feature (e.g. ``threshold`` above every feature's variance) raises a
+          ``ValueError`` rather than returning an empty DataFrame.
+
+        See Also
+        --------
+        * :meth:`SequenceFeature.prune_by_correlation` for the complementary redundancy-pruning step.
+        * :meth:`SequenceFeature.feature_matrix` for the feature matrix that variance is computed over.
+        * :meth:`TreeModel.select_features` for the model-based selection that follows pruning.
+
+        Examples
+        --------
+        .. include:: examples/sf_prune_by_variance.rst
+        """
+        # Check input
+        df_feat = ut.check_df_feat(df_feat=df_feat)
+        ut.check_number_range(name="threshold", val=threshold, min_val=0, just_int=False, accept_none=False)
+        if X is None:
+            ut.check_df_parts(df_parts=df_parts)
+            X = self.feature_matrix(features=df_feat, df_parts=df_parts, df_scales=df_scales,
+                                    accept_gaps=accept_gaps, n_jobs=n_jobs)
+        else:
+            X = check_match_df_feat_X(df_feat=df_feat, X=X)
+        # Prune features whose variance is at or below the threshold
+        is_selected = filter_variance_(X, threshold=threshold)
+        if not is_selected.any():
+            raise ValueError(f"'threshold' ({threshold}) removed all features. Lower it to retain features.")
+        df_feat = df_feat[is_selected].reset_index(drop=True)
+        return df_feat
+
+    def prune_by_correlation(self,
+                             df_feat: pd.DataFrame = None,
+                             df_parts: Optional[pd.DataFrame] = None,
+                             df_scales: Optional[pd.DataFrame] = None,
+                             max_cor: float = 0.7,
+                             X: Optional[ut.ArrayLike2D] = None,
+                             accept_gaps: bool = False,
+                             n_jobs: Union[int, None] = 1,
+                             ) -> pd.DataFrame:
+        """
+        Prune mutually correlated features from a feature DataFrame.
+
+        Model-free **feature pruning** step: among features whose realized feature values
+        (built from ``df_parts``, or supplied directly via ``X``) are pairwise correlated beyond
+        ``max_cor``, keeps the one with the higher ``abs_auc`` and drops the others, returning the
+        row-filtered ``df_feat``. Use it after :meth:`SequenceFeature.prune_by_variance` and before
+        :meth:`TreeModel.select_features`.
+
+        The correlation is **empirical** — measured over the actual samples in ``df_parts``. This is
+        deliberately different from CPP's in-run redundancy reduction, which compares the underlying
+        scale vectors (``df_scales.corr()``) together with positional overlap. Pruning here catches
+        features that happen to be redundant on a specific dataset even when their scales are not.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info)
+            Feature DataFrame with a unique identifier, scale information, statistics, and positions for
+            each feature. Must contain the ``abs_auc`` statistic used as the deterministic tie-break.
+        df_parts : pd.DataFrame, shape (n_samples, n_parts), optional
+            DataFrame with sequence parts. Used to build the feature matrix; not required if ``X`` is given.
+        df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
+            DataFrame of scales with letters typically representing amino acids. Default from :meth:`load_scales`
+            unless specified in ``options['df_scales']``.
+        max_cor : float, default=0.7
+            Maximum absolute Pearson correlation [0-1] between retained features. For each pair exceeding it,
+            the lower-``abs_auc`` feature is dropped; lower ``max_cor`` to prune more aggressively.
+        X : array-like, shape (n_samples, n_features), optional
+            Pre-computed feature matrix aligned column-for-column with ``df_feat``. If given, it is used
+            directly and ``df_parts`` / ``df_scales`` are ignored (e.g. to reuse a matrix or to prune a
+            :meth:`CPP.run_num` ``df_feat``).
+        accept_gaps : bool, default=False
+            Whether to accept missing values by enabling omitting for computations (if ``True``).
+        n_jobs : int, None, or -1, default=1
+            Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized automatically.
+            If ``-1``, the number is set to all available cores. Overridden by ``options['n_jobs']`` when set.
+
+        Returns
+        -------
+        df_feat : pd.DataFrame, shape (n_selected_features, n_feature_info)
+            Feature DataFrame filtered to a non-redundant subset (sorted by descending ``abs_auc``),
+            with a reset index.
+
+        Notes
+        -----
+        * The retained set is guaranteed to contain no feature pair with absolute correlation above
+          ``max_cor``, and the output is deterministic (byte-identical across runs) because features are
+          ordered by ``abs_auc`` (ties broken by ``abs_mean_dif``) before pruning.
+        * Constant (zero-variance) features have undefined correlation and are always retained here; run
+          :meth:`SequenceFeature.prune_by_variance` first to remove them.
+        * A ``df_feat`` with fewer than two features is returned unchanged (nothing to compare).
+
+        See Also
+        --------
+        * :meth:`SequenceFeature.prune_by_variance` for the variance-pruning step that should precede this.
+        * :meth:`NumericalFeature.filter_correlation` for the underlying correlation primitive on a matrix.
+        * :meth:`TreeModel.select_features` for the model-based selection that follows pruning.
+
+        Examples
+        --------
+        .. include:: examples/sf_prune_by_correlation.rst
+        """
+        # Check input
+        df_feat = ut.check_df_feat(df_feat=df_feat)
+        ut.check_number_range(name="max_cor", val=max_cor, min_val=0, max_val=1, just_int=False, accept_none=False)
+        if X is not None:
+            X = check_match_df_feat_X(df_feat=df_feat, X=X)
+        elif df_parts is not None:
+            ut.check_df_parts(df_parts=df_parts)
+        else:
+            raise ValueError("Either 'df_parts' or a pre-computed 'X' should be provided.")
+        # Nothing to compare with fewer than two features
+        if len(df_feat) < 2:
+            return df_feat.reset_index(drop=True)
+        # Order by descending abs_auc (tie-break abs_mean_dif) so the stronger feature of a pair is kept
+        order = df_feat.sort_values(by=[ut.COL_ABS_AUC, ut.COL_ABS_MEAN_DIF],
+                                    ascending=False).index.to_numpy()
+        df_feat = df_feat.loc[order].reset_index(drop=True)
+        if X is None:
+            X = self.feature_matrix(features=df_feat, df_parts=df_parts, df_scales=df_scales,
+                                    accept_gaps=accept_gaps, n_jobs=n_jobs)
+        else:
+            X = X[:, order]
+        # Prune redundant features (constant columns have undefined correlation -> always kept).
+        # Detect constant columns by zero peak-to-peak range (robust to float epsilon).
+        is_selected = np.ones(X.shape[1], dtype=bool)
+        non_constant = np.ptp(np.asarray(X, dtype=float), axis=0) > 0
+        idx_nc = np.where(non_constant)[0]
+        if idx_nc.size >= 2:
+            is_selected[idx_nc] = filter_correlation_(X[:, idx_nc], max_cor=max_cor)
+        df_feat = df_feat[is_selected].reset_index(drop=True)
+        return df_feat
 
     def get_features(self,
                      list_parts: Optional[List[str]] = None,
