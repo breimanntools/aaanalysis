@@ -324,6 +324,16 @@ class CPP(Tool):
         Notes
         -----
         * All scales from ``df_scales`` must be contained in ``df_cat``
+        * **CPP is intrinsically binary** (one test group vs one reference group). For
+          **multi-class** or **regression** tasks, do not change CPP: transform the target
+          into binary contrasts with the ``SequenceFeature.get_labels_*`` helpers and loop
+          :meth:`run` (or :meth:`run_num`) over them. Use
+          :meth:`SequenceFeature.get_labels_ovr` / :meth:`SequenceFeature.get_labels_ovo`
+          for multi-class and :meth:`SequenceFeature.get_labels_quantile` /
+          :meth:`SequenceFeature.get_labels_tiered` for regression. The row-dropping
+          helpers (``ovo`` / ``tiered``) return the row-matched ``df_parts`` /
+          ``dict_num_parts`` per contrast, ready to drop straight into a new ``CPP``. See
+          the **P8: Prediction** protocol for the end-to-end workflow.
 
         See Also
         --------
@@ -331,6 +341,8 @@ class CPP(Tool):
         * :class:`SequenceFeature` for definition of sequence **Parts**.
         * :meth:`SequenceFeature.split_kws` for definition of **Splits** key word arguments.
         * :func:`load_scales` for definition of amino acid **Scales** and their categories.
+        * ``SequenceFeature.get_labels_*`` (e.g. :meth:`SequenceFeature.get_labels_ovr`):
+          build multi-class / regression label contrasts to drive CPP.
 
         Examples
         --------
@@ -482,6 +494,10 @@ class CPP(Tool):
         -----
         * Pre-filtering can be adjusted by the following parameters: {'n_pre_filter', 'pct_pre_filter', 'max_std_test'}.
         * Filtering can be adjusted by the following parameters: {'n_filter', 'max_overlap', 'max_cor', 'check_cat'}.
+        * **Binary by design.** ``run`` compares one test group against one reference group. For
+          multi-class or regression tasks, build binary label contrasts with the
+          ``SequenceFeature.get_labels_*`` helpers and loop ``run`` over them (see the
+          :class:`CPP` class notes and the **P8: Prediction** protocol).
         * **Cost** scales as ``O(n_scales x n_parts x n_splits)`` (the candidate feature count), so larger
           scale sets / wider ``split_kws`` are proportionally slower — budget a sweep accordingly, or use
           :class:`CPPGrid` (which runs CPP once per ``n_filter`` group and slices the rest).
