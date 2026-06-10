@@ -44,10 +44,9 @@ protocol; click it to open that protocol.
      <a href="generated/protocol5_engineer_features.html"><img src="_static/img/thumbs/protocol5.png" alt="P5: Engineer features"><div class="cap">P5: Engineer features</div></a>
      <a href="generated/protocol6_compositional_positional.html"><img src="_static/img/thumbs/protocol6.png" alt="P6: Compositional vs positional"><div class="cap">P6: Compositional vs positional</div></a>
      <a href="generated/protocol7_feature_selection.html"><img src="_static/img/thumbs/protocol7.png" alt="P7: Select &amp; reduce features"><div class="cap">P7: Select &amp; reduce features</div></a>
-     <a href="generated/protocol8_classifier.html"><img src="_static/img/thumbs/protocol8.png" alt="P8: Classifier"><div class="cap">P8: Classifier</div></a>
+     <a href="generated/protocol8_prediction.html"><img src="_static/img/thumbs/protocol8.png" alt="P8: Prediction"><div class="cap">P8: Prediction</div></a>
      <a href="generated/protocol9_interpretability.html"><img src="_static/img/thumbs/protocol9.png" alt="P9: Interpretability"><div class="cap">P9: Interpretability</div></a>
      <a href="generated/protocol10_validation.html"><img src="_static/img/thumbs/protocol10.png" alt="P10: Validation"><div class="cap">P10: Validation</div></a>
-     <a href="generated/protocol11_multiclass_regression.html"><img src="_static/img/thumbs/protocol11.png" alt="P11: Multi-class and regression"><div class="cap">P11: Multi-class and regression</div></a>
    </div>
 
 AAanalysis turns a biological *question* into an
@@ -70,7 +69,6 @@ selection, modelling, explanation, and validation.
    generated/protocol5_engineer_features
    generated/protocol6_compositional_positional
    generated/protocol7_feature_selection
-   generated/protocol8_classifier
+   generated/protocol8_prediction
    generated/protocol9_interpretability
    generated/protocol10_validation
-   generated/protocol11_multiclass_regression
