@@ -69,12 +69,34 @@ A cross-cutting use-case class with **no prediction target**: CPP contrasts two 
 _Avoid_: feature discovery (collides with feature engineering), profiling (too generic).
 
 **design / engineering**:
-A cross-cutting use-case class that inverts prediction: modify a sequence to move it toward a target CPP profile (AAMut / SeqMut). Same levels, opposite direction.
-_Avoid_: optimization (overloaded), generation.
+A cross-cutting use-case class that inverts prediction: instead of asking *what distinguishes two groups*, it asks *how a mutation moves a sequence's CPP feature profile*, and uses that to move a sequence toward a target profile ([[AAMut]] / [[SeqMut]]). Same prediction levels, opposite direction. The #37 scope is the **measurement + minimal single-objective** layer (apply mutations, measure [[ΔCPP]], rank by magnitude, suggest the top target-shift); goal-directed library generation, multi-objective/Pareto weighting, and uncertainty/active-learning selection are deferred to the design chain (#57/#59/#60). It is deliberately **model-free** — ΔCPP is a change in CPP feature values, never a black-box model score.
+_Avoid_: optimization (overloaded — reserved for the deferred chain), generation.
 
 **relational / interaction (scope boundary)**:
 Tasks about relationships *between* residues or chains (PPI interfaces, residue–residue contacts). AAanalysis profiles interface **segments** only; long-range pairwise contacts are **out of scope** and hand off to structure / PLM tooling. A boundary, **not** a fourth prediction level.
 _Avoid_: pair level, contact level (implies first-class support that does not exist).
+
+### Protein-design (mutation / ΔCPP) vocabulary
+
+**AAMut**:
+The **residue-level, CPP-agnostic** mutator (`aaanalysis/protein_design/`). `AAMut(df_scales).run(from_aa, to_aa, scales)` returns a tidy per-scale substitution-impact table — the signed `delta = scale[to_aa] - scale[from_aa]` for every requested substitution pair — independent of any sequence or task; `eval` ranks scales by mean `abs_delta` (substitution sensitivity). It is the physicochemical building block [[SeqMut]] uses per position. Distinct from a sequence-level mutator: AAMut never sees a [[df_seq]] or a [[df_feat]].
+_Avoid_: substitution matrix (that is one *view* of AAMut's output, the `AAMutPlot.substitution_matrix` heatmap), BLOSUM (AAMut is property-scale-based, not log-odds).
+
+**SeqMut**:
+The **sequence-level, CPP-aware** mutator. Requires the **position-based** [[df_seq]] (`sequence` + `tmd_start`/`tmd_stop`) and a [[df_feat]]; applies point mutations and measures the [[ΔCPP]] they induce. Four verbs: `mutate` (apply a tidy `df_mut(entry, pos, to_aa)` table), `scan` (exhaustive per-position × substitution landscape, ranked by `delta_cpp`), `suggest` (top **target-shift** mutations), `eval` (**stable-vs-disruptive** per region). Deterministic and **model-free**; the returned table *is* the mutation history (no hidden state). It is the sole CPP-coupled class in the design module.
+_Avoid_: sequence mutator (use SeqMut), perturbation (the legacy module name; the package is `protein_design`).
+
+**ΔCPP** (`delta_cpp`):
+The **feature-space** change a mutation induces: `ΔX = X_mut − X_wt` over the [[df_feat]] features (each `X` from `SequenceFeature.feature_matrix`), aggregated to the scalar L1 magnitude `delta_cpp = Σ|ΔX|`. The measurement layer of [[design / engineering]] — never a model prediction delta (that model-based path is the deferred #57 territory, explicitly out of scope). Only positions inside the parts referenced by `df_feat` can change `X`, so SeqMut's default scan region is the JMD-N + TMD + JMD-C span.
+_Avoid_: mutation score, fitness (implies an optimization objective), prediction change (model-based — wrong layer).
+
+**target-shift** (`shift_score`):
+The signed score by which [[SeqMut]]`.suggest` ranks a mutation toward the **test-class profile**: `shift_score = Σ sign(mean_dif) · ΔX`, optionally weighted per feature by `feat_importance`/`abs_auc`. The target direction is **implicit in `df_feat`'s `mean_dif`** (the way the test class differs from the reference), so no separate target vector is needed — though an explicit `target` feature-vector override is accepted. Positive = moves toward the test class.
+_Avoid_: objective (reserved for the deferred multi-objective #59), gradient (no model is differentiated).
+
+**stable vs disruptive**:
+The binary tag [[SeqMut]]`.eval` assigns each scanned mutation by thresholding `|ΔCPP|` (default: the upper-tertile quantile of the observed distribution; user-overridable), summarized as a per-`entry`×`region` disruptive **rate**. "Disruptive" = large feature-space displacement; "stable" = small.
+_Avoid_: deleterious / tolerated (phenotype claims AAanalysis does not make — the tag is feature-space displacement, not function).
 
 ### Multi-class & regression labeling vocabulary
 
