@@ -19,8 +19,8 @@ campaigns/loops**):
 - **v1.1** (~13 + board) — **release-readiness: docs onramp + quick wins + API trust**
   (slimmed; the two feature-y items #91/#93 moved to v1.3 so v1.1 reads as polish, not a
   new package): ~~#18~~ (done), #20, #21, #35, #69, #74, #75, #76, #77, #78, #80, #81,
-  #82, #84. **+ "key next steps" from the GitHub Project board** (pending `read:project`
-  scope — fold into v1.1/v1.2 once readable). Reviewer asks: cheat sheet (#81), one
+  #82, #84. **+ "key next steps" from the GitHub Project board** (board now fully synced —
+  see _Priority tiers & Kanban_ below). Reviewer asks: cheat sheet (#81), one
   golden-path notebook + a "CPP/dPULearn/AAclust/ShapModel/TreeModel/CPPGrid?" decision
   tree (fold into #21/#81), and `CPP.run_num` (already in the v1.1 roadmap).
 - **v1.2** (4 open; #61 + #58 closed) — **protein design** (moved up from v1.3; "important
@@ -54,11 +54,38 @@ campaigns/loops**):
 Dependency order (from the lanes below): ~~#18 before #61~~ (#18 done; **#61 done/closed**), **#37 before #57/#59** (protein-design chain). Milestones complement
 the `prio:` labels — they answer "additive → which v1.x minor" vs "breaking/heavy → v2.X".
 
-_Execution status (2026-06-10): **DONE** — created the **v1.4** + **v1.5** milestones,
-re-themed v1.1/v1.2/v1.3/v2.X descriptions, re-assigned 26 issues into the 6 buckets, and
-closed **#58** as a duplicate of #57. **Still pending:** fold the GitHub Project board's
-"key next steps" into v1.1/v1.2 (blocked on `read:project` scope) and reconcile the
-per-issue verdict-table `Milestone` column below._
+_Execution status (updated 2026-06-11): **milestones + board DONE.** Created the **v1.4** +
+**v1.5** milestones, re-themed all milestone descriptions, re-assigned 26 issues into the 6
+buckets, and closed **#58** (dup of #57). The GitHub Project **"AAanalysis"** Kanban is now
+fully synced (all 59 open issues carded) and driven by a 3-tier `prio:` scheme — see below.
+Remaining doc chore: reconcile the per-issue verdict-table `Milestone` column further down._
+
+## Priority tiers & Kanban (2026-06-11)
+
+The GitHub Project **"AAanalysis"** (Kanban, `#1`) is the live working board. **`prio:`
+labels are orthogonal to milestones** — milestone = *which release*; prio = *how soon* —
+and the prio label drives the board's Status column:
+
+> **`prio:1` → "To Do"** (do next) · **`prio:2` / `prio:3` → "Backlog"** · closed → "Done".
+
+Every open issue carries **exactly one** `prio:` label. Current split — **11 / 14 / 34**:
+
+- **prio:1 (11 — To Do):** #16, #21, #32, #37, #57, #59, #74, #81, #84, #91, #106.
+  = v1.1 release-readiness **5** (#21 golden-path tutorial · #74 CHANGELOG/deprecation ·
+  #81 cheat sheet · #84 param/branch coverage · #106 docs-architecture epic) + v1.2
+  protein-design **4** (#16, #37, #57, #59) + v1.3 trust/selection **2** (#32 feature
+  selection · #91 model eval).
+- **prio:2 (14 — headline-next, Backlog):** v1.1 #20, #35, #80, #107, #109 · v1.3 #28,
+  #29, #33, #43, #88 · v1.4 #22, #40, #56, #60.
+- **prio:3 (34 — convenience / extensions / research / heavy-deferred, Backlog):** the
+  rest — **all of v1.5 and v2.X** (heavy + XAI long-tail), the minor v1.1 docs quick-wins
+  (#69, #75, #76, #77, #78, #82, #108), v1.3 extensions (#25, #26, #27, #36, #87, #89, #93),
+  v1.4 secondary (#19, #23, #24, #45, #64), and #44 (no milestone).
+
+Principle: **prio:2 = a milestone's headline deliverables; prio:3 = convenience/sugar,
+extensions, research-y, or heavy-and-deferred.** Caveats: **#57/#59 depend on #37** landing
+first (they're in To Do as parallel intent, not because they're unblocked); **v1.2 is
+entirely prio:1** by request.
 
 ## Snapshot
 - **Open issues: 60 · closed: 30.**
