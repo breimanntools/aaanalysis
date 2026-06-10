@@ -18,6 +18,16 @@ pytest tests/unit/aaclust_tests/test_aaclust_fit.py::TestAAclustFit::test_valid_
 # coverage (matches CI gate: test_coverage.yml uses --cov-fail-under=88)
 pytest --cov=aaanalysis --cov-fail-under=88 tests
 
+# branch coverage + the branch/line gate (issue #84). --cov-branch reports a
+# branch-rate; the helper parses coverage.xml and fails below the committed
+# line/branch gates (do NOT use --cov-fail-under with --cov-branch: it would
+# gate the combined number and silently redefine the line floor).
+pytest tests -m "not regression" --cov=aaanalysis --cov-branch --cov-report=xml -n auto -c tests/pytest.ini
+python .github/scripts/check_branch_coverage.py
+
+# parameter coverage meta-test (fast, no coverage run needed)
+pytest tests/unit/api_tests/test_param_coverage.py -x -vv -c tests/pytest.ini
+
 # run notebooks — LOCAL gate only (nbmake is NOT in blocking CI; re-run + re-commit
 # outputs before every push; RTD renders committed outputs but does not execute them)
 pytest --nbmake --nbmake-timeout=120 tutorials/ examples/

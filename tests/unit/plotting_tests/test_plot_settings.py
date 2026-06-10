@@ -48,6 +48,11 @@ class TestPlotSettings:
         assert mpl.rcParams["errorbar.capsize"] == 10
         assert mpl.rcParams["legend.frameon"] == False
 
+    def test_show_options(self):
+        for show_options in [True, False]:
+            aa.plot_settings(show_options=show_options)
+        assert mpl.rcParams["font.family"] == ["sans-serif"]
+
     # Negative Tests
     def test_negative_font_scale(self):
         with pytest.raises(ValueError):

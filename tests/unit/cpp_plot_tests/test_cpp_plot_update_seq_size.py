@@ -73,6 +73,15 @@ class TestUpdateSeqSize:
         assert isinstance(result, plt.Axes)
         plt.close()
 
+    def test_max_x_dist(self):
+        for max_x_dist in [0.0, 0.1, 0.5]:
+            cpp_plot = aa.CPPPlot()
+            args_seq = get_args_seq()
+            _, ax = plot_profile(cpp_plot=cpp_plot, args_seq=args_seq)
+            result = cpp_plot.update_seq_size(ax=ax, max_x_dist=max_x_dist)
+            assert isinstance(result, plt.Axes)
+            plt.close()
+
     def test_weight_tmd_jmd(self):
         for weight_tmd_jmd in ["bold", "normal"]:
             cpp_plot = aa.CPPPlot()

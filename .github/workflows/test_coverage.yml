@@ -79,7 +79,15 @@ jobs:
         # than the default C-tracer, so the coverage job stops being the long pole.
         COVERAGE_CORE: sysmon
       run: |
-        pytest tests -m "not regression" --cov=aaanalysis --cov-report=xml --cov-fail-under=88 -x -n auto --durations=20
+        pytest tests -m "not regression" --cov=aaanalysis --cov-branch --cov-report=xml -x -n auto --durations=20
+
+    # Branch coverage cannot be gated by --cov-fail-under once --cov-branch is on
+    # (that flag then checks the *combined* line+branch number, silently redefining
+    # the line floor). Parse coverage.xml for independent line (>=88) and branch
+    # (>=80) gates instead (issue #84, ADR-0016 D4).
+    - name: Enforce line and branch coverage gates
+      run: |
+        python .github/scripts/check_branch_coverage.py
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v7

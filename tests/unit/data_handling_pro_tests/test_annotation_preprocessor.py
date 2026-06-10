@@ -117,6 +117,21 @@ class TestRegistryAndMetadata:
         with pytest.raises(ValueError):
             ap.build_scales(df_seq=None, dict_num=None, features=["phospho"])
 
+    def test_register_feature_subcategory_and_normalization(self):
+        ap = AnnotationPreprocessor(verbose=False)
+        ap.register_feature(
+            key="hotspot",
+            subcategory="Custom hotspots",
+            normalization=lambda values: np.clip(values, 0.0, 1.0),
+        )
+        df_cat = ap.build_cat(features=["hotspot"])
+        assert df_cat[ut.COL_SUBCAT].iloc[0] == "Custom hotspots"
+        df_annot = _annot_rows(
+            [["P1", 5, 5, "", "hotspot", "Functional sites", "rfdiff", "", 0.42, None]]
+        )
+        dn = ap.encode(df_seq=_df_seq(), df_annot=df_annot, features=["hotspot"])
+        assert abs(dn["P1"][4, 0] - 0.42) < 1e-9
+
 
 # ---------------------------------------------------------------------------
 # UniProt JSON → df_annot mapper
