@@ -389,6 +389,10 @@ class TestGetLabelsQuantile:
         labels = SF.get_labels_quantile(np.array([1, 2, 3, 4], dtype=np.float32), q=0.5)
         assert labels.tolist() == [0, 0, 1, 1]
 
+    def test_targets_keyword(self):
+        labels = SF.get_labels_quantile(targets=[1.0, 2, 3, 4], q=0.5)
+        assert set(np.unique(labels)).issubset({0, 1})
+
     # Negative
     def test_none_raises(self):
         with pytest.raises(ValueError):
@@ -533,6 +537,11 @@ class TestGetLabelsTiered:
         tiers = SF.get_labels_tiered(t, q_pos=0.8, list_q_neg=[0.3], dict_num_parts=_toy_dict_num_parts(len(t)))
         dps, dnp, y = tiers[0.3]
         assert dps is None and dnp["tmd"].shape[0] == len(y)
+
+    def test_targets_keyword(self):
+        t = list(np.linspace(0, 1, 20))
+        tiers = SF.get_labels_tiered(targets=t, q_pos=0.8, list_q_neg=[0.3], df_parts=_toy_df_parts(len(t)))
+        assert list(tiers.keys()) == [0.3]
 
     # Negative
     def test_none_raises(self):
@@ -688,6 +697,10 @@ class TestGetDfPartsFromWindows:
         df = SF.get_df_parts_from_windows({"jmd_n": ["AAAA", "CCCC"], "tmd": ["EEEEEE", "FFFFFF"],
                                            "jmd_c": ["HHHH", "KKKK"]})
         assert df.loc["REF1", "tmd"] == "FFFFFF"
+
+    def test_dict_parts_keyword(self):
+        df = SF.get_df_parts_from_windows(dict_parts=_toy_windows(3))
+        assert len(df) == 3 and list(df) == ["jmd_n", "tmd", "jmd_c"]
 
     # Negative
     def test_none_raises(self):

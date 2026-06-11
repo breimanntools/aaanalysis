@@ -59,6 +59,12 @@ class TestCompareSetsNegatives:
         df_neg_comp = aa.dPULearn.compare_sets_negatives(list_labels=list_labels, return_upset_data=False)
         assert isinstance(df_neg_comp, pd.DataFrame)
 
+    def test_remove_non_neg_valid(self):
+        list_labels = _create_list_labels(100, 3)
+        for remove_non_neg in [True, False]:
+            result = aa.dPULearn.compare_sets_negatives(list_labels=list_labels, remove_non_neg=remove_non_neg)
+            assert isinstance(result, pd.DataFrame)
+
     # Negative tests
     @settings(max_examples=10)
     @given(size=st.integers(min_value=1, max_value=100), num_labels=st.integers(min_value=1, max_value=10))

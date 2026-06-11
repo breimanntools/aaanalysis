@@ -79,6 +79,22 @@ class TestAAclust:
         # No direct assertions on 'min_th' effect, as its role is internal and complex.  # This test ensures no error is raised.
         aac.fit(X, min_th=min_th)
 
+    def test_fit_on_center(self):
+        """Test the 'on_center' parameter during the 'fit' method (threshold on center vs. medoid)."""
+        for on_center in [True, False]:
+            X = np.random.rand(100, 10)
+            aac = aa.AAclust()
+            aac.fit(X, on_center=on_center)
+            assert isinstance(aac.labels_, np.ndarray)
+
+    def test_fit_merge(self):
+        """Test the 'merge' parameter during the 'fit' method (post-clustering merge step)."""
+        for merge in [True, False]:
+            X = np.random.rand(100, 10)
+            aac = aa.AAclust()
+            aac.fit(X, merge=merge)
+            assert isinstance(aac.labels_, np.ndarray)
+
     # Property-based testing for negative cases
     @given(n_clusters=some.integers(max_value=0))
     def test_fit_invalid_n_clusters(self, n_clusters):
