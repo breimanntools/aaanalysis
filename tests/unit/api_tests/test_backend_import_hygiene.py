@@ -40,7 +40,7 @@ def _frontend_files(pkg_dir):
 
 def _backend_subpkg_imports(py_file):
     """Yield the ``_backend/<subpkg>`` subpackage names a file imports from (relative)."""
-    tree = ast.parse(py_file.read_text(), filename=str(py_file))
+    tree = ast.parse(py_file.read_text(encoding="utf-8"), filename=str(py_file))
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom) and node.level >= 1 and node.module:
             parts = node.module.split(".")
