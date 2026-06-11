@@ -188,7 +188,8 @@ def load_dataset(name: str = "Overview",
         jmd_n, tmd, jmd_c`` for domain-level datasets).
     df : pd.DataFrame
         When ``name='Overview'``: a summary table of all available benchmarks
-        (no ``sequence`` column; one row per dataset).
+        (no ``sequence`` column; one row per dataset), including an
+        ``'Avg length'`` column (see Notes for its definition).
 
     Notes
     -----
@@ -202,6 +203,12 @@ def load_dataset(name: str = "Overview",
 
     See :ref:`t1_overview_benchmarks` for the size, class balance, and reference
     predictor of each dataset.
+
+    The Overview table's ``'Avg length'`` column is the mean number of residues
+    per sequence, averaged over the complete dataset (all sequences, before any
+    non-canonical-amino-acid removal). For amino acid level (``'AA_*'``)
+    datasets this is the mean **full-protein** length, not the length of the
+    windowed sequences returned under the default ``aa_window_size``.
 
     ``df_seq`` includes these columns:
 

@@ -3,6 +3,7 @@ This is a script for testing the aa.load_dataset function.
 """
 from hypothesis import given, example, settings
 import hypothesis.strategies as some
+import numpy as np
 import aaanalysis.utils as ut
 import aaanalysis as aa
 import pytest
@@ -210,4 +211,51 @@ class TestLoadDatasetComplex:
         df = aa.load_dataset(name="SEQ_LOCATION", n=5, random=True)
         assert len(df) == 5 * 2
         assert set(df[ut.COL_LABEL]) == {0, 1}
+
+
+def _recompute_avg_length(name):
+    """Mean full-length sequence over the complete, unfiltered dataset.
+
+    Mirrors the definition of the Overview 'Avg length' column: all sequences
+    are kept (non_canonical_aa='keep') and, for amino-acid-level datasets, the
+    full protein is used (aa_window_size=None) rather than the windowed view.
+    """
+    kwargs = dict(non_canonical_aa="keep")
+    if name.startswith("AA_"):
+        kwargs["aa_window_size"] = None
+    df_seq = aa.load_dataset(name=name, **kwargs)
+    return df_seq[ut.COL_SEQ].str.len().mean()
+
+
+# Dataset names from the Overview table itself, so the parametrization can never
+# go stale relative to the bundled benchmarks.
+LIST_BENCHMARK_NAMES = aa.load_dataset(name="Overview")["Dataset"].to_list()
+
+
+class TestOverviewAvgLength:
+    """Pin the Overview 'Avg length' column to the bundled sequence files (issue #82)."""
+
+    def test_overview_has_avg_length_no_nan(self):
+        """The Overview frame exposes 'Avg length' with no missing values."""
+        df = aa.load_dataset(name="Overview")
+        assert "Avg length" in df.columns
+        assert df["Avg length"].isna().sum() == 0
+
+    @pytest.mark.parametrize("name", LIST_BENCHMARK_NAMES)
+    def test_avg_length_matches_recomputed(self, name):
+        """Stored 'Avg length' equals the recomputed mean for every dataset (14/14)."""
+        df = aa.load_dataset(name="Overview")
+        stored = df.loc[df["Dataset"] == name, "Avg length"].iloc[0]
+        recomputed = _recompute_avg_length(name)
+        # Exact match in practice — far inside the issue's <= 0.5 residue tolerance.
+        assert np.isclose(stored, recomputed, atol=1e-6), (
+            f"'{name}': stored Avg length ({stored}) should match "
+            f"recomputed mean length ({recomputed})"
+        )
+
+    def test_avg_length_golden_value(self):
+        """Golden anchor: AA_CASPASE3 reports the full-protein mean length."""
+        df = aa.load_dataset(name="Overview")
+        stored = df.loc[df["Dataset"] == "AA_CASPASE3", "Avg length"].iloc[0]
+        assert np.isclose(stored, 796.587982832618, atol=1e-6)
 

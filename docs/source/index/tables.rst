@@ -75,11 +75,12 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
 
 .. list-table::
    :header-rows: 1
-   :widths: 8 8 8 8 8 8 8 8 8 8
+   :widths: 8 8 8 8 8 8 8 8 8 8 8
 
    * - Level
      - Dataset
      - # Sequences
+     - Avg length
      - # Amino acids
      - # Positives
      - # Negatives
@@ -90,6 +91,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
    * - Amino acid
      - AA_CASPASE3
      - 233
+     - 796.6
      - 185605
      - 705
      - 184900
@@ -100,6 +102,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
    * - Amino acid
      - AA_FURIN
      - 71
+     - 831.0
      - 59003
      - 163
      - 58840
@@ -110,6 +113,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
    * - Amino acid
      - AA_LDR
      - 342
+     - 345.8
      - 118248
      - 35469
      - 82779
@@ -120,6 +124,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
    * - Amino acid
      - AA_MMP2
      - 573
+     - 546.2
      - 312976
      - 2416
      - 310560
@@ -130,6 +135,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
    * - Amino acid
      - AA_RNABIND
      - 221
+     - 248.9
      - 55001
      - 6492
      - 48509
@@ -140,6 +146,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
    * - Amino acid
      - AA_SA
      - 233
+     - 796.6
      - 185605
      - 101082
      - 84523
@@ -150,6 +157,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
    * - Sequence
      - SEQ_AMYLO
      - 1414
+     - 6.0
      - 8484
      - 511
      - 903
@@ -160,6 +168,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
    * - Sequence
      - SEQ_CAPSID
      - 7935
+     - 424.0
      - 3364680
      - 3864
      - 4071
@@ -170,6 +179,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
    * - Sequence
      - SEQ_DISULFIDE
      - 2547
+     - 241.3
      - 614470
      - 897
      - 1650
@@ -180,6 +190,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
    * - Sequence
      - SEQ_LOCATION
      - 1835
+     - 399.1
      - 732398
      - 1045
      - 790
@@ -190,6 +201,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
    * - Sequence
      - SEQ_SOLUBLE
      - 17408
+     - 254.6
      - 4432269
      - 8704
      - 8704
@@ -200,6 +212,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
    * - Sequence
      - SEQ_TAIL
      - 6668
+     - 400.7
      - 2671690
      - 2574
      - 4094
@@ -210,6 +223,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
    * - Domain
      - DOM_GSEC
      - 126
+     - 737.8
      - 92964
      - 63
      - 63
@@ -220,6 +234,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
    * - Domain
      - DOM_GSEC_PU
      - 694
+     - 712.6
      - 494524
      - 63
      - 0
