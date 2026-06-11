@@ -142,6 +142,13 @@ planning notes — are the single sources of truth:
 So the authoritative record of *why* the code looks the way it does is the **ADRs + CONTEXT.md +
 CLAUDE.md/.claude/rules**, kept in sync as decisions are made.
 
+The loop for a single change is: pick the issue → ``/grill-with-docs`` (spec vs. reality) →
+branch in an isolated ``git worktree`` → implement → open a draft PR early → pass the automated
+quality gates → human review → merge → delete the branch. The full step-by-step protocol and the
+exact gate each change must clear (test matrix, ≥88 % coverage, RTD docs, architecture and
+parameter-coverage meta-tests, lint/security) are documented in
+`docs/guides/agentic_engineering.md <docs/guides/agentic_engineering.md>`_.
+
 Citations
 =========
 If you use AAanalysis in your work, please cite the respective publication as follows:
