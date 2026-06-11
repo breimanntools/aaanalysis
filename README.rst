@@ -95,21 +95,6 @@ If you are looking to make publication-ready plots with a view lines of code, se
 
 You can find the official documentation at `Read the Docs <https://aaanalysis.readthedocs.io/en/latest/>`_.
 
-Cheat Sheet
-===========
-A one-page visual reference to the AAanalysis workflow, the main classes grouped by
-capability, the prediction levels (residue / domain / protein), and the
-*Part × Split × Scale* feature ontology — every snippet uses the public API.
-
-.. image:: docs/source/_artwork/cheat_sheet_preview.png
-   :alt: AAanalysis cheat sheet (page 1 of 3)
-   :target: https://aaanalysis.readthedocs.io/en/latest/index/cheat_sheet.html
-   :width: 75%
-   :align: center
-
-`Download the cheat sheet (PDF, 3 pages) <docs/source/_static/cheat_sheet.pdf>`_ |
-`open it interactively <https://aaanalysis.readthedocs.io/en/latest/index/cheat_sheet.html>`_
-
 Install
 =======
 **AAanalysis** can be installed from `PyPi <https://pypi.org/project/aaanalysis>`_:
@@ -134,8 +119,8 @@ If you use uv, the equivalent commands are:
 Contributing
 ============
 We appreciate bug reports, feature requests, or updates on documentation and code. For details, please refer to
-`Contributing Guidelines <CONTRIBUTING.rst>`_. These include specifics about AAanalysis and also notes on Test
-Guided Development (TGD) using ChatGPT. For further questions or suggestions, please email stephanbreimann@gmail.com.
+`Contributing Guidelines <CONTRIBUTING.rst>`_. These cover AAanalysis development conventions and the automated
+quality gates every change must pass. For further questions or suggestions, please email stephanbreimann@gmail.com.
 
 Agentic engineering
 ===================
@@ -163,6 +148,20 @@ quality gates → human review → merge → delete the branch. The full step-by
 exact gate each change must clear (test matrix, ≥88 % coverage, RTD docs, architecture and
 parameter-coverage meta-tests, lint/security) are documented in
 `docs/guides/agentic_engineering.md <docs/guides/agentic_engineering.md>`_.
+
+Cheat Sheet
+===========
+The cheat sheet condenses AAanalysis onto a single page: the end-to-end workflow, the main
+classes grouped by capability, the prediction levels (residue / domain / protein), and the
+*Part × Split × Scale* feature ontology. Every snippet uses the public API.
+
+.. image:: docs/source/_artwork/cheat_sheet_preview.png
+   :alt: AAanalysis cheat sheet (page 1 of 3)
+   :target: docs/source/_static/cheat_sheet.pdf
+   :width: 75%
+   :align: center
+
+`Download the cheat sheet (PDF, 3 pages) <docs/source/_static/cheat_sheet.pdf>`_
 
 Citations
 =========
