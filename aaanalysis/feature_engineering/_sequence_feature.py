@@ -704,12 +704,18 @@ class SequenceFeature:
             DataFrame of scales with letters typically representing amino acids. Default from :meth:`load_scales`
             unless specified in ``options['df_scales']``.
         threshold : float, default=0.0
-            Features with column variance ``<= threshold`` are dropped. With the default ``0.0`` only
-            strictly constant features are removed; raise it to prune low-variance features more aggressively.
+            Minimum **population variance** (``numpy`` ``var``, ``ddof=0``) a feature's column must exceed
+            to be kept; the threshold is in **variance units**, not standard-deviation units. Feature
+            values are means of (typically ``[0, 1]``-normalized) scale values, so variances are small —
+            commonly below ``0.1`` — and a useful range is: ``0.0`` removes only strictly constant
+            features, while ``~0.01`` to ``~0.05`` also prunes low-variance features. The variance is
+            computed **over all provided samples** (every row of ``df_parts`` / ``X``, both classes
+            together) per feature column — not the test group only, and not per split.
         X : array-like, shape (n_samples, n_features), optional
-            Pre-computed feature matrix aligned column-for-column with ``df_feat``. If given, it is used
-            directly and ``df_parts`` / ``df_scales`` are ignored (e.g. to reuse a matrix or to prune a
-            :meth:`CPP.run_num` ``df_feat``).
+            Pre-computed feature matrix. Column ``i`` must correspond to the feature in row ``i`` of
+            ``df_feat`` (same order). If given, it is used directly and ``df_parts`` / ``df_scales`` are
+            ignored (e.g. to reuse a matrix across pruning calls or to prune a :meth:`CPP.run_num`
+            ``df_feat``).
         accept_gaps : bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
         n_jobs : int, None, or -1, default=1
@@ -723,6 +729,13 @@ class SequenceFeature:
 
         Notes
         -----
+        * **Variance metric**: population variance (``ddof=0``) of each feature column over all samples.
+          A feature that is constant across the samples (zero peak-to-peak range) is treated as exactly
+          zero variance, so ``threshold=0.0`` removes precisely the constant features even when floating
+          point would otherwise leave a tiny non-zero variance.
+        * **Scope**: variance reflects how much a feature varies across *your* samples; it is unrelated to
+          CPP's in-run pre-filter, which screens *candidate* features by the **test-group** standard
+          deviation (``max_std_test``) rather than the spread over all samples.
         * Recommended pruning order: variance (this method) -> correlation
           (:meth:`SequenceFeature.prune_by_correlation`) -> :meth:`TreeModel.select_features`.
         * A pruning that retains no feature (e.g. ``threshold`` above every feature's variance) raises a
@@ -777,6 +790,12 @@ class SequenceFeature:
         scale vectors (``df_scales.corr()``) together with positional overlap. Pruning here catches
         features that happen to be redundant on a specific dataset even when their scales are not.
 
+        Compared with the lower-level :meth:`NumericalFeature.filter_correlation`, which takes a raw
+        matrix ``X`` and returns a boolean mask keeping the **first** column of each correlated pair (in
+        the order given), this method is df_feat-in / df_feat-out: it builds ``X`` for you, **ranks
+        features by ``abs_auc`` first** so the dropped feature of a pair is always the weaker one, and
+        returns the row-filtered ``df_feat``.
+
         .. versionadded:: 1.1.0
 
         Parameters
@@ -790,11 +809,15 @@ class SequenceFeature:
             DataFrame of scales with letters typically representing amino acids. Default from :meth:`load_scales`
             unless specified in ``options['df_scales']``.
         max_cor : float, default=0.7
-            Maximum absolute Pearson correlation [0-1] between retained features. For each pair exceeding it,
-            the lower-``abs_auc`` feature is dropped; lower ``max_cor`` to prune more aggressively.
+            Maximum **absolute Pearson correlation** [0-1] allowed between any two retained features.
+            For each pair whose ``|corr| > max_cor``, the feature with the **lower** ``abs_auc`` is
+            dropped (and the higher-``abs_auc`` one kept) — regardless of the input row order, because
+            the method ranks by ``abs_auc`` internally. Lower ``max_cor`` to prune more aggressively.
         X : array-like, shape (n_samples, n_features), optional
-            Pre-computed feature matrix aligned column-for-column with ``df_feat``. If given, it is used
-            directly and ``df_parts`` / ``df_scales`` are ignored (e.g. to reuse a matrix or to prune a
+            Pre-computed feature matrix. Column ``i`` must correspond to the feature in row ``i`` of the
+            ``df_feat`` you pass (same order); the method then re-ranks ``df_feat`` and ``X`` together by
+            ``abs_auc`` internally, so you do **not** pre-sort. If given, it is used directly and
+            ``df_parts`` / ``df_scales`` are ignored (e.g. to reuse a matrix or to prune a
             :meth:`CPP.run_num` ``df_feat``).
         accept_gaps : bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
@@ -810,9 +833,14 @@ class SequenceFeature:
 
         Notes
         -----
-        * The retained set is guaranteed to contain no feature pair with absolute correlation above
-          ``max_cor``, and the output is deterministic (byte-identical across runs) because features are
-          ordered by ``abs_auc`` (ties broken by ``abs_mean_dif``) before pruning.
+        * **Tie-break / determinism**: features are sorted by descending ``abs_auc`` (ties broken by
+          ``abs_mean_dif``) before pruning, so for every correlated pair the lower-``abs_auc`` feature is
+          the one removed. This makes the output independent of the input row order and byte-identical
+          across runs; the returned ``df_feat`` is in descending-``abs_auc`` order.
+        * **X alignment**: if you pass a pre-computed ``X``, its columns must be aligned to the ``df_feat``
+          rows you pass (column ``i`` = feature in row ``i``); the method reorders both together, so a
+          mis-aligned ``X`` would correlate the wrong features.
+        * The retained set is guaranteed to contain no feature pair with ``|corr| > max_cor``.
         * Constant (zero-variance) features have undefined correlation and are always retained here; run
           :meth:`SequenceFeature.prune_by_variance` first to remove them.
         * A ``df_feat`` with fewer than two features is returned unchanged (nothing to compare).
