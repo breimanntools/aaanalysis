@@ -125,7 +125,7 @@ def _ctor_assignments(text):
 
 
 def _code_blobs(nb_path):
-    nb = json.loads(pathlib.Path(nb_path).read_text())
+    nb = json.loads(pathlib.Path(nb_path).read_text(encoding="utf-8"))
     for cell in nb.get("cells", []):
         if cell.get("cell_type") == "code":
             yield "".join(cell.get("source", []))
@@ -147,7 +147,7 @@ def test_registry_has_no_stale_or_duplicate_entries():
 
 
 def test_registry_documented_in_style_guide():
-    text = GUIDE.read_text()
+    text = GUIDE.read_text(encoding="utf-8")
     undocumented = [
         (cls, abbr) for cls, abbr in REGISTRY.items()
         if f"``{cls}``" not in text or f"``{abbr}``" not in text
@@ -175,7 +175,8 @@ def test_docstring_example_includes_resolve_to_notebooks():
     stems = {pathlib.Path(p).stem for p in example_nbs}
     missing = []
     for py in glob.glob(str(ROOT / "aaanalysis" / "**" / "*.py"), recursive=True):
-        for m in re.finditer(r"include:: examples/([A-Za-z0-9_]+)\.rst", pathlib.Path(py).read_text()):
+        for m in re.finditer(r"include:: examples/([A-Za-z0-9_]+)\.rst",
+                             pathlib.Path(py).read_text(encoding="utf-8")):
             if m.group(1) not in stems:
                 missing.append(f"{pathlib.Path(py).relative_to(ROOT)} -> examples/{m.group(1)}.rst")
     assert not missing, "Docstring .. include:: with no matching notebook:\n" + "\n".join(missing)
