@@ -30,7 +30,8 @@ def fitted():
     df_seq = aa.load_dataset(name="DOM_GSEC", n=12)
     labels = df_seq["label"].to_list()
     sf = aa.SequenceFeature()
-    df_parts = sf.get_df_parts(df_seq=df_seq)
+    # gamma-secretase geometry: TMD ~20 aa (from the data), short JMDs of 4
+    df_parts = sf.get_df_parts(df_seq=df_seq, jmd_n_len=4, jmd_c_len=4)
     cpp = aa.CPP(df_parts=df_parts)
     df_feat = cpp.run(labels=labels, n_filter=40)
     X = sf.feature_matrix(features=df_feat, df_parts=df_parts)
@@ -124,6 +125,17 @@ class TestPruneByVariance:
         sf, df_feat, df_parts, X = fitted
         with pytest.raises(ValueError):
             sf.prune_by_variance(df_feat=df_feat, X=X, threshold=1e9)
+
+    def test_df_scales_passthrough(self, fitted):
+        sf, df_feat, df_parts, X = fitted
+        out = sf.prune_by_variance(df_feat=df_feat, df_parts=df_parts,
+                                   df_scales=ut.load_default_scales(), threshold=0.0)
+        ut.check_df_feat(df_feat=out)
+
+    def test_n_jobs_passthrough(self, fitted):
+        sf, df_feat, df_parts, X = fitted
+        out = sf.prune_by_variance(df_feat=df_feat, df_parts=df_parts, threshold=0.0, n_jobs=2)
+        assert len(out) == len(df_feat)
 
 
 class TestPruneByVarianceComplex:
@@ -242,6 +254,23 @@ class TestPruneByCorrelation:
         sf, df_feat, df_parts, X = fitted
         with pytest.raises(ValueError):
             sf.prune_by_correlation(df_feat=df_feat)
+
+    def test_df_scales_passthrough(self, fitted):
+        sf, df_feat, df_parts, X = fitted
+        out = sf.prune_by_correlation(df_feat=df_feat, df_parts=df_parts,
+                                      df_scales=ut.load_default_scales(), max_cor=0.7)
+        ut.check_df_feat(df_feat=out)
+
+    def test_n_jobs_passthrough(self, fitted):
+        sf, df_feat, df_parts, X = fitted
+        a = sf.prune_by_correlation(df_feat=df_feat, df_parts=df_parts, max_cor=0.7, n_jobs=1)
+        b = sf.prune_by_correlation(df_feat=df_feat, df_parts=df_parts, max_cor=0.7, n_jobs=2)
+        assert list(a[ut.COL_FEATURE]) == list(b[ut.COL_FEATURE])
+
+    def test_accept_gaps_passthrough(self, fitted):
+        sf, df_feat, df_parts, X = fitted
+        out = sf.prune_by_correlation(df_feat=df_feat, df_parts=df_parts, max_cor=0.7, accept_gaps=True)
+        assert isinstance(out, pd.DataFrame)
 
 
 class TestPruneByCorrelationComplex:

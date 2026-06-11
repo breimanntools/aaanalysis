@@ -122,6 +122,26 @@ We appreciate bug reports, feature requests, or updates on documentation and cod
 `Contributing Guidelines <CONTRIBUTING.rst>`_. These include specifics about AAanalysis and also notes on Test
 Guided Development (TGD) using ChatGPT. For further questions or suggestions, please email stephanbreimann@gmail.com.
 
+Agentic engineering
+===================
+AAanalysis is developed with AI-assisted ("agentic") workflows. Their durable artifacts — not ephemeral
+planning notes — are the single sources of truth:
+
+- **Issue triage & planning.** ``/github-issue-handoff`` audits every open issue against the coding
+  standards and writes one prioritized plan to ``docs/guides/handoff_github_issues.md`` (refreshed on
+  demand). Per-issue scratch files are **not** committed.
+- **Spec & design.** ``/grill-with-docs`` interviews the contributor to resolve each design decision and
+  sharpen terminology against the project glossary. Decisions that are hard to reverse are recorded as
+  **Architecture Decision Records** (``docs/adr/``); the domain vocabulary lives in **CONTEXT.md**; the
+  transient implementation plan stays outside the repo.
+- **Standards & guardrails.** Implementation rules live in ``CLAUDE.md`` and the path-scoped files under
+  ``.claude/rules/`` (frontend/backend split, docstrings, testing, reproducibility, …) and are backed by
+  meta-tests — e.g. per-parameter test coverage and backend-import hygiene
+  (``tests/unit/api_tests/``).
+
+So the authoritative record of *why* the code looks the way it does is the **ADRs + CONTEXT.md +
+CLAUDE.md/.claude/rules**, kept in sync as decisions are made.
+
 Citations
 =========
 If you use AAanalysis in your work, please cite the respective publication as follows:
