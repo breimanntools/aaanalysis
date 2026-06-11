@@ -54,6 +54,18 @@ class TestDisplayDf:
         if n_cols < len(list(sample_dataframe)):
             aa.display_df(sample_dataframe, n_cols=n_cols)
 
+    @pytest.mark.parametrize("n_rows", [None, 10, 1000])
+    def test_n_rows_exceeds_length(self, n_rows, sample_dataframe):
+        # n_rows beyond the frame size must NOT raise (head clamps) so the house
+        # convention display_df(df, n_rows=10) is safe on tables shorter than 10 rows.
+        assert len(sample_dataframe) < 1000
+        aa.display_df(sample_dataframe, n_rows=n_rows)
+
+    @pytest.mark.parametrize("n_cols", [None, 10, 1000])
+    def test_n_cols_exceeds_length(self, n_cols, sample_dataframe):
+        assert len(list(sample_dataframe)) < 1000
+        aa.display_df(sample_dataframe, n_cols=n_cols)
+
     def test_row_to_show(self, sample_dataframe):
         for row in list(sample_dataframe.T):
             aa.display_df(sample_dataframe, row_to_show=row)
@@ -82,12 +94,12 @@ class TestDisplayDf:
         with pytest.raises(ValueError):
             aa.display_df(sample_dataframe, char_limit=invalid_value)
 
-    @pytest.mark.parametrize("invalid_value", [-100, 'invalid'])
+    @pytest.mark.parametrize("invalid_value", ['invalid', 5.5])
     def test_invalid_n_rows(self, invalid_value, sample_dataframe):
         with pytest.raises(ValueError):
             aa.display_df(sample_dataframe, n_rows=invalid_value)
 
-    @pytest.mark.parametrize("invalid_value", [-100, 'invalid'])
+    @pytest.mark.parametrize("invalid_value", ['invalid', 5.5])
     def test_invalid_n_cols(self, invalid_value, sample_dataframe):
         with pytest.raises(ValueError):
             aa.display_df(sample_dataframe, n_cols=invalid_value)

@@ -27,6 +27,7 @@ auto-load when Claude reads matching files:
 | `api-stability.md` | `aaanalysis/__init__.py` |
 | `changelog.md` | `CHANGELOG.md` (file does not exist yet — aspirational) |
 | `dev-scripts.md` | `dev_scripts/**` |
+| `notebooks.md` | `examples/**/*.ipynb`, `tutorials/**/*.ipynb` (display_df tables, `plt.show()`/`tight_layout()` plots, executed outputs) |
 
 ## Other reference rules (no auto-load)
 
@@ -104,6 +105,14 @@ The detailed rules live in the path-scoped files above; these are the
 highest-risk traps worth keeping front-of-mind every session.
 
 - **No `print(...)` in library code.** Use `ut.print_out(...)`.
+- **Notebook presentation (examples + tutorials).** In `.ipynb` cells, show
+  tables with `aa.display_df(df, n_rows=10, show_shape=True)` — never a bare
+  `df`/`df.head()` or `print(df)`. End every plot cell with `plt.tight_layout()`
+  then `plt.show()` (inline backend) so the figure actually renders — a bare
+  `Plot().method(...)` leaves only a useless `<Axes …>` text repr in the output.
+  This does **not** change library code, which still never calls `plt.show()` /
+  `plt.tight_layout()` (those live only in notebook/user code; see
+  `notebooks.md` and `plotting.md`).
 - **No imports from `aaanalysis._utils.*` outside `utils.py`.** Go through
   `import aaanalysis.utils as ut`.
 - **No bare `except Exception:` to silence errors.** Let them surface.
