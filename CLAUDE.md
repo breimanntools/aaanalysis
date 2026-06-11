@@ -109,3 +109,9 @@ highest-risk traps worth keeping front-of-mind every session.
 - **No bare `except Exception:` to silence errors.** Let them surface.
 - **No custom exception base** (`AAanalysisError` etc.) — use bare
   `ValueError` / `RuntimeError`.
+- **No cross-class backend imports.** A frontend imports backend helpers only
+  from a shared `_backend/*.py` module (top-level) or its *own* dedicated
+  `_backend/<subpkg>/` — never from another class's dedicated subpackage (e.g.
+  `SequenceFeature` reaching into `_backend/num_feat/`). Put shared helpers in a
+  common `_backend/*.py`. Enforced by
+  `tests/unit/api_tests/test_backend_import_hygiene.py`.
