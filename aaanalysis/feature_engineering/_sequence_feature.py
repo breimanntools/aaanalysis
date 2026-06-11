@@ -381,7 +381,7 @@ class SequenceFeature:
         n_split_min: int, default=1
             Number to specify the greatest ``Segment``. Should be > 0.
         n_split_max: int, default=15,
-            Number to specify the smallest ``Segment``. Should be > ``n_split_min``.
+            Number to specify the smallest ``Segment``. Should be >= ``n_split_min``.
         steps_pattern: list of int, default=[3, 4], optional
             Possible steps sizes for ``Pattern``. Should contain at least 1 non-negative integers
             if ``Pattern`` split_type is used. If ``None``, default is used.
@@ -404,6 +404,24 @@ class SequenceFeature:
             - Segment: {n_split_min:1, n_split_max=15}
             - Pattern: {steps=[3, 4], n_min=2, n_max=4, len_max=15}
             - PeriodicPattern: {steps=[3, 4]}
+
+        Notes
+        -----
+        The split bounds returned here are validated for internal consistency
+        (e.g., ``n_split_min <= n_split_max``, ``n_min <= n_max``,
+        ``len_max > min(steps_pattern)``); inconsistent values raise a ``ValueError``.
+
+        Beyond that, the *feasible* maxima are effectively capped by the CPP part
+        lengths used to build ``df_parts`` (``tmd_len``, ``jmd_n_len``, ``jmd_c_len``;
+        defaults 20/10/10): a ``Segment`` cannot be split into more pieces than its
+        part has residues, and a ``Pattern``/``PeriodicPattern`` cannot span beyond
+        the part length. Choosing ``n_split_max``, ``n_max``, or ``len_max`` larger
+        than a part can accommodate does not raise here — those splits simply yield
+        empty feature buckets downstream. The one config that is always degenerate
+        regardless of part length, an empty ``Pattern`` bucket where even the shortest
+        repeat exceeds ``len_max`` (``n_min * min(steps_pattern) > len_max``), emits a
+        ``UserWarning`` naming the offending parameters so it can be fixed by raising
+        ``len_max`` or lowering ``steps_pattern``/``n_min``.
 
         Examples
         --------

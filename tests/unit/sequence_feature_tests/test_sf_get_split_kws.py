@@ -108,7 +108,8 @@ class TestGetSplitKws:
     def test_invalid_n_split_max(self):
         """Test invalid 'n_split_max' values."""
         sf = aa.SequenceFeature()
-        with pytest.raises(ValueError):
+        # Joint constraint: the message names the offending 'n_split_min'/'n_split_max'
+        with pytest.raises(ValueError, match="n_split_min"):
             sf.get_split_kws(n_split_max=1, n_split_min=2)
         with pytest.raises(ValueError):
             sf.get_split_kws(n_split_max=0)
@@ -132,7 +133,8 @@ class TestGetSplitKws:
     def test_invalid_n_min_max(self):
         """Test invalid 'n_min' and 'n_max' values."""
         sf = aa.SequenceFeature()
-        with pytest.raises(ValueError):
+        # Joint constraint: the message names the offending 'n_min'/'n_max'
+        with pytest.raises(ValueError, match="n_min"):
             sf.get_split_kws(n_min=5, n_max=4)
         with pytest.raises(ValueError):
             sf.get_split_kws(n_min=0, n_max=3)
@@ -142,7 +144,8 @@ class TestGetSplitKws:
         sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
             sf.get_split_kws(len_max=0)
-        with pytest.raises(ValueError):
+        # Joint constraint: the message names the offending 'len_max'
+        with pytest.raises(ValueError, match="len_max"):
             sf.get_split_kws(len_max=3, steps_pattern=[4, 5])
 
     def test_invalid_steps_periodicpattern(self):
@@ -261,3 +264,33 @@ class TestGetSplitKwsComplex:
             sf.get_split_kws(n_split_min=10, n_split_max=5, steps_pattern=[5, 2, 3], len_max=1)
         with pytest.raises(ValueError):
             sf.get_split_kws(split_types=["Invalid", "Segment"], n_min=4, n_max=3)
+
+
+class TestGetSplitKwsGoldenValues:
+    """Golden-value and warning regressions for get_split_kws."""
+
+    def test_default_output_unchanged(self):
+        """Default get_split_kws() output is frozen (dict-equality regression)."""
+        sf = aa.SequenceFeature()
+        expected = {
+            "Segment": {"n_split_min": 1, "n_split_max": 15},
+            "Pattern": {"steps": [3, 4], "n_min": 2, "n_max": 4, "len_max": 15},
+            "PeriodicPattern": {"steps": [3, 4]},
+        }
+        assert sf.get_split_kws() == expected
+
+    def test_empty_pattern_bucket_warns_once(self):
+        """A degenerate Pattern config (n_min*min(steps) > len_max) emits exactly one
+        UserWarning naming the offending parameters."""
+        sf = aa.SequenceFeature()
+        # pytest.warns records warnings even though tests/pytest.ini globally ignores
+        # "'Pattern' split config" UserWarnings, so the carve-out stays intact.
+        with pytest.warns(UserWarning) as record:
+            sf.get_split_kws(steps_pattern=[3], n_min=2, len_max=4, split_types="Pattern")
+        pattern_warnings = [
+            w for w in record
+            if issubclass(w.category, UserWarning) and "'Pattern' split config" in str(w.message)
+        ]
+        assert len(pattern_warnings) == 1
+        msg = str(pattern_warnings[0].message)
+        assert "len_max" in msg and "n_min" in msg and "steps" in msg
