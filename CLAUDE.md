@@ -115,3 +115,8 @@ highest-risk traps worth keeping front-of-mind every session.
   `SequenceFeature` reaching into `_backend/num_feat/`). Put shared helpers in a
   common `_backend/*.py`. Enforced by
   `tests/unit/api_tests/test_backend_import_hygiene.py`.
+- **In example/tutorial notebooks, show DataFrames with
+  `aa.display_df(df, n_rows=10, show_shape=True)`** — never `print(df)`, a bare
+  `df`, or `df.head()`. `display_df` renders a clean, width-bounded table and the
+  shape, which is the house presentation for every `examples/**` and
+  `tutorials/**` notebook.

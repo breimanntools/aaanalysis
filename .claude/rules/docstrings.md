@@ -23,6 +23,9 @@ traps to keep front-of-mind on touch:
 - **Citations are `[Key]_` only** (definitions live in
   `docs/source/index/references.rst`); never inline a full reference or URL.
 - Module docstring opens with `"""This is a script for ..."""` (CLAUDE.md §3).
+- **Example/tutorial notebooks** (the `.ipynb` behind each `examples/<name>.rst`)
+  show DataFrames with `aa.display_df(df, n_rows=10, show_shape=True)` — never
+  `print(df)` / bare `df` / `df.head()` (CLAUDE.md §3).
 
 Run the checker before/after editing docstrings:
 `python .claude/skills/docstrings/scripts/check_docstrings.py <path>`.
