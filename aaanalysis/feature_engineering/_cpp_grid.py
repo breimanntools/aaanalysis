@@ -324,7 +324,7 @@ class CPPGrid(Tool):
 
         Examples
         --------
-        .. include:: examples/cpp_grid.rst
+        .. include:: examples/cppg.rst
         """
         # Check input
         _check_params_dict(name="params_parts", params=params_parts)
@@ -486,7 +486,7 @@ class CPPGrid(Tool):
 
         Examples
         --------
-        .. include:: examples/cpp_grid_eval.rst
+        .. include:: examples/cppg_eval.rst
         """
         # Check input
         if self.df_params_ is None or self.list_df_feat_ is None:

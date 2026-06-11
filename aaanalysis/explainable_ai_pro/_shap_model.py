@@ -325,7 +325,7 @@ class ShapModel:
 
         Examples
         --------
-        .. include:: examples/shap_model.rst
+        .. include:: examples/sm.rst
         """
         # Global parameters
         verbose = ut.check_verbose(verbose)

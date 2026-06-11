@@ -552,7 +552,7 @@ class AAWindowSampler:
 
         Examples
         --------
-        .. include:: examples/aws_sample_same_protein.rst
+        .. include:: examples/aaws_sample_same_protein.rst
         """
         # Validate
         ut.check_df_seq(df_seq=df_seq)
@@ -689,7 +689,7 @@ class AAWindowSampler:
 
         Examples
         --------
-        .. include:: examples/aws_sample_different_protein.rst
+        .. include:: examples/aaws_sample_different_protein.rst
         """
         # Validate
         ut.check_df_seq(df_seq=df_seq)
@@ -872,7 +872,7 @@ class AAWindowSampler:
 
         Examples
         --------
-        .. include:: examples/aws_sample_synthetic.rst
+        .. include:: examples/aaws_sample_synthetic.rst
         """
         # Validate
         ut.check_df_seq(df_seq=df_seq)
@@ -1005,7 +1005,7 @@ class AAWindowSampler:
 
         Examples
         --------
-        .. include:: examples/aws_sample_motif_matched.rst
+        .. include:: examples/aaws_sample_motif_matched.rst
         """
         # Validate
         ut.check_df_seq(df_seq=df_seq)
@@ -1103,7 +1103,7 @@ class AAWindowSampler:
 
         Examples
         --------
-        .. include:: examples/aws_sample_benchmark_set.rst
+        .. include:: examples/aaws_sample_benchmark_set.rst
         """
         # Validate
         ut.check_df_seq(df_seq=df_seq)

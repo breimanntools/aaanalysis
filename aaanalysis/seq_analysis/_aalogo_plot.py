@@ -287,7 +287,7 @@ class AAlogoPlot:
 
         Examples
         --------
-        .. include:: examples/aalogo_plot_single_logo.rst
+        .. include:: examples/aal_plot_single_logo.rst
         """
         # Check input
         check_df_logo(df_logo=df_logo)
@@ -451,7 +451,7 @@ class AAlogoPlot:
 
         Examples
         --------
-        .. include:: examples/aalogo_plot_multi_logo.rst
+        .. include:: examples/aal_plot_multi_logo.rst
         """
         # Check input
         check_list_df_logo(list_df_logo=list_df_logo)

@@ -199,7 +199,7 @@ class TreeModel:
 
         Examples
         --------
-        .. include:: examples/tree_model.rst
+        .. include:: examples/tm.rst
         """
         # Global parameters
         verbose = ut.check_verbose(verbose)

@@ -140,7 +140,7 @@ class AAlogo:
 
         Examples
         --------
-        .. include:: examples/aalogo_get_df_logo.rst
+        .. include:: examples/aal_get_df_logo.rst
         """
         # Check input
         ut.check_df_parts(df_parts=df_parts)
@@ -222,7 +222,7 @@ class AAlogo:
 
         Examples
         --------
-        .. include:: examples/aalogo_get_df_logo_info.rst
+        .. include:: examples/aal_get_df_logo_info.rst
         """
         # Check input
         ut.check_df_parts(df_parts=df_parts)
@@ -291,7 +291,7 @@ class AAlogo:
 
         Examples
         --------
-        .. include:: examples/aalogo_get_conservation.rst
+        .. include:: examples/aal_get_conservation.rst
         """
         # Check input
         check_df_logo_info(df_logo_info=df_logo_info)

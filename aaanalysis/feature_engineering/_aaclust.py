@@ -166,7 +166,7 @@ class AAclust(Wrapper):
 
         Examples
         --------
-        .. include:: examples/aaclust.rst
+        .. include:: examples/aac.rst
         """
         # Global parameters
         verbose = ut.check_verbose(verbose)
@@ -267,7 +267,7 @@ class AAclust(Wrapper):
 
         Examples
         --------
-        .. include:: examples/aaclust_fit.rst
+        .. include:: examples/aac_fit.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -380,7 +380,7 @@ class AAclust(Wrapper):
 
         Examples
         --------
-        .. include:: examples/aaclust_eval.rst
+        .. include:: examples/aac_eval.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -435,7 +435,7 @@ class AAclust(Wrapper):
 
         Examples
         --------
-        .. include:: examples/aaclust_name_clusters.rst
+        .. include:: examples/aac_name_clusters.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -477,7 +477,7 @@ class AAclust(Wrapper):
 
         Examples
         --------
-        .. include:: examples/aaclust_comp_centers.rst
+        .. include:: examples/aac_comp_centers.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -525,7 +525,7 @@ class AAclust(Wrapper):
 
         Examples
         --------
-        .. include:: examples/aaclust_comp_medoids.rst
+        .. include:: examples/aac_comp_medoids.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -589,7 +589,7 @@ class AAclust(Wrapper):
 
         Examples
         --------
-        .. include:: examples/aaclust_comp_correlation.rst
+        .. include:: examples/aac_comp_correlation.rst
         """
         # Check input
         X = ut.check_X(X=X, min_n_samples=2)
@@ -636,7 +636,7 @@ class AAclust(Wrapper):
 
         Examples
         --------
-        .. include:: examples/aaclust_comp_coverage.rst
+        .. include:: examples/aac_comp_coverage.rst
         """
         names = ut.check_list_like(name="names", val=names, accept_none=False)
         names_ref = ut.check_list_like(name="names_ref", val=names_ref, accept_none=False)
@@ -698,7 +698,7 @@ class AAclust(Wrapper):
 
         Examples
         --------
-        .. include:: examples/aaclust_filter_coverage.rst
+        .. include:: examples/aac_filter_coverage.rst
         """
         # Check input
         X = ut.check_X(X=X, min_n_samples=2)

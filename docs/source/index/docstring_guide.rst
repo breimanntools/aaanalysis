@@ -274,6 +274,131 @@ Versioning & deprecation
   ``DeprecationWarning`` shim (see :ref:`api-stability <usage_principles>`); a
   renamed/removed public symbol keeps a one-minor-release shim before removal.
 
+Class abbreviations
+-------------------
+
+Every public class has **one canonical abbreviation**, used identically as the
+example-notebook instance variable (``aac = aa.AAclust()``) and the
+example-notebook filename stem (``examples/feature_engineering/aac_fit.ipynb``).
+This keeps the API, the example notebooks, and the rendered docs in lock-step.
+The registry below is the single source of truth and is enforced by
+``tests/unit/api_tests/test_class_abbreviation_registry.py`` (every public class
+is registered; every ``<abbr> = aa.<Class>()`` and notebook filename matches).
+
+Rules:
+
+* ``AA*`` classes keep the ``aa`` prefix; acronyms stay whole (``CPP`` → ``cpp``);
+  the established public spelling is kept (``dPULearn`` → ``dpul``).
+* A plot pair is the base abbreviation plus ``_plot`` (``CPPPlot`` → ``cpp_plot``).
+* **Legacy/incumbency wins.** Existing short forms are kept (``aac``, ``aal``);
+  the ``aa`` prefix is enforced where missing (``AAWindowSampler`` → ``aaws``);
+  and when two classes would collide the *newer* one takes the longer form — so
+  ``SeqMut`` stays ``seqmut``, leaving ``sm`` free for ``ShapModel``.
+* **A class instance is named the bare abbreviation, always** — ``cpp = aa.CPP(...)``,
+  never ``cpp_res``/``cpp_dom``. If you build the same class repeatedly (e.g. one
+  CPP per prediction level), **reassign the bare name** and let the *outputs* carry
+  the qualifier (``df_feat_res``, ``X_res``). A ``<abbr>_<qualifier>`` *instance*
+  name is allowed **only** for a genuinely concurrent second instance that cannot
+  be restructured (``aaws_strict`` beside ``aaws``) — never an unrelated word.
+
+.. list-table:: Canonical class abbreviations
+   :header-rows: 1
+   :widths: 35 20 25
+
+   * - Class
+     - Abbr.
+     - Extra
+   * - ``SequencePreprocessor``
+     - ``sp``
+     -
+   * - ``EmbeddingPreprocessor``
+     - ``ep``
+     -
+   * - ``AAlogo`` / ``AAlogoPlot``
+     - ``aal`` / ``aal_plot``
+     -
+   * - ``AAWindowSampler``
+     - ``aaws``
+     -
+   * - ``AAclust`` / ``AAclustPlot``
+     - ``aac`` / ``aac_plot``
+     -
+   * - ``SequenceFeature``
+     - ``sf``
+     -
+   * - ``NumericalFeature``
+     - ``nf``
+     -
+   * - ``CPP`` / ``CPPPlot``
+     - ``cpp`` / ``cpp_plot``
+     -
+   * - ``CPPGrid``
+     - ``cppg``
+     -
+   * - ``dPULearn`` / ``dPULearnPlot``
+     - ``dpul`` / ``dpul_plot``
+     -
+   * - ``AAMut`` / ``AAMutPlot``
+     - ``aamut`` / ``aamut_plot``
+     -
+   * - ``SeqMut`` / ``SeqMutPlot``
+     - ``seqmut`` / ``seqmut_plot``
+     -
+   * - ``TreeModel``
+     - ``tm``
+     -
+   * - ``ShapModel``
+     - ``sm``
+     - ``pro``
+   * - ``StructurePreprocessor``
+     - ``stp``
+     - ``pro``
+   * - ``AnnotationPreprocessor``
+     - ``ap``
+     - ``pro``
+
+Output / data-object names
+--------------------------
+
+The objects passed *between* steps have canonical names too — most are defined in
+the project glossary (``CONTEXT.md``). Use these consistently so a snippet reads
+the same everywhere; this table is a reference, **not** a test-enforced gate (only
+the *class-instance* names above are checked).
+
+.. list-table:: Canonical data-object variable names
+   :header-rows: 1
+   :widths: 22 45
+
+   * - Variable
+     - Object (producer)
+   * - ``df_seq``
+     - sequence frame (``load_dataset``, ``read_fasta``)
+   * - ``df_scales`` / ``df_cat``
+     - AAontology scales / scale categories (``load_scales``, ``build_cat``)
+   * - ``df_parts``
+     - assembled parts (``sf.get_df_parts``)
+   * - ``split_kws``
+     - split specification (``sf.get_split_kws``) — matches the ``split_kws=`` parameter
+   * - ``df_feat``
+     - feature frame, canonical schema (``cpp.run``, ``load_features``, ``sm.add_*``)
+   * - ``X`` / ``labels``
+     - feature matrix (``sf.feature_matrix``) / class labels (``df_seq["label"].to_list()``)
+   * - ``df_eval``
+     - evaluation results (``cpp/tm/dpul/aamut/seqmut .eval(...)``)
+   * - ``df_pos`` / ``feat_importance``
+     - feature positions (``sf.get_df_pos``) / importance column (``tm.add_feat_importance``)
+   * - ``df_logo`` / ``df_logo_info``
+     - sequence-logo frames (``aal.get_df_logo`` / ``get_df_logo_info``)
+   * - ``df_impact`` / ``df_scan``
+     - mutation impact (``aamut.run``) / scan (``seqmut.scan``)
+   * - ``df_pu`` / ``dict_num`` / ``df_annot`` / ``df_params``
+     - PU frame (``dpul``) / numerical parts (``nf``) / annotations (``ap``) / grid params (``cppg``)
+
+**Qualifiers belong on the data level.** A variant of a data object takes a
+``<name>_<qualifier>`` suffix (``df_feat_res``, ``X_res``, ``df_cat_selected``,
+``df_top15``) — used **only when you actually have a variant**, not stamped onto
+every example. Class instances stay the bare abbreviation (see above).
+
 Examples & verification
 -----------------------
 
