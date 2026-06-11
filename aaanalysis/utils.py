@@ -320,6 +320,29 @@ COLS_FEAT_SCALES_FULL = COLS_FEAT_SCALES + [COL_SCALE_DES]  # incl. scale_descri
 COLS_FEAT_STAT = [COL_ABS_AUC, COL_ABS_MEAN_DIF, COL_MEAN_DIF, COL_STD_TEST, COL_STD_REF]
 COLS_FEAT_WEIGHT = [COL_FEAT_IMPORT, COL_FEAT_IMPORT_STD, COL_FEAT_IMPACT]
 
+# Protein design (AAMut / SeqMut) — output column names
+COL_FROM_AA = "from_aa"             # substituted-from amino acid (single letter)
+COL_TO_AA = "to_aa"                 # substituted-to amino acid (single letter)
+COL_MUTATION = "mutation"           # HGVS-like label "<from_aa><pos><to_aa>", e.g. "M123V"
+COL_DELTA = "delta"                 # AAMut — signed per-scale substitution delta (to_aa - from_aa)
+COL_ABS_DELTA = "abs_delta"         # AAMut — magnitude of the per-scale delta
+COL_DELTA_CPP = "delta_cpp"         # SeqMut — Sum|dX| feature-space magnitude of a mutation
+COL_SHIFT_SCORE = "shift_score"     # SeqMut — signed shift toward the test-class profile
+COL_SEQ_MUT = "sequence_mut"        # SeqMut.mutate — full mutated sequence
+COL_REGION = "region"               # SeqMut — part a scanned position falls in (jmd_n/tmd/jmd_c)
+COL_IS_DISRUPTIVE = "is_disruptive"  # SeqMut.eval — disruptive flag (|delta_cpp| >= threshold)
+COL_N_MUT = "n_mut"                 # SeqMut.eval — number of scanned mutations
+COL_N_DISRUPTIVE = "n_disruptive"   # SeqMut.eval — number flagged disruptive
+COL_FRAC_DISRUPTIVE = "frac_disruptive"  # SeqMut.eval — n_disruptive / n_mut
+COL_MEAN_DELTA_CPP = "mean_delta_cpp"    # SeqMut.eval — mean |delta_cpp| over scanned mutations
+COLS_AAMUT = [COL_FROM_AA, COL_TO_AA, COL_SCALE_ID, COL_CAT, COL_SUBCAT, COL_DELTA, COL_ABS_DELTA]
+COLS_SEQMUT_SCAN = [COL_ENTRY, COL_POS, COL_FROM_AA, COL_TO_AA, COL_MUTATION,
+                    COL_REGION, COL_DELTA_CPP, COL_SHIFT_SCORE]
+COLS_SEQMUT_EVAL = [COL_ENTRY, COL_REGION, COL_N_MUT, COL_N_DISRUPTIVE,
+                    COL_FRAC_DISRUPTIVE, COL_MEAN_DELTA_CPP]
+# SeqMut.suggest — optional weighting of the shift score by a df_feat column
+LIST_SHIFT_WEIGHTS = [COL_FEAT_IMPORT, COL_ABS_AUC]
+
 # Canonical, deterministic df_feat column order (issue #18). This is a LOWER BOUND
 # on the known/fixed columns, not an exhaustive schema: the dynamic p-value column
 # (COL_PVAL_MW vs COL_PVAL_TTEST per 'parametric'), the post-hoc explainable-AI
