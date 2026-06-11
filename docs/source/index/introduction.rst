@@ -41,17 +41,3 @@ To get hands-on experience, explore our :ref:`Tutorials <tutorials>`. In additio
 documentation, we compiled various overview :ref:`Tables <tables>` that provide in-depth resources, including our
 **AAontology** scale classification and a variety of benchmark protein datasets. Discover the scientific foundation
 of AAanalysis in the :ref:`References <references>` section.
-
-Cheat Sheet
------------
-For a one-page overview, the cheat sheet condenses AAanalysis onto a single page: the end-to-end workflow, the main
-classes grouped by capability, the prediction levels (residue / domain / protein), and the *Part × Split × Scale*
-feature ontology. Every snippet uses the public API.
-
-.. image:: /_artwork/cheat_sheet_preview.png
-   :alt: AAanalysis cheat sheet (page 1 of 3)
-   :target: /_static/cheat_sheet.pdf
-   :width: 75%
-   :align: center
-
-:download:`Download the cheat sheet (PDF, 3 pages) </_static/cheat_sheet.pdf>`

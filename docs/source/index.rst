@@ -23,6 +23,18 @@ For extended features, including our explainable AI module, please use the 'prof
 
    pip install aaanalysis[pro]
 
+Cheat Sheet
+===========
+The cheat sheet distills AAanalysis into a three-page summary: the golden workflow, the main
+classes grouped by capability, the prediction levels (residue / domain / protein), and the
+*Part × Split × Scale* feature ontology. Click the image below to download the PDF.
+
+.. image:: /_artwork/cheat_sheet_preview.png
+   :alt: AAanalysis cheat sheet (page 1 of 3)
+   :target: https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_static/cheat_sheet.pdf
+   :width: 75%
+   :align: center
+
 .. toctree::
    :maxdepth: 1
    :caption: OVERVIEW

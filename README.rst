@@ -131,7 +131,7 @@ classes grouped by capability, the prediction levels (residue / domain / protein
 .. image:: docs/source/_artwork/cheat_sheet_preview.png
    :alt: AAanalysis cheat sheet (page 1 of 3)
    :target: https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_static/cheat_sheet.pdf
-   :width: 75%
+   :width: 90%
    :align: center
 
 Citations
