@@ -28,8 +28,7 @@ from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_f
                                             get_labels_ovr_, get_labels_ovo_, get_labels_quantile_,
                                             get_labels_tiered_)
 from ._backend.cpp_run import _pick_feature_matrix_builder
-from ._backend.num_feat.filter_correlation import filter_correlation_
-from ._backend.num_feat.filter_variance import filter_variance_
+from ._backend.feature_filter import filter_correlation_, filter_variance_
 
 
 # I Helper Functions
