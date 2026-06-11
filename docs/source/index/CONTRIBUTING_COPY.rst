@@ -1,8 +1,11 @@
 .. Developer Notes:
     - This file summarizes Python dev conventions for this project.
     - Refer to 'Vision' for project aims and 'Documentation' for naming conventions.
-    - Only modify  CONTRIBUTING.rst and then update the /docs/source/index/CONTRIBUTING_COPY.rst.
+    - This file mirrors CONTRIBUTING.rst: modify CONTRIBUTING.rst first, then update this copy.
     - Remove '/docs/source' from image paths for CONTRIBUTING_COPY.
+    - EXCEPTION — the 'Agentic Engineering' section is RTD-only and has NO counterpart in
+      CONTRIBUTING.rst (the root file drops it). When re-syncing the two files, do not delete
+      this section. It is an inline RST port of /docs/guides/agentic_engineering.md (canonical).
     Some minor doc tools
     - You can use Traffic analytics (https://docs.readthedocs.io/en/stable/analytics.html) for doc traffic.
     - Check URLs with LinkChecker (bash: linkchecker ./docs/_build/html/index.html).
@@ -380,95 +383,116 @@ AAanalysis is packaged and released using Poetry. To create and publish a new ve
 
    After publishing, verify that the package appears correctly on PyPI and that the metadata and files are accurate.
 
-Advanced: Test with ChatGPT
-===========================
-To optimize testing, use ChatGPT with the template below and fill in the blank spaces between ``START OF CODE``
-and ``END OF CODE``. Examples of testing templates can be found here:
-`AAanalysis unit tests <https://github.com/breimanntools/aaanalysis/blob/master/tests/unit/>`_.
+Agentic Engineering
+===================
+AAanalysis is developed with AI-assisted ("agentic") workflows. Just as important as the
+tooling are the **automated gates every change must pass before a human merges it**. The
+durable artifacts of this process (ADRs, ``CONTEXT.md``, ``CLAUDE.md`` / ``.claude/rules``,
+and the code) are the single sources of truth; per-issue planning notes are ephemeral and not
+committed. The canonical version of this protocol lives in
+`docs/guides/agentic_engineering.md <https://github.com/breimanntools/aaanalysis/blob/master/docs/guides/agentic_engineering.md>`_.
 
-.. code-block:: none
+Workflow (step by step)
+-----------------------
+1. **Pick the issue.** No skill required. Optionally clean up or generate the issue wording
+   first with ``/triage`` or ``/to-issues`` (house style: ``docs/guides/issue_style_guide.rst``).
+2. **``/grill-with-docs`` — the highest-leverage step.** A custom command that sharpens the
+   spec against the *live* codebase and refreshes ``CONTEXT.md`` / ADRs **before any code is
+   written**. The closest built-in, ``/init``, only (re)generates codebase docs — it does not
+   do the adversarial spec-vs-reality pass. Keep grill for the real work; use ``/init`` only as
+   a one-time bootstrap when ``CONTEXT.md`` does not exist yet.
+3. **Branch + isolated worktree.** ``git switch -c <type>/<slug>`` off ``master`` (plain git).
+   **Always pair it with** ``git worktree add`` **so each task gets its own checkout** —
+   concurrent streams then cannot contaminate each other.
+4. **Implement.** Plan mode. Use a structured plan for multi-file or architectural changes; drop
+   to plain edits for trivial diffs. Plan mode is preferable when you want to approve the
+   approach before commits land.
+5. **Push → open PR.** ``gh`` / ``git``. A PR needs ≥1 commit; push a scaffolding commit and open
+   a **draft PR early** so CI + the Read the Docs (RTD) preview run while you build.
+6. **Automated review gate (machine-enforced, not eyeballed).** Run ``/review`` (reviews the PR
+   diff) and ``/security-review`` (scans the pending diff for vulnerabilities). The quality gates
+   below must be green first. **Never merge red** — automated checks *gate* the human review,
+   they do not replace it.
+7. **Refine on the same branch.** Back to plan mode; push more commits (the PR and the RTD
+   preview update automatically).
+8. **Keep current.** Periodically merge ``master`` → branch (plain git). A good fit for the
+   ``/schedule`` skill: auto-**sync** each morning so you wake to a synced branch or an early
+   conflict warning. **A scheduled job syncs only — it must never resolve conflicts or merge a
+   branch to** ``master`` **unattended; it just flags you.**
+9. **Arm auto-merge.** Once the step-6 review is green and you've read the RTD preview + PR diff,
+   enable GitHub-native auto-merge: ``gh pr merge --auto --squash``. GitHub then merges the moment
+   every required check passes and the branch is conflict-free, so **"never merge red" still
+   holds** — a red check blocks the merge instead of completing it.
+10. **Auto-fix red CI.** If GitHub Actions reports a failure, pull the failing logs
+    (``gh run view --log-failed``, or ``gh run watch`` to follow live), reproduce locally, fix
+    **forward on the same branch**, and push. Armed auto-merge re-arms itself and completes once
+    the re-run is green. Disarm with ``gh pr merge --disable-auto`` if you need to hold the PR.
+11. **Delete the branch.** Plain git, with permission.
 
-    "
-    Generate test functions for a given TARGET FUNCTION using the style of the provided TESTING TEMPLATE. Please take your time to ensure thoroughness and accuracy.
+Quality gates
+-------------
+.. note::
 
-    Inputs:
-    TARGET FUNCTION:
-    - START OF CODE
-    -----------------------------------------
-    [your code here]
-    -----------------------------------------
-    - END OF CODE
+   **Never merge red.** These automated checks gate the merge. With ``gh pr merge --auto``
+   GitHub enforces it for you — it completes the merge only once every required check is green
+   and the branch is conflict-free.
 
-    TESTING TEMPLATE:
-    - START OF CODE
-    -----------------------------------------
-    [your code]
-    -----------------------------------------
-    - END OF CODE
+.. list-table::
+   :header-rows: 1
+   :widths: 16 24 60
 
-    **Key Directive**: For the Normal Cases Test Class, EACH function MUST test ONLY ONE individual parameter of the TARGET FUNCTION using Hypothesis for property-based testing. This is crucial.
+   * - Gate
+     - "Green" means
+     - AAanalysis mechanism
+   * - **Tests**
+     - full matrix passes
+     - ``.github/workflows/main.yml`` ("Unit Tests"): ``pytest tests -m "not regression" -x -n auto`` on **Ubuntu py3.10–3.14** + **Windows py3.10 & 3.14** (Windows brackets min+max; the full Windows range and the ``-m regression`` exact-value CPP anchor run in the nightly).
+   * - **Coverage**
+     - **≥ 88 %** line coverage, package-only
+     - ``.github/workflows/test_coverage.yml``: ``pytest … --cov=aaanalysis --cov-fail-under=88`` (+ Codecov ``patch`` / ``project``). Measured on the package only (``--cov=aaanalysis``, never ``--cov=./``).
+   * - **Docs**
+     - RTD builds; API + examples render
+     - ``readthedocs.org`` check: Sphinx + nbsphinx. ``docs/source/conf.py`` runs ``export_example_notebooks_to_rst`` with ``nbsphinx_execute='never'`` — it renders committed notebook outputs, it does not execute them.
+   * - **Docstrings**
+     - numpydoc shape, named ``Returns``, per-method ``Examples`` include, no doc-vs-signature drift
+     - the ``/docstrings`` skill: ``check_docstrings.py``, ``doc_signature_drift.py``, ``check_example_notebooks.py``. **Local gate** (not yet a CI job).
+   * - **Notebooks execute**
+     - every ``examples/`` + ``tutorials/`` notebook runs clean with embedded outputs
+     - ``pytest --nbmake --nbmake-timeout=120 examples/ tutorials/``. **Local gate only — NOT in blocking CI.** Re-run and re-commit outputs before every push.
+   * - **Architecture**
+     - matches ``CONTEXT.md`` / ADRs; no cross-class backend imports or layering violations
+     - machine: ``tests/unit/api_tests/test_backend_import_hygiene.py``. Spec / ADR conformance is human + ``/grill-with-docs``.
+   * - **Parameter coverage**
+     - every public parameter is exercised by name in tests
+     - ``tests/unit/api_tests/test_param_coverage.py``.
+   * - **Lint (errors)**
+     - no syntax errors / undefined names
+     - ``.github/workflows/codeql_analysis.yml`` ("code-quality" job): ``flake8 . --select=E9,F63,F7,F82``.
+   * - **Style / types (full)**
+     - black (88) / isort / flake8 (88) / mypy clean
+     - **manual at review** — no pre-commit, ruff, or type-checker in CI (v2 target).
+   * - **Security**
+     - CodeQL clean
+     - ``.github/workflows/codeql_analysis.yml`` ("Analyze" job).
+   * - **Issue linkage**
+     - the PR's lifecycle keyword is set per policy
+     - ``Closes #NN`` in the **PR body** (see Process notes → *Issue lifecycle*).
 
-    Requirements:
-
-    1. Normal Cases Test Class:
-    - Name: 'Test[TARGET FUNCTION NAME]'.
-    - Objective: Test EACH parameter *INDIVIDUALLY*.
-    - Tests: Test EACH parameter, at least 10 positive and 10 negative tests for this class.
-
-    2. Complex Cases Test Class:
-    - Name: 'Test[TARGET FUNCTION NAME]Complex'.
-    - Objective: Test combinations of the TARGET FUNCTION parameters.
-    - Tests: At least 5 positive and 5 negative that intricately challenge the TARGET FUNCTION.
-
-    3. General Guidelines:
-    - Use Hypothesis for property-based testing, but test parameters individually for the Normal Cases Test Class .
-    - Tests should be clear, concise, and non-redundant.
-    - Code must be complete, without placeholders like 'TODO', 'Fill this', or 'Add ...'.
-    - Explain potential issues in the TARGET FUNCTION.
-
-    Output Expectations:
-    - Two test classes: one for normal cases (individual parameters) and one for complex cases (combinations).
-    - In Normal Cases, one function = one parameter tested.
-    - Aim for at least 30 unique tests, totaling 150+ lines of code.
-
-    Reminder: In Normal Cases, it's crucial to test parameters individually. Take your time and carefully create the Python code for all cases!
-    "
-
-ChatGPT has a token limit, which may truncate responses. To continue, simply ask 'continue processing' or something
-similar. Repeat as necessary and compile the results.
-
-We recommend the following workflow:
-
-1. Repeat the prompt in new ChatGPT sessions until most of the positive test cases are covered.
-2. Adjust the testing script manually such that all positive tests are passed.
-3. Continue in the same session, sharing the revised script, and request the creation of negative tests.
-4. Finally, provide the complete testing script, including positive and negative cases, and request the development
-   of complex test cases
-
-Test Guided Development (TGD)
------------------------------
-Leverage ChatGPT to generate testing scripts and refine your code's functionality and its interface. If ChatGPT
-struggles or produces erroneous tests, it often indicates ambiguities or complexities in your function's logic,
-variable naming, or documentation gaps, especially regarding edge cases. Address these insights to ensure intuitive
-and robust code design through the TGD approach.
-
-**Essential Strategies for Effective TGD**:
-
-- **Isolated Functionality Testing**: Test one function or method at a time, adhering to unit testing principles.
-  Provide an entire and well-documented function. The better the docstring, the more comprehensive our automatically
-  generated tests will be.
-
-- **Isolated Test Sessions**: Start each test scenario in a new ChatGPT session to maintain clarity and
-  prevent context overlap, ensuring focused and relevant test generation.
-
-- **Consistent Template Usage**: Align your test creation with existing templates for similar functionalities,
-  utilizing them as a structured guide to maintain consistency in your test design.
-
-- **Initial Test Baseline**: Aim for an initial set of tests where about 25% pass, providing a foundational baseline
-  that identifies primary areas for iterative improvement in both tests and code.
-
-- **Iterative Refinement and Simplification**: Use ChatGPT-generated tests to iteratively refine your code, especially
-  if repeated test failures indicate areas needing clarification or simplification in your function's design.
-
-Through an iterative TGD process, you can systematically uncover and address any subtleties or complexities in your
-code, paving the way for a more robust and user-friendly application.
+Process notes (hard-won)
+------------------------
+- **Isolated worktrees per task.** Create a ``git worktree`` per branch so two concurrent
+  streams never share one working tree / ``HEAD``. Sharing a single checkout caused commits to
+  land on the wrong branch and uncommitted work to bleed across tasks. Do the edits in the
+  worktree, commit, push, then ``git worktree remove``.
+- **Issue lifecycle —** ``Closes #NN``. GitHub auto-closes a referenced issue on merge to the
+  default branch when a closing keyword (``Closes`` / ``Fixes`` / ``Resolves #NN``) appears in
+  **either the PR body or the merge (squash) commit message**. To **keep an issue open through a
+  merge, remove the keyword from the PR body before merging** — fixing only the commit-message
+  text is not enough.
+- **Auto-merge + auto-fix loop.** ``gh pr merge --auto --squash`` is the default finish: it is
+  safe because GitHub merges only on all-green + conflict-free, preserving *never merge red*. When
+  a check goes red, **fix forward on the same branch** — the armed auto-merge needs no re-issuing
+  and completes on the green re-run. Use ``gh pr merge --disable-auto`` to hold a PR.
+- **Notebooks are a local-only gate.** Because nbmake is not in blocking CI, a broken example
+  surfaces only on RTD (as wrong/un-rendered output) or in a local run. Always run
+  ``pytest --nbmake examples/ tutorials/`` and commit fresh outputs before pushing.
