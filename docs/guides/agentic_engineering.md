@@ -18,28 +18,39 @@ not committed.
 3. **Branch + isolated worktree.** `git switch -c <type>/<slug>` off `master` (plain git).
    **Always pair it with `git worktree add` so each task gets its own checkout** — concurrent
    streams then cannot contaminate each other (see Process notes → *Isolated worktrees*).
-4. **Implement.** Plan mode / the goal skill. Use a structured plan for multi-file or
-   architectural changes; drop to plain edits for trivial diffs. Plan mode is preferable when
-   you want to approve the approach before commits land.
+4. **Implement.** Plan mode. Use a structured plan for multi-file or architectural changes;
+   drop to plain edits for trivial diffs. Plan mode is preferable when you want to approve the
+   approach before commits land.
 5. **Push → open PR.** `gh` / `git`. A PR needs ≥1 commit; push a scaffolding commit and open
    a **draft PR early** so CI + the Read the Docs (RTD) preview run while you build.
 6. **Automated review gate (machine-enforced, not eyeballed).** Run `/review` (reviews the PR
    diff) and `/security-review` (scans the pending diff for vulnerabilities). The quality gates
    below must be green first. **Never merge red** — automated checks *gate* the human review,
    they do not replace it.
-7. **Refine on the same branch.** Back to plan / goal mode; push more commits (the PR and the
-   RTD preview update automatically).
+7. **Refine on the same branch.** Back to plan mode; push more commits (the PR and the RTD
+   preview update automatically).
 8. **Keep current.** Periodically merge `master` → branch (plain git). A good fit for the
    `/schedule` skill: auto-**sync** each morning so you wake to a synced branch or an early
-   conflict warning. **Schedule the sync only — never an auto-merge to master** (a scheduled
-   job can sync when clean but cannot resolve conflicts; it should just flag you).
-9. **Manual review → merge.** No skill, and that is correct: read the RTD preview + PR diff
-   (informed by the step-6 findings) and make the call with `gh pr merge`.
-10. **Delete the branch.** Plain git, with permission (root `CLAUDE.md` §0).
+   conflict warning. **A scheduled job syncs only — it must never resolve conflicts or merge a
+   branch to `master` unattended; it just flags you.** (PR auto-merge in step 9 is a different,
+   safe mechanism — GitHub completes it only when checks are green *and* the branch merges cleanly.)
+9. **Arm auto-merge.** Once the step-6 review is green and you've read the RTD preview + PR diff,
+   enable GitHub-native auto-merge: `gh pr merge --auto --squash`. GitHub then merges the moment
+   every required check passes and the branch is conflict-free, so **"never merge red" still
+   holds** — a red check blocks the merge instead of completing it. For a hard human gate on a
+   given PR, skip `--auto` and merge manually once green.
+10. **Auto-fix red CI.** If GitHub Actions reports a failure (whether or not auto-merge is armed),
+    pull the failing logs (`gh run view --log-failed`, or `gh run watch` to follow live),
+    reproduce locally, fix **forward on the same branch**, and push. Armed auto-merge re-arms
+    itself and completes once the re-run is green — no need to re-issue the merge. Disarm with
+    `gh pr merge --disable-auto` if you need to hold the PR.
+11. **Delete the branch.** Plain git, with permission (root `CLAUDE.md` §0).
 
 ## Quality gates — how AAanalysis checks each
 
-> **Rule: never merge red.** These automated checks gate the human review.
+> **Rule: never merge red.** These automated checks gate the merge. With
+> `gh pr merge --auto` GitHub enforces it for you — it completes the merge only once every
+> required check is green and the branch is conflict-free.
 
 | Gate | "Green" means | AAanalysis mechanism |
 |---|---|---|
@@ -67,6 +78,12 @@ not committed.
   the PR body or the merge (squash) commit message**. To **keep an issue open through a merge,
   remove the keyword from the PR body before merging** — fixing only the commit-message text is
   not enough. To auto-close, keep `Closes #NN` in the PR body.
+- **Auto-merge + auto-fix loop.** `gh pr merge --auto --squash` is the default finish: it is
+  safe because GitHub merges only on all-green + conflict-free, preserving *never merge red*. When
+  a check goes red, **fix forward on the same branch** (`gh run view --log-failed` → reproduce
+  locally → push) — the armed auto-merge needs no re-issuing and completes on the green re-run.
+  Use `gh pr merge --disable-auto` to hold a PR. Arming auto-merge is still a publish action, so
+  it needs the per-action go-ahead in root `CLAUDE.md` §0, exactly like a manual merge.
 - **Notebooks are a local-only gate.** Because nbmake is not in blocking CI, a broken example
   surfaces only on RTD (as wrong/un-rendered output) or in a local run. Always run
   `pytest --nbmake examples/ tutorials/` and commit fresh outputs before pushing.
