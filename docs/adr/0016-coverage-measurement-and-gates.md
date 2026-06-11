@@ -62,3 +62,52 @@ allowed only with an inline justification.
 - A `codecov.yml` and a CI `--cov-fail-under` floor exist for the first time.
 - The `cpp_core` Codecov component and the absolute targets are added/raised
   incrementally as coverage climbs, not in one switch.
+
+## Addendum — Branch + parameter coverage (2026-06, issue #84)
+
+Line coverage alone has two blind spots the ratchet above does not catch: an
+untested *branch* (only one arm of a conditional runs) and an unexercised public
+*parameter* (a kwarg added, documented, never called with a non-default value).
+Both pass the line gate green. Two checks close them, in the same package-only,
+ratcheted spirit as D1–D3.
+
+**D4 — Gate branch coverage with a separate, honest number.** The coverage
+pytest step adds `--cov-branch`. Crucially, `--cov-fail-under` is *not* used for
+this: once branch is on, that flag measures the *combined* line+branch number,
+which would silently re-define the historical line floor. Instead a post-pytest
+step (`.github/scripts/check_branch_coverage.py`) parses the cobertura `coverage.xml`
+root attributes `line-rate` and `branch-rate` and fails if either drops below its
+own committed gate — keeping an independent line floor (88, unchanged) and branch
+floor. The branch gate is set conservatively at-or-below the measured baseline and
+ratcheted up in tracked steps, never flipped to an aspirational number.
+
+**D5 — Enforce parameter coverage with a meta-test.** `tests/unit/api_tests/
+test_param_coverage.py` enumerates every public parameter of every symbol in
+`aaanalysis.__all__` (for classes: `__init__` + every public method; properties,
+`self`/`cls` and `*args/**kwargs` excluded) and fails if a parameter is neither
+referenced as a keyword argument anywhere under `tests/` nor on an explicit
+`ALLOWLIST` with a reason. Two deliberate trade-offs:
+
+- *Detection is global and name-based.* A parameter counts as covered if its name
+  appears as a kwarg at any call site, not necessarily a call to the owning
+  symbol. Per-(symbol, method, param) attribution would need call-site type
+  resolution; the global approach is simple and robust to test-layout drift, at
+  the cost of a known false-positive surface for ambient names (`verbose`,
+  `random_state`, `n_jobs`, `df_seq`, ...). The complementary branch gate (D4)
+  still catches genuinely untested code paths those names mask.
+- *Pro symbols are skipped when their extra is absent.* When an optional
+  dependency is missing the public symbol is a `missing_feature_stub` lambda with
+  no real signature; the meta-test detects that and skips it with a recorded
+  reason, so the check is green in a core-only (`[dev]`) environment and enforces
+  the pro surface only where `[pro]` is installed.
+
+The `ALLOWLIST` is the registry of justified, intentionally-untested params —
+visual-only styling passthroughs (`plot_legend`, `AAlogoPlot` logomaker kwargs)
+and whole-class gaps awaiting a dedicated suite (`AAMut`/`SeqMut`). It is kept
+small; the test reports a *test-covered* percentage (allowlist excluded) that must
+stay ≥95%, so allowlist growth is visible drift.
+
+**Rejected for D4/D5:** folding branch into `--cov-fail-under` (re-defines the
+line floor); a `dev_scripts/` script for D5 (cannot gate CI); allowlisting
+behavioural params to reach green (only visual-only passthroughs and whole-class
+gaps are allowlisted — behavioural params get a real test).

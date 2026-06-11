@@ -99,9 +99,11 @@ def display_df(df: pd.DataFrame = None,
     show_shape : bool, default=False
         If ``True``, shape of ``df`` is printed.
     n_rows : int, optional
-        Display only the first n rows. If negative, last n rows will be shown.
+        Display only the first n rows. If negative, last n rows will be shown. A value larger
+        than the number of rows simply shows all rows (so a fixed ``n_rows`` is safe on any frame).
     n_cols : int, optional
-        Display only the first n columns. If negative, last n columns will be shown.
+        Display only the first n columns. If negative, last n columns will be shown. A value
+        larger than the number of columns simply shows all columns.
     row_to_show : int or str, optional
         Display only the specified row.
     col_to_show : int or str, optional
@@ -126,13 +128,11 @@ def display_df(df: pd.DataFrame = None,
     ut.check_number_range(name="max_width_pct", val=max_width_pct, min_val=1, max_val=100, accept_none=False, just_int=True)
     ut.check_number_range(name="max_height", val=max_height, min_val=1, accept_none=False, just_int=True)
     ut.check_number_range(name="char_limit", val=char_limit, min_val=1, accept_none=True, just_int=True)
-    # Upper bound dropped (no max_val): pandas head/tail clamp gracefully, so the house
-    # convention ``display_df(df, n_rows=10, show_shape=True)`` is safe on a table shorter than
-    # 10 rows (it just shows all of them). The lower bound (-len) keeps the negative
-    # "last n rows / columns" semantics intact.
     n_rows_, n_cols_ = len(df), len(df.T)
-    ut.check_number_range(name="n_rows", val=n_rows, min_val=-n_rows_, accept_none=True, just_int=True)
-    ut.check_number_range(name="n_cols", val=n_cols, min_val=-n_cols_, accept_none=True, just_int=True)
+    # No upper bound: a positive n_rows/n_cols larger than the frame simply shows all of it
+    # (``head``/``tail`` clamp), so ``display_df(df, n_rows=10)`` is safe on a 3-row table.
+    ut.check_number_range(name="n_rows", val=n_rows, min_val=-n_rows_, max_val=None, accept_none=True, just_int=True)
+    ut.check_number_range(name="n_cols", val=n_cols, min_val=-n_cols_, max_val=None, accept_none=True, just_int=True)
     _check_show(name="show_only_col", val=col_to_show, df=df)
     _check_show(name="show_only_row", val=row_to_show, df=df)
     # Show shape before filtering

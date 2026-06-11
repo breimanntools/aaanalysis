@@ -24,6 +24,13 @@ class TestShapModel:
                               list_model_classes=[LogisticRegression, LinearRegression, SVR, SVR])
         assert sm._explainer_class == shap.KernelExplainer
 
+    def test_eval_under_construction(self):
+        # eval() is a documented, not-yet-implemented stub; passing shap_values by
+        # name must still raise the NotImplementedError contract (issue #84 coverage).
+        sm = aa.ShapModel(explainer_class=shap.TreeExplainer)
+        with pytest.raises(NotImplementedError):
+            sm.eval(shap_values=None, is_selected=None)
+
     def test_explainer_kwargs_parameter(self):
         list_explainer_kwargs = [dict(feature_perturbation="interventional", model_output="probability"),
                                  dict(feature_perturbation="interventional", model_output="raw")]

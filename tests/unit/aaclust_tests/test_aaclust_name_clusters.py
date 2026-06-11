@@ -23,6 +23,15 @@ class TestNameClusters:
         result = aa.AAclust().name_clusters(X, labels, names)
         assert isinstance(result, list)
 
+    def test_valid_shorten_names(self):
+        """Test the 'shorten_names' parameter (whether long cluster names are abbreviated)."""
+        X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+        labels = [2, 3, 2]
+        names = ['scale'+str(i) for i in range(X.shape[0])]
+        for shorten_names in [True, False]:
+            result = aa.AAclust().name_clusters(X, labels, names, shorten_names=shorten_names)
+            assert isinstance(result, list)
+
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=1, max_side=2),
                          elements=some.floats(allow_nan=False, allow_infinity=False)))
     def test_invalid_X(self, X):
