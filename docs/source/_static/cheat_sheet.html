@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AAanalysis Cheat Sheet · v10</title>
+<style>/* AAanalysis cheat sheet — DataCamp-style portrait, 3-column, 3 pages.
+   Generated artifact styling; edit here then regenerate (see README.md). */
+
+:root {
+  /* RTD-style palette: black #333131 · blue #67A1D0 · grey #C9C9C9 */
+  --ink:       #333131;
+  --ink-soft:  #5a5a5a;
+  --ink-faint: #9a9a9a;
+  --line:      #C9C9C9;
+  --line-soft: #e6e6e6;
+  --bg:        #ffffff;
+  --code-bg:   #f1f3f5;
+  --code-ink:  #333131;
+
+  --accent:      #67A1D0;       /* RTD blue */
+  --accent-soft: #e8f1f9;
+  --header-bg:   #333131;       /* RTD black — section bars + footer */
+
+  /* code token colours — neutral (only TMD/JMD + PU-labels carry real meaning) */
+  --tok-comment: #9a9a9a;
+  --tok-string:  #5a5a5a;
+  --tok-name:    #3f7bb0;
+
+  /* fixed semantic colours */
+  --c-green: #4FA24B;
+  --c-amber: #e0902c;
+  --c-red:   #cf4b3a;
+  --c-blue:  #2156a8;
+  /* package TMD/JMD colours (ut.COLOR_TMD / ut.COLOR_JMD) */
+  --c-tmd:   #00FA9A;
+  --c-jmd:   #0000FF;
+  /* dPULearn label colours (chips + the dPULearnPlot.pca legend match) */
+  --c-pos:    #4FA24B;
+  --c-relneg: #B0398E;
+  --c-unl:    #8A8A8A;
+  /* neutral pill for non-relational tags */
+  --pill-bg:  #8a93a0;
+}
+
+.page.accent-blue, .page.accent-green, .page.accent-amber { --accent: #67A1D0; --accent-soft: #e8f1f9; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-family: "AA Sans", Helvetica, Arial, "DejaVu Sans", sans-serif; color: var(--ink); }
+body { background: #97a0ac; }
+code, pre, .mono { font-family: "AA Mono", Menlo, "DejaVu Sans Mono", monospace; }
+
+/* ---- page frame (landscape A4) ------------------------------------------ */
+.page {
+  position: relative;
+  width: 297mm; height: 210mm;
+  padding: 5mm 6mm 8mm;
+  background: var(--bg);
+  overflow: hidden;
+}
+@media screen {
+  body { padding: 16px 0; }
+  .page { margin: 0 auto 20px; box-shadow: 0 5px 22px rgba(0,0,0,.30); }
+}
+
+.cols { column-count: 4; column-gap: 4mm; column-fill: auto; height: 100%; }
+.page.cols3 .cols { column-count: 3; }
+
+/* ---- section ------------------------------------------------------------- */
+.sec { break-inside: avoid; -webkit-column-break-inside: avoid; margin-bottom: 5px; }
+.sec-h {
+  background: var(--header-bg); color: #fff; font-weight: 800;
+  font-size: 9pt; letter-spacing: .2px; padding: 2.6px 7px; border-radius: 2px;
+  display: flex; justify-content: space-between; align-items: baseline; gap: 6px;
+}
+.sec-h > span:first-child { flex: 0 0 auto; white-space: nowrap; }
+.sec-h .hint { flex: 0 1 auto; min-width: 0; font-weight: 600; font-size: 6.2pt; opacity: .85;
+               font-style: italic; white-space: nowrap; overflow: hidden;
+               text-overflow: ellipsis; text-align: right; }
+.sec-body { padding: 3px 1px 0; }
+
+.sub {
+  color: var(--accent); font-weight: 800; font-size: 7.7pt;
+  margin: 4px 0 1px; padding-bottom: 1px; border-bottom: 1px solid var(--accent-soft);
+}
+.sub:first-child { margin-top: 1px; }
+.sub .uc { color: #fff; background: var(--ink-faint); font-size: 5.4pt; font-weight: 800;
+           border-radius: 6px; padding: 0 4px; margin-left: 4px; vertical-align: middle; }
+
+/* ---- code ---------------------------------------------------------------- */
+pre.code {
+  background: var(--code-bg); border-radius: 2px; padding: 3px 5px;
+  font-size: 6.6pt; line-height: 1.34; color: var(--code-ink);
+  white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2; margin: 1px 0 2px;
+}
+pre.code .c-cm { color: var(--tok-comment); font-style: italic; }
+pre.code .c-st { color: var(--tok-string); }
+pre.code .c-nm { color: var(--tok-name); font-weight: 600; }
+.cap { font-size: 6.2pt; color: var(--ink-faint); font-style: italic; margin: 0 0 2px; }
+
+/* inline output figure rendered directly under a recipe's code */
+.recipe-img { display: block; width: auto; max-width: 100%; max-height: 36mm;
+              margin: 3px auto 1px; border: 1px solid var(--line); border-radius: 2px;
+              background: #fff; }
+.recipe-img.big { max-height: 46mm; max-width: 100%; }
+
+/* ---- key/value & map tables --------------------------------------------- */
+table { width: 100%; border-collapse: collapse; }
+.kv td { padding: 1.7px 3px; vertical-align: top; border-bottom: 1px solid var(--line-soft); font-size: 7pt; }
+.kv tr:last-child td { border-bottom: none; }
+.kv .k { font-family: "AA Mono", monospace; color: var(--tok-name); font-weight: 600; white-space: nowrap; }
+.kv .k.wrap { white-space: normal; }
+.kv .d { color: var(--ink-soft); }
+.kv .d.mono { font-family: "AA Mono", monospace; color: var(--code-ink); }
+
+/* capability item: stacked "what" over "symbol" (robust in narrow columns) */
+.cap-item { padding: 1.8px 0; border-bottom: 1px solid var(--line-soft); }
+.cap-item:last-child { border-bottom: none; }
+.cap-item .cw { display: block; font-size: 6.9pt; color: var(--ink-soft); line-height: 1.2; }
+.cap-item .cs { display: block; font-family: "AA Mono", monospace; font-size: 6.6pt;
+                color: var(--accent); font-weight: 600; overflow-wrap: anywhere; }
+
+/* ---- title block (page 1) ----------------------------------------------- */
+.title-block { break-inside: avoid; margin-bottom: 6px; }
+.title-block .brand-logo { height: 12mm; width: auto; display: block; margin-bottom: 1px; }
+.title-block .cs { font-size: 12pt; font-weight: 800; color: var(--ink); font-style: italic; }
+.title-block .tagline { font-size: 7.6pt; color: var(--ink-soft); margin-top: 3px; line-height: 1.3; }
+.title-block .docs { font-size: 7pt; color: var(--accent); font-weight: 700; margin-top: 2px; }
+
+/* page banner for pages 2-3 (compact title) */
+.page-banner { break-inside: avoid; margin-bottom: 6px; }
+.page-banner .brand { display: flex; flex-wrap: nowrap; align-items: center; gap: 5px; }
+.page-banner .brand-logo, .page-banner .banner-logo { height: 6mm; width: auto; flex: 0 0 auto; }
+.page-banner .suffix { font-size: 10.5pt; font-weight: 800; color: var(--ink);
+                       letter-spacing: -.3px; white-space: nowrap; }
+.page-banner .sub2 { font-size: 7.4pt; color: var(--ink-soft); font-style: italic; }
+
+.intro {
+  background: var(--accent-soft); border-left: 3px solid var(--accent);
+  border-radius: 2px; padding: 4px 7px; font-size: 7pt; color: var(--ink-soft);
+  line-height: 1.34; break-inside: avoid; margin-bottom: 5px;
+}
+.intro b { color: var(--ink); }
+
+/* ---- golden workflow (vertical) ----------------------------------------- */
+.wf-step { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px;
+           padding: 2px 0; border-bottom: 1px solid var(--line-soft); }
+.wf-step:last-child { border-bottom: none; }
+.wf-step .n { color: #fff; background: var(--accent); font-weight: 800; font-size: 6pt;
+              min-width: 11px; height: 11px; border-radius: 50%; text-align: center; line-height: 11px; }
+.wf-step .t { font-weight: 800; font-size: 7pt; min-width: 46px; }
+.wf-step .call { font-family: "AA Mono", monospace; font-size: 6.2pt; color: var(--ink-soft); }
+.wf-step .arrow { color: var(--ink-faint); font-size: 6.2pt; }
+.wf-step .o { font-family: "AA Mono", monospace; font-size: 6.2pt; color: var(--ink); font-weight: 600; }
+
+/* ---- prediction levels --------------------------------------------------- */
+.lvl-card { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 2px;
+            padding: 2px 5px; margin-bottom: 3px; }
+.lvl-card .lh { display: flex; justify-content: space-between; align-items: baseline; }
+.lvl-card .nm { font-weight: 800; font-size: 7.5pt; color: var(--accent); }
+.lvl-card .px { font-family: "AA Mono", monospace; font-size: 6.4pt; color: var(--ink-faint); }
+.lvl-card .row { font-size: 6.7pt; color: var(--ink-soft); line-height: 1.3; }
+.lvl-card .row b { color: var(--ink); font-weight: 700; }
+.pill { display: inline-block; font-size: 5.6pt; font-weight: 800; color: #fff; padding: 0 4px;
+        border-radius: 6px; white-space: nowrap; }
+/* strategy/level tags are not a colour relation -> neutral grey */
+.pill.compositional, .pill.positional, .pill.both { background: var(--pill-bg); }
+
+/* ---- ontology ------------------------------------------------------------ */
+.onto-row { padding: 1.5px 0; border-bottom: 1px solid var(--line-soft); }
+.onto-row:last-child { border-bottom: none; }
+.onto-row .h { font-weight: 800; font-size: 7.3pt; color: var(--accent); }
+.onto-row .s { font-size: 6.3pt; color: var(--ink-faint); font-style: italic; }
+.onto-row .it { font-size: 6.8pt; color: var(--ink-soft); }
+.onto-ex { margin-top: 2px; }
+.onto-ex div { font-family: "AA Mono", monospace; font-size: 6.3pt; color: var(--ink-soft); padding: .5px 0; }
+
+/* ---- sequence anatomy ---------------------------------------------------- */
+.anat-track { display: flex; height: 15px; border-radius: 2px; overflow: hidden; margin: 3px 0 1px; }
+.anat-track .seg { display: flex; align-items: center; justify-content: center; color: #fff;
+                   font-size: 6pt; font-weight: 800; letter-spacing: .4px; }
+.anat-track .jmd { background: var(--c-jmd); flex: 0 0 20%; }
+.anat-track .tmd { background: var(--c-tmd); color: #143b2a; flex: 1 1 auto; }
+.anat-coords { display: flex; justify-content: space-between; font-family: "AA Mono", monospace;
+               font-size: 5.6pt; color: var(--ink-faint); }
+.chips { margin-top: 3px; }
+.chips .chip { display: inline-block; font-size: 5.6pt; font-weight: 700; color: #fff;
+               padding: 0 4px; border-radius: 6px; margin-right: 3px; }
+.chip.pos { background: var(--c-pos); } .chip.neg { background: var(--c-relneg); } .chip.unl { background: var(--c-unl); }
+
+/* ---- citations / glossary / misc ---------------------------------------- */
+.cite-item { padding: 2px 0; border-bottom: 1px solid var(--line-soft); }
+.cite-item:last-child { border-bottom: none; }
+.cite-item .nm { font-weight: 800; font-size: 7.3pt; }
+.cite-item .ky { font-family: "AA Mono", monospace; font-size: 6.4pt; color: var(--accent); float: right; }
+.cite-item .rf { font-size: 6.6pt; color: var(--ink-soft); }
+.cite-item .jr { font-size: 6.6pt; font-style: italic; color: var(--ink); }
+.bullets li { font-size: 7pt; color: var(--ink-soft); margin-left: 11px; padding: 1px 0; }
+
+/* glossary as a full-width landscape band (spans all page columns), v9-style */
+.gloss-wide { column-span: all; -webkit-column-span: all; break-inside: avoid; margin-top: 4px; }
+.gloss-cols { column-count: 3; column-gap: 7mm; }
+.gloss-item { break-inside: avoid; -webkit-column-break-inside: avoid; font-size: 6.6pt;
+              color: var(--ink-soft); line-height: 1.3; padding: 1.6px 0;
+              border-bottom: 1px solid var(--line-soft); }
+.gloss-item b { color: var(--ink); }
+
+/* ---- footer bar ---------------------------------------------------------- */
+.footer-bar {
+  position: absolute; left: 6mm; right: 6mm; bottom: 3.5mm;
+  background: var(--header-bg); color: #fff; border-radius: 2px;
+  padding: 2px 8px; display: flex; justify-content: space-between; align-items: center;
+  font-size: 6.4pt;
+}
+.footer-bar .r { opacity: .9; }
+
+/* ---- example-output gallery (full-width horizontal row) ----------------- */
+.gallery-sec { column-span: all; -webkit-column-span: all; break-inside: avoid; margin: 4px 0 5px; }
+.gallery { display: flex; flex-wrap: nowrap; gap: 7px; align-items: flex-end;
+           justify-content: space-between; }
+.gallery figure { margin: 0; flex: 0 1 auto; text-align: center; min-width: 0; }
+.gallery figure img { height: 45mm; width: auto; max-width: 84mm;
+                      border: 1px solid var(--line); border-radius: 2px; background: #fff; }
+.gallery figcaption { font-size: 6.6pt; color: var(--ink-soft); margin-top: 3px; }
+.gallery figcaption .nm { font-family: "AA Mono", monospace; color: var(--accent); font-weight: 600; }
+
+/* ---- print --------------------------------------------------------------- */
+@page { size: A4 landscape; margin: 0; }
+@media print {
+  body { background: #fff; padding: 0; }
+  .page { margin: 0; box-shadow: none; page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+}
+</style>
+</head>
+<body><section class="page accent-blue cols3">
+  <div class="cols">
+
+    <div class="title-block">
+      <img class="brand-logo" src="cs_img/logo.png" alt="AAanalysis">
+      <div class="cs">Cheat Sheet</div>
+      <div class="tagline">Sequence → physicochemical scales → interpretable features → explainable ML → biological mechanism</div>
+      <div class="docs">pip install aaanalysis · aaanalysis.readthedocs.io</div>
+    </div>
+
+    <div class="intro"><b>AAanalysis</b> is a Python framework for interpretable, sequence-based protein prediction. It turns sequences into physicochemical features (CPP), trains explainable models, and traces every prediction back to a residue × property × group comparison — robust for small datasets.</div>
+
+    <div class="sec">
+      <div class="sec-h"><span>The Golden Workflow</span><span class="hint">canonical pipeline</span></div>
+      <div class="sec-body">
+        <div class="wf-step"><span class="n">1</span><span class="t">LOAD</span><span class="call">load_dataset · load_scales</span><span class="arrow">→</span><span class="o">df_seq · df_scales</span></div>
+        <div class="wf-step"><span class="n">2</span><span class="t">PARTS</span><span class="call">SequenceFeature.get_df_parts</span><span class="arrow">→</span><span class="o">df_parts</span></div>
+        <div class="wf-step"><span class="n">3</span><span class="t">FEATURES</span><span class="call">CPP.run</span><span class="arrow">→</span><span class="o">df_feat</span></div>
+        <div class="wf-step"><span class="n">4</span><span class="t">MODEL</span><span class="call">TreeModel.fit · dPULearn.fit</span><span class="arrow">→</span><span class="o">feat_importance · labels_</span></div>
+        <div class="wf-step"><span class="n">5</span><span class="t">EXPLAIN</span><span class="call">CPPPlot.feature_map · ShapModel</span><span class="arrow">→</span><span class="o">figure · feat_impact</span></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Prediction Task Levels</span><span class="hint">task → setup</span></div>
+      <div class="sec-body">
+        <div class="lvl-card">
+          <div class="lh"><span class="nm">Residue <span class="px">AA_*</span></span><span class="pill positional">positional</span></div>
+          <div class="row"><b>unit:</b> sliding window (aa_window_size)</div>
+          <div class="row"><b>ref:</b> non-site windows / shuffled background</div>
+        </div>
+        <div class="lvl-card">
+          <div class="lh"><span class="nm">Domain <span class="px">DOM_*</span></span><span class="pill both">both</span></div>
+          <div class="row"><b>unit:</b> part-set jmd_n · tmd · jmd_c (from tmd_start / tmd_stop)</div>
+          <div class="row"><b>ref:</b> labelled A vs B groups</div>
+        </div>
+        <div class="lvl-card">
+          <div class="lh"><span class="nm">Protein <span class="px">SEQ_*</span></span><span class="pill compositional">compositional</span></div>
+          <div class="row"><b>unit:</b> whole chain (composition)</div>
+          <div class="row"><b>ref:</b> labelled groups / composition-matched background</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Sequence Anatomy</span><span class="hint">the TMD model</span></div>
+      <div class="sec-body">
+        <table class="kv"><tr><td class="k">TMD</td><td class="d">Target Middle Domain — the central segment of interest (e.g. transmembrane stretch, binding region).</td></tr><tr><td class="k">JMD</td><td class="d">Juxta Middle Domain — the flanks adjoining the TMD (jmd_n on the N-side, jmd_c on the C-side).</td></tr></table>
+        <div class="anat-track"><div class="seg jmd">JMD-N</div><div class="seg tmd">TMD</div><div class="seg jmd">JMD-C</div></div>
+        <div class="anat-coords"><span>0</span><span>tmd_start</span><span>tmd_stop</span><span>len(seq)</span></div>
+        <div class="cap">JMD widths set globally: aa.options[&#39;jmd_n_len&#39;] · [&#39;jmd_c_len&#39;].</div>
+        <div class="chips"><span class="chip pos">1: positives</span><span class="chip neg">0: rel-negatives</span><span class="chip unl">2: unlabeled</span></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Feature Ontology</span><span class="hint">Part × Split × Scale</span></div>
+      <div class="sec-body">
+        <div class="onto-row"><span class="h">PART</span> <span class="s">where on the sequence</span>
+          <div class="it">tmd · jmd_n · jmd_c · tmd_jmd · jmd_n_tmd_n · tmd_c_jmd_c</div></div>
+        <div class="onto-row"><span class="h">SPLIT</span> <span class="s">how to read the part</span>
+          <div class="it">Segment — contiguous · Pattern — sparse pairs · PeriodicPattern — i, i+3/4</div></div>
+        <div class="onto-row"><span class="h">SCALE</span> <span class="s">which physicochemical property</span>
+          <div class="it">AAontology (~600 scales) · hydrophobicity · charge · helix propensity · shape</div></div>
+        <div class="onto-ex"><div>TMD × Segment × hydrophobicity → membrane insertion</div><div>JMD × Pattern × net charge → electrostatic recognition</div><div>TMD × PeriodicPattern × helix → α-helical interface</div></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>CPP Strategies</span><span class="hint">via split_kws</span></div>
+      <div class="sec-body">
+        <div class="sub">Compositional <span class="pill compositional">≈ sequence/protein-level</span></div>
+        <div class="cap">one whole-part average (composition-like, position-agnostic)</div>
+        <pre class="code">skw = sf.get_split_kws(
+    split_types=<span class="c-st">&quot;Segment&quot;</span>,
+    n_split_min=1, n_split_max=1)
+cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts,
+             split_kws=skw)</pre>
+        <div class="sub">Positional <span class="pill positional">≈ residue-/region-level</span></div>
+        <div class="cap">sub-segments and/or patterns resolved to positions</div>
+        <pre class="code">skw = sf.get_split_kws(
+    split_types=[<span class="c-st">&quot;Segment&quot;</span>, <span class="c-st">&quot;Pattern&quot;</span>,
+                 <span class="c-st">&quot;PeriodicPattern&quot;</span>],
+    n_split_max=5, steps_pattern=[3, 4],
+    steps_periodicpattern=[3, 4])
+cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts,
+             split_kws=skw)</pre>
+        <div class="cap">Domain level uses both. → CPP strategies: see the CPP tutorial (docs).</div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Which Module Should I Use?</span><span class="hint">intent → module</span></div>
+      <div class="sec-body">
+        <div class="cap-item"><span class="cw">Explore sequence patterns / composition →</span><span class="cs">AAlogo</span></div>
+        <div class="cap-item"><span class="cw">Discover discriminative physicochemical features →</span><span class="cs">CPP</span></div>
+        <div class="cap-item"><span class="cw">Reduce redundant amino-acid scales →</span><span class="cs">AAclust</span></div>
+        <div class="cap-item"><span class="cw">Train with positives + unlabelled data →</span><span class="cs">dPULearn</span></div>
+        <div class="cap-item"><span class="cw">Train an interpretable classifier →</span><span class="cs">TreeModel</span></div>
+        <div class="cap-item"><span class="cw">Explain a prediction (per feature / sample) →</span><span class="cs">ShapModel  [pro]</span></div>
+        <div class="cap-item"><span class="cw">Visualize CPP features →</span><span class="cs">CPPPlot</span></div>
+      </div>
+    </div>
+
+<div class="sec">
+  <div class="sec-h"><span>Data &amp; Preparation</span><span class="hint">load · encode · clean</span></div>
+  <div class="sec-body">
+    <div class="cap-item"><span class="cw">Load benchmark sequences</span><span class="cs">load_dataset(name) → df_seq</span></div>
+    <div class="cap-item"><span class="cw">Load AAontology scales</span><span class="cs">load_scales() → df_scales</span></div>
+    <div class="cap-item"><span class="cw">Load precomputed features</span><span class="cs">load_features(name) → df_feat</span></div>
+    <div class="cap-item"><span class="cw">Read / write FASTA</span><span class="cs">read_fasta(file) → df_seq</span></div>
+    <div class="cap-item"><span class="cw">Encode sequences (one-hot / int)</span><span class="cs">SequencePreprocessor().encode_*(seqs)</span></div>
+    <div class="cap-item"><span class="cw">Cluster redundant homologs</span><span class="cs">filter_seq(df_seq)  [pro]</span></div>
+  </div>
+</div><div class="sec">
+  <div class="sec-h"><span>Feature Engineering</span><span class="hint">parts · CPP · scales</span></div>
+  <div class="sec-body">
+    <div class="cap-item"><span class="cw">Extract sequence parts</span><span class="cs">get_df_parts(df_seq) → df_parts</span></div>
+    <div class="cap-item"><span class="cw">Discover discriminative features</span><span class="cs">CPP(df_parts).run(labels) → df_feat  ★</span></div>
+    <div class="cap-item"><span class="cw">Simplify → interpretable scales</span><span class="cs">CPP.simplify(df_feat, labels)</span></div>
+    <div class="cap-item"><span class="cw">Build feature matrix X</span><span class="cs">feature_matrix(df_feat, df_parts) → X</span></div>
+    <div class="cap-item"><span class="cw">Reduce redundant scales</span><span class="cs">AAclust().fit(X)  [Wrapper]</span></div>
+    <div class="cap-item"><span class="cw">Drop correlated features</span><span class="cs">filter_correlation(X)</span></div>
+  </div>
+</div><div class="sec">
+  <div class="sec-h"><span>Structural &amp; Embedding</span><span class="hint">alternative feature sources</span></div>
+  <div class="sec-body">
+    <div class="cap-item"><span class="cw">Fetch AlphaFold + encode 3D/DSSP/PAE</span><span class="cs">StructurePreprocessor().encode_dssp(df_seq)</span></div>
+    <div class="cap-item"><span class="cw">Encode protein-LM embeddings</span><span class="cs">EmbeddingPreprocessor().encode(df_seq)</span></div>
+    <div class="cap-item"><span class="cw">Embeddings → pseudo-scales</span><span class="cs">EmbeddingPreprocessor().build_scales(df_seq)</span></div>
+    <div class="cap-item"><span class="cw">Combine numeric feature dicts → CPP</span><span class="cs">combine_dict_nums(dict_nums)</span></div>
+  </div>
+</div><div class="sec">
+  <div class="sec-h"><span>Modeling &amp; Explainability</span><span class="hint"></span></div>
+  <div class="sec-body">
+    <div class="cap-item"><span class="cw">Train + RFE + MC importance</span><span class="cs">TreeModel().fit(X, labels)  [Wrapper]</span></div>
+    <div class="cap-item"><span class="cw">Train with positives + unlabelled</span><span class="cs">dPULearn().fit(X, labels)  [Wrapper]</span></div>
+    <div class="cap-item"><span class="cw">Per-feature / sample SHAP impact</span><span class="cs">ShapModel().fit(X, labels)  [pro]</span></div>
+  </div>
+</div><div class="sec">
+  <div class="sec-h"><span>Sequence Analysis</span><span class="hint">logos · motifs</span></div>
+  <div class="sec-body">
+    <div class="cap-item"><span class="cw">Position-specific logo</span><span class="cs">AAlogo().get_df_logo(df_parts)</span></div>
+    <div class="cap-item"><span class="cw">Sample sequence windows</span><span class="cs">AAWindowSampler().sample(df_seq)</span></div>
+    <div class="cap-item"><span class="cw">Pairwise sequence similarity</span><span class="cs">comp_seq_sim(df_seq)  [pro]</span></div>
+    <div class="cap-item"><span class="cw">Scan motifs (FIMO / MEME)</span><span class="cs">scan_motif(df_seq, pwm)  [pro]</span></div>
+  </div>
+</div><div class="sec">
+  <div class="sec-h"><span>Metrics &amp; Plotting</span><span class="hint">utilities</span></div>
+  <div class="sec-body">
+    <div class="cap-item"><span class="cw">Adjusted AUC (class imbalance)</span><span class="cs">comp_auc_adjusted(X, labels)</span></div>
+    <div class="cap-item"><span class="cw">BIC score · KL divergence</span><span class="cs">comp_bic_score(X, labels) · comp_kld</span></div>
+    <div class="cap-item"><span class="cw">Global plot style &amp; fonts</span><span class="cs">plot_settings(font_scale)</span></div>
+    <div class="cap-item"><span class="cw">Colours &amp; standalone legend</span><span class="cs">plot_get_clist(n) · plot_legend(ax)</span></div>
+  </div>
+</div><div class="sec">
+  <div class="sec-h"><span>Protein Design <span class="uc">(planned)</span></span><span class="hint"></span></div>
+  <div class="sec-body">
+    <div class="cap-item"><span class="cw">In-silico point mutations</span><span class="cs">AAMut · AAMutPlot</span></div>
+    <div class="cap-item"><span class="cw">Sequence-design libraries</span><span class="cs">SeqMut · SeqMutPlot</span></div>
+  </div>
+</div>
+  </div>
+  <div class="footer-bar"><span><b>AAanalysis</b> · interpretable, sequence-based protein prediction</span>
+  <span class="r">aaanalysis.readthedocs.io · v10 · 2026-06</span></div>
+</section>
+
+<section class="page accent-blue cols3">
+  <div class="cols">
+
+    <div class="page-banner">
+      <div class="brand"><img class="banner-logo" src="cs_img/logo.png" alt="AAanalysis"> <span class="suffix">· Worked Examples</span></div>
+      <div class="sub2">tutorial-style code with the figure each call produces</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Install · Import · Load</span><span class="hint">core + [pro]</span></div>
+      <div class="sec-body"><pre class="code"><span class="c-cm"># Python &gt;= 3.11</span>
+pip install aaanalysis         <span class="c-cm"># core</span>
+pip install <span class="c-st">&#x27;aaanalysis[pro]&#x27;</span>  <span class="c-cm"># SHAP, FIMO, Bio</span>
+
+import numpy as np
+import matplotlib.pyplot as plt
+import aaanalysis as aa
+df_seq = <span class="c-nm">aa.load_dataset</span>(name=<span class="c-st">&#x27;DOM_GSEC&#x27;</span>)   <span class="c-cm"># γ-secretase</span>
+labels = df_seq[<span class="c-st">&#x27;label&#x27;</span>].to_list()
+df_scales = <span class="c-nm">aa.load_scales</span>()
+<span class="c-cm"># TMD model: 20-aa TMD, short JMD flanks</span>
+<span class="c-nm">aa.options</span>[<span class="c-st">&#x27;jmd_n_len&#x27;</span>] = 6
+<span class="c-nm">aa.options</span>[<span class="c-st">&#x27;jmd_c_len&#x27;</span>] = 6</pre></div>
+    </div>
+
+<div class="sec">
+  <div class="sec-h"><span>AAlogo — see the data</span><span class="hint">dataset at a glance</span></div>
+  <div class="sec-body">
+    <pre class="code">sf = <span class="c-nm">aa.SequenceFeature</span>()
+df_parts = sf.get_df_parts(df_seq=df_seq,
+    list_parts=[<span class="c-st">&#x27;tmd&#x27;</span>, <span class="c-st">&#x27;jmd_n&#x27;</span>, <span class="c-st">&#x27;jmd_c&#x27;</span>])
+
+aal = <span class="c-nm">aa.AAlogo</span>()
+df_logo = aal.get_df_logo(df_parts=df_parts,
+    labels=labels, label_test=1, tmd_len=20)
+df_info = aal.get_df_logo_info(df_parts=df_parts,
+    labels=labels, label_test=1, tmd_len=20)
+<span class="c-nm">aa.plot_settings</span>(font_scale=0.7)
+<span class="c-nm">aa.AAlogoPlot</span>().single_logo(df_logo=df_logo,
+    df_logo_info=df_info,        <span class="c-cm"># bits bar on top</span>
+    name_data=<span class="c-st">&#x27;Test set: substrates&#x27;</span>)
+plt.tight_layout(); plt.show()</pre>
+<img class="recipe-img" src="cs_plots/logo.png" alt="AAlogo — see the data output">  </div>
+</div><div class="sec">
+  <div class="sec-h"><span>CPP — feature map</span><span class="hint">flagship · interpretability</span></div>
+  <div class="sec-body">
+    <pre class="code"><span class="c-cm"># extended parts -&gt; default split grid applies</span>
+df_parts = sf.get_df_parts(df_seq=df_seq,
+    list_parts=[<span class="c-st">&#x27;tmd&#x27;</span>, <span class="c-st">&#x27;jmd_n_tmd_n&#x27;</span>, <span class="c-st">&#x27;tmd_c_jmd_c&#x27;</span>])
+cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, df_scales=df_scales)
+df_feat = cpp.run(labels=labels, n_filter=40)
+<span class="c-cm"># swap scales for more interpretable correlated ones</span>
+df_feat = cpp.simplify(df_feat=df_feat, labels=labels)
+X = sf.feature_matrix(features=df_feat[<span class="c-st">&#x27;feature&#x27;</span>],
+                      df_parts=df_parts)
+tm = <span class="c-nm">aa.TreeModel</span>(); tm.fit(X, labels=labels)
+df_feat = tm.add_feat_importance(df_feat=df_feat)
+
+cpp_plot = <span class="c-nm">aa.CPPPlot</span>()
+<span class="c-nm">aa.plot_settings</span>(font_scale=0.65)
+cpp_plot.feature_map(df_feat=df_feat)
+plt.tight_layout(); plt.show()</pre>
+<img class="recipe-img big" src="cs_plots/feature_map.png" alt="CPP — feature map output">  </div>
+</div><div class="sec">
+  <div class="sec-h"><span>ShapModel — explain a prediction</span><span class="hint">per-protein · [pro]</span></div>
+  <div class="sec-body">
+    <pre class="code">se = <span class="c-nm">aa.ShapModel</span>()
+<span class="c-cm"># fuzzy_labeling captures the true SHAP impact</span>
+se.fit(X, labels=labels, fuzzy_labeling=True)
+<span class="c-cm"># explain a borderline call — LRP6 (~60% substrate)</span>
+i = list(df_seq[<span class="c-st">&#x27;entry&#x27;</span>]).index(<span class="c-st">&#x27;O75581&#x27;</span>)
+df_feat = se.add_feat_impact(df_feat=df_feat,
+              sample_positions=i, names=<span class="c-st">&#x27;LRP6&#x27;</span>)
+
+cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
+    col_imp=<span class="c-st">&#x27;feat_impact_LRP6&#x27;</span>, name_test=<span class="c-st">&#x27;LRP6&#x27;</span>,
+    **args_seq)
+plt.tight_layout(); plt.show()</pre>
+<img class="recipe-img big" src="cs_plots/feature_map_shap.png" alt="ShapModel — explain a prediction output">  </div>
+</div><div class="sec">
+  <div class="sec-h"><span>AAclust — clusters</span><span class="hint">scale reduction · Wrapper</span></div>
+  <div class="sec-body">
+    <pre class="code">X = np.array(df_scales).T
+aac = <span class="c-nm">aa.AAclust</span>()
+aac.fit(X, names=list(df_scales), n_clusters=10)
+aac.medoid_names_   <span class="c-cm"># redundancy-reduced scales</span>
+
+aac_plot = <span class="c-nm">aa.AAclustPlot</span>()
+aac_plot.centers(X, labels=aac.labels_)
+plt.tight_layout(); plt.show()</pre>
+<img class="recipe-img" src="cs_plots/centers.png" alt="AAclust — clusters output">  </div>
+</div><div class="sec">
+  <div class="sec-h"><span>dPULearn — PCA</span><span class="hint">reliable negatives · Wrapper</span></div>
+  <div class="sec-body">
+    <pre class="code"><span class="c-cm"># labels: 1 = positive, 2 = unlabelled</span>
+dpul = <span class="c-nm">aa.dPULearn</span>()
+dpul.fit(X=X, labels=labels, n_unl_to_neg=n_pos)
+df_pu = dpul.df_pu_   <span class="c-cm"># 1 pos · 0 rel-neg · 2 unl</span>
+
+dpul_plot = <span class="c-nm">aa.dPULearnPlot</span>()
+dpul_plot.pca(df_pu=df_pu, labels=labels)
+plt.tight_layout(); plt.show()</pre>
+<img class="recipe-img" src="cs_plots/pca.png" alt="dPULearn — PCA output">  </div>
+</div>
+  </div>
+  <div class="footer-bar"><span><b>AAanalysis</b> · tutorial-style worked examples</span>
+  <span class="r">aaanalysis.readthedocs.io · v10 · 2026-06</span></div>
+</section>
+
+<section class="page accent-blue cols3">
+  <div class="cols">
+
+    <div class="page-banner">
+      <div class="brand"><img class="banner-logo" src="cs_img/logo.png" alt="AAanalysis"> <span class="suffix">· Reference</span></div>
+      <div class="sub2">5-minute example · options · class ↔ plot · glossary · citations</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>The 5-Minute Example</span><span class="hint">copy-paste this</span></div>
+      <div class="sec-body"><pre class="code">import matplotlib.pyplot as plt
+import aaanalysis as aa
+df_seq = <span class="c-nm">aa.load_dataset</span>(name=<span class="c-st">&#x27;DOM_GSEC&#x27;</span>)
+labels = df_seq[<span class="c-st">&#x27;label&#x27;</span>].to_list()
+sf = <span class="c-nm">aa.SequenceFeature</span>()
+df_parts = sf.get_df_parts(df_seq=df_seq)
+cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts)
+df_feat = cpp.run(labels=labels)
+X = sf.feature_matrix(features=df_feat[<span class="c-st">&#x27;feature&#x27;</span>],
+                      df_parts=df_parts)
+tm = <span class="c-nm">aa.TreeModel</span>(); tm.fit(X, labels=labels)
+df_feat = tm.add_feat_importance(df_feat=df_feat)
+cpp_plot = <span class="c-nm">aa.CPPPlot</span>()
+<span class="c-nm">aa.plot_settings</span>()
+cpp_plot.feature_map(df_feat=df_feat)
+plt.tight_layout(); plt.show()</pre></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>aa.options</span><span class="hint">system-level settings</span></div>
+      <div class="sec-body"><pre class="code"><span class="c-nm">aa.options</span>[<span class="c-st">&#x27;random_state&#x27;</span>] = 42
+<span class="c-nm">aa.options</span>[<span class="c-st">&#x27;verbose&#x27;</span>] = True
+<span class="c-nm">aa.options</span>[<span class="c-st">&#x27;allow_multiprocessing&#x27;</span>] = True
+
+<span class="c-cm"># TMD model — JMD flank widths</span>
+<span class="c-nm">aa.options</span>[<span class="c-st">&#x27;jmd_n_len&#x27;</span>] = 10
+<span class="c-nm">aa.options</span>[<span class="c-st">&#x27;jmd_c_len&#x27;</span>] = 10
+
+<span class="c-cm"># plot labels &amp; system-level scales</span>
+<span class="c-nm">aa.options</span>[<span class="c-st">&#x27;name_tmd&#x27;</span>] = <span class="c-st">&#x27;TMD&#x27;</span>
+<span class="c-nm">aa.options</span>[<span class="c-st">&#x27;df_scales&#x27;</span>] = my_scales</pre></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Class ↔ Plot Class</span><span class="hint">mirrored API</span></div>
+      <div class="sec-body"><table class="kv">
+<tr><td class="k">CPP</td><td class="d mono">CPPPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAclust</td><td class="d mono">AAclustPlot</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">AAlogo</td><td class="d mono">AAlogoPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">dPULearn</td><td class="d mono">dPULearnPlot</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">TreeModel</td><td class="d mono">—</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">ShapModel  [pro]</td><td class="d mono">—</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">AAMut</td><td class="d mono">AAMutPlot</td><td class="d" style="text-align:right">planned</td></tr><tr><td class="k">SeqMut</td><td class="d mono">SeqMutPlot</td><td class="d" style="text-align:right">planned</td></tr><tr><td class="k">AAWindowSampler</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">SequenceFeature</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">NumericalFeature</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">SequencePreprocessor</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr>      </table></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>How to Cite</span><span class="hint">if you use AAanalysis</span></div>
+      <div class="sec-body">        <div class="cite-item"><span class="ky">[Breimann24a]</span><span class="nm">AAclust</span>
+          <div class="rf">Breimann &amp; Frishman (2024a), AAclust: k-optimized clustering for selecting redundancy-reduced sets of amino acid scales</div><div class="jr">Bioinformatics Advances</div></div>
+        <div class="cite-item"><span class="ky">[Breimann24b]</span><span class="nm">AAontology</span>
+          <div class="rf">Breimann et al. (2024b), AAontology: An ontology of amino acid scales for interpretable machine learning</div><div class="jr">Journal of Molecular Biology</div></div>
+        <div class="cite-item"><span class="ky">[Breimann25a]</span><span class="nm">CPP &amp; dPULearn</span>
+          <div class="rf">Breimann &amp; Kamp et al. (2025), Charting γ-secretase substrates by explainable AI</div><div class="jr">Nature Communications</div></div>
+</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Design Principles</span></div>
+      <div class="sec-body"><ul class="bullets"><li>Explicit over implicit — DataFrames everywhere</li><li>Wrappers (.fit / .predict / .eval) set trailing *_ attributes after fit</li><li>Biological interpretability is first-class</li><li>Small-data robust and reproducible (layered seeds)</li></ul></div>
+    </div>
+
+    <div class="sec gloss-wide">
+      <div class="sec-h"><span>Glossary</span><span class="hint">canonical vocabulary · CONTEXT.md</span></div>
+      <div class="sec-body gloss-cols">
+<div class="gloss-item"><b>Prediction level</b> — Residue (AA_*) · Domain (DOM_*) · Protein (SEQ_*) — the unit a task predicts at; sets the dataset, the part, and the reference.</div><div class="gloss-item"><b>Part</b> — Named segment used as feature input: tmd, jmd_n, jmd_c, tmd_jmd, jmd_n_tmd_n, tmd_c_jmd_c.</div><div class="gloss-item"><b>Split</b> — How a scale is read across a part: Segment (contiguous), Pattern (sparse), PeriodicPattern (i, i+3/4).</div><div class="gloss-item"><b>Scale</b> — AA → ℝ mapping. AAontology ships ~600 curated scales in two-level categories.</div><div class="gloss-item"><b>Feature</b> — (Part × Split × Scale) — the atomic, residue-grounded, interpretable unit of CPP.</div><div class="gloss-item"><b>Compositional vs positional</b> — How split_kws resolves locality: a whole-part average (compositional) vs sub-region/position-resolved (positional).</div><div class="gloss-item"><b>df_seq</b> — Sequence table: entry, sequence, label, TMD bounds (tmd_start, tmd_stop).</div><div class="gloss-item"><b>df_parts</b> — Wide table — one column per part (tmd, jmd_n, jmd_c, …).</div><div class="gloss-item"><b>df_feat</b> — Ranked features: feature, abs_auc, mean_dif, p_val, positions, scale, category.</div><div class="gloss-item"><b>Wrapper</b> — sklearn-style class — .fit / .predict / .eval, sets trailing *_ attributes after fit.</div><div class="gloss-item"><b>Plot class</b> — *Plot mirror of an analytical class — same arguments, visualization only.</div><div class="gloss-item"><b>PU labels</b> — dPULearn input: 1 = positive, 2 = unlabelled. Output: 1 / 0 (reliable-negative) / 2.</div><div class="gloss-item"><b>CPP</b> — Comparative Physicochemical Profiling — discovers ranked Part × Split × Scale features.</div><div class="gloss-item"><b>AAontology</b> — Two-level scale taxonomy; CPP uses its categories to organize and rank features.</div>      </div>
+    </div>
+
+  </div>
+  <div class="footer-bar"><span><b>AAanalysis</b> · reference · 5-minute example · glossary</span>
+  <span class="r">aaanalysis.readthedocs.io · v10 · 2026-06</span></div>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AAanalysis Cheat Sheet · {{ m.version }}</title>
+<style>{{ css|safe }}</style>
+</head>
+<body>
+
+{%- macro footer(label) -%}
+<div class="footer-bar"><span><b>AAanalysis</b> · {{ label }}</span>
+  <span class="r">{{ m.docs_url }} · {{ m.version }} · {{ m.date }}</span></div>
+{%- endmacro -%}
+
+{%- macro family(F) -%}
+<div class="sec">
+  <div class="sec-h"><span>{{ F.name }}{% if F.under_construction %} <span class="uc">(planned)</span>{% endif %}</span><span class="hint">{{ F.tag }}</span></div>
+  <div class="sec-body">
+    {% for what, sym, code in F['rows'] %}
+    <div class="cap-item"><span class="cw">{{ what }}</span><span class="cs">{{ sym }}</span></div>
+    {% endfor %}
+  </div>
+</div>
+{%- endmacro -%}
+
+{%- macro recipe(R) -%}
+<div class="sec">
+  <div class="sec-h"><span>{{ R.cls }}</span><span class="hint">{{ R.tag }}</span></div>
+  <div class="sec-body">
+    <pre class="code">{{ R.code|hl }}</pre>
+    {% if R.img %}<img class="recipe-img{{ ' big' if R.big }}" src="{{ img_base }}{{ R.img }}.png" alt="{{ R.cls }} output">{% endif %}
+  </div>
+</div>
+{%- endmacro -%}
+
+{# ===================== PAGE 1 — ORIENT (blue) ===================== #}
+<section class="page accent-blue cols3">
+  <div class="cols">
+
+    <div class="title-block">
+      <img class="brand-logo" src="{{ logo_base }}logo.png" alt="AAanalysis">
+      <div class="cs">Cheat Sheet</div>
+      <div class="tagline">{{ m.tagline }}</div>
+      <div class="docs">{{ m.pip }} · {{ m.docs_url }}</div>
+    </div>
+
+    <div class="intro">{{ m.intro|safe }}</div>
+
+    <div class="sec">
+      <div class="sec-h"><span>The Golden Workflow</span><span class="hint">canonical pipeline</span></div>
+      <div class="sec-body">
+        {% for s in c.golden_workflow %}
+        <div class="wf-step"><span class="n">{{ s.n }}</span><span class="t">{{ s.title }}</span><span class="call">{{ s.call }}</span><span class="arrow">→</span><span class="o">{{ s.out }}</span></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Prediction Task Levels</span><span class="hint">task → setup</span></div>
+      <div class="sec-body">
+        {% for L in c.prediction_levels %}
+        <div class="lvl-card">
+          <div class="lh"><span class="nm">{{ L.level }} <span class="px">{{ L.prefix }}</span></span><span class="pill {{ L.strategy }}">{{ L.strategy }}</span></div>
+          <div class="row"><b>unit:</b> {{ L.unit }}</div>
+          <div class="row"><b>ref:</b> {{ L.reference }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Sequence Anatomy</span><span class="hint">the TMD model</span></div>
+      <div class="sec-body">
+        <table class="kv">{% for k,v in c.sequence_anatomy.rows %}<tr><td class="k">{{ k }}</td><td class="d">{{ v }}</td></tr>{% endfor %}</table>
+        <div class="anat-track"><div class="seg jmd">JMD-N</div><div class="seg tmd">TMD</div><div class="seg jmd">JMD-C</div></div>
+        <div class="anat-coords"><span>0</span><span>tmd_start</span><span>tmd_stop</span><span>len(seq)</span></div>
+        <div class="cap">{{ c.sequence_anatomy.note }}</div>
+        <div class="chips"><span class="chip pos">1: positives</span><span class="chip neg">0: rel-negatives</span><span class="chip unl">2: unlabeled</span></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Feature Ontology</span><span class="hint">Part × Split × Scale</span></div>
+      <div class="sec-body">
+        {% for key in ['part','split','scale'] %}{% set O = c.feature_ontology[key] %}
+        <div class="onto-row"><span class="h">{{ key|upper }}</span> <span class="s">{{ O.sub }}</span>
+          <div class="it">{{ O['items']|join(' · ') }}</div></div>
+        {% endfor %}
+        <div class="onto-ex">{% for ex in c.feature_ontology.examples %}<div>{{ ex }}</div>{% endfor %}</div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>CPP Strategies</span><span class="hint">via split_kws</span></div>
+      <div class="sec-body">
+        {% for k in ['compositional','positional'] %}{% set S = c.cpp_strategies[k] %}
+        <div class="sub">{{ S.name }} <span class="pill {{ k }}">{{ S.maps }}</span></div>
+        <div class="cap">{{ S.desc }}</div>
+        <pre class="code">{{ S.code|hl }}</pre>
+        {% endfor %}
+        <div class="cap">{{ c.cpp_strategies.note }}</div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Which Module Should I Use?</span><span class="hint">intent → module</span></div>
+      <div class="sec-body">
+        {% for what, mod in c.which_module %}
+        <div class="cap-item"><span class="cw">{{ what }} →</span><span class="cs">{{ mod }}</span></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% for F in c.capability_families %}{{ family(F) }}{% endfor %}
+
+  </div>
+  {{ footer('interpretable, sequence-based protein prediction') }}
+</section>
+
+{# ===================== PAGE 2 — CAPABILITIES (green) ===================== #}
+<section class="page accent-blue cols3">
+  <div class="cols">
+
+    <div class="page-banner">
+      <div class="brand"><img class="banner-logo" src="{{ logo_base }}logo.png" alt="AAanalysis"> <span class="suffix">· Worked Examples</span></div>
+      <div class="sub2">tutorial-style code with the figure each call produces</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Install · Import · Load</span><span class="hint">core + [pro]</span></div>
+      <div class="sec-body"><pre class="code">{{ c.install|hl }}</pre></div>
+    </div>
+
+    {% for R in c.flagship_recipes %}{{ recipe(R) }}{% endfor %}
+
+  </div>
+  {{ footer('tutorial-style worked examples') }}
+</section>
+
+{# ===================== PAGE 3 — REFERENCE (amber) ===================== #}
+<section class="page accent-blue cols3">
+  <div class="cols">
+
+    <div class="page-banner">
+      <div class="brand"><img class="banner-logo" src="{{ logo_base }}logo.png" alt="AAanalysis"> <span class="suffix">· Reference</span></div>
+      <div class="sub2">5-minute example · options · class ↔ plot · glossary · citations</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>The 5-Minute Example</span><span class="hint">copy-paste this</span></div>
+      <div class="sec-body"><pre class="code">{{ c.five_minute|hl }}</pre></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>aa.options</span><span class="hint">system-level settings</span></div>
+      <div class="sec-body"><pre class="code">{{ c.options|hl }}</pre></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Class ↔ Plot Class</span><span class="hint">mirrored API</span></div>
+      <div class="sec-body"><table class="kv">
+        {% for cls,plot,kind in c.class_plot %}<tr><td class="k">{{ cls }}</td><td class="d mono">{{ plot }}</td><td class="d" style="text-align:right">{{ kind }}</td></tr>{% endfor %}
+      </table></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>How to Cite</span><span class="hint">if you use AAanalysis</span></div>
+      <div class="sec-body">{% for cit in c.citations %}
+        <div class="cite-item"><span class="ky">{{ cit.key }}</span><span class="nm">{{ cit.name }}</span>
+          <div class="rf">{{ cit.ref }}</div><div class="jr">{{ cit.journal }}</div></div>
+      {% endfor %}</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Design Principles</span></div>
+      <div class="sec-body"><ul class="bullets">{% for p in c.design_principles %}<li>{{ p }}</li>{% endfor %}</ul></div>
+    </div>
+
+    <div class="sec gloss-wide">
+      <div class="sec-h"><span>Glossary</span><span class="hint">canonical vocabulary · CONTEXT.md</span></div>
+      <div class="sec-body gloss-cols">
+        {% for term,d in c.glossary %}<div class="gloss-item"><b>{{ term }}</b> — {{ d }}</div>{% endfor %}
+      </div>
+    </div>
+
+  </div>
+  {{ footer('reference · 5-minute example · glossary') }}
+</section>
+
+</body>
+</html>
