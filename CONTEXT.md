@@ -427,6 +427,41 @@ _Avoid_: selection mode (collides with `output_mode`), selection method.
 A constructor-level boolean mask on `TreeModel` marking features to keep *before* RFE runs in `fit` — an upstream gate, not a **selection strategy**. Orthogonal to `select_features`, which acts after fitting.
 _Avoid_: preselection strategy (it carries no strategy), prefilter (collides with RFE prefiltering).
 
+**feature pruning**:
+The *model-free*, *post-hoc* reduction of a [[df_feat]] by dropping features that are near-constant
+or empirically redundant **across the user's own samples**, performed by
+`SequenceFeature.prune_by_variance` and `SequenceFeature.prune_by_correlation`. Pruning runs on a
+fitted `df_feat` (e.g. from `CPP.run`) and composes **before** model-based **feature selection** —
+the recommended order is **variance pruning → correlation pruning → `TreeModel.select_features`**.
+Both methods are df_feat-in / df_feat-out (row-filtered, reset index) and build the feature matrix
+via `SequenceFeature.feature_matrix` (or accept a pre-computed `X`). Distinct from **feature
+selection** (model-based, TreeModel), CPP **feature filtering** (the in-run split/scale screening),
+CPP **redundancy reduction** (scale-vector correlation + position overlap, see below), and **feature
+simplification** (`CPP.simplify`, which relabels scales). See ADR-0026.
+_Avoid_: feature filtering (the CPP in-run term), feature reduction (overloaded with selection),
+data cleaning (too generic).
+
+**variance pruning**:
+`SequenceFeature.prune_by_variance(df_feat, df_parts, threshold=0.0)` — drops every feature whose
+**feature-matrix column variance over all samples** is at or below `threshold`. The default `0.0`
+removes only strictly constant features (zero peak-to-peak range, robust to float epsilon); raise it
+to prune low-variance features. Distinct from CPP's in-run pre-filter, which screens *candidate*
+features by the **test-group** standard deviation (`max_std_test`) rather than the spread of the
+already-selected features over all samples.
+_Avoid_: low-variance filter (use the method's pruning verb), constant-feature filter (too narrow).
+
+**empirical correlation pruning**:
+`SequenceFeature.prune_by_correlation(df_feat, df_parts, max_cor=0.7)` — among features whose
+**realized feature values are pairwise correlated** beyond `max_cor` (absolute Pearson over the
+actual samples), keeps the higher-`abs_auc` feature and drops the others; deterministic because
+features are ordered by `[abs_auc, abs_mean_dif]` before pruning, and constant columns (undefined
+correlation) are always retained. **Deliberately different** from CPP's in-run **redundancy
+reduction**, which compares the underlying *scale vectors* (`df_scales.corr()`) plus positional
+overlap — empirical pruning catches features that are redundant on a *specific dataset* even when
+their scales are not. Reuses the `NumericalFeature.filter_correlation` matrix primitive.
+_Avoid_: redundancy reduction (reserved for CPP's in-run scale-correlation step), correlation
+filtering (ambiguous about scale-vector vs sample-level correlation).
+
 ### Explainability (CPP-SHAP) vocabulary
 
 **feature importance**:
@@ -502,6 +537,7 @@ _Avoid_: interpretability score (a high score usually reads as good; the grade i
 - **Compositional** CPP strategy is a single `Segment(1,1)` whole-part split; **positional** is `n_split_max>1` / **Pattern** / **PeriodicPattern**. Compositional suits **protein level**, positional suits **residue level**, **domain level** uses both.
 - **Determinant discovery** and **design / engineering** are cross-cutting use-case classes (any level); **relational / interaction** is a documented scope boundary, not a level.
 - **Feature selection** happens *after* `TreeModel.fit`: `top_k` / `threshold` read the Monte Carlo `feat_importance`; `frequency` aggregates the per-round `is_selected_` masks that **RFE prefiltering** (`fit(use_rfe=True)`) produced. **is_preselected** gates features *before* RFE. So the order is: `is_preselected` (pre-RFE) → RFE in `fit` → `select_features` (post-fit).
+- **Feature pruning** sits *before* feature selection and is model-free: **variance pruning** → **empirical correlation pruning** (`SequenceFeature.prune_by_*`) shrink a `df_feat` on the user's own samples, then `TreeModel.select_features` applies the model-based cut. Pruning's empirical correlation is distinct from CPP's in-run **redundancy reduction** (scale-vector correlation + position overlap). See ADR-0026.
 
 ## Example dialogue
 
