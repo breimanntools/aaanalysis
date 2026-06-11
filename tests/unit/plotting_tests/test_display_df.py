@@ -54,6 +54,14 @@ class TestDisplayDf:
         if n_cols < len(list(sample_dataframe)):
             aa.display_df(sample_dataframe, n_cols=n_cols)
 
+    def test_n_rows_oversize_shows_all(self, sample_dataframe):
+        # n_rows larger than the frame must not raise — it shows all rows (clamped via head)
+        aa.display_df(sample_dataframe, n_rows=len(sample_dataframe) + 50)
+        aa.display_df(sample_dataframe, n_rows=10, show_shape=True)
+
+    def test_n_cols_oversize_shows_all(self, sample_dataframe):
+        aa.display_df(sample_dataframe, n_cols=len(list(sample_dataframe)) + 50)
+
     def test_row_to_show(self, sample_dataframe):
         for row in list(sample_dataframe.T):
             aa.display_df(sample_dataframe, row_to_show=row)
