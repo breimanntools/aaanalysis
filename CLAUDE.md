@@ -129,3 +129,11 @@ highest-risk traps worth keeping front-of-mind every session.
   `df`, or `df.head()`. `display_df` renders a clean, width-bounded table and the
   shape, which is the house presentation for every `examples/**` and
   `tutorials/**` notebook.
+- **Parallel agents must not share one checkout.** When more than one agent or
+  process works in this repo at once, give each its own per-task `git worktree`
+  (see `workflow.md`). A shared working tree / `HEAD` lets a concurrent commit or
+  push land *between* your `git status` and your commit — so re-check status
+  immediately before staging, commit **explicit pathspecs** (never a blind
+  `git add -A` / `git commit -a`), and never commit, revert, or discard changes
+  you did not make. If unexpected edits appear in the tree, stop and surface them
+  rather than bundling them into your commit.

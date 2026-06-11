@@ -122,46 +122,17 @@ We appreciate bug reports, feature requests, or updates on documentation and cod
 `Contributing Guidelines <CONTRIBUTING.rst>`_. These cover AAanalysis development conventions and the automated
 quality gates every change must pass. For further questions or suggestions, please email stephanbreimann@gmail.com.
 
-Agentic engineering
-===================
-AAanalysis is developed with AI-assisted ("agentic") workflows. Their durable artifacts — not ephemeral
-planning notes — are the single sources of truth:
-
-- **Issue triage & planning.** ``/github-issue-handoff`` audits every open issue against the coding
-  standards and writes one prioritized plan to ``docs/guides/handoff_github_issues.md`` (refreshed on
-  demand). Per-issue scratch files are **not** committed.
-- **Spec & design.** ``/grill-with-docs`` interviews the contributor to resolve each design decision and
-  sharpen terminology against the project glossary. Decisions that are hard to reverse are recorded as
-  **Architecture Decision Records** (``docs/adr/``); the domain vocabulary lives in **CONTEXT.md**; the
-  transient implementation plan stays outside the repo.
-- **Standards & guardrails.** Implementation rules live in ``CLAUDE.md`` and the path-scoped files under
-  ``.claude/rules/`` (frontend/backend split, docstrings, testing, reproducibility, …) and are backed by
-  meta-tests — e.g. per-parameter test coverage and backend-import hygiene
-  (``tests/unit/api_tests/``).
-
-So the authoritative record of *why* the code looks the way it does is the **ADRs + CONTEXT.md +
-CLAUDE.md/.claude/rules**, kept in sync as decisions are made.
-
-The loop for a single change is: pick the issue → ``/grill-with-docs`` (spec vs. reality) →
-branch in an isolated ``git worktree`` → implement → open a draft PR early → pass the automated
-quality gates → human review → merge → delete the branch. The full step-by-step protocol and the
-exact gate each change must clear (test matrix, ≥88 % coverage, RTD docs, architecture and
-parameter-coverage meta-tests, lint/security) are documented in
-`docs/guides/agentic_engineering.md <docs/guides/agentic_engineering.md>`_.
-
 Cheat Sheet
 ===========
-The cheat sheet condenses AAanalysis onto a single page: the end-to-end workflow, the main
+The cheat sheet distills AAanalysis into a three-page summary: the golden workflow, the main
 classes grouped by capability, the prediction levels (residue / domain / protein), and the
-*Part × Split × Scale* feature ontology. Every snippet uses the public API.
+*Part × Split × Scale* feature ontology. Click the image below to download the PDF.
 
 .. image:: docs/source/_artwork/cheat_sheet_preview.png
    :alt: AAanalysis cheat sheet (page 1 of 3)
-   :target: docs/source/_static/cheat_sheet.pdf
+   :target: https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_static/cheat_sheet.pdf
    :width: 75%
    :align: center
-
-`Download the cheat sheet (PDF, 3 pages) <docs/source/_static/cheat_sheet.pdf>`_
 
 Citations
 =========

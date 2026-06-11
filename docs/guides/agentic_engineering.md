@@ -72,7 +72,13 @@ not committed.
   streams never share one working tree / `HEAD`. Sharing a single checkout caused commits to
   land on the wrong branch and uncommitted work to bleed across tasks. A worktree also lets you
   build and verify one branch without disturbing another in-flight branch — do the edits in the
-  worktree, commit, push, then `git worktree remove`.
+  worktree, commit, push, then `git worktree remove`. **If you run parallel agents the per-task
+  worktree is mandatory:** in a shared checkout a concurrent agent's commit/push can land
+  *between* your `git status` and your commit (observed: a cheat-sheet refactor was committed by
+  another process mid-task, right after this guide's own redundancy-cleanup edits were
+  inspected). Mitigate even in a shared tree — re-check `git status` immediately before staging,
+  commit **explicit pathspecs only** (never a blind `git add -A` / `git commit -a`), and never
+  commit, revert, or discard changes you did not make; stop and surface unexpected edits instead.
 - **Issue lifecycle — `Closes #NN`.** GitHub auto-closes a referenced issue on merge to the
   default branch when a closing keyword (`Closes` / `Fixes` / `Resolves #NN`) appears in **either
   the PR body or the merge (squash) commit message**. To **keep an issue open through a merge,

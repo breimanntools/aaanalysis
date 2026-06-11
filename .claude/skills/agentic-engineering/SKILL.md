@@ -37,6 +37,11 @@ From root `CLAUDE.md` §0 — authorization is **per-action, never per-session**
 3. **Branch + isolated worktree.** `git switch -c <type>/<slug>` off `master`, **always paired
    with `git worktree add`** so concurrent streams never share a checkout (`fix/`, `feat/`,
    `doc/`, `refactor/`). Do the edits in the worktree; remove it (with permission) when done.
+   **Running parallel agents makes this mandatory:** a shared checkout lets one agent's
+   commit/push race another's inspection. Even when you can't use a worktree, re-check
+   `git status` immediately before committing, stage **explicit pathspecs only** (never a blind
+   `git add -A` / `git commit -a`), and never commit, revert, or discard changes you did not
+   make — stop and surface unexpected edits instead.
 4. **Implement.** Use plan mode for multi-file or architectural changes so the approach is
    approved before commits land; drop to plain edits for trivial diffs. Honor the path-scoped
    rules in `.claude/rules/` that auto-load for the files you touch.

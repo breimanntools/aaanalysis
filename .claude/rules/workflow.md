@@ -61,7 +61,12 @@ python dev_scripts/dev_aa_window_sampler.py
   `git worktree add` so concurrent task streams never share one working tree /
   `HEAD` — sharing a checkout lets commits land on the wrong branch and
   uncommitted work bleed across tasks. Do the edits in the worktree, commit,
-  push, then `git worktree remove`.
+  push, then `git worktree remove`. **If you're running parallel agents this is
+  mandatory:** without a per-task worktree a concurrent agent's commit/push can
+  land *between* your `git status` and your commit. So even in a shared checkout,
+  re-check `git status` immediately before staging, commit **explicit pathspecs
+  only** (never a blind `git add -A` / `git commit -a`), and never commit, revert,
+  or discard changes you did not make — stop and surface unexpected edits instead.
 - Keep PRs small and focused; rebase on `master`.
 - Never merge if `pytest tests` fails on Linux *or* Windows. CI runs the
   full matrix py 3.10–3.14 on Linux; Windows brackets min+max (3.10 + 3.14),
