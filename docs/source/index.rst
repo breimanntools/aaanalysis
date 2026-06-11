@@ -29,11 +29,13 @@ The cheat sheet distills AAanalysis into a three-page summary: the golden workfl
 classes grouped by capability, the prediction levels (residue / domain / protein), and the
 *Part × Split × Scale* feature ontology. Click the image below to download the PDF.
 
-.. image:: /_artwork/cheat_sheet_preview.png
-   :alt: AAanalysis cheat sheet (page 1 of 3)
-   :target: https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_static/cheat_sheet.pdf
-   :width: 75%
-   :align: center
+.. raw:: html
+
+   <a href="_static/cheat_sheet.pdf" download="aaanalysis_cheat_sheet.pdf">
+     <img src="https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/cheat_sheet_preview.png"
+          alt="AAanalysis cheat sheet (page 1 of 3)"
+          style="width: 75%; display: block; margin-left: auto; margin-right: auto;">
+   </a>
 
 .. toctree::
    :maxdepth: 1
