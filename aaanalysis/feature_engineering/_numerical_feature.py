@@ -10,7 +10,7 @@ from typing import Optional, Literal, Dict, Union, List, Tuple, Type
 import aaanalysis.utils as ut
 
 from ._backend.check_feature import check_df_scales, expand_pos_anchors_
-from ._backend.num_feat.filter_correlation import filter_correlation_
+from ._backend.feature_filter import filter_correlation_
 from ._backend.num_feat.extend_alphabet import extend_alphabet_
 from ._backend.cpp._filters._assign import assign_dict_num_to_parts
 
