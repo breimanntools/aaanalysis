@@ -95,6 +95,21 @@ If you are looking to make publication-ready plots with a view lines of code, se
 
 You can find the official documentation at `Read the Docs <https://aaanalysis.readthedocs.io/en/latest/>`_.
 
+Cheat Sheet
+===========
+A one-page visual reference to the AAanalysis workflow, the main classes grouped by
+capability, the prediction levels (residue / domain / protein), and the
+*Part × Split × Scale* feature ontology — every snippet uses the public API.
+
+.. image:: docs/source/_artwork/cheat_sheet_preview.png
+   :alt: AAanalysis cheat sheet (page 1 of 3)
+   :target: https://aaanalysis.readthedocs.io/en/latest/index/cheat_sheet.html
+   :width: 75%
+   :align: center
+
+`Download the cheat sheet (PDF, 3 pages) <docs/source/_static/cheat_sheet.pdf>`_ |
+`open it interactively <https://aaanalysis.readthedocs.io/en/latest/index/cheat_sheet.html>`_
+
 Install
 =======
 **AAanalysis** can be installed from `PyPi <https://pypi.org/project/aaanalysis>`_:
