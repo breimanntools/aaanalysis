@@ -103,6 +103,13 @@ venv.bak/
 
 # Documentation
 docs/_build/
+## Cheat-sheet build (docs/_cheatsheet/): the toolkit (build_cheat_sheet.py,
+## content.py, gen_plots.py, cheat_sheet.css, template.html.jinja, fonts/) is
+## tracked; the build virtualenv is not (it's only otherwise caught by the
+## venv's own internal .gitignore — pin it explicitly). __pycache__ is already
+## ignored globally above. The published cheat_sheet.pdf/.html under
+## docs/source/_static/ ARE tracked (RTD serves them; it can't rebuild them).
+docs/_cheatsheet/.buildenv/
 
 # Build Systems
 ## PyBuilder
