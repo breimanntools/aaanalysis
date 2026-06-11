@@ -222,6 +222,10 @@ Cross-references (``See Also``)
   capitalization (``AAlogo``, not ``AALogo``) and method names on the right
   class. The checker's ``XREF-UNRESOLVED`` flags an internal target that does
   not resolve; external refs (``pandas.DataFrame``) are left alone.
+* **Order multi-layer links by documentation layer.** When a ``See Also`` (or
+  inline prose) links out to other documentation layers, reference them in the
+  order Usage Principles → Tables → Tutorials. Add an **external-library**
+  reference only when absolutely necessary.
 
 Citations
 ---------

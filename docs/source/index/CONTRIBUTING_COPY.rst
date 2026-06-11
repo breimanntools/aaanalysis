@@ -301,13 +301,9 @@ and functions. Within these docstrings, scientific
 `References <https://aaanalysis.readthedocs.io/en/latest/index/references.html>`_
 may be mentioned in their extended sections.
 
-For additional links in docstrings, use the *See Also* section in this order:
+For the order in which docstring *See Also* entries reference these layers, see the
+:ref:`Docstring Style Guide <docstring_guide>`.
 
-- `Usage Principles <https://aaanalysis.readthedocs.io/en/latest/index/usage_principles.html>`_,
-- `Tables <https://aaanalysis.readthedocs.io/en/latest/index/tables.html>`_,
-- `Tutorials <https://aaanalysis.readthedocs.io/en/latest/tutorials.html>`_.
-
-Only include **External library** references when absolutely necessary.
 Note that the Usage Principles documentation is open for direct linking to References,
 Tutorials, and Tables, which can as well include links to References.
 
