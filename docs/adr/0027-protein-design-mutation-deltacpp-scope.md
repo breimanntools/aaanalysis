@@ -1,4 +1,4 @@
-# ADR-0026 — Protein design (AAMut/SeqMut): scope boundary and model-free ΔCPP
+# ADR-0027 — Protein design (AAMut/SeqMut): scope boundary and model-free ΔCPP
 
 Status: Accepted — 2026-06-11
 
