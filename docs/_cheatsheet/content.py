@@ -215,14 +215,11 @@ FLAGSHIP_RECIPES = [
              "df_parts = sf.get_df_parts(df_seq=df_seq,\n"
              "    list_parts=['tmd', 'jmd_n', 'jmd_c'])\n"
              "\n"
-             "aal = aa.AAlogo()\n"
-             "df_logo = aal.get_df_logo(df_parts=df_parts,\n"
-             "    labels=labels, label_test=1, tmd_len=20)\n"
-             "df_info = aal.get_df_logo_info(df_parts=df_parts,\n"
-             "    labels=labels, label_test=1, tmd_len=20)\n"
              "aa.plot_settings(font_scale=0.7)\n"
-             "aa.AAlogoPlot().single_logo(df_logo=df_logo,\n"
-             "    df_logo_info=df_info,        # bits bar on top\n"
+             "# aal_kws builds df_logo + bits bar for you\n"
+             "aa.AAlogoPlot().single_logo(\n"
+             "    aal_kws=dict(df_parts=df_parts, labels=labels,\n"
+             "        label_test=1, tmd_len=20),\n"
              "    name_data='Test set: substrates')\n"
              "plt.tight_layout(); plt.show()"},
     {"cls": "CPP — feature map", "tag": "flagship · interpretability", "img": "feature_map",
