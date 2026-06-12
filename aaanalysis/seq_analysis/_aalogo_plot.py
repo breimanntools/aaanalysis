@@ -1,6 +1,7 @@
 """
 This is a script for the frontend of the AAlogoPlot class.
 """
+import inspect
 import matplotlib.pyplot as plt
 import pandas as pd
 from typing import Optional, Union, List, Tuple, Literal
@@ -24,14 +25,33 @@ def check_df_logo(df_logo=None):
         raise ValueError("'df_logo' must not be empty.")
 
 
+def _valid_aal_kws_keys(include_info=True):
+    """Return AAlogo.get_df_logo[/_info] parameter names valid in an aal_kws dict."""
+    keys = set(inspect.signature(AAlogo.get_df_logo).parameters) - {"self"}
+    if include_info:
+        keys &= set(inspect.signature(AAlogo.get_df_logo_info).parameters) - {"self"}
+    return keys
+
+
+def check_aal_kws_keys(name=None, aal_kws=None, include_info=True):
+    """Check that every key in an aal_kws dict is a valid AAlogo argument name."""
+    valid_keys = _valid_aal_kws_keys(include_info=include_info)
+    invalid_keys = set(aal_kws) - valid_keys
+    if invalid_keys:
+        raise ValueError(
+            f"'{name}' contains invalid keys {sorted(invalid_keys)}; allowed keys are "
+            f"{sorted(valid_keys)}.")
+
+
 def check_aal_kws(aal_kws=None, df_logo=None, df_logo_info=None):
-    """Check aal_kws is a dict not combined with precomputed df_logo/df_logo_info."""
+    """Check aal_kws is a valid-key dict not combined with df_logo/df_logo_info."""
     if aal_kws is None:
         return
     if not isinstance(aal_kws, dict):
         raise ValueError(
             f"'aal_kws' ({aal_kws}) should be a dictionary of keyword arguments "
             f"shared by 'AAlogo.get_df_logo' and 'AAlogo.get_df_logo_info'.")
+    check_aal_kws_keys(name="aal_kws", aal_kws=aal_kws, include_info=True)
     if df_logo is not None or df_logo_info is not None:
         raise ValueError(
             "'aal_kws' is mutually exclusive with 'df_logo' and 'df_logo_info': "
@@ -40,7 +60,7 @@ def check_aal_kws(aal_kws=None, df_logo=None, df_logo_info=None):
 
 
 def check_list_aal_kws(list_aal_kws=None, list_df_logo=None):
-    """Check list_aal_kws is a list of dicts not combined with given list_df_logo."""
+    """Check list_aal_kws is a list of valid dicts not combined with list_df_logo."""
     if list_aal_kws is None:
         return
     if not isinstance(list_aal_kws, list) or len(list_aal_kws) == 0:
@@ -52,6 +72,8 @@ def check_list_aal_kws(list_aal_kws=None, list_df_logo=None):
             raise ValueError(
                 f"'list_aal_kws[{i}]' ({aal_kws}) should be a dictionary of "
                 f"'AAlogo.get_df_logo' keyword arguments.")
+        check_aal_kws_keys(name=f"list_aal_kws[{i}]", aal_kws=aal_kws,
+                           include_info=False)
     if list_df_logo is not None:
         raise ValueError(
             "'list_aal_kws' is mutually exclusive with 'list_df_logo': provide either "
@@ -267,7 +289,7 @@ class AAlogoPlot:
             shared by both methods, e.g. ``df_parts``, ``labels``, ``label_test``,
             ``tmd_len``, ``start_n``, ``characters_to_ignore``, and ``pseudocount``. It is
             mutually exclusive with ``df_logo`` and ``df_logo_info`` (passing both raises
-            ``ValueError``). Example:
+            ``ValueError``); unknown keys also raise ``ValueError``. Example:
             ``aal_kws=dict(df_parts=df_parts, labels=labels, label_test=1, tmd_len=20)``.
         info_bar_color : str, default='gray'
             Color of the bit-score bars in the optional top panel.
@@ -457,7 +479,8 @@ class AAlogoPlot:
             ``df_parts``, ``labels``, ``label_test``, ``tmd_len``, ``start_n``,
             ``characters_to_ignore``, and ``pseudocount`` (typically the same ``df_parts``
             with a different ``label_test`` per group). It is mutually exclusive with
-            ``list_df_logo`` (passing both raises ``ValueError``). Example:
+            ``list_df_logo`` (passing both raises ``ValueError``); unknown keys in any dict
+            also raise ``ValueError``. Example:
             ``list_aal_kws=[dict(df_parts=df_parts, labels=labels, label_test=1),
             dict(df_parts=df_parts, labels=labels, label_test=0)]``.
         target_p1_site : int, optional

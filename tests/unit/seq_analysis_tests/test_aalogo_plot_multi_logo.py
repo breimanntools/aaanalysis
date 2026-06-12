@@ -509,3 +509,12 @@ class TestMultiLogoListAalKws:
         aal_plot = get_aal_plot()
         with pytest.raises(ValueError):
             aal_plot.multi_logo(list_df_logo=list_df_logo, list_aal_kws=list_aal_kws)
+
+    def test_invalid_list_aal_kws_unknown_key(self):
+        """Test that an unknown key in a list_aal_kws dict raises ValueError."""
+        df_parts, labels = get_df_parts_labels()
+        aal_plot = get_aal_plot()
+        list_aal_kws = [dict(df_parts=df_parts, labels=labels, label_test=1),
+                        dict(df_parts=df_parts, labels=labels, bad_key=1)]
+        with pytest.raises(ValueError):
+            aal_plot.multi_logo(list_aal_kws=list_aal_kws)

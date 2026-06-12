@@ -542,3 +542,11 @@ class TestSingleLogoAalKws:
         aal_plot = get_aal_plot()
         with pytest.raises((ValueError, TypeError)):
             aal_plot.single_logo(aal_kws=dict(df_parts="not-a-frame"))
+
+    def test_invalid_aal_kws_unknown_key(self):
+        """Test that an unknown key in aal_kws raises ValueError (not raw TypeError)."""
+        df_parts, labels = get_df_parts_labels()
+        aal_plot = get_aal_plot()
+        with pytest.raises(ValueError):
+            aal_plot.single_logo(
+                aal_kws=dict(df_parts=df_parts, labels=labels, df_part=1))
