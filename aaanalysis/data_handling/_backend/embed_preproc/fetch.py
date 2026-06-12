@@ -6,7 +6,9 @@ size-aware model recommendation, and residue→protein pooling. The heavy
 and is imported lazily so this module stays importable on a base install.
 """
 import os
-from typing import Dict, List, Optional
+import re
+import warnings
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -129,3 +131,137 @@ def pool_residue_(arr: np.ndarray, pooling: str = "mean") -> np.ndarray:
     raise ValueError(
         f"'pooling' ('{pooling}') should be one of 'mean', 'max' for residue arrays "
         f"('cls' is only available via fetch_embeddings(mode='protein'))")
+
+
+def _preprocess_sequences(seqs: List[str], tokenizer: str) -> List[str]:
+    """T5 tokenizers expect space-separated residues with rare AAs (U/Z/O/B)
+    mapped to X; BERT-style (ESM) tokenizers take the raw sequence."""
+    if tokenizer == "t5":
+        return [" ".join(re.sub(r"[UZOB]", "X", s)) for s in seqs]
+    return list(seqs)
+
+
+def _load_model_and_tokenizer(model: str, device: str):
+    """Lazy, mockable seam: import the heavy deps and load weights from the HF
+    Hub. Raises a friendly ``[embed]`` install hint if they are absent."""
+    try:
+        import torch
+        from transformers import logging as _hf_logging
+        if REGISTRY[model]["tokenizer"] == "t5":
+            from transformers import T5EncoderModel, T5Tokenizer
+        else:
+            from transformers import AutoModel, AutoTokenizer
+    except ImportError as e:
+        raise ImportError(
+            "Computing embeddings requires the 'embed' extra (torch, transformers, "
+            "sentencepiece). Install it with:\n\tpip install 'aaanalysis[embed]'") from e
+    _hf_logging.set_verbosity_error()  # silence the weight-load report
+    repo = REGISTRY[model]["repo_id"]
+    if REGISTRY[model]["tokenizer"] == "t5":
+        tok = T5Tokenizer.from_pretrained(repo, do_lower_case=False, legacy=True)
+        mdl = T5EncoderModel.from_pretrained(repo)
+    else:
+        tok = AutoTokenizer.from_pretrained(repo)
+        mdl = AutoModel.from_pretrained(repo)
+    mdl = mdl.to(device).eval()
+    return mdl, tok, torch
+
+
+def _residue_block(hidden_i: np.ndarray, length: int, has_cls: bool) -> np.ndarray:
+    """Slice the real-residue rows out of one sequence's hidden states,
+    dropping the leading CLS (ESM) and trailing EOS/pad tokens."""
+    start = 1 if has_cls else 0
+    return hidden_i[start:start + length]
+
+
+# II Main Functions
+def compute_embeddings_(
+    df_seq,
+    model: str,
+    mode: str = "protein",
+    pooling: str = "mean",
+    batch_size: int = 8,
+    device: str = "cpu",
+    max_length: Optional[int] = None,
+    layer: int = -1,
+    on_failure: str = "nan",
+) -> Tuple[Union[np.ndarray, Dict[str, np.ndarray]], np.ndarray]:
+    """Compute PLM embeddings for every entry in ``df_seq``.
+
+    Returns ``(embeddings, ok)`` where ``embeddings`` is a ``(n, D)`` matrix
+    (``mode='protein'``) or an ``{entry: (L, D)}`` dict (``mode='residue'``),
+    and ``ok`` is a boolean array marking successfully embedded entries. The
+    frontend validates all arguments; this trusts them."""
+    meta = REGISTRY[model]
+    dim = meta["dim"]
+    cap = meta["max_len"] if max_length is None else max_length
+    entries = df_seq[ut.COL_ENTRY].tolist()
+    seqs = [str(s) for s in df_seq[ut.COL_SEQ].tolist()]
+    # Length cap: truncate (with a UserWarning) rather than fail.
+    n_trunc = 0
+    capped = []
+    for s in seqs:
+        if cap is not None and len(s) > cap:
+            s = s[:cap]
+            n_trunc += 1
+        capped.append(s)
+    if n_trunc:
+        warnings.warn(f"'{n_trunc}' sequence(s) exceeded the model length cap "
+                      f"({cap}) and were truncated", UserWarning)
+    lengths = [len(s) for s in capped]
+    model_obj, tok, torch = _load_model_and_tokenizer(model, device)
+
+    pooled = np.full((len(entries), dim), np.nan, dtype=float)
+    per_residue: Dict[str, np.ndarray] = {}
+    ok = np.ones(len(entries), dtype=bool)
+
+    def _run(indices):
+        batch_seqs = [capped[i] for i in indices]
+        proc = _preprocess_sequences(batch_seqs, meta["tokenizer"])
+        enc = tok(proc, return_tensors="pt", padding=True)
+        enc = {k: v.to(device) for k, v in enc.items()}
+        with torch.no_grad():
+            out = model_obj(**enc, output_hidden_states=(layer != -1))
+        hidden = out.last_hidden_state if layer == -1 else out.hidden_states[layer]
+        hidden = hidden.detach().cpu().numpy()
+        for slot, i in enumerate(indices):
+            h_i = hidden[slot]
+            res = _residue_block(h_i, lengths[i], meta["has_cls"])
+            if mode == "residue":
+                per_residue[entries[i]] = res
+            elif pooling == "cls":
+                pooled[i] = h_i[0]
+            else:
+                pooled[i] = pool_residue_(res, pooling)
+
+    order = list(range(len(entries)))
+    for start in range(0, len(order), batch_size):
+        batch = order[start:start + batch_size]
+        try:
+            _run(batch)
+        except (RuntimeError, ValueError, IndexError):
+            # Isolate the offending entry: re-run the batch one item at a time.
+            for i in batch:
+                try:
+                    _run([i])
+                except (RuntimeError, ValueError, IndexError) as e:
+                    if on_failure == "raise":
+                        raise RuntimeError(
+                            f"embedding failed for entry '{entries[i]}': {e}") from e
+                    ok[i] = False
+                    per_residue.pop(entries[i], None)
+
+    if mode == "residue":
+        embeddings: Union[np.ndarray, Dict[str, np.ndarray]] = {
+            entries[i]: (per_residue.get(entries[i],
+                                        np.full((lengths[i], dim), np.nan, dtype=float)))
+            for i in range(len(entries))
+        }
+        if on_failure == "drop":
+            embeddings = {e: v for e, v in embeddings.items()
+                          if ok[list(entries).index(e)]}
+    else:
+        embeddings = pooled
+        if on_failure == "drop":
+            embeddings = pooled[ok]
+    return embeddings, ok

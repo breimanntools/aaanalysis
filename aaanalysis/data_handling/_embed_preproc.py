@@ -2,7 +2,7 @@
 This is a script for the frontend of the EmbeddingPreprocessor class for
 preparing protein-language-model (PLM) embeddings as inputs to ``CPP.run_num``.
 """
-from typing import Dict, Tuple, Union, Literal
+from typing import Dict, Tuple, Union, Literal, Optional
 import warnings
 
 import numpy as np
@@ -12,9 +12,16 @@ import aaanalysis.utils as ut
 from ._backend.embed_preproc.encode import encode_
 from ._backend.embed_preproc.build_pseudo_scales import build_pseudo_scales_
 from ._backend.embed_preproc.cluster_pseudo_scales import cluster_pseudo_scales_
+from ._backend.embed_preproc import fetch as _fetch
 
 
 # I Helper Functions
+def _check_handle_failure(on_failure):
+    """Validate the shared ``on_failure`` policy (matches the fetch_* siblings)."""
+    ut.check_str_options(name="on_failure", val=on_failure,
+                         list_str_options=["nan", "drop", "raise"])
+
+
 def _check_per_residue_dict(name, df_seq, arrays):
     """Validate that ``arrays`` is a dict keyed by entry, each value a
     2D ndarray whose first axis matches the corresponding sequence length,
@@ -430,3 +437,223 @@ class EmbeddingPreprocessor:
             metric=metric,
         )
         return df_cat
+
+    def fetch_embeddings(
+        self,
+        df_seq: pd.DataFrame = None,
+        mode: Literal["protein", "residue"] = "protein",
+        model: str = "esm2_t12_35M",
+        pooling: Literal["mean", "max", "cls"] = "mean",
+        source: Literal["auto", "compute"] = "auto",
+        batch_size: int = 8,
+        device: Literal["auto", "cpu", "cuda", "mps"] = "auto",
+        max_length: Optional[int] = None,
+        layer: int = -1,
+        allow_oversized: bool = False,
+        on_failure: Literal["nan", "drop", "raise"] = "nan",
+        return_df: bool = False,
+    ) -> Union[np.ndarray, Dict[str, np.ndarray],
+               Tuple[np.ndarray, pd.DataFrame], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
+        """
+        Fetch and compute protein language model (PLM) embeddings for every entry.
+
+        Downloads a curated model (ESM-2, ESM-1b, ProtT5, ProstT5) from the Hugging
+        Face Hub and computes its embeddings, returning either one vector per protein
+        (``mode='protein'``) or a per-residue array per protein (``mode='residue'``).
+        The per-residue output is the raw, unbounded ``{entry: (L, D)}`` mapping that
+        :meth:`encode` normalizes into the ``dict_num`` consumed by :meth:`CPP.run_num`;
+        the per-protein output is a redundancy-free feature matrix ready for
+        :meth:`AAclust.select_proteins` or :class:`TreeModel`. Embeddings are returned
+        **raw** — normalization is :meth:`encode`'s job. Requires the ``embed`` extra
+        (``pip install 'aaanalysis[embed]'``); the heavy dependencies are imported
+        lazily, so the rest of the class works without them.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein identifiers and
+            a ``sequence`` column with full protein sequences. Output rows are aligned to
+            ``df_seq``.
+        mode : {'protein', 'residue'}, default='protein'
+            ``'protein'`` returns one pooled vector per protein; ``'residue'`` returns
+            the per-residue ``(L, D)`` array per protein (feeds :meth:`encode`).
+        model : str, default='esm2_t12_35M'
+            Registry key of the PLM to use (e.g. ``'esm2_t6_8M'``, ``'esm2_t33_650M'``,
+            ``'prott5_xl_u50'``, ``'prostt5'``).
+        pooling : {'mean', 'max', 'cls'}, default='mean'
+            Residue→protein reduction for ``mode='protein'``. ``'cls'`` uses the model's
+            leading token and is only valid for models that have one (ESM, not ProtT5).
+        source : {'auto', 'compute'}, default='auto'
+            Acquisition path. Both currently compute locally; ``'uniprot'`` (direct
+            fetch of precomputed embeddings) is reserved for a future release.
+        batch_size : int, default=8
+            Number of sequences embedded per forward pass.
+        device : {'auto', 'cpu', 'cuda', 'mps'}, default='auto'
+            Compute device; ``'auto'`` picks CUDA, then Apple MPS, else CPU.
+        max_length : int, optional
+            Truncate sequences to this many residues. Defaults to the model's own cap
+            (e.g. 1022 for ESM-1b); longer sequences are truncated with a warning.
+        layer : int, default=-1
+            Hidden layer to read out; ``-1`` is the last layer.
+        allow_oversized : bool, default=False
+            If ``False``, a model whose estimated memory footprint exceeds the detected
+            device memory raises a ``RuntimeWarning`` (with a smaller-model suggestion)
+            but still runs. ``True`` suppresses the guard.
+        on_failure : {'nan', 'drop', 'raise'}, default='nan'
+            Policy for entries that fail to embed: ``'nan'`` keeps a NaN row/array and
+            marks it not-ok; ``'drop'`` removes it; ``'raise'`` raises ``RuntimeError``.
+        return_df : bool, default=False
+            If ``True``, also return an echo of ``df_seq`` with a boolean
+            ``embeddings_ok`` column.
+
+        Returns
+        -------
+        embeddings : np.ndarray or dict
+            ``np.ndarray`` of shape ``(n_samples, D)`` row-aligned to ``df_seq``
+            (``mode='protein'``), or ``{entry: (L, D)}`` of raw per-residue arrays
+            (``mode='residue'``).
+        df_seq_out : pd.DataFrame
+            Returned only when ``return_df=True``: an echo of ``df_seq`` plus a boolean
+            ``embeddings_ok`` column.
+
+        Notes
+        -----
+        * Embedding extraction is deterministic (eval mode), so no ``random_state`` /
+          ``seed`` is needed.
+        * Returned embeddings are raw (unbounded) floats; pass ``mode='residue'`` output
+          to :meth:`encode` before :meth:`CPP.run_num`.
+
+        See Also
+        --------
+        * :meth:`EmbeddingPreprocessor.pool_embeddings`: pool per-residue arrays into
+          per-protein vectors explicitly.
+        * :meth:`EmbeddingPreprocessor.encode`: normalize per-residue embeddings to ``[0, 1]``.
+        * :meth:`AAclust.select_proteins`: cluster per-protein embeddings into representatives.
+
+        Raises
+        ------
+        ValueError
+            On invalid arguments (unknown ``model``, ``'cls'`` pooling on a model without
+            a CLS token, a pre-existing ``embeddings_ok`` column, ...).
+        ImportError
+            If the ``embed`` extra (``torch`` / ``transformers``) is not installed.
+        RuntimeError
+            On an embedding failure under ``on_failure='raise'``.
+
+        Examples
+        --------
+        .. include:: examples/ep_fetch_embeddings.rst
+        """
+        # Validate
+        verbose = self._verbose
+        ut.check_df_seq(df_seq=df_seq)
+        ut.check_str_options(name="mode", val=mode, list_str_options=ut.LIST_EMBED_MODES)
+        ut.check_str_options(name="model", val=model, list_str_options=_fetch.LIST_MODELS)
+        ut.check_str_options(name="pooling", val=pooling, list_str_options=ut.LIST_POOLING)
+        ut.check_str_options(name="source", val=source, list_str_options=ut.LIST_EMBED_SOURCES)
+        ut.check_str_options(name="device", val=device, list_str_options=ut.LIST_EMBED_DEVICES)
+        ut.check_number_range(name="batch_size", val=batch_size, min_val=1, just_int=True)
+        ut.check_number_range(name="max_length", val=max_length, min_val=1, just_int=True, accept_none=True)
+        ut.check_bool(name="allow_oversized", val=allow_oversized)
+        ut.check_bool(name="return_df", val=return_df)
+        _check_handle_failure(on_failure)
+        if mode == "protein" and pooling == "cls" and not _fetch.REGISTRY[model]["has_cls"]:
+            raise ValueError(f"'pooling' ('cls') is not available for model '{model}' "
+                             f"(no CLS token); use 'mean' or 'max'.")
+        if ut.COL_EMBEDDINGS_OK in df_seq.columns:
+            raise ValueError(f"'df_seq' should not already contain a "
+                             f"'{ut.COL_EMBEDDINGS_OK}' column. Drop it before calling "
+                             f"fetch_embeddings.")
+        # Resolve device + hardware guard
+        hw = _fetch.detect_hardware()
+        eff_device = hw["device"] if device == "auto" else device
+        mem = hw["free_vram_gb"] if eff_device in ("cuda", "mps") else hw["total_ram_gb"]
+        need = _fetch.estimate_footprint_gb(model, device=eff_device, batch_size=batch_size)
+        rec = _fetch.recommend_model(mem_gb=mem, device=eff_device)
+        if mem is not None and need > mem and not allow_oversized:
+            warnings.warn(
+                f"'model' ('{model}', ~{need:.1f} GB) likely exceeds available "
+                f"{eff_device} memory ({mem:.1f} GB) at batch_size={batch_size}; this "
+                f"may crash. Pass allow_oversized=True, lower batch_size, or use "
+                f"'{rec}'.", RuntimeWarning)
+        elif verbose:
+            mem_str = f"{mem:.1f} GB" if mem is not None else "unknown memory"
+            ut.print_out(f"hardware: {eff_device}, {mem_str} -> recommended model '{rec}'")
+        # Compute
+        embeddings, ok = _fetch.compute_embeddings_(
+            df_seq=df_seq, model=model, mode=mode, pooling=pooling,
+            batch_size=batch_size, device=eff_device, max_length=max_length,
+            layer=layer, on_failure=on_failure)
+        if not return_df:
+            return embeddings
+        df_seq_out = df_seq.copy()
+        df_seq_out[ut.COL_EMBEDDINGS_OK] = ok
+        return embeddings, df_seq_out
+
+    def pool_embeddings(
+        self,
+        embeddings: Dict[str, np.ndarray] = None,
+        pooling: Literal["mean", "max"] = "mean",
+        df_seq: pd.DataFrame = None,
+    ) -> Union[Dict[str, np.ndarray], np.ndarray]:
+        """
+        Pool per-residue embeddings into one vector per protein.
+
+        Reduces a ``{entry: (L, D)}`` mapping (e.g. from
+        :meth:`fetch_embeddings(mode='residue') <fetch_embeddings>` or your own PLM
+        run) to one ``(D,)`` vector per protein. This is the simple statistical
+        counterpart to the richer "pooling" that :meth:`CPP.run` / :meth:`CPP.run_num`
+        perform when turning per-residue values into features.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        embeddings : dict
+            Mapping ``{entry: (L, D)}`` of per-residue embedding arrays.
+        pooling : {'mean', 'max'}, default='mean'
+            Reduction over residues. (``'cls'`` is unavailable here — residue arrays
+            carry no leading token; use ``fetch_embeddings(mode='protein', pooling='cls')``.)
+        df_seq : pd.DataFrame, optional
+            DataFrame containing an ``entry`` column with unique protein identifiers. If
+            given, return a ``(n_samples, D)`` matrix row-aligned to ``df_seq`` instead of
+            a dict.
+
+        Returns
+        -------
+        pooled : dict or np.ndarray
+            ``{entry: (D,)}`` of pooled vectors, or a ``(n_samples, D)`` matrix
+            row-aligned to ``df_seq`` when ``df_seq`` is given.
+
+        See Also
+        --------
+        * :meth:`EmbeddingPreprocessor.fetch_embeddings`: obtain the per-residue arrays.
+
+        Raises
+        ------
+        ValueError
+            On invalid ``pooling``, an empty ``embeddings`` dict, or an entry in
+            ``df_seq`` missing from ``embeddings``.
+
+        Examples
+        --------
+        .. include:: examples/ep_pool_embeddings.rst
+        """
+        # Validate
+        ut.check_str_options(name="pooling", val=pooling, list_str_options=["mean", "max"])
+        if not isinstance(embeddings, dict) or len(embeddings) == 0:
+            raise ValueError("'embeddings' should be a non-empty dict mapping entry to "
+                             "an (L, D) array.")
+        pooled = {entry: _fetch.pool_residue_(arr, pooling=pooling)
+                  for entry, arr in embeddings.items()}
+        if df_seq is None:
+            return pooled
+        ut.check_df_seq(df_seq=df_seq)
+        entries = df_seq[ut.COL_ENTRY].tolist()
+        missing = [e for e in entries if e not in pooled]
+        if missing:
+            raise ValueError(f"'embeddings' ({len(missing)} missing) should contain every "
+                             f"entry in 'df_seq'. Missing: {missing[:5]}")
+        return np.vstack([pooled[e] for e in entries])
