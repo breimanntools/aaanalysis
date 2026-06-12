@@ -81,9 +81,10 @@ __all__ = [
 # substring of the message. See .claude/rules/pro-core-boundary.md.
 _EXTRA_MODULES = {
     "pro": {"shap", "Bio", "biopython", "upsetplot", "UpSetPlot", "requests", "afragmenter"},
+    "embed": {"torch", "transformers", "sentencepiece", "huggingface_hub"},
     "dev": {"IPython"},
 }
-_EXTRA_INSTALL = {"pro": "aaanalysis[pro]", "dev": "aaanalysis[dev]"}
+_EXTRA_INSTALL = {"pro": "aaanalysis[pro]", "embed": "aaanalysis[embed]", "dev": "aaanalysis[dev]"}
 
 
 def _raise_missing_feature(feature_name, error, mode):

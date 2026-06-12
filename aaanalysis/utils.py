@@ -196,6 +196,13 @@ COLS_SEQ_TMD = [COL_SEQ, COL_TMD]
 COL_POS = "pos"   # AAWindowSampler — per-row 1-based positive position(s); list[int] or scalar
 COL_SS = "ss"     # get_dssp — per-residue secondary-structure codes; list[str] (length matches sequence) or None
 COL_DSSP_OK = "dssp_ok"   # get_dssp — DSSP success flag (bool)
+COL_EMBEDDINGS_OK = "embeddings_ok"   # fetch_embeddings — per-entry success flag (bool)
+
+# EmbeddingPreprocessor.fetch_embeddings — option bundles
+LIST_EMBED_MODES = ["protein", "residue"]
+LIST_EMBED_SOURCES = ["auto", "compute"]      # 'uniprot' reserved (ADR-0029 D6)
+LIST_POOLING = ["mean", "max", "cls"]
+LIST_EMBED_DEVICES = ["auto", "cpu", "cuda", "mps"]
 
 # AAWindowSampler — output column names
 COL_ENTRY_WIN = "entry_win"

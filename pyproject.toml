@@ -81,6 +81,17 @@ pro = [
   # transitive deps (python-igraph + rich), no DL framework.
   "afragmenter>=0.0.6",
 ]
+embed = [
+  # Protein-language-model embedding compute path for
+  # EmbeddingPreprocessor.fetch_embeddings (ESM-2 / ESM-1b / ProtT5 / ProstT5
+  # from the Hugging Face Hub). Isolated from [pro] because torch alone is
+  # ~1-2 GB - 50x the weight of every other pro feature. Lazy-imported inside
+  # the method; the rest of EmbeddingPreprocessor works without it. See ADR-0029.
+  "torch>=2.2",
+  "transformers>=4.40",
+  "sentencepiece>=0.2",
+  "huggingface_hub>=0.23",
+]
 docs = [
   "aaanalysis[pro]",
   "docutils==0.21.2",

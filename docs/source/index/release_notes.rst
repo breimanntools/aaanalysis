@@ -22,7 +22,14 @@ Added
   embeddings into a ``[0, 1]`` per-residue ``dict_num`` (``method='minmax' |
   'quantile' | 'sigmoid'``) ready for ``CPP.run_num``; the secondary
   ``build_scales`` / ``build_cat`` pair collapses them into pseudo-scales /
-  pseudo-categories for ``CPP.run``.
+  pseudo-categories for ``CPP.run``. The ``fetch_embeddings`` method
+  (``aaanalysis[embed]``) downloads a curated PLM (ESM-2, ESM-1b, ProtT5,
+  ProstT5) from the Hugging Face Hub and computes per-protein
+  (``mode='protein'``, mean/max/cls pooling) or per-residue
+  (``mode='residue'``) embeddings, with a hardware-aware size guard; the
+  ``pool_embeddings`` helper reduces per-residue arrays to per-protein vectors.
+  A new ``[embed]`` install extra isolates the heavy ``torch`` / ``transformers``
+  dependencies (see ADR-0029).
 - **StructurePreprocessor** (``aaanalysis[pro]``): Converts PDB / CIF / AlphaFold
   files (and AlphaFold PAE sidecars) into ``[0, 1]``-normalized per-residue
   numerical tensors. Methods: ``get_dssp``, ``encode_dssp``, ``encode_pdb``,
