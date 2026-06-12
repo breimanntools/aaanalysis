@@ -4,16 +4,11 @@ on:
   push:
     branches:
       - master
-    # Docs-only / notebook-only pushes to master skip the suite (they cannot
-    # change unit-test or coverage results). Mixed commits (code + docs) still
-    # run. paths-ignore is intentionally NOT set on pull_request: a skipped
-    # required check shows as perpetually "pending" and would block PR merges.
-    paths-ignore:
-      - '**/*.md'
-      - '**/*.ipynb'
-      - 'docs/**'
-      - 'tutorials/**'
-      - 'examples/**'
+    # Run on EVERY push to master (no paths-ignore). The Codecov badge tracks the
+    # branch-HEAD commit, so a docs-only HEAD with no coverage report renders the
+    # badge as "unknown". Running the suite (and its coverage upload) on every
+    # master commit keeps HEAD reported and the badge fresh. The extra runner
+    # minutes on docs-only pushes are the accepted cost of an always-valid badge.
   pull_request:
     branches:
       - master
