@@ -99,6 +99,8 @@ pre.code .c-nm { color: var(--tok-name); font-weight: 600; }
 .cap { font-size: 6.2pt; color: var(--ink-faint); font-style: italic; margin: 0 0 2px; }
 
 /* inline output figure rendered directly under a recipe's code */
+.recipe-fig { margin: 0; text-align: center; }
+.recipe-fig figcaption { font-size: 5.8pt; font-style: italic; color: var(--ink-faint); margin-top: 1px; }
 .recipe-img { display: block; width: auto; max-width: 100%; max-height: 23mm;
               margin: 2px auto 1px; border: 1px solid var(--line); border-radius: 2px;
               background: #fff; }

@@ -104,6 +104,8 @@ pre.code .c-nm { color: var(--tok-name); font-weight: 600; }
 .cap { font-size: 6.2pt; color: var(--ink-faint); font-style: italic; margin: 0 0 2px; }
 
 /* inline output figure rendered directly under a recipe's code */
+.recipe-fig { margin: 0; text-align: center; }
+.recipe-fig figcaption { font-size: 5.8pt; font-style: italic; color: var(--ink-faint); margin-top: 1px; }
 .recipe-img { display: block; width: auto; max-width: 100%; max-height: 23mm;
               margin: 2px auto 1px; border: 1px solid var(--line); border-radius: 2px;
               background: #fff; }
@@ -342,19 +344,16 @@ df_scales = <span class="c-nm">aa.load_scales</span>()</pre></div>
         <div class="sub">Compositional <span class="pill compositional">≈ sequence/protein-level</span></div>
         <div class="cap">one whole-part average (composition-like, position-agnostic)</div>
         <pre class="code">split_kws = sf.get_split_kws(
-    split_types=<span class="c-st">&quot;Segment&quot;</span>,
-    n_split_min=1, n_split_max=1)
-cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts,
-             split_kws=split_kws)</pre>
+    split_types=<span class="c-st">&quot;Segment&quot;</span>, n_split_max=1)
+cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</pre>
         <div class="sub">Positional <span class="pill positional">≈ residue-/region-level</span></div>
         <div class="cap">sub-segments and/or patterns resolved to positions</div>
         <pre class="code">split_kws = sf.get_split_kws(
-    split_types=[<span class="c-st">&quot;Segment&quot;</span>, <span class="c-st">&quot;Pattern&quot;</span>,
-                 <span class="c-st">&quot;PeriodicPattern&quot;</span>],
-    n_split_max=5, steps_pattern=[3, 4],
+    split_types=[<span class="c-st">&quot;Segment&quot;</span>, <span class="c-st">&quot;Pattern&quot;</span>, <span class="c-st">&quot;PeriodicPattern&quot;</span>],
+    n_split_max=5,
+    steps_pattern=[3, 4],
     steps_periodicpattern=[3, 4])
-cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts,
-             split_kws=split_kws)</pre>
+cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</pre>
         <div class="cap">Domain level uses both. → CPP strategies: see the CPP tutorial (docs).</div>
       </div>
     </div>
@@ -362,13 +361,12 @@ cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts,
     <div class="sec">
       <div class="sec-h"><span>Which Module Should I Use?</span><span class="hint">intent → module</span></div>
       <div class="sec-body">
-        <div class="cap-item"><span class="cw">Explore sequence patterns / composition →</span><span class="cs">AAlogo</span></div>
-        <div class="cap-item"><span class="cw">Discover discriminative physicochemical features →</span><span class="cs">CPP</span></div>
+        <div class="cap-item"><span class="cw">Explore sequence patterns / composition →</span><span class="cs">AAlogo · AAlogoPlot</span></div>
+        <div class="cap-item"><span class="cw">Discover discriminative physicochemical features →</span><span class="cs">CPP · CPPPlot</span></div>
         <div class="cap-item"><span class="cw">Reduce redundant amino acid scales →</span><span class="cs">AAclust</span></div>
         <div class="cap-item"><span class="cw">Train with positives + unlabeled data →</span><span class="cs">dPULearn</span></div>
         <div class="cap-item"><span class="cw">Train an interpretable classifier →</span><span class="cs">TreeModel</span></div>
         <div class="cap-item"><span class="cw">Explain a prediction (per feature / sample) →</span><span class="cs">ShapModel  [pro]</span></div>
-        <div class="cap-item"><span class="cw">Visualize CPP features →</span><span class="cs">CPPPlot</span></div>
       </div>
     </div>
 
@@ -464,13 +462,14 @@ df_parts = sf.get_df_parts(df_seq=df_seq,
         label_test=1, tmd_len=20),
     name_data=<span class="c-st">&#x27;Test set: substrates&#x27;</span>)
 plt.tight_layout(); plt.show()</pre>
-<img class="recipe-img logo" src="cs_plots/logo.png" alt="AAlogo — see the data output">  </div>
+<figure class="recipe-fig"><img class="recipe-img logo" src="cs_plots/logo.png" alt="AAlogo — see the data output"><figcaption>AAlogoPlot.single_logo · per-position enrichment</figcaption></figure>  </div>
 </div><div class="sec pairsec">
   <div class="sec-h"><span>CPP — feature</span><span class="hint">top feature · REF vs TEST</span></div>
   <div class="sec-body"><pre class="code"><span class="c-cm"># default parts + a redundancy-reduced set of 100 scales</span>
 df_parts = sf.get_df_parts(df_seq=df_seq)
-df_scales = <span class="c-nm">aa.AAclust</span>().select_scales(df_scales, n_clusters=100)
-cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, df_scales=df_scales)
+df_scales_sel = <span class="c-nm">aa.AAclust</span>().select_scales(
+    df_scales=df_scales, n_clusters=100)
+cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, df_scales=df_scales_sel)
 df_feat = cpp.run(labels=labels, n_filter=100)
 X = sf.feature_matrix(df_feat[<span class="c-st">&#x27;feature&#x27;</span>], df_parts)
 tm = <span class="c-nm">aa.TreeModel</span>(); tm.fit(X, labels=labels)
@@ -489,8 +488,8 @@ cpp_plot.ranking(df_feat=df_feat, n_top=15, rank=True,
 plt.tight_layout(); plt.show()</pre>
     <div class="pair-note">▼ figure below · right</div></div>
   <div class="pair-imgs" style="--ph:30mm">
-    <figure><img class="pair-img" src="cs_plots/feature.png" alt="CPP — feature"><figcaption>left</figcaption></figure>
-    <figure><img class="pair-img" src="cs_plots/ranking.png" alt="CPP — ranking"><figcaption>right</figcaption></figure>
+    <figure><img class="pair-img" src="cs_plots/feature.png" alt="CPP — feature"><figcaption>CPPPlot.feature · top feature, REF vs TEST</figcaption></figure>
+    <figure><img class="pair-img" src="cs_plots/ranking.png" alt="CPP — ranking"><figcaption>CPPPlot.ranking · top-15 features</figcaption></figure>
   </div>
 </div><div class="sec">
   <div class="sec-h"><span>CPP — feature map</span><span class="hint">group level · full vs simplified</span></div>
@@ -503,7 +502,7 @@ df_feat = cpp.simplify(df_feat=df_feat, labels=labels)
 cpp_plot.feature_map(df_feat=df_feat)            <span class="c-cm"># right</span>
 plt.tight_layout(); plt.show()</pre>
 <div class="pair-imgs" style="--ph:44mm">
-<figure><img class="pair-img" src="cs_plots/feature_map.png" alt="CPP — feature map"><figcaption>standard</figcaption></figure><figure><img class="pair-img" src="cs_plots/feature_map_simplified.png" alt="CPP — feature map"><figcaption>simplified</figcaption></figure>    </div>  </div>
+<figure><img class="pair-img" src="cs_plots/feature_map.png" alt="CPP — feature map"><figcaption>CPPPlot.feature_map · all scales</figcaption></figure><figure><img class="pair-img" src="cs_plots/feature_map_simplified.png" alt="CPP — feature map"><figcaption>CPPPlot.feature_map · simplified</figcaption></figure>    </div>  </div>
 </div><div class="sec">
   <div class="sec-h"><span>ShapModel — explain a prediction</span><span class="hint">sample level · [pro]</span></div>
   <div class="sec-body">
@@ -520,7 +519,7 @@ cpp_plot.profile(df_feat=df_feat, **ka)            <span class="c-cm"># left</sp
 cpp_plot.feature_map(df_feat=df_feat, name_test=<span class="c-st">&#x27;APP&#x27;</span>, **ka)  <span class="c-cm"># right</span>
 plt.tight_layout(); plt.show()</pre>
 <div class="pair-imgs" style="--ph:36mm">
-<figure><img class="pair-img" src="cs_plots/shap_profile.png" alt="ShapModel — explain a prediction"><figcaption>cpp.profile (SHAP)</figcaption></figure><figure><img class="pair-img" src="cs_plots/feature_map_shap.png" alt="ShapModel — explain a prediction"><figcaption>SHAP feature map</figcaption></figure>    </div>  </div>
+<figure><img class="pair-img" src="cs_plots/shap_profile.png" alt="ShapModel — explain a prediction"><figcaption>CPPPlot.profile · SHAP</figcaption></figure><figure><img class="pair-img" src="cs_plots/feature_map_shap.png" alt="ShapModel — explain a prediction"><figcaption>CPPPlot.feature_map · SHAP</figcaption></figure>    </div>  </div>
 </div><div class="sec pairsec">
   <div class="sec-h"><span>AAclust — clusters</span><span class="hint">scale reduction · Wrapper</span></div>
   <div class="sec-body"><pre class="code">X = np.array(df_scales).T
@@ -544,8 +543,8 @@ dpul_plot.pca(df_pu=df_pu, labels=labels)
 plt.tight_layout(); plt.show()</pre>
     <div class="pair-note">▼ figure below · right</div></div>
   <div class="pair-imgs" style="--ph:37mm">
-    <figure><img class="pair-img" src="cs_plots/centers.png" alt="AAclust — clusters"><figcaption>left</figcaption></figure>
-    <figure><img class="pair-img" src="cs_plots/pca.png" alt="dPULearn — PCA"><figcaption>right</figcaption></figure>
+    <figure><img class="pair-img" src="cs_plots/centers.png" alt="AAclust — clusters"><figcaption>AAclustPlot.centers · cluster scale profiles</figcaption></figure>
+    <figure><img class="pair-img" src="cs_plots/pca.png" alt="dPULearn — PCA"><figcaption>dPULearnPlot.pca · reliable negatives</figcaption></figure>
   </div>
 </div>
   </div>

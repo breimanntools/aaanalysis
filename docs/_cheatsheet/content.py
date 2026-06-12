@@ -87,34 +87,30 @@ CPP_STRATEGIES = {
         "name": "Compositional", "maps": "≈ sequence/protein-level",
         "desc": "one whole-part average (composition-like, position-agnostic)",
         "code": 'split_kws = sf.get_split_kws(\n'
-                '    split_types="Segment",\n'
-                '    n_split_min=1, n_split_max=1)\n'
-                'cpp = aa.CPP(df_parts=df_parts,\n'
-                '             split_kws=split_kws)',
+                '    split_types="Segment", n_split_max=1)\n'
+                'cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws)',
     },
     "positional": {
         "name": "Positional", "maps": "≈ residue-/region-level",
         "desc": "sub-segments and/or patterns resolved to positions",
         "code": 'split_kws = sf.get_split_kws(\n'
-                '    split_types=["Segment", "Pattern",\n'
-                '                 "PeriodicPattern"],\n'
-                '    n_split_max=5, steps_pattern=[3, 4],\n'
+                '    split_types=["Segment", "Pattern", "PeriodicPattern"],\n'
+                '    n_split_max=5,\n'
+                '    steps_pattern=[3, 4],\n'
                 '    steps_periodicpattern=[3, 4])\n'
-                'cpp = aa.CPP(df_parts=df_parts,\n'
-                '             split_kws=split_kws)',
+                'cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws)',
     },
     "note": "Domain level uses both. → CPP strategies: see the CPP tutorial (docs).",
 }
 
 # Beginner decision flow: user intent -> the module to reach for.
 WHICH_MODULE = [
-    ("Explore sequence patterns / composition", "AAlogo"),
-    ("Discover discriminative physicochemical features", "CPP"),
+    ("Explore sequence patterns / composition", "AAlogo · AAlogoPlot"),
+    ("Discover discriminative physicochemical features", "CPP · CPPPlot"),
     ("Reduce redundant amino acid scales", "AAclust"),
     ("Train with positives + unlabeled data", "dPULearn"),
     ("Train an interpretable classifier", "TreeModel"),
     ("Explain a prediction (per feature / sample)", "ShapModel  [pro]"),
-    ("Visualize CPP features", "CPPPlot"),
 ]
 
 SEQUENCE_ANATOMY = {
@@ -213,6 +209,7 @@ CAPABILITY_FAMILIES = [
 # Worked examples — tutorial-convention code paired with the figure it produces.
 FLAGSHIP_RECIPES = [
     {"cls": "AAlogo — see the data", "tag": "dataset at a glance", "img": "logo", "logo": True,
+     "caption": "AAlogoPlot.single_logo · per-position enrichment",
      "code": "import numpy as np, matplotlib.pyplot as plt, aaanalysis as aa\n"
              "df_seq = aa.load_dataset(name='DOM_GSEC')   # γ-secretase\n"
              "labels = list(df_seq['label']); df_scales = aa.load_scales()\n"
@@ -227,16 +224,19 @@ FLAGSHIP_RECIPES = [
              "    name_data='Test set: substrates')\n"
              "plt.tight_layout(); plt.show()"},
     {"cls": "CPP — ranking", "tag": "top features · effect + importance", "img": "ranking",
+     "caption": "CPPPlot.ranking · top-15 features",
      "code": "# same df_feat — rank the top discriminative features\n"
              "aa.plot_settings(font_scale=0.6)\n"
              "cpp_plot.ranking(df_feat=df_feat, n_top=15, rank=True,\n"
              "    name_test='substrates', name_ref='non-subs.')\n"
              "plt.tight_layout(); plt.show()"},
     {"cls": "CPP — feature", "tag": "top feature · REF vs TEST", "img": "feature",
+     "caption": "CPPPlot.feature · top feature, REF vs TEST",
      "code": "# default parts + a redundancy-reduced set of 100 scales\n"
              "df_parts = sf.get_df_parts(df_seq=df_seq)\n"
-             "df_scales = aa.AAclust().select_scales(df_scales, n_clusters=100)\n"
-             "cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)\n"
+             "df_scales_sel = aa.AAclust().select_scales(\n"
+             "    df_scales=df_scales, n_clusters=100)\n"
+             "cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales_sel)\n"
              "df_feat = cpp.run(labels=labels, n_filter=100)\n"
              "X = sf.feature_matrix(df_feat['feature'], df_parts)\n"
              "tm = aa.TreeModel(); tm.fit(X, labels=labels)\n"
@@ -248,7 +248,7 @@ FLAGSHIP_RECIPES = [
              "plt.tight_layout(); plt.show()"},
     {"cls": "CPP — feature map", "tag": "group level · full vs simplified",
      "imgs": ["feature_map", "feature_map_simplified"],
-     "img_labels": ["standard", "simplified"], "h": 44,
+     "img_labels": ["CPPPlot.feature_map · all scales", "CPPPlot.feature_map · simplified"], "h": 44,
      "code": "# global Part × Split × Scale map — all AAontology scales\n"
              "cpp_plot = aa.CPPPlot(); aa.plot_settings(font_scale=0.65)\n"
              "cpp_plot.feature_map(df_feat=df_feat)            # left\n"
@@ -258,7 +258,7 @@ FLAGSHIP_RECIPES = [
              "plt.tight_layout(); plt.show()"},
     {"cls": "ShapModel — explain a prediction", "tag": "sample level · [pro]",
      "imgs": ["shap_profile", "feature_map_shap"],
-     "img_labels": ["cpp.profile (SHAP)", "SHAP feature map"], "h": 36,
+     "img_labels": ["CPPPlot.profile · SHAP", "CPPPlot.feature_map · SHAP"], "h": 36,
      "code": "# fuzzy labeling: APP's label is its soft prediction score (0.6, not 1)\n"
              "i = list(df_seq['entry']).index('P05067')   # APP\n"
              "y = [float(v) for v in labels]; y[i] = 0.6\n"
@@ -272,6 +272,7 @@ FLAGSHIP_RECIPES = [
              "cpp_plot.feature_map(df_feat=df_feat, name_test='APP', **ka)  # right\n"
              "plt.tight_layout(); plt.show()"},
     {"cls": "AAclust — clusters", "tag": "scale reduction · Wrapper", "img": "centers",
+     "caption": "AAclustPlot.centers · cluster scale profiles",
      "code": "X = np.array(df_scales).T\n"
              "aac = aa.AAclust()\n"
              "aac.fit(X, names=list(df_scales), n_clusters=10)\n"
@@ -281,6 +282,7 @@ FLAGSHIP_RECIPES = [
              "aac_plot.centers(X, labels=aac.labels_)\n"
              "plt.tight_layout(); plt.show()"},
     {"cls": "dPULearn — PCA", "tag": "reliable negatives · Wrapper", "img": "pca",
+     "caption": "dPULearnPlot.pca · reliable negatives",
      "code": "# labels: 1 = positive, 2 = unlabeled\n"
              "n_pos = sum(np.array(labels) == 1)\n"
              "dpul = aa.dPULearn()\n"

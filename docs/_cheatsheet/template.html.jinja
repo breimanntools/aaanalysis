@@ -31,7 +31,7 @@
     <pre class="code">{{ R.code|hl }}</pre>
     {% if R.imgs %}<div class="pair-imgs" style="--ph:{{ R.h }}mm">
       {% for im in R.imgs %}<figure><img class="pair-img" src="{{ img_base }}{{ im }}.png" alt="{{ R.cls }}"><figcaption>{{ R.img_labels[loop.index0] }}</figcaption></figure>{% endfor %}
-    </div>{% elif R.img %}<img class="recipe-img{{ ' big' if R.big }}{{ ' logo' if R.logo }}" src="{{ img_base }}{{ R.img }}.png" alt="{{ R.cls }} output">{% endif %}
+    </div>{% elif R.img %}<figure class="recipe-fig"><img class="recipe-img{{ ' big' if R.big }}{{ ' logo' if R.logo }}" src="{{ img_base }}{{ R.img }}.png" alt="{{ R.cls }} output">{% if R.caption %}<figcaption>{{ R.caption }}</figcaption>{% endif %}</figure>{% endif %}
   </div>
 </div>
 {%- endmacro -%}
@@ -48,8 +48,8 @@
   <div class="sec-body"><pre class="code">{{ R.code|hl }}</pre>
     <div class="pair-note">▼ figure below · right</div></div>
   <div class="pair-imgs" style="--ph:{{ G.h }}mm">
-    <figure><img class="pair-img" src="{{ img_base }}{{ L.img }}.png" alt="{{ L.cls }}"><figcaption>left</figcaption></figure>
-    <figure><img class="pair-img" src="{{ img_base }}{{ R.img }}.png" alt="{{ R.cls }}"><figcaption>right</figcaption></figure>
+    <figure><img class="pair-img" src="{{ img_base }}{{ L.img }}.png" alt="{{ L.cls }}"><figcaption>{{ L.caption if L.caption else 'left' }}</figcaption></figure>
+    <figure><img class="pair-img" src="{{ img_base }}{{ R.img }}.png" alt="{{ R.cls }}"><figcaption>{{ R.caption if R.caption else 'right' }}</figcaption></figure>
   </div>
 </div>
 {%- endmacro -%}
