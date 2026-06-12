@@ -55,7 +55,7 @@ def main():
     def _augment(dff):
         Xm = sf.feature_matrix(features=dff["feature"], df_parts=df_parts)
         tmm = aa.TreeModel(verbose=False); tmm.fit(Xm, labels=labels)
-        return tmm.add_feat_importance(df_feat=dff), Xm
+        return tmm.add_feat_importance(df_feat=dff, sort=True), Xm
 
     cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, verbose=False)
     df_feat0 = cpp.run(labels=labels, n_filter=100, n_jobs=1)
@@ -88,12 +88,12 @@ def main():
     _save("ranking")
 
     # CPP feature: REF vs TEST value distribution of the single top feature
-    df_top = df_feat.sort_values("feat_importance", ascending=False).reset_index(drop=True)
-    top_feature = df_top["feature"][0]
+    # (df_feat is already ranked most-important-first via add_feat_importance(sort=True))
+    top_feature = df_feat["feature"].iloc[0]
     aa.plot_settings(font_scale=0.7)
     cpp_plot.feature(feature=top_feature, df_seq=df_seq, labels=labels,
                      name_test="substrates", name_ref="non-subs.")
-    plt.title(f"{top_feature}\n({df_top['subcategory'][0]})", fontsize=8)
+    plt.title(f"{top_feature}\n({df_feat['subcategory'].iloc[0]})", fontsize=8)
     _save("feature")
 
     # AAclust: cluster the scale set, plot cluster centers in PCA space
