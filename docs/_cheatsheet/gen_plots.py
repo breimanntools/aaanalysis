@@ -65,12 +65,12 @@ def main():
     # AAlogo: substrate (label_test=1, the CPP "test set") sequence logo with a
     # bits information bar on top — makes the dataset clear
     n_test = int(sum(v == 1 for v in labels))
-    aal = aa.AAlogo()
-    df_logo = aal.get_df_logo(df_parts=df_parts_core, labels=labels, label_test=1, tmd_len=TMD_LEN)
-    df_info = aal.get_df_logo_info(df_parts=df_parts_core, labels=labels, label_test=1, tmd_len=TMD_LEN)
     aa.plot_settings(font_scale=0.7)
-    aa.AAlogoPlot().single_logo(df_logo=df_logo, df_logo_info=df_info,
-                                name_data=f"Test set: substrates (n={n_test})")
+    # aal_kws computes df_logo + the bits bar internally (skips the manual AAlogo step)
+    aa.AAlogoPlot().single_logo(
+        aal_kws=dict(df_parts=df_parts_core, labels=labels,
+                     label_test=1, tmd_len=TMD_LEN),
+        name_data=f"Test set: substrates (n={n_test})")
     _save("logo")
 
     # group-level CPP feature map (tutorial conventions)

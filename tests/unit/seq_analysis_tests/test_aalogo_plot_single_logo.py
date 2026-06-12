@@ -460,3 +460,93 @@ class TestSingleLogoComplex:
         )
         assert isinstance(fig, plt.Figure)
         plt.close("all")
+
+
+# Helper for aal_kws tests
+def get_df_parts_labels(n=50):
+    """Build df_parts + labels from DOM_GSEC for aal_kws-based tests."""
+    sf = aa.SequenceFeature()
+    df_seq = aa.load_dataset(name="DOM_GSEC", n=n)
+    labels = df_seq["label"].values
+    df_parts = sf.get_df_parts(df_seq=df_seq)
+    return df_parts, labels
+
+
+# ===========================================================================
+# XII Test single_logo: aal_kws (internal AAlogo shortcut)
+# ===========================================================================
+class TestSingleLogoAalKws:
+    """Test single_logo 'aal_kws' convenience parameter."""
+
+    def test_valid_aal_kws(self):
+        """Test that aal_kws computes df_logo + df_logo_info internally and plots."""
+        df_parts, labels = get_df_parts_labels()
+        aal_plot = get_aal_plot()
+        fig, axes = aal_plot.single_logo(
+            aal_kws=dict(df_parts=df_parts, labels=labels, label_test=1))
+        assert isinstance(fig, plt.Figure)
+        # df_logo_info is computed internally -> info bar present -> (ax_logo, ax_info)
+        assert isinstance(axes, tuple) and len(axes) == 2
+        plt.close("all")
+
+    def test_aal_kws_matches_explicit(self):
+        """Test that aal_kws path matches the explicit df_logo/df_logo_info path."""
+        df_parts, labels = get_df_parts_labels()
+        kws = dict(df_parts=df_parts, labels=labels, label_test=1)
+        df_logo = aa.AAlogo().get_df_logo(**kws)
+        df_logo_info = aa.AAlogo().get_df_logo_info(**kws)
+        fig_a, _ = get_aal_plot().single_logo(df_logo=df_logo, df_logo_info=df_logo_info)
+        fig_b, _ = get_aal_plot().single_logo(aal_kws=kws)
+        assert isinstance(fig_a, plt.Figure) and isinstance(fig_b, plt.Figure)
+        plt.close("all")
+
+    def test_aal_kws_respects_logo_type(self):
+        """Test that the plot's logo_type is used when computing df_logo via aal_kws."""
+        df_parts, labels = get_df_parts_labels()
+        kws = dict(df_parts=df_parts, labels=labels, label_test=1)
+        for logo_type in ["probability", "counts", "weight", "information"]:
+            aal_plot = get_aal_plot(logo_type=logo_type)
+            fig, _ = aal_plot.single_logo(aal_kws=kws)
+            assert isinstance(fig, plt.Figure)
+            plt.close("all")
+
+    def test_invalid_aal_kws_not_dict(self):
+        """Test that a non-dict aal_kws raises ValueError."""
+        aal_plot = get_aal_plot()
+        for aal_kws in ["invalid", 1, [1, 2, 3]]:
+            with pytest.raises(ValueError):
+                aal_plot.single_logo(aal_kws=aal_kws)
+
+    def test_invalid_aal_kws_with_df_logo(self):
+        """Test that combining aal_kws with df_logo raises ValueError."""
+        df_parts, labels = get_df_parts_labels()
+        df_logo = get_df_logo()
+        aal_plot = get_aal_plot()
+        with pytest.raises(ValueError):
+            aal_plot.single_logo(
+                df_logo=df_logo,
+                aal_kws=dict(df_parts=df_parts, labels=labels, label_test=1))
+
+    def test_invalid_aal_kws_with_df_logo_info(self):
+        """Test that combining aal_kws with df_logo_info raises ValueError."""
+        df_parts, labels = get_df_parts_labels()
+        df_logo_info = get_df_logo_info()
+        aal_plot = get_aal_plot()
+        with pytest.raises(ValueError):
+            aal_plot.single_logo(
+                df_logo_info=df_logo_info,
+                aal_kws=dict(df_parts=df_parts, labels=labels, label_test=1))
+
+    def test_invalid_aal_kws_bad_df_parts(self):
+        """Test that invalid contents in aal_kws surface as an error from AAlogo."""
+        aal_plot = get_aal_plot()
+        with pytest.raises((ValueError, TypeError)):
+            aal_plot.single_logo(aal_kws=dict(df_parts="not-a-frame"))
+
+    def test_invalid_aal_kws_unknown_key(self):
+        """Test that an unknown key in aal_kws raises ValueError (not raw TypeError)."""
+        df_parts, labels = get_df_parts_labels()
+        aal_plot = get_aal_plot()
+        with pytest.raises(ValueError):
+            aal_plot.single_logo(
+                aal_kws=dict(df_parts=df_parts, labels=labels, df_part=1))

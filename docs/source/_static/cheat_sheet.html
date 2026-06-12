@@ -431,14 +431,11 @@ df_scales = <span class="c-nm">aa.load_scales</span>()
 df_parts = sf.get_df_parts(df_seq=df_seq,
     list_parts=[<span class="c-st">&#x27;tmd&#x27;</span>, <span class="c-st">&#x27;jmd_n&#x27;</span>, <span class="c-st">&#x27;jmd_c&#x27;</span>])
 
-aal = <span class="c-nm">aa.AAlogo</span>()
-df_logo = aal.get_df_logo(df_parts=df_parts,
-    labels=labels, label_test=1, tmd_len=20)
-df_info = aal.get_df_logo_info(df_parts=df_parts,
-    labels=labels, label_test=1, tmd_len=20)
 <span class="c-nm">aa.plot_settings</span>(font_scale=0.7)
-<span class="c-nm">aa.AAlogoPlot</span>().single_logo(df_logo=df_logo,
-    df_logo_info=df_info,        <span class="c-cm"># bits bar on top</span>
+<span class="c-cm"># aal_kws builds df_logo + bits bar for you</span>
+<span class="c-nm">aa.AAlogoPlot</span>().single_logo(
+    aal_kws=dict(df_parts=df_parts, labels=labels,
+        label_test=1, tmd_len=20),
     name_data=<span class="c-st">&#x27;Test set: substrates&#x27;</span>)
 plt.tight_layout(); plt.show()</pre>
 <img class="recipe-img" src="cs_plots/logo.png" alt="AAlogo — see the data output">  </div>

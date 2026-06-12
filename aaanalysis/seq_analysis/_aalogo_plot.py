@@ -1,11 +1,13 @@
 """
 This is a script for the frontend of the AAlogoPlot class.
 """
+import inspect
 import matplotlib.pyplot as plt
 import pandas as pd
 from typing import Optional, Union, List, Tuple, Literal
 
 import aaanalysis.utils as ut
+from ._aalogo import AAlogo
 from ._backend._aalogo.aalogo_plot import single_logo_, multi_logo_
 
 # Settings
@@ -21,6 +23,62 @@ def check_df_logo(df_logo=None):
     ut.check_df(name="df_logo", df=df_logo, accept_none=False, accept_nan=False)
     if len(df_logo) == 0:
         raise ValueError("'df_logo' must not be empty.")
+
+
+def _valid_aal_kws_keys(include_info=True):
+    """Return AAlogo.get_df_logo[/_info] parameter names valid in an aal_kws dict."""
+    keys = set(inspect.signature(AAlogo.get_df_logo).parameters) - {"self"}
+    if include_info:
+        keys &= set(inspect.signature(AAlogo.get_df_logo_info).parameters) - {"self"}
+    return keys
+
+
+def check_aal_kws_keys(name=None, aal_kws=None, include_info=True):
+    """Check that every key in an aal_kws dict is a valid AAlogo argument name."""
+    valid_keys = _valid_aal_kws_keys(include_info=include_info)
+    invalid_keys = set(aal_kws) - valid_keys
+    if invalid_keys:
+        raise ValueError(
+            f"'{name}' contains invalid keys {sorted(invalid_keys)}; allowed keys are "
+            f"{sorted(valid_keys)}.")
+
+
+def check_aal_kws(aal_kws=None, df_logo=None, df_logo_info=None):
+    """Check aal_kws is a valid-key dict not combined with df_logo/df_logo_info."""
+    if aal_kws is None:
+        return
+    if not isinstance(aal_kws, dict):
+        raise ValueError(
+            f"'aal_kws' ({aal_kws}) should be a dictionary of keyword arguments "
+            f"shared by 'AAlogo.get_df_logo' and 'AAlogo.get_df_logo_info'.")
+    check_aal_kws_keys(name="aal_kws", aal_kws=aal_kws, include_info=True)
+    if df_logo is not None or df_logo_info is not None:
+        raise ValueError(
+            "'aal_kws' is mutually exclusive with 'df_logo' and 'df_logo_info': "
+            "provide either 'aal_kws' (logo data computed internally) or "
+            "precomputed 'df_logo'/'df_logo_info', not both.")
+
+
+def check_list_aal_kws(list_aal_kws=None, list_df_logo=None):
+    """Check list_aal_kws is a list of valid dicts not combined with list_df_logo."""
+    if list_aal_kws is None:
+        return
+    if not isinstance(list_aal_kws, list) or len(list_aal_kws) == 0:
+        raise ValueError(
+            f"'list_aal_kws' ({list_aal_kws}) should be a non-empty list of "
+            f"dictionaries, one per logo, holding 'AAlogo.get_df_logo' arguments.")
+    for i, aal_kws in enumerate(list_aal_kws):
+        if not isinstance(aal_kws, dict):
+            raise ValueError(
+                f"'list_aal_kws[{i}]' ({aal_kws}) should be a dictionary of "
+                f"'AAlogo.get_df_logo' keyword arguments.")
+        check_aal_kws_keys(name=f"list_aal_kws[{i}]", aal_kws=aal_kws,
+                           include_info=False)
+    if list_df_logo is not None:
+        raise ValueError(
+            "'list_aal_kws' is mutually exclusive with 'list_df_logo': provide either "
+            "'list_aal_kws' (logo data computed internally) or precomputed "
+            "'list_df_logo', not both.")
 
 
 def check_list_df_logo(list_df_logo=None):
@@ -163,13 +221,15 @@ class AAlogoPlot:
         jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
         # Set attributes
         self._verbose = verbose
+        self._logo_type = logo_type
         self._y_label = DICT_LOGO_LABELS[logo_type]
         self._jmd_n_len = jmd_n_len
         self._jmd_c_len = jmd_c_len
 
     def single_logo(self,
-                    df_logo: pd.DataFrame = None,
+                    df_logo: Optional[pd.DataFrame] = None,
                     df_logo_info: Optional[pd.Series] = None,
+                    aal_kws: Optional[dict] = None,
                     info_bar_color: str = "gray",
                     info_bar_ylim: Optional[Tuple[float, float]] = None,
                     target_p1_site: Optional[int] = None,
@@ -211,12 +271,26 @@ class AAlogoPlot:
 
         Parameters
         ----------
-        df_logo : pd.DataFrame, shape (n_positions, n_amino_acids)
+        df_logo : pd.DataFrame, shape (n_positions, n_amino_acids), optional
             Logo matrix as returned by :meth:`AAlogo.get_df_logo`. Rows are residue
-            positions, columns are amino acids.
+            positions, columns are amino acids. Required unless ``aal_kws`` is given,
+            in which case it is computed internally and must be ``None``.
         df_logo_info : pd.Series, shape (n_positions,), optional
             Per-position information content as returned by :meth:`AAlogo.get_df_logo_info`.
-            If provided, a bit-score bar is rendered above the main logo.
+            If provided, a bit-score bar is rendered above the main logo. Must be ``None``
+            when ``aal_kws`` is given (it is then computed internally and the bar is shown).
+        aal_kws : dict, optional
+            Convenience shortcut that lets you skip the manual :class:`AAlogo` step. If
+            provided, ``AAlogoPlot`` internally instantiates :class:`AAlogo` (using this
+            plot's ``logo_type``) and computes both ``df_logo`` (via
+            :meth:`AAlogo.get_df_logo`) and ``df_logo_info`` (via
+            :meth:`AAlogo.get_df_logo_info`) from these keyword arguments, then renders the
+            logo together with the bit-score bar. ``aal_kws`` therefore holds the arguments
+            shared by both methods, e.g. ``df_parts``, ``labels``, ``label_test``,
+            ``tmd_len``, ``start_n``, ``characters_to_ignore``, and ``pseudocount``. It is
+            mutually exclusive with ``df_logo`` and ``df_logo_info`` (passing both raises
+            ``ValueError``); unknown keys also raise ``ValueError``. Example:
+            ``aal_kws=dict(df_parts=df_parts, labels=labels, label_test=1, tmd_len=20)``.
         info_bar_color : str, default='gray'
             Color of the bit-score bars in the optional top panel.
         info_bar_ylim : tuple of float, optional
@@ -290,6 +364,11 @@ class AAlogoPlot:
         .. include:: examples/aal_plot_single_logo.rst
         """
         # Check input
+        check_aal_kws(aal_kws=aal_kws, df_logo=df_logo, df_logo_info=df_logo_info)
+        if aal_kws is not None:
+            aal = AAlogo(logo_type=self._logo_type)
+            df_logo = aal.get_df_logo(**aal_kws)
+            df_logo_info = aal.get_df_logo_info(**aal_kws)
         check_df_logo(df_logo=df_logo)
         if df_logo_info is not None:
             check_df_logo_info(df_logo_info=df_logo_info, df_logo=df_logo)
@@ -351,7 +430,8 @@ class AAlogoPlot:
         return fig, axes
 
     def multi_logo(self,
-                   list_df_logo: List[pd.DataFrame] = None,
+                   list_df_logo: Optional[List[pd.DataFrame]] = None,
+                   list_aal_kws: Optional[List[dict]] = None,
                    target_p1_site: Optional[int] = None,
                    figsize_per_logo: Tuple[Union[int, float], Union[int, float]] = (8, 3),
                    fontsize_labels: Optional[Union[int, float]] = None,
@@ -386,8 +466,23 @@ class AAlogoPlot:
 
         Parameters
         ----------
-        list_df_logo : list of pd.DataFrame, each shape (n_positions, n_amino_acids)
+        list_df_logo : list of pd.DataFrame, each shape (n_positions, n_amino_acids), optional
             List of logo matrices, one per group. All must have the same number of positions.
+            Required unless ``list_aal_kws`` is given, in which case it is computed
+            internally and must be ``None``.
+        list_aal_kws : list of dict, optional
+            Convenience shortcut that lets you skip the manual :class:`AAlogo` step for each
+            group. If provided, ``AAlogoPlot`` internally instantiates :class:`AAlogo` (using
+            this plot's ``logo_type``) and computes one ``df_logo`` per dict via
+            :meth:`AAlogo.get_df_logo`, producing ``list_df_logo``. Each dict holds the
+            :meth:`AAlogo.get_df_logo` keyword arguments for that group, e.g.
+            ``df_parts``, ``labels``, ``label_test``, ``tmd_len``, ``start_n``,
+            ``characters_to_ignore``, and ``pseudocount`` (typically the same ``df_parts``
+            with a different ``label_test`` per group). It is mutually exclusive with
+            ``list_df_logo`` (passing both raises ``ValueError``); unknown keys in any dict
+            also raise ``ValueError``. Example:
+            ``list_aal_kws=[dict(df_parts=df_parts, labels=labels, label_test=1),
+            dict(df_parts=df_parts, labels=labels, label_test=0)]``.
         target_p1_site : int, optional
             If set, replaces the standard JMD/TMD x-axis with P-site notation.
         figsize_per_logo : tuple of (int or float), default=(8, 3)
@@ -454,6 +549,10 @@ class AAlogoPlot:
         .. include:: examples/aal_plot_multi_logo.rst
         """
         # Check input
+        check_list_aal_kws(list_aal_kws=list_aal_kws, list_df_logo=list_df_logo)
+        if list_aal_kws is not None:
+            aal = AAlogo(logo_type=self._logo_type)
+            list_df_logo = [aal.get_df_logo(**aal_kws) for aal_kws in list_aal_kws]
         check_list_df_logo(list_df_logo=list_df_logo)
         ut.check_figsize(figsize=figsize_per_logo)
         check_list_name_data(list_name_data=list_name_data, list_df_logo=list_df_logo)
