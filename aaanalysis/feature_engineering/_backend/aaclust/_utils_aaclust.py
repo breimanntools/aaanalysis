@@ -27,6 +27,28 @@ def _cluster_medoid(X, metric="correlation"):
     return medoid_index
 
 
+def _dist_to_medoids(X, labels=None, medoid_ind=None, labels_medoids=None, metric="correlation"):
+    """Distance (under metric) of each sample in X to its cluster's medoid; medoids get 0.0.
+
+    For ``metric='correlation'`` the distance is ``1 - Pearson(sample, medoid)``; otherwise the
+    pairwise distance from the medoid is used (mirrors the metric handling of `_cluster_medoid`).
+    """
+    labels = np.asarray(labels)
+    medoid_ind = np.asarray(medoid_ind)
+    labels_medoids = np.asarray(labels_medoids)
+    label_to_medoid = {lab: int(medoid_ind[j]) for j, lab in enumerate(labels_medoids)}
+    dist = np.zeros(len(labels), dtype=float)
+    for i in range(len(labels)):
+        m = label_to_medoid[labels[i]]
+        if i == m:
+            continue  # medoid's distance to itself is 0.0
+        if metric == "correlation":
+            dist[i] = 1.0 - np.corrcoef(X[i], X[m])[0, 1]
+        else:
+            dist[i] = pairwise_distances(X[m].reshape(1, -1), X[i].reshape(1, -1), metric=metric)[0, 0]
+    return dist
+
+
 def _compute_centers(X, labels=None):
     """Obtain cluster centers and their labels"""
     labels_centers = list(OrderedDict.fromkeys(labels))

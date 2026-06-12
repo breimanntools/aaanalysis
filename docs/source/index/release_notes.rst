@@ -68,6 +68,12 @@ Added
   returns the redundancy-reduced subset of its columns (one medoid scale per
   cluster) directly — collapsing the manual transpose, ``names`` bookkeeping, and
   medoid-name indexing into a single call ready for ``CPP``.
+- **AAclust.select_proteins**: Protein-level redundancy reduction over a pre-pooled
+  per-protein feature matrix (``X``: CPP features, pooled embeddings, or structural /
+  DSSP-derived features). Clusters the proteins and selects one representative (medoid)
+  per cluster, annotating ``df_seq`` with ``cluster`` / ``is_representative`` /
+  ``dist_to_rep`` (``return_data='annotated' | 'filtered' | 'both'``) — the numerical
+  counterpart to sequence-identity reduction via ``filter_seq``.
 
 **Sequence Analysis**
 

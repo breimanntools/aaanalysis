@@ -462,6 +462,15 @@ their scales are not. Reuses the `NumericalFeature.filter_correlation` matrix pr
 _Avoid_: redundancy reduction (reserved for CPP's in-run scale-correlation step), correlation
 filtering (ambiguous about scale-vector vs sample-level correlation).
 
+**protein-level redundancy reduction**:
+`AAclust.select_proteins(df_seq, X, ...)` — core (no `pro` dep) clustering of a **pre-pooled
+per-protein feature matrix** `X` (CPP features, pooled embeddings, DSSP/structural features),
+keeping one medoid (representative) per cluster and annotating `df_seq` with
+`cluster` / `is_representative` / `dist_to_rep`. The **numerical** counterpart of `filter_seq`
+(pro, sequence-identity clustering via CD-HIT/MMseqs2) and orthogonal to CPP's in-run
+scale-correlation redundancy reduction. Pooling per-residue inputs to one vector per protein is
+the caller's job (the method takes a single matrix, not `dict_num`).
+
 ### Explainability (CPP-SHAP) vocabulary
 
 **feature importance**:
