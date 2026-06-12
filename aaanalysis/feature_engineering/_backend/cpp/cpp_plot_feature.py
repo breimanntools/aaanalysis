@@ -1,6 +1,7 @@
 """
 This is a script for the backend of the CPPPlot.feature() method.
 """
+import textwrap
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -9,6 +10,7 @@ import matplotlib as mpl
 import aaanalysis.utils as ut
 
 from .utils_feature import get_list_parts, get_df_parts_, get_feature_matrix_, get_amino_acids_
+from .sequence_feature import get_feature_descriptions_
 from ._utils_cpp_plot_elements import PlotElements
 
 COL_FEAT_VAL = "feature_values"
@@ -128,10 +130,10 @@ def _add_names_to_show(ax, df_show, name_test, color_test, color_ref, fontsize_n
 # II Main Functions
 def plot_feature(ax=None, figsize=(5.6, 4.8), feature=str,
                  df_seq=None, labels=None, label_test=1, label_ref=0,
-                 df_scales=None, accept_gaps=None,
-                 jmd_n_len=10, jmd_c_len=10,
+                 df_scales=None, df_cat=None, accept_gaps=None,
+                 tmd_len=20, jmd_n_len=10, jmd_c_len=10,
                  name_test="TEST", name_ref="REF", names_to_show=None,
-                 show_seq=False,
+                 show_seq=False, show_title=True, title_wrap_width=45,
                  color_test="tab:green", color_ref="tab:gray",
                  histplot=False, alpha_hist=0.1, alpha_dif=0.25,
                  fontsize_mean_dif=15, fontsize_name_test=13,
@@ -180,6 +182,11 @@ def plot_feature(ax=None, figsize=(5.6, 4.8), feature=str,
     # Update ticks
     pe.set_x_ticks(ax=ax, fs=fs)
     pe.set_y_ticks(ax=ax, fs=fs)
+    # Add the feature description as a wrapped, line-broken title (user plt.title() still overrides)
+    if show_title:
+        description = get_feature_descriptions_(features=[feature], df_cat=df_cat,
+                                                tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)[0]
+        ax.set_title(textwrap.fill(description, width=title_wrap_width), size=fs)
     # Adjust plot
     sns.despine()
     plt.tight_layout()

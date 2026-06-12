@@ -394,6 +394,8 @@ class CPPPlot:
                 color_test: str = "tab:green",
                 color_ref: str = "tab:gray",
                 show_seq: bool = False,
+                show_title: bool = True,
+                title_wrap_width: int = 45,
                 histplot: bool = False,
                 fontsize_mean_dif: Union[int, float, None] = 15,
                 fontsize_name_test: Union[int, float, None] = 13,
@@ -454,6 +456,12 @@ class CPPPlot:
             Color for the reference dataset.
         show_seq : bool, default=False
             If ``True``, show sequence of samples selected via ``names_to_show``.
+        show_title : bool, default=True
+            If ``True``, set the plot title to the feature's human-readable description (see
+            :meth:`SequenceFeature.get_feature_descriptions`), line-wrapped at ``title_wrap_width``.
+            A subsequent ``plt.title(...)`` / ``ax.set_title(...)`` call still overrides it.
+        title_wrap_width : int, default=45
+            Maximum line width (in characters, >0) for wrapping the ``show_title`` description.
         histplot : bool, default=False
             If ``True``, plot a histogram. If ``False``, plot a kernel density estimate (KDE) plot.
         fontsize_mean_dif : int or float, default=15
@@ -501,6 +509,8 @@ class CPPPlot:
         ut.check_color(name="color_test", val=color_test)
         ut.check_color(name="color_ref", val=color_ref)
         ut.check_bool(name="show_seq", val=show_seq)
+        ut.check_bool(name="show_title", val=show_title)
+        ut.check_number_range(name="title_wrap_width", val=title_wrap_width, min_val=1, just_int=True)
         ut.check_bool(name="histplot", val=histplot)
         args_fs = ut.check_fontsize_args(fontsize_mean_dif=fontsize_mean_dif,
                                          fontsize_name_test=fontsize_name_test,
@@ -515,10 +525,12 @@ class CPPPlot:
 
         # Plot feature
         ax = plot_feature(ax=ax, figsize=figsize,
-                          feature=feature, df_scales=self._df_scales, accept_gaps=self._accept_gaps,
+                          feature=feature, df_scales=self._df_scales, df_cat=self._df_cat,
+                          accept_gaps=self._accept_gaps,
                           df_seq=df_seq, labels=labels, label_test=label_test, label_ref=label_ref,
                           jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                           names_to_show=names_to_show, show_seq=show_seq,
+                          show_title=show_title, title_wrap_width=title_wrap_width,
                           name_test=name_test, name_ref=name_ref,
                           color_test=color_test, color_ref=color_ref,
                           **args_fs,

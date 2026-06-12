@@ -241,6 +241,36 @@ class TestCPPPlotFeature:
         assert isinstance(ax, plt.Axes)
         plt.close()
 
+    @given(show_title=st.booleans())
+    def test_show_title(self, show_title):
+        df_seq, labels, df_feat = get_input()
+        cpp_plot = aa.CPPPlot()
+        plt.close("all")
+        ax = cpp_plot.feature(feature=VALID_FEATURE, df_seq=df_seq, labels=labels, show_title=show_title)
+        assert isinstance(ax, plt.Axes)
+        # Title present iff show_title; when present it is the wrapped feature description
+        if show_title:
+            assert ax.get_title() != ""
+            sf = aa.SequenceFeature()
+            expected = sf.get_feature_descriptions(features=[VALID_FEATURE])[0]
+            assert ax.get_title().replace("\n", " ") == expected
+        else:
+            assert ax.get_title() == ""
+        plt.close()
+
+    @settings(max_examples=5, deadline=None)
+    @given(title_wrap_width=st.integers(min_value=10, max_value=200))
+    def test_title_wrap_width(self, title_wrap_width):
+        df_seq, labels, df_feat = get_input()
+        cpp_plot = aa.CPPPlot()
+        plt.close("all")
+        ax = cpp_plot.feature(feature=VALID_FEATURE, df_seq=df_seq, labels=labels,
+                              title_wrap_width=title_wrap_width)
+        assert isinstance(ax, plt.Axes)
+        # Every wrapped line stays within the requested width
+        assert all(len(line) <= title_wrap_width for line in ax.get_title().split("\n"))
+        plt.close()
+
     @settings(max_examples=5, deadline=None)
     @given(histplot=st.booleans())
     def test_histplot(self, histplot):
@@ -391,6 +421,20 @@ class TestCPPPlotFeature:
         cpp_plot = aa.CPPPlot()
         with pytest.raises(ValueError):
             cpp_plot.feature(feature=VALID_FEATURE, df_seq=df_seq, labels=labels, show_seq="invalid")
+
+    def test_invalid_show_title(self):
+        df_seq, labels, _ = get_input()
+        cpp_plot = aa.CPPPlot()
+        with pytest.raises(ValueError):
+            cpp_plot.feature(feature=VALID_FEATURE, df_seq=df_seq, labels=labels, show_title="invalid")
+
+    def test_invalid_title_wrap_width(self):
+        df_seq, labels, _ = get_input()
+        cpp_plot = aa.CPPPlot()
+        for bad in [0, -5, "invalid", 12.5]:
+            with pytest.raises(ValueError):
+                cpp_plot.feature(feature=VALID_FEATURE, df_seq=df_seq, labels=labels, title_wrap_width=bad)
+
 
 class TestComplexCPPPlotFeature:
     """Test complex class for feature method, focusing on individual parameters."""
