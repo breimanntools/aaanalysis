@@ -442,7 +442,9 @@ class EmbeddingPreprocessor:
         self,
         df_seq: pd.DataFrame = None,
         mode: Literal["protein", "residue"] = "protein",
-        model: str = "esm2_t12_35M",
+        model: Literal["esm2_t6_8M", "esm2_t12_35M", "esm2_t30_150M",
+                       "esm2_t33_650M", "esm2_t36_3B", "esm1b",
+                       "prott5_xl_u50", "prostt5"] = "esm2_t12_35M",
         pooling: Literal["mean", "max", "cls"] = "mean",
         source: Literal["auto", "compute"] = "auto",
         batch_size: int = 8,
@@ -480,8 +482,12 @@ class EmbeddingPreprocessor:
             ``'protein'`` returns one pooled vector per protein; ``'residue'`` returns
             the per-residue ``(L, D)`` array per protein (feeds :meth:`encode`).
         model : str, default='esm2_t12_35M'
-            Registry key of the PLM to use (e.g. ``'esm2_t6_8M'``, ``'esm2_t33_650M'``,
-            ``'prott5_xl_u50'``, ``'prostt5'``).
+            Registry key of the PLM to use — one of ``'esm2_t6_8M'``,
+            ``'esm2_t12_35M'``, ``'esm2_t30_150M'``, ``'esm2_t33_650M'``,
+            ``'esm2_t36_3B'``, ``'esm1b'``, ``'prott5_xl_u50'``, ``'prostt5'``. See the
+            *Notes* table for each model's size, embedding dimension, and whether it runs
+            on a typical laptop CPU. An unknown key raises a ``ValueError`` listing the
+            valid options.
         pooling : {'mean', 'max', 'cls'}, default='mean'
             Residue→protein reduction for ``mode='protein'``. ``'cls'`` uses the model's
             leading token and is only valid for models that have one (ESM, not ProtT5).
@@ -520,6 +526,87 @@ class EmbeddingPreprocessor:
 
         Notes
         -----
+        **Available models.** Footprints are inference floors (real peak grows with
+        ``batch_size`` × sequence length); *Local* marks models that run comfortably on a
+        typical 16 GB laptop CPU. ESM-2 spans accuracy/speed trade-offs; ProtT5/ProstT5
+        are stronger but heavier; ProstT5 is structure-aware (trained on 3Di tokens).
+
+        .. list-table::
+           :header-rows: 1
+           :widths: 20 8 6 10 8 30
+
+           * - model
+             - params
+             - dim
+             - ~RAM (CPU)
+             - Local?
+             - best for
+           * - ``esm2_t6_8M``
+             - 8 M
+             - 320
+             - ~0.3 GB
+             - yes
+             - laptops, large corpora, quick tests
+           * - ``esm2_t12_35M``
+             - 35 M
+             - 480
+             - ~0.5 GB
+             - yes
+             - default; best size/quality on CPU
+           * - ``esm2_t30_150M``
+             - 150 M
+             - 640
+             - ~1.5 GB
+             - yes
+             - richer residue features, still CPU-fine
+           * - ``esm2_t33_650M``
+             - 650 M
+             - 1280
+             - ~3 GB
+             - slow
+             - strong; comfortable with a GPU
+           * - ``esm2_t36_3B``
+             - 3 B
+             - 2560
+             - ~12 GB
+             - GPU
+             - highest quality; needs a ≥12 GB GPU
+           * - ``esm1b``
+             - 650 M
+             - 1280
+             - ~3 GB
+             - slow
+             - ESM-1b parity; 1022-residue cap
+           * - ``prott5_xl_u50``
+             - 1.2 B
+             - 1024
+             - ~5 GB
+             - GPU
+             - ProtT5; matches UniProt's embeddings
+           * - ``prostt5``
+             - 1.2 B
+             - 1024
+             - ~5 GB
+             - GPU
+             - structure-aware (3Di) embeddings
+
+        The larger ESM-2 models and both T5 models are slow on CPU and may exhaust memory;
+        ``fetch_embeddings`` emits a ``RuntimeWarning`` suggesting a smaller model when the
+        estimated footprint exceeds the detected device memory (override with
+        ``allow_oversized=True``, lower ``batch_size``, or select a GPU via ``device``).
+
+        **Compute locally vs. fetch precomputed (UniProt).** ``fetch_embeddings`` computes
+        embeddings on your machine, which works for *any* sequence — mutants, designs, or
+        non-model organisms not in any database. UniProt separately publishes
+        **precomputed ProtT5 per-protein embeddings** for UniProtKB/Swiss-Prot and selected
+        reference proteomes; when your proteins are covered and ProtT5 is acceptable,
+        downloading those (currently a bulk per-proteome file indexed by accession) avoids
+        local compute entirely. Prefer the precomputed route for large, fully-covered
+        Swiss-Prot sets on a CPU-only machine; compute here when proteins are novel/mutated,
+        when you need a non-ProtT5 model (e.g. ESM-2/ProstT5), or when you want per-residue
+        output for :meth:`encode` → :meth:`CPP.run_num`. A ``source='uniprot'`` path for the
+        precomputed route is reserved for a future release.
+
         * Embedding extraction is deterministic (eval mode), so no ``random_state`` /
           ``seed`` is needed.
         * Returned embeddings are raw (unbounded) floats; pass ``mode='residue'`` output
