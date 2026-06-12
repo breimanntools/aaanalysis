@@ -27,45 +27,78 @@ From root `CLAUDE.md` §0 — authorization is **per-action, never per-session**
 
 ## Steps
 
-1. **Pick the issue.** Optionally sharpen the wording first with `/triage` or `/to-issues`
-   (house style: `docs/guides/issue_style_guide.rst`). For "what next?", `/github-issue-handoff`
-   produces a prioritized, parallelization-aware plan.
-2. **`/grill-with-docs` — the highest-leverage step.** Sharpen the spec against the *live*
-   codebase and refresh `CONTEXT.md` / ADRs **before any code is written**. Do not skip to
-   implementation on anything non-trivial. (`/init` only bootstraps codebase docs when
-   `CONTEXT.md` is missing — it is not a substitute for the adversarial spec-vs-reality pass.)
-3. **Branch + isolated worktree.** `git switch -c <type>/<slug>` off `master`, **always paired
-   with `git worktree add`** so concurrent streams never share a checkout (`fix/`, `feat/`,
-   `doc/`, `refactor/`). Do the edits in the worktree; remove it (with permission) when done.
-   **Running parallel agents makes this mandatory:** a shared checkout lets one agent's
-   commit/push race another's inspection. Even when you can't use a worktree, re-check
-   `git status` immediately before committing, stage **explicit pathspecs only** (never a blind
-   `git add -A` / `git commit -a`), and never commit, revert, or discard changes you did not
-   make — stop and surface unexpected edits instead.
-4. **Implement.** Use plan mode for multi-file or architectural changes so the approach is
-   approved before commits land; drop to plain edits for trivial diffs. Honor the path-scoped
-   rules in `.claude/rules/` that auto-load for the files you touch.
-5. **Push → draft PR early.** A PR needs ≥1 commit: push a scaffolding commit and open a **draft
-   PR** so CI + the Read the Docs preview run while you build. (Push needs §0 go-ahead.)
-6. **Automated review gate.** Run `/review` (PR diff) and `/security-review` (vulnerability scan).
-   The quality gates in the canonical doc's table must be green first. **Never merge red** — these
-   gate the human review, they do not replace it.
-7. **Refine on the same branch.** Push more commits; the PR and RTD preview update automatically.
-8. **Keep current.** Periodically merge `master` → branch. Good fit for `/schedule`: an auto-**sync**
-   each morning. A scheduled job **syncs only** — it must never resolve conflicts or merge a branch
-   to `master` unattended; it just flags you.
-9. **Arm auto-merge.** Once step-6 is green and you've read the RTD preview + PR diff, enable
-   GitHub-native auto-merge: `gh pr merge --auto --squash`. GitHub merges the moment every required
-   check passes and the branch is conflict-free, so **"never merge red" still holds** — a red check
-   blocks the merge instead of completing it. Skip `--auto` and merge manually for a hard human gate.
-   *Arming auto-merge is a publish action → needs §0 go-ahead.*
-10. **Auto-fix red CI (fix-forward loop).** If GitHub Actions reports a failure (armed or not):
-    - `gh run watch` to follow live, or `gh run view --log-failed` for the failing logs.
-    - **Reproduce locally** before fixing — run the failing gate (see *Local gate commands*).
-    - Fix **forward on the same branch** and push. Armed auto-merge re-arms itself and completes
-      on the green re-run; do not re-issue the merge. Use `gh pr merge --disable-auto` to hold it.
-    - Loop until green. Don't paper over a real failure to force a merge — surface it.
-11. **Delete the branch + worktree.** Plain git, **with permission** (§0).
+Seven steps in three phases. **Full rationale + the quality-gates table live in
+`docs/guides/agentic_engineering.md`** — read it first; this checklist drives it.
+
+**Prepare**
+
+1. **Pick & sharpen the issue.** Optionally `/triage` or `/to-issues` for wording (house style:
+   `docs/guides/issue_style_guide.rst`); `/github-issue-handoff` for a prioritized "what next?" plan.
+2. **`/grill-with-docs`** — sharpen the spec against the *live* codebase and refresh `CONTEXT.md` /
+   ADRs **before any code**. Don't skip on anything non-trivial. (`/init` only bootstraps codebase
+   docs when `CONTEXT.md` is missing — not a substitute for the adversarial spec-vs-reality pass.)
+3. **Branch + isolated worktree.** `git switch -c <type>/<slug>` off `master`, **always paired with
+   `git worktree add`** (`fix/`, `feat/`, `doc/`, `refactor/`) so concurrent streams never share a
+   checkout. Even in a shared checkout, re-check `git status` before committing, stage **explicit
+   pathspecs only** (never a blind `git add -A` / `git commit -a`), and never commit, revert, or
+   discard changes you did not make — stop and surface unexpected edits instead.
+
+**Build**
+
+4. **Implement + open a draft PR early.** Plan mode for multi-file / architectural changes (approve
+   the approach before commits land); plain edits for trivial diffs. Honor the auto-loaded
+   `.claude/rules/` for the files you touch. A PR needs ≥1 commit: push a scaffolding commit and open
+   a **draft PR** so CI + the RTD preview run while you keep pushing to refine. (Push → §0 go-ahead.)
+   **Before a substantive push, run the fast local unit gate** (`pytest tests -m "not regression" -x
+   -n auto -c tests/pytest.ini`) — far faster than a red-CI round-trip. **No change is done until you
+   walk the Ripple checklist below** — the code edit usually lands with its mirrors *in the same PR*.
+5. **Automated review gate.** Run `/review` (PR diff) + `/security-review` (vulnerability scan); for a
+   substantial diff also `/code-review high` (or `ultra` for the deep cloud review) + `/simplify`, and
+   `/docstrings` when public API or docstrings change. The canonical doc's quality gates must be green.
+   **Never merge red** — these gate the human review, they do not replace it. *Meanwhile:* periodically
+   sync `master` → branch (`/schedule` fits) — **sync only**, never resolve conflicts or merge to
+   `master` unattended; it just flags you.
+
+**Merge & clean up**
+
+6. **Arm auto-merge; fix-forward on red.** Once green and you've read the RTD preview + PR diff:
+   `gh pr merge --auto --squash` (*a publish action → §0 go-ahead*). GitHub merges only on all-green
+   + conflict-free, so *never merge red* holds. On red CI: `gh run watch` / `gh run view --log-failed`
+   → **reproduce locally** (see *Local gate commands*) → fix **forward on the same branch** and push;
+   armed auto-merge re-arms and completes on the green re-run. `gh pr merge --disable-auto` to hold;
+   skip `--auto` for a hard human gate. Don't paper over a real failure to force a merge — surface it.
+7. **Clean up — gated on merge + a green `master` (with permission, §0).** Trigger off **merge
+   state, not a CI run**: wait until `gh pr view <n> --json state,mergedAt` shows `MERGED`, then
+   let the push-triggered `master` workflows pass (confirms the squash is clean). An intervening
+   push from any session just re-runs checks; armed auto-merge waits for the new green, so the
+   trigger survives. Confirm no work is lost (`git branch --merged master` lists it; worktree
+   `git status --porcelain` empty), then `git switch master` → `git worktree remove <path>`
+   (uncommitted work needs `--force` → also permission) → `git worktree prune` →
+   `git branch -d <branch>`; remote head branch auto-deletes on squash-merge if the repo setting
+   is on, else `git push origin --delete <branch>` (push → §0). A scheduled/unattended job may
+   *flag* "ready to clean up" but never deletes on its own (§0).
+
+## Ripple checklist (no change is done until its mirrors are in sync)
+
+A code edit almost always lands with its mirrors **in the same PR** (tutorials may trail, but never
+a different release). The package is heavily cross-referenced and meta-tested, so walk this when you
+touch code — full rationale + exact paths are in the guide's *Propagate every change* section:
+
+- **Docstrings** (numpydoc; citations → `references.rst`) — `/docstrings`, now blocking CI.
+- **Public API** — `aaanalysis/__init__.py` `__all__` (CONFIRM-FIRST); API ref + autosummary follow.
+- **Examples** — `examples/<abbr>_<method>.ipynb` (one per method, included in the docstring); cover
+  every param, re-run with executed outputs.
+- **Tutorials** — `tutorials/*.ipynb`; **Protocols** — `protocols/protocol<N>_*.ipynb` (workflow changes).
+- **Tests** — the change's unit tests **+** cross-file meta-tests: `test_param_coverage.py`,
+  `test_class_abbreviation_registry.py`, backend-import-hygiene, extras/stub parity.
+- **Cheat sheet** — `docs/_cheatsheet/content.py` (single source → regen html/pdf; public symbols only).
+- **Tables** — `docs/source/index/tables*.rst` via `create_tables_doc.py` (scales/datasets changes).
+- **Release notes** — `docs/source/index/release_notes.rst` (the changelog; *Unreleased* section).
+- **Contributing** — `CONTRIBUTING.rst` **+** its port `docs/source/index/CONTRIBUTING_COPY.rst`.
+- **Glossary / ADRs** — `CONTEXT.md`; `docs/adr/NNNN-*.md`. **Conventions** — `CLAUDE.md` / `.claude/rules/*`.
+- **Build / deps** — `pyproject.toml` / `config.py` (both CONFIRM-FIRST).
+
+Most surface late (stale cheat sheet, red meta-test, wrong RTD render), not in the fast unit job.
 
 ## Local gate commands (reproduce CI before fixing)
 
@@ -81,7 +114,9 @@ pytest --nbmake --nbmake-timeout=120 examples/ tutorials/               # Notebo
 ```
 
 `/docstrings` runs the docstring checkers (`check_docstrings.py`, `doc_signature_drift.py`,
-`check_example_notebooks.py`) — a local gate, not yet a CI job.
+`check_example_notebooks.py`). The first two are **blocking CI** in `codeql_analysis.yml`
+("code-quality" job); `check_example_notebooks` runs there **advisory (non-blocking)** until the
+remaining notebook param-coverage gaps are cleared. All three also run locally via this skill.
 
 ## Notes
 

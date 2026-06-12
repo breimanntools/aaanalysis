@@ -59,3 +59,13 @@ jobs:
 
     - name: Run mypy (check static typing)
       run: mypy aaanalysis/__init__.py --follow-imports=skip
+
+    - name: Check docstring house style
+      run: python .claude/skills/docstrings/scripts/check_docstrings.py
+
+    - name: Check doc/signature drift
+      run: python .claude/skills/docstrings/scripts/doc_signature_drift.py
+
+    - name: Check example-notebook parameter coverage (advisory, non-blocking)
+      continue-on-error: true
+      run: python .claude/skills/docstrings/scripts/check_example_notebooks.py
