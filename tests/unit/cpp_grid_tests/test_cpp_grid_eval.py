@@ -25,6 +25,15 @@ def _grid_after_run(n=10, n_filter=(10, 25)):
     return grid
 
 
+@pytest.fixture(scope="module")
+def grid_default():
+    """One default CPPGrid (n=10, n_filter=(10, 25)), run once and shared across the
+    read-only eval tests. ``eval`` is non-mutating (it only reads ``df_params_`` /
+    ``list_df_feat_`` and returns a fresh frame), so a single post-run grid is safe to
+    reuse — this collapses ~13 redundant ``grid.run()`` calls into one per worker."""
+    return _grid_after_run(n=10, n_filter=(10, 25))
+
+
 # Normal cases ---------------------------------------------------------
 class TestCPPGridEval:
     """Positive and parameter-level negative tests for eval."""
@@ -32,53 +41,44 @@ class TestCPPGridEval:
     def test_is_tool_subclass(self):
         assert issubclass(CPPGrid, Tool)
 
-    def test_returns_dataframe(self):
-        grid = _grid_after_run()
-        assert isinstance(grid.eval(), pd.DataFrame)
+    def test_returns_dataframe(self, grid_default):
+        assert isinstance(grid_default.eval(), pd.DataFrame)
 
-    def test_one_row_per_config(self):
-        grid = _grid_after_run()
-        assert len(grid.eval()) == len(grid.df_params_)
+    def test_one_row_per_config(self, grid_default):
+        assert len(grid_default.eval()) == len(grid_default.df_params_)
 
-    def test_has_quality_columns(self):
-        grid = _grid_after_run()
-        df_eval = grid.eval()
+    def test_has_quality_columns(self, grid_default):
+        df_eval = grid_default.eval()
         for col in (ut.COL_AVG_ABS_AUC, "avg_abs_mean_dif", "n_features"):
             assert col in df_eval.columns
 
-    def test_keeps_param_columns(self):
-        grid = _grid_after_run()
-        df_eval = grid.eval()
+    def test_keeps_param_columns(self, grid_default):
+        df_eval = grid_default.eval()
         assert "n_filter" in df_eval.columns
 
-    def test_sorted_best_first_by_auc(self):
-        grid = _grid_after_run()
-        df_eval = grid.eval(sort_by=ut.COL_AVG_ABS_AUC)
+    def test_sorted_best_first_by_auc(self, grid_default):
+        df_eval = grid_default.eval(sort_by=ut.COL_AVG_ABS_AUC)
         vals = df_eval[ut.COL_AVG_ABS_AUC].dropna().to_list()
         assert vals == sorted(vals, reverse=True)
 
-    def test_index_maps_to_list_df_feat(self):
-        grid = _grid_after_run()
-        df_eval = grid.eval()
+    def test_index_maps_to_list_df_feat(self, grid_default):
+        df_eval = grid_default.eval()
         i = df_eval.index[0]
-        assert grid.list_df_feat_[i] is not None
+        assert grid_default.list_df_feat_[i] is not None
 
-    def test_avg_abs_auc_matches_manual_mean(self):
-        grid = _grid_after_run()
-        df_eval = grid.eval()
+    def test_avg_abs_auc_matches_manual_mean(self, grid_default):
+        df_eval = grid_default.eval()
         i = df_eval.index[0]
-        expected = float(grid.list_df_feat_[i][ut.COL_ABS_AUC].mean())
+        expected = float(grid_default.list_df_feat_[i][ut.COL_ABS_AUC].mean())
         assert np.isclose(df_eval.loc[i, ut.COL_AVG_ABS_AUC], expected)
 
-    def test_n_features_matches_len(self):
-        grid = _grid_after_run()
-        df_eval = grid.eval()
+    def test_n_features_matches_len(self, grid_default):
+        df_eval = grid_default.eval()
         i = df_eval.index[0]
-        assert df_eval.loc[i, "n_features"] == len(grid.list_df_feat_[i])
+        assert df_eval.loc[i, "n_features"] == len(grid_default.list_df_feat_[i])
 
-    def test_ascending_override(self):
-        grid = _grid_after_run()
-        df_eval = grid.eval(sort_by=ut.COL_AVG_ABS_AUC, ascending=True)
+    def test_ascending_override(self, grid_default):
+        df_eval = grid_default.eval(sort_by=ut.COL_AVG_ABS_AUC, ascending=True)
         vals = df_eval[ut.COL_AVG_ABS_AUC].dropna().to_list()
         assert vals == sorted(vals)
 
@@ -89,29 +89,25 @@ class TestCPPGridEval:
         with pytest.raises(RuntimeError):
             grid.eval()
 
-    def test_invalid_sort_by_column(self):
-        grid = _grid_after_run()
+    def test_invalid_sort_by_column(self, grid_default):
         with pytest.raises(ValueError):
-            grid.eval(sort_by="does_not_exist")
+            grid_default.eval(sort_by="does_not_exist")
 
-    def test_invalid_sort_by_type(self):
-        grid = _grid_after_run()
+    def test_invalid_sort_by_type(self, grid_default):
         with pytest.raises(ValueError):
-            grid.eval(sort_by=123)
+            grid_default.eval(sort_by=123)
 
 
 # Combinations ---------------------------------------------------------
 class TestCPPGridEvalComplex:
     """Combinations and edge interactions for eval."""
 
-    def test_run_sets_attributes(self):
-        grid = _grid_after_run()
-        assert grid.df_params_ is not None and grid.list_df_feat_ is not None
+    def test_run_sets_attributes(self, grid_default):
+        assert grid_default.df_params_ is not None and grid_default.list_df_feat_ is not None
 
-    def test_best_feature_table_accessible(self):
-        grid = _grid_after_run()
-        df_eval = grid.eval()
-        best = grid.list_df_feat_[df_eval.index[0]]
+    def test_best_feature_table_accessible(self, grid_default):
+        df_eval = grid_default.eval()
+        best = grid_default.list_df_feat_[df_eval.index[0]]
         assert isinstance(best, pd.DataFrame) and ut.COL_ABS_AUC in best.columns
 
     def test_single_config_eval(self):
@@ -121,9 +117,8 @@ class TestCPPGridEvalComplex:
         df_eval = grid.eval()
         assert len(df_eval) == 1
 
-    def test_sort_by_n_features_ascending_default(self):
-        grid = _grid_after_run()
-        df_eval = grid.eval(sort_by="n_features")
+    def test_sort_by_n_features_ascending_default(self, grid_default):
+        df_eval = grid_default.eval(sort_by="n_features")
         vals = df_eval["n_features"].dropna().to_list()
         assert vals == sorted(vals)
 

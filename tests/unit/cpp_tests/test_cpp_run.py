@@ -356,3 +356,108 @@ class TestCPPRunProperties:
         s1 = set(cpp.run(labels=labels, n_filter=15, n_jobs=1)["feature"])
         s2 = set(cpp.run(labels=labels, n_filter=15, n_jobs=2)["feature"])
         assert s1 == s2
+
+
+def _run_num_args(n=6, d=4):
+    """Build (df_parts, dict_num_parts, df_scales, df_cat, labels) for run_num."""
+    import numpy as np
+    import aaanalysis.utils as ut
+    seqs = ["ACDEFGHIKLMNPQRSTVWY" * 3, "MKTAYIAKQRQISFVKSHFSRQ" * 3,
+            "GAVLIMFWPSTCYNQDEKRHG" * 3, "LLLLLKKKKKDDDDDEEEEEAA" * 3,
+            "WYWYWYWYWYWYWYWYWYWY" * 3, "QQQQQNNNNNSSSSSTTTTTT" * 3][:n]
+    df_seq = pd.DataFrame({"entry": [f"P{i}" for i in range(n)], "sequence": seqs})
+    df_seq["tmd_start"] = 11
+    df_seq["tmd_stop"] = df_seq["sequence"].str.len() - 10
+    rng = np.random.default_rng(0)
+    dict_num = {e: rng.random((len(s), d)) for e, s in zip(df_seq["entry"], df_seq["sequence"])}
+    nf = aa.NumericalFeature()
+    df_parts, dict_num_parts = nf.get_parts(df_seq=df_seq, dict_num=dict_num, jmd_n_len=10, jmd_c_len=10)
+    df_scales = pd.DataFrame(rng.random((20, d)), index=list(ut.LIST_CANONICAL_AA),
+                             columns=[f"d{i}" for i in range(d)])
+    df_cat = pd.DataFrame({"scale_id": [f"d{i}" for i in range(d)], "category": ["X"] * d,
+                           "subcategory": ["x"] * d, "scale_name": [f"d{i}" for i in range(d)],
+                           "scale_description": ["d"] * d})
+    labels = [1] * (n // 2) + [0] * (n - n // 2)
+    return df_parts, dict_num_parts, df_scales, df_cat, labels
+
+
+class TestCPPRunBatchBranches:
+    """Branch coverage for the scale-batched / sample-batched / numerical-batched
+    orchestrators behind CPP.run / CPP.run_num — exercises the per-batch verbose
+    progress arms (which only execute under verbose=True) and the batched output
+    invariants. These orchestrators are otherwise only reached via the n_batches /
+    n_sample_batches parameters."""
+
+    def test_scale_batched_verbose_progress(self):
+        # Drives cpp_run_batch's per-batch verbose progress branches.
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=8)
+        labels = df_seq["label"].to_list()
+        df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq)
+        df_scales = aa.load_scales(top60_n=20).T.head(6).T
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, verbose=True)
+        df_feat = cpp.run(labels=labels, n_filter=10, n_jobs=1, n_batches=3)
+        assert isinstance(df_feat, pd.DataFrame)
+        assert len(df_feat) == 10
+
+    def test_scale_batched_matches_single_pass(self):
+        # Batched and single-pass select the same feature set (output invariant).
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=8)
+        labels = df_seq["label"].to_list()
+        df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq)
+        df_scales = aa.load_scales(top60_n=20).T.head(6).T
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, verbose=False)
+        df_single = cpp.run(labels=labels, n_filter=10, n_jobs=1)
+        df_batch = cpp.run(labels=labels, n_filter=10, n_jobs=1, n_batches=3)
+        assert set(df_single["feature"]) == set(df_batch["feature"])
+
+    def test_sample_batched_verbose_progress(self):
+        # Drives cpp_run_sample_batched's pass-1 / pass-2 verbose progress branches.
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=8)
+        labels = df_seq["label"].to_list()
+        df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq)
+        df_scales = aa.load_scales(top60_n=20).T.head(6).T
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, verbose=True)
+        df_feat = cpp.run(labels=labels, n_filter=10, n_jobs=1, n_sample_batches=2)
+        assert isinstance(df_feat, pd.DataFrame)
+        assert len(df_feat) == 10
+
+    def test_sample_batched_max_batches_equals_n_samples(self):
+        # n_sample_batches == n_samples -> batch_size 1, every batch non-empty.
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=6)
+        labels = df_seq["label"].to_list()
+        df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq)
+        df_scales = aa.load_scales(top60_n=20).T.head(5).T
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, verbose=False)
+        df_feat = cpp.run(labels=labels, n_filter=8, n_jobs=1, n_sample_batches=len(df_parts))
+        assert isinstance(df_feat, pd.DataFrame)
+        assert len(df_feat) > 0
+
+    def test_run_num_scale_batched_verbose_progress(self):
+        # Drives cpp_run_batch_num's per-D-batch verbose progress branches.
+        dp, dnp, dsc, dca, labels = _run_num_args()
+        cpp = aa.CPP(df_parts=dp, df_scales=dsc, df_cat=dca, verbose=True)
+        df_feat = cpp.run_num(dict_num_parts=dnp, labels=labels, n_filter=3, n_jobs=1, n_batches=2)
+        assert isinstance(df_feat, pd.DataFrame)
+        assert len(df_feat) == 3
+
+    def test_run_num_scale_batched_matches_single_pass(self):
+        # Numerical batched path is bit-exact with the single-pass numerical path.
+        dp, dnp, dsc, dca, labels = _run_num_args()
+        cpp = aa.CPP(df_parts=dp, df_scales=dsc, df_cat=dca, verbose=False)
+        df_single = cpp.run_num(dict_num_parts=dnp, labels=labels, n_filter=3, n_jobs=1)
+        df_batch = cpp.run_num(dict_num_parts=dnp, labels=labels, n_filter=3, n_jobs=1, n_batches=2)
+        assert set(df_single["feature"]) == set(df_batch["feature"])
+
+    def test_scale_batched_verbose_multi_split_types(self):
+        # Verbose batched run across all three split types exercises the per-batch
+        # progress arms with a richer split_kws.
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=6)
+        labels = df_seq["label"].to_list()
+        df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq, list_parts=["tmd_jmd"])
+        df_scales = aa.load_scales(top60_n=20).T.head(4).T
+        split_kws = aa.SequenceFeature().get_split_kws(
+            split_types=["Segment", "PeriodicPattern"], n_split_min=1, n_split_max=3)
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws, verbose=True)
+        df_feat = cpp.run(labels=labels, n_filter=8, n_jobs=1, n_batches=2)
+        assert isinstance(df_feat, pd.DataFrame)
+        assert len(df_feat) > 0

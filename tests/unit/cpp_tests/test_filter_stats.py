@@ -281,3 +281,38 @@ class TestFilterStatsSampleBatched:
         with warnings.catch_warnings():
             warnings.simplefilter("error", RuntimeWarning)
             cpp.run(labels=_labels(), n_filter=5, n_jobs=1, n_sample_batches=2)
+
+
+class TestFilterStatsAcceptGaps:
+    """The accept_gaps=True arms of the pre-filter / finalize stages, which drop
+    features with a NaN abs_mean_dif (from a fully-gapped split). Driven through
+    a gapped df_parts so the NaN mask actually has something to remove."""
+
+    def test_sample_batched_accept_gaps_finalize(self):
+        # cpp_run_sample_batched -> finalize_stats with accept_gaps=True exercises
+        # the NaN-mask arm on the accumulator-combined stats.
+        cpp = aa.CPP(df_parts=_gapped_df_parts(), accept_gaps=True)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df_feat = cpp.run(labels=[1, 1, 0, 0], n_filter=3, n_jobs=1, n_sample_batches=2)
+        assert isinstance(df_feat, pd.DataFrame)
+        assert set(cpp.last_filter_stats_) == _STATS_KEYS
+
+    def test_single_pass_accept_gaps_run(self):
+        # Single-pass accept_gaps=True over a gapped df_parts exercises the
+        # streaming-stats NaN mask + the add-stat p-value NaN handling.
+        cpp = aa.CPP(df_parts=_gapped_df_parts(), accept_gaps=True)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df_feat = cpp.run(labels=[1, 1, 0, 0], n_filter=3, n_jobs=1)
+        assert isinstance(df_feat, pd.DataFrame)
+        assert len(df_feat) > 0
+
+    def test_scale_batched_accept_gaps_run(self):
+        # Scale-batched accept_gaps=True path (cpp_run_batch) over a gapped df_parts.
+        cpp = aa.CPP(df_parts=_gapped_df_parts(), accept_gaps=True)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df_feat = cpp.run(labels=[1, 1, 0, 0], n_filter=3, n_jobs=1, n_batches=2)
+        assert isinstance(df_feat, pd.DataFrame)
+        assert set(cpp.last_filter_stats_) == _STATS_KEYS
