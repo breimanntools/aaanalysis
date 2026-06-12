@@ -39,6 +39,26 @@ def check_aal_kws(aal_kws=None, df_logo=None, df_logo_info=None):
             "precomputed 'df_logo'/'df_logo_info', not both.")
 
 
+def check_list_aal_kws(list_aal_kws=None, list_df_logo=None):
+    """Check list_aal_kws is a list of dicts not combined with given list_df_logo."""
+    if list_aal_kws is None:
+        return
+    if not isinstance(list_aal_kws, list) or len(list_aal_kws) == 0:
+        raise ValueError(
+            f"'list_aal_kws' ({list_aal_kws}) should be a non-empty list of "
+            f"dictionaries, one per logo, holding 'AAlogo.get_df_logo' arguments.")
+    for i, aal_kws in enumerate(list_aal_kws):
+        if not isinstance(aal_kws, dict):
+            raise ValueError(
+                f"'list_aal_kws[{i}]' ({aal_kws}) should be a dictionary of "
+                f"'AAlogo.get_df_logo' keyword arguments.")
+    if list_df_logo is not None:
+        raise ValueError(
+            "'list_aal_kws' is mutually exclusive with 'list_df_logo': provide either "
+            "'list_aal_kws' (logo data computed internally) or precomputed "
+            "'list_df_logo', not both.")
+
+
 def check_list_df_logo(list_df_logo=None):
     """Check that list_df_logo is a non-empty list of valid logo DataFrames."""
     if not isinstance(list_df_logo, list) or len(list_df_logo) == 0:
@@ -388,7 +408,8 @@ class AAlogoPlot:
         return fig, axes
 
     def multi_logo(self,
-                   list_df_logo: List[pd.DataFrame] = None,
+                   list_df_logo: Optional[List[pd.DataFrame]] = None,
+                   list_aal_kws: Optional[List[dict]] = None,
                    target_p1_site: Optional[int] = None,
                    figsize_per_logo: Tuple[Union[int, float], Union[int, float]] = (8, 3),
                    fontsize_labels: Optional[Union[int, float]] = None,
@@ -423,8 +444,22 @@ class AAlogoPlot:
 
         Parameters
         ----------
-        list_df_logo : list of pd.DataFrame, each shape (n_positions, n_amino_acids)
+        list_df_logo : list of pd.DataFrame, each shape (n_positions, n_amino_acids), optional
             List of logo matrices, one per group. All must have the same number of positions.
+            Required unless ``list_aal_kws`` is given, in which case it is computed
+            internally and must be ``None``.
+        list_aal_kws : list of dict, optional
+            Convenience shortcut that lets you skip the manual :class:`AAlogo` step for each
+            group. If provided, ``AAlogoPlot`` internally instantiates :class:`AAlogo` (using
+            this plot's ``logo_type``) and computes one ``df_logo`` per dict via
+            :meth:`AAlogo.get_df_logo`, producing ``list_df_logo``. Each dict holds the
+            :meth:`AAlogo.get_df_logo` keyword arguments for that group, e.g.
+            ``df_parts``, ``labels``, ``label_test``, ``tmd_len``, ``start_n``,
+            ``characters_to_ignore``, and ``pseudocount`` (typically the same ``df_parts``
+            with a different ``label_test`` per group). It is mutually exclusive with
+            ``list_df_logo`` (passing both raises ``ValueError``). Example:
+            ``list_aal_kws=[dict(df_parts=df_parts, labels=labels, label_test=1),
+            dict(df_parts=df_parts, labels=labels, label_test=0)]``.
         target_p1_site : int, optional
             If set, replaces the standard JMD/TMD x-axis with P-site notation.
         figsize_per_logo : tuple of (int or float), default=(8, 3)
@@ -491,6 +526,10 @@ class AAlogoPlot:
         .. include:: examples/aal_plot_multi_logo.rst
         """
         # Check input
+        check_list_aal_kws(list_aal_kws=list_aal_kws, list_df_logo=list_df_logo)
+        if list_aal_kws is not None:
+            aal = AAlogo(logo_type=self._logo_type)
+            list_df_logo = [aal.get_df_logo(**aal_kws) for aal_kws in list_aal_kws]
         check_list_df_logo(list_df_logo=list_df_logo)
         ut.check_figsize(figsize=figsize_per_logo)
         check_list_name_data(list_name_data=list_name_data, list_df_logo=list_df_logo)

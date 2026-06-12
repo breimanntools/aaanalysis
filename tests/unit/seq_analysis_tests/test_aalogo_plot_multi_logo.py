@@ -429,3 +429,83 @@ class TestMultiLogoPartsLen:
             fig, axes = aal_plot.multi_logo(list_df_logo=list_df_logo)
             assert isinstance(fig, plt.Figure)
             plt.close("all")
+
+
+# Helper for list_aal_kws tests
+def get_df_parts_labels(n=50):
+    """Build df_parts + labels from DOM_GSEC for list_aal_kws-based tests."""
+    sf = aa.SequenceFeature()
+    df_seq = aa.load_dataset(name="DOM_GSEC", n=n)
+    labels = df_seq["label"].values
+    df_parts = sf.get_df_parts(df_seq=df_seq)
+    return df_parts, labels
+
+
+# ===========================================================================
+# XII Test multi_logo: list_aal_kws (internal AAlogo shortcut)
+# ===========================================================================
+class TestMultiLogoListAalKws:
+    """Test multi_logo 'list_aal_kws' convenience parameter."""
+
+    def test_valid_list_aal_kws(self):
+        """Test that list_aal_kws computes list_df_logo internally and plots."""
+        df_parts, labels = get_df_parts_labels()
+        aal_plot = get_aal_plot()
+        list_aal_kws = [dict(df_parts=df_parts, labels=labels, label_test=lt)
+                        for lt in [1, 0]]
+        fig, axes = aal_plot.multi_logo(list_aal_kws=list_aal_kws)
+        assert isinstance(fig, plt.Figure)
+        assert len(axes) == len(list_aal_kws)
+        plt.close("all")
+
+    def test_list_aal_kws_matches_explicit(self):
+        """Test that list_aal_kws path matches the explicit list_df_logo path."""
+        df_parts, labels = get_df_parts_labels()
+        list_aal_kws = [dict(df_parts=df_parts, labels=labels, label_test=lt)
+                        for lt in [1, 0]]
+        list_df_logo = [aa.AAlogo().get_df_logo(**kws) for kws in list_aal_kws]
+        fig_a, axes_a = get_aal_plot().multi_logo(list_df_logo=list_df_logo)
+        fig_b, axes_b = get_aal_plot().multi_logo(list_aal_kws=list_aal_kws)
+        assert isinstance(fig_a, plt.Figure) and isinstance(fig_b, plt.Figure)
+        assert len(axes_a) == len(axes_b)
+        plt.close("all")
+
+    def test_list_aal_kws_respects_logo_type(self):
+        """Test that the plot's logo_type is used when computing logos via list_aal_kws."""
+        df_parts, labels = get_df_parts_labels()
+        list_aal_kws = [dict(df_parts=df_parts, labels=labels, label_test=lt)
+                        for lt in [1, 0]]
+        for logo_type in ["probability", "counts", "weight", "information"]:
+            aal_plot = get_aal_plot(logo_type=logo_type)
+            fig, axes = aal_plot.multi_logo(list_aal_kws=list_aal_kws)
+            assert isinstance(fig, plt.Figure)
+            plt.close("all")
+
+    def test_invalid_list_aal_kws_not_list(self):
+        """Test that a non-list list_aal_kws raises ValueError."""
+        aal_plot = get_aal_plot()
+        for list_aal_kws in ["invalid", 1, {"df_parts": 1}]:
+            with pytest.raises(ValueError):
+                aal_plot.multi_logo(list_aal_kws=list_aal_kws)
+
+    def test_invalid_list_aal_kws_empty(self):
+        """Test that an empty list_aal_kws raises ValueError."""
+        aal_plot = get_aal_plot()
+        with pytest.raises(ValueError):
+            aal_plot.multi_logo(list_aal_kws=[])
+
+    def test_invalid_list_aal_kws_element_not_dict(self):
+        """Test that a non-dict element in list_aal_kws raises ValueError."""
+        aal_plot = get_aal_plot()
+        with pytest.raises(ValueError):
+            aal_plot.multi_logo(list_aal_kws=["not-a-dict"])
+
+    def test_invalid_list_aal_kws_with_list_df_logo(self):
+        """Test that combining list_aal_kws with list_df_logo raises ValueError."""
+        df_parts, labels = get_df_parts_labels()
+        list_df_logo = get_list_df_logo()
+        list_aal_kws = [dict(df_parts=df_parts, labels=labels, label_test=lt)
+                        for lt in [1, 0]]
+        aal_plot = get_aal_plot()
+        with pytest.raises(ValueError):
+            aal_plot.multi_logo(list_df_logo=list_df_logo, list_aal_kws=list_aal_kws)
