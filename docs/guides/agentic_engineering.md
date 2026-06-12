@@ -8,7 +8,7 @@ not committed.
 
 ## Workflow
 
-Seven steps in three phases. Phases group the work; within the Build phase you iterate, so the
+Eight steps in three phases. Phases group the work; within the Build phase you iterate, so the
 order there is natural rather than rigid. The full rationale lives in this section; the
 `agentic-engineering` skill carries a one-line-per-step checklist that points back here.
 
@@ -46,18 +46,40 @@ order there is natural rather than rigid. The full rationale lives in this secti
    branch or an early conflict warning). **A scheduled job syncs only — it must never resolve
    conflicts or merge a branch to `master` unattended; it just flags you.**
 
-### Merge & clean up
+### Review, merge & clean up
 
-6. **Arm auto-merge; fix-forward on red.** Once the review is green and you've read the RTD
-   preview + PR diff, enable GitHub-native auto-merge: `gh pr merge --auto --squash`. GitHub
-   merges the moment every required check passes and the branch is conflict-free, so **"never
-   merge red" still holds** — a red check blocks the merge instead of completing it. If CI goes
-   red, pull the failing logs (`gh run view --log-failed`, or `gh run watch` to follow live),
-   reproduce locally, and fix **forward on the same branch**; armed auto-merge re-arms itself and
-   completes on the green re-run. Disarm with `gh pr merge --disable-auto` to hold the PR, or skip
-   `--auto` for a hard human gate. Arming auto-merge is a publish action → needs the per-action
+6. **Human review gate — stop and let the user choose.** After the push lands and the GitHub
+   Actions are running (confirm with `gh pr checks <n>` / `gh run list --branch <branch>`), do
+   **not** advance to merge on your own. This is a deliberate checkpoint for human judgement on the
+   *content* of the change — distinct from, and on top of, the automated gates in step 5 and CI,
+   which independently enforce *never merge red*. Surface the fork explicitly and **wait for the
+   user's decision**:
+
+   - **(a) Manual PR review — iterate.** The user reviews the PR diff on GitHub and leaves comments.
+     Address **each** comment by refactoring **forward on the same branch** (honor the *Propagate
+     every change* ripple checklist and the auto-loaded `.claude/rules/`), re-run the fast local
+     gate, push (*each re-push is a publish action → §0 go-ahead*), and report back what changed per
+     comment. Then **loop**: wait for the next round of comments and repeat the *review → refactor →
+     push* cycle. Stay in the loop until the user explicitly signals the review is complete (e.g.
+     "merge it" / "looks good" / "skip further review") — only then proceed to step 7. Each re-push
+     re-triggers CI, and any armed auto-merge simply waits for the new green, so iterating never
+     races the merge.
+   - **(b) Skip review — merge + clean up.** The user opts out of a manual pass; proceed straight to
+     step 7.
+
+   Recommend (a) for substantial or architectural diffs and (b) for trivial ones, but **never
+   assume the answer — the user picks.** Holding here is also why the draft PR + CI run early
+   (step 4): the user can review against a green, RTD-previewed PR rather than a moving target.
+7. **Arm auto-merge; fix-forward on red.** Once the user has cleared the review gate (step 6) and
+   you've read the RTD preview + PR diff, enable GitHub-native auto-merge: `gh pr merge --auto
+   --squash`. GitHub merges the moment every required check passes and the branch is conflict-free,
+   so **"never merge red" still holds** — a red check blocks the merge instead of completing it. If
+   CI goes red, pull the failing logs (`gh run view --log-failed`, or `gh run watch` to follow
+   live), reproduce locally, and fix **forward on the same branch**; armed auto-merge re-arms itself
+   and completes on the green re-run. Disarm with `gh pr merge --disable-auto` to hold the PR, or
+   skip `--auto` for a hard human gate. Arming auto-merge is a publish action → needs the per-action
    go-ahead in root `CLAUDE.md` §0.
-7. **Clean up — gated on merge + a green `master`.** Key cleanup off the **merge state, never a
+8. **Clean up — gated on merge + a green `master`.** Key cleanup off the **merge state, never a
    single CI run**: once `gh pr view <n> --json state,mergedAt` shows `MERGED`, let the
    push-triggered workflows on `master` run and **wait for them to pass** — that confirms the
    squash didn't break anything the branch CI couldn't see (master may have moved under it). An
