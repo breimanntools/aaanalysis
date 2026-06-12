@@ -9,15 +9,16 @@
 
 {%- macro footer(label) -%}
 <div class="footer-bar"><span><b>AAanalysis</b> · {{ label }}</span>
-  <span class="r">{{ m.docs_url }} · {{ m.version }} · {{ m.date }}</span></div>
+  <span class="r"><a class="docs-link" href="https://{{ m.docs_url }}">{{ m.docs_url }}</a> · {{ m.version }} · {{ m.date }}</span></div>
 {%- endmacro -%}
 
 {%- macro family(F) -%}
 <div class="sec">
-  <div class="sec-h"><span>{{ F.name }}{% if F.under_construction %} <span class="uc">(planned)</span>{% endif %}</span><span class="hint">{{ F.tag }}</span></div>
+  <div class="sec-h"><span>{{ F.name }}{% if F.under_construction %} <span class="uc">(to be extended)</span>{% endif %}{% if F.new %} <span class="uc new">v1.1</span>{% endif %}</span><span class="hint">{{ F.tag }}</span></div>
   <div class="sec-body">
     {% for what, sym, code in F['rows'] %}
-    <div class="cap-item"><span class="cw">{{ what }}</span><span class="cs">{{ sym }}</span></div>
+    {% set _fn = sym.split(' → ')[0] %}{% set _out = sym.split(' → ')[1:] %}
+    <div class="cap-item"><span class="cw">{{ what }}</span><span class="cs">{{ _fn }}{% if _out %} → <span class="out">{{ _out|join(' → ') }}</span>{% endif %}</span></div>
     {% endfor %}
   </div>
 </div>
@@ -28,7 +29,27 @@
   <div class="sec-h"><span>{{ R.cls }}</span><span class="hint">{{ R.tag }}</span></div>
   <div class="sec-body">
     <pre class="code">{{ R.code|hl }}</pre>
-    {% if R.img %}<img class="recipe-img{{ ' big' if R.big }}" src="{{ img_base }}{{ R.img }}.png" alt="{{ R.cls }} output">{% endif %}
+    {% if R.imgs %}<div class="pair-imgs" style="--ph:{{ R.h }}mm">
+      {% for im in R.imgs %}<figure><img class="pair-img" src="{{ img_base }}{{ im }}.png" alt="{{ R.cls }}"><figcaption>{{ R.img_labels[loop.index0] }}</figcaption></figure>{% endfor %}
+    </div>{% elif R.img %}<img class="recipe-img{{ ' big' if R.big }}{{ ' logo' if R.logo }}" src="{{ img_base }}{{ R.img }}.png" alt="{{ R.cls }} output">{% endif %}
+  </div>
+</div>
+{%- endmacro -%}
+
+{# a PAIR: two code boxes stacked, then both figures side-by-side in ONE row at a
+   shared height G.h (mm) so the two plots are exactly the same height. #}
+{%- macro recipe_pair(G) -%}
+{%- set L = G.recipes[0] -%}{%- set R = G.recipes[1] -%}
+<div class="sec pairsec">
+  <div class="sec-h"><span>{{ L.cls }}</span><span class="hint">{{ L.tag }}</span></div>
+  <div class="sec-body"><pre class="code">{{ L.code|hl }}</pre>
+    <div class="pair-note">▼ figure below · left</div></div>
+  <div class="sec-h"><span>{{ R.cls }}</span><span class="hint">{{ R.tag }}</span></div>
+  <div class="sec-body"><pre class="code">{{ R.code|hl }}</pre>
+    <div class="pair-note">▼ figure below · right</div></div>
+  <div class="pair-imgs" style="--ph:{{ G.h }}mm">
+    <figure><img class="pair-img" src="{{ img_base }}{{ L.img }}.png" alt="{{ L.cls }}"><figcaption>left</figcaption></figure>
+    <figure><img class="pair-img" src="{{ img_base }}{{ R.img }}.png" alt="{{ R.cls }}"><figcaption>right</figcaption></figure>
   </div>
 </div>
 {%- endmacro -%}
@@ -39,12 +60,17 @@
 
     <div class="title-block">
       <img class="brand-logo" src="{{ logo_base }}logo.png" alt="AAanalysis">
-      <div class="cs">Cheat Sheet</div>
+      <div class="cs">v1.1 Cheat Sheet</div>
       <div class="tagline">{{ m.tagline }}</div>
-      <div class="docs">{{ m.pip }} · {{ m.docs_url }}</div>
+      <div class="docs">{{ m.pip }} · <a class="docs-link" href="https://{{ m.docs_url }}">{{ m.docs_url }}</a></div>
     </div>
 
     <div class="intro">{{ m.intro|safe }}</div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Install · Import · Load</span><span class="hint">core + [pro]</span></div>
+      <div class="sec-body"><pre class="code">{{ c.install|hl }}</pre></div>
+    </div>
 
     <div class="sec">
       <div class="sec-h"><span>The Golden Workflow</span><span class="hint">canonical pipeline</span></div>
@@ -118,7 +144,7 @@
 </section>
 
 {# ===================== PAGE 2 — CAPABILITIES (green) ===================== #}
-<section class="page accent-blue cols3">
+<section class="page accent-blue cols3 wex">
   <div class="cols">
 
     <div class="page-banner">
@@ -126,12 +152,7 @@
       <div class="sub2">tutorial-style code with the figure each call produces</div>
     </div>
 
-    <div class="sec">
-      <div class="sec-h"><span>Install · Import · Load</span><span class="hint">core + [pro]</span></div>
-      <div class="sec-body"><pre class="code">{{ c.install|hl }}</pre></div>
-    </div>
-
-    {% for R in c.flagship_recipes %}{{ recipe(R) }}{% endfor %}
+    {% for G in c.recipe_groups %}{% if G.recipes|length == 1 %}{{ recipe(G.recipes[0]) }}{% else %}{{ recipe_pair(G) }}{% endif %}{% endfor %}
 
   </div>
   {{ footer('tutorial-style worked examples') }}

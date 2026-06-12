@@ -59,19 +59,25 @@ code, pre, .mono { font-family: "AA Mono", Menlo, "DejaVu Sans Mono", monospace;
 
 .cols { column-count: 4; column-gap: 4mm; column-fill: auto; height: 100%; }
 .page.cols3 .cols { column-count: 3; }
+/* worked-examples is plot-dense: trade a hair of code size for bigger figures
+   and footer clearance in the tallest column */
+.page.wex pre.code { font-size: 6.3pt; line-height: 1.18; }
 
 /* ---- section ------------------------------------------------------------- */
-.sec { break-inside: avoid; -webkit-column-break-inside: avoid; margin-bottom: 5px; }
+.sec { break-inside: avoid; -webkit-column-break-inside: avoid; margin-bottom: 2px; }
 .sec-h {
   background: var(--header-bg); color: #fff; font-weight: 800;
-  font-size: 9pt; letter-spacing: .2px; padding: 2.6px 7px; border-radius: 2px;
+  font-size: 9pt; letter-spacing: .2px; padding: 2px 7px; border-radius: 2px;
   display: flex; justify-content: space-between; align-items: baseline; gap: 6px;
 }
 .sec-h > span:first-child { flex: 0 0 auto; white-space: nowrap; }
+.sec-h .uc { font-size: 5.6pt; font-weight: 800; opacity: .8; vertical-align: middle; }
+.sec-h .uc.new { color: #fff; background: var(--accent); opacity: 1;
+                 border-radius: 6px; padding: 0 4px; }
 .sec-h .hint { flex: 0 1 auto; min-width: 0; font-weight: 600; font-size: 6.2pt; opacity: .85;
                font-style: italic; white-space: nowrap; overflow: hidden;
                text-overflow: ellipsis; text-align: right; }
-.sec-body { padding: 3px 1px 0; }
+.sec-body { padding: 2px 1px 0; }
 
 .sub {
   color: var(--accent); font-weight: 800; font-size: 7.7pt;
@@ -84,7 +90,7 @@ code, pre, .mono { font-family: "AA Mono", Menlo, "DejaVu Sans Mono", monospace;
 /* ---- code ---------------------------------------------------------------- */
 pre.code {
   background: var(--code-bg); border-radius: 2px; padding: 3px 5px;
-  font-size: 6.6pt; line-height: 1.34; color: var(--code-ink);
+  font-size: 6.6pt; line-height: 1.2; color: var(--code-ink);
   white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2; margin: 1px 0 2px;
 }
 pre.code .c-cm { color: var(--tok-comment); font-style: italic; }
@@ -93,10 +99,23 @@ pre.code .c-nm { color: var(--tok-name); font-weight: 600; }
 .cap { font-size: 6.2pt; color: var(--ink-faint); font-style: italic; margin: 0 0 2px; }
 
 /* inline output figure rendered directly under a recipe's code */
-.recipe-img { display: block; width: auto; max-width: 100%; max-height: 36mm;
-              margin: 3px auto 1px; border: 1px solid var(--line); border-radius: 2px;
+.recipe-img { display: block; width: auto; max-width: 100%; max-height: 23mm;
+              margin: 2px auto 1px; border: 1px solid var(--line); border-radius: 2px;
               background: #fff; }
-.recipe-img.big { max-height: 46mm; max-width: 100%; }
+.recipe-img.big { max-height: 33mm; max-width: 100%; }
+.recipe-img.logo { max-height: 30mm; }
+
+/* paired recipes: a "see figure left/right" pointer under each code box, then
+   the two figures side-by-side below — together as wide as the code block */
+.pair-note { font-size: 6pt; font-weight: 700; font-style: italic;
+             color: var(--accent); margin: 1px 0 2px; }
+/* both figures in one row, sharing the row height --ph so they are EXACTLY the
+   same height (widths follow each plot's aspect ratio) */
+.pair-imgs { display: flex; gap: 2.5mm; justify-content: center; align-items: flex-end; margin: 3px 0 1px; }
+.pair-imgs figure { flex: 0 1 auto; min-width: 0; margin: 0; text-align: center; }
+.pair-img { display: block; height: var(--ph, 30mm); width: auto; max-width: 100%;
+            border: 1px solid var(--line); border-radius: 2px; background: #fff; }
+.pair-imgs figcaption { font-size: 5.8pt; font-style: italic; color: var(--ink-faint); margin-top: 1px; }
 
 /* ---- key/value & map tables --------------------------------------------- */
 table { width: 100%; border-collapse: collapse; }
@@ -108,11 +127,13 @@ table { width: 100%; border-collapse: collapse; }
 .kv .d.mono { font-family: "AA Mono", monospace; color: var(--code-ink); }
 
 /* capability item: stacked "what" over "symbol" (robust in narrow columns) */
-.cap-item { padding: 1.8px 0; border-bottom: 1px solid var(--line-soft); }
+.cap-item { padding: 0.4px 0; border-bottom: 1px solid var(--line-soft); }
 .cap-item:last-child { border-bottom: none; }
-.cap-item .cw { display: block; font-size: 6.9pt; color: var(--ink-soft); line-height: 1.2; }
+.cap-item .cw { display: block; font-size: 6.9pt; color: var(--ink-soft); line-height: 1.12; }
 .cap-item .cs { display: block; font-family: "AA Mono", monospace; font-size: 6.6pt;
-                color: var(--accent); font-weight: 600; overflow-wrap: anywhere; }
+                color: var(--accent); font-weight: 600; overflow-wrap: anywhere; line-height: 1.15; }
+/* function call stays blue (.cs); the output object (after →) renders black */
+.cap-item .cs .out { color: var(--ink); }
 
 /* ---- title block (page 1) ----------------------------------------------- */
 .title-block { break-inside: avoid; margin-bottom: 6px; }
@@ -120,6 +141,7 @@ table { width: 100%; border-collapse: collapse; }
 .title-block .cs { font-size: 12pt; font-weight: 800; color: var(--ink); font-style: italic; }
 .title-block .tagline { font-size: 7.6pt; color: var(--ink-soft); margin-top: 3px; line-height: 1.3; }
 .title-block .docs { font-size: 7pt; color: var(--accent); font-weight: 700; margin-top: 2px; }
+.docs-link { color: inherit; text-decoration: none; }
 
 /* page banner for pages 2-3 (compact title) */
 .page-banner { break-inside: avoid; margin-bottom: 6px; }
@@ -131,14 +153,14 @@ table { width: 100%; border-collapse: collapse; }
 
 .intro {
   background: var(--accent-soft); border-left: 3px solid var(--accent);
-  border-radius: 2px; padding: 4px 7px; font-size: 7pt; color: var(--ink-soft);
-  line-height: 1.34; break-inside: avoid; margin-bottom: 5px;
+  border-radius: 2px; padding: 3px 7px; font-size: 7pt; color: var(--ink-soft);
+  line-height: 1.28; break-inside: avoid; margin-bottom: 4px;
 }
 .intro b { color: var(--ink); }
 
 /* ---- golden workflow (vertical) ----------------------------------------- */
 .wf-step { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px;
-           padding: 2px 0; border-bottom: 1px solid var(--line-soft); }
+           padding: 1.4px 0; border-bottom: 1px solid var(--line-soft); }
 .wf-step:last-child { border-bottom: none; }
 .wf-step .n { color: #fff; background: var(--accent); font-weight: 800; font-size: 6pt;
               min-width: 11px; height: 11px; border-radius: 50%; text-align: center; line-height: 11px; }
@@ -149,7 +171,7 @@ table { width: 100%; border-collapse: collapse; }
 
 /* ---- prediction levels --------------------------------------------------- */
 .lvl-card { border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 2px;
-            padding: 2px 5px; margin-bottom: 3px; }
+            padding: 1.5px 5px; margin-bottom: 2px; }
 .lvl-card .lh { display: flex; justify-content: space-between; align-items: baseline; }
 .lvl-card .nm { font-weight: 800; font-size: 7.5pt; color: var(--accent); }
 .lvl-card .px { font-family: "AA Mono", monospace; font-size: 6.4pt; color: var(--ink-faint); }
@@ -161,7 +183,7 @@ table { width: 100%; border-collapse: collapse; }
 .pill.compositional, .pill.positional, .pill.both { background: var(--pill-bg); }
 
 /* ---- ontology ------------------------------------------------------------ */
-.onto-row { padding: 1.5px 0; border-bottom: 1px solid var(--line-soft); }
+.onto-row { padding: 1px 0; border-bottom: 1px solid var(--line-soft); }
 .onto-row:last-child { border-bottom: none; }
 .onto-row .h { font-weight: 800; font-size: 7.3pt; color: var(--accent); }
 .onto-row .s { font-size: 6.3pt; color: var(--ink-faint); font-style: italic; }

@@ -9,7 +9,7 @@ signatures, and every term matches the canonical glossary in ``CONTEXT.md``.
 """
 
 META = {
-    "version": "v10",
+    "version": "v1.1.0",
     "date": "2026-06",
     "pip": "pip install aaanalysis",
     "docs_url": "aaanalysis.readthedocs.io",
@@ -34,7 +34,7 @@ GOLDEN_WORKFLOW = [
      "out": "df_seq · df_scales"},
     {"n": "2", "title": "PARTS", "call": "SequenceFeature.get_df_parts",
      "out": "df_parts"},
-    {"n": "3", "title": "FEATURES", "call": "CPP.run",
+    {"n": "3", "title": "FEATURES", "call": "Part × Split × Scale · CPP.run",
      "out": "df_feat"},
     {"n": "4", "title": "MODEL", "call": "TreeModel.fit · dPULearn.fit",
      "out": "feat_importance · labels_"},
@@ -86,22 +86,22 @@ CPP_STRATEGIES = {
     "compositional": {
         "name": "Compositional", "maps": "≈ sequence/protein-level",
         "desc": "one whole-part average (composition-like, position-agnostic)",
-        "code": 'skw = sf.get_split_kws(\n'
+        "code": 'split_kws = sf.get_split_kws(\n'
                 '    split_types="Segment",\n'
                 '    n_split_min=1, n_split_max=1)\n'
                 'cpp = aa.CPP(df_parts=df_parts,\n'
-                '             split_kws=skw)',
+                '             split_kws=split_kws)',
     },
     "positional": {
         "name": "Positional", "maps": "≈ residue-/region-level",
         "desc": "sub-segments and/or patterns resolved to positions",
-        "code": 'skw = sf.get_split_kws(\n'
+        "code": 'split_kws = sf.get_split_kws(\n'
                 '    split_types=["Segment", "Pattern",\n'
                 '                 "PeriodicPattern"],\n'
                 '    n_split_max=5, steps_pattern=[3, 4],\n'
                 '    steps_periodicpattern=[3, 4])\n'
                 'cpp = aa.CPP(df_parts=df_parts,\n'
-                '             split_kws=skw)',
+                '             split_kws=split_kws)',
     },
     "note": "Domain level uses both. → CPP strategies: see the CPP tutorial (docs).",
 }
@@ -110,8 +110,8 @@ CPP_STRATEGIES = {
 WHICH_MODULE = [
     ("Explore sequence patterns / composition", "AAlogo"),
     ("Discover discriminative physicochemical features", "CPP"),
-    ("Reduce redundant amino-acid scales", "AAclust"),
-    ("Train with positives + unlabelled data", "dPULearn"),
+    ("Reduce redundant amino acid scales", "AAclust"),
+    ("Train with positives + unlabeled data", "dPULearn"),
     ("Train an interpretable classifier", "TreeModel"),
     ("Explain a prediction (per feature / sample)", "ShapModel  [pro]"),
     ("Visualize CPP features", "CPPPlot"),
@@ -128,7 +128,7 @@ SEQUENCE_ANATOMY = {
     "coords": "0 · tmd_start · tmd_stop · len(seq)",
     "note": "JMD widths set globally: aa.options['jmd_n_len'] · ['jmd_c_len'].",
     "pu_note": "dPULearn labels (dpu.labels_): 1 positives · 0 reliable-negatives · "
-               "2 unlabelled.",
+               "2 unlabeled.",
 }
 
 # -- Page 2: capabilities & API -----------------------------------------------
@@ -143,10 +143,7 @@ INSTALL = (
     "import aaanalysis as aa\n"
     "df_seq = aa.load_dataset(name='DOM_GSEC')   # γ-secretase\n"
     "labels = df_seq['label'].to_list()\n"
-    "df_scales = aa.load_scales()\n"
-    "# TMD model: 20-aa TMD, short JMD flanks\n"
-    "aa.options['jmd_n_len'] = 6\n"
-    "aa.options['jmd_c_len'] = 6"
+    "df_scales = aa.load_scales()"
 )
 
 # Five capability families mirroring the package subpackages. Each row is
@@ -165,24 +162,28 @@ CAPABILITY_FAMILIES = [
      ]},
     {"name": "Feature Engineering", "tag": "parts · CPP · scales", "flagship": True,
      "rows": [
-         ("Extract sequence parts", "get_df_parts(df_seq) → df_parts", None),
+         ("SequenceFeature  →  sf", "sf = aa.SequenceFeature()", None),
+         ("· split sequence into parts", "sf.get_df_parts(df_seq) → df_parts", None),
+         ("· assemble feature matrix X", "sf.feature_matrix(df_feat, df_parts) → X", None),
          ("Discover discriminative features", "CPP(df_parts).run(labels) → df_feat  ★", None),
+         ("Sweep CPP configs (grid)", "CPPGrid().run(...) · .eval() → ranked configs", None),
          ("Simplify → interpretable scales", "CPP.simplify(df_feat, labels)", None),
-         ("Build feature matrix X", "feature_matrix(df_feat, df_parts) → X", None),
          ("Reduce redundant scales", "AAclust().fit(X)  [Wrapper]", None),
-         ("Drop correlated features", "filter_correlation(X)", None),
+         ("Drop correlated features", "NumericalFeature().filter_correlation(X)", None),
      ]},
-    {"name": "Structural & Embedding", "tag": "alternative feature sources",
+    {"name": "Numerical Feature Sources", "tag": "PLM · structure · PTM", "new": True,
      "rows": [
-         ("Fetch AlphaFold + encode 3D/DSSP/PAE", "StructurePreprocessor().encode_dssp(df_seq)", None),
-         ("Encode protein-LM embeddings", "EmbeddingPreprocessor().encode(df_seq)", None),
-         ("Embeddings → pseudo-scales", "EmbeddingPreprocessor().build_scales(df_seq)", None),
-         ("Combine numeric feature dicts → CPP", "combine_dict_nums(dict_nums)", None),
+         ("PLM embeddings", "EmbeddingPreprocessor().encode(...) → dict_num", None),
+         ("Structure / DSSP / PAE", "StructurePreprocessor().encode_dssp(...)  [pro]", None),
+         ("PTM / site annotations", "AnnotationPreprocessor().encode(...)  [pro]", None),
+         ("Combine sources", "combine_dict_nums([...]) → dict_num", None),
+         ("Slice to parts", "NumericalFeature().get_parts(...) → dict_num_parts", None),
+         ("Numerical CPP", "CPP(df_parts).run_num(dict_num_parts, labels) → df_feat", None),
      ]},
     {"name": "Modeling & Explainability", "tag": "",
      "rows": [
          ("Train + RFE + MC importance", "TreeModel().fit(X, labels)  [Wrapper]", None),
-         ("Train with positives + unlabelled", "dPULearn().fit(X, labels)  [Wrapper]", None),
+         ("Train with positives + unlabeled", "dPULearn().fit(X, labels)  [Wrapper]", None),
          ("Per-feature / sample SHAP impact", "ShapModel().fit(X, labels)  [pro]", None),
      ]},
     {"name": "Sequence Analysis", "tag": "logos · motifs",
@@ -196,11 +197,12 @@ CAPABILITY_FAMILIES = [
      "rows": [
          ("Adjusted AUC (class imbalance)", "comp_auc_adjusted(X, labels)", None),
          ("BIC score · KL divergence", "comp_bic_score(X, labels) · comp_kld", None),
+         ("Per-protein / detection (v1.1)", "comp_per_protein_ap · comp_detection_metrics", None),
          ("Global plot style & fonts", "plot_settings(font_scale)", None),
          ("Colours & standalone legend", "plot_get_clist(n) · plot_legend(ax)", None),
      ]},
     {"name": "Protein Design", "tag": "",
-     "under_construction": True,
+     "under_construction": True, "new": True,
      "rows": [
          ("In-silico point mutations", "AAMut · AAMutPlot", None),
          ("Sequence-design libraries", "SeqMut · SeqMutPlot", None),
@@ -210,11 +212,13 @@ CAPABILITY_FAMILIES = [
 # Detailed recipes for the core analytical classes (page 2, right zone).
 # Worked examples — tutorial-convention code paired with the figure it produces.
 FLAGSHIP_RECIPES = [
-    {"cls": "AAlogo — see the data", "tag": "dataset at a glance", "img": "logo",
-     "code": "sf = aa.SequenceFeature()\n"
+    {"cls": "AAlogo — see the data", "tag": "dataset at a glance", "img": "logo", "logo": True,
+     "code": "import numpy as np, matplotlib.pyplot as plt, aaanalysis as aa\n"
+             "df_seq = aa.load_dataset(name='DOM_GSEC')   # γ-secretase\n"
+             "labels = list(df_seq['label']); df_scales = aa.load_scales()\n"
+             "sf = aa.SequenceFeature()\n"
              "df_parts = sf.get_df_parts(df_seq=df_seq,\n"
              "    list_parts=['tmd', 'jmd_n', 'jmd_c'])\n"
-             "\n"
              "aa.plot_settings(font_scale=0.7)\n"
              "# aal_kws builds df_logo + bits bar for you\n"
              "aa.AAlogoPlot().single_logo(\n"
@@ -222,37 +226,53 @@ FLAGSHIP_RECIPES = [
              "        label_test=1, tmd_len=20),\n"
              "    name_data='Test set: substrates')\n"
              "plt.tight_layout(); plt.show()"},
-    {"cls": "CPP — feature map", "tag": "flagship · interpretability", "img": "feature_map",
-     "big": True,
-     "code": "# extended parts -> default split grid applies\n"
-             "df_parts = sf.get_df_parts(df_seq=df_seq,\n"
-             "    list_parts=['tmd', 'jmd_n_tmd_n', 'tmd_c_jmd_c'])\n"
-             "cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)\n"
-             "df_feat = cpp.run(labels=labels, n_filter=40)\n"
-             "# swap scales for more interpretable correlated ones\n"
-             "df_feat = cpp.simplify(df_feat=df_feat, labels=labels)\n"
-             "X = sf.feature_matrix(features=df_feat['feature'],\n"
-             "                      df_parts=df_parts)\n"
+    {"cls": "CPP — ranking", "tag": "top features · effect + importance", "img": "ranking",
+     "code": "# same df_feat — rank the top discriminative features\n"
+             "aa.plot_settings(font_scale=0.6)\n"
+             "cpp_plot.ranking(df_feat=df_feat, n_top=15, rank=True,\n"
+             "    name_test='substrates', name_ref='non-subs.')\n"
+             "plt.tight_layout(); plt.show()"},
+    {"cls": "CPP — feature", "tag": "top feature · REF vs TEST", "img": "feature",
+     "code": "# default parts + a redundancy-reduced set of 100 scales\n"
+             "df_parts = sf.get_df_parts(df_seq=df_seq)\n"
+             "sel = aa.AAclust().fit(np.array(df_scales).T,\n"
+             "    names=list(df_scales), n_clusters=100).medoid_names_\n"
+             "cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales[sel])\n"
+             "df_feat = cpp.run(labels=labels, n_filter=100)\n"
+             "X = sf.feature_matrix(df_feat['feature'], df_parts)\n"
              "tm = aa.TreeModel(); tm.fit(X, labels=labels)\n"
              "df_feat = tm.add_feat_importance(df_feat=df_feat)\n"
-             "\n"
-             "cpp_plot = aa.CPPPlot()\n"
-             "aa.plot_settings(font_scale=0.65)\n"
-             "cpp_plot.feature_map(df_feat=df_feat)\n"
+             "cpp_plot = aa.CPPPlot(); aa.plot_settings()\n"
+             "# distribution of the single top feature\n"
+             "top = df_feat.sort_values('feat_importance',\n"
+             "    ascending=False)['feature'].iloc[0]\n"
+             "cpp_plot.feature(feature=top, df_seq=df_seq, labels=labels,\n"
+             "    name_test='substrates', name_ref='non-subs.')\n"
              "plt.tight_layout(); plt.show()"},
-    {"cls": "ShapModel — explain a prediction", "tag": "per-protein · [pro]", "img": "feature_map_shap",
-     "big": True,
-     "code": "se = aa.ShapModel()\n"
-             "# fuzzy_labeling captures the true SHAP impact\n"
-             "se.fit(X, labels=labels, fuzzy_labeling=True)\n"
-             "# explain a borderline call — LRP6 (~60% substrate)\n"
-             "i = list(df_seq['entry']).index('O75581')\n"
-             "df_feat = se.add_feat_impact(df_feat=df_feat,\n"
-             "              sample_positions=i, names='LRP6')\n"
-             "\n"
-             "cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,\n"
-             "    col_imp='feat_impact_LRP6', name_test='LRP6',\n"
-             "    **args_seq)\n"
+    {"cls": "CPP — feature map", "tag": "group level · full vs simplified",
+     "imgs": ["feature_map", "feature_map_simplified"],
+     "img_labels": ["standard", "simplified"], "h": 44,
+     "code": "# global Part × Split × Scale map — all AAontology scales\n"
+             "cpp_plot = aa.CPPPlot(); aa.plot_settings(font_scale=0.65)\n"
+             "cpp_plot.feature_map(df_feat=df_feat)            # left\n"
+             "# CPP.simplify → fewer, interpretable correlated scales\n"
+             "df_feat = cpp.simplify(df_feat=df_feat, labels=labels)\n"
+             "cpp_plot.feature_map(df_feat=df_feat)            # right\n"
+             "plt.tight_layout(); plt.show()"},
+    {"cls": "ShapModel — explain a prediction", "tag": "sample level · [pro]",
+     "imgs": ["shap_profile", "feature_map_shap"],
+     "img_labels": ["cpp.profile (SHAP)", "SHAP feature map"], "h": 36,
+     "code": "# fuzzy labeling: APP's label is its soft prediction score (0.6, not 1)\n"
+             "i = list(df_seq['entry']).index('P05067')   # APP\n"
+             "y = [float(v) for v in labels]; y[i] = 0.6\n"
+             "sm = aa.ShapModel(); sm.fit(X, labels=y, fuzzy_labeling=True)\n"
+             "df_feat = sm.add_feat_impact(df_feat=df_feat,\n"
+             "              sample_positions=i, names='APP')\n"
+             "args_seq = {k + '_seq': v for k, v in sf.get_df_parts(\n"
+             "    df_seq=df_seq).loc['P05067'].to_dict().items()}\n"
+             "ka = dict(col_imp='feat_impact_APP', shap_plot=True, **args_seq)\n"
+             "cpp_plot.profile(df_feat=df_feat, **ka)            # left\n"
+             "cpp_plot.feature_map(df_feat=df_feat, name_test='APP', **ka)  # right\n"
              "plt.tight_layout(); plt.show()"},
     {"cls": "AAclust — clusters", "tag": "scale reduction · Wrapper", "img": "centers",
      "code": "X = np.array(df_scales).T\n"
@@ -264,7 +284,8 @@ FLAGSHIP_RECIPES = [
              "aac_plot.centers(X, labels=aac.labels_)\n"
              "plt.tight_layout(); plt.show()"},
     {"cls": "dPULearn — PCA", "tag": "reliable negatives · Wrapper", "img": "pca",
-     "code": "# labels: 1 = positive, 2 = unlabelled\n"
+     "code": "# labels: 1 = positive, 2 = unlabeled\n"
+             "n_pos = sum(np.array(labels) == 1)\n"
              "dpul = aa.dPULearn()\n"
              "dpul.fit(X=X, labels=labels, n_unl_to_neg=n_pos)\n"
              "df_pu = dpul.df_pu_   # 1 pos · 0 rel-neg · 2 unl\n"
@@ -272,6 +293,21 @@ FLAGSHIP_RECIPES = [
              "dpul_plot = aa.dPULearnPlot()\n"
              "dpul_plot.pca(df_pu=df_pu, labels=labels)\n"
              "plt.tight_layout(); plt.show()"},
+]
+
+# Page-2 layout: AAlogo stands alone (big logo); the rest are shown as PAIRS —
+# two code boxes stacked, then both figures side-by-side below (left | right),
+# so each figure pair is as wide as the code block.
+# Each pair renders two code boxes then both figures SIDE-BY-SIDE in one row, set
+# to a shared row height "h" (mm) so the two plots are exactly the same height
+# (widths follow each plot's aspect ratio). h is tuned so the two widths fit one
+# column. Feature maps sit in the middle column.
+RECIPE_GROUPS = [
+    {"recipes": [FLAGSHIP_RECIPES[0]]},                                  # AAlogo (col1, big logo)
+    {"recipes": [FLAGSHIP_RECIPES[2], FLAGSHIP_RECIPES[1]], "h": 30},    # feature | ranking (col1)
+    {"recipes": [FLAGSHIP_RECIPES[3]]},                                  # feature map: full | simplified (col2 top)
+    {"recipes": [FLAGSHIP_RECIPES[4]]},                                  # SHAP: profile | feature map (col2 bottom)
+    {"recipes": [FLAGSHIP_RECIPES[5], FLAGSHIP_RECIPES[6]], "h": 37},    # AAclust | dPULearn (col3)
 ]
 
 # -- Page 3: reference --------------------------------------------------------
@@ -306,24 +342,27 @@ OPTIONS = (
     "aa.options['jmd_c_len'] = 10\n"
     "\n"
     "# plot labels & system-level scales\n"
-    "aa.options['name_tmd'] = 'TMD'\n"
+    "aa.options['name_tmd'] = 'P5-P5′'   # e.g. cleavage-site prediction\n"
     "aa.options['df_scales'] = my_scales"
 )
 
 # (class, plot class | "—", kind tag)
 CLASS_PLOT = [
+    ("SequencePreprocessor", "—", ""),
+    ("EmbeddingPreprocessor", "—", "v1.1"),
+    ("StructurePreprocessor  [pro]", "—", "v1.1"),
+    ("AnnotationPreprocessor  [pro]", "—", "v1.1"),
     ("CPP", "CPPPlot", ""),
     ("AAclust", "AAclustPlot", "Wrapper"),
     ("AAlogo", "AAlogoPlot", ""),
     ("dPULearn", "dPULearnPlot", "Wrapper"),
     ("TreeModel", "—", "Wrapper"),
     ("ShapModel  [pro]", "—", "Wrapper"),
-    ("AAMut", "AAMutPlot", "planned"),
-    ("SeqMut", "SeqMutPlot", "planned"),
+    ("AAMut", "AAMutPlot", "to be extended"),
+    ("SeqMut", "SeqMutPlot", "to be extended"),
     ("AAWindowSampler", "—", ""),
     ("SequenceFeature", "—", ""),
     ("NumericalFeature", "—", ""),
-    ("SequencePreprocessor", "—", ""),
 ]
 
 DESIGN_PRINCIPLES = [
@@ -370,7 +409,7 @@ GLOSSARY = [
      "attributes after fit."),
     ("Plot class", "*Plot mirror of an analytical class — same arguments, "
      "visualization only."),
-    ("PU labels", "dPULearn input: 1 = positive, 2 = unlabelled. Output: "
+    ("PU labels", "dPULearn input: 1 = positive, 2 = unlabeled. Output: "
      "1 / 0 (reliable-negative) / 2."),
     ("CPP", "Comparative Physicochemical Profiling — discovers ranked "
      "Part × Split × Scale features."),
@@ -393,6 +432,7 @@ CONTENT = {
     "five_minute": FIVE_MINUTE,
     "capability_families": CAPABILITY_FAMILIES,
     "flagship_recipes": FLAGSHIP_RECIPES,
+    "recipe_groups": RECIPE_GROUPS,
     "options": OPTIONS,
     "class_plot": CLASS_PLOT,
     "design_principles": DESIGN_PRINCIPLES,

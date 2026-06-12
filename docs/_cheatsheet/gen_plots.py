@@ -25,12 +25,9 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 aa.options["verbose"] = False
 aa.options["random_state"] = 42
-# γ-secretase TMD model: ~20-aa transmembrane domain with short JMD flanks.
-# JMD=6 is the smallest flank for which the jmd_n_tmd_n / tmd_c_jmd_c parts stay
-# >= 15 aa (the shortest DOM_GSEC TMD is 18), so DEFAULT CPP split settings apply.
-JMD_LEN = 6
-aa.options["jmd_n_len"] = JMD_LEN
-aa.options["jmd_c_len"] = JMD_LEN
+# Tutorial settings (tutorial3c_cpp): DEFAULT parts + DEFAULT JMD flanks
+# (jmd_n_len = jmd_c_len = 10) so the feature map spans 40 positions, and a
+# redundancy-reduced set of 100 scales (AAclust medoids) — matching the tutorial.
 TMD_LEN = 20
 
 
@@ -46,21 +43,25 @@ def main():
     df_seq = aa.load_dataset(name="DOM_GSEC")
     labels = df_seq["label"].to_list()
     sf = aa.SequenceFeature()
-    # extended parts for CPP -> long enough for the DEFAULT split grid
-    df_parts = sf.get_df_parts(df_seq=df_seq,
-                               list_parts=["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"])
-    # core parts for the logo (full TMD) + per-protein sequence overlay
+    # DEFAULT parts (tmd · jmd_n · jmd_c, jmd=10) — tutorial settings
+    df_parts = sf.get_df_parts(df_seq=df_seq)
     df_parts_core = sf.get_df_parts(df_seq=df_seq, list_parts=["tmd", "jmd_n", "jmd_c"])
+    # redundancy-reduced set of 100 scales (AAclust medoids) — tutorial
+    df_scales = aa.load_scales()
+    _sel = aa.AAclust().fit(np.array(df_scales).T, names=list(df_scales),
+                            n_clusters=100).medoid_names_
+    df_scales = df_scales[_sel]
 
-    cpp = aa.CPP(df_parts=df_parts, verbose=False)
-    df_feat = cpp.run(labels=labels, n_filter=40, n_jobs=1,
-                      tmd_len=TMD_LEN, jmd_n_len=JMD_LEN, jmd_c_len=JMD_LEN)
-    # swap scales for more interpretable correlated ones (CPP.simplify demo)
-    df_feat = cpp.simplify(df_feat=df_feat, labels=labels)
-    X = sf.feature_matrix(features=df_feat["feature"], df_parts=df_parts)
-    tm = aa.TreeModel(verbose=False)
-    tm.fit(X, labels=labels)
-    df_feat = tm.add_feat_importance(df_feat=df_feat)
+    def _augment(dff):
+        Xm = sf.feature_matrix(features=dff["feature"], df_parts=df_parts)
+        tmm = aa.TreeModel(verbose=False); tmm.fit(Xm, labels=labels)
+        return tmm.add_feat_importance(df_feat=dff), Xm
+
+    cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, verbose=False)
+    df_feat0 = cpp.run(labels=labels, n_filter=100, n_jobs=1)
+    # FULL = tutorial (un-simplified); SIMPLIFIED = swapped to interpretable scales
+    df_feat, X = _augment(df_feat0)
+    df_feat_s, X_s = _augment(cpp.simplify(df_feat=df_feat0, labels=labels))
 
     # AAlogo: substrate (label_test=1, the CPP "test set") sequence logo with a
     # bits information bar on top — makes the dataset clear
@@ -73,10 +74,27 @@ def main():
         name_data=f"Test set: substrates (n={n_test})")
     _save("logo")
 
-    # group-level CPP feature map (tutorial conventions)
+    # group-level CPP feature maps: FULL (tutorial) and SIMPLIFIED
     cpp_plot = aa.CPPPlot()
     aa.plot_settings(font_scale=0.65, weight_bold=False)
     cpp_plot.feature_map(df_feat=df_feat); _save("feature_map")
+    aa.plot_settings(font_scale=0.65, weight_bold=False)
+    cpp_plot.feature_map(df_feat=df_feat_s); _save("feature_map_simplified")
+
+    # CPP ranking: top discriminative features by effect size (mean_dif) + importance
+    aa.plot_settings(font_scale=0.6, weight_bold=False)
+    cpp_plot.ranking(df_feat=df_feat, n_top=15, rank=True, tmd_len=TMD_LEN,
+                     name_test="substrates", name_ref="non-subs.")
+    _save("ranking")
+
+    # CPP feature: REF vs TEST value distribution of the single top feature
+    df_top = df_feat.sort_values("feat_importance", ascending=False).reset_index(drop=True)
+    top_feature = df_top["feature"][0]
+    aa.plot_settings(font_scale=0.7)
+    cpp_plot.feature(feature=top_feature, df_seq=df_seq, labels=labels,
+                     name_test="substrates", name_ref="non-subs.")
+    plt.title(f"{top_feature}\n({df_top['subcategory'][0]})", fontsize=8)
+    _save("feature")
 
     # AAclust: cluster the scale set, plot cluster centers in PCA space
     X_scales = np.array(df_scales := aa.load_scales()).T
@@ -98,20 +116,27 @@ def main():
                           names=["Reliable negatives", "Positives", "Unlabeled"])
     _save("pca")
 
-    # per-protein CPP-SHAP feature map for a BORDERLINE prediction — LRP6 (O75581),
-    # an honest out-of-fold substrate score of ~0.60 (interesting to explain).
-    entry = "O75581"
-    se = aa.ShapModel(verbose=False)
-    se.fit(X, labels=labels, fuzzy_labeling=True)
+    # SHAP analysis on the SIMPLIFIED features — fuzzy-labeling demo: APP (P05067)
+    # gets a SOFT prediction-score label of 0.6 (not a hard 1), and the cpp.profile
+    # + per-protein SHAP feature map are derived from it.
+    entry = "P05067"
     pos = list(df_seq["entry"]).index(entry)
-    df_feat = se.add_sample_mean_dif(X, labels=labels, df_feat=df_feat,
-                                     sample_positions=pos, names="LRP6")
-    df_feat = se.add_feat_impact(df_feat=df_feat, sample_positions=pos, names="LRP6")
     args_seq = {k + "_seq": v for k, v in df_parts_core.loc[entry].to_dict().items()}
+    labels_fuzzy = [float(v) for v in labels]
+    labels_fuzzy[pos] = 0.6
+    sm = aa.ShapModel(verbose=False)
+    sm.fit(X_s, labels=labels_fuzzy, fuzzy_labeling=True)
+    df_feat_sh = sm.add_sample_mean_dif(X_s, labels=labels_fuzzy, df_feat=df_feat_s,
+                                        sample_positions=pos, names="APP")
+    df_feat_sh = sm.add_feat_impact(df_feat=df_feat_sh, sample_positions=pos, names="APP")
+    aa.plot_settings(font_scale=0.6, weight_bold=False)
+    cpp_plot.profile(df_feat=df_feat_sh, col_imp="feat_impact_APP", shap_plot=True,
+                     tmd_len=TMD_LEN, **args_seq)
+    _save("shap_profile")
     aa.plot_settings(font_scale=0.65, weight_bold=False)
-    cpp_plot.feature_map(df_feat=df_feat, col_val="mean_dif_LRP6",
-                         col_imp="feat_impact_LRP6", shap_plot=True,
-                         name_test="LRP6", **args_seq)
+    cpp_plot.feature_map(df_feat=df_feat_sh, col_val="mean_dif_APP",
+                         col_imp="feat_impact_APP", shap_plot=True,
+                         name_test="APP", **args_seq)
     _save("feature_map_shap")
 
 
