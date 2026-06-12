@@ -130,8 +130,21 @@ table { width: 100%; border-collapse: collapse; }
 .kv .k.wrap { white-space: normal; }
 .kv .d { color: var(--ink-soft); }
 .kv .d.mono { font-family: "AA Mono", monospace; color: var(--code-ink); }
+.kv .d.abbr { color: var(--accent); font-weight: 700; white-space: nowrap; }
+.kv tr.hdr td { font-size: 5.6pt; font-weight: 800; color: var(--ink-faint); text-transform: uppercase;
+                letter-spacing: 0.3px; border-bottom: 1px solid var(--line); padding-bottom: 1px; }
+.kv tr.hdr td.abbr, .kv tr.hdr td.mono { font-family: inherit; }
 
 /* capability item: stacked "what" over "symbol" (robust in narrow columns) */
+.rowtag { color: #fff; background: var(--accent); font-size: 5pt; font-weight: 800;
+          border-radius: 6px; padding: 0 3px; margin-left: 3px; vertical-align: middle; }
+/* Decision Guide (page 3) */
+.dg-q { font-weight: 800; font-size: 6.7pt; color: var(--accent); margin: 3px 0 0.5px; }
+.dg-q:first-child { margin-top: 0; }
+.dg-row { font-size: 6.4pt; padding: 0.4px 0 0.4px 6px; line-height: 1.18; }
+.dg-row .dg-l { font-weight: 700; color: var(--ink); }
+.dg-row .dg-r { color: var(--ink-soft); }
+td.k.mono { font-family: "AA Mono", monospace; font-weight: 700; color: var(--accent); white-space: nowrap; }
 .cap-item { padding: 0.4px 0; border-bottom: 1px solid var(--line-soft); }
 .cap-item:last-child { border-bottom: none; }
 .cap-item .cw { display: block; font-size: 6.9pt; color: var(--ink-soft); line-height: 1.12; }
@@ -188,6 +201,14 @@ table { width: 100%; border-collapse: collapse; }
 .pill.compositional, .pill.positional, .pill.both { background: var(--pill-bg); }
 
 /* ---- ontology ------------------------------------------------------------ */
+.splits { margin: 2px 0 1px; padding-top: 1.5px; border-top: 1px solid var(--line-soft); }
+.splits .sp-row { font-family: "AA Mono", monospace; font-size: 6.3pt; line-height: 1.18; white-space: pre; }
+.splits .sp-lbl { display: inline-block; width: 25mm; color: var(--accent); font-weight: 700; }
+.splits .sp-cells { color: var(--accent); letter-spacing: 0.3px; }
+.splits .sp-row.sp-seq .sp-lbl { color: var(--ink-faint); font-weight: 800; }
+.splits .sp-row.sp-seq .sp-cells { color: var(--ink); }
+.splits .sp-caption { font-size: 5.8pt; font-style: italic; margin-top: 0.5px; }
+.splits .sp-caption a { color: var(--accent); text-decoration: none; font-weight: 600; }
 .onto-row { padding: 1px 0; border-bottom: 1px solid var(--line-soft); }
 .onto-row:last-child { border-bottom: none; }
 .onto-row .h { font-weight: 800; font-size: 7.3pt; color: var(--accent); }
@@ -218,6 +239,8 @@ table { width: 100%; border-collapse: collapse; }
 .cite-item .ky { font-family: "AA Mono", monospace; font-size: 6.4pt; color: var(--accent); float: right; }
 .cite-item .rf { font-size: 6.6pt; color: var(--ink-soft); }
 .cite-item .jr { font-size: 6.6pt; font-style: italic; color: var(--ink); }
+.cite-item .ky a { color: inherit; text-decoration: none; }
+.cite-item .jr a { color: var(--accent); text-decoration: none; font-weight: 600; }
 .bullets li { font-size: 7pt; color: var(--ink-soft); margin-left: 11px; padding: 1px 0; }
 
 /* glossary as a full-width landscape band (spans all page columns), v9-style */

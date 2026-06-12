@@ -16,9 +16,10 @@
 <div class="sec">
   <div class="sec-h"><span>{{ F.name }}{% if F.under_construction %} <span class="uc">(to be extended)</span>{% endif %}{% if F.new %} <span class="uc new">v1.1</span>{% endif %}</span><span class="hint">{{ F.tag }}</span></div>
   <div class="sec-body">
-    {% for what, sym, code in F['rows'] %}
+    {% for row in F['rows'] %}
+    {% set what = row[0] %}{% set sym = row[1] %}{% set _tag = row[3] if row|length > 3 else None %}
     {% set _fn = sym.split(' → ')[0] %}{% set _out = sym.split(' → ')[1:] %}
-    <div class="cap-item"><span class="cw">{{ what }}</span><span class="cs">{{ _fn }}{% if _out %} → <span class="out">{{ _out|join(' → ') }}</span>{% endif %}</span></div>
+    <div class="cap-item"><span class="cw">{{ what }}{% if _tag %} <span class="rowtag">{{ _tag }}</span>{% endif %}</span><span class="cs">{{ _fn }}{% if _out %} → <span class="out">{{ _out|join(' → ') }}</span>{% endif %}</span></div>
     {% endfor %}
   </div>
 </div>
@@ -114,6 +115,14 @@
         <div class="onto-row"><span class="h">{{ key|upper }}</span> <span class="s">{{ O.sub }}</span>
           <div class="it">{{ O['items']|join(' · ') }}</div></div>
         {% endfor %}
+        {% set S = c.splits_schema %}
+        <div class="splits">
+          <div class="sp-row sp-seq"><span class="sp-lbl">{{ S.seq_label }}</span><span class="sp-cells">{{ S.seq }}</span></div>
+          {% for name, mask in S.rows %}
+          <div class="sp-row"><span class="sp-lbl">{{ name }}</span><span class="sp-cells">{{ mask }}</span></div>
+          {% endfor %}
+          <div class="sp-caption"><a href="{{ S.ref_url }}" target="_blank" rel="noopener">{{ S.ref_text }}</a></div>
+        </div>
         <div class="onto-ex">{% for ex in c.feature_ontology.examples %}<div>{{ ex }}</div>{% endfor %}</div>
       </div>
     </div>
@@ -170,8 +179,20 @@
     </div>
 
     <div class="sec">
-      <div class="sec-h"><span>The 5-Minute Example</span><span class="hint">copy-paste this</span></div>
-      <div class="sec-body"><pre class="code">{{ c.five_minute|hl }}</pre></div>
+      <div class="sec-h"><span>Decision Guide</span><span class="hint">pick your setup</span></div>
+      <div class="sec-body">
+        {% for q, branches in c.decision_guide %}
+        <div class="dg-q">{{ q }}</div>
+        {% for label, result in branches %}
+        <div class="dg-row"><span class="dg-l">{{ label }}</span> <span class="dg-r">→ {{ result }}</span></div>
+        {% endfor %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Gotchas</span><span class="hint">things that bite</span></div>
+      <div class="sec-body"><ul class="bullets">{% for g in c.gotchas %}<li>{{ g|safe }}</li>{% endfor %}</ul></div>
     </div>
 
     <div class="sec">
@@ -180,17 +201,23 @@
     </div>
 
     <div class="sec">
-      <div class="sec-h"><span>Class ↔ Plot Class</span><span class="hint">mirrored API</span></div>
+      <div class="sec-h"><span>Data Objects</span><span class="hint">shapes &amp; columns</span></div>
+      <div class="sec-body"><table class="kv">{% for name, cols in c.data_objects %}<tr><td class="k mono">{{ name }}</td><td class="d">{{ cols }}</td></tr>{% endfor %}</table></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Class · abbr ↔ Plot Class</span><span class="hint">mirrored API</span></div>
       <div class="sec-body"><table class="kv">
-        {% for cls,plot,kind in c.class_plot %}<tr><td class="k">{{ cls }}</td><td class="d mono">{{ plot }}</td><td class="d" style="text-align:right">{{ kind }}</td></tr>{% endfor %}
+        <tr class="hdr"><td class="k">class</td><td class="d mono abbr">abbr</td><td class="d mono">plot class</td><td class="d" style="text-align:right">kind</td></tr>
+        {% for cls,abbr,plot,kind in c.class_plot %}<tr><td class="k">{{ cls }}</td><td class="d mono abbr">{{ abbr }}</td><td class="d mono">{{ plot }}</td><td class="d" style="text-align:right">{{ kind|replace('[v1.1]', '<span class="rowtag">v1.1</span>')|safe }}</td></tr>{% endfor %}
       </table></div>
     </div>
 
     <div class="sec">
       <div class="sec-h"><span>How to Cite</span><span class="hint">if you use AAanalysis</span></div>
       <div class="sec-body">{% for cit in c.citations %}
-        <div class="cite-item"><span class="ky">{{ cit.key }}</span><span class="nm">{{ cit.name }}</span>
-          <div class="rf">{{ cit.ref }}</div><div class="jr">{{ cit.journal }}</div></div>
+        <div class="cite-item"><span class="ky"><a href="{{ cit.url }}" target="_blank" rel="noopener">{{ cit.key }}</a></span><span class="nm">{{ cit.name }}</span>
+          <div class="rf">{{ cit.ref }}</div><div class="jr"><a href="{{ cit.url }}" target="_blank" rel="noopener">{{ cit.journal }} ↗</a></div></div>
       {% endfor %}</div>
     </div>
 
@@ -202,7 +229,7 @@
     <div class="sec gloss-wide">
       <div class="sec-h"><span>Glossary</span><span class="hint">canonical vocabulary · CONTEXT.md</span></div>
       <div class="sec-body gloss-cols">
-        {% for term,d in c.glossary %}<div class="gloss-item"><b>{{ term }}</b> — {{ d }}</div>{% endfor %}
+        {% for row in c.glossary %}{% set term = row[0] %}{% set d = row[1] %}{% set _tag = row[2] if row|length > 2 else None %}<div class="gloss-item"><b>{{ term }}</b>{% if _tag %} <span class="rowtag">{{ _tag }}</span>{% endif %} — {{ d }}</div>{% endfor %}
       </div>
     </div>
 

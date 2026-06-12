@@ -23,7 +23,9 @@ META = {
              "sequence-based protein prediction. It turns sequences into "
              "physicochemical features (CPP), trains explainable models, and "
              "traces every prediction back to a residue × property × group "
-             "comparison — robust for small datasets.",
+             "comparison — robust for small datasets. <b>v1.1</b> extends the "
+             "core feature engine beyond physicochemical scales to PLM "
+             "embeddings and protein structure.",
     "copyright": "© Stephan Breimann · BSD-3",
 }
 
@@ -71,12 +73,31 @@ FEATURE_ONTOLOGY = {
                         "PeriodicPattern — i, i+3/4"]},
     "scale": {"sub": "which physicochemical property",
               "items": ["AAontology (~600 scales)", "hydrophobicity · charge",
-                        "helix propensity · shape"]},
+                        "helix propensity"]},
     "examples": [
         "TMD × Segment × hydrophobicity → membrane insertion",
         "JMD × Pattern × net charge → electrostatic recognition",
         "TMD × PeriodicPattern × helix → α-helical interface",
     ],
+}
+
+# Splits schema (page 1): how each Split type selects residues of a Part — a
+# simplified take on Breimann25a Suppl. Fig. C (APP / NOTCH1 TMD splits). Each
+# mask aligns 1:1 with the residues above it (■ = selected, · = skipped).
+SPLITS_SCHEMA = {
+    "intro": "A Split picks which residues of a Part feed each Scale:",
+    "seq_label": "TMD",
+    "seq":       "A I I G L M V G G V V I",
+    "rows": [
+        ("Segment(1,4)",     "■ ■ ■ · · · · · · · · ·"),
+        ("Pattern(N,1,4,8)", "■ · · ■ · · · ■ · · · ·"),
+        ("PeriodicPattern",  "■ · · ■ · · ■ · · ■ · ·"),
+    ],
+    "caption": "contiguous (Segment) · fixed positions (Pattern) · "
+               "periodic, α-helix face (PeriodicPattern).",
+    "ref_text": "Simplified from Breimann25a (Suppl. Fig. 1C ↗)",
+    "ref_url": "https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-025-60638-z/"
+               "MediaObjects/41467_2025_60638_MOESM1_ESM.pdf",
 }
 
 # Compositional vs positional is not a setting — it emerges from split_kws (#86).
@@ -151,21 +172,20 @@ INSTALL = (
 # Module map: each row shows the call with 1-2 key params and how it connects to
 # the Golden-Workflow objects (df_seq · df_parts · df_feat · X · labels).
 CAPABILITY_FAMILIES = [
-    {"name": "Data & Preparation", "tag": "load · encode · clean",
+    {"name": "Data & Preparation", "tag": "load · clean",
      "rows": [
          ("Load benchmark sequences", "load_dataset(name) → df_seq", None),
          ("Load AAontology scales", "load_scales() → df_scales", None),
          ("Load precomputed features", "load_features(name) → df_feat", None),
          ("Read / write FASTA", "read_fasta(file) → df_seq", None),
-         ("Encode sequences (one-hot / int)", "SequencePreprocessor().encode_*(seqs)", None),
-         ("Cluster redundant homologs", "filter_seq(df_seq)  [pro]", None),
+         ("Cluster redundant homologs", "filter_seq(df_seq) → df_clust  [pro]", None),
      ]},
     {"name": "Sequence Analysis", "tag": "logos · motifs",
      "rows": [
-         ("Position-specific logo", "AAlogo().get_df_logo(df_parts)", None),
+         ("Position-specific logo", "AAlogo().get_df_logo(df_parts) → df_logo", None),
          ("Sample sequence windows", "AAWindowSampler().sample(df_seq)", None),
          ("Pairwise sequence similarity", "comp_seq_sim(df_seq)  [pro]", None),
-         ("Scan motifs (FIMO / MEME)", "scan_motif(df_seq, pwm)  [pro]", None),
+         ("Scan motifs (FIMO / MEME)", "scan_motif(df_seq, pwm) → df_hits  [pro]", None),
      ]},
     {"name": "Feature Engineering", "tag": "parts · CPP · scales", "flagship": True,
      "rows": [
@@ -174,18 +194,18 @@ CAPABILITY_FAMILIES = [
          ("· assemble feature matrix X", "sf.feature_matrix(df_feat, df_parts) → X", None),
          ("Discover discriminative features", "CPP(df_parts).run(labels) → df_feat  ★", None),
          ("Sweep CPP configs (grid)", "CPPGrid().run(...) · .eval() → ranked configs", None),
-         ("Simplify → interpretable scales", "CPP.simplify(df_feat, labels)", None),
+         ("Simplify → interpretable scales", "CPP.simplify(df_feat, labels) → df_feat", None),
          ("Reduce redundant scales", "AAclust().fit(X)  [Wrapper]", None),
          ("Drop correlated features", "NumericalFeature().filter_correlation(X)", None),
      ]},
-    {"name": "Advanced Feature Sources", "tag": "PLM · structure · PTM → numerical CPP", "new": True,
+    {"name": "Feature Preprocessing", "tag": "one-hot · PLM · structure · PTM",
      "rows": [
-         ("PLM embeddings", "EmbeddingPreprocessor().encode(...) → dict_num", None),
-         ("Structure / DSSP / PAE", "StructurePreprocessor().encode_dssp(...)  [pro]", None),
-         ("PTM / site annotations", "AnnotationPreprocessor().encode(...)  [pro]", None),
-         ("Combine sources", "combine_dict_nums([...]) → dict_num", None),
-         ("Slice to parts", "NumericalFeature().get_parts(...) → dict_num_parts", None),
-         ("Numerical CPP", "CPP(df_parts).run_num(dict_num_parts, labels) → df_feat", None),
+         ("Encode sequences (one-hot / int)", "SequencePreprocessor().encode_*(seqs)", None),
+         ("PLM embeddings", "EmbeddingPreprocessor().encode(...) → dict_num", None, "v1.1"),
+         ("Structure / DSSP / PAE", "StructurePreprocessor().encode_dssp(...) → dict_num  [pro]", None, "v1.1"),
+         ("PTM / site annotations", "AnnotationPreprocessor().encode(...) → dict_num  [pro]", None, "v1.1"),
+         ("Combine sources", "combine_dict_nums([...]) → dict_num", None, "v1.1"),
+         ("Numerical CPP", "CPP(df_parts).run_num(dict_num_parts, labels) → df_feat", None, "v1.1"),
      ]},
     {"name": "Modeling & Explainability", "tag": "",
      "rows": [
@@ -198,14 +218,13 @@ CAPABILITY_FAMILIES = [
          ("Adjusted AUC (class imbalance)", "comp_auc_adjusted(X, labels)", None),
          ("BIC score · KL divergence", "comp_bic_score(X, labels) · comp_kld", None),
          ("Per-protein / detection (v1.1)", "comp_per_protein_ap · comp_detection_metrics", None),
-         ("Global plot style & fonts", "plot_settings(font_scale)", None),
-         ("Colours & standalone legend", "plot_get_clist(n) · plot_legend(ax)", None),
+         ("Plot style, fonts & standalone legend", "plot_settings(font_scale) · plot_legend(ax)", None),
      ]},
     {"name": "Protein Design", "tag": "",
      "under_construction": True,
      "rows": [
-         ("In-silico point mutations", "AAMut · AAMutPlot", None),
-         ("Sequence-design libraries", "SeqMut · SeqMutPlot", None),
+         ("In-silico point mutations", "AAMut · AAMutPlot", None, "v1.1"),
+         ("Sequence-design libraries", "SeqMut · SeqMutPlot", None, "v1.1"),
      ]},
 ]
 
@@ -337,9 +356,52 @@ FIVE_MINUTE = (
     "plt.tight_layout(); plt.show()"
 )
 
+# Decision guide (A): the two decisions that define a task — what to predict
+# (level + parts) and what training signal you have (which model) — then how to
+# discover and explain. Mirrors the scikit-learn "choose an estimator" map idea.
+DECISION_GUIDE = [
+    ("What are you predicting?", [
+        ("per residue / site", "AA_* · odd/even window · parts = window"),
+        ("per domain / region", "DOM_* · TMD model · parts = jmd_n·tmd·jmd_c"),
+        ("whole protein", "SEQ_* · composition · whole chain"),
+    ]),
+    ("What labels do you have?", [
+        ("labeled 0 / 1", "TreeModel — classify"),
+        ("positives + unlabeled (1 / 2)", "dPULearn → reliable negatives → TreeModel"),
+        ("no negatives at all", "AAWindowSampler — build a reference background"),
+    ]),
+    ("Discover & explain", [
+        ("find features", "CPP.run — compositional or positional (via split_kws)"),
+        ("explain a prediction", "CPPPlot.feature_map · ShapModel [pro]"),
+    ]),
+]
+
+# Gotchas (B): the non-obvious rules that bite. <b> spans -> rendered |safe.
+GOTCHAS = [
+    "Labels: <b>1/0</b> = supervised (pos/neg). <b>dPULearn needs 1/2</b> "
+    "(pos/unlabeled) and outputs <b>0 = reliable-negative</b>.",
+    "<b>load_dataset(name, n=N)</b> returns <b>2N</b> rows (N per class) — "
+    "count classes via df_seq['label'].",
+    "Compositional vs positional is not a flag — it <b>emerges from split_kws</b>.",
+    "Reproducibility: layered seeds — seed= ▸ random_state= ▸ "
+    "options['random_state'] ▸ default.",
+    "<b>DOM_*</b> parts need tmd_start/tmd_stop in df_seq; <b>[pro]</b> features "
+    "need <span style='font-family:\"AA Mono\",monospace'>pip install 'aaanalysis[pro]'</span>.",
+]
+
+# Data objects (C): the canonical tables/arrays and their columns/shape.
+DATA_OBJECTS = [
+    ("df_seq", "entry · sequence · label · tmd_start · tmd_stop"),
+    ("df_parts", "one column per part: tmd · jmd_n · jmd_c · …"),
+    ("df_feat", "feature · abs_auc · mean_dif · p_val · positions · scale · category"),
+    ("X", "feature matrix (samples × features) from sf.feature_matrix"),
+    ("dict_num", "{entry: ndarray (L×D)} — numerical per-residue values (v1.1)"),
+]
+
 OPTIONS = (
     "aa.options['random_state'] = 42\n"
     "aa.options['verbose'] = True\n"
+    "aa.options['n_jobs'] = -1            # all cores (None = auto)\n"
     "aa.options['allow_multiprocessing'] = True\n"
     "\n"
     "# TMD model — JMD flank widths\n"
@@ -351,23 +413,24 @@ OPTIONS = (
     "aa.options['df_scales'] = my_scales"
 )
 
-# (class, plot class | "—", kind tag)
+# (class, abbr, plot class | "—", kind tag) — abbr = canonical instance name
+# (mirrors the registry in docstring_guide.rst / test_class_abbreviation_registry.py)
 CLASS_PLOT = [
-    ("SequencePreprocessor", "—", ""),
-    ("EmbeddingPreprocessor", "—", "[v1.1]"),
-    ("StructurePreprocessor  [pro]", "—", "[v1.1]"),
-    ("AnnotationPreprocessor  [pro]", "—", "[v1.1]"),
-    ("CPP", "CPPPlot", ""),
-    ("AAclust", "AAclustPlot", "Wrapper"),
-    ("AAlogo", "AAlogoPlot", ""),
-    ("dPULearn", "dPULearnPlot", "Wrapper"),
-    ("TreeModel", "—", "Wrapper"),
-    ("ShapModel  [pro]", "—", "Wrapper"),
-    ("AAMut", "AAMutPlot", "to be extended"),
-    ("SeqMut", "SeqMutPlot", "to be extended"),
-    ("AAWindowSampler", "—", ""),
-    ("SequenceFeature", "—", ""),
-    ("NumericalFeature", "—", ""),
+    ("SequencePreprocessor", "sp", "—", ""),
+    ("EmbeddingPreprocessor", "ep", "—", "[v1.1]"),
+    ("StructurePreprocessor  [pro]", "stp", "—", "[v1.1]"),
+    ("AnnotationPreprocessor  [pro]", "ap", "—", "[v1.1]"),
+    ("CPP", "cpp", "CPPPlot", ""),
+    ("AAclust", "aac", "AAclustPlot", "Wrapper"),
+    ("AAlogo", "aal", "AAlogoPlot", ""),
+    ("dPULearn", "dpul", "dPULearnPlot", "Wrapper"),
+    ("TreeModel", "tm", "—", "Wrapper"),
+    ("ShapModel  [pro]", "sm", "—", "Wrapper"),
+    ("AAMut", "aamut", "AAMutPlot", "[v1.1]"),
+    ("SeqMut", "seqmut", "SeqMutPlot", "[v1.1]"),
+    ("AAWindowSampler", "aaws", "—", ""),
+    ("SequenceFeature", "sf", "—", ""),
+    ("NumericalFeature", "nf", "—", ""),
 ]
 
 DESIGN_PRINCIPLES = [
@@ -381,45 +444,66 @@ CITATIONS = [
     {"name": "AAclust", "key": "[Breimann24a]",
      "ref": "Breimann & Frishman (2024a), AAclust: k-optimized clustering for "
             "selecting redundancy-reduced sets of amino acid scales",
-     "journal": "Bioinformatics Advances"},
+     "journal": "Bioinformatics Advances",
+     "url": "https://academic.oup.com/bioinformaticsadvances/article/4/1/vbae165/7852846"},
     {"name": "AAontology", "key": "[Breimann24b]",
      "ref": "Breimann et al. (2024b), AAontology: An ontology of amino acid "
             "scales for interpretable machine learning",
-     "journal": "Journal of Molecular Biology"},
+     "journal": "Journal of Molecular Biology",
+     "url": "https://www.sciencedirect.com/science/article/pii/S0022283624003267"},
     {"name": "CPP & dPULearn", "key": "[Breimann25a]",
      "ref": "Breimann & Kamp et al. (2025), Charting γ-secretase substrates by "
             "explainable AI",
-     "journal": "Nature Communications"},
+     "journal": "Nature Communications",
+     "url": "https://www.nature.com/articles/s41467-025-60638-z"},
 ]
 
+# Deeper mental models promoted from CONTEXT.md (the canonical glossary); the
+# df_seq/df_parts/df_feat data-shape entries now live in the "Data Objects" panel.
 GLOSSARY = [
-    ("Prediction level", "Residue (AA_*) · Domain (DOM_*) · Protein (SEQ_*) — the "
-     "unit a task predicts at; sets the dataset, the part, and the reference."),
+    # -- The CPP feature model --------------------------------------------
+    ("Feature (CPP)", "(Part × Split × Scale) — the atomic, residue-grounded, "
+     "interpretable unit of CPP."),
     ("Part", "Named segment used as feature input: tmd, jmd_n, jmd_c, tmd_jmd, "
      "jmd_n_tmd_n, tmd_c_jmd_c."),
     ("Split", "How a scale is read across a part: Segment (contiguous), Pattern "
      "(sparse), PeriodicPattern (i, i+3/4)."),
     ("Scale", "AA → ℝ mapping. AAontology ships ~600 curated scales in two-level "
      "categories."),
-    ("Feature (CPP)", "(Part × Split × Scale) — the atomic, residue-grounded, "
-     "interpretable unit of CPP."),
+    ("AAontology", "Two-level scale taxonomy; CPP uses its categories to organize "
+     "and rank features."),
+    ("CPP", "Comparative Physicochemical Profiling — discovers ranked "
+     "Part × Split × Scale features."),
     ("Compositional vs positional", "How split_kws resolves locality: a whole-part "
      "average (compositional) vs sub-region/position-resolved (positional)."),
-    ("df_seq", "Sequence table: entry, sequence, label, TMD bounds (tmd_start, "
-     "tmd_stop)."),
-    ("df_parts", "Wide table — one column per part (tmd, jmd_n, jmd_c, …)."),
-    ("df_feat", "Ranked features: feature, abs_auc, mean_dif, p_val, positions, "
-     "scale, category."),
+    # -- Prediction tasks -------------------------------------------------
+    ("Prediction level", "Residue (AA_*) · Domain (DOM_*) · Protein (SEQ_*) — the "
+     "unit a task predicts at; a proxy for the two axes below."),
+    ("Unit of comparison", "What CPP profiles for a task: a window (residue), a "
+     "part-set (domain), or the whole chain (protein). One of two task-defining axes."),
+    ("Reference construction", "How the contrast set is built: labeled A-vs-B groups · "
+     "non-site windows · an unlabeled pool · composition-matched background. The 2nd axis."),
+    ("Test vs reference group", "The A-vs-B contrast at CPP's core: the test group is "
+     "profiled against the reference group; a feature's mean_dif is test − reference."),
+    # -- CPP modes & numerical CPP ----------------------------------------
+    ("Determinant discovery", "CPP with no prediction target — contrast two groups to "
+     "surface what physicochemically distinguishes them. CPP's purest interpretable use."),
+    ("Design / ΔCPP", "Inverts prediction: measure how a mutation shifts a sequence's "
+     "CPP profile (ΔCPP) and steer toward a target. Model-free (AAMut · SeqMut)."),
+    ("Numerical CPP (pseudo-scale)", "CPP generalizes from AA→scale lookup to any "
+     "per-residue tensor — PLM · structure · PTM — each a pseudo-scale via CPP.run_num.", "v1.1"),
+    # -- Models, explainability & feature reduction -----------------------
+    ("Feature importance vs impact", "Two explainability axes: importance = unsigned, "
+     "group-level (TreeModel); impact = signed, per-sample (ShapModel, shap_plot)."),
+    ("Reducing features", "Four distinct ops: redundancy reduction (AAclust scales) · "
+     "feature pruning · selection (RFE) · simplification (CPP.simplify → interpretable scales)."),
+    ("PU labels", "dPULearn input: 1 = positive, 2 = unlabeled. Output: "
+     "1 / 0 (reliable-negative) / 2."),
+    # -- Class conventions ------------------------------------------------
     ("Wrapper", "sklearn-style class — .fit / .predict / .eval, sets trailing *_ "
      "attributes after fit."),
     ("Plot class", "*Plot mirror of an analytical class — same arguments, "
      "visualization only."),
-    ("PU labels", "dPULearn input: 1 = positive, 2 = unlabeled. Output: "
-     "1 / 0 (reliable-negative) / 2."),
-    ("CPP", "Comparative Physicochemical Profiling — discovers ranked "
-     "Part × Split × Scale features."),
-    ("AAontology", "Two-level scale taxonomy; CPP uses its categories to organize "
-     "and rank features."),
 ]
 
 FOOTER_NOTE = ("Layered seeds: seed= (call) ▸ random_state= (init) ▸ "
@@ -433,11 +517,15 @@ CONTENT = {
     "prediction_levels": PREDICTION_LEVELS,
     "prediction_outputs": PREDICTION_OUTPUTS,
     "feature_ontology": FEATURE_ONTOLOGY,
+    "splits_schema": SPLITS_SCHEMA,
     "cpp_strategies": CPP_STRATEGIES,
     "sequence_anatomy": SEQUENCE_ANATOMY,
     "install": INSTALL,
     "which_module": WHICH_MODULE,
     "five_minute": FIVE_MINUTE,
+    "decision_guide": DECISION_GUIDE,
+    "gotchas": GOTCHAS,
+    "data_objects": DATA_OBJECTS,
     "capability_families": CAPABILITY_FAMILIES,
     "flagship_recipes": FLAGSHIP_RECIPES,
     "recipe_groups": RECIPE_GROUPS,
