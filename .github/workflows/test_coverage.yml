@@ -1,0 +1,106 @@
+name: Test Coverage
+
+on:
+  push:
+    branches:
+      - master
+    # Run on EVERY push to master (no paths-ignore). The Codecov badge tracks the
+    # branch-HEAD commit, so a docs-only HEAD with no coverage report renders the
+    # badge as "unknown". Running the suite (and its coverage upload) on every
+    # master commit keeps HEAD reported and the badge fresh. The extra runner
+    # minutes on docs-only pushes are the accepted cost of an always-valid badge.
+  pull_request:
+    branches:
+      - master
+
+# Cancel a superseded in-progress run on the same branch/PR (saves runner minutes).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Coverage runs as its own workflow (a single canonical config: Linux, Python
+  # 3.12) so a coverage report is still produced and uploaded independently of the
+  # unit-test matrix's fail-fast, mirroring ADR-0016 (coverage is measured on one
+  # canonical environment).
+  test:
+    name: Run Tests and Report Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+
+    - name: Cache Python dependencies
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-coverage-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-coverage-
+
+    - name: Install package and test dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+
+    - name: Install cd-hit and mmseqs2
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cd-hit
+        sudo apt-get install -y mmseqs2
+
+    # FIMO (MEME suite) gates the scan_motif end-to-end / parity / golden tests
+    # (@fimo_required). Built from source (not apt, not conda — ADR-0019) and
+    # cached on the version key so the heavy build runs only on a cache miss.
+    - name: Cache MEME suite (FIMO)
+      id: cache-meme
+      uses: actions/cache@v5
+      with:
+        path: ~/meme-install
+        key: ${{ runner.os }}-meme-5.5.8
+
+    - name: Build FIMO from MEME suite
+      if: steps.cache-meme.outputs.cache-hit != 'true'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential zlib1g-dev
+        MEME_VERSION=5.5.8
+        curl -sSL "https://meme-suite.org/meme/meme-software/${MEME_VERSION}/meme-${MEME_VERSION}.tar.gz" -o meme.tar.gz
+        tar -xzf meme.tar.gz
+        cd "meme-${MEME_VERSION}"
+        ./configure --prefix="$HOME/meme-install" --enable-build-libxml2 --enable-build-libxslt
+        make -j"$(nproc)"
+        make install
+
+    - name: Add FIMO to PATH
+      run: echo "$HOME/meme-install/bin" >> "$GITHUB_PATH"
+
+    - name: Run tests with coverage and generate XML report
+      env:
+        MPLBACKEND: Agg
+        # Use CPython's sys.monitoring coverage backend (py3.12+): much faster
+        # than the default C-tracer, so the coverage job stops being the long pole.
+        COVERAGE_CORE: sysmon
+      run: |
+        pytest tests -m "not regression" --cov=aaanalysis --cov-branch --cov-report=xml -x -n auto --durations=20
+
+    # Branch coverage cannot be gated by --cov-fail-under once --cov-branch is on
+    # (that flag then checks the *combined* line+branch number, silently redefining
+    # the line floor). Parse coverage.xml for independent line (>=88) and branch
+    # (>=80) gates instead (issue #84, ADR-0016 D4).
+    - name: Enforce line and branch coverage gates
+      run: |
+        python .github/scripts/check_branch_coverage.py
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v7
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        fail_ci_if_error: true
