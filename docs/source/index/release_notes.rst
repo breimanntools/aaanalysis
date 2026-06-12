@@ -63,6 +63,12 @@ Added
 - **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts``
   from per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output), so
   each sequence part can be generated with its own recipe.
+- **AAclust.select_proteins**: Protein-level redundancy reduction over a pre-pooled
+  per-protein feature matrix (``X``: CPP features, pooled embeddings, or structural /
+  DSSP-derived features). Clusters the proteins and selects one representative (medoid)
+  per cluster, annotating ``df_seq`` with ``cluster`` / ``is_representative`` /
+  ``dist_to_rep`` (``return_data='annotated' | 'filtered' | 'both'``) — the numerical
+  counterpart to sequence-identity reduction via ``filter_seq``.
 
 **Sequence Analysis**
 

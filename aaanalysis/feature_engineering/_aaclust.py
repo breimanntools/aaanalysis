@@ -2,7 +2,7 @@
 This is a script for the frontend of the AAclust class, a clustering wrapper object to obtain redundancy-reduced
 scale subsets.
 """
-from typing import Optional, Dict, List, Tuple, Type, Literal
+from typing import Optional, Dict, List, Tuple, Type, Literal, Union
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.base import ClusterMixin
@@ -19,7 +19,7 @@ from ._backend.check_aaclust import check_metric
 from ._backend.aaclust.aaclust_fit import estimate_lower_bound_n_clusters, optimize_n_clusters, merge_clusters
 from ._backend.aaclust.aaclust_eval import evaluate_clustering
 from ._backend.aaclust.aaclust_methods import (compute_centers, compute_medoids, name_clusters,
-                                               compute_correlation)
+                                               compute_correlation, compute_dist_to_medoids)
 
 
 # I Helper Functions
@@ -43,6 +43,20 @@ def check_match_X_n_clusters(X=None, n_clusters=None, accept_none=True):
         raise ValueError(f"n_samples={n_samples} (in 'X') should be >= 'n_clusters' ({n_clusters})")
     if n_unique_samples < n_clusters:
         raise ValueError(f"'n_clusters' ({n_clusters}) should be >= n_unique_samples={n_unique_samples} (in 'X').")
+
+
+def check_match_df_seq_X(df_seq=None, X=None):
+    """Verify 'df_seq' has a unique 'entry' column and is row-aligned to 'X'."""
+    if not isinstance(df_seq, pd.DataFrame):
+        raise ValueError(f"'df_seq' ({type(df_seq)}) should be a pandas DataFrame.")
+    if ut.COL_ENTRY not in df_seq.columns:
+        raise ValueError(f"'df_seq' should contain the '{ut.COL_ENTRY}' column (got columns: {list(df_seq.columns)}).")
+    entries = df_seq[ut.COL_ENTRY].to_list()
+    if len(entries) != len(set(entries)):
+        raise ValueError(f"'{ut.COL_ENTRY}' values in 'df_seq' should be unique.")
+    n_samples = X.shape[0]
+    if len(df_seq) != n_samples:
+        raise ValueError(f"n_proteins does not match for 'df_seq' ({len(df_seq)}) and 'X' ({n_samples} rows).")
 
 
 def check_X_X_ref(X=None, X_ref=None):
@@ -726,3 +740,111 @@ class AAclust(Wrapper):
             if n > n_samples:
                 n = n_samples
         return selected_scale_ids
+
+    def select_proteins(self,
+                        df_seq: pd.DataFrame,
+                        X: ut.ArrayLike2D,
+                        n_clusters: Optional[int] = None,
+                        on_center: bool = True,
+                        min_th: float = 0.3,
+                        metric: Literal["correlation", "manhattan", "euclidean", "cosine"] = "euclidean",
+                        return_data: Literal["annotated", "filtered", "both"] = "annotated",
+                        ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, np.ndarray]]:
+        """
+        Select a redundancy-reduced set of proteins from a per-protein feature matrix.
+
+        Clusters proteins by their numerical representation in ``X`` (e.g. a CPP feature matrix,
+        pooled per-protein embeddings, or structural/DSSP-derived features) and selects one
+        representative protein (the medoid) per cluster [Breimann24a]_. ``X`` must be pre-pooled to
+        one row per protein; pooling per-residue inputs to a per-protein vector is left to the caller.
+        The result is reported on ``df_seq`` in the same style as sequence-based redundancy reduction:
+        a ``cluster`` label, an ``is_representative`` flag, and the ``dist_to_rep`` distance of each
+        protein to its representative.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_proteins, n_columns)
+            DataFrame containing an ``entry`` column with unique protein identifiers, row-aligned
+            to ``X`` (row `i` of ``df_seq`` describes protein `i` in ``X``).
+        X : array-like, shape (n_proteins, n_features)
+            Per-protein feature matrix. `Rows` correspond to proteins and `columns` to features.
+        n_clusters : int, optional
+            Pre-defined number of clusters (selected proteins). If provided, k is not optimized.
+            Must be 0 < n_clusters < n_proteins.
+        min_th : float, default=0.3
+            Pearson correlation threshold for clustering optimization (between 0 and 1).
+        on_center : bool, default=True
+            If ``True``, ``min_th`` is applied to the cluster center. Otherwise, to all cluster members.
+        metric : {'correlation', 'euclidean', 'manhattan', 'cosine'}, default='euclidean'
+            Similarity measure used for obtaining medoids and computing ``dist_to_rep``:
+
+             - ``correlation``: Pearson correlation (maximum)
+             - ``euclidean``: Euclidean distance (minimum)
+             - ``manhattan``: Manhattan distance (minimum)
+             - ``cosine``: Cosine distance (minimum)
+
+        return_data : {'annotated', 'filtered', 'both'}, default='annotated'
+            Controls the returned data:
+
+             - ``annotated``: ``df_seq`` with three added columns (one row per protein).
+             - ``filtered``: tuple ``(df_seq_repr, X_repr)`` with only the representative proteins.
+             - ``both``: tuple ``(df_seq, X_repr)`` with the annotated ``df_seq`` and representative-only ``X``.
+
+        Returns
+        -------
+        df_seq : pd.DataFrame
+            ``df_seq`` extended by ``cluster`` (cluster label), ``is_representative`` (1 for the
+            representative protein of each cluster, else 0), and ``dist_to_rep`` (distance to the
+            representative under ``metric``; 0 for representatives). Returned when
+            ``return_data='annotated'``.
+        df_seq_repr, X_repr : pd.DataFrame and array-like
+            The representative proteins only (``return_data='filtered'``), or the annotated
+            ``df_seq`` together with the representative-only feature matrix (``return_data='both'``).
+
+        Notes
+        -----
+        * Representatives are the cluster medoids, so ``is_representative`` sums to the number of clusters.
+        * Under ``metric='correlation'`` the distance to the representative is ``1 - Pearson``; it is
+          undefined (NaN) for a protein whose feature vector has zero variance.
+
+        See Also
+        --------
+        * :meth:`AAclust.fit`: The underlying clustering used for protein selection.
+        * :meth:`AAclust.comp_medoids`: The medoid computation defining the representatives.
+
+        Examples
+        --------
+        .. include:: examples/aac_select_proteins.rst
+        """
+        # Check input
+        X = ut.check_X(X=X)
+        ut.check_X_unique_samples(X=X)
+        ut.check_number_range(name="min_th", val=min_th, min_val=0, max_val=1, just_int=False)
+        ut.check_number_range(name="n_clusters", val=n_clusters, min_val=1, just_int=True, accept_none=True)
+        check_metric(metric=metric)
+        ut.check_bool(name="on_center", val=on_center)
+        ut.check_str_options(name="return_data", val=return_data,
+                             list_str_options=["annotated", "filtered", "both"])
+        check_match_X_n_clusters(X=X, n_clusters=n_clusters, accept_none=True)
+        check_match_df_seq_X(df_seq=df_seq, X=X)
+        # Cluster proteins (rows of X); obtain the representative (medoid) per cluster under 'metric'
+        self.fit(X=X, n_clusters=n_clusters, on_center=on_center, min_th=min_th, metric=metric)
+        labels = self.labels_
+        _, labels_medoids, medoid_ind = compute_medoids(X, labels=labels, metric=metric)
+        is_representative = np.zeros(len(labels), dtype=int)
+        is_representative[np.asarray(medoid_ind)] = 1
+        dist_to_rep = compute_dist_to_medoids(X, labels=labels, medoid_ind=medoid_ind,
+                                              labels_medoids=labels_medoids, metric=metric)
+        # Annotate df_seq (row-aligned to X)
+        df_seq_annot = df_seq.copy()
+        df_seq_annot[ut.COL_CLUST] = labels
+        df_seq_annot[ut.COL_IS_REP] = is_representative
+        df_seq_annot[ut.COL_DIST_TO_REP] = dist_to_rep
+        rep_mask = is_representative.astype(bool)
+        if return_data == "annotated":
+            return df_seq_annot
+        if return_data == "filtered":
+            return df_seq_annot[rep_mask].reset_index(drop=True), X[rep_mask]
+        return df_seq_annot, X[rep_mask]

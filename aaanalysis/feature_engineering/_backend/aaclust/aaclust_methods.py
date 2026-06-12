@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 import aaanalysis.utils as ut
-from ._utils_aaclust import _compute_centers, _compute_medoids
+from ._utils_aaclust import _compute_centers, _compute_medoids, _dist_to_medoids
 
 
 # I Helper function
@@ -85,6 +85,16 @@ def compute_medoids(X, labels=None, metric="correlation"):
     # Function in utilis for not breaking dependency rules:
     # Backend functions should only depend on backend utility functions
     return _compute_medoids(X, labels=labels, metric=metric)
+
+
+def compute_dist_to_medoids(X, labels=None, medoid_ind=None, labels_medoids=None, metric="correlation"):
+    """Obtain the distance of each sample to its cluster medoid (representative)"""
+    if metric is None:
+        metric = "correlation"
+    # Function in _utils_aaclust for not breaking dependency rules:
+    # Backend functions should only depend on backend utility functions
+    return _dist_to_medoids(X, labels=labels, medoid_ind=medoid_ind,
+                            labels_medoids=labels_medoids, metric=metric)
 
 
 def name_clusters(X, labels=None, names=None, shorten_names=True):

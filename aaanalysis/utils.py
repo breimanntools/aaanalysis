@@ -293,6 +293,7 @@ LIST_ECO_MANUAL = [STR_ECO_EXPERIMENTAL, STR_ECO_COMBINATORIAL]
 COL_CLUST = "cluster"
 COL_REP_IDEN = "identity_with_rep"
 COL_IS_REP = "is_representative"
+COL_DIST_TO_REP = "dist_to_rep"
 
 # Columns for df_feat
 COL_FEATURE = "feature"
