@@ -88,12 +88,12 @@ def main():
     _save("ranking")
 
     # CPP feature: REF vs TEST value distribution of the single top feature
-    # (df_feat is already ranked most-important-first via add_feat_importance(sort=True))
-    top_feature = df_feat["feature"].iloc[0]
+    # (df_feat is already ranked most-important-first via add_feat_importance(sort=True),
+    #  so feat_rank=1 selects the top feature straight from df_feat)
     aa.plot_settings(font_scale=0.7)
-    cpp_plot.feature(feature=top_feature, df_seq=df_seq, labels=labels,
+    cpp_plot.feature(feature=df_feat, feat_rank=1, df_seq=df_seq, labels=labels,
                      name_test="substrates", name_ref="non-subs.")
-    plt.title(f"{top_feature}\n({df_feat['subcategory'].iloc[0]})", fontsize=8)
+    plt.title(f"{df_feat['feature'].iloc[0]}\n({df_feat['subcategory'].iloc[0]})", fontsize=8)
     _save("feature")
 
     # AAclust: cluster the scale set, plot cluster centers in PCA space

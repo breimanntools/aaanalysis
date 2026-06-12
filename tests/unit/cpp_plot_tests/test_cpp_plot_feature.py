@@ -41,6 +41,69 @@ class TestCPPPlotFeature:
             assert isinstance(ax, plt.Axes)
             plt.close()
 
+    def test_feature_list(self):
+        # feature accepts a list of feature ids; feat_rank selects which one
+        df_seq, labels, df_feat = get_input()
+        features = random.sample(df_feat["feature"].to_list(), 5)
+        cpp_plot = aa.CPPPlot()
+        ax = cpp_plot.feature(feature=features, df_seq=df_seq, labels=labels)
+        assert isinstance(ax, plt.Axes)
+        plt.close()
+
+    def test_feature_df_feat(self):
+        # feature accepts a whole df_feat; its 'feature' column supplies the ids
+        df_seq, labels, df_feat = get_input()
+        cpp_plot = aa.CPPPlot()
+        ax = cpp_plot.feature(feature=df_feat.head(10), df_seq=df_seq, labels=labels)
+        assert isinstance(ax, plt.Axes)
+        plt.close()
+
+    def test_feat_rank(self):
+        # feat_rank is 1-based; each valid rank selects a feature and plots
+        df_seq, labels, df_feat = get_input()
+        features = random.sample(df_feat["feature"].to_list(), 5)
+        cpp_plot = aa.CPPPlot()
+        for feat_rank in range(1, len(features) + 1):
+            ax = cpp_plot.feature(feature=features, df_seq=df_seq, labels=labels, feat_rank=feat_rank)
+            assert isinstance(ax, plt.Axes)
+            plt.close()
+
+    def test_feat_rank_selects_expected(self):
+        # feature=list with feat_rank=k plots the SAME data as passing the k-th id directly
+        # (as-given order, 1-based), and a different rank plots different data.
+        def _kde_signature(ax):
+            return tuple(tuple(round(float(x), 6) for x in ln.get_xdata()) for ln in ax.lines)
+
+        df_seq, labels, df_feat = get_input()
+        features = random.sample(df_feat["feature"].to_list(), 4)
+        cpp_plot = aa.CPPPlot()
+        sigs = []
+        for k in range(1, len(features) + 1):
+            ax_rank = cpp_plot.feature(feature=features, df_seq=df_seq, labels=labels, feat_rank=k)
+            ax_direct = cpp_plot.feature(feature=features[k - 1], df_seq=df_seq, labels=labels)
+            sig_rank = _kde_signature(ax_rank)
+            assert sig_rank == _kde_signature(ax_direct)
+            sigs.append(sig_rank)
+            plt.close("all")
+        # Distinct features (distinct ranks) yield distinct plotted curves
+        assert len(set(sigs)) == len(sigs)
+
+    def test_invalid_feat_rank(self):
+        df_seq, labels, df_feat = get_input()
+        features = random.sample(df_feat["feature"].to_list(), 3)
+        cpp_plot = aa.CPPPlot()
+        # Out of range (1-based): 0, negative, and beyond the number of features
+        for feat_rank in [0, -1, len(features) + 1, 99]:
+            with pytest.raises(ValueError):
+                cpp_plot.feature(feature=features, df_seq=df_seq, labels=labels, feat_rank=feat_rank)
+        # Wrong type
+        for feat_rank in [1.5, "1", None, [1]]:
+            with pytest.raises(ValueError):
+                cpp_plot.feature(feature=features, df_seq=df_seq, labels=labels, feat_rank=feat_rank)
+        # A single feature only admits feat_rank=1
+        with pytest.raises(ValueError):
+            cpp_plot.feature(feature=features[0], df_seq=df_seq, labels=labels, feat_rank=2)
+
     def test_valid_df_seq_labels(self):
         df_seq, labels, df_feat = get_input()
         all_data_set_names = [x for x in aa.load_dataset()["Dataset"].to_list() if "AA" not in x
@@ -236,8 +299,9 @@ class TestCPPPlotFeature:
             ax = cpp_plot.feature(feature=feature.lower(), df_seq=df_seq, labels=labels)
         with pytest.raises(ValueError):
             ax = cpp_plot.feature(feature=feature.upper(), df_seq=df_seq, labels=labels)
+        # A list/df_feat containing an invalid feature id is still rejected
         with pytest.raises(ValueError):
-            ax = cpp_plot.feature(feature=features, df_seq=df_seq, labels=labels)
+            ax = cpp_plot.feature(feature=[feature, "invalid_feature"], df_seq=df_seq, labels=labels, feat_rank=2)
         with pytest.raises(ValueError):
             ax = cpp_plot.feature(feature=None, df_seq=df_seq, labels=labels)
         with pytest.raises(ValueError):
