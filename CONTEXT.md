@@ -71,6 +71,10 @@ _Avoid_: granularity, scope.
 How the contrasting set is built for a CPP / PU workflow — labeled A-vs-B groups, non-site / non-cleaved windows, an unlabeled pool, or a composition-matched shuffled background (#61 / #66). The second class-defining axis.
 _Avoid_: negative set (too narrow — only one of the options).
 
+**test group / reference group**:
+The two sets CPP contrasts: the **test group** is profiled against the **reference group**, and a feature's mean difference (`mean_dif`) is computed as *test − reference* (`abs_auc` measures the separation magnitude, unsigned). The A-vs-B comparison at the literal heart of CPP — what **reference construction** produces and what **determinant discovery** interprets. At multi-class, each class is the test group in turn versus the rest as the reference group (**one-vs-rest (OvR)**).
+_Avoid_: positive / negative set (conflates the comparison roles with PU label values 1/0); test/reference *set* (prefer "group" — "set" collides with reference construction's output).
+
 **determinant discovery**:
 A cross-cutting use-case class with **no prediction target**: CPP contrasts two groups to surface *what physicochemically distinguishes them*, interpreted via AAontology. CPP's purest, most interpretable use; applies at any **prediction level**.
 _Avoid_: feature discovery (collides with feature engineering), profiling (too generic).
