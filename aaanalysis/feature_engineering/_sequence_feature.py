@@ -24,7 +24,8 @@ from ._backend.cpp.utils_feature import (get_df_parts_,
                                          replace_non_canonical_aa_,
                                          get_positions_, get_amino_acids_,
                                          get_df_pos_, get_df_pos_parts_)
-from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_, get_df_feat_,
+from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_,
+                                            get_feature_descriptions_, get_df_feat_,
                                             get_labels_ovr_, get_labels_ovo_, get_labels_quantile_,
                                             get_labels_tiered_)
 from ._backend.cpp_run import _pick_feature_matrix_builder
@@ -1033,6 +1034,87 @@ class SequenceFeature:
                                         jmd_c_len=jmd_c_len,
                                         jmd_n_len=jmd_n_len)
         return feat_names
+
+    @staticmethod
+    def get_feature_descriptions(features: Union[ut.ArrayLike1D, pd.DataFrame] = None,
+                                 df_cat: Optional[pd.DataFrame] = None,
+                                 start: int = 1,
+                                 tmd_len: int = 20,
+                                 jmd_n_len: int = 10,
+                                 jmd_c_len: int = 10,
+                                 ) -> List[str]:
+        """
+        Build a standardized, human-readable description for each feature id (PART-SPLIT-SCALE).
+
+        Complements the compact :meth:`SequenceFeature.get_feature_names` label
+        (``'scale name [positions]'``) with one self-contained sentence per
+        feature that spells out all three id fields: the sequence part as a
+        readable label, the Split as a phrase (e.g. ``'segment 2 of 4'``),
+        and the scale as its AAontology name together with the category and
+        subcategory from ``df_cat``. Terminology is drawn from fixed vocabularies
+        (the part labels and the AAontology category/subcategory wording), so the
+        output is deterministic and consistent across runs. The result can be
+        assigned to a ``df_feat`` column (``'feature_description'``) for readable
+        :class:`CPP` output without changing the ``'feature'`` id string.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        features : array-like, shape (n_features,) or pd.DataFrame
+            List of feature ids (``'PART-SPLIT-SCALE'``). Alternatively, a ``df_feat`` DataFrame,
+            in which case its ``'feature'`` column is used.
+        df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
+            DataFrame of categories for physicochemical scales. Must contain all scales from ``df_scales``.
+            Default from :meth:`load_scales` with ``name='scales_cat'``, unless specified in ``options['df_cat']``.
+        start : int, default=1
+            Position label of first residue position (starting at N-terminus).
+        tmd_len : int, default=20
+            Length of target middle domain (TMD) (>0).
+        jmd_n_len : int, default=10
+            Length of JMD-N (>=0).
+        jmd_c_len : int, default=10
+            Length of JMD-C (>=0).
+
+        Returns
+        -------
+        feat_descriptions : list of str
+            Human-readable description for each feature, one per feature id.
+
+        Notes
+        -----
+        * Length parameters (``tmd_len``, ``jmd_n_len``, ``jmd_c_len``) must match with ids in ``features``.
+        * Part labels come from a fixed vocabulary; category and subcategory wording is taken
+          verbatim from ``df_cat`` (the AAontology scale categories table).
+
+        See Also
+        --------
+        * :meth:`SequenceFeature.get_feature_names` for the compact label form.
+
+        Examples
+        --------
+        .. include:: examples/sf_get_feature_descriptions.rst
+        """
+        # Load defaults
+        if df_cat is None:
+            df_cat = ut.load_default_scales(scale_cat=True)
+        # Check input
+        features = ut.check_features(features=features)
+        check_df_cat(df_cat=df_cat)
+        ut.check_number_val(name="start", val=start, just_int=True, accept_none=False)
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
+        args_len, _ = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+        check_match_df_cat_features(df_cat=df_cat, features=features)
+        check_match_features_seq_parts(features=features, **args_len)
+        # Get feature descriptions
+        feat_descriptions = get_feature_descriptions_(features=features,
+                                                      df_cat=df_cat,
+                                                      start=start,
+                                                      tmd_len=tmd_len,
+                                                      jmd_c_len=jmd_c_len,
+                                                      jmd_n_len=jmd_n_len)
+        return feat_descriptions
 
     @staticmethod
     def get_feature_positions(features: Union[ut.ArrayLike1D, pd.DataFrame] = None,

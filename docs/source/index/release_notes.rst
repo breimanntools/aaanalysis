@@ -63,6 +63,12 @@ Added
 - **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts``
   from per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output), so
   each sequence part can be generated with its own recipe.
+- **SequenceFeature.get_feature_descriptions**: Build one standardized,
+  human-readable sentence per ``PART-SPLIT-SCALE`` feature id, combining the
+  sequence region, the split (e.g. ``"segment 2 of 4"``), and the AAontology scale
+  name, category, and subcategory. Complements the compact ``get_feature_names``
+  label; the description is additive (the ``'feature'`` id is unchanged) and can be
+  assigned to an optional ``'feature_description'`` ``df_feat`` column.
 - **AAclust.select_scales**: Convenience wrapper around ``AAclust.fit`` that takes
   an amino acid scales DataFrame (rows = amino acids, columns = scale IDs) and
   returns the redundancy-reduced subset of its columns (one medoid scale per

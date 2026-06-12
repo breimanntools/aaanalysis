@@ -132,6 +132,24 @@ LIST_ALL_PARTS = ["tmd", "tmd_e", "tmd_n", "tmd_c", "jmd_n", "jmd_c", "ext_c", "
                   "tmd_jmd", "jmd_n_tmd_n", "tmd_c_jmd_c", "ext_n_tmd_n", "tmd_c_ext_c"]
 LIST_PARTS = ["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
 
+# Canonical, human-readable label per sequence part (the PART field of a
+# PART-SPLIT-SCALE feature id). Single source of the part-label vocabulary used by
+# SequenceFeature.get_feature_descriptions; keys cover every part in LIST_ALL_PARTS.
+# ('region' is deliberately avoided here — reserved for the #27 region abstraction.)
+DICT_PART_LABEL = {"tmd": "TMD",
+                   "tmd_e": "extended TMD",
+                   "tmd_n": "TMD-N",
+                   "tmd_c": "TMD-C",
+                   "jmd_n": "JMD-N",
+                   "jmd_c": "JMD-C",
+                   "ext_c": "C-terminal extension",
+                   "ext_n": "N-terminal extension",
+                   "tmd_jmd": "JMD-N+TMD+JMD-C",
+                   "jmd_n_tmd_n": "JMD-N+TMD-N",
+                   "tmd_c_jmd_c": "TMD-C+JMD-C",
+                   "ext_n_tmd_n": "N-terminal extension+TMD-N",
+                   "tmd_c_ext_c": "TMD-C+C-terminal extension"}
+
 # Split names
 STR_SEGMENT = "Segment"
 STR_PATTERN = "Pattern"
@@ -309,6 +327,7 @@ COL_PVAL_FDR = "p_val_fdr_bh"
 COL_POSITION = "positions"
 COL_AA_TEST = "amino_acids_test"
 COL_AA_REF = "amino_acids_ref"
+COL_FEAT_DES = "feature_description"  # optional, additive: one readable sentence per feature id
 
 # Columns for df_feat after processing with explainable AI methods
 COL_FEAT_IMPORT = "feat_importance"
