@@ -127,6 +127,11 @@ Changed
 - **n_jobs**: Unified parallelism convention across ``CPP`` / ``CPPGrid``
   (``1`` serial, ``-1`` all cores, ``N>1`` exactly N, ``None`` optimized), with an
   ``options['n_jobs']`` global override.
+- **CPPPlot.feature**: Now titles the plot with the feature's human-readable
+  description (from ``SequenceFeature.get_feature_descriptions``), line-wrapped via
+  the new ``show_title`` (default ``True``) and ``title_wrap_width`` (default ``45``)
+  parameters. A subsequent ``plt.title(...)`` still overrides it; ``feature_map`` and
+  ``ranking`` are unchanged.
 
 
 Version 1.0 (Stable Version)
