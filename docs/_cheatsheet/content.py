@@ -241,13 +241,11 @@ FLAGSHIP_RECIPES = [
              "df_feat = cpp.run(labels=labels, n_filter=100)\n"
              "X = sf.feature_matrix(df_feat['feature'], df_parts)\n"
              "tm = aa.TreeModel(); tm.fit(X, labels=labels)\n"
-             "df_feat = tm.add_feat_importance(df_feat=df_feat)\n"
+             "df_feat = tm.add_feat_importance(df_feat=df_feat, sort=True)\n"
              "cpp_plot = aa.CPPPlot(); aa.plot_settings()\n"
-             "# distribution of the single top feature\n"
-             "top = df_feat.sort_values('feat_importance',\n"
-             "    ascending=False)['feature'].iloc[0]\n"
-             "cpp_plot.feature(feature=top, df_seq=df_seq, labels=labels,\n"
-             "    name_test='substrates', name_ref='non-subs.')\n"
+             "# distribution of the top feature (feat_rank=1 of the sorted df_feat)\n"
+             "cpp_plot.feature(feature=df_feat, feat_rank=1, df_seq=df_seq,\n"
+             "    labels=labels, name_test='substrates', name_ref='non-subs.')\n"
              "plt.tight_layout(); plt.show()"},
     {"cls": "CPP — feature map", "tag": "group level · full vs simplified",
      "imgs": ["feature_map", "feature_map_simplified"],

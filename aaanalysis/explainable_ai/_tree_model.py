@@ -484,7 +484,8 @@ class TreeModel:
 
     def add_feat_importance(self,
                             df_feat: pd.DataFrame = None,
-                            drop: bool = False
+                            drop: bool = False,
+                            sort: bool = False,
                             ) -> pd.DataFrame:
         """
         Include feature importance and its standard deviation to feature DataFrame.
@@ -501,6 +502,9 @@ class TreeModel:
         drop : bool, default=False
             If ``True``, allow dropping of already existing ``feat_importance`` and ``feat_importance_std`` columns
             from ``df_feat`` before inserting.
+        sort : bool, default=False
+            If ``True``, sort the returned DataFrame by ``feat_importance`` in descending order (most important
+            feature first) and reset the index. If ``False``, the input feature order is preserved.
 
         Returns
         -------
@@ -518,6 +522,7 @@ class TreeModel:
         # Check input
         df_feat = ut.check_df_feat(df_feat=df_feat)
         ut.check_bool(name="drop", val=drop)
+        ut.check_bool(name="sort", val=sort)
         check_match_df_feat_importance_arrays(df_feat=df_feat,
                                               feat_importance=self.feat_importance,
                                               feat_importance_std=self.feat_importance_std,
@@ -530,6 +535,8 @@ class TreeModel:
         args = dict(allow_duplicates=False)
         df_feat.insert(loc=len(df_feat.columns), column=ut.COL_FEAT_IMPORT, value=self.feat_importance, **args)
         df_feat.insert(loc=len(df_feat.columns), column=ut.COL_FEAT_IMPORT_STD, value=self.feat_importance_std, **args)
+        if sort:
+            df_feat = df_feat.sort_values(by=ut.COL_FEAT_IMPORT, ascending=False).reset_index(drop=True)
         return df_feat
 
     def select_features(self,

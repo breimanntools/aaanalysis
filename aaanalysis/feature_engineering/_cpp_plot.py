@@ -380,7 +380,8 @@ class CPPPlot:
 
     # Plotting method for single feature
     def feature(self,
-                feature: str = None,
+                feature: Union[str, List[str], pd.DataFrame] = None,
+                feat_rank: int = 1,
                 df_seq: pd.DataFrame = None,
                 labels: ut.ArrayLike1D = None,
                 label_test: int = 1,
@@ -417,8 +418,16 @@ class CPPPlot:
 
         Parameters
         ----------
-        feature : str
-            Name of the feature for which test and reference set distributions and difference should be plotted.
+        feature : str, list of str, or pd.DataFrame
+            The feature(s) to plot, given as a single ``PART-SPLIT-SCALE`` feature id, a list of such ids,
+            or a feature DataFrame (``df_feat``) whose ``feature`` column supplies the ids. When more than
+            one feature is provided, ``feat_rank`` selects which one is plotted. The order is taken as given
+            (pre-sort with :meth:`TreeModel.add_feat_importance` using ``sort=True`` to place the most
+            important feature first).
+        feat_rank : int, default=1
+            1-based rank selecting which feature to plot when ``feature`` holds more than one
+            (``1`` = first/top, ``2`` = second, ...). Must be between 1 and the number of provided features.
+            For a single feature it must be ``1``.
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
             DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
             in a distinct **Position-based**, **Part-based**, **Sequence-based**, or **Sequence-TMD-based** format.
@@ -476,7 +485,9 @@ class CPPPlot:
         .. include:: examples/cpp_plot_feature.rst
         """
         # Check input
-        ut.check_features(features=feature, list_scales=list(self._df_scales))
+        features = ut.check_features(features=feature, list_scales=list(self._df_scales))
+        ut.check_number_range(name="feat_rank", val=feat_rank, min_val=1, max_val=len(features), just_int=True)
+        feature = features[feat_rank - 1]
         ut.check_df_seq(df_seq=df_seq, accept_none=False)
         ut.check_number_val(name="label_test", val=label_test, just_int=True)
         ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
