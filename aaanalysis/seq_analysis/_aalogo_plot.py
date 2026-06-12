@@ -59,8 +59,8 @@ def check_aal_kws(aal_kws=None, df_logo=None, df_logo_info=None):
             "precomputed 'df_logo'/'df_logo_info', not both.")
 
 
-def check_list_aal_kws(list_aal_kws=None, list_df_logo=None):
-    """Check list_aal_kws is a list of valid dicts not combined with list_df_logo."""
+def check_list_aal_kws(list_aal_kws=None, list_df_logo=None, list_df_logo_info=None):
+    """Check list_aal_kws is a list of valid dicts not combined with precomputed data."""
     if list_aal_kws is None:
         return
     if not isinstance(list_aal_kws, list) or len(list_aal_kws) == 0:
@@ -73,12 +73,12 @@ def check_list_aal_kws(list_aal_kws=None, list_df_logo=None):
                 f"'list_aal_kws[{i}]' ({aal_kws}) should be a dictionary of "
                 f"'AAlogo.get_df_logo' keyword arguments.")
         check_aal_kws_keys(name=f"list_aal_kws[{i}]", aal_kws=aal_kws,
-                           include_info=False)
-    if list_df_logo is not None:
+                           include_info=True)
+    if list_df_logo is not None or list_df_logo_info is not None:
         raise ValueError(
-            "'list_aal_kws' is mutually exclusive with 'list_df_logo': provide either "
-            "'list_aal_kws' (logo data computed internally) or precomputed "
-            "'list_df_logo', not both.")
+            "'list_aal_kws' is mutually exclusive with 'list_df_logo' and "
+            "'list_df_logo_info': provide either 'list_aal_kws' (logo data computed "
+            "internally) or precomputed 'list_df_logo'/'list_df_logo_info', not both.")
 
 
 def check_list_df_logo(list_df_logo=None):
@@ -93,6 +93,18 @@ def check_list_df_logo(list_df_logo=None):
             raise ValueError(
                 f"All DataFrames in 'list_df_logo' must have the same number of positions. "
                 f"list_df_logo[0] has {n_pos}, list_df_logo[{i}] has {len(df)}.")
+
+
+def check_list_df_logo_info(list_df_logo_info=None, list_df_logo=None):
+    """Check list_df_logo_info is a list of Series matching list_df_logo in count and length."""
+    if not isinstance(list_df_logo_info, list) or len(list_df_logo_info) == 0:
+        raise ValueError("'list_df_logo_info' must be a non-empty list of Series.")
+    if len(list_df_logo_info) != len(list_df_logo):
+        raise ValueError(
+            f"'list_df_logo_info' length ({len(list_df_logo_info)}) must match "
+            f"'list_df_logo' length ({len(list_df_logo)}).")
+    for i, df_logo_info in enumerate(list_df_logo_info):
+        check_df_logo_info(df_logo_info=df_logo_info, df_logo=list_df_logo[i])
 
 
 def check_parts_len(jmd_n_len=None, jmd_c_len=None, df_logo=None):
@@ -280,17 +292,9 @@ class AAlogoPlot:
             If provided, a bit-score bar is rendered above the main logo. Must be ``None``
             when ``aal_kws`` is given (it is then computed internally and the bar is shown).
         aal_kws : dict, optional
-            Convenience shortcut that lets you skip the manual :class:`AAlogo` step. If
-            provided, ``AAlogoPlot`` internally instantiates :class:`AAlogo` (using this
-            plot's ``logo_type``) and computes both ``df_logo`` (via
-            :meth:`AAlogo.get_df_logo`) and ``df_logo_info`` (via
-            :meth:`AAlogo.get_df_logo_info`) from these keyword arguments, then renders the
-            logo together with the bit-score bar. ``aal_kws`` therefore holds the arguments
-            shared by both methods, e.g. ``df_parts``, ``labels``, ``label_test``,
-            ``tmd_len``, ``start_n``, ``characters_to_ignore``, and ``pseudocount``. It is
-            mutually exclusive with ``df_logo`` and ``df_logo_info`` (passing both raises
-            ``ValueError``); unknown keys also raise ``ValueError``. Example:
-            ``aal_kws=dict(df_parts=df_parts, labels=labels, label_test=1, tmd_len=20)``.
+            :meth:`AAlogo.get_df_logo` / :meth:`AAlogo.get_df_logo_info` keyword arguments.
+            If given, ``df_logo`` and ``df_logo_info`` are computed internally and both must
+            be ``None``. Mutually exclusive with ``df_logo`` and ``df_logo_info`` (see Notes).
         info_bar_color : str, default='gray'
             Color of the bit-score bars in the optional top panel.
         info_bar_ylim : tuple of float, optional
@@ -353,6 +357,19 @@ class AAlogoPlot:
             When ``df_logo_info`` is ``None``: a single ``Axes`` for the logo panel.
             When ``df_logo_info`` is provided: a tuple ``(ax_logo, ax_info)`` where
             ``ax_info`` is the bit-score bar above the logo.
+
+        Notes
+        -----
+        * ``aal_kws`` is a convenience shortcut that skips the manual :class:`AAlogo`
+          step: ``AAlogoPlot`` instantiates :class:`AAlogo` with this plot's
+          ``logo_type`` and computes both ``df_logo`` (via :meth:`AAlogo.get_df_logo`)
+          and ``df_logo_info`` (via :meth:`AAlogo.get_df_logo_info`), then renders the
+          logo with the bit-score bar. It holds the arguments shared by both methods,
+          e.g. ``df_parts``, ``labels``, ``label_test``, ``tmd_len``, ``start_n``,
+          ``characters_to_ignore``, and ``pseudocount``. Passing both ``aal_kws`` and
+          ``df_logo`` / ``df_logo_info`` raises ``ValueError``, as do unknown keys.
+          Example: ``aal_kws=dict(df_parts=df_parts, labels=labels, label_test=1,
+          tmd_len=20)``.
 
         See Also
         --------
@@ -431,7 +448,11 @@ class AAlogoPlot:
 
     def multi_logo(self,
                    list_df_logo: Optional[List[pd.DataFrame]] = None,
+                   list_df_logo_info: Optional[List[pd.Series]] = None,
                    list_aal_kws: Optional[List[dict]] = None,
+                   info_bar_color: str = "gray",
+                   info_bar_ylim: Optional[Tuple[float, float]] = None,
+                   height_ratio: Tuple[Union[int, float], Union[int, float]] = (1, 6),
                    target_p1_site: Optional[int] = None,
                    figsize_per_logo: Tuple[Union[int, float], Union[int, float]] = (8, 3),
                    fontsize_labels: Optional[Union[int, float]] = None,
@@ -457,10 +478,13 @@ class AAlogoPlot:
                    xtick_length: Union[int, float] = 11.0,
                    ) -> Tuple[plt.Figure, List[plt.Axes]]:
         """
-        Plot multiple sequence logos stacked vertically for group comparison.
+        Plot multiple sequence logos stacked vertically for group comparison, each with
+        an optional bit-score bar on top.
 
-        All logos share the same y-axis scale. Target middle domain (TMD) / juxta middle
-        domain (JMD) annotations are shown only on the bottom subplot to avoid repetition.
+        All logos share the same y-axis scale, and (when shown) all bit-score bars share a
+        common scale so they are comparable across groups. Target middle domain (TMD) /
+        juxta middle domain (JMD) annotations are shown only on the bottom subplot to avoid
+        repetition.
 
         .. versionadded:: 1.1.0
 
@@ -470,19 +494,24 @@ class AAlogoPlot:
             List of logo matrices, one per group. All must have the same number of positions.
             Required unless ``list_aal_kws`` is given, in which case it is computed
             internally and must be ``None``.
+        list_df_logo_info : list of pd.Series, each shape (n_positions,), optional
+            Per-position information content, one per group, as returned by
+            :meth:`AAlogo.get_df_logo_info`. If provided, a bit-score bar is rendered above
+            each logo. Length and per-group positions must match ``list_df_logo``. Must be
+            ``None`` when ``list_aal_kws`` is given (it is then computed internally and the
+            bars are shown).
         list_aal_kws : list of dict, optional
-            Convenience shortcut that lets you skip the manual :class:`AAlogo` step for each
-            group. If provided, ``AAlogoPlot`` internally instantiates :class:`AAlogo` (using
-            this plot's ``logo_type``) and computes one ``df_logo`` per dict via
-            :meth:`AAlogo.get_df_logo`, producing ``list_df_logo``. Each dict holds the
-            :meth:`AAlogo.get_df_logo` keyword arguments for that group, e.g.
-            ``df_parts``, ``labels``, ``label_test``, ``tmd_len``, ``start_n``,
-            ``characters_to_ignore``, and ``pseudocount`` (typically the same ``df_parts``
-            with a different ``label_test`` per group). It is mutually exclusive with
-            ``list_df_logo`` (passing both raises ``ValueError``); unknown keys in any dict
-            also raise ``ValueError``. Example:
-            ``list_aal_kws=[dict(df_parts=df_parts, labels=labels, label_test=1),
-            dict(df_parts=df_parts, labels=labels, label_test=0)]``.
+            Per-group :meth:`AAlogo.get_df_logo` keyword arguments, one dict per group. If
+            given, ``list_df_logo`` and ``list_df_logo_info`` are computed internally and
+            must be ``None``. Mutually exclusive with ``list_df_logo`` (see Notes).
+        info_bar_color : str, default='gray'
+            Color of the bit-score bars in the optional top panels.
+        info_bar_ylim : tuple of float, optional
+            Shared y-axis limits ``(min, max)`` for all bit-score bars. If ``None``, set
+            automatically from the global maximum so bars stay comparable across groups.
+        height_ratio : tuple of (int or float), default=(1, 6)
+            Height ratio ``(info_bar, logo)`` of each group when ``list_df_logo_info`` is
+            provided.
         target_p1_site : int, optional
             If set, replaces the standard JMD/TMD x-axis with P-site notation.
         figsize_per_logo : tuple of (int or float), default=(8, 3)
@@ -536,8 +565,24 @@ class AAlogoPlot:
         -------
         fig : plt.Figure
             Figure object.
-        axes : list of plt.Axes
-            One ``Axes`` per logo.
+        axes : list of plt.Axes or list of tuple of (plt.Axes, plt.Axes)
+            When no bit-score bars are shown: one ``Axes`` per logo. When
+            ``list_df_logo_info`` (or ``list_aal_kws``) is given: one
+            ``(ax_logo, ax_info)`` tuple per group, where ``ax_info`` is the bar above.
+
+        Notes
+        -----
+        * ``list_aal_kws`` is a convenience shortcut that skips the manual :class:`AAlogo`
+          step for each group: ``AAlogoPlot`` instantiates :class:`AAlogo` with this plot's
+          ``logo_type`` and computes both ``df_logo`` (via :meth:`AAlogo.get_df_logo`) and
+          ``df_logo_info`` (via :meth:`AAlogo.get_df_logo_info`) per dict, so the bit-score
+          bars appear automatically. Each dict holds that group's arguments, e.g.
+          ``df_parts``, ``labels``, ``label_test``, ``tmd_len``, ``start_n``,
+          ``characters_to_ignore``, and ``pseudocount`` (typically the same ``df_parts``
+          with a different ``label_test`` per group). Passing both ``list_aal_kws`` and
+          ``list_df_logo`` / ``list_df_logo_info`` raises ``ValueError``, as do unknown keys.
+          Example: ``list_aal_kws=[dict(df_parts=df_parts, labels=labels, label_test=1),
+          dict(df_parts=df_parts, labels=labels, label_test=0)]``.
 
         See Also
         --------
@@ -549,11 +594,18 @@ class AAlogoPlot:
         .. include:: examples/aal_plot_multi_logo.rst
         """
         # Check input
-        check_list_aal_kws(list_aal_kws=list_aal_kws, list_df_logo=list_df_logo)
+        check_list_aal_kws(list_aal_kws=list_aal_kws, list_df_logo=list_df_logo,
+                           list_df_logo_info=list_df_logo_info)
         if list_aal_kws is not None:
             aal = AAlogo(logo_type=self._logo_type)
             list_df_logo = [aal.get_df_logo(**aal_kws) for aal_kws in list_aal_kws]
+            list_df_logo_info = [aal.get_df_logo_info(**aal_kws) for aal_kws in list_aal_kws]
         check_list_df_logo(list_df_logo=list_df_logo)
+        if list_df_logo_info is not None:
+            check_list_df_logo_info(list_df_logo_info=list_df_logo_info,
+                                    list_df_logo=list_df_logo)
+            check_info_bar_ylim(info_bar_ylim=info_bar_ylim)
+            check_height_ratio(height_ratio=height_ratio)
         ut.check_figsize(figsize=figsize_per_logo)
         check_list_name_data(list_name_data=list_name_data, list_df_logo=list_df_logo)
         check_list_name_data_color(list_name_data_color=list_name_data_color,
@@ -579,6 +631,10 @@ class AAlogoPlot:
                          f"JMD-N={jmd_n_len}, JMD-C={jmd_c_len})")
         # Plot
         fig, axes = multi_logo_(list_df_logo=list_df_logo,
+                                list_df_logo_info=list_df_logo_info,
+                                info_bar_color=info_bar_color,
+                                info_bar_ylim=info_bar_ylim,
+                                height_ratio=height_ratio,
                                 target_p1_site=target_p1_site,
                                 figsize_per_logo=figsize_per_logo,
                                 y_label=self._y_label,

@@ -142,7 +142,9 @@ def single_logo_(df_logo=None, df_logo_info=None,
     return fig, axes
 
 
-def multi_logo_(list_df_logo=None, target_p1_site=None, figsize_per_logo=(8, 3),
+def multi_logo_(list_df_logo=None, list_df_logo_info=None, target_p1_site=None,
+                figsize_per_logo=(8, 3),
+                info_bar_color="gray", info_bar_ylim=None, height_ratio=(1, 6),
                 fontsize_labels=None, y_label="Counts",
                 list_name_data=None, list_name_data_color="black",
                 name_data_pos="top", name_data_fontsize=None,
@@ -154,13 +156,34 @@ def multi_logo_(list_df_logo=None, target_p1_site=None, figsize_per_logo=(8, 3),
                 fontsize_tmd_jmd=None, weight_tmd_jmd="normal",
                 highlight_tmd_area=True, highlight_alpha=0.15,
                 xtick_size=None, xtick_width=2.0, xtick_length=11.0):
-    """Plot multiple sequence logos stacked vertically with shared y-axis and part annotations."""
+    """Plot multiple sequence logos stacked vertically with optional bit-score bars,
+    shared y-axis, and part annotations."""
     n_plots = len(list_df_logo)
     figsize = (figsize_per_logo[0], figsize_per_logo[1] * n_plots)
-    fig, axes = plt.subplots(nrows=n_plots, figsize=figsize)
-    # plt.subplots returns a single Axes (not array) when nrows=1
-    if n_plots == 1:
-        axes = [axes]
+    show_info = list_df_logo_info is not None
+
+    # Create figure layout: an optional (info_bar, logo) pair per group. A nested
+    # gridspec keeps each pair tight (inner hspace=0) while spacing the groups
+    # apart (outer hspace); one scalar hspace on a flat grid cannot do both.
+    if show_info:
+        fig = plt.figure(figsize=figsize)
+        outer = fig.add_gridspec(n_plots, 1, hspace=0.33)
+        axes, list_ax_info = [], []
+        for i in range(n_plots):
+            inner = outer[i].subgridspec(2, 1, height_ratios=height_ratio, hspace=0)
+            ax_info = fig.add_subplot(inner[0])
+            ax_logo = fig.add_subplot(inner[1], sharex=ax_info)
+            list_ax_info.append(ax_info)
+            axes.append(ax_logo)
+        # Shared bar y-axis so bit heights are comparable across groups
+        if info_bar_ylim is None:
+            info_bar_ylim = (0, max(s.values.max() for s in list_df_logo_info))
+    else:
+        fig, axes = plt.subplots(nrows=n_plots, figsize=figsize)
+        # plt.subplots returns a single Axes (not array) when nrows=1
+        if n_plots == 1:
+            axes = [axes]
+        list_ax_info = [None] * n_plots
 
     # Pre-compute y_max across all logos for shared y-axis scaling
     y_max = max(df.values.sum(axis=1).max() for df in list_df_logo)
@@ -215,17 +238,27 @@ def multi_logo_(list_df_logo=None, target_p1_site=None, figsize_per_logo=(8, 3),
         sns.despine(ax=ax_logo, top=True, bottom=True)
         ax_logo.set_ylabel(y_label, size=fontsize_labels)
 
-        # Optional dataset name annotation
+        # Optional bit-score bar above this logo
+        if show_info:
+            _add_bit_score_bar(ax_info=list_ax_info[i], df_logo_info=list_df_logo_info[i],
+                               size=fontsize_labels, bar_color=info_bar_color,
+                               ylim=info_bar_ylim)
+
+        # Optional dataset name annotation (on the info bar for top placement)
         if name_data is not None:
             fs = ut.plot_gco() + 1 if name_data_fontsize is None else name_data_fontsize
-            _add_name_data(ax=ax_logo, name_data=name_data, name_data_pos=name_data_pos,
+            ax_name = list_ax_info[i] if (show_info and name_data_pos == "top") else ax_logo
+            _add_name_data(ax=ax_name, name_data=name_data, name_data_pos=name_data_pos,
                            color=name_data_color, fontsize=fs)
 
-    # Enforce shared y-axis limits across all subplots
+    # Enforce shared y-axis limits across all logo subplots
     y_max_actual = max(ax.get_ylim()[1] for ax in axes)
     for ax in axes:
         ax.set_ylim(0, y_max_actual)
 
+    # The nested gridspec already sets group/pair spacing; tight_layout fights it.
+    if show_info:
+        return fig, [(axes[i], list_ax_info[i]) for i in range(n_plots)]
     plt.tight_layout()
     plt.subplots_adjust(hspace=0.33)
     return fig, axes

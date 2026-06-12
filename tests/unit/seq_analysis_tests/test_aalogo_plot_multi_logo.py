@@ -518,3 +518,157 @@ class TestMultiLogoListAalKws:
                         dict(df_parts=df_parts, labels=labels, bad_key=1)]
         with pytest.raises(ValueError):
             aal_plot.multi_logo(list_aal_kws=list_aal_kws)
+
+    def test_list_aal_kws_shows_bit_bars(self):
+        """Test that list_aal_kws auto-computes info and returns (ax_logo, ax_info) tuples."""
+        df_parts, labels = get_df_parts_labels()
+        aal_plot = get_aal_plot(logo_type="information")
+        list_aal_kws = [dict(df_parts=df_parts, labels=labels, label_test=lt)
+                        for lt in [1, 0]]
+        fig, axes = aal_plot.multi_logo(list_aal_kws=list_aal_kws)
+        assert len(axes) == 2
+        for pair in axes:
+            assert isinstance(pair, tuple) and len(pair) == 2
+            ax_logo, ax_info = pair
+            assert len(ax_info.patches) > 0  # bit-score bars drawn
+        plt.close("all")
+
+
+# Helper for list_df_logo_info tests
+def get_list_df_logo_and_info(n=50, logo_type="information"):
+    """Build matching [df_logo, df_logo] and [df_logo_info, df_logo_info] from DOM_GSEC."""
+    df_parts, labels = get_df_parts_labels(n=n)
+    aal = aa.AAlogo(logo_type=logo_type)
+    kws = [dict(df_parts=df_parts, labels=labels, label_test=lt) for lt in [1, 0]]
+    list_df_logo = [aal.get_df_logo(**k) for k in kws]
+    list_df_logo_info = [aal.get_df_logo_info(**k) for k in kws]
+    return list_df_logo, list_df_logo_info
+
+
+# ===========================================================================
+# XIII Test multi_logo: list_df_logo_info (bit-score bars)
+# ===========================================================================
+class TestMultiLogoListDfLogoInfo:
+    """Test multi_logo 'list_df_logo_info' parameter (precomputed bit-score bars)."""
+
+    def test_valid_list_df_logo_info_returns_tuples(self):
+        """Test that list_df_logo_info renders bars and returns (ax_logo, ax_info) tuples."""
+        list_df_logo, list_df_logo_info = get_list_df_logo_and_info()
+        aal_plot = get_aal_plot(logo_type="information")
+        fig, axes = aal_plot.multi_logo(list_df_logo=list_df_logo,
+                                        list_df_logo_info=list_df_logo_info)
+        assert isinstance(fig, plt.Figure)
+        assert len(axes) == len(list_df_logo)
+        for ax_logo, ax_info in axes:
+            assert isinstance(ax_logo, plt.Axes) and isinstance(ax_info, plt.Axes)
+            assert len(ax_info.patches) > 0
+        plt.close("all")
+
+    def test_valid_single_group_with_info(self):
+        """Test n_plots=1 edge case with a bit-score bar."""
+        list_df_logo, list_df_logo_info = get_list_df_logo_and_info()
+        aal_plot = get_aal_plot(logo_type="information")
+        fig, axes = aal_plot.multi_logo(list_df_logo=list_df_logo[:1],
+                                        list_df_logo_info=list_df_logo_info[:1])
+        assert len(axes) == 1
+        assert isinstance(axes[0], tuple)
+        plt.close("all")
+
+    def test_shared_info_bar_ylim_auto(self):
+        """Test that all bit-score bars share a common y-axis when ylim is auto."""
+        list_df_logo, list_df_logo_info = get_list_df_logo_and_info()
+        aal_plot = get_aal_plot(logo_type="information")
+        fig, axes = aal_plot.multi_logo(list_df_logo=list_df_logo,
+                                        list_df_logo_info=list_df_logo_info)
+        info_ylims = [ax_info.get_ylim() for _, ax_info in axes]
+        assert len(set(info_ylims)) == 1
+        plt.close("all")
+
+    @settings(max_examples=5, deadline=None)
+    @given(ymax=st.floats(min_value=2.0, max_value=6.0))
+    def test_explicit_info_bar_ylim_applied(self, ymax):
+        """Test that an explicit info_bar_ylim is applied to every bar."""
+        list_df_logo, list_df_logo_info = get_list_df_logo_and_info()
+        aal_plot = get_aal_plot(logo_type="information")
+        fig, axes = aal_plot.multi_logo(list_df_logo=list_df_logo,
+                                        list_df_logo_info=list_df_logo_info,
+                                        info_bar_ylim=(0, ymax))
+        for _, ax_info in axes:
+            assert ax_info.get_ylim() == (0, ymax)
+        plt.close("all")
+
+    def test_name_data_top_lands_on_info_bar(self):
+        """Test that name_data_pos='top' annotates the info bar, not the logo."""
+        list_df_logo, list_df_logo_info = get_list_df_logo_and_info()
+        aal_plot = get_aal_plot(logo_type="information")
+        names = ["Positive", "Negative"]
+        fig, axes = aal_plot.multi_logo(list_df_logo=list_df_logo,
+                                        list_df_logo_info=list_df_logo_info,
+                                        list_name_data=names, name_data_pos="top")
+        for (ax_logo, ax_info), name in zip(axes, names):
+            assert name in [t.get_text() for t in ax_info.texts]
+            assert name not in [t.get_text() for t in ax_logo.texts]
+        plt.close("all")
+
+    def test_no_info_stays_backward_compatible(self):
+        """Test that omitting info still returns a flat list of Axes (no bars)."""
+        list_df_logo, _ = get_list_df_logo_and_info()
+        aal_plot = get_aal_plot(logo_type="information")
+        fig, axes = aal_plot.multi_logo(list_df_logo=list_df_logo)
+        assert all(isinstance(ax, plt.Axes) for ax in axes)
+        plt.close("all")
+
+    def test_invalid_info_with_list_aal_kws(self):
+        """Test that combining list_df_logo_info with list_aal_kws raises ValueError."""
+        df_parts, labels = get_df_parts_labels()
+        _, list_df_logo_info = get_list_df_logo_and_info()
+        list_aal_kws = [dict(df_parts=df_parts, labels=labels, label_test=lt)
+                        for lt in [1, 0]]
+        aal_plot = get_aal_plot()
+        with pytest.raises(ValueError):
+            aal_plot.multi_logo(list_aal_kws=list_aal_kws,
+                                list_df_logo_info=list_df_logo_info)
+
+    def test_invalid_info_length_mismatch(self):
+        """Test that list_df_logo_info with the wrong count raises ValueError."""
+        list_df_logo, list_df_logo_info = get_list_df_logo_and_info()
+        aal_plot = get_aal_plot(logo_type="information")
+        with pytest.raises(ValueError):
+            aal_plot.multi_logo(list_df_logo=list_df_logo,
+                                list_df_logo_info=list_df_logo_info[:1])
+
+    def test_invalid_info_per_group_length_mismatch(self):
+        """Test that an info Series of the wrong length raises ValueError."""
+        list_df_logo, list_df_logo_info = get_list_df_logo_and_info()
+        bad = [list_df_logo_info[0], list_df_logo_info[1].iloc[:5]]
+        aal_plot = get_aal_plot(logo_type="information")
+        with pytest.raises(ValueError):
+            aal_plot.multi_logo(list_df_logo=list_df_logo, list_df_logo_info=bad)
+
+    def test_invalid_info_not_list(self):
+        """Test that a non-list list_df_logo_info raises ValueError."""
+        list_df_logo, list_df_logo_info = get_list_df_logo_and_info()
+        aal_plot = get_aal_plot(logo_type="information")
+        for bad in [list_df_logo_info[0], "invalid", 1, []]:
+            with pytest.raises(ValueError):
+                aal_plot.multi_logo(list_df_logo=list_df_logo, list_df_logo_info=bad)
+
+    def test_invalid_info_bar_ylim(self):
+        """Test that a malformed info_bar_ylim raises ValueError."""
+        list_df_logo, list_df_logo_info = get_list_df_logo_and_info()
+        aal_plot = get_aal_plot(logo_type="information")
+        for ylim in [(1,), (5, 1), "invalid", (1, 2, 3)]:
+            with pytest.raises(ValueError):
+                aal_plot.multi_logo(list_df_logo=list_df_logo,
+                                    list_df_logo_info=list_df_logo_info,
+                                    info_bar_ylim=ylim)
+
+    def test_invalid_height_ratio(self):
+        """Test that a malformed height_ratio raises ValueError."""
+        list_df_logo, list_df_logo_info = get_list_df_logo_and_info()
+        aal_plot = get_aal_plot(logo_type="information")
+        for hr in [(1,), (0, 6), (-1, 6), "invalid"]:
+            with pytest.raises(ValueError):
+                aal_plot.multi_logo(list_df_logo=list_df_logo,
+                                    list_df_logo_info=list_df_logo_info,
+                                    height_ratio=hr)
