@@ -475,11 +475,10 @@ cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, df_scales=df_scales[se
 df_feat = cpp.run(labels=labels, n_filter=100)
 X = sf.feature_matrix(df_feat[<span class="c-st">&#x27;feature&#x27;</span>], df_parts)
 tm = <span class="c-nm">aa.TreeModel</span>(); tm.fit(X, labels=labels)
-df_feat = tm.add_feat_importance(df_feat=df_feat)
+df_feat = tm.add_feat_importance(df_feat=df_feat, sort=True)
 cpp_plot = <span class="c-nm">aa.CPPPlot</span>(); <span class="c-nm">aa.plot_settings</span>()
-<span class="c-cm"># distribution of the single top feature</span>
-top = df_feat.sort_values(<span class="c-st">&#x27;feat_importance&#x27;</span>,
-    ascending=False)[<span class="c-st">&#x27;feature&#x27;</span>].iloc[0]
+<span class="c-cm"># distribution of the single top feature (already ranked)</span>
+top = df_feat[<span class="c-st">&#x27;feature&#x27;</span>].iloc[0]
 cpp_plot.feature(feature=top, df_seq=df_seq, labels=labels,
     name_test=<span class="c-st">&#x27;substrates&#x27;</span>, name_ref=<span class="c-st">&#x27;non-subs.&#x27;</span>)
 plt.tight_layout(); plt.show()</pre>
