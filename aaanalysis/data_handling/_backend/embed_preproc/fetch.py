@@ -81,7 +81,7 @@ def detect_hardware() -> Dict:
         import torch
     except ImportError:
         return info
-    if torch.cuda.is_available():
+    if torch.cuda.is_available():  # pragma: no cover - needs a GPU, not run in CI
         info["has_cuda"] = True
         info["device"] = "cuda"
         free, _total = torch.cuda.mem_get_info()
@@ -141,7 +141,7 @@ def _preprocess_sequences(seqs: List[str], tokenizer: str) -> List[str]:
     return list(seqs)
 
 
-def _load_model_and_tokenizer(model: str, device: str):
+def _load_model_and_tokenizer(model: str, device: str):  # pragma: no cover - loads real weights (needs the 'embed' extra + network); mocked in tests
     """Lazy, mockable seam: import the heavy deps and load weights from the HF
     Hub. Raises a friendly ``[embed]`` install hint if they are absent."""
     try:

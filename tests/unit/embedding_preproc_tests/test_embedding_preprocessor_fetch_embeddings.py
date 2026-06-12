@@ -160,6 +160,36 @@ class TestFetchComputeFake:
         X = aa.EmbeddingPreprocessor(verbose=False).fetch_embeddings(_df(), on_failure="drop")
         assert X.shape[0] == 0
 
+    def test_cls_pooling(self, monkeypatch):
+        _patch_loader(monkeypatch)
+        # fake hidden[token_pos] == token_pos; the CLS token is row 0 -> all zeros
+        X = aa.EmbeddingPreprocessor(verbose=False).fetch_embeddings(
+            _df(), mode="protein", pooling="cls", model="esm2_t6_8M")
+        np.testing.assert_allclose(X, 0.0)
+
+    def test_residue_on_failure_nan(self, monkeypatch):
+        _patch_loader(monkeypatch, fail=True)
+        emb = aa.EmbeddingPreprocessor(verbose=False).fetch_embeddings(
+            _df(), mode="residue", on_failure="nan")
+        assert all(np.isnan(v).all() for v in emb.values())
+
+    def test_residue_on_failure_drop(self, monkeypatch):
+        _patch_loader(monkeypatch, fail=True)
+        emb = aa.EmbeddingPreprocessor(verbose=False).fetch_embeddings(
+            _df(), mode="residue", on_failure="drop")
+        assert emb == {}
+
+    def test_oversized_model_warns(self, monkeypatch):
+        _patch_loader(monkeypatch)
+        monkeypatch.setattr(fetch, "detect_hardware", lambda: dict(
+            device="cpu", has_cuda=False, has_mps=False, total_ram_gb=0.01, free_vram_gb=None))
+        with pytest.warns(RuntimeWarning):
+            aa.EmbeddingPreprocessor(verbose=False).fetch_embeddings(_df(), model="esm2_t6_8M")
+
+    def test_verbose_prints_recommendation(self, monkeypatch, capsys):
+        _patch_loader(monkeypatch)
+        aa.EmbeddingPreprocessor(verbose=True).fetch_embeddings(_df(), model="esm2_t6_8M")
+
     def test_layer_and_allow_oversized_pass_through(self, monkeypatch):
         _patch_loader(monkeypatch)
         X = aa.EmbeddingPreprocessor(verbose=False).fetch_embeddings(
