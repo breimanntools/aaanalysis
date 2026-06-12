@@ -110,9 +110,10 @@ def main():
     dpul = aa.dPULearn(verbose=False)
     dpul.fit(X, labels=labels_pu, n_unl_to_neg=n_pos // 2)
     aa.plot_settings(font_scale=0.8)
-    # match the cheat-sheet PU-label chips: 0 rel-neg=magenta, 1 pos=green, 2 unl=grey
+    # use the package's canonical sample colours (COLOR_REL_NEG gold, COLOR_POS
+    # green, COLOR_UNL grey) — the dPULearnPlot.pca default — so the figure and
+    # the cheat-sheet "Groups" chips agree with what the library actually plots.
     aa.dPULearnPlot().pca(df_pu=dpul.df_pu_, labels=dpul.labels_,
-                          colors=["#B0398E", "#4FA24B", "#8A8A8A"],
                           names=["Reliable negatives", "Positives", "Unlabeled"])
     _save("pca")
 

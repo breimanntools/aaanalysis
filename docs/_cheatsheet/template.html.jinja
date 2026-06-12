@@ -91,6 +91,9 @@
           <div class="row"><b>ref:</b> {{ L.reference }}</div>
         </div>
         {% endfor %}
+        <div class="cap"><b>Output types:</b> {{ c.prediction_outputs }}</div>
+        <div class="chips"><span class="chips-label">Groups:</span><span class="chip pos">1: positives</span><span class="chip neg">0: negatives</span><span class="chip relneg">0: reliable negatives</span><span class="chip unl">2: unlabeled</span></div>
+        <div class="cap">Label 0 is a curated <b>negative</b> in labelled data, or a dPULearn-inferred <b>reliable negative</b> drawn from the unlabeled (2) pool.</div>
       </div>
     </div>
 
@@ -101,12 +104,11 @@
         <div class="anat-track"><div class="seg jmd">JMD-N</div><div class="seg tmd">TMD</div><div class="seg jmd">JMD-C</div></div>
         <div class="anat-coords"><span>0</span><span>tmd_start</span><span>tmd_stop</span><span>len(seq)</span></div>
         <div class="cap">{{ c.sequence_anatomy.note }}</div>
-        <div class="chips"><span class="chip pos">1: positives</span><span class="chip neg">0: rel-negatives</span><span class="chip unl">2: unlabeled</span></div>
       </div>
     </div>
 
     <div class="sec">
-      <div class="sec-h"><span>Feature Ontology</span><span class="hint">Part × Split × Scale</span></div>
+      <div class="sec-h"><span>CPP Feature Concept</span><span class="hint">Part × Split × Scale</span></div>
       <div class="sec-body">
         {% for key in ['part','split','scale'] %}{% set O = c.feature_ontology[key] %}
         <div class="onto-row"><span class="h">{{ key|upper }}</span> <span class="s">{{ O.sub }}</span>

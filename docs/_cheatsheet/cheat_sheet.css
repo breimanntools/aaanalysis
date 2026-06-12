@@ -29,10 +29,13 @@
   /* package TMD/JMD colours (ut.COLOR_TMD / ut.COLOR_JMD) */
   --c-tmd:   #00FA9A;
   --c-jmd:   #0000FF;
-  /* dPULearn label colours (chips + the dPULearnPlot.pca legend match) */
-  --c-pos:    #4FA24B;
-  --c-relneg: #B0398E;
-  --c-unl:    #8A8A8A;
+  /* Sample/label colours — match the package constants in utils.py
+     (COLOR_POS / COLOR_NEG / COLOR_REL_NEG / COLOR_UNL) and the
+     dPULearnPlot.pca legend. */
+  --c-pos:    #389d2b;
+  --c-neg:    #ad4570;
+  --c-relneg: #ad9745;
+  --c-unl:    #7f7f7f;
   /* neutral pill for non-relational tags */
   --pill-bg:  #8a93a0;
 }
@@ -201,10 +204,12 @@ table { width: 100%; border-collapse: collapse; }
 .anat-track .tmd { background: var(--c-tmd); color: #143b2a; flex: 1 1 auto; }
 .anat-coords { display: flex; justify-content: space-between; font-family: "AA Mono", monospace;
                font-size: 5.6pt; color: var(--ink-faint); }
-.chips { margin-top: 3px; }
+.chips { margin-top: 1px; }
+.chips .chips-label { font-size: 5.6pt; font-weight: 700; color: var(--ink-soft); margin-right: 4px; }
 .chips .chip { display: inline-block; font-size: 5.6pt; font-weight: 700; color: #fff;
                padding: 0 4px; border-radius: 6px; margin-right: 3px; }
-.chip.pos { background: var(--c-pos); } .chip.neg { background: var(--c-relneg); } .chip.unl { background: var(--c-unl); }
+.chip.pos { background: var(--c-pos); } .chip.neg { background: var(--c-neg); }
+.chip.relneg { background: var(--c-relneg); } .chip.unl { background: var(--c-unl); }
 
 /* ---- citations / glossary / misc ---------------------------------------- */
 .cite-item { padding: 2px 0; border-bottom: 1px solid var(--line-soft); }

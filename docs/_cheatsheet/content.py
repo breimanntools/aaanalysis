@@ -104,11 +104,14 @@ CPP_STRATEGIES = {
     "note": "Domain level uses both. → CPP strategies: see the CPP tutorial (docs).",
 }
 
-# Beginner decision flow: user intent -> the module to reach for.
+# Beginner decision flow: user intent -> the module to reach for. Ordered to
+# follow the RTD API subpackages — Sequence Analysis, Feature Engineering,
+# PU Learning, Explainable AI — while keeping the intent -> key-class mapping.
 WHICH_MODULE = [
     ("Explore sequence patterns / composition", "AAlogo · AAlogoPlot"),
-    ("Discover discriminative physicochemical features", "CPP · CPPPlot"),
+    ("Sample reference windows (if negatives are missing)", "AAWindowSampler"),
     ("Reduce redundant amino acid scales", "AAclust"),
+    ("Discover discriminative physicochemical features", "CPP · CPPPlot"),
     ("Train with positives + unlabeled data", "dPULearn"),
     ("Train an interpretable classifier", "TreeModel"),
     ("Explain a prediction (per feature / sample)", "ShapModel  [pro]"),
@@ -157,6 +160,13 @@ CAPABILITY_FAMILIES = [
          ("Encode sequences (one-hot / int)", "SequencePreprocessor().encode_*(seqs)", None),
          ("Cluster redundant homologs", "filter_seq(df_seq)  [pro]", None),
      ]},
+    {"name": "Sequence Analysis", "tag": "logos · motifs",
+     "rows": [
+         ("Position-specific logo", "AAlogo().get_df_logo(df_parts)", None),
+         ("Sample sequence windows", "AAWindowSampler().sample(df_seq)", None),
+         ("Pairwise sequence similarity", "comp_seq_sim(df_seq)  [pro]", None),
+         ("Scan motifs (FIMO / MEME)", "scan_motif(df_seq, pwm)  [pro]", None),
+     ]},
     {"name": "Feature Engineering", "tag": "parts · CPP · scales", "flagship": True,
      "rows": [
          ("SequenceFeature  →  sf", "sf = aa.SequenceFeature()", None),
@@ -168,7 +178,7 @@ CAPABILITY_FAMILIES = [
          ("Reduce redundant scales", "AAclust().fit(X)  [Wrapper]", None),
          ("Drop correlated features", "NumericalFeature().filter_correlation(X)", None),
      ]},
-    {"name": "Numerical Feature Sources", "tag": "PLM · structure · PTM", "new": True,
+    {"name": "Advanced Feature Sources", "tag": "PLM · structure · PTM → numerical CPP", "new": True,
      "rows": [
          ("PLM embeddings", "EmbeddingPreprocessor().encode(...) → dict_num", None),
          ("Structure / DSSP / PAE", "StructurePreprocessor().encode_dssp(...)  [pro]", None),
@@ -179,16 +189,9 @@ CAPABILITY_FAMILIES = [
      ]},
     {"name": "Modeling & Explainability", "tag": "",
      "rows": [
+         ("Train with positives + unlabeled data", "dPULearn().fit(X, labels)  [Wrapper]", None),
          ("Train + RFE + MC importance", "TreeModel().fit(X, labels)  [Wrapper]", None),
-         ("Train with positives + unlabeled", "dPULearn().fit(X, labels)  [Wrapper]", None),
          ("Per-feature / sample SHAP impact", "ShapModel().fit(X, labels)  [pro]", None),
-     ]},
-    {"name": "Sequence Analysis", "tag": "logos · motifs",
-     "rows": [
-         ("Position-specific logo", "AAlogo().get_df_logo(df_parts)", None),
-         ("Sample sequence windows", "AAWindowSampler().sample(df_seq)", None),
-         ("Pairwise sequence similarity", "comp_seq_sim(df_seq)  [pro]", None),
-         ("Scan motifs (FIMO / MEME)", "scan_motif(df_seq, pwm)  [pro]", None),
      ]},
     {"name": "Metrics & Plotting", "tag": "utilities",
      "rows": [
@@ -199,7 +202,7 @@ CAPABILITY_FAMILIES = [
          ("Colours & standalone legend", "plot_get_clist(n) · plot_legend(ax)", None),
      ]},
     {"name": "Protein Design", "tag": "",
-     "under_construction": True, "new": True,
+     "under_construction": True,
      "rows": [
          ("In-silico point mutations", "AAMut · AAMutPlot", None),
          ("Sequence-design libraries", "SeqMut · SeqMutPlot", None),
@@ -257,10 +260,11 @@ FLAGSHIP_RECIPES = [
              "df_feat = cpp.simplify(df_feat=df_feat, labels=labels)\n"
              "cpp_plot.feature_map(df_feat=df_feat)            # right\n"
              "plt.tight_layout(); plt.show()"},
-    {"cls": "ShapModel — explain a prediction", "tag": "sample level · [pro]",
+    {"cls": "ShapModel — explain a prediction", "tag": "sample level · advanced · [pro]",
      "imgs": ["shap_profile", "feature_map_shap"],
      "img_labels": ["CPPPlot.profile · SHAP", "CPPPlot.feature_map · SHAP"], "h": 36,
-     "code": "# fuzzy labeling: APP's label is its soft prediction score (0.6, not 1)\n"
+     "code": "# advanced: per-sample explanation (fuzzy labeling demo)\n"
+             "# fuzzy labeling: APP's label is its soft prediction score (0.6, not 1)\n"
              "i = list(df_seq['entry']).index('P05067')   # APP\n"
              "y = [float(v) for v in labels]; y[i] = 0.6\n"
              "sm = aa.ShapModel(); sm.fit(X, labels=y, fuzzy_labeling=True)\n"
@@ -284,14 +288,15 @@ FLAGSHIP_RECIPES = [
              "plt.tight_layout(); plt.show()"},
     {"cls": "dPULearn — PCA", "tag": "reliable negatives · Wrapper", "img": "pca",
      "caption": "dPULearnPlot.pca · reliable negatives",
-     "code": "# labels: 1 = positive, 2 = unlabeled\n"
-             "n_pos = sum(np.array(labels) == 1)\n"
+     "code": "# DOM_GSEC ships 1/0 — encode as PU labels: 1 = positive, 2 = unlabeled\n"
+             "labels_pu = [1 if x == 1 else 2 for x in labels]\n"
+             "n_pos = sum(np.array(labels_pu) == 1)\n"
              "dpul = aa.dPULearn()\n"
-             "dpul.fit(X=X, labels=labels, n_unl_to_neg=n_pos)\n"
+             "dpul.fit(X=X, labels=labels_pu, n_unl_to_neg=n_pos // 2)\n"
              "df_pu = dpul.df_pu_   # 1 pos · 0 rel-neg · 2 unl\n"
              "\n"
              "dpul_plot = aa.dPULearnPlot()\n"
-             "dpul_plot.pca(df_pu=df_pu, labels=labels)\n"
+             "dpul_plot.pca(df_pu=df_pu, labels=dpul.labels_)\n"
              "plt.tight_layout(); plt.show()"},
 ]
 
@@ -349,9 +354,9 @@ OPTIONS = (
 # (class, plot class | "—", kind tag)
 CLASS_PLOT = [
     ("SequencePreprocessor", "—", ""),
-    ("EmbeddingPreprocessor", "—", "v1.1"),
-    ("StructurePreprocessor  [pro]", "—", "v1.1"),
-    ("AnnotationPreprocessor  [pro]", "—", "v1.1"),
+    ("EmbeddingPreprocessor", "—", "[v1.1]"),
+    ("StructurePreprocessor  [pro]", "—", "[v1.1]"),
+    ("AnnotationPreprocessor  [pro]", "—", "[v1.1]"),
     ("CPP", "CPPPlot", ""),
     ("AAclust", "AAclustPlot", "Wrapper"),
     ("AAlogo", "AAlogoPlot", ""),
@@ -396,7 +401,7 @@ GLOSSARY = [
      "(sparse), PeriodicPattern (i, i+3/4)."),
     ("Scale", "AA → ℝ mapping. AAontology ships ~600 curated scales in two-level "
      "categories."),
-    ("Feature", "(Part × Split × Scale) — the atomic, residue-grounded, "
+    ("Feature (CPP)", "(Part × Split × Scale) — the atomic, residue-grounded, "
      "interpretable unit of CPP."),
     ("Compositional vs positional", "How split_kws resolves locality: a whole-part "
      "average (compositional) vs sub-region/position-resolved (positional)."),
@@ -420,10 +425,13 @@ GLOSSARY = [
 FOOTER_NOTE = ("Layered seeds: seed= (call) ▸ random_state= (init) ▸ "
                "aa.options['random_state'] ▸ default.")
 
+PREDICTION_OUTPUTS = "classification · regression · ranking · explanation"
+
 CONTENT = {
     "meta": META,
     "golden_workflow": GOLDEN_WORKFLOW,
     "prediction_levels": PREDICTION_LEVELS,
+    "prediction_outputs": PREDICTION_OUTPUTS,
     "feature_ontology": FEATURE_ONTOLOGY,
     "cpp_strategies": CPP_STRATEGIES,
     "sequence_anatomy": SEQUENCE_ANATOMY,
