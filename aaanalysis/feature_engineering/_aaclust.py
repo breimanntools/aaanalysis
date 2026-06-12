@@ -13,7 +13,7 @@ import pandas as pd
 from aaanalysis.template_classes import Wrapper
 import aaanalysis.utils as ut
 
-from ._backend.check_feature import check_df_cat
+from ._backend.check_feature import check_df_cat, check_df_scales
 
 from ._backend.check_aaclust import check_metric
 from ._backend.aaclust.aaclust_fit import estimate_lower_bound_n_clusters, optimize_n_clusters, merge_clusters
@@ -661,6 +661,73 @@ class AAclust(Wrapper):
         n_unique_ref = len(set(names_ref))
         coverage = round(n_unique_intersect/n_unique_ref*100, 2)
         return coverage
+
+    def select_scales(self,
+                      df_scales: pd.DataFrame = None,
+                      n_clusters: Optional[int] = None,
+                      on_center: bool = True,
+                      min_th: float = 0.3,
+                      metric: Literal["correlation", "manhattan", "euclidean", "cosine"] = "euclidean",
+                      ) -> pd.DataFrame:
+        """
+        Select a redundancy-reduced subset of scales directly from a scales DataFrame.
+
+        Convenience wrapper around :meth:`AAclust.fit` for the common scale-selection workflow:
+        it clusters the scales in ``df_scales`` and returns the columns of the representative
+        scales (medoids), one per cluster [Breimann24a]_. This avoids the manual transpose and
+        name bookkeeping otherwise needed to map ``fit`` results back onto ``df_scales``. The
+        fitted attributes (e.g. :attr:`AAclust.labels_`, :attr:`AAclust.medoid_names_`) remain
+        accessible on the instance afterwards.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_scales : pd.DataFrame, shape (n_letters, n_scales)
+            DataFrame with amino acid scales. `Rows` correspond to amino acids (one-letter codes)
+            and `columns` to scale IDs.
+        n_clusters : int, optional
+            Pre-defined number of clusters (selected scales). If provided, k is not optimized.
+            Must be 0 < n_clusters < n_scales.
+        min_th : float, default=0.3
+            Pearson correlation threshold for clustering optimization (between 0 and 1).
+        on_center : bool, default=True
+            If ``True``, ``min_th`` is applied to the cluster center. Otherwise, to all cluster members.
+        metric : {'correlation', 'euclidean', 'manhattan', 'cosine'}, default='euclidean'
+            Similarity measure used for optional cluster merging and obtaining medoids:
+
+             - ``correlation``: Pearson correlation (maximum)
+             - ``euclidean``: Euclidean distance (minimum)
+             - ``manhattan``: Manhattan distance (minimum)
+             - ``cosine``: Cosine distance (minimum)
+
+        Returns
+        -------
+        df_scales_selected : pd.DataFrame, shape (n_letters, n_clusters)
+            Subset of ``df_scales`` containing only the columns of the selected (medoid) scales.
+
+        See Also
+        --------
+        * :meth:`AAclust.fit`: The underlying clustering used for scale selection.
+        * :meth:`AAclust.filter_coverage`: Scale selection that additionally guarantees subcategory coverage.
+
+        Examples
+        --------
+        .. include:: examples/aac_select_scales.rst
+        """
+        # Check input
+        check_df_scales(df_scales=df_scales, accept_none=False)
+        ut.check_number_range(name="min_th", val=min_th, min_val=0, max_val=1, just_int=False)
+        ut.check_number_range(name="n_clusters", val=n_clusters, min_val=1, just_int=True, accept_none=True)
+        check_metric(metric=metric)
+        ut.check_bool(name="on_center", val=on_center)
+        # Cluster scales (rows of X are scales, columns are amino acids) and select medoids
+        names = list(df_scales)
+        X = np.asarray(df_scales).T
+        self.fit(X=X, n_clusters=n_clusters, on_center=on_center, min_th=min_th,
+                 metric=metric, names=names)
+        df_scales_selected = df_scales[self.medoid_names_]
+        return df_scales_selected
 
     def filter_coverage(self,
                         X: ut.ArrayLike2D,
