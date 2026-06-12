@@ -86,6 +86,13 @@ autodoc_default_options = {
 
 autodoc_member_order = 'bysource'
 
+# Drop the leading ``aaanalysis.`` module prefix from object names in
+# signatures and in the sidebar/TOC object entries, so navigation shows e.g.
+# ``SequenceFeature.feature_matrix`` instead of
+# ``aaanalysis.SequenceFeature.feature_matrix`` (which gets truncated in the
+# RTD theme sidebar).
+add_module_names = False
+
 # Type hint settings
 typehints_fully_qualified = False
 set_type_checking_flag = False
