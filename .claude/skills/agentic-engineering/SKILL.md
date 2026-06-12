@@ -1,6 +1,6 @@
 ---
 name: agentic-engineering
-description: Drive a change through the AAanalysis agentic-engineering protocol step by step — pick/sharpen the issue, branch into an isolated worktree, implement, open a draft PR, run the automated review + quality gates, keep the branch synced, then arm GitHub-native auto-merge with a fix-forward loop on red CI. Use when the user wants to start work on an issue, "walk me through the workflow", take a change from issue to merge, or wants the auto-merge / auto-fix loop driven for them. The canonical protocol lives in docs/guides/agentic_engineering.md; this skill executes it.
+description: Drive a change through the AAanalysis agentic-engineering protocol step by step — pick/sharpen the issue, branch into an isolated worktree, implement, open a draft PR, run the automated review + quality gates, keep the branch synced, stop at the human-review gate (manual PR-review loop or skip-to-merge — the user's call), then arm GitHub-native auto-merge with a fix-forward loop on red CI. Use when the user wants to start work on an issue, "walk me through the workflow", take a change from issue to merge, or wants the auto-merge / auto-fix loop driven for them. The canonical protocol lives in docs/guides/agentic_engineering.md; this skill executes it.
 ---
 
 # AAanalysis agentic-engineering — drive a change to merge
@@ -27,7 +27,7 @@ From root `CLAUDE.md` §0 — authorization is **per-action, never per-session**
 
 ## Steps
 
-Seven steps in three phases. **Full rationale + the quality-gates table live in
+Eight steps in three phases. **Full rationale + the quality-gates table live in
 `docs/guides/agentic_engineering.md`** — read it first; this checklist drives it.
 
 **Prepare**
@@ -42,6 +42,23 @@ Seven steps in three phases. **Full rationale + the quality-gates table live in
    checkout. Even in a shared checkout, re-check `git status` before committing, stage **explicit
    pathspecs only** (never a blind `git add -A` / `git commit -a`), and never commit, revert, or
    discard changes you did not make — stop and surface unexpected edits instead.
+
+   **Never fake isolation with `git stash` (this caused a real incident).** Isolation comes from
+   `git worktree add` — *never* from stashing. The shared stash stack is **global, not per-branch**:
+   a bare `git stash pop` / `git stash apply` operates on whatever is on top, which may be a
+   **pre-existing stash you did not create** (an earlier session's or teammate's WIP). Worse, a
+   *failed* `git stash push` (e.g. a pathspec that doesn't match a **staged deletion** — `git rm`
+   leaves nothing in the worktree to match) creates **no** stash and returns non-zero; a following
+   `git stash pop` then silently applies *someone else's* stash, producing conflicts and apparent
+   data loss. Rules:
+   - **Don't stash to "move work onto a fresh base."** To land uncommitted edits on a clean base,
+     either `git worktree add ../wt-<slug> -b <type>/<slug> origin/master` and make the edits there,
+     or `git switch -c <branch> origin/master` (git carries clean working changes across the switch).
+     If the switch reports a conflict, **stop and surface it** — do not stash to force it.
+   - **If you must stash:** run `git stash list` first; `git stash push -m <msg> -- <explicit paths>`
+     and **verify it was actually created** (check the exit status *and* that `git stash list` grew);
+     then pop **by explicit ref you confirmed is yours** (`git stash pop stash@{0}`), never a bare
+     `git stash pop`. Always check a git command's exit status before running the next one.
 
 **Build**
 
@@ -59,15 +76,30 @@ Seven steps in three phases. **Full rationale + the quality-gates table live in
    sync `master` → branch (`/schedule` fits) — **sync only**, never resolve conflicts or merge to
    `master` unattended; it just flags you.
 
-**Merge & clean up**
+**Review, merge & clean up**
 
-6. **Arm auto-merge; fix-forward on red.** Once green and you've read the RTD preview + PR diff:
-   `gh pr merge --auto --squash` (*a publish action → §0 go-ahead*). GitHub merges only on all-green
-   + conflict-free, so *never merge red* holds. On red CI: `gh run watch` / `gh run view --log-failed`
-   → **reproduce locally** (see *Local gate commands*) → fix **forward on the same branch** and push;
-   armed auto-merge re-arms and completes on the green re-run. `gh pr merge --disable-auto` to hold;
-   skip `--auto` for a hard human gate. Don't paper over a real failure to force a merge — surface it.
-7. **Clean up — gated on merge + a green `master` (with permission, §0).** Trigger off **merge
+6. **Human review gate — STOP and let the user choose.** After the push lands and CI/Actions are
+   running (confirm with `gh pr checks <n>` / `gh run list --branch <branch>`), do **not** advance to
+   merge on your own. Surface the fork explicitly and **wait for the user's decision**:
+   - **(a) Manual PR review (iterate).** The user reviews the PR diff on GitHub and leaves comments.
+     Address **each** comment by refactoring **forward on the same branch** (honor the Ripple
+     checklist + auto-loaded `.claude/rules/`), re-run the fast local gate, push (*each re-push → §0
+     go-ahead*), and report what changed per comment. Then **loop** — wait for the next round of
+     comments and repeat the *review → refactor → push* cycle. Stay in this loop until the user
+     explicitly says the review is done (e.g. "merge it" / "looks good" / "skip further review"); only
+     then go to step 7. Re-pushes re-trigger CI, and any armed auto-merge waits for the new green.
+   - **(b) Skip review → merge + clean up.** The user opts out of manual review; go straight to step 7.
+   Recommend (a) for substantial or architectural diffs and (b) for trivial ones, but **never assume —
+   the user picks.** This gate is about human judgement on the *content*; the automated gates (step 5)
+   and CI still independently enforce *never merge red*.
+7. **Arm auto-merge; fix-forward on red.** Once the user has cleared step 6, and you've read the RTD
+   preview + PR diff: `gh pr merge --auto --squash` (*a publish action → §0 go-ahead*). GitHub merges
+   only on all-green + conflict-free, so *never merge red* holds. On red CI: `gh run watch` /
+   `gh run view --log-failed` → **reproduce locally** (see *Local gate commands*) → fix **forward on
+   the same branch** and push; armed auto-merge re-arms and completes on the green re-run.
+   `gh pr merge --disable-auto` to hold; skip `--auto` for a hard human gate. Don't paper over a real
+   failure to force a merge — surface it.
+8. **Clean up — gated on merge + a green `master` (with permission, §0).** Trigger off **merge
    state, not a CI run**: wait until `gh pr view <n> --json state,mergedAt` shows `MERGED`, then
    let the push-triggered `master` workflows pass (confirms the squash is clean). An intervening
    push from any session just re-runs checks; armed auto-merge waits for the new green, so the
@@ -120,6 +152,9 @@ remaining notebook param-coverage gaps are cleared. All three also run locally v
 
 ## Notes
 
+- **Worktrees, not `git stash`, for isolation (see step 3).** A bare `git stash pop` grabs the top
+  of the *global* stash stack — possibly a stash you didn't create. Get isolation from
+  `git worktree add`; if you ever stash, verify your push succeeded and pop by explicit ref.
 - **Fix forward, never merge red.** Auto-merge is safe precisely because GitHub only completes it
   on all-green + conflict-free. The auto-fix loop turns a red check into another commit, not a
   reason to override the gate.
