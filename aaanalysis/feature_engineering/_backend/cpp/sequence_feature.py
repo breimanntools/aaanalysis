@@ -64,6 +64,44 @@ def get_feature_names_(features=None, df_cat=None, tmd_len=20, jmd_c_len=10, jmd
     return feat_names
 
 
+def _split_to_phrase(split=None):
+    """Turn a SPLIT token into a readable phrase; flag whether its positions are contiguous."""
+    # Parse the SPLIT string locally (like get_feature_names_ above) rather than reusing the
+    # file-private _get_split_info in utils_feature.py: it lives in another module and only the
+    # display wording — not the parsed ints — is needed here.
+    split_type = split.split("(")[0]
+    args = split.split("(")[1].replace(")", "")
+    if split_type == ut.STR_SEGMENT:
+        i_th, n_split = [int(x) for x in args.split(",")]
+        return f"segment {i_th} of {n_split}", True
+    terminus = args.split(",")[0]
+    term = "N-terminus" if terminus == "N" else "C-terminus"
+    if split_type == ut.STR_PERIODIC_PATTERN:
+        steps = split.split("i+")[1].split(",")[0]  # e.g. '3/4'
+        return f"periodic pattern (steps {steps} from {term})", False
+    return f"pattern (from {term})", False
+
+
+def get_feature_descriptions_(features=None, df_cat=None, tmd_len=20, jmd_c_len=10, jmd_n_len=10, start=1):
+    """Build one standardized, human-readable description per feature id (PART-SPLIT-SCALE)."""
+    feat_positions = get_positions_(features=features, tmd_len=tmd_len, jmd_n_len=jmd_n_len,
+                                    jmd_c_len=jmd_c_len, start=start)
+    dict_name = dict(zip(df_cat[ut.COL_SCALE_ID], df_cat[ut.COL_SCALE_NAME]))
+    dict_cat = dict(zip(df_cat[ut.COL_SCALE_ID], df_cat[ut.COL_CAT]))
+    dict_subcat = dict(zip(df_cat[ut.COL_SCALE_ID], df_cat[ut.COL_SUBCAT]))
+    descriptions = []
+    for feat_id, pos in zip(features, feat_positions):
+        part, split, scale = ut.split_feat_id(feat_id=feat_id)
+        part_label = ut.DICT_PART_LABEL[part.lower()]
+        phrase, contiguous = _split_to_phrase(split=split)
+        list_pos = pos.split(",")
+        pos_str = f"{list_pos[0]}-{list_pos[-1]}" if (contiguous and len(list_pos) > 2) else ", ".join(list_pos)
+        des = (f"{part_label}, {phrase} (positions {pos_str}) — "
+               f"{dict_name[scale]} [{dict_cat[scale]}: {dict_subcat[scale]}]")
+        descriptions.append(des)
+    return descriptions
+
+
 def get_df_feat_(features=None, df_parts=None, labels=None,
                  label_test=1, label_ref=0, df_scales=None, df_cat=None,
                  accept_gaps=False, parametric=False,

@@ -34,6 +34,13 @@ A named region of a protein over which a **split** operates and a scale is avera
 First-class user-defined / renamed regions are tracked by **#27** (region abstraction); today a part is chosen from the predefined family.
 _Avoid_: region (reserved for the #27 abstraction), domain (a part may be a window or sub-region, not a whole domain), segment (a split type).
 
+**part label**:
+The fixed, human-readable display string for a `part` token (e.g. `tmd` → "TMD", `jmd_n_tmd_n` → "JMD-N+TMD-N"), defined once in `ut.DICT_PART_LABEL` and used when rendering a feature id as prose. Deliberately *not* called a "region" (that noun is reserved for #27); a part label is purely cosmetic and changes no behavior.
+
+**feature description**:
+One standardized, human-readable sentence built deterministically from a `PART-SPLIT-SCALE` feature id by `SequenceFeature.get_feature_descriptions`: it joins the **part label**, the **split** rendered as a phrase (e.g. "segment 2 of 4"), the residue positions, and the scale's AAontology name / category / subcategory from `df_cat`. Additive only — the `feature` id string is unchanged — and optionally carried as the `feature_description` (`ut.COL_FEAT_DES`) column of `df_feat`. Distinct from the compact **feature name** (`get_feature_names`, `'subcategory [positions]'`), which drops the part and category.
+_Avoid_: feature name (that is the shorter label form), scale description (that is the per-scale `scale_description` field, only one ingredient).
+
 **assembled reference df_parts**:
 A `df_parts` whose rows are **chimeras** of independent per-part windows — each part column is filled from its own window set (e.g. a separate `AAWindowSampler.sample_synthetic` call with its own generator and window size), rather than sliced from one contiguous protein. Built by `SequenceFeature.get_df_parts_from_windows` (windows aligned by position: the i-th window of every part forms the i-th row) and used as the **reference** class for `CPP`. Because a row stitches windows from different sources it has no single source `entry_win`; rows are ided by a per-row `REF{i}` index instead.
 _Avoid_: synthetic df_parts (the windows need not be synthetic), reference window (that is the per-window term, not the assembled table).
