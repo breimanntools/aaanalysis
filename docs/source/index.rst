@@ -34,7 +34,7 @@ classes grouped by capability, the prediction levels (residue / domain / protein
    <a href="_static/cheat_sheet.pdf" download="aaanalysis_cheat_sheet.pdf">
      <img src="https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/cheat_sheet_preview.png"
           alt="AAanalysis cheat sheet (page 1 of 3)"
-          style="width: 90%; display: block; margin-left: auto; margin-right: auto;">
+          style="width: 100%; display: block; margin-left: auto; margin-right: auto;">
    </a>
 
 .. toctree::
