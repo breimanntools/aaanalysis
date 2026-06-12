@@ -70,13 +70,34 @@ class TestCPPPlotFeature:
 
     def test_feat_rank_selects_expected(self):
         # feature=list with feat_rank=k plots the SAME data as passing the k-th id directly
-        # (as-given order, 1-based), and a different rank plots different data.
+        # (as-given order, 1-based), and distinct features plot distinct curves.
         def _kde_signature(ax):
-            return tuple(tuple(round(float(x), 6) for x in ln.get_xdata()) for ln in ax.lines)
+            # Fingerprint each plotted curve by both grid (x) AND density (y): x alone only
+            # encodes the data range, so two distinct features sharing a range would collide.
+            return tuple(
+                (tuple(round(float(x), 6) for x in ln.get_xdata()),
+                 tuple(round(float(y), 6) for y in ln.get_ydata()))
+                for ln in ax.lines
+            )
 
         df_seq, labels, df_feat = get_input()
-        features = random.sample(df_feat["feature"].to_list(), 4)
         cpp_plot = aa.CPPPlot()
+        # Deterministically gather 4 features whose plotted curves are pairwise distinct, so the
+        # distinctness assertion below is a valid precondition rather than a sampling coin flip.
+        rng = random.Random(0)
+        pool = df_feat["feature"].to_list()
+        rng.shuffle(pool)
+        features, seen = [], set()
+        for feature in pool:
+            sig = _kde_signature(cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels))
+            plt.close("all")
+            if sig not in seen:
+                seen.add(sig)
+                features.append(feature)
+            if len(features) == 4:
+                break
+        assert len(features) == 4
+
         sigs = []
         for k in range(1, len(features) + 1):
             ax_rank = cpp_plot.feature(feature=features, df_seq=df_seq, labels=labels, feat_rank=k)
