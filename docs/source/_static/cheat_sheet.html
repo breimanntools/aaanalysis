@@ -344,7 +344,8 @@ df_scales = <span class="c-nm">aa.load_scales</span>()</pre></div>
         <div class="sub">Compositional <span class="pill compositional">≈ sequence/protein-level</span></div>
         <div class="cap">one whole-part average (composition-like, position-agnostic)</div>
         <pre class="code">split_kws = sf.get_split_kws(
-    split_types=<span class="c-st">&quot;Segment&quot;</span>, n_split_max=1)
+    split_types=<span class="c-st">&quot;Segment&quot;</span>,
+    n_split_max=1)
 cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</pre>
         <div class="sub">Positional <span class="pill positional">≈ residue-/region-level</span></div>
         <div class="cap">sub-segments and/or patterns resolved to positions</div>

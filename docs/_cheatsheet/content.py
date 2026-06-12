@@ -87,7 +87,8 @@ CPP_STRATEGIES = {
         "name": "Compositional", "maps": "≈ sequence/protein-level",
         "desc": "one whole-part average (composition-like, position-agnostic)",
         "code": 'split_kws = sf.get_split_kws(\n'
-                '    split_types="Segment", n_split_max=1)\n'
+                '    split_types="Segment",\n'
+                '    n_split_max=1)\n'
                 'cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws)',
     },
     "positional": {
