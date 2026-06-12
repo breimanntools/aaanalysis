@@ -184,6 +184,13 @@ Improved
 
 Fixed
 ~~~~~
+- **StructurePreprocessor.fetch_alphafold**: Resolve download URLs through the
+  AlphaFold API instead of a hardcoded file version. AlphaFold DB renamed its
+  files ``v4`` → ``v6``, which had silently broken every fetch (all entries
+  returned ``alphafold_ok=False``); the fetch now tracks the current version
+  automatically. Added a ``network``-marked live test (``tests/integration/``)
+  so an upstream API/version change is caught instead of slipping past the
+  mocked unit tests.
 - **General Bug Fixes**: Minor fixes related to dependency resolution and edge-case behavior.
 - **Documentation**: Removed inconsistencies in documentation for selected functions and plotting options.
 
