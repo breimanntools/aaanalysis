@@ -168,6 +168,12 @@ fast unit job. Check them at implement time (step 4), not after CI goes red.
   inspected). Mitigate even in a shared tree — re-check `git status` immediately before staging,
   commit **explicit pathspecs only** (never a blind `git add -A` / `git commit -a`), and never
   commit, revert, or discard changes you did not make; stop and surface unexpected edits instead.
+  The requirement is really *one working tree + `HEAD` per concurrent stream* — a `git worktree`
+  (lighter) or a separate clone both satisfy it; a single shared checkout is safe only for strictly
+  serial work. And **commit early**: a stray `git switch` / `git reset --hard` can only destroy
+  *uncommitted* work (it once wiped a session's edits when the tree was reset to `origin/master`),
+  so frequent commits are the cheapest safeguard. To see what other streams are in flight, derive
+  it on demand from `git worktree list` + `gh pr list` — there is no committed board to maintain.
 - **Issue lifecycle — `Closes #NN`.** GitHub auto-closes a referenced issue on merge to the
   default branch when a closing keyword (`Closes` / `Fixes` / `Resolves #NN`) appears in **either
   the PR body or the merge (squash) commit message**. To **keep an issue open through a merge,
