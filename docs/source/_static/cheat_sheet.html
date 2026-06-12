@@ -469,9 +469,8 @@ plt.tight_layout(); plt.show()</pre>
   <div class="sec-h"><span>CPP — feature</span><span class="hint">top feature · REF vs TEST</span></div>
   <div class="sec-body"><pre class="code"><span class="c-cm"># default parts + a redundancy-reduced set of 100 scales</span>
 df_parts = sf.get_df_parts(df_seq=df_seq)
-sel = <span class="c-nm">aa.AAclust</span>().fit(np.array(df_scales).T,
-    names=list(df_scales), n_clusters=100).medoid_names_
-cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, df_scales=df_scales[sel])
+df_scales = <span class="c-nm">aa.AAclust</span>().select_scales(df_scales, n_clusters=100)
+cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, df_scales=df_scales)
 df_feat = cpp.run(labels=labels, n_filter=100)
 X = sf.feature_matrix(df_feat[<span class="c-st">&#x27;feature&#x27;</span>], df_parts)
 tm = <span class="c-nm">aa.TreeModel</span>(); tm.fit(X, labels=labels)

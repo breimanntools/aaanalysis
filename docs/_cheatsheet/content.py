@@ -235,9 +235,8 @@ FLAGSHIP_RECIPES = [
     {"cls": "CPP — feature", "tag": "top feature · REF vs TEST", "img": "feature",
      "code": "# default parts + a redundancy-reduced set of 100 scales\n"
              "df_parts = sf.get_df_parts(df_seq=df_seq)\n"
-             "sel = aa.AAclust().fit(np.array(df_scales).T,\n"
-             "    names=list(df_scales), n_clusters=100).medoid_names_\n"
-             "cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales[sel])\n"
+             "df_scales = aa.AAclust().select_scales(df_scales, n_clusters=100)\n"
+             "cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)\n"
              "df_feat = cpp.run(labels=labels, n_filter=100)\n"
              "X = sf.feature_matrix(df_feat['feature'], df_parts)\n"
              "tm = aa.TreeModel(); tm.fit(X, labels=labels)\n"
