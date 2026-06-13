@@ -1033,13 +1033,15 @@ class StructurePreprocessor:
                 continue
             blocks: List[np.ndarray] = []
             entry_ok = True
-            # Compute the per-residue pLDDT (structure walk + alignment) ONCE
-            # and reuse it across all three pLDDT keys requested for this entry,
-            # instead of each encoder re-walking/re-aligning independently.
+            # Compute the per-residue pLDDT (structure walk + alignment) at
+            # most ONCE per entry and reuse it across the pLDDT keys. It is
+            # computed lazily inside the per-key ``try`` below (not hoisted
+            # here) so that a RuntimeError degrades just this row
+            # (pdb_ok=False) exactly as when each encoder computed it
+            # internally — hoisting it out of the try would let the error
+            # abort the whole encode_pdb call instead of the single entry.
             plddt_shared = None
-            if any(k in ("plddt", "plddt_disorder", "plddt_tier")
-                   for k in features):
-                plddt_shared = _plddt_per_residue(structure, seq)
+            plddt_done = False
             for key in features:
                 try:
                     if key == "bfactor":
@@ -1047,14 +1049,23 @@ class StructurePreprocessor:
                     elif key == "depth":
                         block, identity = encode_depth(structure, seq)
                     elif key == "plddt":
+                        if not plddt_done:
+                            plddt_shared = _plddt_per_residue(structure, seq)
+                            plddt_done = True
                         block, identity = encode_plddt(structure, seq,
                                                        plddt=plddt_shared)
                     elif key == "plddt_disorder":
+                        if not plddt_done:
+                            plddt_shared = _plddt_per_residue(structure, seq)
+                            plddt_done = True
                         block, identity = encode_plddt_disorder(
                             structure, seq,
                             threshold=plddt_disorder_threshold,
                             plddt=plddt_shared)
                     elif key == "plddt_tier":
+                        if not plddt_done:
+                            plddt_shared = _plddt_per_residue(structure, seq)
+                            plddt_done = True
                         block, identity = encode_plddt_tier(
                             structure, seq, plddt=plddt_shared)
                     elif key == "chi1_sincos":
