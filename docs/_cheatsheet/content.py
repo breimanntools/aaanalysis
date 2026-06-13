@@ -375,20 +375,29 @@ DECISION_GUIDE = [
         ("whole protein", "SEQ_* · composition · whole chain"),
     ]),
     ("What labels do you have?", [
-        ("labeled 0 / 1", "CPP → ML model"),
-        ("positives + unlabeled (1 / 2)", "CPP → dPULearn → ML model"),
-        ("no negatives at all", "AAWindowSampler → CPP → ML model"),
+        ("labeled 0 / 1", '<span class="api">CPP</span> → ML model'),
+        ("positives + unlabeled (1 / 2)",
+         '<span class="api">CPP</span> → <span class="api">dPULearn</span> → ML model'),
+        ("no negatives at all",
+         '<span class="api">AAWindowSampler</span> → <span class="api">CPP</span> → ML model'),
     ]),
     ("What is your learning task?", [
-        ("classify", "any classifier (sklearn)"),
-        ("regress", "get_labels_quantile / tiered"),
-        ("multi-class", "get_labels_ovr / ovo"),
-        ("cluster · PCA", "AAclust · dPULearn"),
+        ("classify", '<span class="api">CPP</span> → classifier (sklearn)'),
+        ("regress",
+         '<span class="api">get_labels_quantile</span> / <span class="api">tiered</span> '
+         '→ <span class="api">CPP</span> → regression model'),
+        ("multi-class",
+         '<span class="api">get_labels_ovr</span> / <span class="api">ovo</span> '
+         '→ <span class="api">CPP</span> → classifiers'),
+        ("cluster", '<span class="api">AAclust</span>'),
     ]),
     ("Which explainability do you need?", [
-        ("group level", "CPP → TreeModel → CPPPlot → feature importance"),
+        ("group level",
+         '<span class="api">CPP</span> → <span class="api">TreeModel</span> → '
+         '<span class="api">CPPPlot</span> → feature importance'),
         ("per protein",
-         'CPP → ShapModel [pro] → CPPPlot → feature impact '
+         '<span class="api">CPP</span> → <span class="api">ShapModel</span> [pro] → '
+         '<span class="api">CPPPlot</span> → feature impact '
          '<span class="shap-up">↑</span><span class="shap-dn">↓</span>'),
     ]),
 ]
