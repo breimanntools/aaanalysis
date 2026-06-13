@@ -9,16 +9,6 @@ from ._utils import pad_sequences
 
 
 # I Helper Functions
-def _one_hot_encode(amino_acid=None, alphabet=None, gap="_"):
-    """
-    Encodes a single amino acid into a one-hot vector based on a specified alphabet.
-    Returns a zero vector for gaps represented as '_'.
-    """
-    dict_aa_index = {aa: i for i, aa in enumerate(alphabet)}
-    vector = np.zeros(len(alphabet), dtype=int)
-    if amino_acid != gap:
-        vector[dict_aa_index[amino_acid]] = 1
-    return vector
 
 
 # II Main Functions
@@ -32,12 +22,20 @@ def encode_one_hot(list_seq=None, alphabet="ACDEFGHIKLMNPQRSTVWY", gap="-", pad_
     # Create feature names
     max_length = len(padded_sequences[0])
     list_features = [f"{i}{aa}" for i in range(1, max_length+1) for aa in alphabet]
-    # Create one-hot-encoding
+    # One-hot-encoding (vectorized; identical output to the per-residue form). A gap — which
+    # the frontend guarantees is not in the alphabet — maps to index -1 and yields an all-zero
+    # block; every other residue sets a single 1 at its alphabet index. Column order is
+    # position-major then alphabet, matching ``list_features`` and the original flatten.
     num_amino_acids = len(alphabet)
-    feature_matrix = np.zeros((len(padded_sequences), max_length * num_amino_acids), dtype=int)
-    args = dict(alphabet=alphabet, gap=gap)
-    for idx, seq in enumerate(padded_sequences):
-        encoded_seq = [_one_hot_encode(amino_acid=aa, **args) for aa in seq]
-        feature_matrix[idx, :] = np.array(encoded_seq).flatten()
+    n_seq = len(padded_sequences)
+    char_matrix = np.array([list(seq) for seq in padded_sequences])
+    aa_to_index = {aa: i for i, aa in enumerate(alphabet)}
+    index_matrix = np.full(char_matrix.shape, -1, dtype=int)
+    for aa, i in aa_to_index.items():
+        index_matrix[char_matrix == aa] = i
+    one_hot = np.zeros((n_seq, max_length, num_amino_acids), dtype=int)
+    valid = index_matrix >= 0
+    rows, positions = np.nonzero(valid)
+    one_hot[rows, positions, index_matrix[valid]] = 1
+    feature_matrix = one_hot.reshape(n_seq, max_length * num_amino_acids)
     return feature_matrix, list_features
-

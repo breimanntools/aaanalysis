@@ -192,6 +192,8 @@ Changed
   A further pass vectorizes ``AAWindowSampler`` window-sampling internals:
   candidate-center band filtering (~40x faster at scale) and per-window PWM
   scoring in ``sample_motif_matched`` (~12x), again with identical results.
+  ``SequencePreprocessor.encode_one_hot`` is also vectorized (~3x), with a
+  byte-identical feature matrix.
 
 
 Version 1.0 (Stable Version)
