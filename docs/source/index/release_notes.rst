@@ -201,6 +201,16 @@ Changed
   plus each per-feature value mapping); the first optimal alignment is
   deterministic, so cached and recomputed encoder output are byte-identical
   (~12x off the repeated-alignment overhead).
+- **Performance benchmark + regression guard** (developer tooling): A committed
+  ``pytest-benchmark`` suite (``tests/benchmarks/``) micro-benchmarks the hot
+  public entry points — ``CPP.run`` / ``CPP.run_num``, ``AAclust.fit``,
+  ``SequenceFeature.feature_matrix``, ``AAWindowSampler`` sampling, ``dPULearn.fit``,
+  ``TreeModel.fit``, and ``StructurePreprocessor.encode_pdb`` — on small bundled
+  fixtures. A baseline-comparison helper
+  (``.github/scripts/check_perf_regression.py``) flags any path slower than a
+  generous ``1.5x`` threshold, wired as a **non-gating nightly** job
+  (``perf_nightly.yml``). Opt-in via the new ``[bench]`` install extra; it never
+  touches the blocking matrix. No effect on the public API.
 - **dPULearn.fit**: Flexible, package-consistent label handling via ``label_pos`` /
   ``label_unl`` / ``label_neg`` markers. Pass standard ``{0, 1}`` labels directly with
   ``label_unl=0`` (``0`` = unlabeled, ``1`` = positive), or any positive / unlabeled /

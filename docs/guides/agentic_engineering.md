@@ -159,6 +159,7 @@ fast unit job. Check them at implement time (step 4), not after CI goes red.
 | **Lint (errors)** | no syntax errors / undefined names | `.github/workflows/codeql_analysis.yml` ("code-quality" job): `flake8 . --select=E9,F63,F7,F82`. |
 | **Style / types (full)** | black (88) / isort / flake8 (88) / mypy clean | **manual at review** — no pre-commit, ruff, or type-checker in CI (v2 target; `.claude/rules/sharp-edges.md`). |
 | **Security** | CodeQL clean | `.github/workflows/codeql_analysis.yml` ("Analyze" job). No separate dependency-scan PR gate yet — worth adding. |
+| **Perf (non-gating)** | no covered hot path slower than `1.5x` baseline | `.github/workflows/perf_nightly.yml` benchmarks the hot entry points (`tests/benchmarks/`, opt-in `[bench]` extra) and runs `.github/scripts/check_perf_regression.py` against the committed `tests/benchmarks/perf_baseline.json`. **Nightly / on-demand only — NOT the blocking matrix** (wall-clock is noisy). Locally: `pip install -e ".[dev,pro,bench]"` then `pytest tests/benchmarks --benchmark-json=perf_run.json -c tests/pytest.ini && python .github/scripts/check_perf_regression.py perf_run.json`. Refresh the baseline on the CI runner class via the workflow's `refresh_baseline` dispatch input, then commit the artifact (issue #187). |
 | **Issue linkage** | the PR's lifecycle keyword is set per policy | `Closes #NN` in the **PR body** (see Process notes → *Issue lifecycle*). |
 
 ## Process notes (hard-won)
