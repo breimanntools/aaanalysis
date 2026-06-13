@@ -564,7 +564,7 @@ plt.tight_layout(); plt.show()</pre>
 <div class="pair-imgs" style="--ph:36mm">
 <figure><img class="pair-img" src="cs_plots/shap_profile.png" alt="ShapModel — explain a prediction"><figcaption>CPPPlot.profile · SHAP</figcaption></figure><figure><img class="pair-img" src="cs_plots/feature_map_shap.png" alt="ShapModel — explain a prediction"><figcaption>CPPPlot.feature_map · SHAP</figcaption></figure>    </div>  </div>
 </div><div class="sec pairsec">
-  <div class="sec-h"><span>AAclust — clusters</span><span class="hint">scale reduction · Wrapper</span></div>
+  <div class="sec-h"><span>AAclust — clusters</span><span class="hint">scale reduction · clusters</span></div>
   <div class="sec-body"><pre class="code">aac = <span class="c-nm">aa.AAclust</span>()
 aac.select_scales(df_scales, n_clusters=10)
 aac.medoid_names_   <span class="c-cm"># 10 reduced scales (labels_ also set)</span>
@@ -573,7 +573,7 @@ aac_plot = <span class="c-nm">aa.AAclustPlot</span>()
 aac_plot.centers(np.array(df_scales).T, labels=aac.labels_)
 plt.tight_layout(); plt.show()</pre>
     <div class="pair-note">▼ figure below · left</div></div>
-  <div class="sec-h"><span>dPULearn — PCA</span><span class="hint">reliable negatives · Wrapper</span></div>
+  <div class="sec-h"><span>dPULearn — PCA</span><span class="hint">reliable negatives · PU learning</span></div>
   <div class="sec-body"><pre class="code"><span class="c-cm"># DOM_GSEC ships 1/0 — encode as PU labels: 1 = positive, 2 = unlabeled</span>
 labels_pu = [1 if x == 1 else 2 for x in labels]
 n_pos = sum(np.array(labels_pu) == 1)
@@ -643,7 +643,7 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
     </div>
 
     <div class="sec">
-      <div class="sec-h"><span>Design Principles</span></div>
+      <div class="sec-h"><span>Design Principles</span><span class="hint">the AAanalysis way</span></div>
       <div class="sec-body"><ul class="bullets"><li>Explicit over implicit — DataFrames everywhere</li><li>Wrappers (.fit / .predict / .eval) set trailing *_ attributes after fit</li><li>Biological interpretability is first-class</li><li>Small-data robust and reproducible (layered seeds)</li></ul></div>
     </div>
 
