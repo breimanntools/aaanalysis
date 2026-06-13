@@ -97,11 +97,16 @@ def candidate_centers_(seq_len, window_size, exclude_positions=None,
         return centers
     if min_distance is None and max_distance is None:
         return centers
-    # Nearest-excluded L1 distance per center, vectorized. Distances are integers, so the
-    # band comparisons reproduce the scalar keep/drop decisions exactly.
+    # Nearest-excluded L1 distance per center via binary search into the sorted excluded
+    # positions: the nearest excluded position is one of the two neighbours bracketing the
+    # center. O(n_centers · log n_excl) time and O(n_centers) memory — no n_centers × n_excl
+    # matrix. Distances are integers, so the band comparisons reproduce the scalar decisions.
     centers_arr = np.asarray(centers)
-    excl = np.asarray([p - 1 for p in exclude_positions])
-    d = np.abs(centers_arr[:, None] - excl[None, :]).min(axis=1)
+    excl = np.unique(np.asarray([p - 1 for p in exclude_positions]))
+    pos = np.searchsorted(excl, centers_arr)
+    left = np.abs(centers_arr - excl[np.clip(pos - 1, 0, len(excl) - 1)])
+    right = np.abs(centers_arr - excl[np.clip(pos, 0, len(excl) - 1)])
+    d = np.minimum(left, right)
     keep = np.ones(len(centers_arr), dtype=bool)
     if min_distance is not None:
         keep &= d >= min_distance
