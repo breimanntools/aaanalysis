@@ -37,7 +37,7 @@ from ._backend.struct_preproc.encode_dssp import (
 from ._backend.struct_preproc.encode_pdb import (
     load_structure, encode_bfactor, encode_depth,
     encode_plddt, encode_plddt_disorder, encode_plddt_tier,
-    _plddt_per_residue,
+    _plddt_per_residue, _resolve_best_chain,
     encode_chi1_sincos, encode_chi2_sincos,
     encode_ca_centroid_dist, encode_ca_centroid_dist_norm,
     encode_contact_count_8A, encode_contact_count_12A,
@@ -1033,30 +1033,45 @@ class StructurePreprocessor:
                 continue
             blocks: List[np.ndarray] = []
             entry_ok = True
-            # Compute the per-residue pLDDT (structure walk + alignment) at
-            # most ONCE per entry and reuse it across the pLDDT keys. It is
-            # computed lazily inside the per-key ``try`` below (not hoisted
-            # here) so that a RuntimeError degrades just this row
-            # (pdb_ok=False) exactly as when each encoder computed it
-            # internally — hoisting it out of the try would let the error
-            # abort the whole encode_pdb call instead of the single entry.
+            # Collect the structure's amino-acid chains and pick the best match
+            # for this sequence at most ONCE per entry, then share that
+            # (chain, residues, atom_seq, identity) across every encoder rather
+            # than re-walking the structure ~13x. The pick is a deterministic
+            # function of (structure, seq), so sharing is byte-identical to
+            # per-encoder recompute. Computed lazily inside the per-key ``try``
+            # below (not hoisted here) so a RuntimeError degrades just this row
+            # (pdb_ok=False) exactly as when each encoder resolved it
+            # internally — hoisting it out of the try would let the error abort
+            # the whole encode_pdb call instead of the single entry.
+            chain_pick = None
+            chain_pick_done = False
+            # The per-residue pLDDT read (structure walk + alignment) is shared
+            # across the three pLDDT keys, computed at most once per entry, with
+            # the same per-entry error-envelope rationale.
             plddt_shared = None
             plddt_done = False
             for key in features:
                 try:
+                    if not chain_pick_done:
+                        chain_pick = _resolve_best_chain(structure, seq)
+                        chain_pick_done = True
                     if key == "bfactor":
-                        block, identity = encode_bfactor(structure, seq)
+                        block, identity = encode_bfactor(
+                            structure, seq, chain_pick=chain_pick)
                     elif key == "depth":
-                        block, identity = encode_depth(structure, seq)
+                        block, identity = encode_depth(
+                            structure, seq, chain_pick=chain_pick)
                     elif key == "plddt":
                         if not plddt_done:
-                            plddt_shared = _plddt_per_residue(structure, seq)
+                            plddt_shared = _plddt_per_residue(
+                                structure, seq, chain_pick)
                             plddt_done = True
                         block, identity = encode_plddt(structure, seq,
                                                        plddt=plddt_shared)
                     elif key == "plddt_disorder":
                         if not plddt_done:
-                            plddt_shared = _plddt_per_residue(structure, seq)
+                            plddt_shared = _plddt_per_residue(
+                                structure, seq, chain_pick)
                             plddt_done = True
                         block, identity = encode_plddt_disorder(
                             structure, seq,
@@ -1064,31 +1079,35 @@ class StructurePreprocessor:
                             plddt=plddt_shared)
                     elif key == "plddt_tier":
                         if not plddt_done:
-                            plddt_shared = _plddt_per_residue(structure, seq)
+                            plddt_shared = _plddt_per_residue(
+                                structure, seq, chain_pick)
                             plddt_done = True
                         block, identity = encode_plddt_tier(
                             structure, seq, plddt=plddt_shared)
                     elif key == "chi1_sincos":
-                        block, identity = encode_chi1_sincos(structure, seq)
+                        block, identity = encode_chi1_sincos(
+                            structure, seq, chain_pick=chain_pick)
                     elif key == "chi2_sincos":
-                        block, identity = encode_chi2_sincos(structure, seq)
+                        block, identity = encode_chi2_sincos(
+                            structure, seq, chain_pick=chain_pick)
                     elif key == "ca_centroid_dist":
                         block, identity = encode_ca_centroid_dist(
-                            structure, seq)
+                            structure, seq, chain_pick=chain_pick)
                     elif key == "ca_centroid_dist_norm":
                         block, identity = encode_ca_centroid_dist_norm(
-                            structure, seq)
+                            structure, seq, chain_pick=chain_pick)
                     elif key == "contact_count_8A":
                         block, identity = encode_contact_count_8A(
-                            structure, seq)
+                            structure, seq, chain_pick=chain_pick)
                     elif key == "contact_count_12A":
                         block, identity = encode_contact_count_12A(
-                            structure, seq)
+                            structure, seq, chain_pick=chain_pick)
                     elif key == "hse":
-                        block, identity = encode_hse(structure, seq)
+                        block, identity = encode_hse(
+                            structure, seq, chain_pick=chain_pick)
                     elif key == "disulfide":
                         block, identity = encode_disulfide(
-                            structure, seq)
+                            structure, seq, chain_pick=chain_pick)
                     else:
                         raise RuntimeError(
                             f"Internal: feature key {key!r} not in "

@@ -103,7 +103,12 @@ class TestEncodePdbEdges:
     def test_encoder_fail_sets_not_ok(self, tmp_path):
         (tmp_path / "P1.pdb").write_text("x")
         stp = aa.StructurePreprocessor(verbose=False)
+        # The shared per-entry chain pick runs in the frontend before the
+        # encoders, so stub it (the dummy structure is never really walked);
+        # the encoder still raises to exercise the row-degrade path.
         with patch(f"{MODULE}.load_structure", return_value=object()), \
+             patch(f"{MODULE}._resolve_best_chain",
+                   return_value=(None, None, None, 0.0)), \
              patch(f"{MODULE}.encode_bfactor", side_effect=RuntimeError("enc boom")):
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
@@ -136,6 +141,8 @@ class TestEncodePdbEdges:
         import numpy as np
         stp = aa.StructurePreprocessor(verbose=True)
         with patch(f"{MODULE}.load_structure", return_value=object()), \
+             patch(f"{MODULE}._resolve_best_chain",
+                   return_value=(None, None, None, 0.0)), \
              patch(f"{MODULE}.encode_bfactor",
                    return_value=(np.zeros((9, 1)), 1.0)):
             stp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
