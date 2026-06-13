@@ -561,8 +561,7 @@ sm = <span class="c-nm">aa.ShapModel</span>()
 sm.fit(X, labels=labels, df_seq=df_seq, fuzzy_labels={<span class="c-st">&#x27;P05067&#x27;</span>: 0.6})   <span class="c-cm"># APP</span>
 df_feat = sm.add_feat_impact(df_feat=df_feat, df_seq=df_seq,
               samples=<span class="c-st">&#x27;P05067&#x27;</span>, names=<span class="c-st">&#x27;APP&#x27;</span>)   <span class="c-cm"># select by accession</span>
-args_seq = {k + <span class="c-st">&#x27;_seq&#x27;</span>: v for k, v in sf.get_df_parts(
-    df_seq=df_seq).loc[<span class="c-st">&#x27;P05067&#x27;</span>].to_dict().items()}
+args_seq = sf.get_args_seq(df_seq=df_seq, sample=<span class="c-st">&#x27;P05067&#x27;</span>)
 ka = dict(col_imp=<span class="c-st">&#x27;feat_impact_APP&#x27;</span>, shap_plot=True, **args_seq)
 cpp_plot.profile(df_feat=df_feat, **ka)
 cpp_plot.feature_map(df_feat=df_feat, name_test=<span class="c-st">&#x27;APP&#x27;</span>, **ka)
@@ -576,7 +575,7 @@ aac.select_scales(df_scales, n_clusters=10)
 aac.medoid_names_   <span class="c-cm"># 10 reduced scales (labels_ also set)</span>
 
 aac_plot = <span class="c-nm">aa.AAclustPlot</span>()
-aac_plot.centers(np.array(df_scales).T, labels=aac.labels_)
+aac_plot.centers(df_scales=df_scales, labels=aac.labels_)   <span class="c-cm"># df_scales transposed internally</span>
 plt.tight_layout(); plt.show()</pre>
     <div class="pair-note">▼ figure below · left</div></div>
   <div class="sec-h"><span>dPULearn — PCA</span><span class="hint"><span class="hint-neg">reliable negatives</span> · PU learning</span></div>

@@ -122,15 +122,16 @@ def main():
     # gets a SOFT prediction-score label of 0.6 (not a hard 1), and the cpp.profile
     # + per-protein SHAP feature map are derived from it.
     entry = "P05067"
-    pos = list(df_seq["entry"]).index(entry)
-    args_seq = {k + "_seq": v for k, v in df_parts_core.loc[entry].to_dict().items()}
-    labels_fuzzy = [float(v) for v in labels]
-    labels_fuzzy[pos] = 0.6
+    # accession-based interface (#129/#158): entry-keyed fuzzy_labels (no manual
+    # fuzzy vector), select the sample by name via samples=+df_seq, and slice the
+    # per-protein parts with SequenceFeature.get_args_seq — same output as before.
+    args_seq = sf.get_args_seq(df_seq=df_seq, sample=entry)
     sm = aa.ShapModel(verbose=False)
-    sm.fit(X_s, labels=labels_fuzzy, fuzzy_labeling=True)
-    df_feat_sh = sm.add_sample_mean_dif(X_s, labels=labels_fuzzy, df_feat=df_feat_s,
-                                        sample_positions=pos, names="APP")
-    df_feat_sh = sm.add_feat_impact(df_feat=df_feat_sh, sample_positions=pos, names="APP")
+    sm.fit(X_s, labels=labels, df_seq=df_seq, fuzzy_labels={entry: 0.6})
+    df_feat_sh = sm.add_sample_mean_dif(X_s, labels=labels, df_feat=df_feat_s,
+                                        df_seq=df_seq, samples=entry, names="APP")
+    df_feat_sh = sm.add_feat_impact(df_feat=df_feat_sh, df_seq=df_seq,
+                                    samples=entry, names="APP")
     aa.plot_settings(font_scale=0.6, weight_bold=False)
     cpp_plot.profile(df_feat=df_feat_sh, col_imp="feat_impact_APP", shap_plot=True,
                      tmd_len=TMD_LEN, **args_seq)
