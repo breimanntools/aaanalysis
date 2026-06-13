@@ -146,8 +146,13 @@ def _encode_equal_length(seqs):
     length = len(seqs[0])
     if length == 0 or any(len(s) != length for s in seqs):
         return None
-    arr = np.frombuffer("".join(seqs).encode("latin-1"), dtype=np.uint8).reshape(len(seqs), length)
-    return arr
+    try:
+        buf = "".join(seqs).encode("latin-1")
+    except UnicodeEncodeError:
+        # Non-latin-1 residues (never present in real protein windows): fall back to the
+        # exact scalar path, which compares characters directly like the original.
+        return None
+    return np.frombuffer(buf, dtype=np.uint8).reshape(len(seqs), length)
 
 
 def filter_similarity_to_test(windows, test_windows, max_similarity):

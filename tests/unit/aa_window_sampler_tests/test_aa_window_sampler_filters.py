@@ -115,6 +115,17 @@ class TestFilterEquivalence:
         assert kept == ref_kept
         assert np.array_equal(mask, ref_mask)
 
+    def test_non_latin1_falls_back_to_scalar(self):
+        # Equal-length windows with a non-latin-1 character must not crash; they fall back
+        # to the exact scalar path (alpha = U+03B1 is outside latin-1).
+        windows = ["AAAA", "AAαA", "AAAA"]
+        kept, mask = filter_redundancy(windows, 0.5)
+        ref_kept, ref_mask = _ref_filter_redundancy(windows, 0.5)
+        assert kept == ref_kept and np.array_equal(mask, ref_mask)
+        kept, mask = filter_similarity_to_test(windows, ["AAαA"], 0.5)
+        ref_kept, ref_mask = _ref_filter_similarity_to_test(windows, ["AAαA"], 0.5)
+        assert kept == ref_kept and np.array_equal(mask, ref_mask)
+
     def test_ragged_lengths_match_reference(self):
         # Mixed-length inputs must fall back to the exact scalar path.
         windows = ["AAAA", "AAAAA", "AAAA", "CCCC", "CC"]
