@@ -40,7 +40,8 @@ Learn how to load protein benchmarking datasets and amino acid scale sets in the
 Feature Engineering
 -------------------
 Explore interpretable feature engineering, the core of AAanalysis, with the **AAclust**, **SequenceFeature**,
-and **CPP** tutorials.
+and **CPP** tutorials, then see how CPP turns different data representations (scales, embeddings, structure)
+into features.
 
 .. toctree::
    :maxdepth: 1
@@ -48,6 +49,7 @@ and **CPP** tutorials.
    generated/tutorial3a_aaclust
    generated/tutorial3b_sequence_feature
    generated/tutorial3c_cpp
+   generated/tutorial3d_data_representations
 
 PU Learning
 -----------
