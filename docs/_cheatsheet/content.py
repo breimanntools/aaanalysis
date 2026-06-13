@@ -379,11 +379,15 @@ DECISION_GUIDE = [
         ("positives + unlabeled (1 / 2)", "CPP → dPULearn → ML model"),
         ("no negatives at all", "AAWindowSampler → CPP → ML model"),
     ]),
-    ("CPP features (X) → standard ML", [
-        ("classify · regress", "TreeModel — regression via get_labels_quantile"),
+    ("What is your learning task?", [
+        ("classify", "TreeModel"),
+        ("regress", "get_labels_quantile / tiered → TreeModel"),
         ("multi-class", "get_labels_ovr / ovo"),
         ("cluster · PCA", "AAclust · dPULearn"),
-        ("rank · explain features", "TreeModel importance / RFE · ShapModel [pro]"),
+    ]),
+    ("Which explainability do you need?", [
+        ("global (group level)", "CPP → TreeModel → CPPPlot"),
+        ("local (per protein)", "CPP → ShapModel → CPPPlot"),
     ]),
 ]
 
