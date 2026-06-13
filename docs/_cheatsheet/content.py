@@ -129,10 +129,10 @@ CPP_STRATEGIES = {
 # follow the RTD API subpackages — Sequence Analysis, Feature Engineering,
 # PU Learning, Explainable AI — while keeping the intent -> key-class mapping.
 WHICH_MODULE = [
-    ("Explore sequence patterns / composition", "AAlogo · AAlogoPlot"),
+    ("Explore sequence patterns / composition", "AAlogo"),
     ("Sample reference windows (if negatives are missing)", "AAWindowSampler"),
     ("Reduce redundant amino acid scales", "AAclust"),
-    ("Discover discriminative physicochemical features", "CPP · CPPPlot"),
+    ("Discover discriminative physicochemical features", "CPP"),
     ("Train with positives + unlabeled data", "dPULearn"),
     ("Train an interpretable classifier", "TreeModel"),
     ("Explain a prediction (per feature / sample)", "ShapModel  [pro]"),
@@ -183,7 +183,7 @@ CAPABILITY_FAMILIES = [
     {"name": "Sequence Analysis", "tag": "logos · motifs",
      "rows": [
          ("Position-specific logo", "AAlogo().get_df_logo(df_parts) → df_logo", None),
-         ("Sample sequence windows", "AAWindowSampler().sample(df_seq)", None),
+         ("Sample reference windows", "AAWindowSampler().sample_*(df_seq)", None),
          ("Pairwise sequence similarity", "comp_seq_sim(df_seq)  [pro]", None),
          ("Scan motifs (FIMO / MEME)", "scan_motif(df_seq, pwm) → df_hits  [pro]", None),
      ]},
@@ -200,7 +200,7 @@ CAPABILITY_FAMILIES = [
      ]},
     {"name": "Feature Preprocessing", "tag": "one-hot · PLM · structure · PTM",
      "rows": [
-         ("Encode sequences (one-hot / int)", "SequencePreprocessor().encode_*(seqs)", None),
+         ("Encode sequences (one-hot / int)", "SequencePreprocessor().encode_*(seqs) → X", None),
          ("PLM embeddings", "EmbeddingPreprocessor().encode(...) → dict_num", None, "v1.1"),
          ("Structure / DSSP / PAE", "StructurePreprocessor().encode_dssp(...) → dict_num  [pro]", None, "v1.1"),
          ("PTM / site annotations", "AnnotationPreprocessor().encode(...) → dict_num  [pro]", None, "v1.1"),
@@ -257,9 +257,9 @@ FLAGSHIP_RECIPES = [
      "caption": "CPPPlot.feature · top feature, REF vs TEST",
      "code": "# default parts + a redundancy-reduced set of 100 scales\n"
              "df_parts = sf.get_df_parts(df_seq=df_seq)\n"
-             "df_scales_sel = aa.AAclust().select_scales(\n"
+             "df_scales = aa.AAclust().select_scales(\n"
              "    df_scales=df_scales, n_clusters=100)\n"
-             "cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales_sel)\n"
+             "cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)\n"
              "df_feat = cpp.run(labels=labels, n_filter=100)\n"
              "X = sf.feature_matrix(df_feat['feature'], df_parts)\n"
              "tm = aa.TreeModel(); tm.fit(X, labels=labels)\n"
@@ -274,10 +274,10 @@ FLAGSHIP_RECIPES = [
      "img_labels": ["CPPPlot.feature_map · all scales", "CPPPlot.feature_map · simplified"], "h": 44,
      "code": "# global Part × Split × Scale map — all AAontology scales\n"
              "cpp_plot = aa.CPPPlot(); aa.plot_settings(font_scale=0.65)\n"
-             "cpp_plot.feature_map(df_feat=df_feat)            # left\n"
+             "cpp_plot.feature_map(df_feat=df_feat)\n"
              "# CPP.simplify → fewer, interpretable correlated scales\n"
              "df_feat = cpp.simplify(df_feat=df_feat, labels=labels)\n"
-             "cpp_plot.feature_map(df_feat=df_feat)            # right\n"
+             "cpp_plot.feature_map(df_feat=df_feat)\n"
              "plt.tight_layout(); plt.show()"},
     {"cls": "ShapModel — explain a prediction", "tag": "sample level · advanced · [pro]",
      "imgs": ["shap_profile", "feature_map_shap"],
@@ -292,18 +292,17 @@ FLAGSHIP_RECIPES = [
              "args_seq = {k + '_seq': v for k, v in sf.get_df_parts(\n"
              "    df_seq=df_seq).loc['P05067'].to_dict().items()}\n"
              "ka = dict(col_imp='feat_impact_APP', shap_plot=True, **args_seq)\n"
-             "cpp_plot.profile(df_feat=df_feat, **ka)            # left\n"
-             "cpp_plot.feature_map(df_feat=df_feat, name_test='APP', **ka)  # right\n"
+             "cpp_plot.profile(df_feat=df_feat, **ka)\n"
+             "cpp_plot.feature_map(df_feat=df_feat, name_test='APP', **ka)\n"
              "plt.tight_layout(); plt.show()"},
     {"cls": "AAclust — clusters", "tag": "scale reduction · Wrapper", "img": "centers",
      "caption": "AAclustPlot.centers · cluster scale profiles",
-     "code": "X = np.array(df_scales).T\n"
-             "aac = aa.AAclust()\n"
-             "aac.fit(X, names=list(df_scales), n_clusters=10)\n"
-             "aac.medoid_names_   # redundancy-reduced scales\n"
+     "code": "aac = aa.AAclust()\n"
+             "aac.select_scales(df_scales, n_clusters=10)\n"
+             "aac.medoid_names_   # 10 reduced scales (labels_ also set)\n"
              "\n"
              "aac_plot = aa.AAclustPlot()\n"
-             "aac_plot.centers(X, labels=aac.labels_)\n"
+             "aac_plot.centers(np.array(df_scales).T, labels=aac.labels_)\n"
              "plt.tight_layout(); plt.show()"},
     {"cls": "dPULearn — PCA", "tag": "reliable negatives · Wrapper", "img": "pca",
      "caption": "dPULearnPlot.pca · reliable negatives",
@@ -317,6 +316,15 @@ FLAGSHIP_RECIPES = [
              "dpul_plot = aa.dPULearnPlot()\n"
              "dpul_plot.pca(df_pu=df_pu, labels=dpul.labels_)\n"
              "plt.tight_layout(); plt.show()"},
+    {"cls": "AAWindowSampler", "tag": "build reference windows",
+     "code": "# Reference windows around sites when you lack negatives:\n"
+             "aaws = aa.AAWindowSampler()\n"
+             "# SAME proteins · window 9 (odd) -> PTM / single-residue site\n"
+             "df_same = aaws.sample_same_protein(df_seq, n=100, window_size=9)\n"
+             "# DIFFERENT proteins · window 10 (even) -> cleavage bond\n"
+             "df_diff = aaws.sample_different_protein(df_seq, n=100, window_size=10)\n"
+             "# SYNTHETIC — AA-frequency priors (null background)\n"
+             "df_syn = aaws.sample_synthetic(df_seq, n=100, generator='global_freq')"},
 ]
 
 # Page-2 layout: AAlogo stands alone (big logo); the rest are shown as PAIRS —
@@ -332,6 +340,7 @@ RECIPE_GROUPS = [
     {"recipes": [FLAGSHIP_RECIPES[3]]},                                  # feature map: full | simplified (col2 top)
     {"recipes": [FLAGSHIP_RECIPES[4]]},                                  # SHAP: profile | feature map (col2 bottom)
     {"recipes": [FLAGSHIP_RECIPES[5], FLAGSHIP_RECIPES[6]], "h": 37},    # AAclust | dPULearn (col3)
+    {"recipes": [FLAGSHIP_RECIPES[7]]},                                  # AAWindowSampler (code-only, pairs with dPULearn — col3)
 ]
 
 # -- Page 3: reference --------------------------------------------------------
@@ -366,9 +375,9 @@ DECISION_GUIDE = [
         ("whole protein", "SEQ_* · composition · whole chain"),
     ]),
     ("What labels do you have?", [
-        ("labeled 0 / 1", "TreeModel — classify"),
-        ("positives + unlabeled (1 / 2)", "dPULearn → reliable negatives → TreeModel"),
-        ("no negatives at all", "AAWindowSampler — build a reference background"),
+        ("labeled 0 / 1", "CPP → TreeModel"),
+        ("positives + unlabeled (1 / 2)", "CPP → dPULearn → TreeModel"),
+        ("no negatives at all", "AAWindowSampler → CPP → TreeModel"),
     ]),
     ("Discover & explain", [
         ("find features", "CPP.run — compositional or positional (via split_kws)"),
@@ -409,28 +418,34 @@ OPTIONS = (
     "aa.options['jmd_c_len'] = 10\n"
     "\n"
     "# plot labels & system-level scales\n"
-    "aa.options['name_tmd'] = 'P5-P5′'   # e.g. cleavage-site prediction\n"
+    "aa.options['name_tmd'] = 'P5-P5′'   # e.g. cleavage site\n"
     "aa.options['df_scales'] = my_scales"
 )
 
 # (class, abbr, plot class | "—", kind tag) — abbr = canonical instance name
 # (mirrors the registry in docstring_guide.rst / test_class_abbreviation_registry.py)
 CLASS_PLOT = [
+    # Data Handling
     ("SequencePreprocessor", "sp", "—", ""),
-    ("EmbeddingPreprocessor", "ep", "—", "[v1.1]"),
-    ("StructurePreprocessor  [pro]", "stp", "—", "[v1.1]"),
-    ("AnnotationPreprocessor  [pro]", "ap", "—", "[v1.1]"),
+    ("EmbeddingPreprocessor", "ep", "—", ""),
+    ("StructurePreprocessor  [pro]", "stp", "—", ""),
+    ("AnnotationPreprocessor  [pro]", "ap", "—", ""),
+    # Sequence Analysis
+    ("AAlogo", "aal", "AAlogoPlot", ""),
+    ("AAWindowSampler", "aaws", "—", ""),
+    # Feature Engineering
+    ("SequenceFeature", "sf", "—", ""),
     ("CPP", "cpp", "CPPPlot", ""),
     ("AAclust", "aac", "AAclustPlot", "Wrapper"),
-    ("AAlogo", "aal", "AAlogoPlot", ""),
+    ("NumericalFeature", "nf", "—", ""),
+    # PU Learning
     ("dPULearn", "dpul", "dPULearnPlot", "Wrapper"),
+    # Explainable AI
     ("TreeModel", "tm", "—", "Wrapper"),
     ("ShapModel  [pro]", "sm", "—", "Wrapper"),
-    ("AAMut", "aamut", "AAMutPlot", "[v1.1]"),
-    ("SeqMut", "seqmut", "SeqMutPlot", "[v1.1]"),
-    ("AAWindowSampler", "aaws", "—", ""),
-    ("SequenceFeature", "sf", "—", ""),
-    ("NumericalFeature", "nf", "—", ""),
+    # Protein Design
+    ("AAMut", "aamut", "AAMutPlot", ""),
+    ("SeqMut", "seqmut", "SeqMutPlot", ""),
 ]
 
 DESIGN_PRINCIPLES = [
@@ -474,22 +489,11 @@ GLOSSARY = [
      "and rank features."),
     ("CPP", "Comparative Physicochemical Profiling — discovers ranked "
      "Part × Split × Scale features."),
+    ("Test vs reference group", "The A-vs-B contrast CPP profiles: a feature's "
+     "mean_dif is test − reference (name_test / name_ref in CPPPlot)."),
     ("Compositional vs positional", "How split_kws resolves locality: a whole-part "
      "average (compositional) vs sub-region/position-resolved (positional)."),
-    # -- Prediction tasks -------------------------------------------------
-    ("Prediction level", "Residue (AA_*) · Domain (DOM_*) · Protein (SEQ_*) — the "
-     "unit a task predicts at; a proxy for the two axes below."),
-    ("Unit of comparison", "What CPP profiles for a task: a window (residue), a "
-     "part-set (domain), or the whole chain (protein). One of two task-defining axes."),
-    ("Reference construction", "How the contrast set is built: labeled A-vs-B groups · "
-     "non-site windows · an unlabeled pool · composition-matched background. The 2nd axis."),
-    ("Test vs reference group", "The A-vs-B contrast at CPP's core: the test group is "
-     "profiled against the reference group; a feature's mean_dif is test − reference."),
     # -- CPP modes & numerical CPP ----------------------------------------
-    ("Determinant discovery", "CPP with no prediction target — contrast two groups to "
-     "surface what physicochemically distinguishes them. CPP's purest interpretable use."),
-    ("Design / ΔCPP", "Inverts prediction: measure how a mutation shifts a sequence's "
-     "CPP profile (ΔCPP) and steer toward a target. Model-free (AAMut · SeqMut)."),
     ("Numerical CPP (pseudo-scale)", "CPP generalizes from AA→scale lookup to any "
      "per-residue tensor — PLM · structure · PTM — each a pseudo-scale via CPP.run_num.", "v1.1"),
     # -- Models, explainability & feature reduction -----------------------
@@ -500,7 +504,7 @@ GLOSSARY = [
     ("PU labels", "dPULearn input: 1 = positive, 2 = unlabeled. Output: "
      "1 / 0 (reliable-negative) / 2."),
     # -- Class conventions ------------------------------------------------
-    ("Wrapper", "sklearn-style class — .fit / .predict / .eval, sets trailing *_ "
+    ("Wrapper class", "sklearn-style class — .fit / .predict / .eval, sets trailing *_ "
      "attributes after fit."),
     ("Plot class", "*Plot mirror of an analytical class — same arguments, "
      "visualization only."),

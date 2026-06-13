@@ -19,7 +19,7 @@
     {% for row in F['rows'] %}
     {% set what = row[0] %}{% set sym = row[1] %}{% set _tag = row[3] if row|length > 3 else None %}
     {% set _fn = sym.split(' → ')[0] %}{% set _out = sym.split(' → ')[1:] %}
-    <div class="cap-item"><span class="cw">{{ what }}{% if _tag %} <span class="rowtag">{{ _tag }}</span>{% endif %}</span><span class="cs">{{ _fn }}{% if _out %} → <span class="out">{{ _out|join(' → ') }}</span>{% endif %}</span></div>
+    <div class="cap-item"><span class="cw">{{ what }}{% if _tag %} <span class="rowtag">{{ _tag }}</span>{% endif %}</span><span class="cs">{{ _fn|replace('[pro]', '<span class="protag">pro</span>')|safe }}{% if _out %} → <span class="out">{{ _out|join(' → ')|replace('[pro]', '<span class="protag">pro</span>')|safe }}</span>{% endif %}</span></div>
     {% endfor %}
   </div>
 </div>
@@ -143,7 +143,7 @@
       <div class="sec-h"><span>Which Module Should I Use?</span><span class="hint">intent → module</span></div>
       <div class="sec-body">
         {% for what, mod in c.which_module %}
-        <div class="cap-item"><span class="cw">{{ what }} →</span><span class="cs">{{ mod }}</span></div>
+        <div class="cap-item"><span class="cw">{{ what }} →</span><span class="cs">{{ mod|replace('[pro]', '<span class="protag">pro</span>')|safe }}</span></div>
         {% endfor %}
       </div>
     </div>
@@ -175,7 +175,7 @@
 
     <div class="page-banner">
       <div class="brand"><img class="banner-logo" src="{{ logo_base }}logo.png" alt="AAanalysis"> <span class="suffix">· Reference</span></div>
-      <div class="sub2">5-minute example · options · class ↔ plot · glossary · citations</div>
+      <div class="sub2">decision guide · gotchas · options · class ↔ plot · glossary · citations</div>
     </div>
 
     <div class="sec">
@@ -209,7 +209,7 @@
       <div class="sec-h"><span>Class · abbr ↔ Plot Class</span><span class="hint">mirrored API</span></div>
       <div class="sec-body"><table class="kv">
         <tr class="hdr"><td class="k">class</td><td class="d mono abbr">abbr</td><td class="d mono">plot class</td><td class="d" style="text-align:right">kind</td></tr>
-        {% for cls,abbr,plot,kind in c.class_plot %}<tr><td class="k">{{ cls }}</td><td class="d mono abbr">{{ abbr }}</td><td class="d mono">{{ plot }}</td><td class="d" style="text-align:right">{{ kind|replace('[v1.1]', '<span class="rowtag">v1.1</span>')|safe }}</td></tr>{% endfor %}
+        {% for cls,abbr,plot,kind in c.class_plot %}<tr><td class="k">{{ cls|replace('[pro]', '<span class="protag">pro</span>')|safe }}</td><td class="d mono abbr">{{ abbr }}</td><td class="d mono">{{ plot }}</td><td class="d" style="text-align:right">{{ kind|replace('[v1.1]', '<span class="rowtag">v1.1</span>')|safe }}</td></tr>{% endfor %}
       </table></div>
     </div>
 
@@ -234,7 +234,7 @@
     </div>
 
   </div>
-  {{ footer('reference · 5-minute example · glossary') }}
+  {{ footer('reference · decision guide · glossary') }}
 </section>
 
 </body>

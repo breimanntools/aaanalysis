@@ -96,12 +96,13 @@ def main():
     plt.title(f"{df_feat['feature'].iloc[0]}\n({df_feat['subcategory'].iloc[0]})", fontsize=8)
     _save("feature")
 
-    # AAclust: cluster the scale set, plot cluster centers in PCA space
-    X_scales = np.array(df_scales := aa.load_scales()).T
+    # AAclust: reduce the full scale set via select_scales, plot cluster centers.
+    # select_scales fits internally, so aac.labels_ stays available for the plot.
+    df_scales_full = aa.load_scales()
     aac = aa.AAclust()
-    aac.fit(X_scales, names=list(df_scales), n_clusters=10)
+    aac.select_scales(df_scales_full, n_clusters=10)
     aa.plot_settings()
-    aa.AAclustPlot().centers(X_scales, labels=aac.labels_); _save("centers")
+    aa.AAclustPlot().centers(np.array(df_scales_full).T, labels=aac.labels_); _save("centers")
 
     # dPULearn PCA: positives (1) + unlabelled (2) -> reliable negatives (0).
     # Convert only part of the unlabelled pool so unlabelled (grey) remain visible.
