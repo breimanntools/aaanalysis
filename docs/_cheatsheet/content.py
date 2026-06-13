@@ -253,7 +253,9 @@ FLAGSHIP_RECIPES = [
              "cpp_plot.ranking(df_feat=df_feat, n_top=15, rank=True,\n"
              "    name_test='substrates', name_ref='non-subs.')\n"
              "plt.tight_layout(); plt.show()"},
-    {"cls": "CPP — feature", "tag": "top feature · REF vs TEST", "img": "feature",
+    {"cls": "CPP — feature",
+     "tag": 'top feature · <span class="hint-ref">ref</span> vs <span class="hint-test">test</span>',
+     "img": "feature",
      "caption": "CPPPlot.feature · top feature, REF vs TEST",
      "code": "# default parts + a redundancy-reduced set of 100 scales\n"
              "df_parts = sf.get_df_parts(df_seq=df_seq)\n"

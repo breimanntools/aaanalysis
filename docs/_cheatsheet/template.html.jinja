@@ -27,7 +27,7 @@
 
 {%- macro recipe(R) -%}
 <div class="sec">
-  <div class="sec-h"><span>{{ R.cls }}</span><span class="hint">{{ R.tag }}</span></div>
+  <div class="sec-h"><span>{{ R.cls }}</span><span class="hint">{{ R.tag|safe }}</span></div>
   <div class="sec-body">
     <pre class="code">{{ R.code|hl }}</pre>
     {% if R.imgs %}<div class="pair-imgs" style="--ph:{{ R.h }}mm">
@@ -42,10 +42,10 @@
 {%- macro recipe_pair(G) -%}
 {%- set L = G.recipes[0] -%}{%- set R = G.recipes[1] -%}
 <div class="sec pairsec">
-  <div class="sec-h"><span>{{ L.cls }}</span><span class="hint">{{ L.tag }}</span></div>
+  <div class="sec-h"><span>{{ L.cls }}</span><span class="hint">{{ L.tag|safe }}</span></div>
   <div class="sec-body"><pre class="code">{{ L.code|hl }}</pre>
     <div class="pair-note">▼ figure below · left</div></div>
-  <div class="sec-h"><span>{{ R.cls }}</span><span class="hint">{{ R.tag }}</span></div>
+  <div class="sec-h"><span>{{ R.cls }}</span><span class="hint">{{ R.tag|safe }}</span></div>
   <div class="sec-body"><pre class="code">{{ R.code|hl }}</pre>
     <div class="pair-note">▼ figure below · right</div></div>
   <div class="pair-imgs" style="--ph:{{ G.h }}mm">
