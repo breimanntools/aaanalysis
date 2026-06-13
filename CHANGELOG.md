@@ -67,6 +67,16 @@ and a suite of site-localization metrics and plotting helpers.
   (~12x), and `SequencePreprocessor.encode_one_hot` (~3x), vectorized with
   identical output. Plus `StructurePreprocessor.encode_pdb` CA-CA contact counts
   (`contact_count_8A`/`12A`) vectorized (~50x, identical counts).
+- `dPULearn.fit` gains flexible, package-consistent label handling via
+  `label_pos` / `label_unl` / `label_neg` markers: pass standard `{0, 1}` labels
+  directly with `label_unl=0`, or an arbitrary positive/unlabeled/negative
+  encoding. Pre-labeled negatives (`label_neg`) are kept and never re-selected —
+  only unlabeled samples are candidates. The negative count is now specified one
+  of two ways (exactly one): the new `n_neg` (the **total** number of negatives
+  wanted; dPULearn identifies `n_neg` minus the pre-labeled negatives), or the
+  existing `n_unl_to_neg` (the number identified **directly from the unlabeled
+  pool**). Output labels always use the package convention (1 = positive,
+  0 = negative, 2 = unlabeled); the recommended input encoding is unchanged.
 
 ### Deprecated
 - None. The strict-semver deprecation policy and the `deprecated` decorator are
