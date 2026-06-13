@@ -59,6 +59,30 @@ def check_aal_kws(aal_kws=None, df_logo=None, df_logo_info=None):
             "precomputed 'df_logo'/'df_logo_info', not both.")
 
 
+def check_logo_input_source(df_logo=None, df_logo_info=None, aal_kws=None,
+                            df_parts=None, labels=None):
+    """Check exactly one logo-data source is given (precomputed, aal_kws, or df_parts)."""
+    if labels is not None and df_parts is None:
+        raise ValueError("'labels' requires 'df_parts' to be given as well.")
+    has_df_parts = df_parts is not None
+    if has_df_parts:
+        if df_logo is not None or df_logo_info is not None:
+            raise ValueError(
+                "'df_parts'/'labels' are mutually exclusive with 'df_logo' and "
+                "'df_logo_info': provide either 'df_parts' (logo data computed "
+                "internally) or precomputed 'df_logo'/'df_logo_info', not both.")
+        if aal_kws is not None:
+            raise ValueError(
+                "'df_parts'/'labels' are mutually exclusive with 'aal_kws': pass the "
+                "logo inputs either directly via 'df_parts' (with 'labels', "
+                "'label_test', 'tmd_len') or bundled in 'aal_kws', not both.")
+    elif df_logo is None and aal_kws is None:
+        raise ValueError(
+            "No logo data provided: pass precomputed 'df_logo' (optionally with "
+            "'df_logo_info'), or compute it internally via 'df_parts' (with "
+            "'labels', 'label_test', 'tmd_len') or 'aal_kws'.")
+
+
 def check_list_aal_kws(list_aal_kws=None, list_df_logo=None, list_df_logo_info=None):
     """Check list_aal_kws is a list of valid dicts not combined with precomputed data."""
     if list_aal_kws is None:
@@ -242,6 +266,10 @@ class AAlogoPlot:
                     df_logo: Optional[pd.DataFrame] = None,
                     df_logo_info: Optional[pd.Series] = None,
                     aal_kws: Optional[dict] = None,
+                    df_parts: Optional[pd.DataFrame] = None,
+                    labels: Optional[ut.ArrayLike1D] = None,
+                    label_test: int = 1,
+                    tmd_len: Optional[int] = None,
                     info_bar_color: str = "gray",
                     info_bar_ylim: Optional[Tuple[float, float]] = None,
                     target_p1_site: Optional[int] = None,
@@ -295,6 +323,23 @@ class AAlogoPlot:
             :meth:`AAlogo.get_df_logo` / :meth:`AAlogo.get_df_logo_info` keyword arguments.
             If given, ``df_logo`` and ``df_logo_info`` are computed internally and both must
             be ``None``. Mutually exclusive with ``df_logo`` and ``df_logo_info`` (see Notes).
+        df_parts : pd.DataFrame, shape (n_samples, n_parts), optional
+            Sequence parts DataFrame with at least one of the standard part columns
+            (``jmd_n``, ``tmd``, ``jmd_c``), as passed to :meth:`AAlogo.get_df_logo`. If given,
+            ``df_logo`` and ``df_logo_info`` are computed internally (so the bit-score bar is
+            shown). Mutually exclusive with ``df_logo`` / ``df_logo_info`` and with ``aal_kws``
+            (see Notes).
+        labels : array-like, shape (n_samples,), optional
+            Class labels for the samples in ``df_parts``. If provided, only samples with
+            ``label_test`` are included in the logo computation. Only used together with
+            ``df_parts``.
+        label_test : int, default=1
+            Class label of the test group to select from ``labels``. Only used together with
+            ``df_parts``.
+        tmd_len : int, optional
+            Fixed length (>=1) to align all target middle domain (TMD) sequences before
+            computing the logo. If ``None``, the maximum TMD length in ``df_parts`` is used.
+            Only used together with ``df_parts``.
         info_bar_color : str, default='gray'
             Color of the bit-score bars in the optional top panel.
         info_bar_ylim : tuple of float, optional
@@ -360,16 +405,26 @@ class AAlogoPlot:
 
         Notes
         -----
-        * ``aal_kws`` is a convenience shortcut that skips the manual :class:`AAlogo`
-          step: ``AAlogoPlot`` instantiates :class:`AAlogo` with this plot's
+        * There are three ways to supply the logo data, and exactly one must be used:
+
+          1. precomputed ``df_logo`` (optionally with ``df_logo_info``);
+          2. the raw inputs ``df_parts`` (with ``labels``, ``label_test``, ``tmd_len``);
+          3. an ``aal_kws`` dict bundling the :class:`AAlogo` getter arguments.
+
+          Mixing sources (e.g. ``df_parts`` together with ``df_logo`` or ``aal_kws``)
+          raises ``ValueError``.
+        * ``df_parts`` is the most direct shortcut: when given (and ``df_logo`` is
+          ``None``), ``AAlogoPlot`` instantiates :class:`AAlogo` with this plot's
           ``logo_type`` and computes both ``df_logo`` (via :meth:`AAlogo.get_df_logo`)
-          and ``df_logo_info`` (via :meth:`AAlogo.get_df_logo_info`), then renders the
-          logo with the bit-score bar. It holds the arguments shared by both methods,
-          e.g. ``df_parts``, ``labels``, ``label_test``, ``tmd_len``, ``start_n``,
-          ``characters_to_ignore``, and ``pseudocount``. Passing both ``aal_kws`` and
-          ``df_logo`` / ``df_logo_info`` raises ``ValueError``, as do unknown keys.
-          Example: ``aal_kws=dict(df_parts=df_parts, labels=labels, label_test=1,
-          tmd_len=20)``.
+          and ``df_logo_info`` (via :meth:`AAlogo.get_df_logo_info`) from
+          ``df_parts``/``labels``/``label_test``/``tmd_len``, then renders the logo
+          with the bit-score bar.
+        * ``aal_kws`` is the equivalent shortcut as a single dict, useful when the
+          getter arguments are assembled programmatically. It holds the arguments
+          shared by both methods, e.g. ``df_parts``, ``labels``, ``label_test``,
+          ``tmd_len``, ``start_n``, ``characters_to_ignore``, and ``pseudocount``.
+          Unknown keys raise ``ValueError``. Example: ``aal_kws=dict(df_parts=df_parts,
+          labels=labels, label_test=1, tmd_len=20)``.
 
         See Also
         --------
@@ -381,7 +436,13 @@ class AAlogoPlot:
         .. include:: examples/aal_plot_single_logo.rst
         """
         # Check input
+        check_logo_input_source(df_logo=df_logo, df_logo_info=df_logo_info,
+                                aal_kws=aal_kws, df_parts=df_parts, labels=labels)
         check_aal_kws(aal_kws=aal_kws, df_logo=df_logo, df_logo_info=df_logo_info)
+        # Build aal_kws from the direct df_parts inputs (same internal compute path)
+        if df_parts is not None:
+            aal_kws = dict(df_parts=df_parts, labels=labels,
+                           label_test=label_test, tmd_len=tmd_len)
         if aal_kws is not None:
             aal = AAlogo(logo_type=self._logo_type)
             df_logo = aal.get_df_logo(**aal_kws)

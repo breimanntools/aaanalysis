@@ -550,3 +550,141 @@ class TestSingleLogoAalKws:
         with pytest.raises(ValueError):
             aal_plot.single_logo(
                 aal_kws=dict(df_parts=df_parts, labels=labels, df_part=1))
+
+
+# Helper for the df_parts-path regression comparison
+def _glyph_extents(ax):
+    """Return sorted (y0, y1) extents of every logo glyph patch on an Axes."""
+    return sorted((round(p.get_extents().y0, 4), round(p.get_extents().y1, 4))
+                  for p in ax.patches)
+
+
+# ===========================================================================
+# XIII Test single_logo: df_parts/labels/label_test/tmd_len (direct inputs)
+# ===========================================================================
+class TestSingleLogoDfParts:
+    """Test single_logo 'df_parts'/'labels'/'label_test'/'tmd_len' direct inputs."""
+
+    def test_valid_df_parts(self):
+        """Test that df_parts computes df_logo + df_logo_info internally and plots."""
+        df_parts, labels = get_df_parts_labels()
+        aal_plot = get_aal_plot()
+        fig, axes = aal_plot.single_logo(df_parts=df_parts, labels=labels, label_test=1)
+        assert isinstance(fig, plt.Figure)
+        # df_logo_info is computed internally -> info bar present -> (ax_logo, ax_info)
+        assert isinstance(axes, tuple) and len(axes) == 2
+        plt.close("all")
+
+    def test_valid_df_parts_without_labels(self):
+        """Test that df_parts alone (no labels) uses all samples and plots."""
+        df_parts, _ = get_df_parts_labels()
+        aal_plot = get_aal_plot()
+        fig, axes = aal_plot.single_logo(df_parts=df_parts)
+        assert isinstance(fig, plt.Figure)
+        plt.close("all")
+
+    def test_valid_label_test(self):
+        """Test that label_test selects the target group."""
+        df_parts, labels = get_df_parts_labels()
+        aal_plot = get_aal_plot()
+        for label_test in [0, 1]:
+            fig, axes = aal_plot.single_logo(
+                df_parts=df_parts, labels=labels, label_test=label_test)
+            assert isinstance(fig, plt.Figure)
+            plt.close("all")
+
+    def test_valid_tmd_len(self):
+        """Test that an explicit tmd_len is accepted."""
+        df_parts, labels = get_df_parts_labels()
+        # jmd_n_len + jmd_c_len must be < logo length (= tmd_len here, only 'tmd' part)
+        aal_plot = aa.AAlogoPlot(jmd_n_len=2, jmd_c_len=2)
+        fig, axes = aal_plot.single_logo(
+            df_parts=df_parts, labels=labels, label_test=1, tmd_len=15)
+        assert isinstance(fig, plt.Figure)
+        plt.close("all")
+
+    def test_df_parts_matches_explicit_path(self):
+        """Regression: df_parts path renders the SAME logo as the two-getter path."""
+        df_parts, labels = get_df_parts_labels()
+        kws = dict(df_parts=df_parts, labels=labels, label_test=1)
+        df_logo = aa.AAlogo().get_df_logo(**kws)
+        df_logo_info = aa.AAlogo().get_df_logo_info(**kws)
+        fig_a, axes_a = get_aal_plot().single_logo(
+            df_logo=df_logo, df_logo_info=df_logo_info)
+        fig_b, axes_b = get_aal_plot().single_logo(
+            df_parts=df_parts, labels=labels, label_test=1)
+        ax_logo_a, ax_logo_b = axes_a[0], axes_b[0]
+        # Same y-axis scale and byte-identical glyph extents
+        assert ax_logo_a.get_ylim() == ax_logo_b.get_ylim()
+        assert _glyph_extents(ax_logo_a) == _glyph_extents(ax_logo_b)
+        plt.close("all")
+
+    def test_df_parts_matches_aal_kws_path(self):
+        """Regression: df_parts path matches the equivalent aal_kws path."""
+        df_parts, labels = get_df_parts_labels()
+        kws = dict(df_parts=df_parts, labels=labels, label_test=1)
+        fig_a, axes_a = get_aal_plot().single_logo(aal_kws=kws)
+        fig_b, axes_b = get_aal_plot().single_logo(
+            df_parts=df_parts, labels=labels, label_test=1)
+        assert _glyph_extents(axes_a[0]) == _glyph_extents(axes_b[0])
+        plt.close("all")
+
+    def test_df_parts_respects_logo_type(self):
+        """Test that the plot's logo_type is used when computing via df_parts."""
+        df_parts, labels = get_df_parts_labels()
+        for logo_type in ["probability", "counts", "weight", "information"]:
+            aal_plot = get_aal_plot(logo_type=logo_type)
+            fig, _ = aal_plot.single_logo(df_parts=df_parts, labels=labels, label_test=1)
+            assert isinstance(fig, plt.Figure)
+            plt.close("all")
+
+    def test_invalid_df_parts_with_df_logo(self):
+        """Test that combining df_parts with df_logo raises ValueError."""
+        df_parts, labels = get_df_parts_labels()
+        df_logo = get_df_logo()
+        aal_plot = get_aal_plot()
+        with pytest.raises(ValueError):
+            aal_plot.single_logo(df_logo=df_logo, df_parts=df_parts, labels=labels)
+
+    def test_invalid_df_parts_with_df_logo_info(self):
+        """Test that combining df_parts with df_logo_info raises ValueError."""
+        df_parts, labels = get_df_parts_labels()
+        df_logo_info = get_df_logo_info()
+        aal_plot = get_aal_plot()
+        with pytest.raises(ValueError):
+            aal_plot.single_logo(df_parts=df_parts, df_logo_info=df_logo_info)
+
+    def test_invalid_df_parts_with_aal_kws(self):
+        """Test that combining df_parts with aal_kws raises ValueError."""
+        df_parts, labels = get_df_parts_labels()
+        aal_plot = get_aal_plot()
+        with pytest.raises(ValueError):
+            aal_plot.single_logo(
+                df_parts=df_parts, labels=labels,
+                aal_kws=dict(df_parts=df_parts, labels=labels, label_test=1))
+
+    def test_invalid_labels_without_df_parts(self):
+        """Test that labels without df_parts raises ValueError."""
+        _, labels = get_df_parts_labels()
+        aal_plot = get_aal_plot()
+        with pytest.raises(ValueError):
+            aal_plot.single_logo(labels=labels)
+
+    def test_invalid_no_source(self):
+        """Test that providing no logo-data source raises ValueError."""
+        aal_plot = get_aal_plot()
+        with pytest.raises(ValueError):
+            aal_plot.single_logo()
+
+    def test_invalid_df_parts_bad_frame(self):
+        """Test that an invalid df_parts surfaces as an error from AAlogo."""
+        aal_plot = get_aal_plot()
+        with pytest.raises((ValueError, TypeError)):
+            aal_plot.single_logo(df_parts="not-a-frame")
+
+    def test_invalid_label_test_no_samples(self):
+        """Test that a label_test with no matching samples raises ValueError."""
+        df_parts, labels = get_df_parts_labels()
+        aal_plot = get_aal_plot()
+        with pytest.raises(ValueError):
+            aal_plot.single_logo(df_parts=df_parts, labels=labels, label_test=99)
