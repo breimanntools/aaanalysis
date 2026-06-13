@@ -308,12 +308,10 @@ FLAGSHIP_RECIPES = [
              "plt.tight_layout(); plt.show()"},
     {"cls": "dPULearn — PCA", "tag": "reliable negatives · PU learning", "img": "pca",
      "caption": "dPULearnPlot.pca · reliable negatives",
-     "code": "# DOM_GSEC ships 1/0 — encode as PU labels: 1 = positive, 2 = unlabeled\n"
-             "labels_pu = [1 if x == 1 else 2 for x in labels]\n"
-             "n_pos = sum(np.array(labels_pu) == 1)\n"
+     "code": "# DOM_GSEC ships 1/0 — treat 0 as the unlabeled pool (label_unl=0)\n"
              "dpul = aa.dPULearn()\n"
-             "dpul.fit(X=X, labels=labels_pu, n_unl_to_neg=n_pos // 2)\n"
-             "df_pu = dpul.df_pu_   # 1 pos · 0 rel-neg · 2 unl\n"
+             "dpul.fit(X=X, labels=labels, label_unl=0, n_neg=31)   # n_neg: reliable negatives to mine\n"
+             "df_pu = dpul.df_pu_   # out: 1 pos · 0 rel-neg · 2 unl\n"
              "\n"
              "dpul_plot = aa.dPULearnPlot()\n"
              "dpul_plot.pca(df_pu=df_pu, labels=dpul.labels_)\n"
@@ -397,8 +395,9 @@ DECISION_GUIDE = [
 
 # Gotchas (B): the non-obvious rules that bite. <b> spans -> rendered |safe.
 GOTCHAS = [
-    "Labels: <b>1/0</b> = supervised (pos/neg). <b>dPULearn needs 1/2</b> "
-    "(pos/unlabeled) and outputs <b>0 = reliable-negative</b>.",
+    "Labels: <b>1/0</b> = supervised (pos/neg). <b>dPULearn</b> takes 1/0 "
+    "(<b>label_unl=0</b>) or 1/2; <b>n_neg</b> = reliable negatives to mine; "
+    "output <b>1 · 0 (rel-neg) · 2 (unl)</b>.",
     "<b>load_dataset(name, n=N)</b> returns <b>2N</b> rows (N per class) — "
     "count classes via df_seq['label'].",
     "Compositional vs positional is not a flag — it <b>emerges from split_kws</b>.",

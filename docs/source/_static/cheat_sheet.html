@@ -577,12 +577,10 @@ aac_plot.centers(np.array(df_scales).T, labels=aac.labels_)
 plt.tight_layout(); plt.show()</pre>
     <div class="pair-note">▼ figure below · left</div></div>
   <div class="sec-h"><span>dPULearn — PCA</span><span class="hint">reliable negatives · PU learning</span></div>
-  <div class="sec-body"><pre class="code"><span class="c-cm"># DOM_GSEC ships 1/0 — encode as PU labels: 1 = positive, 2 = unlabeled</span>
-labels_pu = [1 if x == 1 else 2 for x in labels]
-n_pos = sum(np.array(labels_pu) == 1)
+  <div class="sec-body"><pre class="code"><span class="c-cm"># DOM_GSEC ships 1/0 — treat 0 as the unlabeled pool (label_unl=0)</span>
 dpul = <span class="c-nm">aa.dPULearn</span>()
-dpul.fit(X=X, labels=labels_pu, n_unl_to_neg=n_pos // 2)
-df_pu = dpul.df_pu_   <span class="c-cm"># 1 pos · 0 rel-neg · 2 unl</span>
+dpul.fit(X=X, labels=labels, label_unl=0, n_neg=31)   <span class="c-cm"># n_neg: reliable negatives to mine</span>
+df_pu = dpul.df_pu_   <span class="c-cm"># out: 1 pos · 0 rel-neg · 2 unl</span>
 
 dpul_plot = <span class="c-nm">aa.dPULearnPlot</span>()
 dpul_plot.pca(df_pu=df_pu, labels=dpul.labels_)
@@ -642,7 +640,7 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
 
     <div class="sec">
       <div class="sec-h"><span>Gotchas</span><span class="hint">things that bite</span></div>
-      <div class="sec-body"><ul class="bullets"><li>Labels: <b>1/0</b> = supervised (pos/neg). <b>dPULearn needs 1/2</b> (pos/unlabeled) and outputs <b>0 = reliable-negative</b>.</li><li><b>load_dataset(name, n=N)</b> returns <b>2N</b> rows (N per class) — count classes via df_seq['label'].</li><li>Compositional vs positional is not a flag — it <b>emerges from split_kws</b>.</li><li>Reproducibility: layered seeds — seed= ▸ random_state= ▸ options['random_state'] ▸ default.</li><li><b>DOM_*</b> parts need tmd_start/tmd_stop in df_seq; <b>[pro]</b> features need <span style='font-family:"AA Mono",monospace'>pip install 'aaanalysis[pro]'</span>.</li><li><b>TMD</b> = <b>Target</b> Middle Domain — generalized from <b>Transmembrane</b> domain (Breimann25a) to any central segment; JMD-N / JMD-C are its flanks.</li></ul></div>
+      <div class="sec-body"><ul class="bullets"><li>Labels: <b>1/0</b> = supervised (pos/neg). <b>dPULearn</b> takes 1/0 (<b>label_unl=0</b>) or 1/2; <b>n_neg</b> = reliable negatives to mine; output <b>1 · 0 (rel-neg) · 2 (unl)</b>.</li><li><b>load_dataset(name, n=N)</b> returns <b>2N</b> rows (N per class) — count classes via df_seq['label'].</li><li>Compositional vs positional is not a flag — it <b>emerges from split_kws</b>.</li><li>Reproducibility: layered seeds — seed= ▸ random_state= ▸ options['random_state'] ▸ default.</li><li><b>DOM_*</b> parts need tmd_start/tmd_stop in df_seq; <b>[pro]</b> features need <span style='font-family:"AA Mono",monospace'>pip install 'aaanalysis[pro]'</span>.</li><li><b>TMD</b> = <b>Target</b> Middle Domain — generalized from <b>Transmembrane</b> domain (Breimann25a) to any central segment; JMD-N / JMD-C are its flanks.</li></ul></div>
     </div>
 
     <div class="sec">
