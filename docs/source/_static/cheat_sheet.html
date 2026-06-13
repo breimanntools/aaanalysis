@@ -637,7 +637,7 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
 
     <div class="sec">
       <div class="sec-h"><span>Gotchas</span><span class="hint">things that bite</span></div>
-      <div class="sec-body"><ul class="bullets"><li>Labels: <b>1/0</b> = supervised (pos/neg). <b>dPULearn needs 1/2</b> (pos/unlabeled) and outputs <b>0 = reliable-negative</b>.</li><li><b>load_dataset(name, n=N)</b> returns <b>2N</b> rows (N per class) — count classes via df_seq['label'].</li><li>Compositional vs positional is not a flag — it <b>emerges from split_kws</b>.</li><li>Reproducibility: layered seeds — seed= ▸ random_state= ▸ options['random_state'] ▸ default.</li><li><b>DOM_*</b> parts need tmd_start/tmd_stop in df_seq; <b>[pro]</b> features need <span style='font-family:"AA Mono",monospace'>pip install 'aaanalysis[pro]'</span>.</li></ul></div>
+      <div class="sec-body"><ul class="bullets"><li>Labels: <b>1/0</b> = supervised (pos/neg). <b>dPULearn needs 1/2</b> (pos/unlabeled) and outputs <b>0 = reliable-negative</b>.</li><li><b>load_dataset(name, n=N)</b> returns <b>2N</b> rows (N per class) — count classes via df_seq['label'].</li><li>Compositional vs positional is not a flag — it <b>emerges from split_kws</b>.</li><li>Reproducibility: layered seeds — seed= ▸ random_state= ▸ options['random_state'] ▸ default.</li><li><b>DOM_*</b> parts need tmd_start/tmd_stop in df_seq; <b>[pro]</b> features need <span style='font-family:"AA Mono",monospace'>pip install 'aaanalysis[pro]'</span>.</li><li><b>TMD</b> = <b>Target</b> Middle Domain — generalized from <b>Transmembrane</b> domain (Breimann25a) to any central segment; JMD-N / JMD-C are its flanks.</li></ul></div>
     </div>
 
     <div class="sec">

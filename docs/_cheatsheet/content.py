@@ -402,6 +402,8 @@ GOTCHAS = [
     "options['random_state'] ▸ default.",
     "<b>DOM_*</b> parts need tmd_start/tmd_stop in df_seq; <b>[pro]</b> features "
     "need <span style='font-family:\"AA Mono\",monospace'>pip install 'aaanalysis[pro]'</span>.",
+    "<b>TMD</b> = <b>Target</b> Middle Domain — generalized from <b>Transmembrane</b> "
+    "domain (Breimann25a) to any central segment; JMD-N / JMD-C are its flanks.",
 ]
 
 # Data objects (C): the canonical tables/arrays and their columns/shape.
