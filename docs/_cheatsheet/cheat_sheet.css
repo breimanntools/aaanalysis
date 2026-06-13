@@ -121,7 +121,7 @@ pre.code .c-nm { color: var(--tok-name); font-weight: 600; }
              color: var(--accent); margin: 1px 0 2px; }
 /* both figures in one row, sharing the row height --ph so they are EXACTLY the
    same height (widths follow each plot's aspect ratio) */
-.pair-imgs { display: flex; gap: 2.5mm; justify-content: center; align-items: flex-end; margin: 3px 0 1px; }
+.pair-imgs { display: flex; gap: 1.5mm; justify-content: center; align-items: flex-end; margin: 2px 0 1px; }
 .pair-imgs figure { flex: 0 1 auto; min-width: 0; margin: 0; text-align: center; }
 .pair-img { display: block; height: var(--ph, 30mm); width: auto; max-width: 100%;
             border: 1px solid var(--line); border-radius: 2px; background: #fff; }

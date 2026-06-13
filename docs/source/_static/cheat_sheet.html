@@ -126,7 +126,7 @@ pre.code .c-nm { color: var(--tok-name); font-weight: 600; }
              color: var(--accent); margin: 1px 0 2px; }
 /* both figures in one row, sharing the row height --ph so they are EXACTLY the
    same height (widths follow each plot's aspect ratio) */
-.pair-imgs { display: flex; gap: 2.5mm; justify-content: center; align-items: flex-end; margin: 3px 0 1px; }
+.pair-imgs { display: flex; gap: 1.5mm; justify-content: center; align-items: flex-end; margin: 2px 0 1px; }
 .pair-imgs figure { flex: 0 1 auto; min-width: 0; margin: 0; text-align: center; }
 .pair-img { display: block; height: var(--ph, 30mm); width: auto; max-width: 100%;
             border: 1px solid var(--line); border-radius: 2px; background: #fff; }
@@ -535,8 +535,8 @@ cpp_plot.ranking(df_feat=df_feat, n_top=15, rank=True,
     name_test=<span class="c-st">&#x27;substrates&#x27;</span>, name_ref=<span class="c-st">&#x27;non-subs.&#x27;</span>)
 plt.tight_layout(); plt.show()</pre>
     <div class="pair-note">▼ figure below · right</div></div>
-  <div class="pair-imgs" style="--ph:30mm">
-    <figure><img class="pair-img" src="cs_plots/feature.png" alt="CPP — feature"><figcaption>CPPPlot.feature · top feature, REF vs TEST</figcaption></figure>
+  <div class="pair-imgs" style="--ph:35mm">
+    <figure><img class="pair-img" src="cs_plots/feature.png" alt="CPP — feature"><figcaption>CPPPlot.feature · top feature</figcaption></figure>
     <figure><img class="pair-img" src="cs_plots/ranking.png" alt="CPP — ranking"><figcaption>CPPPlot.ranking · top-15 features</figcaption></figure>
   </div>
 </div><div class="sec">
@@ -549,7 +549,7 @@ cpp_plot.feature_map(df_feat=df_feat)
 df_feat = cpp.simplify(df_feat=df_feat, labels=labels)
 cpp_plot.feature_map(df_feat=df_feat)
 plt.tight_layout(); plt.show()</pre>
-<div class="pair-imgs" style="--ph:44mm">
+<div class="pair-imgs" style="--ph:48mm">
 <figure><img class="pair-img" src="cs_plots/feature_map.png" alt="CPP — feature map"><figcaption>CPPPlot.feature_map · all scales</figcaption></figure><figure><img class="pair-img" src="cs_plots/feature_map_simplified.png" alt="CPP — feature map"><figcaption>CPPPlot.feature_map · simplified</figcaption></figure>    </div>  </div>
 </div><div class="sec">
   <div class="sec-h"><span>ShapModel — explain a prediction</span><span class="hint"><span class="hint-pos">sample</span> level · [pro]</span></div>
@@ -564,7 +564,7 @@ ka = dict(col_imp=<span class="c-st">&#x27;feat_impact_APP&#x27;</span>, shap_pl
 cpp_plot.profile(df_feat=df_feat, **ka)
 cpp_plot.feature_map(df_feat=df_feat, name_test=<span class="c-st">&#x27;APP&#x27;</span>, **ka)
 plt.tight_layout(); plt.show()</pre>
-<div class="pair-imgs" style="--ph:36mm">
+<div class="pair-imgs" style="--ph:41mm">
 <figure><img class="pair-img" src="cs_plots/shap_profile.png" alt="ShapModel — explain a prediction"><figcaption>CPPPlot.profile · SHAP</figcaption></figure><figure><img class="pair-img" src="cs_plots/feature_map_shap.png" alt="ShapModel — explain a prediction"><figcaption>CPPPlot.feature_map · SHAP</figcaption></figure>    </div>  </div>
 </div><div class="sec pairsec">
   <div class="sec-h"><span>AAclust — clusters</span><span class="hint">scale reduction · clustering</span></div>
@@ -586,7 +586,7 @@ dpul_plot = <span class="c-nm">aa.dPULearnPlot</span>()
 dpul_plot.pca(df_pu=df_pu, labels=dpul.labels_)
 plt.tight_layout(); plt.show()</pre>
     <div class="pair-note">▼ figure below · right</div></div>
-  <div class="pair-imgs" style="--ph:37mm">
+  <div class="pair-imgs" style="--ph:42mm">
     <figure><img class="pair-img" src="cs_plots/centers.png" alt="AAclust — clusters"><figcaption>AAclustPlot.centers · cluster scale profiles</figcaption></figure>
     <figure><img class="pair-img" src="cs_plots/pca.png" alt="dPULearn — PCA"><figcaption>dPULearnPlot.pca · reliable negatives</figcaption></figure>
   </div>
@@ -657,7 +657,7 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
       <div class="sec-h"><span>Class · abbr ↔ Plot Class</span><span class="hint">mirrored API</span></div>
       <div class="sec-body"><table class="kv">
         <tr class="hdr"><td class="k">class</td><td class="d mono abbr">abbr</td><td class="d mono">plot class</td><td class="d" style="text-align:right">kind</td></tr>
-<tr><td class="k">SequencePreprocessor</td><td class="d mono abbr">sp</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">EmbeddingPreprocessor</td><td class="d mono abbr">ep</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">StructurePreprocessor  <span class="protag">pro</span></td><td class="d mono abbr">stp</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AnnotationPreprocessor  <span class="protag">pro</span></td><td class="d mono abbr">ap</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAlogo</td><td class="d mono abbr">aal</td><td class="d mono">AAlogoPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAWindowSampler</td><td class="d mono abbr">aaws</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">SequenceFeature</td><td class="d mono abbr">sf</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">CPP</td><td class="d mono abbr">cpp</td><td class="d mono">CPPPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAclust</td><td class="d mono abbr">aac</td><td class="d mono">AAclustPlot</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">NumericalFeature</td><td class="d mono abbr">nf</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">dPULearn</td><td class="d mono abbr">dpul</td><td class="d mono">dPULearnPlot</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">TreeModel</td><td class="d mono abbr">tm</td><td class="d mono">—</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">ShapModel  <span class="protag">pro</span></td><td class="d mono abbr">sm</td><td class="d mono">—</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">AAMut</td><td class="d mono abbr">aamut</td><td class="d mono">AAMutPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">SeqMut</td><td class="d mono abbr">seqmut</td><td class="d mono">SeqMutPlot</td><td class="d" style="text-align:right"></td></tr>      </table></div>
+<tr><td class="k">SequencePreprocessor</td><td class="d mono abbr">sp</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">EmbeddingPreprocessor</td><td class="d mono abbr">ep</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">StructurePreprocessor  <span class="protag">pro</span></td><td class="d mono abbr">stp</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AnnotationPreprocessor  <span class="protag">pro</span></td><td class="d mono abbr">ap</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAlogo</td><td class="d mono abbr">aal</td><td class="d mono">AAlogoPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAWindowSampler</td><td class="d mono abbr">aaws</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">SequenceFeature</td><td class="d mono abbr">sf</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">NumericalFeature</td><td class="d mono abbr">nf</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAclust</td><td class="d mono abbr">aac</td><td class="d mono">AAclustPlot</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">CPP</td><td class="d mono abbr">cpp</td><td class="d mono">CPPPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">dPULearn</td><td class="d mono abbr">dpul</td><td class="d mono">dPULearnPlot</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">TreeModel</td><td class="d mono abbr">tm</td><td class="d mono">—</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">ShapModel  <span class="protag">pro</span></td><td class="d mono abbr">sm</td><td class="d mono">—</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">AAMut</td><td class="d mono abbr">aamut</td><td class="d mono">AAMutPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">SeqMut</td><td class="d mono abbr">seqmut</td><td class="d mono">SeqMutPlot</td><td class="d" style="text-align:right"></td></tr>      </table></div>
     </div>
 
     <div class="sec">
