@@ -609,7 +609,7 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
   <div class="cols">
 
     <div class="page-banner">
-      <div class="brand"><img class="banner-logo" src="cs_img/logo.png" alt="AAanalysis"> <span class="suffix">· Reference</span></div>
+      <div class="brand"><img class="banner-logo" src="cs_img/logo.png" alt="AAanalysis"> <span class="suffix">· Concepts &amp; Reference</span></div>
       <div class="sub2">decision guide · gotchas · options · class ↔ plot · glossary · citations</div>
     </div>
 
@@ -621,13 +621,14 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
         <div class="dg-row"><span class="dg-l">per domain / region</span> <span class="dg-r">→ DOM_* · TMD model · parts = jmd_n·tmd·jmd_c</span></div>
         <div class="dg-row"><span class="dg-l">whole protein</span> <span class="dg-r">→ SEQ_* · composition · whole chain</span></div>
         <div class="dg-q">What labels do you have?</div>
-        <div class="dg-row"><span class="dg-l">labeled 0 / 1</span> <span class="dg-r">→ CPP → classify</span></div>
-        <div class="dg-row"><span class="dg-l">positives + unlabeled (1 / 2)</span> <span class="dg-r">→ CPP → dPULearn → classify</span></div>
-        <div class="dg-row"><span class="dg-l">no negatives at all</span> <span class="dg-r">→ AAWindowSampler → CPP → classify</span></div>
-        <div class="dg-q">Discover &amp; explain</div>
-        <div class="dg-row"><span class="dg-l">find features</span> <span class="dg-r">→ CPP.run — compositional or positional (via split_kws)</span></div>
-        <div class="dg-row"><span class="dg-l">rank / prune features</span> <span class="dg-r">→ TreeModel — importance + RFE (optional)</span></div>
-        <div class="dg-row"><span class="dg-l">explain a prediction</span> <span class="dg-r">→ CPPPlot.feature_map · ShapModel [pro]</span></div>
+        <div class="dg-row"><span class="dg-l">labeled 0 / 1</span> <span class="dg-r">→ CPP → ML model</span></div>
+        <div class="dg-row"><span class="dg-l">positives + unlabeled (1 / 2)</span> <span class="dg-r">→ CPP → dPULearn → ML model</span></div>
+        <div class="dg-row"><span class="dg-l">no negatives at all</span> <span class="dg-r">→ AAWindowSampler → CPP → ML model</span></div>
+        <div class="dg-q">CPP features (X) → standard ML</div>
+        <div class="dg-row"><span class="dg-l">classify · regress</span> <span class="dg-r">→ TreeModel — regression via get_labels_quantile</span></div>
+        <div class="dg-row"><span class="dg-l">multi-class</span> <span class="dg-r">→ get_labels_ovr / ovo</span></div>
+        <div class="dg-row"><span class="dg-l">cluster · PCA</span> <span class="dg-r">→ AAclust · dPULearn</span></div>
+        <div class="dg-row"><span class="dg-l">rank · explain features</span> <span class="dg-r">→ TreeModel importance / RFE · ShapModel [pro]</span></div>
       </div>
     </div>
 
@@ -687,7 +688,7 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
     </div>
 
   </div>
-  <div class="footer-bar"><span><b>AAanalysis</b> · reference · decision guide · glossary</span>
+  <div class="footer-bar"><span><b>AAanalysis</b> · concepts &amp; reference · decision guide · glossary</span>
   <span class="r"><a class="docs-link" href="https://aaanalysis.readthedocs.io">aaanalysis.readthedocs.io</a> · v1.1.0 · 2026-06</span></div>
 </section>
 

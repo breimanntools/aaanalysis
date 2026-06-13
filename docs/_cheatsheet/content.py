@@ -375,14 +375,15 @@ DECISION_GUIDE = [
         ("whole protein", "SEQ_* · composition · whole chain"),
     ]),
     ("What labels do you have?", [
-        ("labeled 0 / 1", "CPP → classify"),
-        ("positives + unlabeled (1 / 2)", "CPP → dPULearn → classify"),
-        ("no negatives at all", "AAWindowSampler → CPP → classify"),
+        ("labeled 0 / 1", "CPP → ML model"),
+        ("positives + unlabeled (1 / 2)", "CPP → dPULearn → ML model"),
+        ("no negatives at all", "AAWindowSampler → CPP → ML model"),
     ]),
-    ("Discover & explain", [
-        ("find features", "CPP.run — compositional or positional (via split_kws)"),
-        ("rank / prune features", "TreeModel — importance + RFE (optional)"),
-        ("explain a prediction", "CPPPlot.feature_map · ShapModel [pro]"),
+    ("CPP features (X) → standard ML", [
+        ("classify · regress", "TreeModel — regression via get_labels_quantile"),
+        ("multi-class", "get_labels_ovr / ovo"),
+        ("cluster · PCA", "AAclust · dPULearn"),
+        ("rank · explain features", "TreeModel importance / RFE · ShapModel [pro]"),
     ]),
 ]
 
