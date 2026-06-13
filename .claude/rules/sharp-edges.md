@@ -22,3 +22,12 @@ limitations — do not "fix" them opportunistically.
   config** — these are explicitly out of scope for now.
 - **Don't create `AAanalysisError`** or any custom exception base — bare
   `ValueError` / `RuntimeError` is the rule.
+- **Don't re-attempt the rejected performance optimizations.** A whole-library
+  perf audit already tried and dropped many candidates — FASTA `iterrows`,
+  TreeModel CV parallelization, `encode_pae` loops, AAclust binary-search `k`
+  (non-monotonic `min_cor(k)`), ShapModel rolling-mean (memory-only), sparse
+  one-hot, and more — each for a documented reason (no measured gain, or
+  output-changing). The full table (accepted **and** rejected, with evidence)
+  is **ADR-0033**; the tolerance policy for any output-affecting optimization is
+  **ADR-0032**. Consult both before optimizing, and benchmark every new
+  candidate in isolation first.
