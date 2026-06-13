@@ -2,7 +2,6 @@
 This is a script for the frontend of the dPULearn class, used for deterministic Positive-Unlabeled (PU) Learning.
 """
 from typing import Optional, Literal, Dict, Union, List, Tuple, Type
-import warnings
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
@@ -24,11 +23,12 @@ def check_metric(metric=None):
         raise ValueError(f"'metric' ({metric}) should be None or one of following: {LIST_METRICS}")
 
 
-def check_n_unl_to_neg(labels=None, n_unl_to_neg=None, label_unl=None):
-    """Validate that there are enough unlabeled samples in the dataset."""
+def check_n_to_identify(labels=None, n_to_identify=None, label_unl=None):
+    """Validate that there are enough unlabeled samples to identify the requested negatives."""
     n_unl = np.sum(labels == label_unl)
-    if n_unl < n_unl_to_neg:
-        raise ValueError(f"Number of unlabeled labels ({n_unl}) must be higher than 'n_neg' ({n_unl_to_neg})")
+    if n_unl < n_to_identify:
+        raise ValueError(f"Number of unlabeled samples ({n_unl}) must be higher than the number of "
+                         f"negatives to identify from them ({n_to_identify}).")
 
 
 def check_match_labels_markers(label_pos=None, label_unl=None, label_neg=None):
@@ -66,21 +66,26 @@ def normalize_pu_labels(labels=None, label_pos=None, label_unl=None, label_neg=N
     return normalized
 
 
-def resolve_n_neg(n_neg=None, n_unl_to_neg=None):
-    """Resolve the negative-count argument, honoring the deprecated 'n_unl_to_neg' alias."""
+def resolve_n_to_identify(n_neg=None, n_unl_to_neg=None, n_pre_neg=0):
+    """Resolve how many negatives to identify from the unlabeled pool.
+
+    Exactly one of ``n_neg`` (total negatives wanted) or ``n_unl_to_neg`` (negatives to take
+    directly from the unlabeled pool) must be given.
+    """
+    if (n_neg is None) == (n_unl_to_neg is None):
+        raise ValueError("Specify exactly one of 'n_neg' (the TOTAL number of negatives wanted) "
+                         "or 'n_unl_to_neg' (the number of negatives to identify directly from "
+                         "the unlabeled pool).")
     if n_unl_to_neg is not None:
-        warnings.warn(
-            "'n_unl_to_neg' is deprecated and will be removed in version 1.2.0."
-            " Use 'n_neg' instead (the number of unlabeled samples reclassified as"
-            " reliable negatives).",
-            DeprecationWarning, stacklevel=3,
-        )
-        if n_neg is not None and n_neg != n_unl_to_neg:
-            raise ValueError(f"'n_neg' ({n_neg}) and the deprecated alias 'n_unl_to_neg' "
-                             f"({n_unl_to_neg}) were both set to different values; pass only 'n_neg'.")
-        if n_neg is None:
-            n_neg = n_unl_to_neg
-    return n_neg
+        ut.check_number_range(name="n_unl_to_neg", val=n_unl_to_neg, min_val=1, just_int=True)
+        return n_unl_to_neg
+    ut.check_number_range(name="n_neg", val=n_neg, min_val=1, just_int=True)
+    n_to_identify = n_neg - n_pre_neg
+    if n_to_identify < 1:
+        raise ValueError(f"'n_neg' ({n_neg}) is the TOTAL number of negatives wanted, but 'labels' "
+                         f"already contains {n_pre_neg} pre-labeled negative(s); it must exceed that "
+                         f"by at least 1 (or use 'n_unl_to_neg' to set the count directly).")
+    return n_to_identify
 
 
 def check_n_components(n_components=1):
@@ -219,8 +224,10 @@ class dPULearn:
         based on the distance to positive samples (1).
 
         Only unlabeled samples are candidates for reclassification; any pre-labeled negatives provided via
-        ``label_neg`` are kept as negatives and are never re-selected. ``n_neg`` is the **total** number of
-        negatives wanted, so dPULearn identifies ``n_neg`` minus the number of pre-labeled negatives.
+        ``label_neg`` are kept as negatives and are never re-selected. Specify the count in one of two ways
+        (exactly one): ``n_neg`` as the **total** number of negatives wanted (dPULearn identifies ``n_neg``
+        minus the pre-labeled negatives), or ``n_unl_to_neg`` to set the number identified **directly from
+        the unlabeled pool**.
 
         Use the ``dPULearn.labels_`` attribute to retrieve the output labels of samples in ``X``
         including identified negatives. Output labels always use the package convention
@@ -237,12 +244,12 @@ class dPULearn:
             unlabeled marker (``label_unl``); pre-labeled negatives (``label_neg``) are optional. By
             default positives are ``1`` and unlabeled are ``2``; set ``label_unl=0`` to pass the standard
             ``{0, 1}`` encoding directly (``0`` = unlabeled, ``1`` = positive).
-        n_neg : int
-            **Total** number of reliable negatives (0) wanted in the output. dPULearn identifies
-            ``n_neg`` minus the number of pre-labeled negatives already in ``labels`` (so with no
-            pre-labeled negatives it identifies exactly ``n_neg``). Required — there is no default;
-            it must exceed the number of pre-labeled negatives, and the number to identify must be
-            ``< n`` unlabeled samples.
+        n_neg : int, optional
+            **Total** number of negatives (0) wanted in the output: any pre-labeled negatives
+            (``label_neg``) plus the newly identified reliable negatives add up to ``n_neg``. So
+            dPULearn identifies ``n_neg`` minus the pre-labeled negatives (with no pre-labeled
+            negatives it identifies exactly ``n_neg``). It must exceed the number of pre-labeled
+            negatives. Provide **exactly one** of ``n_neg`` or ``n_unl_to_neg``.
         metric : str or None, optional
             The distance metric to use. If ``None``, Principal Component Analysis (PCA)-based
             identification is performed. For distance-based identification one of the following
@@ -270,8 +277,10 @@ class dPULearn:
             remaining (``n_neg`` minus pre-labeled) negatives from the unlabeled pool. ``None`` means
             ``labels`` contains no pre-labeled negatives. Must differ from ``label_pos`` / ``label_unl``.
         n_unl_to_neg : int, optional
-            Deprecated alias for ``n_neg`` (same meaning when there are no pre-labeled negatives).
-            Scheduled for removal in version 1.2.0; use ``n_neg`` instead.
+            Number of reliable negatives to identify **directly from the unlabeled pool** — direct
+            control over how many unlabeled samples are reclassified, independent of any pre-labeled
+            negatives (final negatives = pre-labeled + ``n_unl_to_neg``). Provide **exactly one** of
+            ``n_neg`` or ``n_unl_to_neg``. With no pre-labeled negatives the two are equivalent.
 
         Returns
         -------
@@ -326,29 +335,15 @@ class dPULearn:
         labels = normalize_pu_labels(labels=labels, label_pos=label_pos,
                                      label_unl=label_unl, label_neg=label_neg)
         n_pre_neg = int(np.sum(labels == 0))
-        # Resolve the negative-count argument (deprecated 'n_unl_to_neg' alias -> 'n_neg')
-        n_neg = resolve_n_neg(n_neg=n_neg, n_unl_to_neg=n_unl_to_neg)
-        if n_neg is None:
-            raise ValueError(
-                "'n_neg' (None) should be a positive int — the TOTAL number of reliable "
-                "negatives (0) wanted. There is no default; set it explicitly (e.g. n_neg=1 "
-                "to start conservatively, then increase)."
-            )
-        ut.check_number_range(name="n_neg", val=n_neg, min_val=1, just_int=True)
-        # n_neg is the total wanted; identify only the remaining negatives from the unlabeled pool
-        n_to_identify = n_neg - n_pre_neg
-        if n_to_identify < 1:
-            raise ValueError(
-                f"'n_neg' ({n_neg}) is the TOTAL number of negatives wanted, but 'labels' already "
-                f"contains {n_pre_neg} pre-labeled negative(s); it must exceed that by at least 1."
-            )
-        check_n_unl_to_neg(labels=labels, n_unl_to_neg=n_to_identify, label_unl=2)
+        # Resolve how many negatives to identify from the unlabeled pool (n_neg total vs n_unl_to_neg direct)
+        n_to_identify = resolve_n_to_identify(n_neg=n_neg, n_unl_to_neg=n_unl_to_neg, n_pre_neg=n_pre_neg)
+        check_n_to_identify(labels=labels, n_to_identify=n_to_identify, label_unl=2)
         check_metric(metric=metric)
         check_n_components(n_components=n_components)
         ut.check_match_X_labels(X=X, labels=labels)
         check_match_X_n_components(X=X, n_components=n_components)
         # Compute average distance for threshold-based filtering (Yang et al., 2012, 2014; Nan et al. 2017)
-        args = dict(X=X, labels=labels, n_unl_to_neg=n_to_identify,
+        args = dict(X=X, labels=labels, n_to_identify=n_to_identify,
                     label_neg=0, label_pos=1, label_unl=2)
         if metric is not None:
             new_labels, df_pu = get_neg_via_distance(**args, metric=metric)

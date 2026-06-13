@@ -10,7 +10,7 @@ from sklearn.decomposition import PCA
 import aaanalysis.utils as ut
 
 # II Main Functions
-def get_neg_via_distance(X=None, labels=None, metric="euclidean", n_unl_to_neg=None,
+def get_neg_via_distance(X=None, labels=None, metric="euclidean", n_to_identify=None,
                          label_neg=0, label_pos=1, label_unl=2):
     """Identify distant samples from positive mean as reliable negatives based on a specified distance metric."""
     col_dif = f'{metric}_dif'
@@ -24,7 +24,7 @@ def get_neg_via_distance(X=None, labels=None, metric="euclidean", n_unl_to_neg=N
     # Create a DataFrame with the distances
     df_pu = pd.DataFrame({col_dif: dif_to_pos_mean, col_dif_abs: abs_dif_to_pos_mean})
     # Select negatives based on largest average distance to positives
-    top_indices = df_pu[mask_unl].sort_values(by=col_dif_abs).tail(n_unl_to_neg).index
+    top_indices = df_pu[mask_unl].sort_values(by=col_dif_abs).tail(n_to_identify).index
     new_labels = labels.copy()
     new_labels[top_indices] = label_neg
     # Adjust df distance
@@ -35,7 +35,7 @@ def get_neg_via_distance(X=None, labels=None, metric="euclidean", n_unl_to_neg=N
     return new_labels, df_pu
 
 
-def get_neg_via_pca(X=None, labels=None, n_components=0.8, n_unl_to_neg=None,
+def get_neg_via_pca(X=None, labels=None, n_components=0.8, n_to_identify=None,
                     label_neg=0, label_pos=1, label_unl=2, **pca_kwargs):
     """Identify distant samples from positive mean as reliable negatives in PCA-compressed feature spaces."""
     # Principal component analysis
@@ -44,11 +44,11 @@ def get_neg_via_pca(X=None, labels=None, n_components=0.8, n_unl_to_neg=None,
     list_exp_var = pca.explained_variance_ratio_
     columns_pca = [f"PC{n+1} ({round(exp_var*100, 1)}%)" for n, exp_var in enumerate(list_exp_var)]
     # Determine number of negatives based on explained variance
-    _list_n_neg = [math.ceil(n_unl_to_neg * x / sum(list_exp_var)) for x in list_exp_var]
+    _list_n_neg = [math.ceil(n_to_identify * x / sum(list_exp_var)) for x in list_exp_var]
     _list_n_cumsum = np.cumsum(np.array(_list_n_neg))
-    list_n_neg = [n for n, cs in zip(_list_n_neg, _list_n_cumsum) if cs <= n_unl_to_neg]
-    if sum(list_n_neg) != n_unl_to_neg:
-        list_n_neg.append(n_unl_to_neg - sum(list_n_neg))
+    list_n_neg = [n for n, cs in zip(_list_n_neg, _list_n_cumsum) if cs <= n_to_identify]
+    if sum(list_n_neg) != n_to_identify:
+        list_n_neg.append(n_to_identify - sum(list_n_neg))
     columns_pca = columns_pca[:len(list_n_neg)]
     # Create df_pu based on PCA components
     df_pu = pd.DataFrame(pca.components_.T[:, :len(columns_pca)], columns=columns_pca)

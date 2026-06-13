@@ -185,18 +185,12 @@ Changed
   ``label_unl`` / ``label_neg`` markers. Pass standard ``{0, 1}`` labels directly with
   ``label_unl=0`` (``0`` = unlabeled, ``1`` = positive), or any positive / unlabeled /
   negative encoding. **Only unlabeled samples are candidates** — pre-labeled negatives
-  (``label_neg``) are kept and never re-selected. ``n_neg`` is now the primary count and
-  is the **total** number of negatives wanted, so dPULearn identifies ``n_neg`` minus the
-  pre-labeled negatives already in ``labels``. Output labels always use the package
-  convention (``1`` = positive, ``0`` = negative, ``2`` = unlabeled); the recommended
-  input encoding is unchanged. The old ``n_unl_to_neg`` still works as a deprecated alias.
-
-Deprecated
-~~~~~~~~~~
-
-- **dPULearn.fit(n_unl_to_neg=...)**: Deprecated in favor of ``n_neg`` (identical meaning
-  when there are no pre-labeled negatives); scheduled for removal in version 1.2.0. The
-  alias still works and emits a single ``DeprecationWarning``.
+  (``label_neg``) are kept and never re-selected. The negative count is specified one of
+  two ways (exactly one): the new ``n_neg`` (the **total** number of negatives wanted, so
+  dPULearn identifies ``n_neg`` minus the pre-labeled negatives), or the existing
+  ``n_unl_to_neg`` (the number identified **directly from the unlabeled pool**, for direct
+  control). Output labels always use the package convention (``1`` = positive, ``0`` =
+  negative, ``2`` = unlabeled); the recommended input encoding is unchanged.
 
 
 Version 1.0 (Stable Version)

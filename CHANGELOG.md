@@ -62,16 +62,16 @@ and a suite of site-localization metrics and plotting helpers.
   `label_pos` / `label_unl` / `label_neg` markers: pass standard `{0, 1}` labels
   directly with `label_unl=0`, or an arbitrary positive/unlabeled/negative
   encoding. Pre-labeled negatives (`label_neg`) are kept and never re-selected —
-  only unlabeled samples are candidates. `n_neg` is now the primary count and is
-  the **total** number of negatives wanted, so dPULearn identifies `n_neg` minus
-  the pre-labeled negatives. Output labels always use the package convention
-  (1 = positive, 0 = negative, 2 = unlabeled); the recommended input encoding is
-  unchanged.
+  only unlabeled samples are candidates. The negative count is now specified one
+  of two ways (exactly one): the new `n_neg` (the **total** number of negatives
+  wanted; dPULearn identifies `n_neg` minus the pre-labeled negatives), or the
+  existing `n_unl_to_neg` (the number identified **directly from the unlabeled
+  pool**). Output labels always use the package convention (1 = positive,
+  0 = negative, 2 = unlabeled); the recommended input encoding is unchanged.
 
 ### Deprecated
-- `dPULearn.fit(n_unl_to_neg=...)` is deprecated in favor of `n_neg` (identical
-  meaning when there are no pre-labeled negatives); scheduled for removal in
-  version 1.2.0. The alias still works and emits a single `DeprecationWarning`.
+- None. The strict-semver deprecation policy and the `deprecated` decorator are
+  now in force for all future public-API renames and removals.
 
 ## [1.0.3] - 2026-04-06
 ### Added
