@@ -230,7 +230,13 @@ Changed
   single session-scoped ``PairwiseAligner`` across all entries (and across the
   chain-pick, mismatch-count and feature-align steps) rather than constructing
   three fresh aligners per entry. Identity fractions and alignments are
-  byte-identical in every case.
+  byte-identical in every case. Completing this sharing, ``encode_pdb`` now
+  collects the structure's amino-acid chains and picks the best-matching chain
+  **once per entry** and threads that result through every requested encoder,
+  rather than re-walking the structure (and rebuilding each chain's atom
+  sequence) once per feature — up to ~13 redundant walks collapsed to one. The
+  pick is a deterministic function of the structure and target sequence, so the
+  shared and per-encoder results are byte-identical.
   A further "Batch 6" pass replaces two more hotspots in place with
   byte-identical implementations: ``AAMut.comp_substitution_impact`` now
   accumulates the per-(from, to) delta columns and builds a single DataFrame
