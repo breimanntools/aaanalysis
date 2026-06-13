@@ -172,7 +172,7 @@ INSTALL = (
 # Module map: each row shows the call with 1-2 key params and how it connects to
 # the Golden-Workflow objects (df_seq · df_parts · df_feat · X · labels).
 CAPABILITY_FAMILIES = [
-    {"name": "Data & Preparation", "tag": "load · clean",
+    {"name": "Data & Preparation", "tag": "datasets · scales · FASTA",
      "rows": [
          ("Load benchmark sequences", "load_dataset(name) → df_seq", None),
          ("Load AAontology scales", "load_scales() → df_scales", None),
@@ -180,7 +180,7 @@ CAPABILITY_FAMILIES = [
          ("Read / write FASTA", "read_fasta(file) → df_seq", None),
          ("Cluster redundant homologs", "filter_seq(df_seq) → df_clust  [pro]", None),
      ]},
-    {"name": "Sequence Analysis", "tag": "logos · motifs",
+    {"name": "Sequence Analysis", "tag": "logos · windows · motifs",
      "rows": [
          ("Position-specific logo", "AAlogo().get_df_logo(df_parts) → df_logo", None),
          ("Sample reference windows", "AAWindowSampler().sample_*(df_seq)", None),
@@ -207,20 +207,20 @@ CAPABILITY_FAMILIES = [
          ("Combine sources", "combine_dict_nums([...]) → dict_num", None, "v1.1"),
          ("Numerical CPP", "CPP(df_parts).run_num(dict_num_parts, labels) → df_feat", None, "v1.1"),
      ]},
-    {"name": "Modeling & Explainability", "tag": "",
+    {"name": "Modeling & Explainability", "tag": "PU · classify · SHAP",
      "rows": [
          ("Train with positives + unlabeled data", "dPULearn().fit(X, labels)  [Wrapper]", None),
          ("Train + RFE + MC importance", "TreeModel().fit(X, labels)  [Wrapper]", None),
          ("Per-feature / sample SHAP impact", "ShapModel().fit(X, labels)  [pro]", None),
      ]},
-    {"name": "Metrics & Plotting", "tag": "utilities",
+    {"name": "Metrics & Plotting", "tag": "metrics · plots",
      "rows": [
          ("Adjusted AUC (class imbalance)", "comp_auc_adjusted(X, labels)", None),
          ("BIC score · KL divergence", "comp_bic_score(X, labels) · comp_kld", None),
          ("Per-protein / detection (v1.1)", "comp_per_protein_ap · comp_detection_metrics", None),
          ("Plot style, fonts & standalone legend", "plot_settings(font_scale) · plot_legend(ax)", None),
      ]},
-    {"name": "Protein Design", "tag": "",
+    {"name": "Protein Design", "tag": "mutations · design",
      "under_construction": True,
      "rows": [
          ("In-silico point mutations", "AAMut · AAMutPlot", None, "v1.1"),

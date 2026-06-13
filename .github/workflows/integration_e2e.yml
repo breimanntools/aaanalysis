@@ -1,0 +1,62 @@
+name: Integration & E2E Tests
+
+# Dedicated home for the cross-component (integration) and protocol-workflow
+# (e2e) tiers — see ADR-0031. These are excluded from the `Unit Tests` matrix
+# (main.yml `-m "not integration and not e2e"`) so they run once, here, as their
+# own PR check. Core-only + tiny + seeded, so this needs no FIMO/cd-hit/mmseqs
+# and no `pro` extra; Python is bracketed at the floor + ceiling on Linux.
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration-e2e:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ['3.10', '3.14']  # bracket the supported range
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Cache Python dependencies
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install package and test dependencies
+      # Core install only — the integration/e2e tiers import no `pro` features.
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install pytest hypothesis pytest-xdist
+
+    - name: Run integration & e2e tiers
+      # One combined check over both directories. The network-marked live-endpoint
+      # file (test_online_fetches.py) is skipped by default and would need the `pro`
+      # extra just to import, so it is ignored here; it stays collected (and skipped)
+      # in the Unit Tests matrix and runs on demand / in the nightly.
+      run: >-
+        pytest tests/integration tests/e2e
+        --ignore=tests/integration/test_online_fetches.py
+        -m "not regression" -n auto -c tests/pytest.ini --durations=20
+      env:
+        MPLBACKEND: Agg

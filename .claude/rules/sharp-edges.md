@@ -7,8 +7,6 @@ limitations — do not "fix" them opportunistically.
   to the appropriate topical block (search for the nearest `# `-style
   section header). Splitting into `_constants.py`, `_checks/`,
   `_plotting_glue.py`, `_data_io.py` is a v2 refactor.
-- **`tests/integration/` and `tests/e2e/`** are nearly empty. Deferred to
-  v2.
 - **`config.py` is documented as untested.** Adding unit tests when
   touching it is welcomed.
 - **No type checker, no pre-commit, no ruff.** Out of scope until v2.
