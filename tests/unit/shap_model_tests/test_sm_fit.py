@@ -322,6 +322,13 @@ class TestShapModelFitFuzzyLabels:
         sm.fit(valid_X, labels=y, df_seq=df_seq, fuzzy_labels={entry: 0.4}, **ARGS)
         assert sm.shap_values is not None
 
+    def test_fuzzy_labels_numpy_value(self):
+        # numpy float values in the dict are accepted (not just python float)
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
+        sm.fit(valid_X, labels=valid_labels, df_seq=df_seq, fuzzy_labels={entry: np.float64(0.6)}, **ARGS)
+        assert sm.shap_values is not None
+
     def test_df_seq_only_consumed_with_fuzzy_labels(self):
         # df_seq passed without fuzzy_labels is harmless (binary path unchanged)
         sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)

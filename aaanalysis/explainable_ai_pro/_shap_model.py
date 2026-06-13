@@ -166,7 +166,8 @@ def check_match_fuzzy_labels_df_seq(fuzzy_labels=None, df_seq=None, labels=None)
     if len(wrong_keys) != 0:
         raise ValueError(f"'fuzzy_labels' keys ({wrong_keys}) should be entries in the "
                          f"'{ut.COL_ENTRY}' column of 'df_seq'.")
-    wrong_values = {k: v for k, v in fuzzy_labels.items() if not (isinstance(v, (int, float)) and 0 <= v <= 1)}
+    wrong_values = {k: v for k, v in fuzzy_labels.items()
+                    if not (isinstance(v, (int, float, np.number)) and 0 <= v <= 1)}
     if len(wrong_values) != 0:
         raise ValueError(f"'fuzzy_labels' values ({wrong_values}) should be numbers between 0 and 1.")
     entry_to_idx = {entry: i for i, entry in enumerate(entries)}
@@ -251,8 +252,12 @@ def check_match_sample_positions_group_average(sample_positions=None, group_aver
             raise ValueError
 
 
-def check_match_sample_positions_df_seq(sample_positions=None, names=None, df_seq=None, n_samples=None):
+def check_match_sample_positions_df_seq(sample_positions=None, names=None, df_seq=None, n_samples=None,
+                                        group_average=False):
     """Resolve entry-name 'sample_positions' to integer row positions via 'df_seq'."""
+    # Normalize array input to a list so entry-name detection works uniformly
+    if isinstance(sample_positions, np.ndarray):
+        sample_positions = sample_positions.tolist()
     is_str = isinstance(sample_positions, str)
     str_positions = sample_positions if isinstance(sample_positions, list) else [sample_positions]
     is_str_list = isinstance(sample_positions, list) and any(isinstance(p, str) for p in str_positions)
@@ -275,8 +280,9 @@ def check_match_sample_positions_df_seq(sample_positions=None, names=None, df_se
     if len(wrong_entries) != 0:
         raise ValueError(f"'sample_positions' entries ({wrong_entries}) should be in the "
                          f"'{ut.COL_ENTRY}' column of 'df_seq'.")
-    # Default names to the entry strings when all selected samples are named and names not given
-    if names is None and all(isinstance(p, str) for p in str_positions):
+    # Default names to the entry strings when all selected samples are named and names not given.
+    # Skip for group_average: the group is named by a single string (defaulting to 'Group' downstream).
+    if names is None and not group_average and all(isinstance(p, str) for p in str_positions):
         names = sample_positions
     # Map entry name(s) to integer position(s), preserving scalar vs list shape
     if is_str:
@@ -672,7 +678,8 @@ class ShapModel:
         df_feat = ut.check_df_feat(df_feat=df_feat)
         ut.check_bool(name="drop", val=drop)
         sample_positions, names = check_match_sample_positions_df_seq(sample_positions=sample_positions, names=names,
-                                                                      df_seq=df_seq, n_samples=n_samples)
+                                                                      df_seq=df_seq, n_samples=n_samples,
+                                                                      group_average=group_average)
         check_names(names=names)
         ut.check_bool(name="group_average", val=group_average)
         sample_positions = check_sample_positions(sample_positions=sample_positions, n_samples=n_samples)
@@ -784,7 +791,8 @@ class ShapModel:
         df_feat = ut.check_df_feat(df_feat=df_feat)
         ut.check_bool(name="drop", val=drop)
         sample_positions, names = check_match_sample_positions_df_seq(sample_positions=sample_positions, names=names,
-                                                                      df_seq=df_seq, n_samples=n_samples)
+                                                                      df_seq=df_seq, n_samples=n_samples,
+                                                                      group_average=group_average)
         check_names(names=names)
         ut.check_bool(name="group_average", val=group_average)
         sample_positions = check_sample_positions(sample_positions=sample_positions, n_samples=n_samples)

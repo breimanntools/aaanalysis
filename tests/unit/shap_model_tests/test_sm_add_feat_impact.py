@@ -273,6 +273,23 @@ class TestAddFeatImpactDfSeq:
                                      sample_positions=entry, names="APP")
         assert "feat_impact_APP" in df_feat.columns
 
+    def test_group_average_with_entry_names(self):
+        # group_average with entry-name list must not collide with name auto-defaulting
+        entries = df_seq["entry"].iloc[:2].to_list()
+        sm = aa.ShapModel(verbose=False, random_state=0)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        df_feat = sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq,
+                                     sample_positions=entries, group_average=True)
+        assert any("feat_impact" in c for c in df_feat.columns)
+
+    def test_sample_positions_entry_ndarray(self):
+        entries = np.array(df_seq["entry"].iloc[:2].to_list())
+        sm = aa.ShapModel(verbose=False, random_state=0)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        df_feat = sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq, sample_positions=entries)
+        for e in entries:
+            assert f"feat_impact_{e}" in df_feat.columns
+
     # Negative tests
     def test_entry_name_requires_df_seq(self):
         entry = df_seq["entry"].iloc[0]
