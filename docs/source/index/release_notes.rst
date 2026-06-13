@@ -88,6 +88,17 @@ Added
   ``dist_to_rep`` (``return_data='annotated' | 'filtered' | 'both'``) — the numerical
   counterpart to sequence-identity reduction via ``filter_seq``.
 
+**Explainable AI**
+
+- **ShapModel — accession-based interface** (``aaanalysis[pro]``): ``fit`` accepts
+  entry-keyed soft labels via ``fuzzy_labels={'P05067': 0.6}`` together with
+  ``df_seq``, overriding the matching entries in ``labels`` and enabling fuzzy
+  labeling without a manual row-index lookup or array mutation.
+  ``add_feat_impact`` and ``add_sample_mean_dif`` additionally accept ``df_seq``
+  and let ``sample_positions`` be given as entry name(s), resolved to the matching
+  row(s) (column names default to the accession). The array ``labels`` +
+  ``fuzzy_labeling=True`` and integer ``sample_positions`` paths are unchanged.
+
 **Sequence Analysis**
 
 - **AAWindowSampler**: Samples fixed-length sequence windows for PU-learning and
