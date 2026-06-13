@@ -792,6 +792,11 @@ class CPP(Tool):
 
         Notes
         -----
+        * **Call order — ``get_parts`` then ``run_num``.** ``dict_num_parts`` must come
+          from :meth:`NumericalFeature.get_parts` (step 1), which slices a raw
+          ``df_seq`` + ``dict_num`` into the per-part tensors consumed here (step 2).
+          There is no raw-``df_seq`` / ``dict_num`` entry point on ``run_num``; passing
+          ``dict_num_parts=None`` raises (use :meth:`run` for sequence-mode).
         * **Raw PLM embeddings are not directly usable — normalize them first.**
           Per-residue values are expected in ``[0, 1]`` (the ``StructurePreprocessor`` /
           ``AnnotationPreprocessor`` normalization convention), since the default
@@ -799,6 +804,9 @@ class CPP(Tool):
           (unbounded floats) must be passed through
           :meth:`EmbeddingPreprocessor.encode` to obtain a ``[0, 1]``-normalized
           ``{entry: (L, D)}`` ``dict_num`` before :meth:`NumericalFeature.get_parts`.
+          Skipping normalization raises no error — the ``max_std_test`` pre-filter is
+          simply miscalibrated for the out-of-range spread, so the feature funnel
+          silently keeps/drops the wrong features.
           (``EmbeddingPreprocessor.build_scales`` / ``build_cat`` serve the *other*,
           AA-scale path via :meth:`run`; they are not a per-residue value source here.)
         * **Three arms, one entry point.** *structure-only* (``dict_num`` from

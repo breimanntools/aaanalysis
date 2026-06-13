@@ -197,6 +197,20 @@ class NumericalFeature:
 
         Notes
         -----
+        * **Call order — ``get_parts`` then ``run_num``.** This is step 1 of the
+          two-step numerical-mode workflow: it only *slices* ``df_seq`` + ``dict_num``
+          into ``(df_parts, dict_num_parts)``. Pass ``df_parts`` to the :class:`CPP`
+          constructor and ``dict_num_parts`` to :meth:`CPP.run_num` (step 2);
+          ``run_num`` has no raw-``df_seq`` / ``dict_num`` entry point, so this order
+          is the only supported one.
+        * **``dict_num`` must already be ``[0, 1]``-normalized.** ``get_parts`` slices
+          values verbatim — it does NOT rescale. The ``max_std_test`` pre-filter in
+          :meth:`CPP.run_num` is calibrated for the ``[0, 1]`` range; passing unbounded
+          values (e.g. raw protein language model embeddings) leaves that pre-filter
+          miscalibrated, so the feature funnel silently keeps/drops the wrong features
+          (no error is raised). Normalize first — e.g. via
+          :meth:`EmbeddingPreprocessor.encode`, :class:`StructurePreprocessor`, or
+          :class:`AnnotationPreprocessor`, all of which emit ``[0, 1]`` ``dict_num``.
         * ``dict_num_parts`` carries NaN padding at the trailing rows for entries
           whose JMD doesn't fit the requested length. The corresponding per-part
           string in ``df_parts`` also pads with ``'-'`` (gap), so the two outputs

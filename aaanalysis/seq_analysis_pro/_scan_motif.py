@@ -141,7 +141,8 @@ def scan_motif(df_seq: pd.DataFrame = None,
                                   motif_pseudo: Optional[float] = None,
                                   ) -> pd.DataFrame:
     """
-    Scan candidate proteins for statistically significant Position Weight Matrix (PWM) occurrences using FIMO.
+    Scan candidate proteins for statistically significant Position Weight Matrix (PWM)
+    occurrences using FIMO (**[pro]**, requires ``aaanalysis[pro]``).
 
     ``scan_motif`` is a Command-Line Interface (CLI) wrapper around FIMO (Find
     Individual Motif Occurrences) [Bailey09]_, [Grant11]_ from the MEME (Multiple

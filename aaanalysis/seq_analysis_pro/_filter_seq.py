@@ -57,7 +57,7 @@ def filter_seq(df_seq: pd.DataFrame = None,
                verbose: bool = False
                ) -> pd.DataFrame:
     """
-    Redundancy reduction of sequences using clustering-based algorithms.
+    Redundancy reduction of sequences using clustering-based algorithms (**[pro]**, requires ``aaanalysis[pro]``).
 
     This functions performs redundancy reduction of sequences by clustering and selecting representative sequences using
     the CD-HIT ([Li06]_) or MMseqs2 ([Steinegger17]_) algorithms locally. It allows for adjustable filtering strictness:

@@ -148,7 +148,8 @@ class SeqMut:
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
             DataFrame containing an ``entry`` column with unique protein identifiers, in the
-            **position-based** format (``sequence``, ``tmd_start``, ``tmd_stop``).
+            **position-based** format (``sequence``, ``tmd_start``, ``tmd_stop``). See
+            :meth:`SequenceFeature.get_df_parts` for the full ``df_seq`` format specification.
         mutations : pd.DataFrame, shape (n_mutations, >=3)
             Tidy mutation table with columns ``entry``, ``pos`` (1-based position in the full
             sequence), and ``to_aa`` (target amino acid). ``from_aa`` is derived and checked.
@@ -225,7 +226,8 @@ class SeqMut:
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
             DataFrame containing an ``entry`` column with unique protein identifiers, in the
-            **position-based** format (``sequence``, ``tmd_start``, ``tmd_stop``).
+            **position-based** format (``sequence``, ``tmd_start``, ``tmd_stop``). See
+            :meth:`SequenceFeature.get_df_parts` for the full ``df_seq`` format specification.
         df_feat : pd.DataFrame
             CPP feature set (output of :meth:`CPP.run`) defining which features ΔCPP is measured over.
         region : str or list of int, optional
@@ -291,7 +293,8 @@ class SeqMut:
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
             DataFrame containing an ``entry`` column with unique protein identifiers, in the
-            **position-based** format (``sequence``, ``tmd_start``, ``tmd_stop``).
+            **position-based** format (``sequence``, ``tmd_start``, ``tmd_stop``). See
+            :meth:`SequenceFeature.get_df_parts` for the full ``df_seq`` format specification.
         df_feat : pd.DataFrame
             CPP feature set (output of :meth:`CPP.run`); its signed ``mean_dif`` defines the target direction.
         n : int, default=10

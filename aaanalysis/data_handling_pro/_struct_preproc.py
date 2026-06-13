@@ -348,7 +348,8 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
 # II Main Functions
 class StructurePreprocessor:
     """
-    Preprocessing class for protein structure features (PDB / CIF / AlphaFold).
+    Preprocessing class (**[pro]**, requires ``aaanalysis[pro]``) for protein
+    structure features (PDB / CIF / AlphaFold).
 
     Turns local structure files into the ``[0, 1]``-normalized per-residue
     ``dict_num`` consumed by :meth:`CPP.run_num`. Each ``encode_*`` method
