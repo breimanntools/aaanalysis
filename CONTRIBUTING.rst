@@ -319,6 +319,60 @@ To generate the documentation locally:
 
 - Open `_build/html/index.html` in a browser.
 
+Versioning and Deprecation Policy
+=================================
+
+AAanalysis follows `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_
+(**MAJOR.MINOR.PATCH**) and is **semver-strict from v1.x onward**. The public API
+is exactly the set of symbols re-exported by ``aaanalysis/__init__.py`` (anything
+starting with ``_`` is private and may change without notice).
+
+Deprecation policy
+------------------
+
+Renaming or removing a public symbol is a breaking change. To give users a
+migration window, such a change is staged across releases:
+
+1. **Deprecate, don't remove.** Keep the symbol working and decorate it with
+   ``aaanalysis.utils.deprecated(reason=..., version_removed=...)``. Calling it
+   (or, for a class, instantiating it) then emits a ``DeprecationWarning`` naming
+   the replacement and the planned removal version, and the docstring gains a
+   deprecation note rendered in the API docs.
+
+   .. code-block:: python
+
+       import aaanalysis.utils as ut
+
+       @ut.deprecated(reason="Use 'new_name' instead.", version_removed="1.2.0")
+       def old_name(...):
+           ...
+
+2. **Ship at least one minor release** carrying the ``DeprecationWarning`` before
+   the symbol is removed.
+3. **Remove** the symbol only in a subsequent **minor** (or major) release, and
+   record it under ``Removed`` in the changelog.
+
+PATCH releases never rename or remove public symbols; MINOR releases add
+backward-compatible functionality (and may *introduce* deprecations); MAJOR
+releases may complete removals.
+
+Changelog
+---------
+
+Every user-visible change (new public symbol, signature change, behavior change,
+deprecation, or important bug fix) is recorded **in the same pull request** in two
+places:
+
+- ``CHANGELOG.md`` (repo root, `Keep a Changelog
+  <https://keepachangelog.com/en/1.1.0/>`_ format) — a terse, one-line-per-change
+  index under the top ``Unreleased`` section
+  (``Added`` / ``Changed`` / ``Deprecated`` / ``Removed`` / ``Fixed``).
+- ``docs/source/index/release_notes.rst`` — the narrative, RTD-rendered notes
+  under the current ``Unreleased`` version, with cross-references and examples.
+
+At release time, the ``Unreleased`` heading in both files is renamed to the new
+version with its date.
+
 Building New PyPi package version
 ---------------------------------
 

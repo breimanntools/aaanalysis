@@ -1,8 +1,9 @@
 """This is a script to test the warning/exception decorators in
 aaanalysis._utils.decorators (exposed via aaanalysis.utils): the backend-error
-wrapper, the RuntimeWarning catcher, the invalid-division catcher, and the
-UndefinedMetricWarning catcher.
+wrapper, the RuntimeWarning catcher, the invalid-division catcher, the
+UndefinedMetricWarning catcher, and the ``deprecated`` decorator.
 """
+import inspect
 import warnings
 
 import pytest
@@ -119,3 +120,79 @@ class TestCatchUndefinedMetricWarning:
         with warnings.catch_warnings():
             warnings.simplefilter("error")
             assert quiet() == 5
+
+
+class TestDeprecated:
+    """deprecated() emits a DeprecationWarning and annotates the docstring."""
+
+    def test_function_warns_on_call(self):
+        @ut.deprecated(reason="Use 'new_fn' instead.", version_removed="1.2.0")
+        def old_fn():
+            return 42
+        with pytest.warns(DeprecationWarning) as record:
+            assert old_fn() == 42
+        msg = str(record[0].message)
+        assert "'old_fn' is deprecated" in msg
+        assert "1.2.0" in msg
+        assert "Use 'new_fn' instead." in msg
+
+    def test_function_return_value_and_args_pass_through(self):
+        @ut.deprecated()
+        def add(a, b=1):
+            return a + b
+        with pytest.warns(DeprecationWarning):
+            assert add(2, b=3) == 5
+
+    def test_signature_and_metadata_preserved(self):
+        @ut.deprecated(reason="gone soon")
+        def f(a, b=2):
+            """Original summary."""
+            return a
+        assert f.__name__ == "f"
+        assert list(inspect.signature(f).parameters) == ["a", "b"]
+        # The original docstring is kept below the deprecation note.
+        assert "Original summary." in f.__doc__
+        assert ".. admonition:: Deprecated" in f.__doc__
+        assert "gone soon" in f.__doc__
+
+    def test_no_args_warns_without_reason_or_version(self):
+        @ut.deprecated()
+        def g():
+            return None
+        with pytest.warns(DeprecationWarning, match="'g' is deprecated"):
+            g()
+
+    def test_class_warns_on_instantiation(self):
+        @ut.deprecated(reason="Use NewCls.", version_removed="2.0.0")
+        class OldCls:
+            """A class on its way out."""
+            def __init__(self, x):
+                self.x = x
+        with pytest.warns(DeprecationWarning, match="'OldCls' is deprecated"):
+            obj = OldCls(7)
+        # Instance is constructed correctly despite the warning.
+        assert obj.x == 7
+        assert ".. admonition:: Deprecated" in OldCls.__doc__
+
+    def test_class_keeps_type_identity(self):
+        @ut.deprecated()
+        class C:
+            def __init__(self):
+                pass
+        assert isinstance(C, type)
+        with pytest.warns(DeprecationWarning):
+            assert isinstance(C(), C)
+
+    def test_multiline_reason_stays_indented_in_admonition(self):
+        # A multi-line reason must keep every continuation line inside the
+        # admonition body (3-space indent), or Sphinx drops the later lines.
+        @ut.deprecated(reason="First line.\nSecond line.")
+        def h():
+            """Summary."""
+            return None
+        body = h.__doc__.split("Summary.")[0]
+        content = [ln for ln in body.splitlines()
+                   if ln and not ln.startswith(".. admonition")]
+        assert content, "expected an indented admonition body"
+        assert all(ln.startswith("   ") for ln in content)
+        assert "   Second line." in h.__doc__

@@ -130,19 +130,23 @@ def _pick_feature_matrix_builder():
 
     Public ``CPP.run`` and ``CPP.run_num`` both call this — neither exposes a
     user-facing backend switch (the choice is determined entirely by wheel
-    state at import time). One-time INFO notice on first fallback use so a
+    state at import time). One-time ``UserWarning`` on first fallback use so a
     pure-Python install isn't silent.
     """
     global _PYTHON_FALLBACK_NOTIFIED
     if _HAS_CYTHON_INNER:
         return get_feature_matrix_c_
     if not _PYTHON_FALLBACK_NOTIFIED:
-        ut.print_out(
-            "CPP using the Python kernel fallback — the compiled Cython "
+        # A real warning (not an INFO print) so it surfaces even with
+        # ``aa.options['verbose'] = False`` — a silent INFO let users blame the
+        # algorithm for ~2x-slower runs instead of reinstalling for the wheel.
+        warnings.warn(
+            "CPP is using the Python kernel fallback — the compiled Cython "
             "extension is not available in this install. Output is bit-exact "
             "with the Cython path but ~2x slower. Reinstall via "
             "`pip install --force-reinstall aaanalysis` to fetch a prebuilt "
-            "wheel."
+            "wheel.",
+            UserWarning,
         )
         _PYTHON_FALLBACK_NOTIFIED = True
     return get_feature_matrix_fast_

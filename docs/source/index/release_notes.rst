@@ -120,6 +120,15 @@ Added
 
 - **aa.__version__**: The installed package version is now exposed as a
   top-level attribute via ``importlib.metadata``.
+- **CHANGELOG.md + deprecation policy**: A root ``CHANGELOG.md``
+  (`Keep a Changelog <https://keepachangelog.com/en/1.1.0/>`_ format) now gives a
+  terse, developer-facing index alongside these narrative notes. The project
+  adopts strict semantic versioning: from v1.x onward, any rename or removal of a
+  public symbol ships at least one minor release carrying a ``DeprecationWarning``
+  first. A ``deprecated(reason, version_removed)`` decorator helper (internal,
+  ``aaanalysis.utils``) marks such symbols and prepends a deprecation note
+  to their docstring. See the *Versioning and Deprecation Policy* in
+  ``CONTRIBUTING.rst``.
 
 **Documentation**
 
@@ -136,6 +145,15 @@ Added
 Changed
 ~~~~~~~
 
+- **CPP performance work**: The Cython feature-matrix kernel, macOS-safe threaded
+  ``n_jobs``, scale / AA-index caching, and scale / sample batching land in this
+  release, replacing the hour-long, low-CPU CPP runs seen on ``1.0.3`` and
+  earlier. **Users on** ``≤1.0.3`` **should upgrade** rather than debug a
+  performance pathology that is already fixed.
+- **CPP Cython-fallback notice**: When the compiled extension is missing and CPP
+  falls back to the ~2× slower pure-Python kernel, the one-time notice is now a
+  ``UserWarning`` instead of an easily-missed INFO print, so it surfaces even with
+  ``aa.options['verbose'] = False``.
 - **SequenceFeature.feature_matrix**: New ``batch=`` parameter accepts a list of
   ``df_parts`` and builds them in a single Cython pass, returning a list of
   feature matrices — faster than per-call construction for many small part tables.
