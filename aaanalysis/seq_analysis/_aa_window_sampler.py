@@ -294,6 +294,7 @@ def _filter_aa_context(df_seq=None, aa_context_col=None, context_in=None, contex
 
 
 # II Main Function
+# Not a Wrapper/Tool: a sampler with sample_* methods, no .fit/.eval or .run/.eval contract.
 class AAWindowSampler:
     """
     Utility class for sampling amino-acid windows / segments from full protein sequences.

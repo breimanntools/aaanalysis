@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 
 import aaanalysis.utils as ut
+from aaanalysis.template_classes import Wrapper
 
 from ._backend.check_models import (check_match_labels_X,
                                     check_match_X_is_selected)
@@ -137,10 +138,12 @@ def check_match_df_feat_feat_importance(df_feat=None, feat_importance=None):
 
 
 # II Main Functions
-class TreeModel:
+class TreeModel(Wrapper):
     """
     Tree Model class: A wrapper for tree-based models to obtain Monte Carlo estimates of feature
     importance and predictions [Breimann25a]_.
+
+    As a :class:`Wrapper`, it implements the ``.fit`` / ``.eval`` model contract.
 
     Monte Carlo estimates are derived by averaging feature importance or prediction probabilities across various
     tree-based models and training rounds, enhancing the robustness and reproducibility of these estimates.

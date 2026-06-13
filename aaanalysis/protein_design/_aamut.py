@@ -6,6 +6,7 @@ from typing import Optional, List, Union
 import pandas as pd
 
 import aaanalysis.utils as ut
+from aaanalysis.template_classes import Tool
 from ._backend.aamut.aamut import comp_substitution_impact, eval_substitution_impact
 
 
@@ -46,10 +47,12 @@ def check_scales_subset(scales=None, df_scales=None):
 
 
 # II Main Functions
-class AAMut:
+class AAMut(Tool):
     """
     Amino Acid Mutator (AAMut) class for analyzing the physicochemical impact of amino acid
     substitutions on property scales [Breimann24a]_.
+
+    As a :class:`Tool`, it implements the ``.run`` / ``.eval`` pipeline contract.
 
     ``AAMut`` is **CPP-agnostic**: it quantifies how substituting one amino acid for another
     shifts each physicochemical scale value, independent of any sequence or prediction task.

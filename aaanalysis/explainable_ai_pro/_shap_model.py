@@ -10,6 +10,7 @@ import warnings
 import shap
 
 import aaanalysis.utils as ut
+from aaanalysis.template_classes import Wrapper
 from ._backend.check_models import (check_match_labels_X,
                                     check_match_X_is_selected)
 from ._backend.shap_model.shap_model_fit import monte_carlo_shap_estimation
@@ -325,11 +326,13 @@ def check_match_df_feat_shap_values(df_feat=None, shap_values=None, drop=False, 
 
 
 # II Main Functions
-class ShapModel:
+class ShapModel(Wrapper):
     """
     SHAP Model class (**[pro]**, requires ``aaanalysis[pro]``): A wrapper for SHAP
     (SHapley Additive exPlanations) [Lundberg20]_ explainers to obtain Monte Carlo
     estimates for feature impact [Breimann25a]_.
+
+    As a :class:`Wrapper`, it implements the ``.fit`` / ``.eval`` model contract.
 
     `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ is an explainable Artificial Intelligence (AI) framework
     and game-theoretic approach to explain the output of any machine learning model using SHAP values. These SHAP values
