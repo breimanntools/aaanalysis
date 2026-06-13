@@ -351,6 +351,53 @@ class TestGetDfPartsGoldenValues:
         assert (out_pos[list_parts] == out_part[list_parts]).all().all()
         assert (out_pos[list_parts] == out_seq_tmd[list_parts]).all().all()
 
+    def test_gap_padding_golden(self):
+        """Pin the '-'-padded parts when the TMD sits too close to both termini.
+
+        seq 'MKLPQRST' (len 8), TMD 'PQR' at 1-based 4..6, jmd_n_len==jmd_c_len==4:
+        only 3 N-terminal and 2 C-terminal residues are available, so both JMDs are
+        gap-padded ('-MKL', 'ST--'). Composite parts must concatenate the *padded*
+        base parts, not the raw sequence — this is the exact invariant the vectorized
+        ``get_df_parts_`` driver has to preserve.
+        """
+        sf = aa.SequenceFeature()
+        df_seq = pd.DataFrame({"entry": ["P1"], "sequence": ["MKLPQRST"],
+                               "tmd_start": [4], "tmd_stop": [6]})
+        list_parts = ["jmd_n", "tmd", "jmd_c", "tmd_n", "tmd_c",
+                      "tmd_jmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
+        out = sf.get_df_parts(df_seq=df_seq, list_parts=list_parts,
+                              jmd_n_len=4, jmd_c_len=4)
+        expected = {"jmd_n": "-MKL", "tmd": "PQR", "jmd_c": "ST--",
+                    "tmd_n": "PQ", "tmd_c": "R",
+                    "tmd_jmd": "-MKLPQRST--",
+                    "jmd_n_tmd_n": "-MKLPQ", "tmd_c_jmd_c": "RST--"}
+        assert {p: out[p].iloc[0] for p in list_parts} == expected
+
+    def test_backend_part_based_branch(self):
+        """``get_df_parts_`` reads parts directly from a part-based ``df_seq``.
+
+        The public ``get_df_parts`` normalizes every input format to the
+        position-based schema before calling the backend, so the part-based arm of
+        the backend driver is reached only by internal callers that pass
+        ``jmd_n`` / ``tmd`` / ``jmd_c`` columns through without position columns
+        (e.g. ``CPP.run_num``'s df_seq↔df_parts parity guard,
+        ``CPPPlot.feature``). Exercise it directly so the branch stays covered and
+        correct (parts are taken verbatim; ``jmd_n_len`` / ``jmd_c_len`` are unused
+        here).
+        """
+        from aaanalysis.feature_engineering._backend.cpp.utils_feature import get_df_parts_
+        import aaanalysis.utils as ut
+        df_seq = pd.DataFrame({ut.COL_ENTRY: ["P1", "P2"],
+                               ut.COL_JMD_N: ["AAAA", "DDDD"],
+                               ut.COL_TMD: ["LMVF", "GHIK"],
+                               ut.COL_JMD_C: ["CCCC", "EEEE"]})
+        out = get_df_parts_(df_seq=df_seq, list_parts=["jmd_n", "tmd", "jmd_c", "tmd_jmd"],
+                            jmd_n_len=4, jmd_c_len=4)
+        assert list(out.index) == ["P1", "P2"]
+        assert out.loc["P1", "tmd_jmd"] == "AAAALMVFCCCC"
+        assert out.loc["P2", "jmd_n"] == "DDDD"
+        assert out.loc["P2", "tmd"] == "GHIK"
+
 
 # Complex Cases
 class TestGetDfPartsComplex:

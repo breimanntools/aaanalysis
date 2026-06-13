@@ -161,6 +161,10 @@ Changed
   input mode (``tmd_len=``) explodes each 1-based anchor in the ``pos`` column
   into one three-part (``jmd_n`` / ``tmd`` / ``jmd_c``) row, identified by
   ``entry_win``.
+- **SequenceFeature.get_df_parts**: Several-fold faster on large inputs — the
+  per-row ``DataFrame.apply`` driver was replaced with a vectorized iteration over
+  the raw column arrays. The output (parts, column order, index, values) is
+  unchanged.
 - **n_jobs**: Unified parallelism convention across ``CPP`` / ``CPPGrid``
   (``1`` serial, ``-1`` all cores, ``N>1`` exactly N, ``None`` optimized), with an
   ``options['n_jobs']`` global override.
