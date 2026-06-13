@@ -30,13 +30,14 @@ from ._backend.struct_preproc.run_dssp_full import (
 from ._backend.struct_preproc.align_dssp_full import (
     pick_best_chain_full_, count_mismatches_full_,
     align_chain_full_to_sequence_, apply_ss_mode_full_,
-    apply_gap_handling_full_)
+    apply_gap_handling_full_, _make_aligner as _make_dssp_aligner)
 from ._backend.struct_preproc.encode_dssp import (
     encode_ss, encode_rasa, encode_dihedrals_sincos,
     encode_hbond_donor, encode_hbond_acceptor)
 from ._backend.struct_preproc.encode_pdb import (
     load_structure, encode_bfactor, encode_depth,
     encode_plddt, encode_plddt_disorder, encode_plddt_tier,
+    _plddt_per_residue,
     encode_chi1_sincos, encode_chi2_sincos,
     encode_ca_centroid_dist, encode_ca_centroid_dist_norm,
     encode_contact_count_8A, encode_contact_count_12A,
@@ -247,6 +248,12 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
     # handled by run_dssp_full_for_entry_.
     session_tmp = tempfile.TemporaryDirectory()
     session_tmp_path = Path(session_tmp.name)
+    # One session-scoped PairwiseAligner reused across all entries (and across
+    # the chain-pick, mismatch-count, and align steps within each entry),
+    # instead of constructing three fresh aligners per entry. The aligner holds
+    # no per-call state, so this is byte-identical to per-entry construction.
+    # This is a SEPARATE aligner from the encode_pdb alignment cache (#180-A).
+    dssp_aligner = _make_dssp_aligner()
 
     def _append_nan_row():
         """Push NaN/None onto every per-row list for a failed entry."""
@@ -281,7 +288,7 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
                 UserWarning)
             _append_nan_row()
             continue
-        best = pick_best_chain_full_(target_seq, chains)
+        best = pick_best_chain_full_(target_seq, chains, aligner=dssp_aligner)
         if best is None:
             warnings.warn(
                 f"No chains with assigned secondary structure for entry "
@@ -293,7 +300,8 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
         (chain_id, atom_seq, atom_ss, atom_asa, atom_phi, atom_psi,
          atom_hb_d_off, atom_hb_d_en,
          atom_hb_a_off, atom_hb_a_en) = record
-        n_mismatch = count_mismatches_full_(target_seq, atom_seq)
+        n_mismatch = count_mismatches_full_(target_seq, atom_seq,
+                                            aligner=dssp_aligner)
         if n_mismatch > 0:
             warnings.warn(
                 f"Entry '{entry}': best-matching chain '{chain_id}' has "
@@ -305,7 +313,8 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
          aligned_hb_a_off, aligned_hb_a_en) = \
             align_chain_full_to_sequence_(
                 target_seq, atom_seq, atom_ss, atom_asa, atom_phi, atom_psi,
-                atom_hb_d_off, atom_hb_d_en, atom_hb_a_off, atom_hb_a_en)
+                atom_hb_d_off, atom_hb_d_en, atom_hb_a_off, atom_hb_a_en,
+                aligner=dssp_aligner)
         encoded_ss = apply_ss_mode_full_(aligned_ss, ss_mode)
         (final_ss, final_asa, final_phi, final_psi,
          final_hb_d_off, final_hb_d_en,
@@ -1024,6 +1033,15 @@ class StructurePreprocessor:
                 continue
             blocks: List[np.ndarray] = []
             entry_ok = True
+            # Compute the per-residue pLDDT (structure walk + alignment) at
+            # most ONCE per entry and reuse it across the pLDDT keys. It is
+            # computed lazily inside the per-key ``try`` below (not hoisted
+            # here) so that a RuntimeError degrades just this row
+            # (pdb_ok=False) exactly as when each encoder computed it
+            # internally — hoisting it out of the try would let the error
+            # abort the whole encode_pdb call instead of the single entry.
+            plddt_shared = None
+            plddt_done = False
             for key in features:
                 try:
                     if key == "bfactor":
@@ -1031,13 +1049,25 @@ class StructurePreprocessor:
                     elif key == "depth":
                         block, identity = encode_depth(structure, seq)
                     elif key == "plddt":
-                        block, identity = encode_plddt(structure, seq)
+                        if not plddt_done:
+                            plddt_shared = _plddt_per_residue(structure, seq)
+                            plddt_done = True
+                        block, identity = encode_plddt(structure, seq,
+                                                       plddt=plddt_shared)
                     elif key == "plddt_disorder":
+                        if not plddt_done:
+                            plddt_shared = _plddt_per_residue(structure, seq)
+                            plddt_done = True
                         block, identity = encode_plddt_disorder(
                             structure, seq,
-                            threshold=plddt_disorder_threshold)
+                            threshold=plddt_disorder_threshold,
+                            plddt=plddt_shared)
                     elif key == "plddt_tier":
-                        block, identity = encode_plddt_tier(structure, seq)
+                        if not plddt_done:
+                            plddt_shared = _plddt_per_residue(structure, seq)
+                            plddt_done = True
+                        block, identity = encode_plddt_tier(
+                            structure, seq, plddt=plddt_shared)
                     elif key == "chi1_sincos":
                         block, identity = encode_chi1_sincos(structure, seq)
                     elif key == "chi2_sincos":

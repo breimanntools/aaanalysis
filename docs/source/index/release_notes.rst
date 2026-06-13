@@ -210,6 +210,17 @@ Changed
   plus each per-feature value mapping); the first optimal alignment is
   deterministic, so cached and recomputed encoder output are byte-identical
   (~12x off the repeated-alignment overhead).
+  Three further ``StructurePreprocessor`` hotspots are sped up with identical
+  output: ``encode_pdb``'s disulfide encoder replaces its O(n^2) SG-SG
+  double loop with a vectorized pairwise-distance computation (same 2.5 Å
+  inclusive boundary, equidistant-tie handling and nearest-partner pick;
+  16-48x); the three pLDDT encoders (``plddt`` / ``plddt_disorder`` /
+  ``plddt_tier``) now share one per-residue pLDDT read + alignment per entry
+  instead of each re-walking the structure (~2.2x); and ``get_dssp`` reuses a
+  single session-scoped ``PairwiseAligner`` across all entries (and across the
+  chain-pick, mismatch-count and feature-align steps) rather than constructing
+  three fresh aligners per entry. Identity fractions and alignments are
+  byte-identical in every case.
 - **Performance benchmark + regression guard** (developer tooling): A committed
   ``pytest-benchmark`` suite (``tests/benchmarks/``) micro-benchmarks the hot
   public entry points — ``CPP.run`` / ``CPP.run_num``, ``AAclust.fit``,
