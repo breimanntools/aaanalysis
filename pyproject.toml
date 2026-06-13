@@ -92,6 +92,15 @@ embed = [
   "sentencepiece>=0.2",
   "huggingface_hub>=0.23",
 ]
+bench = [
+  # Committed perf benchmark + regression-guard suite (tests/benchmarks/, issue
+  # #187). Isolated from [dev] on purpose: keeping pytest-benchmark out of the
+  # default dev install means the unit / coverage matrices never collect the
+  # benchmarks (the suite importorskips when the plugin is absent), so wall-clock
+  # noise never reaches the blocking gates. The suite runs in the opt-in perf
+  # nightly; install with -e ".[dev,pro,bench]" to run it locally.
+  "pytest-benchmark>=4.0",
+]
 docs = [
   "aaanalysis[pro]",
   "docutils==0.21.2",
