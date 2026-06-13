@@ -6,7 +6,7 @@ the external ``msms`` binary). The frontend ``encode_pdb`` validates inputs,
 opens the PDB once per entry, then dispatches by feature key.
 """
 from functools import lru_cache
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import numpy as np
 
@@ -228,9 +228,15 @@ def _plddt_per_residue(structure, sequence: str):
     return aligned, identity
 
 
-def encode_plddt(structure, sequence: str) -> Tuple[np.ndarray, float]:
-    """Per-residue pLDDT (AF B-factor column) as ``(L, 1)``, ``[0, 1]``."""
-    aligned, identity = _plddt_per_residue(structure, sequence)
+def encode_plddt(structure, sequence: str, plddt=None) -> Tuple[np.ndarray, float]:
+    """Per-residue pLDDT (AF B-factor column) as ``(L, 1)``, ``[0, 1]``.
+
+    ``plddt`` optionally supplies a precomputed ``(aligned, identity)`` pair
+    from :func:`_plddt_per_residue` so the three pLDDT encoders share one
+    structure walk + alignment per entry; recomputed when omitted. Output is
+    identical either way.
+    """
+    aligned, identity = _plddt_per_residue(structure, sequence) if plddt is None else plddt
     if aligned is None:
         return np.full((len(sequence), 1), np.nan), 0.0
     raw = np.asarray(aligned, dtype=np.float64).reshape(-1, 1)
@@ -238,10 +244,15 @@ def encode_plddt(structure, sequence: str) -> Tuple[np.ndarray, float]:
 
 
 def encode_plddt_disorder(structure, sequence: str,
-                          threshold: float = 70.0
+                          threshold: float = 70.0,
+                          plddt=None,
                           ) -> Tuple[np.ndarray, float]:
-    """Boolean ``pLDDT < threshold`` as ``(L, 1)``, ``{0, 1}``."""
-    aligned, identity = _plddt_per_residue(structure, sequence)
+    """Boolean ``pLDDT < threshold`` as ``(L, 1)``, ``{0, 1}``.
+
+    ``plddt`` optionally supplies a precomputed ``(aligned, identity)`` pair
+    (see :func:`encode_plddt`); recomputed when omitted.
+    """
+    aligned, identity = _plddt_per_residue(structure, sequence) if plddt is None else plddt
     if aligned is None:
         return np.full((len(sequence), 1), np.nan), 0.0
     arr = np.asarray(aligned, dtype=np.float64)
@@ -250,14 +261,17 @@ def encode_plddt_disorder(structure, sequence: str,
     return normalize("plddt_disorder", out.reshape(-1, 1)), identity
 
 
-def encode_plddt_tier(structure, sequence: str
+def encode_plddt_tier(structure, sequence: str, plddt=None
                       ) -> Tuple[np.ndarray, float]:
     """Per-residue pLDDT tier one-hot ``[<50, 50-70, 70-90, ≥90]`` as ``(L, 4)``.
 
     Boundaries follow the AlphaFold-DB documented confidence tiers:
       very_low <50, low 50-70, confident 70-90, very_high ≥90.
+
+    ``plddt`` optionally supplies a precomputed ``(aligned, identity)`` pair
+    (see :func:`encode_plddt`); recomputed when omitted.
     """
-    aligned, identity = _plddt_per_residue(structure, sequence)
+    aligned, identity = _plddt_per_residue(structure, sequence) if plddt is None else plddt
     if aligned is None:
         return np.full((len(sequence), 4), np.nan), 0.0
     arr = np.asarray(aligned, dtype=np.float64)
@@ -523,48 +537,43 @@ def encode_disulfide(structure, sequence: str
         sequence, chains)
     if chain is None:
         return np.full((len(sequence), 2), np.nan), 0.0
-    # Build per-residue SG coordinates (NaN for non-CYS).
-    sg_coords: List[Optional[np.ndarray]] = []
-    is_cys: List[bool] = []
-    for residue, _ in residues:
+    # Build per-residue SG coordinates (NaN rows for non-CYS / missing SG).
+    n_res = len(residues)
+    sg = np.full((n_res, 3), np.nan, dtype=np.float64)
+    is_cys = np.zeros(n_res, dtype=bool)
+    for idx, (residue, _) in enumerate(residues):
         if residue.get_resname() != "CYS":
-            sg_coords.append(None)
-            is_cys.append(False)
             continue
-        is_cys.append(True)
-        sg = None
+        is_cys[idx] = True
         for atom in residue.get_atoms():
             if atom.get_name() == "SG":
-                sg = np.asarray(atom.get_coord(), dtype=np.float64)
+                sg[idx] = np.asarray(atom.get_coord(), dtype=np.float64)
                 break
-        sg_coords.append(sg)
-    # Pairwise SG-SG distance: find each CYS's nearest partner within 2.5 Å.
-    n_res = len(residues)
-    atom_participates: List[float] = []
-    atom_partner_dist: List[float] = []
-    for i in range(n_res):
-        if not is_cys[i] or sg_coords[i] is None:
-            atom_participates.append(float("nan"))
-            atom_partner_dist.append(float("nan"))
-            continue
-        # Search for nearest CYS partner within 2.5 Å.
-        best_dist = float("inf")
-        for j in range(n_res):
-            if i == j or not is_cys[j] or sg_coords[j] is None:
-                continue
-            d = float(np.linalg.norm(sg_coords[i] - sg_coords[j]))
-            if d <= 2.5 and d < best_dist:
-                best_dist = d
-        if np.isfinite(best_dist):
-            atom_participates.append(1.0)
-            atom_partner_dist.append(best_dist)
-        else:
-            atom_participates.append(0.0)
-            atom_partner_dist.append(float("nan"))
+    has_sg = is_cys & ~np.isnan(sg).any(axis=1)
+    # Original outcome by residue class:
+    #   non-CYS, or CYS without an SG atom -> (participates=NaN, dist=NaN);
+    #   CYS-with-SG                        -> participates 0.0/1.0, dist set
+    #                                         only when bonded (<= 2.5 A).
+    # Start everything at NaN; the nearest-partner pick fills CYS-with-SG only.
+    atom_participates = np.full(n_res, np.nan, dtype=np.float64)
+    atom_partner_dist = np.full(n_res, np.nan, dtype=np.float64)
+    cys_idx = np.where(has_sg)[0]
+    if cys_idx.size:
+        pts = sg[cys_idx]  # (k, 3)
+        # Pairwise SG-SG distances, same Euclidean formula as the scalar
+        # np.linalg.norm so distances are identical; vectorized over partners.
+        diff = pts[:, None, :] - pts[None, :, :]
+        D = np.sqrt((diff ** 2).sum(axis=2))  # (k, k)
+        np.fill_diagonal(D, np.inf)           # mirror the i == j skip
+        D[D > 2.5] = np.inf                    # 2.5 Å inclusive boundary
+        nearest = D.min(axis=1)               # ties: equidistant -> same min
+        bonded = np.isfinite(nearest)
+        atom_participates[cys_idx] = bonded.astype(np.float64)
+        atom_partner_dist[cys_idx[bonded]] = nearest[bonded]
     aligned_part = _align_atom_values_to_target(
-        sequence, atom_seq, atom_participates)
+        sequence, atom_seq, atom_participates.tolist())
     aligned_dist = _align_atom_values_to_target(
-        sequence, atom_seq, atom_partner_dist)
+        sequence, atom_seq, atom_partner_dist.tolist())
     raw = np.column_stack([np.asarray(aligned_part, dtype=np.float64),
                            np.asarray(aligned_dist, dtype=np.float64)])
     return normalize("disulfide", raw), identity

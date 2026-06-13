@@ -44,12 +44,21 @@ ChainFull = Tuple[
 
 
 def pick_best_chain_full_(
-    target_seq: str, chains: List[ChainFull]
+    target_seq: str, chains: List[ChainFull],
+    aligner: Optional[PairwiseAligner] = None,
 ) -> Optional[Tuple[ChainFull, float]]:
-    """Choose the chain whose ATOM sequence best matches ``target_seq``."""
+    """Choose the chain whose ATOM sequence best matches ``target_seq``.
+
+    ``aligner`` lets a caller pass one session-scoped
+    :class:`Bio.Align.PairwiseAligner` so it is constructed once per
+    ``get_dssp`` run instead of once per entry; the aligner is stateless
+    across ``align`` calls, so reusing it is byte-identical to a fresh one.
+    Defaults to building a fresh aligner when called standalone.
+    """
     if not chains:
         return None
-    aligner = _make_aligner()
+    if aligner is None:
+        aligner = _make_aligner()
     best = None
     best_score = -1.0
     for record in chains:
@@ -61,9 +70,18 @@ def pick_best_chain_full_(
     return (best, best_score)
 
 
-def count_mismatches_full_(target_seq: str, atom_seq: str) -> int:
-    """Number of target positions whose aligned partner is a different residue."""
-    aligner = _make_aligner()
+def count_mismatches_full_(
+    target_seq: str, atom_seq: str,
+    aligner: Optional[PairwiseAligner] = None,
+) -> int:
+    """Number of target positions whose aligned partner is a different residue.
+
+    ``aligner`` optionally supplies a session-scoped aligner (reused across
+    entries); a fresh one is built when omitted. Output is identical either
+    way since the aligner holds no per-call state.
+    """
+    if aligner is None:
+        aligner = _make_aligner()
     alignment = aligner.align(target_seq, atom_seq)[0]
     a, b = str(alignment[0]), str(alignment[1])
     return sum(1 for x, y in zip(a, b)
@@ -81,6 +99,7 @@ def align_chain_full_to_sequence_(
     atom_hb_d_en: List[float],
     atom_hb_a_off: List[float],
     atom_hb_a_en: List[float],
+    aligner: Optional[PairwiseAligner] = None,
 ) -> Tuple[List[str], List[float], List[float], List[float],
            List[float], List[float], List[float], List[float]]:
     """Map each ``target_seq`` position to its DSSP feature values.
@@ -90,8 +109,13 @@ def align_chain_full_to_sequence_(
     ``float('nan')``. Returns eight lists, each of length
     ``len(target_seq)``: ``(ss, asa, phi, psi, hb_donor_off, hb_donor_en,
     hb_acceptor_off, hb_acceptor_en)``.
+
+    ``aligner`` optionally supplies a session-scoped aligner (reused across
+    entries); a fresh one is built when omitted. The alignment string pair
+    is identical either way.
     """
-    aligner = _make_aligner()
+    if aligner is None:
+        aligner = _make_aligner()
     alignment = aligner.align(target_seq, atom_seq)[0]
     a_aln, b_aln = str(alignment[0]), str(alignment[1])
     out_ss: List[str] = []
