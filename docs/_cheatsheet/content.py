@@ -172,7 +172,7 @@ INSTALL = (
 # Module map: each row shows the call with 1-2 key params and how it connects to
 # the Golden-Workflow objects (df_seq · df_parts · df_feat · X · labels).
 CAPABILITY_FAMILIES = [
-    {"name": "Data & Preparation", "tag": "load · clean",
+    {"name": "Data & Preparation", "tag": "datasets · scales · FASTA",
      "rows": [
          ("Load benchmark sequences", "load_dataset(name) → df_seq", None),
          ("Load AAontology scales", "load_scales() → df_scales", None),
@@ -180,7 +180,7 @@ CAPABILITY_FAMILIES = [
          ("Read / write FASTA", "read_fasta(file) → df_seq", None),
          ("Cluster redundant homologs", "filter_seq(df_seq) → df_clust  [pro]", None),
      ]},
-    {"name": "Sequence Analysis", "tag": "logos · motifs",
+    {"name": "Sequence Analysis", "tag": "logos · windows · motifs",
      "rows": [
          ("Position-specific logo", "AAlogo().get_df_logo(df_parts) → df_logo", None),
          ("Sample reference windows", "AAWindowSampler().sample_*(df_seq)", None),
@@ -207,20 +207,20 @@ CAPABILITY_FAMILIES = [
          ("Combine sources", "combine_dict_nums([...]) → dict_num", None, "v1.1"),
          ("Numerical CPP", "CPP(df_parts).run_num(dict_num_parts, labels) → df_feat", None, "v1.1"),
      ]},
-    {"name": "Modeling & Explainability", "tag": "",
+    {"name": "Modeling & Explainability", "tag": "PU · classify · SHAP",
      "rows": [
          ("Train with positives + unlabeled data", "dPULearn().fit(X, labels)  [Wrapper]", None),
          ("Train + RFE + MC importance", "TreeModel().fit(X, labels)  [Wrapper]", None),
          ("Per-feature / sample SHAP impact", "ShapModel().fit(X, labels)  [pro]", None),
      ]},
-    {"name": "Metrics & Plotting", "tag": "utilities",
+    {"name": "Metrics & Plotting", "tag": "metrics · plots",
      "rows": [
          ("Adjusted AUC (class imbalance)", "comp_auc_adjusted(X, labels)", None),
          ("BIC score · KL divergence", "comp_bic_score(X, labels) · comp_kld", None),
          ("Per-protein / detection (v1.1)", "comp_per_protein_ap · comp_detection_metrics", None),
          ("Plot style, fonts & standalone legend", "plot_settings(font_scale) · plot_legend(ax)", None),
      ]},
-    {"name": "Protein Design", "tag": "",
+    {"name": "Protein Design", "tag": "mutations · design",
      "under_construction": True,
      "rows": [
          ("In-silico point mutations", "AAMut · AAMutPlot", None, "v1.1"),
@@ -375,14 +375,21 @@ DECISION_GUIDE = [
         ("whole protein", "SEQ_* · composition · whole chain"),
     ]),
     ("What labels do you have?", [
-        ("labeled 0 / 1", "CPP → classify"),
-        ("positives + unlabeled (1 / 2)", "CPP → dPULearn → classify"),
-        ("no negatives at all", "AAWindowSampler → CPP → classify"),
+        ("labeled 0 / 1", "CPP → ML model"),
+        ("positives + unlabeled (1 / 2)", "CPP → dPULearn → ML model"),
+        ("no negatives at all", "AAWindowSampler → CPP → ML model"),
     ]),
-    ("Discover & explain", [
-        ("find features", "CPP.run — compositional or positional (via split_kws)"),
-        ("rank / prune features", "TreeModel — importance + RFE (optional)"),
-        ("explain a prediction", "CPPPlot.feature_map · ShapModel [pro]"),
+    ("What is your learning task?", [
+        ("classify", "any classifier (sklearn)"),
+        ("regress", "get_labels_quantile / tiered"),
+        ("multi-class", "get_labels_ovr / ovo"),
+        ("cluster · PCA", "AAclust · dPULearn"),
+    ]),
+    ("Which explainability do you need?", [
+        ("group level", "CPP → TreeModel → CPPPlot → feature importance"),
+        ("per protein",
+         'CPP → ShapModel [pro] → CPPPlot → feature impact '
+         '<span class="shap-up">↑</span><span class="shap-dn">↓</span>'),
     ]),
 ]
 
@@ -397,13 +404,15 @@ GOTCHAS = [
     "options['random_state'] ▸ default.",
     "<b>DOM_*</b> parts need tmd_start/tmd_stop in df_seq; <b>[pro]</b> features "
     "need <span style='font-family:\"AA Mono\",monospace'>pip install 'aaanalysis[pro]'</span>.",
+    "<b>TMD</b> = <b>Target</b> Middle Domain — generalized from <b>Transmembrane</b> "
+    "domain (Breimann25a) to any central segment; JMD-N / JMD-C are its flanks.",
 ]
 
 # Data objects (C): the canonical tables/arrays and their columns/shape.
 DATA_OBJECTS = [
     ("df_seq", "entry · sequence · label · tmd_start · tmd_stop"),
     ("df_parts", "one column per part: tmd · jmd_n · jmd_c · …"),
-    ("df_feat", "feature · abs_auc · mean_dif · p_val · positions · scale · category"),
+    ("df_feat", "feature · category · subcategory · scale_name · abs_auc · mean_dif · p_val · positions"),
     ("X", "feature matrix (samples × features) from sf.feature_matrix"),
     ("dict_num", "{entry: ndarray (L×D)} — numerical per-residue values (v1.1)"),
 ]

@@ -181,6 +181,19 @@ Changed
   ``AnnotationPreprocessor``, ``comp_seq_sim``, ``filter_seq``, ``scan_motif``) carry
   a ``[pro]`` install marker in their summary; and ``SeqMut`` cross-links the canonical
   ``df_seq`` format spec (``SequenceFeature.get_df_parts``).
+- **Performance (same output)**: Several internal hotspots were vectorized or
+  parallelized without changing results. ``AAWindowSampler`` redundancy /
+  similarity filtering now compares amino-acid windows with vectorized NumPy
+  operations (identical keep/drop decisions; ~30x faster at scale), ``AAclust``
+  sample-to-medoid correlation distances are computed in one pass, and the
+  per-feature Kullback-Leibler divergence (used by ``dPULearn.eval`` with
+  ``comp_kld=True``) is parallelized over features and honors
+  ``options['n_jobs']``. Public APIs and outputs are unchanged.
+  A further pass vectorizes ``AAWindowSampler`` window-sampling internals:
+  candidate-center band filtering (~40x faster at scale) and per-window PWM
+  scoring in ``sample_motif_matched`` (~12x), again with identical results.
+  ``SequencePreprocessor.encode_one_hot`` is also vectorized (~3x), with a
+  byte-identical feature matrix.
 - **dPULearn.fit**: Flexible, package-consistent label handling via ``label_pos`` /
   ``label_unl`` / ``label_neg`` markers. Pass standard ``{0, 1}`` labels directly with
   ``label_unl=0`` (``0`` = unlabeled, ``1`` = positive), or any positive / unlabeled /

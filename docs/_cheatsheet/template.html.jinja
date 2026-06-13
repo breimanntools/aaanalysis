@@ -143,7 +143,7 @@
       <div class="sec-h"><span>Which Module Should I Use?</span><span class="hint">intent → module</span></div>
       <div class="sec-body">
         {% for what, mod in c.which_module %}
-        <div class="cap-item"><span class="cw">{{ what }} →</span><span class="cs">{{ mod|replace('[pro]', '<span class="protag">pro</span>')|safe }}</span></div>
+        <div class="cap-item"><span class="cw">{{ what }}</span><span class="cs">{{ mod|replace('[pro]', '<span class="protag">pro</span>')|safe }}</span></div>
         {% endfor %}
       </div>
     </div>
@@ -174,7 +174,7 @@
   <div class="cols">
 
     <div class="page-banner">
-      <div class="brand"><img class="banner-logo" src="{{ logo_base }}logo.png" alt="AAanalysis"> <span class="suffix">· Reference</span></div>
+      <div class="brand"><img class="banner-logo" src="{{ logo_base }}logo.png" alt="AAanalysis"> <span class="suffix">· Concepts &amp; Reference</span></div>
       <div class="sub2">decision guide · gotchas · options · class ↔ plot · glossary · citations</div>
     </div>
 
@@ -184,7 +184,7 @@
         {% for q, branches in c.decision_guide %}
         <div class="dg-q">{{ q }}</div>
         {% for label, result in branches %}
-        <div class="dg-row"><span class="dg-l">{{ label }}</span> <span class="dg-r">→ {{ result }}</span></div>
+        <div class="dg-row"><span class="dg-l">{{ label }}</span> <span class="dg-r">→ {{ result|replace('[pro]', '<span class="protag">pro</span>')|safe }}</span></div>
         {% endfor %}
         {% endfor %}
       </div>
@@ -196,8 +196,8 @@
     </div>
 
     <div class="sec">
-      <div class="sec-h"><span>aa.options</span><span class="hint">system-level settings</span></div>
-      <div class="sec-body"><pre class="code">{{ c.options|hl }}</pre></div>
+      <div class="sec-h"><span>Design Principles</span></div>
+      <div class="sec-body"><ul class="bullets">{% for p in c.design_principles %}<li>{{ p }}</li>{% endfor %}</ul></div>
     </div>
 
     <div class="sec">
@@ -214,16 +214,16 @@
     </div>
 
     <div class="sec">
+      <div class="sec-h"><span>aa.options</span><span class="hint">system-level settings</span></div>
+      <div class="sec-body"><pre class="code">{{ c.options|hl }}</pre></div>
+    </div>
+
+    <div class="sec">
       <div class="sec-h"><span>How to Cite</span><span class="hint">if you use AAanalysis</span></div>
       <div class="sec-body">{% for cit in c.citations %}
         <div class="cite-item"><span class="ky"><a href="{{ cit.url }}" target="_blank" rel="noopener">{{ cit.key }}</a></span><span class="nm">{{ cit.name }}</span>
           <div class="rf">{{ cit.ref }}</div><div class="jr"><a href="{{ cit.url }}" target="_blank" rel="noopener">{{ cit.journal }} ↗</a></div></div>
       {% endfor %}</div>
-    </div>
-
-    <div class="sec">
-      <div class="sec-h"><span>Design Principles</span></div>
-      <div class="sec-body"><ul class="bullets">{% for p in c.design_principles %}<li>{{ p }}</li>{% endfor %}</ul></div>
     </div>
 
     <div class="sec gloss-wide">
@@ -234,7 +234,7 @@
     </div>
 
   </div>
-  {{ footer('reference · decision guide · glossary') }}
+  {{ footer('concepts & reference · decision guide · glossary') }}
 </section>
 
 </body>

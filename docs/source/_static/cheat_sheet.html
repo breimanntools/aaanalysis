@@ -152,6 +152,8 @@ table { width: 100%; border-collapse: collapse; }
 .dg-row { font-size: 6.4pt; padding: 0.4px 0 0.4px 6px; line-height: 1.18; }
 .dg-row .dg-l { font-weight: 700; color: var(--ink); }
 .dg-row .dg-r { color: var(--ink-soft); }
+.dg-r .shap-up { color: #FF0D57; font-weight: 800; }  /* SHAP positive (ut.COLOR_SHAP_POS) */
+.dg-r .shap-dn { color: #1E88E5; font-weight: 800; }  /* SHAP negative (ut.COLOR_SHAP_NEG) */
 td.k.mono { font-family: "AA Mono", monospace; font-weight: 700; color: var(--accent); white-space: nowrap; }
 .cap-item { padding: 0.4px 0; border-bottom: 1px solid var(--line-soft); }
 .cap-item:last-child { border-bottom: none; }
@@ -402,18 +404,18 @@ cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</
     <div class="sec">
       <div class="sec-h"><span>Which Module Should I Use?</span><span class="hint">intent → module</span></div>
       <div class="sec-body">
-        <div class="cap-item"><span class="cw">Explore sequence patterns / composition →</span><span class="cs">AAlogo</span></div>
-        <div class="cap-item"><span class="cw">Sample reference windows (if negatives are missing) →</span><span class="cs">AAWindowSampler</span></div>
-        <div class="cap-item"><span class="cw">Reduce redundant amino acid scales →</span><span class="cs">AAclust</span></div>
-        <div class="cap-item"><span class="cw">Discover discriminative physicochemical features →</span><span class="cs">CPP</span></div>
-        <div class="cap-item"><span class="cw">Train with positives + unlabeled data →</span><span class="cs">dPULearn</span></div>
-        <div class="cap-item"><span class="cw">Train an interpretable classifier →</span><span class="cs">TreeModel</span></div>
-        <div class="cap-item"><span class="cw">Explain a prediction (per feature / sample) →</span><span class="cs">ShapModel  <span class="protag">pro</span></span></div>
+        <div class="cap-item"><span class="cw">Explore sequence patterns / composition</span><span class="cs">AAlogo</span></div>
+        <div class="cap-item"><span class="cw">Sample reference windows (if negatives are missing)</span><span class="cs">AAWindowSampler</span></div>
+        <div class="cap-item"><span class="cw">Reduce redundant amino acid scales</span><span class="cs">AAclust</span></div>
+        <div class="cap-item"><span class="cw">Discover discriminative physicochemical features</span><span class="cs">CPP</span></div>
+        <div class="cap-item"><span class="cw">Train with positives + unlabeled data</span><span class="cs">dPULearn</span></div>
+        <div class="cap-item"><span class="cw">Train an interpretable classifier</span><span class="cs">TreeModel</span></div>
+        <div class="cap-item"><span class="cw">Explain a prediction (per feature / sample)</span><span class="cs">ShapModel  <span class="protag">pro</span></span></div>
       </div>
     </div>
 
 <div class="sec">
-  <div class="sec-h"><span>Data &amp; Preparation</span><span class="hint">load · clean</span></div>
+  <div class="sec-h"><span>Data &amp; Preparation</span><span class="hint">datasets · scales · FASTA</span></div>
   <div class="sec-body">
     <div class="cap-item"><span class="cw">Load benchmark sequences</span><span class="cs">load_dataset(name) → <span class="out">df_seq</span></span></div>
     <div class="cap-item"><span class="cw">Load AAontology scales</span><span class="cs">load_scales() → <span class="out">df_scales</span></span></div>
@@ -422,7 +424,7 @@ cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</
     <div class="cap-item"><span class="cw">Cluster redundant homologs</span><span class="cs">filter_seq(df_seq) → <span class="out">df_clust  <span class="protag">pro</span></span></span></div>
   </div>
 </div><div class="sec">
-  <div class="sec-h"><span>Sequence Analysis</span><span class="hint">logos · motifs</span></div>
+  <div class="sec-h"><span>Sequence Analysis</span><span class="hint">logos · windows · motifs</span></div>
   <div class="sec-body">
     <div class="cap-item"><span class="cw">Position-specific logo</span><span class="cs">AAlogo().get_df_logo(df_parts) → <span class="out">df_logo</span></span></div>
     <div class="cap-item"><span class="cw">Sample reference windows</span><span class="cs">AAWindowSampler().sample_*(df_seq)</span></div>
@@ -452,14 +454,14 @@ cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</
     <div class="cap-item"><span class="cw">Numerical CPP <span class="rowtag">v1.1</span></span><span class="cs">CPP(df_parts).run_num(dict_num_parts, labels) → <span class="out">df_feat</span></span></div>
   </div>
 </div><div class="sec">
-  <div class="sec-h"><span>Modeling &amp; Explainability</span><span class="hint"></span></div>
+  <div class="sec-h"><span>Modeling &amp; Explainability</span><span class="hint">PU · classify · SHAP</span></div>
   <div class="sec-body">
     <div class="cap-item"><span class="cw">Train with positives + unlabeled data</span><span class="cs">dPULearn().fit(X, labels)  [Wrapper]</span></div>
     <div class="cap-item"><span class="cw">Train + RFE + MC importance</span><span class="cs">TreeModel().fit(X, labels)  [Wrapper]</span></div>
     <div class="cap-item"><span class="cw">Per-feature / sample SHAP impact</span><span class="cs">ShapModel().fit(X, labels)  <span class="protag">pro</span></span></div>
   </div>
 </div><div class="sec">
-  <div class="sec-h"><span>Metrics &amp; Plotting</span><span class="hint">utilities</span></div>
+  <div class="sec-h"><span>Metrics &amp; Plotting</span><span class="hint">metrics · plots</span></div>
   <div class="sec-body">
     <div class="cap-item"><span class="cw">Adjusted AUC (class imbalance)</span><span class="cs">comp_auc_adjusted(X, labels)</span></div>
     <div class="cap-item"><span class="cw">BIC score · KL divergence</span><span class="cs">comp_bic_score(X, labels) · comp_kld</span></div>
@@ -467,7 +469,7 @@ cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</
     <div class="cap-item"><span class="cw">Plot style, fonts &amp; standalone legend</span><span class="cs">plot_settings(font_scale) · plot_legend(ax)</span></div>
   </div>
 </div><div class="sec">
-  <div class="sec-h"><span>Protein Design <span class="uc">(to be extended)</span></span><span class="hint"></span></div>
+  <div class="sec-h"><span>Protein Design <span class="uc">(to be extended)</span></span><span class="hint">mutations · design</span></div>
   <div class="sec-body">
     <div class="cap-item"><span class="cw">In-silico point mutations <span class="rowtag">v1.1</span></span><span class="cs">AAMut · AAMutPlot</span></div>
     <div class="cap-item"><span class="cw">Sequence-design libraries <span class="rowtag">v1.1</span></span><span class="cs">SeqMut · SeqMutPlot</span></div>
@@ -609,7 +611,7 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
   <div class="cols">
 
     <div class="page-banner">
-      <div class="brand"><img class="banner-logo" src="cs_img/logo.png" alt="AAanalysis"> <span class="suffix">· Reference</span></div>
+      <div class="brand"><img class="banner-logo" src="cs_img/logo.png" alt="AAanalysis"> <span class="suffix">· Concepts &amp; Reference</span></div>
       <div class="sub2">decision guide · gotchas · options · class ↔ plot · glossary · citations</div>
     </div>
 
@@ -621,19 +623,40 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
         <div class="dg-row"><span class="dg-l">per domain / region</span> <span class="dg-r">→ DOM_* · TMD model · parts = jmd_n·tmd·jmd_c</span></div>
         <div class="dg-row"><span class="dg-l">whole protein</span> <span class="dg-r">→ SEQ_* · composition · whole chain</span></div>
         <div class="dg-q">What labels do you have?</div>
-        <div class="dg-row"><span class="dg-l">labeled 0 / 1</span> <span class="dg-r">→ CPP → classify</span></div>
-        <div class="dg-row"><span class="dg-l">positives + unlabeled (1 / 2)</span> <span class="dg-r">→ CPP → dPULearn → classify</span></div>
-        <div class="dg-row"><span class="dg-l">no negatives at all</span> <span class="dg-r">→ AAWindowSampler → CPP → classify</span></div>
-        <div class="dg-q">Discover &amp; explain</div>
-        <div class="dg-row"><span class="dg-l">find features</span> <span class="dg-r">→ CPP.run — compositional or positional (via split_kws)</span></div>
-        <div class="dg-row"><span class="dg-l">rank / prune features</span> <span class="dg-r">→ TreeModel — importance + RFE (optional)</span></div>
-        <div class="dg-row"><span class="dg-l">explain a prediction</span> <span class="dg-r">→ CPPPlot.feature_map · ShapModel [pro]</span></div>
+        <div class="dg-row"><span class="dg-l">labeled 0 / 1</span> <span class="dg-r">→ CPP → ML model</span></div>
+        <div class="dg-row"><span class="dg-l">positives + unlabeled (1 / 2)</span> <span class="dg-r">→ CPP → dPULearn → ML model</span></div>
+        <div class="dg-row"><span class="dg-l">no negatives at all</span> <span class="dg-r">→ AAWindowSampler → CPP → ML model</span></div>
+        <div class="dg-q">What is your learning task?</div>
+        <div class="dg-row"><span class="dg-l">classify</span> <span class="dg-r">→ any classifier (sklearn)</span></div>
+        <div class="dg-row"><span class="dg-l">regress</span> <span class="dg-r">→ get_labels_quantile / tiered</span></div>
+        <div class="dg-row"><span class="dg-l">multi-class</span> <span class="dg-r">→ get_labels_ovr / ovo</span></div>
+        <div class="dg-row"><span class="dg-l">cluster · PCA</span> <span class="dg-r">→ AAclust · dPULearn</span></div>
+        <div class="dg-q">Which explainability do you need?</div>
+        <div class="dg-row"><span class="dg-l">group level</span> <span class="dg-r">→ CPP → TreeModel → CPPPlot → feature importance</span></div>
+        <div class="dg-row"><span class="dg-l">per protein</span> <span class="dg-r">→ CPP → ShapModel <span class="protag">pro</span> → CPPPlot → feature impact <span class="shap-up">↑</span><span class="shap-dn">↓</span></span></div>
       </div>
     </div>
 
     <div class="sec">
       <div class="sec-h"><span>Gotchas</span><span class="hint">things that bite</span></div>
-      <div class="sec-body"><ul class="bullets"><li>Labels: <b>1/0</b> = supervised (pos/neg). <b>dPULearn needs 1/2</b> (pos/unlabeled) and outputs <b>0 = reliable-negative</b>.</li><li><b>load_dataset(name, n=N)</b> returns <b>2N</b> rows (N per class) — count classes via df_seq['label'].</li><li>Compositional vs positional is not a flag — it <b>emerges from split_kws</b>.</li><li>Reproducibility: layered seeds — seed= ▸ random_state= ▸ options['random_state'] ▸ default.</li><li><b>DOM_*</b> parts need tmd_start/tmd_stop in df_seq; <b>[pro]</b> features need <span style='font-family:"AA Mono",monospace'>pip install 'aaanalysis[pro]'</span>.</li></ul></div>
+      <div class="sec-body"><ul class="bullets"><li>Labels: <b>1/0</b> = supervised (pos/neg). <b>dPULearn needs 1/2</b> (pos/unlabeled) and outputs <b>0 = reliable-negative</b>.</li><li><b>load_dataset(name, n=N)</b> returns <b>2N</b> rows (N per class) — count classes via df_seq['label'].</li><li>Compositional vs positional is not a flag — it <b>emerges from split_kws</b>.</li><li>Reproducibility: layered seeds — seed= ▸ random_state= ▸ options['random_state'] ▸ default.</li><li><b>DOM_*</b> parts need tmd_start/tmd_stop in df_seq; <b>[pro]</b> features need <span style='font-family:"AA Mono",monospace'>pip install 'aaanalysis[pro]'</span>.</li><li><b>TMD</b> = <b>Target</b> Middle Domain — generalized from <b>Transmembrane</b> domain (Breimann25a) to any central segment; JMD-N / JMD-C are its flanks.</li></ul></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Design Principles</span></div>
+      <div class="sec-body"><ul class="bullets"><li>Explicit over implicit — DataFrames everywhere</li><li>Wrappers (.fit / .predict / .eval) set trailing *_ attributes after fit</li><li>Biological interpretability is first-class</li><li>Small-data robust and reproducible (layered seeds)</li></ul></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Data Objects</span><span class="hint">shapes &amp; columns</span></div>
+      <div class="sec-body"><table class="kv"><tr><td class="k mono">df_seq</td><td class="d">entry · sequence · label · tmd_start · tmd_stop</td></tr><tr><td class="k mono">df_parts</td><td class="d">one column per part: tmd · jmd_n · jmd_c · …</td></tr><tr><td class="k mono">df_feat</td><td class="d">feature · category · subcategory · scale_name · abs_auc · mean_dif · p_val · positions</td></tr><tr><td class="k mono">X</td><td class="d">feature matrix (samples × features) from sf.feature_matrix</td></tr><tr><td class="k mono">dict_num</td><td class="d">{entry: ndarray (L×D)} — numerical per-residue values (v1.1)</td></tr></table></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span>Class · abbr ↔ Plot Class</span><span class="hint">mirrored API</span></div>
+      <div class="sec-body"><table class="kv">
+        <tr class="hdr"><td class="k">class</td><td class="d mono abbr">abbr</td><td class="d mono">plot class</td><td class="d" style="text-align:right">kind</td></tr>
+<tr><td class="k">SequencePreprocessor</td><td class="d mono abbr">sp</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">EmbeddingPreprocessor</td><td class="d mono abbr">ep</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">StructurePreprocessor  <span class="protag">pro</span></td><td class="d mono abbr">stp</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AnnotationPreprocessor  <span class="protag">pro</span></td><td class="d mono abbr">ap</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAlogo</td><td class="d mono abbr">aal</td><td class="d mono">AAlogoPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAWindowSampler</td><td class="d mono abbr">aaws</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">SequenceFeature</td><td class="d mono abbr">sf</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">CPP</td><td class="d mono abbr">cpp</td><td class="d mono">CPPPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAclust</td><td class="d mono abbr">aac</td><td class="d mono">AAclustPlot</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">NumericalFeature</td><td class="d mono abbr">nf</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">dPULearn</td><td class="d mono abbr">dpul</td><td class="d mono">dPULearnPlot</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">TreeModel</td><td class="d mono abbr">tm</td><td class="d mono">—</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">ShapModel  <span class="protag">pro</span></td><td class="d mono abbr">sm</td><td class="d mono">—</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">AAMut</td><td class="d mono abbr">aamut</td><td class="d mono">AAMutPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">SeqMut</td><td class="d mono abbr">seqmut</td><td class="d mono">SeqMutPlot</td><td class="d" style="text-align:right"></td></tr>      </table></div>
     </div>
 
     <div class="sec">
@@ -653,18 +676,6 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
     </div>
 
     <div class="sec">
-      <div class="sec-h"><span>Data Objects</span><span class="hint">shapes &amp; columns</span></div>
-      <div class="sec-body"><table class="kv"><tr><td class="k mono">df_seq</td><td class="d">entry · sequence · label · tmd_start · tmd_stop</td></tr><tr><td class="k mono">df_parts</td><td class="d">one column per part: tmd · jmd_n · jmd_c · …</td></tr><tr><td class="k mono">df_feat</td><td class="d">feature · abs_auc · mean_dif · p_val · positions · scale · category</td></tr><tr><td class="k mono">X</td><td class="d">feature matrix (samples × features) from sf.feature_matrix</td></tr><tr><td class="k mono">dict_num</td><td class="d">{entry: ndarray (L×D)} — numerical per-residue values (v1.1)</td></tr></table></div>
-    </div>
-
-    <div class="sec">
-      <div class="sec-h"><span>Class · abbr ↔ Plot Class</span><span class="hint">mirrored API</span></div>
-      <div class="sec-body"><table class="kv">
-        <tr class="hdr"><td class="k">class</td><td class="d mono abbr">abbr</td><td class="d mono">plot class</td><td class="d" style="text-align:right">kind</td></tr>
-<tr><td class="k">SequencePreprocessor</td><td class="d mono abbr">sp</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">EmbeddingPreprocessor</td><td class="d mono abbr">ep</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">StructurePreprocessor  <span class="protag">pro</span></td><td class="d mono abbr">stp</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AnnotationPreprocessor  <span class="protag">pro</span></td><td class="d mono abbr">ap</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAlogo</td><td class="d mono abbr">aal</td><td class="d mono">AAlogoPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAWindowSampler</td><td class="d mono abbr">aaws</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">SequenceFeature</td><td class="d mono abbr">sf</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">CPP</td><td class="d mono abbr">cpp</td><td class="d mono">CPPPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAclust</td><td class="d mono abbr">aac</td><td class="d mono">AAclustPlot</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">NumericalFeature</td><td class="d mono abbr">nf</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">dPULearn</td><td class="d mono abbr">dpul</td><td class="d mono">dPULearnPlot</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">TreeModel</td><td class="d mono abbr">tm</td><td class="d mono">—</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">ShapModel  <span class="protag">pro</span></td><td class="d mono abbr">sm</td><td class="d mono">—</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">AAMut</td><td class="d mono abbr">aamut</td><td class="d mono">AAMutPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">SeqMut</td><td class="d mono abbr">seqmut</td><td class="d mono">SeqMutPlot</td><td class="d" style="text-align:right"></td></tr>      </table></div>
-    </div>
-
-    <div class="sec">
       <div class="sec-h"><span>How to Cite</span><span class="hint">if you use AAanalysis</span></div>
       <div class="sec-body">        <div class="cite-item"><span class="ky"><a href="https://academic.oup.com/bioinformaticsadvances/article/4/1/vbae165/7852846" target="_blank" rel="noopener">[Breimann24a]</a></span><span class="nm">AAclust</span>
           <div class="rf">Breimann &amp; Frishman (2024a), AAclust: k-optimized clustering for selecting redundancy-reduced sets of amino acid scales</div><div class="jr"><a href="https://academic.oup.com/bioinformaticsadvances/article/4/1/vbae165/7852846" target="_blank" rel="noopener">Bioinformatics Advances ↗</a></div></div>
@@ -675,11 +686,6 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
 </div>
     </div>
 
-    <div class="sec">
-      <div class="sec-h"><span>Design Principles</span></div>
-      <div class="sec-body"><ul class="bullets"><li>Explicit over implicit — DataFrames everywhere</li><li>Wrappers (.fit / .predict / .eval) set trailing *_ attributes after fit</li><li>Biological interpretability is first-class</li><li>Small-data robust and reproducible (layered seeds)</li></ul></div>
-    </div>
-
     <div class="sec gloss-wide">
       <div class="sec-h"><span>Glossary</span><span class="hint">canonical vocabulary · CONTEXT.md</span></div>
       <div class="sec-body gloss-cols">
@@ -687,7 +693,7 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
     </div>
 
   </div>
-  <div class="footer-bar"><span><b>AAanalysis</b> · reference · decision guide · glossary</span>
+  <div class="footer-bar"><span><b>AAanalysis</b> · concepts &amp; reference · decision guide · glossary</span>
   <span class="r"><a class="docs-link" href="https://aaanalysis.readthedocs.io">aaanalysis.readthedocs.io</a> · v1.1.0 · 2026-06</span></div>
 </section>
 

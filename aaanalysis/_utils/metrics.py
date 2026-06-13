@@ -119,17 +119,33 @@ def _comp_kld_for_feature(args):
     return entropy(density1, density2)
 
 
-def kullback_leibler_divergence_(X=None, labels=None, label_test=0, label_ref=1):
-    """Calculate the average Kullback-Leibler Divergence (KLD) for each feature."""
+def _comp_kld_chunk(X1_chunk, X2_chunk):
+    """Compute KLD for a contiguous block of features (one parallel unit)."""
+    return np.array([_comp_kld_for_feature((X1_chunk[:, i], X2_chunk[:, i]))
+                     for i in range(X1_chunk.shape[1])])
+
+
+def kullback_leibler_divergence_(X=None, labels=None, label_test=0, label_ref=1, n_jobs=1):
+    """Calculate the average Kullback-Leibler Divergence (KLD) for each feature.
+
+    Per-feature KLDs are independent, so chunking across workers yields the same
+    values in the same order (identical to the serial path). ``n_jobs=1`` keeps the
+    original in-process loop; ``None`` defers to the optimized worker count.
+    """
     mask_test = np.asarray([x == label_test for x in labels])
     mask_ref = np.asarray([x == label_ref for x in labels])
     X1 = X[mask_ref]
     X2 = X[mask_test]
-    # Prepare arguments for each feature
-    args = [(X1[:, i], X2[:, i]) for i in range(X.shape[1])]
-    # Compute KLD for each feature
-    kld = np.array([_comp_kld_for_feature(arg) for arg in args])
-    return kld
+    n_jobs = resolve_n_jobs(n_jobs=n_jobs, n_work=X.shape[1])
+    if n_jobs == 1:
+        # Prepare arguments for each feature and compute KLD for each feature
+        args = [(X1[:, i], X2[:, i]) for i in range(X.shape[1])]
+        return np.array([_comp_kld_for_feature(arg) for arg in args])
+    feature_chunks = np.array_split(np.arange(X.shape[1]), n_jobs)
+    with Parallel(n_jobs=n_jobs) as parallel:
+        results = parallel(delayed(_comp_kld_chunk)(X1[:, chunk], X2[:, chunk])
+                           for chunk in feature_chunks)
+    return np.concatenate(results)
 
 
 # Per-protein site-localization metrics (windowed protease / PTM prediction)
