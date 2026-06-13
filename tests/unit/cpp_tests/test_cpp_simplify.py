@@ -96,6 +96,15 @@ class TestSimplify:
         )
 
     @settings(max_examples=3, deadline=None)
+    @given(candidate_search=some.sampled_from(["exact", "fast"]))
+    def test_candidate_search(self, fitted, candidate_search):
+        cpp, df_feat, labels = fitted
+        out = _simplify(cpp, df_feat, labels, candidate_search=candidate_search)
+        assert list(out.columns) == list(ut.LIST_COLS_FEAT) and 1 <= len(out) <= len(
+            df_feat
+        )
+
+    @settings(max_examples=3, deadline=None)
     @given(ml_model=some.sampled_from(["svm", "rf", "log_reg"]))
     def test_ml_model_presets(self, fitted, ml_model):
         cpp, df_feat, labels = fitted
@@ -145,6 +154,11 @@ class TestSimplify:
         cpp, df_feat, labels = fitted
         with pytest.raises(ValueError, match="strategy"):
             cpp.simplify(df_feat=df_feat, labels=labels, strategy="bogus")
+
+    def test_invalid_candidate_search(self, fitted):
+        cpp, df_feat, labels = fitted
+        with pytest.raises(ValueError, match="candidate_search"):
+            cpp.simplify(df_feat=df_feat, labels=labels, candidate_search="bogus")
 
     def test_invalid_on_unimprovable(self, fitted):
         cpp, df_feat, labels = fitted
@@ -208,6 +222,27 @@ class TestSimplifyComplex:
             assert (
                 accepted["interpretability_cand"] < accepted["interpretability_orig"]
             ).all()
+
+    def test_candidate_search_exact_is_default(self, fitted):
+        # candidate_search='exact' must reproduce the no-arg default byte-for-byte
+        # (the opt-in heuristic never touches the default path).
+        cpp, df_feat, labels = fitted
+        for strategy in ["greedy", "consolidate", "swap_all"]:
+            default = _simplify(cpp, df_feat, labels, strategy=strategy)
+            exact = _simplify(
+                cpp, df_feat, labels, strategy=strategy, candidate_search="exact"
+            )
+            assert exact.equals(default), strategy
+
+    def test_candidate_search_fast_noop_for_swap_all(self, fitted):
+        # swap_all stops at the first viable candidate, so the cap is a no-op:
+        # 'fast' must equal 'exact' for swap_all.
+        cpp, df_feat, labels = fitted
+        exact = _simplify(cpp, df_feat, labels, strategy="swap_all",
+                          candidate_search="exact")
+        fast = _simplify(cpp, df_feat, labels, strategy="swap_all",
+                         candidate_search="fast")
+        assert fast.equals(exact)
 
     def test_redundancy_does_not_increase_count(self, fitted):
         cpp, df_feat, labels = fitted
