@@ -166,4 +166,4 @@ Where to go next
    - **Mechanics:** the per-function :ref:`tutorials <tutorials>` cover
      ``CPP``, ``SequenceFeature``, ``AAclust``, and the rest.
    - **Vocabulary:** every term used here is defined in the
-     :ref:`glossary <glossary>`. The taxonomy itself is recorded in ADR-0022.
+     :ref:`glossary <glossary>`.
