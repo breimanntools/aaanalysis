@@ -56,3 +56,18 @@ Then commit the regenerated `docs/source/_static/cheat_sheet.{html,pdf}`.
   TTFs, which also make the PDF reproducible on any machine (incl. Linux CI).
 - **Not packaged:** this directory is docs tooling; it is not part of the
   installed `aaanalysis` wheel.
+
+## Planned (deferred — blocked by API ergonomics)
+
+The dPULearn / AAclust / ShapModel worked-example recipes in `content.py` still
+carry API plumbing that a few API improvements would remove. Once these land,
+simplify the corresponding recipes to the one-call forms:
+
+- [ ] **dPULearn** → `aa.dPULearn().fit(X, labels, label_unl=0, n_neg=10)` —
+  drop the manual `1/0 → 1/2` `labels_pu` encoding. Blocked by #157.
+- [ ] **AAclust** → `aa.AAclustPlot().centers(aac)` — drop the
+  `np.array(df_scales).T, labels=aac.labels_` plumbing. Blocked by #158.
+- [ ] **ShapModel** → `aa.ShapModel().fit(X, labels, fuzzy={'P05067': 0.6})` —
+  drop the manual entry-index lookup + float-label construction. Blocked by #129.
+
+Part of #81 (cheat sheet).
