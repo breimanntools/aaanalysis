@@ -306,7 +306,7 @@ FLAGSHIP_RECIPES = [
              "aac_plot = aa.AAclustPlot()\n"
              "aac_plot.centers(np.array(df_scales).T, labels=aac.labels_)\n"
              "plt.tight_layout(); plt.show()"},
-    {"cls": "dPULearn — PCA", "tag": "reliable negatives · PU learning", "img": "pca",
+    {"cls": "dPULearn — PCA", "tag": '<span class="hint-neg">reliable negatives</span> · PU learning', "img": "pca",
      "caption": "dPULearnPlot.pca · reliable negatives",
      "code": "# DOM_GSEC ships 1/0 — treat 0 as the unlabeled pool (label_unl=0)\n"
              "dpul = aa.dPULearn()\n"

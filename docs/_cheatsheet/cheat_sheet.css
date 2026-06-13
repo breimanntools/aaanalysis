@@ -83,6 +83,7 @@ code, pre, .mono { font-family: "AA Mono", Menlo, "DejaVu Sans Mono", monospace;
 /* test/ref colour cue in the CPP-feature hint (legible on the dark header bar) */
 .sec-h .hint .hint-test { color: #6abf67; opacity: 1; }  /* test group (green) */
 .sec-h .hint .hint-ref  { color: #c2c2c2; opacity: 1; }  /* reference group (gray) */
+.sec-h .hint .hint-neg  { color: #d4b35a; opacity: 1; }  /* reliable negatives (gold, lightened COLOR_REL_NEG for the dark bar) */
 .sec-body { padding: 2px 1px 0; }
 
 .sub {
