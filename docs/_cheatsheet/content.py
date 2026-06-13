@@ -256,7 +256,7 @@ FLAGSHIP_RECIPES = [
     {"cls": "CPP — feature",
      "tag": 'top feature · <span class="hint-test">test</span> vs <span class="hint-ref">ref</span>',
      "img": "feature",
-     "caption": "CPPPlot.feature · top feature, REF vs TEST",
+     "caption": "CPPPlot.feature · top feature",
      "code": "# default parts + a redundancy-reduced set of 100 scales\n"
              "df_parts = sf.get_df_parts(df_seq=df_seq)\n"
              "df_scales = aa.AAclust().select_scales(\n"
@@ -273,7 +273,7 @@ FLAGSHIP_RECIPES = [
              "plt.tight_layout(); plt.show()"},
     {"cls": "CPP — feature map", "tag": "group level · importance",
      "imgs": ["feature_map", "feature_map_simplified"],
-     "img_labels": ["CPPPlot.feature_map · all scales", "CPPPlot.feature_map · simplified"], "h": 44,
+     "img_labels": ["CPPPlot.feature_map · all scales", "CPPPlot.feature_map · simplified"], "h": 48,
      "code": "# global Part × Split × Scale map — all AAontology scales\n"
              "cpp_plot = aa.CPPPlot(); aa.plot_settings(font_scale=0.65)\n"
              "cpp_plot.feature_map(df_feat=df_feat)\n"
@@ -283,14 +283,12 @@ FLAGSHIP_RECIPES = [
              "plt.tight_layout(); plt.show()"},
     {"cls": "ShapModel — explain a prediction", "tag": '<span class="hint-pos">sample</span> level · [pro]',
      "imgs": ["shap_profile", "feature_map_shap"],
-     "img_labels": ["CPPPlot.profile · SHAP", "CPPPlot.feature_map · SHAP"], "h": 36,
-     "code": "# advanced: per-sample explanation (fuzzy labeling demo)\n"
-             "# fuzzy labeling: APP's label is its soft prediction score (0.6, not 1)\n"
-             "# fuzzy_labels is keyed by entry, so no manual row-index lookup is needed\n"
+     "img_labels": ["CPPPlot.profile · SHAP", "CPPPlot.feature_map · SHAP"], "h": 41,
+     "code": "# per-sample SHAP — APP's soft label (0.6), keyed by entry\n"
              "sm = aa.ShapModel()\n"
-             "sm.fit(X, labels=labels, df_seq=df_seq, fuzzy_labels={'P05067': 0.6})   # APP\n"
+             "sm.fit(X, labels=labels, df_seq=df_seq, fuzzy_labels={'P05067': 0.6})\n"
              "df_feat = sm.add_feat_impact(df_feat=df_feat, df_seq=df_seq,\n"
-             "              samples='P05067', names='APP')   # select by accession\n"
+             "                             samples='P05067', names='APP')\n"
              "args_seq = sf.get_args_seq(df_seq=df_seq, sample='P05067')\n"
              "ka = dict(col_imp='feat_impact_APP', shap_plot=True, **args_seq)\n"
              "cpp_plot.profile(df_feat=df_feat, **ka)\n"
@@ -335,10 +333,10 @@ FLAGSHIP_RECIPES = [
 # column. Feature maps sit in the middle column.
 RECIPE_GROUPS = [
     {"recipes": [FLAGSHIP_RECIPES[0]]},                                  # AAlogo (col1, big logo)
-    {"recipes": [FLAGSHIP_RECIPES[2], FLAGSHIP_RECIPES[1]], "h": 30},    # feature | ranking (col1)
+    {"recipes": [FLAGSHIP_RECIPES[2], FLAGSHIP_RECIPES[1]], "h": 35},    # feature | ranking (col1)
     {"recipes": [FLAGSHIP_RECIPES[3]]},                                  # feature map: full | simplified (col2 top)
     {"recipes": [FLAGSHIP_RECIPES[4]]},                                  # SHAP: profile | feature map (col2 bottom)
-    {"recipes": [FLAGSHIP_RECIPES[5], FLAGSHIP_RECIPES[6]], "h": 37},    # AAclust | dPULearn (col3)
+    {"recipes": [FLAGSHIP_RECIPES[5], FLAGSHIP_RECIPES[6]], "h": 42},    # AAclust | dPULearn (col3)
     {"recipes": [FLAGSHIP_RECIPES[7]]},                                  # AAWindowSampler (code-only, pairs with dPULearn — col3)
 ]
 
@@ -454,9 +452,9 @@ CLASS_PLOT = [
     ("AAWindowSampler", "aaws", "—", ""),
     # Feature Engineering
     ("SequenceFeature", "sf", "—", ""),
-    ("CPP", "cpp", "CPPPlot", ""),
-    ("AAclust", "aac", "AAclustPlot", "Wrapper"),
     ("NumericalFeature", "nf", "—", ""),
+    ("AAclust", "aac", "AAclustPlot", "Wrapper"),
+    ("CPP", "cpp", "CPPPlot", ""),
     # PU Learning
     ("dPULearn", "dpul", "dPULearnPlot", "Wrapper"),
     # Explainable AI
