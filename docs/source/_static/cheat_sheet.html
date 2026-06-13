@@ -560,9 +560,8 @@ plt.tight_layout(); plt.show()</pre>
 sm = <span class="c-nm">aa.ShapModel</span>()
 sm.fit(X, labels=labels, df_seq=df_seq, fuzzy_labels={<span class="c-st">&#x27;P05067&#x27;</span>: 0.6})   <span class="c-cm"># APP</span>
 df_feat = sm.add_feat_impact(df_feat=df_feat, df_seq=df_seq,
-              sample_positions=<span class="c-st">&#x27;P05067&#x27;</span>, names=<span class="c-st">&#x27;APP&#x27;</span>)
-args_seq = {k + <span class="c-st">&#x27;_seq&#x27;</span>: v for k, v in sf.get_df_parts(
-    df_seq=df_seq).loc[<span class="c-st">&#x27;P05067&#x27;</span>].to_dict().items()}
+              samples=<span class="c-st">&#x27;P05067&#x27;</span>, names=<span class="c-st">&#x27;APP&#x27;</span>)   <span class="c-cm"># select by accession</span>
+args_seq = sf.get_args_seq(df_seq=df_seq, sample=<span class="c-st">&#x27;P05067&#x27;</span>)   <span class="c-cm"># tmd/jmd seq, no glue</span>
 ka = dict(col_imp=<span class="c-st">&#x27;feat_impact_APP&#x27;</span>, shap_plot=True, **args_seq)
 cpp_plot.profile(df_feat=df_feat, **ka)
 cpp_plot.feature_map(df_feat=df_feat, name_test=<span class="c-st">&#x27;APP&#x27;</span>, **ka)

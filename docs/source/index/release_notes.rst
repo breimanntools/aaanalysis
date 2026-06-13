@@ -70,6 +70,10 @@ Added
 - **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts``
   from per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output), so
   each sequence part can be generated with its own recipe.
+- **SequenceFeature.get_args_seq**: Return one protein's ``{jmd_n_seq, tmd_seq,
+  jmd_c_seq}`` as a ready-to-splat ``args_seq`` dict (selected by entry or position),
+  removing the manual ``get_df_parts`` slicing glue when passing a per-protein
+  sequence to ``CPPPlot.profile`` / ``CPPPlot.feature_map`` (e.g. sample-level SHAP plots).
 - **SequenceFeature.get_feature_descriptions**: Build one standardized,
   human-readable sentence per ``PART-SPLIT-SCALE`` feature id, combining the
   sequence region, the split (e.g. ``"segment 2 of 4"``), and the AAontology scale
@@ -95,9 +99,11 @@ Added
   ``df_seq``, overriding the matching entries in ``labels`` and enabling fuzzy
   labeling without a manual row-index lookup or array mutation.
   ``add_feat_impact`` and ``add_sample_mean_dif`` additionally accept ``df_seq``
-  and let ``sample_positions`` be given as entry name(s), resolved to the matching
-  row(s) (column names default to the accession). The array ``labels`` +
-  ``fuzzy_labeling=True`` and integer ``sample_positions`` paths are unchanged.
+  and a new ``samples`` parameter that takes either row position(s) or entry
+  name(s), resolved to the matching row(s) (column names default to the
+  accession). The array ``labels`` + ``fuzzy_labeling=True`` path is unchanged;
+  the former ``sample_positions`` parameter remains as a deprecated alias for
+  ``samples`` (emits a ``DeprecationWarning``; removed in 1.2.0).
 
 **Sequence Analysis**
 

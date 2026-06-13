@@ -219,14 +219,14 @@ class TestAddFeatImpactBranch:
         # sm_add_feat_impact.py:88 -> sample_positions int single-sample arm
         sm = _fitted_sm(n_feat=4)
         df_feat = _df_feat(4)
-        out = sm.add_feat_impact(df_feat=df_feat, sample_positions=0, names="P0")
+        out = sm.add_feat_impact(df_feat=df_feat, samples=0, names="P0")
         assert any("feat_impact" in c for c in list(out))
 
     def test_group_average_path(self):
         # sm_add_feat_impact.py:43,49,95 (group) + _shap_model.py:180,184
         sm = _fitted_sm(n_feat=4)
         df_feat = _df_feat(4)
-        out = sm.add_feat_impact(df_feat=df_feat, sample_positions=[0, 1, 2],
+        out = sm.add_feat_impact(df_feat=df_feat, samples=[0, 1, 2],
                                  group_average=True, normalize=True)
         assert any("feat_impact" in c for c in list(out))
 
@@ -237,7 +237,7 @@ class TestAddFeatImpactBranch:
         import warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            out = sm.add_feat_impact(df_feat=df_feat, sample_positions=[0, 1, 2, 3],
+            out = sm.add_feat_impact(df_feat=df_feat, samples=[0, 1, 2, 3],
                                      group_average=True, normalize=True)
         assert any("feat_impact" in c for c in list(out))
 
@@ -246,28 +246,28 @@ class TestAddFeatImpactBranch:
         sm = _fitted_sm(n_feat=4)
         df_feat = _df_feat(4)
         with pytest.raises(ValueError, match="must be a list"):
-            sm.add_feat_impact(df_feat=df_feat, sample_positions=2, group_average=True)
+            sm.add_feat_impact(df_feat=df_feat, samples=2, group_average=True)
 
     def test_group_average_single_position_raises(self):
         # _shap_model.py:214 -> group_average with single-element list
         sm = _fitted_sm(n_feat=4)
         df_feat = _df_feat(4)
         with pytest.raises(ValueError):
-            sm.add_feat_impact(df_feat=df_feat, sample_positions=[0], group_average=True)
+            sm.add_feat_impact(df_feat=df_feat, samples=[0], group_average=True)
 
     def test_group_average_invalid_names_type_raises(self):
         # _shap_model.py:187 -> group_average with list names (not str/None)
         sm = _fitted_sm(n_feat=4)
         df_feat = _df_feat(4)
         with pytest.raises(ValueError):
-            sm.add_feat_impact(df_feat=df_feat, sample_positions=[0, 1, 2],
+            sm.add_feat_impact(df_feat=df_feat, samples=[0, 1, 2],
                                group_average=True, names=["a", "b"])
 
     def test_group_average_names_str_kept(self):
         # _shap_model.py:184 -> group_average with str names kept as-is
         sm = _fitted_sm(n_feat=4)
         df_feat = _df_feat(4)
-        out = sm.add_feat_impact(df_feat=df_feat, sample_positions=[0, 1, 2],
+        out = sm.add_feat_impact(df_feat=df_feat, samples=[0, 1, 2],
                                  group_average=True, names="MyGroup")
         assert any("MyGroup" in c for c in list(out))
 
@@ -275,6 +275,6 @@ class TestAddFeatImpactBranch:
         # _shap_model.py:232-235 -> feat_impact cols already present (non-importance)
         sm = _fitted_sm(n_feat=4)
         df_feat = _df_feat(4)
-        out = sm.add_feat_impact(df_feat=df_feat, sample_positions=0, names="P0")
+        out = sm.add_feat_impact(df_feat=df_feat, samples=0, names="P0")
         with pytest.raises(ValueError, match="feat_impact"):
-            sm.add_feat_impact(df_feat=out, sample_positions=0, names="P0", drop=False)
+            sm.add_feat_impact(df_feat=out, samples=0, names="P0", drop=False)
