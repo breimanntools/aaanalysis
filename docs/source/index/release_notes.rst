@@ -201,6 +201,16 @@ Changed
   plus each per-feature value mapping); the first optimal alignment is
   deterministic, so cached and recomputed encoder output are byte-identical
   (~12x off the repeated-alignment overhead).
+- **Pooled, optionally concurrent web fetches**:
+  ``StructurePreprocessor.fetch_alphafold`` and
+  ``AnnotationPreprocessor.fetch_uniprot`` now route every request through a
+  pooled ``requests.Session`` (one per worker thread) rather than opening a
+  fresh connection per request, and accept a new ``max_workers`` parameter for
+  threaded bulk fetching. Concurrency is **off by default** (``max_workers=None``
+  or ``1`` keeps the unchanged sequential path) because parallel requests to
+  AlphaFold DB / UniProt risk HTTP-429 throttling; when enabled, results are
+  reassembled in input order, so the returned status table / ``df_annot`` and
+  the on-disk files are byte-identical regardless of worker count.
 - **dPULearn.fit**: Flexible, package-consistent label handling via ``label_pos`` /
   ``label_unl`` / ``label_neg`` markers. Pass standard ``{0, 1}`` labels directly with
   ``label_unl=0`` (``0`` = unlabeled, ``1`` = positive), or any positive / unlabeled /

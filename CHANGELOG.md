@@ -69,6 +69,13 @@ and a suite of site-localization metrics and plotting helpers.
   (`contact_count_8A`/`12A`) vectorized (~50x, identical counts) and its
   per-(target, atom) sequence alignment cached across the ~26 redundant
   re-alignments each entry triggers (~12x off the alignment overhead, byte-identical encoder output).
+- `StructurePreprocessor.fetch_alphafold` and `AnnotationPreprocessor.fetch_uniprot`
+  reuse a pooled HTTP session (one `requests.Session` per worker thread) instead of
+  opening a fresh connection per request, and gain an opt-in `max_workers` parameter
+  for threaded bulk fetching. Concurrency is **off by default** (`max_workers=None`/`1`
+  is the unchanged sequential path) because parallel requests to AlphaFold DB / UniProt
+  risk HTTP-429 throttling; results are reassembled in input order, so the status
+  table / `df_annot` and on-disk files are byte-identical regardless of worker count.
 - `dPULearn.fit` gains flexible, package-consistent label handling via
   `label_pos` / `label_unl` / `label_neg` markers: pass standard `{0, 1}` labels
   directly with `label_unl=0`, or an arbitrary positive/unlabeled/negative

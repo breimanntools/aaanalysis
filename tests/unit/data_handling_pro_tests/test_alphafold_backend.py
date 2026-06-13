@@ -2,7 +2,8 @@
 ``data_handling_pro/_backend/struct_preproc/_alphafold.py``
 (fetch_af_file / fetch_alphafold_bulk and the URL/filename helpers).
 
-The network endpoint is never hit by the suite; ``requests.get`` is mocked.
+The network endpoint is never hit by the suite; the backend's ``http_get_``
+transport seam is mocked.
 A parity test asserts that the filenames written by the backend are exactly
 the ones the StructurePreprocessor file resolvers find, so a download feeds
 ``encode_pdb`` / ``encode_pae`` / ``get_dssp`` with no glue.
@@ -67,47 +68,47 @@ class TestResolveUrls:
     (the live-endpoint guard is the network test in tests/integration/)."""
 
     def test_valid_returns_pdb_and_pae_urls(self):
-        with patch(f"{MODULE}.requests.get", return_value=_api_resp()):
+        with patch(f"{MODULE}.http_get_", return_value=_api_resp()):
             model_url, pae_url = af._af_resolve_urls("P1", "pdb", 5.0)
         assert model_url.endswith("model_v6.pdb")
         assert pae_url.endswith("predicted_aligned_error_v6.json")
 
     def test_valid_cif_uses_cif_url(self):
-        with patch(f"{MODULE}.requests.get", return_value=_api_resp()):
+        with patch(f"{MODULE}.http_get_", return_value=_api_resp()):
             model_url, _ = af._af_resolve_urls("P1", "cif", 5.0)
         assert model_url.endswith("model_v6.cif")
 
     def test_valid_404_returns_none(self):
-        with patch(f"{MODULE}.requests.get", return_value=_api_resp(404)):
+        with patch(f"{MODULE}.http_get_", return_value=_api_resp(404)):
             assert af._af_resolve_urls("P1", "pdb", 5.0) is None
 
     def test_valid_400_returns_none(self):
-        with patch(f"{MODULE}.requests.get", return_value=_api_resp(400)):
+        with patch(f"{MODULE}.http_get_", return_value=_api_resp(400)):
             assert af._af_resolve_urls("BADACC", "pdb", 5.0) is None
 
     def test_valid_empty_records_returns_none(self):
-        with patch(f"{MODULE}.requests.get", return_value=_api_resp(records=[])):
+        with patch(f"{MODULE}.http_get_", return_value=_api_resp(records=[])):
             assert af._af_resolve_urls("P1", "pdb", 5.0) is None
 
     def test_valid_no_pae_doc_url(self):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    return_value=_api_resp(records=[{"pdbUrl": "http://m.pdb"}])):
             model_url, pae_url = af._af_resolve_urls("P1", "pdb", 5.0)
         assert model_url == "http://m.pdb" and pae_url is None
 
     def test_invalid_500_raises(self):
-        with patch(f"{MODULE}.requests.get", return_value=_api_resp(500)):
+        with patch(f"{MODULE}.http_get_", return_value=_api_resp(500)):
             with pytest.raises(RuntimeError, match="HTTP 500"):
                 af._af_resolve_urls("P1", "pdb", 5.0)
 
     def test_invalid_missing_model_key_raises(self):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    return_value=_api_resp(records=[{"paeDocUrl": "x"}])):
             with pytest.raises(RuntimeError, match="no 'pdbUrl'"):
                 af._af_resolve_urls("P1", "pdb", 5.0)
 
     def test_invalid_transport_error_raises(self):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=requests.RequestException("boom")):
             with pytest.raises(RuntimeError, match="failed"):
                 af._af_resolve_urls("P1", "pdb", 5.0)
@@ -118,38 +119,38 @@ class TestFetchAfFile:
 
     def test_valid_200_writes_and_returns_true(self, tmp_path):
         dest = tmp_path / "P1.pdb"
-        with patch(f"{MODULE}.requests.get", return_value=_resp(200, b"XYZ")):
+        with patch(f"{MODULE}.http_get_", return_value=_resp(200, b"XYZ")):
             ok = af.fetch_af_file("http://x", dest, timeout=5.0)
         assert ok is True
         assert dest.read_bytes() == b"XYZ"
 
     def test_valid_404_returns_false_no_file(self, tmp_path):
         dest = tmp_path / "P1.pdb"
-        with patch(f"{MODULE}.requests.get", return_value=_resp(404)):
+        with patch(f"{MODULE}.http_get_", return_value=_resp(404)):
             ok = af.fetch_af_file("http://x", dest)
         assert ok is False
         assert not dest.exists()
 
     def test_valid_passes_timeout(self, tmp_path):
         dest = tmp_path / "P1.pdb"
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    return_value=_resp(200)) as mg:
             af.fetch_af_file("http://x", dest, timeout=12.0)
         assert mg.call_args.kwargs["timeout"] == 12.0
 
     def test_valid_atomic_no_part_left(self, tmp_path):
         dest = tmp_path / "P1.pdb"
-        with patch(f"{MODULE}.requests.get", return_value=_resp(200)):
+        with patch(f"{MODULE}.http_get_", return_value=_resp(200)):
             af.fetch_af_file("http://x", dest)
         assert not (tmp_path / "P1.pdb.part").exists()
 
     def test_invalid_500_raises(self, tmp_path):
-        with patch(f"{MODULE}.requests.get", return_value=_resp(500)):
+        with patch(f"{MODULE}.http_get_", return_value=_resp(500)):
             with pytest.raises(RuntimeError, match="HTTP 500"):
                 af.fetch_af_file("http://x", tmp_path / "P1.pdb")
 
     def test_invalid_transport_error_raises(self, tmp_path):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=requests.RequestException("boom")):
             with pytest.raises(RuntimeError, match="failed"):
                 af.fetch_af_file("http://x", tmp_path / "P1.pdb")
@@ -177,7 +178,7 @@ class TestFetchAlphafoldBulk:
         assert not bool(df.iloc[0]["model_ok"]) and not bool(df.iloc[0]["pae_ok"])
 
     def test_valid_single_entry_both_ok(self, tmp_path):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=_seq_responses(200, 200)):
             df = af.fetch_alphafold_bulk(["P1"], tmp_path, "pdb",
                                          30.0, True, False)
@@ -187,7 +188,7 @@ class TestFetchAlphafoldBulk:
         assert (tmp_path / "AF-P1-F1-predicted_aligned_error_v4.json").is_file()
 
     def test_valid_multiple_entries(self, tmp_path):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=_seq_responses(200, 200, 200, 200)):
             df = af.fetch_alphafold_bulk(["P1", "P2"], tmp_path, "pdb",
                                          30.0, True, False)
@@ -195,7 +196,7 @@ class TestFetchAlphafoldBulk:
         assert df["alphafold_ok"].all()
 
     def test_valid_cif_format(self, tmp_path):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=_seq_responses(200, 200)):
             af.fetch_alphafold_bulk(["P1"], tmp_path, "cif", 30.0, True, False)
         assert (tmp_path / "P1.cif").is_file()
@@ -203,7 +204,7 @@ class TestFetchAlphafoldBulk:
     def test_valid_skip_existing_skips(self, tmp_path):
         (tmp_path / "P1.pdb").write_text("x")
         (tmp_path / "AF-P1-F1-predicted_aligned_error_v4.json").write_text("{}")
-        with patch(f"{MODULE}.requests.get") as mg:
+        with patch(f"{MODULE}.http_get_") as mg:
             df = af.fetch_alphafold_bulk(["P1"], tmp_path, "pdb",
                                          30.0, True, False)
         mg.assert_not_called()
@@ -213,7 +214,7 @@ class TestFetchAlphafoldBulk:
     def test_valid_partial_refetches_only_missing(self, tmp_path):
         # Model already present, PAE missing -> only one GET (for PAE).
         (tmp_path / "P1.pdb").write_text("x")
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=_seq_responses(200)) as mg:
             df = af.fetch_alphafold_bulk(["P1"], tmp_path, "pdb",
                                          30.0, True, False)
@@ -223,7 +224,7 @@ class TestFetchAlphafoldBulk:
     def test_valid_skip_existing_false_always_downloads(self, tmp_path):
         (tmp_path / "P1.pdb").write_text("x")
         (tmp_path / "AF-P1-F1-predicted_aligned_error_v4.json").write_text("{}")
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=_seq_responses(200, 200)) as mg:
             af.fetch_alphafold_bulk(["P1"], tmp_path, "pdb",
                                     30.0, False, False)
@@ -231,7 +232,7 @@ class TestFetchAlphafoldBulk:
 
     def test_valid_mixed_success_and_404(self, tmp_path):
         # P1 ok; P2 model ok, PAE 404.
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=_seq_responses(200, 200, 200, 404)):
             with pytest.warns(UserWarning, match="PAE for 'P2'"):
                 df = af.fetch_alphafold_bulk(["P1", "P2"], tmp_path, "pdb",
@@ -242,7 +243,7 @@ class TestFetchAlphafoldBulk:
         assert df.iloc[1]["pae_path"] == ""
 
     def test_valid_404_model_warns(self, tmp_path):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=_seq_responses(404, 200)):
             with pytest.warns(UserWarning, match="model for 'P1'"):
                 df = af.fetch_alphafold_bulk(["P1"], tmp_path, "pdb",
@@ -251,20 +252,20 @@ class TestFetchAlphafoldBulk:
         assert df.iloc[0]["model_path"] == ""
 
     def test_valid_verbose_prints_entry(self, tmp_path, capsys):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=_seq_responses(200, 200)):
             af.fetch_alphafold_bulk(["P1"], tmp_path, "pdb", 30.0, True, True)
         assert "P1" in capsys.readouterr().out
 
     def test_valid_columns_schema(self, tmp_path):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=_seq_responses(200, 200)):
             df = af.fetch_alphafold_bulk(["P1"], tmp_path, "pdb",
                                          30.0, True, False)
         assert list(df.columns) == af.COLS_AF_STATUS
 
     def test_invalid_network_error_propagates(self, tmp_path):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=requests.RequestException("down")):
             with pytest.raises(RuntimeError):
                 af.fetch_alphafold_bulk(["P1"], tmp_path, "pdb",
@@ -283,7 +284,7 @@ class TestFetchAlphafoldBulkComplex:
     def test_written_names_resolve_via_resolvers(self, tmp_path):
         # The no-glue contract: backend-written filenames are exactly what
         # encode_pdb / encode_pae find.
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=_seq_responses(200, 200)):
             af.fetch_alphafold_bulk(["P12345"], tmp_path, "pdb",
                                     30.0, True, False)
@@ -293,14 +294,14 @@ class TestFetchAlphafoldBulkComplex:
         assert pae_path is not None
 
     def test_cif_names_resolve(self, tmp_path):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=_seq_responses(200, 200)):
             af.fetch_alphafold_bulk(["P9"], tmp_path, "cif", 30.0, True, False)
         struct_path, fmt = resolve_structure_path(tmp_path, "P9")
         assert struct_path is not None and fmt == "cif"
 
     def test_status_paths_point_at_real_files(self, tmp_path):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=_seq_responses(200, 200)):
             df = af.fetch_alphafold_bulk(["P1"], tmp_path, "pdb",
                                          30.0, True, False)
@@ -308,14 +309,14 @@ class TestFetchAlphafoldBulkComplex:
         assert Path(df.iloc[0]["pae_path"]).is_file()
 
     def test_skipped_false_when_downloaded(self, tmp_path):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=_seq_responses(200, 200)):
             df = af.fetch_alphafold_bulk(["P1"], tmp_path, "pdb",
                                          30.0, True, False)
         assert bool(df.iloc[0]["skipped"]) is False
 
     def test_returns_dataframe(self, tmp_path):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=_seq_responses(200, 200)):
             df = af.fetch_alphafold_bulk(["P1"], tmp_path, "pdb",
                                          30.0, True, False)
