@@ -509,7 +509,7 @@ df_parts = sf.get_df_parts(df_seq=df_seq,
 plt.tight_layout(); plt.show()</pre>
 <figure class="recipe-fig"><img class="recipe-img logo" src="cs_plots/logo.png" alt="AAlogo — see the data output"><figcaption>AAlogoPlot.single_logo · per-position enrichment</figcaption></figure>  </div>
 </div><div class="sec pairsec">
-  <div class="sec-h"><span>CPP — feature</span><span class="hint">top feature · <span class="hint-ref">ref</span> vs <span class="hint-test">test</span></span></div>
+  <div class="sec-h"><span>CPP — feature</span><span class="hint">top feature · <span class="hint-test">test</span> vs <span class="hint-ref">ref</span></span></div>
   <div class="sec-body"><pre class="code"><span class="c-cm"># default parts + a redundancy-reduced set of 100 scales</span>
 df_parts = sf.get_df_parts(df_seq=df_seq)
 df_scales = <span class="c-nm">aa.AAclust</span>().select_scales(
@@ -537,7 +537,7 @@ plt.tight_layout(); plt.show()</pre>
     <figure><img class="pair-img" src="cs_plots/ranking.png" alt="CPP — ranking"><figcaption>CPPPlot.ranking · top-15 features</figcaption></figure>
   </div>
 </div><div class="sec">
-  <div class="sec-h"><span>CPP — feature map</span><span class="hint">group level · full vs simplified</span></div>
+  <div class="sec-h"><span>CPP — feature map</span><span class="hint">group level · importance</span></div>
   <div class="sec-body">
     <pre class="code"><span class="c-cm"># global Part × Split × Scale map — all AAontology scales</span>
 cpp_plot = <span class="c-nm">aa.CPPPlot</span>(); <span class="c-nm">aa.plot_settings</span>(font_scale=0.65)
@@ -549,7 +549,7 @@ plt.tight_layout(); plt.show()</pre>
 <div class="pair-imgs" style="--ph:44mm">
 <figure><img class="pair-img" src="cs_plots/feature_map.png" alt="CPP — feature map"><figcaption>CPPPlot.feature_map · all scales</figcaption></figure><figure><img class="pair-img" src="cs_plots/feature_map_simplified.png" alt="CPP — feature map"><figcaption>CPPPlot.feature_map · simplified</figcaption></figure>    </div>  </div>
 </div><div class="sec">
-  <div class="sec-h"><span>ShapModel — explain a prediction</span><span class="hint">sample level · advanced · [pro]</span></div>
+  <div class="sec-h"><span>ShapModel — explain a prediction</span><span class="hint">sample level · impact · [pro]</span></div>
   <div class="sec-body">
     <pre class="code"><span class="c-cm"># advanced: per-sample explanation (fuzzy labeling demo)</span>
 <span class="c-cm"># fuzzy labeling: APP&#x27;s label is its soft prediction score (0.6, not 1)</span>
@@ -567,7 +567,7 @@ plt.tight_layout(); plt.show()</pre>
 <div class="pair-imgs" style="--ph:36mm">
 <figure><img class="pair-img" src="cs_plots/shap_profile.png" alt="ShapModel — explain a prediction"><figcaption>CPPPlot.profile · SHAP</figcaption></figure><figure><img class="pair-img" src="cs_plots/feature_map_shap.png" alt="ShapModel — explain a prediction"><figcaption>CPPPlot.feature_map · SHAP</figcaption></figure>    </div>  </div>
 </div><div class="sec pairsec">
-  <div class="sec-h"><span>AAclust — clusters</span><span class="hint">scale reduction · clusters</span></div>
+  <div class="sec-h"><span>AAclust — clusters</span><span class="hint">scale reduction · clustering</span></div>
   <div class="sec-body"><pre class="code">aac = <span class="c-nm">aa.AAclust</span>()
 aac.select_scales(df_scales, n_clusters=10)
 aac.medoid_names_   <span class="c-cm"># 10 reduced scales (labels_ also set)</span>

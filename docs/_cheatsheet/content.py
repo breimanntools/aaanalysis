@@ -254,7 +254,7 @@ FLAGSHIP_RECIPES = [
              "    name_test='substrates', name_ref='non-subs.')\n"
              "plt.tight_layout(); plt.show()"},
     {"cls": "CPP — feature",
-     "tag": 'top feature · <span class="hint-ref">ref</span> vs <span class="hint-test">test</span>',
+     "tag": 'top feature · <span class="hint-test">test</span> vs <span class="hint-ref">ref</span>',
      "img": "feature",
      "caption": "CPPPlot.feature · top feature, REF vs TEST",
      "code": "# default parts + a redundancy-reduced set of 100 scales\n"
@@ -271,7 +271,7 @@ FLAGSHIP_RECIPES = [
              "cpp_plot.feature(feature=df_feat, feat_rank=1, df_seq=df_seq,\n"
              "    labels=labels, name_test='substrates', name_ref='non-subs.')\n"
              "plt.tight_layout(); plt.show()"},
-    {"cls": "CPP — feature map", "tag": "group level · full vs simplified",
+    {"cls": "CPP — feature map", "tag": "group level · importance",
      "imgs": ["feature_map", "feature_map_simplified"],
      "img_labels": ["CPPPlot.feature_map · all scales", "CPPPlot.feature_map · simplified"], "h": 44,
      "code": "# global Part × Split × Scale map — all AAontology scales\n"
@@ -281,7 +281,7 @@ FLAGSHIP_RECIPES = [
              "df_feat = cpp.simplify(df_feat=df_feat, labels=labels)\n"
              "cpp_plot.feature_map(df_feat=df_feat)\n"
              "plt.tight_layout(); plt.show()"},
-    {"cls": "ShapModel — explain a prediction", "tag": "sample level · advanced · [pro]",
+    {"cls": "ShapModel — explain a prediction", "tag": "sample level · impact · [pro]",
      "imgs": ["shap_profile", "feature_map_shap"],
      "img_labels": ["CPPPlot.profile · SHAP", "CPPPlot.feature_map · SHAP"], "h": 36,
      "code": "# advanced: per-sample explanation (fuzzy labeling demo)\n"
@@ -297,7 +297,7 @@ FLAGSHIP_RECIPES = [
              "cpp_plot.profile(df_feat=df_feat, **ka)\n"
              "cpp_plot.feature_map(df_feat=df_feat, name_test='APP', **ka)\n"
              "plt.tight_layout(); plt.show()"},
-    {"cls": "AAclust — clusters", "tag": "scale reduction · clusters", "img": "centers",
+    {"cls": "AAclust — clusters", "tag": "scale reduction · clustering", "img": "centers",
      "caption": "AAclustPlot.centers · cluster scale profiles",
      "code": "aac = aa.AAclust()\n"
              "aac.select_scales(df_scales, n_clusters=10)\n"
