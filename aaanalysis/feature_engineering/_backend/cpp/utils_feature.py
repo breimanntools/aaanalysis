@@ -121,13 +121,9 @@ def _get_df_pos_long(df=None, col_cat="category", col_val=None):
 
 
 # Get df parts
-def _extract_parts(row, jmd_n_len, jmd_c_len, pos_based, list_parts):
-    """Helper function to extract parts from a single row."""
-    if jmd_c_len is not None and jmd_n_len is not None and pos_based:
-        seq, tmd_start, tmd_stop = row[ut.COLS_SEQ_POS]
-        jmd_n, tmd, jmd_c = create_parts(seq, tmd_start, tmd_stop, jmd_n_len, jmd_c_len)
-    else:
-        jmd_n, tmd, jmd_c = row[ut.COLS_SEQ_PARTS]
+def _extract_parts(parts, list_parts):
+    """Build the {part: seq} dict for one sequence from its (jmd_n, tmd, jmd_c) base parts."""
+    jmd_n, tmd, jmd_c = parts
     # Get dictionary of parts and filter by list_parts
     dict_part_seq = ut.get_dict_part_seq(tmd=tmd, jmd_n=jmd_n, jmd_c=jmd_c)
     return {part: dict_part_seq[part] for part in list_parts}
@@ -192,15 +188,25 @@ def get_list_parts(features=None):
 
 def get_df_parts_(df_seq=None, list_parts=None, jmd_n_len=None, jmd_c_len=None):
     """Create DataFrame with sequence parts"""
+    # Iterate over the raw column arrays instead of df.apply(axis=1): the per-row
+    # Series materialization of apply() is the bottleneck, while the per-row work
+    # (create_parts + get_dict_part_seq) is unchanged, so the output is identical.
     pos_based = set(ut.COLS_SEQ_POS).issubset(set(df_seq))
-    _df_seq = df_seq.copy()
-    _df_seq['parts'] = df_seq.apply(lambda row:
-                                    _extract_parts(row, jmd_n_len, jmd_c_len, pos_based, list_parts), axis=1)
+    if jmd_n_len is not None and jmd_c_len is not None and pos_based:
+        cols = zip(df_seq[ut.COL_SEQ].to_numpy(),
+                   df_seq[ut.COL_TMD_START].to_numpy(),
+                   df_seq[ut.COL_TMD_STOP].to_numpy())
+        records = [_extract_parts(create_parts(seq, tmd_start, tmd_stop, jmd_n_len, jmd_c_len),
+                                  list_parts)
+                   for seq, tmd_start, tmd_stop in cols]
+    else:
+        cols = zip(df_seq[ut.COL_JMD_N].to_numpy(),
+                   df_seq[ut.COL_TMD].to_numpy(),
+                   df_seq[ut.COL_JMD_C].to_numpy())
+        records = [_extract_parts((jmd_n, tmd, jmd_c), list_parts)
+                   for jmd_n, tmd, jmd_c in cols]
     # Convert the extracted parts into a DataFrame
-    df_parts = pd.DataFrame(_df_seq['parts'].to_list(),
-                            index=df_seq[ut.COL_ENTRY])
-    # DEV: the following line sorts index if list_parts contains just one element
-    # df_parts = pd.DataFrame.from_dict(dict_parts, orient="index")
+    df_parts = pd.DataFrame(records, index=df_seq[ut.COL_ENTRY])
     return df_parts
 
 
