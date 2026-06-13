@@ -9,9 +9,40 @@ paths:
 - `pytest` + `hypothesis`. Coverage via `pytest-cov`.
 - Layout: `tests/unit/<class_or_topic>_tests/test_<class_or_method>.py`. One
   file per public method.
-- `tests/integration/` and `tests/e2e/` exist but are nearly empty —
-  integration / e2e coverage is **deferred to v2**. Do not add integration
-  tests proactively.
+- **Three tiers** (ADR-0031): `tests/unit/` (per-method, the bulk),
+  `tests/integration/` (cross-component *seams*), `tests/e2e/`
+  (full protocol-mirroring *workflows*). All three are default-selected and
+  **gate merges** (the blocking job runs `-m "not regression"`). See the
+  per-tier taxonomy below before adding to integration/e2e.
+
+## Tier taxonomy (what each tier tests — ADR-0031)
+Count is bounded by distinct *seams* and *workflows*, **not** by unit-test
+volume; cover each seam/workflow **once**. The governing rule: **don't re-test
+at a higher tier what a lower tier already covers.**
+
+| Aspect | Unit | Integration | E2e |
+|---|---|---|---|
+| Job | per-method correctness | seam contract holds | workflow → right artifact |
+| Positive | per-param, hypothesis-fuzzed | happy path | happy path |
+| Negative | per-param invalid-input sweep | **composition failures only** (NOT input validation) | minimal: degenerate dataset → clear error |
+| Hypothesis | per-argument strategies | **pipeline invariants / metamorphic** | **reproducibility** (seed→same artifact) |
+
+- **Integration negatives are composition failures** — failures invisible to
+  either component's unit tests (shape/label-set mismatch at a seam, PU dataset
+  with no unlabeled rows, sampler returns no windows → empty logo, single-class
+  labels into `CPP.run`). Do **not** re-run per-parameter invalid-input
+  negatives there — that is the unit layer's job (frontend `# Validate` block).
+- **Keep inputs tiny + seeded**, assert **structural/range** artifacts (shapes,
+  schema columns, metrics in `[0,1]`, finiteness) — **never frozen exact
+  values** (that is the regression anchor's job; e2e runs the full matrix where
+  3rd-decimal drift would flake). Hypothesis here uses small `max_examples`
+  (3–5) because each example runs the real pipeline.
+- **Shared seeded builders** live in `tests/_pipeline.py` (one definition of the
+  load→parts→CPP→matrix spine), exposed to integration as session fixtures in
+  `tests/integration/conftest.py` and imported directly by e2e.
+- `tests/integration/test_online_fetches.py` is a separate, `network`-marked
+  live-endpoint tier (deselected by default); it is *not* the cross-component
+  integration tier above.
 
 ## File header (current style)
 Each test file currently opens with:
@@ -97,11 +128,15 @@ inline (aligns with `reproducibility.md`).
 
 ## Test tiers & markers
 Register markers in `tests/pytest.ini` `markers =`; only stand up markers
-actually in use — **do not** create empty `integration`/`benchmark` tiers
-(integration/e2e stay deferred to v2, below).
+actually in use — **do not** create empty `benchmark` tiers.
 
 - `regression` — a frozen-value anchor (see below).
 - `slow` — opt-in heavy tests, deselectable in fast CI runs.
+- `integration` — cross-component seam test (see the tier taxonomy above);
+  default-selected, so it gates merges.
+- `e2e` — full protocol-mirroring workflow; default-selected, so it gates
+  merges. Add the marker module-wide with `pytestmark = pytest.mark.integration`
+  (or `e2e`).
 
 ### CPP regression anchor (ADR-0015)
 `tests/unit/cpp_tests/test_cpp_regression.py` runs a seeded `DOM_GSEC`
