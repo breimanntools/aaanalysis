@@ -355,6 +355,68 @@ class SequenceFeature:
                              f"Reduce 'jmd_n_len' ({jmd_n_len}) and 'jmd_c_len' ({jmd_c_len}) settings.")
         return df_parts
 
+    def get_args_seq(self,
+                     df_seq: pd.DataFrame = None,
+                     sample: Union[int, str] = None,
+                     jmd_n_len: Union[int, None] = 10,
+                     jmd_c_len: Union[int, None] = 10,
+                     ) -> dict:
+        """
+        Get the per-part sequence arguments (``jmd_n_seq``, ``tmd_seq``, ``jmd_c_seq``) for a single protein.
+
+        Slices one protein from ``df_seq`` into its JMD-N, TMD, and JMD-C parts and returns them as a
+        ready-to-use ``args_seq`` dictionary, so the per-protein sequence can be passed directly to
+        :meth:`CPPPlot.profile` and :meth:`CPPPlot.feature_map` (e.g. for sample-level SHAP plots) via
+        ``**args_seq``, without manually slicing :meth:`SequenceFeature.get_df_parts`.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
+            in a distinct format: **Position-based**, **Part-based**, **Sequence-based**, or **Sequence-TMD-based**.
+        sample : int or str
+            The protein to extract, given either as a row position in ``df_seq`` or as an entry name (str)
+            from its ``entry`` column.
+        jmd_n_len : int, default=10
+            Length of JMD-N in number of amino acids. If ``None``, ``jmd_n`` and ``jmd_c`` should be given.
+        jmd_c_len : int, default=10
+            Length of JMD-C in number of amino acids. If ``None``, ``jmd_n`` and ``jmd_c`` should be given.
+
+        Returns
+        -------
+        args_seq : dict
+            Dictionary with the keys ``jmd_n_seq``, ``tmd_seq``, and ``jmd_c_seq`` mapping to the
+            corresponding amino acid sequence parts of the selected protein.
+
+        See Also
+        --------
+        * :meth:`SequenceFeature.get_df_parts` for creating the underlying sequence parts DataFrame.
+        * :meth:`CPPPlot.profile` and :meth:`CPPPlot.feature_map`, which accept the returned parts via ``**args_seq``.
+
+        Examples
+        --------
+        .. include:: examples/sf_get_args_seq.rst
+        """
+        # Check input
+        list_parts = ut.COLS_SEQ_PARTS  # ['jmd_n', 'tmd', 'jmd_c']
+        df_parts = self.get_df_parts(df_seq=df_seq, list_parts=list_parts,
+                                     jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+        entries = list(df_parts.index)
+        if isinstance(sample, str):
+            if sample not in entries:
+                raise ValueError(f"'sample' ({sample}) should be an entry in the '{ut.COL_ENTRY}' column "
+                                 f"of 'df_seq'. First entries are: {entries[:5]}")
+            row = df_parts.loc[sample]
+        elif isinstance(sample, (int, np.integer)) and not isinstance(sample, bool):
+            ut.check_number_range(name="sample", val=int(sample), min_val=0, max_val=len(df_parts) - 1, just_int=True)
+            row = df_parts.iloc[int(sample)]
+        else:
+            raise ValueError(f"'sample' ({sample}) should be an entry name (str) or a row position (int).")
+        args_seq = {f"{part}_seq": row[part] for part in list_parts}
+        return args_seq
+
     @staticmethod
     def get_split_kws(split_types: Optional[Union[Literal["Segment", "Pattern", "PeriodicPattern"],
                                                    List[Literal["Segment", "Pattern", "PeriodicPattern"]]]] = None,

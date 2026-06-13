@@ -140,6 +140,44 @@ def check_match_n_background_data_X(n_background_data=None, X=None):
         raise ValueError(f"'n_background_data' ({n_background_data}) must be < 'n_samples' ({n_samples}) from 'X'.")
 
 
+def check_match_df_seq_X(df_seq=None, X=None):
+    """Verify 'df_seq' has a unique 'entry' column and is row-aligned to 'X'."""
+    if not isinstance(df_seq, pd.DataFrame):
+        raise ValueError(f"'df_seq' ({type(df_seq)}) should be a pandas DataFrame.")
+    if ut.COL_ENTRY not in df_seq.columns:
+        raise ValueError(f"'df_seq' should contain the '{ut.COL_ENTRY}' column (got columns: {list(df_seq.columns)}).")
+    entries = df_seq[ut.COL_ENTRY].to_list()
+    if len(entries) != len(set(entries)):
+        raise ValueError(f"'{ut.COL_ENTRY}' values in 'df_seq' should be unique.")
+    n_samples = X.shape[0]
+    if len(df_seq) != n_samples:
+        raise ValueError(f"n_proteins does not match for 'df_seq' ({len(df_seq)}) and 'X' ({n_samples} rows).")
+
+
+def check_match_fuzzy_labels_df_seq(fuzzy_labels=None, df_seq=None, labels=None):
+    """Build a float label vector from binary 'labels' overridden by entry-keyed 'fuzzy_labels'.
+
+    'df_seq' is assumed already validated (DataFrame, unique 'entry' column, row-aligned to 'X')
+    by 'check_match_df_seq_X', which the caller runs first.
+    """
+    ut.check_dict(name="fuzzy_labels", val=fuzzy_labels, accept_none=False)
+    entries = df_seq[ut.COL_ENTRY].to_list()
+    set_entries = set(entries)
+    wrong_keys = [k for k in fuzzy_labels if k not in set_entries]
+    if len(wrong_keys) != 0:
+        raise ValueError(f"'fuzzy_labels' keys ({wrong_keys}) should be entries in the "
+                         f"'{ut.COL_ENTRY}' column of 'df_seq'.")
+    wrong_values = {k: v for k, v in fuzzy_labels.items()
+                    if not (isinstance(v, (int, float, np.number)) and 0 <= v <= 1)}
+    if len(wrong_values) != 0:
+        raise ValueError(f"'fuzzy_labels' values ({wrong_values}) should be numbers between 0 and 1.")
+    entry_to_idx = {entry: i for i, entry in enumerate(entries)}
+    fuzzy_vector = [float(x) for x in labels]
+    for entry, score in fuzzy_labels.items():
+        fuzzy_vector[entry_to_idx[entry]] = float(score)
+    return fuzzy_vector
+
+
 # Check function for add_feat_impact method
 def check_sample_positions(sample_positions=None, n_samples=None):
     """Check if sample_positions is int or list of ints"""
@@ -213,6 +251,57 @@ def check_match_sample_positions_group_average(sample_positions=None, group_aver
         sample_positions = ut.check_list_like(name="sample_positions", val=sample_positions)
         if len(sample_positions) == 1:
             raise ValueError
+
+
+def resolve_samples_alias(samples=None, sample_positions=None):
+    """Map the deprecated 'sample_positions' keyword onto 'samples' (back-compatibility)."""
+    if sample_positions is not None:
+        if samples is not None:
+            raise ValueError("Pass only 'samples'; 'sample_positions' is a deprecated alias for it.")
+        warnings.warn("'sample_positions' is deprecated and will be removed in 1.2.0; use 'samples' instead.",
+                      DeprecationWarning, stacklevel=3)
+        samples = sample_positions
+    return samples
+
+
+def check_match_samples_df_seq(samples=None, names=None, df_seq=None, n_samples=None,
+                               group_average=False):
+    """Resolve entry-name 'samples' to integer row positions via 'df_seq'."""
+    # Normalize array input to a list so entry-name detection works uniformly
+    if isinstance(samples, np.ndarray):
+        samples = samples.tolist()
+    is_str = isinstance(samples, str)
+    str_samples = samples if isinstance(samples, list) else [samples]
+    is_str_list = isinstance(samples, list) and any(isinstance(p, str) for p in str_samples)
+    # Integer / None selection: leave untouched (back-compatible path)
+    if not (is_str or is_str_list):
+        return samples, names
+    if df_seq is None:
+        raise ValueError("'df_seq' should be provided (not None) when 'samples' contains "
+                         f"entry names, to map them to row positions of the '{ut.COL_ENTRY}' column.")
+    if not isinstance(df_seq, pd.DataFrame) or ut.COL_ENTRY not in df_seq.columns:
+        raise ValueError(f"'df_seq' should be a pandas DataFrame containing the '{ut.COL_ENTRY}' column.")
+    entries = df_seq[ut.COL_ENTRY].to_list()
+    if len(entries) != len(set(entries)):
+        raise ValueError(f"'{ut.COL_ENTRY}' values in 'df_seq' should be unique.")
+    if len(df_seq) != n_samples:
+        raise ValueError(f"n_proteins does not match for 'df_seq' ({len(df_seq)}) and the fitted "
+                         f"samples ({n_samples} rows).")
+    entry_to_idx = {entry: i for i, entry in enumerate(entries)}
+    wrong_entries = [p for p in str_samples if isinstance(p, str) and p not in entry_to_idx]
+    if len(wrong_entries) != 0:
+        raise ValueError(f"'samples' entries ({wrong_entries}) should be in the "
+                         f"'{ut.COL_ENTRY}' column of 'df_seq'.")
+    # Default names to the entry strings when all selected samples are named and names not given.
+    # Skip for group_average: the group is named by a single string (defaulting to 'Group' downstream).
+    if names is None and not group_average and all(isinstance(p, str) for p in str_samples):
+        names = samples
+    # Map entry name(s) to integer position(s), preserving scalar vs list shape
+    if is_str:
+        samples = entry_to_idx[samples]
+    else:
+        samples = [entry_to_idx[p] if isinstance(p, str) else p for p in samples]
+    return samples, names
 
 
 def check_match_df_feat_shap_values(df_feat=None, shap_values=None, drop=False, shap_feat_importance=False):
@@ -381,6 +470,8 @@ class ShapModel:
             is_selected: ut.ArrayLike2D = None,
             fuzzy_labeling: bool = False,
             n_background_data: Optional[int] = None,
+            df_seq: Optional[pd.DataFrame] = None,
+            fuzzy_labels: Optional[dict] = None,
             ) -> "ShapModel":
         """
         Obtain SHapley Additive exPlanations (SHAP) values aggregated across prediction models and
@@ -413,6 +504,13 @@ class ShapModel:
         n_background_data : None or int, optional
             The number samples (< 'n_samples') in the background dataset used for the `KernelExplainer`` to reduce
             computation time. The dataset is obtained by k-means clustering. If ``None``, the full dataset 'X' is used.
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
+            DataFrame containing an ``entry`` column with a unique protein identifier per row, row-aligned to ``X``.
+            Required when ``fuzzy_labels`` is given, to map entry names to the corresponding rows of ``X``.
+        fuzzy_labels : dict, optional
+            Soft labels keyed by entry, e.g. ``{'P05067': 0.6}``. Each value (in [0, 1]) overrides the label of the
+            matching entry in ``labels`` and enables fuzzy labeling. Aligned to ``X`` via ``df_seq``, this avoids
+            the manual row-index lookup and array mutation otherwise needed to set a soft label.
 
         Returns
         -------
@@ -429,6 +527,16 @@ class ShapModel:
         * Idea: Adjusts label thresholds dynamically in Monte Carlo estimation to better represent label uncertainties.
         * Background: Inspired by fuzzy logic, replacing binary true/false with degrees of truth.
 
+        **Setting soft labels**
+
+        There are two equivalent ways to provide soft labels, both enabling fuzzy labeling:
+
+        * Pass a float ``labels`` array directly (e.g. ``0.6`` in place of a binary ``0``/``1``) with
+          ``fuzzy_labeling=True``.
+        * Pass binary (or float) ``labels`` together with ``df_seq`` and ``fuzzy_labels`` keyed by entry. The
+          ``fuzzy_labels`` values **override** the matching entries in ``labels``; fuzzy labeling is enabled
+          automatically. This is the recommended path, as it refers to proteins by accession rather than row index.
+
         See Also
         --------
         * [Breimann25a]_ introduces fuzzy labeling to compute Monte Carlo estimates of SHAP values
@@ -443,7 +551,14 @@ class ShapModel:
         n_samples, n_feat = X.shape
         ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
         ut.check_bool(name="fuzzy_labeling", val=fuzzy_labeling)
-        labels = check_match_labels_X_fuzzy_labeling(labels=labels, X=X, fuzzy_labeling=fuzzy_labeling)
+        if fuzzy_labels is not None:
+            # Entry-keyed soft labels override 'labels' and enable fuzzy labeling
+            check_match_df_seq_X(df_seq=df_seq, X=X)
+            labels = check_match_labels_X_fuzzy_labeling(labels=labels, X=X, fuzzy_labeling=True)
+            labels = check_match_fuzzy_labels_df_seq(fuzzy_labels=fuzzy_labels, df_seq=df_seq, labels=labels)
+            fuzzy_labeling = True
+        else:
+            labels = check_match_labels_X_fuzzy_labeling(labels=labels, X=X, fuzzy_labeling=fuzzy_labeling)
         check_match_labels_fuzzy_labeling(labels=labels, fuzzy_labeling=fuzzy_labeling, verbose=self._verbose)
         ut.check_number_range(name="label_target_class", val=label_target_class, min_val=0, just_int=True, accept_none=True)
         check_match_labels_target_class_labels(label_target_class=label_target_class, labels=labels)
@@ -480,11 +595,13 @@ class ShapModel:
     def add_feat_impact(self,
                         df_feat: pd.DataFrame = None,
                         drop: bool = False,
-                        sample_positions: Union[int, List[int], None] = None,
+                        samples: Union[int, List[int], str, List[str], None] = None,
                         names: Optional[Union[str, List[str]]] = None,
                         normalize: bool = True,
                         group_average: bool = False,
                         shap_feat_importance: bool = False,
+                        df_seq: Optional[pd.DataFrame] = None,
+                        sample_positions: Union[int, List[int], str, List[str], None] = None,
                         ) -> pd.DataFrame:
         """
         Compute SHapley Additive exPlanations (SHAP) feature impact (or importance) from SHAP values
@@ -509,24 +626,31 @@ class ShapModel:
         drop : bool, default=False
             If ``True``, allow dropping of already existing feature impact and feature importance columns from
             ``df_feat`` before inserting.
-        sample_positions : int, list of int, or None
-            Position index/indices for the sample(s) in ``shap_values``.
+        samples : int, list of int, str, list of str, or None
+            Sample(s) to compute the feature impact for, given either as row position(s) in ``shap_values``
+            or as entry name(s) (str) from the ``entry`` column of ``df_seq`` (resolved to the matching row(s)).
             If ``None``, the impact for each sample will be returned.
         names: str or list of str, optional
             Unique name(s) used for the feature impact columns. When provided, they should align with
-            ``sample_positions`` as follows:
+            ``samples`` as follows:
 
-            - **Single sample**: ``name`` as string and ``sample_positions`` as integer.
-            - **Multiple samples**: ``name`` as list of string and ``sample_positions`` as corresponding list of integers.
-            - **Group**: ``name`` as string and ``sample_positions`` as list of integers, each indicating a group sample.
+            - **Single sample**: ``name`` as string and ``samples`` as integer or entry name.
+            - **Multiple samples**: ``name`` as list of string and ``samples`` as corresponding list.
+            - **Group**: ``name`` as string and ``samples`` as list, each indicating a group sample.
 
-            If ``sample_positions`` is ``None`` (all samples are considered), ``name`` must be list with names for each sample.
+            If ``samples`` is ``None`` (all samples are considered), ``name`` must be list with names for each sample.
+            When ``samples`` is given as entry name(s) and ``names`` is ``None``, the entry name(s) are used.
         normalize : bool, default=True
             If ``True``, normalize the feature impact to percentage.
         group_average : bool, default=False
-            If ``True``, compute the average of samples given by ``sample_positions``.
+            If ``True``, compute the average of samples given by ``samples``.
         shap_feat_importance : bool, default=False
             If ``True``, include feature importance (i.e., absolute average SHAP values) instead of impact to ``df_feat``.
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
+            DataFrame containing an ``entry`` column with a unique protein identifier per row, row-aligned to the
+            fitted samples. Required only when ``samples`` is given as entry name(s).
+        sample_positions : int, list of int, str, list of str, or None
+            Deprecated alias for ``samples`` (removed in 1.2.0).
 
         Returns
         -------
@@ -566,8 +690,12 @@ class ShapModel:
         # Check input
         check_shap_values(shap_values=self.shap_values)
         n_samples, n_features = self.shap_values.shape
+        samples = resolve_samples_alias(samples=samples, sample_positions=sample_positions)
         df_feat = ut.check_df_feat(df_feat=df_feat)
         ut.check_bool(name="drop", val=drop)
+        sample_positions, names = check_match_samples_df_seq(samples=samples, names=names,
+                                                             df_seq=df_seq, n_samples=n_samples,
+                                                             group_average=group_average)
         check_names(names=names)
         ut.check_bool(name="group_average", val=group_average)
         sample_positions = check_sample_positions(sample_positions=sample_positions, n_samples=n_samples)
@@ -606,9 +734,11 @@ class ShapModel:
                             label_ref: int = 0,
                             df_feat: pd.DataFrame = None,
                             drop: bool = False,
-                            sample_positions: Union[int, List[int], None] = None,
+                            samples: Union[int, List[int], str, List[str], None] = None,
                             names: Optional[Union[str, List[str]]] = None,
                             group_average: bool = False,
+                            df_seq: Optional[pd.DataFrame] = None,
+                            sample_positions: Union[int, List[int], str, List[str], None] = None,
                             ) -> pd.DataFrame:
         """
         Compute the feature value difference between selected samples and a reference group average.
@@ -637,20 +767,27 @@ class ShapModel:
         drop : bool, default=False
             If ``True``, allow dropping of already existing sample specific mean difference columns from
             ``df_feat`` before inserting.
-        sample_positions : int, list of int, or None
-            Position index/indices for the sample(s) in ``X``.
+        samples : int, list of int, str, list of str, or None
+            Sample(s) to compute the difference for, given either as row position(s) in ``X`` or as entry
+            name(s) (str) from the ``entry`` column of ``df_seq`` (resolved to the matching row(s)).
             If ``None``, the difference for each sample will be returned.
         names: str or list of str, optional
             Unique name(s) used for the feature value differences columns. When provided, they should align with
-            ``sample_positions`` as follows:
+            ``samples`` as follows:
 
-            - **Single sample**: ``name`` as string and ``sample_positions`` as integer.
-            - **Multiple samples**: ``name`` as list of string and ``sample_positions`` as corresponding list of integers.
-            - **Group**: ``name`` as string and ``sample_positions`` as list of integers, each indicating a group sample.
+            - **Single sample**: ``name`` as string and ``samples`` as integer or entry name.
+            - **Multiple samples**: ``name`` as list of string and ``samples`` as corresponding list.
+            - **Group**: ``name`` as string and ``samples`` as list, each indicating a group sample.
 
-            If ``sample_positions`` is ``None`` (all samples are considered), ``name`` must be list with names for each sample.
+            If ``samples`` is ``None`` (all samples are considered), ``name`` must be list with names for each sample.
+            When ``samples`` is given as entry name(s) and ``names`` is ``None``, the entry name(s) are used.
         group_average : bool, default=False
-            If ``True``, compute the average of samples given by ``sample_positions``.
+            If ``True``, compute the average of samples given by ``samples``.
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
+            DataFrame containing an ``entry`` column with a unique protein identifier per row, row-aligned to ``X``.
+            Required only when ``samples`` is given as entry name(s).
+        sample_positions : int, list of int, str, list of str, or None
+            Deprecated alias for ``samples`` (removed in 1.2.0).
 
         Returns
         -------
@@ -670,8 +807,12 @@ class ShapModel:
         labels = ut.check_labels(labels=labels, vals_required=[label_ref],
                                  len_required=n_samples, allow_other_vals=True,
                                  accept_float=True) # Accept fuzzy labeling by default
+        samples = resolve_samples_alias(samples=samples, sample_positions=sample_positions)
         df_feat = ut.check_df_feat(df_feat=df_feat)
         ut.check_bool(name="drop", val=drop)
+        sample_positions, names = check_match_samples_df_seq(samples=samples, names=names,
+                                                             df_seq=df_seq, n_samples=n_samples,
+                                                             group_average=group_average)
         check_names(names=names)
         ut.check_bool(name="group_average", val=group_average)
         sample_positions = check_sample_positions(sample_positions=sample_positions, n_samples=n_samples)

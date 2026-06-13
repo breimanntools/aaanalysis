@@ -60,14 +60,14 @@ class TestAddFeatImpact:
         for pos in sample_positions:
             sm.fit(valid_X, labels=valid_labels, **ARGS)
             df_feat = create_df_feat()
-            df_feat = sm.add_feat_impact(df_feat=df_feat, sample_positions=pos, drop=True)
+            df_feat = sm.add_feat_impact(df_feat=df_feat, samples=pos, drop=True)
             assert isinstance(df_feat, pd.DataFrame)
         df_feat = create_df_feat()
-        df_feat = sm.add_feat_impact(df_feat=df_feat, sample_positions=list(range(0, len(df_seq)-1)),
+        df_feat = sm.add_feat_impact(df_feat=df_feat, samples=list(range(0, len(df_seq)-1)),
                                      drop=True)
         assert isinstance(df_feat, pd.DataFrame)
         df_feat = create_df_feat()
-        df_feat = sm.add_feat_impact(df_feat=df_feat, sample_positions=sample_positions, drop=True)
+        df_feat = sm.add_feat_impact(df_feat=df_feat, samples=sample_positions, drop=True)
         assert isinstance(df_feat, pd.DataFrame)
 
     def test_names_valid(self):
@@ -77,7 +77,7 @@ class TestAddFeatImpact:
         df_feat = create_df_feat()
         df_feat = sm.add_feat_impact(df_feat=df_feat, names=names, drop=True)
         assert isinstance(df_feat, pd.DataFrame)
-        df_feat = sm.add_feat_impact(df_feat=df_feat, names="test", sample_positions=1, drop=True)
+        df_feat = sm.add_feat_impact(df_feat=df_feat, names="test", samples=1, drop=True)
         assert isinstance(df_feat, pd.DataFrame)
 
     def test_name_single_valid(self):
@@ -86,7 +86,7 @@ class TestAddFeatImpact:
         df_feat = create_df_feat()
         names = "SampleName"
         pos = 0
-        df_feat = sm.add_feat_impact(df_feat=df_feat, names=names, sample_positions=pos)
+        df_feat = sm.add_feat_impact(df_feat=df_feat, names=names, samples=pos)
         assert isinstance(df_feat, pd.DataFrame)
         assert f"feat_impact_{names}" in list(df_feat)
 
@@ -96,7 +96,7 @@ class TestAddFeatImpact:
         df_feat = create_df_feat()
         names = ["SampleName1", "SampleName2"]
         pos = [0, 1]
-        df_feat = sm.add_feat_impact(df_feat=df_feat, names=names, sample_positions=pos)
+        df_feat = sm.add_feat_impact(df_feat=df_feat, names=names, samples=pos)
         #assert isinstance(df_feat, pd.DataFrame)
         for name in names:
             assert f"feat_impact_{name}" in df_feat.columns
@@ -110,7 +110,7 @@ class TestAddFeatImpact:
             assert isinstance(df_feat, pd.DataFrame)
         sm.fit(valid_X, labels=valid_labels, **ARGS)
         df_feat = create_df_feat()
-        df_feat = sm.add_feat_impact(df_feat=df_feat, sample_positions=[1, 2, 3], group_average=True)
+        df_feat = sm.add_feat_impact(df_feat=df_feat, samples=[1, 2, 3], group_average=True)
         assert isinstance(df_feat, pd.DataFrame)
 
     def test_normalize_valid(self):
@@ -152,11 +152,11 @@ class TestAddFeatImpact:
         sm = aa.ShapModel(verbose=False)
         sm.fit(valid_X, labels=valid_labels, **ARGS)
         with pytest.raises(ValueError):
-            sm.add_feat_impact(df_feat=create_df_feat(), sample_positions="not_a_valid_pos")
+            sm.add_feat_impact(df_feat=create_df_feat(), samples="not_a_valid_pos")
         with pytest.raises(ValueError):
-            sm.add_feat_impact(df_feat=create_df_feat(), sample_positions=[1, None])
+            sm.add_feat_impact(df_feat=create_df_feat(), samples=[1, None])
         with pytest.raises(ValueError):
-            sm.add_feat_impact(df_feat=create_df_feat(), sample_positions=[1, "asdf"])
+            sm.add_feat_impact(df_feat=create_df_feat(), samples=[1, "asdf"])
 
     def test_name_invalid(self):
         sm = aa.ShapModel(verbose=False)
@@ -170,7 +170,7 @@ class TestAddFeatImpact:
             names = [f"Name{i}" for i in range(len(valid_labels) - 1)]   # Not matching
             sm.add_feat_impact(df_feat=create_df_feat(), names=names)
         with pytest.raises(ValueError):
-            sm.add_feat_impact(df_feat=create_df_feat(), sample_positions=[1, 2], names="Not matching")
+            sm.add_feat_impact(df_feat=create_df_feat(), samples=[1, 2], names="Not matching")
 
     def test_group_average_invalid(self):
         sm = aa.ShapModel(verbose=False)
@@ -216,7 +216,7 @@ class TestAddFeatImpactComplex:
         group_average = False
         normalize = True
 
-        result = sm.add_feat_impact(df_feat=df_feat, names=names, sample_positions=pos,
+        result = sm.add_feat_impact(df_feat=df_feat, names=names, samples=pos,
                                     group_average=group_average, normalize=normalize)
         assert isinstance(result, pd.DataFrame)
         for name in names:
@@ -234,4 +234,113 @@ class TestAddFeatImpactComplex:
         group_average = True  # Group average shouldn't be True for multiple names
 
         with pytest.raises(ValueError):
-            sm.add_feat_impact(df_feat=df_feat, names=names, sample_positions=pos, group_average=group_average)
+            sm.add_feat_impact(df_feat=df_feat, names=names, samples=pos, group_average=group_average)
+
+
+class TestAddFeatImpactDfSeq:
+    """Accession-based sample selection: entry-name ``sample_positions`` resolved via ``df_seq``."""
+
+    # Positive tests
+    def test_sample_positions_entry_name(self):
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(verbose=False, random_state=0)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        df_feat = sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq, samples=entry)
+        assert f"feat_impact_{entry}" in df_feat.columns
+
+    def test_entry_name_matches_int_position(self):
+        entry = df_seq["entry"].iloc[2]
+        i = list(df_seq["entry"]).index(entry)
+        sm = aa.ShapModel(verbose=False, random_state=0)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        df_a = sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq, samples=entry)
+        df_b = sm.add_feat_impact(df_feat=create_df_feat(), samples=i, names=entry)
+        assert df_a[f"feat_impact_{entry}"].equals(df_b[f"feat_impact_{entry}"])
+
+    def test_sample_positions_entry_list(self):
+        entries = df_seq["entry"].iloc[:3].to_list()
+        sm = aa.ShapModel(verbose=False, random_state=0)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        df_feat = sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq, samples=entries)
+        for e in entries:
+            assert f"feat_impact_{e}" in df_feat.columns
+
+    def test_names_override_entry_name(self):
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(verbose=False, random_state=0)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        df_feat = sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq,
+                                     samples=entry, names="APP")
+        assert "feat_impact_APP" in df_feat.columns
+
+    def test_group_average_with_entry_names(self):
+        # group_average with entry-name list must not collide with name auto-defaulting
+        entries = df_seq["entry"].iloc[:2].to_list()
+        sm = aa.ShapModel(verbose=False, random_state=0)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        df_feat = sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq,
+                                     samples=entries, group_average=True)
+        assert any("feat_impact" in c for c in df_feat.columns)
+
+    def test_sample_positions_entry_ndarray(self):
+        entries = np.array(df_seq["entry"].iloc[:2].to_list())
+        sm = aa.ShapModel(verbose=False, random_state=0)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        df_feat = sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq, samples=entries)
+        for e in entries:
+            assert f"feat_impact_{e}" in df_feat.columns
+
+    # Negative tests
+    def test_entry_name_requires_df_seq(self):
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(verbose=False)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            sm.add_feat_impact(df_feat=create_df_feat(), samples=entry)
+
+    def test_entry_not_in_df_seq(self):
+        sm = aa.ShapModel(verbose=False)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq, samples="NOT_AN_ENTRY")
+
+    def test_entry_name_df_seq_missing_entry_column(self):
+        entry = df_seq["entry"].iloc[0]
+        df_bad = df_seq.rename(columns={"entry": "acc"})
+        sm = aa.ShapModel(verbose=False)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_bad, samples=entry)
+
+    def test_entry_name_df_seq_non_unique(self):
+        entry = df_seq["entry"].iloc[0]
+        df_dup = df_seq.copy()
+        df_dup["entry"] = entry  # collapse to a single repeated entry
+        sm = aa.ShapModel(verbose=False)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_dup, samples=entry)
+
+    def test_entry_name_df_seq_length_mismatch(self):
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(verbose=False)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq.head(3), samples=entry)
+
+    def test_sample_positions_deprecated_alias(self):
+        # 'sample_positions' still works (deprecated) and equals 'samples'
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(verbose=False, random_state=0)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.warns(DeprecationWarning):
+            df_dep = sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq, sample_positions=entry)
+        df_new = sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq, samples=entry)
+        assert df_dep[f"feat_impact_{entry}"].equals(df_new[f"feat_impact_{entry}"])
+
+    def test_samples_and_sample_positions_both_raises(self):
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(verbose=False)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq, samples=entry, sample_positions=entry)

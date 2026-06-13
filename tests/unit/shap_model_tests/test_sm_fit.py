@@ -293,3 +293,103 @@ class TestShapModelFitExplainers:
                           list_model_classes=[LogisticRegression], verbose=False)
         sm.fit(X, labels=labels, n_rounds=1)
         assert sm.shap_values.shape == X.shape
+
+
+class TestShapModelFitFuzzyLabels:
+    """Entry-keyed soft labels (``fuzzy_labels``) aligned to ``X`` via ``df_seq``."""
+
+    # Positive tests
+    def test_fuzzy_labels_valid(self):
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False, random_state=0)
+        sm.fit(valid_X, labels=valid_labels, df_seq=df_seq, fuzzy_labels={entry: 0.6}, **ARGS)
+        assert sm.shap_values is not None
+        assert sm.exp_value is not None
+
+    @settings(max_examples=5, deadline=None)
+    @given(score=st.floats(min_value=0, max_value=1, allow_nan=False, allow_infinity=False))
+    def test_fuzzy_labels_score_range(self, score):
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
+        sm.fit(valid_X, labels=valid_labels, df_seq=df_seq, fuzzy_labels={entry: score}, **ARGS)
+        assert sm.shap_values is not None
+
+    def test_fuzzy_labels_float_labels_base(self):
+        # Base labels already float; fuzzy_labels overrides one entry's value
+        entry = df_seq["entry"].iloc[1]
+        y = [float(v) for v in valid_labels]
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
+        sm.fit(valid_X, labels=y, df_seq=df_seq, fuzzy_labels={entry: 0.4}, **ARGS)
+        assert sm.shap_values is not None
+
+    def test_fuzzy_labels_numpy_value(self):
+        # numpy float values in the dict are accepted (not just python float)
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
+        sm.fit(valid_X, labels=valid_labels, df_seq=df_seq, fuzzy_labels={entry: np.float64(0.6)}, **ARGS)
+        assert sm.shap_values is not None
+
+    def test_df_seq_only_consumed_with_fuzzy_labels(self):
+        # df_seq passed without fuzzy_labels is harmless (binary path unchanged)
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
+        sm.fit(valid_X, labels=valid_labels, df_seq=df_seq, **ARGS)
+        assert sm.shap_values is not None
+
+    # Golden / regression: KPI #129 — keyed path == manual array mutation
+    def test_fuzzy_labels_matches_manual_mutation(self):
+        entry = df_seq["entry"].iloc[0]
+        i = list(df_seq["entry"]).index(entry)
+        y = [float(v) for v in valid_labels]
+        y[i] = 0.6
+        sm_manual = aa.ShapModel(**MODEL_KWARGS, verbose=False, random_state=42)
+        sm_manual.fit(valid_X, labels=y, fuzzy_labeling=True, **ARGS)
+        sm_keyed = aa.ShapModel(**MODEL_KWARGS, verbose=False, random_state=42)
+        sm_keyed.fit(valid_X, labels=valid_labels, df_seq=df_seq, fuzzy_labels={entry: 0.6}, **ARGS)
+        assert np.array_equal(sm_manual.shap_values, sm_keyed.shap_values)
+        assert sm_manual.exp_value == sm_keyed.exp_value
+
+    # Negative tests
+    def test_fuzzy_labels_requires_df_seq(self):
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
+        with pytest.raises(ValueError):
+            sm.fit(valid_X, labels=valid_labels, fuzzy_labels={entry: 0.6}, **ARGS)
+
+    def test_fuzzy_labels_invalid_key(self):
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
+        with pytest.raises(ValueError):
+            sm.fit(valid_X, labels=valid_labels, df_seq=df_seq, fuzzy_labels={"NOT_AN_ENTRY": 0.6}, **ARGS)
+
+    def test_fuzzy_labels_invalid_value(self):
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
+        for bad in [1.5, -0.1, "x"]:
+            with pytest.raises(ValueError):
+                sm.fit(valid_X, labels=valid_labels, df_seq=df_seq, fuzzy_labels={entry: bad}, **ARGS)
+
+    def test_fuzzy_labels_df_seq_length_mismatch(self):
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
+        with pytest.raises(ValueError):
+            sm.fit(valid_X, labels=valid_labels, df_seq=df_seq.head(3), fuzzy_labels={entry: 0.6}, **ARGS)
+
+    def test_fuzzy_labels_df_seq_non_unique_entries(self):
+        entry = df_seq["entry"].iloc[0]
+        df_dup = df_seq.copy()
+        df_dup["entry"] = entry  # collapse to a single repeated entry
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
+        with pytest.raises(ValueError):
+            sm.fit(valid_X, labels=valid_labels, df_seq=df_dup, fuzzy_labels={entry: 0.6}, **ARGS)
+
+    def test_fuzzy_labels_invalid_df_seq_type(self):
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
+        with pytest.raises(ValueError):
+            sm.fit(valid_X, labels=valid_labels, df_seq="not_a_df", fuzzy_labels={entry: 0.6}, **ARGS)
+
+    def test_fuzzy_labels_df_seq_missing_entry_column(self):
+        entry = df_seq["entry"].iloc[0]
+        df_bad = df_seq.rename(columns={"entry": "acc"})
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
+        with pytest.raises(ValueError):
+            sm.fit(valid_X, labels=valid_labels, df_seq=df_bad, fuzzy_labels={entry: 0.6}, **ARGS)

@@ -113,16 +113,16 @@ class TestAddSampleMeanDif:
             sm = aa.ShapModel(verbose=False)
             df_feat = create_df_feat()
             df_feat_updated = sm.add_sample_mean_dif(valid_X, labels=labels,
-                                                     sample_positions=pos,
+                                                     samples=pos,
                                                      df_feat=df_feat)
             assert isinstance(df_feat_updated, pd.DataFrame)
         df_feat = create_df_feat()
         df_feat = sm.add_sample_mean_dif(valid_X, labels=labels,
-                                                 sample_positions=list(range(0, len(df_seq)-1)), df_feat=df_feat)
+                                                 samples=list(range(0, len(df_seq)-1)), df_feat=df_feat)
         assert isinstance(df_feat, pd.DataFrame)
         df_feat = create_df_feat()
         df_feat = sm.add_sample_mean_dif(valid_X, labels=labels,
-                                                 sample_positions=sample_positions, df_feat=df_feat)
+                                                 samples=sample_positions, df_feat=df_feat)
         assert isinstance(df_feat, pd.DataFrame)
 
     def test_names_valid(self):
@@ -132,7 +132,7 @@ class TestAddSampleMeanDif:
         labels = create_labels(valid_X.shape[0])
         df_feat = sm.add_sample_mean_dif(valid_X, labels=labels, df_feat=df_feat, names=names)
         assert isinstance(df_feat, pd.DataFrame)
-        df_feat = sm.add_sample_mean_dif(valid_X, labels=labels, df_feat=df_feat, names="test", sample_positions=0)
+        df_feat = sm.add_sample_mean_dif(valid_X, labels=labels, df_feat=df_feat, names="test", samples=0)
         assert isinstance(df_feat, pd.DataFrame)
 
     def test_group_average_valid(self):
@@ -146,7 +146,7 @@ class TestAddSampleMeanDif:
         sm.fit(valid_X, labels=valid_labels, **ARGS)
         df_feat = create_df_feat()
         df_feat_updated = sm.add_sample_mean_dif(valid_X, labels=labels, group_average=group_average,
-                                                 df_feat=df_feat, sample_positions=[1, 2, 3])
+                                                 df_feat=df_feat, samples=[1, 2, 3])
         assert isinstance(df_feat_updated, pd.DataFrame)
 
     # Negative tests
@@ -197,7 +197,7 @@ class TestAddSampleMeanDif:
         invalid_sample_positions_inputs = ['invalid', -1, 100, [100, -1]]
         for sample_positions in invalid_sample_positions_inputs:
             with pytest.raises(ValueError):
-                sm.add_sample_mean_dif(valid_X, labels=labels, sample_positions=sample_positions, df_feat=df_feat)
+                sm.add_sample_mean_dif(valid_X, labels=labels, samples=sample_positions, df_feat=df_feat)
 
     def test_names_invalid(self):
         sm = aa.ShapModel()
@@ -232,7 +232,7 @@ class TestAddSampleMeanDifComplex:
         names = ["Sample1", "Sample2", "Sample3"]
         df_feat_updated = sm.add_sample_mean_dif(valid_X, labels=labels, label_ref=label_ref,
                                                  df_feat=df_feat, drop=drop,
-                                                 sample_positions=sample_positions, names=names,
+                                                 samples=sample_positions, names=names,
                                                  group_average=False)
         assert isinstance(df_feat_updated, pd.DataFrame)
 
@@ -248,5 +248,44 @@ class TestAddSampleMeanDifComplex:
         with pytest.raises(ValueError):
             sm.add_sample_mean_dif(valid_X, labels=labels, label_ref=label_ref,
                                    df_feat=df_feat, drop=drop,
-                                   sample_positions=sample_positions, names=names,
+                                   samples=sample_positions, names=names,
                                    group_average=group_average)
+
+
+class TestAddSampleMeanDifDfSeq:
+    """Accession-based sample selection: entry-name ``sample_positions`` resolved via ``df_seq``."""
+
+    # Positive tests
+    def test_sample_positions_entry_name(self):
+        entry = df_seq["entry"].iloc[0]
+        df_feat = aa.ShapModel.add_sample_mean_dif(valid_X, labels=valid_labels, df_feat=create_df_feat(),
+                                                   df_seq=df_seq, samples=entry)
+        assert f"mean_dif_{entry}" in df_feat.columns
+
+    def test_entry_name_matches_int_position(self):
+        entry = df_seq["entry"].iloc[2]
+        i = list(df_seq["entry"]).index(entry)
+        df_a = aa.ShapModel.add_sample_mean_dif(valid_X, labels=valid_labels, df_feat=create_df_feat(),
+                                                df_seq=df_seq, samples=entry)
+        df_b = aa.ShapModel.add_sample_mean_dif(valid_X, labels=valid_labels, df_feat=create_df_feat(),
+                                                samples=i, names=entry)
+        assert df_a[f"mean_dif_{entry}"].equals(df_b[f"mean_dif_{entry}"])
+
+    def test_sample_positions_entry_list(self):
+        entries = df_seq["entry"].iloc[:3].to_list()
+        df_feat = aa.ShapModel.add_sample_mean_dif(valid_X, labels=valid_labels, df_feat=create_df_feat(),
+                                                   df_seq=df_seq, samples=entries)
+        for e in entries:
+            assert f"mean_dif_{e}" in df_feat.columns
+
+    # Negative tests
+    def test_entry_name_requires_df_seq(self):
+        entry = df_seq["entry"].iloc[0]
+        with pytest.raises(ValueError):
+            aa.ShapModel.add_sample_mean_dif(valid_X, labels=valid_labels, df_feat=create_df_feat(),
+                                             samples=entry)
+
+    def test_entry_not_in_df_seq(self):
+        with pytest.raises(ValueError):
+            aa.ShapModel.add_sample_mean_dif(valid_X, labels=valid_labels, df_feat=create_df_feat(),
+                                             df_seq=df_seq, samples="NOT_AN_ENTRY")
