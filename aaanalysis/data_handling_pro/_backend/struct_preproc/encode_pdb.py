@@ -5,6 +5,7 @@ and from biopython's surface tools (``Bio.PDB.ResidueDepth``, which needs
 the external ``msms`` binary). The frontend ``encode_pdb`` validates inputs,
 opens the PDB once per entry, then dispatches by feature key.
 """
+from functools import lru_cache
 from typing import List, Optional, Tuple
 
 import numpy as np
@@ -48,11 +49,25 @@ def _make_aligner():
     return aligner
 
 
-def _identity_fraction(target_seq: str, atom_seq: str, aligner) -> float:
+@lru_cache(maxsize=128)
+def _alignment_strings(target_seq: str, atom_seq: str) -> Tuple[str, str]:
+    """Global-aligned ``(target, atom)`` string pair for two sequences.
+
+    The alignment depends only on the two sequences, so within one ``encode_pdb``
+    entry every encoder that aligns the same ``target`` against the same ``atom``
+    sequence (chain pick + each per-feature value mapping) reuses one computation
+    instead of re-running the O(L^2) aligner ~26x. ``aligner.align(...)[0]`` is the
+    deterministic first optimal alignment, so the cached result is identical to
+    recomputing it."""
+    aligner = _make_aligner()
+    alignment = aligner.align(target_seq, atom_seq)[0]
+    return str(alignment[0]), str(alignment[1])
+
+
+def _identity_fraction(target_seq: str, atom_seq: str) -> float:
     if not target_seq or not atom_seq:
         return 0.0
-    alignment = aligner.align(target_seq, atom_seq)[0]
-    a, b = str(alignment[0]), str(alignment[1])
+    a, b = _alignment_strings(target_seq, atom_seq)
     return sum(1 for x, y in zip(a, b)
                if x == y and x != "-") / len(target_seq)
 
@@ -60,13 +75,12 @@ def _identity_fraction(target_seq: str, atom_seq: str, aligner) -> float:
 def _pick_best_chain_records(target_seq: str, chains):
     """Return (chain, residues, identity) for the chain best matching target."""
     from Bio.PDB.Polypeptide import protein_letters_3to1
-    aligner = _make_aligner()
     best = None
     best_score = -1.0
     for chain, residues in chains:
         atom_seq = "".join(
             _residue_one_letter(r, protein_letters_3to1) for r, _ in residues)
-        score = _identity_fraction(target_seq, atom_seq, aligner)
+        score = _identity_fraction(target_seq, atom_seq)
         if score > best_score:
             best_score = score
             best = (chain, residues, atom_seq)
@@ -80,9 +94,7 @@ def _align_atom_values_to_target(target_seq: str,
                                  atom_seq: str,
                                  atom_values: List[float]) -> List[float]:
     """Map per-ATOM-residue floats onto target positions; gaps -> NaN."""
-    aligner = _make_aligner()
-    alignment = aligner.align(target_seq, atom_seq)[0]
-    a_aln, b_aln = str(alignment[0]), str(alignment[1])
+    a_aln, b_aln = _alignment_strings(target_seq, atom_seq)
     out: List[float] = []
     atom_idx = 0
     for ta, ab in zip(a_aln, b_aln):

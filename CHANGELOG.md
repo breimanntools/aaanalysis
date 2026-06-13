@@ -66,7 +66,9 @@ and a suite of site-localization metrics and plotting helpers.
   candidate-center band filtering (~40x) and `sample_motif_matched` PWM scoring
   (~12x), and `SequencePreprocessor.encode_one_hot` (~3x), vectorized with
   identical output. Plus `StructurePreprocessor.encode_pdb` CA-CA contact counts
-  (`contact_count_8A`/`12A`) vectorized (~50x, identical counts).
+  (`contact_count_8A`/`12A`) vectorized (~50x, identical counts) and its
+  per-(target, atom) sequence alignment cached across the ~26 redundant
+  re-alignments each entry triggers (~12x off the alignment overhead, byte-identical encoder output).
 - `dPULearn.fit` gains flexible, package-consistent label handling via
   `label_pos` / `label_unl` / `label_neg` markers: pass standard `{0, 1}` labels
   directly with `label_unl=0`, or an arbitrary positive/unlabeled/negative
