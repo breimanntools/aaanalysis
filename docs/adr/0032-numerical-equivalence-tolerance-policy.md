@@ -103,6 +103,15 @@ reviewer acceptance checklist lives in `CONTRIBUTING.rst` (and the
   ~35–50 % audit estimate counted *evaluations* assuming flat per-eval cost.
   Failing D1's benefit bar, it was closed unimplemented (the #188 outcome).
   Evidence: gitignored `dev_scripts/perf_aaclust_ksearch_validate.py`.
+- **Performance-measurement caveat (generalizing #200).** Under D1 a
+  "benchmarked win" is a **wall-clock** (or memory) measurement of the *real
+  pipeline on the canonical cell* — never an operation- or evaluation-*count*,
+  and never an asymptotic argument. Fewer operations can be *slower* when the
+  optimization shifts work toward more expensive individual operations: the #200
+  bisection ran *fewer* KMeans fits but at larger `k`, where per-fit cost is
+  higher, so it lost despite the lower count. Treat an eval-count or big-O claim
+  as a hypothesis to be timed, not as evidence. This applies to every future T3
+  candidate (e.g. #199).
 - The nightly accumulates one anchor per landed T2/T3 optimization alongside the
   ADR-0015 CPP anchor; all run on the canonical Linux/floor-Python cell and are
   re-frozen only on intentional, reviewed change.
