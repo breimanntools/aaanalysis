@@ -32,6 +32,15 @@ pytest tests/unit/api_tests/test_param_coverage.py -x -vv -c tests/pytest.ini
 # outputs before every push; RTD renders committed outputs but does not execute them)
 pytest --nbmake --nbmake-timeout=120 tutorials/ examples/
 
+# perf benchmark suite (issue #187) — opt-in [bench] extra, runs in the perf
+# nightly only (NOT the blocking matrix; wall-clock is noisy). Needs the plugin:
+#   uv pip install -e ".[dev,pro,bench]"
+pytest tests/benchmarks --benchmark-json=perf_run.json -c tests/pytest.ini
+python .github/scripts/check_perf_regression.py perf_run.json   # compare vs baseline
+# refresh the committed baseline (do it on CI's runner class via the perf-nightly
+# workflow_dispatch with refresh_baseline=true, then commit the artifact):
+python .github/scripts/check_perf_regression.py perf_run.json --update
+
 # build docs
 cd docs && make html
 

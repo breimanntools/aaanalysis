@@ -212,6 +212,16 @@ Changed
   chain-pick, mismatch-count and feature-align steps) rather than constructing
   three fresh aligners per entry. Identity fractions and alignments are
   byte-identical in every case.
+- **Performance benchmark + regression guard** (developer tooling): A committed
+  ``pytest-benchmark`` suite (``tests/benchmarks/``) micro-benchmarks the hot
+  public entry points — ``CPP.run`` / ``CPP.run_num``, ``AAclust.fit``,
+  ``SequenceFeature.feature_matrix``, ``AAWindowSampler`` sampling, ``dPULearn.fit``,
+  ``TreeModel.fit``, and ``StructurePreprocessor.encode_pdb`` — on small bundled
+  fixtures. A baseline-comparison helper
+  (``.github/scripts/check_perf_regression.py``) flags any path slower than a
+  generous ``1.5x`` threshold, wired as a **non-gating nightly** job
+  (``perf_nightly.yml``). Opt-in via the new ``[bench]`` install extra; it never
+  touches the blocking matrix. No effect on the public API.
 - **Pooled, optionally concurrent web fetches**:
   ``StructurePreprocessor.fetch_alphafold`` and
   ``AnnotationPreprocessor.fetch_uniprot`` now route every request through a

@@ -1,0 +1,68 @@
+name: Perf (benchmark + regression guard)
+
+# NON-GATING nightly job (issue #187, mirroring the mutation/regression nightly).
+# Runs on a schedule and on manual dispatch only — never on push/PR — so noisy
+# wall-clock timings never block a merge. It micro-benchmarks the hot public
+# entry points (tests/benchmarks/) on small bundled fixtures and compares the run
+# against the committed baseline (tests/benchmarks/perf_baseline.json), flagging
+# any covered path slower than the baseline threshold (1.5x).
+#
+# Refreshing the baseline: the committed numbers are hardware-specific, so refresh
+# them ON THIS RUNNER CLASS (ubuntu-latest). Trigger this workflow via "Run
+# workflow" (workflow_dispatch) with refresh_baseline=true, download the
+# perf-baseline artifact, and commit it to tests/benchmarks/perf_baseline.json.
+
+on:
+  schedule:
+    - cron: "0 5 * * *"   # 05:00 UTC daily (after the 04:00 mutation nightly)
+  workflow_dispatch:
+    inputs:
+      refresh_baseline:
+        description: "Write a fresh baseline artifact instead of comparing"
+        type: boolean
+        default: false
+
+jobs:
+  benchmark:
+    name: Benchmark hot paths (Linux/py3.11)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install package + dev/pro/bench deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev,pro,bench]
+
+      - name: Run benchmark suite
+        env:
+          MPLBACKEND: Agg
+        run: |
+          pytest tests/benchmarks --benchmark-json=perf_run.json \
+            -c tests/pytest.ini -v
+
+      - name: Compare against committed baseline
+        if: ${{ !inputs.refresh_baseline }}
+        run: python .github/scripts/check_perf_regression.py perf_run.json
+
+      - name: Refresh baseline (manual dispatch only)
+        if: ${{ inputs.refresh_baseline }}
+        run: |
+          python .github/scripts/check_perf_regression.py perf_run.json --update
+          echo "Refreshed tests/benchmarks/perf_baseline.json — download the "
+          echo "perf-baseline artifact and commit it."
+
+      - name: Upload run + baseline
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: perf-baseline
+          path: |
+            perf_run.json
+            tests/benchmarks/perf_baseline.json
+          if-no-files-found: ignore
