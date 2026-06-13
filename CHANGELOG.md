@@ -64,7 +64,8 @@ and a suite of site-localization metrics and plotting helpers.
   Kullback-Leibler divergence used by `dPULearn.eval(comp_kld=True)`
   (parallelized, honors `options['n_jobs']`). Plus `AAWindowSampler`
   candidate-center band filtering (~40x) and `sample_motif_matched` PWM scoring
-  (~12x), vectorized with identical output.
+  (~12x), and `SequencePreprocessor.encode_one_hot` (~3x), vectorized with
+  identical output.
 
 ### Deprecated
 - None. The strict-semver deprecation policy and the `deprecated` decorator are

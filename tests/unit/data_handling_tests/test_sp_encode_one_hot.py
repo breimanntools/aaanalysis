@@ -116,6 +116,42 @@ class TestEncodeOneHotComplex:
         assert isinstance(result[0], np.ndarray)
         assert isinstance(result[1], list)
 
+
+def _ref_one_hot(list_seq, alphabet="ACDEFGHIKLMNPQRSTVWY", gap="-", pad_at="C"):
+    """Reference (per-residue) one-hot encoder used to pin the vectorized output."""
+    from aaanalysis.data_handling._backend.seq_preproc._utils import pad_sequences
+    padded = pad_sequences(list_seq, pad_at=pad_at, gap=gap)
+    max_length, num = len(padded[0]), len(alphabet)
+    feats = [f"{i}{aa}" for i in range(1, max_length + 1) for aa in alphabet]
+    fm = np.zeros((len(padded), max_length * num), dtype=int)
+    d = {a: i for i, a in enumerate(alphabet)}
+    for r, seq in enumerate(padded):
+        rows = []
+        for aa_ in seq:
+            v = np.zeros(num, dtype=int)
+            if aa_ != gap:
+                v[d[aa_]] = 1
+            rows.append(v)
+        fm[r, :] = np.array(rows).flatten()
+    return fm, feats
+
+
+class TestEncodeOneHotEquivalence:
+    """The vectorized encoder must return output identical to the per-residue reference."""
+
+    @pytest.mark.parametrize("pad_at", ["C", "N"])
+    @pytest.mark.parametrize("seed", [0, 1, 2, 7])
+    def test_matches_reference(self, pad_at, seed):
+        rng = np.random.default_rng(seed)
+        aas = "ACDEFGHIKLMNPQRSTVWY"
+        seqs = ["".join(rng.choice(list(aas), int(rng.integers(5, 40)))) for _ in range(60)]
+        sp = aa.SequencePreprocessor()
+        fm, feats = sp.encode_one_hot(list_seq=seqs, pad_at=pad_at)
+        ref_fm, ref_feats = _ref_one_hot(seqs, pad_at=pad_at)
+        assert feats == ref_feats
+        assert fm.dtype == ref_fm.dtype
+        assert np.array_equal(fm, ref_fm)
+
     @settings(max_examples=10, deadline=None)
     @given(
         list_seq=st.none(),
