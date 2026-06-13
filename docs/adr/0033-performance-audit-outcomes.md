@@ -59,8 +59,20 @@ not redo**, with the reason for each.
 | `encode_disulfide`, `_plddt` reuse, DSSP aligner reuse | StructurePreprocessor | identical | 16–48× / 2.2× | #194 |
 | `filter_correlation_`, redundancy `df_cor`→numpy, `_greedy_simplify_` copy-drop | feature_engineering | identical | ~3.3× / ~3.4× | #195 |
 | `AAMut.comp_substitution_impact`, `get_sliding_aa_window` | protein_design / data_handling | identical | ~19× / ~1.8× | #196 |
+| `_eligible_candidates_` (numpy filter + hoisted `interp_arr`) | CPP simplify | byte-identical | **~2–3.5×** (audit's "~66×" did NOT hold) | #198 |
+| `candidate_centers_` memory follow-up (`searchsorted`) | AAWindowSampler | byte-identical | **O(n) memory (6.5 MB → ~0)**, slightly faster | #202 |
 
 Infrastructure: benchmark + regression suite (#193); tolerance policy ADR-0032 (#191).
+
+### First realized **T3** win under ADR-0032 (statistically-equivalent, opt-in)
+
+| Win | Module | Tier / contract | Speed | PR |
+|---|---|---|---|---|
+| `CPP.simplify(candidate_search='fast')` | feature_engineering | **T3** — default `'exact'` byte-identical; `'fast'` opt-in within a band (kept-feature **Jaccard ≥ 0.95**, **ΔavgABS_AUC ≤ 0.005** on the canonical DOM_GSEC cell) | **greedy 8.3×** (7.3 s → 0.88 s); consolidate 3.3×; swap_all no-op | #207 (#199) |
+
+This is the **proof that ADR-0032 pays off**: a real speed-up that the strict same-output bar
+would have blocked, shipped safely behind a documented tolerance band, with the default path
+left byte-identical to protect published results.
 
 The "×" above are **speed** micro-benchmarks. **Memory** was touched only where noted:
 `_greedy_simplify_` drops a per-feature `X.copy()` (memory-only); the `encode_pdb`
@@ -153,11 +165,13 @@ comparison is only meaningful on the shared core (`CPP.run`, `AAclust.fit`,
   regression anchor (ADR-0015 pattern).
 - New same-output candidates are gated by D2 (isolated benchmark) before a PR.
 
-## Out of scope (still open, genuine same-output wins)
+## Out of scope (still open)
 
-Tracked in #186, not yet implemented in any PR:
+The same-output sweep is otherwise complete (`_eligible_candidates_` landed in #198,
+`candidate_centers_` memory fix in #202). Two items remain, both optional:
 
-- `_eligible_candidates_` (CPP `_simplify.py`) — drop the per-feature `.items()` over the
-  ~586-scale `df_cor` Series; hoist `interp`/`cor` to numpy. ~66× (the standout).
 - `encode_pdb` per-entry coordinate/residue cache — one structure walk + best-chain pick
-  shared across the ~13 encoders; needs golden tests on the P1/P2/AF_TINY fixtures. ~12×.
+  shared across the ~13 encoders; needs golden tests on the P1/P2/AF_TINY fixtures. ~12×
+  (the only sizeable same-output item left; invasive).
+- `_dist_to_medoids` memory tightening — a per-cluster form would cut its ~3×-input
+  temporaries (see the memory table above); bounded today, so low priority.
