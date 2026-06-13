@@ -11,6 +11,10 @@ import aaanalysis.utils as ut
 
 
 # I Helper Functions
+# Canonical amino-acid -> column index (built once; identical to rebuilding it per call).
+_AA_INDEX = {a: i for i, a in enumerate(ut.LIST_CANONICAL_AA)}
+
+
 def _is_missing(val):
     """Treat ``None`` / ``NaN`` / empty string as 'no positive positions'."""
     return (val is None
@@ -93,16 +97,17 @@ def candidate_centers_(seq_len, window_size, exclude_positions=None,
         return centers
     if min_distance is None and max_distance is None:
         return centers
-    excl_0based = [p - 1 for p in exclude_positions]
-    result = []
-    for c in centers:
-        d = min(abs(c - p) for p in excl_0based)
-        if min_distance is not None and d < min_distance:
-            continue
-        if max_distance is not None and d > max_distance:
-            continue
-        result.append(c)
-    return result
+    # Nearest-excluded L1 distance per center, vectorized. Distances are integers, so the
+    # band comparisons reproduce the scalar keep/drop decisions exactly.
+    centers_arr = np.asarray(centers)
+    excl = np.asarray([p - 1 for p in exclude_positions])
+    d = np.abs(centers_arr[:, None] - excl[None, :]).min(axis=1)
+    keep = np.ones(len(centers_arr), dtype=bool)
+    if min_distance is not None:
+        keep &= d >= min_distance
+    if max_distance is not None:
+        keep &= d <= max_distance
+    return centers_arr[keep].tolist()
 
 
 def collect_test_windows(df_seq, pos_col, window_size):
@@ -242,10 +247,9 @@ def score_window_pwm_(window, pwm):
     ordered by ``ut.LIST_CANONICAL_AA``. The score is the sum over positions of
     ``pwm[i, aa_index[w[i]]]``; non-canonical residues contribute zero.
     """
-    aa_index = {a: i for i, a in enumerate(ut.LIST_CANONICAL_AA)}
     score = 0.0
     for i, aa in enumerate(window):
-        j = aa_index.get(aa)
+        j = _AA_INDEX.get(aa)
         if j is not None:
             score += float(pwm[i, j])
     return score

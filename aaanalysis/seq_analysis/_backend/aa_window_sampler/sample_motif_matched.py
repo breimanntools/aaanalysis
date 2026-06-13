@@ -27,20 +27,24 @@ def _scan_protein_(seq, pwm, window_size, aa_index, threshold,
         return []
     # Per-position residue index (-1 for non-canonical).
     aa_idx_arr = np.array([aa_index.get(c, -1) for c in seq], dtype=np.int64)
-    hits = []
     lo, hi = half_left, n - half_right + 1
-    for c in range(lo, hi):
-        if allowed_centers is not None and c not in allowed_centers:
-            continue
-        score = 0.0
-        start = c - half_left
-        for i in range(window_size):
-            j = aa_idx_arr[start + i]
-            if j >= 0:
-                score += float(pwm[i, j])
-        if score >= threshold:
-            hits.append((score, c))
-    return hits
+    centers = range(lo, hi)
+    if allowed_centers is not None:
+        centers = [c for c in centers if c in allowed_centers]
+    centers = np.fromiter(centers, dtype=np.int64)
+    if centers.size == 0:
+        return []
+    # (n_centers, window_size) matrix of residue indices, one row per candidate window.
+    idx_mat = aa_idx_arr[(centers - half_left)[:, None] + np.arange(window_size)[None, :]]
+    # Sum pwm[i, idx] over positions i left-to-right (same order as the scalar loop); a
+    # non-canonical residue (idx < 0) adds 0.0, which is bit-identical to skipping it.
+    scores = np.zeros(centers.size, dtype=float)
+    for i in range(window_size):
+        col = idx_mat[:, i]
+        valid = col >= 0
+        scores += np.where(valid, pwm[i, np.where(valid, col, 0)], 0.0)
+    keep = scores >= threshold
+    return list(zip(scores[keep].tolist(), centers[keep].tolist()))
 
 
 def _slice_window_(seq, center, half_left, window_size):

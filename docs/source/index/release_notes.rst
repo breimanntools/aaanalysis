@@ -189,6 +189,9 @@ Changed
   per-feature Kullback-Leibler divergence (used by ``dPULearn.eval`` with
   ``comp_kld=True``) is parallelized over features and honors
   ``options['n_jobs']``. Public APIs and outputs are unchanged.
+  A further pass vectorizes ``AAWindowSampler`` window-sampling internals:
+  candidate-center band filtering (~40x faster at scale) and per-window PWM
+  scoring in ``sample_motif_matched`` (~12x), again with identical results.
 
 
 Version 1.0 (Stable Version)

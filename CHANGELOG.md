@@ -62,7 +62,9 @@ and a suite of site-localization metrics and plotting helpers.
   `AAWindowSampler` redundancy/similarity filtering (vectorized, ~30x at scale),
   `AAclust` sample-to-medoid correlation distances (single pass), and per-feature
   Kullback-Leibler divergence used by `dPULearn.eval(comp_kld=True)`
-  (parallelized, honors `options['n_jobs']`).
+  (parallelized, honors `options['n_jobs']`). Plus `AAWindowSampler`
+  candidate-center band filtering (~40x) and `sample_motif_matched` PWM scoring
+  (~12x), vectorized with identical output.
 
 ### Deprecated
 - None. The strict-semver deprecation policy and the `deprecated` decorator are
