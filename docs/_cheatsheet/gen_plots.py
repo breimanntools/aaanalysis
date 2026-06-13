@@ -104,12 +104,12 @@ def main():
     aa.plot_settings()
     aa.AAclustPlot().centers(np.array(df_scales_full).T, labels=aac.labels_); _save("centers")
 
-    # dPULearn PCA: positives (1) + unlabelled (2) -> reliable negatives (0).
-    # Convert only part of the unlabelled pool so unlabelled (grey) remain visible.
-    labels_pu = [1 if v == 1 else 2 for v in labels]
+    # dPULearn PCA: DOM_GSEC ships 1/0; label_unl=0 treats 0 as the unlabeled pool.
+    # Mine only n_pos//2 reliable negatives so the remaining unlabelled (grey) stay
+    # visible. Output labels_ are always 1 (pos) / 0 (rel-neg) / 2 (unl).
     n_pos = sum(v == 1 for v in labels)
     dpul = aa.dPULearn(verbose=False)
-    dpul.fit(X, labels=labels_pu, n_unl_to_neg=n_pos // 2)
+    dpul.fit(X, labels=labels, label_unl=0, n_neg=n_pos // 2)
     aa.plot_settings(font_scale=0.8)
     # use the package's canonical sample colours (COLOR_REL_NEG gold, COLOR_POS
     # green, COLOR_UNL grey) — the dPULearnPlot.pca default — so the figure and
