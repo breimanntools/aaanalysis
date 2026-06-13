@@ -1,10 +1,14 @@
 name: Nightly (mutation + regression)
 
 # NON-GATING nightly job (ADR-0015 / ADR-0016). Runs on a schedule and on
-# manual dispatch — never on push/PR, so it never blocks merges. It does two
+# manual dispatch — never on push/PR, so it never blocks merges. It does three
 # things on the canonical cell (Linux + py3.11):
 #   1. Re-verifies the exact-value CPP regression anchor (`-m regression`).
-#   2. Runs a scoped, non-gating mutmut audit of the CPP numeric core; surviving
+#   2. Runs the live online-fetch tests (`-m network --run-network`) so an
+#      upstream API/version change (e.g. AlphaFold's v4->v6 file rename, which
+#      silently broke fetch_alphafold) surfaces as a red nightly instead of
+#      slipping past the mocked unit tests.
+#   3. Runs a scoped, non-gating mutmut audit of the CPP numeric core; surviving
 #      mutants are a TODO list for stronger golden/property tests, not a gate.
 
 on:
@@ -33,6 +37,11 @@ jobs:
         env:
           MPLBACKEND: Agg
         run: pytest tests -m regression -vv
+
+      - name: Verify live online fetches (AlphaFold etc.)
+        env:
+          MPLBACKEND: Agg
+        run: pytest tests -m network --run-network -vv
 
       - name: Mutation audit of CPP numeric core (non-gating)
         continue-on-error: true

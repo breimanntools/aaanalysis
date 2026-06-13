@@ -8,6 +8,25 @@ import aaanalysis as aa
 from aaanalysis.config import _dict_options
 
 
+# Live-endpoint ('network'-marked) tests are skipped by default so they never run
+# in the blocking matrix (a per-job 'pytest -m "not regression"' would otherwise
+# hit AlphaFold/UniProt live on every push). Run them with '--run-network' (the
+# nightly does) to catch upstream API/version breakage. A code-side regression is
+# still caught networklessly by the mocked unit tests.
+def pytest_addoption(parser):
+    parser.addoption("--run-network", action="store_true", default=False,
+                     help="run 'network'-marked tests against live endpoints")
+
+
+def pytest_collection_modifyitems(config, items):
+    if config.getoption("--run-network"):
+        return
+    skip_network = pytest.mark.skip(reason="live endpoint; pass --run-network to run")
+    for item in items:
+        if "network" in item.keywords:
+            item.add_marker(skip_network)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _warm_matplotlib():
     """Prime matplotlib's font cache + first-figure cost ONCE per session.
