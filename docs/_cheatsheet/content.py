@@ -284,13 +284,11 @@ FLAGSHIP_RECIPES = [
     {"cls": "ShapModel — explain a prediction", "tag": '<span class="hint-pos">sample</span> level · [pro]',
      "imgs": ["shap_profile", "feature_map_shap"],
      "img_labels": ["CPPPlot.profile · SHAP", "CPPPlot.feature_map · SHAP"], "h": 36,
-     "code": "# advanced: per-sample explanation (fuzzy labeling demo)\n"
-             "# fuzzy labeling: APP's label is its soft prediction score (0.6, not 1)\n"
-             "# fuzzy_labels is keyed by entry, so no manual row-index lookup is needed\n"
+     "code": "# per-sample SHAP — APP's soft label (0.6), keyed by entry\n"
              "sm = aa.ShapModel()\n"
-             "sm.fit(X, labels=labels, df_seq=df_seq, fuzzy_labels={'P05067': 0.6})   # APP\n"
+             "sm.fit(X, labels=labels, df_seq=df_seq, fuzzy_labels={'P05067': 0.6})\n"
              "df_feat = sm.add_feat_impact(df_feat=df_feat, df_seq=df_seq,\n"
-             "              samples='P05067', names='APP')   # select by accession\n"
+             "                             samples='P05067', names='APP')\n"
              "args_seq = sf.get_args_seq(df_seq=df_seq, sample='P05067')\n"
              "ka = dict(col_imp='feat_impact_APP', shap_plot=True, **args_seq)\n"
              "cpp_plot.profile(df_feat=df_feat, **ka)\n"

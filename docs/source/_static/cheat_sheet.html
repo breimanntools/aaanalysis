@@ -554,13 +554,11 @@ plt.tight_layout(); plt.show()</pre>
 </div><div class="sec">
   <div class="sec-h"><span>ShapModel — explain a prediction</span><span class="hint"><span class="hint-pos">sample</span> level · [pro]</span></div>
   <div class="sec-body">
-    <pre class="code"><span class="c-cm"># advanced: per-sample explanation (fuzzy labeling demo)</span>
-<span class="c-cm"># fuzzy labeling: APP&#x27;s label is its soft prediction score (0.6, not 1)</span>
-<span class="c-cm"># fuzzy_labels is keyed by entry, so no manual row-index lookup is needed</span>
+    <pre class="code"><span class="c-cm"># per-sample SHAP — APP&#x27;s soft label (0.6), keyed by entry</span>
 sm = <span class="c-nm">aa.ShapModel</span>()
-sm.fit(X, labels=labels, df_seq=df_seq, fuzzy_labels={<span class="c-st">&#x27;P05067&#x27;</span>: 0.6})   <span class="c-cm"># APP</span>
+sm.fit(X, labels=labels, df_seq=df_seq, fuzzy_labels={<span class="c-st">&#x27;P05067&#x27;</span>: 0.6})
 df_feat = sm.add_feat_impact(df_feat=df_feat, df_seq=df_seq,
-              samples=<span class="c-st">&#x27;P05067&#x27;</span>, names=<span class="c-st">&#x27;APP&#x27;</span>)   <span class="c-cm"># select by accession</span>
+                             samples=<span class="c-st">&#x27;P05067&#x27;</span>, names=<span class="c-st">&#x27;APP&#x27;</span>)
 args_seq = sf.get_args_seq(df_seq=df_seq, sample=<span class="c-st">&#x27;P05067&#x27;</span>)
 ka = dict(col_imp=<span class="c-st">&#x27;feat_impact_APP&#x27;</span>, shap_plot=True, **args_seq)
 cpp_plot.profile(df_feat=df_feat, **ka)
