@@ -221,6 +221,15 @@ Changed
   ``n_unl_to_neg`` (the number identified **directly from the unlabeled pool**, for direct
   control). Output labels always use the package convention (``1`` = positive, ``0`` =
   negative, ``2`` = unlabeled); the recommended input encoding is unchanged.
+- **Numerical-equivalence tolerance policy** (developer-facing): A new policy
+  (ADR-0032, summarized in ``CONTRIBUTING.rst``) defines three tiers of acceptable
+  output change for performance optimizations — **T1 byte-identical** (default),
+  **T2 numerically-equivalent** (``allclose(atol=1e-10, rtol=0)`` plus identical
+  discrete decisions), and **T3 statistically-equivalent** (documented quality
+  metric within an agreed band) — and the evidence + pinned regression anchor each
+  tier requires. It unblocks previously-excluded algorithmic optimizations (e.g.
+  AAclust binary-search ``k``), each landing as its own tier-declared PR. No user-
+  facing behavior changes in this release.
 
 
 Version 1.0 (Stable Version)

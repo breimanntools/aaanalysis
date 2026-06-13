@@ -86,6 +86,14 @@ and a suite of site-localization metrics and plotting helpers.
   existing `n_unl_to_neg` (the number identified **directly from the unlabeled
   pool**). Output labels always use the package convention (1 = positive,
   0 = negative, 2 = unlabeled); the recommended input encoding is unchanged.
+- Numerical-equivalence tolerance policy for performance optimizations
+  (developer-facing; ADR-0032, checklist in `CONTRIBUTING.rst`): three tiers —
+  **T1** byte-identical (default), **T2** numerically-equivalent
+  (`allclose(atol=1e-10, rtol=0)` + identical discrete decisions), **T3**
+  statistically-equivalent (quality metric within a documented band) — with the
+  evidence + pinned regression anchor each tier requires. Unblocks
+  previously-excluded algorithmic optimizations (e.g. AAclust binary-search `k`),
+  each as its own tier-declared PR. No user-facing behavior change.
 
 ### Deprecated
 - None. The strict-semver deprecation policy and the `deprecated` decorator are
