@@ -17,6 +17,24 @@ from ._backend.aaclust.aaclust_plot import plot_eval, plot_center_or_medoid, plo
 
 
 # I Helper Functions
+def check_resolve_X_df_scales(X=None, df_scales=None):
+    """Resolve the feature matrix from ``X`` or ``df_scales`` (whichever is provided).
+
+    ``df_scales`` has amino acids in `rows` and scales in `columns`; it is transposed to the
+    (n_scales, n_amino_acids) feature matrix the plot expects, removing the manual ``.T``.
+    Exactly one of ``X`` or ``df_scales`` must be provided.
+    """
+    if df_scales is not None:
+        if X is not None:
+            raise ValueError("'X' and 'df_scales' are mutually exclusive; provide only one.")
+        if not isinstance(df_scales, pd.DataFrame):
+            raise ValueError(f"'df_scales' ({type(df_scales)}) should be a pandas DataFrame.")
+        return np.asarray(df_scales).T
+    if X is None:
+        raise ValueError("Either 'X' or 'df_scales' should be provided.")
+    return X
+
+
 def check_match_df_eval_names(df_eval=None, names=None):
     """Validate the match between the number of samples in df_eval and the length of names"""
     n_samples = len(df_eval)
@@ -235,8 +253,9 @@ class AAclustPlot:
         return fig, axes
 
     def centers(self,
-                X: ut.ArrayLike2D,
+                X: Optional[ut.ArrayLike2D] = None,
                 labels: Optional[Union[np.ndarray, list]] = None,
+                df_scales: Optional[pd.DataFrame] = None,
                 component_x: int = 1,
                 component_y: int = 2,
                 ax: Optional[plt.Axes] = None,
@@ -258,10 +277,16 @@ class AAclustPlot:
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features), optional
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
+            Provide either ``X`` or ``df_scales`` (mutually exclusive).
         labels : array-like, shape (n_samples,)
             Cluster labels for each sample in ``X``. If ``None``, no grouping is used.
+        df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
+            Amino acid scales DataFrame (`rows` are amino acids, `columns` are scale IDs), as
+            returned by :func:`load_scales` or passed to :meth:`AAclust.select_scales`. Passed
+            instead of ``X``, it is transposed internally to the feature matrix, so the manual
+            ``np.asarray(df_scales).T`` is no longer needed.
         component_x : int, default=1
             Index of the PCA component for the x-axis. Must be >= 1.
         component_y : int, default=2
@@ -289,6 +314,8 @@ class AAclustPlot:
         Notes
         -----
         * Ensure `X` and `labels` are in the same order to avoid mislabeling.
+        * When ``df_scales`` is given, ``labels`` still refers to its `columns` (the scales);
+          pass the cluster labels from clustering, e.g. ``labels=aac.labels_``.
 
         See Also
         --------
@@ -300,6 +327,7 @@ class AAclustPlot:
         .. include:: examples/aac_plot_centers.rst
         """
         # Check input
+        X = check_resolve_X_df_scales(X=X, df_scales=df_scales)
         X = ut.check_X(X=X)
         ut.check_X_unique_samples(X=X)
         labels = ut.check_labels(labels=labels)
@@ -323,8 +351,9 @@ class AAclustPlot:
 
 
     def medoids(self,
-                X: ut.ArrayLike2D,
+                X: Optional[ut.ArrayLike2D] = None,
                 labels: ut.ArrayLike1D = None,
+                df_scales: Optional[pd.DataFrame] = None,
                 component_x: int = 1,
                 component_y: int = 2,
                 metric: str = "euclidean",
@@ -346,10 +375,16 @@ class AAclustPlot:
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features), optional
             Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
+            Provide either ``X`` or ``df_scales`` (mutually exclusive).
         labels : array-like, shape (n_samples,)
             Cluster labels for each sample in ``X``. If ``None``, no grouping is used.
+        df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
+            Amino acid scales DataFrame (`rows` are amino acids, `columns` are scale IDs), as
+            returned by :func:`load_scales` or passed to :meth:`AAclust.select_scales`. Passed
+            instead of ``X``, it is transposed internally to the feature matrix, so the manual
+            ``np.asarray(df_scales).T`` is no longer needed.
         component_x : int, default=1
             Index of the PCA component for the x-axis. Must be >= 1.
         component_y : int, default=2
@@ -385,6 +420,8 @@ class AAclustPlot:
         Notes
         -----
         * Ensure `X` and `labels` are in the same order to avoid mislabeling.
+        * When ``df_scales`` is given, ``labels`` still refers to its `columns` (the scales);
+          pass the cluster labels from clustering, e.g. ``labels=aac.labels_``.
 
         See Also
         --------
@@ -396,6 +433,7 @@ class AAclustPlot:
         .. include:: examples/aac_plot_medoids.rst
         """
         # Check input
+        X = check_resolve_X_df_scales(X=X, df_scales=df_scales)
         X = ut.check_X(X=X)
         ut.check_X_unique_samples(X=X)
         labels = ut.check_labels(labels=labels)

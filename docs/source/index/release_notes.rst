@@ -87,6 +87,12 @@ Added
   per cluster, annotating ``df_seq`` with ``cluster`` / ``is_representative`` /
   ``dist_to_rep`` (``return_data='annotated' | 'filtered' | 'both'``) — the numerical
   counterpart to sequence-identity reduction via ``filter_seq``.
+- **AAclustPlot.centers / AAclustPlot.medoids accept df_scales**: Both methods gain a
+  ``df_scales`` argument (the amino acid scales DataFrame, mutually exclusive with ``X``)
+  that is transposed to the feature matrix internally — so
+  ``aac_plot.centers(df_scales=df_scales, labels=aac.labels_)`` replaces the manual
+  ``centers(np.array(df_scales).T, labels=aac.labels_)``. The explicit ``X`` signature
+  still works.
 
 **Sequence Analysis**
 

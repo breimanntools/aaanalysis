@@ -184,6 +184,59 @@ class TestAAclustPlotMedoids:
             plt.close()
 
 
+class TestAAclustPlotMedoidsFromDfScales:
+    """Test the 'df_scales' input path of the 'medoids' method (issue #158)."""
+
+    @staticmethod
+    def _fitted(n_clusters=8):
+        df_scales = aa.load_scales()
+        aac = aa.AAclust(random_state=42)
+        aac.select_scales(df_scales, n_clusters=n_clusters)
+        return aac, df_scales
+
+    def test_df_scales_path(self):
+        """A scales DataFrame can be passed via df_scales (transposed internally)."""
+        aac, df_scales = self._fitted()
+        ax, df_components = aa.AAclustPlot().medoids(df_scales=df_scales, labels=aac.labels_)
+        assert isinstance(ax, plt.Axes) and isinstance(df_components, pd.DataFrame)
+        plt.close()
+
+    def test_df_scales_equivalent_to_explicit(self):
+        """medoids(df_scales=df) plots identical data to the manual medoids(X.T, labels)."""
+        aac, df_scales = self._fitted()
+        aac_plot = aa.AAclustPlot()
+        _, df_from_scales = aac_plot.medoids(df_scales=df_scales, labels=aac.labels_)
+        _, df_from_explicit = aac_plot.medoids(np.array(df_scales).T, labels=aac.labels_)
+        pd.testing.assert_frame_equal(df_from_scales, df_from_explicit)
+        plt.close("all")
+
+    def test_back_compat_explicit_unchanged(self):
+        """The explicit (X, labels) signature still works."""
+        X = np.random.rand(10, 5)
+        labels = [i % 3 for i in range(10)]
+        ax, df_components = aa.AAclustPlot().medoids(X, labels=labels)
+        assert isinstance(ax, plt.Axes) and isinstance(df_components, pd.DataFrame)
+        plt.close()
+
+    def test_X_and_df_scales_mutually_exclusive(self):
+        """Passing both X and df_scales raises a clear ValueError."""
+        aac, df_scales = self._fitted()
+        with pytest.raises(ValueError):
+            aa.AAclustPlot().medoids(np.array(df_scales).T, labels=aac.labels_, df_scales=df_scales)
+
+    def test_neither_X_nor_df_scales_raises(self):
+        """Passing neither X nor df_scales raises a clear ValueError."""
+        aac, _ = self._fitted()
+        with pytest.raises(ValueError):
+            aa.AAclustPlot().medoids(labels=aac.labels_)
+
+    def test_df_scales_non_dataframe_raises(self):
+        """A non-DataFrame df_scales raises a clear ValueError."""
+        aac, df_scales = self._fitted()
+        with pytest.raises(ValueError):
+            aa.AAclustPlot().medoids(df_scales=np.array(df_scales), labels=aac.labels_)
+
+
 class TestAAclustPlotCenterComplex:
     """Test combinations of parameters in the 'medoids' method of the AAclustPlot class."""
 
