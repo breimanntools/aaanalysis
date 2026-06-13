@@ -1160,11 +1160,14 @@ class CPP(Tool):
             every eligible candidate and reproduces the original result exactly. ``'fast'`` is
             an **approximate** speed-up that caps the search to the most promising candidates
             per feature (highest interpretability, then strongest correlation); it can change
-            which features are kept and so is most useful on large scale pools. The speed-up is
-            concentrated in ``strategy='greedy'`` (one cross-validation per candidate tried);
-            ``'consolidate'`` gains less and ``'swap_all'`` is unaffected (it already stops at
-            the first viable candidate). With ``return_details=True`` the ``df_candidates``
-            report is correspondingly shorter under ``'fast'``.
+            which features are kept and so is most useful on large scale pools. If none of the
+            searched candidates is accepted, the feature keeps its original scale (it is never
+            dropped for this reason), so ``'fast'`` may leave a feature un-simplified that
+            ``'exact'`` would have swapped. The speed-up is concentrated in ``strategy='greedy'``
+            (one cross-validation per candidate tried); ``'consolidate'`` gains less and
+            ``'swap_all'`` is unaffected (it already stops at the first viable candidate). With
+            ``return_details=True`` the ``df_candidates`` report is correspondingly shorter
+            under ``'fast'``.
         max_interpret_grade : int, optional
             The maximum (worst) interpretability **grade** kept (1-10, where **grade 1 is the
             best / most interpretable, so lower is better**). Every feature whose scale
