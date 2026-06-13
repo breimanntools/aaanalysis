@@ -238,8 +238,9 @@ def check_match_df_feat_shap_values(df_feat=None, shap_values=None, drop=False, 
 # II Main Functions
 class ShapModel:
     """
-    SHAP Model class: A wrapper for SHAP (SHapley Additive exPlanations) [Lundberg20]_ explainers to obtain
-    Monte Carlo estimates for feature impact [Breimann25a]_.
+    SHAP Model class (**[pro]**, requires ``aaanalysis[pro]``): A wrapper for SHAP
+    (SHapley Additive exPlanations) [Lundberg20]_ explainers to obtain Monte Carlo
+    estimates for feature impact [Breimann25a]_.
 
     `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ is an explainable Artificial Intelligence (AI) framework
     and game-theoretic approach to explain the output of any machine learning model using SHAP values. These SHAP values

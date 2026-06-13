@@ -36,6 +36,17 @@ def _patch_get(*statuses):
     return patch(f"{BACKEND}.requests.get", side_effect=_responses(*statuses))
 
 
+@pytest.fixture(autouse=True)
+def _stub_af_resolve_urls():
+    """Resolve URLs without the network so the ``requests.get`` mocks below
+    drive only the two file downloads (model + PAE). The resolver itself is
+    unit-tested in test_alphafold_backend.py::TestResolveUrls and live-checked
+    by the network test."""
+    with patch(f"{BACKEND}._af_resolve_urls",
+               return_value=("https://af/model", "https://af/pae")):
+        yield
+
+
 # II Test Classes
 class TestFetchAlphafold:
     """Normal cases and per-parameter validation (one parameter per test)."""

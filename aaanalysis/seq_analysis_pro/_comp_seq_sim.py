@@ -15,7 +15,7 @@ def comp_seq_sim(seq1: Optional[str] = None,
                  df_seq: Optional[pd.DataFrame] = None,
                  ) -> Union[float, pd.DataFrame]:
     """
-    Compute pairwise similarity between two or more sequences.
+    Compute pairwise similarity between two or more sequences (**[pro]**, requires ``aaanalysis[pro]``).
 
     The sequence similarity score between two sequences is the alignment score expressed as a percentage of
     the length of the longest sequence (range ``[0, 100]``). The alignment score is obtained using the

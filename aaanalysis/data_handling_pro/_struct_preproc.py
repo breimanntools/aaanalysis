@@ -348,7 +348,8 @@ def _run_get_dssp_internal(df_seq, pdb_folder, features, ss_mode,
 # II Main Functions
 class StructurePreprocessor:
     """
-    Preprocessing class for protein structure features (PDB / CIF / AlphaFold).
+    Preprocessing class (**[pro]**, requires ``aaanalysis[pro]``) for protein
+    structure features (PDB / CIF / AlphaFold).
 
     Turns local structure files into the ``[0, 1]``-normalized per-residue
     ``dict_num`` consumed by :meth:`CPP.run_num`. Each ``encode_*`` method
@@ -460,14 +461,16 @@ class StructurePreprocessor:
         """Download AlphaFold model + Predicted Aligned Error (PAE) files for
         every entry into a folder.
 
-        Fetches each entry's structure (``AF-<entry>-F1-model_v4``) and PAE sidecar
-        from the AlphaFold Protein Structure Database [Varadi22]_
-        (https://alphafold.ebi.ac.uk), saving them under the canonical filenames
-        :meth:`encode_pdb` / :meth:`encode_pae` / :meth:`get_dssp` already
-        resolve — so a single call populates the ``pdb_folder`` / ``pae_folder``
-        those methods consume. This is the ``fetch_`` (web) acquisition
-        counterpart to the local ``get_`` tools; it downloads all entries in
-        one bulk call.
+        Fetches each entry's F1 structure and PAE sidecar from the AlphaFold
+        Protein Structure Database [Varadi22]_ (https://alphafold.ebi.ac.uk),
+        saving them under the canonical filenames :meth:`encode_pdb` /
+        :meth:`encode_pae` / :meth:`get_dssp` already resolve — so a single call
+        populates the ``pdb_folder`` / ``pae_folder`` those methods consume. The
+        download URLs are resolved through the AlphaFold API, so the fetch tracks
+        the current data version automatically (the file naming moved
+        ``v4`` → ``v6`` and will move again). This is the ``fetch_`` (web)
+        acquisition counterpart to the local ``get_`` tools; it downloads all
+        entries in one bulk call.
 
         .. versionadded:: 1.1.0
 

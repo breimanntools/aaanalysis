@@ -120,10 +120,40 @@ Added
 
 - **aa.__version__**: The installed package version is now exposed as a
   top-level attribute via ``importlib.metadata``.
+- **CHANGELOG.md + deprecation policy**: A root ``CHANGELOG.md``
+  (`Keep a Changelog <https://keepachangelog.com/en/1.1.0/>`_ format) now gives a
+  terse, developer-facing index alongside these narrative notes. The project
+  adopts strict semantic versioning: from v1.x onward, any rename or removal of a
+  public symbol ships at least one minor release carrying a ``DeprecationWarning``
+  first. A ``deprecated(reason, version_removed)`` decorator helper (internal,
+  ``aaanalysis.utils``) marks such symbols and prepends a deprecation note
+  to their docstring. See the *Versioning and Deprecation Policy* in
+  ``CONTRIBUTING.rst``.
+
+**Documentation**
+
+- **Prediction tasks** concept-overview page (*Usage Principles*): maps a
+  biological question to the right AAanalysis workflow via a task table keyed on
+  *unit of comparison* and *reference construction* (not biological scale alone),
+  covering the residue / domain / protein levels plus the determinant-discovery,
+  design/engineering, and relational-boundary rows. The front door to the
+  Protocols catalog; taxonomy recorded in ADR-0022.
+- **A minimal CPP analysis** tutorial (``tutorial0_minimal``): the shortest
+  end-to-end loop — load a dataset, run CPP, read out the signature — paired with
+  the new concept page.
 
 Changed
 ~~~~~~~
 
+- **CPP performance work**: The Cython feature-matrix kernel, macOS-safe threaded
+  ``n_jobs``, scale / AA-index caching, and scale / sample batching land in this
+  release, replacing the hour-long, low-CPU CPP runs seen on ``1.0.3`` and
+  earlier. **Users on** ``≤1.0.3`` **should upgrade** rather than debug a
+  performance pathology that is already fixed.
+- **CPP Cython-fallback notice**: When the compiled extension is missing and CPP
+  falls back to the ~2× slower pure-Python kernel, the one-time notice is now a
+  ``UserWarning`` instead of an easily-missed INFO print, so it surfaces even with
+  ``aa.options['verbose'] = False``.
 - **SequenceFeature.feature_matrix**: New ``batch=`` parameter accepts a list of
   ``df_parts`` and builds them in a single Cython pass, returning a list of
   feature matrices — faster than per-call construction for many small part tables.
@@ -131,6 +161,10 @@ Changed
   input mode (``tmd_len=``) explodes each 1-based anchor in the ``pos`` column
   into one three-part (``jmd_n`` / ``tmd`` / ``jmd_c``) row, identified by
   ``entry_win``.
+- **SequenceFeature.get_df_parts**: Several-fold faster on large inputs — the
+  per-row ``DataFrame.apply`` driver was replaced with a vectorized iteration over
+  the raw column arrays. The output (parts, column order, index, values) is
+  unchanged.
 - **n_jobs**: Unified parallelism convention across ``CPP`` / ``CPPGrid``
   (``1`` serial, ``-1`` all cores, ``N>1`` exactly N, ``None`` optimized), with an
   ``options['n_jobs']`` global override.
@@ -139,6 +173,14 @@ Changed
   the new ``show_title`` (default ``True``) and ``title_wrap_width`` (default ``45``)
   parameters. A subsequent ``plt.title(...)`` still overrides it; ``feature_map`` and
   ``ranking`` are unchanged.
+- **Docstring discoverability**: Surfaced previously implicit API contracts at the
+  docstrings users actually read (no behavior change). ``CPP.run_num`` /
+  ``NumericalFeature.get_parts`` now state the ``get_parts`` → ``run_num`` call order
+  and the ``[0, 1]`` normalization contract (and what breaks if unnormalized); the
+  ``[pro]`` classes / functions (``ShapModel``, ``StructurePreprocessor``,
+  ``AnnotationPreprocessor``, ``comp_seq_sim``, ``filter_seq``, ``scan_motif``) carry
+  a ``[pro]`` install marker in their summary; and ``SeqMut`` cross-links the canonical
+  ``df_seq`` format spec (``SequenceFeature.get_df_parts``).
 - **Performance (same output)**: Several internal hotspots were vectorized or
   parallelized without changing results. ``AAWindowSampler`` redundancy /
   similarity filtering now compares amino-acid windows with vectorized NumPy
@@ -192,6 +234,13 @@ Improved
 
 Fixed
 ~~~~~
+- **StructurePreprocessor.fetch_alphafold**: Resolve download URLs through the
+  AlphaFold API instead of a hardcoded file version. AlphaFold DB renamed its
+  files ``v4`` → ``v6``, which had silently broken every fetch (all entries
+  returned ``alphafold_ok=False``); the fetch now tracks the current version
+  automatically. Added a ``network``-marked live test (``tests/integration/``)
+  so an upstream API/version change is caught instead of slipping past the
+  mocked unit tests.
 - **General Bug Fixes**: Minor fixes related to dependency resolution and edge-case behavior.
 - **Documentation**: Removed inconsistencies in documentation for selected functions and plotting options.
 

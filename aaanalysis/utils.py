@@ -30,7 +30,8 @@ from ._utils.utils_types import (ArrayLike1D,
                                  VALID_INT_FLOAT_TYPES)
 
 # Decorators
-from ._utils.decorators import (catch_backend_processing_error,
+from ._utils.decorators import (deprecated,
+                                catch_backend_processing_error,
                                 BackendProcessingError,
                                 catch_runtime_warnings,
                                 CatchRuntimeWarnings,

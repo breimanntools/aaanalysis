@@ -35,26 +35,82 @@ def _seq_responses(*statuses):
 
 
 # II Test Classes
+def _api_resp(status=200,
+              pdb_url="https://alphafold.ebi.ac.uk/files/AF-P1-F1-model_v6.pdb",
+              pae_url="https://alphafold.ebi.ac.uk/files/AF-P1-F1-predicted_aligned_error_v6.json",
+              records="default"):
+    """Mock an AlphaFold prediction-API response (carries .json())."""
+    m = MagicMock()
+    m.status_code = status
+    if records == "default":
+        records = [{"pdbUrl": pdb_url, "cifUrl": pdb_url.replace(".pdb", ".cif"),
+                    "paeDocUrl": pae_url}] if status == 200 else None
+    m.json.return_value = records
+    return m
+
+
 class TestUrlAndFilenameHelpers:
-    """URL templates + local filename helpers."""
-
-    def test_model_url_pdb(self):
-        assert af._af_model_url("P12345", "pdb") == (
-            "https://alphafold.ebi.ac.uk/files/AF-P12345-F1-model_v4.pdb")
-
-    def test_model_url_cif(self):
-        assert af._af_model_url("P12345", "cif").endswith(
-            "AF-P12345-F1-model_v4.cif")
-
-    def test_pae_url(self):
-        assert af._af_pae_url("P12345").endswith(
-            "AF-P12345-F1-predicted_aligned_error_v4.json")
+    """Local filename helpers (download URLs are resolved via the API now)."""
 
     def test_model_filename_pdb(self):
         assert af._af_model_filename("P1", "pdb") == "P1.pdb"
 
     def test_model_filename_cif(self):
         assert af._af_model_filename("P1", "cif") == "P1.cif"
+
+
+class TestResolveUrls:
+    """_af_resolve_urls: version-agnostic URL resolution via the API.
+
+    This is the regression guard for the v4 -> v6 breakage: it pins the API
+    fields the resolver reads, so a code-side change is caught networklessly
+    (the live-endpoint guard is the network test in tests/integration/)."""
+
+    def test_valid_returns_pdb_and_pae_urls(self):
+        with patch(f"{MODULE}.requests.get", return_value=_api_resp()):
+            model_url, pae_url = af._af_resolve_urls("P1", "pdb", 5.0)
+        assert model_url.endswith("model_v6.pdb")
+        assert pae_url.endswith("predicted_aligned_error_v6.json")
+
+    def test_valid_cif_uses_cif_url(self):
+        with patch(f"{MODULE}.requests.get", return_value=_api_resp()):
+            model_url, _ = af._af_resolve_urls("P1", "cif", 5.0)
+        assert model_url.endswith("model_v6.cif")
+
+    def test_valid_404_returns_none(self):
+        with patch(f"{MODULE}.requests.get", return_value=_api_resp(404)):
+            assert af._af_resolve_urls("P1", "pdb", 5.0) is None
+
+    def test_valid_400_returns_none(self):
+        with patch(f"{MODULE}.requests.get", return_value=_api_resp(400)):
+            assert af._af_resolve_urls("BADACC", "pdb", 5.0) is None
+
+    def test_valid_empty_records_returns_none(self):
+        with patch(f"{MODULE}.requests.get", return_value=_api_resp(records=[])):
+            assert af._af_resolve_urls("P1", "pdb", 5.0) is None
+
+    def test_valid_no_pae_doc_url(self):
+        with patch(f"{MODULE}.requests.get",
+                   return_value=_api_resp(records=[{"pdbUrl": "http://m.pdb"}])):
+            model_url, pae_url = af._af_resolve_urls("P1", "pdb", 5.0)
+        assert model_url == "http://m.pdb" and pae_url is None
+
+    def test_invalid_500_raises(self):
+        with patch(f"{MODULE}.requests.get", return_value=_api_resp(500)):
+            with pytest.raises(RuntimeError, match="HTTP 500"):
+                af._af_resolve_urls("P1", "pdb", 5.0)
+
+    def test_invalid_missing_model_key_raises(self):
+        with patch(f"{MODULE}.requests.get",
+                   return_value=_api_resp(records=[{"paeDocUrl": "x"}])):
+            with pytest.raises(RuntimeError, match="no 'pdbUrl'"):
+                af._af_resolve_urls("P1", "pdb", 5.0)
+
+    def test_invalid_transport_error_raises(self):
+        with patch(f"{MODULE}.requests.get",
+                   side_effect=requests.RequestException("boom")):
+            with pytest.raises(RuntimeError, match="failed"):
+                af._af_resolve_urls("P1", "pdb", 5.0)
 
 
 class TestFetchAfFile:
@@ -100,7 +156,25 @@ class TestFetchAfFile:
 
 
 class TestFetchAlphafoldBulk:
-    """fetch_alphafold_bulk: single/multiple/skip/partial/mixed/verbose."""
+    """fetch_alphafold_bulk: single/multiple/skip/partial/mixed/verbose.
+
+    URL resolution is stubbed here so these exercise the download/skip/404-file
+    logic; _af_resolve_urls itself is covered by TestResolveUrls."""
+
+    @pytest.fixture(autouse=True)
+    def _stub_resolve_urls(self):
+        with patch(f"{MODULE}._af_resolve_urls",
+                   return_value=("https://af/model", "https://af/pae")):
+            yield
+
+    def test_valid_accession_not_in_afdb(self, tmp_path):
+        # API resolves to None (404/400) -> both files not-ok, no crash.
+        with patch(f"{MODULE}._af_resolve_urls", return_value=None):
+            with pytest.warns(UserWarning):
+                df = af.fetch_alphafold_bulk(["P1"], tmp_path, "pdb",
+                                             30.0, True, False)
+        assert not bool(df.iloc[0]["alphafold_ok"])
+        assert not bool(df.iloc[0]["model_ok"]) and not bool(df.iloc[0]["pae_ok"])
 
     def test_valid_single_entry_both_ok(self, tmp_path):
         with patch(f"{MODULE}.requests.get",
@@ -199,6 +273,12 @@ class TestFetchAlphafoldBulk:
 
 class TestFetchAlphafoldBulkComplex:
     """Cross-cutting: parity with the resolvers + path bookkeeping."""
+
+    @pytest.fixture(autouse=True)
+    def _stub_resolve_urls(self):
+        with patch(f"{MODULE}._af_resolve_urls",
+                   return_value=("https://af/model", "https://af/pae")):
+            yield
 
     def test_written_names_resolve_via_resolvers(self, tmp_path):
         # The no-glue contract: backend-written filenames are exactly what

@@ -138,6 +138,9 @@ table { width: 100%; border-collapse: collapse; }
 /* capability item: stacked "what" over "symbol" (robust in narrow columns) */
 .rowtag { color: #fff; background: var(--accent); font-size: 5pt; font-weight: 800;
           border-radius: 6px; padding: 0 3px; margin-left: 3px; vertical-align: middle; }
+.protag { color: #fff; background: var(--pill-bg); font-size: 5pt; font-weight: 800;
+          border-radius: 6px; padding: 0 3px; margin-left: 2px; vertical-align: middle;
+          font-family: "AA Sans", Helvetica, Arial, sans-serif; letter-spacing: 0.2px; }
 /* Decision Guide (page 3) */
 .dg-q { font-weight: 800; font-size: 6.7pt; color: var(--accent); margin: 3px 0 0.5px; }
 .dg-q:first-child { margin-top: 0; }

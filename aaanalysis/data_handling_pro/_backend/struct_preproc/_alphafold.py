@@ -25,6 +25,10 @@ from ._file_format import _af_canonical_pae_name
 
 # I Helper Functions
 AF_FILES_URL = "https://alphafold.ebi.ac.uk/files/"
+# Version-agnostic source of truth for download URLs. The /files/ names carry a
+# data-version suffix (…_v4 -> …_v6 -> …) that changes without notice; the API
+# always reports the current URLs, so we resolve through it instead of guessing.
+AF_API_URL = "https://alphafold.ebi.ac.uk/api/prediction/"
 
 # Column order for the per-entry status table built by ``fetch_alphafold_bulk``.
 # Positional-list rows are wrapped into a DataFrame with these columns.
@@ -45,14 +49,51 @@ def _af_model_filename(entry: str, file_format: str) -> str:
     return f"{entry}.{file_format}"
 
 
-def _af_model_url(entry: str, file_format: str) -> str:
-    """AlphaFold-DB URL for the F1 model file of a UniProt accession."""
-    return f"{AF_FILES_URL}AF-{entry}-F1-model_v4.{file_format}"
+def _af_resolve_urls(entry: str, file_format: str, timeout: float = 30.0):
+    """Resolve the current AlphaFold-DB model + PAE download URLs for an accession.
 
+    Queries the AlphaFold prediction API, which always returns the URLs for the
+    latest data version, so this survives AlphaFold-DB version bumps (the file
+    naming moved ``v4`` -> ``v6`` and will move again). Returns
+    ``(model_url, pae_url)``, or ``None`` when the accession is not in
+    AlphaFold DB (the soft, ``on_failure``-governed case). ``pae_url`` may be
+    ``None`` if the API record has no PAE sidecar.
 
-def _af_pae_url(entry: str) -> str:
-    """AlphaFold-DB URL for the F1 PAE sidecar of a UniProt accession."""
-    return f"{AF_FILES_URL}{_af_canonical_pae_name(entry)}"
+    Raises
+    ------
+    RuntimeError
+        On a non-404 API failure, or if the record lacks the requested model URL
+        (an unexpected API-shape change worth surfacing rather than silently
+        falling back to a guessed, possibly-stale URL).
+    """
+    api_url = f"{AF_API_URL}{entry}"
+    try:
+        resp = requests.get(api_url, timeout=timeout)
+    except requests.RequestException as e:
+        raise RuntimeError(
+            f"AlphaFold API request for '{entry}' ('{api_url}') failed: {e}") from e
+    # The API answers an accession it has no model for with 404 or 400 (the
+    # latter for malformed/unknown accessions); both are the soft "not in
+    # AlphaFold DB" case governed by on_failure, not a transport error.
+    if resp.status_code in (400, 404):
+        return None
+    if resp.status_code != 200:
+        raise RuntimeError(
+            f"AlphaFold API request for '{entry}' returned HTTP "
+            f"{resp.status_code} (expected 200)")
+    records = resp.json()
+    if not records:
+        return None
+    record = records[0]
+    model_key = "cifUrl" if file_format == "cif" else "pdbUrl"
+    model_url = record.get(model_key)
+    if model_url is None:
+        raise RuntimeError(
+            f"AlphaFold API record for '{entry}' has no '{model_key}' "
+            f"(unexpected API shape; available URL keys: "
+            f"{[k for k in record if k.endswith('Url')]})")
+    pae_url = record.get("paeDocUrl")
+    return model_url, pae_url
 
 
 def fetch_af_file(url: str, dest_path: Path, timeout: float = 30.0) -> bool:
@@ -122,10 +163,16 @@ def fetch_alphafold_bulk(
         if verbose:
             ut.print_out(
                 f"Fetching AlphaFold {file_format} + PAE for '{entry}'")
-        model_ok = model_present or fetch_af_file(
-            _af_model_url(entry, file_format), model_path, timeout)
-        pae_ok = pae_present or fetch_af_file(
-            _af_pae_url(entry), pae_path, timeout)
+        # Resolve current download URLs via the API (version-agnostic). None =>
+        # the accession is not in AlphaFold DB; both files are then not-ok.
+        resolved = _af_resolve_urls(entry, file_format, timeout)
+        if resolved is None:
+            model_ok, pae_ok = model_present, pae_present
+        else:
+            model_url, pae_url = resolved
+            model_ok = model_present or fetch_af_file(model_url, model_path, timeout)
+            pae_ok = pae_present or (
+                pae_url is not None and fetch_af_file(pae_url, pae_path, timeout))
         if not model_ok:
             warnings.warn(
                 f"AlphaFold model for '{entry}' not found in AlphaFold DB "

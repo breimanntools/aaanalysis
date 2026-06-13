@@ -21,6 +21,10 @@ to reach for each tool. Where a protocol uses a function, it links to that
 function's tutorial for the mechanics instead of repeating them, so the two stay
 distinct with no overlap.
 
+**New here?** The :ref:`Prediction tasks <prediction_tasks>` concept-overview page
+is the front door: it maps a biological question to the right task — by *unit of
+comparison* and *reference construction* — and points into the protocols below.
+
 The protocols catalog at a glance — each tile is the headline figure of one
 protocol; click it to open that protocol.
 

@@ -12,13 +12,17 @@ Tutorials
 
 Getting Started
 ---------------
-For an introduction into AAanalysis, explore our **Quick start** and **Slow start** tutorials, both offering the same examples
+The **A minimal CPP analysis** notebook is the shortest complete loop — load a
+dataset, run CPP, read out the signature — and pairs with the
+:ref:`Prediction tasks <prediction_tasks>` concept page. For a fuller introduction,
+explore our **Quick start** and **Slow start** tutorials, both offering the same examples
 with the latter explaining the conceptual background. The **Plotting Prelude** tutorial can help you to create publication-ready plots.
 
 
 .. toctree::
    :maxdepth: 1
 
+   generated/tutorial0_minimal
    generated/tutorial1_quick_start
    generated/tutorial1_slow_start
    generated/plotting_prelude
@@ -36,7 +40,8 @@ Learn how to load protein benchmarking datasets and amino acid scale sets in the
 Feature Engineering
 -------------------
 Explore interpretable feature engineering, the core of AAanalysis, with the **AAclust**, **SequenceFeature**,
-and **CPP** tutorials.
+and **CPP** tutorials, then see how CPP turns different data representations (scales, embeddings, structure)
+into features.
 
 .. toctree::
    :maxdepth: 1
@@ -44,6 +49,7 @@ and **CPP** tutorials.
    generated/tutorial3a_aaclust
    generated/tutorial3b_sequence_feature
    generated/tutorial3c_cpp
+   generated/tutorial3d_data_representations
 
 PU Learning
 -----------
