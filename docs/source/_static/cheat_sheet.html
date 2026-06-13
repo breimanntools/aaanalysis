@@ -88,6 +88,8 @@ code, pre, .mono { font-family: "AA Mono", Menlo, "DejaVu Sans Mono", monospace;
 /* test/ref colour cue in the CPP-feature hint (legible on the dark header bar) */
 .sec-h .hint .hint-test { color: #6abf67; opacity: 1; }  /* test group (green) */
 .sec-h .hint .hint-ref  { color: #c2c2c2; opacity: 1; }  /* reference group (gray) */
+.sec-h .hint .hint-neg  { color: #d4b35a; opacity: 1; }  /* reliable negatives (gold, lightened COLOR_REL_NEG for the dark bar) */
+.sec-h .shap-pos { color: #FF0D57; }  /* SHAP red (ut.COLOR_SHAP_POS) — highlights "explain" in the ShapModel title */
 .sec-body { padding: 2px 1px 0; }
 
 .sub {
@@ -550,7 +552,7 @@ plt.tight_layout(); plt.show()</pre>
 <div class="pair-imgs" style="--ph:44mm">
 <figure><img class="pair-img" src="cs_plots/feature_map.png" alt="CPP — feature map"><figcaption>CPPPlot.feature_map · all scales</figcaption></figure><figure><img class="pair-img" src="cs_plots/feature_map_simplified.png" alt="CPP — feature map"><figcaption>CPPPlot.feature_map · simplified</figcaption></figure>    </div>  </div>
 </div><div class="sec">
-  <div class="sec-h"><span>ShapModel — explain a prediction</span><span class="hint">sample level · impact · [pro]</span></div>
+  <div class="sec-h"><span>ShapModel — <span class="shap-pos">explain</span> a prediction</span><span class="hint">sample level · [pro]</span></div>
   <div class="sec-body">
     <pre class="code"><span class="c-cm"># advanced: per-sample explanation (fuzzy labeling demo)</span>
 <span class="c-cm"># fuzzy labeling: APP&#x27;s label is its soft prediction score (0.6, not 1)</span>
@@ -577,7 +579,7 @@ aac_plot = <span class="c-nm">aa.AAclustPlot</span>()
 aac_plot.centers(np.array(df_scales).T, labels=aac.labels_)
 plt.tight_layout(); plt.show()</pre>
     <div class="pair-note">▼ figure below · left</div></div>
-  <div class="sec-h"><span>dPULearn — PCA</span><span class="hint">reliable negatives · PU learning</span></div>
+  <div class="sec-h"><span>dPULearn — PCA</span><span class="hint"><span class="hint-neg">reliable negatives</span> · PU learning</span></div>
   <div class="sec-body"><pre class="code"><span class="c-cm"># DOM_GSEC ships 1/0 — treat 0 as the unlabeled pool (label_unl=0)</span>
 dpul = <span class="c-nm">aa.dPULearn</span>()
 dpul.fit(X=X, labels=labels, label_unl=0, n_neg=31)   <span class="c-cm"># n_neg: reliable negatives to mine</span>

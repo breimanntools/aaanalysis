@@ -281,7 +281,7 @@ FLAGSHIP_RECIPES = [
              "df_feat = cpp.simplify(df_feat=df_feat, labels=labels)\n"
              "cpp_plot.feature_map(df_feat=df_feat)\n"
              "plt.tight_layout(); plt.show()"},
-    {"cls": "ShapModel — explain a prediction", "tag": "sample level · impact · [pro]",
+    {"cls": 'ShapModel — <span class="shap-pos">explain</span> a prediction', "tag": "sample level · [pro]",
      "imgs": ["shap_profile", "feature_map_shap"],
      "img_labels": ["CPPPlot.profile · SHAP", "CPPPlot.feature_map · SHAP"], "h": 36,
      "code": "# advanced: per-sample explanation (fuzzy labeling demo)\n"
@@ -306,7 +306,7 @@ FLAGSHIP_RECIPES = [
              "aac_plot = aa.AAclustPlot()\n"
              "aac_plot.centers(np.array(df_scales).T, labels=aac.labels_)\n"
              "plt.tight_layout(); plt.show()"},
-    {"cls": "dPULearn — PCA", "tag": "reliable negatives · PU learning", "img": "pca",
+    {"cls": "dPULearn — PCA", "tag": '<span class="hint-neg">reliable negatives</span> · PU learning', "img": "pca",
      "caption": "dPULearnPlot.pca · reliable negatives",
      "code": "# DOM_GSEC ships 1/0 — treat 0 as the unlabeled pool (label_unl=0)\n"
              "dpul = aa.dPULearn()\n"
