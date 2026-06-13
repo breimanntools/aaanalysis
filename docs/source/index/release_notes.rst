@@ -211,6 +211,16 @@ Changed
   generous ``1.5x`` threshold, wired as a **non-gating nightly** job
   (``perf_nightly.yml``). Opt-in via the new ``[bench]`` install extra; it never
   touches the blocking matrix. No effect on the public API.
+- **Pooled, optionally concurrent web fetches**:
+  ``StructurePreprocessor.fetch_alphafold`` and
+  ``AnnotationPreprocessor.fetch_uniprot`` now route every request through a
+  pooled ``requests.Session`` (one per worker thread) rather than opening a
+  fresh connection per request, and accept a new ``max_workers`` parameter for
+  threaded bulk fetching. Concurrency is **off by default** (``max_workers=None``
+  or ``1`` keeps the unchanged sequential path) because parallel requests to
+  AlphaFold DB / UniProt risk HTTP-429 throttling; when enabled, results are
+  reassembled in input order, so the returned status table / ``df_annot`` and
+  the on-disk files are byte-identical regardless of worker count.
 - **dPULearn.fit**: Flexible, package-consistent label handling via ``label_pos`` /
   ``label_unl`` / ``label_neg`` markers. Pass standard ``{0, 1}`` labels directly with
   ``label_unl=0`` (``0`` = unlabeled, ``1`` = positive), or any positive / unlabeled /
@@ -221,6 +231,15 @@ Changed
   ``n_unl_to_neg`` (the number identified **directly from the unlabeled pool**, for direct
   control). Output labels always use the package convention (``1`` = positive, ``0`` =
   negative, ``2`` = unlabeled); the recommended input encoding is unchanged.
+- **Numerical-equivalence tolerance policy** (developer-facing): A new policy
+  (ADR-0032, summarized in ``CONTRIBUTING.rst``) defines three tiers of acceptable
+  output change for performance optimizations — **T1 byte-identical** (default),
+  **T2 numerically-equivalent** (``allclose(atol=1e-10, rtol=0)`` plus identical
+  discrete decisions), and **T3 statistically-equivalent** (documented quality
+  metric within an agreed band) — and the evidence + pinned regression anchor each
+  tier requires. It unblocks previously-excluded algorithmic optimizations (e.g.
+  AAclust binary-search ``k``), each landing as its own tier-declared PR. No user-
+  facing behavior changes in this release.
 
 
 Version 1.0 (Stable Version)

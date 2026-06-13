@@ -168,6 +168,7 @@ class AnnotationPreprocessor:
         features: Optional[List[str]] = None,
         evidence: Literal["experimental", "manual", "all"] = "manual",
         timeout: float = 30.0,
+        max_workers: Optional[int] = None,
     ) -> pd.DataFrame:
         """Fetch UniProt features for every entry and map to ``df_annot``.
 
@@ -195,6 +196,13 @@ class AnnotationPreprocessor:
             in the ``evidence`` column regardless.
         timeout : float, default=30.0
             Per-request timeout in seconds.
+        max_workers : int, optional
+            Number of threads for concurrent fetches. ``None`` or ``1``
+            (default) fetches entries sequentially. Greater than ``1`` fetches
+            on a thread pool; rows are concatenated in input order and the
+            ``df_annot`` is identical to the sequential result. Concurrency is
+            opt-in because parallel requests to UniProt risk HTTP-429 throttling
+            that can turn successful fetches into failures.
 
         Returns
         -------
@@ -226,6 +234,9 @@ class AnnotationPreprocessor:
         ut.check_number_range(
             name="timeout", val=timeout, min_val=1, accept_none=False, just_int=False
         )
+        if max_workers is not None:
+            ut.check_number_range(name="max_workers", val=max_workers,
+                                  min_val=1, just_int=True)
         # Fetch + map
         entries = df_seq[ut.COL_ENTRY].tolist()
         evidence_codes = _evidence_codes_for_mode(evidence)
@@ -235,6 +246,7 @@ class AnnotationPreprocessor:
             evidence_codes=evidence_codes,
             timeout=timeout,
             verbose=verbose,
+            max_workers=max_workers,
         )
 
     # ------------------------------------------------------------------

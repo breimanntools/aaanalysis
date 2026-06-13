@@ -69,6 +69,13 @@ and a suite of site-localization metrics and plotting helpers.
   (`contact_count_8A`/`12A`) vectorized (~50x, identical counts) and its
   per-(target, atom) sequence alignment cached across the ~26 redundant
   re-alignments each entry triggers (~12x off the alignment overhead, byte-identical encoder output).
+- `StructurePreprocessor.fetch_alphafold` and `AnnotationPreprocessor.fetch_uniprot`
+  reuse a pooled HTTP session (one `requests.Session` per worker thread) instead of
+  opening a fresh connection per request, and gain an opt-in `max_workers` parameter
+  for threaded bulk fetching. Concurrency is **off by default** (`max_workers=None`/`1`
+  is the unchanged sequential path) because parallel requests to AlphaFold DB / UniProt
+  risk HTTP-429 throttling; results are reassembled in input order, so the status
+  table / `df_annot` and on-disk files are byte-identical regardless of worker count.
 - `dPULearn.fit` gains flexible, package-consistent label handling via
   `label_pos` / `label_unl` / `label_neg` markers: pass standard `{0, 1}` labels
   directly with `label_unl=0`, or an arbitrary positive/unlabeled/negative
@@ -79,6 +86,14 @@ and a suite of site-localization metrics and plotting helpers.
   existing `n_unl_to_neg` (the number identified **directly from the unlabeled
   pool**). Output labels always use the package convention (1 = positive,
   0 = negative, 2 = unlabeled); the recommended input encoding is unchanged.
+- Numerical-equivalence tolerance policy for performance optimizations
+  (developer-facing; ADR-0032, checklist in `CONTRIBUTING.rst`): three tiers —
+  **T1** byte-identical (default), **T2** numerically-equivalent
+  (`allclose(atol=1e-10, rtol=0)` + identical discrete decisions), **T3**
+  statistically-equivalent (quality metric within a documented band) — with the
+  evidence + pinned regression anchor each tier requires. Unblocks
+  previously-excluded algorithmic optimizations (e.g. AAclust binary-search `k`),
+  each as its own tier-declared PR. No user-facing behavior change.
 
 ### Deprecated
 - None. The strict-semver deprecation policy and the `deprecated` decorator are

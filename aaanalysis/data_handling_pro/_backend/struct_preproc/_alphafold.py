@@ -14,7 +14,7 @@ on network / response failures other than a 404 (the soft "accession not in
 AlphaFold DB" case), so missing structures do not abort a bulk download.
 """
 from pathlib import Path
-from typing import List
+from typing import List, Optional, Tuple
 import warnings
 
 import pandas as pd
@@ -22,6 +22,7 @@ import requests
 
 import aaanalysis.utils as ut
 from ._file_format import _af_canonical_pae_name
+from .._fetch import http_get_, run_in_order_
 
 # I Helper Functions
 AF_FILES_URL = "https://alphafold.ebi.ac.uk/files/"
@@ -68,7 +69,7 @@ def _af_resolve_urls(entry: str, file_format: str, timeout: float = 30.0):
     """
     api_url = f"{AF_API_URL}{entry}"
     try:
-        resp = requests.get(api_url, timeout=timeout)
+        resp = http_get_(api_url, timeout=timeout)
     except requests.RequestException as e:
         raise RuntimeError(
             f"AlphaFold API request for '{entry}' ('{api_url}') failed: {e}") from e
@@ -111,7 +112,7 @@ def fetch_af_file(url: str, dest_path: Path, timeout: float = 30.0) -> bool:
         On any other non-200 response or transport error.
     """
     try:
-        resp = requests.get(url, timeout=timeout)
+        resp = http_get_(url, timeout=timeout)
     except requests.RequestException as e:
         raise RuntimeError(f"AlphaFold request for '{url}' failed: {e}") from e
     if resp.status_code == 404:
@@ -127,6 +128,39 @@ def fetch_af_file(url: str, dest_path: Path, timeout: float = 30.0) -> bool:
 
 
 # II Main Functions
+def _fetch_af_one(
+    entry: str,
+    out_folder: Path,
+    file_format: str,
+    timeout: float,
+    skip_existing: bool,
+) -> Tuple[bool, bool, bool, Path, Path]:
+    """Resolve + download model/PAE for one entry; do the network/disk work only.
+
+    Returns ``(was_skip, model_ok, pae_ok, model_path, pae_path)``. Pure
+    network/filesystem work with no logging or warnings so it is safe to run on
+    a worker thread; the caller emits the verbose prints and UserWarnings from
+    the main thread in input order.
+    """
+    model_path = out_folder / _af_model_filename(entry, file_format)
+    pae_path = out_folder / _af_canonical_pae_name(entry)
+    model_present = skip_existing and model_path.is_file()
+    pae_present = skip_existing and pae_path.is_file()
+    if model_present and pae_present:
+        return True, True, True, model_path, pae_path
+    # Resolve current download URLs via the API (version-agnostic). None =>
+    # the accession is not in AlphaFold DB; both files are then not-ok.
+    resolved = _af_resolve_urls(entry, file_format, timeout)
+    if resolved is None:
+        model_ok, pae_ok = model_present, pae_present
+    else:
+        model_url, pae_url = resolved
+        model_ok = model_present or fetch_af_file(model_url, model_path, timeout)
+        pae_ok = pae_present or (
+            pae_url is not None and fetch_af_file(pae_url, pae_path, timeout))
+    return False, model_ok, pae_ok, model_path, pae_path
+
+
 def fetch_alphafold_bulk(
     entries: List[str],
     out_folder: Path,
@@ -134,6 +168,7 @@ def fetch_alphafold_bulk(
     timeout: float = 30.0,
     skip_existing: bool = True,
     verbose: bool = True,
+    max_workers: Optional[int] = None,
 ) -> pd.DataFrame:
     """Download model + PAE for every entry; return a per-entry status table.
 
@@ -141,19 +176,25 @@ def fetch_alphafold_bulk(
     missing file when ``skip_existing`` is set. Entries missing from AlphaFold
     DB (404) are reported as not-ok via a ``UserWarning`` rather than raising.
 
+    With ``max_workers`` greater than 1 the per-entry downloads run on a thread
+    pool; results are reassembled in input order, so the status table is
+    identical to the sequential path regardless of worker count. The verbose
+    prints and the not-found ``UserWarning``s are emitted from the main thread.
+
     Raises
     ------
     RuntimeError
         Propagated from :func:`fetch_af_file` on network failure (non-404).
     """
     out_folder = Path(out_folder)
+    results = run_in_order_(
+        lambda entry: _fetch_af_one(entry, out_folder, file_format, timeout,
+                                    skip_existing),
+        entries, max_workers=max_workers)
     rows: List[list] = []
-    for entry in entries:
-        model_path = out_folder / _af_model_filename(entry, file_format)
-        pae_path = out_folder / _af_canonical_pae_name(entry)
-        model_present = skip_existing and model_path.is_file()
-        pae_present = skip_existing and pae_path.is_file()
-        if model_present and pae_present:
+    for entry, (was_skip, model_ok, pae_ok, model_path, pae_path) in zip(
+            entries, results):
+        if was_skip:
             if verbose:
                 ut.print_out(
                     f"Skipping '{entry}' (model + PAE already present)")
@@ -163,16 +204,6 @@ def fetch_alphafold_bulk(
         if verbose:
             ut.print_out(
                 f"Fetching AlphaFold {file_format} + PAE for '{entry}'")
-        # Resolve current download URLs via the API (version-agnostic). None =>
-        # the accession is not in AlphaFold DB; both files are then not-ok.
-        resolved = _af_resolve_urls(entry, file_format, timeout)
-        if resolved is None:
-            model_ok, pae_ok = model_present, pae_present
-        else:
-            model_url, pae_url = resolved
-            model_ok = model_present or fetch_af_file(model_url, model_path, timeout)
-            pae_ok = pae_present or (
-                pae_url is not None and fetch_af_file(pae_url, pae_path, timeout))
         if not model_ok:
             warnings.warn(
                 f"AlphaFold model for '{entry}' not found in AlphaFold DB "

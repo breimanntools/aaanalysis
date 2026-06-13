@@ -9,7 +9,8 @@ import aaanalysis as aa
 
 aa.options["verbose"] = False
 
-# requests.get lives in the download backend; patch it there (no network).
+# http_get_ (the pooled transport seam) lives in the download backend; patch it
+# there (no network).
 BACKEND = "aaanalysis.data_handling_pro._backend.struct_preproc._alphafold"
 
 
@@ -33,12 +34,12 @@ def _df(entries=("P1",)):
 
 
 def _patch_get(*statuses):
-    return patch(f"{BACKEND}.requests.get", side_effect=_responses(*statuses))
+    return patch(f"{BACKEND}.http_get_", side_effect=_responses(*statuses))
 
 
 @pytest.fixture(autouse=True)
 def _stub_af_resolve_urls():
-    """Resolve URLs without the network so the ``requests.get`` mocks below
+    """Resolve URLs without the network so the ``http_get_`` mocks below
     drive only the two file downloads (model + PAE). The resolver itself is
     unit-tested in test_alphafold_backend.py::TestResolveUrls and live-checked
     by the network test."""
@@ -82,7 +83,7 @@ class TestFetchAlphafold:
 
     def test_valid_timeout_passed_through(self, tmp_path):
         stp = aa.StructurePreprocessor(verbose=False)
-        with patch(f"{BACKEND}.requests.get",
+        with patch(f"{BACKEND}.http_get_",
                    side_effect=_responses(200, 200)) as mg:
             stp.fetch_alphafold(df_seq=_df(), out_folder=str(tmp_path),
                                 timeout=7.0)
@@ -92,7 +93,7 @@ class TestFetchAlphafold:
         (tmp_path / "P1.pdb").write_text("x")
         (tmp_path / "AF-P1-F1-predicted_aligned_error_v4.json").write_text("{}")
         stp = aa.StructurePreprocessor(verbose=False)
-        with patch(f"{BACKEND}.requests.get") as mg:
+        with patch(f"{BACKEND}.http_get_") as mg:
             out = stp.fetch_alphafold(df_seq=_df(), out_folder=str(tmp_path),
                                       skip_existing=True)
         mg.assert_not_called()
@@ -102,7 +103,7 @@ class TestFetchAlphafold:
         (tmp_path / "P1.pdb").write_text("x")
         (tmp_path / "AF-P1-F1-predicted_aligned_error_v4.json").write_text("{}")
         stp = aa.StructurePreprocessor(verbose=False)
-        with patch(f"{BACKEND}.requests.get",
+        with patch(f"{BACKEND}.http_get_",
                    side_effect=_responses(200, 200)) as mg:
             stp.fetch_alphafold(df_seq=_df(), out_folder=str(tmp_path),
                                 skip_existing=False)
@@ -263,7 +264,7 @@ class TestFetchAlphafoldComplex:
     def test_valid_partial_present_one_get(self, tmp_path):
         (tmp_path / "P1.pdb").write_text("x")
         stp = aa.StructurePreprocessor(verbose=False)
-        with patch(f"{BACKEND}.requests.get",
+        with patch(f"{BACKEND}.http_get_",
                    side_effect=_responses(200)) as mg:
             stp.fetch_alphafold(df_seq=_df(), out_folder=str(tmp_path))
         assert mg.call_count == 1
@@ -285,7 +286,7 @@ class TestFetchAlphafoldComplex:
 
     def test_invalid_transport_error_raises(self, tmp_path):
         stp = aa.StructurePreprocessor(verbose=False)
-        with patch(f"{BACKEND}.requests.get",
+        with patch(f"{BACKEND}.http_get_",
                    side_effect=requests.RequestException("down")):
             with pytest.raises(RuntimeError):
                 stp.fetch_alphafold(df_seq=_df(), out_folder=str(tmp_path))

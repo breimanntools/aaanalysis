@@ -457,6 +457,7 @@ class StructurePreprocessor:
         skip_existing: bool = True,
         on_failure: Literal["nan", "drop", "raise"] = "nan",
         return_df: bool = False,
+        max_workers: Optional[int] = None,
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
         """Download AlphaFold model + Predicted Aligned Error (PAE) files for
         every entry into a folder.
@@ -505,6 +506,13 @@ class StructurePreprocessor:
         return_df : bool, default=False
             If ``True``, also return an echo of ``df_seq`` with an appended
             boolean ``alphafold_ok`` column as a second element.
+        max_workers : int, optional
+            Number of threads for concurrent downloads. ``None`` or ``1``
+            (default) fetches entries sequentially. Greater than ``1`` downloads
+            on a thread pool; the status table is reassembled in input order and
+            is identical to the sequential result. Concurrency is opt-in because
+            parallel requests to AlphaFold DB risk HTTP-429 throttling that can
+            turn successful downloads into failures.
 
         Returns
         -------
@@ -550,6 +558,9 @@ class StructurePreprocessor:
         ut.check_bool(name="skip_existing", val=skip_existing)
         _check_handle_failure(on_failure)
         ut.check_bool(name="return_df", val=return_df)
+        if max_workers is not None:
+            ut.check_number_range(name="max_workers", val=max_workers,
+                                  min_val=1, just_int=True)
         if COL_ALPHAFOLD_OK in df_seq.columns:
             raise ValueError(
                 f"'df_seq' should not already contain a "
@@ -568,7 +579,8 @@ class StructurePreprocessor:
         # Download
         df_status = fetch_alphafold_bulk(
             entries=entries, out_folder=out_folder, file_format=file_format,
-            timeout=timeout, skip_existing=skip_existing, verbose=verbose)
+            timeout=timeout, skip_existing=skip_existing, verbose=verbose,
+            max_workers=max_workers)
         ok_per_row = df_status[COL_ALPHAFOLD_OK].tolist()
         df_status, ok_after, keep_idx = _drop_or_raise_failed_entries(
             df_seq=df_status, ok_per_row=ok_per_row, on_failure=on_failure,

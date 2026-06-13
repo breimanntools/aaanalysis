@@ -10,6 +10,11 @@ on:
   schedule:
     - cron: '0 0 * * 0'
 
+# Cancel a superseded in-progress run on the same branch/PR (saves runner minutes).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   analyze:
     name: Analyze
