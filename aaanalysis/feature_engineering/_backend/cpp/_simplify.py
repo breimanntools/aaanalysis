@@ -132,29 +132,84 @@ def _recompute_swapped_row_(
     return row_df, col
 
 
-def _eligible_candidates_(feat_id=None, df_cor=None, dict_interp=None, min_cor=0.7):
+def _interp_array_(df_cor=None, dict_interp=None):
+    """Per-scale interpretability ratings aligned to ``df_cor.index`` (float, NaN if
+    unrated). Hoist this ONCE per simplify call and pass it to
+    :func:`_eligible_candidates_` as ``interp_arr`` so the per-scale ``_interp``
+    scan is not repeated for every targeted feature (the #186 cross-feature hoist).
+    ``dict_interp`` is constant across a simplify call, so the array is too."""
+    scales = df_cor.index.to_numpy()
+    interp_arr = np.array(
+        [_interp(scale_id=s, dict_interp=dict_interp) for s in scales], dtype=float
+    )
+    return scales, interp_arr
+
+
+def _eligible_candidates_(
+    feat_id=None, df_cor=None, dict_interp=None, min_cor=0.7, interp_arr=None
+):
     """Eligible candidate scales for one feature, ranked by (interpretability, |corr|).
 
     Eligible iff the candidate subcategory rating is strictly better (lower) than
     the feature's current scale rating AND ``|corr(candidate, original)| >=
     min_cor`` (anti-correlation allowed via ``abs``). Returns a list of
-    ``(scale_cand, interp_cand, abs_cor, cor)``."""
+    ``(scale_cand, interp_cand, abs_cor, cor)``.
+
+    The per-candidate scan over the ``df_cor[scale_old]`` column (a Python
+    ``_interp`` + ``float`` per scale) is vectorized with numpy: the
+    interpretability ratings and the correlation column are hoisted to arrays,
+    filtered in one numpy pass. The small surviving candidate list is then ranked
+    with the original Python ``list.sort(key=lambda t: (t[1], -t[2]))`` (primary:
+    ``interp_cand`` ascending, secondary: ``abs_cor`` descending) so the output
+    list — values, dtypes (Python ``float``), AND tie order (including NaN
+    correlation cells, which are kept and stay in ``df_cor`` index order within
+    their interp group) — is byte-identical to the original.
+
+    ``interp_arr`` is an OPTIONAL precomputed ``(scales, interp_arr)`` pair from
+    :func:`_interp_array_` (the cross-feature hoist): since ``dict_interp`` is
+    constant across a simplify call, callers compute it once and pass it for every
+    feature instead of rebuilding it per feature. Defaulting to ``None`` rebuilds
+    it locally, so the standalone behavior is unchanged."""
     scale_old = ut.split_feat_id(feat_id=feat_id)[2]
     interp_old = _interp(scale_id=scale_old, dict_interp=dict_interp)
     if np.isnan(interp_old) or scale_old not in df_cor.columns:
         return []
-    candidates = []
-    cors = df_cor[scale_old]
-    for scale_cand, cor in cors.items():
-        if scale_cand == scale_old:
-            continue
-        interp_cand = _interp(scale_id=scale_cand, dict_interp=dict_interp)
-        if np.isnan(interp_cand) or interp_cand >= interp_old:
-            continue
-        abs_cor = abs(float(cor))
-        if abs_cor < min_cor:
-            continue
-        candidates.append((scale_cand, interp_cand, abs_cor, float(cor)))
+    # Hoist the interp rating per scale and the correlation column to arrays,
+    # following df_cor's index order (the original loop iterated cors.items()).
+    if interp_arr is None:
+        scales, interp_arr = _interp_array_(df_cor=df_cor, dict_interp=dict_interp)
+    else:
+        scales, interp_arr = interp_arr
+    cor_arr = df_cor[scale_old].to_numpy(dtype=float)
+    abs_cor_arr = np.abs(cor_arr)
+    # Filter mirrors the original element-by-element guards. A NaN correlation
+    # cell passes the min_cor test (nan < x is False), matching the original.
+    keep = (
+        (scales != scale_old)
+        & ~np.isnan(interp_arr)
+        & (interp_arr < interp_old)
+        & ~(abs_cor_arr < min_cor)
+    )
+    idx = np.flatnonzero(keep)
+    if idx.size == 0:
+        return []
+    # Build the kept candidates in original df_cor index order (flatnonzero is
+    # ascending), then rank with the SAME Python sort as the original
+    # (key = (interp_cand, -abs_cor)). Sorting in Python — not np.lexsort —
+    # reproduces list.sort's exact tie behavior, including NaN correlation cells:
+    # these are kept (nan < min_cor is False) but must stay in index order within
+    # their interp group, whereas np.lexsort would push the NaN secondary key to
+    # the tail of the group. The survivor list is small, so this is not the
+    # bottleneck (the per-scale interp/correlation scan was).
+    candidates = [
+        (
+            str(scales[k]),
+            float(interp_arr[k]),
+            float(abs_cor_arr[k]),
+            float(cor_arr[k]),
+        )
+        for k in idx
+    ]
     candidates.sort(key=lambda t: (t[1], -t[2]))
     return candidates
 
@@ -344,10 +399,12 @@ def _greedy_simplify_(
     new_rows = {}  # row_index -> recomputed one-row df (accepted swaps)
     dropped = set()  # row_index dropped via on_unimprovable
     records = []
+    interp_arr = _interp_array_(df_cor=df_cor, dict_interp=dict_interp)
     for i, feat_id, interp_old in targets:
         positions = df_feat.iloc[i][ut.COL_POSITION]
         cands = _eligible_candidates_(
-            feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp, min_cor=min_cor
+            feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp,
+            min_cor=min_cor, interp_arr=interp_arr,
         )
         accepted = False
         for scale_cand, interp_cand, abs_cor, cor in cands:
@@ -483,10 +540,12 @@ def _swap_all_simplify_(
     new_rows = {}
     dropped = set()
     records = []
+    interp_arr = _interp_array_(df_cor=df_cor, dict_interp=dict_interp)
     for i, feat_id, interp_old in targets:
         positions = df_feat.iloc[i][ut.COL_POSITION]
         cands = _eligible_candidates_(
-            feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp, min_cor=min_cor
+            feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp,
+            min_cor=min_cor, interp_arr=interp_arr,
         )
         swapped = False
         for scale_cand, interp_cand, abs_cor, cor in cands:
@@ -586,12 +645,14 @@ def _consolidate_simplify_(
         max_interpret_grade=max_interpret_grade,
     )
     # Per target: (feat_id, interp_old, eligible candidates) + the subcategory rankings.
+    interp_arr = _interp_array_(df_cor=df_cor, dict_interp=dict_interp)
     target_cands = {
         i: (
             feat_id,
             interp_old,
             _eligible_candidates_(
-                feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp, min_cor=min_cor
+                feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp,
+                min_cor=min_cor, interp_arr=interp_arr,
             ),
         )
         for i, feat_id, interp_old in targets
