@@ -166,11 +166,11 @@ comparison is only meaningful on the shared core (`CPP.run`, `AAclust.fit`,
   regression anchor (ADR-0015 pattern).
 - New same-output candidates are gated by D2 (isolated benchmark) before a PR.
 
-## Out of scope (sweep complete)
+## Status: complete
 
-The same-output sweep is **complete**: `_eligible_candidates_` (#198), `candidate_centers_`
-memory fix (#202), and the `encode_pdb` shared chain pick (#205) all landed; the tolerance
-policy produced its first T3 win (#207). One optional item remains:
-
-- `_dist_to_medoids` memory tightening — a per-cluster form would cut its ~3×-input
-  temporaries (see the memory table); bounded today, so low priority.
+The performance program is **done**: the same-output sweep landed across the library
+(`_eligible_candidates_` #198, `candidate_centers_` memory fix #202, `encode_pdb` shared
+chain pick #205, plus the earlier batches), and the tolerance policy produced its first T3
+win (#207). No further optimizations are planned. Any future candidate must clear **D2**
+(a benchmarked win) and **D6** (no memory blow-up), and must not revisit the rejected list
+above.
