@@ -278,15 +278,18 @@ class AAclustPlot:
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features), optional
-            Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
-            Provide either ``X`` or ``df_scales`` (mutually exclusive).
+            Feature matrix with the clustered samples in `rows` and features in `columns`, used
+            **as-is** (no transpose). This is the form for **proteins and other per-sample
+            matrices** — e.g. a CPP feature matrix, pooled protein embeddings, or structural
+            features, one row per protein. For **amino acid scales** pass ``df_scales`` instead.
+            Provide exactly one of ``X`` or ``df_scales``.
         labels : array-like, shape (n_samples,)
-            Cluster labels for each sample in ``X``. If ``None``, no grouping is used.
+            Cluster labels (typically ``aac.labels_``), one per clustered sample — i.e. per `row`
+            of ``X`` or per `column` of ``df_scales``. If ``None``, no grouping is used.
         df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
-            Amino acid scales DataFrame (`rows` are amino acids, `columns` are scale IDs), as
-            returned by :func:`load_scales` or passed to :meth:`AAclust.select_scales`. Passed
-            instead of ``X``, it is transposed internally to the feature matrix, so the manual
-            ``np.asarray(df_scales).T`` is no longer needed.
+            Amino acid scales DataFrame with amino acids in `rows` and scale IDs in `columns`, as
+            returned by :func:`load_scales`. It is **transposed internally** to the feature matrix,
+            so you never call ``.T`` yourself. Provide exactly one of ``X`` or ``df_scales``.
         component_x : int, default=1
             Index of the PCA component for the x-axis. Must be >= 1.
         component_y : int, default=2
@@ -313,9 +316,10 @@ class AAclustPlot:
 
         Notes
         -----
+        * Pass **scales** via ``df_scales`` (transposed for you) and **proteins / embeddings /
+          CPP features** via ``X`` (a samples-by-features matrix, used as-is) — never transpose
+          manually.
         * Ensure `X` and `labels` are in the same order to avoid mislabeling.
-        * When ``df_scales`` is given, ``labels`` still refers to its `columns` (the scales);
-          pass the cluster labels from clustering, e.g. ``labels=aac.labels_``.
 
         See Also
         --------
@@ -376,15 +380,18 @@ class AAclustPlot:
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features), optional
-            Feature matrix. `Rows` typically correspond to scales and `columns` to amino acids.
-            Provide either ``X`` or ``df_scales`` (mutually exclusive).
+            Feature matrix with the clustered samples in `rows` and features in `columns`, used
+            **as-is** (no transpose). This is the form for **proteins and other per-sample
+            matrices** — e.g. a CPP feature matrix, pooled protein embeddings, or structural
+            features, one row per protein. For **amino acid scales** pass ``df_scales`` instead.
+            Provide exactly one of ``X`` or ``df_scales``.
         labels : array-like, shape (n_samples,)
-            Cluster labels for each sample in ``X``. If ``None``, no grouping is used.
+            Cluster labels (typically ``aac.labels_``), one per clustered sample — i.e. per `row`
+            of ``X`` or per `column` of ``df_scales``. If ``None``, no grouping is used.
         df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
-            Amino acid scales DataFrame (`rows` are amino acids, `columns` are scale IDs), as
-            returned by :func:`load_scales` or passed to :meth:`AAclust.select_scales`. Passed
-            instead of ``X``, it is transposed internally to the feature matrix, so the manual
-            ``np.asarray(df_scales).T`` is no longer needed.
+            Amino acid scales DataFrame with amino acids in `rows` and scale IDs in `columns`, as
+            returned by :func:`load_scales`. It is **transposed internally** to the feature matrix,
+            so you never call ``.T`` yourself. Provide exactly one of ``X`` or ``df_scales``.
         component_x : int, default=1
             Index of the PCA component for the x-axis. Must be >= 1.
         component_y : int, default=2
@@ -419,9 +426,10 @@ class AAclustPlot:
 
         Notes
         -----
+        * Pass **scales** via ``df_scales`` (transposed for you) and **proteins / embeddings /
+          CPP features** via ``X`` (a samples-by-features matrix, used as-is) — never transpose
+          manually.
         * Ensure `X` and `labels` are in the same order to avoid mislabeling.
-        * When ``df_scales`` is given, ``labels`` still refers to its `columns` (the scales);
-          pass the cluster labels from clustering, e.g. ``labels=aac.labels_``.
 
         See Also
         --------

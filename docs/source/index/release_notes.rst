@@ -91,8 +91,10 @@ Added
   ``df_scales`` argument (the amino acid scales DataFrame, mutually exclusive with ``X``)
   that is transposed to the feature matrix internally — so
   ``aac_plot.centers(df_scales=df_scales, labels=aac.labels_)`` replaces the manual
-  ``centers(np.array(df_scales).T, labels=aac.labels_)``. The explicit ``X`` signature
-  still works.
+  ``centers(np.array(df_scales).T, labels=aac.labels_)``. This removes the transpose
+  ambiguity: pass **scales** via ``df_scales`` (transposed for you) and **proteins /
+  embeddings / CPP features** via ``X`` (a samples-by-features matrix, used as-is) — never
+  transpose manually. The explicit ``X`` signature is unchanged.
 
 **Sequence Analysis**
 
