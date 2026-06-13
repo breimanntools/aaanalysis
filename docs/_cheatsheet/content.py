@@ -304,7 +304,7 @@ FLAGSHIP_RECIPES = [
              "aac.medoid_names_   # 10 reduced scales (labels_ also set)\n"
              "\n"
              "aac_plot = aa.AAclustPlot()\n"
-             "aac_plot.centers(np.array(df_scales).T, labels=aac.labels_)\n"
+             "aac_plot.centers(df_scales=df_scales, labels=aac.labels_)   # df_scales transposed internally\n"
              "plt.tight_layout(); plt.show()"},
     {"cls": "dPULearn — PCA", "tag": '<span class="hint-neg">reliable negatives</span> · PU learning', "img": "pca",
      "caption": "dPULearnPlot.pca · reliable negatives",
