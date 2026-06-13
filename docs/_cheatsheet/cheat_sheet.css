@@ -84,6 +84,7 @@ code, pre, .mono { font-family: "AA Mono", Menlo, "DejaVu Sans Mono", monospace;
 .sec-h .hint .hint-test { color: #6abf67; opacity: 1; }  /* test group (green) */
 .sec-h .hint .hint-ref  { color: #c2c2c2; opacity: 1; }  /* reference group (gray) */
 .sec-h .hint .hint-neg  { color: #d4b35a; opacity: 1; }  /* reliable negatives (gold, lightened COLOR_REL_NEG for the dark bar) */
+.sec-h .shap-pos { color: #FF0D57; }  /* SHAP red (ut.COLOR_SHAP_POS) — highlights "explain" in the ShapModel title */
 .sec-body { padding: 2px 1px 0; }
 
 .sub {
