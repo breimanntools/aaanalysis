@@ -196,6 +196,11 @@ Changed
   byte-identical feature matrix. And ``StructurePreprocessor.encode_pdb`` CA-CA
   contact counts (``contact_count_8A`` / ``contact_count_12A``) use a vectorized
   per-residue distance computation (~50x at scale) with byte-identical counts.
+  ``encode_pdb`` additionally caches the per-(target, atom) global sequence
+  alignment that its encoders otherwise re-run ~26 times per entry (chain pick
+  plus each per-feature value mapping); the first optimal alignment is
+  deterministic, so cached and recomputed encoder output are byte-identical
+  (~12x off the repeated-alignment overhead).
 - **dPULearn.fit**: Flexible, package-consistent label handling via ``label_pos`` /
   ``label_unl`` / ``label_neg`` markers. Pass standard ``{0, 1}`` labels directly with
   ``label_unl=0`` (``0`` = unlabeled, ``1`` = positive), or any positive / unlabeled /
