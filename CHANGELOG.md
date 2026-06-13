@@ -58,16 +58,20 @@ and a suite of site-localization metrics and plotting helpers.
   `options['n_jobs']` global override.
 - `CPPPlot.feature` titles the plot with the feature's human-readable
   description, controlled by new `show_title` / `title_wrap_width` parameters.
-- `dPULearn.fit` accepts standard `{0, 1}` labels directly via `label_unl=0`
-  (and an arbitrary positive/unlabeled pair via `label_pos` / `label_unl`),
-  normalizing internally to the 1 (positive) / 2 (unlabeled) contract; the
-  recommended encoding is unchanged. `n_neg` is now the primary name for the
-  reliable-negative count.
+- `dPULearn.fit` gains flexible, package-consistent label handling via
+  `label_pos` / `label_unl` / `label_neg` markers: pass standard `{0, 1}` labels
+  directly with `label_unl=0`, or an arbitrary positive/unlabeled/negative
+  encoding. Pre-labeled negatives (`label_neg`) are kept and never re-selected —
+  only unlabeled samples are candidates. `n_neg` is now the primary count and is
+  the **total** number of negatives wanted, so dPULearn identifies `n_neg` minus
+  the pre-labeled negatives. Output labels always use the package convention
+  (1 = positive, 0 = negative, 2 = unlabeled); the recommended input encoding is
+  unchanged.
 
 ### Deprecated
 - `dPULearn.fit(n_unl_to_neg=...)` is deprecated in favor of `n_neg` (identical
-  meaning); scheduled for removal in version 1.2.0. The alias still works and
-  emits a single `DeprecationWarning`.
+  meaning when there are no pre-labeled negatives); scheduled for removal in
+  version 1.2.0. The alias still works and emits a single `DeprecationWarning`.
 
 ## [1.0.3] - 2026-04-06
 ### Added

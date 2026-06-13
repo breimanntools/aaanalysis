@@ -298,13 +298,47 @@ class TestdPULearnFitLabelEncoding:
                 warnings.simplefilter("ignore", DeprecationWarning)
                 dpul.fit(X, labels_pu, n_neg=5, n_unl_to_neg=7)
 
+    # Pre-labeled negatives (label_neg) + total-n_neg semantics
+    @staticmethod
+    def _data_with_pre_neg(n=60, n_pre_neg=4, seed=42):
+        X, labels_pu = TestdPULearnFitLabelEncoding._det_data(n=n, seed=seed)
+        labels = labels_pu.copy()
+        unl_idx = np.where(labels == 2)[0][:n_pre_neg]  # mark some unlabeled as pre-labeled negatives
+        labels[unl_idx] = 0
+        return X, labels, unl_idx
+
+    def test_label_neg_pre_labeled_negatives(self):
+        """n_neg is the TOTAL wanted; pre-labeled negatives are kept and the rest identified."""
+        X, labels, pre_idx = self._data_with_pre_neg(n=60, n_pre_neg=4)
+        dpul = aa.dPULearn(random_state=42)
+        dpul.fit(X, labels, label_neg=0, n_neg=10)  # 4 pre-labeled + 6 newly identified
+        assert np.sum(dpul.labels_ == 0) == 10
+        # the pre-labeled negatives are preserved (never re-selected)
+        assert all(dpul.labels_[i] == 0 for i in pre_idx)
+
+    def test_n_neg_not_exceeding_pre_labeled_raises(self):
+        """n_neg must exceed the number of pre-labeled negatives by at least 1."""
+        X, labels, _ = self._data_with_pre_neg(n=60, n_pre_neg=4)
+        dpul = aa.dPULearn(random_state=42)
+        with pytest.raises(ValueError, match="pre-labeled"):
+            dpul.fit(X, labels, label_neg=0, n_neg=4)  # 4 total but 4 already pre-labeled
+
     # Negative tests
     def test_label_pos_equals_label_unl_raises(self):
-        """label_pos and label_unl must differ."""
+        """Label markers must be distinct."""
         X, labels_pu = self._det_data()
         dpul = aa.dPULearn(random_state=42)
-        with pytest.raises(ValueError, match="should differ"):
+        with pytest.raises(ValueError, match="distinct"):
             dpul.fit(X, labels_pu, label_pos=1, label_unl=1, n_neg=5)
+
+    def test_value_outside_markers_raises(self):
+        """A label value matching none of the markers is rejected."""
+        X, labels_pu = self._det_data(n=60)
+        labels = labels_pu.copy()
+        labels[np.where(labels == 2)[0][:3]] = 0  # 0 present but label_neg not declared
+        dpul = aa.dPULearn(random_state=42)
+        with pytest.raises(ValueError):
+            dpul.fit(X, labels, n_neg=5)  # label_neg=None -> 0 is an unexpected value
 
 
 class TestdPULearnFitComplex:

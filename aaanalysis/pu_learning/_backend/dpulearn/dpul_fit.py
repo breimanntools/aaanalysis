@@ -11,12 +11,13 @@ import aaanalysis.utils as ut
 
 # II Main Functions
 def get_neg_via_distance(X=None, labels=None, metric="euclidean", n_unl_to_neg=None,
-                         label_neg=0, label_pos=1):
+                         label_neg=0, label_pos=1, label_unl=2):
     """Identify distant samples from positive mean as reliable negatives based on a specified distance metric."""
     col_dif = f'{metric}_dif'
     col_dif_abs = f"{metric}_abs_dif"
     mask_pos = labels == label_pos
-    mask_unl = labels != label_pos
+    # Only the unlabeled samples are candidates; pre-labeled negatives are preserved as-is.
+    mask_unl = labels == label_unl
     # Compute the distances to the average value of the positive datapoints
     dif_to_pos_mean = pairwise_distances(X[mask_pos], X, metric=metric).mean(axis=0)
     abs_dif_to_pos_mean = np.abs(dif_to_pos_mean)
@@ -28,12 +29,14 @@ def get_neg_via_distance(X=None, labels=None, metric="euclidean", n_unl_to_neg=N
     new_labels[top_indices] = label_neg
     # Adjust df distance
     df_pu = df_pu.round(4)
-    df_pu.insert(0, ut.COL_SELECTION_VIA, [metric if l == 0 else None for l in new_labels])
+    # Record selection only for the newly identified negatives (pre-labeled negatives stay None)
+    top_set = set(top_indices)
+    df_pu.insert(0, ut.COL_SELECTION_VIA, [metric if i in top_set else None for i in df_pu.index])
     return new_labels, df_pu
 
 
 def get_neg_via_pca(X=None, labels=None, n_components=0.8, n_unl_to_neg=None,
-                    label_neg=0, label_pos=1, **pca_kwargs):
+                    label_neg=0, label_pos=1, label_unl=2, **pca_kwargs):
     """Identify distant samples from positive mean as reliable negatives in PCA-compressed feature spaces."""
     # Principal component analysis
     pca = PCA(n_components=n_components, **pca_kwargs)
@@ -51,7 +54,8 @@ def get_neg_via_pca(X=None, labels=None, n_components=0.8, n_unl_to_neg=None,
     df_pu = pd.DataFrame(pca.components_.T[:, :len(columns_pca)], columns=columns_pca)
     # Get mean of positive data for each component
     mask_pos = labels == label_pos
-    mask_unl = labels != label_pos
+    # Only the unlabeled samples are candidates; pre-labeled negatives are preserved as-is.
+    mask_unl = labels == label_unl
     pc_means = df_pu[mask_pos].mean(axis=0)
     # Select negatives based on absolute difference to mean of positives for each component
     df_pu.insert(0, ut.COL_SELECTION_VIA, None)  # New column to store the PC information
