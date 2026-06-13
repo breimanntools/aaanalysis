@@ -225,6 +225,13 @@ Changed
   chain-pick, mismatch-count and feature-align steps) rather than constructing
   three fresh aligners per entry. Identity fractions and alignments are
   byte-identical in every case.
+  A further "Batch 6" pass replaces two more hotspots in place with
+  byte-identical implementations: ``AAMut.comp_substitution_impact`` now
+  accumulates the per-(from, to) delta columns and builds a single DataFrame
+  instead of concatenating hundreds of one-pair frames (byte-identical table,
+  ~19x); and ``SequencePreprocessor.get_sliding_aa_window`` inlines a strided
+  window slice rather than re-padding the sequence string on every position
+  (byte-identical window list, ~1.8x).
 - **Performance benchmark + regression guard** (developer tooling): A committed
   ``pytest-benchmark`` suite (``tests/benchmarks/``) micro-benchmarks the hot
   public entry points — ``CPP.run`` / ``CPP.run_num``, ``AAclust.fit``,
