@@ -92,8 +92,8 @@ def _check_scores_unit_range(scores, name="score"):
 # II Main Functions
 class AnnotationPreprocessor:
     """
-    Preprocessing class for per-residue post-translational modification (PTM) /
-    functional-site annotations.
+    Preprocessing class (**[pro]**, requires ``aaanalysis[pro]``) for per-residue
+    post-translational modification (PTM) / functional-site annotations.
 
     Collects per-residue annotations — fetched from UniProt
     (:meth:`fetch_uniprot`) or ingested from a user / predictor table

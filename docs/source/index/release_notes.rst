@@ -151,6 +151,14 @@ Changed
   the new ``show_title`` (default ``True``) and ``title_wrap_width`` (default ``45``)
   parameters. A subsequent ``plt.title(...)`` still overrides it; ``feature_map`` and
   ``ranking`` are unchanged.
+- **Docstring discoverability**: Surfaced previously implicit API contracts at the
+  docstrings users actually read (no behavior change). ``CPP.run_num`` /
+  ``NumericalFeature.get_parts`` now state the ``get_parts`` → ``run_num`` call order
+  and the ``[0, 1]`` normalization contract (and what breaks if unnormalized); the
+  ``[pro]`` classes / functions (``ShapModel``, ``StructurePreprocessor``,
+  ``AnnotationPreprocessor``, ``comp_seq_sim``, ``filter_seq``, ``scan_motif``) carry
+  a ``[pro]`` install marker in their summary; and ``SeqMut`` cross-links the canonical
+  ``df_seq`` format spec (``SequenceFeature.get_df_parts``).
 
 
 Version 1.0 (Stable Version)
