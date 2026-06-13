@@ -62,6 +62,36 @@ not redo**, with the reason for each.
 
 Infrastructure: benchmark + regression suite (#193); tolerance policy ADR-0032 (#191).
 
+The "×" above are **speed** micro-benchmarks. **Memory** was touched only where noted:
+`_greedy_simplify_` drops a per-feature `X.copy()` (memory-only); the `encode_pdb`
+alignment / contact caches trade a little memory for speed; the pro-IO path streams.
+Most wins are pure compute (loop vectorization) with neutral memory.
+
+## Performance relative to v1.0.3 (last released stable)
+
+Two **distinct** efforts separate v1.0.3 from current `master` — do not conflate them:
+
+1. **The CPP performance overhaul (post-1.0.3) — the order-of-magnitude gain, and NOT part
+   of this sweep.** v1.0.3 and earlier predate the Cython feature-matrix kernel, macOS-safe
+   threaded `n_jobs`, scale / AA-index caching, and scale / sample batching. Per the
+   CHANGELOG, 1.0.3 could show **hour-long, low-CPU `CPP.run`**; the overhaul replaced that
+   (v1.0.2 already noted "3–5× faster `CPP.run`"; the kernel + batching go well beyond),
+   and CPP is now **memory-bounded** by streaming / chunking instead of materializing the
+   full sample×scale×split tensor. This is the dramatic **efficiency *and* memory** gain
+   versus 1.0.3.
+2. **This same-output sweep (ADR-0033) — incremental.** Its wins sit mostly in **v1.1-new
+   subsystems** (`AAWindowSampler`, `StructurePreprocessor`, embeddings) that have **no
+   v1.0.3 counterpart**, plus targeted wins on pre-existing code (dPULearn KLD,
+   `filter_correlation_`, AAclust `_dist_to_medoids`). Mostly speed; memory as noted above.
+
+**No precise end-to-end ×-factor vs 1.0.3 is asserted here.** It would require benchmarking
+1.0.3 against `master`, and most swept symbols did not exist in 1.0.3, so a fair comparison
+is only meaningful on the shared core (`CPP.run`, `AAclust.fit`,
+`SequenceFeature.feature_matrix`) — where the gain is the overhaul's, not this sweep's. The
+committed benchmark suite (#193) measures current `master` going forward; 1.0.3 has neither
+the suite nor the v1.1 surface, so any 1.0.3 number must come from an explicit benchmark run,
+not an estimate (D2).
+
 ## Rejected alternatives — DO NOT RE-ATTEMPT
 
 ### (a) Benchmarked → no measurable gain (the audit over-estimated these)
