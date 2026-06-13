@@ -556,7 +556,8 @@ plt.tight_layout(); plt.show()</pre>
   <div class="sec-body">
     <pre class="code"><span class="c-cm"># per-sample SHAP — APP&#x27;s soft label (0.6), keyed by entry</span>
 sm = <span class="c-nm">aa.ShapModel</span>()
-sm.fit(X, labels=labels, df_seq=df_seq, fuzzy_labels={<span class="c-st">&#x27;P05067&#x27;</span>: 0.6})
+sm.fit(X, labels=labels, df_seq=df_seq,
+       fuzzy_labels={<span class="c-st">&#x27;P05067&#x27;</span>: 0.6})
 df_feat = sm.add_feat_impact(df_feat=df_feat, df_seq=df_seq,
                              samples=<span class="c-st">&#x27;P05067&#x27;</span>, names=<span class="c-st">&#x27;APP&#x27;</span>)
 args_seq = sf.get_args_seq(df_seq=df_seq, sample=<span class="c-st">&#x27;P05067&#x27;</span>)
@@ -650,7 +651,7 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
 
     <div class="sec">
       <div class="sec-h"><span>Key Data Objects</span><span class="hint">shapes &amp; columns</span></div>
-      <div class="sec-body"><table class="kv"><tr><td class="k mono">df_seq</td><td class="d">entry · sequence · label · tmd_start · tmd_stop</td></tr><tr><td class="k mono">df_parts</td><td class="d">one column per part: tmd · jmd_n · jmd_c · …</td></tr><tr><td class="k mono">df_feat</td><td class="d">feature · category · subcategory · scale_name · abs_auc · mean_dif · p_val · positions</td></tr><tr><td class="k mono">X</td><td class="d">feature matrix (samples × features) from sf.feature_matrix</td></tr><tr><td class="k mono">dict_num</td><td class="d">{entry: ndarray (L×D)} — numerical per-residue values (v1.1)</td></tr></table></div>
+      <div class="sec-body"><table class="kv"><tr><td class="k mono">df_seq</td><td class="d">entry · sequence · label · tmd_start · tmd_stop</td></tr><tr><td class="k mono">df_parts</td><td class="d">one column per part: tmd · jmd_n · jmd_c · …</td></tr><tr><td class="k mono">df_feat</td><td class="d">feature · category · subcategory · scale_name · abs_auc · mean_dif · p_val · positions</td></tr><tr><td class="k mono">X</td><td class="d">feature matrix (samples × features) from sf.feature_matrix</td></tr><tr><td class="k mono">dict_num</td><td class="d">{entry: ndarray (L×D)} — numerical per-residue values</td></tr></table></div>
     </div>
 
     <div class="sec">

@@ -286,7 +286,8 @@ FLAGSHIP_RECIPES = [
      "img_labels": ["CPPPlot.profile · SHAP", "CPPPlot.feature_map · SHAP"], "h": 41,
      "code": "# per-sample SHAP — APP's soft label (0.6), keyed by entry\n"
              "sm = aa.ShapModel()\n"
-             "sm.fit(X, labels=labels, df_seq=df_seq, fuzzy_labels={'P05067': 0.6})\n"
+             "sm.fit(X, labels=labels, df_seq=df_seq,\n"
+             "       fuzzy_labels={'P05067': 0.6})\n"
              "df_feat = sm.add_feat_impact(df_feat=df_feat, df_seq=df_seq,\n"
              "                             samples='P05067', names='APP')\n"
              "args_seq = sf.get_args_seq(df_seq=df_seq, sample='P05067')\n"
@@ -421,7 +422,7 @@ DATA_OBJECTS = [
     ("df_parts", "one column per part: tmd · jmd_n · jmd_c · …"),
     ("df_feat", "feature · category · subcategory · scale_name · abs_auc · mean_dif · p_val · positions"),
     ("X", "feature matrix (samples × features) from sf.feature_matrix"),
-    ("dict_num", "{entry: ndarray (L×D)} — numerical per-residue values (v1.1)"),
+    ("dict_num", "{entry: ndarray (L×D)} — numerical per-residue values"),
 ]
 
 OPTIONS = (
