@@ -61,6 +61,7 @@ not redo**, with the reason for each.
 | `AAMut.comp_substitution_impact`, `get_sliding_aa_window` | protein_design / data_handling | identical | ~19× / ~1.8× | #196 |
 | `_eligible_candidates_` (numpy filter + hoisted `interp_arr`) | CPP simplify | byte-identical | **~2–3.5×** (audit's "~66×" did NOT hold) | #198 |
 | `candidate_centers_` memory follow-up (`searchsorted`) | AAWindowSampler | byte-identical | **O(n) memory (6.5 MB → ~0)**, slightly faster | #202 |
+| `encode_pdb` shared per-entry chain pick (across ~13 encoders) | StructurePreprocessor | byte-identical (+ error envelope) | removes ~13× walk-redundancy; **end-to-end modest** (extraction-bound) | #205 |
 
 Infrastructure: benchmark + regression suite (#193); tolerance policy ADR-0032 (#191).
 
@@ -165,13 +166,11 @@ comparison is only meaningful on the shared core (`CPP.run`, `AAclust.fit`,
   regression anchor (ADR-0015 pattern).
 - New same-output candidates are gated by D2 (isolated benchmark) before a PR.
 
-## Out of scope (still open)
+## Out of scope (sweep complete)
 
-The same-output sweep is otherwise complete (`_eligible_candidates_` landed in #198,
-`candidate_centers_` memory fix in #202). Two items remain, both optional:
+The same-output sweep is **complete**: `_eligible_candidates_` (#198), `candidate_centers_`
+memory fix (#202), and the `encode_pdb` shared chain pick (#205) all landed; the tolerance
+policy produced its first T3 win (#207). One optional item remains:
 
-- `encode_pdb` per-entry coordinate/residue cache — one structure walk + best-chain pick
-  shared across the ~13 encoders; needs golden tests on the P1/P2/AF_TINY fixtures. ~12×
-  (the only sizeable same-output item left; invasive).
 - `_dist_to_medoids` memory tightening — a per-cluster form would cut its ~3×-input
-  temporaries (see the memory table above); bounded today, so low priority.
+  temporaries (see the memory table); bounded today, so low priority.
