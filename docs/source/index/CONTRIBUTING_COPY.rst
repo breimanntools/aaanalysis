@@ -444,7 +444,7 @@ committed. The canonical version of this protocol lives in
 
 Workflow (step by step)
 -----------------------
-Seven steps in three phases. Phases group the work; within the Build phase you iterate, so the
+Eight steps in three phases. Phases group the work; within the Build phase you iterate, so the
 order there is natural rather than rigid.
 
 **Prepare**
@@ -466,11 +466,13 @@ order there is natural rather than rigid.
    (approve the approach before commits land); drop to plain edits for trivial diffs. Honor the
    path-scoped rules in ``.claude/rules/`` that auto-load for the files you touch. A PR needs ≥1
    commit, so push a scaffolding commit and open a **draft PR** early — CI and the Read the Docs
-   (RTD) preview then run while you keep pushing to refine. **Before a substantive push, run the
-   fast local unit gate** (``pytest tests -m "not regression" -x -n auto -c tests/pytest.ini``) — a
-   local run catches the obvious break far faster than a red-CI round-trip. **No change is done
-   until you have walked the ripple checklist below** — a code edit almost always lands alongside
-   its docstring, example, test, and other mirrors *in the same PR*.
+   (RTD) preview then run while you keep pushing to refine. **Push and open the PR *before* the
+   human-review gate (step 6), not after** — opening the PR is what starts CI/RTD, so the checks run
+   *while* the user reviews or decides to skip. **Before a substantive push, run the fast local unit
+   gate** (``pytest tests -m "not regression" -x -n auto -c tests/pytest.ini``) — a local run catches
+   the obvious break far faster than a red-CI round-trip. **No change is done until you have walked
+   the ripple checklist below** — a code edit almost always lands alongside its docstring, example,
+   test, and other mirrors *in the same PR*.
 5. **Automated review gate (machine-enforced, not eyeballed).** Run ``/review`` (reviews the PR
    diff) and ``/security-review`` (scans the pending diff for vulnerabilities); for a substantial
    diff reach for ``/code-review high`` (or ``ultra`` for the deep cloud review) and ``/simplify``,
@@ -481,17 +483,40 @@ order there is natural rather than rigid.
    a synced branch or an early conflict warning). **A scheduled job syncs only — it must never
    resolve conflicts or merge a branch to** ``master`` **unattended; it just flags you.**
 
-**Merge & clean up**
+**Review, merge & clean up**
 
-6. **Arm auto-merge; fix-forward on red.** Once the review is green and you've read the RTD
-   preview + PR diff, enable GitHub-native auto-merge: ``gh pr merge --auto --squash``. GitHub
+6. **Human review gate — the PR is already up; the user picks how to review.** Because the PR was
+   pushed and opened in step 4, the GitHub Actions + RTD preview are **already running while the user
+   decides** (confirm with ``gh pr checks <n>`` / ``gh run list --branch <branch>``). This is a
+   deliberate checkpoint for human judgement on the *content* of the change — **not** a decision about
+   whether to push (that already happened) — distinct from and on top of the automated gates in step 5
+   and CI. Do **not** advance to merge on your own; surface the fork and **wait for the user's
+   decision**:
+
+   - **(a) Manual PR review — iterate.** The user reviews the PR diff on GitHub and leaves comments.
+     Address **each** comment by refactoring **forward on the same branch** (honor the ripple
+     checklist and the auto-loaded ``.claude/rules/``), re-run the fast local gate, push, and report
+     back per comment. Then **loop**: wait for the next round and repeat the *review → refactor →
+     push* cycle until the user signals the review is complete (e.g. "merge it" / "looks good") —
+     only then proceed to step 7. Each re-push re-triggers CI, and any armed auto-merge waits for the
+     new green.
+   - **(b) Skip review — approve + auto-merge.** The user opts out of a manual pass: post a short
+     **approving review comment** (e.g. "Skipping manual review — automated gates green, all good") so
+     the skip is recorded on the PR, then proceed to step 7. The PR merges and closes itself once CI
+     is green.
+
+   Recommend (a) for substantial or architectural diffs and (b) for trivial ones, but **never assume
+   the answer — the user picks.**
+7. **Arm auto-merge; fix-forward on red.** Once the user has cleared the review gate (step 6) — on the
+   skip path, after the approving review comment — and you've read the RTD preview + PR diff, enable
+   GitHub-native auto-merge: ``gh pr merge --auto --squash``. GitHub
    merges the moment every required check passes and the branch is conflict-free, so **"never
    merge red" still holds** — a red check blocks the merge instead of completing it. If CI goes
    red, pull the failing logs (``gh run view --log-failed``, or ``gh run watch`` to follow live),
    reproduce locally, and fix **forward on the same branch**; armed auto-merge re-arms itself and
    completes on the green re-run. Disarm with ``gh pr merge --disable-auto`` to hold the PR, or
    skip ``--auto`` for a hard human gate.
-7. **Clean up — gated on merge + a green** ``master``. Key cleanup off the **merge state, never a
+8. **Clean up — gated on merge + a green** ``master``. Key cleanup off the **merge state, never a
    single CI run**: once ``gh pr view <n> --json state,mergedAt`` shows ``MERGED``, let the
    push-triggered workflows on ``master`` run and **wait for them to pass** — that confirms the
    squash didn't break anything the branch CI couldn't see (master may have moved under it). An

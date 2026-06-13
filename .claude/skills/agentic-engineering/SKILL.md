@@ -1,6 +1,6 @@
 ---
 name: agentic-engineering
-description: Drive a change through the AAanalysis agentic-engineering protocol step by step — pick/sharpen the issue, branch into an isolated worktree, implement, open a draft PR, run the automated review + quality gates, keep the branch synced, stop at the human-review gate (manual PR-review loop or skip-to-merge — the user's call), then arm GitHub-native auto-merge with a fix-forward loop on red CI. Use when the user wants to start work on an issue, "walk me through the workflow", take a change from issue to merge, or wants the auto-merge / auto-fix loop driven for them. The canonical protocol lives in docs/guides/agentic_engineering.md; this skill executes it.
+description: Drive a change through the AAanalysis agentic-engineering protocol step by step — pick/sharpen the issue, branch into an isolated worktree, implement, push and open the PR early so CI runs, run the automated review + quality gates, keep the branch synced, then hold at the human-review gate where the user picks a manual PR-review loop or skips (skip = post an approving review comment, then arm GitHub-native auto-merge), with a fix-forward loop on red CI. Use when the user wants to start work on an issue, "walk me through the workflow", take a change from issue to merge, or wants the auto-merge / auto-fix loop driven for them. The canonical protocol lives in docs/guides/agentic_engineering.md; this skill executes it.
 ---
 
 # AAanalysis agentic-engineering — drive a change to merge
@@ -66,9 +66,11 @@ Eight steps in three phases. **Full rationale + the quality-gates table live in
    the approach before commits land); plain edits for trivial diffs. Honor the auto-loaded
    `.claude/rules/` for the files you touch. A PR needs ≥1 commit: push a scaffolding commit and open
    a **draft PR** so CI + the RTD preview run while you keep pushing to refine. (Push → §0 go-ahead.)
-   **Before a substantive push, run the fast local unit gate** (`pytest tests -m "not regression" -x
-   -n auto -c tests/pytest.ini`) — far faster than a red-CI round-trip. **No change is done until you
-   walk the Ripple checklist below** — the code edit usually lands with its mirrors *in the same PR*.
+   **Push and open the PR *before* the human-review gate (step 6), not after** — that is what starts
+   CI/RTD, so the checks run *while* the user reviews or decides to skip. **Before a substantive push,
+   run the fast local unit gate** (`pytest tests -m "not regression" -x -n auto -c tests/pytest.ini`) —
+   far faster than a red-CI round-trip. **No change is done until you walk the Ripple checklist
+   below** — the code edit usually lands with its mirrors *in the same PR*.
 5. **Automated review gate.** Run `/review` (PR diff) + `/security-review` (vulnerability scan); for a
    substantial diff also `/code-review high` (or `ultra` for the deep cloud review) + `/simplify`, and
    `/docstrings` when public API or docstrings change. The canonical doc's quality gates must be green.
@@ -78,9 +80,11 @@ Eight steps in three phases. **Full rationale + the quality-gates table live in
 
 **Review, merge & clean up**
 
-6. **Human review gate — STOP and let the user choose.** After the push lands and CI/Actions are
-   running (confirm with `gh pr checks <n>` / `gh run list --branch <branch>`), do **not** advance to
-   merge on your own. Surface the fork explicitly and **wait for the user's decision**:
+6. **Human review gate — the PR is already up; the user picks how to review.** You pushed and opened
+   the PR back in step 4, so by now CI/Actions + the RTD preview are **already running while the user
+   decides** (confirm with `gh pr checks <n>` / `gh run list --branch <branch>`). This gate is human
+   judgement on the *content* — **not** a decision about whether to push (that already happened). Do
+   **not** advance to merge on your own; surface the fork and **wait for the user's decision**:
    - **(a) Manual PR review (iterate).** The user reviews the PR diff on GitHub and leaves comments.
      Address **each** comment by refactoring **forward on the same branch** (honor the Ripple
      checklist + auto-loaded `.claude/rules/`), re-run the fast local gate, push (*each re-push → §0
@@ -88,12 +92,16 @@ Eight steps in three phases. **Full rationale + the quality-gates table live in
      comments and repeat the *review → refactor → push* cycle. Stay in this loop until the user
      explicitly says the review is done (e.g. "merge it" / "looks good" / "skip further review"); only
      then go to step 7. Re-pushes re-trigger CI, and any armed auto-merge waits for the new green.
-   - **(b) Skip review → merge + clean up.** The user opts out of manual review; go straight to step 7.
+   - **(b) Skip review → approve + auto-merge.** The user opts out of a manual pass: post a short
+     **approving review comment** (e.g. "Skipping manual review — automated gates green, all good") so
+     the skip is recorded on the PR, then go to step 7 to arm auto-merge. The PR merges and closes
+     itself once CI is green.
    Recommend (a) for substantial or architectural diffs and (b) for trivial ones, but **never assume —
    the user picks.** This gate is about human judgement on the *content*; the automated gates (step 5)
    and CI still independently enforce *never merge red*.
-7. **Arm auto-merge; fix-forward on red.** Once the user has cleared step 6, and you've read the RTD
-   preview + PR diff: `gh pr merge --auto --squash` (*a publish action → §0 go-ahead*). GitHub merges
+7. **Arm auto-merge; fix-forward on red.** Once the user has cleared step 6 (on the skip path, after
+   you've posted the approving review comment), and you've read the RTD preview + PR diff:
+   `gh pr merge --auto --squash` (*a publish action → §0 go-ahead*). GitHub merges
    only on all-green + conflict-free, so *never merge red* holds. On red CI: `gh run watch` /
    `gh run view --log-failed` → **reproduce locally** (see *Local gate commands*) → fix **forward on
    the same branch** and push; armed auto-merge re-arms and completes on the green re-run.
