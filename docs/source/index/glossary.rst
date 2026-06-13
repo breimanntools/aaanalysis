@@ -84,6 +84,32 @@ Prediction tasks
       define a task: the :term:`unit of comparison` and the
       :term:`reference construction`.
 
+   residue level
+      Per-residue / windowed prediction (datasets ``AA_*``); the
+      :term:`unit of comparison` is a fixed-length :term:`window`
+      (``AAWindowSampler``). Two **sub-modes**, differing only by window parity:
+      *single-residue* (odd window — a site *on* a residue, e.g. a PTM) and
+      *between-residues* (even window — a bond ``P1│P1′``, e.g. cleavage).
+
+   domain level
+      Prediction over a defined sub-region (datasets ``DOM_*``); the
+      :term:`unit of comparison` is the :term:`part`-set derived from
+      ``tmd_start`` / ``tmd_stop`` (``jmd_n`` / ``tmd`` / ``jmd_c``). CPP is
+      native here.
+
+   protein level
+      Whole-chain prediction (datasets ``SEQ_*``); the
+      :term:`unit of comparison` is the entire chain as one part.
+      "Protein level" is the user-facing name of the ``SEQ_`` (sequence)
+      prefix — *sequence* stays reserved for the amino-acid string.
+
+   relational / interaction
+      Tasks about relationships *between* residues or chains (PPI interfaces,
+      residue–residue contacts). AAanalysis profiles interface **segments**
+      only; long-range pairwise contacts are **out of scope** and hand off to
+      structure / PLM tooling. A documented scope boundary, **not** a fourth
+      :term:`prediction level`.
+
    unit of comparison
       What CPP profiles for a task — a :term:`window` (residue level), a
       part-set (domain level), or the whole chain (protein level). One of the

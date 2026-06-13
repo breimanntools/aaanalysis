@@ -53,11 +53,15 @@ See the primary analysis pipeline of the AAanalysis framework in this diagram:
    AAanalysis pipeline illustrating the typical data flow, represented as data frames, with key
    methods (Python classes) highlighted by black squares.
 
-Details on the foundational concepts of AAnalysis are provided by the following sections:
+New here? Start with **Prediction tasks**, the concept-overview page that maps a
+biological question to the right AAanalysis workflow — by *unit of comparison* and
+*reference construction*, not biological scale alone. Details on the foundational
+concepts of AAanalysis are provided by the following sections:
 
 .. toctree::
    :maxdepth: 1
 
+   usage_principles/prediction_tasks
    usage_principles/aaontology
    usage_principles/aaclust
    usage_principles/feature_identification
