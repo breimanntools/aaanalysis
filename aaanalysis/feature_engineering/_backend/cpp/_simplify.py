@@ -19,8 +19,27 @@ import aaanalysis.utils as ut
 from .utils_feature import _feature_value, _get_dict_all_scales
 from ._utils_feature_stat import add_stat_
 
+# candidate_search='fast' cap: evaluate at most this many candidates per feature
+# (the top-k of the ranked best-first list). Chosen as the smallest k that keeps
+# the heuristic within the documented quality band (kept-feature Jaccard >= 0.95,
+# ΔavgABS_AUC <= 0.005 vs exact) with margin on the canonical DOM_GSEC cell; see
+# the validation harness (dev_scripts/perf_simplify_validate.py) and the T3
+# regression anchor (tests/unit/cpp_tests/test_cpp_simplify_regression.py).
+_FAST_TOP_K = 10
+
 
 # I Helper Functions
+def _cap_candidates_(candidates=None, top_k=None):
+    """Top-``top_k`` prefix of the ranked (best-first) candidate list.
+
+    ``top_k=None`` (``candidate_search='exact'``) returns the list unchanged, so
+    the exact path stays byte-identical; a finite ``top_k``
+    (``candidate_search='fast'``) keeps only the most promising candidates."""
+    if top_k is None:
+        return candidates
+    return candidates[:top_k]
+
+
 def _interp(scale_id=None, dict_interp=None):
     """Interpretability rating of a scale's subcategory (NaN if unrated/absent)."""
     val = dict_interp.get(scale_id, np.nan)
@@ -132,29 +151,84 @@ def _recompute_swapped_row_(
     return row_df, col
 
 
-def _eligible_candidates_(feat_id=None, df_cor=None, dict_interp=None, min_cor=0.7):
+def _interp_array_(df_cor=None, dict_interp=None):
+    """Per-scale interpretability ratings aligned to ``df_cor.index`` (float, NaN if
+    unrated). Hoist this ONCE per simplify call and pass it to
+    :func:`_eligible_candidates_` as ``interp_arr`` so the per-scale ``_interp``
+    scan is not repeated for every targeted feature (the #186 cross-feature hoist).
+    ``dict_interp`` is constant across a simplify call, so the array is too."""
+    scales = df_cor.index.to_numpy()
+    interp_arr = np.array(
+        [_interp(scale_id=s, dict_interp=dict_interp) for s in scales], dtype=float
+    )
+    return scales, interp_arr
+
+
+def _eligible_candidates_(
+    feat_id=None, df_cor=None, dict_interp=None, min_cor=0.7, interp_arr=None
+):
     """Eligible candidate scales for one feature, ranked by (interpretability, |corr|).
 
     Eligible iff the candidate subcategory rating is strictly better (lower) than
     the feature's current scale rating AND ``|corr(candidate, original)| >=
     min_cor`` (anti-correlation allowed via ``abs``). Returns a list of
-    ``(scale_cand, interp_cand, abs_cor, cor)``."""
+    ``(scale_cand, interp_cand, abs_cor, cor)``.
+
+    The per-candidate scan over the ``df_cor[scale_old]`` column (a Python
+    ``_interp`` + ``float`` per scale) is vectorized with numpy: the
+    interpretability ratings and the correlation column are hoisted to arrays,
+    filtered in one numpy pass. The small surviving candidate list is then ranked
+    with the original Python ``list.sort(key=lambda t: (t[1], -t[2]))`` (primary:
+    ``interp_cand`` ascending, secondary: ``abs_cor`` descending) so the output
+    list — values, dtypes (Python ``float``), AND tie order (including NaN
+    correlation cells, which are kept and stay in ``df_cor`` index order within
+    their interp group) — is byte-identical to the original.
+
+    ``interp_arr`` is an OPTIONAL precomputed ``(scales, interp_arr)`` pair from
+    :func:`_interp_array_` (the cross-feature hoist): since ``dict_interp`` is
+    constant across a simplify call, callers compute it once and pass it for every
+    feature instead of rebuilding it per feature. Defaulting to ``None`` rebuilds
+    it locally, so the standalone behavior is unchanged."""
     scale_old = ut.split_feat_id(feat_id=feat_id)[2]
     interp_old = _interp(scale_id=scale_old, dict_interp=dict_interp)
     if np.isnan(interp_old) or scale_old not in df_cor.columns:
         return []
-    candidates = []
-    cors = df_cor[scale_old]
-    for scale_cand, cor in cors.items():
-        if scale_cand == scale_old:
-            continue
-        interp_cand = _interp(scale_id=scale_cand, dict_interp=dict_interp)
-        if np.isnan(interp_cand) or interp_cand >= interp_old:
-            continue
-        abs_cor = abs(float(cor))
-        if abs_cor < min_cor:
-            continue
-        candidates.append((scale_cand, interp_cand, abs_cor, float(cor)))
+    # Hoist the interp rating per scale and the correlation column to arrays,
+    # following df_cor's index order (the original loop iterated cors.items()).
+    if interp_arr is None:
+        scales, interp_arr = _interp_array_(df_cor=df_cor, dict_interp=dict_interp)
+    else:
+        scales, interp_arr = interp_arr
+    cor_arr = df_cor[scale_old].to_numpy(dtype=float)
+    abs_cor_arr = np.abs(cor_arr)
+    # Filter mirrors the original element-by-element guards. A NaN correlation
+    # cell passes the min_cor test (nan < x is False), matching the original.
+    keep = (
+        (scales != scale_old)
+        & ~np.isnan(interp_arr)
+        & (interp_arr < interp_old)
+        & ~(abs_cor_arr < min_cor)
+    )
+    idx = np.flatnonzero(keep)
+    if idx.size == 0:
+        return []
+    # Build the kept candidates in original df_cor index order (flatnonzero is
+    # ascending), then rank with the SAME Python sort as the original
+    # (key = (interp_cand, -abs_cor)). Sorting in Python — not np.lexsort —
+    # reproduces list.sort's exact tie behavior, including NaN correlation cells:
+    # these are kept (nan < min_cor is False) but must stay in index order within
+    # their interp group, whereas np.lexsort would push the NaN secondary key to
+    # the tail of the group. The survivor list is small, so this is not the
+    # bottleneck (the per-scale interp/correlation scan was).
+    candidates = [
+        (
+            str(scales[k]),
+            float(interp_arr[k]),
+            float(abs_cor_arr[k]),
+            float(cor_arr[k]),
+        )
+        for k in idx
+    ]
     candidates.sort(key=lambda t: (t[1], -t[2]))
     return candidates
 
@@ -329,9 +403,13 @@ def _greedy_simplify_(
     accept_gaps=False,
     max_std_test=0.2,
     estimator=None,
+    top_k=None,
 ):
     """Per-feature swap with a CV non-regression gate. Returns
-    ``(df_feat_new, X_kept, records, baseline)``."""
+    ``(df_feat_new, X_kept, records, baseline)``.
+
+    ``top_k`` (``candidate_search='fast'``) caps the candidates evaluated per
+    feature; ``None`` (``'exact'``) evaluates them all (byte-identical path)."""
     n = len(df_feat)
     baseline = _score_feature_set_(
         X=X, labels=labels, ml_cv=ml_cv, ml_metric=ml_metric, estimator=estimator
@@ -344,11 +422,14 @@ def _greedy_simplify_(
     new_rows = {}  # row_index -> recomputed one-row df (accepted swaps)
     dropped = set()  # row_index dropped via on_unimprovable
     records = []
+    interp_arr = _interp_array_(df_cor=df_cor, dict_interp=dict_interp)
     for i, feat_id, interp_old in targets:
         positions = df_feat.iloc[i][ut.COL_POSITION]
         cands = _eligible_candidates_(
-            feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp, min_cor=min_cor
+            feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp,
+            min_cor=min_cor, interp_arr=interp_arr,
         )
+        cands = _cap_candidates_(candidates=cands, top_k=top_k)
         accepted = False
         for scale_cand, interp_cand, abs_cor, cor in cands:
             row_df, col = _recompute_swapped_row_(
@@ -483,10 +564,12 @@ def _swap_all_simplify_(
     new_rows = {}
     dropped = set()
     records = []
+    interp_arr = _interp_array_(df_cor=df_cor, dict_interp=dict_interp)
     for i, feat_id, interp_old in targets:
         positions = df_feat.iloc[i][ut.COL_POSITION]
         cands = _eligible_candidates_(
-            feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp, min_cor=min_cor
+            feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp,
+            min_cor=min_cor, interp_arr=interp_arr,
         )
         swapped = False
         for scale_cand, interp_cand, abs_cor, cor in cands:
@@ -568,6 +651,7 @@ def _consolidate_simplify_(
     accept_gaps=False,
     max_std_test=0.2,
     estimator=None,
+    top_k=None,
 ):
     """Batch-by-subcategory swaps toward the fewest interpretable subcategories.
 
@@ -575,7 +659,11 @@ def _consolidate_simplify_(
     unclaimed target with an eligible candidate in that subcategory is swapped to
     its best in-subcat candidate, the whole batch is CV-scored, and the batch is
     accepted only if the set score stays within ``ml_th`` of the baseline. Returns
-    ``(df_feat_new, X_kept, records)``."""
+    ``(df_feat_new, X_kept, records)``.
+
+    ``top_k`` (``candidate_search='fast'``) caps the candidates per feature
+    before subcategory ranking, so the heuristic is internally consistent; ``None``
+    (``'exact'``) evaluates them all (byte-identical path)."""
     n = len(df_feat)
     baseline = _score_feature_set_(
         X=X, labels=labels, ml_cv=ml_cv, ml_metric=ml_metric, estimator=estimator
@@ -586,12 +674,17 @@ def _consolidate_simplify_(
         max_interpret_grade=max_interpret_grade,
     )
     # Per target: (feat_id, interp_old, eligible candidates) + the subcategory rankings.
+    interp_arr = _interp_array_(df_cor=df_cor, dict_interp=dict_interp)
     target_cands = {
         i: (
             feat_id,
             interp_old,
-            _eligible_candidates_(
-                feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp, min_cor=min_cor
+            _cap_candidates_(
+                candidates=_eligible_candidates_(
+                    feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp,
+                    min_cor=min_cor, interp_arr=interp_arr,
+                ),
+                top_k=top_k,
             ),
         )
         for i, feat_id, interp_old in targets
@@ -714,6 +807,7 @@ def simplify_cpp_(
     df_scales_self=None,
     labels=None,
     strategy=ut.STRATEGY_GREEDY,
+    candidate_search=ut.CANDIDATE_SEARCH_EXACT,
     max_interpret_grade=None,
     min_cor=0.7,
     ml_metric="balanced_accuracy",
@@ -741,6 +835,10 @@ def simplify_cpp_(
     # redundancy reduction), so the output keeps every input feature 1:1.
     if not allow_drop:
         on_unimprovable = ut.ON_UNIMPROVABLE_KEEP
+    # candidate_search='fast' caps candidates evaluated per feature; 'exact'
+    # (top_k=None) evaluates them all (byte-identical path). swap_all has no CV
+    # gate and breaks at the first viable candidate, so it ignores the cap.
+    top_k = _FAST_TOP_K if candidate_search == ut.CANDIDATE_SEARCH_FAST else None
     df_scales_pool, df_cor, dict_all_scales, dict_interp, dict_meta = (
         _load_candidate_pool_()
     )
@@ -818,6 +916,7 @@ def simplify_cpp_(
             accept_gaps=accept_gaps,
             max_std_test=max_std_test,
             estimator=estimator,
+            top_k=top_k,
         )
         if strategy == ut.STRATEGY_GREEDY:
             df_feat_new, _X_kept, records, _ = _greedy_simplify_(**common)

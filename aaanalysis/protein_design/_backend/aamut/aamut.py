@@ -27,31 +27,38 @@ def comp_substitution_impact(df_scales=None, df_cat=None, list_from=None, list_t
     """
     sub = df_scales[list_scales]
     cat_map, subcat_map = _get_df_cat_lookup(df_cat=df_cat)
-    # Vectorized over scales: for each ordered (from, to) pair stack the per-scale delta row.
-    records = []
     n_scales = len(list_scales)
     arr_scale_id = np.asarray(list_scales)
     arr_cat = np.asarray([cat_map.get(s, np.nan) for s in list_scales], dtype=object)
     arr_subcat = np.asarray([subcat_map.get(s, np.nan) for s in list_scales], dtype=object)
+    # Vectorized over scales: accumulate per-(from, to) pair into column lists and build
+    # ONE DataFrame at the end (avoids constructing/concatenating hundreds of small frames).
+    M = sub.to_numpy(dtype=float)  # rows aligned to sub.index
+    idx_of = {a: i for i, a in enumerate(sub.index)}
+    from_list = []
+    to_list = []
+    delta_rows = []
     for from_aa in list_from:
-        row_from = sub.loc[from_aa].to_numpy(dtype=float)
+        row_from = M[idx_of[from_aa]]
         for to_aa in list_to:
             if to_aa == from_aa:
                 continue
-            delta = sub.loc[to_aa].to_numpy(dtype=float) - row_from
-            block = pd.DataFrame({
-                ut.COL_FROM_AA: np.repeat(from_aa, n_scales),
-                ut.COL_TO_AA: np.repeat(to_aa, n_scales),
-                ut.COL_SCALE_ID: arr_scale_id,
-                ut.COL_CAT: arr_cat,
-                ut.COL_SUBCAT: arr_subcat,
-                ut.COL_DELTA: delta,
-                ut.COL_ABS_DELTA: np.abs(delta),
-            })
-            records.append(block)
-    if len(records) == 0:
+            from_list.append(from_aa)
+            to_list.append(to_aa)
+            delta_rows.append(M[idx_of[to_aa]] - row_from)
+    if len(delta_rows) == 0:
         return pd.DataFrame(columns=ut.COLS_AAMUT)
-    df_impact = pd.concat(records, axis=0, ignore_index=True)
+    n_pairs = len(delta_rows)
+    delta = np.concatenate(delta_rows)  # (n_pairs * n_scales,)
+    df_impact = pd.DataFrame({
+        ut.COL_FROM_AA: np.repeat(from_list, n_scales),
+        ut.COL_TO_AA: np.repeat(to_list, n_scales),
+        ut.COL_SCALE_ID: np.tile(arr_scale_id, n_pairs),
+        ut.COL_CAT: np.tile(arr_cat, n_pairs),
+        ut.COL_SUBCAT: np.tile(arr_subcat, n_pairs),
+        ut.COL_DELTA: delta,
+        ut.COL_ABS_DELTA: np.abs(delta),
+    })
     return df_impact[ut.COLS_AAMUT].reset_index(drop=True)
 
 

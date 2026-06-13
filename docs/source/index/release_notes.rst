@@ -57,6 +57,13 @@ Added
   pre-sliced numerical tensor (``dict_num_parts``) rather than an amino-acid →
   scale lookup, enabling embedding / structure / annotation features through the
   same pipeline and output schema as ``CPP.run``.
+- **CPP.simplify ``candidate_search='fast'``**: New opt-in heuristic that caps the
+  candidate scales evaluated per feature, for a large speed-up on big scale pools
+  (mainly the ``greedy`` strategy). The default ``candidate_search='exact'`` is
+  unchanged and reproduces the previous result exactly; ``'fast'`` is
+  *statistically equivalent* — the kept-feature set may differ but stays within a
+  documented quality band (kept-feature Jaccard ≥ 0.95 and ΔavgABS_AUC ≤ 0.005 vs
+  exact on the canonical data).
 - **SequenceFeature.get_labels_ovr / get_labels_ovo**: Convert multi-class
   ``labels`` into binary label sets for ``CPP`` — one-vs-rest (K full-length
   arrays, all samples kept) or one-vs-one (per class-pair). The row-dropping
@@ -173,7 +180,11 @@ Changed
   pandas lookup into the scale-correlation table with a numpy view built once,
   keeping the sequential greedy tie-break (kept set and order unchanged). The greedy
   swap loop drops a per-candidate full-matrix copy in favor of a single mutated-column
-  save/restore (memory only; scored matrix and selected set unchanged).
+  save/restore (memory only; scored matrix and selected set unchanged). ``CPP.simplify``'s
+  per-feature candidate ranking (``_eligible_candidates_``) replaces the Python scan over
+  every pool scale with a numpy filter and a stable ``lexsort`` rank, and hoists the
+  per-scale interpretability array once across the whole call — the ranked candidate list
+  (values, tie order, and float dtype) is byte-identical.
 - **n_jobs**: Unified parallelism convention across ``CPP`` / ``CPPGrid``
   (``1`` serial, ``-1`` all cores, ``N>1`` exactly N, ``None`` optimized), with an
   ``options['n_jobs']`` global override.
@@ -220,7 +231,20 @@ Changed
   single session-scoped ``PairwiseAligner`` across all entries (and across the
   chain-pick, mismatch-count and feature-align steps) rather than constructing
   three fresh aligners per entry. Identity fractions and alignments are
-  byte-identical in every case.
+  byte-identical in every case. Completing this sharing, ``encode_pdb`` now
+  collects the structure's amino-acid chains and picks the best-matching chain
+  **once per entry** and threads that result through every requested encoder,
+  rather than re-walking the structure (and rebuilding each chain's atom
+  sequence) once per feature — up to ~13 redundant walks collapsed to one. The
+  pick is a deterministic function of the structure and target sequence, so the
+  shared and per-encoder results are byte-identical.
+  A further "Batch 6" pass replaces two more hotspots in place with
+  byte-identical implementations: ``AAMut.comp_substitution_impact`` now
+  accumulates the per-(from, to) delta columns and builds a single DataFrame
+  instead of concatenating hundreds of one-pair frames (byte-identical table,
+  ~19x); and ``SequencePreprocessor.get_sliding_aa_window`` inlines a strided
+  window slice rather than re-padding the sequence string on every position
+  (byte-identical window list, ~1.8x).
 - **Performance benchmark + regression guard** (developer tooling): A committed
   ``pytest-benchmark`` suite (``tests/benchmarks/``) micro-benchmarks the hot
   public entry points — ``CPP.run`` / ``CPP.run_num``, ``AAclust.fit``,

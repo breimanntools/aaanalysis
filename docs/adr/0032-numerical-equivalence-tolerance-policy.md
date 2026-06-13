@@ -91,6 +91,27 @@ reviewer acceptance checklist lives in `CONTRIBUTING.rst` (and the
 
 - The excluded queue (AAclust binary-search `k`, sparse one-hot, `ShapModel`
   rolling aggregation) is unblocked, each as its own tier-declared PR (D4).
+- **Measured outcome — AAclust binary-search `k` (#200): not implemented.** The
+  flagship T3 candidate above was built as an opt-in stage-2 bisection and
+  benchmarked against the exhaustive default on the canonical cell
+  (`load_scales().T`, seed 42) plus a size/threshold/seed sweep. It is
+  *statistically equivalent* (canonical cell identical; |Δk|/k median 0, medoid
+  Jaccard median 1.0) but **not faster** — median ≈ −5 %, 66 % slower on the
+  canonical cell — because KMeans cost grows with `k` and bisection probes
+  expensive high-`k` midpoints, while stage 1's lower-bound estimate already
+  lands near the answer (so stage 2 covers only a short, cheap range). The
+  ~35–50 % audit estimate counted *evaluations* assuming flat per-eval cost.
+  Failing D1's benefit bar, it was closed unimplemented (the #188 outcome).
+  Evidence: gitignored `dev_scripts/perf_aaclust_ksearch_validate.py`.
+- **Performance-measurement caveat (generalizing #200).** Under D1 a
+  "benchmarked win" is a **wall-clock** (or memory) measurement of the *real
+  pipeline on the canonical cell* — never an operation- or evaluation-*count*,
+  and never an asymptotic argument. Fewer operations can be *slower* when the
+  optimization shifts work toward more expensive individual operations: the #200
+  bisection ran *fewer* KMeans fits but at larger `k`, where per-fit cost is
+  higher, so it lost despite the lower count. Treat an eval-count or big-O claim
+  as a hypothesis to be timed, not as evidence. This applies to every future T3
+  candidate (e.g. #199).
 - The nightly accumulates one anchor per landed T2/T3 optimization alongside the
   ADR-0015 CPP anchor; all run on the canonical Linux/floor-Python cell and are
   re-frozen only on intentional, reviewed change.

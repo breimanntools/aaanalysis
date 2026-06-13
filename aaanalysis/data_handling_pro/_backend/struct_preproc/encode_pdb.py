@@ -90,6 +90,30 @@ def _pick_best_chain_records(target_seq: str, chains):
     return chain, residues, atom_seq, best_score
 
 
+def _resolve_best_chain(structure, sequence: str):
+    """Collect chains and pick the best-matching one **once** per entry.
+
+    "Best-matching" means the chain whose ATOM-record residue sequence has the
+    highest **identity fraction** to the target ``sequence`` — i.e. the number
+    of matched (non-gap) positions in the global alignment of the two, divided
+    by ``len(sequence)`` (see :func:`_identity_fraction`). Ties are broken by
+    chain order (the first chain reaching the maximum wins). This is the chain
+    every encoder aligns against and reads per-residue values from.
+
+    ``_collect_chain_residues`` + ``_pick_best_chain_records`` are pure,
+    deterministic functions of ``(structure, sequence)``, so the result can be
+    computed once and shared across every encoder for the same entry instead of
+    re-walking the structure (and rebuilding each chain's atom sequence) ~13x.
+    Returns ``(chain, residues, atom_seq, identity)``; ``chain`` is ``None``
+    when the structure has no amino-acid chains — the encoders map that to an
+    all-NaN block with identity 0.0, collapsing the former ``not chains`` and
+    ``chain is None`` early-returns into one check."""
+    chains = _collect_chain_residues(structure)
+    if not chains:
+        return None, None, None, 0.0
+    return _pick_best_chain_records(sequence, chains)
+
+
 def _align_atom_values_to_target(target_seq: str,
                                  atom_seq: str,
                                  atom_values: List[float]) -> List[float]:
@@ -125,8 +149,14 @@ def load_structure(pdb_path):
     return parser.get_structure("s", str(pdb_path))
 
 
-def encode_bfactor(structure, sequence: str) -> Tuple[np.ndarray, float]:
+def encode_bfactor(structure, sequence: str, chain_pick=None
+                   ) -> Tuple[np.ndarray, float]:
     """Per-residue mean B-factor as ``(L, 1)`` ndarray, aligned to ``sequence``.
+
+    ``chain_pick`` optionally supplies a precomputed
+    ``(chain, residues, atom_seq, identity)`` from :func:`_resolve_best_chain`
+    so all encoders for one entry share a single chain walk + best-chain pick;
+    recomputed when omitted. Output is identical either way.
 
     Returns
     -------
@@ -137,11 +167,9 @@ def encode_bfactor(structure, sequence: str) -> Tuple[np.ndarray, float]:
         Identity fraction of the chosen chain vs. ``sequence`` — caller can
         use this for diagnostics.
     """
-    chains = _collect_chain_residues(structure)
-    if not chains:
-        return np.full((len(sequence), 1), np.nan), 0.0
-    chain, residues, atom_seq, identity = _pick_best_chain_records(sequence,
-                                                                   chains)
+    chain, residues, atom_seq, identity = (
+        chain_pick if chain_pick is not None
+        else _resolve_best_chain(structure, sequence))
     if chain is None:
         return np.full((len(sequence), 1), np.nan), 0.0
     atom_b: List[float] = []
@@ -156,18 +184,25 @@ def encode_bfactor(structure, sequence: str) -> Tuple[np.ndarray, float]:
     return normalize("bfactor", raw), identity
 
 
-def encode_depth(structure, sequence: str) -> Tuple[np.ndarray, float]:
+def encode_depth(structure, sequence: str, chain_pick=None
+                 ) -> Tuple[np.ndarray, float]:
     """Per-residue residue depth as ``(L, 1)`` ndarray, aligned to ``sequence``.
 
     Uses :class:`Bio.PDB.ResidueDepth.ResidueDepth`, which shells out to the
     external ``msms`` binary. The caller is expected to have verified that
     ``msms`` is on PATH via :func:`_extras.check_msms_available` before
     reaching this function.
+
+    ``chain_pick`` optionally supplies a precomputed
+    ``(chain, residues, atom_seq, identity)`` (see :func:`encode_bfactor`);
+    recomputed when omitted.
     """
     check_msms_available()
     from Bio.PDB.ResidueDepth import ResidueDepth
-    chains = _collect_chain_residues(structure)
-    if not chains:
+    chain, residues, atom_seq, identity = (
+        chain_pick if chain_pick is not None
+        else _resolve_best_chain(structure, sequence))
+    if chain is None:
         return np.full((len(sequence), 1), np.nan), 0.0
     try:
         model = next(structure.get_models())
@@ -177,10 +212,6 @@ def encode_depth(structure, sequence: str) -> Tuple[np.ndarray, float]:
         rd = ResidueDepth(model)
     except Exception as e:
         raise RuntimeError(f"ResidueDepth failed (msms error?): {e}") from e
-    chain, residues, atom_seq, identity = _pick_best_chain_records(sequence,
-                                                                   chains)
-    if chain is None:
-        return np.full((len(sequence), 1), np.nan), 0.0
     atom_depth: List[float] = []
     for residue, key in residues:
         try:
@@ -194,19 +225,21 @@ def encode_depth(structure, sequence: str) -> Tuple[np.ndarray, float]:
 
 
 # --- AF model-file encoders (commit 2) ---------------------------------------
-def _plddt_per_residue(structure, sequence: str):
+def _plddt_per_residue(structure, sequence: str, chain_pick=None):
     """Shared CA-B-factor read used by all three pLDDT keys.
 
     AlphaFold stores pLDDT (0–100) in the B-factor column of model PDB / CIF
     files. We read the CA-atom B-factor (preferred when available; falls
     back to mean over all atoms in the residue) which is consistent with the
     AF-DB confidence convention. Returns (aligned values list, identity).
+
+    ``chain_pick`` optionally supplies a precomputed
+    ``(chain, residues, atom_seq, identity)`` (see :func:`encode_bfactor`);
+    recomputed when omitted.
     """
-    chains = _collect_chain_residues(structure)
-    if not chains:
-        return None, 0.0
-    chain, residues, atom_seq, identity = _pick_best_chain_records(
-        sequence, chains)
+    chain, residues, atom_seq, identity = (
+        chain_pick if chain_pick is not None
+        else _resolve_best_chain(structure, sequence))
     if chain is None:
         return None, 0.0
     atom_plddt: List[float] = []
@@ -228,15 +261,18 @@ def _plddt_per_residue(structure, sequence: str):
     return aligned, identity
 
 
-def encode_plddt(structure, sequence: str, plddt=None) -> Tuple[np.ndarray, float]:
+def encode_plddt(structure, sequence: str, plddt=None, chain_pick=None
+                 ) -> Tuple[np.ndarray, float]:
     """Per-residue pLDDT (AF B-factor column) as ``(L, 1)``, ``[0, 1]``.
 
     ``plddt`` optionally supplies a precomputed ``(aligned, identity)`` pair
     from :func:`_plddt_per_residue` so the three pLDDT encoders share one
     structure walk + alignment per entry; recomputed when omitted. Output is
-    identical either way.
+    identical either way. ``chain_pick`` (see :func:`encode_bfactor`) is used
+    only when ``plddt`` is omitted.
     """
-    aligned, identity = _plddt_per_residue(structure, sequence) if plddt is None else plddt
+    aligned, identity = (_plddt_per_residue(structure, sequence, chain_pick)
+                         if plddt is None else plddt)
     if aligned is None:
         return np.full((len(sequence), 1), np.nan), 0.0
     raw = np.asarray(aligned, dtype=np.float64).reshape(-1, 1)
@@ -246,13 +282,16 @@ def encode_plddt(structure, sequence: str, plddt=None) -> Tuple[np.ndarray, floa
 def encode_plddt_disorder(structure, sequence: str,
                           threshold: float = 70.0,
                           plddt=None,
+                          chain_pick=None,
                           ) -> Tuple[np.ndarray, float]:
     """Boolean ``pLDDT < threshold`` as ``(L, 1)``, ``{0, 1}``.
 
     ``plddt`` optionally supplies a precomputed ``(aligned, identity)`` pair
-    (see :func:`encode_plddt`); recomputed when omitted.
+    (see :func:`encode_plddt`); recomputed when omitted. ``chain_pick`` (see
+    :func:`encode_bfactor`) is used only when ``plddt`` is omitted.
     """
-    aligned, identity = _plddt_per_residue(structure, sequence) if plddt is None else plddt
+    aligned, identity = (_plddt_per_residue(structure, sequence, chain_pick)
+                         if plddt is None else plddt)
     if aligned is None:
         return np.full((len(sequence), 1), np.nan), 0.0
     arr = np.asarray(aligned, dtype=np.float64)
@@ -261,7 +300,7 @@ def encode_plddt_disorder(structure, sequence: str,
     return normalize("plddt_disorder", out.reshape(-1, 1)), identity
 
 
-def encode_plddt_tier(structure, sequence: str, plddt=None
+def encode_plddt_tier(structure, sequence: str, plddt=None, chain_pick=None
                       ) -> Tuple[np.ndarray, float]:
     """Per-residue pLDDT tier one-hot ``[<50, 50-70, 70-90, ≥90]`` as ``(L, 4)``.
 
@@ -269,9 +308,11 @@ def encode_plddt_tier(structure, sequence: str, plddt=None
       very_low <50, low 50-70, confident 70-90, very_high ≥90.
 
     ``plddt`` optionally supplies a precomputed ``(aligned, identity)`` pair
-    (see :func:`encode_plddt`); recomputed when omitted.
+    (see :func:`encode_plddt`); recomputed when omitted. ``chain_pick`` (see
+    :func:`encode_bfactor`) is used only when ``plddt`` is omitted.
     """
-    aligned, identity = _plddt_per_residue(structure, sequence) if plddt is None else plddt
+    aligned, identity = (_plddt_per_residue(structure, sequence, chain_pick)
+                         if plddt is None else plddt)
     if aligned is None:
         return np.full((len(sequence), 4), np.nan), 0.0
     arr = np.asarray(aligned, dtype=np.float64)
@@ -316,13 +357,12 @@ def _chi_sincos_for_residue(residue, chi_index: int):
 
 
 def _encode_chi_sincos(structure, sequence: str, chi_index: int,
-                       feature_key: str) -> Tuple[np.ndarray, float]:
+                       feature_key: str, chain_pick=None
+                       ) -> Tuple[np.ndarray, float]:
     """Shared chi1 / chi2 backbone for the two registry keys."""
-    chains = _collect_chain_residues(structure)
-    if not chains:
-        return np.full((len(sequence), 2), np.nan), 0.0
-    chain, residues, atom_seq, identity = _pick_best_chain_records(
-        sequence, chains)
+    chain, residues, atom_seq, identity = (
+        chain_pick if chain_pick is not None
+        else _resolve_best_chain(structure, sequence))
     if chain is None:
         return np.full((len(sequence), 2), np.nan), 0.0
     # Initialise internal coordinates on the chain (idempotent).
@@ -343,25 +383,30 @@ def _encode_chi_sincos(structure, sequence: str, chi_index: int,
     return normalize(feature_key, raw), identity
 
 
-def encode_chi1_sincos(structure, sequence: str
+def encode_chi1_sincos(structure, sequence: str, chain_pick=None
                        ) -> Tuple[np.ndarray, float]:
     """sin/cos of chi1 per residue as ``(L, 2)``, ``[0, 1]``."""
-    return _encode_chi_sincos(structure, sequence, 1, "chi1_sincos")
+    return _encode_chi_sincos(structure, sequence, 1, "chi1_sincos",
+                              chain_pick=chain_pick)
 
 
-def encode_chi2_sincos(structure, sequence: str
+def encode_chi2_sincos(structure, sequence: str, chain_pick=None
                        ) -> Tuple[np.ndarray, float]:
     """sin/cos of chi2 per residue as ``(L, 2)``, ``[0, 1]``."""
-    return _encode_chi_sincos(structure, sequence, 2, "chi2_sincos")
+    return _encode_chi_sincos(structure, sequence, 2, "chi2_sincos",
+                              chain_pick=chain_pick)
 
 
-def _ca_coords_and_residues(structure, sequence: str):
-    """Pick best chain and return (CA coordinates ndarray, residues, atom_seq, identity)."""
-    chains = _collect_chain_residues(structure)
-    if not chains:
-        return None, None, None, 0.0
-    chain, residues, atom_seq, identity = _pick_best_chain_records(
-        sequence, chains)
+def _ca_coords_and_residues(structure, sequence: str, chain_pick=None):
+    """Pick best chain; return (CA coords ndarray, residues, atom_seq, identity).
+
+    ``chain_pick`` optionally supplies a precomputed
+    ``(chain, residues, atom_seq, identity)`` (see :func:`encode_bfactor`);
+    recomputed when omitted.
+    """
+    chain, residues, atom_seq, identity = (
+        chain_pick if chain_pick is not None
+        else _resolve_best_chain(structure, sequence))
     if chain is None:
         return None, None, None, 0.0
     ca_coords: List[np.ndarray] = []
@@ -379,11 +424,11 @@ def _ca_coords_and_residues(structure, sequence: str):
     return coords, residues, atom_seq, identity
 
 
-def encode_ca_centroid_dist(structure, sequence: str
+def encode_ca_centroid_dist(structure, sequence: str, chain_pick=None
                             ) -> Tuple[np.ndarray, float]:
     """Per-residue ``||CA - centroid(CA)||`` as ``(L, 1)``, ``[0, 1]``."""
     coords, _residues, atom_seq, identity = _ca_coords_and_residues(
-        structure, sequence)
+        structure, sequence, chain_pick=chain_pick)
     if coords is None or len(coords) == 0:
         return np.full((len(sequence), 1), np.nan), 0.0
     finite = coords[~np.isnan(coords).any(axis=1)]
@@ -396,7 +441,7 @@ def encode_ca_centroid_dist(structure, sequence: str
     return normalize("ca_centroid_dist", raw), identity
 
 
-def encode_ca_centroid_dist_norm(structure, sequence: str
+def encode_ca_centroid_dist_norm(structure, sequence: str, chain_pick=None
                                   ) -> Tuple[np.ndarray, float]:
     """Per-residue ``||CA - centroid|| / Rg`` as ``(L, 1)``, ``[0, 1]``.
 
@@ -405,7 +450,7 @@ def encode_ca_centroid_dist_norm(structure, sequence: str
     inputs yield NaN.
     """
     coords, _residues, atom_seq, identity = _ca_coords_and_residues(
-        structure, sequence)
+        structure, sequence, chain_pick=chain_pick)
     if coords is None or len(coords) == 0:
         return np.full((len(sequence), 1), np.nan), 0.0
     finite = coords[~np.isnan(coords).any(axis=1)]
@@ -423,11 +468,11 @@ def encode_ca_centroid_dist_norm(structure, sequence: str
 
 
 def _encode_contact_count(structure, sequence: str, radius_A: float,
-                          min_seq_sep: int, feature_key: str
+                          min_seq_sep: int, feature_key: str, chain_pick=None
                           ) -> Tuple[np.ndarray, float]:
     """Shared CA-CA contact-count backbone for the two radius variants."""
     coords, _residues, atom_seq, identity = _ca_coords_and_residues(
-        structure, sequence)
+        structure, sequence, chain_pick=chain_pick)
     if coords is None or len(coords) == 0:
         return np.full((len(sequence), 1), np.nan), 0.0
     n = len(coords)
@@ -451,23 +496,26 @@ def _encode_contact_count(structure, sequence: str, radius_A: float,
     return normalize(feature_key, raw), identity
 
 
-def encode_contact_count_8A(structure, sequence: str
+def encode_contact_count_8A(structure, sequence: str, chain_pick=None
                             ) -> Tuple[np.ndarray, float]:
     """Per-residue CA-CA contacts within 8 Å, seq-sep ≥ 5; ``(L, 1)`` in ``[0, 1]``."""
     return _encode_contact_count(structure, sequence,
                                  radius_A=8.0, min_seq_sep=5,
-                                 feature_key="contact_count_8A")
+                                 feature_key="contact_count_8A",
+                                 chain_pick=chain_pick)
 
 
-def encode_contact_count_12A(structure, sequence: str
+def encode_contact_count_12A(structure, sequence: str, chain_pick=None
                              ) -> Tuple[np.ndarray, float]:
     """Per-residue CA-CA contacts within 12 Å, seq-sep ≥ 5; ``(L, 1)`` in ``[0, 1]``."""
     return _encode_contact_count(structure, sequence,
                                  radius_A=12.0, min_seq_sep=5,
-                                 feature_key="contact_count_12A")
+                                 feature_key="contact_count_12A",
+                                 chain_pick=chain_pick)
 
 
-def encode_hse(structure, sequence: str) -> Tuple[np.ndarray, float]:
+def encode_hse(structure, sequence: str, chain_pick=None
+               ) -> Tuple[np.ndarray, float]:
     """Per-residue half-sphere exposure (HSE-Cα) as ``(L, 2)`` in ``[0, 1]``.
 
     Uses :class:`Bio.PDB.HSExposure.HSExposureCA` with the standard 13 Å
@@ -480,10 +528,16 @@ def encode_hse(structure, sequence: str) -> Tuple[np.ndarray, float]:
     Counts are normalized by the registry recipe ``clip(x / 30, 0, 1)``;
     real counts above 30 are rare (typical 13 Å sphere holds 10-20
     neighbors).
+
+    ``chain_pick`` optionally supplies a precomputed
+    ``(chain, residues, atom_seq, identity)`` (see :func:`encode_bfactor`);
+    recomputed when omitted.
     """
     from Bio.PDB.HSExposure import HSExposureCA
-    chains = _collect_chain_residues(structure)
-    if not chains:
+    chain, residues, atom_seq, identity = (
+        chain_pick if chain_pick is not None
+        else _resolve_best_chain(structure, sequence))
+    if chain is None:
         return np.full((len(sequence), 2), np.nan), 0.0
     try:
         model = next(structure.get_models())
@@ -493,10 +547,6 @@ def encode_hse(structure, sequence: str) -> Tuple[np.ndarray, float]:
         HSExposureCA(model, radius=13.0)
     except Exception as e:
         raise RuntimeError(f"HSExposureCA failed: {e}") from e
-    chain, residues, atom_seq, identity = _pick_best_chain_records(
-        sequence, chains)
-    if chain is None:
-        return np.full((len(sequence), 2), np.nan), 0.0
     atom_up: List[float] = []
     atom_down: List[float] = []
     for residue, _ in residues:
@@ -512,7 +562,7 @@ def encode_hse(structure, sequence: str) -> Tuple[np.ndarray, float]:
 
 
 # --- Disulfide-bond encoder (v1.2) -------------------------------------------
-def encode_disulfide(structure, sequence: str
+def encode_disulfide(structure, sequence: str, chain_pick=None
                      ) -> Tuple[np.ndarray, float]:
     """Per-residue disulfide bond as ``(L, 2)``: [participates, partner_distance].
 
@@ -529,12 +579,14 @@ def encode_disulfide(structure, sequence: str
     Both columns are normalized by the registry's `disulfide` recipe to
     `[0, 1]`: the participates dim is identity (already boolean), and the
     distance dim is `clip(x / 5, 0, 1)` (5 Å as a generous upper bound).
+
+    ``chain_pick`` optionally supplies a precomputed
+    ``(chain, residues, atom_seq, identity)`` (see :func:`encode_bfactor`);
+    recomputed when omitted.
     """
-    chains = _collect_chain_residues(structure)
-    if not chains:
-        return np.full((len(sequence), 2), np.nan), 0.0
-    chain, residues, atom_seq, identity = _pick_best_chain_records(
-        sequence, chains)
+    chain, residues, atom_seq, identity = (
+        chain_pick if chain_pick is not None
+        else _resolve_best_chain(structure, sequence))
     if chain is None:
         return np.full((len(sequence), 2), np.nan), 0.0
     # Build per-residue SG coordinates (NaN rows for non-CYS / missing SG).
