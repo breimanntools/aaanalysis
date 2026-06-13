@@ -15,14 +15,20 @@ def filter_correlation_(X, max_cor=0.7):
     corr_matrix = np.corrcoef(X, rowvar=False)
     # Get number of features
     n_features = X.shape[1]
+    # Precompute |corr| so the inner triangle comparison is vectorized per row.
+    abs_cor = np.abs(corr_matrix)
     # Initialize the mask to select features
     is_selected = np.ones(n_features, dtype=bool)
-    # Iterate over the upper triangle of the correlation matrix
+    # Greedy, order-dependent: a feature deselected earlier can no longer deselect
+    # later ones, so iterate rows and skip already-deselected i (identical mask to
+    # the nested-loop form). The j > i comparison is vectorized over the row.
     for i in range(n_features):
-        if is_selected[i]:
-            for j in range(i + 1, n_features):
-                if is_selected[j] and abs(corr_matrix[i, j]) > max_cor:
-                    is_selected[j] = False
+        if not is_selected[i]:
+            continue
+        over = abs_cor[i, i + 1:] > max_cor
+        if over.any():
+            j_idx = np.nonzero(over)[0] + (i + 1)
+            is_selected[j_idx[is_selected[j_idx]]] = False
     return is_selected
 
 
