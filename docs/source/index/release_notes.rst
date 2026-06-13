@@ -173,7 +173,11 @@ Changed
   pandas lookup into the scale-correlation table with a numpy view built once,
   keeping the sequential greedy tie-break (kept set and order unchanged). The greedy
   swap loop drops a per-candidate full-matrix copy in favor of a single mutated-column
-  save/restore (memory only; scored matrix and selected set unchanged).
+  save/restore (memory only; scored matrix and selected set unchanged). ``CPP.simplify``'s
+  per-feature candidate ranking (``_eligible_candidates_``) replaces the Python scan over
+  every pool scale with a numpy filter and a stable ``lexsort`` rank, and hoists the
+  per-scale interpretability array once across the whole call — the ranked candidate list
+  (values, tie order, and float dtype) is byte-identical.
 - **n_jobs**: Unified parallelism convention across ``CPP`` / ``CPPGrid``
   (``1`` serial, ``-1`` all cores, ``N>1`` exactly N, ``None`` optimized), with an
   ``options['n_jobs']`` global override.
