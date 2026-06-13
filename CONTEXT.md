@@ -543,6 +543,43 @@ number as the `interpret_grade` column; "grade" is chosen so the parameter name 
 lower is better.
 _Avoid_: interpretability score (a high score usually reads as good; the grade is inverted).
 
+### Optimization-equivalence vocabulary
+
+These name the tiers of the **numerical-equivalence tolerance policy** (ADR-0032)
+that governs when a performance optimization is allowed to change a numerical
+output. An optimization lands at the **strictest tier it can satisfy**; each
+carries the evidence + regression anchor its tier requires (extending the
+ADR-0015 anchor pattern).
+
+**byte-identical** (tier **T1**, the default):
+Output is bit-for-bit identical to the implementation it replaces. The bar for
+the vast majority of optimizations (vectorizing a loop with the same formula,
+hoisting an invariant, caching a deterministic result). No extra evidence beyond
+the change's own unit / parity tests.
+_Avoid_: same-output (overloaded — historically meant T1+T2 together), exact (ambiguous).
+
+**numerically-equivalent** (tier **T2**):
+Numerical outputs agree to `np.allclose(atol=1e-10, rtol=0)` **and** every
+**discrete decision** (labels, selected features / medoids, kept / dropped /
+ranked sets) is identical. Covers ULP-level reorderings (einsum/BLAS reductions,
+rolling-mean aggregation) and `allclose` distance/correlation reformulations.
+_Avoid_: approximately equal, close-enough (the tolerance is exact: `atol=1e-10, rtol=0`).
+
+**statistically-equivalent** (tier **T3**):
+Outputs differ and discrete decisions *may* differ, but documented quality
+metrics (clustering quality, downstream AUC, kept-feature overlap) stay within an
+**agreed, numerically stated band** on named canonical datasets. Reserved for
+genuinely algorithmic changes (e.g. AAclust binary-search `k`) — never a fallback
+for a change that could meet T2.
+_Avoid_: equivalent (unqualified — say which tier), good-enough.
+
+**discrete decision**:
+A non-numerical output an optimization must not silently change under T2 — a
+label assignment, a selected feature / medoid, a kept / dropped / ranked set.
+Distinct from a numerical *value*: a value may drift within tolerance, a decision
+may not (under T2) without escalating to T3.
+_Avoid_: result (overloaded), output (overloaded).
+
 ## Relationships
 
 - A **df_seq** row contains one **entry** and one sequence; optionally a **pos column** cell of 1-based positions.

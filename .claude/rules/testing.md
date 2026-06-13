@@ -152,6 +152,15 @@ runs/re-verifies in the **non-gating nightly** (`mutation_nightly.yml`) so a
 intentional, reviewed change. It extends the unit-level parity-test precedent —
 it is **not** the deferred integration tier.
 
+**Output-affecting optimizations extend this anchor pattern.** A perf change that
+alters output (even at the ULP level or in tie-breaks) is governed by the
+**numerical-equivalence tolerance policy** (ADR-0032): it lands at the strictest
+tier it satisfies — **T1** byte-identical (default), **T2** `allclose(atol=1e-10,
+rtol=0)` + identical discrete decisions, or **T3** quality-metric within a
+documented band — and commits a `@pytest.mark.regression` anchor (same canonical-
+cell pin, same nightly-only run) freezing the decision artifact / value (T2) or
+the banded metric (T3). The reviewer acceptance checklist is in `CONTRIBUTING.rst`.
+
 ### Mutation testing
 `mutmut` is an **opt-in dev tool + non-gating nightly CI job** (not a hard
 gate). Use surviving mutants on the core filters/validators to find weak tests,

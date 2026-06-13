@@ -159,6 +159,42 @@ This will execute all the test cases in the tests/ directory. Check out our
 `README on testing <https://github.com/breimanntools/aaanalysis/blob/master/tests/README_TESTING>`_. See further
 useful commands in our `Project Cheat Sheet <https://github.com/breimanntools/aaanalysis/blob/master/docs/guides/project_cheat_sheet.md>`_.
 
+Optimizations that Change Output
+""""""""""""""""""""""""""""""""
+
+Most optimizations must be **byte-identical** to the code they replace. An
+optimization that changes output at all — even only at the floating-point
+last-bit (ULP) level or in tie-breaks — is acceptable only under the
+**numerical-equivalence tolerance policy** (ADR-0032), which defines three tiers
+of acceptable change and the evidence each requires:
+
+- **T1 — Byte-identical** (default): output is bit-for-bit identical. Covered by
+  the change's own unit / parity tests; no extra evidence.
+- **T2 — Numerically-equivalent**: ``np.allclose(atol=1e-10, rtol=0)`` on all
+  numerical outputs **and** identical discrete decisions (labels, selected
+  features / medoids, kept / dropped / ranked sets). Examples: ULP-level
+  reductions, ``allclose`` distance/correlation reformulations.
+- **T3 — Statistically-equivalent**: results differ but documented quality
+  metrics (clustering quality, downstream AUC, kept-feature overlap) stay within
+  an agreed, numerically stated band on named canonical datasets. Reserved for
+  genuinely algorithmic changes (e.g. AAclust binary-search ``k``) — never a
+  fallback for a change that could meet T2.
+
+**Reviewer acceptance checklist** for a T2 / T3 optimization PR:
+
+1. The PR **names its tier** and lands at the *strictest* tier the change can
+   satisfy.
+2. It links a validation harness (gitignored ``dev_scripts/perf_*_validate.py``
+   pattern) that asserts the equivalence and benchmarks old-vs-new.
+3. It states the **tolerance / band numerically** (T2: ``atol=1e-10, rtol=0`` +
+   the discrete-decision artifacts that stay equal; T3: e.g. ΔAUC ≤ 0.005,
+   kept-feature Jaccard ≥ 0.95) and names the canonical dataset(s).
+4. It commits a **regression anchor** extending the ADR-0015 pattern
+   (``@pytest.mark.regression``, pinned to the canonical Linux / floor-Python
+   cell, run only in the non-gating nightly) that freezes the decision artifact /
+   value (T2) or the banded metric (T3).
+5. Each previously-excluded optimization lands as **its own PR**.
+
 
 Pull Requests
 =============
