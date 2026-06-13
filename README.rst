@@ -95,20 +95,6 @@ If you are looking to make publication-ready plots with a view lines of code, se
 
 You can find the official documentation at `Read the Docs <https://aaanalysis.readthedocs.io/en/latest/>`_.
 
-The AAanalysis Ecosystem
-========================
-AAanalysis is the interpretable middle layer between bioinformatics I/O and the downstream machine
-learning, explainable AI, and protein-design stack. It *consumes* upstream representations (sequences,
-embeddings, structures) and even competitor descriptor sets, runs them through its interpretable core
-(*Part × Split × Scale* · AAontology · CPP · ShapModel), and *exposes* the resulting features,
-explanations, and objectives to the standard ML / XAI / optimization tools.
-
-.. image:: https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/diagrams/aaanalysis_ecosystem.png
-   :alt: The AAanalysis ecosystem — where AAanalysis fits in the protein-ML stack
-   :target: https://aaanalysis.readthedocs.io/en/latest/_static/aaanalysis_ecosystem.html
-   :width: 100%
-   :align: center
-
 Install
 =======
 **AAanalysis** can be installed from `PyPi <https://pypi.org/project/aaanalysis>`_:
@@ -146,6 +132,24 @@ classes grouped by capability, the prediction levels (residue / domain / protein
    :alt: AAanalysis cheat sheet (page 1 of 3)
    :target: https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_static/cheat_sheet.pdf
    :width: 90%
+   :align: center
+
+The AAanalysis Ecosystem
+========================
+AAanalysis is the interpretable middle layer between bioinformatics I/O and the downstream machine
+learning, explainable AI, and protein-design stack. It *consumes* upstream representations (sequences,
+embeddings, structures) and even competitor descriptor sets, runs them through its interpretable core
+(*Part × Split × Scale* · AAontology · CPP · ShapModel), and *exposes* the resulting features,
+explanations, and objectives to the standard ML / XAI / optimization tools.
+
+Click the diagram to open the interactive
+`standalone ecosystem map <https://aaanalysis.readthedocs.io/en/latest/_static/aaanalysis_ecosystem.html>`_
+(per-method maturity and adoption status).
+
+.. image:: https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/diagrams/aaanalysis_ecosystem.png
+   :alt: The AAanalysis ecosystem — where AAanalysis fits in the protein-ML stack
+   :target: https://aaanalysis.readthedocs.io/en/latest/_static/aaanalysis_ecosystem.html
+   :width: 100%
    :align: center
 
 Citations
