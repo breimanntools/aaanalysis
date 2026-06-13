@@ -201,6 +201,16 @@ Changed
   plus each per-feature value mapping); the first optimal alignment is
   deterministic, so cached and recomputed encoder output are byte-identical
   (~12x off the repeated-alignment overhead).
+  A further "Batch 6" pass replaces three more hotspots in place with
+  exactly-equivalent implementations: ``AAMut.comp_substitution_impact`` now
+  accumulates the per-(from, to) delta columns and builds a single DataFrame
+  instead of concatenating hundreds of one-pair frames (byte-identical table,
+  ~19x); the cluster ``bic_score`` (used by ``AAclust``) sums squared
+  differences directly instead of allocating a per-cluster distance matrix
+  (identical value to ``atol=1e-10``); and
+  ``SequencePreprocessor.get_sliding_aa_window`` inlines a strided window slice
+  rather than re-padding the sequence string on every position (byte-identical
+  window list, ~1.8x).
 - **Pooled, optionally concurrent web fetches**:
   ``StructurePreprocessor.fetch_alphafold`` and
   ``AnnotationPreprocessor.fetch_uniprot`` now route every request through a

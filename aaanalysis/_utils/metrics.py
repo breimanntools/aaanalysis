@@ -4,7 +4,6 @@ This is a script for utility functions for statistical measures.
 import numpy as np
 from scipy.stats import entropy, gaussian_kde
 from collections import OrderedDict
-from scipy.spatial import distance
 from joblib import Parallel, delayed
 import os
 from scipy.stats import rankdata
@@ -85,9 +84,11 @@ def bic_score_(X, labels=None):
     centers, center_labels = _compute_centers(X, labels=labels)
     size_clusters = np.bincount(labels)
 
-    # Compute variance over all clusters
+    # Compute variance over all clusters.
+    # Vectorized squared-diff sum avoids allocating a full (n_cluster x 1) cdist
+    # distance matrix per cluster; numerically identical to cdist(...)**2.
     list_masks = [labels == label for label in center_labels]
-    sum_squared_dist = sum([sum(distance.cdist(X[mask], [center], 'euclidean') ** 2) for mask, center in zip(list_masks, centers)])
+    sum_squared_dist = sum(((X[mask] - center) ** 2).sum() for mask, center in zip(list_masks, centers))
 
     # Compute between-cluster variance
     denominator = max((n_samples - n_classes) * n_features, epsilon)
