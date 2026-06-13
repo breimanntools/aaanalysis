@@ -8,8 +8,98 @@ import traceback
 from sklearn.exceptions import ConvergenceWarning, UndefinedMetricWarning
 import functools
 import re
+import textwrap
 
 # Helper functions
+def _build_deprecation_message(name=None, reason=None, version_removed=None):
+    """Assemble the user-facing DeprecationWarning text for a deprecated symbol."""
+    msg = f"'{name}' is deprecated"
+    if version_removed is not None:
+        msg += f" and will be removed in version {version_removed}"
+    msg += "."
+    if reason is not None:
+        msg += f" {reason}"
+    return msg
+
+
+def _prepend_deprecation_note(doc=None, reason=None, version_removed=None):
+    """Prepend a ``.. admonition:: Deprecated`` block to an existing docstring.
+
+    Sphinx renders it as a highlighted box in the API docs, so the deprecation is
+    visible both at call time (the warning) and in the rendered documentation. An
+    ``admonition`` (rather than the ``.. deprecated::`` directive) is used on
+    purpose: the latter requires a "deprecated since" version argument, whereas we
+    track the *removal* target — and an argument-less ``.. deprecated::`` is a
+    Sphinx build error. The body is always non-empty so the directive is valid.
+    """
+    body = []
+    if reason is not None:
+        body.append(reason)
+    if version_removed is not None:
+        body.append(f"Scheduled for removal in version {version_removed}.")
+    if not body:
+        body.append("This API is deprecated and will be removed in a future release.")
+    # Indent every physical line (a multi-line ``reason`` must stay inside the
+    # directive body, or Sphinx drops the continuation lines). textwrap.indent
+    # leaves blank lines un-prefixed, so no trailing whitespace creeps in.
+    indented = textwrap.indent("\n".join(body), "   ")
+    block = f".. admonition:: Deprecated\n\n{indented}"
+    if not doc:
+        return block + "\n"
+    return f"{block}\n\n{doc}"
+
+
+# Deprecation
+def deprecated(reason=None, version_removed=None):
+    """Mark a public function, method, or class as deprecated (semver policy).
+
+    Emits a :class:`DeprecationWarning` whenever the wrapped callable is invoked
+    (for a class, on instantiation) and prepends a ``.. admonition:: Deprecated``
+    note to its docstring. Per the project's strict-semver policy, a symbol in
+    ``aaanalysis.__all__`` must ship at least one minor release carrying this
+    decorator before it is renamed or removed.
+
+    Parameters
+    ----------
+    reason
+        Human-readable explanation and migration hint (e.g. the replacement
+        symbol). Appended to the warning message and the docstring note.
+    version_removed
+        The version in which the symbol is scheduled to be removed (e.g.
+        ``"1.2.0"``). Surfaced in both the warning and the docstring note.
+
+    Returns
+    -------
+    decorator
+        A decorator that wraps the target callable/class with the deprecation
+        warning while preserving its signature and metadata.
+    """
+    def decorator(obj):
+        msg = _build_deprecation_message(name=obj.__name__, reason=reason,
+                                         version_removed=version_removed)
+        doc = _prepend_deprecation_note(doc=obj.__doc__, reason=reason,
+                                        version_removed=version_removed)
+        if isinstance(obj, type):
+            orig_init = obj.__init__
+
+            @functools.wraps(orig_init)
+            def new_init(self, *args, **kwargs):
+                warnings.warn(msg, DeprecationWarning, stacklevel=2)
+                orig_init(self, *args, **kwargs)
+
+            obj.__init__ = new_init
+            obj.__doc__ = doc
+            return obj
+
+        @functools.wraps(obj)
+        def wrapper(*args, **kwargs):
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
+            return obj(*args, **kwargs)
+
+        wrapper.__doc__ = doc
+        return wrapper
+
+    return decorator
 
 
 # Catch backend errors
