@@ -152,6 +152,7 @@ table { width: 100%; border-collapse: collapse; }
 .dg-row .dg-r { color: var(--ink-soft); }
 .dg-r .shap-up { color: #FF0D57; font-weight: 800; }  /* SHAP positive (ut.COLOR_SHAP_POS) */
 .dg-r .shap-dn { color: #1E88E5; font-weight: 800; }  /* SHAP negative (ut.COLOR_SHAP_NEG) */
+.dg-r .api { color: var(--tok-name); font-weight: normal; }  /* AAanalysis classes/methods — identifier blue, not bold */
 td.k.mono { font-family: "AA Mono", monospace; font-weight: 700; color: var(--accent); white-space: nowrap; }
 .cap-item { padding: 0.4px 0; border-bottom: 1px solid var(--line-soft); }
 .cap-item:last-child { border-bottom: none; }

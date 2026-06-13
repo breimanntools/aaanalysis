@@ -157,6 +157,7 @@ table { width: 100%; border-collapse: collapse; }
 .dg-row .dg-r { color: var(--ink-soft); }
 .dg-r .shap-up { color: #FF0D57; font-weight: 800; }  /* SHAP positive (ut.COLOR_SHAP_POS) */
 .dg-r .shap-dn { color: #1E88E5; font-weight: 800; }  /* SHAP negative (ut.COLOR_SHAP_NEG) */
+.dg-r .api { color: var(--tok-name); font-weight: normal; }  /* AAanalysis classes/methods — identifier blue, not bold */
 td.k.mono { font-family: "AA Mono", monospace; font-weight: 700; color: var(--accent); white-space: nowrap; }
 .cap-item { padding: 0.4px 0; border-bottom: 1px solid var(--line-soft); }
 .cap-item:last-child { border-bottom: none; }
@@ -624,17 +625,17 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
         <div class="dg-row"><span class="dg-l">per domain / region</span> <span class="dg-r">→ DOM_* · TMD model · parts = jmd_n·tmd·jmd_c</span></div>
         <div class="dg-row"><span class="dg-l">whole protein</span> <span class="dg-r">→ SEQ_* · composition · whole chain</span></div>
         <div class="dg-q">What labels do you have?</div>
-        <div class="dg-row"><span class="dg-l">labeled 0 / 1</span> <span class="dg-r">→ CPP → ML model</span></div>
-        <div class="dg-row"><span class="dg-l">positives + unlabeled (1 / 2)</span> <span class="dg-r">→ CPP → dPULearn → ML model</span></div>
-        <div class="dg-row"><span class="dg-l">no negatives at all</span> <span class="dg-r">→ AAWindowSampler → CPP → ML model</span></div>
+        <div class="dg-row"><span class="dg-l">labeled 0 / 1</span> <span class="dg-r">→ <span class="api">CPP</span> → ML model</span></div>
+        <div class="dg-row"><span class="dg-l">positives + unlabeled (1 / 2)</span> <span class="dg-r">→ <span class="api">CPP</span> → <span class="api">dPULearn</span> → ML model</span></div>
+        <div class="dg-row"><span class="dg-l">no negatives at all</span> <span class="dg-r">→ <span class="api">AAWindowSampler</span> → <span class="api">CPP</span> → ML model</span></div>
         <div class="dg-q">What is your learning task?</div>
-        <div class="dg-row"><span class="dg-l">classify</span> <span class="dg-r">→ any classifier (sklearn)</span></div>
-        <div class="dg-row"><span class="dg-l">regress</span> <span class="dg-r">→ get_labels_quantile / tiered</span></div>
-        <div class="dg-row"><span class="dg-l">multi-class</span> <span class="dg-r">→ get_labels_ovr / ovo</span></div>
-        <div class="dg-row"><span class="dg-l">cluster · PCA</span> <span class="dg-r">→ AAclust · dPULearn</span></div>
+        <div class="dg-row"><span class="dg-l">classify</span> <span class="dg-r">→ <span class="api">CPP</span> → classifier (sklearn)</span></div>
+        <div class="dg-row"><span class="dg-l">regress</span> <span class="dg-r">→ <span class="api">get_labels_quantile</span> / <span class="api">tiered</span> → <span class="api">CPP</span> → regression model</span></div>
+        <div class="dg-row"><span class="dg-l">multi-class</span> <span class="dg-r">→ <span class="api">get_labels_ovr</span> / <span class="api">ovo</span> → <span class="api">CPP</span> → classifiers</span></div>
+        <div class="dg-row"><span class="dg-l">cluster</span> <span class="dg-r">→ <span class="api">AAclust</span></span></div>
         <div class="dg-q">Which explainability do you need?</div>
-        <div class="dg-row"><span class="dg-l">group level</span> <span class="dg-r">→ CPP → TreeModel → CPPPlot → feature importance</span></div>
-        <div class="dg-row"><span class="dg-l">per protein</span> <span class="dg-r">→ CPP → ShapModel <span class="protag">pro</span> → CPPPlot → feature impact <span class="shap-up">↑</span><span class="shap-dn">↓</span></span></div>
+        <div class="dg-row"><span class="dg-l">group level</span> <span class="dg-r">→ <span class="api">CPP</span> → <span class="api">TreeModel</span> → <span class="api">CPPPlot</span> → feature importance</span></div>
+        <div class="dg-row"><span class="dg-l">per protein</span> <span class="dg-r">→ <span class="api">CPP</span> → <span class="api">ShapModel</span> <span class="protag">pro</span> → <span class="api">CPPPlot</span> → feature impact <span class="shap-up">↑</span><span class="shap-dn">↓</span></span></div>
       </div>
     </div>
 
@@ -649,7 +650,7 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
     </div>
 
     <div class="sec">
-      <div class="sec-h"><span>Data Objects</span><span class="hint">shapes &amp; columns</span></div>
+      <div class="sec-h"><span>Key Data Objects</span><span class="hint">shapes &amp; columns</span></div>
       <div class="sec-body"><table class="kv"><tr><td class="k mono">df_seq</td><td class="d">entry · sequence · label · tmd_start · tmd_stop</td></tr><tr><td class="k mono">df_parts</td><td class="d">one column per part: tmd · jmd_n · jmd_c · …</td></tr><tr><td class="k mono">df_feat</td><td class="d">feature · category · subcategory · scale_name · abs_auc · mean_dif · p_val · positions</td></tr><tr><td class="k mono">X</td><td class="d">feature matrix (samples × features) from sf.feature_matrix</td></tr><tr><td class="k mono">dict_num</td><td class="d">{entry: ndarray (L×D)} — numerical per-residue values (v1.1)</td></tr></table></div>
     </div>
 
