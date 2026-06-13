@@ -36,8 +36,8 @@ determines how you set CPP up are two axes:
 - **Reference construction** — how the contrasting set is built. Labeled
   A-vs-B groups, non-site / non-cleaved windows, an unlabeled pool, or a
   composition-matched shuffled background. CPP always reads out a
-  :term:`test group` against a :term:`reference group`, and a feature's
-  ``mean_dif`` is *test − reference*.
+  :term:`test group` against a :term:`reference group`, so a feature's effect
+  size (``mean_dif``) is read as *test − reference*.
 
 The :term:`prediction level` is the convenient label; these two axes are the
 substance. The table below leads with them.
@@ -104,13 +104,13 @@ The prediction-task table
      - A sequence profiled against a target CPP profile
      - A target / reference profile the sequence is moved toward (``ΔCPP``)
      - ``AA_`` / ``DOM_`` / ``SEQ_``
-     - Compositional and positional
+     - Compositional or positional
      - ``AAMut``, ``SeqMut``
    * - **Relational / interaction**
 
        (scope boundary — not a level)
      - Interface **segments** only (a part-set on each partner)
-     - Within-AAanalysis only for segments; pairwise contacts hand off
+     - In scope for interface segments only; pairwise contacts hand off
      - Interface segments via ``DOM_`` / ``AA_``
      - Positional (segments)
      - Out of scope: structure / PLM tooling
@@ -118,9 +118,9 @@ The prediction-task table
 Reading the table
 -----------------
 
-**The three levels.** :term:`Residue level <residue level>`, :term:`domain level`,
-and :term:`protein level` map one-to-one onto the ``AA_`` / ``DOM_`` / ``SEQ_``
-dataset prefixes. "Protein level" is the user-facing name of the ``SEQ_``
+**The three levels.** The :term:`residue <residue level>`,
+:term:`domain <domain level>`, and :term:`protein <protein level>` levels map
+one-to-one onto the ``AA_`` / ``DOM_`` / ``SEQ_`` dataset prefixes. "Protein level" is the user-facing name of the ``SEQ_``
 (sequence) prefix; *sequence* stays reserved for the amino-acid string itself.
 The residue level carries **two sub-modes** that differ only by window parity:
 *single-residue* (odd window, a site on a residue) and *between-residues* (even
@@ -145,7 +145,8 @@ CPP strategy in one line
 ------------------------
 
 The **CPP strategy** column is :term:`compositional vs positional`, and it is not
-a parameter — it *emerges* from ``split_kws``. A single whole-part average
+a parameter — it *emerges* from ``split_kws`` (the CPP argument that controls how
+each part is read). A single whole-part average
 (``Segment(1,1)``) is **compositional** (composition-like, position-agnostic);
 sub-segments, ``Pattern``, or ``PeriodicPattern`` are **positional**. The strategy
 tracks the level: compositional suits the protein level, positional suits the
