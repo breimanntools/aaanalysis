@@ -632,8 +632,8 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
         <div class="dg-row"><span class="dg-l">multi-class</span> <span class="dg-r">→ get_labels_ovr / ovo</span></div>
         <div class="dg-row"><span class="dg-l">cluster · PCA</span> <span class="dg-r">→ AAclust · dPULearn</span></div>
         <div class="dg-q">Which explainability do you need?</div>
-        <div class="dg-row"><span class="dg-l">feature importance (group)</span> <span class="dg-r">→ TreeModel → CPPPlot</span></div>
-        <div class="dg-row"><span class="dg-l">feature impact (per protein)</span> <span class="dg-r">→ ShapModel <span class="protag">pro</span> → CPPPlot <span class="shap-up">↑</span><span class="shap-dn">↓</span></span></div>
+        <div class="dg-row"><span class="dg-l">group level</span> <span class="dg-r">→ CPP → TreeModel → CPPPlot → feature importance</span></div>
+        <div class="dg-row"><span class="dg-l">per protein</span> <span class="dg-r">→ CPP → ShapModel <span class="protag">pro</span> → CPPPlot → feature impact <span class="shap-up">↑</span><span class="shap-dn">↓</span></span></div>
       </div>
     </div>
 

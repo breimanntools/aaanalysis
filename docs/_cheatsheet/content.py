@@ -386,9 +386,9 @@ DECISION_GUIDE = [
         ("cluster · PCA", "AAclust · dPULearn"),
     ]),
     ("Which explainability do you need?", [
-        ("feature importance (group)", "TreeModel → CPPPlot"),
-        ("feature impact (per protein)",
-         'ShapModel [pro] → CPPPlot '
+        ("group level", "CPP → TreeModel → CPPPlot → feature importance"),
+        ("per protein",
+         'CPP → ShapModel [pro] → CPPPlot → feature impact '
          '<span class="shap-up">↑</span><span class="shap-dn">↓</span>'),
     ]),
 ]
