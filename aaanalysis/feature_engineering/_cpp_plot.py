@@ -8,6 +8,7 @@ import warnings
 
 import aaanalysis.utils as ut
 
+from ._sequence_feature import SequenceFeature
 from ._backend.check_feature import (check_split_kws,
                                      check_parts_len,
                                      check_match_features_seq_parts,
@@ -165,6 +166,51 @@ def check_imp_tuples(name="imp_th", imp_tuples=None):
         raise ValueError(f"'{name}' ({imp_tuples}) should contain 3 numbers in ascending order")
     if th1 <= 0:
         raise ValueError(f"Minium of '{name}' ({imp_tuples[0]}) should be > 0")
+
+
+# Resolve per-sample sequence parts and feature-impact column (df_seq / entry / sample convenience)
+def check_match_sample_seq(sample=None, tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None, df_seq=None, name="sample"):
+    """Check the df_seq/sample convenience input against explicitly given sequence parts."""
+    explicit_seq_given = any(x is not None for x in [tmd_seq, jmd_n_seq, jmd_c_seq])
+    if sample is not None:
+        if explicit_seq_given:
+            raise ValueError(f"'{name}' ({sample}) and explicit sequence parts "
+                             f"('tmd_seq', 'jmd_n_seq', 'jmd_c_seq') should not be provided together.")
+        if df_seq is None:
+            raise ValueError(f"'df_seq' should be given (not None) when '{name}' ({sample}) is provided.")
+    elif df_seq is not None:
+        raise ValueError(f"'{name}' should be given (not None) when 'df_seq' is provided.")
+
+
+def get_args_seq_for_sample(df_seq=None, sample=None, jmd_n_len=10, jmd_c_len=10):
+    """Derive the per-part sequence arguments for one protein via SequenceFeature (frontend reuse)."""
+    sf = SequenceFeature(verbose=False)
+    args_seq = sf.get_args_seq(df_seq=df_seq, sample=sample, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+    return args_seq
+
+
+def get_sample_name(df_seq=None, sample=None):
+    """Resolve the entry name for a sample given as an entry name (str) or a row position (int)."""
+    if isinstance(sample, str):
+        return sample
+    entries = df_seq[ut.COL_ENTRY].to_list()
+    return entries[int(sample)]
+
+
+def resolve_col_imp_for_sample(df_feat=None, name=None, col_imp=None):
+    """Resolve the 'feat_impact_<name>' column for a sample-level SHAP plot.
+
+    If ``col_imp`` is already explicitly given it is returned unchanged; otherwise the
+    ``feat_impact_<name>`` column is selected from ``df_feat``.
+    """
+    if col_imp is not None:
+        return col_imp
+    col_imp = f"{ut.COL_FEAT_IMPACT}_{name}"
+    if col_imp not in df_feat.columns:
+        cols_impact = [x for x in df_feat.columns if str(x).startswith(f"{ut.COL_FEAT_IMPACT}_")]
+        raise ValueError(f"'col_imp' ('{col_imp}') derived for sample '{name}' is not a column in 'df_feat'. "
+                         f"Available feature-impact columns are: {cols_impact}")
+    return col_imp
 
 
 # Check update_seq_size
@@ -722,6 +768,8 @@ class CPPPlot:
                 # Appearance of Parts (TMD-JMD)
                 start: int = 1,
                 tmd_len: int = 20,
+                df_seq: Optional[pd.DataFrame] = None,
+                entry: Optional[str] = None,
                 tmd_seq: Optional[str] = None,
                 jmd_n_seq: Optional[str] = None,
                 jmd_c_seq: Optional[str] = None,
@@ -794,6 +842,16 @@ class CPPPlot:
         tmd_len : int, default=20
             Length of target middle domain (TMD) to be depicted (>0). Must match with all feature
             from ``df_feat``.
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
+            DataFrame containing an ``entry`` column with unique protein identifiers and sequence information,
+            used together with ``entry`` to derive the per-sample TMD-JMD sequence parts
+            (``tmd_seq``/``jmd_n_seq``/``jmd_c_seq``) internally via :meth:`SequenceFeature.get_df_parts`,
+            honoring the instance ``jmd_n_len``/``jmd_c_len``. Mutually exclusive with explicitly passing the
+            ``*_seq`` parts.
+        entry : str, optional
+            Protein identifier (accession) from the ``entry`` column of ``df_seq`` for which to derive and
+            display the TMD-JMD sequence parts. Requires ``df_seq``; must not be combined with explicit
+            ``tmd_seq``/``jmd_n_seq``/``jmd_c_seq``.
         tmd_seq : str, optional
             TMD sequence for specific sample.
         jmd_n_seq : str, optional
@@ -885,6 +943,14 @@ class CPPPlot:
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
         jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
         jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
+        # Convenience: derive per-sample sequence parts from df_seq/entry via SequenceFeature (frontend reuse)
+        check_match_sample_seq(sample=entry, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, df_seq=df_seq,
+                               name="entry")
+        if entry is not None:
+            args_seq_sample = get_args_seq_for_sample(df_seq=df_seq, sample=entry,
+                                                      jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+            tmd_seq, jmd_n_seq, jmd_c_seq = (args_seq_sample["tmd_seq"], args_seq_sample["jmd_n_seq"],
+                                             args_seq_sample["jmd_c_seq"])
         args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                              jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
                                              check_jmd_seq_len_consistent=True)
@@ -1212,6 +1278,8 @@ class CPPPlot:
                     # Appearance of Parts (TMD-JMD)
                     start: int = 1,
                     tmd_len: int = 20,
+                    df_seq: Optional[pd.DataFrame] = None,
+                    entry: Optional[str] = None,
                     tmd_seq: Optional[str] = None,
                     jmd_n_seq: Optional[str] = None,
                     jmd_c_seq: Optional[str] = None,
@@ -1317,6 +1385,16 @@ class CPPPlot:
         tmd_len : int, default=20
             Length of target middle domain (TMD) to be depicted (>0). Must match with all feature
             from ``df_feat``.
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
+            DataFrame containing an ``entry`` column with unique protein identifiers and sequence information,
+            used together with ``entry`` to derive the per-sample TMD-JMD sequence parts
+            (``tmd_seq``/``jmd_n_seq``/``jmd_c_seq``) internally via :meth:`SequenceFeature.get_df_parts`,
+            honoring the instance ``jmd_n_len``/``jmd_c_len``. Mutually exclusive with explicitly passing the
+            ``*_seq`` parts.
+        entry : str, optional
+            Protein identifier (accession) from the ``entry`` column of ``df_seq`` for which to derive and
+            display the TMD-JMD sequence parts. Requires ``df_seq``; must not be combined with explicit
+            ``tmd_seq``/``jmd_n_seq``/``jmd_c_seq``.
         tmd_seq : str, optional
             TMD sequence for specific sample.
         jmd_n_seq : str, optional
@@ -1440,6 +1518,14 @@ class CPPPlot:
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
         jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
         jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
+        # Convenience: derive per-sample sequence parts from df_seq/entry via SequenceFeature (frontend reuse)
+        check_match_sample_seq(sample=entry, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, df_seq=df_seq,
+                               name="entry")
+        if entry is not None:
+            args_seq_sample = get_args_seq_for_sample(df_seq=df_seq, sample=entry,
+                                                      jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+            tmd_seq, jmd_n_seq, jmd_c_seq = (args_seq_sample["tmd_seq"], args_seq_sample["jmd_n_seq"],
+                                             args_seq_sample["jmd_c_seq"])
         args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                              jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
                                              check_jmd_seq_len_consistent=True)
