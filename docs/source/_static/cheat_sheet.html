@@ -415,7 +415,7 @@ cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</
     </div>
 
 <div class="sec">
-  <div class="sec-h"><span>Data &amp; Preparation</span><span class="hint">load · clean</span></div>
+  <div class="sec-h"><span>Data &amp; Preparation</span><span class="hint">datasets · scales · FASTA</span></div>
   <div class="sec-body">
     <div class="cap-item"><span class="cw">Load benchmark sequences</span><span class="cs">load_dataset(name) → <span class="out">df_seq</span></span></div>
     <div class="cap-item"><span class="cw">Load AAontology scales</span><span class="cs">load_scales() → <span class="out">df_scales</span></span></div>
@@ -424,7 +424,7 @@ cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</
     <div class="cap-item"><span class="cw">Cluster redundant homologs</span><span class="cs">filter_seq(df_seq) → <span class="out">df_clust  <span class="protag">pro</span></span></span></div>
   </div>
 </div><div class="sec">
-  <div class="sec-h"><span>Sequence Analysis</span><span class="hint">logos · motifs</span></div>
+  <div class="sec-h"><span>Sequence Analysis</span><span class="hint">logos · windows · motifs</span></div>
   <div class="sec-body">
     <div class="cap-item"><span class="cw">Position-specific logo</span><span class="cs">AAlogo().get_df_logo(df_parts) → <span class="out">df_logo</span></span></div>
     <div class="cap-item"><span class="cw">Sample reference windows</span><span class="cs">AAWindowSampler().sample_*(df_seq)</span></div>
@@ -454,14 +454,14 @@ cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</
     <div class="cap-item"><span class="cw">Numerical CPP <span class="rowtag">v1.1</span></span><span class="cs">CPP(df_parts).run_num(dict_num_parts, labels) → <span class="out">df_feat</span></span></div>
   </div>
 </div><div class="sec">
-  <div class="sec-h"><span>Modeling &amp; Explainability</span><span class="hint"></span></div>
+  <div class="sec-h"><span>Modeling &amp; Explainability</span><span class="hint">PU · classify · SHAP</span></div>
   <div class="sec-body">
     <div class="cap-item"><span class="cw">Train with positives + unlabeled data</span><span class="cs">dPULearn().fit(X, labels)  [Wrapper]</span></div>
     <div class="cap-item"><span class="cw">Train + RFE + MC importance</span><span class="cs">TreeModel().fit(X, labels)  [Wrapper]</span></div>
     <div class="cap-item"><span class="cw">Per-feature / sample SHAP impact</span><span class="cs">ShapModel().fit(X, labels)  <span class="protag">pro</span></span></div>
   </div>
 </div><div class="sec">
-  <div class="sec-h"><span>Metrics &amp; Plotting</span><span class="hint">utilities</span></div>
+  <div class="sec-h"><span>Metrics &amp; Plotting</span><span class="hint">metrics · plots</span></div>
   <div class="sec-body">
     <div class="cap-item"><span class="cw">Adjusted AUC (class imbalance)</span><span class="cs">comp_auc_adjusted(X, labels)</span></div>
     <div class="cap-item"><span class="cw">BIC score · KL divergence</span><span class="cs">comp_bic_score(X, labels) · comp_kld</span></div>
@@ -469,7 +469,7 @@ cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</
     <div class="cap-item"><span class="cw">Plot style, fonts &amp; standalone legend</span><span class="cs">plot_settings(font_scale) · plot_legend(ax)</span></div>
   </div>
 </div><div class="sec">
-  <div class="sec-h"><span>Protein Design <span class="uc">(to be extended)</span></span><span class="hint"></span></div>
+  <div class="sec-h"><span>Protein Design <span class="uc">(to be extended)</span></span><span class="hint">mutations · design</span></div>
   <div class="sec-body">
     <div class="cap-item"><span class="cw">In-silico point mutations <span class="rowtag">v1.1</span></span><span class="cs">AAMut · AAMutPlot</span></div>
     <div class="cap-item"><span class="cw">Sequence-design libraries <span class="rowtag">v1.1</span></span><span class="cs">SeqMut · SeqMutPlot</span></div>
