@@ -33,6 +33,7 @@ import requests
 
 import aaanalysis.utils as ut
 from .feature_registry import REGISTRY
+from .._fetch import http_get_, run_in_order_
 
 # I Helper Functions
 UNIPROT_JSON_URL = "https://rest.uniprot.org/uniprotkb/{acc}.json"
@@ -78,7 +79,7 @@ def fetch_uniprot_json(accession: str, timeout: float = 30.0) -> dict:
     """
     url = UNIPROT_JSON_URL.format(acc=accession)
     try:
-        resp = requests.get(url, timeout=timeout)
+        resp = http_get_(url, timeout=timeout)
     except requests.RequestException as e:
         raise RuntimeError(f"UniProt request for '{accession}' failed: {e}") from e
     if resp.status_code != 200:
@@ -251,26 +252,48 @@ def map_record_to_rows(
     return rows
 
 
+def _fetch_uniprot_one(
+    entry: str,
+    allowed_features: Optional[List[str]],
+    evidence_codes: Optional[List[str]],
+    timeout: float,
+) -> List[list]:
+    """Fetch + map one entry to its ``df_annot`` rows (network work only).
+
+    No logging, so it is safe to run on a worker thread; the caller emits the
+    verbose prints from the main thread in input order.
+    """
+    data = fetch_uniprot_json(entry, timeout=timeout)
+    return map_record_to_rows(entry, data, allowed_features, evidence_codes)
+
+
 def fetch_and_map(
     entries: List[str],
     allowed_features: Optional[List[str]],
     evidence_codes: Optional[List[str]],
     timeout: float = 30.0,
     verbose: bool = True,
+    max_workers: Optional[int] = None,
 ) -> pd.DataFrame:
     """Fetch every entry and concatenate the mapped rows into a ``df_annot``.
+
+    With ``max_workers`` greater than 1 the per-entry fetches run on a thread
+    pool; rows are concatenated in input order, so the ``df_annot`` is identical
+    to the sequential path regardless of worker count. The verbose prints are
+    emitted from the main thread.
 
     Raises
     ------
     RuntimeError
         Propagated from :func:`fetch_uniprot_json` on network failure.
     """
+    results = run_in_order_(
+        lambda entry: _fetch_uniprot_one(entry, allowed_features,
+                                         evidence_codes, timeout),
+        entries, max_workers=max_workers)
     all_rows: List[list] = []
-    for entry in entries:
+    for entry, rows in zip(entries, results):
         if verbose:
             ut.print_out(f"Fetching UniProt features for '{entry}'")
-        data = fetch_uniprot_json(entry, timeout=timeout)
-        all_rows.extend(
-            map_record_to_rows(entry, data, allowed_features, evidence_codes)
-        )
+        all_rows.extend(rows)
     return pd.DataFrame(all_rows, columns=ut.COLS_ANNOT)

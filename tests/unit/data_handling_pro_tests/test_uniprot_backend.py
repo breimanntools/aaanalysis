@@ -6,7 +6,8 @@ _get_sequence and the evidence/classification helpers).
 The network endpoint is never hit by the suite; the existing frontend test calls
 ``map_record_to_rows`` on hand-built JSON dicts. Here we additionally cover the
 ``requests``-backed ``fetch_uniprot_json`` / ``fetch_and_map`` paths by mocking
-``requests.get`` (no network), plus the feature-classification and skip branches.
+the backend's ``http_get_`` transport seam (no network), plus the
+feature-classification and skip branches.
 """
 from unittest.mock import patch, MagicMock
 
@@ -49,24 +50,24 @@ class TestFetchUniprotJson:
     """fetch_uniprot_json: success, non-200, transport error."""
 
     def test_valid_returns_json(self):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    return_value=_resp(200, {"primaryAccession": "P1"})):
             out = up.fetch_uniprot_json("P1")
         assert out["primaryAccession"] == "P1"
 
     def test_valid_passes_timeout(self):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    return_value=_resp(200, {})) as mg:
             up.fetch_uniprot_json("P1", timeout=12.0)
         assert mg.call_args.kwargs["timeout"] == 12.0
 
     def test_invalid_non_200(self):
-        with patch(f"{MODULE}.requests.get", return_value=_resp(404, {})):
+        with patch(f"{MODULE}.http_get_", return_value=_resp(404, {})):
             with pytest.raises(RuntimeError, match="HTTP 404"):
                 up.fetch_uniprot_json("MISSING")
 
     def test_invalid_transport_error(self):
-        with patch(f"{MODULE}.requests.get",
+        with patch(f"{MODULE}.http_get_",
                    side_effect=requests.RequestException("boom")):
             with pytest.raises(RuntimeError, match="failed"):
                 up.fetch_uniprot_json("P1")
