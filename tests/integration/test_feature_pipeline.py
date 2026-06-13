@@ -86,14 +86,18 @@ class TestSequenceFeatureToCPP:
         # abs_auc is a discriminative magnitude in [0, 0.5].
         assert df_feat["abs_auc"].between(0, 0.5).all()
 
-    def test_same_seed_same_df_feat(self, pipeline):
-        # Reproducibility property across the parts->CPP seam.
-        df_feat_a = _pipeline.build_df_feat(df_parts=pipeline["df_parts"],
-                                            labels=pipeline["labels"],
-                                            df_scales=pipeline["df_scales"])
-        df_feat_b = _pipeline.build_df_feat(df_parts=pipeline["df_parts"],
-                                            labels=pipeline["labels"],
-                                            df_scales=pipeline["df_scales"])
+    def test_same_seed_same_df_feat(self):
+        # Reproducibility across the parts->CPP seam, rebuilt independently each run
+        # (fresh df_parts, not the shared fixture) so this is a true reproduction,
+        # not merely CPP determinism on one object.
+        sf = aa.SequenceFeature()
+        df_seq = _pipeline.load_dom_gsec()
+        labels = df_seq["label"].to_list()
+        df_scales = _pipeline.small_scales()
+        df_feat_a = _pipeline.build_df_feat(df_parts=sf.get_df_parts(df_seq=df_seq),
+                                            labels=labels, df_scales=df_scales)
+        df_feat_b = _pipeline.build_df_feat(df_parts=sf.get_df_parts(df_seq=df_seq),
+                                            labels=labels, df_scales=df_scales)
         assert df_feat_a["feature"].to_list() == df_feat_b["feature"].to_list()
 
     def test_row_permutation_same_feature_set(self, pipeline):
@@ -199,9 +203,13 @@ class TestCPPGridSweep:
         # CPPGrid.eval scores each swept config and ranks them, index-aligned to the runs.
         cppg = aa.CPPGrid(df_seq=pipeline["df_seq"], labels=pipeline["labels"],
                           verbose=False, random_state=0, n_jobs=1)
-        cppg.run(params_cpp=dict(n_filter=[8, 12]), params_scales=_pipeline.small_scales())
+        df_scales_a = _pipeline.small_scales()
+        df_scales_b = df_scales_a.iloc[:, :10]
+        # A 4-config sweep gives the ranking enough points to be a real check.
+        cppg.run(params_cpp=dict(n_filter=[8, 12]), params_scales=[df_scales_a, df_scales_b])
         df_eval = cppg.eval()
         assert {"avg_ABS_AUC", "n_features"}.issubset(df_eval.columns)
+        assert len(df_eval) == 4
         assert df_eval["avg_ABS_AUC"].is_monotonic_decreasing  # best-first
         # The product-order index still maps each row back to its feature table.
         top_idx = df_eval.index[0]

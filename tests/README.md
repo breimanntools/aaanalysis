@@ -13,11 +13,46 @@ method, `Test<Method>` / `Test<Method>Complex` classes, negative tests with
 `pytest.raises(..., match=...)`, property tests with `@given` + `@settings(deadline=None)`,
 and golden-value checks for the scientific core.
 
+## Test tiers (unit · integration · e2e)
+
+Three tiers with **distinct jobs** (full taxonomy + rationale in
+`.claude/rules/testing.md` and **ADR-0031**). The rule that keeps them from
+overlapping: *don't re-test at a higher tier what a lower tier already covers.*
+
+| Tier | Directory | Job | Negatives are… | Hypothesis is… |
+|---|---|---|---|---|
+| **unit** | `tests/unit/` | one public method, in isolation | per-parameter invalid-input sweep | per-argument strategies |
+| **integration** | `tests/integration/` | a **seam** between two/three real classes (no mocks) | **composition failures only** | pipeline invariants / metamorphic |
+| **e2e** | `tests/e2e/` | a full **workflow** mirroring a `protocols/*.ipynb` | degenerate dataset → clear error | reproducibility (seed→same artifact) |
+
+- **Integration** (`test_feature_pipeline`, `test_prediction_pipeline`,
+  `test_seq_pipeline`, `test_data_pipeline`) asserts that one component's output is a
+  valid input to the next — e.g. `CPP.run` → `feature_matrix` → `TreeModel.fit`,
+  `dPULearn` carve → `TreeModel`, `AAWindowSampler` → `AAlogo`, `CPPGrid` sweep + `eval`,
+  fasta round-trip, encoder → consumer. Its negatives are failures that only emerge *when
+  components meet* (shape/label-set mismatch, PU dataset with no unlabeled rows, a sampler
+  that returns no windows) — never a re-run of unit-level input validation.
+- **e2e** (`test_protocols.py`) runs one tiny, seeded, assertion-bearing analogue of each
+  `protocol1`–`10` notebook (the notebooks themselves assert nothing). Core-only: where a
+  protocol uses a `pro` feature it substitutes the core path.
+- Both tiers assert **structural/range** artifacts (shapes, schema columns, metrics in
+  `[0, 1]`, finiteness, monotonic ranking) and **never frozen exact values** — exact-value
+  freezing is the CPP regression anchor's job (ADR-0015). Their shared seeded spine lives
+  in `tests/_pipeline.py`; integration exposes it as session fixtures in
+  `tests/integration/conftest.py`, and e2e imports the builders directly. Count is bounded
+  by *seams × workflows*, not by unit-test volume.
+
+`tests/integration/test_online_fetches.py` is a separate, `network`-marked live-endpoint
+tier (deselected by default), not part of the cross-component integration tier.
+
 ## Running
 
 ```bash
 # full suite (parallel)
 pytest tests -m "not regression" -n auto -c tests/pytest.ini
+
+# just the cross-component + workflow tiers
+pytest tests/integration tests/e2e -m "not regression" -n auto -c tests/pytest.ini
 
 # branch + line coverage gate (matches CI: line >=88, branch >=80)
 COVERAGE_CORE=sysmon pytest tests -m "not regression" \
@@ -25,8 +60,14 @@ COVERAGE_CORE=sysmon pytest tests -m "not regression" \
 python .github/scripts/check_branch_coverage.py
 ```
 
-Always pass `-c tests/pytest.ini` (it registers the `regression`/`slow` markers and the
-`filterwarnings` for the deliberate CPP advisories). Coverage config is `/.coveragerc`.
+Always pass `-c tests/pytest.ini` (it registers the `regression`/`slow`/`integration`/`e2e`
+markers and the `filterwarnings` for the deliberate CPP advisories). Coverage config is
+`/.coveragerc`.
+
+**In CI** the `integration`/`e2e` tiers run in their own **`Integration & E2E Tests`**
+workflow (`.github/workflows/integration_e2e.yml`) and are excluded from the `Unit Tests`
+matrix (`main.yml` runs `-m "not regression and not integration and not e2e"`) so they
+appear as their own check and never double-run.
 
 ## Coverage policy
 

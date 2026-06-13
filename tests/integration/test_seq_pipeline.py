@@ -41,12 +41,17 @@ class TestSamplerToLogo:
     @settings(max_examples=4, deadline=None)
     @given(window_size=some.integers(min_value=5, max_value=12))
     def test_logo_rows_equal_window_length(self, window_size):
-        # Property: the logo position axis always matches the sampled window length.
+        # Property across the seam: the sampler emits window_size-length windows
+        # AND the logo's position axis reflects that actual length.
         df_seq = aa.load_dataset(name="DOM_GSEC", n=10)
         df_win = aa.AAWindowSampler(random_state=0).sample_synthetic(
             df_seq=df_seq, n=6, window_size=window_size, generator="global_freq", seed=0)
+        # The sampler's real contract — every window is exactly window_size residues.
+        assert (df_win["window"].str.len() == window_size).all()
         df_parts = pd.DataFrame({"tmd": df_win["window"].to_list()})
-        df_logo = aa.AAlogo().get_df_logo(df_parts=df_parts, tmd_len=window_size)
+        # tmd_len omitted: the logo INFERS length from the windows, so the row count
+        # reflects the actual sampled length rather than a forced tmd_len.
+        df_logo = aa.AAlogo().get_df_logo(df_parts=df_parts)
         assert df_logo.shape[0] == window_size
 
     def test_absent_label_empties_logo(self):
