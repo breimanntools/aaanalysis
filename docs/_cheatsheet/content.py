@@ -253,7 +253,9 @@ FLAGSHIP_RECIPES = [
              "cpp_plot.ranking(df_feat=df_feat, n_top=15, rank=True,\n"
              "    name_test='substrates', name_ref='non-subs.')\n"
              "plt.tight_layout(); plt.show()"},
-    {"cls": "CPP — feature", "tag": "top feature · REF vs TEST", "img": "feature",
+    {"cls": "CPP — feature",
+     "tag": 'top feature · <span class="hint-ref">ref</span> vs <span class="hint-test">test</span>',
+     "img": "feature",
      "caption": "CPPPlot.feature · top feature, REF vs TEST",
      "code": "# default parts + a redundancy-reduced set of 100 scales\n"
              "df_parts = sf.get_df_parts(df_seq=df_seq)\n"
@@ -295,7 +297,7 @@ FLAGSHIP_RECIPES = [
              "cpp_plot.profile(df_feat=df_feat, **ka)\n"
              "cpp_plot.feature_map(df_feat=df_feat, name_test='APP', **ka)\n"
              "plt.tight_layout(); plt.show()"},
-    {"cls": "AAclust — clusters", "tag": "scale reduction · Wrapper", "img": "centers",
+    {"cls": "AAclust — clusters", "tag": "scale reduction · clusters", "img": "centers",
      "caption": "AAclustPlot.centers · cluster scale profiles",
      "code": "aac = aa.AAclust()\n"
              "aac.select_scales(df_scales, n_clusters=10)\n"
@@ -304,7 +306,7 @@ FLAGSHIP_RECIPES = [
              "aac_plot = aa.AAclustPlot()\n"
              "aac_plot.centers(np.array(df_scales).T, labels=aac.labels_)\n"
              "plt.tight_layout(); plt.show()"},
-    {"cls": "dPULearn — PCA", "tag": "reliable negatives · Wrapper", "img": "pca",
+    {"cls": "dPULearn — PCA", "tag": "reliable negatives · PU learning", "img": "pca",
      "caption": "dPULearnPlot.pca · reliable negatives",
      "code": "# DOM_GSEC ships 1/0 — encode as PU labels: 1 = positive, 2 = unlabeled\n"
              "labels_pu = [1 if x == 1 else 2 for x in labels]\n"

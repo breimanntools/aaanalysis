@@ -407,18 +407,18 @@ def _encode_contact_count(structure, sequence: str, radius_A: float,
     n = len(coords)
     counts = np.zeros(n, dtype=np.float64)
     has_finite = ~np.isnan(coords).any(axis=1)
+    seq_idx = np.arange(n)
     for i in range(n):
         if not has_finite[i]:
             counts[i] = np.nan
             continue
-        ci = coords[i]
-        for j in range(n):
-            if j == i or abs(j - i) < min_seq_sep:
-                continue
-            if not has_finite[j]:
-                continue
-            if float(np.linalg.norm(ci - coords[j])) <= radius_A:
-                counts[i] += 1
+        # Distance to every other CA, same formula as the scalar np.linalg.norm (so counts
+        # are identical), vectorized over j. NaN distances (missing CA) fail ``<= radius_A``
+        # and are also excluded by ``has_finite``; ``seq_idx != i`` mirrors the ``j == i`` skip.
+        d = np.sqrt(((coords[i] - coords) ** 2).sum(axis=1))
+        neighbor = ((np.abs(seq_idx - i) >= min_seq_sep) & (seq_idx != i)
+                    & has_finite & (d <= radius_A))
+        counts[i] = float(neighbor.sum())
     aligned = _align_atom_values_to_target(sequence, atom_seq,
                                             counts.tolist())
     raw = np.asarray(aligned, dtype=np.float64).reshape(-1, 1)

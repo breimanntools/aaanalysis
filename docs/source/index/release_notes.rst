@@ -193,7 +193,9 @@ Changed
   candidate-center band filtering (~40x faster at scale) and per-window PWM
   scoring in ``sample_motif_matched`` (~12x), again with identical results.
   ``SequencePreprocessor.encode_one_hot`` is also vectorized (~3x), with a
-  byte-identical feature matrix.
+  byte-identical feature matrix. And ``StructurePreprocessor.encode_pdb`` CA-CA
+  contact counts (``contact_count_8A`` / ``contact_count_12A``) use a vectorized
+  per-residue distance computation (~50x at scale) with byte-identical counts.
 - **dPULearn.fit**: Flexible, package-consistent label handling via ``label_pos`` /
   ``label_unl`` / ``label_neg`` markers. Pass standard ``{0, 1}`` labels directly with
   ``label_unl=0`` (``0`` = unlabeled, ``1`` = positive), or any positive / unlabeled /

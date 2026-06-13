@@ -65,7 +65,8 @@ and a suite of site-localization metrics and plotting helpers.
   (parallelized, honors `options['n_jobs']`). Plus `AAWindowSampler`
   candidate-center band filtering (~40x) and `sample_motif_matched` PWM scoring
   (~12x), and `SequencePreprocessor.encode_one_hot` (~3x), vectorized with
-  identical output.
+  identical output. Plus `StructurePreprocessor.encode_pdb` CA-CA contact counts
+  (`contact_count_8A`/`12A`) vectorized (~50x, identical counts).
 - `dPULearn.fit` gains flexible, package-consistent label handling via
   `label_pos` / `label_unl` / `label_neg` markers: pass standard `{0, 1}` labels
   directly with `label_unl=0`, or an arbitrary positive/unlabeled/negative
