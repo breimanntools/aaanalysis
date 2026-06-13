@@ -48,7 +48,8 @@ class TestFeaturesToTreeModel:
         tm = aa.TreeModel(verbose=False, random_state=0).fit(
             pipeline["X"], labels=pipeline["labels"], use_rfe=False, n_cv=2, n_rounds=2)
         assert len(tm.feat_importance) == np.asarray(pipeline["X"]).shape[1]
-        assert tm.list_models_ is not None
+        assert len(tm.is_selected_) == 2          # one selection mask per round
+        assert len(tm.list_models_) == 2          # one model bundle per round
 
     def test_eval_metrics_in_range(self, pipeline):
         tm = aa.TreeModel(verbose=False, random_state=0).fit(
@@ -67,11 +68,12 @@ class TestFeaturesToTreeModel:
         tm_b = aa.TreeModel(verbose=False, random_state=0).fit(
             pipeline["X"], labels=pipeline["labels"], **kws)
         assert np.allclose(tm_a.feat_importance, tm_b.feat_importance)
+        assert np.array_equal(np.asarray(tm_a.is_selected_), np.asarray(tm_b.is_selected_))
 
     def test_label_length_mismatch_rejected(self, pipeline):
         # Composition failure: X rows and labels must align across the seam.
         labels_short = pipeline["labels"][:-1]
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="should contain"):
             aa.TreeModel(verbose=False, random_state=0).fit(
                 pipeline["X"], labels=labels_short, use_rfe=False, n_cv=2, n_rounds=2)
 
@@ -100,7 +102,7 @@ class TestPUToDPULearn:
 
     def test_standard_01_labels_rejected(self, pipeline):
         # Composition failure: dPULearn expects PU encoding {1, 2}, not {0, 1}.
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="does not contain required values"):
             aa.dPULearn(verbose=False, random_state=0).fit(
                 X=pipeline["X"], labels=pipeline["labels"], n_unl_to_neg=2)
 

@@ -9,11 +9,13 @@ paths:
 - `pytest` + `hypothesis`. Coverage via `pytest-cov`.
 - Layout: `tests/unit/<class_or_topic>_tests/test_<class_or_method>.py`. One
   file per public method.
-- **Three tiers** (ADR-0031): `tests/unit/` (per-method, the bulk),
-  `tests/integration/` (cross-component *seams*), `tests/e2e/`
-  (full protocol-mirroring *workflows*). All three are default-selected and
-  **gate merges** (the blocking job runs `-m "not regression"`). See the
-  per-tier taxonomy below before adding to integration/e2e.
+- **Three tiers** (ADR-0031): `tests/unit/` (per-method, the bulk; `Unit Tests`
+  workflow `main.yml`), `tests/integration/` (cross-component *seams*) and
+  `tests/e2e/` (full protocol-mirroring *workflows*) — the latter two run in
+  their **own `Integration & E2E Tests` workflow** (`integration_e2e.yml`) and
+  are excluded from the unit matrix (`main.yml` runs
+  `-m "not regression and not integration and not e2e"`). All three **gate
+  merges**. See the per-tier taxonomy below before adding to integration/e2e.
 
 ## Tier taxonomy (what each tier tests — ADR-0031)
 Count is bounded by distinct *seams* and *workflows*, **not** by unit-test
@@ -132,11 +134,11 @@ actually in use — **do not** create empty `benchmark` tiers.
 
 - `regression` — a frozen-value anchor (see below).
 - `slow` — opt-in heavy tests, deselectable in fast CI runs.
-- `integration` — cross-component seam test (see the tier taxonomy above);
-  default-selected, so it gates merges.
-- `e2e` — full protocol-mirroring workflow; default-selected, so it gates
-  merges. Add the marker module-wide with `pytestmark = pytest.mark.integration`
-  (or `e2e`).
+- `integration` — cross-component seam test (see the tier taxonomy above); runs
+  in the dedicated `Integration & E2E Tests` workflow, excluded from the unit
+  matrix.
+- `e2e` — full protocol-mirroring workflow; same dedicated workflow. Add the
+  marker module-wide with `pytestmark = pytest.mark.integration` (or `e2e`).
 
 ### CPP regression anchor (ADR-0015)
 `tests/unit/cpp_tests/test_cpp_regression.py` runs a seeded `DOM_GSEC`

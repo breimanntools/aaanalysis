@@ -45,8 +45,11 @@ class TestAAclustScaleReductionToCPP:
         df_feat = aa.CPP(df_parts=pipeline["df_parts"], df_scales=df_scales_red,
                          verbose=False, random_state=0).run(labels=pipeline["labels"],
                                                             n_filter=10, n_jobs=1)
-        assert len(df_feat) > 0
+        assert len(df_feat) == 10
         assert DF_FEAT_COLS.issubset(df_feat.columns)
+        # Every feature must reference one of the 5 reduced (medoid) scales only.
+        used_scales = {f.split("-")[-1] for f in df_feat["feature"]}
+        assert used_scales.issubset(set(aac.medoid_names_))
 
     @settings(max_examples=5, deadline=None)
     @given(n_clusters=some.integers(min_value=2, max_value=8))
@@ -67,7 +70,7 @@ class TestAAclustScaleReductionToCPP:
         df_feat = aa.CPP(df_parts=pipeline["df_parts"], df_scales=df_scales_red,
                          verbose=False, random_state=0).run(labels=pipeline["labels"],
                                                             n_filter=5, n_jobs=1)
-        assert len(df_feat) > 0
+        assert len(df_feat) == 5
 
 
 # ---------------------------------------------------------------------------
@@ -107,7 +110,7 @@ class TestSequenceFeatureToCPP:
     def test_single_class_labels_rejected(self, pipeline):
         # Composition failure: CPP needs two groups to contrast; all-one-class must raise.
         labels_one = [1] * len(pipeline["labels"])
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="more than one different value"):
             aa.CPP(df_parts=pipeline["df_parts"], df_scales=pipeline["df_scales"],
                    verbose=False).run(labels=labels_one, n_filter=5, n_jobs=1)
 
@@ -124,7 +127,7 @@ class TestCPPFeatImportanceToPlot:
         df_feat = tm.add_feat_importance(df_feat=pipeline["df_feat"])
         assert "feat_importance" in df_feat.columns
         fig, ax = aa.CPPPlot().ranking(df_feat=df_feat, n_top=5)
-        assert fig is not None
+        assert len(fig.axes) >= 1  # the ranking actually rendered onto axes
 
     def test_plot_rejects_feat_without_importance(self, pipeline):
         # Composition failure: ranking needs the importance column the TreeModel adds.
@@ -166,6 +169,9 @@ class TestCPPGridSweep:
         list_df_feat, df_params = cppg.run(params_cpp=dict(n_filter=[10, 15]),
                                            params_scales=_pipeline.small_scales())
         assert len(list_df_feat) == len(df_params) == 2
+        # df_params records the swept axis, so a silently-ignored sweep would be caught.
+        assert "n_filter" in df_params.columns
+        assert sorted(df_params["n_filter"]) == [10, 15]
         for df_feat in list_df_feat:
             assert df_feat is not None and DF_FEAT_COLS.issubset(df_feat.columns)
 
@@ -177,3 +183,33 @@ class TestCPPGridSweep:
                                    params_scales=_pipeline.small_scales())
         sizes = sorted(len(df) for df in list_df_feat)
         assert sizes == [8, 12]
+
+    def test_multi_axis_sweep_is_cartesian(self, pipeline):
+        # Sweeping two axes (n_filter x scale-set) yields their Cartesian product.
+        cppg = aa.CPPGrid(df_seq=pipeline["df_seq"], labels=pipeline["labels"],
+                          verbose=False, random_state=0, n_jobs=1)
+        df_scales_a = _pipeline.small_scales()
+        df_scales_b = df_scales_a.iloc[:, :10]  # a distinct, smaller scale set
+        list_df_feat, df_params = cppg.run(params_cpp=dict(n_filter=[8, 12]),
+                                           params_scales=[df_scales_a, df_scales_b])
+        assert len(list_df_feat) == len(df_params) == 4  # 2 n_filter x 2 scale sets
+        assert all(df is not None for df in list_df_feat)
+
+    def test_eval_ranks_configs_best_first(self, pipeline):
+        # CPPGrid.eval scores each swept config and ranks them, index-aligned to the runs.
+        cppg = aa.CPPGrid(df_seq=pipeline["df_seq"], labels=pipeline["labels"],
+                          verbose=False, random_state=0, n_jobs=1)
+        cppg.run(params_cpp=dict(n_filter=[8, 12]), params_scales=_pipeline.small_scales())
+        df_eval = cppg.eval()
+        assert {"avg_ABS_AUC", "n_features"}.issubset(df_eval.columns)
+        assert df_eval["avg_ABS_AUC"].is_monotonic_decreasing  # best-first
+        # The product-order index still maps each row back to its feature table.
+        top_idx = df_eval.index[0]
+        assert cppg.list_df_feat_[top_idx] is not None
+
+    def test_eval_before_run_raises(self, pipeline):
+        # Composition failure: eval has nothing to score until run() has populated it.
+        cppg = aa.CPPGrid(df_seq=pipeline["df_seq"], labels=pipeline["labels"],
+                          verbose=False, random_state=0, n_jobs=1)
+        with pytest.raises(RuntimeError, match="requires a prior 'run'"):
+            cppg.eval()

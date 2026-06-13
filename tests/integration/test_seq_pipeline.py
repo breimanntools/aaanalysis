@@ -111,5 +111,5 @@ class TestMutationToFeatures:
         # Composition failure: the mutations table must reference df_seq entries.
         df_seq = self._df_seq()
         muts = pd.DataFrame({"entry": ["NOT_AN_ENTRY"], "pos": [5], "to_aa": ["A"]})
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"is not in 'df_seq'"):
             aa.SeqMut(verbose=False).mutate(df_seq=df_seq, mutations=muts)

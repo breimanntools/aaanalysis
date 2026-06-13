@@ -34,12 +34,18 @@ drift-flaky, and add nothing the unit layer already covers.
 
 ## Decision
 
-- **D1 — Stand up two real tiers that gate merges.** `tests/integration/`
-  (cross-component *seams*) and `tests/e2e/` (full protocol-mirroring
-  *workflows*) are default-selected: the blocking job already runs
-  `-m "not regression"`, so both tiers run on every push/PR. New `integration`
-  and `e2e` markers are registered in `tests/pytest.ini` for selection/clarity,
-  **not** for deselection.
+- **D1 — Stand up two real tiers that gate merges, in their own CI action.**
+  `tests/integration/` (cross-component *seams*) and `tests/e2e/` (full
+  protocol-mirroring *workflows*) run in a **dedicated `Integration & E2E Tests`
+  workflow** (`.github/workflows/integration_e2e.yml`, one combined job over
+  both directories, Linux, Python bracketed at floor + ceiling). They are
+  **excluded from the `Unit Tests` matrix** (`main.yml` runs
+  `-m "not regression and not integration and not e2e"`) so they run once, as
+  their own PR check, rather than double-running across the full matrix. New
+  `integration` / `e2e` markers in `tests/pytest.ini` drive both the dedicated
+  selection and that exclusion. (They are core-only + offline, so the dedicated
+  workflow needs no `pro` extra and no FIMO/cd-hit/mmseqs; the network-marked
+  `test_online_fetches.py` stays in the unit matrix, skipped by default.)
 - **D2 — Count is bounded by seams × workflows, not by unit-test volume.** Each
   distinct component seam and each protocol notebook is covered **once**. The
   initial suite is ~12 integration seams and 10 e2e workflows.

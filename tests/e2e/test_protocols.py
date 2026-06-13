@@ -36,10 +36,10 @@ class TestProtocol1Signature:
         assert df_feat["abs_auc"].is_monotonic_decreasing  # ranked best-first
 
     def test_signature_reproducible(self):
-        # Reproducibility: the same seeded run yields the same top feature.
+        # Reproducibility: the same seeded run yields the identical ranked signature.
         a = _pipeline.build_pipeline()["df_feat"]
         b = _pipeline.build_pipeline()["df_feat"]
-        assert a["feature"].iloc[0] == b["feature"].iloc[0]
+        assert a["feature"].to_list() == b["feature"].to_list()
 
 
 # ---------------------------------------------------------------------------
@@ -212,7 +212,7 @@ class TestE2EDegenerate:
     def test_single_class_pipeline_rejected(self):
         # All-one-class labels cannot define a TEST-vs-REF contrast.
         p = _pipeline.build_pipeline()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="more than one different value"):
             aa.CPP(df_parts=p["df_parts"], df_scales=p["df_scales"], verbose=False).run(
                 labels=[1] * len(p["labels"]), n_filter=5, n_jobs=1)
 
@@ -220,6 +220,6 @@ class TestE2EDegenerate:
         # One sample cannot train/evaluate a model; the error must be explicit.
         p = _pipeline.build_pipeline()
         X1 = np.asarray(p["X"])[:1]
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="should be >= 3"):
             aa.TreeModel(verbose=False, random_state=0).fit(
                 X1, labels=[1], use_rfe=False, n_cv=2, n_rounds=2)
