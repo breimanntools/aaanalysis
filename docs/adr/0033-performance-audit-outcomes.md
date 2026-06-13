@@ -67,30 +67,50 @@ The "×" above are **speed** micro-benchmarks. **Memory** was touched only where
 alignment / contact caches trade a little memory for speed; the pro-IO path streams.
 Most wins are pure compute (loop vectorization) with neutral memory.
 
-## Performance relative to v1.0.3 (last released stable)
+## Performance relative to v1.0.3 (measured)
 
-Two **distinct** efforts separate v1.0.3 from current `master` — do not conflate them:
+`CPP.run` on `DOM_GSEC`, PyPI **1.0.3** vs current **master**, `n_jobs=1` (peak = `ru_maxrss`):
 
-1. **The CPP performance overhaul (post-1.0.3) — the order-of-magnitude gain, and NOT part
-   of this sweep.** v1.0.3 and earlier predate the Cython feature-matrix kernel, macOS-safe
-   threaded `n_jobs`, scale / AA-index caching, and scale / sample batching. Per the
-   CHANGELOG, 1.0.3 could show **hour-long, low-CPU `CPP.run`**; the overhaul replaced that
-   (v1.0.2 already noted "3–5× faster `CPP.run`"; the kernel + batching go well beyond),
-   and CPP is now **memory-bounded** by streaming / chunking instead of materializing the
-   full sample×scale×split tensor. This is the dramatic **efficiency *and* memory** gain
-   versus 1.0.3.
-2. **This same-output sweep (ADR-0033) — incremental.** Its wins sit mostly in **v1.1-new
-   subsystems** (`AAWindowSampler`, `StructurePreprocessor`, embeddings) that have **no
-   v1.0.3 counterpart**, plus targeted wins on pre-existing code (dPULearn KLD,
-   `filter_correlation_`, AAclust `_dist_to_medoids`). Mostly speed; memory as noted above.
+| Workload | v1.0.3 | master | speed | memory |
+|---|---|---|---|---|
+| small — 20 seq, 586 scales, 100 feat | 0.39 s / 15 MB | 0.15 s / 57 MB | 2.6× | 3.7× (but +42 MB absolute) |
+| large — 126 seq, Segment+Pattern | 29.7 s / 220 MB | **2.4 s / 256 MB** | **~12×** | **~1.16×** |
 
-**No precise end-to-end ×-factor vs 1.0.3 is asserted here.** It would require benchmarking
-1.0.3 against `master`, and most swept symbols did not exist in 1.0.3, so a fair comparison
-is only meaningful on the shared core (`CPP.run`, `AAclust.fit`,
-`SequenceFeature.feature_matrix`) — where the gain is the overhaul's, not this sweep's. The
-committed benchmark suite (#193) measures current `master` going forward; 1.0.3 has neither
-the suite nor the v1.1 surface, so any 1.0.3 number must come from an explicit benchmark run,
-not an estimate (D2).
+The order-of-magnitude gain is the **post-1.0.3 CPP overhaul** (Cython feature-matrix kernel,
+threaded `n_jobs`, scale/AA-index caching, scale/sample batching) — **not** this sweep, which
+is incremental and mostly on v1.1-new subsystems. At scale the memory ratio is ~1.16×
+(acceptable); the small-scale 3.7× is trivial in absolute terms. CPP's memory-efficient escape
+hatch caps peak when needed (measured large case: 256 MB → **213 MB with `n_batches=8`**;
+`n_sample_batches=8` → 233 MB and faster).
+
+## Per-optimization speed + peak-memory check (D2, extended to memory)
+
+**D6. A speed win must not trade a materially larger *peak memory* for it.** Every shipped
+same-output optimization was re-measured for both speed and peak RSS (old vs new, isolated
+subprocess; `ru_maxrss`, which — unlike `tracemalloc` — captures NumPy buffers):
+
+| Function | speed | peak ΔRSS (old → new) | verdict |
+|---|---|---|---|
+| `encode_pdb` contact-count | ~50× | +0.1 MB | ✅ per-row keeps O(n) by design |
+| `filter_redundancy` | ~33× | +0.6 MB | ✅ buffer view |
+| `filter_similarity_to_test` | ~37× | +0.1 MB | ✅ |
+| `encode_one_hot` | ~4.7× | +7 MB (~1.15×, output-bound) | ✅ |
+| `_dist_to_medoids` | ~60× | +9.6 MB (~3× the input X) | ⚠️ bounded by input order; a per-cluster form would tighten it |
+| `candidate_centers_` | ~12× | **+6.5 MB — an O(n·excl) matrix (was ~0)** | ❌ **fixed** → `searchsorted`, O(n) memory, byte-identical (#202) |
+
+The #194/#195/#196 wins (`AAMut.comp_substitution_impact`, `bic_score_`,
+`get_sliding_aa_window`, `filter_correlation_`, `encode_disulfide`, `_plddt`,
+`_greedy_simplify_` copy-drop, `_eligible_candidates_` #198) are memory-neutral or
+memory-**reducing** by construction (the `X.copy()` drop explicitly frees memory).
+
+**Rule:** a vectorization that introduces a new O(n·m) intermediate (as `candidate_centers_`
+did) must be reworked (`searchsorted`, chunking) or gated behind a batch parameter (as CPP's
+`n_batches` / `n_sample_batches`). Measure peak RSS, not just time.
+
+**Caveat on the 1.0.3 numbers:** most swept symbols did not exist in 1.0.3, so a fair
+comparison is only meaningful on the shared core (`CPP.run`, `AAclust.fit`,
+`SequenceFeature.feature_matrix`); the committed benchmark suite (#193) measures current
+`master` going forward.
 
 ## Rejected alternatives — DO NOT RE-ATTEMPT
 
