@@ -93,6 +93,13 @@ def _pick_best_chain_records(target_seq: str, chains):
 def _resolve_best_chain(structure, sequence: str):
     """Collect chains and pick the best-matching one **once** per entry.
 
+    "Best-matching" means the chain whose ATOM-record residue sequence has the
+    highest **identity fraction** to the target ``sequence`` — i.e. the number
+    of matched (non-gap) positions in the global alignment of the two, divided
+    by ``len(sequence)`` (see :func:`_identity_fraction`). Ties are broken by
+    chain order (the first chain reaching the maximum wins). This is the chain
+    every encoder aligns against and reads per-residue values from.
+
     ``_collect_chain_residues`` + ``_pick_best_chain_records`` are pure,
     deterministic functions of ``(structure, sequence)``, so the result can be
     computed once and shared across every encoder for the same entry instead of
