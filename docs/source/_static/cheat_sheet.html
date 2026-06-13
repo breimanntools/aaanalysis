@@ -85,6 +85,9 @@ code, pre, .mono { font-family: "AA Mono", Menlo, "DejaVu Sans Mono", monospace;
 .sec-h .hint { flex: 0 1 auto; min-width: 0; font-weight: 600; font-size: 6.2pt; opacity: .85;
                font-style: italic; white-space: nowrap; overflow: hidden;
                text-overflow: ellipsis; text-align: right; }
+/* test/ref colour cue in the CPP-feature hint (legible on the dark header bar) */
+.sec-h .hint .hint-test { color: #6abf67; opacity: 1; }  /* test group (green) */
+.sec-h .hint .hint-ref  { color: #c2c2c2; opacity: 1; }  /* reference group (gray) */
 .sec-body { padding: 2px 1px 0; }
 
 .sub {
@@ -506,7 +509,7 @@ df_parts = sf.get_df_parts(df_seq=df_seq,
 plt.tight_layout(); plt.show()</pre>
 <figure class="recipe-fig"><img class="recipe-img logo" src="cs_plots/logo.png" alt="AAlogo — see the data output"><figcaption>AAlogoPlot.single_logo · per-position enrichment</figcaption></figure>  </div>
 </div><div class="sec pairsec">
-  <div class="sec-h"><span>CPP — feature</span><span class="hint">top feature · REF vs TEST</span></div>
+  <div class="sec-h"><span>CPP — feature</span><span class="hint">top feature · <span class="hint-ref">ref</span> vs <span class="hint-test">test</span></span></div>
   <div class="sec-body"><pre class="code"><span class="c-cm"># default parts + a redundancy-reduced set of 100 scales</span>
 df_parts = sf.get_df_parts(df_seq=df_seq)
 df_scales = <span class="c-nm">aa.AAclust</span>().select_scales(
