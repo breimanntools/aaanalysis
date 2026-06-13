@@ -197,20 +197,22 @@ def get_sample_name(df_seq=None, sample=None):
     return entries[int(sample)]
 
 
-def resolve_col_imp_for_sample(df_feat=None, name=None, col_imp=None):
-    """Resolve the 'feat_impact_<name>' column for a sample-level SHAP plot.
+def resolve_col_imp_for_sample(df_feat=None, name=None):
+    """Resolve the 'feat_impact_<name>' column in ``df_feat`` for a sample-level SHAP plot.
 
-    If ``col_imp`` is already explicitly given it is returned unchanged; otherwise the
-    ``feat_impact_<name>`` column is selected from ``df_feat``.
+    Picks the ``feat_impact_<name>`` column matching the resolved sample name. If that exact
+    column is absent but exactly one ``feat_impact_*`` column exists, that single column is used
+    (covers the case where a custom ``names=`` was passed to :meth:`ShapModel.add_feat_impact`).
     """
-    if col_imp is not None:
-        return col_imp
+    cols_impact = [x for x in df_feat.columns if str(x).startswith(f"{ut.COL_FEAT_IMPACT}_")]
     col_imp = f"{ut.COL_FEAT_IMPACT}_{name}"
-    if col_imp not in df_feat.columns:
-        cols_impact = [x for x in df_feat.columns if str(x).startswith(f"{ut.COL_FEAT_IMPACT}_")]
-        raise ValueError(f"'col_imp' ('{col_imp}') derived for sample '{name}' is not a column in 'df_feat'. "
-                         f"Available feature-impact columns are: {cols_impact}")
-    return col_imp
+    if col_imp in df_feat.columns:
+        return col_imp
+    if len(cols_impact) == 1:
+        return cols_impact[0]
+    raise ValueError(f"'col_imp' could not be resolved for sample '{name}': no '{col_imp}' column in 'df_feat' "
+                     f"and the feature-impact column is ambiguous. Available columns are: {cols_impact}. "
+                     f"Pass 'col_imp' explicitly.")
 
 
 # Check update_seq_size
@@ -770,6 +772,7 @@ class CPPPlot:
                 tmd_len: int = 20,
                 df_seq: Optional[pd.DataFrame] = None,
                 entry: Optional[str] = None,
+                sample: Optional[Union[int, str]] = None,
                 tmd_seq: Optional[str] = None,
                 jmd_n_seq: Optional[str] = None,
                 jmd_c_seq: Optional[str] = None,
@@ -851,7 +854,12 @@ class CPPPlot:
         entry : str, optional
             Protein identifier (accession) from the ``entry`` column of ``df_seq`` for which to derive and
             display the TMD-JMD sequence parts. Requires ``df_seq``; must not be combined with explicit
-            ``tmd_seq``/``jmd_n_seq``/``jmd_c_seq``.
+            ``tmd_seq``/``jmd_n_seq``/``jmd_c_seq`` or with ``sample``.
+        sample : int or str, optional
+            Like ``entry``, but accepting either a row position in ``df_seq`` (int) or an entry name (str).
+            Convenience for sample-level SHAP plots: when given with ``df_seq`` and ``shap_plot=True``, the
+            ``feat_impact_<name>`` column is also resolved internally from ``df_feat`` (so ``col_imp`` need not
+            be passed). Requires ``df_seq``; mutually exclusive with explicit ``*_seq`` parts and with ``entry``.
         tmd_seq : str, optional
             TMD sequence for specific sample.
         jmd_n_seq : str, optional
@@ -930,6 +938,14 @@ class CPPPlot:
         """
         # Check primary input
         ut.check_bool(name="shap_plot", val=shap_plot)
+        # Convenience: merge the per-sample selectors ('entry' str-only, 'sample' int-or-str)
+        if entry is not None and sample is not None:
+            raise ValueError(f"'entry' ({entry}) and 'sample' ({sample}) should not be provided together.")
+        sample = entry if entry is not None else sample
+        name_sample = get_sample_name(df_seq=df_seq, sample=sample) if (sample is not None and df_seq is not None) else None
+        # For sample-level SHAP plots, resolve the 'feat_impact_<name>' column when 'col_imp' is left at default
+        if sample is not None and shap_plot and col_imp == ut.COL_FEAT_IMPORT and isinstance(df_feat, pd.DataFrame):
+            col_imp = resolve_col_imp_for_sample(df_feat=df_feat, name=name_sample)
         if col_imp is None:
             df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat)
         else:
@@ -943,11 +959,11 @@ class CPPPlot:
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
         jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
         jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
-        # Convenience: derive per-sample sequence parts from df_seq/entry via SequenceFeature (frontend reuse)
-        check_match_sample_seq(sample=entry, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, df_seq=df_seq,
-                               name="entry")
-        if entry is not None:
-            args_seq_sample = get_args_seq_for_sample(df_seq=df_seq, sample=entry,
+        # Convenience: derive per-sample sequence parts from df_seq/entry/sample via SequenceFeature (frontend reuse)
+        check_match_sample_seq(sample=sample, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, df_seq=df_seq,
+                               name="sample")
+        if sample is not None:
+            args_seq_sample = get_args_seq_for_sample(df_seq=df_seq, sample=sample,
                                                       jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
             tmd_seq, jmd_n_seq, jmd_c_seq = (args_seq_sample["tmd_seq"], args_seq_sample["jmd_n_seq"],
                                              args_seq_sample["jmd_c_seq"])
@@ -1280,6 +1296,7 @@ class CPPPlot:
                     tmd_len: int = 20,
                     df_seq: Optional[pd.DataFrame] = None,
                     entry: Optional[str] = None,
+                    sample: Optional[Union[int, str]] = None,
                     tmd_seq: Optional[str] = None,
                     jmd_n_seq: Optional[str] = None,
                     jmd_c_seq: Optional[str] = None,
@@ -1394,7 +1411,13 @@ class CPPPlot:
         entry : str, optional
             Protein identifier (accession) from the ``entry`` column of ``df_seq`` for which to derive and
             display the TMD-JMD sequence parts. Requires ``df_seq``; must not be combined with explicit
-            ``tmd_seq``/``jmd_n_seq``/``jmd_c_seq``.
+            ``tmd_seq``/``jmd_n_seq``/``jmd_c_seq`` or with ``sample``.
+        sample : int or str, optional
+            Like ``entry``, but accepting either a row position in ``df_seq`` (int) or an entry name (str).
+            Convenience for sample-level SHAP plots: when given with ``df_seq`` and ``shap_plot=True``, the
+            ``feat_impact_<name>`` column is resolved internally from ``df_feat`` (so ``col_imp`` need not be
+            passed) and ``name_test`` defaults to the resolved sample name. Requires ``df_seq``; mutually
+            exclusive with explicit ``*_seq`` parts and with ``entry``.
         tmd_seq : str, optional
             TMD sequence for specific sample.
         jmd_n_seq : str, optional
@@ -1497,6 +1520,17 @@ class CPPPlot:
         ut.check_bool(name="shap_plot", val=shap_plot)
         ut.check_str_options(name="col_cat", val=col_cat,
                              list_str_options=[ut.COL_CAT, ut.COL_SUBCAT, ut.COL_SCALE_NAME])
+        # Convenience: merge the per-sample selectors ('entry' str-only, 'sample' int-or-str)
+        if entry is not None and sample is not None:
+            raise ValueError(f"'entry' ({entry}) and 'sample' ({sample}) should not be provided together.")
+        sample = entry if entry is not None else sample
+        name_sample = get_sample_name(df_seq=df_seq, sample=sample) if (sample is not None and df_seq is not None) else None
+        # For sample-level SHAP plots, resolve the 'feat_impact_<name>' column and 'name_test' from the sample
+        if sample is not None and shap_plot and isinstance(df_feat, pd.DataFrame):
+            if col_imp == ut.COL_FEAT_IMPORT:
+                col_imp = resolve_col_imp_for_sample(df_feat=df_feat, name=name_sample)
+            if name_test == "TEST" and name_sample is not None:
+                name_test = str(name_sample)
         col_val = check_col_val(col_val=col_val, shap_plot=shap_plot, sample_mean_dif=True)
         col_imp = check_col_imp(col_imp=col_imp, shap_plot=shap_plot)
         df_feat = ut.check_df_feat(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot,
@@ -1518,11 +1552,11 @@ class CPPPlot:
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
         jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
         jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
-        # Convenience: derive per-sample sequence parts from df_seq/entry via SequenceFeature (frontend reuse)
-        check_match_sample_seq(sample=entry, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, df_seq=df_seq,
-                               name="entry")
-        if entry is not None:
-            args_seq_sample = get_args_seq_for_sample(df_seq=df_seq, sample=entry,
+        # Convenience: derive per-sample sequence parts from df_seq/entry/sample via SequenceFeature (frontend reuse)
+        check_match_sample_seq(sample=sample, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq, jmd_c_seq=jmd_c_seq, df_seq=df_seq,
+                               name="sample")
+        if sample is not None:
+            args_seq_sample = get_args_seq_for_sample(df_seq=df_seq, sample=sample,
                                                       jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
             tmd_seq, jmd_n_seq, jmd_c_seq = (args_seq_sample["tmd_seq"], args_seq_sample["jmd_n_seq"],
                                              args_seq_sample["jmd_c_seq"])

@@ -112,7 +112,7 @@ class TestProfileDfSeqEntry:
         df_seq = get_df_seq()
         df_feat = get_df_feat()
         cpp_plot = aa.CPPPlot()
-        with pytest.raises(ValueError, match="entry"):
+        with pytest.raises(ValueError, match="should be given"):
             cpp_plot.profile(df_feat=df_feat, df_seq=df_seq)
 
     def test_error_unknown_entry(self):
