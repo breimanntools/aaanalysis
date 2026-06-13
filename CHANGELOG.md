@@ -58,10 +58,16 @@ and a suite of site-localization metrics and plotting helpers.
   `options['n_jobs']` global override.
 - `CPPPlot.feature` titles the plot with the feature's human-readable
   description, controlled by new `show_title` / `title_wrap_width` parameters.
+- `dPULearn.fit` accepts standard `{0, 1}` labels directly via `label_unl=0`
+  (and an arbitrary positive/unlabeled pair via `label_pos` / `label_unl`),
+  normalizing internally to the 1 (positive) / 2 (unlabeled) contract; the
+  recommended encoding is unchanged. `n_neg` is now the primary name for the
+  reliable-negative count.
 
 ### Deprecated
-- None. The strict-semver deprecation policy and the `deprecated` decorator are
-  now in force for all future public-API renames and removals.
+- `dPULearn.fit(n_unl_to_neg=...)` is deprecated in favor of `n_neg` (identical
+  meaning); scheduled for removal in version 1.2.0. The alias still works and
+  emits a single `DeprecationWarning`.
 
 ## [1.0.3] - 2026-04-06
 ### Added

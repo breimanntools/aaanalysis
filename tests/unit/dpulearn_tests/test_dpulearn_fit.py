@@ -176,8 +176,8 @@ class TestdPULearnFit:
             with pytest.raises(ValueError):
                 dpul.fit(X, labels, n_unl_to_neg=n_unl_to_neg)
 
-    def test_n_unl_to_neg_none_message(self):
-        """Omitting 'n_unl_to_neg' gives a tailored message (no opaque default)."""
+    def test_n_neg_none_message(self):
+        """Omitting the negative count gives a tailored 'n_neg' message (no opaque default)."""
         X = np.random.rand(100, 5)
         labels = create_labels(100)
         dpul = aa.dPULearn()
@@ -185,12 +185,12 @@ class TestdPULearnFit:
             dpul.fit(X, labels)
 
     def test_labels_wrong_encoding_message(self):
-        """Standard {0, 1} labels get the PU-encoding hint (1 = positive, 2 = unlabeled)."""
+        """Standard {0, 1} labels under the default 1/2 encoding point the user to label_unl=0."""
         X = np.random.rand(100, 5)
         labels = np.array([0, 1] * 50)
         dpul = aa.dPULearn()
-        with pytest.raises(ValueError, match="PU-encoded"):
-            dpul.fit(X, labels, n_unl_to_neg=5)
+        with pytest.raises(ValueError, match="label_unl=0"):
+            dpul.fit(X, labels, n_neg=5)
     
     @settings(deadline=None, max_examples=10)
     @given(metric=some.just("invalid_metric"))
@@ -218,6 +218,93 @@ class TestdPULearnFit:
         if is_invalid and valid_labels:
             with pytest.raises(ValueError):
                 dpul.fit(X, labels, n_components=n_components)
+
+
+class TestdPULearnFitLabelEncoding:
+    """Test the 1/0 label-encoding ergonomics + the n_unl_to_neg -> n_neg deprecation alias."""
+
+    @staticmethod
+    def _det_data(n=60, n_features=5, seed=42):
+        rng = np.random.default_rng(seed)
+        X = rng.random((n, n_features))
+        labels_pu = np.array([1, 2] * (n // 2))      # 1 = positive, 2 = unlabeled
+        return X, labels_pu
+
+    # Positive tests (exercise each new parameter by name)
+    def test_n_neg_parameter(self):
+        """'n_neg' is the primary count name."""
+        X, labels = self._det_data()
+        dpul = aa.dPULearn(random_state=42)
+        df_pu = dpul.fit(X, labels, n_neg=5).df_pu_
+        assert isinstance(df_pu, pd.DataFrame)
+        assert np.sum(dpul.labels_ == 0) == 5
+
+    def test_label_unl_zero_one_encoding(self):
+        """Standard {0, 1} labels work directly when label_unl=0 (0 = unlabeled, 1 = positive)."""
+        X, labels_pu = self._det_data()
+        labels_01 = np.where(labels_pu == 2, 0, 1)   # 2 -> 0 (unlabeled), 1 stays positive
+        dpul = aa.dPULearn(random_state=42)
+        df_pu = dpul.fit(X, labels_01, label_unl=0, n_neg=5).df_pu_
+        assert isinstance(df_pu, pd.DataFrame)
+        assert np.sum(dpul.labels_ == 0) == 5
+
+    def test_label_pos_custom_encoding(self):
+        """A fully custom positive/unlabeled marker pair is normalized internally."""
+        X, labels_pu = self._det_data()
+        # Encode positives as 7, unlabeled as 9
+        labels_custom = np.where(labels_pu == 1, 7, 9)
+        dpul = aa.dPULearn(random_state=42)
+        df_pu = dpul.fit(X, labels_custom, label_pos=7, label_unl=9, n_neg=5).df_pu_
+        assert isinstance(df_pu, pd.DataFrame)
+        assert np.sum(dpul.labels_ == 0) == 5
+
+    def test_equivalence_1_0_vs_1_2(self):
+        """1/0 + n_neg yields byte-identical labels_/df_pu_ to the 1/2 + n_unl_to_neg path."""
+        X, labels_pu = self._det_data()
+        labels_01 = np.where(labels_pu == 2, 0, 1)
+        dpul_pu = aa.dPULearn(random_state=42).fit(X, labels_pu, n_neg=5)
+        dpul_01 = aa.dPULearn(random_state=42).fit(X, labels_01, label_unl=0, n_neg=5)
+        assert np.array_equal(dpul_pu.labels_, dpul_01.labels_)
+        pd.testing.assert_frame_equal(dpul_pu.df_pu_, dpul_01.df_pu_)
+
+    def test_n_unl_to_neg_alias_equivalence(self):
+        """The deprecated 'n_unl_to_neg' alias produces the same result as 'n_neg'."""
+        X, labels_pu = self._det_data()
+        dpul_new = aa.dPULearn(random_state=42).fit(X, labels_pu, n_neg=5)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            dpul_old = aa.dPULearn(random_state=42).fit(X, labels_pu, n_unl_to_neg=5)
+        assert np.array_equal(dpul_new.labels_, dpul_old.labels_)
+        pd.testing.assert_frame_equal(dpul_new.df_pu_, dpul_old.df_pu_)
+
+    # Deprecation / conflict
+    def test_n_unl_to_neg_emits_one_deprecation_warning(self):
+        """'n_unl_to_neg' emits exactly one DeprecationWarning."""
+        X, labels_pu = self._det_data()
+        dpul = aa.dPULearn(random_state=42)
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            dpul.fit(X, labels_pu, n_unl_to_neg=5)
+        dep = [w for w in caught if issubclass(w.category, DeprecationWarning)]
+        assert len(dep) == 1
+        assert "n_neg" in str(dep[0].message)
+
+    def test_n_neg_alias_conflict_raises(self):
+        """Passing both 'n_neg' and a conflicting 'n_unl_to_neg' raises ValueError."""
+        X, labels_pu = self._det_data()
+        dpul = aa.dPULearn(random_state=42)
+        with pytest.raises(ValueError, match="n_unl_to_neg"):
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", DeprecationWarning)
+                dpul.fit(X, labels_pu, n_neg=5, n_unl_to_neg=7)
+
+    # Negative tests
+    def test_label_pos_equals_label_unl_raises(self):
+        """label_pos and label_unl must differ."""
+        X, labels_pu = self._det_data()
+        dpul = aa.dPULearn(random_state=42)
+        with pytest.raises(ValueError, match="should differ"):
+            dpul.fit(X, labels_pu, label_pos=1, label_unl=1, n_neg=5)
 
 
 class TestdPULearnFitComplex:

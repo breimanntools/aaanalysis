@@ -181,6 +181,20 @@ Changed
   ``AnnotationPreprocessor``, ``comp_seq_sim``, ``filter_seq``, ``scan_motif``) carry
   a ``[pro]`` install marker in their summary; and ``SeqMut`` cross-links the canonical
   ``df_seq`` format spec (``SequenceFeature.get_df_parts``).
+- **dPULearn.fit**: Now accepts the standard ``{0, 1}`` label encoding directly via
+  ``label_unl=0`` (``0`` = unlabeled, ``1`` = positive), and an arbitrary
+  positive/unlabeled marker pair via ``label_pos`` / ``label_unl``; labels are
+  normalized internally to the 1 (positive) / 2 (unlabeled) contract before
+  identification. The recommended encoding is unchanged. ``n_neg`` is now the primary
+  name for the reliable-negative count (the old ``n_unl_to_neg`` still works as a
+  deprecated alias).
+
+Deprecated
+~~~~~~~~~~
+
+- **dPULearn.fit(n_unl_to_neg=...)**: Deprecated in favor of ``n_neg`` (identical
+  meaning); scheduled for removal in version 1.2.0. The alias still works and emits a
+  single ``DeprecationWarning``.
 
 
 Version 1.0 (Stable Version)

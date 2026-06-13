@@ -2,6 +2,7 @@
 This is a script for the frontend of the dPULearn class, used for deterministic Positive-Unlabeled (PU) Learning.
 """
 from typing import Optional, Literal, Dict, Union, List, Tuple, Type
+import warnings
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
@@ -27,7 +28,43 @@ def check_n_unl_to_neg(labels=None, n_unl_to_neg=None, label_unl=None):
     """Validate that there are enough unlabeled samples in the dataset."""
     n_unl = np.sum(labels == label_unl)
     if n_unl < n_unl_to_neg:
-        raise ValueError(f"Number of unlabeled labels ({n_unl}) must be higher than 'n_unl_to_neg' ({n_unl_to_neg})")
+        raise ValueError(f"Number of unlabeled labels ({n_unl}) must be higher than 'n_neg' ({n_unl_to_neg})")
+
+
+def check_match_label_pos_unl(label_pos=None, label_unl=None):
+    """Validate the positive/unlabeled marker pair used to encode the input labels."""
+    ut.check_number_range(name="label_pos", val=label_pos, min_val=0, just_int=True)
+    ut.check_number_range(name="label_unl", val=label_unl, min_val=0, just_int=True)
+    if label_pos == label_unl:
+        raise ValueError(f"'label_pos' ({label_pos}) and 'label_unl' ({label_unl}) should differ.")
+
+
+def normalize_pu_labels_(labels=None, label_pos=None, label_unl=None):
+    """Map the user's positive/unlabeled encoding onto the internal 1 (positive) / 2 (unlabeled) contract."""
+    labels = np.asarray(labels)
+    if (label_pos, label_unl) == (1, 2):
+        return labels
+    normalized = labels.copy()
+    normalized[labels == label_pos] = 1
+    normalized[labels == label_unl] = 2
+    return normalized
+
+
+def resolve_n_neg_(n_neg=None, n_unl_to_neg=None):
+    """Resolve the negative-count argument, honoring the deprecated 'n_unl_to_neg' alias."""
+    if n_unl_to_neg is not None:
+        warnings.warn(
+            "'n_unl_to_neg' is deprecated and will be removed in version 1.2.0."
+            " Use 'n_neg' instead (the number of unlabeled samples reclassified as"
+            " reliable negatives).",
+            DeprecationWarning, stacklevel=3,
+        )
+        if n_neg is not None and n_neg != n_unl_to_neg:
+            raise ValueError(f"'n_neg' ({n_neg}) and the deprecated alias 'n_unl_to_neg' "
+                             f"({n_unl_to_neg}) were both set to different values; pass only 'n_neg'.")
+        if n_neg is None:
+            n_neg = n_unl_to_neg
+    return n_neg
 
 
 def check_n_components(n_components=1):
@@ -153,9 +190,12 @@ class dPULearn:
     def fit(self,
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D = None,
-            n_unl_to_neg: int = None,
+            n_neg: int = None,
             metric: Optional[Literal["euclidean", "manhattan", "cosine"]] = None,
             n_components: Union[float, int] = 0.80,
+            label_pos: int = 1,
+            label_unl: int = 2,
+            n_unl_to_neg: int = None,
             ) -> "dPULearn":
         """
         Fit the dPULearn model to identify reliable negative samples (labeled by 0) from unlabeled samples (2)
@@ -171,9 +211,11 @@ class dPULearn:
         X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
         labels : array-like, shape (n_samples,)
-            Dataset labels of samples in ``X``. Should be either 1 (positive) or 2 (unlabeled).
-        n_unl_to_neg : int
-            Number of negative samples (0) to be reliably identified from unlabeled samples (2).
+            Dataset labels of samples in ``X``, encoding positives and unlabeled samples.
+            By default positives are ``1`` and unlabeled are ``2``; set ``label_unl=0`` to pass
+            the standard ``{0, 1}`` encoding directly (``0`` = unlabeled, ``1`` = positive).
+        n_neg : int
+            Number of reliable negatives (0) to be identified from the unlabeled samples.
             Should be >= 1 and < n unlabeled samples. Required — there is no default; a sensible
             start is a small value (e.g. ``1``), increased as confidence grows.
         metric : str or None, optional
@@ -190,6 +232,17 @@ class dPULearn:
 
             * In case (a): it should be an integer >= 1.
             * In case (b): it should be a float with  0.0 < ``n_components`` < 1.0.
+
+        label_pos : int, default=1
+            Value marking positive samples in ``labels``.
+        label_unl : int, default=2
+            Value marking unlabeled samples in ``labels``. Set ``label_unl=0`` to pass the
+            standard ``{0, 1}`` encoding (``0`` = unlabeled, ``1`` = positive) without
+            re-encoding. Internally the labels are normalized to the 1 (positive) / 2 (unlabeled)
+            contract before identification.
+        n_unl_to_neg : int, optional
+            Deprecated alias for ``n_neg`` (same meaning). Scheduled for removal in version 1.2.0;
+            use ``n_neg`` instead.
 
         Returns
         -------
@@ -230,27 +283,31 @@ class dPULearn:
         """
         # Check input
         X = ut.check_X(X=X)
+        check_match_label_pos_unl(label_pos=label_pos, label_unl=label_unl)
         labels = ut.check_labels(
-            labels=labels, vals_required=[1, 2], allow_other_vals=False,
-            str_add="dPULearn expects PU-encoded labels: 1 = positive, 2 = unlabeled "
-                    "(reliable negatives 0 are the fitted output, not an input). "
-                    "Convert a standard {0, 1} encoding before calling fit.",
+            labels=labels, vals_required=[label_pos, label_unl], allow_other_vals=False,
+            str_add=f"dPULearn expects positives as {label_pos} ('label_pos') and unlabeled as "
+                    f"{label_unl} ('label_unl'); reliable negatives (0) are the fitted output, "
+                    f"not an input. Set label_unl=0 to pass a standard {{0, 1}} encoding.",
         )
-        if n_unl_to_neg is None:
+        # Normalize the user encoding to the internal 1 (positive) / 2 (unlabeled) contract
+        labels = normalize_pu_labels_(labels=labels, label_pos=label_pos, label_unl=label_unl)
+        # Resolve the negative-count argument (deprecated 'n_unl_to_neg' alias -> 'n_neg')
+        n_neg = resolve_n_neg_(n_neg=n_neg, n_unl_to_neg=n_unl_to_neg)
+        if n_neg is None:
             raise ValueError(
-                "'n_unl_to_neg' (None) should be a positive int — the number of "
-                "unlabeled samples (2) to reclassify as reliable negatives (0). "
-                "There is no default; set it explicitly (e.g. n_unl_to_neg=1 to "
-                "start conservatively, then increase)."
+                "'n_neg' (None) should be a positive int — the number of unlabeled "
+                "samples to reclassify as reliable negatives (0). There is no default; "
+                "set it explicitly (e.g. n_neg=1 to start conservatively, then increase)."
             )
-        ut.check_number_range(name="n_unl_to_neg", val=n_unl_to_neg, min_val=1, just_int=True)
-        check_n_unl_to_neg(labels=labels, n_unl_to_neg=n_unl_to_neg, label_unl=2)
+        ut.check_number_range(name="n_neg", val=n_neg, min_val=1, just_int=True)
+        check_n_unl_to_neg(labels=labels, n_unl_to_neg=n_neg, label_unl=2)
         check_metric(metric=metric)
         check_n_components(n_components=n_components)
         ut.check_match_X_labels(X=X, labels=labels)
         check_match_X_n_components(X=X, n_components=n_components)
         # Compute average distance for threshold-based filtering (Yang et al., 2012, 2014; Nan et al. 2017)
-        args = dict(X=X, labels=labels, n_unl_to_neg=n_unl_to_neg, label_neg=0)
+        args = dict(X=X, labels=labels, n_unl_to_neg=n_neg, label_neg=0)
         if metric is not None:
             new_labels, df_pu = get_neg_via_distance(**args, metric=metric)
         # Identify most far away negatives in PCA compressed feature space
