@@ -621,11 +621,12 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
         <div class="dg-row"><span class="dg-l">per domain / region</span> <span class="dg-r">→ DOM_* · TMD model · parts = jmd_n·tmd·jmd_c</span></div>
         <div class="dg-row"><span class="dg-l">whole protein</span> <span class="dg-r">→ SEQ_* · composition · whole chain</span></div>
         <div class="dg-q">What labels do you have?</div>
-        <div class="dg-row"><span class="dg-l">labeled 0 / 1</span> <span class="dg-r">→ CPP → TreeModel</span></div>
-        <div class="dg-row"><span class="dg-l">positives + unlabeled (1 / 2)</span> <span class="dg-r">→ CPP → dPULearn → TreeModel</span></div>
-        <div class="dg-row"><span class="dg-l">no negatives at all</span> <span class="dg-r">→ AAWindowSampler → CPP → TreeModel</span></div>
+        <div class="dg-row"><span class="dg-l">labeled 0 / 1</span> <span class="dg-r">→ CPP → classify</span></div>
+        <div class="dg-row"><span class="dg-l">positives + unlabeled (1 / 2)</span> <span class="dg-r">→ CPP → dPULearn → classify</span></div>
+        <div class="dg-row"><span class="dg-l">no negatives at all</span> <span class="dg-r">→ AAWindowSampler → CPP → classify</span></div>
         <div class="dg-q">Discover &amp; explain</div>
         <div class="dg-row"><span class="dg-l">find features</span> <span class="dg-r">→ CPP.run — compositional or positional (via split_kws)</span></div>
+        <div class="dg-row"><span class="dg-l">rank / prune features</span> <span class="dg-r">→ TreeModel — importance + RFE (optional)</span></div>
         <div class="dg-row"><span class="dg-l">explain a prediction</span> <span class="dg-r">→ CPPPlot.feature_map · ShapModel [pro]</span></div>
       </div>
     </div>
