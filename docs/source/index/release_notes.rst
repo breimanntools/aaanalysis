@@ -192,6 +192,9 @@ Changed
   A further pass vectorizes ``AAWindowSampler`` window-sampling internals:
   candidate-center band filtering (~40x faster at scale) and per-window PWM
   scoring in ``sample_motif_matched`` (~12x), again with identical results.
+  ``StructurePreprocessor.encode_pdb`` CA-CA contact counts
+  (``contact_count_8A`` / ``contact_count_12A``) use a vectorized per-residue
+  distance computation (~50x at scale) with byte-identical counts.
 
 
 Version 1.0 (Stable Version)
