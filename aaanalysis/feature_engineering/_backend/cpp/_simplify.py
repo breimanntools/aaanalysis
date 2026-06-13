@@ -212,21 +212,29 @@ def _merged_scale_corr_(df_feat=None, df_scales_pool=None, df_scales_self=None):
     return df_all[present].corr()
 
 
-def _is_redundant_(feat, kept, dict_c, dict_p, df_cor, max_overlap, max_cor, check_cat):
+def _is_redundant_(feat, kept, dict_c, dict_p, dict_scale, cor_np, cpos,
+                   max_overlap, max_cor, check_cat):
     """A feature is redundant with one of ``kept`` when their positions overlap
     (``>= max_overlap`` or one is a subset) AND their scales positively correlate
     (signed ``cor > max_cor``, matching ``CPP.run``'s ``filtering`` — anti-correlated
-    scales are NOT redundant), within the same category when ``check_cat``."""
+    scales are NOT redundant), within the same category when ``check_cat``.
+
+    The scale-correlation lookup is done against the numpy view ``cor_np`` plus the
+    column->index map ``cpos`` (built once by the caller) instead of a per-pair
+    double pandas ``__getitem__``; ``dict_scale`` maps feat id -> its scale id. This
+    is a pure access change — the sequential greedy ``kept`` scan is unchanged, so
+    the kept set and its order are byte-identical to the pandas form."""
+    pos = dict_p[feat]
+    si = cpos.get(dict_scale[feat])
     for top in kept:
         if check_cat and dict_c[feat] != dict_c[top]:
             continue
-        pos, top_pos = dict_p[feat], dict_p[top]
+        top_pos = dict_p[top]
         overlap = len(top_pos.intersection(pos)) / len(top_pos.union(pos))
         if overlap >= max_overlap or pos.issubset(top_pos):
-            scale = ut.split_feat_id(feat_id=feat)[2]
-            top_scale = ut.split_feat_id(feat_id=top)[2]
-            if scale in df_cor.columns and top_scale in df_cor.columns:
-                if float(df_cor[top_scale][scale]) > max_cor:
+            ti = cpos.get(dict_scale[top])
+            if si is not None and ti is not None:
+                if float(cor_np[ti, si]) > max_cor:
                     return True
     return False
 
@@ -254,6 +262,12 @@ def _apply_redundancy_(
     dict_c = dict(zip(feats, df[ut.COL_CAT]))
     dict_p = dict(zip(feats, [set(x) for x in df[ut.COL_POSITION]]))
     dict_auc = dict(zip(feats, df[ut.COL_ABS_AUC]))
+    # Convert df_cor to a numpy view + a column->index map ONCE so the inner
+    # redundancy test does an O(1) numpy lookup instead of a double pandas
+    # __getitem__ (the profiled hot spot). dict_scale maps feat id -> scale id.
+    dict_scale = {f: ut.split_feat_id(feat_id=f)[2] for f in feats}
+    cor_np = df_cor.to_numpy()
+    cpos = {c: k for k, c in enumerate(df_cor.columns)}
     originals = [f for f in feats if f not in swapped_ids]
     swapped = [f for f in feats if f in swapped_ids]
     if tie_break == ut.TIE_BREAK_INTERPRETABILITY:
@@ -270,7 +284,8 @@ def _apply_redundancy_(
     kept = list(originals)  # originals are protected — always kept
     for feat in swapped:
         if not _is_redundant_(
-            feat, kept, dict_c, dict_p, df_cor, max_overlap, max_cor, check_cat
+            feat, kept, dict_c, dict_p, dict_scale, cor_np, cpos,
+            max_overlap, max_cor, check_cat
         ):
             kept.append(feat)
     return df[df[ut.COL_FEATURE].isin(kept)].reset_index(drop=True)
@@ -365,17 +380,21 @@ def _greedy_simplify_(
                     ]
                 )
                 continue
-            X_trial = X.copy()
-            X_trial[:, i] = col
+            # Score in place: cross_val_score only READS X (it clones the
+            # estimator per fold), so mutate the single trial column instead of
+            # copying the whole matrix. Save the old column to restore on reject;
+            # the scored matrix is byte-identical to a full X.copy() trial.
+            old_col = X[:, i].copy()
+            X[:, i] = col
             score = _score_feature_set_(
-                X=X_trial,
+                X=X,
                 labels=labels,
                 ml_cv=ml_cv,
                 ml_metric=ml_metric,
                 estimator=estimator,
             )
             if score >= baseline - ml_th:
-                X[:, i] = col
+                # accepted -> col already in place
                 new_rows[i] = row_df
                 baseline = score
                 accepted = True
@@ -393,6 +412,8 @@ def _greedy_simplify_(
                     ]
                 )
                 break
+            # rejected -> restore the original column so X is unchanged
+            X[:, i] = old_col
             records.append(
                 [
                     feat_id,
