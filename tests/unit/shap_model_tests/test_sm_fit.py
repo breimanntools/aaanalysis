@@ -386,3 +386,10 @@ class TestShapModelFitFuzzyLabels:
         sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
         with pytest.raises(ValueError):
             sm.fit(valid_X, labels=valid_labels, df_seq="not_a_df", fuzzy_labels={entry: 0.6}, **ARGS)
+
+    def test_fuzzy_labels_df_seq_missing_entry_column(self):
+        entry = df_seq["entry"].iloc[0]
+        df_bad = df_seq.rename(columns={"entry": "acc"})
+        sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
+        with pytest.raises(ValueError):
+            sm.fit(valid_X, labels=valid_labels, df_seq=df_bad, fuzzy_labels={entry: 0.6}, **ARGS)

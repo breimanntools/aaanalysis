@@ -303,3 +303,27 @@ class TestAddFeatImpactDfSeq:
         sm.fit(valid_X, labels=valid_labels, **ARGS)
         with pytest.raises(ValueError):
             sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq, sample_positions="NOT_AN_ENTRY")
+
+    def test_entry_name_df_seq_missing_entry_column(self):
+        entry = df_seq["entry"].iloc[0]
+        df_bad = df_seq.rename(columns={"entry": "acc"})
+        sm = aa.ShapModel(verbose=False)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_bad, sample_positions=entry)
+
+    def test_entry_name_df_seq_non_unique(self):
+        entry = df_seq["entry"].iloc[0]
+        df_dup = df_seq.copy()
+        df_dup["entry"] = entry  # collapse to a single repeated entry
+        sm = aa.ShapModel(verbose=False)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_dup, sample_positions=entry)
+
+    def test_entry_name_df_seq_length_mismatch(self):
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(verbose=False)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq.head(3), sample_positions=entry)

@@ -155,11 +155,12 @@ def check_match_df_seq_X(df_seq=None, X=None):
 
 
 def check_match_fuzzy_labels_df_seq(fuzzy_labels=None, df_seq=None, labels=None):
-    """Build a float label vector from binary 'labels' overridden by entry-keyed 'fuzzy_labels'."""
+    """Build a float label vector from binary 'labels' overridden by entry-keyed 'fuzzy_labels'.
+
+    'df_seq' is assumed already validated (DataFrame, unique 'entry' column, row-aligned to 'X')
+    by 'check_match_df_seq_X', which the caller runs first.
+    """
     ut.check_dict(name="fuzzy_labels", val=fuzzy_labels, accept_none=False)
-    if df_seq is None:
-        raise ValueError("'df_seq' should be provided (not None) when 'fuzzy_labels' is given, "
-                         "to align entries with the rows of 'X'.")
     entries = df_seq[ut.COL_ENTRY].to_list()
     set_entries = set(entries)
     wrong_keys = [k for k in fuzzy_labels if k not in set_entries]
