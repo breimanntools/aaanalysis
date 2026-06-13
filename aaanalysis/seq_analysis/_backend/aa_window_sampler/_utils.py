@@ -134,6 +134,27 @@ def window_identity(a, b):
     return sum(x == y for x, y in zip(a, b)) / n
 
 
+def _encode_equal_length(seqs):
+    """Encode a list of equal-length strings as a ``(n, L)`` uint8 array.
+
+    Returns ``None`` when the list is empty or the strings are ragged, so callers
+    fall back to the exact scalar path (which handles ragged windows by treating
+    different-length pairs as identity 0.0).
+    """
+    if not seqs:
+        return None
+    length = len(seqs[0])
+    if length == 0 or any(len(s) != length for s in seqs):
+        return None
+    try:
+        buf = "".join(seqs).encode("latin-1")
+    except UnicodeEncodeError:
+        # Non-latin-1 residues (never present in real protein windows): fall back to the
+        # exact scalar path, which compares characters directly like the original.
+        return None
+    return np.frombuffer(buf, dtype=np.uint8).reshape(len(seqs), length)
+
+
 def filter_similarity_to_test(windows, test_windows, max_similarity):
     """Drop windows whose identity to any test window exceeds ``max_similarity``.
 
@@ -144,10 +165,21 @@ def filter_similarity_to_test(windows, test_windows, max_similarity):
     """
     if max_similarity is None or not test_windows:
         return list(windows), np.ones(len(windows), dtype=bool)
-    mask = np.array([
-        not any(window_identity(w, tw) > max_similarity for tw in test_windows)
-        for w in windows
-    ])
+    W = _encode_equal_length(windows)
+    T = _encode_equal_length(test_windows)
+    if W is None or T is None or W.shape[1] != T.shape[1]:
+        # Ragged / mismatched lengths: identity uses the exact scalar rule (0.0 across lengths).
+        mask = np.array([
+            not any(window_identity(w, tw) > max_similarity for tw in test_windows)
+            for w in windows
+        ])
+        return [w for w, k in zip(windows, mask) if k], mask
+    # identity(w, tw) == fraction of matching positions (an exact integer ratio), so the
+    # vectorized comparison reproduces the scalar decisions exactly. Loop over the (few)
+    # test windows to keep memory at O(n_windows) instead of O(n_windows * n_test).
+    mask = np.ones(len(windows), dtype=bool)
+    for t in T:
+        mask &= ~((W == t).mean(axis=1) > max_similarity)
     return [w for w, k in zip(windows, mask) if k], mask
 
 
@@ -162,13 +194,32 @@ def filter_redundancy(windows, max_similarity):
     """
     if max_similarity is None:
         return list(windows), np.ones(len(windows), dtype=bool)
-    kept, mask = [], []
-    for w in windows:
-        is_dup = any(window_identity(w, k) > max_similarity for k in kept)
-        mask.append(not is_dup)
-        if not is_dup:
-            kept.append(w)
-    return kept, np.array(mask)
+    W = _encode_equal_length(windows)
+    if W is None:
+        # Ragged windows: keep the exact scalar greedy path.
+        kept, mask = [], []
+        for w in windows:
+            is_dup = any(window_identity(w, k) > max_similarity for k in kept)
+            mask.append(not is_dup)
+            if not is_dup:
+                kept.append(w)
+        return kept, np.array(mask)
+    # Same greedy order/decisions, but each "is this a duplicate of a kept window?" check
+    # compares against all kept windows at once. Kept rows accumulate in a preallocated
+    # buffer so the per-window check reads a contiguous view (no per-iteration gather/copy).
+    n, length = W.shape
+    mask = np.zeros(n, dtype=bool)
+    kept_buf = np.empty((n, length), dtype=W.dtype)
+    m = 0
+    for i in range(n):
+        wi = W[i]
+        # (matches / length) reproduces window_identity bit-for-bit, so the decision matches.
+        if m and bool(((kept_buf[:m] == wi).mean(axis=1) > max_similarity).any()):
+            continue
+        mask[i] = True
+        kept_buf[m] = wi
+        m += 1
+    return [windows[i] for i in range(n) if mask[i]], mask
 
 
 def apply_similarity_filters(window, test_windows, accepted_windows,

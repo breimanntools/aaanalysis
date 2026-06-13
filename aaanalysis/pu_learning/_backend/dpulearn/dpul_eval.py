@@ -41,9 +41,10 @@ def _comp_auc(X=None, labels=None, label_test=0, label_ref=1, n_jobs=None):
     return avg_auc_abs
 
 
-def _comp_kld(X, labels, label_test=0, label_ref=1):
+def _comp_kld(X, labels, label_test=0, label_ref=1, n_jobs=None):
     """Calculate the average Kullback-Leibler Divergence (KLD) for each feature."""
-    kld_values = ut.kullback_leibler_divergence_(X=X, labels=labels, label_test=label_test, label_ref=label_ref)
+    kld_values = ut.kullback_leibler_divergence_(X=X, labels=labels, label_test=label_test,
+                                                 label_ref=label_ref, n_jobs=n_jobs)
     # Compute the average KLD
     avg_kld = np.mean(kld_values)
     return avg_kld
@@ -62,7 +63,7 @@ def _eval_distribution_alignment(X=None, labels=None, label_test=0, label_ref=1,
     """Compute the similarity between identified negatives and the other dataset classes (positives, unlabeled)"""
     # Perform tests
     avg_auc_abs = _comp_auc(X=X, labels=labels, label_test=label_test, label_ref=label_ref, n_jobs=n_jobs)
-    avg_kld = _comp_kld(X=X, labels=labels, label_test=label_test, label_ref=label_ref) if comp_kld else None
+    avg_kld = _comp_kld(X=X, labels=labels, label_test=label_test, label_ref=label_ref, n_jobs=n_jobs) if comp_kld else None
     return avg_auc_abs, avg_kld
 
 
@@ -77,7 +78,7 @@ def _eval_distribution_alignment_X_neg(X=None, labels=None, X_neg=None, comp_kld
     labels_combined = np.array([label_test] * len(X_test) + [label_ref] * len(X_neg))
     # Perform tests
     avg_auc = _comp_auc(X=X_combined, labels=labels_combined, label_test=label_test, label_ref=label_ref, n_jobs=n_jobs)
-    avg_kld = _comp_kld(X=X_combined, labels=labels_combined, label_test=label_test, label_ref=label_ref) if comp_kld else None
+    avg_kld = _comp_kld(X=X_combined, labels=labels_combined, label_test=label_test, label_ref=label_ref, n_jobs=n_jobs) if comp_kld else None
     return avg_auc, avg_kld
 
 

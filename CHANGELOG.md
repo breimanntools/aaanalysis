@@ -58,6 +58,11 @@ and a suite of site-localization metrics and plotting helpers.
   `options['n_jobs']` global override.
 - `CPPPlot.feature` titles the plot with the feature's human-readable
   description, controlled by new `show_title` / `title_wrap_width` parameters.
+- Same-output speedups for internal hotspots (no API/output change):
+  `AAWindowSampler` redundancy/similarity filtering (vectorized, ~30x at scale),
+  `AAclust` sample-to-medoid correlation distances (single pass), and per-feature
+  Kullback-Leibler divergence used by `dPULearn.eval(comp_kld=True)`
+  (parallelized, honors `options['n_jobs']`).
 
 ### Deprecated
 - None. The strict-semver deprecation policy and the `deprecated` decorator are
