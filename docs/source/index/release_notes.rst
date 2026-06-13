@@ -165,6 +165,15 @@ Changed
   per-row ``DataFrame.apply`` driver was replaced with a vectorized iteration over
   the raw column arrays. The output (parts, column order, index, values) is
   unchanged.
+- **CPP / feature-engineering same-output speedups**: Three byte-identical
+  optimizations. ``SequenceFeature.prune_by_correlation`` /
+  ``NumericalFeature.filter_correlation`` vectorize the inner correlation-triangle
+  comparison while preserving the greedy, order-dependent skip (the selected mask
+  is unchanged). ``CPP.simplify``'s redundancy reduction replaces a per-pair double
+  pandas lookup into the scale-correlation table with a numpy view built once,
+  keeping the sequential greedy tie-break (kept set and order unchanged). The greedy
+  swap loop drops a per-candidate full-matrix copy in favor of a single mutated-column
+  save/restore (memory only; scored matrix and selected set unchanged).
 - **n_jobs**: Unified parallelism convention across ``CPP`` / ``CPPGrid``
   (``1`` serial, ``-1`` all cores, ``N>1`` exactly N, ``None`` optimized), with an
   ``options['n_jobs']`` global override.
