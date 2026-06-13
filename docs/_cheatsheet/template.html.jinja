@@ -184,7 +184,7 @@
         {% for q, branches in c.decision_guide %}
         <div class="dg-q">{{ q }}</div>
         {% for label, result in branches %}
-        <div class="dg-row"><span class="dg-l">{{ label }}</span> <span class="dg-r">→ {{ result }}</span></div>
+        <div class="dg-row"><span class="dg-l">{{ label }}</span> <span class="dg-r">→ {{ result|replace('[pro]', '<span class="protag">pro</span>')|safe }}</span></div>
         {% endfor %}
         {% endfor %}
       </div>

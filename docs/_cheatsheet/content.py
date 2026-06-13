@@ -380,14 +380,16 @@ DECISION_GUIDE = [
         ("no negatives at all", "AAWindowSampler → CPP → ML model"),
     ]),
     ("What is your learning task?", [
-        ("classify", "TreeModel"),
-        ("regress", "get_labels_quantile / tiered → TreeModel"),
+        ("classify", "any classifier (sklearn)"),
+        ("regress", "get_labels_quantile / tiered"),
         ("multi-class", "get_labels_ovr / ovo"),
         ("cluster · PCA", "AAclust · dPULearn"),
     ]),
     ("Which explainability do you need?", [
-        ("global (group level)", "CPP → TreeModel → CPPPlot"),
-        ("local (per protein)", "CPP → ShapModel → CPPPlot"),
+        ("feature importance (group)", "TreeModel → CPPPlot"),
+        ("feature impact (per protein)",
+         'ShapModel [pro] → CPPPlot '
+         '<span class="shap-up">↑</span><span class="shap-dn">↓</span>'),
     ]),
 ]
 
@@ -410,7 +412,7 @@ GOTCHAS = [
 DATA_OBJECTS = [
     ("df_seq", "entry · sequence · label · tmd_start · tmd_stop"),
     ("df_parts", "one column per part: tmd · jmd_n · jmd_c · …"),
-    ("df_feat", "feature · abs_auc · mean_dif · p_val · positions · scale · category"),
+    ("df_feat", "feature · category · subcategory · scale_name · abs_auc · mean_dif · p_val · positions"),
     ("X", "feature matrix (samples × features) from sf.feature_matrix"),
     ("dict_num", "{entry: ndarray (L×D)} — numerical per-residue values (v1.1)"),
 ]

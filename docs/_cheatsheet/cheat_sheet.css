@@ -147,6 +147,8 @@ table { width: 100%; border-collapse: collapse; }
 .dg-row { font-size: 6.4pt; padding: 0.4px 0 0.4px 6px; line-height: 1.18; }
 .dg-row .dg-l { font-weight: 700; color: var(--ink); }
 .dg-row .dg-r { color: var(--ink-soft); }
+.dg-r .shap-up { color: #FF0D57; font-weight: 800; }  /* SHAP positive (ut.COLOR_SHAP_POS) */
+.dg-r .shap-dn { color: #1E88E5; font-weight: 800; }  /* SHAP negative (ut.COLOR_SHAP_NEG) */
 td.k.mono { font-family: "AA Mono", monospace; font-weight: 700; color: var(--accent); white-space: nowrap; }
 .cap-item { padding: 0.4px 0; border-bottom: 1px solid var(--line-soft); }
 .cap-item:last-child { border-bottom: none; }
