@@ -250,3 +250,42 @@ class TestAddSampleMeanDifComplex:
                                    df_feat=df_feat, drop=drop,
                                    sample_positions=sample_positions, names=names,
                                    group_average=group_average)
+
+
+class TestAddSampleMeanDifDfSeq:
+    """Accession-based sample selection: entry-name ``sample_positions`` resolved via ``df_seq``."""
+
+    # Positive tests
+    def test_sample_positions_entry_name(self):
+        entry = df_seq["entry"].iloc[0]
+        df_feat = aa.ShapModel.add_sample_mean_dif(valid_X, labels=valid_labels, df_feat=create_df_feat(),
+                                                   df_seq=df_seq, sample_positions=entry)
+        assert f"mean_dif_{entry}" in df_feat.columns
+
+    def test_entry_name_matches_int_position(self):
+        entry = df_seq["entry"].iloc[2]
+        i = list(df_seq["entry"]).index(entry)
+        df_a = aa.ShapModel.add_sample_mean_dif(valid_X, labels=valid_labels, df_feat=create_df_feat(),
+                                                df_seq=df_seq, sample_positions=entry)
+        df_b = aa.ShapModel.add_sample_mean_dif(valid_X, labels=valid_labels, df_feat=create_df_feat(),
+                                                sample_positions=i, names=entry)
+        assert df_a[f"mean_dif_{entry}"].equals(df_b[f"mean_dif_{entry}"])
+
+    def test_sample_positions_entry_list(self):
+        entries = df_seq["entry"].iloc[:3].to_list()
+        df_feat = aa.ShapModel.add_sample_mean_dif(valid_X, labels=valid_labels, df_feat=create_df_feat(),
+                                                   df_seq=df_seq, sample_positions=entries)
+        for e in entries:
+            assert f"mean_dif_{e}" in df_feat.columns
+
+    # Negative tests
+    def test_entry_name_requires_df_seq(self):
+        entry = df_seq["entry"].iloc[0]
+        with pytest.raises(ValueError):
+            aa.ShapModel.add_sample_mean_dif(valid_X, labels=valid_labels, df_feat=create_df_feat(),
+                                             sample_positions=entry)
+
+    def test_entry_not_in_df_seq(self):
+        with pytest.raises(ValueError):
+            aa.ShapModel.add_sample_mean_dif(valid_X, labels=valid_labels, df_feat=create_df_feat(),
+                                             df_seq=df_seq, sample_positions="NOT_AN_ENTRY")

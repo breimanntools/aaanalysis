@@ -235,3 +235,54 @@ class TestAddFeatImpactComplex:
 
         with pytest.raises(ValueError):
             sm.add_feat_impact(df_feat=df_feat, names=names, sample_positions=pos, group_average=group_average)
+
+
+class TestAddFeatImpactDfSeq:
+    """Accession-based sample selection: entry-name ``sample_positions`` resolved via ``df_seq``."""
+
+    # Positive tests
+    def test_sample_positions_entry_name(self):
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(verbose=False, random_state=0)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        df_feat = sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq, sample_positions=entry)
+        assert f"feat_impact_{entry}" in df_feat.columns
+
+    def test_entry_name_matches_int_position(self):
+        entry = df_seq["entry"].iloc[2]
+        i = list(df_seq["entry"]).index(entry)
+        sm = aa.ShapModel(verbose=False, random_state=0)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        df_a = sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq, sample_positions=entry)
+        df_b = sm.add_feat_impact(df_feat=create_df_feat(), sample_positions=i, names=entry)
+        assert df_a[f"feat_impact_{entry}"].equals(df_b[f"feat_impact_{entry}"])
+
+    def test_sample_positions_entry_list(self):
+        entries = df_seq["entry"].iloc[:3].to_list()
+        sm = aa.ShapModel(verbose=False, random_state=0)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        df_feat = sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq, sample_positions=entries)
+        for e in entries:
+            assert f"feat_impact_{e}" in df_feat.columns
+
+    def test_names_override_entry_name(self):
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(verbose=False, random_state=0)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        df_feat = sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq,
+                                     sample_positions=entry, names="APP")
+        assert "feat_impact_APP" in df_feat.columns
+
+    # Negative tests
+    def test_entry_name_requires_df_seq(self):
+        entry = df_seq["entry"].iloc[0]
+        sm = aa.ShapModel(verbose=False)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            sm.add_feat_impact(df_feat=create_df_feat(), sample_positions=entry)
+
+    def test_entry_not_in_df_seq(self):
+        sm = aa.ShapModel(verbose=False)
+        sm.fit(valid_X, labels=valid_labels, **ARGS)
+        with pytest.raises(ValueError):
+            sm.add_feat_impact(df_feat=create_df_feat(), df_seq=df_seq, sample_positions="NOT_AN_ENTRY")
