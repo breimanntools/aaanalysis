@@ -139,6 +139,14 @@ Changed
   the new ``show_title`` (default ``True``) and ``title_wrap_width`` (default ``45``)
   parameters. A subsequent ``plt.title(...)`` still overrides it; ``feature_map`` and
   ``ranking`` are unchanged.
+- **Performance (same output)**: Several internal hotspots were vectorized or
+  parallelized without changing results. ``AAWindowSampler`` redundancy /
+  similarity filtering now compares amino-acid windows with vectorized NumPy
+  operations (identical keep/drop decisions; ~30x faster at scale), ``AAclust``
+  sample-to-medoid correlation distances are computed in one pass, and the
+  per-feature Kullback-Leibler divergence (used by ``dPULearn.eval`` with
+  ``comp_kld=True``) is parallelized over features and honors
+  ``options['n_jobs']``. Public APIs and outputs are unchanged.
 
 
 Version 1.0 (Stable Version)
