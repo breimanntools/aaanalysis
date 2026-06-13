@@ -1107,6 +1107,7 @@ class CPP(Tool):
         df_feat: pd.DataFrame = None,
         labels: ut.ArrayLike1D = None,
         strategy: Literal["greedy", "consolidate", "swap_all"] = "greedy",
+        candidate_search: Literal["exact", "fast"] = "exact",
         max_interpret_grade: Optional[int] = None,
         min_cor: float = 0.7,
         ml_model: Union[Literal["svm", "rf", "log_reg"], object] = "svm",
@@ -1154,6 +1155,16 @@ class CPP(Tool):
               subcategories, keeping each batch swap only if the set CV score holds.
             - ``'swap_all'``: apply every eligible best-candidate swap with no CV gate
               (fastest; ``ml_model`` / ``ml_metric`` / ``ml_th`` / ``ml_cv`` ignored).
+        candidate_search : {'exact', 'fast'}, default='exact'
+            How many candidate scales are evaluated per feature. ``'exact'`` (default) tests
+            every eligible candidate and reproduces the original result exactly. ``'fast'`` is
+            an **approximate** speed-up that caps the search to the most promising candidates
+            per feature (highest interpretability, then strongest correlation); it can change
+            which features are kept and so is most useful on large scale pools. The speed-up is
+            concentrated in ``strategy='greedy'`` (one cross-validation per candidate tried);
+            ``'consolidate'`` gains less and ``'swap_all'`` is unaffected (it already stops at
+            the first viable candidate). With ``return_details=True`` the ``df_candidates``
+            report is correspondingly shorter under ``'fast'``.
         max_interpret_grade : int, optional
             The maximum (worst) interpretability **grade** kept (1-10, where **grade 1 is the
             best / most interpretable, so lower is better**). Every feature whose scale
@@ -1261,6 +1272,11 @@ class CPP(Tool):
             name="strategy", val=strategy, list_str_options=ut.LIST_SIMPLIFY_STRATEGIES
         )
         ut.check_str_options(
+            name="candidate_search",
+            val=candidate_search,
+            list_str_options=ut.LIST_CANDIDATE_SEARCH,
+        )
+        ut.check_str_options(
             name="on_unimprovable",
             val=on_unimprovable,
             list_str_options=ut.LIST_ON_UNIMPROVABLE,
@@ -1307,6 +1323,7 @@ class CPP(Tool):
             df_scales_self=self.df_scales,
             labels=labels,
             strategy=strategy,
+            candidate_search=candidate_search,
             max_interpret_grade=max_interpret_grade,
             min_cor=min_cor,
             ml_metric=ml_metric,

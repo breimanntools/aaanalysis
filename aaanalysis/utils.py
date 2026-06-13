@@ -399,6 +399,12 @@ LIST_ON_UNIMPROVABLE = [ON_UNIMPROVABLE_KEEP, ON_UNIMPROVABLE_DROP, ON_UNIMPROVA
 TIE_BREAK_INTERPRETABILITY = "interpretability"
 TIE_BREAK_PERFORMANCE = "performance"
 LIST_REDUNDANCY_TIE_BREAK = [TIE_BREAK_INTERPRETABILITY, TIE_BREAK_PERFORMANCE]
+# CPP.simplify — per-feature candidate-search breadth. 'exact' tests every
+# eligible candidate (default; byte-identical to the historical path); 'fast' is
+# an opt-in heuristic that caps the candidates evaluated per feature for speed.
+CANDIDATE_SEARCH_EXACT = "exact"
+CANDIDATE_SEARCH_FAST = "fast"
+LIST_CANDIDATE_SEARCH = [CANDIDATE_SEARCH_EXACT, CANDIDATE_SEARCH_FAST]
 # CPP.simplify — cross-validation-gate model presets (SVM default; also accepts a
 # custom sklearn estimator instance).
 MODEL_SVM = "svm"

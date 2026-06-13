@@ -57,6 +57,13 @@ Added
   pre-sliced numerical tensor (``dict_num_parts``) rather than an amino-acid →
   scale lookup, enabling embedding / structure / annotation features through the
   same pipeline and output schema as ``CPP.run``.
+- **CPP.simplify ``candidate_search='fast'``**: New opt-in heuristic that caps the
+  candidate scales evaluated per feature, for a large speed-up on big scale pools
+  (mainly the ``greedy`` strategy). The default ``candidate_search='exact'`` is
+  unchanged and reproduces the previous result exactly; ``'fast'`` is
+  *statistically equivalent* — the kept-feature set may differ but stays within a
+  documented quality band (kept-feature Jaccard ≥ 0.95 and ΔavgABS_AUC ≤ 0.005 vs
+  exact on the canonical data).
 - **SequenceFeature.get_labels_ovr / get_labels_ovo**: Convert multi-class
   ``labels`` into binary label sets for ``CPP`` — one-vs-rest (K full-length
   arrays, all samples kept) or one-vs-one (per class-pair). The row-dropping

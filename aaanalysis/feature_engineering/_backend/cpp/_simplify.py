@@ -19,8 +19,27 @@ import aaanalysis.utils as ut
 from .utils_feature import _feature_value, _get_dict_all_scales
 from ._utils_feature_stat import add_stat_
 
+# candidate_search='fast' cap: evaluate at most this many candidates per feature
+# (the top-k of the ranked best-first list). Chosen as the smallest k that keeps
+# the heuristic within the documented quality band (kept-feature Jaccard >= 0.95,
+# ΔavgABS_AUC <= 0.005 vs exact) with margin on the canonical DOM_GSEC cell; see
+# the validation harness (dev_scripts/perf_simplify_validate.py) and the T3
+# regression anchor (tests/unit/cpp_tests/test_cpp_simplify_regression.py).
+_FAST_TOP_K = 10
+
 
 # I Helper Functions
+def _cap_candidates_(candidates=None, top_k=None):
+    """Top-``top_k`` prefix of the ranked (best-first) candidate list.
+
+    ``top_k=None`` (``candidate_search='exact'``) returns the list unchanged, so
+    the exact path stays byte-identical; a finite ``top_k``
+    (``candidate_search='fast'``) keeps only the most promising candidates."""
+    if top_k is None:
+        return candidates
+    return candidates[:top_k]
+
+
 def _interp(scale_id=None, dict_interp=None):
     """Interpretability rating of a scale's subcategory (NaN if unrated/absent)."""
     val = dict_interp.get(scale_id, np.nan)
@@ -384,9 +403,13 @@ def _greedy_simplify_(
     accept_gaps=False,
     max_std_test=0.2,
     estimator=None,
+    top_k=None,
 ):
     """Per-feature swap with a CV non-regression gate. Returns
-    ``(df_feat_new, X_kept, records, baseline)``."""
+    ``(df_feat_new, X_kept, records, baseline)``.
+
+    ``top_k`` (``candidate_search='fast'``) caps the candidates evaluated per
+    feature; ``None`` (``'exact'``) evaluates them all (byte-identical path)."""
     n = len(df_feat)
     baseline = _score_feature_set_(
         X=X, labels=labels, ml_cv=ml_cv, ml_metric=ml_metric, estimator=estimator
@@ -406,6 +429,7 @@ def _greedy_simplify_(
             feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp,
             min_cor=min_cor, interp_arr=interp_arr,
         )
+        cands = _cap_candidates_(candidates=cands, top_k=top_k)
         accepted = False
         for scale_cand, interp_cand, abs_cor, cor in cands:
             row_df, col = _recompute_swapped_row_(
@@ -627,6 +651,7 @@ def _consolidate_simplify_(
     accept_gaps=False,
     max_std_test=0.2,
     estimator=None,
+    top_k=None,
 ):
     """Batch-by-subcategory swaps toward the fewest interpretable subcategories.
 
@@ -634,7 +659,11 @@ def _consolidate_simplify_(
     unclaimed target with an eligible candidate in that subcategory is swapped to
     its best in-subcat candidate, the whole batch is CV-scored, and the batch is
     accepted only if the set score stays within ``ml_th`` of the baseline. Returns
-    ``(df_feat_new, X_kept, records)``."""
+    ``(df_feat_new, X_kept, records)``.
+
+    ``top_k`` (``candidate_search='fast'``) caps the candidates per feature
+    before subcategory ranking, so the heuristic is internally consistent; ``None``
+    (``'exact'``) evaluates them all (byte-identical path)."""
     n = len(df_feat)
     baseline = _score_feature_set_(
         X=X, labels=labels, ml_cv=ml_cv, ml_metric=ml_metric, estimator=estimator
@@ -650,9 +679,12 @@ def _consolidate_simplify_(
         i: (
             feat_id,
             interp_old,
-            _eligible_candidates_(
-                feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp,
-                min_cor=min_cor, interp_arr=interp_arr,
+            _cap_candidates_(
+                candidates=_eligible_candidates_(
+                    feat_id=feat_id, df_cor=df_cor, dict_interp=dict_interp,
+                    min_cor=min_cor, interp_arr=interp_arr,
+                ),
+                top_k=top_k,
             ),
         )
         for i, feat_id, interp_old in targets
@@ -775,6 +807,7 @@ def simplify_cpp_(
     df_scales_self=None,
     labels=None,
     strategy=ut.STRATEGY_GREEDY,
+    candidate_search=ut.CANDIDATE_SEARCH_EXACT,
     max_interpret_grade=None,
     min_cor=0.7,
     ml_metric="balanced_accuracy",
@@ -802,6 +835,10 @@ def simplify_cpp_(
     # redundancy reduction), so the output keeps every input feature 1:1.
     if not allow_drop:
         on_unimprovable = ut.ON_UNIMPROVABLE_KEEP
+    # candidate_search='fast' caps candidates evaluated per feature; 'exact'
+    # (top_k=None) evaluates them all (byte-identical path). swap_all has no CV
+    # gate and breaks at the first viable candidate, so it ignores the cap.
+    top_k = _FAST_TOP_K if candidate_search == ut.CANDIDATE_SEARCH_FAST else None
     df_scales_pool, df_cor, dict_all_scales, dict_interp, dict_meta = (
         _load_candidate_pool_()
     )
@@ -879,6 +916,7 @@ def simplify_cpp_(
             accept_gaps=accept_gaps,
             max_std_test=max_std_test,
             estimator=estimator,
+            top_k=top_k,
         )
         if strategy == ut.STRATEGY_GREEDY:
             df_feat_new, _X_kept, records, _ = _greedy_simplify_(**common)
