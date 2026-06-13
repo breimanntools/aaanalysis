@@ -37,14 +37,26 @@ def _dist_to_medoids(X, labels=None, medoid_ind=None, labels_medoids=None, metri
     medoid_ind = np.asarray(medoid_ind)
     labels_medoids = np.asarray(labels_medoids)
     label_to_medoid = {lab: int(medoid_ind[j]) for j, lab in enumerate(labels_medoids)}
-    dist = np.zeros(len(labels), dtype=float)
-    for i in range(len(labels)):
-        m = label_to_medoid[labels[i]]
-        if i == m:
-            continue  # medoid's distance to itself is 0.0
-        if metric == "correlation":
-            dist[i] = 1.0 - np.corrcoef(X[i], X[m])[0, 1]
-        else:
+    n = len(labels)
+    dist = np.zeros(n, dtype=float)
+    medoid_of = np.array([label_to_medoid[lab] for lab in labels])
+    if metric == "correlation":
+        # Row-wise Pearson(sample, its medoid), vectorized. Mathematically the same value
+        # as np.corrcoef per pair (the ddof cancels in the ratio); differs only at the ULP
+        # level from the summation order, and the medoid's own row is forced to 0.0.
+        Xm = X[medoid_of]
+        Xc = X - X.mean(axis=1, keepdims=True)
+        Mc = Xm - Xm.mean(axis=1, keepdims=True)
+        num = np.einsum("ij,ij->i", Xc, Mc)
+        den = np.sqrt(np.einsum("ij,ij->i", Xc, Xc) * np.einsum("ij,ij->i", Mc, Mc))
+        with np.errstate(invalid="ignore", divide="ignore"):
+            dist = 1.0 - num / den
+        dist[np.arange(n) == medoid_of] = 0.0
+    else:
+        for i in range(n):
+            m = medoid_of[i]
+            if i == m:
+                continue  # medoid's distance to itself is 0.0
             dist[i] = pairwise_distances(X[m].reshape(1, -1), X[i].reshape(1, -1), metric=metric)[0, 0]
     return dist
 
