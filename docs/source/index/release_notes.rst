@@ -121,6 +121,18 @@ Added
 - **aa.__version__**: The installed package version is now exposed as a
   top-level attribute via ``importlib.metadata``.
 
+**Documentation**
+
+- **Prediction tasks** concept-overview page (*Usage Principles*): maps a
+  biological question to the right AAanalysis workflow via a task table keyed on
+  *unit of comparison* and *reference construction* (not biological scale alone),
+  covering the residue / domain / protein levels plus the determinant-discovery,
+  design/engineering, and relational-boundary rows. The front door to the
+  Protocols catalog; taxonomy recorded in ADR-0022.
+- **A minimal CPP analysis** tutorial (``tutorial0_minimal``): the shortest
+  end-to-end loop — load a dataset, run CPP, read out the signature — paired with
+  the new concept page.
+
 Changed
 ~~~~~~~
 
