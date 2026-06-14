@@ -76,13 +76,6 @@ classes grouped by capability, the prediction levels (residue / domain / protein
    index/references.rst
    index/release_notes.rst
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
 The AAanalysis Ecosystem
 ========================
 AAanalysis is the interpretable middle layer between bioinformatics I/O and the downstream machine
