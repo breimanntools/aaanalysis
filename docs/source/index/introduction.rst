@@ -11,6 +11,13 @@
 
 Introduction
 ============
+
+.. image:: /_artwork/logos/model_AAanalysis.png
+   :alt: AAanalysis Model Overview
+   :align: center
+   :class: aa-model
+   :width: 100%
+
 **AAanalysis** is a Python framework designed for scientists and researchers focusing on interpretable sequence-based
 protein prediction. Ideal for comparing protein sequences using amino acid scales, this toolkit is versatile enough
 for any sequence analysis representable by numerical values.
