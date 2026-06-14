@@ -7,6 +7,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 
 import aaanalysis.utils as ut
+from aaanalysis.template_classes import Wrapper
 from ._backend.dpulearn.dpul_fit import (get_neg_via_distance, get_neg_via_pca)
 from ._backend.dpulearn.dpul_eval import eval_identified_negatives
 from ._backend.dpulearn.dpul_compare_sets_neg import compare_sets_negatives_
@@ -133,9 +134,11 @@ def check_match_X_X_neg(X=None, X_neg=None):
 
 
 # II Main Functions
-class dPULearn:
+class dPULearn(Wrapper):
     """
     Deterministic Positive-Unlabeled Learning (**dPULearn**) class for identifying reliable negatives from unlabeled data [Breimann25a]_.
+
+    As a ``Wrapper``, it implements the ``.fit`` / ``.eval`` model contract.
 
     dPULearn offers a deterministic approach to Positive-Unlabeled (PU) learning, featuring two distinct
     identification approaches:
