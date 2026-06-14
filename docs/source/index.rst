@@ -37,7 +37,7 @@ browser; a PDF download is linked below.
           alt="AAanalysis cheat sheet (page 1 of 3)"
           style="width: 100%; display: block; margin-left: auto; margin-right: auto;">
    </a>
-   <p style="margin-top: 0.8em; text-align: center;">
+   <p style="margin-top: 0.25em; text-align: right; font-size: 0.8em;">
      <a href="_static/cheat_sheet.pdf" download="aaanalysis_cheat_sheet.pdf">⬇ Download the cheat sheet (PDF, 3 pages)</a>
    </p>
 
