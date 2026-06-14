@@ -189,6 +189,7 @@ CI/CD tools automate testing and deployment.
 ### GitHub Actions workflows
 
 - **Test Coverage** (`test_coverage.yml`): Runs on push/PR to master. Installs `.[pro]`, runs pytest with coverage, uploads to Codecov.
+- **Integration & E2E Tests** (`integration_e2e.yml`): Runs on push/PR to master. Core-only, offline; runs `tests/integration` + `tests/e2e` on Ubuntu py3.10 + 3.14 (excluded from the Unit Tests matrix — ADR-0031).
 - **Build Wheels** (`build_wheels.yml`): Runs on release. Builds wheels via cibuildwheel and publishes to PyPI.
 
 (Workflows are managed via YAML files in `.github/workflows/`; no bash commands needed.)

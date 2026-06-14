@@ -625,7 +625,10 @@ Quality gates
      - AAanalysis mechanism
    * - **Tests**
      - full matrix passes
-     - ``.github/workflows/main.yml`` ("Unit Tests"): ``pytest tests -m "not regression" -x -n auto`` on **Ubuntu py3.10–3.14** + **Windows py3.10 & 3.14** (Windows brackets min+max; the full Windows range and the ``-m regression`` exact-value CPP anchor run in the nightly).
+     - ``.github/workflows/main.yml`` ("Unit Tests"): ``pytest tests -m "not regression and not integration and not e2e" -x -n auto`` on **Ubuntu py3.10–3.14** + **Windows py3.10 & 3.14** (Windows brackets min+max; the full Windows range and the ``-m regression`` exact-value CPP anchor run in the nightly).
+   * - **Integration & E2E**
+     - cross-component seams + protocol workflows pass
+     - ``.github/workflows/integration_e2e.yml`` ("Integration & E2E Tests"): ``pytest tests/integration tests/e2e -m "not regression" -n auto`` on **Ubuntu py3.10 + 3.14** (core-only, offline). The fourth master-gating workflow (push + PR to master); excluded from the Unit Tests matrix so it runs once (ADR-0031).
    * - **Coverage**
      - **≥ 88 %** line coverage, package-only
      - ``.github/workflows/test_coverage.yml``: ``pytest … --cov=aaanalysis --cov-fail-under=88`` (+ Codecov ``patch`` / ``project``). Measured on the package only (``--cov=aaanalysis``, never ``--cov=./``).

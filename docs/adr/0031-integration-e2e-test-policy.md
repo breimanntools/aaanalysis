@@ -38,10 +38,14 @@ drift-flaky, and add nothing the unit layer already covers.
   `tests/integration/` (cross-component *seams*) and `tests/e2e/` (full
   protocol-mirroring *workflows*) run in a **dedicated `Integration & E2E Tests`
   workflow** (`.github/workflows/integration_e2e.yml`, one combined job over
-  both directories, Linux, Python bracketed at floor + ceiling). They are
+  both directories, Linux, Python bracketed at floor + ceiling). It triggers on
+  the same events as the other gating actions — `push` to `master` and
+  `pull_request` targeting `master` — making it the **fourth master-gating
+  workflow** alongside `Unit Tests` (`main.yml`), `Test Coverage`
+  (`test_coverage.yml`), and `CodeQL` (`codeql_analysis.yml`). The tiers are
   **excluded from the `Unit Tests` matrix** (`main.yml` runs
   `-m "not regression and not integration and not e2e"`) so they run once, as
-  their own PR check, rather than double-running across the full matrix. New
+  their own check, rather than double-running across the full matrix. New
   `integration` / `e2e` markers in `tests/pytest.ini` drive both the dedicated
   selection and that exclusion. (They are core-only + offline, so the dedicated
   workflow needs no `pro` extra and no FIMO/cd-hit/mmseqs; the network-marked
@@ -88,7 +92,9 @@ drift-flaky, and add nothing the unit layer already covers.
 
 - CI now has a blocking, assertion-bearing pipeline test for every documented
   workflow and every cross-component seam — the protocol notebooks finally have
-  checked analogues even though nbmake is not in CI.
+  checked analogues even though nbmake is not in CI. Pushing to `master` (or
+  opening a PR against it) now triggers **four** gating workflows, not three:
+  `Unit Tests`, `Test Coverage`, `CodeQL`, and `Integration & E2E Tests`.
 - The `testing.md` taxonomy table and the `sharp-edges.md` deferral are updated
   to match; "integration/e2e deferred to v2" is no longer true.
 - Reviewers have a bright line for higher-tier scope: a new integration test is
