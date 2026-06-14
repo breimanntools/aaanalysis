@@ -4,9 +4,19 @@ on:
   push:
     branches:
       - master
+    # Docs-only changes can't affect test outcomes, so skip the matrix for them.
+    # A commit touching any non-doc file (e.g. *.py, pyproject.toml) still runs.
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.rst'
   pull_request:
     branches:
       - master
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.rst'
 
 # Cancel a superseded in-progress run on the same branch/PR (saves runner minutes).
 concurrency:
