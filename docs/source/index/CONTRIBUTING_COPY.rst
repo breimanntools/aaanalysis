@@ -486,8 +486,8 @@ order there is natural rather than rigid.
 **Prepare**
 
 1. **Pick & sharpen the issue.** No skill required to start. Optionally clean up or generate the
-   wording with ``/triage`` or ``/to-issues`` (house style: ``docs/guides/issue_style_guide.rst``);
-   for "what next?", ``/github-issue-handoff`` produces a prioritized, parallelization-aware plan.
+   wording with ``/triage`` or ``/to-issues`` (house style: ``docs/guides/issue_style_guide.md``);
+   for "what next?", ``/github-issues`` produces a prioritized, parallelization-aware plan.
 2. **``/grill-with-docs`` — the highest-leverage step.** Sharpen the spec against the *live*
    codebase and refresh ``CONTEXT.md`` / ADRs **before any code is written**. The closest built-in,
    ``/init``, only (re)generates codebase docs — it does not do the adversarial spec-vs-reality
