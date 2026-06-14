@@ -137,7 +137,7 @@ class dPULearn(Wrapper):
     """
     Deterministic Positive-Unlabeled Learning (**dPULearn**) class for identifying reliable negatives from unlabeled data [Breimann25a]_.
 
-    As a :class:`Wrapper`, it implements the ``.fit`` / ``.eval`` model contract.
+    As a ``Wrapper``, it implements the ``.fit`` / ``.eval`` model contract.
 
     dPULearn offers a deterministic approach to Positive-Unlabeled (PU) learning, featuring two distinct
     identification approaches:

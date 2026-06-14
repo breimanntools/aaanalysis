@@ -332,7 +332,7 @@ class ShapModel(Wrapper):
     (SHapley Additive exPlanations) [Lundberg20]_ explainers to obtain Monte Carlo
     estimates for feature impact [Breimann25a]_.
 
-    As a :class:`Wrapper`, it implements the ``.fit`` / ``.eval`` model contract.
+    As a ``Wrapper``, it implements the ``.fit`` / ``.eval`` model contract.
 
     `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ is an explainable Artificial Intelligence (AI) framework
     and game-theoretic approach to explain the output of any machine learning model using SHAP values. These SHAP values

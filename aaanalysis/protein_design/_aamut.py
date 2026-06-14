@@ -52,7 +52,7 @@ class AAMut(Tool):
     Amino Acid Mutator (AAMut) class for analyzing the physicochemical impact of amino acid
     substitutions on property scales [Breimann24a]_.
 
-    As a :class:`Tool`, it implements the ``.run`` / ``.eval`` pipeline contract.
+    As a ``Tool``, it implements the ``.run`` / ``.eval`` pipeline contract.
 
     ``AAMut`` is **CPP-agnostic**: it quantifies how substituting one amino acid for another
     shifts each physicochemical scale value, independent of any sequence or prediction task.

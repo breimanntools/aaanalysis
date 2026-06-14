@@ -143,7 +143,7 @@ class TreeModel(Wrapper):
     Tree Model class: A wrapper for tree-based models to obtain Monte Carlo estimates of feature
     importance and predictions [Breimann25a]_.
 
-    As a :class:`Wrapper`, it implements the ``.fit`` / ``.eval`` model contract.
+    As a ``Wrapper``, it implements the ``.fit`` / ``.eval`` model contract.
 
     Monte Carlo estimates are derived by averaging feature importance or prediction probabilities across various
     tree-based models and training rounds, enhancing the robustness and reproducibility of these estimates.
