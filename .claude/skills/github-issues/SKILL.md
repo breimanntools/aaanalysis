@@ -1,5 +1,5 @@
 ---
-name: github-issue-handoff
+name: github-issues
 description: Audit all open GitHub issues for the aaanalysis package against its scope and coding standards (CLAUDE.md + .claude/rules/sharp-edges.md), flagging each as ready / needs-revision / conflicts / already-addressed, detecting overlaps that must not be developed in parallel, and writing a prioritized step-by-step implementation plan to docs/guides/handoff_github_issues.md. Use when the user wants to review, triage, audit, or scope GitHub issues, refresh the issue handoff, decide what to implement next, or plan parallel work across issues.
 ---
 
@@ -12,7 +12,7 @@ a *handoff* — another session (or a parallel one) should be able to pick any l
 ## Workflow
 
 1. **Fetch.** Run the bundled script to get every open issue with its full body:
-   `python .claude/skills/github-issue-handoff/scripts/fetch_issues.py` (add `--limit N`
+   `python .claude/skills/github-issues/scripts/fetch_issues.py` (add `--limit N`
    if there are many; `--json` for raw). Do not hand-list issues — always fetch fresh.
 2. **Load the baselines** (so verdicts are grounded, not guessed):
    - Scope + standards: `CLAUDE.md`, `.claude/rules/sharp-edges.md`, and skim the other

@@ -2,7 +2,7 @@
 
 How to write a GitHub issue for this repo. Derived from the strongest existing
 issues (**#61**, **#62**) and the coding standards in `CLAUDE.md` +
-`.claude/rules/`. The skill `github-issue-handoff` and any agent creating issues
+`.claude/rules/`. The skill `github-issues` and any agent creating issues
 should follow this.
 
 **Core idea.** A good issue is a *contract*: a reader can **scope it, build it,

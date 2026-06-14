@@ -2,6 +2,10 @@
 
 Not path-scoped. Referenced from the root CLAUDE.md.
 
+> **How the subpackages connect at runtime** (the `load → parts → CPP → model →
+> explain → plot` dataflow): see `docs/module_map.md`. This tree shows *where things
+> live*; the map shows *how they flow*.
+
 ```
 aaanalysis/
   __init__.py            # public re-exports + pro stubs
