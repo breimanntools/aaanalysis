@@ -154,3 +154,15 @@ a:visited {
         overflow-wrap: anywhere;
     }
 }
+
+/* ------ Ecosystem Figure Spacing ------ */
+/* Equal vertical gap above and below the ecosystem diagram on the index
+ * page. Uses margin (gap between boxes), not padding (inside the figure).
+ * Scoped via :figclass: ecosystem-figure so other figures are untouched.
+ * Covers both docutils outputs: <figure class="..."> and the legacy
+ * <div class="figure ...">. */
+.rst-content figure.ecosystem-figure,
+.rst-content .figure.ecosystem-figure {
+    margin-top: 24px;
+    margin-bottom: 24px;
+}
