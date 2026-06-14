@@ -51,10 +51,6 @@ Welcome to the AAanalysis documentation!
    :target: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml
    :alt: CodeQL
 
-.. |Documentation Status| image:: https://img.shields.io/readthedocs/aaanalysis/latest
-   :target: https://aaanalysis.readthedocs.io/en/latest/?badge=latest
-   :alt: Documentation Status
-
 
 .. =========================
 .. Table
@@ -67,7 +63,7 @@ Welcome to the AAanalysis documentation!
    * - **Distribution**
      - |License| |PyPI Version| |Supported Python Versions| |Downloads| |GitHub Stars|
    * - **Status**
-     - |PyPI Status| |Unit Tests| |Codecov| |CodeQL| |Documentation Status|
+     - |PyPI Status| |Unit Tests| |Codecov| |CodeQL|
 
 .. image:: docs/source/_artwork/logos/model_AAanalysis.png
    :alt: Overview of AAanalysis components
