@@ -132,7 +132,7 @@ def main() -> int:
     out_dir = _parse_out_dir()
     preview = out_dir != ASSET_DIR or PLOTS_DIR != ASSET_DIR / "cs_plots"
     html_out = out_dir / "cheat_sheet.html"
-    pdf_out = out_dir / "cheat_sheet.pdf"
+    pdf_out = out_dir / "AAanalysis_cheat_sheet.pdf"
     sys.path.insert(0, str(HERE))
     out_dir.mkdir(parents=True, exist_ok=True)
 

@@ -1,7 +1,7 @@
 """This is the single source of truth for the AAanalysis cheat sheet content.
 
 The same ``CONTENT`` dict drives both rendered outputs (``cheat_sheet.html`` and
-``cheat_sheet.pdf``) via ``build_cheat_sheet.py`` -> ``template.html.jinja``, so the
+``AAanalysis_cheat_sheet.pdf``) via ``build_cheat_sheet.py`` -> ``template.html.jinja``, so the
 two artifacts can never drift. Edit content here, then regenerate (see README.md).
 
 Every code snippet uses only public ``aaanalysis.__all__`` symbols with real
