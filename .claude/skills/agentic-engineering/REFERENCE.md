@@ -52,6 +52,52 @@ data loss. Rules:
   then pop **by explicit ref you confirmed is yours** (`git stash pop stash@{0}`), never a bare
   `git stash pop`. Always check a git command's exit status before running the next one.
 
+## Merge method — merge commits, never squash
+
+**Land every PR as a merge commit (`gh pr merge --auto --merge`). Do not pass `--squash`.** Two
+reasons, both learned the hard way:
+
+- **Squash rewrites history into a new SHA**, so the branch's own commits are never reachable from
+  `master`. That makes `git branch --merged master` omit the branch and `git branch -d` refuse it
+  ("not fully merged") — the cleanup detection in step 8 goes blind, branches pile up across parallel
+  sessions, and you're forced into `git branch -D` (force) + `git diff master...<branch>` workarounds
+  that are easy to get wrong. Merge commits keep the branch reachable, so `--merged` / `-d` just work.
+- **Squash silently collapses the individual commits** (a scaffold + a fix + a style commit become
+  one), losing the per-commit narrative the reviewer and `git log` rely on.
+
+The merge **method is its own explicit decision** — never fold `--squash`/`--merge` into the wording
+of the step-6 "skip review → auto-merge" option. A real incident: a PR was squash-merged because the
+flag rode along inside an auto-merge option the user picked for its *review-skip* meaning. If the user
+has not stated a method, ask; the standing default for this repo is `--merge`.
+
+## Parallel-session hazards (concurrent streams, one repo)
+
+Several sessions/agents work this repo at the same time. Almost every "what was already done?"
+confusion traces to **one session acting on stale knowledge of another's merges/deletes**. The
+mitigations SKILL.md's *Parallel sessions* section summarizes, in full:
+
+- **Isolation is per-task worktrees, full stop.** One `git worktree` (or separate clone) per
+  concurrent stream — never a shared checkout / `HEAD`. A shared tree lets a concurrent commit/push
+  land *between* your `git status` and your commit (observed: an unrelated refactor was committed by
+  another process mid-task). If you must share a tree, it is safe only for strictly serial work.
+- **Live state is derived, never remembered.** Session memory, a prior turn's `gh pr list`, or a
+  screenshot are all instantly stale. Before any status claim / commit / merge / cleanup:
+  `git fetch origin --prune` (drops remote-tracking refs for branches another session already
+  merged+deleted — the usual "ghost branch that looks ahead/unmerged") **and** a fresh
+  `gh pr list` / `gh pr view <n> --json state,mergedAt`.
+- **Squash made this worse; merge commits make detection honest.** Under squash, a merged branch
+  looked unmerged to git, so "is this forgotten work?" was unanswerable from git alone and the
+  screenshot-driven guesses were wrong. With merge commits, `git branch --merged master` is the
+  truth, and `prune_merged_branches.py` cross-checks PR state on top.
+- **Only ever act on the branch/worktree you created.** Enumerate others with `git worktree list` +
+  `gh pr list`; an unexpected branch/worktree/edit is someone else's in-flight work — **stop and
+  surface it**, never commit/revert/delete/clean it. A non-empty `git diff master...<branch>` on a
+  branch with **no PR** is *forgotten work* — flag it for a human, never delete it.
+- **Cleanup runs from any session and is idempotent.** Parallel auto-merges land after the opening
+  session ends, so `python .github/scripts/prune_merged_branches.py` (report-only by default,
+  `--apply` to delete) is the reconcile tool — run it from any session; it is PR-state-driven and
+  never touches FORGOTTEN no-PR branches. A scheduled/unattended job may *flag* but never deletes (§0).
+
 ## CI specifics drift — verify, don't trust
 
 The *Local gate commands* block below and the guide's quality-gates table name concrete

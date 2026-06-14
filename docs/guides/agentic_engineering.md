@@ -107,7 +107,13 @@ order there is natural rather than rigid. The full rationale lives in this secti
    (step 4): the user can review against a green, RTD-previewed PR rather than a moving target.
 7. **Arm auto-merge; fix-forward on red.** Once the user has cleared the review gate (step 6) — on the
    skip path, after you've posted the approving review comment — and you've read the RTD preview + PR
-   diff, enable GitHub-native auto-merge: `gh pr merge --auto --squash`. GitHub merges the moment every required check passes and the branch is conflict-free,
+   diff, enable GitHub-native auto-merge: **`gh pr merge --auto --merge`** — a **merge commit, never
+   `--squash`** (squash rewrites the branch into a new SHA, which loses the individual commits *and*
+   blinds the step-8 cleanup detection; merge commits keep `git branch --merged` / `-d` honest). The
+   merge **method** is its own explicit decision — never fold `--squash`/`--merge` into the step-6
+   skip-review option (a real incident: a PR was squash-merged because the flag rode along in an
+   auto-merge option the user picked for its review-skip meaning). GitHub merges the moment every
+   required check passes and the branch is conflict-free,
    so **"never merge red" still holds** — a red check blocks the merge instead of completing it. If
    CI goes red, pull the failing logs (`gh run view --log-failed`, or `gh run watch` to follow
    live), reproduce locally, and fix **forward on the same branch**; armed auto-merge re-arms itself
@@ -117,22 +123,21 @@ order there is natural rather than rigid. The full rationale lives in this secti
 8. **Clean up — gated on merge + a green `master`.** Key cleanup off the **merge state, never a
    single CI run**: once `gh pr view <n> --json state,mergedAt` shows `MERGED`, let the
    push-triggered workflows on `master` run and **wait for them to pass** — that confirms the
-   squash didn't break anything the branch CI couldn't see (master may have moved under it). An
+   merge didn't break anything the branch CI couldn't see (master may have moved under it). An
    intervening push, from this session or another, just re-runs checks and armed auto-merge waits
    for the *new* green, so the trigger survives the race.
 
-   **Verify with PR state, not commit reachability.** This repo **squash-merges**, which gives the
-   merge a new SHA, so the branch's own commits are never reachable from `master`. That makes
-   `git branch --merged master` omit the branch and `git branch -d <branch>` refuse it ("not fully
-   merged") — both are **blind to squash-merges** and must not be used as the "is it safe to delete?"
-   test. Instead confirm via the **`MERGED` PR state** above (or an empty `git diff master...<branch>`,
-   meaning the branch introduces nothing master lacks), then delete with **`git branch -D`** (force —
-   the merged PR already proves the work is in `master`). A branch with **no PR and a non-empty
-   `git diff master...<branch>`** is *forgotten work* — never delete it; surface it for a human.
+   **First refresh, then verify by reachability.** Run `git fetch origin --prune` to drop
+   remote-tracking refs another session's merge+delete left behind. Because PRs land as **merge
+   commits** (never squash), the branch's commits are reachable from `master`, so
+   `git branch --merged master` lists it and a plain **`git branch -d <branch>`** deletes it safely —
+   no `-D` force, no `git diff master...<branch>` workaround. (The `MERGED` PR state is the
+   confirming cross-check.) A branch with **no PR and a non-empty `git diff master...<branch>`** is
+   *forgotten work* — never delete it; surface it for a human.
 
    Then, **with permission (root `CLAUDE.md` §0, per-action)** and after that verification —
    `git switch master` → `git worktree remove <path>` (a tree with uncommitted work needs
-   `--force`, which also needs permission) → `git worktree prune` → `git branch -D <branch>`. The
+   `--force`, which also needs permission) → `git worktree prune` → `git branch -d <branch>`. The
    remote branch is auto-deleted by GitHub on merge only when the repo's "automatically delete
    head branches" setting is on; otherwise `git push origin --delete <branch>` (a push → §0).
 
@@ -230,10 +235,11 @@ fast unit job. Check them at implement time (step 4), not after CI goes red.
   it on demand from `git worktree list` + `gh pr list` — there is no committed board to maintain.
 - **Issue lifecycle — `Closes #NN`.** GitHub auto-closes a referenced issue on merge to the
   default branch when a closing keyword (`Closes` / `Fixes` / `Resolves #NN`) appears in **either
-  the PR body or the merge (squash) commit message**. To **keep an issue open through a merge,
+  the PR body or the merge commit message**. To **keep an issue open through a merge,
   remove the keyword from the PR body before merging** — fixing only the commit-message text is
   not enough. To auto-close, keep `Closes #NN` in the PR body.
-- **Auto-merge + auto-fix loop.** `gh pr merge --auto --squash` is the default finish: it is
+- **Auto-merge + auto-fix loop.** `gh pr merge --auto --merge` (a **merge commit, never `--squash`**)
+  is the default finish: it is
   safe because GitHub merges only on all-green + conflict-free, preserving *never merge red*. When
   a check goes red, **fix forward on the same branch** (`gh run view --log-failed` → reproduce
   locally → push) — the armed auto-merge needs no re-issuing and completes on the green re-run.

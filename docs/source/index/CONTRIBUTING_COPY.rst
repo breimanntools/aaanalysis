@@ -545,7 +545,11 @@ order there is natural rather than rigid.
    the answer — the user picks.**
 7. **Arm auto-merge; fix-forward on red.** Once the user has cleared the review gate (step 6) — on the
    skip path, after the approving review comment — and you've read the RTD preview + PR diff, enable
-   GitHub-native auto-merge: ``gh pr merge --auto --squash``. GitHub
+   GitHub-native auto-merge: ``gh pr merge --auto --merge`` — a **merge commit, never** ``--squash``
+   (squash rewrites the branch into a new SHA, which loses the individual commits *and* blinds the
+   step-8 cleanup detection; merge commits keep ``git branch --merged`` / ``-d`` honest). The merge
+   **method** is its own explicit decision — never fold ``--squash`` / ``--merge`` into the step-6
+   skip-review option. GitHub
    merges the moment every required check passes and the branch is conflict-free, so **"never
    merge red" still holds** — a red check blocks the merge instead of completing it. If CI goes
    red, pull the failing logs (``gh run view --log-failed``, or ``gh run watch`` to follow live),
@@ -555,16 +559,16 @@ order there is natural rather than rigid.
 8. **Clean up — gated on merge + a green** ``master``. Key cleanup off the **merge state, never a
    single CI run**: once ``gh pr view <n> --json state,mergedAt`` shows ``MERGED``, let the
    push-triggered workflows on ``master`` run and **wait for them to pass** — that confirms the
-   squash didn't break anything the branch CI couldn't see (master may have moved under it). An
+   merge didn't break anything the branch CI couldn't see (master may have moved under it). An
    intervening push, from this session or another, just re-runs checks and armed auto-merge waits
    for the *new* green, so the trigger survives the race. Then, **with permission** and after
-   confirming no work is lost — ``git branch --merged master`` lists the branch and
-   ``git status --porcelain`` in the worktree is empty — ``git switch master`` →
-   ``git worktree remove <path>`` (a tree with uncommitted work needs ``--force``, which also
-   needs permission) → ``git worktree prune`` → ``git branch -d <branch>``. The remote branch is
-   auto-deleted by GitHub on squash-merge when the repo's "automatically delete head branches"
-   setting is on; otherwise ``git push origin --delete <branch>``. A scheduled/unattended job may
-   *detect and flag* "ready to clean up" but must never delete on its own — the same sync-only
+   ``git fetch origin --prune`` + confirming no work is lost — because PRs land as **merge commits**,
+   ``git branch --merged master`` lists the branch and ``git status --porcelain`` in the worktree is
+   empty — ``git switch master`` → ``git worktree remove <path>`` (a tree with uncommitted work needs
+   ``--force``, which also needs permission) → ``git worktree prune`` → ``git branch -d <branch>``.
+   The remote branch is auto-deleted by GitHub on merge when the repo's "automatically delete head
+   branches" setting is on; otherwise ``git push origin --delete <branch>``. A scheduled/unattended
+   job may *detect and flag* "ready to clean up" but must never delete on its own — the same sync-only
    discipline as the step-5 background sync.
 
 Propagate every change — the ripple checklist
@@ -673,10 +677,11 @@ Process notes (hard-won)
   make; stop and surface unexpected edits instead.
 - **Issue lifecycle —** ``Closes #NN``. GitHub auto-closes a referenced issue on merge to the
   default branch when a closing keyword (``Closes`` / ``Fixes`` / ``Resolves #NN``) appears in
-  **either the PR body or the merge (squash) commit message**. To **keep an issue open through a
+  **either the PR body or the merge commit message**. To **keep an issue open through a
   merge, remove the keyword from the PR body before merging** — fixing only the commit-message
   text is not enough.
-- **Auto-merge + auto-fix loop.** ``gh pr merge --auto --squash`` is the default finish: it is
+- **Auto-merge + auto-fix loop.** ``gh pr merge --auto --merge`` (a **merge commit, never**
+  ``--squash``) is the default finish: it is
   safe because GitHub merges only on all-green + conflict-free, preserving *never merge red*. When
   a check goes red, **fix forward on the same branch** — the armed auto-merge needs no re-issuing
   and completes on the green re-run. Use ``gh pr merge --disable-auto`` to hold a PR.

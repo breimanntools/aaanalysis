@@ -23,8 +23,12 @@ edits — make those directly.
 4. Fast local gate → ⛔ push scaffold commit → open a **draft PR** (this starts CI + the RTD preview).
 5. **`/review`** + **`/security-review`** (+ `/code-review high`, `/simplify`, `/docstrings` for big/API diffs). **Never merge red.**
 6. ⛔ **Human gate** — user picks **(a)** manual review loop or **(b)** skip → post an approving comment.
-7. ⛔ `gh pr merge --auto --squash`; fix-forward on red (armed auto-merge completes on the green re-run).
+7. ⛔ `gh pr merge --auto --merge` (**merge commit — never `--squash`**); fix-forward on red (armed auto-merge completes on the green re-run).
 8. ⛔ After the PR is **MERGED** + `master` is green: clean up (worktree remove · `branch -d` · remote delete — three separate asks).
+
+> **Parallel sessions are the norm here.** Before any status claim, commit, merge, or cleanup, refresh
+> live state (`git fetch origin --prune` + `gh pr list` / `gh pr view`) and act **only** on the
+> branch/worktree *you* created — see [Parallel sessions](#parallel-sessions-dont-let-concurrent-streams-collide).
 
 ## Delegated skills
 
@@ -100,24 +104,53 @@ Eight steps in three phases. **Full rationale + the quality-gates table live in
      recorded, then go to step 7.
    Recommend (a) for substantial/architectural diffs, (b) for trivial ones — but **never assume.**
 7. **Arm auto-merge; fix-forward on red.** After step 6 clears (on skip, after the approving comment)
-   and you've read the RTD preview + diff: `gh pr merge --auto --squash` (publish → §0). GitHub merges
-   only on all-green + conflict-free, so *never merge red* holds. On red: `gh run view --log-failed`
-   → reproduce locally → fix **forward on the same branch** → push; armed auto-merge completes on the
-   green re-run. `gh pr merge --disable-auto` to hold. Don't paper over a real failure to force a merge.
+   and you've read the RTD preview + diff: **`gh pr merge --auto --merge`** (publish → §0). Use a
+   **merge commit — never `--squash`** (squash rewrites the branch into a new SHA, which both loses the
+   individual commits *and* breaks squash-blind cleanup detection; merge commits keep
+   `git branch --merged` / `-d` reliable). The merge **method** is its own explicit choice — don't fold
+   it into the step-6 skip option. GitHub merges only on all-green + conflict-free, so *never merge red*
+   holds. On red: `gh run view --log-failed` → reproduce locally → fix **forward on the same branch** →
+   push; armed auto-merge completes on the green re-run. `gh pr merge --disable-auto` to hold. Don't
+   paper over a real failure to force a merge.
 8. **Clean up — gated on merge + a green `master` (with permission, §0).** Trigger off **merge state,
    not a CI run**: wait until `gh pr view <n> --json state,mergedAt` shows `MERGED`, then let the
-   push-triggered `master` workflows pass. **This repo squash-merges, so `git branch --merged master`
-   and `git branch -d` are BLIND to it** — the squash gives a new SHA, so both report the merged branch
-   as "not merged" and `-d` refuses. Verify via **PR state** (`MERGED` above) or an empty
-   `git diff master...<branch>`, then delete with **`git branch -D`** (force; the PR proves the work is
-   in master). As separate §0 asks: `git switch master` → `git worktree remove <path>` (uncommitted work
-   needs `--force` → also permission) → `git worktree prune` → `git branch -D <branch>`; remote head
+   push-triggered `master` workflows pass. Because PRs land as **merge commits** (never squash), the
+   branch's commits stay reachable from `master`, so `git branch --merged master` lists it and a plain
+   **`git branch -d <branch>`** deletes it safely (no `-D` force, no `git diff` workaround needed).
+   First `git fetch origin --prune` to drop stale remote-tracking refs another session's merge left
+   behind. As separate §0 asks: `git switch master` → `git worktree remove <path>` (uncommitted work
+   needs `--force` → also permission) → `git worktree prune` → `git branch -d <branch>`; remote head
    auto-deletes only if the repo's "automatically delete head branches" setting is on, else
    `git push origin --delete <branch>` (push → §0). **Canonical tool:**
    `python .github/scripts/prune_merged_branches.py` (PR-state-driven; report-only by default, `--apply`
    to delete, never touches FORGOTTEN no-PR work) — prefer it over ad-hoc deletes and run it from *any*
    session, since parallel auto-merges often land after the opening session ended. A scheduled/unattended
    job may *flag* "ready to clean up" but never deletes on its own (§0).
+
+## Parallel sessions (don't let concurrent streams collide)
+
+Multiple sessions/agents run against this repo at once. The failure mode (a real, repeated incident):
+one session acts on **stale knowledge** of what another already merged, deleted, or is mid-edit — so
+branches pile up, "is this forgotten work?" gets misjudged, and cleanup touches the wrong thing.
+Discipline:
+
+- **One worktree per task, always** (step 3) — never share a checkout / `HEAD`. Mandatory with
+  parallel agents: in a shared tree a concurrent commit/push can land *between* your `git status` and
+  your command.
+- **Derive live state; never trust session memory or a screenshot.** Before any status claim, commit,
+  merge, or cleanup, run `git fetch origin --prune` **and** `gh pr list` / `gh pr view <n> --json
+  state,mergedAt`. `--prune` drops stale remote-tracking refs another session's merge+delete left
+  behind (the usual source of "ghost" branches that look unmerged/ahead).
+- **Act only on the branch/worktree *you* created.** Discover what else is in flight with
+  `git worktree list` + `gh pr list`. If you find a branch, worktree, or working-tree edit you did not
+  make, **stop and surface it** — never commit, revert, delete, or "clean up" another stream's work.
+- **Re-check immediately before the act**, not only at the start — re-run `git status` +
+  `gh pr view` right before staging / merging / deleting.
+- **Cleanup is idempotent + PR-state-driven** (`prune_merged_branches.py`), safe to run from *any*
+  session; parallel auto-merges routinely land after the opening session ended, so end-of-session
+  cleanup alone can't keep up. A scheduled/unattended job may *flag* but never deletes (§0).
+
+Full hazard analysis: [REFERENCE.md](REFERENCE.md) → *Parallel-session hazards*.
 
 ## Ripple checklist (no change is done until its mirrors are in sync)
 
@@ -149,7 +182,12 @@ job names and thresholds drift — **verify the live configuration** (`.github/w
 
 ## Notes
 
+- **Merge with `--merge` (merge commit), never `--squash`.** Merge commits keep the branch's commits
+  on `master`, so `git branch --merged` / `-d` cleanup stays reliable (squash rewrites to a new SHA
+  and breaks it, and silently drops the individual commits). The merge **method** is its own explicit
+  decision — surface it; never bundle it into the step-6 skip-review option.
 - **Worktrees, not `git stash`, for isolation.** See step 3 / [REFERENCE.md](REFERENCE.md).
+- **Parallel sessions: derive live state, touch only your own branch.** See *Parallel sessions* above.
 - **Fix forward, never merge red.** Auto-merge is safe precisely because GitHub only completes it
   on all-green + conflict-free; the auto-fix loop turns a red check into another commit.
 - **Issue lifecycle.** To auto-close on merge, keep `Closes #NN` in the **PR body**. To keep the

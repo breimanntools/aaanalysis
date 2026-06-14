@@ -3,17 +3,15 @@
 
 Why this exists
 ---------------
-This repo **squash-merges** every PR. A squash creates a brand-new commit on
-``master`` with a different SHA, so the feature branch's own commits are never
-reachable from ``master``. That breaks the obvious cleanup primitives:
-
-* ``git branch --merged master``  -> does NOT list a squash-merged branch
-* ``git branch -d <branch>``      -> refuses it ("not fully merged")
-
-So reachability-based cleanup silently no-ops and merged branches pile up
-(made worse by parallel sessions whose auto-merge lands *after* the session
-ended). This tool instead asks the source of truth -- **PR state via ``gh``** --
-and classifies every local branch / worktree into:
+This repo lands every PR as a **merge commit** (never squash), so a merged
+branch's commits *are* reachable from ``master`` and ``git branch --merged`` /
+``git branch -d`` work normally. But reachability alone is still not a safe
+cleanup oracle across **parallel sessions**: it can't distinguish a merged-PR
+branch from forgotten local work, it ignores PR / remote state, and a rebased or
+amended branch can read as "unmerged" even after its PR merged. Merged branches
+then pile up, made worse by auto-merges that land *after* the session that
+opened the PR has ended. This tool asks the source of truth -- **PR state via
+``gh``** -- and classifies every local branch / worktree into:
 
 * MERGED   -> its PR is merged; the work is in master; safe to delete.
 * OPEN     -> open PR; in-flight; KEEP.

@@ -89,7 +89,7 @@ python dev_scripts/dev_aa_window_sampler.py
   with the full Windows range in the nightly.
 - **Issue lifecycle / `Closes #NN`.** A closing keyword
   (`Closes`/`Fixes`/`Resolves #NN`) auto-closes the issue on merge to `master`
-  when it appears in **either the PR body or the merge (squash) commit
+  when it appears in **either the PR body or the merge commit
   message**. To **keep an issue open through a merge, remove the keyword from
   the PR body before merging** — editing only the commit message is not enough.
 - Update `CONTRIBUTING.rst`, any affected `examples/*.ipynb`, and (once it
