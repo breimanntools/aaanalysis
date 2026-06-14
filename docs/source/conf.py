@@ -167,6 +167,7 @@ html_context = {
     'github_user': 'breimanntools',
     'github_repo': 'aaanalysis',
     'github_version': 'master/',
+    'conf_py_path': 'docs/source/',  # path from repo root to the dir holding the .rst sources
 }
 
 html_meta = {
