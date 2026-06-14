@@ -33,6 +33,7 @@
     {% if R.imgs %}<div class="pair-imgs" style="--ph:{{ R.h }}mm">
       {% for im in R.imgs %}<figure><img class="pair-img" src="{{ img_base }}{{ im }}.png" alt="{{ R.cls|striptags }}"><figcaption>{{ R.img_labels[loop.index0] }}</figcaption></figure>{% endfor %}
     </div>{% elif R.img %}<figure class="recipe-fig"><img class="recipe-img{{ ' big' if R.big }}{{ ' logo' if R.logo }}" src="{{ img_base }}{{ R.img }}.png" alt="{{ R.cls|striptags }} output">{% if R.caption %}<figcaption>{{ R.caption }}</figcaption>{% endif %}</figure>{% endif %}
+    {% if R.ref_url %}<div class="suppl-ref"><a href="{{ R.ref_url }}" target="_blank" rel="noopener">{{ R.ref_text }}</a></div>{% endif %}
   </div>
 </div>
 {%- endmacro -%}
@@ -52,6 +53,8 @@
     <figure><img class="pair-img" src="{{ img_base }}{{ L.img }}.png" alt="{{ L.cls|striptags }}"><figcaption>{{ L.caption if L.caption else 'left' }}</figcaption></figure>
     <figure><img class="pair-img" src="{{ img_base }}{{ R.img }}.png" alt="{{ R.cls|striptags }}"><figcaption>{{ R.caption if R.caption else 'right' }}</figcaption></figure>
   </div>
+  {% if L.ref_url %}<div class="suppl-ref"><a href="{{ L.ref_url }}" target="_blank" rel="noopener">{{ L.ref_text }}</a></div>{% endif %}
+  {% if R.ref_url %}<div class="suppl-ref"><a href="{{ R.ref_url }}" target="_blank" rel="noopener">{{ R.ref_text }}</a></div>{% endif %}
 </div>
 {%- endmacro -%}
 
@@ -101,9 +104,9 @@
     <div class="sec">
       <div class="sec-h"><span>Sequence Anatomy</span><span class="hint">the TMD model</span></div>
       <div class="sec-body">
-        <table class="kv">{% for k,v in c.sequence_anatomy.rows %}<tr><td class="k">{{ k }}</td><td class="d">{{ v }}</td></tr>{% endfor %}</table>
+        <table class="kv">{% for k,v in c.sequence_anatomy.rows %}<tr><td class="k">{{ k }}</td><td class="d">{{ v|safe }}</td></tr>{% endfor %}</table>
         <div class="anat-track"><div class="seg jmd">JMD-N</div><div class="seg tmd">TMD</div><div class="seg jmd">JMD-C</div></div>
-        <div class="anat-coords"><span>0</span><span>tmd_start</span><span>tmd_stop</span><span>len(seq)</span></div>
+        <div class="anat-coords"><span class="c0">0</span><span class="c1">tmd_start</span><span class="c2">tmd_stop</span><span class="c3">len(seq)</span></div>
         <div class="cap">{{ c.sequence_anatomy.note }}</div>
       </div>
     </div>
@@ -121,6 +124,7 @@
           {% for name, mask in S.rows %}
           <div class="sp-row"><span class="sp-lbl">{{ name }}</span><span class="sp-cells">{{ mask }}</span></div>
           {% endfor %}
+          {% if S.payoff %}<div class="sp-note">{{ S.payoff }}</div>{% endif %}
           <div class="sp-caption"><a href="{{ S.ref_url }}" target="_blank" rel="noopener">{{ S.ref_text }}</a></div>
         </div>
         <div class="onto-ex">{% for ex in c.feature_ontology.examples %}<div>{{ ex }}</div>{% endfor %}</div>
@@ -136,6 +140,7 @@
         <pre class="code">{{ S.code|hl }}</pre>
         {% endfor %}
         <div class="cap">{{ c.cpp_strategies.note }}</div>
+        {% if c.cpp_strategies.ref_url %}<div class="suppl-ref"><a href="{{ c.cpp_strategies.ref_url }}" target="_blank" rel="noopener">{{ c.cpp_strategies.ref_text }}</a></div>{% endif %}
       </div>
     </div>
 
@@ -229,7 +234,7 @@
     <div class="sec gloss-wide">
       <div class="sec-h"><span>Glossary</span><span class="hint">canonical vocabulary · CONTEXT.md</span></div>
       <div class="sec-body gloss-cols">
-        {% for row in c.glossary %}{% set term = row[0] %}{% set d = row[1] %}{% set _tag = row[2] if row|length > 2 else None %}<div class="gloss-item"><b>{{ term }}</b>{% if _tag %} <span class="rowtag">{{ _tag }}</span>{% endif %} — {{ d }}</div>{% endfor %}
+        {% for row in c.glossary %}{% set term = row[0] %}{% set d = row[1] %}{% set _tag = row[2] if row|length > 2 else None %}<div class="gloss-item"><b>{{ term }}</b>{% if _tag %} <span class="rowtag">{{ _tag }}</span>{% endif %} — {{ d|safe }}</div>{% endfor %}
       </div>
     </div>
 

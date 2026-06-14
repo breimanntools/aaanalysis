@@ -218,8 +218,12 @@ td.k.mono { font-family: "AA Mono", monospace; font-weight: 700; color: var(--ac
 .splits .sp-cells { color: var(--accent); letter-spacing: 0.3px; }
 .splits .sp-row.sp-seq .sp-lbl { color: var(--ink-faint); font-weight: 800; }
 .splits .sp-row.sp-seq .sp-cells { color: var(--ink); }
+.splits .sp-note { font-size: 5.9pt; color: var(--ink-soft); line-height: 1.2; margin-top: 1px; }
 .splits .sp-caption { font-size: 5.8pt; font-style: italic; margin-top: 0.5px; }
 .splits .sp-caption a { color: var(--accent); text-decoration: none; font-weight: 600; }
+/* reusable supplement-link line (CPP strategies note, recipe figures) */
+.suppl-ref { font-size: 5.8pt; font-style: italic; margin-top: 1px; }
+.suppl-ref a { color: var(--accent); text-decoration: none; font-weight: 600; }
 .onto-row { padding: 1px 0; border-bottom: 1px solid var(--line-soft); }
 .onto-row:last-child { border-bottom: none; }
 .onto-row .h { font-weight: 800; font-size: 7.3pt; color: var(--accent); }
@@ -234,8 +238,17 @@ td.k.mono { font-family: "AA Mono", monospace; font-weight: 700; color: var(--ac
                    font-size: 6pt; font-weight: 800; letter-spacing: .4px; }
 .anat-track .jmd { background: var(--c-jmd); flex: 0 0 20%; }
 .anat-track .tmd { background: var(--c-tmd); color: #143b2a; flex: 1 1 auto; }
-.anat-coords { display: flex; justify-content: space-between; font-family: "AA Mono", monospace;
+/* TMD green for the inline "variable length" text */
+.tmd-var { color: #72F6A2; }
+/* coords aligned EXACTLY to the track boundaries: JMD-N=20% so tmd_start sits at
+   20% and tmd_stop at 80% (the TMD spans the middle 60%). */
+.anat-coords { position: relative; height: 8pt; margin-top: 1px; font-family: "AA Mono", monospace;
                font-size: 5.6pt; color: var(--ink-faint); }
+.anat-coords span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+.anat-coords .c0 { left: 0; transform: none; }
+.anat-coords .c1 { left: 20%; }
+.anat-coords .c2 { left: 80%; }
+.anat-coords .c3 { left: auto; right: 0; transform: none; }
 .chips { margin-top: 1px; }
 .chips .chips-label { font-size: 5.6pt; font-weight: 700; color: var(--ink-soft); margin-right: 4px; }
 .chips .chip { display: inline-block; font-size: 5.6pt; font-weight: 700; color: #fff;

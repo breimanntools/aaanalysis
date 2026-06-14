@@ -17,9 +17,14 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-OUT_DIR = HERE.parent / "source" / "_static"
-HTML_OUT = OUT_DIR / "cheat_sheet.html"
-PDF_OUT = OUT_DIR / "cheat_sheet.pdf"
+# Committed output + asset home. ASSET_DIR always hosts the figures (cs_plots/)
+# and logos (cs_img/); the html/pdf are written to ASSET_DIR by default, or to a
+# preview dir via --out-dir (assets still resolve from ASSET_DIR).
+ASSET_DIR = HERE.parent / "source" / "_static"
+OUT_DIR = ASSET_DIR
+# Figures (cs_plots) are read from here; --plots-dir redirects to a preview dir
+# (e.g. freshly regenerated plots) so committed figures stay untouched.
+PLOTS_DIR = ASSET_DIR / "cs_plots"
 
 
 def _ensure_macos_libs():
@@ -84,7 +89,7 @@ def _hl(code: str):
     return Markup("".join(out))
 
 
-def render_html(*, pdf: bool = False) -> str:
+def render_html(*, pdf: bool = False, preview: bool = False) -> str:
     import jinja2
     from content import CONTENT  # local module (HERE is on sys.path)
 
@@ -95,11 +100,13 @@ def render_html(*, pdf: bool = False) -> str:
     )
     env.filters["hl"] = _hl
     css = (HERE / "cheat_sheet.css").read_text(encoding="utf-8")
-    if pdf:
-        css = _font_face_css() + "\n" + css
-        # WeasyPrint resolves against base_url=HERE; use absolute file:// for images
-        img_base = (OUT_DIR / "cs_plots").as_uri() + "/"
-        logo_base = (OUT_DIR / "cs_img").as_uri() + "/"
+    if pdf or preview:
+        # PDF (any location) and preview HTML (out of _static/) need absolute
+        # file:// asset URLs resolved against the committed ASSET_DIR.
+        if pdf:
+            css = _font_face_css() + "\n" + css
+        img_base = PLOTS_DIR.as_uri() + "/"
+        logo_base = (ASSET_DIR / "cs_img").as_uri() + "/"
     else:
         # committed HTML lives in _static/; images in _static/cs_plots|cs_img/
         img_base = "cs_plots/"
@@ -109,22 +116,37 @@ def render_html(*, pdf: bool = False) -> str:
                            img_base=img_base, logo_base=logo_base)
 
 
-def main() -> int:
-    html_only = "--html-only" in sys.argv
-    sys.path.insert(0, str(HERE))
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+def _parse_out_dir() -> Path:
+    """--out-dir <dir> redirects the html/pdf outputs (assets stay in ASSET_DIR)."""
+    if "--out-dir" in sys.argv:
+        i = sys.argv.index("--out-dir")
+        return Path(sys.argv[i + 1]).resolve()
+    return ASSET_DIR
 
-    html = render_html(pdf=False)
-    HTML_OUT.write_text(html, encoding="utf-8")
-    print(f"[cheat-sheet] HTML  -> {HTML_OUT}  ({len(html):,} bytes)")
+
+def main() -> int:
+    global PLOTS_DIR
+    html_only = "--html-only" in sys.argv
+    if "--plots-dir" in sys.argv:
+        PLOTS_DIR = Path(sys.argv[sys.argv.index("--plots-dir") + 1]).resolve()
+    out_dir = _parse_out_dir()
+    preview = out_dir != ASSET_DIR or PLOTS_DIR != ASSET_DIR / "cs_plots"
+    html_out = out_dir / "cheat_sheet.html"
+    pdf_out = out_dir / "cheat_sheet.pdf"
+    sys.path.insert(0, str(HERE))
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    html = render_html(pdf=False, preview=preview)
+    html_out.write_text(html, encoding="utf-8")
+    print(f"[cheat-sheet] HTML  -> {html_out}  ({len(html):,} bytes)")
 
     if html_only:
         print("[cheat-sheet] --html-only: skipped PDF.")
         return 0
 
     from weasyprint import HTML  # imported late so --html-only needs no libs
-    HTML(string=render_html(pdf=True), base_url=str(HERE)).write_pdf(str(PDF_OUT))
-    print(f"[cheat-sheet] PDF   -> {PDF_OUT}")
+    HTML(string=render_html(pdf=True, preview=preview), base_url=str(HERE)).write_pdf(str(pdf_out))
+    print(f"[cheat-sheet] PDF   -> {pdf_out}")
     return 0
 
 

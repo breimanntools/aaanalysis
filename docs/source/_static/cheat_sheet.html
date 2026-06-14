@@ -223,8 +223,12 @@ td.k.mono { font-family: "AA Mono", monospace; font-weight: 700; color: var(--ac
 .splits .sp-cells { color: var(--accent); letter-spacing: 0.3px; }
 .splits .sp-row.sp-seq .sp-lbl { color: var(--ink-faint); font-weight: 800; }
 .splits .sp-row.sp-seq .sp-cells { color: var(--ink); }
+.splits .sp-note { font-size: 5.9pt; color: var(--ink-soft); line-height: 1.2; margin-top: 1px; }
 .splits .sp-caption { font-size: 5.8pt; font-style: italic; margin-top: 0.5px; }
 .splits .sp-caption a { color: var(--accent); text-decoration: none; font-weight: 600; }
+/* reusable supplement-link line (CPP strategies note, recipe figures) */
+.suppl-ref { font-size: 5.8pt; font-style: italic; margin-top: 1px; }
+.suppl-ref a { color: var(--accent); text-decoration: none; font-weight: 600; }
 .onto-row { padding: 1px 0; border-bottom: 1px solid var(--line-soft); }
 .onto-row:last-child { border-bottom: none; }
 .onto-row .h { font-weight: 800; font-size: 7.3pt; color: var(--accent); }
@@ -239,8 +243,17 @@ td.k.mono { font-family: "AA Mono", monospace; font-weight: 700; color: var(--ac
                    font-size: 6pt; font-weight: 800; letter-spacing: .4px; }
 .anat-track .jmd { background: var(--c-jmd); flex: 0 0 20%; }
 .anat-track .tmd { background: var(--c-tmd); color: #143b2a; flex: 1 1 auto; }
-.anat-coords { display: flex; justify-content: space-between; font-family: "AA Mono", monospace;
+/* TMD green for the inline "variable length" text */
+.tmd-var { color: #72F6A2; }
+/* coords aligned EXACTLY to the track boundaries: JMD-N=20% so tmd_start sits at
+   20% and tmd_stop at 80% (the TMD spans the middle 60%). */
+.anat-coords { position: relative; height: 8pt; margin-top: 1px; font-family: "AA Mono", monospace;
                font-size: 5.6pt; color: var(--ink-faint); }
+.anat-coords span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+.anat-coords .c0 { left: 0; transform: none; }
+.anat-coords .c1 { left: 20%; }
+.anat-coords .c2 { left: 80%; }
+.anat-coords .c3 { left: auto; right: 0; transform: none; }
 .chips { margin-top: 1px; }
 .chips .chips-label { font-size: 5.6pt; font-weight: 700; color: var(--ink-soft); margin-right: 4px; }
 .chips .chip { display: inline-block; font-size: 5.6pt; font-weight: 700; color: #fff;
@@ -359,9 +372,9 @@ df_scales = <span class="c-nm">aa.load_scales</span>()</pre></div>
     <div class="sec">
       <div class="sec-h"><span>Sequence Anatomy</span><span class="hint">the TMD model</span></div>
       <div class="sec-body">
-        <table class="kv"><tr><td class="k">TMD</td><td class="d">Target Middle Domain — the central segment of interest (e.g. transmembrane stretch, binding region).</td></tr><tr><td class="k">JMD</td><td class="d">Juxta Middle Domain — the flanks adjoining the TMD (jmd_n on the N-side, jmd_c on the C-side).</td></tr></table>
+        <table class="kv"><tr><td class="k">TMD</td><td class="d">Target Middle Domain — the central segment of interest (e.g. transmembrane domain); <span class="tmd-var">variable length</span>.</td></tr><tr><td class="k">JMD</td><td class="d">Juxta Middle Domain — the fixed-width flanks adjoining the TMD (jmd_n on the N-side, jmd_c on the C-side).</td></tr></table>
         <div class="anat-track"><div class="seg jmd">JMD-N</div><div class="seg tmd">TMD</div><div class="seg jmd">JMD-C</div></div>
-        <div class="anat-coords"><span>0</span><span>tmd_start</span><span>tmd_stop</span><span>len(seq)</span></div>
+        <div class="anat-coords"><span class="c0">0</span><span class="c1">tmd_start</span><span class="c2">tmd_stop</span><span class="c3">len(seq)</span></div>
         <div class="cap">JMD widths set globally: aa.options[&#39;jmd_n_len&#39;] · [&#39;jmd_c_len&#39;].</div>
       </div>
     </div>
@@ -380,7 +393,7 @@ df_scales = <span class="c-nm">aa.load_scales</span>()</pre></div>
           <div class="sp-row"><span class="sp-lbl">Segment(1,4)</span><span class="sp-cells">■ ■ ■ · · · · · · · · ·</span></div>
           <div class="sp-row"><span class="sp-lbl">Pattern(N,1,4,8)</span><span class="sp-cells">■ · · ■ · · · ■ · · · ·</span></div>
           <div class="sp-row"><span class="sp-lbl">PeriodicPattern</span><span class="sp-cells">■ · · ■ · · ■ · · ■ · ·</span></div>
-          <div class="sp-caption"><a href="https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-025-60638-z/MediaObjects/41467_2025_60638_MOESM1_ESM.pdf" target="_blank" rel="noopener">Simplified from Breimann25a (Suppl. Fig. 1C ↗)</a></div>
+<div class="sp-note">Splitting maps parts (of various length) to fixed relative positions.</div>          <div class="sp-caption"><a href="https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-025-60638-z/MediaObjects/41467_2025_60638_MOESM1_ESM.pdf" target="_blank" rel="noopener">Simplified from Breimann25 (Suppl. Fig. 1C ↗)</a></div>
         </div>
         <div class="onto-ex"><div>TMD × Segment × hydrophobicity → membrane insertion</div><div>JMD × Pattern × net charge → electrostatic recognition</div><div>TMD × PeriodicPattern × helix → α-helical interface</div></div>
       </div>
@@ -404,7 +417,7 @@ cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</
     steps_periodicpattern=[3, 4])
 cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</pre>
         <div class="cap">Domain level uses both. → CPP strategies: see the CPP tutorial (docs).</div>
-      </div>
+<div class="suppl-ref"><a href="https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-025-60638-z/MediaObjects/41467_2025_60638_MOESM1_ESM.pdf" target="_blank" rel="noopener">See details in Breimann25 · Suppl. Fig. 1 ↗</a></div>      </div>
     </div>
 
     <div class="sec">
@@ -563,19 +576,25 @@ df_feat = sm.add_feat_impact(df_feat=df_feat, df_seq=df_seq,
 args_seq = sf.get_args_seq(df_seq=df_seq, sample=<span class="c-st">&#x27;P05067&#x27;</span>)
 ka = dict(col_imp=<span class="c-st">&#x27;feat_impact_APP&#x27;</span>, shap_plot=True, **args_seq)
 cpp_plot.profile(df_feat=df_feat, **ka)
-cpp_plot.feature_map(df_feat=df_feat, name_test=<span class="c-st">&#x27;APP&#x27;</span>, **ka)
+<span class="c-cm"># vmin/vmax=±21% → same colour scale as the global feature map (comparable)</span>
+cpp_plot.feature_map(df_feat=df_feat, name_test=<span class="c-st">&#x27;APP&#x27;</span>,
+                     vmin=-21, vmax=21, **ka)
 plt.tight_layout(); plt.show()</pre>
 <div class="pair-imgs" style="--ph:41mm">
-<figure><img class="pair-img" src="cs_plots/shap_profile.png" alt="ShapModel — explain a prediction"><figcaption>CPPPlot.profile · SHAP</figcaption></figure><figure><img class="pair-img" src="cs_plots/feature_map_shap.png" alt="ShapModel — explain a prediction"><figcaption>CPPPlot.feature_map · SHAP</figcaption></figure>    </div>  </div>
+<figure><img class="pair-img" src="cs_plots/shap_profile.png" alt="ShapModel — explain a prediction"><figcaption>CPPPlot.profile · SHAP</figcaption></figure><figure><img class="pair-img" src="cs_plots/feature_map_shap.png" alt="ShapModel — explain a prediction"><figcaption>CPPPlot.feature_map · SHAP</figcaption></figure>    </div><div class="suppl-ref"><a href="https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-025-60638-z/MediaObjects/41467_2025_60638_MOESM1_ESM.pdf" target="_blank" rel="noopener">See details in Breimann25 · Suppl. Fig. 10 ↗</a></div>  </div>
 </div><div class="sec pairsec">
   <div class="sec-h"><span>AAclust — clusters</span><span class="hint">scale reduction · clustering</span></div>
   <div class="sec-body"><pre class="code">aac = <span class="c-nm">aa.AAclust</span>()
+<span class="c-cm"># pick a redundancy-reduced set of scales</span>
 aac.select_scales(df_scales, n_clusters=10)
 aac.medoid_names_   <span class="c-cm"># 10 reduced scales (labels_ also set)</span>
 
 aac_plot = <span class="c-nm">aa.AAclustPlot</span>()
-aac_plot.centers(df_scales=df_scales, labels=aac.labels_)   <span class="c-cm"># df_scales transposed internally</span>
-plt.tight_layout(); plt.show()</pre>
+aac_plot.centers(df_scales=df_scales, labels=aac.labels_)
+plt.tight_layout(); plt.show()
+
+<span class="c-cm"># AAclust also reduces redundant proteins (not just scales)</span>
+df_seq = aac.select_proteins(df_seq=df_seq, X=X)</pre>
     <div class="pair-note">▼ figure below · left</div></div>
   <div class="sec-h"><span>dPULearn — PCA</span><span class="hint"><span class="hint-neg">reliable negatives</span> · PU learning</span></div>
   <div class="sec-body"><pre class="code"><span class="c-cm"># DOM_GSEC ships 1/0 — treat 0 as the unlabeled pool (label_unl=0)</span>
@@ -591,7 +610,7 @@ plt.tight_layout(); plt.show()</pre>
     <figure><img class="pair-img" src="cs_plots/centers.png" alt="AAclust — clusters"><figcaption>AAclustPlot.centers · cluster scale profiles</figcaption></figure>
     <figure><img class="pair-img" src="cs_plots/pca.png" alt="dPULearn — PCA"><figcaption>dPULearnPlot.pca · reliable negatives</figcaption></figure>
   </div>
-</div><div class="sec">
+<div class="suppl-ref"><a href="https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-025-60638-z/MediaObjects/41467_2025_60638_MOESM1_ESM.pdf" target="_blank" rel="noopener">See details in Breimann25 · Suppl. Fig. 3 ↗</a></div></div><div class="sec">
   <div class="sec-h"><span>AAWindowSampler</span><span class="hint">build reference windows</span></div>
   <div class="sec-body">
     <pre class="code"><span class="c-cm"># Reference windows around sites when you lack negatives:</span>
@@ -641,7 +660,7 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
 
     <div class="sec">
       <div class="sec-h"><span>Gotchas</span><span class="hint">things that bite</span></div>
-      <div class="sec-body"><ul class="bullets"><li>Labels: <b>1/0</b> = supervised (pos/neg). <b>dPULearn</b> takes 1/0 (<b>label_unl=0</b>) or 1/2; <b>n_neg</b> = reliable negatives to mine; output <b>1 · 0 (rel-neg) · 2 (unl)</b>.</li><li><b>load_dataset(name, n=N)</b> returns <b>2N</b> rows (N per class) — count classes via df_seq['label'].</li><li>Compositional vs positional is not a flag — it <b>emerges from split_kws</b>.</li><li>Reproducibility: layered seeds — seed= ▸ random_state= ▸ options['random_state'] ▸ default.</li><li><b>DOM_*</b> parts need tmd_start/tmd_stop in df_seq; <b>[pro]</b> features need <span style='font-family:"AA Mono",monospace'>pip install 'aaanalysis[pro]'</span>.</li><li><b>TMD</b> = <b>Target</b> Middle Domain — generalized from <b>Transmembrane</b> domain (Breimann25a) to any central segment; JMD-N / JMD-C are its flanks.</li></ul></div>
+      <div class="sec-body"><ul class="bullets"><li>Labels: <b>1/0</b> = supervised (pos/neg). <b>dPULearn</b> takes 1/0 (<b>label_unl=0</b>) or 1/2; <b>n_neg</b> = reliable negatives to mine; output <b>1 · 0 (rel-neg) · 2 (unl)</b>.</li><li><b>load_dataset(name, n=N)</b> returns <b>2N</b> rows (N per class) — count classes via df_seq['label'].</li><li>Compositional vs positional is not a flag — it <b>emerges from split_kws</b>.</li><li>Reproducibility: layered seeds — seed= ▸ random_state= ▸ options['random_state'] ▸ default.</li><li><b>DOM_*</b> parts need tmd_start/tmd_stop in df_seq; <b>[pro]</b> features need <span style='font-family:"AA Mono",monospace'>pip install 'aaanalysis[pro]'</span>.</li></ul></div>
     </div>
 
     <div class="sec">
@@ -683,7 +702,7 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
           <div class="rf">Breimann &amp; Frishman (2024a), AAclust: k-optimized clustering for selecting redundancy-reduced sets of amino acid scales</div><div class="jr"><a href="https://academic.oup.com/bioinformaticsadvances/article/4/1/vbae165/7852846" target="_blank" rel="noopener">Bioinformatics Advances ↗</a></div></div>
         <div class="cite-item"><span class="ky"><a href="https://www.sciencedirect.com/science/article/pii/S0022283624003267" target="_blank" rel="noopener">[Breimann24b]</a></span><span class="nm">AAontology</span>
           <div class="rf">Breimann et al. (2024b), AAontology: An ontology of amino acid scales for interpretable machine learning</div><div class="jr"><a href="https://www.sciencedirect.com/science/article/pii/S0022283624003267" target="_blank" rel="noopener">Journal of Molecular Biology ↗</a></div></div>
-        <div class="cite-item"><span class="ky"><a href="https://www.nature.com/articles/s41467-025-60638-z" target="_blank" rel="noopener">[Breimann25a]</a></span><span class="nm">CPP &amp; dPULearn</span>
+        <div class="cite-item"><span class="ky"><a href="https://www.nature.com/articles/s41467-025-60638-z" target="_blank" rel="noopener">[Breimann25]</a></span><span class="nm">CPP &amp; dPULearn</span>
           <div class="rf">Breimann &amp; Kamp et al. (2025), Charting γ-secretase substrates by explainable AI</div><div class="jr"><a href="https://www.nature.com/articles/s41467-025-60638-z" target="_blank" rel="noopener">Nature Communications ↗</a></div></div>
 </div>
     </div>
@@ -691,7 +710,7 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
     <div class="sec gloss-wide">
       <div class="sec-h"><span>Glossary</span><span class="hint">canonical vocabulary · CONTEXT.md</span></div>
       <div class="sec-body gloss-cols">
-<div class="gloss-item"><b>Feature (CPP)</b> — (Part × Split × Scale) — the atomic, residue-grounded, interpretable unit of CPP.</div><div class="gloss-item"><b>Part</b> — Named segment used as feature input: tmd, jmd_n, jmd_c, tmd_jmd, jmd_n_tmd_n, tmd_c_jmd_c.</div><div class="gloss-item"><b>Split</b> — How a scale is read across a part: Segment (contiguous), Pattern (sparse), PeriodicPattern (i, i+3/4).</div><div class="gloss-item"><b>Scale</b> — AA → ℝ mapping. AAontology ships ~600 curated scales in two-level categories.</div><div class="gloss-item"><b>AAontology</b> — Two-level scale taxonomy; CPP uses its categories to organize and rank features.</div><div class="gloss-item"><b>CPP</b> — Comparative Physicochemical Profiling — discovers ranked Part × Split × Scale features.</div><div class="gloss-item"><b>Test vs reference group</b> — The A-vs-B contrast CPP profiles: a feature&#39;s mean_dif is test − reference (name_test / name_ref in CPPPlot).</div><div class="gloss-item"><b>Compositional vs positional</b> — How split_kws resolves locality: a whole-part average (compositional) vs sub-region/position-resolved (positional).</div><div class="gloss-item"><b>Numerical CPP (pseudo-scale)</b> <span class="rowtag">v1.1</span> — CPP generalizes from AA→scale lookup to any per-residue tensor — PLM · structure · PTM — each a pseudo-scale via CPP.run_num.</div><div class="gloss-item"><b>Feature importance vs impact</b> — Two explainability axes: importance = unsigned, group-level (TreeModel); impact = signed, per-sample (ShapModel, shap_plot).</div><div class="gloss-item"><b>Reducing features</b> — Four distinct ops: redundancy reduction (AAclust scales) · feature pruning · selection (RFE) · simplification (CPP.simplify → interpretable scales).</div><div class="gloss-item"><b>PU labels</b> — dPULearn input: 1 = positive, 2 = unlabeled. Output: 1 / 0 (reliable-negative) / 2.</div><div class="gloss-item"><b>Wrapper class</b> — sklearn-style class — .fit / .predict / .eval, sets trailing *_ attributes after fit.</div><div class="gloss-item"><b>Plot class</b> — *Plot mirror of an analytical class — same arguments, visualization only.</div>      </div>
+<div class="gloss-item"><b>Feature (CPP)</b> — (Part × Split × Scale) — the atomic, residue-grounded, interpretable unit of CPP.</div><div class="gloss-item"><b>Part</b> — Named segment used as feature input: <b>tmd</b>, <b>jmd_n</b>, <b>jmd_c</b>, tmd_jmd, jmd_n_tmd_n, tmd_c_jmd_c.</div><div class="gloss-item"><b>Split</b> — How a scale is read across a part: Segment (contiguous), Pattern (sparse), PeriodicPattern (i, i+3/4).</div><div class="gloss-item"><b>Scale</b> — AA (amino acid) → ℝ mapping. AAontology ships ~600 curated scales in two-level categories.</div><div class="gloss-item"><b>TMD (Target Middle Domain)</b> — The central segment of interest (e.g. a transmembrane domain); variable length, made comparable across proteins by splitting. Generalized from 'Transmembrane' to any central segment.</div><div class="gloss-item"><b>JMD (Juxta Middle Domain)</b> — The fixed-width flanks adjoining the TMD: jmd_n (N-terminal side) and jmd_c (C-terminal side).</div><div class="gloss-item"><b>AAontology</b> — Two-level scale taxonomy; CPP uses its categories to organize and rank features.</div><div class="gloss-item"><b>CPP</b> — Comparative Physicochemical Profiling — discovers ranked Part × Split × Scale features.</div><div class="gloss-item"><b>Test vs reference group</b> — The A-vs-B contrast CPP profiles: a feature's mean_dif is test − reference (name_test / name_ref in CPPPlot).</div><div class="gloss-item"><b>Compositional vs positional</b> — How split_kws resolves locality: a whole-part average (compositional) vs sub-region/position-resolved (positional).</div><div class="gloss-item"><b>Numerical CPP (pseudo-scale)</b> <span class="rowtag">v1.1</span> — CPP generalizes from AA→scale lookup to any per-residue tensor — PLM (protein language model) · structure · PTM — each a pseudo-scale via CPP.run_num.</div><div class="gloss-item"><b>Feature importance vs impact</b> — Two explainability axes: importance = unsigned, group-level (TreeModel); impact = signed, per-sample (ShapModel, shap_plot).</div><div class="gloss-item"><b>Reducing features</b> — Four distinct ops: redundancy reduction (AAclust scales) · feature pruning · selection (RFE, recursive feature elimination) · simplification (CPP.simplify → interpretable scales).</div><div class="gloss-item"><b>PU learning (Positive-Unlabeled learning)</b> — Training from labeled positives and unlabeled data only (no curated negatives); dPULearn infers reliable negatives from the unlabeled pool.</div><div class="gloss-item"><b>PU labels</b> — dPULearn input: 1 = positive, 2 = unlabeled. Output: 1 / 0 (reliable-negative) / 2.</div><div class="gloss-item"><b>Wrapper class</b> — sklearn-style class — .fit / .predict / .eval, sets trailing *_ attributes after fit.</div><div class="gloss-item"><b>Plot class</b> — *Plot mirror of an analytical class — same arguments, visualization only.</div>      </div>
     </div>
 
   </div>

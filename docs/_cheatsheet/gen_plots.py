@@ -10,6 +10,7 @@ build then embeds them in the "Example Outputs" gallery. Regenerate only when th
 figures should change — the build itself does not call this.
 """
 import os
+import sys
 import warnings
 from pathlib import Path
 
@@ -20,7 +21,13 @@ import matplotlib.pyplot as plt  # noqa: E402
 import aaanalysis as aa  # noqa: E402
 
 warnings.filterwarnings("ignore")
-OUT = Path(__file__).resolve().parent.parent / "source" / "_static" / "cs_plots"
+# Default: committed assets. --out-dir <dir> writes elsewhere (e.g. a preview
+# cs_plots) so the committed figures stay untouched until approved.
+_DEFAULT_OUT = Path(__file__).resolve().parent.parent / "source" / "_static" / "cs_plots"
+if "--out-dir" in sys.argv:
+    OUT = Path(sys.argv[sys.argv.index("--out-dir") + 1]).resolve()
+else:
+    OUT = _DEFAULT_OUT
 OUT.mkdir(parents=True, exist_ok=True)
 
 aa.options["verbose"] = False
@@ -137,9 +144,11 @@ def main():
                      tmd_len=TMD_LEN, **args_seq)
     _save("shap_profile")
     aa.plot_settings(font_scale=0.65, weight_bold=False)
+    # Pin the colour scale to ±21% (vmin/vmax) so this per-sample SHAP map shares
+    # the global feature map's % range — the colours are then directly comparable.
     cpp_plot.feature_map(df_feat=df_feat_sh, col_val="mean_dif_APP",
                          col_imp="feat_impact_APP", shap_plot=True,
-                         name_test="APP", **args_seq)
+                         name_test="APP", vmin=-21, vmax=21, **args_seq)
     _save("feature_map_shap")
 
 

@@ -81,8 +81,13 @@ FEATURE_ONTOLOGY = {
     ],
 }
 
+# Single supplement (Breimann25, Nat. Commun. 2025) — the MOESM1 ESM PDF that
+# hosts the algorithm/figure deep-dives linked from several panels.
+SUPPL_PDF_URL = ("https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-025-60638-z/"
+                 "MediaObjects/41467_2025_60638_MOESM1_ESM.pdf")
+
 # Splits schema (page 1): how each Split type selects residues of a Part — a
-# simplified take on Breimann25a Suppl. Fig. C (APP / NOTCH1 TMD splits). Each
+# simplified take on Breimann25 Suppl. Fig. C (APP / NOTCH1 TMD splits). Each
 # mask aligns 1:1 with the residues above it (■ = selected, · = skipped).
 SPLITS_SCHEMA = {
     "intro": "A Split picks which residues of a Part feed each Scale:",
@@ -95,9 +100,10 @@ SPLITS_SCHEMA = {
     ],
     "caption": "contiguous (Segment) · fixed positions (Pattern) · "
                "periodic, α-helix face (PeriodicPattern).",
-    "ref_text": "Simplified from Breimann25a (Suppl. Fig. 1C ↗)",
-    "ref_url": "https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-025-60638-z/"
-               "MediaObjects/41467_2025_60638_MOESM1_ESM.pdf",
+    # Subtle payoff: why splitting matters for variable-length TMDs.
+    "payoff": "Splitting maps parts (of various length) to fixed relative positions.",
+    "ref_text": "Simplified from Breimann25 (Suppl. Fig. 1C ↗)",
+    "ref_url": SUPPL_PDF_URL,
 }
 
 # Compositional vs positional is not a setting — it emerges from split_kws (#86).
@@ -123,6 +129,8 @@ CPP_STRATEGIES = {
                 'cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws)',
     },
     "note": "Domain level uses both. → CPP strategies: see the CPP tutorial (docs).",
+    "ref_text": "See details in Breimann25 · Suppl. Fig. 1 ↗",
+    "ref_url": SUPPL_PDF_URL,
 }
 
 # Beginner decision flow: user intent -> the module to reach for. Ordered to
@@ -141,8 +149,9 @@ WHICH_MODULE = [
 SEQUENCE_ANATOMY = {
     "rows": [
         ("TMD", "Target Middle Domain — the central segment of interest "
-                "(e.g. transmembrane stretch, binding region)."),
-        ("JMD", "Juxta Middle Domain — the flanks adjoining the TMD "
+                "(e.g. transmembrane domain); "
+                "<span class=\"tmd-var\">variable length</span>."),
+        ("JMD", "Juxta Middle Domain — the fixed-width flanks adjoining the TMD "
                 "(jmd_n on the N-side, jmd_c on the C-side)."),
     ],
     "track": ["JMD-N", "TMD", "JMD-C"],
@@ -284,6 +293,7 @@ FLAGSHIP_RECIPES = [
     {"cls": "ShapModel — explain a prediction", "tag": '<span class="hint-pos">sample</span> level · [pro]',
      "imgs": ["shap_profile", "feature_map_shap"],
      "img_labels": ["CPPPlot.profile · SHAP", "CPPPlot.feature_map · SHAP"], "h": 41,
+     "ref_text": "See details in Breimann25 · Suppl. Fig. 10 ↗", "ref_url": SUPPL_PDF_URL,
      "code": "# per-sample SHAP — APP's soft label (0.6), keyed by entry\n"
              "sm = aa.ShapModel()\n"
              "sm.fit(X, labels=labels, df_seq=df_seq,\n"
@@ -293,19 +303,26 @@ FLAGSHIP_RECIPES = [
              "args_seq = sf.get_args_seq(df_seq=df_seq, sample='P05067')\n"
              "ka = dict(col_imp='feat_impact_APP', shap_plot=True, **args_seq)\n"
              "cpp_plot.profile(df_feat=df_feat, **ka)\n"
-             "cpp_plot.feature_map(df_feat=df_feat, name_test='APP', **ka)\n"
+             "# vmin/vmax=±21% → same colour scale as the global feature map (comparable)\n"
+             "cpp_plot.feature_map(df_feat=df_feat, name_test='APP',\n"
+             "                     vmin=-21, vmax=21, **ka)\n"
              "plt.tight_layout(); plt.show()"},
     {"cls": "AAclust — clusters", "tag": "scale reduction · clustering", "img": "centers",
      "caption": "AAclustPlot.centers · cluster scale profiles",
      "code": "aac = aa.AAclust()\n"
+             "# pick a redundancy-reduced set of scales\n"
              "aac.select_scales(df_scales, n_clusters=10)\n"
              "aac.medoid_names_   # 10 reduced scales (labels_ also set)\n"
              "\n"
              "aac_plot = aa.AAclustPlot()\n"
-             "aac_plot.centers(df_scales=df_scales, labels=aac.labels_)   # df_scales transposed internally\n"
-             "plt.tight_layout(); plt.show()"},
+             "aac_plot.centers(df_scales=df_scales, labels=aac.labels_)\n"
+             "plt.tight_layout(); plt.show()\n"
+             "\n"
+             "# AAclust also reduces redundant proteins (not just scales)\n"
+             "df_seq = aac.select_proteins(df_seq=df_seq, X=X)"},
     {"cls": "dPULearn — PCA", "tag": '<span class="hint-neg">reliable negatives</span> · PU learning', "img": "pca",
      "caption": "dPULearnPlot.pca · reliable negatives",
+     "ref_text": "See details in Breimann25 · Suppl. Fig. 3 ↗", "ref_url": SUPPL_PDF_URL,
      "code": "# DOM_GSEC ships 1/0 — treat 0 as the unlabeled pool (label_unl=0)\n"
              "dpul = aa.dPULearn()\n"
              "dpul.fit(X=X, labels=labels, label_unl=0, n_neg=31)   # n_neg: reliable negatives to mine\n"
@@ -412,8 +429,6 @@ GOTCHAS = [
     "options['random_state'] ▸ default.",
     "<b>DOM_*</b> parts need tmd_start/tmd_stop in df_seq; <b>[pro]</b> features "
     "need <span style='font-family:\"AA Mono\",monospace'>pip install 'aaanalysis[pro]'</span>.",
-    "<b>TMD</b> = <b>Target</b> Middle Domain — generalized from <b>Transmembrane</b> "
-    "domain (Breimann25a) to any central segment; JMD-N / JMD-C are its flanks.",
 ]
 
 # Data objects (C): the canonical tables/arrays and their columns/shape.
@@ -484,7 +499,7 @@ CITATIONS = [
             "scales for interpretable machine learning",
      "journal": "Journal of Molecular Biology",
      "url": "https://www.sciencedirect.com/science/article/pii/S0022283624003267"},
-    {"name": "CPP & dPULearn", "key": "[Breimann25a]",
+    {"name": "CPP & dPULearn", "key": "[Breimann25]",
      "ref": "Breimann & Kamp et al. (2025), Charting γ-secretase substrates by "
             "explainable AI",
      "journal": "Nature Communications",
@@ -497,12 +512,17 @@ GLOSSARY = [
     # -- The CPP feature model --------------------------------------------
     ("Feature (CPP)", "(Part × Split × Scale) — the atomic, residue-grounded, "
      "interpretable unit of CPP."),
-    ("Part", "Named segment used as feature input: tmd, jmd_n, jmd_c, tmd_jmd, "
-     "jmd_n_tmd_n, tmd_c_jmd_c."),
+    ("Part", "Named segment used as feature input: <b>tmd</b>, <b>jmd_n</b>, "
+     "<b>jmd_c</b>, tmd_jmd, jmd_n_tmd_n, tmd_c_jmd_c."),
     ("Split", "How a scale is read across a part: Segment (contiguous), Pattern "
      "(sparse), PeriodicPattern (i, i+3/4)."),
-    ("Scale", "AA → ℝ mapping. AAontology ships ~600 curated scales in two-level "
-     "categories."),
+    ("Scale", "AA (amino acid) → ℝ mapping. AAontology ships ~600 curated scales "
+     "in two-level categories."),
+    ("TMD (Target Middle Domain)", "The central segment of interest (e.g. a "
+     "transmembrane domain); variable length, made comparable across proteins by "
+     "splitting. Generalized from 'Transmembrane' to any central segment."),
+    ("JMD (Juxta Middle Domain)", "The fixed-width flanks adjoining the TMD: "
+     "jmd_n (N-terminal side) and jmd_c (C-terminal side)."),
     ("AAontology", "Two-level scale taxonomy; CPP uses its categories to organize "
      "and rank features."),
     ("CPP", "Comparative Physicochemical Profiling — discovers ranked "
@@ -513,12 +533,17 @@ GLOSSARY = [
      "average (compositional) vs sub-region/position-resolved (positional)."),
     # -- CPP modes & numerical CPP ----------------------------------------
     ("Numerical CPP (pseudo-scale)", "CPP generalizes from AA→scale lookup to any "
-     "per-residue tensor — PLM · structure · PTM — each a pseudo-scale via CPP.run_num.", "v1.1"),
+     "per-residue tensor — PLM (protein language model) · structure · PTM — each a "
+     "pseudo-scale via CPP.run_num.", "v1.1"),
     # -- Models, explainability & feature reduction -----------------------
     ("Feature importance vs impact", "Two explainability axes: importance = unsigned, "
      "group-level (TreeModel); impact = signed, per-sample (ShapModel, shap_plot)."),
     ("Reducing features", "Four distinct ops: redundancy reduction (AAclust scales) · "
-     "feature pruning · selection (RFE) · simplification (CPP.simplify → interpretable scales)."),
+     "feature pruning · selection (RFE, recursive feature elimination) · "
+     "simplification (CPP.simplify → interpretable scales)."),
+    ("PU learning (Positive-Unlabeled learning)", "Training from labeled positives "
+     "and unlabeled data only (no curated negatives); dPULearn infers reliable "
+     "negatives from the unlabeled pool."),
     ("PU labels", "dPULearn input: 1 = positive, 2 = unlabeled. Output: "
      "1 / 0 (reliable-negative) / 2."),
     # -- Class conventions ------------------------------------------------
