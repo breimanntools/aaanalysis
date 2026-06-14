@@ -18,10 +18,12 @@ on:
       - '**/*.md'
       - '**/*.rst'
 
-# Cancel a superseded in-progress run on the same branch/PR (saves runner minutes).
+# Cancel a superseded in-progress run on PR branches (saves runner minutes), but
+# NOT on master: a cancelled run's conclusion renders as red "failing" on the
+# Unit Tests badge, so master runs always complete to a real pass/fail.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 jobs:
   test:
