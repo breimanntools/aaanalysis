@@ -33,9 +33,10 @@ def check_n_to_identify(labels=None, n_to_identify=None, label_unl=None):
 
 def check_match_labels_markers(label_pos=None, label_unl=None, label_neg=None):
     """Validate the positive/unlabeled/negative marker values used to encode the input labels."""
-    ut.check_number_range(name="label_pos", val=label_pos, min_val=0, just_int=True)
-    ut.check_number_range(name="label_unl", val=label_unl, min_val=0, just_int=True)
-    ut.check_number_range(name="label_neg", val=label_neg, min_val=0, just_int=True, accept_none=True)
+    # Markers may be any integer (e.g. -1), they only need to be distinct and match the labels.
+    ut.check_number_val(name="label_pos", val=label_pos, just_int=True)
+    ut.check_number_val(name="label_unl", val=label_unl, just_int=True)
+    ut.check_number_val(name="label_neg", val=label_neg, just_int=True, accept_none=True)
     markers = {"label_pos": label_pos, "label_unl": label_unl}
     if label_neg is not None:
         markers["label_neg"] = label_neg
@@ -211,13 +212,13 @@ class dPULearn:
     def fit(self,
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D = None,
-            n_neg: int = None,
-            metric: Optional[Literal["euclidean", "manhattan", "cosine"]] = None,
-            n_components: Union[float, int] = 0.80,
             label_pos: int = 1,
             label_unl: int = 2,
             label_neg: Optional[int] = None,
+            n_neg: int = None,
             n_unl_to_neg: int = None,
+            metric: Optional[Literal["euclidean", "manhattan", "cosine"]] = None,
+            n_components: Union[float, int] = 0.80,
             ) -> "dPULearn":
         """
         Fit the dPULearn model to identify reliable negative samples (labeled by 0) from unlabeled samples (2)
@@ -244,12 +245,28 @@ class dPULearn:
             unlabeled marker (``label_unl``); pre-labeled negatives (``label_neg``) are optional. By
             default positives are ``1`` and unlabeled are ``2``; set ``label_unl=0`` to pass the standard
             ``{0, 1}`` encoding directly (``0`` = unlabeled, ``1`` = positive).
+        label_pos : int, default=1
+            Value marking positive samples in ``labels``. Must be present.
+        label_unl : int, default=2
+            Value marking unlabeled samples in ``labels`` (the candidate pool). Must be present. Set
+            ``label_unl=0`` to pass the standard ``{0, 1}`` encoding (``0`` = unlabeled, ``1`` =
+            positive) without re-encoding.
+        label_neg : int or None, default=None
+            Value marking pre-labeled (already known) negatives in ``labels``. When given, those
+            samples are kept as negatives and never re-selected, and dPULearn only identifies the
+            remaining (``n_neg`` minus pre-labeled) negatives from the unlabeled pool. ``None`` means
+            ``labels`` contains no pre-labeled negatives. Must differ from ``label_pos`` / ``label_unl``.
         n_neg : int, optional
             **Total** number of negatives (0) wanted in the output: any pre-labeled negatives
             (``label_neg``) plus the newly identified reliable negatives add up to ``n_neg``. So
             dPULearn identifies ``n_neg`` minus the pre-labeled negatives (with no pre-labeled
             negatives it identifies exactly ``n_neg``). It must exceed the number of pre-labeled
             negatives. Provide **exactly one** of ``n_neg`` or ``n_unl_to_neg``.
+        n_unl_to_neg : int, optional
+            Number of reliable negatives to identify **directly from the unlabeled pool** — direct
+            control over how many unlabeled samples are reclassified, independent of any pre-labeled
+            negatives (final negatives = pre-labeled + ``n_unl_to_neg``). Provide **exactly one** of
+            ``n_neg`` or ``n_unl_to_neg``. With no pre-labeled negatives the two are equivalent.
         metric : str or None, optional
             The distance metric to use. If ``None``, Principal Component Analysis (PCA)-based
             identification is performed. For distance-based identification one of the following
@@ -264,23 +281,6 @@ class dPULearn:
 
             * In case (a): it should be an integer >= 1.
             * In case (b): it should be a float with  0.0 < ``n_components`` < 1.0.
-
-        label_pos : int, default=1
-            Value marking positive samples in ``labels``. Must be present.
-        label_unl : int, default=2
-            Value marking unlabeled samples in ``labels`` (the candidate pool). Must be present. Set
-            ``label_unl=0`` to pass the standard ``{0, 1}`` encoding (``0`` = unlabeled, ``1`` =
-            positive) without re-encoding.
-        label_neg : int or None, default=None
-            Value marking pre-labeled (already known) negatives in ``labels``. When given, those
-            samples are kept as negatives and never re-selected, and dPULearn only identifies the
-            remaining (``n_neg`` minus pre-labeled) negatives from the unlabeled pool. ``None`` means
-            ``labels`` contains no pre-labeled negatives. Must differ from ``label_pos`` / ``label_unl``.
-        n_unl_to_neg : int, optional
-            Number of reliable negatives to identify **directly from the unlabeled pool** — direct
-            control over how many unlabeled samples are reclassified, independent of any pre-labeled
-            negatives (final negatives = pre-labeled + ``n_unl_to_neg``). Provide **exactly one** of
-            ``n_neg`` or ``n_unl_to_neg``. With no pre-labeled negatives the two are equivalent.
 
         Returns
         -------
