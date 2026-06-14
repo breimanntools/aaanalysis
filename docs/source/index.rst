@@ -43,6 +43,7 @@ classes grouped by capability, the prediction levels (residue / domain / protein
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
    :caption: OVERVIEW
 
    index/introduction.rst
@@ -53,6 +54,7 @@ classes grouped by capability, the prediction levels (residue / domain / protein
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
    :caption: EXAMPLES
 
    tutorials.rst
@@ -60,12 +62,14 @@ classes grouped by capability, the prediction levels (residue / domain / protein
 
 .. toctree::
    :maxdepth: 2
+   :hidden:
    :caption: REFERENCES
 
    api.rst
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
 
    index/tables.rst
    index/glossary.rst
