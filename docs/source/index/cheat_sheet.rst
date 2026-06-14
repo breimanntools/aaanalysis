@@ -12,7 +12,7 @@ public API and the canonical vocabulary.
 
    <p>
      <a href="../_static/cheat_sheet.html" target="_blank" rel="noopener">Open the interactive cheat sheet full-screen</a>
-     or <a href="../_static/cheat_sheet.pdf" download="aaanalysis_cheat_sheet.pdf">click here to download the PDF cheat sheet</a>.
+     or <a href="../_static/cheat_sheet.pdf" download="AAanalysis_cheat_sheet.pdf">click here to download the PDF cheat sheet</a>.
    </p>
    <iframe src="../_static/cheat_sheet.html" title="AAanalysis cheat sheet"
            style="width:100%; height:80vh; border:1px solid #e3e7ec; border-radius:4px;"

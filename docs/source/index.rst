@@ -33,7 +33,7 @@ classes grouped by capability, the prediction levels (residue / domain / protein
 
    <p>
      Click the image to open the interactive cheat sheet in your browser or
-     <a href="_static/cheat_sheet.pdf" download="aaanalysis_cheat_sheet.pdf">click here to download the PDF cheat sheet</a>.
+     <a href="_static/cheat_sheet.pdf" download="AAanalysis_cheat_sheet.pdf">click here to download the PDF cheat sheet</a>.
    </p>
    <a href="_static/cheat_sheet.html" target="_blank" rel="noopener">
      <img src="https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/cheat_sheet_preview.png"
