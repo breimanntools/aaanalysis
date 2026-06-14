@@ -41,9 +41,13 @@ def normalize_scores(scores: list) -> np.ndarray:
 
 
 # II Main Functions
-def get_msa(uniprot_id: str, output_file: str = "msa.fasta") -> str:
+def get_msa(uniprot_id: str, output_file: str = "msa.fasta",
+            timeout: float = 30.0) -> str:
     """
     Retrieve multiple sequence alignment (MSA) from UniProt.
+
+    Trust boundary: ``uniprot_id`` is interpolated into a remote URL and the
+    response body is written to disk. Treat the fetched content as untrusted.
 
     Parameters
     ----------
@@ -51,6 +55,10 @@ def get_msa(uniprot_id: str, output_file: str = "msa.fasta") -> str:
         UniProt ID of the target protein.
     output_file : str, default="msa.fasta"
         File path to save the retrieved MSA.
+    timeout : float, default=30.0
+        Seconds to wait for the UniProt response before failing (passed to
+        ``requests.get``). A finite default is enforced so the call can never
+        hang forever on an unresponsive server.
 
     Returns
     -------
@@ -63,7 +71,7 @@ def get_msa(uniprot_id: str, output_file: str = "msa.fasta") -> str:
         If the MSA retrieval fails.
     """
     url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
-    response = requests.get(url)
+    response = requests.get(url, timeout=timeout)
 
     if response.status_code == 200:
         with open(output_file, "w") as f:
