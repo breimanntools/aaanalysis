@@ -48,7 +48,7 @@
    :target: https://github.com/breimanntools/aaanalysis/actions/workflows/codeql_analysis.yml
    :alt: CodeQL
 
-.. |Documentation Status| image:: https://readthedocs.org/projects/aaanalysis/badge/?version=latest
+.. |Documentation Status| image:: https://img.shields.io/readthedocs/aaanalysis/latest
    :target: https://aaanalysis.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
