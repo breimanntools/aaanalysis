@@ -63,14 +63,14 @@ class TestFilteringInfo:
         # check_cat=True arm: dict_c maps every feature id to its category.
         df = _df_feat([(_feat("SCA"), "ASA", [1, 2], 0.9),
                        (_feat("SCB"), "ASA", [1, 2], 0.8)])
-        dict_c, dict_p, df_cor = filtering_info_(df=df, df_scales=DF_SCALES, check_cat=True)
+        dict_c, _, _ = filtering_info_(df=df, df_scales=DF_SCALES, check_cat=True)
         assert dict_c == {_feat("SCA"): "ASA", _feat("SCB"): "ASA"}
 
     def test_check_cat_false_leaves_category_map_empty(self):
         # check_cat=False arm: dict_c is empty (never indexed by the loop).
         df = _df_feat([(_feat("SCA"), "ASA", [1, 2], 0.9),
                        (_feat("SCB"), "ASA", [1, 2], 0.8)])
-        dict_c, dict_p, df_cor = filtering_info_(df=df, df_scales=DF_SCALES, check_cat=False)
+        dict_c, _, _ = filtering_info_(df=df, df_scales=DF_SCALES, check_cat=False)
         assert dict_c == {}
 
     def test_positions_become_sets(self):
@@ -195,8 +195,10 @@ class TestFilteringComplex:
                 (_feat("SCB"), "ASA", [1, 2, 3], 0.8),
                 (_feat("SCD"), "TMD", [1, 2, 3], 0.7)]
         df = _df_feat(rows)
-        out_true = set(_survivors(filtering(df=df, df_scales=DF_SCALES, check_cat=True)))
-        out_false = set(_survivors(filtering(df=df, df_scales=DF_SCALES, check_cat=False)))
+        out_true = set(_survivors(
+            filtering(df=df, df_scales=DF_SCALES, check_cat=True)))
+        out_false = set(_survivors(
+            filtering(df=df, df_scales=DF_SCALES, check_cat=False)))
         # SCB dropped in both (same category as SCA, correlated). SCD is also
         # correlated with the seed but in a different category, so it is kept only
         # under check_cat=True (cross-category gate) and dropped under False.
