@@ -159,7 +159,7 @@ def check_match_df_feat_X(df_feat=None, X=None):
 class SequenceFeature:
     """
     Utility feature engineering class using sequences to create :class:`CPP` feature components (**Parts**, **Splits**,
-    and  **Scales**) and data structures [Breimann25a]_.
+    and  **Scales**) and data structures [Breimann25]_.
 
     The three feature components are the primary input for the :class:`aaanalysis.CPP` class and define
     Comparative Physicochemical Profiling (CPP) features.

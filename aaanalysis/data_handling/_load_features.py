@@ -25,7 +25,7 @@ def load_features(name: Literal["DOM_GSEC"] = "DOM_GSEC"):
     Features are only provided for in-depth analyzed datasets available from the :func:`load_dataset`
     function. These are as follows:
 
-        - 'DOM_GSEC' ([Breimann25a]_)
+        - 'DOM_GSEC' ([Breimann25]_)
 
     .. versionadded:: 0.1.3
 

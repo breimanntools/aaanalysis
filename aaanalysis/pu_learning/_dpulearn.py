@@ -136,7 +136,7 @@ def check_match_X_X_neg(X=None, X_neg=None):
 # II Main Functions
 class dPULearn(Wrapper):
     """
-    Deterministic Positive-Unlabeled Learning (**dPULearn**) class for identifying reliable negatives from unlabeled data [Breimann25a]_.
+    Deterministic Positive-Unlabeled Learning (**dPULearn**) class for identifying reliable negatives from unlabeled data [Breimann25]_.
 
     As a ``Wrapper``, it implements the ``.fit`` / ``.eval`` model contract.
 

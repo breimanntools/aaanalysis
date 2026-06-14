@@ -21,8 +21,8 @@ inherent data asymmetry in applications where labeled negatives are unattainable
 dPULearn: Learning reliably from Unbalanced and Small Data
 ----------------------------------------------------------
 dPULearn (deterministic Positive-Unlabeled Learning) is a non-stochastic PU Learning algorithm for identifying
-reliably negative samples from unlabeled data, as introduced in [Breimann25a]_.
+reliably negative samples from unlabeled data, as introduced in [Breimann25]_.
 
 .. figure:: /_artwork/schemes/scheme_dPULearn.png
 
-   Scheme of dPULearn algorithm, adapted from [Breimann25a]_.
+   Scheme of dPULearn algorithm, adapted from [Breimann25]_.

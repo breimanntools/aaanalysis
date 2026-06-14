@@ -229,7 +229,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 63
      - nan
      - Prediction of gamma-secretase substrates
-     - :ref:`Breimann25a <Breimann25a>`
+     - :ref:`Breimann25 <Breimann25>`
      - 1 (substrate), 0 (non-substrate)
    * - Domain
      - DOM_GSEC_PU
@@ -240,7 +240,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
      - 0
      - nan
      - Prediction of gamma-secretase substrates (PU dataset)
-     - :ref:`Breimann25a <Breimann25a>`
+     - :ref:`Breimann25 <Breimann25>`
      - 1 (substrate), 2 (unknown substrate status)
 
 

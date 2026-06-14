@@ -271,7 +271,7 @@ def _derive_dict_part_lens(df_parts=None):
 class CPP(Tool):
     """
     Comparative Physicochemical Profiling (**CPP**) class to create and filter features that are most discriminant
-    between two sets of sequences [Breimann25a]_.
+    between two sets of sequences [Breimann25]_.
 
     CPP aims at identifying a set of non-redundant features that are most discriminant between the
     test and reference group of sequences.
@@ -416,7 +416,7 @@ class CPP(Tool):
         interpretable sequence-based features.
 
         The aim of the CPP algorithm is to identify a set of unique, non-redundant features that are most
-        discriminant between the test and reference group of sequences. See [Breimann25a]_ for details on the algorithm.
+        discriminant between the test and reference group of sequences. See [Breimann25]_ for details on the algorithm.
 
         .. versionadded:: 0.1.0
 

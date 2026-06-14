@@ -63,7 +63,7 @@ def check_match_names_colors(names=None, colors=None):
 # II Main Functions
 class dPULearnPlot:
     """
-    Plotting class for :class:`dPULearn` (deterministic Positive-Unlabeled Learning) results [Breimann25a]_.
+    Plotting class for :class:`dPULearn` (deterministic Positive-Unlabeled Learning) results [Breimann25]_.
 
     Visualizes ``dPULearn`` results in two ways: the reliable negatives it identifies, shown in a
     compressed Principal Component Analysis (PCA) feature space (:meth:`pca`), and an evaluation

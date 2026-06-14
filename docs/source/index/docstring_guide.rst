@@ -68,7 +68,7 @@ Invariants:
   line *after* a blank first line, present tense; not an imperative verb.
 * **Citations are the exception, not the default.** A class earns a ``[Key]_``
   citation only when it is an **important class** that a specific reference
-  describes — its own paper, or the project paper ``[Breimann25a]_`` for the core
+  describes — its own paper, or the project paper ``[Breimann25]_`` for the core
   γ-secretase CPP / dPULearn / TreeModel algorithms it covers. **Most classes —
   every data-prep / utility / helper class (preprocessors, loaders,
   ``NumericalFeature``, ``AAlogo``, …) — carry no citation, and that is correct,
@@ -237,7 +237,7 @@ Citations
   two-author ``[FirstSecondYY]`` (``[ElkanNoto08]``), same author/year gets a
   trailing letter (``[Breimann24a]``).
 * Pick the **few most relevant** references per symbol — 1–2 per major method,
-  plus the project paper (``[Breimann25a]_``) at the class level **only for the
+  plus the project paper (``[Breimann25]_``) at the class level **only for the
   classes that paper actually describes** (the core CPP / dPULearn / TreeModel
   pipeline). It is not a default stamp: a class the cited work does not cover
   carries no class-level citation (see the class-summary rule above).

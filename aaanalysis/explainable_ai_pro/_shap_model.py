@@ -330,7 +330,7 @@ class ShapModel(Wrapper):
     """
     SHAP Model class (**[pro]**, requires ``aaanalysis[pro]``): A wrapper for SHAP
     (SHapley Additive exPlanations) [Lundberg20]_ explainers to obtain Monte Carlo
-    estimates for feature impact [Breimann25a]_.
+    estimates for feature impact [Breimann25]_.
 
     As a ``Wrapper``, it implements the ``.fit`` / ``.eval`` model contract.
 
@@ -542,7 +542,7 @@ class ShapModel(Wrapper):
 
         See Also
         --------
-        * [Breimann25a]_ introduces fuzzy labeling to compute Monte Carlo estimates of SHAP values
+        * [Breimann25]_ introduces fuzzy labeling to compute Monte Carlo estimates of SHAP values
           for samples with not clearly defined class membership.
 
         Examples

@@ -116,7 +116,7 @@ def check_match_seq_slide_start_window_size(seq=None, slide_start=None, window_s
 # II Main Functions
 class SequencePreprocessor:
     """
-    Preprocessing class for representing protein sequences as numeric inputs [Breimann25a]_.
+    Preprocessing class for representing protein sequences as numeric inputs [Breimann25]_.
 
     Turns raw amino-acid strings into the array forms a downstream model
     consumes: a one-hot or integer matrix over a fixed alphabet (via
