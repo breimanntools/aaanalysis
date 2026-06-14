@@ -60,10 +60,12 @@ def check_aal_kws(aal_kws=None, df_logo=None, df_logo_info=None):
 
 
 def check_logo_input_source(df_logo=None, df_logo_info=None, aal_kws=None,
-                            df_parts=None, labels=None):
+                            df_parts=None, labels=None, tmd_len=None):
     """Check exactly one logo-data source is given (precomputed, aal_kws, or df_parts)."""
     if labels is not None and df_parts is None:
         raise ValueError("'labels' requires 'df_parts' to be given as well.")
+    if tmd_len is not None and df_parts is None:
+        raise ValueError("'tmd_len' requires 'df_parts' to be given as well.")
     has_df_parts = df_parts is not None
     if has_df_parts:
         if df_logo is not None or df_logo_info is not None:
@@ -437,7 +439,8 @@ class AAlogoPlot:
         """
         # Check input
         check_logo_input_source(df_logo=df_logo, df_logo_info=df_logo_info,
-                                aal_kws=aal_kws, df_parts=df_parts, labels=labels)
+                                aal_kws=aal_kws, df_parts=df_parts, labels=labels,
+                                tmd_len=tmd_len)
         check_aal_kws(aal_kws=aal_kws, df_logo=df_logo, df_logo_info=df_logo_info)
         # Build aal_kws from the direct df_parts inputs (same internal compute path)
         if df_parts is not None:

@@ -670,6 +670,12 @@ class TestSingleLogoDfParts:
         with pytest.raises(ValueError):
             aal_plot.single_logo(labels=labels)
 
+    def test_invalid_tmd_len_without_df_parts(self):
+        """Test that tmd_len without df_parts raises ValueError."""
+        aal_plot = get_aal_plot()
+        with pytest.raises(ValueError):
+            aal_plot.single_logo(tmd_len=20)
+
     def test_invalid_no_source(self):
         """Test that providing no logo-data source raises ValueError."""
         aal_plot = get_aal_plot()
