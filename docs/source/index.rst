@@ -37,6 +37,23 @@ classes grouped by capability, the prediction levels (residue / domain / protein
           style="width: 100%; display: block; margin-left: auto; margin-right: auto;">
    </a>
 
+The AAanalysis Ecosystem
+========================
+AAanalysis is the interpretable middle layer between bioinformatics I/O and the downstream machine
+learning, explainable AI, and protein-design stack. It *consumes* upstream representations (sequences,
+embeddings, structures) and even competitor descriptor sets, runs them through its interpretable core
+(*Part × Split × Scale* · AAontology · CPP · ShapModel), and *exposes* the resulting features,
+explanations, and objectives to the standard ML / XAI / optimization tools.
+
+Explore the :ref:`full ecosystem map <ecosystem>` — per-category packages, the comparison matrix, and
+where AAanalysis sits in the protein-ML stack. Click the diagram to open it.
+
+.. figure:: _artwork/diagrams/aaanalysis_ecosystem.svg
+   :target: index/ecosystem.html
+   :alt: The AAanalysis ecosystem — where AAanalysis fits in the protein-ML stack
+   :width: 100%
+   :align: center
+
 .. toctree::
    :maxdepth: 1
    :caption: OVERVIEW
