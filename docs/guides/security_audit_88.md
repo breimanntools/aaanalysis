@@ -47,8 +47,12 @@ rule: list-arg form, explicit `str(...)` casts, `tempfile` for scratch files.
 | `seq_analysis_pro/_comp_seq_cons.py::get_msa` | UniProt `.fasta` | **HARDENED** — added the missing `timeout=` (was a bare `requests.get(url)`, the one gap the issue flagged). Now `requests.get(url, timeout=timeout)` with `timeout: float = 30.0`. See note below — this module is an orphan, unreachable from the public API. |
 
 A grep/AST meta-test (`tests/unit/api_tests/test_network_timeout_hygiene.py`)
-now asserts **100 %** of `requests.get` / session `.get` / `http_get_` calls in
-`aaanalysis/` pass an explicit `timeout=`, so a future untimed fetch fails CI.
+now enforces the timeout bound in two ways, so a future untimed fetch fails CI:
+every low-level `requests.get` / session `.get` in `aaanalysis/` passes an
+explicit `timeout=`, **and** the shared `http_get_` transport seam *defines* a
+defaulted `timeout` parameter — that default bounds every caller routing through
+it, so callers are not required to repeat `timeout=` (requiring them would be a
+false-positive trap, since the seam's default is already the guarantee).
 
 ### `_comp_seq_cons.py` is an orphan module
 
