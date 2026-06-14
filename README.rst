@@ -138,7 +138,7 @@ embeddings, structures) and even competitor descriptor sets, runs them through i
 (*Part × Split × Scale* · AAontology · CPP · ShapModel), and *exposes* the resulting features,
 explanations, and objectives to the standard ML / XAI / optimization tools.
 
-Click the diagram to open the interactive
+Click the diagram to open the
 `standalone ecosystem map <https://aaanalysis.readthedocs.io/en/latest/_static/aaanalysis_ecosystem.html>`_
 (per-method maturity and adoption status).
 

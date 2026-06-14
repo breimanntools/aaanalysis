@@ -105,7 +105,7 @@ explanations, and objectives to the standard ML / XAI / optimization tools.
    :align: center
    :figclass: ecosystem-figure
 
-Explore the full `interactive ecosystem map <_static/aaanalysis_ecosystem.html>`_ — per-category
+Explore the full `ecosystem map <_static/aaanalysis_ecosystem.html>`_ — per-category
 packages, the comparison matrix, and where AAanalysis sits in the protein-ML stack. Click the diagram
 to open it.
 
