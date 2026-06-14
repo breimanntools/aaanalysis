@@ -51,7 +51,6 @@ into features. The **scikit-learn Pipeline** recipe shows how the resulting feat
    generated/tutorial3b_sequence_feature
    generated/tutorial3c_cpp
    generated/tutorial3d_data_representations
-   generated/tutorial3e_sklearn_pipeline
 
 PU Learning
 -----------
