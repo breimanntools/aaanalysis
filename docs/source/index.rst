@@ -17,11 +17,25 @@ Install
 
    pip install aaanalysis
 
-For extended features, including our explainable AI module, please use the 'professional' version:
+For extended features, including the explainable AI module:
 
 .. code-block:: bash
 
-   pip install aaanalysis[pro]
+   pip install "aaanalysis[pro]"
+
+If you use uv, the equivalent commands are:
+
+.. code-block:: bash
+
+   uv pip install aaanalysis
+   uv pip install "aaanalysis[pro]"
+
+Contributing
+============
+We appreciate bug reports, feature requests, or updates on documentation and code. For details, please refer to
+:doc:`Contributing Guidelines <index/CONTRIBUTING_COPY>`. These cover AAanalysis development conventions and the
+automated quality gates every change must pass. For further questions or suggestions, please email
+stephanbreimann@gmail.com.
 
 Cheat Sheet
 ===========
