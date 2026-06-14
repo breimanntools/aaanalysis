@@ -27,19 +27,19 @@ Cheat Sheet
 ===========
 The cheat sheet distills AAanalysis into a three-page summary: the golden workflow, the main
 classes grouped by capability, the prediction levels (residue / domain / protein), and the
-*Part × Split × Scale* feature ontology. Click the image to open the interactive cheat sheet in your
-browser; a PDF download is linked below.
+*Part × Split × Scale* feature ontology.
 
 .. raw:: html
 
+   <p>
+     Click the image to open the interactive cheat sheet in your browser or
+     <a href="_static/cheat_sheet.pdf" download="aaanalysis_cheat_sheet.pdf">click here to download the PDF cheat sheet</a>.
+   </p>
    <a href="_static/cheat_sheet.html" target="_blank" rel="noopener">
      <img src="https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/cheat_sheet_preview.png"
           alt="AAanalysis cheat sheet (page 1 of 3)"
           style="width: 100%; display: block; margin-left: auto; margin-right: auto;">
    </a>
-   <p style="margin-top: 0.25em; text-align: right; font-size: 0.8em;">
-     <a href="_static/cheat_sheet.pdf" download="aaanalysis_cheat_sheet.pdf">⬇ Download the cheat sheet (PDF, 3 pages)</a>
-   </p>
 
 .. toctree::
    :maxdepth: 1
