@@ -4,7 +4,7 @@
 canonical order is a lower bound (downstream columns append, never displace).
 
 A pure reorder must not change values, so this is a structural contract test;
-byte-exact values are guarded separately by the ADR-0015 regression anchor.
+byte-exact values are guarded separately by the CPP regression anchor.
 """
 import warnings
 

@@ -3,7 +3,7 @@
 Covers the Stage-1 scale-tensor reuse (D3): the module-level ``@lru_cache`` on
 ``build_scale_lookup`` keyed by ``df_scales`` content (via ``_ScalesKey``) and the
 internal ``clear_scale_lookup_cache`` evictor (the cache is self-bounding, so eviction
-is an internal utility, not public API — see ADR-0014). The cached scale-matrix must
+is an internal utility, not public API). The cached scale-matrix must
 stay bit-exact, so ``CPP.run`` results are identical whether the cache is cold or warm.
 """
 import numpy as np
@@ -98,7 +98,7 @@ class TestBuildScaleLookup:
 
 
 class TestClearScaleLookupCache:
-    """Tests for the internal clear_scale_lookup_cache() evictor (ADR-0014)."""
+    """Tests for the internal clear_scale_lookup_cache() evictor."""
 
     def test_clear_cache_empties(self):
         fm.build_scale_lookup(df_scales=aa.load_scales(top60_n=38))

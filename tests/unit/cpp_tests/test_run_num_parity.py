@@ -1,6 +1,6 @@
 """This is a script to test CPP.run_num()'s numerical-mode contract.
 
-Contract (per ADR-0001 — docs/adr/0001-cpp-backend-architecture.md):
+Contract (the CPP backend architecture):
 - ``run_num`` ALWAYS requires ``dict_num_parts`` (from ``NumericalFeature.get_parts``);
   seq-mode goes through ``cpp.run`` instead.
 - Round-trip parity: when ``dict_num`` is built by applying the AA→scale lookup

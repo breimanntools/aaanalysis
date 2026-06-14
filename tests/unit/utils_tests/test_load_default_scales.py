@@ -1,6 +1,6 @@
 """This is a script to test ut.load_default_scales() and its private memoization helper.
 
-Focus: the override-only contract (ADR-0018). The default frame is memoized in a private
+Focus: the override-only contract. The default frame is memoized in a private
 ``@lru_cache`` loader, and the user-facing ``options['df_scales'|'df_cat']`` keys are an
 override only — the library must never write them, so they stay ``None`` until the user
 sets them (regression guard for the old options-as-cache leak).

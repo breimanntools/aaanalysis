@@ -1,6 +1,6 @@
 """This is a script to test the sequence-analysis / protein-design seams.
 
-Integration tier (ADR-0031). Real components, no mocks.
+Integration tier. Real components, no mocks.
 
 Seams covered:
   9.  AAWindowSampler.sample_* windows -> AAlogo logo matrix

@@ -1,6 +1,6 @@
 """This is a script to test the data-handling seams (real components, no mocks).
 
-Integration tier (ADR-0031).
+Integration tier.
 
 Seams covered:
   11. to_fasta -> read_fasta round-trip

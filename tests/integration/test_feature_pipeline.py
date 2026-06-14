@@ -1,6 +1,6 @@
 """This is a script to test the feature-engineering seams (real components, no mocks).
 
-Integration tier (ADR-0031): each test wires two/three public classes together
+Integration tier: each test wires two/three public classes together
 and asserts the *seam contract* holds — structural/range assertions, never
 frozen exact values (that is the regression anchor's job). Negatives here are
 **composition failures** (only visible when components meet), not re-runs of

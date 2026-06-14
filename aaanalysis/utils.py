@@ -201,7 +201,7 @@ COL_EMBEDDINGS_OK = "embeddings_ok"   # fetch_embeddings — per-entry success f
 
 # EmbeddingPreprocessor.fetch_embeddings — option bundles
 LIST_EMBED_MODES = ["protein", "residue"]
-LIST_EMBED_SOURCES = ["auto", "compute"]      # 'uniprot' reserved (ADR-0029 D6)
+LIST_EMBED_SOURCES = ["auto", "compute"]      # 'uniprot' reserved
 LIST_POOLING = ["mean", "max", "cls"]
 LIST_EMBED_DEVICES = ["auto", "cpu", "cuda", "mps"]
 
@@ -380,7 +380,7 @@ LIST_SHIFT_WEIGHTS = [COL_FEAT_IMPORT, COL_ABS_AUC]
 LIST_COLS_FEAT = ([COL_FEATURE] + COLS_FEAT_SCALES_FULL + COLS_FEAT_STAT
                   + [COL_PVAL_MW, COL_PVAL_FDR] + [COL_POSITION])
 
-# TreeModel — post-fit feature-selection strategies (see ADR-0023). RFE is the
+# TreeModel — post-fit feature-selection strategies. RFE is the
 # fit-time engine (fit(use_rfe=True)), not a selection strategy.
 STRATEGY_TOP_K = "top_k"
 STRATEGY_THRESHOLD = "threshold"

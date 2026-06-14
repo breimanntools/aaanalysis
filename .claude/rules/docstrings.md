@@ -22,6 +22,13 @@ traps to keep front-of-mind on touch:
   `Examples` → `.. include:: examples/<name>.rst`.
 - **Citations are `[Key]_` only** (definitions live in
   `docs/source/index/references.rst`); never inline a full reference or URL.
+- **No ADR references in project code or GitHub (hard rule).** Never cite an
+  ADR number / "see ADR-XXXX" / a `docs/adr/...` path in any `.py` file
+  (docstrings **and** `#` comments) or in GitHub issues / PRs / review comments.
+  ADRs change and aren't part of the RTD docs, so the pointer goes stale and
+  leaks internal process. State the *why* in plain language; ADR cross-refs stay
+  in the decision layer only: `docs/adr/`, `CONTEXT.md`, `.claude/rules/`,
+  `docs/guides/`.
 - Module docstring opens with `"""This is a script for ..."""` (CLAUDE.md §3).
 - **Example/tutorial notebooks** (the `.ipynb` behind each `examples/<name>.rst`)
   show DataFrames with `aa.display_df(df, n_rows=10, show_shape=True)` — never

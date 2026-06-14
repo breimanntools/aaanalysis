@@ -27,7 +27,7 @@ lambdas (signature ``(*args, **kwargs)``); these are skipped with a recorded
 reason, so the check is green in a core-only (``[dev]``) environment and enforces
 the pro surface only where the ``[pro]`` extra is installed.
 
-Extends ADR-0016 (honest, package-only, ratcheted coverage).
+Extends the honest, package-only, ratcheted coverage policy.
 """
 import ast
 import inspect

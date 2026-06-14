@@ -1,6 +1,6 @@
 """This is a script to test the prediction seams (real components, no mocks).
 
-Integration tier (ADR-0031). Negatives are composition failures, properties are
+Integration tier. Negatives are composition failures, properties are
 pipeline invariants / reproducibility.
 
 Seams covered:

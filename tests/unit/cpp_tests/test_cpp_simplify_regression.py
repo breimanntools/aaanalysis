@@ -1,5 +1,5 @@
 """This is a script for the CPP.simplify candidate_search='fast' T3 regression
-anchor (ADR-0032, tier T3; extends the ADR-0015 pattern).
+anchor (tier T3; extends the CPP exact-value regression-anchor pattern).
 
 candidate_search='fast' is an opt-in heuristic that caps the candidates evaluated
 per feature. It is tier T3 (statistically-equivalent): the kept-feature set MAY
@@ -10,10 +10,10 @@ canonical cell:
 
 This anchor pins that band forever (the band assertion) AND freezes the measured
 values (the frozen-value assertion) so a regression that stays *inside* the band
-is still caught (the ADR-0032 rejected-alternative: "a later real regression
+is still caught (a known rejected alternative: "a later real regression
 hides inside the band"). It runs in the non-gating nightly only, never in the
 blocking matrix — banded/exact values are canonical-cell-specific and a platform
-ULP drift must not block merges (ADR-0015 D2).
+ULP drift must not block merges.
 
 Frozen values below were captured on a dev machine (darwin/py3.13) to validate
 the mechanics; the FIRST canonical-cell CI run re-verifies them and they are
@@ -39,12 +39,12 @@ pytestmark = [
     pytest.mark.regression,
     pytest.mark.skipif(
         not _CANONICAL_ENV,
-        reason="banded/exact-value regression pinned to Linux/py3.11 (ADR-0015/0032); "
+        reason="banded/exact-value regression pinned to Linux/py3.11; "
         "set AAA_RUN_REGRESSION=1 to force locally",
     ),
 ]
 
-# --- Documented quality band (ADR-0032, T3) ---------------------------------
+# --- Documented quality band (T3) ---------------------------------
 JACCARD_MIN = 0.95
 DELTA_AVG_ABS_AUC_MAX = 0.005
 
@@ -86,7 +86,7 @@ def _jaccard(a, b):
 
 
 class TestSimplifyFastRegression:
-    """Frozen T3 band for candidate_search='fast' vs 'exact' (ADR-0032)."""
+    """Frozen T3 band for candidate_search='fast' vs 'exact'."""
 
     @pytest.mark.parametrize("strategy", ["greedy", "consolidate"])
     def test_fast_within_band(self, strategy):

@@ -1,6 +1,6 @@
 """This is a script to test the end-to-end protocol workflows.
 
-E2e tier (ADR-0031): one assertion-bearing test per ``protocols/*.ipynb`` —
+E2e tier: one assertion-bearing test per ``protocols/*.ipynb`` —
 the protocol notebooks run end to end but assert nothing and are not in CI, so
 these are their checked analogues. Each runs the real pipeline at a tiny, seeded
 size and asserts a *final artifact* (range/shape/finiteness), never a frozen

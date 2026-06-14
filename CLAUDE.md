@@ -105,6 +105,15 @@ The detailed rules live in the path-scoped files above; these are the
 highest-risk traps worth keeping front-of-mind every session.
 
 - **No `print(...)` in library code.** Use `ut.print_out(...)`.
+- **No ADR references in project code or GitHub (hard rule).** Never cite an
+  ADR (`ADR-0001`, "see ADR-0001", a `docs/adr/...` path) in **any `.py` file**
+  (docstrings **and** `#` comments, library **and** test) or in **GitHub**
+  content (issue bodies, PR descriptions/titles, review comments). ADRs change /
+  get superseded and aren't part of the published RTD docs or the user-facing
+  GitHub surface, so a pointer goes stale and leaks internal process. State the
+  rationale in plain language instead. ADR cross-references stay confined to the
+  decision layer: `docs/adr/`, `CONTEXT.md`, `.claude/rules/`, and dev guides
+  under `docs/guides/`.
 - **Notebook presentation (examples + tutorials).** In `.ipynb` cells, show
   tables with `aa.display_df(df, n_rows=10, show_shape=True)` — never a bare
   `df`/`df.head()` or `print(df)`. End every plot cell with `plt.tight_layout()`

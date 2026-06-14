@@ -4,7 +4,7 @@ These helpers wire the *real* public components together (no mocks) at a small,
 fixed size so the cross-component tests stay fast under xdist. Both
 ``tests/integration`` (via fixtures in its ``conftest.py``) and ``tests/e2e``
 import from here, so a seam's call pattern is defined once. Assertions live in
-the test files; this module only builds artifacts. See ADR-0031.
+the test files; this module only builds artifacts.
 """
 import aaanalysis as aa
 

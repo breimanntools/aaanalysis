@@ -1,4 +1,4 @@
-"""This is a script for the CPP exact-value regression anchor (ADR-0015).
+"""This is a script for the CPP exact-value regression anchor.
 
 A seeded DOM_GSEC mini-pipeline whose top-ranked feature identity and frozen
 ``abs_auc`` (rounded to 3 dp) must not change. It guards the end-to-end
@@ -31,12 +31,12 @@ pytestmark = [
     pytest.mark.regression,
     pytest.mark.skipif(
         not _CANONICAL_ENV,
-        reason="exact-value regression pinned to Linux/py3.11 (ADR-0015); "
+        reason="exact-value regression pinned to Linux/py3.11; "
         "set AAA_RUN_REGRESSION=1 to force locally",
     ),
 ]
 
-# --- Frozen reference values (ADR-0015) -------------------------------------
+# --- Frozen reference values -------------------------------------
 # Captured on darwin/py3.13; authoritative on the canonical Linux/py3.11 cell.
 # Re-freeze ONLY on an intentional, reviewed change to CPP scoring.
 FROZEN_TOP_FEATURE = "TMD_C_JMD_C-Segment(2,3)-CHOP780212"
@@ -58,7 +58,7 @@ def _run_reference_pipeline():
 
 
 class TestCPPRegression:
-    """Frozen end-to-end CPP result (ADR-0015)."""
+    """Frozen end-to-end CPP result."""
 
     def test_top_feature_identity_frozen(self):
         df_feat = _run_reference_pipeline()
