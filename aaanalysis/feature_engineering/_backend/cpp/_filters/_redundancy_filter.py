@@ -22,6 +22,16 @@ import aaanalysis.utils as ut
 # I Helper Functions
 def filtering_info_(df=None, df_scales=None, check_cat=True):
     """Get datasets structures for filtering."""
+    # DEV: ``check_cat`` controls scale-category-aware redundancy gating.
+    # When True, ``dict_c`` maps every feature id to its scale category so the
+    # filtering loop only compares features that share a category; when False,
+    # ``dict_c`` stays empty and the loop's ``not check_cat`` short-circuit
+    # skips the category gate entirely (so the empty dict is never indexed).
+    # ``dict_c`` is built from the same ``df`` the loop iterates, so its keys
+    # always cover every candidate feature (no KeyError is possible). A null
+    # category cell (only reachable via a user-supplied ``df_cat`` with a NaN
+    # category) compares unequal to everything (NaN != NaN), so such a feature
+    # is treated as its own category and is never dropped as redundant.
     if check_cat:
         dict_c = dict(zip(df[ut.COL_FEATURE], df[ut.COL_CAT]))
     else:
