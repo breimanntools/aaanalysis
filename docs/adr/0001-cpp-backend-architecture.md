@@ -84,7 +84,7 @@ Verified by the parity suite in `tests/unit/cpp_tests/`:
 - **Numba-based acceleration as a parallel backend.** Tried, removed. Performance was within 1.01–1.27× of Cython depending on n (after porting Mann-Whitney + AUC + gather amortization into `@njit`). Dependency posture is the disqualifier: numba lags NumPy major releases (NumPy 2.0 broke shap-via-numba for ~3 months until numba 0.60), pins Python versions strictly (Python 3.14 + numba 0.65 had a `cache=True` segfault), has unstable ARM/Mac wheels, and conflicts with Colab's bundled numba. SHAP — the largest numba consumer in the scientific-Python stack — is actively planning to remove its numba dependency for the same reasons. Cython has none of this churn (its compiled `.so` depends only on the stable Python and NumPy C ABIs).
 - **Hatchling build backend + hatch-cython plugin.** Targeted for v2 (per `.claude/rules/dependencies-and-pyproject.md`). Setuptools is the well-trodden Cython path today; hatchling can be revisited with a smaller diff when the rest of v2's migration happens.
 - **Poetry as build backend (with a `build.py` hook).** Rejected — poetry-core doesn't support compiled extensions natively, and Poetry's build-hook story wraps setuptools anyway.
-- **Migrate dev workflow from Poetry to uv in the same PR.** Independent concern. Tracked in `docs/guides/v2-followups.md`. End-user `pip install aaanalysis` and `uv add aaanalysis` both work today regardless of which dev tool the project uses internally.
+- **Migrate dev workflow from Poetry to uv in the same PR.** Independent concern, handled separately (now done — see Followups). End-user `pip install aaanalysis` and `uv add aaanalysis` both work today regardless of which dev tool the project uses internally.
 
 ## Consequences
 
@@ -97,6 +97,8 @@ Verified by the parity suite in `tests/unit/cpp_tests/`:
 
 ## Followups
 
-Tracked in `docs/guides/v2-followups.md`:
-
-- **V2-1**: Migrate dev workflow from Poetry to uv. Independent of this ADR.
+- **V2-1 (done)**: Dev workflow migrated from Poetry to uv — `poetry.lock`
+  dropped, `uv.lock` committed, CI and `CONTRIBUTING.rst` install instructions
+  on uv. Independent of this ADR. The remaining build-tooling migration (drop
+  `[tool.poetry]`, hatchling, ruff, pre-commit, type checker) is tracked in
+  `.claude/rules/sharp-edges.md`.

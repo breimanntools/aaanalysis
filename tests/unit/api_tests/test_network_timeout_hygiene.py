@@ -10,8 +10,7 @@ the bound (no network access, no pro deps needed):
   parameter — that default is the safety guarantee, so callers routing through
   the seam need not repeat it (requiring them to would be a false-positive trap).
 
-A regression here means a new fetch site shipped unbounded. The audited call
-sites and their disposition are documented in ``docs/guides/security_audit_88.md``.
+A regression here means a new fetch site shipped unbounded.
 """
 import ast
 import pathlib

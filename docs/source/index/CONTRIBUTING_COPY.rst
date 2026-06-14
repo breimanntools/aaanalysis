@@ -415,15 +415,15 @@ version with its date.
 Building New PyPi package version
 ---------------------------------
 
-AAanalysis is packaged and released using Poetry. To create and publish a new version on PyPi, follow these steps:
+AAanalysis is packaged with the setuptools build backend (for the Cython kernel) and released using uv. To create and publish a new version on PyPi, follow these steps:
 
-1. **Ensure Poetry is installed**
+1. **Ensure uv is installed**
 
-   If Poetry is not installed, install it with:
+   If uv is not installed, install it (see https://docs.astral.sh/uv/ for options):
 
    .. code-block:: bash
 
-      pip install poetry
+      pip install uv
 
 2. **Update the version**
 
@@ -435,15 +435,15 @@ AAanalysis is packaged and released using Poetry. To create and publish a new ve
    - **MINOR**: backward-compatible new functionality
    - **PATCH**: backward-compatible bug fixes
 
-   Alternatively, Poetry can update the version automatically:
+   Alternatively, uv can update the version automatically:
 
    .. code-block:: bash
 
-      poetry version patch
+      uv version --bump patch
       # or
-      poetry version minor
+      uv version --bump minor
       # or
-      poetry version major
+      uv version --bump major
 
 3. **Build the package**
 
@@ -451,7 +451,7 @@ AAanalysis is packaged and released using Poetry. To create and publish a new ve
 
    .. code-block:: bash
 
-      poetry build
+      uv build
 
    This creates the source distribution and wheel files in the ``dist`` directory.
 
@@ -461,9 +461,9 @@ AAanalysis is packaged and released using Poetry. To create and publish a new ve
 
    .. code-block:: bash
 
-      poetry publish
+      uv publish
 
-   You will need valid PyPI credentials or an API token configured for Poetry.
+   You will need valid PyPI credentials or an API token configured for uv (for example via ``UV_PUBLISH_TOKEN`` or ``--token``).
 
 5. **Verify the upload**
 

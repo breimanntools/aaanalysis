@@ -346,7 +346,7 @@ never let two lanes edit the same `.ipynb`.
 | 75 | 3 | ✅ | Fits; small | No | Route library output through logging, keep `print_out` as a shim (`_utils/utils_output.py` still bare-`print`s). |
 | 77 | 3 | 🔄 | Fits; **premise corrected** | No | No `check_cat` validator exists — it's a redundancy-filter knob in `_backend/cpp/_filters/_redundancy_filter.py`; audit retargeted. |
 | 79 | 3 | 🔄 | Fits; **premise corrected** | No | CPP already ingests `(L,D)` via `run_num`, so PSSM = a `(L,20)`→`dict_num` glue, not a new pipeline. |
-| 88 | 2 | ☑️ | **DONE / closed** (PR #224 `300e9bc0`) | Yes | Audited subprocess (FIMO/BLAST/MMseqs2/CD-HIT/ChainSaw) + network + file parsing; added the missing `get_msa` `timeout=` + an AST timeout-hygiene meta-test; audit recorded in `docs/guides/security_audit_88.md`. **NOT a SECURITY.md** (sharp-edges reject). |
+| 88 | 2 | ☑️ | **DONE / closed** (PR #224 `300e9bc0`) | Yes | Audited subprocess (FIMO/BLAST/MMseqs2/CD-HIT/ChainSaw) + network + file parsing; added the missing `get_msa` `timeout=` + an AST timeout-hygiene meta-test. **NOT a SECURITY.md** (sharp-edges reject). |
 | 89 | 3 | 🔄 | Fits; residue sub-mode ergonomics | No | First-class between-residues/bond-centered features (today implicit via even window + Pattern). Builds on AAWindowSampler. |
 | 80 | 2 | ✅ | Docs; gallery; deps=CONFIRM-FIRST | No | nbsphinx thumbnail gallery; reuse the notebook→rst pipeline. Any new docs dep is a pyproject CONFIRM-FIRST decision. |
 | 20 | 2 | ☑️ | **DONE / closed** (`5f4177d9`, PR #142 + `8ad0dc0d`) | Yes | `SequenceFeature.get_feature_descriptions` + package-wide `versionadded`. Standardized feature descriptions/terminology shipped. |
