@@ -6,6 +6,27 @@ The durable artifacts of this process (ADRs, `CONTEXT.md`, `CLAUDE.md` / `.claud
 and the code) are the single sources of truth; per-issue planning notes are ephemeral and
 not committed.
 
+## When to use this protocol
+
+This is the discipline for **autonomously driving an entire issue or a complete new feature from
+spec to merge** — a substantial bug-fix issue counts. It is deliberately heavy: it spins up a
+worktree, opens a draft PR, and runs the full automated-review + ripple machinery. **Do not** run
+it for typos, one-line fixes, or trivial local edits that won't reach a PR — make those directly.
+The `agentic-engineering` skill executes this protocol and carries the same scope guard.
+
+## Delegated skills (orchestration model)
+
+The protocol is run by an **orchestrator** that delegates each specialist gate to a local
+sub-skill — `/grill-with-docs` (spec-vs-code reality check), `/review` (PR-diff review),
+`/security-review` (vulnerability scan), `/code-review high` / `ultra` (deeper quality review),
+`/simplify` (complexity cleanup), `/docstrings` (public-API & docstring gate), and the issue-side
+helpers (`/triage`, `/to-issues`, `/github-issues`) and `/schedule` (background sync). These are
+sub-skills, not shell or GitHub commands. **If a required sub-skill is unavailable, fails, or
+returns an inconclusive result, stop and surface the missing gate** rather than continuing as
+though it passed — otherwise a real gate is skipped under the appearance of green. Continue only
+after an explicit human decision to run a manual fallback or skip that gate. The human permission
+gates (push, PR, merge, deletion, CONFIRM-FIRST files) override every delegated result.
+
 ## Workflow
 
 Eight steps in three phases. Phases group the work; within the Build phase you iterate, so the
@@ -15,15 +36,23 @@ order there is natural rather than rigid. The full rationale lives in this secti
 ### Prepare
 
 1. **Pick & sharpen the issue.** No skill required to start. Optionally clean up or generate the
-   wording with `/triage` or `/to-issues` (house style: `docs/guides/issue_style_guide.rst`); for
-   "what next?", `/github-issue-handoff` produces a prioritized, parallelization-aware plan.
+   wording with `/triage` or `/to-issues` (house style: `docs/guides/issue_style_guide.md`); for
+   "what next?", `/github-issues` produces a prioritized, parallelization-aware plan.
 2. **`/grill-with-docs` — the highest-leverage step.** Sharpen the spec against the *live*
    codebase and refresh `CONTEXT.md` / ADRs **before any code is written**. The closest built-in,
    `/init`, only (re)generates codebase docs — it does not do the adversarial spec-vs-reality
    pass; use `/init` only as a one-time bootstrap when `CONTEXT.md` does not exist yet.
-3. **Branch + isolated worktree.** `git switch -c <type>/<slug>` off `master` (`fix/`, `feat/`,
-   `doc/`, `refactor/`), **always paired with `git worktree add`** so concurrent streams never
-   share a checkout (see Process notes → *Isolated worktrees*).
+3. **Branch + isolated worktree.** Use the explicit canonical command so the branch is created
+   *directly in a fresh worktree* off `master` (no ambiguity about which checkout it lands in):
+
+   ```bash
+   git fetch origin
+   git worktree add ../wt-<slug> -b <type>/<slug> origin/master   # fix/ feat/ doc/ refactor/
+   cd ../wt-<slug>
+   ```
+
+   The worktree is what keeps concurrent streams from sharing a checkout (see Process notes →
+   *Isolated worktrees*); isolation comes from `git worktree add`, never from `git stash`.
 
 ### Build
 
