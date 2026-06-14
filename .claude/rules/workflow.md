@@ -58,10 +58,17 @@ python dev_scripts/dev_aa_window_sampler.py
   labels use `df_seq["label"].to_list()`, not `len(df_seq)`-based assumptions.
 - **Coverage is measured on the package only** — `--cov=aaanalysis`, never
   `--cov=./` (that counts the test files and inflates the number). See ADR-0016.
-- **Pushing to `master` triggers 4 workflows** (Unit Tests, Test Coverage,
+- **Pushing to `master` triggers up to 4 workflows** (Unit Tests, Test Coverage,
   CodeQL, Integration & E2E Tests); feature-branch pushes trigger none (CI is
   gated to master push/PR). The exact-value CPP regression anchor
   (`-m regression`) runs only in the nightly, not the blocking matrix (ADR-0015).
+- **Docs-only pushes skip 3 of the 4.** Unit Tests (`main.yml`), CodeQL, and
+  Integration & E2E carry `paths-ignore: ['docs/**', '**/*.md', '**/*.rst']`, so a
+  commit touching only those paths runs **none** of them. Test Coverage
+  (`test_coverage.yml`) deliberately has **no `paths-ignore`** and runs on every
+  master push (the Codecov badge must stay current) — so a docs/`.rst`-only push
+  triggers exactly **one** workflow, Test Coverage. Don't tell the user "all 4
+  will run" for a docs-only change.
 
 ## Git / PR workflow
 
