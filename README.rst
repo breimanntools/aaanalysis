@@ -61,9 +61,9 @@ Welcome to the AAanalysis documentation!
    :header-rows: 1
 
    * - **Distribution**
-     - |License| |PyPI Version| |Supported Python Versions| |Downloads| |GitHub Stars|
+     - |License| |PyPI Version| |Supported Python Versions| |Downloads|
    * - **Status**
-     - |PyPI Status| |Unit Tests| |Codecov| |CodeQL|
+     - |PyPI Status| |Unit Tests| |Codecov| |CodeQL| |GitHub Stars|
 
 .. image:: docs/source/_artwork/logos/model_AAanalysis.png
    :alt: Overview of AAanalysis components

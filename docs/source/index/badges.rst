@@ -58,6 +58,6 @@
    :header-rows: 1
 
    * - **Distribution**
-     - |License| |PyPI Version| |Supported Python Versions| |Downloads| |GitHub Stars|
+     - |License| |PyPI Version| |Supported Python Versions| |Downloads|
    * - **Quality**
-     - |PyPI Status| |Unit Tests| |Codecov| |CodeQL|
+     - |PyPI Status| |Unit Tests| |Codecov| |CodeQL| |GitHub Stars|
