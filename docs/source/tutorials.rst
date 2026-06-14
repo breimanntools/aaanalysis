@@ -41,8 +41,8 @@ Feature Engineering
 -------------------
 Explore interpretable feature engineering, the core of AAanalysis, with the **AAclust**, **SequenceFeature**,
 and **CPP** tutorials, then see how CPP turns different data representations (scales, embeddings, structure)
-into features. The **scikit-learn Pipeline** recipe shows how the resulting features drop into a stock
-``sklearn`` workflow with a leakage-aware cross-validation pattern.
+into features. Because **SequenceFeature.feature_matrix** returns a plain numeric matrix, these features
+drop directly into a stock ``scikit-learn`` ``Pipeline`` — the prediction protocol demonstrates this end to end.
 
 .. toctree::
    :maxdepth: 1
