@@ -131,8 +131,8 @@ def main():
     entry = "P05067"
     # accession-based interface (#129/#158): entry-keyed fuzzy_labels (no manual
     # fuzzy vector), select the sample by name via samples=+df_seq, and slice the
-    # per-protein parts with SequenceFeature.get_args_seq — same output as before.
-    args_seq = sf.get_args_seq(df_seq=df_seq, sample=entry)
+    # per-protein parts with SequenceFeature.get_seq_kws (bound to df_parts).
+    seq_kws = sf.get_seq_kws(df_seq=df_seq, df_parts=df_parts, sample=entry)
     sm = aa.ShapModel(verbose=False)
     sm.fit(X_s, labels=labels, df_seq=df_seq, fuzzy_labels={entry: 0.6})
     df_feat_sh = sm.add_sample_mean_dif(X_s, labels=labels, df_feat=df_feat_s,
@@ -141,14 +141,14 @@ def main():
                                     samples=entry, names="APP")
     aa.plot_settings(font_scale=0.6, weight_bold=False)
     cpp_plot.profile(df_feat=df_feat_sh, col_imp="feat_impact_APP", shap_plot=True,
-                     tmd_len=TMD_LEN, **args_seq)
+                     tmd_len=TMD_LEN, **seq_kws)
     _save("shap_profile")
     aa.plot_settings(font_scale=0.65, weight_bold=False)
     # Pin the colour scale to ±21% (vmin/vmax) so this per-sample SHAP map shares
     # the global feature map's % range — the colours are then directly comparable.
     cpp_plot.feature_map(df_feat=df_feat_sh, col_val="mean_dif_APP",
                          col_imp="feat_impact_APP", shap_plot=True,
-                         name_test="APP", vmin=-21, vmax=21, **args_seq)
+                         name_test="APP", vmin=-21, vmax=21, **seq_kws)
     _save("feature_map_shap")
 
 

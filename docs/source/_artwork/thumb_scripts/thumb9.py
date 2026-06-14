@@ -34,8 +34,7 @@ def main():
 
     # APP's sequence parts anchor the heatmap to real residues
     _df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=["tmd", "jmd_c", "jmd_n"])
-    _args = _df_parts.loc["P05067"].to_dict()
-    args_seq = {key + "_seq": _args[key] for key in _args}
+    seq_kws = sf.get_seq_kws(df_seq=df_seq, df_parts=_df_parts, sample="P05067")
 
     # --- CPP-SHAP feature map: cumulative feature impact for APP -------
     fs = aa.plot_gcfs()
@@ -43,7 +42,7 @@ def main():
     cpp_plot = aa.CPPPlot()
     fig, ax = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
                                    col_val="mean_dif_APP", col_imp="feat_impact_APP",
-                                   name_test="APP", figsize=(7, 7), **args_seq)
+                                   name_test="APP", figsize=(7, 7), **seq_kws)
     plt.title("CPP-SHAP feature map for APP", fontsize=fs + 4, weight="bold")
 
     fig.set_size_inches(7, 7)

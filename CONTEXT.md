@@ -45,9 +45,9 @@ _Avoid_: feature name (that is the shorter label form), scale description (that 
 A `df_parts` whose rows are **chimeras** of independent per-part windows — each part column is filled from its own window set (e.g. a separate `AAWindowSampler.sample_synthetic` call with its own generator and window size), rather than sliced from one contiguous protein. Built by `SequenceFeature.get_df_parts_from_windows` (windows aligned by position: the i-th window of every part forms the i-th row) and used as the **reference** class for `CPP`. Because a row stitches windows from different sources it has no single source `entry_win`; rows are ided by a per-row `REF{i}` index instead.
 _Avoid_: synthetic df_parts (the windows need not be synthetic), reference window (that is the per-window term, not the assembled table).
 
-**args_seq**:
-One protein's three part sequences (`jmd_n_seq`, `tmd_seq`, `jmd_c_seq`) bundled as a dict, ready to splat into the sample-level plot methods (`CPPPlot.profile` / `CPPPlot.feature_map`, e.g. SHAP explanations). Produced by `SequenceFeature.get_args_seq(df_seq, sample)`, where **sample** selects the protein by **entry** (accession) or row position — never by **name**, since only `entry` is guaranteed unique in [[df_seq]] (`name` is a *display label*, not a selection key).
-_Avoid_: seq_kwargs, part_seqs.
+**seq_kws**:
+One protein's three part sequences (`jmd_n_seq`, `tmd_seq`, `jmd_c_seq`) bundled as a dict, ready to splat (`**seq_kws`) into the sample-level plot methods (`CPPPlot.profile` / `CPPPlot.feature_map`, e.g. SHAP explanations). Produced by `SequenceFeature.get_seq_kws(df_seq, df_parts, sample)`: the parts are taken from [[df_parts]] (the same parts that produced [[df_feat]] via `CPP.run`), so the displayed residues are **bound to the feature geometry** — there is no JMD-length argument (the lengths are read off `df_parts`; a JMD not encoded there comes back as an empty string). [[df_seq]] is cross-checked for consistency and raises on mismatch. **sample** selects the protein by **entry** (accession) or row position — never by **name**, since only `entry` is guaranteed unique in [[df_seq]] (`name` is a *display label*, not a selection key). Named `_kws` (not `args_seq`) to match the `split_kws` / `cbar_kws` forwarded-keyword-dict family.
+_Avoid_: args_seq, seq_kwargs, part_seqs.
 
 ### Prediction-task taxonomy vocabulary
 

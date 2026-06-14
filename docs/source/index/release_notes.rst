@@ -77,10 +77,12 @@ Added
 - **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts``
   from per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output), so
   each sequence part can be generated with its own recipe.
-- **SequenceFeature.get_args_seq**: Return one protein's ``{jmd_n_seq, tmd_seq,
-  jmd_c_seq}`` as a ready-to-splat ``args_seq`` dict (selected by entry or position),
-  removing the manual ``get_df_parts`` slicing glue when passing a per-protein
-  sequence to ``CPPPlot.profile`` / ``CPPPlot.feature_map`` (e.g. sample-level SHAP plots).
+- **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq,
+  jmd_c_seq}`` as a ready-to-splat ``seq_kws`` dict (selected by entry or position),
+  with the parts taken from ``df_parts`` so the residues stay bound to the feature
+  geometry (no JMD-length argument; ``df_seq`` is cross-checked). Removes the manual
+  ``get_df_parts`` slicing glue when passing a per-protein sequence to
+  ``CPPPlot.profile`` / ``CPPPlot.feature_map`` (e.g. sample-level SHAP plots).
 - **SequenceFeature.get_feature_descriptions**: Build one standardized,
   human-readable sentence per ``PART-SPLIT-SCALE`` feature id, combining the
   sequence region, the split (e.g. ``"segment 2 of 4"``), and the AAontology scale

@@ -155,6 +155,57 @@ def check_match_df_feat_X(df_feat=None, X=None):
     return X
 
 
+def recover_seq_parts_from_df_parts_row(row=None):
+    """Recover the basic ``(jmd_n_seq, tmd_seq, jmd_c_seq)`` from a single ``df_parts`` row.
+
+    The JMD lengths are read off the parts (never given): the basic part set
+    (``jmd_n``/``tmd``/``jmd_c``) is used directly, otherwise the default CPP extended set
+    (``tmd``/``jmd_n_tmd_n``/``tmd_c_jmd_c``) is split around the TMD. A JMD that cannot be
+    derived from the available parts is returned as an empty string (the features then carry
+    no JMD-N/JMD-C either).
+    """
+    cols = set(row.index)
+    _, col_jmd_n_tmd_n, col_tmd_c_jmd_c = ut.LIST_PARTS  # ['tmd', 'jmd_n_tmd_n', 'tmd_c_jmd_c']
+    tmd_seq = row[ut.COL_TMD] if ut.COL_TMD in cols else ""
+    # JMD-N: basic column if present, else the JMD-N portion of jmd_n_tmd_n (prefix before the TMD)
+    if ut.COL_JMD_N in cols:
+        jmd_n_seq = row[ut.COL_JMD_N]
+    elif col_jmd_n_tmd_n in cols and tmd_seq:
+        jmd_n_tmd_n = row[col_jmd_n_tmd_n]
+        n_overlap = max((i for i in range(len(tmd_seq) + 1) if jmd_n_tmd_n.endswith(tmd_seq[:i])), default=0)
+        jmd_n_seq = jmd_n_tmd_n[:len(jmd_n_tmd_n) - n_overlap]
+    else:
+        jmd_n_seq = ""
+    # JMD-C: basic column if present, else the JMD-C portion of tmd_c_jmd_c (suffix after the TMD)
+    if ut.COL_JMD_C in cols:
+        jmd_c_seq = row[ut.COL_JMD_C]
+    elif col_tmd_c_jmd_c in cols and tmd_seq:
+        tmd_c_jmd_c = row[col_tmd_c_jmd_c]
+        c_overlap = max((i for i in range(1, len(tmd_seq) + 1) if tmd_c_jmd_c.startswith(tmd_seq[-i:])), default=0)
+        jmd_c_seq = tmd_c_jmd_c[c_overlap:]
+    else:
+        jmd_c_seq = ""
+    return jmd_n_seq, tmd_seq, jmd_c_seq
+
+
+def check_match_df_seq_df_parts(df_seq=None, entry=None, jmd_n_seq="", tmd_seq="", jmd_c_seq=""):
+    """Check that the parts recovered from ``df_parts`` are consistent with ``df_seq`` for one protein."""
+    mask = df_seq[ut.COL_ENTRY] == entry
+    if not mask.any():
+        raise ValueError(f"'sample' entry ('{entry}') from 'df_parts' is not in the '{ut.COL_ENTRY}' "
+                         f"column of 'df_seq'.")
+    row = df_seq[mask].iloc[0]
+    span = jmd_n_seq + tmd_seq + jmd_c_seq
+    if ut.COL_SEQ in df_seq.columns:
+        if span and span not in row[ut.COL_SEQ]:
+            raise ValueError(f"'df_seq' and 'df_parts' do not match for entry ('{entry}'): the TMD-JMD span "
+                             f"derived from 'df_parts' is not contained in the 'df_seq' sequence.")
+    elif set(ut.COLS_SEQ_PARTS).issubset(df_seq.columns):
+        seq_parts = (row[ut.COL_JMD_N], row[ut.COL_TMD], row[ut.COL_JMD_C])
+        if seq_parts != (jmd_n_seq, tmd_seq, jmd_c_seq):
+            raise ValueError(f"'df_seq' and 'df_parts' do not match for entry ('{entry}'): the TMD-JMD parts differ.")
+
+
 # II Main Functions
 class SequenceFeature:
     """
@@ -355,67 +406,69 @@ class SequenceFeature:
                              f"Reduce 'jmd_n_len' ({jmd_n_len}) and 'jmd_c_len' ({jmd_c_len}) settings.")
         return df_parts
 
-    def get_args_seq(self,
-                     df_seq: pd.DataFrame = None,
-                     sample: Union[int, str] = None,
-                     jmd_n_len: Union[int, None] = 10,
-                     jmd_c_len: Union[int, None] = 10,
-                     ) -> dict:
+    def get_seq_kws(self,
+                    df_seq: pd.DataFrame = None,
+                    df_parts: pd.DataFrame = None,
+                    sample: Union[int, str] = None,
+                    ) -> dict:
         """
-        Get the per-part sequence arguments (``jmd_n_seq``, ``tmd_seq``, ``jmd_c_seq``) for a single protein.
+        Get the per-part sequence keyword arguments (``jmd_n_seq``, ``tmd_seq``, ``jmd_c_seq``) for one protein.
 
-        Slices one protein from ``df_seq`` into its JMD-N, TMD, and JMD-C parts and returns them as a
-        ready-to-use ``args_seq`` dictionary, so the per-protein sequence can be passed directly to
-        :meth:`CPPPlot.profile` and :meth:`CPPPlot.feature_map` (e.g. for sample-level SHAP plots) via
-        ``**args_seq``, without manually slicing :meth:`SequenceFeature.get_df_parts`.
-
-        .. versionadded:: 1.1.0
+        Returns the TMD-JMD sequence parts of a single protein as a ready-to-use ``seq_kws`` dictionary, so
+        the per-protein sequence can be passed directly to the :class:`CPPPlot` methods (e.g. for sample-level
+        plots) via ``**seq_kws``, without manually slicing the DataFrame. The parts are taken from ``df_parts``
+        (the same sequence parts that produced ``df_feat`` via :meth:`CPP.run`), so the displayed residues are
+        always bound to the feature geometry; ``df_seq`` is cross-checked for consistency. The JMD lengths are
+        read off ``df_parts`` (no length argument); a JMD that the parts do not contain is returned empty.
 
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
             DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
             in a distinct format: **Position-based**, **Part-based**, **Sequence-based**, or **Sequence-TMD-based**.
+        df_parts : pd.DataFrame, shape (n_samples, n_parts)
+            Sequence parts DataFrame (indexed by ``entry``) as produced by :meth:`SequenceFeature.get_df_parts`
+            and passed to :meth:`CPP.run`. Defines the TMD-JMD geometry; must be consistent with ``df_seq``.
         sample : int or str
-            The protein to extract, given either as a row position in ``df_seq`` or as an entry name (str)
-            from its ``entry`` column.
-        jmd_n_len : int, default=10
-            Length of JMD-N in number of amino acids. If ``None``, ``jmd_n`` and ``jmd_c`` should be given.
-        jmd_c_len : int, default=10
-            Length of JMD-C in number of amino acids. If ``None``, ``jmd_n`` and ``jmd_c`` should be given.
+            The protein to extract, given either as a row position in ``df_parts`` or as an entry name (str)
+            from its index.
 
         Returns
         -------
-        args_seq : dict
+        seq_kws : dict
             Dictionary with the keys ``jmd_n_seq``, ``tmd_seq``, and ``jmd_c_seq`` mapping to the
-            corresponding amino acid sequence parts of the selected protein.
+            corresponding amino acid sequence parts of the selected protein (empty string where a JMD part
+            is not encoded in ``df_parts``).
 
         See Also
         --------
         * :meth:`SequenceFeature.get_df_parts` for creating the underlying sequence parts DataFrame.
-        * :meth:`CPPPlot.profile` and :meth:`CPPPlot.feature_map`, which accept the returned parts via ``**args_seq``.
+        * :meth:`CPPPlot.profile` and :meth:`CPPPlot.feature_map`, which accept the returned parts via ``**seq_kws``.
 
         Examples
         --------
-        .. include:: examples/sf_get_args_seq.rst
+        .. include:: examples/sf_get_seq_kws.rst
         """
         # Check input
-        list_parts = ut.COLS_SEQ_PARTS  # ['jmd_n', 'tmd', 'jmd_c']
-        df_parts = self.get_df_parts(df_seq=df_seq, list_parts=list_parts,
-                                     jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+        ut.check_df(name="df_seq", df=df_seq, cols_required=[ut.COL_ENTRY])
+        ut.check_df(name="df_parts", df=df_parts)
         entries = list(df_parts.index)
         if isinstance(sample, str):
             if sample not in entries:
-                raise ValueError(f"'sample' ({sample}) should be an entry in the '{ut.COL_ENTRY}' column "
-                                 f"of 'df_seq'. First entries are: {entries[:5]}")
-            row = df_parts.loc[sample]
+                raise ValueError(f"'sample' ({sample}) should be an entry in the index of 'df_parts'. "
+                                 f"First entries are: {entries[:5]}")
+            row, entry = df_parts.loc[sample], sample
         elif isinstance(sample, (int, np.integer)) and not isinstance(sample, bool):
             ut.check_number_range(name="sample", val=int(sample), min_val=0, max_val=len(df_parts) - 1, just_int=True)
-            row = df_parts.iloc[int(sample)]
+            row, entry = df_parts.iloc[int(sample)], entries[int(sample)]
         else:
             raise ValueError(f"'sample' ({sample}) should be an entry name (str) or a row position (int).")
-        args_seq = {f"{part}_seq": row[part] for part in list_parts}
-        return args_seq
+        # Recover the basic parts from df_parts (JMD lengths encoded in the parts) and verify against df_seq
+        jmd_n_seq, tmd_seq, jmd_c_seq = recover_seq_parts_from_df_parts_row(row=row)
+        check_match_df_seq_df_parts(df_seq=df_seq, entry=entry,
+                                    jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
+        seq_kws = {f"{ut.COL_JMD_N}_seq": jmd_n_seq, f"{ut.COL_TMD}_seq": tmd_seq, f"{ut.COL_JMD_C}_seq": jmd_c_seq}
+        return seq_kws
 
     @staticmethod
     def get_split_kws(split_types: Optional[Union[Literal["Segment", "Pattern", "PeriodicPattern"],
