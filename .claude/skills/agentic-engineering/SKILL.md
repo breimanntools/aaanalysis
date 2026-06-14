@@ -106,11 +106,17 @@ Eight steps in three phases. **Full rationale + the quality-gates table live in
    green re-run. `gh pr merge --disable-auto` to hold. Don't paper over a real failure to force a merge.
 8. **Clean up — gated on merge + a green `master` (with permission, §0).** Trigger off **merge state,
    not a CI run**: wait until `gh pr view <n> --json state,mergedAt` shows `MERGED`, then let the
-   push-triggered `master` workflows pass. Confirm no work is lost (`git branch --merged master`;
-   worktree `git status --porcelain` empty), then — **as three separate §0 asks** — `git switch
-   master` → `git worktree remove <path>` (uncommitted work needs `--force` → also permission) →
-   `git worktree prune` → `git branch -d <branch>`; remote head auto-deletes on squash-merge if the
-   repo setting is on, else `git push origin --delete <branch>` (push → §0). A scheduled/unattended
+   push-triggered `master` workflows pass. **This repo squash-merges, so `git branch --merged master`
+   and `git branch -d` are BLIND to it** — the squash gives a new SHA, so both report the merged branch
+   as "not merged" and `-d` refuses. Verify via **PR state** (`MERGED` above) or an empty
+   `git diff master...<branch>`, then delete with **`git branch -D`** (force; the PR proves the work is
+   in master). As separate §0 asks: `git switch master` → `git worktree remove <path>` (uncommitted work
+   needs `--force` → also permission) → `git worktree prune` → `git branch -D <branch>`; remote head
+   auto-deletes only if the repo's "automatically delete head branches" setting is on, else
+   `git push origin --delete <branch>` (push → §0). **Canonical tool:**
+   `python .github/scripts/prune_merged_branches.py` (PR-state-driven; report-only by default, `--apply`
+   to delete, never touches FORGOTTEN no-PR work) — prefer it over ad-hoc deletes and run it from *any*
+   session, since parallel auto-merges often land after the opening session ended. A scheduled/unattended
    job may *flag* "ready to clean up" but never deletes on its own (§0).
 
 ## Ripple checklist (no change is done until its mirrors are in sync)

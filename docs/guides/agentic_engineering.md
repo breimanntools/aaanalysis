@@ -119,13 +119,29 @@ order there is natural rather than rigid. The full rationale lives in this secti
    push-triggered workflows on `master` run and **wait for them to pass** — that confirms the
    squash didn't break anything the branch CI couldn't see (master may have moved under it). An
    intervening push, from this session or another, just re-runs checks and armed auto-merge waits
-   for the *new* green, so the trigger survives the race. Then, **with permission (root
-   `CLAUDE.md` §0, per-action)** and after confirming no work is lost — `git branch --merged
-   master` lists the branch and `git status --porcelain` in the worktree is empty —
+   for the *new* green, so the trigger survives the race.
+
+   **Verify with PR state, not commit reachability.** This repo **squash-merges**, which gives the
+   merge a new SHA, so the branch's own commits are never reachable from `master`. That makes
+   `git branch --merged master` omit the branch and `git branch -d <branch>` refuse it ("not fully
+   merged") — both are **blind to squash-merges** and must not be used as the "is it safe to delete?"
+   test. Instead confirm via the **`MERGED` PR state** above (or an empty `git diff master...<branch>`,
+   meaning the branch introduces nothing master lacks), then delete with **`git branch -D`** (force —
+   the merged PR already proves the work is in `master`). A branch with **no PR and a non-empty
+   `git diff master...<branch>`** is *forgotten work* — never delete it; surface it for a human.
+
+   Then, **with permission (root `CLAUDE.md` §0, per-action)** and after that verification —
    `git switch master` → `git worktree remove <path>` (a tree with uncommitted work needs
-   `--force`, which also needs permission) → `git worktree prune` → `git branch -d <branch>`. The
-   remote branch is auto-deleted by GitHub on squash-merge when the repo's "automatically delete
-   head branches" setting is on; otherwise `git push origin --delete <branch>` (a push → §0). A
+   `--force`, which also needs permission) → `git worktree prune` → `git branch -D <branch>`. The
+   remote branch is auto-deleted by GitHub on merge only when the repo's "automatically delete
+   head branches" setting is on; otherwise `git push origin --delete <branch>` (a push → §0).
+
+   **Canonical tool — `python .github/scripts/prune_merged_branches.py`.** PR-state-driven (not
+   reachability), idempotent, report-only by default; `--apply` deletes the merged/contained local
+   branches (removing a clean worktree first), `--remote --apply` also prunes stale remote branches,
+   and it **never** deletes a FORGOTTEN no-PR branch. Prefer it over ad-hoc deletes and run it from
+   *any* session or as a periodic reconcile — because parallel auto-merges routinely land *after* the
+   session that opened the PR has ended, so per-session end-of-run cleanup alone can't keep up. A
    scheduled/unattended job may *detect and flag* "ready to clean up" but must never delete on its
    own (§0) — the same sync-only discipline as the step-5 background sync.
 
