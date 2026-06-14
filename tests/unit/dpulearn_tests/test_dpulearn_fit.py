@@ -258,6 +258,16 @@ class TestdPULearnFitLabelEncoding:
         assert isinstance(df_pu, pd.DataFrame)
         assert np.sum(dpul.labels_ == 0) == 5
 
+    def test_negative_marker_values(self):
+        """Markers may be negative integers (e.g. label_unl=-1)."""
+        X, labels_pu = self._det_data()
+        labels_neg_marker = np.where(labels_pu == 2, -1, 1)  # 1 = positive, -1 = unlabeled
+        dpul = aa.dPULearn(random_state=42)
+        df_pu = dpul.fit(X, labels_neg_marker, label_unl=-1, n_neg=5).df_pu_
+        assert isinstance(df_pu, pd.DataFrame)
+        # output stays canonical (0 = negative, 1 = positive, 2 = unlabeled)
+        assert np.sum(dpul.labels_ == 0) == 5
+
     def test_equivalence_1_0_vs_1_2(self):
         """1/0 + n_neg yields byte-identical labels_/df_pu_ to the 1/2 + n_neg path."""
         X, labels_pu = self._det_data()
