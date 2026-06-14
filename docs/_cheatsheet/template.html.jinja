@@ -234,7 +234,7 @@
     <div class="sec gloss-wide">
       <div class="sec-h"><span>Glossary</span><span class="hint">canonical vocabulary · CONTEXT.md</span></div>
       <div class="sec-body gloss-cols">
-        {% for row in c.glossary %}{% set term = row[0] %}{% set d = row[1] %}{% set _tag = row[2] if row|length > 2 else None %}<div class="gloss-item"><b>{{ term }}</b>{% if _tag %} <span class="rowtag">{{ _tag }}</span>{% endif %} — {{ d|safe }}</div>{% endfor %}
+        {% for row in c.glossary %}{% set term = row[0] %}{% set d = row[1] %}{% set _tag = row[2] if row|length > 2 else None %}{% set _sub = row[3] if row|length > 3 else None %}<div class="gloss-item{% if _sub %} gloss-sub{% endif %}"><b>{{ term }}</b>{% if _tag %} <span class="rowtag">{{ _tag }}</span>{% endif %} — {{ d|safe }}</div>{% endfor %}
       </div>
     </div>
 

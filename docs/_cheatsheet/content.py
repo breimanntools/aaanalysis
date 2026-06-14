@@ -85,6 +85,8 @@ FEATURE_ONTOLOGY = {
 # hosts the algorithm/figure deep-dives linked from several panels.
 SUPPL_PDF_URL = ("https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-025-60638-z/"
                  "MediaObjects/41467_2025_60638_MOESM1_ESM.pdf")
+# The Breimann25 paper itself (Nat. Commun.) — for inline "Breimann25" citations.
+BREIMANN25_URL = "https://www.nature.com/articles/s41467-025-60638-z"
 
 # Splits schema (page 1): how each Split type selects residues of a Part — a
 # simplified take on Breimann25 Suppl. Fig. C (APP / NOTCH1 TMD splits). Each
@@ -514,27 +516,34 @@ GLOSSARY = [
      "interpretable unit of CPP."),
     ("Part", "Named segment used as feature input: <b>tmd</b>, <b>jmd_n</b>, "
      "<b>jmd_c</b>, tmd_jmd, jmd_n_tmd_n, tmd_c_jmd_c."),
+    # TMD / JMD are sub-entries of Part (rendered indented; see gloss-sub).
+    ("TMD (Target Middle Domain)",
+     "The central <i>variable-length</i> sequence segment of interest, made "
+     "comparable across samples by splitting. Called “transmembrane domain” in "
+     f"<a href=\"{BREIMANN25_URL}\" target=\"_blank\" rel=\"noopener\">Breimann25</a>, "
+     "but generalized here to any target segment.", None, "sub"),
+    ("JMD (Juxta Middle Domain)",
+     "The <i>fixed-length</i> flanking regions adjacent to the TMD: <b>jmd_n</b> "
+     "(N-terminal side) and <b>jmd_c</b> (C-terminal side); called "
+     "“juxtamembrane domain” in "
+     f"<a href=\"{BREIMANN25_URL}\" target=\"_blank\" rel=\"noopener\">Breimann25</a>.",
+     None, "sub"),
     ("Split", "How a scale is read across a part: Segment (contiguous), Pattern "
      "(sparse), PeriodicPattern (i, i+3/4)."),
     ("Scale", "AA (amino acid) → ℝ mapping. AAontology ships ~600 curated scales "
      "in two-level categories."),
-    ("TMD (Target Middle Domain)", "The central segment of interest (e.g. a "
-     "transmembrane domain); variable length, made comparable across proteins by "
-     "splitting. Generalized from 'Transmembrane' to any central segment."),
-    ("JMD (Juxta Middle Domain)", "The fixed-width flanks adjoining the TMD: "
-     "jmd_n (N-terminal side) and jmd_c (C-terminal side)."),
     ("AAontology", "Two-level scale taxonomy; CPP uses its categories to organize "
      "and rank features."),
     ("CPP", "Comparative Physicochemical Profiling — discovers ranked "
      "Part × Split × Scale features."),
     ("Test vs reference group", "The A-vs-B contrast CPP profiles: a feature's "
-     "mean_dif is test − reference (name_test / name_ref in CPPPlot)."),
+     "mean_dif is test − reference (name_test / name_ref in CPPPlot).", None, "sub"),
     ("Compositional vs positional", "How split_kws resolves locality: a whole-part "
-     "average (compositional) vs sub-region/position-resolved (positional)."),
+     "average (compositional) vs sub-region/position-resolved (positional).", None, "sub"),
     # -- CPP modes & numerical CPP ----------------------------------------
     ("Numerical CPP (pseudo-scale)", "CPP generalizes from AA→scale lookup to any "
-     "per-residue tensor — PLM (protein language model) · structure · PTM — each a "
-     "pseudo-scale via CPP.run_num.", "v1.1"),
+     "per-residue tensor — PLM (protein language model) · structure (PDB file) · "
+     "functional annotations (e.g. PTMs) — each a pseudo-scale via CPP.run_num.", "v1.1"),
     # -- Models, explainability & feature reduction -----------------------
     ("Feature importance vs impact", "Two explainability axes: importance = unsigned, "
      "group-level (TreeModel); impact = signed, per-sample (ShapModel, shap_plot)."),

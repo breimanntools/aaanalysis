@@ -274,6 +274,9 @@ td.k.mono { font-family: "AA Mono", monospace; font-weight: 700; color: var(--ac
               color: var(--ink-soft); line-height: 1.3; padding: 1.6px 0;
               border-bottom: 1px solid var(--line-soft); }
 .gloss-item b { color: var(--ink); }
+/* Sub-entries (e.g. TMD/JMD under Part): indent only, no left rule */
+.gloss-item.gloss-sub { margin-left: 12px; }
+.gloss-item a { color: var(--accent); text-decoration: none; font-weight: 600; }
 
 /* ---- footer bar ---------------------------------------------------------- */
 .footer-bar {
