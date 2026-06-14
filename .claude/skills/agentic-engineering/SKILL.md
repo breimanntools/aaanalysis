@@ -23,7 +23,7 @@ edits — make those directly.
 4. Fast local gate → ⛔ push scaffold commit → open a **draft PR** (this starts CI + the RTD preview).
 5. **`/review`** + **`/security-review`** (+ `/code-review high`, `/simplify`, `/docstrings` for big/API diffs). **Never merge red.**
 6. ⛔ **Human gate** — user picks **(a)** manual review loop or **(b)** skip → post an approving comment.
-7. ⛔ `gh pr merge --auto --merge` (**merge commit — never `--squash`**); fix-forward on red (armed auto-merge completes on the green re-run).
+7. ⛔ `gh pr merge --auto --merge`; fix-forward on red (armed auto-merge completes on the green re-run).
 8. ⛔ After the PR is **MERGED** + `master` is green: clean up (worktree remove · `branch -d` · remote delete — three separate asks).
 
 > **Parallel sessions are the norm here.** Before any status claim, commit, merge, or cleanup, refresh
@@ -104,17 +104,15 @@ Eight steps in three phases. **Full rationale + the quality-gates table live in
      recorded, then go to step 7.
    Recommend (a) for substantial/architectural diffs, (b) for trivial ones — but **never assume.**
 7. **Arm auto-merge; fix-forward on red.** After step 6 clears (on skip, after the approving comment)
-   and you've read the RTD preview + diff: **`gh pr merge --auto --merge`** (publish → §0). Use a
-   **merge commit — never `--squash`** (squash rewrites the branch into a new SHA, which both loses the
-   individual commits *and* breaks squash-blind cleanup detection; merge commits keep
-   `git branch --merged` / `-d` reliable). The merge **method** is its own explicit choice — don't fold
-   it into the step-6 skip option. GitHub merges only on all-green + conflict-free, so *never merge red*
-   holds. On red: `gh run view --log-failed` → reproduce locally → fix **forward on the same branch** →
-   push; armed auto-merge completes on the green re-run. `gh pr merge --disable-auto` to hold. Don't
-   paper over a real failure to force a merge.
+   and you've read the RTD preview + diff: **`gh pr merge --auto --merge`** (publish → §0). The merge
+   **method** is its own explicit choice — don't fold it into the step-6 skip option (why `--merge`:
+   [REFERENCE.md](REFERENCE.md) → *Merge method*). GitHub merges only on all-green + conflict-free, so
+   *never merge red* holds. On red: `gh run view --log-failed` → reproduce locally → fix **forward on
+   the same branch** → push; armed auto-merge completes on the green re-run. `gh pr merge --disable-auto`
+   to hold. Don't paper over a real failure to force a merge.
 8. **Clean up — gated on merge + a green `master` (with permission, §0).** Trigger off **merge state,
    not a CI run**: wait until `gh pr view <n> --json state,mergedAt` shows `MERGED`, then let the
-   push-triggered `master` workflows pass. Because PRs land as **merge commits** (never squash), the
+   push-triggered `master` workflows pass. Because PRs land as **merge commits**, the
    branch's commits stay reachable from `master`, so `git branch --merged master` lists it and a plain
    **`git branch -d <branch>`** deletes it safely (no `-D` force, no `git diff` workaround needed).
    First `git fetch origin --prune` to drop stale remote-tracking refs another session's merge left
@@ -182,10 +180,8 @@ job names and thresholds drift — **verify the live configuration** (`.github/w
 
 ## Notes
 
-- **Merge with `--merge` (merge commit), never `--squash`.** Merge commits keep the branch's commits
-  on `master`, so `git branch --merged` / `-d` cleanup stays reliable (squash rewrites to a new SHA
-  and breaks it, and silently drops the individual commits). The merge **method** is its own explicit
-  decision — surface it; never bundle it into the step-6 skip-review option.
+- **Merge with `gh pr merge --auto --merge`** — the method is its own explicit decision, never bundled
+  into the step-6 skip-review option. Rationale: [REFERENCE.md](REFERENCE.md) → *Merge method*.
 - **Worktrees, not `git stash`, for isolation.** See step 3 / [REFERENCE.md](REFERENCE.md).
 - **Parallel sessions: derive live state, touch only your own branch.** See *Parallel sessions* above.
 - **Fix forward, never merge red.** Auto-merge is safe precisely because GitHub only completes it
