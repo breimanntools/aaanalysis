@@ -47,9 +47,6 @@ strategies are detailed to facilitate an transparent and objective analysis of o
 To get hands-on experience, explore our :ref:`Tutorials <tutorials>`. In addition to our detailed :ref:`API <api>`
 documentation, we compiled various overview :ref:`Tables <tables>` that provide in-depth resources, including our
 **AAontology** scale classification and a variety of benchmark protein datasets. Discover the scientific foundation
-of AAanalysis in the :ref:`References <references>` section.
-
-.. toctree::
-   :maxdepth: 1
-
-   ecosystem.rst
+of AAanalysis in the :ref:`References <references>` section. To see how AAanalysis fits among related bioinformatics,
+machine-learning, and explainability tools, explore the
+`AAanalysis Ecosystem <../_static/aaanalysis_ecosystem.html>`_.
