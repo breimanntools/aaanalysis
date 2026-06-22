@@ -98,12 +98,15 @@ jobs:
       - name: Guard — released venv imports the installed release, NOT the working tree
         run: |
           .venv-released/bin/python - <<'PY'
-          import aaanalysis, pathlib
-          repo = str(pathlib.Path.cwd())
-          assert repo not in aaanalysis.__file__, \
-              f"released venv imported the WORKING TREE ({aaanalysis.__file__}); A/B would be master-vs-master"
-          assert "site-packages" in aaanalysis.__file__, aaanalysis.__file__
-          print("released ->", aaanalysis.__file__)
+          import aaanalysis
+          # The installed release lives in site-packages; the working-tree source is
+          # <repo>/aaanalysis/__init__.py (NO "site-packages" in its path). The venv
+          # dir sits INSIDE the repo checkout on CI, so a naive "repo not in path"
+          # check false-fails -- key on site-packages, which the source tree lacks.
+          path = aaanalysis.__file__
+          assert "site-packages" in path, \
+              f"released venv imported the WORKING TREE ({path}); A/B would be master-vs-master"
+          print("released ->", path)
           PY
 
       - name: Benchmark latest stable release
