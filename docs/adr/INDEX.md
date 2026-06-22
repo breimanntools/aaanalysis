@@ -42,4 +42,5 @@ Regenerate this table with:
 | [0031](0031-integration-e2e-test-policy.md) | Integration & e2e test tiers: scope, taxonomy, and merge-gating | Accepted | 2026-06-13 |  |
 | [0032](0032-numerical-equivalence-tolerance-policy.md) | Numerical-equivalence tolerance policy for output-affecting optimizations | Accepted | 2026-06-13 |  |
 | [0033](0033-performance-audit-outcomes.md) | Whole-library performance audit: accepted wins and rejected optimizations | Accepted | 2026-06-13 |  |
+| [0037](0037-perf-ab-gate.md) | Same-runner A/B vs the latest PyPI release makes wall-clock a merge gate | Accepted | 2026-06-22 |  |
 <!-- ADR-INDEX:END -->

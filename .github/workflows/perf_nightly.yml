@@ -1,31 +1,56 @@
-name: Perf (benchmark + regression guard)
+name: Perf (A/B regression gate)
 
-# NON-GATING nightly job (issue #187, mirroring the mutation/regression nightly).
-# Runs on a schedule and on manual dispatch only — never on push/PR — so noisy
-# wall-clock timings never block a merge. It micro-benchmarks the hot public
-# entry points (tests/benchmarks/) on small bundled fixtures and compares the run
-# against the committed baseline (tests/benchmarks/perf_baseline.json), flagging
-# any covered path slower than the baseline threshold (1.5x).
+# MERGE-GATING perf check (issue #187). Runs on PRs and master pushes (and on a
+# daily schedule as a heartbeat). It micro-benchmarks the hot public entry points
+# (tests/benchmarks/) TWICE on the SAME runner in the SAME job:
+#   * the current working tree (editable install), and
+#   * the latest stable release from PyPI, installed --no-deps onto the SAME
+#     dependency set, so only aaanalysis's own source differs.
+# Comparing both builds on one runner cancels cross-runner hardware variance,
+# OS/Python differences, and dependency drift -- the failure mode that made a
+# static committed baseline flap red. The comparison
+# (.github/scripts/check_perf_regression.py) gates per-benchmark: a tight 1.3x
+# band on the meaty paths, a looser 2.0x band on the sub-2ms micro-paths whose
+# relative jitter is far higher.
 #
-# Refreshing the baseline: the committed numbers are hardware-specific, so refresh
-# them ON THIS RUNNER CLASS (ubuntu-latest). Trigger this workflow via "Run
-# workflow" (workflow_dispatch) with refresh_baseline=true, download the
-# perf-baseline artifact, and commit it to tests/benchmarks/perf_baseline.json.
+# Docs-only changes can't affect timings, so they are path-ignored like main.yml.
 
 on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.rst'
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.rst'
   schedule:
-    - cron: "0 5 * * *"   # 05:00 UTC daily (after the 04:00 mutation nightly)
-  workflow_dispatch:
-    inputs:
-      refresh_baseline:
-        description: "Write a fresh baseline artifact instead of comparing"
-        type: boolean
-        default: false
+    - cron: "0 5 * * *"   # 05:00 UTC daily heartbeat (after the 04:00 nightly)
+  workflow_dispatch: {}
+
+concurrency:
+  group: perf-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   benchmark:
-    name: Benchmark hot paths (Linux/py3.11)
+    name: A/B benchmark hot paths (Linux/py3.11)
     runs-on: ubuntu-latest
+    env:
+      MPLBACKEND: Agg
+      # CRITICAL for a correct A/B: stop Python prepending the cwd (the repo root,
+      # which holds the aaanalysis/ source tree) onto sys.path. Without this, the
+      # released venv's pytest would import the WORKING TREE, not the installed
+      # release -> a master-vs-master comparison that can never see a regression.
+      # Paired with pytest --import-mode=importlib (tests/__init__.py would
+      # otherwise make prepend-mode insert the repo root too).
+      PYTHONSAFEPATH: "1"
     steps:
       - uses: actions/checkout@v6
 
@@ -34,35 +59,77 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install package + dev/pro/bench deps
+      - name: Build current (working-tree) venv
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .[dev,pro,bench]
+          python -m venv .venv-current
+          .venv-current/bin/python -m pip install --upgrade pip
+          .venv-current/bin/pip install -e .[dev,pro,bench]
 
-      - name: Run benchmark suite
-        env:
-          MPLBACKEND: Agg
+      - name: Guard — current venv imports the working tree
         run: |
-          pytest tests/benchmarks --benchmark-json=perf_run.json \
-            -c tests/pytest.ini -v
+          .venv-current/bin/python - <<'PY'
+          import aaanalysis, pathlib
+          repo = str(pathlib.Path.cwd())
+          assert repo in aaanalysis.__file__, \
+              f"current venv imported {aaanalysis.__file__}, expected the working tree under {repo}"
+          print("current ->", aaanalysis.__file__)
+          PY
 
-      - name: Compare against committed baseline
-        if: ${{ !inputs.refresh_baseline }}
-        run: python .github/scripts/check_perf_regression.py perf_run.json
-
-      - name: Refresh baseline (manual dispatch only)
-        if: ${{ inputs.refresh_baseline }}
+      - name: Benchmark current working tree
         run: |
-          python .github/scripts/check_perf_regression.py perf_run.json --update
-          echo "Refreshed tests/benchmarks/perf_baseline.json — download the "
-          echo "perf-baseline artifact and commit it."
+          .venv-current/bin/pytest tests/benchmarks --import-mode=importlib \
+            --benchmark-json=current_run.json -c tests/pytest.ini -v
 
-      - name: Upload run + baseline
+      - name: Freeze the dependency set (everything except aaanalysis)
+        run: |
+          .venv-current/bin/pip freeze | grep -viE '^(-e |aaanalysis([=@ ]|$))' > deps.txt
+          echo "----- shared dependency set -----"; cat deps.txt
+
+      - name: Build released venv on the SAME deps
+        run: |
+          python -m venv .venv-released
+          .venv-released/bin/python -m pip install --upgrade pip
+          .venv-released/bin/pip install -r deps.txt
+          .venv-released/bin/pip install aaanalysis --no-deps
+          echo "----- released aaanalysis version -----"
+          # 1.0.3 does not define aaanalysis.__version__; read the install metadata.
+          .venv-released/bin/python -c "from importlib.metadata import version; print(version('aaanalysis'))"
+
+      - name: Guard — released venv imports the installed release, NOT the working tree
+        run: |
+          .venv-released/bin/python - <<'PY'
+          import aaanalysis, pathlib
+          repo = str(pathlib.Path.cwd())
+          assert repo not in aaanalysis.__file__, \
+              f"released venv imported the WORKING TREE ({aaanalysis.__file__}); A/B would be master-vs-master"
+          assert "site-packages" in aaanalysis.__file__, aaanalysis.__file__
+          print("released ->", aaanalysis.__file__)
+          PY
+
+      - name: Benchmark latest stable release
+        # Tolerant: a benchmark exercising an API newer than the published release
+        # errors out of released_run.json instead of failing the job. The compare
+        # step is the gate; current-only benchmarks are reported unbaselined and
+        # not gated.
+        continue-on-error: true
+        run: |
+          .venv-released/bin/pytest tests/benchmarks --import-mode=importlib \
+            --benchmark-json=released_run.json -c tests/pytest.ini -v || true
+
+      - name: Gate current vs released (A/B)
+        run: |
+          # Pass the installed release version so the gated_since guard can fail
+          # on silent coverage loss (a gated method missing from the released run).
+          REL_VER="$(.venv-released/bin/python -c 'from importlib.metadata import version; print(version("aaanalysis"))')"
+          python .github/scripts/check_perf_regression.py current_run.json \
+            --baseline-run released_run.json --released-version "$REL_VER"
+
+      - name: Upload both benchmark runs
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: perf-baseline
+          name: perf-ab-runs
           path: |
-            perf_run.json
-            tests/benchmarks/perf_baseline.json
+            current_run.json
+            released_run.json
           if-no-files-found: ignore

@@ -63,10 +63,13 @@ settings.load_profile("ci")
 - **Hypothesis deadlines are disabled (`deadline=None`) suite-wide.** CI runs the
   tests under **`pytest-xdist -n auto`** (parallel), where shared-CPU contention
   makes per-example wall-clock deadlines flake (a 1.5s-deadline test ran 2.4s
-  purely from a co-scheduled worker). Wall-clock timing is not a reliable gate
-  under parallelism, so all `register_profile`/`@settings` use `deadline=None`.
-  Performance/correctness is guarded by the **CPP regression anchor** (nightly),
-  not by these deadlines. New tests: `register_profile("ci", deadline=None)`.
+  purely from a co-scheduled worker). Per-test wall-clock deadlines are not a
+  reliable gate under parallelism, so all `register_profile`/`@settings` use
+  `deadline=None`. Correctness is guarded by the **CPP regression anchor**
+  (nightly); *speed* is guarded separately by the **perf A/B gate** (a
+  same-runner current-vs-latest-release benchmark, `perf_nightly.yml` /
+  `check_perf_regression.py`), which **is** merge-gating — see the perf-gate note
+  below. New tests: `register_profile("ci", deadline=None)`.
 - A `tests/conftest.py` autouse fixture resets `aa.options` to defaults
   around every test — the `aa.options["verbose"] = False` line at the top of
   every test file is drift to fix on touch.
@@ -160,6 +163,21 @@ rtol=0)` + identical discrete decisions, or **T3** quality-metric within a
 documented band — and commits a `@pytest.mark.regression` anchor (same canonical-
 cell pin, same nightly-only run) freezing the decision artifact / value (T2) or
 the banded metric (T3). The reviewer acceptance checklist is in `CONTRIBUTING.rst`.
+
+### Perf A/B gate (ADR-0037)
+`tests/benchmarks/test_perf_hot_paths.py` (opt-in `[bench]` extra) micro-benchmarks
+the hot public entry points. The perf workflow (`perf_nightly.yml`) runs the suite
+**twice on the same runner in the same job** — the current working tree, and the
+**latest stable release** installed `--no-deps` onto the *same* dependency set —
+then `check_perf_regression.py` compares the two. Running both builds on one runner
+cancels hardware / OS / Python / dependency variance (the failure mode that made a
+static committed baseline flap red), so the check **is merge-gating** on PRs +
+master push: a per-benchmark `1.3×` (meaty paths) / `2.0×` (sub-2ms micro-paths)
+slowdown blocks the merge. This is the one sanctioned **wall-clock merge gate** and
+supersedes the old "wall-clock never gates" stance (ADR-0015/0016) for the perf
+suite; correctness still rides the regression anchor, not this gate. There is **no**
+committed `perf_baseline.json` — the baseline is the live release. Benchmarks newer
+than the published release are reported unbaselined and not gated.
 
 ### Mutation testing
 `mutmut` is an **opt-in dev tool + non-gating nightly CI job** (not a hard
