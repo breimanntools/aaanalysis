@@ -1,0 +1,11 @@
+{
+  "include": ["aaanalysis"],
+  "exclude": [
+    "**/__pycache__",
+    "aaanalysis/**/_backend"
+  ],
+  "typeCheckingMode": "basic",
+  "pythonVersion": "3.10",
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false
+}

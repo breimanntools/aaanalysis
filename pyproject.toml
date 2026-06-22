@@ -130,6 +130,7 @@ dev = [
   "pytest-xdist>=3.6.0",
   "pytest-mpl==0.19.0",
   "mutmut>=3.0",
+  "pyright>=1.1.400",
 ]
 
 [project.urls]
@@ -162,6 +163,7 @@ include = ["aaanalysis*"]
 
 [tool.setuptools.package-data]
 aaanalysis = [
+  "py.typed",
   "_data/*.xlsx",
   "_data/*.tsv",
   "_data/**/*.xlsx",
