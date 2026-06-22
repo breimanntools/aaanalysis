@@ -36,6 +36,7 @@ Each benchmark builds its input data ONCE in a module-scoped fixture, so only
 the hot call itself is timed (not fixture construction). Fixtures are tiny and
 seeded for determinism; the whole suite runs in well under ~2 minutes.
 """
+import hashlib
 import warnings
 from pathlib import Path
 
@@ -91,6 +92,58 @@ def _tag_gated_since(request, benchmark):
     name = request.node.name.split("[")[0]
     if name in GATED_SINCE:
         benchmark.extra_info["gated_since"] = GATED_SINCE[name]
+
+
+def _digest(obj):
+    """Byte-exact digest of a benchmark result, or None if it has no deterministic
+    serialization (e.g. a fitted model object).
+
+    Used for the OUTPUT A/B: check_perf_regression.py compares current vs released
+    digests so a speedup that silently changes output is caught. Both venvs share
+    the SAME pandas/numpy (Option A --no-deps), so pandas' hash and ndarray bytes
+    are directly comparable. Model-returning methods (``*.fit`` -> ``self``) return
+    None here and are simply not output-compared (stochastic; covered by the
+    reproducibility tests instead)."""
+    h = hashlib.sha256()
+
+    def upd(x):
+        if isinstance(x, pd.DataFrame):
+            h.update(b"DF|"); h.update("|".join(map(str, x.columns)).encode())
+            h.update(pd.util.hash_pandas_object(x, index=True).values.tobytes())
+        elif isinstance(x, pd.Series):
+            h.update(b"S|")
+            h.update(pd.util.hash_pandas_object(x, index=True).values.tobytes())
+        elif isinstance(x, np.ndarray):
+            h.update(b"A|"); h.update(str(x.dtype).encode()); h.update(str(x.shape).encode())
+            h.update(np.ascontiguousarray(x).tobytes())
+        elif isinstance(x, dict):
+            h.update(b"D|")
+            for k in sorted(x, key=str):
+                h.update(str(k).encode()); h.update(b"="); upd(x[k])
+        elif isinstance(x, (list, tuple)):
+            h.update(b"L|")
+            for it in x:
+                upd(it)
+        elif isinstance(x, (str, bytes, int, float, bool, type(None))):
+            h.update(repr(x).encode())
+        else:
+            raise TypeError  # no deterministic serialization (e.g. a fitted model)
+
+    try:
+        upd(obj)
+    except TypeError:
+        return None
+    return h.hexdigest()
+
+
+def _bench(benchmark, fn):
+    """Run a benchmark and, when the result is digestible data, stamp a byte-exact
+    ``output_digest`` into the run JSON for the current-vs-released output A/B."""
+    result = benchmark(fn)
+    digest = _digest(result)
+    if digest is not None:
+        benchmark.extra_info["output_digest"] = digest
+    return result
 
 
 # I Shared fixtures (built once per module; only the hot call is benchmarked)
@@ -201,14 +254,14 @@ def test_cpp_run(benchmark, seq_inputs):
     cpp = aa.CPP(df_parts=seq_inputs["df_parts"],
                  df_scales=seq_inputs["df_scales"],
                  split_kws=seq_inputs["split_kws"])
-    result = benchmark(lambda: cpp.run(labels=seq_inputs["labels"], n_jobs=1))
+    result = _bench(benchmark, lambda: cpp.run(labels=seq_inputs["labels"], n_jobs=1))
     assert isinstance(result, pd.DataFrame)
 
 
 def test_cpp_run_num(benchmark, seq_inputs, num_inputs):
     """CPP.run_num — the numerical-mode (dict_num) recompute hot path."""
     cpp = aa.CPP(df_parts=seq_inputs["df_parts"], df_scales=seq_inputs["df_scales"])
-    result = benchmark(lambda: cpp.run_num(
+    result = _bench(benchmark, lambda: cpp.run_num(
         dict_num_parts=num_inputs["dict_num_parts"],
         labels=num_inputs["labels"], n_jobs=1))
     assert isinstance(result, pd.DataFrame)
@@ -216,14 +269,14 @@ def test_cpp_run_num(benchmark, seq_inputs, num_inputs):
 
 def test_aaclust_fit(benchmark, cluster_inputs):
     """AAclust.fit — clustering / medoid selection."""
-    result = benchmark(lambda: aa.AAclust().fit(cluster_inputs, n_clusters=5))
+    result = _bench(benchmark, lambda: aa.AAclust().fit(cluster_inputs, n_clusters=5))
     assert result is not None
 
 
 def test_sequence_feature_matrix(benchmark, feature_matrix_inputs):
     """SequenceFeature.feature_matrix — feature-vector assembly."""
     sf = aa.SequenceFeature()
-    result = benchmark(lambda: sf.feature_matrix(
+    result = _bench(benchmark, lambda: sf.feature_matrix(
         features=feature_matrix_inputs["features"],
         df_parts=feature_matrix_inputs["df_parts"]))
     assert isinstance(result, np.ndarray)
@@ -232,21 +285,21 @@ def test_sequence_feature_matrix(benchmark, feature_matrix_inputs):
 def test_aa_window_sampler(benchmark, window_inputs):
     """AAWindowSampler.sample_same_protein — the vectorized window filters."""
     aaws = aa.AAWindowSampler()
-    result = benchmark(lambda: aaws.sample_same_protein(
+    result = _bench(benchmark, lambda: aaws.sample_same_protein(
         df_seq=window_inputs, pos_col="pos", n=50, window_size=9, seed=0))
     assert isinstance(result, pd.DataFrame)
 
 
 def test_dpulearn_fit(benchmark, pu_inputs):
     """dPULearn.fit — reliable-negative identification."""
-    result = benchmark(lambda: aa.dPULearn().fit(
+    result = _bench(benchmark, lambda: aa.dPULearn().fit(
         pu_inputs["X"], pu_inputs["labels"], n_unl_to_neg=10))
     assert result is not None
 
 
 def test_tree_model_fit(benchmark, tree_inputs):
     """TreeModel.fit — tree-ensemble training + feature importance."""
-    result = benchmark(lambda: aa.TreeModel().fit(
+    result = _bench(benchmark, lambda: aa.TreeModel().fit(
         X=tree_inputs["X"], labels=tree_inputs["labels"],
         use_rfe=False, n_cv=2, n_rounds=2))
     assert result is not None
@@ -258,7 +311,7 @@ def test_encode_pdb(benchmark, pdb_inputs):
     stp = aa.StructurePreprocessor()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        result = benchmark(lambda: stp.encode_pdb(
+        result = _bench(benchmark, lambda: stp.encode_pdb(
             df_seq=pdb_inputs, pdb_folder=str(PDB_FIXTURES), features=["bfactor"]))
     assert isinstance(result, dict)
 
@@ -299,7 +352,7 @@ def test_cpp_eval(benchmark, seq_inputs, df_feat):
     list_df_feat = [df_feat, df_feat.head(half)]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        result = benchmark(lambda: cpp.eval(list_df_feat=list_df_feat,
+        result = _bench(benchmark, lambda: cpp.eval(list_df_feat=list_df_feat,
                                             labels=seq_inputs["labels"], n_jobs=1))
     assert isinstance(result, pd.DataFrame)
 
@@ -309,7 +362,7 @@ def test_cpp_simplify(benchmark, seq_inputs, df_feat):
     cpp = aa.CPP(df_parts=seq_inputs["df_parts"], df_scales=seq_inputs["df_scales"])
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        result = benchmark(lambda: cpp.simplify(
+        result = _bench(benchmark, lambda: cpp.simplify(
             df_feat=df_feat, labels=seq_inputs["labels"], candidate_search="fast"))
     assert isinstance(result, pd.DataFrame)
 
@@ -320,7 +373,7 @@ def test_sequence_feature_get_df_feat(benchmark, seq_inputs):
     sf = aa.SequenceFeature()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        result = benchmark(lambda: sf.get_df_feat(
+        result = _bench(benchmark, lambda: sf.get_df_feat(
             features=features, df_parts=seq_inputs["df_parts"],
             labels=seq_inputs["labels"], df_scales=seq_inputs["df_scales"], n_jobs=1))
     assert isinstance(result, pd.DataFrame)
@@ -331,7 +384,7 @@ def test_prune_by_correlation(benchmark, seq_inputs, df_feat):
     sf = aa.SequenceFeature()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        result = benchmark(lambda: sf.prune_by_correlation(
+        result = _bench(benchmark, lambda: sf.prune_by_correlation(
             df_feat=df_feat, df_parts=seq_inputs["df_parts"],
             df_scales=seq_inputs["df_scales"], max_cor=0.7, n_jobs=1))
     assert isinstance(result, pd.DataFrame)
@@ -339,14 +392,14 @@ def test_prune_by_correlation(benchmark, seq_inputs, df_feat):
 
 def test_comp_auc_adjusted(benchmark, metrics_inputs):
     """comp_auc_adjusted — per-feature adjusted AUC across two groups."""
-    result = benchmark(lambda: aa.comp_auc_adjusted(
+    result = _bench(benchmark, lambda: aa.comp_auc_adjusted(
         X=metrics_inputs["X"], labels=metrics_inputs["labels"], n_jobs=1))
     assert result is not None
 
 
 def test_comp_kld(benchmark, metrics_inputs):
     """comp_kld — per-feature Kullback-Leibler divergence across two groups."""
-    result = benchmark(lambda: aa.comp_kld(
+    result = _bench(benchmark, lambda: aa.comp_kld(
         X=metrics_inputs["X"], labels=metrics_inputs["labels"]))
     assert result is not None
 
@@ -355,12 +408,12 @@ def test_get_sliding_aa_window(benchmark):
     """SequencePreprocessor.get_sliding_aa_window — windowed slice over one sequence."""
     seq = "ACDEFGHIKLMNPQRSTVWY" * 10
     sp = aa.SequencePreprocessor()
-    result = benchmark(lambda: sp.get_sliding_aa_window(seq=seq, window_size=9))
+    result = _bench(benchmark, lambda: sp.get_sliding_aa_window(seq=seq, window_size=9))
     assert result is not None
 
 
 def test_encode_one_hot(benchmark, seq_strings):
     """SequencePreprocessor.encode_one_hot — vectorized one-hot scatter."""
     sp = aa.SequencePreprocessor()
-    result = benchmark(lambda: sp.encode_one_hot(list_seq=seq_strings))
+    result = _bench(benchmark, lambda: sp.encode_one_hot(list_seq=seq_strings))
     assert result is not None

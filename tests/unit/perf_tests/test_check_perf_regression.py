@@ -201,3 +201,47 @@ def test_main_no_released_version_disables_guard(mod, tmp_path):
                             "test_old_method": (5.0, "1.0.0")})
     rc = mod.main([str(current), "--baseline-run", str(released)])
     assert rc == 0
+
+
+# V output A/B (byte-exact current-vs-released)
+def _write_run_dig(path, medians_digests):
+    """medians_digests: {name: (median_s, output_digest_or_None)}."""
+    benches = []
+    for name, (med, dig) in medians_digests.items():
+        b = {"name": name, "stats": {"median": med}}
+        if dig is not None:
+            b["extra_info"] = {"output_digest": dig}
+        benches.append(b)
+    path.write_text(json.dumps({"benchmarks": benches}))
+
+
+def test_read_output_digests(mod, tmp_path):
+    run = tmp_path / "run.json"
+    _write_run_dig(run, {"test_a": (0.01, "abc"), "test_b": (0.02, None)})
+    assert mod.read_output_digests(run) == {"test_a": "abc"}
+
+
+def test_main_output_identical_passes(mod, tmp_path):
+    released = tmp_path / "released.json"
+    current = tmp_path / "current.json"
+    _write_run_dig(released, {"test_cpp_run": (0.010, "samehash")})
+    _write_run_dig(current, {"test_cpp_run": (0.010, "samehash")})
+    assert mod.main([str(current), "--baseline-run", str(released)]) == 0
+
+
+def test_main_output_drift_fails(mod, tmp_path):
+    """Same method, byte-different output vs the release -> fail (review flag)."""
+    released = tmp_path / "released.json"
+    current = tmp_path / "current.json"
+    _write_run_dig(released, {"test_cpp_run": (0.010, "releasehash")})
+    _write_run_dig(current, {"test_cpp_run": (0.010, "currenthash")})
+    assert mod.main([str(current), "--baseline-run", str(released)]) == 1
+
+
+def test_main_output_no_digest_not_compared(mod, tmp_path):
+    """A model-returning method carries no digest -> not output-compared."""
+    released = tmp_path / "released.json"
+    current = tmp_path / "current.json"
+    _write_run_dig(released, {"test_aaclust_fit": (0.001, None)})
+    _write_run_dig(current, {"test_aaclust_fit": (0.001, None)})
+    assert mod.main([str(current), "--baseline-run", str(released)]) == 0

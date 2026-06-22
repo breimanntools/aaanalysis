@@ -120,6 +120,22 @@ def read_gated_since(run_json_path):
     return out
 
 
+def read_output_digests(run_json_path):
+    """Return ``{benchmark_name: output_digest}`` from a run's per-benchmark extra_info.
+
+    Only benchmarks returning digestible data carry a digest (model-returning
+    ``*.fit`` methods don't). Two benchmarks present in both runs with DIFFERENT
+    digests mean the method's output changed vs the release -> a byte-exact drift.
+    """
+    data = json.loads(Path(run_json_path).read_text())
+    out = {}
+    for bench in data.get("benchmarks", []):
+        d = (bench.get("extra_info") or {}).get("output_digest")
+        if d:
+            out[bench["name"]] = d
+    return out
+
+
 def compare(current_medians, baseline_medians):
     """Compare the current run against the baseline (released) run.
 
@@ -170,9 +186,21 @@ def main(argv=None):
     current_medians = read_run_medians(current_path)
     baseline_medians = read_run_medians(baseline_path)
     gated_since = read_gated_since(current_path)
+    cur_digests = read_output_digests(current_path)
+    rel_digests = read_output_digests(baseline_path)
     rel_ver = version_tuple(args.released_version) if args.released_version else None
 
     regressions, missing, added = compare(current_medians, baseline_medians)
+
+    # Output A/B: for methods benchmarked in BOTH builds that carry a digest,
+    # the current output must be byte-identical to the released output. A
+    # mismatch means a code change altered the result vs the release (review it:
+    # intended -> the next release re-baselines automatically; unintended -> a bug).
+    output_drift = sorted(
+        name for name in (set(cur_digests) & set(rel_digests))
+        if cur_digests[name] != rel_digests[name]
+    )
+    output_checked = sorted(set(cur_digests) & set(rel_digests))
 
     gated = sorted(set(current_medians) & set(baseline_medians))
     print(f"[perf] current vs released A/B "
@@ -214,8 +242,15 @@ def main(argv=None):
               f"{', '.join(unknown)}")
     if missing:
         print(f"[perf] released benchmarks not in the current run: {', '.join(missing)}")
+    print(f"[perf] OUTPUT A/B: {len(output_checked)} method(s) byte-exact-checked vs the release"
+          + (f"; {len(output_drift)} changed" if output_drift else "; all identical") + ".")
 
     rc = 0
+    if output_drift:
+        print("FAIL: output changed vs the release (byte-exact drift) — review whether "
+              "intended (will re-baseline on next release) or a bug: "
+              + ", ".join(output_drift))
+        rc = 1
     if lost:
         print("FAIL: coverage lost — benchmark(s) whose method is in the release "
               f"({args.released_version}) but absent from the released run "

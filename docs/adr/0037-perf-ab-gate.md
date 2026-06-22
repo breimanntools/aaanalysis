@@ -100,6 +100,23 @@ to a merge gate.**
   exercising an API absent from the latest release errors out of the released
   run's JSON; the comparator (intersection-only) reports it as new/unbaselined
   and never fails on it. The released benchmark step is tolerant by construction.
+- **D10. The A/B also checks output, not just timing (byte-exact).** Each benchmark
+  stamps a digest of its result into the run JSON
+  (`benchmark.extra_info["output_digest"]`); the comparator fails if a method's
+  current output differs byte-for-byte from the released output. This makes the
+  gate "faster-or-equal **and** unchanged", catching a speedup that silently
+  alters results. Scope is empirical: only methods returning digestible data are
+  compared — `*.fit` methods return a model (`self`), have no deterministic
+  serialization, and are exempt (their reproducibility is covered by the seed
+  tests). Both builds share one dependency set (D2), so pandas/numpy digests are
+  directly comparable. A drift is a **review flag**: if intended, the next release
+  re-baselines it automatically; if not, it is a bug. This **complements, does not
+  replace**, the frozen-value regression anchor (ADR-0015): the A/B catches *drift
+  since the last release*, while the anchor independently pins *correctness vs
+  reviewed ground-truth* (the A/B only ever compares against whatever the last
+  release shipped, so it cannot catch a wrong value that shipped in a release).
+  Measured at adoption: 7 of the 11 gated methods are byte-exact-checked and all
+  identical to 1.0.3 — the post-1.0.3 overhaul preserved exact output.
 
 ## Consequences
 

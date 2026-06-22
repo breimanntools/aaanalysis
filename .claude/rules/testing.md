@@ -177,7 +177,11 @@ slowdown blocks the merge. This is the one sanctioned **wall-clock merge gate** 
 supersedes the old "wall-clock never gates" stance (ADR-0015/0016) for the perf
 suite; correctness still rides the regression anchor, not this gate. There is **no**
 committed `perf_baseline.json` — the baseline is the live release. Benchmarks newer
-than the published release are reported unbaselined and not gated.
+than the published release are reported unbaselined and not gated. The A/B **also
+checks output byte-exactly** (each benchmark stamps an `output_digest`; the gate
+fails if a method's result differs from the release — "faster **and** unchanged"),
+for the deterministic data-returning methods; `*.fit` methods return a model and are
+exempt. This complements, not replaces, the frozen-value anchor (ADR-0037).
 
 ### Mutation testing
 `mutmut` is an **opt-in dev tool + non-gating nightly CI job** (not a hard
