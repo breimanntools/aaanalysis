@@ -4,10 +4,17 @@
 The decision log (``docs/adr/``) is part of an agent's mental model: a stale or
 contradictory ADR misleads exactly like a stale README. This proves the
 *structural* half of ADR hygiene — status lines well-formed, cross-references
-resolve, supersession targets exist, the repo convention "code must never
+resolve, supersession targets exist, **no two ADRs share a number** (the
+parallel-session collision hazard), the repo convention "code must never
 reference an ADR" holds, and the auto-generated overview table (``INDEX.md``) is
 present and current. Whether an ADR's *content* is outdated is judgment a
 reviewer makes; this script only flags mechanical defects.
+
+A duplicate number (``ADR-DUP-NUMBER``) is a defect: concurrent branches each
+pick ``max + 1`` from a stale checkout and collide. Gaps are NOT flagged — an
+ADR legitimately living on an unmerged branch leaves a hole that is normal
+mid-flight. Un-numbered ``XXXX-<slug>.md`` drafts are advisory, a reminder to
+assign the number last (``docs/adr/README.md`` -> Conventions).
 
 It does **not** delete anything. Per ``docs/adr/README.md`` the log is append-only:
 reverse a decision by writing a new ADR that supersedes it and flipping the old
@@ -27,6 +34,7 @@ import os
 import re
 
 ADR_FILE_RE = re.compile(r"^(\d{4})-.*\.md$")
+DRAFT_FILE_RE = re.compile(r"^XXXX-.*\.md$", re.IGNORECASE)
 ADR_TOKEN_RE = re.compile(r"ADR-(\d{3,4})")
 STATUS_RE = re.compile(r"^Status:\s*(.+)$", re.MULTILINE)
 TITLE_RE = re.compile(r"^#\s*ADR-\d{3,4}\s*[—\-–:]\s*(.+?)\s*$", re.MULTILINE)
@@ -47,7 +55,7 @@ Regenerate this table with:
 
 """
 
-ADVISORY_CODES = {"ADR-SUPERSEDED", "ADR-SUPERSEDE-ASYMMETRIC"}
+ADVISORY_CODES = {"ADR-SUPERSEDED", "ADR-SUPERSEDE-ASYMMETRIC", "ADR-UNNUMBERED-DRAFT"}
 
 
 class Finding:
@@ -71,6 +79,34 @@ def _adr_files(adr_dir: str):
         if m:
             out[int(m.group(1))] = os.path.join(adr_dir, name)
     return out
+
+
+def _numbering_findings(adr_dir: str):
+    """Defect on duplicate ADR numbers; advisory on un-numbered (``XXXX-``) drafts.
+
+    A duplicate number is the parallel-session hazard: two branches each grab the
+    same ``NNNN`` from their own stale checkout. ``_adr_files()`` keys by ``int`` so
+    it silently keeps only one of the colliding files — scan the raw listing here
+    instead. Gaps are deliberately NOT flagged: ADRs legitimately live on unmerged
+    branches, so a missing number is normal mid-flight, not a defect. See
+    ``docs/adr/README.md`` -> Conventions ("Number last, against live state").
+    """
+    findings = []
+    by_num: dict[int, list[str]] = {}
+    for name in sorted(os.listdir(adr_dir)):
+        m = ADR_FILE_RE.match(name)
+        if m:
+            by_num.setdefault(int(m.group(1)), []).append(name)
+        elif DRAFT_FILE_RE.match(name):
+            findings.append(Finding(name, "ADR-UNNUMBERED-DRAFT",
+                                    "un-numbered draft — assign the real number before merge "
+                                    "(one past the max across committed ADRs and open PRs)"))
+    for num, names in sorted(by_num.items()):
+        if len(names) > 1:
+            findings.append(Finding(", ".join(names), "ADR-DUP-NUMBER",
+                                    f"number {num:04d} reused by {len(names)} files "
+                                    f"({', '.join(names)}); renumber against live state"))
+    return findings
 
 
 def _read(path: str) -> str:
@@ -205,6 +241,7 @@ def run(adr_dir: str, src: str, write_index: bool) -> int:
         return 0
 
     findings = []
+    findings.extend(_numbering_findings(adr_dir))
     for num, path in adrs.items():
         findings.extend(_check_one(num, path, _read(path), existing, adrs))
     findings.extend(_check_code_refs(src))
@@ -221,7 +258,7 @@ def run(adr_dir: str, src: str, write_index: bool) -> int:
             print(f"  [{f.code}] {f.where}: {f.detail}")
     else:
         print("Defects: none — status lines well-formed, cross-refs resolve, "
-              "no ADR referenced from code, overview table current.")
+              "no duplicate ADR numbers, no ADR referenced from code, overview table current.")
     if advisory:
         print("\nAdvisory:")
         for f in advisory:

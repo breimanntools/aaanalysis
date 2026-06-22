@@ -1,0 +1,37 @@
+name: ADR hygiene
+
+# Gates ADR structural hygiene — duplicate numbers (the parallel-session
+# collision hazard), dangling/asymmetric cross-references, malformed status
+# lines, code-referencing-an-ADR, and a stale INDEX.md. Triggered ONLY on
+# docs/adr/** so it actually runs on ADR-only PRs (the CodeQL/code-quality job
+# carries paths-ignore: docs/** and would skip exactly those). The checker is
+# stdlib-only, so no dependency install is needed.
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'docs/adr/**'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'docs/adr/**'
+
+# Cancel a superseded in-progress run on the same branch/PR.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  adr-hygiene:
+    name: ADR hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Check ADR hygiene (numbering, cross-refs, index)
+        run: python .claude/skills/agent-readiness-audit/scripts/check_adrs.py

@@ -183,7 +183,8 @@ almost never true. When you change code, walk this list and update what applies:
 - **Contributing** — `CONTRIBUTING.rst` **and** its RST port
   `docs/source/index/CONTRIBUTING_COPY.rst` when the dev process changes.
 - **Glossary / ADRs** — `CONTEXT.md` when terminology shifts; a new `docs/adr/NNNN-*.md` for an
-  architectural decision (ideally settled in step 2 via `/grill-with-docs`).
+  architectural decision (ideally settled in step 2 via `/grill-with-docs`). Draft it number-less
+  and assign the number last — see Process notes → *ADR numbering*.
 - **Conventions** — `CLAUDE.md` / `.claude/rules/*` when the change establishes or alters a rule.
 - **Build / deps** — `pyproject.toml` (**CONFIRM-FIRST**) for dependency, extras, or version bumps;
   `aaanalysis/config.py` (**CONFIRM-FIRST**) for a new global option.
@@ -206,6 +207,7 @@ fast unit job. Check them at implement time (step 4), not after CI goes red.
 | **Docstrings** | numpydoc shape, named `Returns`, per-method `Examples` include, no doc-vs-signature drift | the `/docstrings` skill: `check_docstrings.py`, `doc_signature_drift.py`, `check_example_notebooks.py` under `.claude/skills/docstrings/scripts/`. `check_docstrings` + `doc_signature_drift` are **blocking CI** in the `codeql_analysis.yml` "code-quality" job; `check_example_notebooks` runs there **advisory (non-blocking)** until the remaining notebook param-coverage gaps are cleared. All three also run locally via the skill. |
 | **Notebooks execute** | every `examples/` + `tutorials/` notebook runs clean with embedded outputs | `pytest --nbmake --nbmake-timeout=120 examples/ tutorials/`. **Local gate only — NOT in blocking CI.** Re-run and re-commit outputs before every push (see Process notes). |
 | **Architecture** | matches `CONTEXT.md` / ADRs; no cross-class backend imports or layering violations | machine: `tests/unit/api_tests/test_backend_import_hygiene.py` (runs inside `pytest tests`). Spec / ADR conformance is human + `/grill-with-docs`. |
+| **ADR hygiene** | no duplicate ADR numbers (the parallel-session collision), cross-refs resolve, status lines valid, `INDEX.md` current | `.github/workflows/adr_hygiene.yml` (`paths: ['docs/adr/**']`, push + PR) runs `check_adrs.py`. Number-last drafting is the prevention (Process notes → *ADR numbering*); this is the backstop. Gaps are not flagged (ADRs legitimately live on unmerged branches). |
 | **Numerical equivalence** | an output-affecting optimization declares + satisfies a tolerance tier | human at review against the **numerical-equivalence tolerance policy** (ADR-0032): T1 byte-identical (default) / T2 `allclose(atol=1e-10, rtol=0)` + identical discrete decisions / T3 quality-metric within a documented band. Reviewer checklist (tier named, validation harness linked, tolerance/band stated numerically, ADR-0015-style regression anchor committed, one optimization per PR) lives in `CONTRIBUTING.rst`; anchors run in the non-gating nightly. |
 | **Parameter coverage** | every public parameter is exercised by name in tests | `tests/unit/api_tests/test_param_coverage.py` — runs in the "Unit Tests" job (it is an ordinary test under `tests/`, picked up by `pytest tests`). |
 | **Lint (errors)** | no syntax errors / undefined names | `.github/workflows/codeql_analysis.yml` ("code-quality" job): `flake8 . --select=E9,F63,F7,F82`. |
@@ -233,6 +235,14 @@ fast unit job. Check them at implement time (step 4), not after CI goes red.
   *uncommitted* work (it once wiped a session's edits when the tree was reset to `origin/master`),
   so frequent commits are the cheapest safeguard. To see what other streams are in flight, derive
   it on demand from `git worktree list` + `gh pr list` — there is no committed board to maintain.
+- **ADR numbering — allocate last, not while drafting.** Parallel branches each pick `max + 1`
+  from a stale checkout, so two ADRs collide on a number or leave a gap (a real incident left
+  `0034`–`0036` unindexed). Draft number-less (`# ADR-XXXX —`, `docs/adr/XXXX-<slug>.md`); de-dup
+  the *decision* up front via `/grill-with-docs` + a scan of open PRs; then assign the number only
+  as the ADR's PR is about to merge — one past the max across committed ADRs **and** open PRs on a
+  freshly-fetched `origin/master` — and regenerate `INDEX.md`. The index row and sequential
+  filename make a genuine duplicate surface as a merge conflict. Convention home:
+  `docs/adr/README.md` → *Conventions*.
 - **Issue lifecycle — `Closes #NN`.** GitHub auto-closes a referenced issue on merge to the
   default branch when a closing keyword (`Closes` / `Fixes` / `Resolves #NN`) appears in **either
   the PR body or the merge commit message**. To **keep an issue open through a merge,

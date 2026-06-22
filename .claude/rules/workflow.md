@@ -58,20 +58,25 @@ python dev_scripts/dev_aa_window_sampler.py
   labels use `df_seq["label"].to_list()`, not `len(df_seq)`-based assumptions.
 - **Coverage is measured on the package only** — `--cov=aaanalysis`, never
   `--cov=./` (that counts the test files and inflates the number). See ADR-0016.
-- **Pushing to `master` triggers up to 5 workflows** (Unit Tests, Test Coverage,
-  CodeQL, Integration & E2E Tests, and the Perf A/B regression gate); the same
-  five run on PRs to master, while feature-branch *pushes* trigger none (CI is
-  gated to master push/PR). The exact-value CPP regression anchor
+- **Pushing to `master` triggers up to 5 code-gated workflows** (Unit Tests, Test
+  Coverage, CodeQL, Integration & E2E Tests, and the Perf A/B regression gate);
+  the same five run on PRs to master, while feature-branch *pushes* trigger none
+  (CI is gated to master push/PR). The exact-value CPP regression anchor
   (`-m regression`) runs only in the nightly, not the blocking matrix (ADR-0015);
-  the Perf gate benchmarks current-vs-latest-release on one runner (ADR-0037).
-- **Docs-only pushes skip 4 of the 5.** Unit Tests (`main.yml`), CodeQL,
-  Integration & E2E, and the Perf gate (`perf_nightly.yml`) all carry
+  the Perf gate benchmarks current-vs-latest-release on one runner (ADR-0037). A
+  6th workflow, **ADR hygiene** (`adr_hygiene.yml`), is path-*scoped* the other
+  way — it carries `paths: ['docs/adr/**']`, so it fires **only** when a push/PR
+  touches an ADR (running `check_adrs.py`: duplicate-number / cross-ref / index
+  gate) and is skipped otherwise.
+- **Docs-only pushes skip the 4 code-gated workflows.** Unit Tests (`main.yml`),
+  CodeQL, Integration & E2E, and the Perf gate (`perf_nightly.yml`) all carry
   `paths-ignore: ['docs/**', '**/*.md', '**/*.rst']`, so a commit touching only
   those paths runs **none** of them. Test Coverage (`test_coverage.yml`)
   deliberately has **no `paths-ignore`** and runs on every master push (the
-  Codecov badge must stay current) — so a docs/`.rst`-only push triggers exactly
-  **one** workflow, Test Coverage. Don't tell the user "all 5 will run" for a
-  docs-only change.
+  Codecov badge must stay current). So a docs-only push that **doesn't** touch
+  `docs/adr/**` triggers exactly **one** workflow (Test Coverage); one that
+  **does** touch an ADR triggers **two** (Test Coverage + ADR hygiene). Don't
+  tell the user "all 5 will run" for a docs-only change.
 
 ## Git / PR workflow
 

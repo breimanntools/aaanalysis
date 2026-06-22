@@ -70,6 +70,67 @@ of the step-6 "skip review → auto-merge" option. A real incident: a PR was squ
 flag rode along inside an auto-merge option the user picked for its *review-skip* meaning. If the user
 has not stated a method, ask; the standing default for this repo is `--merge`.
 
+## ADR numbering under parallel sessions
+
+The ADR number is the one field that can't be derived safely from a local checkout. Each
+concurrent branch computes "next = highest committed `NNNN` + 1" against its *own* base, and
+because the other branches' ADRs aren't on `master` yet, several pick the **same** number — or,
+once some merge out of order, the sequence gains a gap. A real incident left `0034`–`0036` written
+on unmerged branches and missing from the committed `INDEX.md`, with a fourth session about to
+reuse `0034`.
+
+The fix is **late allocation against live state**, plus letting git surface the rest:
+
+- **Draft number-less.** Title `# ADR-XXXX — <decision>`, filename `docs/adr/XXXX-<slug>.md`. A
+  slug-keyed file never collides on *path* with another session's draft, and `XXXX` makes an
+  un-numbered ADR trivial to grep for before merge.
+- **De-dup the decision, not just the number.** Before writing, `git fetch origin --prune` then
+  scan open PRs/branches (`gh pr list`; grep their diffs for `docs/adr/`) for an ADR covering the
+  same decision — settling it in step 1 via `/grill-with-docs` is what stops two sessions opening
+  rival ADRs for one decision.
+- **Allocate as the last step before the ADR's PR merges.** Rebase on a freshly-fetched
+  `origin/master`, compute `max + 1` over **both** committed `docs/adr/NNNN-*.md` **and** numbers
+  claimed in open PRs, rename the file + title, then regenerate the table:
+  `python .claude/skills/agent-readiness-audit/scripts/check_adrs.py --write-index`.
+- **Let the collision become a conflict.** Two ADRs racing for the same number both edit the same
+  `INDEX.md` row region and both add a sequential filename, so a genuine duplicate shows up as a
+  merge conflict on the second PR rather than landing silently — resolve it by taking the next free
+  number, never by force.
+- **Never renumber a *merged* ADR.** Its number is now referenced and the rename deletes a path
+  (§0). If a duplicate already merged, supersede or correct forward with the maintainer's go-ahead.
+
+`check_adrs.py` now **fails on a duplicate number** (`ADR-DUP-NUMBER` defect; an un-numbered
+`XXXX-<slug>.md` draft is advisory). It is gated in CI by `.github/workflows/adr_hygiene.yml`,
+which is scoped `paths: ['docs/adr/**']` so it actually runs on ADR-only PRs — the CodeQL /
+code-quality job carries `paths-ignore: docs/**` and would skip exactly those. Number-last
+drafting is still the *prevention*; the checker + the `INDEX.md` merge conflict are the backstop.
+Gaps are deliberately not flagged (an ADR on an unmerged branch leaves a normal hole).
+
+## Session self-titling (telling concurrent sessions apart)
+
+Several sessions run this repo at once, each in its own worktree, and by default every terminal
+tab looks identical (`aaanalysis — <generic> — …`), so you cannot tell which tab is which task. A
+machine-local hook fixes this: after a session has used ~1% of its context window it sets the
+terminal tab title to a descriptive label and keeps it current.
+
+- **Format:** `<topic> · PR#<n> · ADR<nnnn>` — e.g. `adr-parallel-fix · PR#233 · ADR0038`.
+  - *topic* = the branch slug with its `doc/` / `feat/` prefix stripped (the human-authored "what
+    this is about"); falls back to the worktree/repo dir name on `master`/detached.
+  - *PR#* = the open PR for the branch (one `gh` call, cached once found).
+  - *ADR* = new `docs/adr/NNNN-*.md` files introduced on the branch (added-vs-`origin/master` plus
+    still-untracked).
+- **When:** a `Stop` hook re-evaluates each turn past the ~1% gate but only re-writes the title
+  when the label actually changes — so it is silent except when the branch, PR, or ADR first
+  appears (effectively "set once, then refreshed on meaningful change"). It writes only to
+  `/dev/tty` and always exits 0.
+- **Why it matters for this protocol:** the title is only as descriptive as the branch slug, so the
+  step-2 worktree command should name the branch for the task (`feat/<slug>` / `doc/<slug>`), not a
+  throwaway. The PR/ADR segments fill in automatically as step 4 (PR) and any ADR land.
+- **Mechanism (local, not committed):** `~/.claude/set_session_title.py` invoked by a global `Stop`
+  hook in `~/.claude/settings.json`. Tunables: `CLAUDE_TITLE_THRESHOLD_CHARS` (default 8000 ≈ 1% of
+  a 200k window), `CLAUDE_TITLE_MIN_TURNS`. A global-settings edit needs a `/hooks` reload (or a
+  restart) to take effect in an already-running session; new sessions pick it up automatically.
+
 ## Parallel-session hazards (concurrent streams, one repo)
 
 Several sessions/agents work this repo at the same time. Almost every "what was already done?"

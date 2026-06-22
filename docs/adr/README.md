@@ -44,6 +44,14 @@ Explicitly deferred work.
   "commit N of M", no per-commit `pytest` verification blocks, no
   commit-history sections. That belongs in commit messages and PR
   descriptions, which are the right home for build process.
+- **Number last, against live state (parallel-safe).** The number is the racy part: several
+  branches draft ADRs at once and each picks `max + 1` from its *own* stale checkout, so two land
+  as the same number or leave a gap. Draft number-less — title `# ADR-XXXX —`, file
+  `docs/adr/XXXX-<slug>.md` — and assign the real number only when the ADR's PR is about to merge,
+  after `git fetch origin --prune`, as one past the highest number across **committed ADRs *and*
+  open PRs**. Regenerate `INDEX.md` then; the index row + sequential filename make a genuine
+  duplicate surface as a merge conflict. Never renumber a *merged* ADR (rename = new path, which
+  needs deletion permission).
 - **One header format:** an inline `Status:` line — never YAML frontmatter.
   Status values: `Accepted`, or `Superseded by ADR-MMMM`.
 - **Immutable once Accepted.** Do not edit a decision in place. To reverse one,

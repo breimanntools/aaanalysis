@@ -33,6 +33,24 @@ edits — make those directly.
 > branch/worktree *you* created — surface anything you didn't make, never touch it. Full hazards:
 > [REFERENCE.md](REFERENCE.md) → *Parallel-session hazards*.
 
+## ADRs under parallel sessions (don't collide on a number)
+
+Concurrent branches each draft an ADR and grab "the next number" from their *own* stale
+checkout — so two land as `0034`, or a gap appears (a real incident left `0034`–`0036`
+unindexed). The durable rule lives in `docs/adr/README.md` → *Conventions*; in execution:
+
+- **Settle the decision in step 1** (`/grill-with-docs`). First `git fetch origin --prune` and
+  scan in-flight work for an ADR on the *same* decision (`gh pr list`; grep open PR diffs for
+  `docs/adr/`) — don't open a rival ADR for one another session already owns.
+- **Draft number-less:** title `# ADR-XXXX —`, file `docs/adr/XXXX-<slug>.md`. Never bake a real
+  number in while implementing — local state is stale the moment another session merges.
+- **Number it last,** as the PR is about to merge: rebase on a fresh `origin/master`, take one
+  past the max across committed ADRs **and** open PRs, rename file + title, regenerate
+  `docs/adr/INDEX.md` (`check_adrs.py --write-index`). Let the index row / sequential filename
+  collide as a git conflict — that's the safety net; resolve by taking the next free number.
+- **Never renumber a *merged* ADR** (rename = new path, §0). Detail:
+  [REFERENCE.md](REFERENCE.md) → *ADR numbering under parallel sessions*.
+
 ## Hard rules (override everything here)
 
 From root `CLAUDE.md` §0/§2 — authorization is **per-action, never per-session**:
@@ -80,7 +98,8 @@ a different release). Full rationale + exact paths: the guide's *Propagate every
 - **Tables** — `docs/source/index/tables*.rst` via `create_tables_doc.py` (scales/datasets changes).
 - **Release notes** — `docs/source/index/release_notes.rst` (the changelog; *Unreleased* section).
 - **Contributing** — `CONTRIBUTING.rst` **+** its port `docs/source/index/CONTRIBUTING_COPY.rst`.
-- **Glossary / ADRs** — `CONTEXT.md`; `docs/adr/NNNN-*.md`. **Conventions** — `CLAUDE.md` / `.claude/rules/*`.
+- **Glossary / ADRs** — `CONTEXT.md`; a new `docs/adr/NNNN-*.md` (settle it in step 1; draft it
+  number-less and number it last — see *ADRs under parallel sessions*). **Conventions** — `CLAUDE.md` / `.claude/rules/*`.
 - **Build / deps** — `pyproject.toml` / `config.py` (both CONFIRM-FIRST).
 
 Most surface late (stale cheat sheet, red meta-test, wrong RTD render), not in the fast unit job.
@@ -97,6 +116,12 @@ commands***. CI job names and thresholds drift — **verify the live configurati
   the step-6 skip option. Why: [REFERENCE.md](REFERENCE.md) → *Merge method*.
 - **Worktrees, not `git stash`, for isolation; one per task.** [REFERENCE.md](REFERENCE.md) →
   *Git-stash hazard* / *Parallel-session hazards*.
+- **Sessions self-title for at-a-glance disambiguation.** After ~1% of context each session sets
+  its terminal tab title to `<topic> · PR#<n> · ADR<nnnn>` — where *topic* is the branch slug —
+  and refreshes it when the PR/ADR appear, so concurrent worktrees are tellable apart. So **give
+  the branch a descriptive slug** at step 2: that slug *is* the session's topic. (Local mechanism:
+  a global `Stop` hook running `~/.claude/set_session_title.py`; details in
+  [REFERENCE.md](REFERENCE.md) → *Session self-titling*.)
 - **Fix forward, never merge red.** GitHub completes auto-merge only on all-green + conflict-free.
 - **Issue lifecycle.** Keep `Closes #NN` in the **PR body** to auto-close; remove it there to keep the
   issue open (the commit message alone isn't enough).
