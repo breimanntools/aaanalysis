@@ -29,7 +29,7 @@ def check_is_preselected(is_preselected=None):
     return is_preselected
 
 
-def check_n_feat_min_n_feat_max(n_feat_min=None, n_feat_max=None):
+def check_n_feat_min_n_feat_max(n_feat_min=None, n_feat_max=None) -> None:
     """Check if vmin and vmax are valid numbers and vmin is less than vmax."""
     ut.check_number_range(name="n_feat_min", val=n_feat_min, min_val=1, just_int=True, accept_none=False)
     ut.check_number_range(name="n_feat_max", val=n_feat_max, min_val=1, just_int=True, accept_none=False)
@@ -37,7 +37,7 @@ def check_n_feat_min_n_feat_max(n_feat_min=None, n_feat_max=None):
         raise ValueError(f"'n_feat_min' ({n_feat_min}) >= 'n_feat_max' ({n_feat_max}) not fulfilled.")
 
 
-def check_n_cv(n_cv=None, labels=None):
+def check_n_cv(n_cv=None, labels=None) -> None:
     """Check if n_cv is valid"""
     ut.check_number_range(name="n_cv", val=n_cv, min_val=2, just_int=True)
     # Check if smaller than smaller class
@@ -48,7 +48,7 @@ def check_n_cv(n_cv=None, labels=None):
         raise ValueError(f"'n_cv' should not be greater than the smallest class count ({min_class_count}), got {n_cv}.")
 
 
-def check_metrics(name="list_eval_sores", metrics=None):
+def check_metrics(name="list_eval_sores", metrics=None) -> None:
     """Check if evaluation metrics are valid"""
     valid_metrics = ["accuracy", "balanced_accuracy", "precision", "recall", "f1", "roc_auc"]
     if metrics is None:
@@ -91,7 +91,7 @@ def check_list_is_selected(list_is_selected=None, X=None, convert_1d_to_2d=False
     return list_is_selected
 
 
-def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, feat_importance_std=None, drop=False):
+def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, feat_importance_std=None, drop=False) -> None:
     """Check if df_feat matches with importance values"""
     if feat_importance is None:
         raise ValueError(f"'feat_importance' is None. Please fit TreeModel before adding feature importance.")
@@ -112,7 +112,7 @@ def check_match_df_feat_importance_arrays(df_feat=None, feat_importance=None, fe
             raise ValueError(f"'{ut.COL_FEAT_IMPORT_STD}' already in 'df_feat' columns. To override, set 'drop=True'.")
 
 
-def check_param_matches_strategy(strategy=None, param=None, n_feat=None):
+def check_param_matches_strategy(strategy=None, param=None, n_feat=None) -> None:
     """Check that the polymorphic ``param`` has the type/range the strategy requires."""
     if strategy == ut.STRATEGY_TOP_K:
         ut.check_number_range(name="param", val=param, min_val=1, max_val=n_feat, just_int=True)
@@ -128,7 +128,7 @@ def check_param_matches_strategy(strategy=None, param=None, n_feat=None):
             raise ValueError(f"'param' (0) should be > 0 for 'strategy'='{ut.STRATEGY_FREQUENCY}'.")
 
 
-def check_match_df_feat_feat_importance(df_feat=None, feat_importance=None):
+def check_match_df_feat_feat_importance(df_feat=None, feat_importance=None) -> None:
     """Check that df_feat rows align one-to-one with the fitted feature importance."""
     n_feat = len(df_feat)
     n_feat_imp = len(feat_importance)
@@ -169,7 +169,7 @@ class TreeModel(Wrapper):
         Same order as ``feat_importance``.
     """
     def __init__(self,
-                 list_model_classes: List[Type[Union[ClassifierMixin, BaseEstimator]]] = None,
+                 list_model_classes: Optional[List[Type[Union[ClassifierMixin, BaseEstimator]]]] = None,
                  list_model_kwargs: Optional[List[Dict]] = None,
                  is_preselected: Optional[ut.ArrayLike1D] = None,
                  verbose: bool = True,
@@ -260,7 +260,7 @@ class TreeModel(Wrapper):
 
     def fit(self,
             X: ut.ArrayLike2D,
-            labels: ut.ArrayLike1D = None,
+            labels: Optional[ut.ArrayLike1D] = None,
             n_rounds: int = 5,
             use_rfe: bool = False,
             n_cv: int = 5,
@@ -354,12 +354,12 @@ class TreeModel(Wrapper):
 
     def eval(self,
              X: ut.ArrayLike2D,
-             labels: ut.ArrayLike1D = None,
-             list_is_selected: List[ut.ArrayLike2D] = None,
+             labels: Optional[ut.ArrayLike1D] = None,
+             list_is_selected: Optional[List[ut.ArrayLike2D]] = None,
              convert_1d_to_2d: bool = False,
              names_feature_selections: Optional[List[str]] = None,
              n_cv: int = 5,
-             list_metrics: Union[str, List[str]] = None,
+             list_metrics: Optional[Union[str, List[str]]] = None,
              ) -> pd.DataFrame:
         """
         Evaluate the prediction performance for different feature selections.
@@ -486,7 +486,7 @@ class TreeModel(Wrapper):
         return pred, pred_std
 
     def add_feat_importance(self,
-                            df_feat: pd.DataFrame = None,
+                            df_feat: Optional[pd.DataFrame] = None,
                             drop: bool = False,
                             sort: bool = False,
                             ) -> pd.DataFrame:
@@ -543,9 +543,9 @@ class TreeModel(Wrapper):
         return df_feat
 
     def select_features(self,
-                        df_feat: pd.DataFrame = None,
+                        df_feat: Optional[pd.DataFrame] = None,
                         strategy: Optional[Literal["top_k", "threshold", "frequency"]] = None,
-                        param: Union[int, float, dict] = None,
+                        param: Optional[Union[int, float, dict]] = None,
                         ) -> pd.DataFrame:
         """
         Select a subset of features from a feature DataFrame using tree-based feature importance.

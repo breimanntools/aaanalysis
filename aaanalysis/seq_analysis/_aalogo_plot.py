@@ -18,7 +18,7 @@ DICT_LOGO_LABELS = {"probability": "Probability [%]",
 
 
 # I Helper Functions
-def check_df_logo(df_logo=None):
+def check_df_logo(df_logo=None) -> None:
     """Check that df_logo is a valid non-empty DataFrame with numeric values."""
     ut.check_df(name="df_logo", df=df_logo, accept_none=False, accept_nan=False)
     if len(df_logo) == 0:
@@ -33,7 +33,7 @@ def _valid_aal_kws_keys(include_info=True):
     return keys
 
 
-def check_aal_kws_keys(name=None, aal_kws=None, include_info=True):
+def check_aal_kws_keys(name=None, aal_kws=None, include_info=True) -> None:
     """Check that every key in an aal_kws dict is a valid AAlogo argument name."""
     valid_keys = _valid_aal_kws_keys(include_info=include_info)
     invalid_keys = set(aal_kws) - valid_keys
@@ -43,7 +43,7 @@ def check_aal_kws_keys(name=None, aal_kws=None, include_info=True):
             f"{sorted(valid_keys)}.")
 
 
-def check_aal_kws(aal_kws=None, df_logo=None, df_logo_info=None):
+def check_aal_kws(aal_kws=None, df_logo=None, df_logo_info=None) -> None:
     """Check aal_kws is a valid-key dict not combined with df_logo/df_logo_info."""
     if aal_kws is None:
         return
@@ -60,7 +60,7 @@ def check_aal_kws(aal_kws=None, df_logo=None, df_logo_info=None):
 
 
 def check_logo_input_source(df_logo=None, df_logo_info=None, aal_kws=None,
-                            df_parts=None, labels=None, tmd_len=None):
+                            df_parts=None, labels=None, tmd_len=None) -> None:
     """Check exactly one logo-data source is given (precomputed, aal_kws, or df_parts)."""
     if labels is not None and df_parts is None:
         raise ValueError("'labels' requires 'df_parts' to be given as well.")
@@ -85,7 +85,7 @@ def check_logo_input_source(df_logo=None, df_logo_info=None, aal_kws=None,
             "'labels', 'label_test', 'tmd_len') or 'aal_kws'.")
 
 
-def check_list_aal_kws(list_aal_kws=None, list_df_logo=None, list_df_logo_info=None):
+def check_list_aal_kws(list_aal_kws=None, list_df_logo=None, list_df_logo_info=None) -> None:
     """Check list_aal_kws is a list of valid dicts not combined with precomputed data."""
     if list_aal_kws is None:
         return
@@ -107,7 +107,7 @@ def check_list_aal_kws(list_aal_kws=None, list_df_logo=None, list_df_logo_info=N
             "internally) or precomputed 'list_df_logo'/'list_df_logo_info', not both.")
 
 
-def check_list_df_logo(list_df_logo=None):
+def check_list_df_logo(list_df_logo=None) -> None:
     """Check that list_df_logo is a non-empty list of valid logo DataFrames."""
     if not isinstance(list_df_logo, list) or len(list_df_logo) == 0:
         raise ValueError("'list_df_logo' must be a non-empty list of DataFrames.")
@@ -121,7 +121,7 @@ def check_list_df_logo(list_df_logo=None):
                 f"list_df_logo[0] has {n_pos}, list_df_logo[{i}] has {len(df)}.")
 
 
-def check_list_df_logo_info(list_df_logo_info=None, list_df_logo=None):
+def check_list_df_logo_info(list_df_logo_info=None, list_df_logo=None) -> None:
     """Check list_df_logo_info is a list of Series matching list_df_logo in count and length."""
     if not isinstance(list_df_logo_info, list) or len(list_df_logo_info) == 0:
         raise ValueError("'list_df_logo_info' must be a non-empty list of Series.")
@@ -149,7 +149,7 @@ def check_parts_len(jmd_n_len=None, jmd_c_len=None, df_logo=None):
     return tmd_len, jmd_n_len, jmd_c_len
 
 
-def check_df_logo_info(df_logo_info=None, df_logo=None):
+def check_df_logo_info(df_logo_info=None, df_logo=None) -> None:
     """Check that df_logo_info is a valid Series with the same length as df_logo."""
     ut.check_df(name="df_logo_info", df=df_logo_info, check_series=True,
                 accept_none=False, accept_nan=False)
@@ -159,7 +159,7 @@ def check_df_logo_info(df_logo_info=None, df_logo=None):
             f"'df_logo' length ({len(df_logo)}).")
 
 
-def check_info_bar_ylim(info_bar_ylim=None):
+def check_info_bar_ylim(info_bar_ylim=None) -> None:
     """Check that info_bar_ylim is None or a valid (min, max) tuple of numbers."""
     if info_bar_ylim is None:
         return
@@ -171,14 +171,14 @@ def check_info_bar_ylim(info_bar_ylim=None):
             f"'info_bar_ylim[0]' ({info_bar_ylim[0]}) must be < 'info_bar_ylim[1]' ({info_bar_ylim[1]}).")
 
 
-def check_height_ratio(height_ratio=None):
+def check_height_ratio(height_ratio=None) -> None:
     """Check that height_ratio is a tuple of two positive numbers."""
     if (not isinstance(height_ratio, tuple) or len(height_ratio) != 2
             or not all(isinstance(v, (int, float)) and v > 0 for v in height_ratio)):
         raise ValueError("'height_ratio' must be a tuple of two positive numbers.")
 
 
-def check_list_name_data(list_name_data=None, list_df_logo=None):
+def check_list_name_data(list_name_data=None, list_df_logo=None) -> None:
     """Check that list_name_data matches the number of logos if provided."""
     if list_name_data is None:
         return
@@ -190,7 +190,7 @@ def check_list_name_data(list_name_data=None, list_df_logo=None):
             f"'list_df_logo' length ({len(list_df_logo)}).")
 
 
-def check_list_name_data_color(list_name_data_color=None, list_df_logo=None):
+def check_list_name_data_color(list_name_data_color=None, list_df_logo=None) -> None:
     """Check that list_name_data_color is a valid string or matching list of strings."""
     if isinstance(list_name_data_color, str):
         return

@@ -82,14 +82,14 @@ def check_match_df_corr_labels_ref(df_corr=None, labels_ref=None, labels=None, p
     return labels_ref
 
 
-def check_method(method=None):
+def check_method(method=None) -> None:
     """Validate the method parameter against a list of valid hierarchical clustering methods"""
     valid_methods = ["single", "complete", "average", "weighted", "centroid", "median", "ward"]
     if method not in valid_methods:
         raise ValueError(f"'method' ({method}) should be one of: {valid_methods}")
 
 
-def check_match_df_corr_clust_x(df_corr=None, cluster_x=None):
+def check_match_df_corr_clust_x(df_corr=None, cluster_x=None) -> None:
     """Ensure df_corr has variability and no missing values if cluster_x is enabled"""
     all_vals = df_corr.to_numpy().flatten()[1:].tolist()
     if cluster_x:
@@ -191,7 +191,7 @@ class AAclustPlot:
         self._model_kwargs = model_kwargs
 
     @staticmethod
-    def eval(df_eval: pd.DataFrame = None,
+    def eval(df_eval: Optional[pd.DataFrame] = None,
              figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
              dict_xlims: Optional[dict] = None,
              ) -> Tuple[plt.Figure, plt.Axes]:
@@ -356,7 +356,7 @@ class AAclustPlot:
 
     def medoids(self,
                 X: Optional[ut.ArrayLike2D] = None,
-                labels: ut.ArrayLike1D = None,
+                labels: Optional[ut.ArrayLike1D] = None,
                 df_scales: Optional[pd.DataFrame] = None,
                 component_x: int = 1,
                 component_y: int = 2,
@@ -465,8 +465,8 @@ class AAclustPlot:
         return ax, df_components
 
     def correlation(self,
-                    df_corr: pd.DataFrame = None,
-                    labels: ut.ArrayLike1D = None,
+                    df_corr: Optional[pd.DataFrame] = None,
+                    labels: Optional[ut.ArrayLike1D] = None,
                     labels_ref: Optional[ut.ArrayLike1D] = None,
                     cluster_x: bool = False,
                     method: str = "average",

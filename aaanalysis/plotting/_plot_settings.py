@@ -15,7 +15,7 @@ LIST_FONTS = ['Arial', 'Courier New', 'DejaVu Sans', 'Times New Roman', 'Verdana
 
 # I Helper functions
 # Check plot_settings
-def check_font(font="Arial"):
+def check_font(font="Arial") -> None:
     if font not in LIST_FONTS:
         error_message = f"'font' ({font}) not in recommended fonts: {LIST_FONTS}. Set font manually by:" \
                         f"\n\tplt.rcParams['font.sans-serif'] = '{font}'"
@@ -23,7 +23,7 @@ def check_font(font="Arial"):
 
 
 # Helper function
-def set_tick_size(axis=None, major_size=None, minor_size=None):
+def set_tick_size(axis=None, major_size=None, minor_size=None) -> None:
     """Set tick size of the given axis."""
     plt.rcParams[f"{axis}tick.major.size"] = major_size
     plt.rcParams[f"{axis}tick.minor.size"] = minor_size

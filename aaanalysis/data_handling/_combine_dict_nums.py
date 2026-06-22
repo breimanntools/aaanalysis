@@ -8,6 +8,7 @@ along the D axis per entry. The result feeds
 from typing import Dict, List
 
 import numpy as np
+from typing import Optional  # noqa: E402
 
 
 # I Helper Functions
@@ -70,7 +71,7 @@ def _check_arrays_shape_per_entry(
 
 # II Main Functions
 def combine_dict_nums(
-    dict_nums: List[Dict[str, np.ndarray]] = None,
+    dict_nums: Optional[List[Dict[str, np.ndarray]]] = None,
 ) -> Dict[str, np.ndarray]:
     """Concatenate multiple per-residue ``dict_num`` inputs along the D axis.
 

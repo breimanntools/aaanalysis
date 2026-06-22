@@ -164,7 +164,7 @@ class AnnotationPreprocessor:
     # ------------------------------------------------------------------
     def fetch_uniprot(
         self,
-        df_seq: pd.DataFrame = None,
+        df_seq: Optional[pd.DataFrame] = None,
         features: Optional[List[str]] = None,
         evidence: Literal["experimental", "manual", "all"] = "manual",
         timeout: float = 30.0,
@@ -252,7 +252,7 @@ class AnnotationPreprocessor:
     # ------------------------------------------------------------------
     # ingest
     # ------------------------------------------------------------------
-    def ingest(self, df_user: pd.DataFrame = None) -> pd.DataFrame:
+    def ingest(self, df_user: Optional[pd.DataFrame] = None) -> pd.DataFrame:
         """Ingest a user / predictor annotation table into ``df_annot``.
 
         Every ingested ``feature_type`` is treated as a ``'Functional sites'``
@@ -348,7 +348,7 @@ class AnnotationPreprocessor:
     # ------------------------------------------------------------------
     def register_feature(
         self,
-        key: str = None,
+        key: Optional[str] = None,
         subcategory: Optional[str] = None,
         normalization: Optional[Callable] = None,
     ) -> None:
@@ -399,9 +399,9 @@ class AnnotationPreprocessor:
     # ------------------------------------------------------------------
     def encode(
         self,
-        df_seq: pd.DataFrame = None,
-        df_annot: pd.DataFrame = None,
-        features: List[str] = None,
+        df_seq: Optional[pd.DataFrame] = None,
+        df_annot: Optional[pd.DataFrame] = None,
+        features: Optional[List[str]] = None,
         on_mismatch: Literal["raise", "drop", "warn"] = "raise",
         return_df: bool = False,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
@@ -545,9 +545,9 @@ class AnnotationPreprocessor:
     # ------------------------------------------------------------------
     def build_scales(
         self,
-        df_seq: pd.DataFrame = None,
-        dict_num: Dict[str, np.ndarray] = None,
-        features: List[str] = None,
+        df_seq: Optional[pd.DataFrame] = None,
+        dict_num: Optional[Dict[str, np.ndarray]] = None,
+        features: Optional[List[str]] = None,
         return_std: bool = False,
         dim_names_override: Optional[List[str]] = None,
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
@@ -689,7 +689,7 @@ class AnnotationPreprocessor:
     # ------------------------------------------------------------------
     def build_cat(
         self,
-        features: List[str] = None,
+        features: Optional[List[str]] = None,
         dim_names_override: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """Build the ``df_cat`` metadata frame for ``features`` (corpus-free).
@@ -745,12 +745,12 @@ class AnnotationPreprocessor:
     # ------------------------------------------------------------------
     def to_df_seq(
         self,
-        df_seq: pd.DataFrame = None,
-        df_annot: pd.DataFrame = None,
-        feature_type: str = None,
+        df_seq: Optional[pd.DataFrame] = None,
+        df_annot: Optional[pd.DataFrame] = None,
+        feature_type: Optional[str] = None,
         match_residue_type: bool = True,
         exclude_other_annotations: bool = True,
-        pos_col: str = None,
+        pos_col: Optional[str] = None,
         aa_context_col: str = "aa_context",
     ) -> pd.DataFrame:
         """Project annotations onto ``df_seq`` for AAWindowSampler negative sampling.

@@ -11,7 +11,7 @@ import aaanalysis.utils as ut
 
 
 # I Helper Functions
-def check_df_impact(df_impact=None):
+def check_df_impact(df_impact=None) -> None:
     """Check that df_impact is a valid AAMut.run output."""
     ut.check_df(df=df_impact, name="df_impact", cols_required=ut.COLS_AAMUT)
     if len(df_impact) == 0:
@@ -51,7 +51,7 @@ class AAMutPlot:
 
     # Main methods
     def substitution_matrix(self,
-                            df_impact: pd.DataFrame = None,
+                            df_impact: Optional[pd.DataFrame] = None,
                             ax: Optional[plt.Axes] = None,
                             figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
                             cmap: str = "viridis",
@@ -96,7 +96,7 @@ class AAMutPlot:
         return ax
 
     def scale_ranking(self,
-                      df_impact: pd.DataFrame = None,
+                      df_impact: Optional[pd.DataFrame] = None,
                       top_n: int = 20,
                       ax: Optional[plt.Axes] = None,
                       figsize: Tuple[Union[int, float], Union[int, float]] = (6, 5),
@@ -145,9 +145,9 @@ class AAMutPlot:
         return ax
 
     def aa_comparison(self,
-                      df_impact: pd.DataFrame = None,
-                      from_aa: str = None,
-                      to_aa: str = None,
+                      df_impact: Optional[pd.DataFrame] = None,
+                      from_aa: Optional[str] = None,
+                      to_aa: Optional[str] = None,
                       top_n: int = 20,
                       ax: Optional[plt.Axes] = None,
                       figsize: Tuple[Union[int, float], Union[int, float]] = (6, 5),

@@ -18,13 +18,13 @@ LIST_METRICS = ['euclidean', 'manhattan', 'cosine']
 
 # I Helper Functions
 # Check functions
-def check_metric(metric=None):
+def check_metric(metric=None) -> None:
     """Validate provided metric"""
     if metric is not None and metric not in LIST_METRICS:
         raise ValueError(f"'metric' ({metric}) should be None or one of following: {LIST_METRICS}")
 
 
-def check_n_to_identify(labels=None, n_to_identify=None, label_unl=None):
+def check_n_to_identify(labels=None, n_to_identify=None, label_unl=None) -> None:
     """Validate that there are enough unlabeled samples to identify the requested negatives."""
     n_unl = np.sum(labels == label_unl)
     if n_unl < n_to_identify:
@@ -32,7 +32,7 @@ def check_n_to_identify(labels=None, n_to_identify=None, label_unl=None):
                          f"negatives to identify from them ({n_to_identify}).")
 
 
-def check_match_labels_markers(label_pos=None, label_unl=None, label_neg=None):
+def check_match_labels_markers(label_pos=None, label_unl=None, label_neg=None) -> None:
     """Validate the positive/unlabeled/negative marker values used to encode the input labels."""
     # Markers may be any integer (e.g. -1), they only need to be distinct and match the labels.
     ut.check_number_val(name="label_pos", val=label_pos, just_int=True)
@@ -45,7 +45,7 @@ def check_match_labels_markers(label_pos=None, label_unl=None, label_neg=None):
         raise ValueError(f"Label markers must be distinct, but got {markers}.")
 
 
-def check_match_labels_markers_present(labels=None, label_pos=None, label_unl=None, label_neg=None):
+def check_match_labels_markers_present(labels=None, label_pos=None, label_unl=None, label_neg=None) -> None:
     """Ensure 'labels' contains the required markers and no values outside the marker set."""
     allowed = {label_pos, label_unl} | ({label_neg} if label_neg is not None else set())
     present = set(np.asarray(labels).tolist())
@@ -90,7 +90,7 @@ def resolve_n_to_identify(n_neg=None, n_unl_to_neg=None, n_pre_neg=0):
     return n_to_identify
 
 
-def check_n_components(n_components=1):
+def check_n_components(n_components=1) -> None:
     """Check if n_components valid for sklearn PCA object"""
     try:
         # Check number of PCs
@@ -106,14 +106,14 @@ def check_n_components(n_components=1):
                          f"\n  a float with 0.0 < 'n_components' < 1.0 (percentage of covered variance)")
 
 
-def check_match_X_n_components(X=None, n_components=1):
+def check_match_X_n_components(X=None, n_components=1) -> None:
     """Check if n_components matches to dimensions of X"""
     n_samples, n_features = X.shape
     if min(n_features, n_samples) <= n_components:
         raise ValueError(f"'n_components' ({n_components}) should be < min(n_features, n_samples) from 'X' ({n_features})")
 
 
-def check_match_list_labels_df_seq(list_labels=None, df_seq=None):
+def check_match_list_labels_df_seq(list_labels=None, df_seq=None) -> None:
     """Check if length of labels in list_labels and df_seq matches"""
     if df_seq is None:
         return None # Skip check
@@ -123,7 +123,7 @@ def check_match_list_labels_df_seq(list_labels=None, df_seq=None):
                          f"samples in 'df_seq' (n={len(df_seq)})")
 
 
-def check_match_X_X_neg(X=None, X_neg=None):
+def check_match_X_X_neg(X=None, X_neg=None) -> None:
     """Check if number of features matches in both feature matrices"""
     if X_neg is None:
         return # Skip test
@@ -214,12 +214,12 @@ class dPULearn(Wrapper):
     # Main method
     def fit(self,
             X: ut.ArrayLike2D,
-            labels: ut.ArrayLike1D = None,
+            labels: Optional[ut.ArrayLike1D] = None,
             label_pos: int = 1,
             label_unl: int = 2,
             label_neg: Optional[int] = None,
-            n_neg: int = None,
-            n_unl_to_neg: int = None,
+            n_neg: Optional[int] = None,
+            n_unl_to_neg: Optional[int] = None,
             metric: Optional[Literal["euclidean", "manhattan", "cosine"]] = None,
             n_components: Union[float, int] = 0.80,
             ) -> "dPULearn":
@@ -360,7 +360,7 @@ class dPULearn(Wrapper):
 
     @staticmethod
     def eval(X: ut.ArrayLike2D,
-             list_labels: ut.ArrayLike2D = None,
+             list_labels: Optional[ut.ArrayLike2D] = None,
              names_datasets: Optional[List[str]] = None,
              X_neg: Optional[ut.ArrayLike2D] = None,
              comp_kld: bool = False,
@@ -446,7 +446,7 @@ class dPULearn(Wrapper):
         return df_eval
 
     @staticmethod
-    def compare_sets_negatives(list_labels: ut.ArrayLike1D = None,
+    def compare_sets_negatives(list_labels: Optional[ut.ArrayLike1D] = None,
                                names_datasets: Optional[List[str]] = None,
                                df_seq: Optional[pd.DataFrame] = None,
                                remove_non_neg : bool = True,

@@ -16,14 +16,14 @@ from ._backend.cpp._filters._assign import assign_dict_num_to_parts
 
 
 # I Helper Functions
-def check_match_df_scales_letter_new(df_scales=None, letter_new=None):
+def check_match_df_scales_letter_new(df_scales=None, letter_new=None) -> None:
     """Check if new letter not already in df_scales"""
     alphabet = df_scales.index.to_list()
     if letter_new in alphabet:
         raise ValueError(f"Letter '{letter_new}' already exists in alphabet of 'df_scales': {alphabet}")
 
 
-def check_match_df_seq_dict_num(df_seq=None, dict_num=None):
+def check_match_df_seq_dict_num(df_seq=None, dict_num=None) -> None:
     """Validate that ``dict_num`` matches ``df_seq`` (Layer-1 contract for ``get_parts``).
 
     Checks (per entry):
@@ -124,8 +124,8 @@ class NumericalFeature:
         return is_selected
 
     @staticmethod
-    def get_parts(df_seq: pd.DataFrame = None,
-                  dict_num: Dict[str, np.ndarray] = None,
+    def get_parts(df_seq: Optional[pd.DataFrame] = None,
+                  dict_num: Optional[Dict[str, np.ndarray]] = None,
                   list_parts: Optional[List[str]] = None,
                   all_parts: bool = False,
                   jmd_n_len: int = 10,
@@ -278,8 +278,8 @@ class NumericalFeature:
         return df_parts, dict_part_vals
 
     @staticmethod
-    def extend_alphabet(df_scales: pd.DataFrame = None,
-                        new_letter: str = None,
+    def extend_alphabet(df_scales: Optional[pd.DataFrame] = None,
+                        new_letter: Optional[str] = None,
                         value_type: Literal["min", "mean", "median", "max"] = "mean",
                         ) -> pd.DataFrame:
         """

@@ -72,7 +72,7 @@ def _finalize_run_output(df_feat=None, return_stats=False):
     return df_feat
 
 
-def check_sample_in_df_seq(sample_name=None, df_seq=None):
+def check_sample_in_df_seq(sample_name=None, df_seq=None) -> None:
     """Check if sample name in df_seq"""
     list_names = list(df_seq[ut.COL_NAME])
     if sample_name not in list_names:
@@ -83,13 +83,13 @@ def check_sample_in_df_seq(sample_name=None, df_seq=None):
         raise ValueError(error)
 
 
-def check_match_list_df_feat_list_df_parts(list_df_feat=None, list_df_parts=None):
+def check_match_list_df_feat_list_df_parts(list_df_feat=None, list_df_parts=None) -> None:
     """Check if all elements in list are valid feature DataFrames"""
     for df_feat, df_parts in zip(list_df_feat, list_df_parts):
         ut.check_df_feat(df_feat=df_feat, list_parts=list(df_parts))
 
 
-def check_ml_cv_labels(ml_cv=None, labels=None):
+def check_ml_cv_labels(ml_cv=None, labels=None) -> None:
     """Validate ``ml_cv`` (>=2, <= smallest class count) for the simplify CV gate."""
     ut.check_number_range(name="ml_cv", val=ml_cv, min_val=2, just_int=True)
     min_class_count = min(pd.Series(labels).value_counts())
@@ -100,7 +100,7 @@ def check_ml_cv_labels(ml_cv=None, labels=None):
         )
 
 
-def check_ml_model(ml_model=None):
+def check_ml_model(ml_model=None) -> None:
     """Validate the simplify CV-gate model: a string preset or a classifier instance."""
     if isinstance(ml_model, str):
         ut.check_str_options(
@@ -115,7 +115,7 @@ def check_ml_model(ml_model=None):
 
 def check_match_list_df_feat_names_feature_sets(
     list_df_feat=None, names_feature_sets=None
-):
+) -> None:
     """Check if length of list_df_feat and names match"""
     if names_feature_sets is None:
         return None  # Skip check
@@ -172,7 +172,7 @@ def _check_dict_num_df_scales_match(dict_num=None, df_scales=None):
 
 def check_match_df_seq_df_parts(
     df_seq=None, df_parts=None, jmd_n_len=None, jmd_c_len=None
-):
+) -> None:
     """Verify ``df_seq`` derives parts equal to ``df_parts`` (CPP.run_num parity guard)."""
     list_parts = list(df_parts)
     try:
@@ -292,7 +292,7 @@ class CPP(Tool):
 
     def __init__(
         self,
-        df_parts: pd.DataFrame = None,
+        df_parts: Optional[pd.DataFrame] = None,
         split_kws: Optional[dict] = None,
         df_scales: Optional[pd.DataFrame] = None,
         df_cat: Optional[pd.DataFrame] = None,
@@ -390,7 +390,7 @@ class CPP(Tool):
     # Main method
     def run(
         self,
-        labels: ut.ArrayLike1D = None,
+        labels: Optional[ut.ArrayLike1D] = None,
         label_test: int = 1,
         label_ref: int = 0,
         n_filter: int = 100,
@@ -689,8 +689,8 @@ class CPP(Tool):
 
     def run_num(
         self,
-        dict_num_parts: Dict[str, np.ndarray] = None,
-        labels: ut.ArrayLike1D = None,
+        dict_num_parts: Optional[Dict[str, np.ndarray]] = None,
+        labels: Optional[ut.ArrayLike1D] = None,
         label_test: int = 1,
         label_ref: int = 0,
         n_filter: int = 100,
@@ -965,8 +965,8 @@ class CPP(Tool):
 
     def eval(
         self,
-        list_df_feat: List[pd.DataFrame] = None,
-        labels: ut.ArrayLike1D = None,
+        list_df_feat: Optional[List[pd.DataFrame]] = None,
+        labels: Optional[ut.ArrayLike1D] = None,
         label_test: int = 1,
         label_ref: int = 0,
         min_th: float = 0.0,
@@ -1104,8 +1104,8 @@ class CPP(Tool):
         return df_eval
     def simplify(
         self,
-        df_feat: pd.DataFrame = None,
-        labels: ut.ArrayLike1D = None,
+        df_feat: Optional[pd.DataFrame] = None,
+        labels: Optional[ut.ArrayLike1D] = None,
         strategy: Literal["greedy", "consolidate", "swap_all"] = "greedy",
         candidate_search: Literal["exact", "fast"] = "exact",
         max_interpret_grade: Optional[int] = None,

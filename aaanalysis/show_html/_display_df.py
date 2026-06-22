@@ -65,7 +65,7 @@ def _select_col(df=None, col_to_show=None):
 
 
 # Main functions
-def display_df(df: pd.DataFrame = None,
+def display_df(df: Optional[pd.DataFrame] = None,
                max_width_pct: int = 100,
                max_height: int = 300,
                char_limit: int = 30,
@@ -74,7 +74,7 @@ def display_df(df: pd.DataFrame = None,
                n_cols: Optional[int] = None,
                row_to_show: Optional[Union[int, str]] = None,
                col_to_show: Optional[Union[int, str]] = None,
-               ):
+               ) -> None:
     """
     Display DataFrame with specific style as HTML output for jupyter notebooks.
 

@@ -12,7 +12,7 @@ from ._backend.seqmut.seqmut import (build_scan_plan, comp_delta_x, comp_scan_sc
 
 
 # I Helper Functions
-def check_match_df_seq_pos_based(df_seq=None):
+def check_match_df_seq_pos_based(df_seq=None) -> None:
     """Check that df_seq is in the position-based format (sequence + tmd_start + tmd_stop)."""
     ut.check_df_seq(df_seq=df_seq)
     missing = [c for c in ut.COLS_SEQ_POS if c not in df_seq.columns]
@@ -131,8 +131,8 @@ class SeqMut:
 
     # Main methods
     def mutate(self,
-               df_seq: pd.DataFrame = None,
-               mutations: pd.DataFrame = None,
+               df_seq: Optional[pd.DataFrame] = None,
+               mutations: Optional[pd.DataFrame] = None,
                df_feat: Optional[pd.DataFrame] = None,
                jmd_n_len: int = 10,
                jmd_c_len: int = 10,
@@ -209,8 +209,8 @@ class SeqMut:
         return df_mut
 
     def scan(self,
-             df_seq: pd.DataFrame = None,
-             df_feat: pd.DataFrame = None,
+             df_seq: Optional[pd.DataFrame] = None,
+             df_feat: Optional[pd.DataFrame] = None,
              region: Optional[Union[str, List[int]]] = None,
              to_aa: Optional[List[str]] = None,
              jmd_n_len: int = 10,
@@ -272,8 +272,8 @@ class SeqMut:
         return df_scan
 
     def suggest(self,
-                df_seq: pd.DataFrame = None,
-                df_feat: pd.DataFrame = None,
+                df_seq: Optional[pd.DataFrame] = None,
+                df_feat: Optional[pd.DataFrame] = None,
                 n: int = 10,
                 region: Optional[Union[str, List[int]]] = None,
                 to_aa: Optional[List[str]] = None,
@@ -340,7 +340,7 @@ class SeqMut:
         return df_suggest
 
     def eval(self,
-             df_scan: pd.DataFrame = None,
+             df_scan: Optional[pd.DataFrame] = None,
              th: Optional[float] = None,
              ) -> pd.DataFrame:
         """

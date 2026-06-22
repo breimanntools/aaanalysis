@@ -47,14 +47,14 @@ def _adjust_plot_args(names=None, colors=None, args_scatter=None, default_names=
 
 
 # Check functions
-def check_match_df_pu_labels(df_pu=None, labels=None):
+def check_match_df_pu_labels(df_pu=None, labels=None) -> None:
     """Check length match df_pu and labels"""
     n_samples = len(df_pu)
     if n_samples != len(labels):
         raise ValueError(f"Number of samples from 'df_pu' (n={n_samples}) does not match with 'labels' (n={len(labels)})")
 
 
-def check_match_names_colors(names=None, colors=None):
+def check_match_names_colors(names=None, colors=None) -> None:
     """Check if length matches of names and colors"""
     if len(names) != len(colors):
         raise ValueError(f"Length of 'names' (n={len(names)}) and 'colors' (n={len(colors)}) does not match.")
@@ -80,7 +80,7 @@ class dPULearnPlot:
         """
 
     @staticmethod
-    def eval(df_eval: pd.DataFrame = None,
+    def eval(df_eval: Optional[pd.DataFrame] = None,
              figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
              dict_xlims: Optional[dict] = None,
              legend: bool = True,
@@ -165,7 +165,7 @@ class dPULearnPlot:
         return fig, axes
 
     @staticmethod
-    def pca(df_pu: pd.DataFrame = None,
+    def pca(df_pu: Optional[pd.DataFrame] = None,
             labels=None,
             figsize: Tuple[Union[int, float], Union[int, float]] = (5, 5),
             pc_x: int = 1,

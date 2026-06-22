@@ -13,8 +13,8 @@ from ._backend.parse_fasta import save_entries_to_fasta
 
 
 # II Main Functions
-def to_fasta(df_seq: pd.DataFrame = None,
-             file_path: str = None,
+def to_fasta(df_seq: Optional[pd.DataFrame] = None,
+             file_path: Optional[str] = None,
              col_id: str = "entry",
              col_seq: str = "sequence",
              sep: str = "|",

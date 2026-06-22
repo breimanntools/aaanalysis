@@ -12,7 +12,7 @@ from aaanalysis import utils as ut
 # II Main function
 def plot_legend(ax: Optional[plt.Axes] = None,
                 # Categories and colors
-                dict_color: Dict[str, str] = None,
+                dict_color: Optional[Dict[str, str]] = None,
                 list_cat: Optional[List[str]] = None,
                 labels: Optional[List[str]] = None,
                 # Position and Layout

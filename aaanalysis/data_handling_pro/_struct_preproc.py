@@ -459,8 +459,8 @@ class StructurePreprocessor:
     # ------------------------------------------------------------------
     def fetch_alphafold(
         self,
-        df_seq: pd.DataFrame = None,
-        out_folder: Union[str, Path] = None,
+        df_seq: Optional[pd.DataFrame] = None,
+        out_folder: Optional[Union[str, Path]] = None,
         file_format: Literal["pdb", "cif"] = "pdb",
         timeout: float = 30.0,
         skip_existing: bool = True,
@@ -605,9 +605,9 @@ class StructurePreprocessor:
     # ------------------------------------------------------------------
     def get_dssp(
         self,
-        df_seq: pd.DataFrame = None,
-        pdb_folder: Union[str, Path] = None,
-        features: List[str] = None,
+        df_seq: Optional[pd.DataFrame] = None,
+        pdb_folder: Optional[Union[str, Path]] = None,
+        features: Optional[List[str]] = None,
         ss_mode: Literal["ss3", "ss8"] = "ss3",
         gap_handling: Literal["pad", "omit"] = "pad",
     ) -> pd.DataFrame:
@@ -695,9 +695,9 @@ class StructurePreprocessor:
     # ------------------------------------------------------------------
     def encode_dssp(
         self,
-        df_seq: pd.DataFrame = None,
-        pdb_folder: Union[str, Path] = None,
-        features: List[str] = None,
+        df_seq: Optional[pd.DataFrame] = None,
+        pdb_folder: Optional[Union[str, Path]] = None,
+        features: Optional[List[str]] = None,
         ss_mode: Literal["ss3", "ss8"] = "ss3",
         gap_handling: Literal["pad", "omit"] = "pad",
         on_failure: Literal["nan", "drop", "raise"] = "nan",
@@ -901,9 +901,9 @@ class StructurePreprocessor:
     # ------------------------------------------------------------------
     def encode_pdb(
         self,
-        df_seq: pd.DataFrame = None,
-        pdb_folder: Union[str, Path] = None,
-        features: List[str] = None,
+        df_seq: Optional[pd.DataFrame] = None,
+        pdb_folder: Optional[Union[str, Path]] = None,
+        features: Optional[List[str]] = None,
         plddt_disorder_threshold: float = 70.0,
         on_failure: Literal["nan", "drop", "raise"] = "nan",
         return_df: bool = False,
@@ -1150,9 +1150,9 @@ class StructurePreprocessor:
     # ------------------------------------------------------------------
     def encode_pae(
         self,
-        df_seq: pd.DataFrame = None,
-        pae_folder: Union[str, Path] = None,
-        features: List[str] = None,
+        df_seq: Optional[pd.DataFrame] = None,
+        pae_folder: Optional[Union[str, Path]] = None,
+        features: Optional[List[str]] = None,
         local_window: int = 5,
         pae_band_edges: Tuple[int, int] = (5, 15),
         on_failure: Literal["nan", "drop", "raise"] = "nan",
@@ -1355,9 +1355,9 @@ class StructurePreprocessor:
     # ------------------------------------------------------------------
     def get_domains(
         self,
-        df_seq: pd.DataFrame = None,
-        pdb_folder: Union[str, Path] = None,
-        pae_folder: Union[str, Path] = None,
+        df_seq: Optional[pd.DataFrame] = None,
+        pdb_folder: Optional[Union[str, Path]] = None,
+        pae_folder: Optional[Union[str, Path]] = None,
         tool: Literal["chainsaw", "afragmenter"] = "afragmenter",
         chainsaw_path: Optional[Union[str, Path]] = None,
         resolution: float = 0.7,
@@ -1539,9 +1539,9 @@ class StructurePreprocessor:
     # ------------------------------------------------------------------
     def encode_domains(
         self,
-        df_seq: pd.DataFrame = None,
-        domain_folder: Union[str, Path] = None,
-        features: List[str] = None,
+        df_seq: Optional[pd.DataFrame] = None,
+        domain_folder: Optional[Union[str, Path]] = None,
+        features: Optional[List[str]] = None,
         on_failure: Literal["nan", "drop", "raise"] = "nan",
         return_df: bool = False,
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
@@ -1765,9 +1765,9 @@ class StructurePreprocessor:
     # ------------------------------------------------------------------
     def build_scales(
         self,
-        df_seq: pd.DataFrame = None,
-        dict_num: Dict[str, np.ndarray] = None,
-        features: List[str] = None,
+        df_seq: Optional[pd.DataFrame] = None,
+        dict_num: Optional[Dict[str, np.ndarray]] = None,
+        features: Optional[List[str]] = None,
         return_std: bool = False,
         dim_names_override: Optional[List[str]] = None,
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
@@ -1919,7 +1919,7 @@ class StructurePreprocessor:
 
     def build_cat(
         self,
-        features: List[str] = None,
+        features: Optional[List[str]] = None,
         dim_names_override: Optional[List[str]] = None,
     ) -> pd.DataFrame:
         """Build the ``df_cat`` metadata frame for ``features``.
