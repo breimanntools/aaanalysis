@@ -193,7 +193,8 @@ def check_match_df_seq_df_parts(df_seq=None, entry=None, jmd_n_seq="", tmd_seq="
     mask = df_seq[ut.COL_ENTRY] == entry
     if not mask.any():
         raise ValueError(f"'sample' entry ('{entry}') from 'df_parts' is not in the '{ut.COL_ENTRY}' "
-                         f"column of 'df_seq'.")
+                         f"column of 'df_seq'. Available entries: "
+                         f"{ut.preview_options(df_seq[ut.COL_ENTRY])}.")
     row = df_seq[mask].iloc[0]
     span = jmd_n_seq + tmd_seq + jmd_c_seq
     if ut.COL_SEQ in df_seq.columns:

@@ -91,7 +91,8 @@ def check_match_df_seq_names_to_show(df_seq=None, names_to_show=None):
     missing_names = [x for x in names_to_show if x not in list_names]
     if len(missing_names) > 0:
         raise ValueError(f"Following names from 'names_to_show' are not in '{ut.COL_NAME}' "
-                         f"column of 'df_seq': {missing_names}")
+                         f"column of 'df_seq': {missing_names}. Available names: "
+                         f"{ut.preview_options(list_names)}.")
 
 
 # Checks for main CPP plots (ranking, profile, maps)

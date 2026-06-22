@@ -52,11 +52,11 @@ def check_metrics(name="list_eval_sores", metrics=None):
     """Check if evaluation metrics are valid"""
     valid_metrics = ["accuracy", "balanced_accuracy", "precision", "recall", "f1", "roc_auc"]
     if metrics is None:
-        raise ValueError(f"'{name}' should not be None. Chose from these: {valid_metrics}")
+        raise ValueError(f"'{name}' should not be None, but be one of: {valid_metrics}")
     metrics = ut.check_list_like(name=name, val=metrics, accept_str=True)
     wrong_metrics = [x for x in metrics if x not in valid_metrics]
     if len(wrong_metrics) != 0:
-        raise ValueError(f"Wrong 'metrics' ({wrong_metrics}). Chose from these: {valid_metrics}")
+        raise ValueError(f"Wrong 'metrics' ({wrong_metrics}). Each should be one of: {valid_metrics}")
 
 
 def check_list_is_selected(list_is_selected=None, X=None, convert_1d_to_2d=False):

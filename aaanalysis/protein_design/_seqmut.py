@@ -31,7 +31,8 @@ def check_match_mutations_df_seq(mutations=None, df_seq=None):
     for entry, pos, to_aa in zip(mutations[ut.COL_ENTRY], mutations[ut.COL_POS],
                                  mutations[ut.COL_TO_AA]):
         if entry not in seq_by_entry:
-            raise ValueError(f"'mutations' entry ({entry}) is not in 'df_seq'.")
+            raise ValueError(f"'mutations' entry ('{entry}') is not in 'df_seq'. Available entries: "
+                             f"{ut.preview_options(seq_by_entry)}.")
         seq = seq_by_entry[entry]
         pos = int(pos)
         if not 1 <= pos <= len(seq):
