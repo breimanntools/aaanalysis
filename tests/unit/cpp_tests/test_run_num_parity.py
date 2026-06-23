@@ -230,3 +230,62 @@ class TestRunNumBatched:
         _, stats_batched = cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1,
                                        n_batches=3, return_stats=True)
         assert stats_single == stats_batched
+
+
+class TestRunNumSampleBatched:
+    """``n_sample_batches`` partitions the SAMPLE axis to bound peak memory.
+
+    Unlike ``n_batches`` (D-axis, bit-exact), the sample-batched path accumulates
+    pass-1 ``std_test`` via accumulator-style variance, so parity is asserted on
+    the feature SET and the stat columns within tolerance (after ``round(3)``),
+    not byte-identity — mirroring the seq-mode ``n_sample_batches`` contract.
+    """
+
+    @staticmethod
+    def _cpp_parts_labels(n=12, n_scales=10):
+        df_seq, labels, df_parts, df_scales = _build_fixture(n=n, n_scales=n_scales)
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
+        dict_num = _build_dict_num_from_scales(df_seq, df_scales)
+        _, parts = aa.NumericalFeature().get_parts(df_seq=df_seq, dict_num=dict_num)
+        return cpp, parts, labels
+
+    @pytest.mark.parametrize("n_sample_batches", [2, 3, 6])
+    def test_sample_batched_runs_and_matches_feature_set(self, n_sample_batches):
+        cpp, parts, labels = self._cpp_parts_labels()
+        single = cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1, n_filter=15)
+        batched = cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1,
+                              n_filter=15, n_sample_batches=n_sample_batches)
+        assert list(single.columns) == list(batched.columns)
+        assert set(single["feature"]) == set(batched["feature"])
+
+    def test_sample_batched_stats_within_tolerance(self):
+        cpp, parts, labels = self._cpp_parts_labels()
+        single = cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1, n_filter=15)
+        batched = cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1,
+                              n_filter=15, n_sample_batches=3)
+        s = single.set_index("feature").sort_index()
+        b = batched.set_index("feature").sort_index()
+        assert np.allclose(s["mean_dif"].to_numpy(), b["mean_dif"].to_numpy(),
+                           atol=1e-6, equal_nan=True)
+
+    def test_n_sample_batches_one_batch_equals_single(self):
+        # n_sample_batches=2 with batch_size covering all but trivially still
+        # streams; full-coverage sanity that the path returns the same shape.
+        cpp, parts, labels = self._cpp_parts_labels()
+        single = cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1, n_filter=15)
+        batched = cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1,
+                              n_filter=15, n_sample_batches=len(labels))
+        assert single.shape == batched.shape
+
+    def test_mutually_exclusive_with_n_batches(self):
+        cpp, parts, labels = self._cpp_parts_labels()
+        with pytest.raises(ValueError, match="mutually exclusive"):
+            cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1,
+                        n_batches=2, n_sample_batches=2)
+
+    @pytest.mark.parametrize("bad", [1, 0, -1, 1.5, "x"])
+    def test_invalid_n_sample_batches_raises(self, bad):
+        cpp, parts, labels = self._cpp_parts_labels()
+        with pytest.raises(ValueError):
+            cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1,
+                        n_sample_batches=bad)

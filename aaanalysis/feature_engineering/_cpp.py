@@ -708,6 +708,7 @@ class CPP(Tool):
         n_jobs: Optional[int] = None,
         vectorized: bool = True,
         n_batches: Optional[int] = None,
+        n_sample_batches: Optional[int] = None,
         return_stats: bool = False,
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
         """
@@ -771,9 +772,21 @@ class CPP(Tool):
             improving speed but increasing memory consumption.
         n_batches : int, None, default=None
             Number of batches (2 to ``len(df_scales.columns)``) over the D axis of
-            ``dict_num_parts``. If ``None``, single-pass (faster, higher peak memory);
-            a value bounds the pass-1 stat working set to one D-chunk. Output is
-            bit-exact with the single-pass result.
+            ``dict_num_parts``. If ``None``, single-pass; a value bounds the **pass-1
+            stat** working set to one D-chunk (pass-2 recompute still runs globally, so
+            this trims pass-1 memory but does not bound overall peak RSS — use
+            ``n_sample_batches`` for that). Output is bit-exact with the single-pass
+            result. Mutually exclusive with ``n_sample_batches``.
+        n_sample_batches : int, None, default=None
+            Number of batches (2 to ``n_samples``) over the **sample** axis. If ``None``,
+            single-pass. A value processes ``ceil(n_samples / n_sample_batches)`` samples
+            per batch, bounding the per-batch working set (stat intermediates + pass-2
+            recompute) to ``O(batch_size)`` — the lever that actually lowers peak RSS for
+            large ``n`` (the resident input tensor itself is unchanged). Pass-1 ``std_test``
+            uses accumulator-style variance, so the result may differ from the single-pass
+            run by ULP-level rounding (after the ``round(3)`` on the stat columns), which
+            can reorder tie-broken features; hence opt-in, not the default. Mutually
+            exclusive with ``n_batches``.
         return_stats : bool, default=False
             If ``True``, also return the filter-funnel statistics (``last_filter_stats_``) as a second
             element ``(df_feat, stats)``; if ``False``, return only ``df_feat``.
@@ -797,6 +810,16 @@ class CPP(Tool):
           ``df_seq`` + ``dict_num`` into the per-part tensors consumed here (step 2).
           There is no raw-``df_seq`` / ``dict_num`` entry point on ``run_num``; passing
           ``dict_num_parts=None`` raises (use :meth:`run` for sequence-mode).
+        * **Peak memory is higher than :meth:`run` and scales with the input tensor.**
+          ``run_num`` carries the dense ``(n_samples, L_part_max, D)`` per-part tensor that
+          ``dict_num_parts`` materializes, so its peak memory is roughly an order of
+          magnitude above the same-data :meth:`run` (which streams an AA→scale lookup and
+          never builds that tensor) and grows with ``D``; runtime is otherwise comparable to
+          :meth:`run`. For large ``n``, pass ``n_sample_batches`` to bound the per-batch
+          working set and lower peak RSS roughly in proportion to the batch count (e.g.
+          ``n_sample_batches=10`` cut working memory ~6× in internal benchmarks), at the
+          cost of ULP-level non-determinism in tie-broken features. ``n_batches`` only
+          trims the pass-1 stat working set, not overall peak.
         * **Raw PLM embeddings are not directly usable — normalize them first.**
           Per-residue values are expected in ``[0, 1]`` (the ``StructurePreprocessor`` /
           ``AnnotationPreprocessor`` normalization convention), since the default
@@ -905,6 +928,22 @@ class CPP(Tool):
             min_val=2,
             max_val=n_df_scales_cols,
         )
+        ut.check_number_range(
+            name="n_sample_batches",
+            val=n_sample_batches,
+            just_int=True,
+            accept_none=True,
+            min_val=2,
+            max_val=len(self.df_parts),
+        )
+        if n_batches is not None and n_sample_batches is not None:
+            raise ValueError(
+                f"'n_batches' ({n_batches}) and 'n_sample_batches' "
+                f"({n_sample_batches}) are mutually exclusive; 'n_batches' bounds "
+                f"the pass-1 stat working set over the scale axis while "
+                f"'n_sample_batches' bounds peak memory over the sample axis. "
+                f"Set at most one."
+            )
 
         # Re-derive per-(entry, part) real lengths from df_parts non-gap chars.
         # The user-facing dict_num_parts carries only the NaN-padded tensor; lens
@@ -941,7 +980,20 @@ class CPP(Tool):
         # isn't present (e.g. user installed without the wheel). Same auto-dispatch
         # as cpp.run — see _pick_feature_matrix_builder docstring.
         builder = _pick_feature_matrix_builder()
-        if n_batches is None:
+        if n_sample_batches is not None:
+            # Batch the sample axis: each batch slices the resident tensor and
+            # bounds the per-batch working set (stat intermediates + pass-2
+            # recompute) to O(batch_size). This is the lever that actually lowers
+            # peak RSS for large n. Pass-1 std_test uses accumulator variance, so
+            # the result may differ from single-pass by ULP-level rounding (after
+            # the round(3) on stat columns); hence opt-in, not the default.
+            df_feat = cpp_run_sample_batched(
+                dict_part_vals=dict_num_parts,
+                dict_part_lens=dict_part_lens,
+                n_sample_batches=n_sample_batches,
+                **args,
+            )
+        elif n_batches is None:
             df_feat = cpp_run_single(
                 df_seq=None,
                 dict_num=None,

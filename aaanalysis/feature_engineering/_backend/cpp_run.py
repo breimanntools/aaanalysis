@@ -21,6 +21,7 @@ faster at large fixtures (no cache write).
 DEV: Bridge layers should be used only in exceptional cases to preserve the
 primary backend-frontend architecture.
 """
+import gc
 import warnings
 
 import numpy as np
@@ -58,6 +59,25 @@ from .cpp._filters._redundancy_filter import filtering
 
 
 # I Helper Functions
+# Only force a gc.collect() after freeing the per-part (n, L, D) tensors when
+# they are large enough for the reclaimed RAM to matter. A full collect costs
+# ~25 ms; on small/medium inputs that is pure overhead (it dominated run_num's
+# wall-clock on the tiny benchmark fixture), while on a multi-GB tensor it
+# meaningfully lowers peak RSS before the add_stat step. 64 MB is the break-even.
+_GC_TENSOR_BYTES = 64 * 1024 ** 2
+
+
+def _part_tensor_nbytes(*objs):
+    """Total nbytes across per-part value/length dicts (or bare arrays)."""
+    total = 0
+    for obj in objs:
+        if isinstance(obj, dict):
+            total += sum(getattr(v, "nbytes", 0) for v in obj.values())
+        else:
+            total += getattr(obj, "nbytes", 0)
+    return total
+
+
 def _get_n_pre_filter(n_pre_filter=None, n_filter=None, n_feat=None, pct_pre_filter=None):
     """Get number of feature to pre-filter (mirrors ``cpp_run._get_n_pre_filter``)."""
     if n_pre_filter is None:
@@ -257,10 +277,13 @@ def cpp_run_single(df_parts=None, split_kws=None, df_scales=None, df_cat=None, v
             list_scales=list_scales, features=features, split_kws=split_kws,
         )
     # Release the per-part tensors before add_stat — they're not needed past
-    # the recompute and can dominate peak RSS at large n × D.
+    # the recompute and can dominate peak RSS at large n × D. Only force a
+    # collect when they are large (see _GC_TENSOR_BYTES); on small inputs the
+    # collect costs more than it reclaims.
+    _nbytes = _part_tensor_nbytes(dict_part_vals, dict_part_lens)
     del dict_part_vals, dict_part_lens
-    import gc
-    gc.collect()
+    if _nbytes >= _GC_TENSOR_BYTES:
+        gc.collect()
 
     df = add_stat(df_feat=df, X_cached=X_cached, labels=labels, parametric=parametric,
                      label_test=label_test, label_ref=label_ref, n_jobs=n_jobs,
@@ -507,18 +530,27 @@ def cpp_run_sample_batched(df_parts=None, split_kws=None, df_scales=None, df_cat
                               label_ref=0, n_filter=100, n_pre_filter=None, pct_pre_filter=5,
                               max_std_test=0.2, max_overlap=0.5, max_cor=0.5, check_cat=True,
                               parametric=False, start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10,
-                              n_jobs=None, vectorized=True, n_sample_batches=10):
+                              n_jobs=None, vectorized=True, n_sample_batches=10,
+                              dict_part_vals=None, dict_part_lens=None):
     """Sample-batched orchestration: bounds memory at O(batch_size * L * D), not O(n).
 
-    Per sample batch: assign + accumulate per-feature partial stats (sum, sum²,
-    counts). After all batches: combine into final mean/std/abs_mean_dif and
-    apply std_test + accept_gaps masks. Pre-filter top n_pre_filter survivors.
-    Pass 2: per sample batch, re-assign + recompute survivor columns; write into
-    the full (n_samples, n_pre_filter) X output. add_stat on X.
+    Per sample batch: get per-part values + accumulate per-feature partial stats
+    (sum, sum², counts). After all batches: combine into final mean/std/abs_mean_dif
+    and apply std_test + accept_gaps masks. Pre-filter top n_pre_filter survivors.
+    Pass 2: per sample batch, re-fetch values + recompute survivor columns; write
+    into the full (n_samples, n_pre_filter) X output. add_stat on X.
 
-    Memory peak: O(batch_size * L * D + n_samples * n_pre_filter * 8).
-    For 100k samples × 586 scales × default splits: ~25 GB vs ~70 GB for the
-    non-batched path. add_stat itself reuses ``add_stat`` on the full X.
+    Two value sources, one orchestrator:
+
+    * **Sequence mode** (``dict_part_vals`` is None): each batch *assigns* scale
+      values from ``df_parts`` strings via ``assign_scale_values_to_seq`` — the
+      full tensor is never resident, so peak is O(batch_size * L * D).
+    * **Numerical mode** (``CPP.run_num``; ``dict_part_vals`` /
+      ``dict_part_lens`` supplied): the full per-part tensor is already resident,
+      so each batch *slices* it along the sample axis (zero-copy views). The
+      resident input stays O(n * L * D), but the per-batch *working* set (stat
+      intermediates + pass-2 recompute) is bounded to O(batch_size), which is the
+      dominant term for large numerical runs.
 
     Numeric note: pass-1 std_test is computed via accumulator-style variance
     (``E[X²] - E[X]²``) which may differ from the single-pass ``np.std`` by
@@ -526,12 +558,25 @@ def cpp_run_sample_batched(df_parts=None, split_kws=None, df_scales=None, df_cat
     these match in 99%+ of cases; in pathological tie-breaks the redundancy
     filter sort can land a few features in different positions.
     """
-    import gc
     args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     list_scales = list(df_scales)
     list_parts = list(df_parts)
     n_samples = len(df_parts)
     labels = np.asarray(labels)
+
+    # Per-batch (vals, lens) provider — slice the resident tensor in numerical
+    # mode, else assign from the part strings (the full tensor never materializes).
+    is_numerical = dict_part_vals is not None and dict_part_lens is not None
+
+    def _batch_vals(b_start, b_end):
+        if is_numerical:
+            vals = {p: v[b_start:b_end] for p, v in dict_part_vals.items()}
+            lens = {p: l[b_start:b_end] for p, l in dict_part_lens.items()}
+            return vals, lens
+        return assign_scale_values_to_seq(
+            df_parts=df_parts.iloc[b_start:b_end], df_scales=df_scales,
+            verbose=False, n_jobs=n_jobs,
+        )
 
     n_feat_total = len(get_features_(list_parts=list_parts, split_kws=split_kws,
                                      list_scales=list_scales))
@@ -562,16 +607,13 @@ def cpp_run_sample_batched(df_parts=None, split_kws=None, df_scales=None, df_cat
     for batch_idx, (b_start, b_end) in enumerate(batch_ranges):
         if b_start >= b_end:
             continue
-        df_parts_batch = df_parts.iloc[b_start:b_end]
         labels_batch = labels[b_start:b_end]
         if verbose:
             ut.print_out(
                 f"1.{batch_idx+1} pass 1 assign + stats "
                 f"({b_start}:{b_end} of {n_samples})"
             )
-        dict_part_vals_batch, dict_part_lens_batch = assign_scale_values_to_seq(
-            df_parts=df_parts_batch, df_scales=df_scales, verbose=False, n_jobs=n_jobs,
-        )
+        dict_part_vals_batch, dict_part_lens_batch = _batch_vals(b_start, b_end)
         accumulate_partial_stats(
             dict_part_vals=dict_part_vals_batch, dict_part_lens=dict_part_lens_batch,
             list_parts=list_parts, list_scales=list_scales, split_kws=split_kws,
@@ -579,8 +621,10 @@ def cpp_run_sample_batched(df_parts=None, split_kws=None, df_scales=None, df_cat
             sum_test=sum_test, sum_sq_test=sum_sq_test, sum_ref=sum_ref,
             count_test=count_test, count_ref=count_ref, indices_map=indices_map,
         )
+        _nbytes = _part_tensor_nbytes(dict_part_vals_batch, dict_part_lens_batch)
         del dict_part_vals_batch, dict_part_lens_batch
-        gc.collect()
+        if _nbytes >= _GC_TENSOR_BYTES:
+            gc.collect()
 
     abs_mean_dif, std_test, features_all = finalize_stats(
         sum_test=sum_test, sum_sq_test=sum_sq_test, sum_ref=sum_ref,
@@ -609,22 +653,21 @@ def cpp_run_sample_batched(df_parts=None, split_kws=None, df_scales=None, df_cat
     for batch_idx, (b_start, b_end) in enumerate(batch_ranges):
         if b_start >= b_end:
             continue
-        df_parts_batch = df_parts.iloc[b_start:b_end]
         if verbose:
             ut.print_out(
                 f"3.{batch_idx+1} pass 2 recompute survivors "
                 f"({b_start}:{b_end} of {n_samples})"
             )
-        dict_part_vals_batch, dict_part_lens_batch = assign_scale_values_to_seq(
-            df_parts=df_parts_batch, df_scales=df_scales, verbose=False, n_jobs=n_jobs,
-        )
+        dict_part_vals_batch, dict_part_lens_batch = _batch_vals(b_start, b_end)
         X_batch = recompute_feature_matrix(
             dict_part_vals=dict_part_vals_batch, dict_part_lens=dict_part_lens_batch,
             list_scales=list_scales, features=features, split_kws=split_kws,
         )
         X[b_start:b_end, :] = X_batch
+        _nbytes = _part_tensor_nbytes(dict_part_vals_batch, dict_part_lens_batch, X_batch)
         del dict_part_vals_batch, dict_part_lens_batch, X_batch
-        gc.collect()
+        if _nbytes >= _GC_TENSOR_BYTES:
+            gc.collect()
 
     df = add_stat(
         df_feat=df, X_cached=X, labels=labels.tolist(), parametric=parametric,
