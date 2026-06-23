@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
 from aaanalysis import utils as ut
 from ._plot_get_clist import plot_get_clist
@@ -49,13 +51,13 @@ def plot_rank(df_rank: Optional[pd.DataFrame] = None,
               group_order: Optional[List[str]] = None,
               dict_color: Optional[Dict[str, str]] = None,
               threshold: Optional[Union[int, float, List[Union[int, float]]]] = None,
-              ax: Optional[plt.Axes] = None,
+              ax: Optional[Axes] = None,
               figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
               marker_size: Union[int, float] = 25,
               xlabel: str = "Protein rank",
               ylabel: str = "Max score per protein",
               fontsize_labels: Optional[Union[int, float]] = None,
-              ) -> Tuple[plt.Figure, plt.Axes]:
+              ) -> Tuple[Figure, Axes]:
     """
     Plot a per-protein rank scatter: max-score-per-protein sorted by score, colored by group.
 

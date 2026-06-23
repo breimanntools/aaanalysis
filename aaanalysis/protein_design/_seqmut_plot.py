@@ -5,6 +5,7 @@ This is a script for the frontend of the SeqMutPlot class for visualizing per-po
 from typing import Optional, Tuple, Union
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 import seaborn as sns
 
 import aaanalysis.utils as ut
@@ -58,10 +59,10 @@ class SeqMutPlot:
     def mutation_landscape(self,
                            df_scan: Optional[pd.DataFrame] = None,
                            entry: Optional[str] = None,
-                           ax: Optional[plt.Axes] = None,
+                           ax: Optional[Axes] = None,
                            figsize: Tuple[Union[int, float], Union[int, float]] = (10, 5),
                            cmap: str = "viridis",
-                           ) -> plt.Axes:
+                           ) -> Axes:
         """
         Plot the per-position ΔCPP mutation landscape for one sequence.
 
@@ -74,7 +75,7 @@ class SeqMutPlot:
             Mutational landscape produced by :meth:`SeqMut.scan`.
         entry : str, optional
             Protein entry to plot. If ``None``, the first entry in ``df_scan`` is used.
-        ax : plt.Axes, optional
+        ax : Axes, optional
             Pre-defined Axes object to plot on. If ``None``, a new one is created.
         figsize : tuple, default=(10, 5)
             Figure dimensions (width, height) in inches (used when ``ax`` is ``None``).
@@ -83,7 +84,7 @@ class SeqMutPlot:
 
         Returns
         -------
-        ax : plt.Axes
+        ax : Axes
             Axes object of the mutation landscape.
 
         Examples
@@ -108,10 +109,10 @@ class SeqMutPlot:
                                 df_scan: Optional[pd.DataFrame] = None,
                                 entry: Optional[str] = None,
                                 pos: Optional[int] = None,
-                                ax: Optional[plt.Axes] = None,
+                                ax: Optional[Axes] = None,
                                 figsize: Tuple[Union[int, float], Union[int, float]] = (6, 5),
                                 color: Optional[str] = None,
-                                ) -> plt.Axes:
+                                ) -> Axes:
         """
         Plot the substitution impact for a single residue across all substitutions.
 
@@ -126,7 +127,7 @@ class SeqMutPlot:
             Protein entry to plot. If ``None``, the first entry in ``df_scan`` is used.
         pos : int
             1-based residue position to plot.
-        ax : plt.Axes, optional
+        ax : Axes, optional
             Pre-defined Axes object to plot on. If ``None``, a new one is created.
         figsize : tuple, default=(6, 5)
             Figure dimensions (width, height) in inches (used when ``ax`` is ``None``).
@@ -135,7 +136,7 @@ class SeqMutPlot:
 
         Returns
         -------
-        ax : plt.Axes
+        ax : Axes
             Axes object of the residue mutation-impact plot.
 
         Examples

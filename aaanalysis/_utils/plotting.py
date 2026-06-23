@@ -4,6 +4,7 @@ This is a script for the backend of the plotting module functions used by other 
 import seaborn as sns
 import matplotlib as mpl
 from matplotlib import pyplot as plt
+from matplotlib.lines import Line2D
 import matplotlib.lines as mlines
 import warnings
 
@@ -22,13 +23,13 @@ def _create_marker(color, label, marker, marker_size, lw, edgecolor, linestyle, 
                                  edgecolor=hatchcolor)
     # If marker is '-', treat it as a line
     if marker == "-":
-         return plt.Line2D(xdata=[0, 1], ydata=[0, 1],
+         return Line2D(xdata=[0, 1], ydata=[0, 1],
                            color=color,
                            linestyle=linestyle,
                            lw=lw,
                            label=label)
     # Creates marker element without line (lw=0)
-    return plt.Line2D(xdata=[0], ydata=[0],
+    return Line2D(xdata=[0], ydata=[0],
                       marker=marker,
                       label=label,
                       markerfacecolor=color,

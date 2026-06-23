@@ -4,13 +4,14 @@ The backend is in general utility module to provide function to remaining AAanal
 """
 from typing import Optional, List, Dict, Union, Tuple
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 from aaanalysis import utils as ut
 
 # I Helper functions
 
 
 # II Main function
-def plot_legend(ax: Optional[plt.Axes] = None,
+def plot_legend(ax: Optional[Axes] = None,
                 # Categories and colors
                 dict_color: Optional[Dict[str, str]] = None,
                 list_cat: Optional[List[str]] = None,
@@ -45,7 +46,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
                 # Additional arguments
                 keep_legend: bool = False,
                 **kwargs
-                ) -> Union[plt.Axes, Tuple[List, List[str]]]:
+                ) -> Union[Axes, Tuple[List, List[str]]]:
     """
     Set an independently customizable plot legend.
 
@@ -56,7 +57,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
 
     Parameters
     ----------
-    ax : plt.Axes, optional
+    ax : Axes, optional
         The axes to attach the legend to. If not provided, the current axes will be used.
     dict_color : dict, optional
         A dictionary mapping categories to colors.
@@ -117,7 +118,7 @@ def plot_legend(ax: Optional[plt.Axes] = None,
 
     Returns
     -------
-    ax : plt.Axes
+    ax : Axes
         The axes object on which legend is applied to.
 
     Notes

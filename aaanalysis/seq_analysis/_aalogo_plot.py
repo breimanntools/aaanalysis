@@ -3,6 +3,8 @@ This is a script for the frontend of the AAlogoPlot class.
 """
 import inspect
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 import pandas as pd
 from typing import Optional, Union, List, Tuple, Literal
 
@@ -298,7 +300,7 @@ class AAlogoPlot:
                     xtick_size: Optional[Union[int, float]] = None,
                     xtick_width: Union[int, float] = 2.0,
                     xtick_length: Union[int, float] = 11.0,
-                    ) -> Tuple[plt.Figure, plt.Axes]:
+                    ) -> Tuple[Figure, Axes]:
         """
         Plot a single sequence logo with optional bit-score bar and target middle domain
         (TMD) / juxta middle domain (JMD) annotations.
@@ -398,9 +400,9 @@ class AAlogoPlot:
 
         Returns
         -------
-        fig : plt.Figure
+        fig : Figure
             Figure object.
-        axes : plt.Axes or tuple of (plt.Axes, plt.Axes)
+        axes : Axes or tuple of (Axes, Axes)
             When ``df_logo_info`` is ``None``: a single ``Axes`` for the logo panel.
             When ``df_logo_info`` is provided: a tuple ``(ax_logo, ax_info)`` where
             ``ax_info`` is the bit-score bar above the logo.
@@ -540,7 +542,7 @@ class AAlogoPlot:
                    xtick_size: Optional[Union[int, float]] = None,
                    xtick_width: Union[int, float] = 2.0,
                    xtick_length: Union[int, float] = 11.0,
-                   ) -> Tuple[plt.Figure, List[plt.Axes]]:
+                   ) -> Tuple[Figure, List[Axes]]:
         """
         Plot multiple sequence logos stacked vertically for group comparison, each with
         an optional bit-score bar on top.
@@ -627,9 +629,9 @@ class AAlogoPlot:
 
         Returns
         -------
-        fig : plt.Figure
+        fig : Figure
             Figure object.
-        axes : list of plt.Axes or list of tuple of (plt.Axes, plt.Axes)
+        axes : list of Axes or list of tuple of (Axes, Axes)
             When no bit-score bars are shown: one ``Axes`` per logo. When
             ``list_df_logo_info`` (or ``list_aal_kws``) is given: one
             ``(ax_logo, ax_info)`` tuple per group, where ``ax_info`` is the bar above.
