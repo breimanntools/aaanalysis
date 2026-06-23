@@ -61,10 +61,6 @@ def plot_get_clist(n_colors: int = 3,
     by default) use :func:`plot_get_cmap` instead.
 
     .. versionadded:: 0.1.2
-    .. versionchanged:: 1.1.0
-        Added ``kind``, ``cmap``, and ``facecolor_dark``. ``kind='categorical'`` now
-        caps ``n_colors`` at 20 (raising above it) instead of returning an arbitrarily
-        large ``'husl'`` palette.
 
     Parameters
     ----------
