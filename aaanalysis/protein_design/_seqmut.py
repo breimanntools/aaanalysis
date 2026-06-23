@@ -132,8 +132,8 @@ class SeqMut:
 
     # Main methods
     def mutate(self,
-               df_seq: Optional[pd.DataFrame] = None,
-               mutations: Optional[pd.DataFrame] = None,
+               df_seq: pd.DataFrame,
+               mutations: pd.DataFrame,
                df_feat: Optional[pd.DataFrame] = None,
                jmd_n_len: int = 10,
                jmd_c_len: int = 10,
@@ -210,8 +210,8 @@ class SeqMut:
         return df_mut
 
     def scan(self,
-             df_seq: Optional[pd.DataFrame] = None,
-             df_feat: Optional[pd.DataFrame] = None,
+             df_seq: pd.DataFrame,
+             df_feat: pd.DataFrame,
              region: Optional[Union[str, List[int]]] = None,
              to_aa: Optional[List[str]] = None,
              jmd_n_len: int = 10,
@@ -273,8 +273,8 @@ class SeqMut:
         return df_scan
 
     def suggest(self,
-                df_seq: Optional[pd.DataFrame] = None,
-                df_feat: Optional[pd.DataFrame] = None,
+                df_seq: pd.DataFrame,
+                df_feat: pd.DataFrame,
                 n: int = 10,
                 region: Optional[Union[str, List[int]]] = None,
                 to_aa: Optional[List[str]] = None,
@@ -341,7 +341,7 @@ class SeqMut:
         return df_suggest
 
     def eval(self,
-             df_scan: Optional[pd.DataFrame] = None,
+             df_scan: pd.DataFrame,
              th: Optional[float] = None,
              ) -> pd.DataFrame:
         """

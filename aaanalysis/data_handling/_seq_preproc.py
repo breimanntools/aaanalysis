@@ -132,7 +132,7 @@ class SequencePreprocessor:
 
     # Sequence encoding
     @staticmethod
-    def encode_one_hot(list_seq: Optional[Union[List[str], str]] = None,
+    def encode_one_hot(list_seq: Union[List[str], str],
                        alphabet: str = "ACDEFGHIKLMNPQRSTVWY",
                        gap: str = "-",
                        pad_at: Literal["C", "N"] = "C",
@@ -187,7 +187,7 @@ class SequencePreprocessor:
         return X, features
 
     @staticmethod
-    def encode_integer(list_seq: Optional[Union[List[str], str]] = None,
+    def encode_integer(list_seq: Union[List[str], str],
                        alphabet: str = "ACDEFGHIKLMNPQRSTVWY",
                        gap: str = "-",
                        pad_at: Literal["C", "N"] = "C",
@@ -240,7 +240,7 @@ class SequencePreprocessor:
         return X, features
 
     @staticmethod
-    def get_aa_window(seq: Optional[str] = None,
+    def get_aa_window(seq: str,
                       pos_start: int = 0,
                       pos_stop: Optional[int] = None,
                       window_size: Optional[int] = None,
@@ -313,7 +313,7 @@ class SequencePreprocessor:
         return window
 
     @staticmethod
-    def get_sliding_aa_window(seq: Optional[str] = None,
+    def get_sliding_aa_window(seq: str,
                               slide_start: int = 0,
                               slide_stop: Optional[int] = None,
                               window_size: int = 5,

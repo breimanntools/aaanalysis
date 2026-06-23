@@ -82,7 +82,7 @@ class dPULearnPlot:
         """
 
     @staticmethod
-    def eval(df_eval: Optional[pd.DataFrame] = None,
+    def eval(df_eval: pd.DataFrame,
              figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
              dict_xlims: Optional[dict] = None,
              legend: bool = True,
@@ -167,7 +167,7 @@ class dPULearnPlot:
         return fig, axes
 
     @staticmethod
-    def pca(df_pu: Optional[pd.DataFrame] = None,
+    def pca(df_pu: pd.DataFrame,
             labels=None,
             figsize: Tuple[Union[int, float], Union[int, float]] = (5, 5),
             pc_x: int = 1,

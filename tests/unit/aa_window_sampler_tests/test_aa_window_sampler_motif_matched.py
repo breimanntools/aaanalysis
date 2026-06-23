@@ -256,7 +256,7 @@ class TestSampleMotifMatched:
         aaws = aa.AAWindowSampler()
         with pytest.raises(ValueError, match="motif_pwm"):
             aaws.sample_motif_matched(df_seq=df_seq, pos_col="pos",
-                                       n=5, window_size=3,
+                                       n=5, window_size=3, motif_pwm=None,
                                        motif_score_threshold=2.5, seed=0)
 
     def test_invalid_motif_pwm_shape(self):
@@ -274,7 +274,8 @@ class TestSampleMotifMatched:
         with pytest.raises(ValueError, match="motif_score_threshold"):
             aaws.sample_motif_matched(df_seq=df_seq, pos_col="pos",
                                        n=5, window_size=3,
-                                       motif_pwm=_pwm_for_a(3), seed=0)
+                                       motif_pwm=_pwm_for_a(3),
+                                       motif_score_threshold=None, seed=0)
 
     def test_invalid_role(self):
         df_seq = _df_seq_with_aaa()

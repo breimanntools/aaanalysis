@@ -59,7 +59,7 @@ class TestAAclustEvaluate:
         """Test with an invalid 'X' value."""
         X = np.array([[1.0, 2.0], [np.nan, 4.0], [5.0, 6.0]])
         with pytest.raises(ValueError):
-            aa.AAclust().eval(X)
+            aa.AAclust().eval(X, list_labels=np.array([1, 2, 1]))
 
     def test_labels(self):
         """Test the 'labels' parameter."""
@@ -78,7 +78,7 @@ class TestAAclustEvaluate:
         """Test with 'labels' parameter set to None."""
         X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
         with pytest.raises(ValueError):
-            aa.AAclust().eval(X)
+            aa.AAclust().eval(X, list_labels=None)
 
     @settings(deadline=None)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2, min_side=10, max_side=50),
@@ -147,4 +147,4 @@ class TestAAclustEvaluateComplex:
     def test_small_X(self, X):
         """Test 'evaluate' with a very small 'X'."""
         with pytest.raises(ValueError):
-            aa.AAclust().eval(X)
+            aa.AAclust().eval(X, list_labels=np.ones(X.shape[0], dtype=int))

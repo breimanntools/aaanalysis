@@ -339,7 +339,7 @@ class AAclust(Wrapper):
 
     def eval(self,
              X: ut.ArrayLike2D,
-             list_labels: Optional[ut.ArrayLike2D] = None,
+             list_labels: ut.ArrayLike2D,
              names_datasets: Optional[List[str]] = None,
              ) -> pd.DataFrame:
         """
@@ -414,7 +414,7 @@ class AAclust(Wrapper):
 
     @staticmethod
     def name_clusters(X: ut.ArrayLike2D,
-                      labels: Optional[ut.ArrayLike1D] = None,
+                      labels: ut.ArrayLike1D,
                       names: Optional[List[str]] = None,
                       shorten_names : bool = True,
                       ) -> List[str]:
@@ -465,7 +465,7 @@ class AAclust(Wrapper):
 
     @staticmethod
     def comp_centers(X: ut.ArrayLike2D,
-                     labels: Optional[ut.ArrayLike1D] = None
+                     labels: ut.ArrayLike1D
                      ) -> Tuple[ut.ArrayLike1D, ut.ArrayLike1D]:
         """
         Computes the center of each cluster based on the given labels.
@@ -504,7 +504,7 @@ class AAclust(Wrapper):
 
     @staticmethod
     def comp_medoids(X: ut.ArrayLike2D,
-                     labels: Optional[ut.ArrayLike1D] = None,
+                     labels: ut.ArrayLike1D,
                      metric: Literal["correlation", "manhattan", "euclidean", "cosine"] = "correlation"
                      ) -> Tuple[ut.ArrayLike1D, ut.ArrayLike1D]:
         """
@@ -553,7 +553,7 @@ class AAclust(Wrapper):
 
     @staticmethod
     def comp_correlation(X: ut.ArrayLike2D,
-                         labels: Optional[ut.ArrayLike1D] = None,
+                         labels: ut.ArrayLike1D,
                          X_ref: Optional[ut.ArrayLike2D] = None,
                          labels_ref: Optional[ut.ArrayLike1D] = None,
                          names: Optional[List[str]] = None,
@@ -624,8 +624,8 @@ class AAclust(Wrapper):
         return df_corr, labels_sorted
 
     @staticmethod
-    def comp_coverage(names: Optional[List[str]] = None,
-                      names_ref: Optional[List[str]] = None
+    def comp_coverage(names: List[str],
+                      names_ref: List[str]
                       ) -> float:
         """
         Computes the percentage of unique names from ``names`` that are present in ``names_ref``.
@@ -663,7 +663,7 @@ class AAclust(Wrapper):
         return coverage
 
     def select_scales(self,
-                      df_scales: Optional[pd.DataFrame] = None,
+                      df_scales: pd.DataFrame,
                       n_clusters: Optional[int] = None,
                       on_center: bool = True,
                       min_th: float = 0.3,
@@ -731,8 +731,8 @@ class AAclust(Wrapper):
 
     def filter_coverage(self,
                         X: ut.ArrayLike2D,
-                        scale_ids: Optional[List[str]] = None,
-                        names_ref: Optional[List[str]] = None,
+                        scale_ids: List[str],
+                        names_ref: List[str],
                         min_coverage: int = 100,
                         df_cat: Optional[pd.DataFrame] = None,
                         col_name: Literal['category', 'subcategory', 'scale_name'] = "subcategory"
@@ -787,6 +787,8 @@ class AAclust(Wrapper):
         names_ref = ut.check_list_like(name="names_ref", val=names_ref, accept_none=False)
         ut.check_number_range(name="min_coverage", val=min_coverage, just_int=True,
                               min_val=10, max_val=100, accept_none=False)
+        if df_cat is None:
+            df_cat = ut.load_default_scales(scale_cat=True)
         check_df_cat(df_cat=df_cat, accept_none=False)
         ut.check_str_options(name="col_name", val=col_name,
                              list_str_options=[ut.COL_CAT, ut.COL_SUBCAT, ut.COL_SCALE_NAME])

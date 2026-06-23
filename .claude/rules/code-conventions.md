@@ -88,14 +88,40 @@ directly.
 
 ## Type hints
 
-- Annotate every public parameter and return type. Use `Optional[...]` for
-  `None`-defaults.
-- Avoid `pd.DataFrame = None` for required args. Either accept `None`
-  honestly (and `check_df_seq(accept_none=True)`) or make the arg required
-  by removing the default.
+- Annotate every public parameter and return type. Use `Optional[...]` **only**
+  for params that genuinely accept `None` (the Validate block passes
+  `accept_none=True` or `None` carries a real meaning). `Optional[T] = None` on
+  an argument the check then *rejects* is a lie — it advertises `None` as valid
+  when the call raises.
+- **Required args carry no default and no `Optional`.** Never write
+  `df_feat: pd.DataFrame = None` for an argument that must be given (the
+  Validate block would reject `None` anyway — the `Optional[...] = None` then
+  lies). Make it required by removing the default: `df_feat: pd.DataFrame`.
+  Required args that lead the signature stay **positional-or-keyword** (no `*`
+  separator — see `frontend-backend.md`); positional remains allowed so dropping
+  a stale `= None` is non-breaking. Place required args before any defaulted arg
+  (Python forbids a non-default after a default). When a required arg must sit
+  **after** a defaulted one and can't be reordered without breaking positional
+  callers, resolve it in priority order: (1) if a canonical default exists, give
+  it one and keep `Optional[T] = None` honestly (e.g. `df_cat` defaults to
+  `ut.load_default_scales(scale_cat=True)`); else (2) make it **keyword-only**
+  with a `*` before it — `def feature(self, feature, feat_rank=1, *, df_seq,
+  labels, ...)`. This `*` for an otherwise-stranded required arg is the **only**
+  sanctioned `*` use; never add `*` merely to force keywords on args that could
+  lead.
 - Use `ut.ArrayLike1D` / `ut.ArrayLike2D` for numpy/list duck types.
 - **No type checker runs in CI.** Local IDE-side type checking (Pylance in
   VS Code) is up to the contributor.
+
+## Blank lines between methods (hard rule, test-enforced)
+
+Two consecutive methods in a class body MUST be separated by at least one blank
+line (PEP 8 E301). A `return` glued directly to the next `def` is a defect, not a
+style preference. Because readable code review has missed this, it is enforced
+programmatically by `tests/unit/api_tests/test_style_method_spacing.py` (AST
+scan over the whole package). The check is narrow on purpose — it flags only
+method-after-method spacing, not the blank line between a class docstring and the
+first method.
 
 ## Linting and Python floor
 

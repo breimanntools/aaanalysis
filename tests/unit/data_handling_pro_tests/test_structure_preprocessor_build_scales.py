@@ -44,7 +44,7 @@ class TestStpBuildPseudoScales:
     def test_invalid_df_seq_none(self):
         stp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.build_scales(features=["bfactor"])
+            stp.build_scales(df_seq=None, dict_num=None, features=["bfactor"])
 
     def test_invalid_dict_num_none(self):
         df = _df_seq()

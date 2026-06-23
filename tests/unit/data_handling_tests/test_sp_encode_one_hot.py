@@ -50,11 +50,11 @@ class TestEncodeOneHot:
         """Test an invalid 'alphabet' parameter."""
         sp = aa.SequencePreprocessor()
         with pytest.raises(ValueError):
-            sp.encode_one_hot(alphabet=None)
+            sp.encode_one_hot(list_seq=["ACDEF"], alphabet=None)
         with pytest.raises(ValueError):
-            sp.encode_one_hot(alphabet="")
+            sp.encode_one_hot(list_seq=["ACDEF"], alphabet="")
         with pytest.raises(ValueError):
-            sp.encode_one_hot(alphabet=123)
+            sp.encode_one_hot(list_seq=["ACDEF"], alphabet=123)
 
     @settings(max_examples=10, deadline=None)
     @given(gap=st.text(min_size=1, max_size=1).filter(lambda g: g not in "ACDEFGHIKLMNPQRSTVWY"))
@@ -70,11 +70,11 @@ class TestEncodeOneHot:
         """Test an invalid 'gap' parameter."""
         sp = aa.SequencePreprocessor()
         with pytest.raises(ValueError):
-            sp.encode_one_hot(gap=None)
+            sp.encode_one_hot(list_seq=["ACDEF"], gap=None)
         with pytest.raises(ValueError):
-            sp.encode_one_hot(gap="")
+            sp.encode_one_hot(list_seq=["ACDEF"], gap="")
         with pytest.raises(ValueError):
-            sp.encode_one_hot(gap="INVALID")
+            sp.encode_one_hot(list_seq=["ACDEF"], gap="INVALID")
 
     @settings(max_examples=10, deadline=None)
     @given(pad_at=st.sampled_from(["N", "C"]))
@@ -90,11 +90,11 @@ class TestEncodeOneHot:
         """Test an invalid 'pad_at' parameter."""
         sp = aa.SequencePreprocessor()
         with pytest.raises(ValueError):
-            sp.encode_one_hot(pad_at=None)
+            sp.encode_one_hot(list_seq=["ACDEF"], pad_at=None)
         with pytest.raises(ValueError):
-            sp.encode_one_hot(pad_at="")
+            sp.encode_one_hot(list_seq=["ACDEF"], pad_at="")
         with pytest.raises(ValueError):
-            sp.encode_one_hot(pad_at="INVALID")
+            sp.encode_one_hot(list_seq=["ACDEF"], pad_at="INVALID")
 
 
 # Complex Cases

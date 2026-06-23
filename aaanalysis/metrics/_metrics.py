@@ -25,8 +25,8 @@ def _check_n_classes_n_samples(X=None, labels=None):
 
 
 # Adjusted Area Under the Curve (AUC*)
-def comp_auc_adjusted(X: Optional[ut.ArrayLike2D] = None,
-                      labels: Optional[ut.ArrayLike1D] = None,
+def comp_auc_adjusted(X: ut.ArrayLike2D,
+                      labels: ut.ArrayLike1D,
                       label_test: int = 1,
                       label_ref: int = 0,
                       n_jobs: Optional[int] = None
@@ -81,8 +81,8 @@ def comp_auc_adjusted(X: Optional[ut.ArrayLike2D] = None,
 
 
 # BIC score
-def comp_bic_score(X: Optional[ut.ArrayLike2D] = None,
-                   labels: Optional[ut.ArrayLike1D] = None
+def comp_bic_score(X: ut.ArrayLike2D,
+                   labels: ut.ArrayLike1D
                    ) -> float:
     """
     Compute an adjusted Bayesian Information Criterion (BIC) (-∞, ∞) for assessing clustering quality.
@@ -134,8 +134,8 @@ def comp_bic_score(X: Optional[ut.ArrayLike2D] = None,
 
 
 # Kullback-Leibler Divergence
-def comp_kld(X: Optional[ut.ArrayLike2D] = None,
-             labels: Optional[ut.ArrayLike1D] =None,
+def comp_kld(X: ut.ArrayLike2D,
+             labels: ut.ArrayLike1D,
              label_test: int = 1,
              label_ref: int = 0
              ) -> ut.ArrayLike1D:
@@ -218,8 +218,8 @@ def _check_list_scores_positions(list_scores=None, list_positions=None):
 
 
 # Per-protein average precision (site localization)
-def comp_per_protein_ap(list_scores: Optional[list] = None,
-                        list_positions: Optional[list] = None,
+def comp_per_protein_ap(list_scores: list,
+                        list_positions: list,
                         tolerance: int = 0,
                         ) -> ut.ArrayLike1D:
     """
@@ -265,8 +265,8 @@ def comp_per_protein_ap(list_scores: Optional[list] = None,
 
 
 # Detection metrics at a fixed threshold
-def comp_detection_metrics(list_scores: Optional[list] = None,
-                           list_positions: Optional[list] = None,
+def comp_detection_metrics(list_scores: list,
+                           list_positions: list,
                            threshold: float = 0.5,
                            tolerance: int = 0,
                            ) -> dict:
@@ -318,7 +318,7 @@ def comp_detection_metrics(list_scores: Optional[list] = None,
 
 
 # Bootstrap confidence interval
-def comp_bootstrap_ci(values: Optional[ut.ArrayLike1D] = None,
+def comp_bootstrap_ci(values: ut.ArrayLike1D,
                       n_rounds: int = 1000,
                       ci: float = 0.95,
                       seed: Optional[int] = None,
@@ -370,7 +370,7 @@ def comp_bootstrap_ci(values: Optional[ut.ArrayLike1D] = None,
 
 
 # Peak-preserving score smoothing
-def comp_smooth_scores(scores: Optional[ut.ArrayLike1D] = None,
+def comp_smooth_scores(scores: ut.ArrayLike1D,
                        method: Literal["triangular", "gaussian"] = "triangular",
                        window: int = 2,
                        sigma: Optional[float] = None,

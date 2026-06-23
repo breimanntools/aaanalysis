@@ -57,7 +57,7 @@ class SeqMutPlot:
 
     # Main methods
     def mutation_landscape(self,
-                           df_scan: Optional[pd.DataFrame] = None,
+                           df_scan: pd.DataFrame,
                            entry: Optional[str] = None,
                            ax: Optional[Axes] = None,
                            figsize: Tuple[Union[int, float], Union[int, float]] = (10, 5),
@@ -106,9 +106,10 @@ class SeqMutPlot:
         return ax
 
     def residue_mutation_impact(self,
-                                df_scan: Optional[pd.DataFrame] = None,
+                                df_scan: pd.DataFrame,
                                 entry: Optional[str] = None,
-                                pos: Optional[int] = None,
+                                *,
+                                pos: int,
                                 ax: Optional[Axes] = None,
                                 figsize: Tuple[Union[int, float], Union[int, float]] = (6, 5),
                                 color: Optional[str] = None,
