@@ -111,6 +111,9 @@ from ._utils.metrics import (auc_adjusted_,
 # and are re-exported here so utils.py stays a thin import barrel; every ``ut.X`` call
 # site is unchanged.
 from ._constants import *  # noqa: F401,F403
+# Data dictionary / interface contract for the key DataFrames (df_seq, df_parts,
+# df_scales, df_cat, df_feat, ...), re-exported so it is reachable as ut.DICT_DF_SCHEMAS.
+from ._schemas import DICT_DF_SCHEMAS, render_schemas_rst  # noqa: F401
 
 # I Helper functions
 def _retrieve_string_starting_at_end(seq, start=None, end=None):
