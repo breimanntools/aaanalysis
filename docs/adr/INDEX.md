@@ -45,4 +45,5 @@ Regenerate this table with:
 | [0035](0035-validation-ut-check-not-pydantic.md) | Input validation stays `ut.check_*`; no Pydantic; agent-typed contracts live in ProtXplain | Accepted | 2026-06-22 |  |
 | [0036](0036-type-hints-contract-checker-deferred-pyright.md) | Ship `py.typed` and adopt pyright (non-blocking) now; type hints are the contract | Accepted | 2026-06-22 |  |
 | [0037](0037-perf-ab-gate.md) | Same-runner A/B vs the latest PyPI release makes wall-clock a merge gate | Accepted | 2026-06-22 |  |
+| [0038](0038-agentic-readiness-boundary.md) | Agentic-readiness boundary: usability/improvability is ours, agent integration is ProtXplain's | Accepted | 2026-06-23 |  |
 <!-- ADR-INDEX:END -->
