@@ -399,6 +399,41 @@ the *class-instance* names above are checked).
 ``df_top15``) — used **only when you actually have a variant**, not stamped onto
 every example. Class instances stay the bare abbreviation (see above).
 
+Label parameter names
+---------------------
+
+Each labeling **concept** has one canonical parameter name, used consistently
+across the classes a user combines in one workflow. Several names look similar
+but name *different* concepts — keep them distinct rather than collapsing them.
+
+.. list-table:: Canonical label parameter names
+   :header-rows: 1
+   :widths: 28 20 52
+
+   * - Concept
+     - Canonical name
+     - Notes
+   * - Contrast markers (the two groups being compared)
+     - ``label_test`` / ``label_ref``
+     - The positive/test group vs the reference group of a *contrast* —
+       ``CPP.run`` / ``CPP.eval``, ``AAlogo.get_df_logo``.
+   * - Single labeling (1D)
+     - ``labels``
+     - One per-sample class-label vector, shape ``(n_samples,)`` — e.g.
+       ``CPP.run``, ``TreeModel.fit`` / ``eval``, ``ShapModel.fit``,
+       ``dPULearn.fit``.
+   * - List of labelings (2D, multi-dataset)
+     - ``list_labels``
+     - Several labelings stacked, shape ``(n_datasets, n_samples)``, paired with
+       ``names_datasets`` — ``AAclust.eval``, ``dPULearn.eval``. Distinct from
+       ``labels`` **on purpose**: the plural marks a list of datasets, not one.
+   * - Target-class selector (a single class to attribute)
+     - ``label_target_class``
+     - ``ShapModel.fit`` — the one class whose model prediction the SHAP values
+       explain. It can be **any** class (the positive, the negative/reference,
+       or any index in a multi-class model), so it is **not** the same concept as
+       ``label_test`` and deliberately keeps its own name.
+
 Examples & verification
 -----------------------
 
