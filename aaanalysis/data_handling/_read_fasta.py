@@ -12,7 +12,7 @@ import aaanalysis.utils as ut
 
 # I Helper Functions
 # Post check functions
-def post_check_unique_entries(list_entries=None, col_id=None):
+def post_check_unique_entries(list_entries=None, col_id=None) -> None:
     """Check if entries are unique"""
     list_duplicates = list(set([x for x in list_entries if list_entries.count(x) > 1]))
     if len(list_duplicates) > 0:
@@ -21,7 +21,7 @@ def post_check_unique_entries(list_entries=None, col_id=None):
         warnings.warn(str_warning)
 
 
-def post_check_col_db(df_seq=None, col_db=None, sep="|"):
+def post_check_col_db(df_seq=None, col_db=None, sep="|") -> None:
     """Check if database column is in DataFrame"""
     columns = list(df_seq)
     if col_db is not None and col_db not in columns:

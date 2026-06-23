@@ -19,7 +19,7 @@ LIST_CLEAVAGE_SITE_DATA = ["AA_CASPASE3", "AA_FURIN", "AA_MMP2"]
 
 # I Helper Functions
 # Check functions
-def check_name_of_dataset(name="Overview", folder_in=None):
+def check_name_of_dataset(name="Overview", folder_in=None) -> None:
     """Check if name of dataset is valid"""
     if name == "Overview":
         return
@@ -35,7 +35,7 @@ def check_name_of_dataset(name="Overview", folder_in=None):
                          f"\n Domain datasets: {list_dom}")
 
 
-def check_min_max_val(min_len=None, max_len=None):
+def check_min_max_val(min_len=None, max_len=None) -> None:
     """Check if min_val and max_val are valid and match"""
     ut.check_number_range(name="min_len", val=min_len, min_val=1, accept_none=True, just_int=True)
     ut.check_number_range(name="max_len", val=max_len, min_val=1, accept_none=True, just_int=True)
@@ -45,7 +45,7 @@ def check_min_max_val(min_len=None, max_len=None):
         raise ValueError(f"'min_len' ({min_len}) should not be smaller than 'max_len' ({max_len})")
 
 
-def check_aa_window_size(aa_window_size=None, is_cs_dataset=False):
+def check_aa_window_size(aa_window_size=None, is_cs_dataset=False) -> None:
     """Check if aa_window size is a positive odd integer"""
     if aa_window_size is None:
         return
@@ -55,7 +55,7 @@ def check_aa_window_size(aa_window_size=None, is_cs_dataset=False):
                          f"Only the following cleavage site datasets can have odd or even sizes: {LIST_CLEAVAGE_SITE_DATA}")
 
 
-def post_check_df_seq(df_seq=None, n=None, name=None):
+def post_check_df_seq(df_seq=None, n=None, name=None) -> None:
     """Check if length of df_seq is valid"""
     max_n = df_seq[ut.COL_LABEL].value_counts().min()
     warning_message = f"'n' ({n}) is too high since the smaller class for '{name}' contains {max_n} samples." \

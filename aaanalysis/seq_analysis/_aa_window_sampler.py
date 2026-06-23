@@ -31,13 +31,13 @@ def check_similarity_threshold(name, val):
     return float(val)
 
 
-def check_output_mode(output_mode):
+def check_output_mode(output_mode) -> None:
     """Validate ``output_mode`` is one of the allowed modes."""
     ut.check_str_options(name="output_mode", val=output_mode,
                          list_str_options=ut.LIST_OUTPUT_MODES)
 
 
-def check_distance_to_pos(min_distance_to_pos, max_distance_to_pos):
+def check_distance_to_pos(min_distance_to_pos, max_distance_to_pos) -> None:
     """Validate the ``(min, max)`` distance-to-positive band.
 
     Each bound is either a non-negative ``int`` or ``None`` (meaning "no bound").
@@ -178,7 +178,7 @@ def check_motif_args(motif_pwm, motif_score_threshold, motif_match, window_size)
     return pwm
 
 
-def check_context_args(aa_context_col, context_in, context_out):
+def check_context_args(aa_context_col, context_in, context_out) -> None:
     """Guard against silent-drop foot-gun: ``context_in``/``context_out`` require ``aa_context_col``."""
     if (context_in is not None or context_out is not None) and aa_context_col is None:
         raise ValueError("'context_in'/'context_out' require 'aa_context_col' to be set.")
@@ -193,7 +193,7 @@ def check_custom_filter(custom_filter):
     return custom_filter
 
 
-def check_arms(arms):
+def check_arms(arms) -> None:
     """Validate the ``arms`` mapping passed to :meth:`AAWindowSampler.sample_benchmark_set`.
 
     Each value must be a dict carrying a ``"method"`` key whose value is one of
@@ -427,7 +427,7 @@ class AAWindowSampler:
 
     # Sampling methods
     def sample_same_protein(self,
-                            df_seq: pd.DataFrame = None,
+                            df_seq: Optional[pd.DataFrame] = None,
                             n: int = 100,
                             window_size: int = 9,
                             pos_col: str = ut.COL_POS,
@@ -601,7 +601,7 @@ class AAWindowSampler:
                                        mark_test=True)
 
     def sample_different_protein(self,
-                                 df_seq: pd.DataFrame = None,
+                                 df_seq: Optional[pd.DataFrame] = None,
                                  n: int = 100,
                                  window_size: int = 9,
                                  pos_col: str = ut.COL_POS,
@@ -740,7 +740,7 @@ class AAWindowSampler:
                                        mark_test=True)
 
     def sample_synthetic(self,
-                         df_seq: pd.DataFrame = None,
+                         df_seq: Optional[pd.DataFrame] = None,
                          n: int = 100,
                          window_size: int = 9,
                          generator: Union[Literal["uniform", "global_freq",
@@ -920,7 +920,7 @@ class AAWindowSampler:
         return df[ut.COLS_SEGMENTS].copy()
 
     def sample_motif_matched(self,
-                              df_seq: pd.DataFrame = None,
+                              df_seq: Optional[pd.DataFrame] = None,
                               n: int = 100,
                               window_size: int = 9,
                               motif_pwm: Optional[pd.DataFrame] = None,
@@ -1056,8 +1056,8 @@ class AAWindowSampler:
                                        mark_test=True)
 
     def sample_benchmark_set(self,
-                             df_seq: pd.DataFrame = None,
-                             arms: Dict[str, Dict] = None,
+                             df_seq: Optional[pd.DataFrame] = None,
+                             arms: Optional[Dict[str, Dict]] = None,
                              seed: Optional[int] = None,
                              ) -> pd.DataFrame:
         """Run several named sampling arms and concatenate them into one benchmark set.

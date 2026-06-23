@@ -130,6 +130,7 @@ dev = [
   "pytest-xdist>=3.6.0",
   "pytest-mpl==0.19.0",
   "mutmut>=3.0",
+  "pyright>=1.1.400",
 ]
 
 [project.urls]
@@ -162,6 +163,7 @@ include = ["aaanalysis*"]
 
 [tool.setuptools.package-data]
 aaanalysis = [
+  "py.typed",
   "_data/*.xlsx",
   "_data/*.tsv",
   "_data/**/*.xlsx",
@@ -181,15 +183,19 @@ aaanalysis = [
 build = "cp310-* cp311-* cp312-* cp313-* cp314-*"
 skip = "*-musllinux_i686 *-manylinux_i686 *-win32 pp*"
 build-verbosity = 1
-# Sanity-check the wheel after install by running the Cython parity test
-# end-to-end against the legacy path. Catches ABI / dtype / dispatch
-# regressions at build time rather than at user-install time.
+# Sanity-check the wheel after install against the real, non-editable artifact:
+# (1) the PEP 561 py.typed marker is present in the installed package — catches a
+#     package-data misconfiguration before the wheel ever reaches PyPI. Run as a
+#     standalone script (not via pytest) so import resolves to the installed wheel
+#     rather than the {project} source tree, which always carries the marker;
+# (2) the Cython parity test end-to-end vs the legacy path — catches ABI / dtype
+#     / dispatch regressions at build time rather than at user-install time.
 test-requires = [
   "pytest>=9.0.3", "hypothesis>=6.124.7",
   "pandas>=2.2.3", "scikit-learn>=1.6.1", "biopython>=1.87",
   "matplotlib>=3.5.3", "seaborn>=0.13.2", "logomaker>=0.8.6",
 ]
-test-command = "pytest {project}/tests/unit/cpp_tests/test_get_feature_matrix_c_parity.py -x -q"
+test-command = "python {project}/tests/_check_py_typed_packaged.py && pytest {project}/tests/unit/cpp_tests/test_get_feature_matrix_c_parity.py -x -q"
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]

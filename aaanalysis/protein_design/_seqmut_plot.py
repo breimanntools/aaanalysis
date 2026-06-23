@@ -11,7 +11,7 @@ import aaanalysis.utils as ut
 
 
 # I Helper Functions
-def check_df_scan(df_scan=None):
+def check_df_scan(df_scan=None) -> None:
     """Check that df_scan is a valid SeqMut.scan output."""
     ut.check_df(df=df_scan, name="df_scan", cols_required=ut.COLS_SEQMUT_SCAN)
     if len(df_scan) == 0:
@@ -56,7 +56,7 @@ class SeqMutPlot:
 
     # Main methods
     def mutation_landscape(self,
-                           df_scan: pd.DataFrame = None,
+                           df_scan: Optional[pd.DataFrame] = None,
                            entry: Optional[str] = None,
                            ax: Optional[plt.Axes] = None,
                            figsize: Tuple[Union[int, float], Union[int, float]] = (10, 5),
@@ -105,9 +105,9 @@ class SeqMutPlot:
         return ax
 
     def residue_mutation_impact(self,
-                                df_scan: pd.DataFrame = None,
+                                df_scan: Optional[pd.DataFrame] = None,
                                 entry: Optional[str] = None,
-                                pos: int = None,
+                                pos: Optional[int] = None,
                                 ax: Optional[plt.Axes] = None,
                                 figsize: Tuple[Union[int, float], Union[int, float]] = (6, 5),
                                 color: Optional[str] = None,

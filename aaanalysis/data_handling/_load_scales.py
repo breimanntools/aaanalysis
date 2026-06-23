@@ -9,7 +9,7 @@ from aaanalysis import utils as ut
 
 
 # Check functions for load_scales
-def check_name_of_scale(name=None):
+def check_name_of_scale(name=None) -> None:
     # Check if the provided scale name is valid
     if name not in ut.NAMES_SCALE_SETS:
         raise ValueError(f"'name' ('{name}') is not valid. Choose one of following: {ut.NAMES_SCALE_SETS}")
@@ -31,7 +31,7 @@ def check_top60_n(name=None, top60_n=None):
     return top60_n
 
 
-def check_top_explain(name=None, top_explain_n=None, top_explain_min_th=None, top60_n=None):
+def check_top_explain(name=None, top_explain_n=None, top_explain_min_th=None, top60_n=None) -> None:
     """Validate the interpretability-tier selector (top_explain_n / top_explain_min_th)."""
     if top_explain_n is None:
         if top_explain_min_th is not None:

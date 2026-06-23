@@ -41,7 +41,7 @@ def check_shap_model(explainer_class=None, explainer_kwargs=None):
     return explainer_kwargs
 
 
-def check_match_class_explainer_and_models(explainer_class=None, explainer_kwargs=None, list_model_classes=None):
+def check_match_class_explainer_and_models(explainer_class=None, explainer_kwargs=None, list_model_classes=None) -> None:
     """Check if each model in list_model_class is compatible with the shap explainer class"""
     dummy_data = np.array([[0, 1], [1, 0]])  # Minimal dummy data to initialize explainers
     dummy_label = [0, 1]
@@ -71,7 +71,7 @@ def check_match_class_explainer_and_models(explainer_class=None, explainer_kwarg
 
 
 # Check functions for fit method
-def check_shap_values(shap_values=None):
+def check_shap_values(shap_values=None) -> None:
     """Check if shap values are properly set"""
     if shap_values is None:
         raise ValueError("'shape_values' are None. Use 'ShapModel().fit()' to compute them.")
@@ -109,7 +109,7 @@ def check_is_selected(is_selected=None, n_feat=None):
     return is_selected
 
 
-def check_match_labels_fuzzy_labeling(labels=None, fuzzy_labeling=False, verbose=True):
+def check_match_labels_fuzzy_labeling(labels=None, fuzzy_labeling=False, verbose=True) -> None:
     """Check if only on label is fuzzy labeled and that the remaining sample balanced (best training scenario)"""
     if not fuzzy_labeling:
         return  # Skip check if fuzzy labeling is not enabled
@@ -125,14 +125,14 @@ def check_match_labels_fuzzy_labeling(labels=None, fuzzy_labeling=False, verbose
                       f"\n The 'labels' contain {n_pos} positive (1) and {n_neg} negative (0) samples.")
 
 
-def check_match_labels_target_class_labels(label_target_class=None, labels=None):
+def check_match_labels_target_class_labels(label_target_class=None, labels=None) -> None:
     """Check if class index matches to classes (unique labels) in labels"""
     label_classes = sorted(list(dict.fromkeys([int(x) for x in labels if x == int(x)])))
     if label_target_class not in label_classes:
         raise ValueError(f"'label_target_class' ({label_target_class}) should be from 'labels' classes: {label_classes}")
 
 
-def check_match_n_background_data_X(n_background_data=None, X=None):
+def check_match_n_background_data_X(n_background_data=None, X=None) -> None:
     """Check if n_background_data not >= n_samples"""
     if n_background_data is None:
         return None # Skip test
@@ -141,7 +141,7 @@ def check_match_n_background_data_X(n_background_data=None, X=None):
         raise ValueError(f"'n_background_data' ({n_background_data}) must be < 'n_samples' ({n_samples}) from 'X'.")
 
 
-def check_match_df_seq_X(df_seq=None, X=None):
+def check_match_df_seq_X(df_seq=None, X=None) -> None:
     """Verify 'df_seq' has a unique 'entry' column and is row-aligned to 'X'."""
     if not isinstance(df_seq, pd.DataFrame):
         raise ValueError(f"'df_seq' ({type(df_seq)}) should be a pandas DataFrame.")
@@ -197,7 +197,7 @@ def check_sample_positions(sample_positions=None, n_samples=None):
     return sample_positions
 
 
-def check_names(names=None):
+def check_names(names=None) -> None:
     """Check if name is str ror list of str"""
     if names is None:
         return None     # Skip test
@@ -246,7 +246,7 @@ def check_match_sample_positions_names(sample_positions=None, names=None, group_
     return sample_positions, names
 
 
-def check_match_sample_positions_group_average(sample_positions=None, group_average=False):
+def check_match_sample_positions_group_average(sample_positions=None, group_average=False) -> None:
     """Check if group_average only True if sample_positions is list"""
     if group_average:
         sample_positions = ut.check_list_like(name="sample_positions", val=sample_positions)
@@ -305,7 +305,7 @@ def check_match_samples_df_seq(samples=None, names=None, df_seq=None, n_samples=
     return samples, names
 
 
-def check_match_df_feat_shap_values(df_feat=None, shap_values=None, drop=False, shap_feat_importance=False):
+def check_match_df_feat_shap_values(df_feat=None, shap_values=None, drop=False, shap_feat_importance=False) -> None:
     """Check if df_feat matches with importance values"""
     if shap_values is None:
         raise ValueError(f"'shap_values' is None. Please fit ShapModel before adding feature impact.")
@@ -355,7 +355,7 @@ class ShapModel(Wrapper):
     def __init__(self,
                  explainer_class: Callable = shap.TreeExplainer,
                  explainer_kwargs: Optional[dict] = None,
-                 list_model_classes: List[Type[Union[BaseEstimator]]] = None,
+                 list_model_classes: Optional[List[Type[Union[BaseEstimator]]]] = None,
                  list_model_kwargs: Optional[List[dict]] = None,
                  verbose: bool = True,
                  random_state: Optional[int] = None,
@@ -467,10 +467,10 @@ class ShapModel(Wrapper):
 
     def fit(self,
             X: ut.ArrayLike2D,
-            labels: ut.ArrayLike1D = None,
+            labels: Optional[ut.ArrayLike1D] = None,
             label_target_class: int = 1,
             n_rounds: int = 5,
-            is_selected: ut.ArrayLike2D = None,
+            is_selected: Optional[ut.ArrayLike2D] = None,
             fuzzy_labeling: bool = False,
             n_background_data: Optional[int] = None,
             df_seq: Optional[pd.DataFrame] = None,
@@ -586,7 +586,7 @@ class ShapModel(Wrapper):
         self.exp_value = exp_val
         return self
 
-    def eval(self, shap_values=None, is_selected=None):
+    def eval(self, shap_values=None, is_selected=None) -> None:
         """Evaluate convergence of the Monte Carlo SHAP-value estimates over rounds.
 
         .. note::
@@ -596,7 +596,7 @@ class ShapModel(Wrapper):
         raise NotImplementedError("ShapModel.eval is under construction.")
 
     def add_feat_impact(self,
-                        df_feat: pd.DataFrame = None,
+                        df_feat: Optional[pd.DataFrame] = None,
                         drop: bool = False,
                         samples: Union[int, List[int], str, List[str], None] = None,
                         names: Optional[Union[str, List[str]]] = None,
@@ -733,9 +733,9 @@ class ShapModel(Wrapper):
 
     @staticmethod
     def add_sample_mean_dif(X: ut.ArrayLike2D,
-                            labels: ut.ArrayLike1D = None,
+                            labels: Optional[ut.ArrayLike1D] = None,
                             label_ref: int = 0,
-                            df_feat: pd.DataFrame = None,
+                            df_feat: Optional[pd.DataFrame] = None,
                             drop: bool = False,
                             samples: Union[int, List[int], str, List[str], None] = None,
                             names: Optional[Union[str, List[str]]] = None,

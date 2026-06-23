@@ -13,7 +13,7 @@ from ._backend.seq_preproc.get_sliding_aa_window import get_sliding_aa_window
 
 
 # I Helper Functions
-def check_gap(gap="_"):
+def check_gap(gap="_") -> None:
     """Check if string of length one"""
     ut.check_str(name="gap", val=gap, accept_none=False)
     if len(gap) != 1:
@@ -21,7 +21,7 @@ def check_gap(gap="_"):
 
 
 # Encoding check functions
-def check_match_list_seq_alphabet(list_seq=None, alphabet=None, gap="-"):
+def check_match_list_seq_alphabet(list_seq=None, alphabet=None, gap="-") -> None:
     """Validate if all characters in the sequences are within the given alphabet"""
     all_chars = set(''.join(list_seq))
     if not all_chars.issubset(set(alphabet + gap)):
@@ -29,7 +29,7 @@ def check_match_list_seq_alphabet(list_seq=None, alphabet=None, gap="-"):
         raise ValueError(f"Following amino acid(s) from 'list_seq' are not in 'alphabet': {invalid_chars}")
 
 
-def check_match_gap_alphabet(gap="_", alphabet=None):
+def check_match_gap_alphabet(gap="_", alphabet=None) -> None:
     """Check that gap is not in alphabet"""
     if gap in alphabet:
         raise ValueError(f"'gap' ('{gap}') should not be contained in the 'alphabet' ('{alphabet}')")
@@ -45,13 +45,13 @@ def adjust_positions(start=None, stop=None, index1=False):
     return start, stop
 
 
-def check_match_pos_start_pos_stop(pos_start=None, pos_stop=None):
+def check_match_pos_start_pos_stop(pos_start=None, pos_stop=None) -> None:
     """Check if start position smaller than stop position"""
     if pos_stop is not None and pos_start > pos_stop:
         raise ValueError(f"'pos_start' ({pos_start}) should be smaller than 'pos_stop' ({pos_stop})")
 
 
-def check_match_pos_stop_window_size(pos_stop=None, window_size=None):
+def check_match_pos_stop_window_size(pos_stop=None, window_size=None) -> None:
     """Check if one is given"""
     if pos_stop is None and window_size is None:
         raise ValueError("Either 'pos_end' or 'window_size' must be specified. Both are 'None'.")
@@ -60,7 +60,7 @@ def check_match_pos_stop_window_size(pos_stop=None, window_size=None):
                          f" Both are given.")
 
 
-def check_match_seq_pos(seq=None, pos_start=None, pos_stop=None):
+def check_match_seq_pos(seq=None, pos_start=None, pos_stop=None) -> None:
     """Check if pos_start matches length of sequence"""
     seq_len = len(seq)
     if pos_start >= seq_len:
@@ -69,7 +69,7 @@ def check_match_seq_pos(seq=None, pos_start=None, pos_stop=None):
         raise ValueError(f"'pos_stop' ({pos_stop}) must be smaller than the sequence length ({seq_len})")
 
 
-def check_match_seq_pos_start_window_size(seq=None, pos_start=None, window_size=None):
+def check_match_seq_pos_start_window_size(seq=None, pos_start=None, window_size=None) -> None:
     """Check if start position and window size do not extend the sequence length"""
     if window_size is not None:
         seq_len = len(seq)
@@ -80,13 +80,13 @@ def check_match_seq_pos_start_window_size(seq=None, pos_start=None, window_size=
 
 
 # Sliding window check functions
-def check_match_slide_start_slide_stop(slide_start=None, slide_stop=None):
+def check_match_slide_start_slide_stop(slide_start=None, slide_stop=None) -> None:
     """Check if start sliding position smaller than stop position"""
     if slide_stop is not None and slide_start > slide_stop:
         raise ValueError(f"'slide_start' ({slide_start}) should be smaller than 'slide_stop' ({slide_stop})")
 
 
-def check_match_slide_start_slide_stop_window_size(slide_start=None, slide_stop=None, window_size=None):
+def check_match_slide_start_slide_stop_window_size(slide_start=None, slide_stop=None, window_size=None) -> None:
     """Check if one is given"""
     if slide_stop is not None:
         min_window_size = slide_stop - slide_stop
@@ -95,7 +95,7 @@ def check_match_slide_start_slide_stop_window_size(slide_start=None, slide_stop=
                              f" between 'slide_start' ('{slide_start}') and 'slide_stop' ({slide_stop}).")
 
 
-def check_match_seq_slide(seq=None, slide_start=None, slide_stop=None):
+def check_match_seq_slide(seq=None, slide_start=None, slide_stop=None) -> None:
     """Check if slide_start matches length of sequence"""
     seq_len = len(seq)
     if slide_start >= seq_len:
@@ -104,7 +104,7 @@ def check_match_seq_slide(seq=None, slide_start=None, slide_stop=None):
         raise ValueError(f"'slide_stop' ({slide_stop}) must be smaller than the sequence length ({seq_len})")
 
 
-def check_match_seq_slide_start_window_size(seq=None, slide_start=None, window_size=None):
+def check_match_seq_slide_start_window_size(seq=None, slide_start=None, window_size=None) -> None:
     """Check if start position and window size do not extend the sequence length"""
     seq_len = len(seq)
     slide_stop = slide_start + window_size
@@ -132,7 +132,7 @@ class SequencePreprocessor:
 
     # Sequence encoding
     @staticmethod
-    def encode_one_hot(list_seq: Union[List[str], str] = None,
+    def encode_one_hot(list_seq: Optional[Union[List[str], str]] = None,
                        alphabet: str = "ACDEFGHIKLMNPQRSTVWY",
                        gap: str = "-",
                        pad_at: Literal["C", "N"] = "C",
@@ -187,7 +187,7 @@ class SequencePreprocessor:
         return X, features
 
     @staticmethod
-    def encode_integer(list_seq: Union[List[str], str] = None,
+    def encode_integer(list_seq: Optional[Union[List[str], str]] = None,
                        alphabet: str = "ACDEFGHIKLMNPQRSTVWY",
                        gap: str = "-",
                        pad_at: Literal["C", "N"] = "C",
@@ -240,7 +240,7 @@ class SequencePreprocessor:
         return X, features
 
     @staticmethod
-    def get_aa_window(seq: str = None,
+    def get_aa_window(seq: Optional[str] = None,
                       pos_start: int = 0,
                       pos_stop: Optional[int] = None,
                       window_size: Optional[int] = None,
@@ -313,7 +313,7 @@ class SequencePreprocessor:
         return window
 
     @staticmethod
-    def get_sliding_aa_window(seq: str = None,
+    def get_sliding_aa_window(seq: Optional[str] = None,
                               slide_start: int = 0,
                               slide_stop: Optional[int] = None,
                               window_size: int = 5,

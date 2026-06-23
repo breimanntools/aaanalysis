@@ -10,7 +10,7 @@ from ._backend._aalogo.aalogo import get_df_logo_, get_df_logo_info_, get_conser
 
 
 # I Helper Functions
-def check_df_logo_info(df_logo_info=None):
+def check_df_logo_info(df_logo_info=None) -> None:
     """Check if df_logo_info is a valid pd.Series with index name 'pos'."""
     ut.check_df(name="df_logo_info", df=df_logo_info,
                 check_series=True, accept_none=False, accept_nan=False)
@@ -26,7 +26,7 @@ def check_match_df_parts_logo_parts(df_parts=None):
     return list_parts
 
 
-def check_tmd_len(tmd_len=None, df_parts=None):
+def check_tmd_len(tmd_len=None, df_parts=None) -> None:
     """Check if tmd_len is valid and does not exceed the maximum TMD length in df_parts."""
     ut.check_number_range(name="tmd_len", val=tmd_len, min_val=1, just_int=True, accept_none=True)
     if tmd_len is not None and ut.COL_TMD in list(df_parts):
@@ -36,13 +36,13 @@ def check_tmd_len(tmd_len=None, df_parts=None):
                              f"in 'df_parts' ({max_tmd_len}).")
 
 
-def check_pseudocount(pseudocount=None):
+def check_pseudocount(pseudocount=None) -> None:
     """Check if pseudocount is a non-negative float."""
     ut.check_number_range(name="pseudocount", val=pseudocount, min_val=0,
                           just_int=False, accept_none=False)
 
 
-def check_characters_to_ignore(characters_to_ignore=None):
+def check_characters_to_ignore(characters_to_ignore=None) -> None:
     """Check if characters_to_ignore is a string."""
     ut.check_str(name="characters_to_ignore", val=characters_to_ignore, accept_none=False)
 
@@ -85,7 +85,7 @@ class AAlogo:
         self._logo_type = logo_type
 
     def get_df_logo(self,
-                    df_parts: pd.DataFrame = None,
+                    df_parts: Optional[pd.DataFrame] = None,
                     labels: Optional[ut.ArrayLike1D] = None,
                     label_test: int = 1,
                     tmd_len: Optional[int] = None,
@@ -168,7 +168,7 @@ class AAlogo:
         return df_logo
 
     def get_df_logo_info(self,
-                         df_parts: pd.DataFrame = None,
+                         df_parts: Optional[pd.DataFrame] = None,
                          labels: Optional[ut.ArrayLike1D] = None,
                          label_test: int = 1,
                          tmd_len: Optional[int] = None,
@@ -249,7 +249,7 @@ class AAlogo:
         return df_logo_info
 
     @staticmethod
-    def get_conservation(df_logo_info: pd.Series = None,
+    def get_conservation(df_logo_info: Optional[pd.Series] = None,
                          value_type: Literal["min", "mean", "median", "max"] = "mean",
                          ) -> float:
         """

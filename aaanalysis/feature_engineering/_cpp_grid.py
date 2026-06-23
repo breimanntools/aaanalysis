@@ -179,8 +179,8 @@ class CPPGrid(Tool):
     """
 
     def __init__(self,
-                 df_seq: pd.DataFrame = None,
-                 labels: ut.ArrayLike1D = None,
+                 df_seq: Optional[pd.DataFrame] = None,
+                 labels: Optional[ut.ArrayLike1D] = None,
                  dict_num: Optional[Dict[str, np.ndarray]] = None,
                  accept_gaps: bool = False,
                  verbose: bool = True,

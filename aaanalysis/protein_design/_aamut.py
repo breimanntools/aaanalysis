@@ -11,7 +11,7 @@ from ._backend.aamut.aamut import comp_substitution_impact, eval_substitution_im
 
 
 # I Helper Functions
-def check_df_scales_aa(df_scales=None):
+def check_df_scales_aa(df_scales=None) -> None:
     """Check that df_scales is a DataFrame indexed by the canonical amino acids."""
     if not isinstance(df_scales, pd.DataFrame):
         raise ValueError(f"'df_scales' ({type(df_scales)}) should be a pandas DataFrame.")
@@ -133,7 +133,7 @@ class AAMut(Tool):
         return df_impact
 
     def eval(self,
-             df_impact: pd.DataFrame = None,
+             df_impact: Optional[pd.DataFrame] = None,
              ) -> pd.DataFrame:
         """
         Evaluate substitution impact by ranking scales on their mean substitution sensitivity.

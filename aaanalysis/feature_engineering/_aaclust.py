@@ -24,7 +24,7 @@ from ._backend.aaclust.aaclust_methods import (compute_centers, compute_medoids,
 
 # I Helper Functions
 # Check parameter matching functions
-def check_match_X_names(X=None, names=None, accept_none=True):
+def check_match_X_names(X=None, names=None, accept_none=True) -> None:
     """Verify that the number of samples in 'X' matches the length of 'names'."""
     if accept_none and names is None:
         return
@@ -33,7 +33,7 @@ def check_match_X_names(X=None, names=None, accept_none=True):
         raise ValueError(f"n_samples does not match for 'X' ({len(X)}) and 'names' ({len(names)}).")
 
 
-def check_match_X_n_clusters(X=None, n_clusters=None, accept_none=True):
+def check_match_X_n_clusters(X=None, n_clusters=None, accept_none=True) -> None:
     """Ensure the number of samples and unique samples in 'X' are greater than or equal to 'n_clusters'."""
     if accept_none and n_clusters is None:
         return
@@ -45,7 +45,7 @@ def check_match_X_n_clusters(X=None, n_clusters=None, accept_none=True):
         raise ValueError(f"'n_clusters' ({n_clusters}) should be >= n_unique_samples={n_unique_samples} (in 'X').")
 
 
-def check_match_df_seq_X(df_seq=None, X=None):
+def check_match_df_seq_X(df_seq=None, X=None) -> None:
     """Verify 'df_seq' has a unique 'entry' column and is row-aligned to 'X'."""
     if not isinstance(df_seq, pd.DataFrame):
         raise ValueError(f"'df_seq' ({type(df_seq)}) should be a pandas DataFrame.")
@@ -59,7 +59,7 @@ def check_match_df_seq_X(df_seq=None, X=None):
         raise ValueError(f"n_proteins does not match for 'df_seq' ({len(df_seq)}) and 'X' ({n_samples} rows).")
 
 
-def check_X_X_ref(X=None, X_ref=None):
+def check_X_X_ref(X=None, X_ref=None) -> None:
     """Check that the number of features in 'X' matches the number of features in 'X_ref'."""
     n_samples, n_features = X.shape
     n_samples_ref, n_features_ref = X_ref.shape
@@ -81,7 +81,7 @@ def check_labels_cor(labels=None, labels_name="labels"):
 
 
 # Post check functions
-def post_check_n_clusters(n_clusters_actual=None, n_clusters=None):
+def post_check_n_clusters(n_clusters_actual=None, n_clusters=None) -> None:
     """Check if n_clusters set properly"""
     if n_clusters is not None and n_clusters_actual < n_clusters:
         warnings.warn(f"'n_clusters' was reduced from {n_clusters} to {n_clusters_actual} "
@@ -89,7 +89,7 @@ def post_check_n_clusters(n_clusters_actual=None, n_clusters=None):
 
 
 # Matching functions for filter_coverage
-def check_match_X_scale_ids(X=None, scale_ids=None, accept_none=True):
+def check_match_X_scale_ids(X=None, scale_ids=None, accept_none=True) -> None:
     """Verify that the number of samples in 'X' matches the length of 'names'."""
     if accept_none and scale_ids is None:
         return
@@ -98,7 +98,7 @@ def check_match_X_scale_ids(X=None, scale_ids=None, accept_none=True):
         raise ValueError(f"n_samples does not match for 'X' ({len(X)}) and 'scale_ids' ({len(scale_ids)}).")
 
 
-def check_match_scale_ids_names(scale_ids=None, names=None, df_cat=None, col_name=None):
+def check_match_scale_ids_names(scale_ids=None, names=None, df_cat=None, col_name=None) -> None:
     """Check scale elements corresponding to scale_ids are superset of names"""
     all_scale_names = df_cat[df_cat[ut.COL_SCALE_ID].isin(scale_ids)][col_name].to_list()
     ut.check_superset_subset(name_superset=f"df_cat ('{col_name}')",
@@ -339,7 +339,7 @@ class AAclust(Wrapper):
 
     def eval(self,
              X: ut.ArrayLike2D,
-             list_labels: ut.ArrayLike2D = None,
+             list_labels: Optional[ut.ArrayLike2D] = None,
              names_datasets: Optional[List[str]] = None,
              ) -> pd.DataFrame:
         """
@@ -414,8 +414,8 @@ class AAclust(Wrapper):
 
     @staticmethod
     def name_clusters(X: ut.ArrayLike2D,
-                      labels: ut.ArrayLike1D = None,
-                      names: List[str] = None,
+                      labels: Optional[ut.ArrayLike1D] = None,
+                      names: Optional[List[str]] = None,
                       shorten_names : bool = True,
                       ) -> List[str]:
         """
@@ -465,7 +465,7 @@ class AAclust(Wrapper):
 
     @staticmethod
     def comp_centers(X: ut.ArrayLike2D,
-                     labels: ut.ArrayLike1D = None
+                     labels: Optional[ut.ArrayLike1D] = None
                      ) -> Tuple[ut.ArrayLike1D, ut.ArrayLike1D]:
         """
         Computes the center of each cluster based on the given labels.
@@ -504,7 +504,7 @@ class AAclust(Wrapper):
 
     @staticmethod
     def comp_medoids(X: ut.ArrayLike2D,
-                     labels: ut.ArrayLike1D = None,
+                     labels: Optional[ut.ArrayLike1D] = None,
                      metric: Literal["correlation", "manhattan", "euclidean", "cosine"] = "correlation"
                      ) -> Tuple[ut.ArrayLike1D, ut.ArrayLike1D]:
         """
@@ -553,7 +553,7 @@ class AAclust(Wrapper):
 
     @staticmethod
     def comp_correlation(X: ut.ArrayLike2D,
-                         labels: ut.ArrayLike1D = None,
+                         labels: Optional[ut.ArrayLike1D] = None,
                          X_ref: Optional[ut.ArrayLike2D] = None,
                          labels_ref: Optional[ut.ArrayLike1D] = None,
                          names: Optional[List[str]] = None,
@@ -624,8 +624,8 @@ class AAclust(Wrapper):
         return df_corr, labels_sorted
 
     @staticmethod
-    def comp_coverage(names: List[str] = None,
-                      names_ref: List[str] = None
+    def comp_coverage(names: Optional[List[str]] = None,
+                      names_ref: Optional[List[str]] = None
                       ) -> float:
         """
         Computes the percentage of unique names from ``names`` that are present in ``names_ref``.
@@ -663,7 +663,7 @@ class AAclust(Wrapper):
         return coverage
 
     def select_scales(self,
-                      df_scales: pd.DataFrame = None,
+                      df_scales: Optional[pd.DataFrame] = None,
                       n_clusters: Optional[int] = None,
                       on_center: bool = True,
                       min_th: float = 0.3,
@@ -731,10 +731,10 @@ class AAclust(Wrapper):
 
     def filter_coverage(self,
                         X: ut.ArrayLike2D,
-                        scale_ids: List[str] = None,
-                        names_ref: List[str] = None,
+                        scale_ids: Optional[List[str]] = None,
+                        names_ref: Optional[List[str]] = None,
                         min_coverage: int = 100,
-                        df_cat: pd.DataFrame = None,
+                        df_cat: Optional[pd.DataFrame] = None,
                         col_name: Literal['category', 'subcategory', 'scale_name'] = "subcategory"
                         ) -> List[str]:
         """

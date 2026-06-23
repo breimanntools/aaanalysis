@@ -20,7 +20,7 @@ pd.set_option('expand_frame_repr', False)  # Single line print for pd.Dataframe
 
 
 # I Helper Functions
-def check_is_tool(name: Optional[str] = None):
+def check_is_tool(name: Optional[str] = None) -> None:
     """Check whether `name` is on PATH and marked as executable."""
     if not shutil.which(name):
         raise ValueError(f"{name} is not installed or not in the PATH.")

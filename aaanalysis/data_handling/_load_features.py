@@ -4,6 +4,8 @@ This is a script for filtering scales from df_scales, such as using correlation 
 
 from typing import Literal
 
+import pandas as pd
+
 import aaanalysis.utils as ut
 
 LIST_DATASETS_WITH_FEATURES = ["DOM_GSEC"]
@@ -11,14 +13,14 @@ FOLDER_FEATURES = ut.FOLDER_DATA + "features" + ut.SEP
 
 
 # I Helper Functions
-def check_name(name=None):
+def check_name(name=None) -> None:
     """Check provided names of dataset"""
     if name not in LIST_DATASETS_WITH_FEATURES:
         raise ValueError(f"'name' should be one of: {LIST_DATASETS_WITH_FEATURES}")
 
 
 # II Main Functions
-def load_features(name: Literal["DOM_GSEC"] = "DOM_GSEC"):
+def load_features(name: Literal["DOM_GSEC"] = "DOM_GSEC") -> pd.DataFrame:
     """
     Load feature sets for protein benchmarking datasets.
 

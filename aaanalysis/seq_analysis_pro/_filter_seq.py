@@ -13,20 +13,20 @@ from ._backend.mmseq2 import run_mmseqs2
 
 
 # I Helper functions
-def check_is_tool(name=None):
+def check_is_tool(name=None) -> None:
     """Check whether `name` is on PATH and marked as executable."""
     if not shutil.which(name):
         raise ValueError(f"{name} is not installed or not in the PATH.")
 
 
-def check_match_identity_coverage(global_identity=True, coverage_short=0.0, coverage_long=0.0):
+def check_match_identity_coverage(global_identity=True, coverage_short=0.0, coverage_long=0.0) -> None:
     """Check if identity and coverage match"""
     if not global_identity and coverage_short == coverage_long == 0:
         raise ValueError(f"If 'global_identity' is False, 'coverage_short' ({coverage_short}) "
                          f"or 'coverage_long' ({coverage_long}) should be >0.0")
 
 
-def check_seq_len(df_seq=None, len_min=11):
+def check_seq_len(df_seq=None, len_min=11) -> None:
     """ Check if the length of each sequence in the specified column is at least `len_min`"""
     mask_seq_len_is_fine = df_seq[ut.COL_SEQ].str.len() >= len_min
     list_seq_too_short = df_seq[~mask_seq_len_is_fine][ut.COL_ENTRY].to_list()
@@ -35,7 +35,7 @@ def check_seq_len(df_seq=None, len_min=11):
                          f"is not meet by the following entries: {list_seq_too_short}")
 
 
-def check_seq_gaps(df_seq):
+def check_seq_gaps(df_seq) -> None:
     """Check if sequences in the specified column contain gaps ('-')."""
     mask_has_gaps = df_seq[ut.COL_SEQ].str.contains("-")
     list_seq_with_gaps = df_seq[mask_has_gaps][ut.COL_ENTRY].to_list()
@@ -45,7 +45,7 @@ def check_seq_gaps(df_seq):
 
 
 # II Main function
-def filter_seq(df_seq: pd.DataFrame = None,
+def filter_seq(df_seq: Optional[pd.DataFrame] = None,
                method: Literal['cd-hit', 'mmseqs'] = "cd-hit",
                similarity_threshold: float = 0.9,
                word_size: Optional[int] = None,

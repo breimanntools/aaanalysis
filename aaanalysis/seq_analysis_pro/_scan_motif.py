@@ -20,7 +20,7 @@ from aaanalysis.seq_analysis._backend.aa_window_sampler.build_output import (
 
 
 # I Helper Functions
-def check_fimo_installed():
+def check_fimo_installed() -> None:
     """Raise ``RuntimeError`` if the ``fimo`` binary is not on PATH."""
     if not shutil.which("fimo"):
         raise RuntimeError(
@@ -126,11 +126,11 @@ def _run_fimo(motif_path, fasta_path, *, pvalue_threshold,
 
 
 # II Main Function
-def scan_motif(df_seq: pd.DataFrame = None,
+def scan_motif(df_seq: Optional[pd.DataFrame] = None,
                                   pos_col: str = "pos",
                                   n: int = 100,
                                   window_size: int = 9,
-                                  motif_pwm: pd.DataFrame = None,
+                                  motif_pwm: Optional[pd.DataFrame] = None,
                                   pvalue_threshold: float = 1e-4,
                                   label_test: Union[int, float] = 1,
                                   label_ref: Union[int, float] = 0,

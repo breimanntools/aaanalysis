@@ -133,8 +133,8 @@ class EmbeddingPreprocessor:
 
     def encode(
         self,
-        df_seq: pd.DataFrame = None,
-        embeddings: Dict[str, np.ndarray] = None,
+        df_seq: Optional[pd.DataFrame] = None,
+        embeddings: Optional[Dict[str, np.ndarray]] = None,
         method: Literal["minmax", "quantile", "sigmoid"] = "minmax",
         clip: Tuple[float, float] = (1.0, 99.0),
         return_df: bool = False,
@@ -229,8 +229,8 @@ class EmbeddingPreprocessor:
 
     def build_scales(
         self,
-        df_seq: pd.DataFrame = None,
-        dict_num: Dict[str, np.ndarray] = None,
+        df_seq: Optional[pd.DataFrame] = None,
+        dict_num: Optional[Dict[str, np.ndarray]] = None,
         return_std: bool = False,
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
         """
@@ -325,8 +325,8 @@ class EmbeddingPreprocessor:
 
     def build_cat(
         self,
-        df_scales: pd.DataFrame = None,
-        df_stds: pd.DataFrame = None,
+        df_scales: Optional[pd.DataFrame] = None,
+        df_stds: Optional[pd.DataFrame] = None,
         cat_min_th: float = 0.5,
         subcat_min_th: float = 0.7,
         metric: Literal["correlation", "cosine"] = "correlation",
@@ -440,7 +440,7 @@ class EmbeddingPreprocessor:
 
     def fetch_embeddings(
         self,
-        df_seq: pd.DataFrame = None,
+        df_seq: Optional[pd.DataFrame] = None,
         mode: Literal["protein", "residue"] = "protein",
         model: Literal["esm2_t6_8M", "esm2_t12_35M", "esm2_t30_150M",
                        "esm2_t33_650M", "esm2_t36_3B", "esm1b",
@@ -681,9 +681,9 @@ class EmbeddingPreprocessor:
 
     def pool_embeddings(
         self,
-        embeddings: Dict[str, np.ndarray] = None,
+        embeddings: Optional[Dict[str, np.ndarray]] = None,
         pooling: Literal["mean", "max"] = "mean",
-        df_seq: pd.DataFrame = None,
+        df_seq: Optional[pd.DataFrame] = None,
     ) -> Union[Dict[str, np.ndarray], np.ndarray]:
         """
         Pool per-residue embeddings into one vector per protein.

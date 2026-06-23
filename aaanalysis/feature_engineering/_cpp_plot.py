@@ -50,7 +50,7 @@ def check_match_dict_color_list_cat(dict_color=None, list_cat=None):
     return {cat: dict_color[cat] for cat in list_cat}
 
 
-def check_df_eval(df_eval):
+def check_df_eval(df_eval) -> None:
     """Check if columns in df_eval have valid values"""
     if len(df_eval) <= 1:
         raise ValueError("'df_eval' should contain at least two features sets")
@@ -71,7 +71,7 @@ def check_df_eval(df_eval):
     ut.check_number_range(name=ut.COL_STD_N_FEAT_PER_CLUST, val=std_n_feat_per_clust, just_int=False)
 
 
-def check_match_df_eval_list_cat(df_eval=None, list_cat=None):
+def check_match_df_eval_list_cat(df_eval=None, list_cat=None) -> None:
     """Check if number of features per category in df_eval and list_cat match"""
     names = df_eval[ut.COL_NAME].to_list()
     list_n_feat_sets = [x[1] for x in df_eval[ut.COL_N_FEAT]]
@@ -81,7 +81,7 @@ def check_match_df_eval_list_cat(df_eval=None, list_cat=None):
 
 
 # Checks for feature plot
-def check_match_df_seq_names_to_show(df_seq=None, names_to_show=None):
+def check_match_df_seq_names_to_show(df_seq=None, names_to_show=None) -> None:
     """Check if """
     if names_to_show is None:
         return # Skip check
@@ -95,14 +95,14 @@ def check_match_df_seq_names_to_show(df_seq=None, names_to_show=None):
 
 
 # Checks for main CPP plots (ranking, profile, maps)
-def check_cmap_for_heatmap(cmap=None):
+def check_cmap_for_heatmap(cmap=None) -> None:
     """Check if cmap is valid or 'SHAP'"""
     if cmap in [ut.STR_CMAP_SHAP, ut.STR_CMAP_CPP]:
         return None     # Skip test
     ut.check_cmap(name="cmap", val=cmap, accept_none=True)
 
 
-def check_col_dif(col_dif=None, shap_plot=False):
+def check_col_dif(col_dif=None, shap_plot=False) -> None:
     """Check if col_dif is string and set default"""
     ut.check_str(name="col_dif", val=col_dif, accept_none=False)
     if col_dif is None:
@@ -149,13 +149,13 @@ def check_col_val(col_val=None, shap_plot=False, sample_mean_dif=False):
     return col_val
 
 
-def check_match_shap_plot_add_legend_cat(shap_plot=False, add_legend_cat=False):
+def check_match_shap_plot_add_legend_cat(shap_plot=False, add_legend_cat=False) -> None:
     """Check if not both are True"""
     if shap_plot and add_legend_cat:
         raise ValueError(f"'shap_plot' ({shap_plot}) and 'add_legend_cat' ({add_legend_cat}) can not be both True.")
 
 
-def check_imp_tuples(name="imp_th", imp_tuples=None):
+def check_imp_tuples(name="imp_th", imp_tuples=None) -> None:
     """Check if legend importance thresholds are valid"""
     ut.check_tuple(name=name, val=imp_tuples, n=3,
                    accept_none=False, check_number=True,
@@ -168,7 +168,7 @@ def check_imp_tuples(name="imp_th", imp_tuples=None):
 
 
 # Check update_seq_size
-def check_match_ax_seq_len(ax=None, jmd_n_len=10, jmd_c_len=10):
+def check_match_ax_seq_len(ax=None, jmd_n_len=10, jmd_c_len=10) -> None:
     """Check if ax matches with required length"""
     labels = ax.xaxis.get_ticklabels(which="both")
     f = lambda l: l.get_window_extent(ax.figure.canvas.get_renderer())
@@ -281,7 +281,7 @@ class CPPPlot:
         self._jmd_c_len = jmd_c_len
 
     @staticmethod
-    def eval(df_eval: pd.DataFrame = None,
+    def eval(df_eval: Optional[pd.DataFrame] = None,
              figsize: Tuple[int or float, int or float] = (6, 4),
              dict_xlims: Optional[dict] = None,
              legend: bool = True,
@@ -380,10 +380,10 @@ class CPPPlot:
 
     # Plotting method for single feature
     def feature(self,
-                feature: Union[str, List[str], pd.DataFrame] = None,
+                feature: Optional[Union[str, List[str], pd.DataFrame]] = None,
                 feat_rank: int = 1,
-                df_seq: pd.DataFrame = None,
-                labels: ut.ArrayLike1D = None,
+                df_seq: Optional[pd.DataFrame] = None,
+                labels: Optional[ut.ArrayLike1D] = None,
                 label_test: int = 1,
                 label_ref: int = 0, 
                 ax: Optional[plt.Axes] = None,
@@ -539,7 +539,7 @@ class CPPPlot:
 
     # Plotting methods for multiple features (group and sample level)
     def ranking(self,
-                df_feat: pd.DataFrame = None,
+                df_feat: Optional[pd.DataFrame] = None,
                 shap_plot: bool = False,
                 col_dif: str = "mean_dif",
                 col_imp: str = "feat_importance",
@@ -712,7 +712,7 @@ class CPPPlot:
 
     def profile(self,
                 # Data and Plot Type
-                df_feat: pd.DataFrame = None,
+                df_feat: Optional[pd.DataFrame] = None,
                 shap_plot: bool = False,
                 col_imp: Union[str, None] = "feat_importance",
                 normalize: bool = True,
@@ -729,8 +729,8 @@ class CPPPlot:
                 jmd_color: str = "blue",
                 tmd_seq_color: str = "black",
                 jmd_seq_color: str = "white",
-                seq_size: Union[int, float] = None,
-                fontsize_tmd_jmd: Union[int, float] = None,
+                seq_size: Optional[Union[int, float]] = None,
+                fontsize_tmd_jmd: Optional[Union[int, float]] = None,
                 weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
                 add_xticks_pos: bool = False,
                 highlight_tmd_area: bool = True,
@@ -939,7 +939,7 @@ class CPPPlot:
 
     def heatmap(self,
                 # Data and Plot Type
-                df_feat: pd.DataFrame = None,
+                df_feat: Optional[pd.DataFrame] = None,
                 shap_plot: bool = False,
                 col_cat: Literal['category', 'subcategory', 'scale_name'] = "subcategory",
                 col_val: str = "mean_dif",
@@ -1193,7 +1193,7 @@ class CPPPlot:
 
     def feature_map(self,
                     # Data and Plot Type
-                    df_feat: pd.DataFrame = None,
+                    df_feat: Optional[pd.DataFrame] = None,
                     shap_plot: bool = False,
                     col_cat: Literal['category', 'subcategory', 'scale_name'] = "subcategory",
                     col_val: str = "mean_dif",
@@ -1512,10 +1512,10 @@ class CPPPlot:
         return fig, ax
 
     def update_seq_size(self,
-                        ax: plt.Axes = None,
+                        ax: Optional[plt.Axes] = None,
                         fig: Optional[plt.Figure] = None,
                         max_x_dist: float = 0.1,
-                        fontsize_tmd_jmd: Union[int, float] = None,
+                        fontsize_tmd_jmd: Optional[Union[int, float]] = None,
                         weight_tmd_jmd: Literal['normal', 'bold'] = 'normal',
                         tmd_color: str = "mediumspringgreen",
                         jmd_color: str = "blue",
