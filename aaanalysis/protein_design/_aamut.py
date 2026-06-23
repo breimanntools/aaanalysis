@@ -133,7 +133,7 @@ class AAMut(Tool):
         return df_impact
 
     def eval(self,
-             df_impact: Optional[pd.DataFrame] = None,
+             df_impact: pd.DataFrame,
              ) -> pd.DataFrame:
         """
         Evaluate substitution impact by ranking scales on their mean substitution sensitivity.

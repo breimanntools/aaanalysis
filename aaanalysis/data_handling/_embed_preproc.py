@@ -133,8 +133,8 @@ class EmbeddingPreprocessor:
 
     def encode(
         self,
-        df_seq: Optional[pd.DataFrame] = None,
-        embeddings: Optional[Dict[str, np.ndarray]] = None,
+        df_seq: pd.DataFrame,
+        embeddings: Dict[str, np.ndarray],
         method: Literal["minmax", "quantile", "sigmoid"] = "minmax",
         clip: Tuple[float, float] = (1.0, 99.0),
         return_df: bool = False,
@@ -229,8 +229,8 @@ class EmbeddingPreprocessor:
 
     def build_scales(
         self,
-        df_seq: Optional[pd.DataFrame] = None,
-        dict_num: Optional[Dict[str, np.ndarray]] = None,
+        df_seq: pd.DataFrame,
+        dict_num: Dict[str, np.ndarray],
         return_std: bool = False,
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, pd.DataFrame]]:
         """
@@ -325,7 +325,7 @@ class EmbeddingPreprocessor:
 
     def build_cat(
         self,
-        df_scales: Optional[pd.DataFrame] = None,
+        df_scales: pd.DataFrame,
         df_stds: Optional[pd.DataFrame] = None,
         cat_min_th: float = 0.5,
         subcat_min_th: float = 0.7,
@@ -440,7 +440,7 @@ class EmbeddingPreprocessor:
 
     def fetch_embeddings(
         self,
-        df_seq: Optional[pd.DataFrame] = None,
+        df_seq: pd.DataFrame,
         mode: Literal["protein", "residue"] = "protein",
         model: Literal["esm2_t6_8M", "esm2_t12_35M", "esm2_t30_150M",
                        "esm2_t33_650M", "esm2_t36_3B", "esm1b",
@@ -681,7 +681,7 @@ class EmbeddingPreprocessor:
 
     def pool_embeddings(
         self,
-        embeddings: Optional[Dict[str, np.ndarray]] = None,
+        embeddings: Dict[str, np.ndarray],
         pooling: Literal["mean", "max"] = "mean",
         df_seq: Optional[pd.DataFrame] = None,
     ) -> Union[Dict[str, np.ndarray], np.ndarray]:

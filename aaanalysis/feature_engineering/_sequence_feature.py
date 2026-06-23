@@ -276,7 +276,7 @@ class SequenceFeature:
 
     # Part and Split methods
     def get_df_parts(self,
-                     df_seq: Optional[pd.DataFrame] = None,
+                     df_seq: pd.DataFrame,
                      list_parts: Optional[Union[str, List[str]]] = None,
                      all_parts: bool = False,
                      jmd_n_len: Union[int, None] = 10,
@@ -408,9 +408,9 @@ class SequenceFeature:
         return df_parts
 
     def get_seq_kws(self,
-                    df_seq: Optional[pd.DataFrame] = None,
-                    df_parts: Optional[pd.DataFrame] = None,
-                    sample: Optional[Union[int, str]] = None,
+                    df_seq: pd.DataFrame,
+                    df_parts: pd.DataFrame,
+                    sample: Union[int, str],
                     ) -> dict:
         """
         Get the per-part sequence keyword arguments (``jmd_n_seq``, ``tmd_seq``, ``jmd_c_seq``) for one protein.
@@ -571,9 +571,9 @@ class SequenceFeature:
 
     # Feature methods
     def get_df_feat(self,
-                    features: Optional[Union[ut.ArrayLike1D, pd.DataFrame]] = None,
-                    df_parts: Optional[pd.DataFrame] = None,
-                    labels: Optional[ut.ArrayLike1D] = None,
+                    features: Union[ut.ArrayLike1D, pd.DataFrame],
+                    df_parts: pd.DataFrame,
+                    labels: ut.ArrayLike1D,
                     label_test: int = 1,
                     label_ref: int = 0,
                     df_scales: Optional[pd.DataFrame] = None,
@@ -698,8 +698,8 @@ class SequenceFeature:
         return df_feat
 
     def feature_matrix(self,
-                       features: Optional[Union[ut.ArrayLike1D, pd.DataFrame]] = None,
-                       df_parts: Optional[Union[pd.DataFrame, List[pd.DataFrame]]] = None,
+                       features: Union[ut.ArrayLike1D, pd.DataFrame],
+                       df_parts: Union[pd.DataFrame, List[pd.DataFrame]],
                        df_scales: Optional[pd.DataFrame] = None,
                        accept_gaps: bool = False,
                        n_jobs: Union[int, None] = 1,
@@ -804,7 +804,7 @@ class SequenceFeature:
         return list_X if batch else list_X[0]
 
     def prune_by_variance(self,
-                          df_feat: Optional[pd.DataFrame] = None,
+                          df_feat: pd.DataFrame,
                           df_parts: Optional[pd.DataFrame] = None,
                           df_scales: Optional[pd.DataFrame] = None,
                           threshold: float = 0.0,
@@ -902,7 +902,7 @@ class SequenceFeature:
         return df_feat
 
     def prune_by_correlation(self,
-                             df_feat: Optional[pd.DataFrame] = None,
+                             df_feat: pd.DataFrame,
                              df_parts: Optional[pd.DataFrame] = None,
                              df_scales: Optional[pd.DataFrame] = None,
                              max_cor: float = 0.7,
@@ -1077,7 +1077,7 @@ class SequenceFeature:
         return features
 
     @staticmethod
-    def get_feature_names(features: Optional[Union[ut.ArrayLike1D, pd.DataFrame]] = None,
+    def get_feature_names(features: Union[ut.ArrayLike1D, pd.DataFrame],
                           df_cat: Optional[pd.DataFrame] = None,
                           start: int = 1,
                           tmd_len: int = 20,
@@ -1152,7 +1152,7 @@ class SequenceFeature:
         return feat_names
 
     @staticmethod
-    def get_feature_descriptions(features: Optional[Union[ut.ArrayLike1D, pd.DataFrame]] = None,
+    def get_feature_descriptions(features: Union[ut.ArrayLike1D, pd.DataFrame],
                                  df_cat: Optional[pd.DataFrame] = None,
                                  start: int = 1,
                                  tmd_len: int = 20,
@@ -1233,7 +1233,7 @@ class SequenceFeature:
         return feat_descriptions
 
     @staticmethod
-    def get_feature_positions(features: Optional[Union[ut.ArrayLike1D, pd.DataFrame]] = None,
+    def get_feature_positions(features: Union[ut.ArrayLike1D, pd.DataFrame],
                               start: int = 1,
                               tmd_len: int = 20,
                               jmd_n_len: int = 10,
@@ -1309,7 +1309,7 @@ class SequenceFeature:
             return list_pos
 
     @staticmethod
-    def get_df_pos(df_feat: Optional[pd.DataFrame] = None,
+    def get_df_pos(df_feat: pd.DataFrame,
                    col_val: str = "mean_dif",
                    col_cat: str = "category",
                    start: int = 1,
@@ -1390,7 +1390,7 @@ class SequenceFeature:
         return df_pos
 
     @staticmethod
-    def get_labels_ovr(labels: Optional[ut.ArrayLike1D] = None,
+    def get_labels_ovr(labels: ut.ArrayLike1D,
                        label_test: int = 1,
                        label_ref: int = 0,
                        ) -> Dict[int, np.ndarray]:
@@ -1451,7 +1451,7 @@ class SequenceFeature:
         return get_labels_ovr_(labels=labels, label_test=label_test, label_ref=label_ref)
 
     @staticmethod
-    def get_labels_ovo(labels: Optional[ut.ArrayLike1D] = None,
+    def get_labels_ovo(labels: ut.ArrayLike1D,
                        df_parts: Optional[pd.DataFrame] = None,
                        dict_num_parts: Optional[Dict[str, np.ndarray]] = None,
                        label_test: int = 1,
@@ -1531,7 +1531,7 @@ class SequenceFeature:
         return dict_labels
 
     @staticmethod
-    def get_labels_quantile(targets: Optional[ut.ArrayLike1D] = None,
+    def get_labels_quantile(targets: ut.ArrayLike1D,
                             q: float = 0.5,
                             label_test: int = 1,
                             label_ref: int = 0,
@@ -1599,7 +1599,7 @@ class SequenceFeature:
         return labels
 
     @staticmethod
-    def get_labels_tiered(targets: Optional[ut.ArrayLike1D] = None,
+    def get_labels_tiered(targets: ut.ArrayLike1D,
                           q_pos: float = 0.8,
                           list_q_neg: Sequence[float] = (0.8, 0.5, 0.3),
                           df_parts: Optional[pd.DataFrame] = None,
@@ -1697,7 +1697,7 @@ class SequenceFeature:
         return dict_labels
 
     @staticmethod
-    def get_df_parts_from_windows(dict_parts: Optional[Dict[str, Union[pd.DataFrame, Sequence[str]]]] = None,
+    def get_df_parts_from_windows(dict_parts: Dict[str, Union[pd.DataFrame, Sequence[str]]],
                                   ) -> pd.DataFrame:
         """
         Assemble a ``df_parts`` from per-part window sets (e.g. :class:`AAWindowSampler` outputs).

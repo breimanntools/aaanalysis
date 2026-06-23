@@ -260,7 +260,7 @@ class TreeModel(Wrapper):
 
     def fit(self,
             X: ut.ArrayLike2D,
-            labels: Optional[ut.ArrayLike1D] = None,
+            labels: ut.ArrayLike1D,
             n_rounds: int = 5,
             use_rfe: bool = False,
             n_cv: int = 5,
@@ -354,8 +354,8 @@ class TreeModel(Wrapper):
 
     def eval(self,
              X: ut.ArrayLike2D,
-             labels: Optional[ut.ArrayLike1D] = None,
-             list_is_selected: Optional[List[ut.ArrayLike2D]] = None,
+             labels: ut.ArrayLike1D,
+             list_is_selected: List[ut.ArrayLike2D],
              convert_1d_to_2d: bool = False,
              names_feature_selections: Optional[List[str]] = None,
              n_cv: int = 5,
@@ -486,7 +486,7 @@ class TreeModel(Wrapper):
         return pred, pred_std
 
     def add_feat_importance(self,
-                            df_feat: Optional[pd.DataFrame] = None,
+                            df_feat: pd.DataFrame,
                             drop: bool = False,
                             sort: bool = False,
                             ) -> pd.DataFrame:
@@ -543,9 +543,9 @@ class TreeModel(Wrapper):
         return df_feat
 
     def select_features(self,
-                        df_feat: Optional[pd.DataFrame] = None,
-                        strategy: Optional[Literal["top_k", "threshold", "frequency"]] = None,
-                        param: Optional[Union[int, float, dict]] = None,
+                        df_feat: pd.DataFrame,
+                        strategy: Literal["top_k", "threshold", "frequency"],
+                        param: Union[int, float, dict],
                         ) -> pd.DataFrame:
         """
         Select a subset of features from a feature DataFrame using tree-based feature importance.

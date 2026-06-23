@@ -94,7 +94,7 @@ class TestSeqColumnGuards:
         stp = aa.StructurePreprocessor(verbose=False)
         d = {"P1": np.zeros((8, 1))}
         with pytest.raises(ValueError, match="for build_scales"):
-            stp.build_scales(df_seq=_part_based_df(), dict_num=d)
+            stp.build_scales(df_seq=_part_based_df(), dict_num=d, features=["bfactor"])
 
 
 class TestPaeIoBranches:

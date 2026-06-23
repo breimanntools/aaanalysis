@@ -13,10 +13,17 @@ policy.
 
 ## Signatures
 
-Frontend (public methods) and backend functions both use
-positional-or-keyword parameters with sklearn-style defaults. Pass kwargs
-explicitly at call sites (`func(name=value)`) for readability — enforced by
-code review, not by `*` separators in the signature.
+Frontend (public methods) and backend functions use positional-or-keyword
+parameters: required args first (no default, no `Optional`), then optional args
+with sklearn-style defaults. Pass kwargs explicitly at call sites
+(`func(name=value)`) for readability — enforced by code review, **not** by `*`
+separators in the signature. Required args have no default and no `Optional`
+(see `code-conventions.md` → Type hints) but stay positional-or-keyword, so
+removing a stale `= None` from a required arg is non-breaking (keyword and
+positional calls both keep working). The single exception: a required arg that
+must sit after a defaulted one (can't lead, no canonical default) becomes
+**keyword-only** with a `*` — that is the only sanctioned `*`. Never add `*`
+merely to force keywords on args that could lead.
 
 ## Validation
 

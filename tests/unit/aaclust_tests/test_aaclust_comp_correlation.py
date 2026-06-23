@@ -202,7 +202,7 @@ class TestCompCorrelationComplex:
         X_ref = np.random.rand(X.shape[0], X.shape[1])
         names = [f"Sample_{i}" for i in range(X.shape[0])]
         with pytest.raises(ValueError):
-            aa.AAclust.comp_correlation(X, X_ref=X_ref, names=names)
+            aa.AAclust.comp_correlation(X, labels=None, X_ref=X_ref, names=names)
 
     @settings(deadline=None, max_examples=5)
     @given(X=npst.arrays(dtype=np.float64, shape=npst.array_shapes(min_dims=2, max_dims=2),

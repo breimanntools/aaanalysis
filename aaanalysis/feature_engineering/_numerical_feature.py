@@ -124,8 +124,8 @@ class NumericalFeature:
         return is_selected
 
     @staticmethod
-    def get_parts(df_seq: Optional[pd.DataFrame] = None,
-                  dict_num: Optional[Dict[str, np.ndarray]] = None,
+    def get_parts(df_seq: pd.DataFrame,
+                  dict_num: Dict[str, np.ndarray],
                   list_parts: Optional[List[str]] = None,
                   all_parts: bool = False,
                   jmd_n_len: int = 10,
@@ -278,8 +278,8 @@ class NumericalFeature:
         return df_parts, dict_part_vals
 
     @staticmethod
-    def extend_alphabet(df_scales: Optional[pd.DataFrame] = None,
-                        new_letter: Optional[str] = None,
+    def extend_alphabet(df_scales: pd.DataFrame,
+                        new_letter: str,
                         value_type: Literal["min", "mean", "median", "max"] = "mean",
                         ) -> pd.DataFrame:
         """

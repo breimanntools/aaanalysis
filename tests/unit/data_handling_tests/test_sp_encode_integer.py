@@ -51,11 +51,11 @@ class TestEncodeInteger:
         """Test an invalid 'alphabet' parameter."""
         sp = aa.SequencePreprocessor()
         with pytest.raises(ValueError):
-            sp.encode_integer(alphabet=None)
+            sp.encode_integer(list_seq=["ACDEF"], alphabet=None)
         with pytest.raises(ValueError):
-            sp.encode_integer(alphabet="")
+            sp.encode_integer(list_seq=["ACDEF"], alphabet="")
         with pytest.raises(ValueError):
-            sp.encode_integer(alphabet=123)
+            sp.encode_integer(list_seq=["ACDEF"], alphabet=123)
 
     @settings(max_examples=10, deadline=None)
     @given(gap=st.text(min_size=1, max_size=1).filter(lambda g: g not in "ACDEFGHIKLMNPQRSTVWY"))
@@ -71,11 +71,11 @@ class TestEncodeInteger:
         """Test an invalid 'gap' parameter."""
         sp = aa.SequencePreprocessor()
         with pytest.raises(ValueError):
-            sp.encode_integer(gap=None)
+            sp.encode_integer(list_seq=["ACDEF"], gap=None)
         with pytest.raises(ValueError):
-            sp.encode_integer(gap="")
+            sp.encode_integer(list_seq=["ACDEF"], gap="")
         with pytest.raises(ValueError):
-            sp.encode_integer(gap="INVALID")
+            sp.encode_integer(list_seq=["ACDEF"], gap="INVALID")
 
     @settings(max_examples=10, deadline=None)
     @given(pad_at=st.sampled_from(["N", "C"]))
@@ -91,11 +91,11 @@ class TestEncodeInteger:
         """Test an invalid 'pad_at' parameter."""
         sp = aa.SequencePreprocessor()
         with pytest.raises(ValueError):
-            sp.encode_integer(pad_at=None)
+            sp.encode_integer(list_seq=["ACDEF"], pad_at=None)
         with pytest.raises(ValueError):
-            sp.encode_integer(pad_at="")
+            sp.encode_integer(list_seq=["ACDEF"], pad_at="")
         with pytest.raises(ValueError):
-            sp.encode_integer(pad_at="INVALID")
+            sp.encode_integer(list_seq=["ACDEF"], pad_at="INVALID")
 
 
 # Complex Cases

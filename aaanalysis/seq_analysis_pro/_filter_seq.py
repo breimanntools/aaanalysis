@@ -45,7 +45,7 @@ def check_seq_gaps(df_seq) -> None:
 
 
 # II Main function
-def filter_seq(df_seq: Optional[pd.DataFrame] = None,
+def filter_seq(df_seq: pd.DataFrame,
                method: Literal['cd-hit', 'mmseqs'] = "cd-hit",
                similarity_threshold: float = 0.9,
                word_size: Optional[int] = None,

@@ -284,7 +284,7 @@ class CPPPlot:
         self._jmd_c_len = jmd_c_len
 
     @staticmethod
-    def eval(df_eval: Optional[pd.DataFrame] = None,
+    def eval(df_eval: pd.DataFrame,
              figsize: Tuple[int or float, int or float] = (6, 4),
              dict_xlims: Optional[dict] = None,
              legend: bool = True,
@@ -383,10 +383,11 @@ class CPPPlot:
 
     # Plotting method for single feature
     def feature(self,
-                feature: Optional[Union[str, List[str], pd.DataFrame]] = None,
+                feature: Union[str, List[str], pd.DataFrame],
                 feat_rank: int = 1,
-                df_seq: Optional[pd.DataFrame] = None,
-                labels: Optional[ut.ArrayLike1D] = None,
+                *,
+                df_seq: pd.DataFrame,
+                labels: ut.ArrayLike1D,
                 label_test: int = 1,
                 label_ref: int = 0, 
                 ax: Optional[Axes] = None,
@@ -542,7 +543,7 @@ class CPPPlot:
 
     # Plotting methods for multiple features (group and sample level)
     def ranking(self,
-                df_feat: Optional[pd.DataFrame] = None,
+                df_feat: pd.DataFrame,
                 shap_plot: bool = False,
                 col_dif: str = "mean_dif",
                 col_imp: str = "feat_importance",
@@ -715,7 +716,7 @@ class CPPPlot:
 
     def profile(self,
                 # Data and Plot Type
-                df_feat: Optional[pd.DataFrame] = None,
+                df_feat: pd.DataFrame,
                 shap_plot: bool = False,
                 col_imp: Union[str, None] = "feat_importance",
                 normalize: bool = True,
@@ -942,7 +943,7 @@ class CPPPlot:
 
     def heatmap(self,
                 # Data and Plot Type
-                df_feat: Optional[pd.DataFrame] = None,
+                df_feat: pd.DataFrame,
                 shap_plot: bool = False,
                 col_cat: Literal['category', 'subcategory', 'scale_name'] = "subcategory",
                 col_val: str = "mean_dif",
@@ -1196,7 +1197,7 @@ class CPPPlot:
 
     def feature_map(self,
                     # Data and Plot Type
-                    df_feat: Optional[pd.DataFrame] = None,
+                    df_feat: pd.DataFrame,
                     shap_plot: bool = False,
                     col_cat: Literal['category', 'subcategory', 'scale_name'] = "subcategory",
                     col_val: str = "mean_dif",
@@ -1515,7 +1516,7 @@ class CPPPlot:
         return fig, ax
 
     def update_seq_size(self,
-                        ax: Optional[Axes] = None,
+                        ax: Axes,
                         fig: Optional[Figure] = None,
                         max_x_dist: float = 0.1,
                         fontsize_tmd_jmd: Optional[Union[int, float]] = None,

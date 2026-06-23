@@ -85,7 +85,7 @@ class AAlogo:
         self._logo_type = logo_type
 
     def get_df_logo(self,
-                    df_parts: Optional[pd.DataFrame] = None,
+                    df_parts: pd.DataFrame,
                     labels: Optional[ut.ArrayLike1D] = None,
                     label_test: int = 1,
                     tmd_len: Optional[int] = None,
@@ -168,7 +168,7 @@ class AAlogo:
         return df_logo
 
     def get_df_logo_info(self,
-                         df_parts: Optional[pd.DataFrame] = None,
+                         df_parts: pd.DataFrame,
                          labels: Optional[ut.ArrayLike1D] = None,
                          label_test: int = 1,
                          tmd_len: Optional[int] = None,
@@ -249,7 +249,7 @@ class AAlogo:
         return df_logo_info
 
     @staticmethod
-    def get_conservation(df_logo_info: Optional[pd.Series] = None,
+    def get_conservation(df_logo_info: pd.Series,
                          value_type: Literal["min", "mean", "median", "max"] = "mean",
                          ) -> float:
         """

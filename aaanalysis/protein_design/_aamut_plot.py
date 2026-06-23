@@ -52,7 +52,7 @@ class AAMutPlot:
 
     # Main methods
     def substitution_matrix(self,
-                            df_impact: Optional[pd.DataFrame] = None,
+                            df_impact: pd.DataFrame,
                             ax: Optional[Axes] = None,
                             figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
                             cmap: str = "viridis",
@@ -97,7 +97,7 @@ class AAMutPlot:
         return ax
 
     def scale_ranking(self,
-                      df_impact: Optional[pd.DataFrame] = None,
+                      df_impact: pd.DataFrame,
                       top_n: int = 20,
                       ax: Optional[Axes] = None,
                       figsize: Tuple[Union[int, float], Union[int, float]] = (6, 5),
@@ -146,9 +146,9 @@ class AAMutPlot:
         return ax
 
     def aa_comparison(self,
-                      df_impact: Optional[pd.DataFrame] = None,
-                      from_aa: Optional[str] = None,
-                      to_aa: Optional[str] = None,
+                      df_impact: pd.DataFrame,
+                      from_aa: str,
+                      to_aa: str,
                       top_n: int = 20,
                       ax: Optional[Axes] = None,
                       figsize: Tuple[Union[int, float], Union[int, float]] = (6, 5),

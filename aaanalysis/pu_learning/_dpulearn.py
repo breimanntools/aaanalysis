@@ -214,7 +214,7 @@ class dPULearn(Wrapper):
     # Main method
     def fit(self,
             X: ut.ArrayLike2D,
-            labels: Optional[ut.ArrayLike1D] = None,
+            labels: ut.ArrayLike1D,
             label_pos: int = 1,
             label_unl: int = 2,
             label_neg: Optional[int] = None,
@@ -360,7 +360,7 @@ class dPULearn(Wrapper):
 
     @staticmethod
     def eval(X: ut.ArrayLike2D,
-             list_labels: Optional[ut.ArrayLike2D] = None,
+             list_labels: ut.ArrayLike2D,
              names_datasets: Optional[List[str]] = None,
              X_neg: Optional[ut.ArrayLike2D] = None,
              comp_kld: bool = False,
@@ -446,7 +446,7 @@ class dPULearn(Wrapper):
         return df_eval
 
     @staticmethod
-    def compare_sets_negatives(list_labels: Optional[ut.ArrayLike1D] = None,
+    def compare_sets_negatives(list_labels: ut.ArrayLike1D,
                                names_datasets: Optional[List[str]] = None,
                                df_seq: Optional[pd.DataFrame] = None,
                                remove_non_neg : bool = True,

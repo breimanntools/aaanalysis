@@ -427,7 +427,7 @@ class AAWindowSampler:
 
     # Sampling methods
     def sample_same_protein(self,
-                            df_seq: Optional[pd.DataFrame] = None,
+                            df_seq: pd.DataFrame,
                             n: int = 100,
                             window_size: int = 9,
                             pos_col: str = ut.COL_POS,
@@ -601,7 +601,7 @@ class AAWindowSampler:
                                        mark_test=True)
 
     def sample_different_protein(self,
-                                 df_seq: Optional[pd.DataFrame] = None,
+                                 df_seq: pd.DataFrame,
                                  n: int = 100,
                                  window_size: int = 9,
                                  pos_col: str = ut.COL_POS,
@@ -740,7 +740,7 @@ class AAWindowSampler:
                                        mark_test=True)
 
     def sample_synthetic(self,
-                         df_seq: Optional[pd.DataFrame] = None,
+                         df_seq: pd.DataFrame,
                          n: int = 100,
                          window_size: int = 9,
                          generator: Union[Literal["uniform", "global_freq",
@@ -920,11 +920,12 @@ class AAWindowSampler:
         return df[ut.COLS_SEGMENTS].copy()
 
     def sample_motif_matched(self,
-                              df_seq: Optional[pd.DataFrame] = None,
+                              df_seq: pd.DataFrame,
                               n: int = 100,
                               window_size: int = 9,
-                              motif_pwm: Optional[pd.DataFrame] = None,
-                              motif_score_threshold: Optional[float] = None,
+                              *,
+                              motif_pwm: pd.DataFrame,
+                              motif_score_threshold: float,
                               pos_col: str = ut.COL_POS,
                               label_test: Union[int, float] = 1,
                               label_ref: Union[int, float] = 0,
@@ -1056,8 +1057,8 @@ class AAWindowSampler:
                                        mark_test=True)
 
     def sample_benchmark_set(self,
-                             df_seq: Optional[pd.DataFrame] = None,
-                             arms: Optional[Dict[str, Dict]] = None,
+                             df_seq: pd.DataFrame,
+                             arms: Dict[str, Dict],
                              seed: Optional[int] = None,
                              ) -> pd.DataFrame:
         """Run several named sampling arms and concatenate them into one benchmark set.

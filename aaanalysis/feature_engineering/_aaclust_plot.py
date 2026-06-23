@@ -193,7 +193,7 @@ class AAclustPlot:
         self._model_kwargs = model_kwargs
 
     @staticmethod
-    def eval(df_eval: Optional[pd.DataFrame] = None,
+    def eval(df_eval: pd.DataFrame,
              figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
              dict_xlims: Optional[dict] = None,
              ) -> Tuple[Figure, Axes]:
@@ -256,7 +256,8 @@ class AAclustPlot:
 
     def centers(self,
                 X: Optional[ut.ArrayLike2D] = None,
-                labels: Optional[Union[np.ndarray, list]] = None,
+                *,
+                labels: Union[np.ndarray, list],
                 df_scales: Optional[pd.DataFrame] = None,
                 component_x: int = 1,
                 component_y: int = 2,
@@ -358,7 +359,8 @@ class AAclustPlot:
 
     def medoids(self,
                 X: Optional[ut.ArrayLike2D] = None,
-                labels: Optional[ut.ArrayLike1D] = None,
+                *,
+                labels: ut.ArrayLike1D,
                 df_scales: Optional[pd.DataFrame] = None,
                 component_x: int = 1,
                 component_y: int = 2,
@@ -467,8 +469,8 @@ class AAclustPlot:
         return ax, df_components
 
     def correlation(self,
-                    df_corr: Optional[pd.DataFrame] = None,
-                    labels: Optional[ut.ArrayLike1D] = None,
+                    df_corr: pd.DataFrame,
+                    labels: ut.ArrayLike1D,
                     labels_ref: Optional[ut.ArrayLike1D] = None,
                     cluster_x: bool = False,
                     method: str = "average",

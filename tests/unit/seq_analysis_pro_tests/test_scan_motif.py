@@ -83,7 +83,7 @@ class TestFindMotifMatchedViaFimo:
         with patch(*MOCK_WHICH, return_value="/usr/local/bin/fimo"):
             with pytest.raises(ValueError, match="motif_pwm"):
                 aa.scan_motif(df_seq=_df_seq_with_aaa(), pos_col="pos", n=5,
-                              window_size=5)
+                              window_size=5, motif_pwm=None)
 
     # --- df_seq / pos_col ---
     def test_invalid_df_seq_type(self):

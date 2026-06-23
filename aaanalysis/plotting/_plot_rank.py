@@ -45,7 +45,7 @@ def _resolve_group_colors(group_order=None, dict_color=None):
 
 
 # II Main Functions
-def plot_rank(df_rank: Optional[pd.DataFrame] = None,
+def plot_rank(df_rank: pd.DataFrame,
               col_score: str = "score",
               col_group: str = "group",
               group_order: Optional[List[str]] = None,

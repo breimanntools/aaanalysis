@@ -66,7 +66,7 @@ class TestRunNumRequiresDictNumParts:
         df_seq, labels, df_parts, df_scales = _build_fixture()
         cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales)
         with pytest.raises(ValueError, match="'dict_num_parts' .* required"):
-            cpp.run_num(labels=labels, n_jobs=1)
+            cpp.run_num(dict_num_parts=None, labels=labels, n_jobs=1)
 
 
 class TestRunNumRoundTrip:

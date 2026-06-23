@@ -467,7 +467,7 @@ class ShapModel(Wrapper):
 
     def fit(self,
             X: ut.ArrayLike2D,
-            labels: Optional[ut.ArrayLike1D] = None,
+            labels: ut.ArrayLike1D,
             label_target_class: int = 1,
             n_rounds: int = 5,
             is_selected: Optional[ut.ArrayLike2D] = None,
@@ -596,7 +596,7 @@ class ShapModel(Wrapper):
         raise NotImplementedError("ShapModel.eval is under construction.")
 
     def add_feat_impact(self,
-                        df_feat: Optional[pd.DataFrame] = None,
+                        df_feat: pd.DataFrame,
                         drop: bool = False,
                         samples: Union[int, List[int], str, List[str], None] = None,
                         names: Optional[Union[str, List[str]]] = None,
@@ -733,9 +733,10 @@ class ShapModel(Wrapper):
 
     @staticmethod
     def add_sample_mean_dif(X: ut.ArrayLike2D,
-                            labels: Optional[ut.ArrayLike1D] = None,
+                            labels: ut.ArrayLike1D,
                             label_ref: int = 0,
-                            df_feat: Optional[pd.DataFrame] = None,
+                            *,
+                            df_feat: pd.DataFrame,
                             drop: bool = False,
                             samples: Union[int, List[int], str, List[str], None] = None,
                             names: Optional[Union[str, List[str]]] = None,

@@ -292,7 +292,7 @@ class CPP(Tool):
 
     def __init__(
         self,
-        df_parts: Optional[pd.DataFrame] = None,
+        df_parts: pd.DataFrame,
         split_kws: Optional[dict] = None,
         df_scales: Optional[pd.DataFrame] = None,
         df_cat: Optional[pd.DataFrame] = None,
@@ -390,7 +390,7 @@ class CPP(Tool):
     # Main method
     def run(
         self,
-        labels: Optional[ut.ArrayLike1D] = None,
+        labels: ut.ArrayLike1D,
         label_test: int = 1,
         label_ref: int = 0,
         n_filter: int = 100,
@@ -689,8 +689,8 @@ class CPP(Tool):
 
     def run_num(
         self,
-        dict_num_parts: Optional[Dict[str, np.ndarray]] = None,
-        labels: Optional[ut.ArrayLike1D] = None,
+        dict_num_parts: Dict[str, np.ndarray],
+        labels: ut.ArrayLike1D,
         label_test: int = 1,
         label_ref: int = 0,
         n_filter: int = 100,
@@ -1017,8 +1017,8 @@ class CPP(Tool):
 
     def eval(
         self,
-        list_df_feat: Optional[List[pd.DataFrame]] = None,
-        labels: Optional[ut.ArrayLike1D] = None,
+        list_df_feat: List[pd.DataFrame],
+        labels: ut.ArrayLike1D,
         label_test: int = 1,
         label_ref: int = 0,
         min_th: float = 0.0,
@@ -1154,10 +1154,11 @@ class CPP(Tool):
             random_state=self._random_state,
         )
         return df_eval
+
     def simplify(
         self,
-        df_feat: Optional[pd.DataFrame] = None,
-        labels: Optional[ut.ArrayLike1D] = None,
+        df_feat: pd.DataFrame,
+        labels: ut.ArrayLike1D,
         strategy: Literal["greedy", "consolidate", "swap_all"] = "greedy",
         candidate_search: Literal["exact", "fast"] = "exact",
         max_interpret_grade: Optional[int] = None,
