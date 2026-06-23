@@ -189,8 +189,11 @@ def plot_gco(option='font.size', show_options=False):
 
 # DEV: plot_get_cdict and plot_get_cmap are implemented in main utils
 # Remaining backend plotting functions
-def plot_get_clist_(n_colors=3):
-    """Get manually curated list of 2 to 9 colors."""
+def plot_get_clist_(n_colors=3, cmap=None):
+    """Get manually curated list of 2 to 9 colors, or sample a named palette if cmap is given."""
+    # Sample any named seaborn/matplotlib palette directly (e.g. 'husl', 'viridis', 'Set2')
+    if cmap is not None:
+        return sns.color_palette(palette=cmap, n_colors=n_colors)
     # Base lists
     list_colors_3_to_4 = ["tab:gray", "tab:blue", "tab:red", "tab:orange"]
     list_colors_5_to_6 = ["tab:blue", "tab:cyan", "tab:gray","tab:red",

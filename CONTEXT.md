@@ -291,6 +291,10 @@ _Avoid_: pae_dict, dict_alignment_error.
 - Plus the 8 AAontology categories (`ASA/Volume`, `Composition`, `Conformation`, `Energy`, `Others`, `Polarity`, `Shape`, `Structure-Activity`).
 The redundancy filter's `check_cat=True` arm groups features by these top-level buckets; fine-grained semantic splits (e.g. `'Secondary structure (3-state)'` vs `'B-factor (CA mean)'` vs `'AlphaFold pLDDT (raw)'`) live in `subcategory` — these follow the AAontology naming convention (descriptive name with source / detail in parentheses) so the `CPPPlot.feature_map` y-axis reads cleanly.
 
+**Color palette kind** (`plot_get_clist(kind=...)`):
+The palette family a color list is drawn from, following Matplotlib's colormap taxonomy. `categorical` = *qualitative*, maximally distinct colors for discrete classes (curated for 2–9, `'husl'` for 10–20, capped at 20). `continuous` = `n_colors` sampled from any named palette via `seaborn.color_palette` — an ordered colormap (`'viridis'`) gives a perceptual ramp encoding magnitude, a qualitative one (`'husl'`, the default) gives distinct hues. `diverging` = two hues from a neutral center for signed/centered data (the house `'CPP'`/`'SHAP'` maps or any Matplotlib diverging map). The companion `plot_get_cmap` returns the pre-sized (101-point) diverging `CPP`/`SHAP` map. `husl` is a qualitative large-N hue generator, **not** an ordered/sequential ramp.
+_Avoid_: calling the `'husl'` rainbow "continuous", calling `'viridis'` "diverging".
+
 ### Annotation-based feature engineering vocabulary
 
 **AnnotationPreprocessor**:
