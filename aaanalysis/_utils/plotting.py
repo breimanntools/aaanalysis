@@ -182,7 +182,7 @@ def plot_gco(option='font.size', show_options=False):
         option_value = current_context[option]  # Typically font_size
     except KeyError:
         options = list(current_context.keys())
-        raise ValueError(f"Option not valid, select from the following: {options}")
+        raise ValueError(f"'option' ('{option}') should be one of: {options}")
     return option_value
 
 

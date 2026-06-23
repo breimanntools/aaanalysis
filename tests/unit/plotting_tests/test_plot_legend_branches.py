@@ -172,5 +172,5 @@ class TestPlotGco:
         assert ut.plot_gco(option="font.size") > 0
 
     def test_invalid_option_raises(self):
-        with pytest.raises(ValueError, match="not valid"):
+        with pytest.raises(ValueError, match="should be one of"):
             ut.plot_gco(option="__no_such_option__")

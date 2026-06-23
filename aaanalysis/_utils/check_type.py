@@ -83,6 +83,21 @@ def check_str_options(name=None, val=None, accept_none=False, list_str_options=N
         raise ValueError(str_add)
 
 
+def preview_options(options=None, n=5):
+    """Render a bounded, readable preview of valid values for an error message.
+
+    Returns the first ``n`` options followed by the total count, so an error about an
+    unknown name (e.g. a protein entry looked up against a user DataFrame) can list
+    candidates without dumping a potentially huge list.
+    """
+    options = list(options)
+    n_total = len(options)
+    str_shown = ", ".join(repr(o) for o in options[:n])
+    if n_total > n:
+        return f"[{str_shown}, ...] ({n_total} total)"
+    return f"[{str_shown}]"
+
+
 def check_bool(name=None, val=None, accept_none=False, str_add=None):
     """Check if the provided value is a boolean."""
     if val is None:
