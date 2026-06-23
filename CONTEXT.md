@@ -149,6 +149,21 @@ labels per tier. Lets a regression target be profiled at increasing positive-vs-
 separation. `SequenceFeature.get_labels_tiered`.
 _Avoid_: banded regression (reserved for the deferred banded-regression task), graded labels.
 
+**label parameter names (canonical)**:
+Four *distinct* labeling concepts, each with one canonical parameter name — similar
+spellings name different things, so they are kept separate rather than unified:
+- **`label_test` / `label_ref`** — the two groups of a **contrast** (positive/test vs
+  reference): `CPP.run`/`eval`, `AAlogo.get_df_logo`.
+- **`labels`** — a **single** 1D per-sample class-label vector `(n_samples,)`:
+  `CPP.run`, `TreeModel.fit`/`eval`, `ShapModel.fit`, `dPULearn.fit`.
+- **`list_labels`** — a **2D list of labelings** `(n_datasets, n_samples)` with
+  `names_datasets`: `AAclust.eval`, `dPULearn.eval`. Plural on purpose.
+- **`label_target_class`** — a **single target class to attribute** in SHAP
+  (`ShapModel.fit`); can be *any* class (positive, negative, or a multi-class index),
+  so it is **not** `label_test` and keeps its own name.
+_Avoid_: renaming `label_target_class` to `label_test` (conflates a general target-class
+selector with the test-vs-reference contrast); collapsing `list_labels` into `labels`.
+
 ### Window sampling vocabulary
 
 **window**:
