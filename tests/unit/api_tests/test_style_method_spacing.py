@@ -21,7 +21,7 @@ _PKG_ROOT = pathlib.Path(aaanalysis.__file__).parent
 def _method_spacing_violations():
     violations = []
     for path in sorted(_PKG_ROOT.rglob("*.py")):
-        tree = ast.parse(path.read_text(), filename=str(path))
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in ast.walk(tree):
             if not isinstance(node, ast.ClassDef):
                 continue
