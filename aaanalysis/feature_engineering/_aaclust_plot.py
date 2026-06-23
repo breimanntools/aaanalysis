@@ -6,6 +6,8 @@ from sklearn.decomposition import PCA
 from typing import Optional, Dict, Union, List, Tuple, Type
 from sklearn.base import TransformerMixin
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 import matplotlib as mpl
 import numpy as np
 import warnings
@@ -194,7 +196,7 @@ class AAclustPlot:
     def eval(df_eval: Optional[pd.DataFrame] = None,
              figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
              dict_xlims: Optional[dict] = None,
-             ) -> Tuple[plt.Figure, plt.Axes]:
+             ) -> Tuple[Figure, Axes]:
         """
         Plots evaluation of ``n_clusters`` and clustering metrics Bayesian Information Criterion
         (``BIC``), Calinski-Harabasz (``CH``), and Silhouette Coefficient (``SC``) from ``df_eval``.
@@ -223,9 +225,9 @@ class AAclustPlot:
 
         Returns
         -------
-        fig : plt.Figure
+        fig : Figure
             Figure object for evaluation plot
-        axes : array of plt.Axes
+        axes : array of Axes
             Array of Axes objects, each representing a subplot within the figure.
 
         Notes
@@ -258,13 +260,13 @@ class AAclustPlot:
                 df_scales: Optional[pd.DataFrame] = None,
                 component_x: int = 1,
                 component_y: int = 2,
-                ax: Optional[plt.Axes] = None,
+                ax: Optional[Axes] = None,
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
                 legend: bool = True,
                 dot_size: int = 100,
                 dot_alpha: Union[int, float] = 0.75,
                 palette: Optional[mpl.colors.ListedColormap] = None,
-                ) -> Tuple[plt.Axes, pd.DataFrame]:
+                ) -> Tuple[Axes, pd.DataFrame]:
         """
         Create a Principal Component Analysis (PCA) plot of clustering results with cluster
         centers highlighted.
@@ -294,7 +296,7 @@ class AAclustPlot:
             Index of the PCA component for the x-axis. Must be >= 1.
         component_y : int, default=2
             Index of the PCA component for the y-axis. Must be >= 1.
-        ax : plt.Axes, optional
+        ax : Axes, optional
             Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
         figsize : tuple, default=(7, 6)
             Figure dimensions (width, height) in inches.
@@ -309,7 +311,7 @@ class AAclustPlot:
 
         Returns
         -------
-        ax : plt.Axes
+        ax : Axes
             PCA plot axes object.
         df_components : pd.DataFrame
             DataFrame with the PCA components.
@@ -361,13 +363,13 @@ class AAclustPlot:
                 component_x: int = 1,
                 component_y: int = 2,
                 metric: str = "euclidean",
-                ax: Optional[plt.Axes] = None,
+                ax: Optional[Axes] = None,
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
                 legend: bool = True,
                 dot_size: int = 100,
                 dot_alpha: Union[int, float] = 0.75,
                 palette: Optional[mpl.colors.ListedColormap] = None,
-                ) -> Tuple[plt.Axes, pd.DataFrame]:
+                ) -> Tuple[Axes, pd.DataFrame]:
         """
         Principal Component Analysis (PCA) plot of clustering with medoids highlighted.
 
@@ -404,7 +406,7 @@ class AAclustPlot:
             - ``manhattan``: Manhattan distance (minimum)
             - ``cosine``: Cosine distance (minimum)
 
-        ax : plt.Axes, optional
+        ax : Axes, optional
             Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
         figsize : tuple, default=(7, 6)
             Figure dimensions (width, height) in inches.
@@ -419,7 +421,7 @@ class AAclustPlot:
 
         Returns
         -------
-        ax : plt.Axes
+        ax : Axes
             PCA plot axes object.
         df_components : pd.DataFrame
             DataFrame with the PCA components.
@@ -482,7 +484,7 @@ class AAclustPlot:
                     vmax: float = 1.0,
                     cmap: str = "viridis",
                     kwargs_heatmap: Optional[dict] = None
-                    ) -> plt.Axes:
+                    ) -> Axes:
         """
         Heatmap for correlation matrix with colored sidebar to label clusters.
 
@@ -532,7 +534,7 @@ class AAclustPlot:
 
         Returns
         -------
-        ax : plt.Axes
+        ax : Axes
             Axes object with the correlation heatmap.
 
         Notes

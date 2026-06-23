@@ -4,6 +4,8 @@ This is a script for the frontend of the CPPPlot class.
 from typing import Optional, Dict, Union, List, Tuple, Type, Literal
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 import warnings
 
 import aaanalysis.utils as ut
@@ -289,7 +291,7 @@ class CPPPlot:
              legend_y: float = -0.3,
              dict_color: Optional[dict] = None,
              list_cat: Optional[List[str]] = None,
-             ) -> Tuple[plt.Figure, plt.Axes]:
+             ) -> Tuple[Figure, Axes]:
         """
         Plot evaluation output of Comparative Physicochemical Profiling (CPP) comparing multiple
         sets of identified feature sets.
@@ -334,9 +336,9 @@ class CPPPlot:
 
         Returns
         -------
-        fig : plt.Figure
+        fig : Figure
             Figure object for evaluation plot
-        axes : array of plt.Axes
+        axes : array of Axes
             Array of Axes objects, each representing a subplot within the figure.
 
         Notes
@@ -387,7 +389,7 @@ class CPPPlot:
                 labels: Optional[ut.ArrayLike1D] = None,
                 label_test: int = 1,
                 label_ref: int = 0, 
-                ax: Optional[plt.Axes] = None,
+                ax: Optional[Axes] = None,
                 figsize: Tuple[Union[int, float], Union[int, float]] = (5.6, 4.8),
                 names_to_show: Optional[Union[List[str], str]] = None,
                 name_test: str = "TEST",
@@ -404,7 +406,7 @@ class CPPPlot:
                 fontsize_names_to_show: Union[int, float, None] = 11,
                 alpha_hist: int or float = 0.1,
                 alpha_dif: int or float = 0.2,
-                ) -> plt.Axes:
+                ) -> Axes:
         """
         Plot distributions of Comparative Physicochemical Profiling (CPP) feature values for test
         and reference datasets highlighting their mean difference.
@@ -440,7 +442,7 @@ class CPPPlot:
             Class label of test group in ``labels``.
         label_ref : int, default=0,
             Class label of reference group in ``labels``.
-        ax : plt.Axes, optional
+        ax : Axes, optional
             Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
         figsize : tuple, default=(5.6, 4.8)
             Figure dimensions (width, height) in inches.
@@ -480,7 +482,7 @@ class CPPPlot:
 
         Returns
         -------
-        ax : plt.Axes
+        ax : Axes
             CPP feature plot axes object.
 
         See Also
@@ -560,7 +562,7 @@ class CPPPlot:
                 xlim_dif: Union[Tuple[Union[int, float], Union[int, float]], None] = (-17.5, 17.5),
                 xlim_rank: Optional[Tuple[Union[int, float], Union[int, float]]] = (0, 4),
                 rank_info_xy: Optional[Tuple[Optional[Union[int, float]], Optional[Union[int, float]]]] = None,
-                ) -> Tuple[plt.Figure, plt.Axes]:
+                ) -> Tuple[Figure, Axes]:
         """
         Plot CPP/-SHAP feature ranking based on feature importance or sample-specific feature impact.
 
@@ -634,9 +636,9 @@ class CPPPlot:
 
         Returns
         -------
-        fig : plt.Figure
+        fig : Figure
             The Figure object for the ranking plot.
-        axes : array of plt.Axes
+        axes : array of Axes
             Array of Axes objects, each representing a subplot within the figure.
 
         Notes
@@ -717,7 +719,7 @@ class CPPPlot:
                 shap_plot: bool = False,
                 col_imp: Union[str, None] = "feat_importance",
                 normalize: bool = True,
-                ax: Optional[plt.Axes] = None,
+                ax: Optional[Axes] = None,
                 figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
 
                 # Appearance of Parts (TMD-JMD)
@@ -751,7 +753,7 @@ class CPPPlot:
                 ytick_size: Optional[Union[int, float]] = None,
                 ytick_width: Optional[Union[int, float]] = None,
                 ytick_length: Union[int, float] = 5.0,
-                ) -> Tuple[plt.Figure, plt.Axes]:
+                ) -> Tuple[Figure, Axes]:
         """
         Plot CPP/-SHAP profile showing feature importance/impact per residue position.
 
@@ -786,7 +788,7 @@ class CPPPlot:
             If ``None``, the number of features per residue position will be shown.
         normalize : bool, default=True
             If ``True``, normalizes aggregated numerical values to a total of 100%.
-        ax : plt.Axes, optional
+        ax : Axes, optional
             Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
         figsize : tuple, default=(7, 5)
             Figure dimensions (width, height) in inches.
@@ -852,9 +854,9 @@ class CPPPlot:
 
         Returns
         -------
-        fig : plt.Figure
+        fig : Figure
             The Figure object for the CPP profile plot.
-        ax : plt.Axes
+        ax : Axes
             CPP profile plot axes object.
 
         Notes
@@ -982,7 +984,7 @@ class CPPPlot:
                 xtick_size: Union[int, float] = 11.0,
                 xtick_width: Union[int, float] = 2.0,
                 xtick_length: Union[int, float] = 5.0,
-                ) -> Tuple[plt.Figure, plt.Axes]:
+                ) -> Tuple[Figure, Axes]:
         """
         Plot a CPP/-SHAP heatmap showing the feature value mean difference/feature impact
         per scale subcategory (y-axis) and residue position (x-axis).
@@ -1092,9 +1094,9 @@ class CPPPlot:
 
         Returns
         -------
-        fig : plt.Figure
+        fig : Figure
             The Figure object for the CPP heatmap.
-        ax : plt.Axes
+        ax : Axes
             Axes object for the CPP heatmap.
 
         Notes
@@ -1248,7 +1250,7 @@ class CPPPlot:
                     xtick_size: Union[int, float] = 11.0,
                     xtick_width: Union[int, float] = 2.0,
                     xtick_length: Union[int, float] = 5.0,
-                    ) -> Tuple[plt.Figure, plt.Axes]:
+                    ) -> Tuple[Figure, Axes]:
         """
         Plot Comparative Physicochemical Profiling (CPP) feature map showing feature value mean
         difference and feature importance per scale subcategory (y-axis) and residue position
@@ -1391,9 +1393,9 @@ class CPPPlot:
 
         Returns
         -------
-        fig : plt.Figure
+        fig : Figure
             The Figure object for the CPP feature map.
-        ax : plt.Axes
+        ax : Axes
             Axes object for the CPP feature map.
 
         Notes
@@ -1513,8 +1515,8 @@ class CPPPlot:
         return fig, ax
 
     def update_seq_size(self,
-                        ax: Optional[plt.Axes] = None,
-                        fig: Optional[plt.Figure] = None,
+                        ax: Optional[Axes] = None,
+                        fig: Optional[Figure] = None,
                         max_x_dist: float = 0.1,
                         fontsize_tmd_jmd: Optional[Union[int, float]] = None,
                         weight_tmd_jmd: Literal['normal', 'bold'] = 'normal',
@@ -1522,7 +1524,7 @@ class CPPPlot:
                         jmd_color: str = "blue",
                         tmd_seq_color: str = "black",
                         jmd_seq_color: str = "white",
-                        ) -> plt.Axes:
+                        ) -> Axes:
         """
         Update the font size of the sequence characters to prevent overlap.
 
@@ -1533,9 +1535,9 @@ class CPPPlot:
 
         Parameters
         ----------
-        ax : plt.Axes
+        ax : Axes
             Comparative Physicochemical Profiling (CPP) plot axes object.
-        fig : plt.Figure, optional
+        fig : Figure, optional
             CPP plot figure object. If given, ``fontsize_tmd_jmd`` will be automatically adjusted.
         max_x_dist : float, default=0.1
             Maximum allowed horizontal distance between sequence characters during font size optimization.
@@ -1555,7 +1557,7 @@ class CPPPlot:
 
         Returns
         -------
-        ax : plt.Axes
+        ax : Axes
             CPP plot axes object.
 
         Notes

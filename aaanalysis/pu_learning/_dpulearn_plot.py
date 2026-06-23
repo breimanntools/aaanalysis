@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 from typing import Optional, Dict, Union, List, Tuple, Type
 
 
@@ -86,7 +88,7 @@ class dPULearnPlot:
              legend: bool = True,
              legend_y: float = -0.175,
              colors: Optional[List[str]] = None,
-             ) -> Tuple[plt.Figure, plt.Axes]:
+             ) -> Tuple[Figure, Axes]:
         """
         Plot evaluation output of dPULearn comparing multiple sets of identified negatives.
 
@@ -130,9 +132,9 @@ class dPULearnPlot:
 
         Returns
         -------
-        fig : plt.Figure
+        fig : Figure
             Figure object for evaluation plot
-        axes : array of plt.Axes
+        axes : array of Axes
             Array of Axes objects, each representing a subplot within the figure. .
 
         Notes
@@ -177,7 +179,7 @@ class dPULearnPlot:
             legend: bool = True,
             legend_y: float = -0.15,
             kwargs_scatterplot: Optional[dict] = None,
-            ) -> plt.Axes:
+            ) -> Axes:
         """
         Principal component analysis (PCA) plot for set of identified negatives.
 
@@ -218,7 +220,7 @@ class dPULearnPlot:
 
         Returns
         -------
-        ax : plt.Axes
+        ax : Axes
             PCA plot axes object.
 
         See Also

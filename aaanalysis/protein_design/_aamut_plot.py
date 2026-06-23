@@ -5,6 +5,7 @@ substitution impact across physicochemical scales.
 from typing import Optional, Tuple, Union
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 import seaborn as sns
 
 import aaanalysis.utils as ut
@@ -52,10 +53,10 @@ class AAMutPlot:
     # Main methods
     def substitution_matrix(self,
                             df_impact: Optional[pd.DataFrame] = None,
-                            ax: Optional[plt.Axes] = None,
+                            ax: Optional[Axes] = None,
                             figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
                             cmap: str = "viridis",
-                            ) -> plt.Axes:
+                            ) -> Axes:
         """
         Plot the 20x20 amino acid substitution-impact matrix.
 
@@ -66,7 +67,7 @@ class AAMutPlot:
         ----------
         df_impact : pd.DataFrame
             Substitution-impact table produced by :meth:`AAMut.run`.
-        ax : plt.Axes, optional
+        ax : Axes, optional
             Pre-defined Axes object to plot on. If ``None``, a new one is created.
         figsize : tuple, default=(7, 6)
             Figure dimensions (width, height) in inches (used when ``ax`` is ``None``).
@@ -75,7 +76,7 @@ class AAMutPlot:
 
         Returns
         -------
-        ax : plt.Axes
+        ax : Axes
             Axes object of the substitution matrix.
 
         Examples
@@ -98,10 +99,10 @@ class AAMutPlot:
     def scale_ranking(self,
                       df_impact: Optional[pd.DataFrame] = None,
                       top_n: int = 20,
-                      ax: Optional[plt.Axes] = None,
+                      ax: Optional[Axes] = None,
                       figsize: Tuple[Union[int, float], Union[int, float]] = (6, 5),
                       color: Optional[str] = None,
-                      ) -> plt.Axes:
+                      ) -> Axes:
         """
         Plot the per-scale ranking of substitution sensitivity.
 
@@ -114,7 +115,7 @@ class AAMutPlot:
             Substitution-impact table produced by :meth:`AAMut.run`.
         top_n : int, default=20
             Number of most sensitive scales to show.
-        ax : plt.Axes, optional
+        ax : Axes, optional
             Pre-defined Axes object to plot on. If ``None``, a new one is created.
         figsize : tuple, default=(6, 5)
             Figure dimensions (width, height) in inches (used when ``ax`` is ``None``).
@@ -123,7 +124,7 @@ class AAMutPlot:
 
         Returns
         -------
-        ax : plt.Axes
+        ax : Axes
             Axes object of the scale-ranking plot.
 
         Examples
@@ -149,9 +150,9 @@ class AAMutPlot:
                       from_aa: Optional[str] = None,
                       to_aa: Optional[str] = None,
                       top_n: int = 20,
-                      ax: Optional[plt.Axes] = None,
+                      ax: Optional[Axes] = None,
                       figsize: Tuple[Union[int, float], Union[int, float]] = (6, 5),
-                      ) -> plt.Axes:
+                      ) -> Axes:
         """
         Plot the per-scale signed delta for one amino acid substitution pair.
 
@@ -168,14 +169,14 @@ class AAMutPlot:
             Substituted-to amino acid (single letter).
         top_n : int, default=20
             Number of scales with the largest absolute delta to show.
-        ax : plt.Axes, optional
+        ax : Axes, optional
             Pre-defined Axes object to plot on. If ``None``, a new one is created.
         figsize : tuple, default=(6, 5)
             Figure dimensions (width, height) in inches (used when ``ax`` is ``None``).
 
         Returns
         -------
-        ax : plt.Axes
+        ax : Axes
             Axes object of the amino acid comparison plot.
 
         Examples
