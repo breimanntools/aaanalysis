@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.github/scripts/set_session_title.py\" 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}

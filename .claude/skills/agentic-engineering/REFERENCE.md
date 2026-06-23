@@ -106,31 +106,6 @@ code-quality job carries `paths-ignore: docs/**` and would skip exactly those. N
 drafting is still the *prevention*; the checker + the `INDEX.md` merge conflict are the backstop.
 Gaps are deliberately not flagged (an ADR on an unmerged branch leaves a normal hole).
 
-## Session self-titling (telling concurrent sessions apart)
-
-Several sessions run this repo at once, each in its own worktree, and by default every terminal
-tab looks identical (`aaanalysis — <generic> — …`), so you cannot tell which tab is which task. A
-machine-local hook fixes this: after a session has used ~1% of its context window it sets the
-terminal tab title to a descriptive label and keeps it current.
-
-- **Format:** `<topic> · PR#<n> · ADR<nnnn>` — e.g. `adr-parallel-fix · PR#233 · ADR0038`.
-  - *topic* = the branch slug with its `doc/` / `feat/` prefix stripped (the human-authored "what
-    this is about"); falls back to the worktree/repo dir name on `master`/detached.
-  - *PR#* = the open PR for the branch (one `gh` call, cached once found).
-  - *ADR* = new `docs/adr/NNNN-*.md` files introduced on the branch (added-vs-`origin/master` plus
-    still-untracked).
-- **When:** a `Stop` hook re-evaluates each turn past the ~1% gate but only re-writes the title
-  when the label actually changes — so it is silent except when the branch, PR, or ADR first
-  appears (effectively "set once, then refreshed on meaningful change"). It writes only to
-  `/dev/tty` and always exits 0.
-- **Why it matters for this protocol:** the title is only as descriptive as the branch slug, so the
-  step-2 worktree command should name the branch for the task (`feat/<slug>` / `doc/<slug>`), not a
-  throwaway. The PR/ADR segments fill in automatically as step 4 (PR) and any ADR land.
-- **Mechanism (local, not committed):** `~/.claude/set_session_title.py` invoked by a global `Stop`
-  hook in `~/.claude/settings.json`. Tunables: `CLAUDE_TITLE_THRESHOLD_CHARS` (default 8000 ≈ 1% of
-  a 200k window), `CLAUDE_TITLE_MIN_TURNS`. A global-settings edit needs a `/hooks` reload (or a
-  restart) to take effect in an already-running session; new sessions pick it up automatically.
-
 ## Parallel-session hazards (concurrent streams, one repo)
 
 Several sessions/agents work this repo at the same time. Almost every "what was already done?"

@@ -116,12 +116,6 @@ commands***. CI job names and thresholds drift — **verify the live configurati
   the step-6 skip option. Why: [REFERENCE.md](REFERENCE.md) → *Merge method*.
 - **Worktrees, not `git stash`, for isolation; one per task.** [REFERENCE.md](REFERENCE.md) →
   *Git-stash hazard* / *Parallel-session hazards*.
-- **Sessions self-title for at-a-glance disambiguation.** After ~1% of context each session sets
-  its terminal tab title to `<topic> · PR#<n> · ADR<nnnn>` — where *topic* is the branch slug —
-  and refreshes it when the PR/ADR appear, so concurrent worktrees are tellable apart. So **give
-  the branch a descriptive slug** at step 2: that slug *is* the session's topic. (Local mechanism:
-  a global `Stop` hook running `~/.claude/set_session_title.py`; details in
-  [REFERENCE.md](REFERENCE.md) → *Session self-titling*.)
 - **Fix forward, never merge red.** GitHub completes auto-merge only on all-green + conflict-free.
 - **Issue lifecycle.** Keep `Closes #NN` in the **PR body** to auto-close; remove it there to keep the
   issue open (the commit message alone isn't enough).
