@@ -588,6 +588,45 @@ Distinct from a numerical *value*: a value may drift within tolerance, a decisio
 may not (under T2) without escalating to T3.
 _Avoid_: result (overloaded), output (overloaded).
 
+### Agentic-readiness & package-boundary vocabulary
+
+These name the scope of the **agentic-readiness** program and the line between
+AAanalysis and **ProtXplain** (the downstream agent-integration package). See
+ADR-0035 (the original boundary) and ADR-0038 (the refinement below).
+
+**agentic readiness**:
+Making the OSS primitives maximally **legible, typed, contracted, and
+improvable** — for human users *and* for the coding agents that *improve* the
+package (consistent class templates, documented data contracts like `df_feat` /
+`DICT_DF_SCHEMAS`, honest type hints, tests). It is **not** an in-package
+agent-tool framework: the layer where external agents call AAanalysis *as a
+tool* is withheld to ProtXplain. Science/product work (structure-XAI, XAI-eval,
+the design bridge) is a separate track, **not** part of agentic readiness.
+_Avoid_: "agent support" (overloaded — conflates the two audiences below).
+
+**two agent audiences**:
+The distinction that resolves the word "agent". Agents that *improve* AAanalysis
+are served **in** AAanalysis (types, contracts, tests, templates). Agents that
+*use* AAanalysis as a tool are served by **ProtXplain** (the MCP /
+machine-readable tool contract). Usability + improvability stay here;
+tool-integration goes downstream.
+
+**machine-readable tool contract (boundary)**:
+The border between the two packages. The MCP server, JSON/tool schemas, verb
+orchestration, and selection/ranking/decision/OOD logic are **ProtXplain**;
+human- and sklearn-idiomatic convenience is **AAanalysis**. A boundary, like the
+**relational / interaction (scope boundary)** — not a feature AAanalysis is
+missing. See ADR-0038.
+
+**convenience facade / golden pipeline**:
+A user-facing one-call wrapper over the existing primitives, planned as the
+stateless `aaanalysis.pipe` (`aap`) namespace. Thin (no own algorithm),
+opt-in, with defaults byte-identical to the explicit primitive path; emits plain
+numpy/pandas that feed sklearn and torch equally (torch stays the `[embed]`
+extra). It is **AAanalysis**, not ProtXplain — convenience is on our side of the
+boundary.
+_Avoid_: "verb" / "tool" (those name the ProtXplain agent-integration layer).
+
 ## Relationships
 
 - A **df_seq** row contains one **entry** and one sequence; optionally a **pos column** cell of 1-based positions.
