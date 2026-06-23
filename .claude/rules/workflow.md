@@ -11,6 +11,11 @@ uv pip install -e ".[dev]"
 # run all tests
 pytest tests -x -vv --durations=20
 
+# sub-minute smoke gate — the critical CPP path end to end
+# (load -> CPP.run -> TreeModel.fit). Fast local sanity before the full suite;
+# finishes in a few seconds. Non-blocking (no dedicated CI job).
+pytest -m smoke -c tests/pytest.ini
+
 # run a single file or method
 pytest tests/unit/aa_window_sampler_tests/test_aa_window_sampler_synthetic.py -x -vv
 pytest tests/unit/aaclust_tests/test_aaclust_fit.py::TestAAclustFit::test_valid_min_th -x -vv
