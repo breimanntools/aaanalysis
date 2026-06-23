@@ -3,10 +3,17 @@
 Not path-scoped. Referenced from the root CLAUDE.md. Accepted architectural
 limitations — do not "fix" them opportunistically.
 
-- **`utils.py` is a god module (~1500 lines).** Add new constants/validators
-  to the appropriate topical block (search for the nearest `# `-style
-  section header). Splitting into `_constants.py`, `_checks/`,
-  `_plotting_glue.py`, `_data_io.py` is a v2 refactor.
+- **`utils.py` is a thinning import barrel.** The bulk of the constants now live
+  in the sibling `aaanalysis/_constants.py` and are re-exported via
+  `from ._constants import *`, so `utils.py` is ~600 lines (validators are already
+  split under `_utils/check_*.py`; the check functions are re-exported too). Add a
+  new **constant** to the appropriate topical block in `_constants.py` (it imports
+  only stdlib + numpy — never `aaanalysis.utils`, to stay circular-free); add a new
+  **helper/validator function** to `utils.py` or the relevant `_utils/*.py`. Every
+  `ut.X` access still goes through `import aaanalysis.utils as ut` — the barrel keeps
+  the access point stable. Extracting the remaining inline functions into
+  `_plotting_glue.py` / `_data_io.py` is the next (optional) slice. The barrel
+  invariants are guarded by `tests/unit/api_tests/test_utils_barrel.py`.
 - **`config.py` is documented as untested.** Adding unit tests when
   touching it is welcomed.
 - **No pre-commit, no ruff** — out of scope until v2. **Type checking is NOT deferred:**
