@@ -421,6 +421,42 @@ DICT_VALUE_TYPE = {COL_ABS_AUC: "mean",
                    COL_FEAT_IMPORT_STD: "mean",
                    COL_FEAT_IMPACT: "sum"}
 
+# df_feat interface contract — the machine-readable "data dictionary" pinning the CPP
+# output schema for downstream consumers (e.g. ProtXplain). Each entry maps a column
+# name to a (dtype, required, nullable, semantics) tuple:
+#   dtype     — coarse kind: 'str' | 'float' | 'int'
+#   required  — True only for the canonical lower-bound columns (LIST_COLS_FEAT) that
+#               every CPP.run() output carries; False = optional/dynamic (test-dependent
+#               p-value variant, diagnostic, or appended post-fit by TreeModel/ShapModel)
+#   nullable  — whether NaN is a valid value for the column
+#   semantics — one-line value meaning
+# Internal contract only (no public accessor; strict-semver caution): rendered to the
+# df_feat contract doc and guarded by tests/unit/api_tests/test_df_feat_contract.py.
+DICT_DF_FEAT = {
+    COL_FEATURE:         ("str",   True,  False, "Opaque PART-SPLIT-SCALE feature id (e.g. 'TMD_C_JMD_C-Segment(3,4)-KLEP840101'); split with split_feat_id, never parse by hand."),
+    COL_CAT:             ("str",   True,  False, "AAontology scale category of the feature's scale."),
+    COL_SUBCAT:          ("str",   True,  False, "AAontology scale subcategory."),
+    COL_SCALE_NAME:      ("str",   True,  False, "Human-readable scale name."),
+    COL_SCALE_DES:       ("str",   True,  False, "One-sentence scale description."),
+    COL_ABS_AUC:         ("float", True,  False, "Absolute adjusted AUC, range [-0.5, 0.5]; primary feature ranking statistic."),
+    COL_ABS_MEAN_DIF:    ("float", True,  False, "Absolute mean difference between test and reference group, range [0, 1]."),
+    COL_MEAN_DIF:        ("float", True,  False, "Signed mean difference (test - reference), range [-1, 1]; the sign gives the direction."),
+    COL_STD_TEST:        ("float", True,  False, "Standard deviation of the feature in the test group."),
+    COL_STD_REF:         ("float", True,  False, "Standard deviation of the feature in the reference group."),
+    COL_PVAL_MW:         ("float", True,  False, "Mann-Whitney U p-value (default, non-parametric). Named 'p_val_ttest_indep' instead when parametric=True."),
+    COL_PVAL_FDR:        ("float", True,  False, "Benjamini-Hochberg FDR-corrected p-value."),
+    COL_POSITION:        ("str",   True,  False, "Comma-separated 1-based residue positions the feature spans."),
+    # Optional / dynamic — present depending on settings or appended downstream.
+    COL_PVAL_TTEST:      ("float", False, False, "Independent t-test p-value; replaces 'p_val_mann_whitney' when parametric=True."),
+    COL_AA_TEST:         ("str",   False, False, "Amino acids at the feature positions in the test group (diagnostic)."),
+    COL_AA_REF:          ("str",   False, False, "Amino acids at the feature positions in the reference group (diagnostic)."),
+    COL_FEAT_DES:        ("str",   False, True,  "Optional readable one-sentence feature description."),
+    COL_FEAT_IMPORT:     ("float", False, False, "Feature importance from TreeModel.fit (post-fit)."),
+    COL_FEAT_IMPORT_STD: ("float", False, False, "Standard deviation of the feature importance across CV rounds (post-fit)."),
+    COL_FEAT_IMPACT:     ("float", False, False, "SHAP-based signed feature impact from ShapModel (post-fit, pro)."),
+    COL_FEAT_IMPACT_STD: ("float", False, False, "Standard deviation of the feature impact (post-fit, pro)."),
+}
+
 
 # Columns of df_eval
 # AAclust (evaluation)
