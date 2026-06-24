@@ -9,6 +9,49 @@ Welcome to the AAanalysis documentation!
 .. include:: index/badges.rst
 .. include:: index/overview.rst
 
+Find Your Way Around
+====================
+The documentation is organized into pillars, each answering one question:
+
+- **Getting Started** — *How do I install AAanalysis and get a first result?* Fast
+  onboarding, no deep theory.
+- **Tutorials** — *How does this tool work?* Tool-level teaching of the AAanalysis
+  building blocks — each tool, its parameters, and its outputs. The *mechanics*;
+  Protocols reuse these and link back rather than repeating them.
+- **Protocols** — *How do I design a valid, end-to-end analysis?* Concept-level
+  workflow teaching that builds the mental model for when and why to reach for each
+  tool — linking to the Tutorials for the mechanics, so the two never overlap.
+- **Use Cases** — *How do I adapt a full biological analysis?* End-to-end biological
+  case studies *(coming soon)*.
+- **API** — *What is the exact signature or parameter?* Technical reference only, no
+  teaching narrative.
+
+.. admonition:: Which section do I want?
+   :class: tip
+
+   - You are **new** and want a first result → **Getting Started**.
+   - You want to learn **one specific tool** (its parameters and outputs) → **Tutorials**.
+   - You want to **design a valid workflow** for a biological question → **Protocols**.
+   - You want to **adapt a complete biological analysis** → **Use Cases** *(coming soon)*.
+   - You want **exact technical details** of a function or class → **API**.
+
+.. list-table:: You want to… / Go to
+   :header-rows: 1
+   :widths: 60 40
+
+   * - You want to…
+     - Go to
+   * - Install AAanalysis and run a first CPP analysis
+     - :ref:`Getting Started <getting_started>`
+   * - Learn what a specific function does and how to call it
+     - :ref:`Tutorials <tutorials>`
+   * - Design a valid, end-to-end analysis for a biological question
+     - :ref:`Protocols <protocols>`
+   * - Adapt a full biological case study to your own data
+     - Use Cases *(coming soon)*
+   * - Look up the exact signature, parameters, or return value
+     - :doc:`API <api>`
+
 Install
 =======
 **AAanalysis** can be installed from `PyPi <https://pypi.org/project/aaanalysis>`_:
@@ -69,6 +112,13 @@ classes grouped by capability, the prediction levels (residue / domain / protein
 .. toctree::
    :maxdepth: 1
    :hidden:
+   :caption: GETTING STARTED
+
+   getting_started.rst
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
    :caption: EXAMPLES
 
    tutorials.rst
@@ -77,7 +127,7 @@ classes grouped by capability, the prediction levels (residue / domain / protein
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: REFERENCES
+   :caption: API
 
    api.rst
 
