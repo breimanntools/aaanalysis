@@ -127,7 +127,7 @@ classes grouped by capability, the prediction levels (residue / domain / protein
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: API
+   :caption: REFERENCES
 
    api.rst
 
