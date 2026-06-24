@@ -1,6 +1,7 @@
 """
 This is a script for the backend of the plotting module functions used by other AAanalysis modules.
 """
+from typing import List, Union
 import seaborn as sns
 import matplotlib as mpl
 from matplotlib import pyplot as plt
@@ -108,7 +109,7 @@ def _check_hatches(marker=None, hatch=None, list_cat=None):
     return list_hatch
 
 
-def _check_marker(marker=None, list_cat=None, lw=0):
+def _check_marker(marker=None, list_cat=None, lw: Union[int, float] = 0):
     """Check validity of markers"""
     # Add '-' for line and None for default marker
     valid_markers = [None, "-"] + list(mlines.Line2D.markers.keys())
@@ -129,7 +130,8 @@ def _check_marker(marker=None, list_cat=None, lw=0):
     return list_marker
 
 
-def _check_marker_size(marker_size=10, list_cat=None):
+def _check_marker_size(marker_size: Union[int, float, List[Union[int, float]]] = 10,
+                       list_cat=None) -> list:
     """Check size of markers"""
     # Check if marker_size is valid
     if isinstance(marker_size, (int, float)):
@@ -221,10 +223,11 @@ def plot_get_clist_(n_colors=3, cmap=None):
 
 
 def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
-                 loc="upper left", loc_out=False, y=None, x=None, n_cols=3,
+                 loc: Union[str, int] = "upper left", loc_out=False, y=None, x=None, n_cols=3,
                  labelspacing=0.2, columnspacing=1.0, handletextpad=0.8, handlelength=2.0,
                  fontsize=None, fontsize_title=None, weight_font="normal", weight_title="normal",
-                 marker=None, marker_size=10, lw=0, linestyle=None, edgecolor=None,
+                 marker=None, marker_size: Union[int, float, List[Union[int, float]]] = 10,
+                 lw: Union[int, float] = 0, linestyle=None, edgecolor=None,
                  hatch=None, hatchcolor="white", title=None, title_align_left=True,
                  frameon=False, keep_legend=False, **kwargs):
     """Sets an independently customizable plot legend"""

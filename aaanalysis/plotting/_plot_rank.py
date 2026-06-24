@@ -27,7 +27,7 @@ _DEFAULT_GROUP_COLORS = {
 }
 
 
-def _resolve_group_colors(group_order=None, dict_color=None):
+def _resolve_group_colors(group_order: List[str], dict_color: Optional[Dict[str, str]] = None):
     """Build a {group: color} map: explicit dict_color wins, then canonical defaults,
     then a curated fallback palette for any remaining groups."""
     dict_color = dict(dict_color) if dict_color is not None else {}
@@ -162,4 +162,6 @@ def plot_rank(df_rank: pd.DataFrame,
     ax.set_ylabel(ylabel, fontsize=fontsize_labels)
     ax.legend()
     sns.despine(ax=ax)
-    return fig, ax
+    # ``ax.figure`` is typed ``Figure | SubFigure | None`` by the matplotlib stubs,
+    # but a top-level Axes here always belongs to a real Figure.
+    return fig, ax  # pyright: ignore[reportReturnType]
