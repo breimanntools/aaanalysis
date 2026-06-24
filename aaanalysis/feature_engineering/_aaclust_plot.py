@@ -191,6 +191,8 @@ class AAclustPlot:
         self._random_state = random_state
         self._model_class = model_class
         self._model_kwargs = model_kwargs
+        # Output attributes (set by the plotting methods)
+        self.df_components_ = None
 
     @staticmethod
     def eval(df_eval: pd.DataFrame,
@@ -226,12 +228,13 @@ class AAclustPlot:
         Returns
         -------
         fig : Figure
-            Figure object for evaluation plot
-        axes : array of Axes
+            Figure object containing the evaluation subplots.
+        ax : array of Axes
             Array of Axes objects, each representing a subplot within the figure.
 
         Notes
         -----
+        * Returned as a ``(fig, ax)`` pair (see :class:`AAclustPlot` for the shared return contract).
         * The data is ranked in ascending order of the average ranking of the scale sets.
 
         See Also
@@ -252,7 +255,7 @@ class AAclustPlot:
                               dict_xlims=dict_xlims,
                               figsize=figsize,
                               colors=colors)
-        return fig, axes
+        return ut.FigAxResult(fig, axes)
 
     def centers(self,
                 X: Optional[ut.ArrayLike2D] = None,
@@ -267,7 +270,7 @@ class AAclustPlot:
                 dot_size: int = 100,
                 dot_alpha: Union[int, float] = 0.75,
                 palette: Optional[mpl.colors.ListedColormap] = None,
-                ) -> Tuple[Axes, pd.DataFrame]:
+                ) -> Tuple[Figure, Axes]:
         """
         Create a Principal Component Analysis (PCA) plot of clustering results with cluster
         centers highlighted.
@@ -312,13 +315,15 @@ class AAclustPlot:
 
         Returns
         -------
+        fig : Figure
+            Figure object containing the PCA plot.
         ax : Axes
             PCA plot axes object.
-        df_components : pd.DataFrame
-            DataFrame with the PCA components.
 
         Notes
         -----
+        * Returned as a ``(fig, ax)`` pair (see :class:`AAclustPlot` for the shared return contract);
+          the PCA-component DataFrame shown here is stored on the instance as ``df_components_``.
         * Pass **scales** via ``df_scales`` (transposed for you) and **proteins / embeddings /
           CPP features** via ``X`` (a samples-by-features matrix, used as-is) — never transpose
           manually.
@@ -354,7 +359,8 @@ class AAclustPlot:
                                                   ax=ax, figsize=figsize,
                                                   dot_size=dot_size, dot_alpha=dot_alpha,
                                                   legend=legend, palette=palette)
-        return ax, df_components
+        self.df_components_ = df_components
+        return ut.FigAxResult(ax.get_figure(), ax)
 
 
     def medoids(self,
@@ -371,7 +377,7 @@ class AAclustPlot:
                 dot_size: int = 100,
                 dot_alpha: Union[int, float] = 0.75,
                 palette: Optional[mpl.colors.ListedColormap] = None,
-                ) -> Tuple[Axes, pd.DataFrame]:
+                ) -> Tuple[Figure, Axes]:
         """
         Principal Component Analysis (PCA) plot of clustering with medoids highlighted.
 
@@ -423,13 +429,15 @@ class AAclustPlot:
 
         Returns
         -------
+        fig : Figure
+            Figure object containing the PCA plot.
         ax : Axes
             PCA plot axes object.
-        df_components : pd.DataFrame
-            DataFrame with the PCA components.
 
         Notes
         -----
+        * Returned as a ``(fig, ax)`` pair (see :class:`AAclustPlot` for the shared return contract);
+          the PCA-component DataFrame shown here is stored on the instance as ``df_components_``.
         * Pass **scales** via ``df_scales`` (transposed for you) and **proteins / embeddings /
           CPP features** via ``X`` (a samples-by-features matrix, used as-is) — never transpose
           manually.
@@ -466,7 +474,8 @@ class AAclustPlot:
                                                   ax=ax, figsize=figsize,
                                                   dot_size=dot_size, dot_alpha=dot_alpha,
                                                   legend=legend, palette=palette)
-        return ax, df_components
+        self.df_components_ = df_components
+        return ut.FigAxResult(ax.get_figure(), ax)
 
     def correlation(self,
                     df_corr: pd.DataFrame,
@@ -486,7 +495,7 @@ class AAclustPlot:
                     vmax: float = 1.0,
                     cmap: str = "viridis",
                     kwargs_heatmap: Optional[dict] = None
-                    ) -> Axes:
+                    ) -> Tuple[Figure, Axes]:
         """
         Heatmap for correlation matrix with colored sidebar to label clusters.
 
@@ -536,11 +545,14 @@ class AAclustPlot:
 
         Returns
         -------
+        fig : Figure
+            Figure object containing the correlation heatmap.
         ax : Axes
             Axes object with the correlation heatmap.
 
         Notes
         -----
+        * Returned as a ``(fig, ax)`` pair (see :class:`AAclustPlot` for the shared return contract).
         * Ensure ``labels`` and ``df_corr`` are in the same order to avoid mislabeling.
         * ``bar_tick_labels=True`` will remove tick labels and set them as text for optimal spacing
           so that they can not be adjusted or retrieved afterward (e.g., via `ax.get_xticklabels()`).
@@ -591,4 +603,4 @@ class AAclustPlot:
             str_error = f"Following error occurred due to sns.heatmap() function: {e}"
             raise ValueError(str_error)
         plt.tight_layout()
-        return ax
+        return ut.FigAxResult(ax.get_figure(), ax)

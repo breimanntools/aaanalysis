@@ -37,7 +37,7 @@ class TestCPPPlotFeature:
         random_features = random.sample(features, 10)
         cpp_plot = aa.CPPPlot()
         for feature in random_features:
-            ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels)
+            _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels)
             assert isinstance(ax, plt.Axes)
             plt.close()
 
@@ -46,7 +46,7 @@ class TestCPPPlotFeature:
         df_seq, labels, df_feat = get_input()
         features = random.sample(df_feat["feature"].to_list(), 5)
         cpp_plot = aa.CPPPlot()
-        ax = cpp_plot.feature(feature=features, df_seq=df_seq, labels=labels)
+        _, ax = cpp_plot.feature(feature=features, df_seq=df_seq, labels=labels)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -54,7 +54,7 @@ class TestCPPPlotFeature:
         # feature accepts a whole df_feat; its 'feature' column supplies the ids
         df_seq, labels, df_feat = get_input()
         cpp_plot = aa.CPPPlot()
-        ax = cpp_plot.feature(feature=df_feat.head(10), df_seq=df_seq, labels=labels)
+        _, ax = cpp_plot.feature(feature=df_feat.head(10), df_seq=df_seq, labels=labels)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -64,7 +64,7 @@ class TestCPPPlotFeature:
         features = random.sample(df_feat["feature"].to_list(), 5)
         cpp_plot = aa.CPPPlot()
         for feat_rank in range(1, len(features) + 1):
-            ax = cpp_plot.feature(feature=features, df_seq=df_seq, labels=labels, feat_rank=feat_rank)
+            _, ax = cpp_plot.feature(feature=features, df_seq=df_seq, labels=labels, feat_rank=feat_rank)
             assert isinstance(ax, plt.Axes)
             plt.close()
 
@@ -89,7 +89,7 @@ class TestCPPPlotFeature:
         rng.shuffle(pool)
         features, seen = [], set()
         for feature in pool:
-            sig = _kde_signature(cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels))
+            sig = _kde_signature(cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels)[1])
             plt.close("all")
             if sig not in seen:
                 seen.add(sig)
@@ -100,8 +100,8 @@ class TestCPPPlotFeature:
 
         sigs = []
         for k in range(1, len(features) + 1):
-            ax_rank = cpp_plot.feature(feature=features, df_seq=df_seq, labels=labels, feat_rank=k)
-            ax_direct = cpp_plot.feature(feature=features[k - 1], df_seq=df_seq, labels=labels)
+            _, ax_rank = cpp_plot.feature(feature=features, df_seq=df_seq, labels=labels, feat_rank=k)
+            _, ax_direct = cpp_plot.feature(feature=features[k - 1], df_seq=df_seq, labels=labels)
             sig_rank = _kde_signature(ax_rank)
             assert sig_rank == _kde_signature(ax_direct)
             sigs.append(sig_rank)
@@ -137,7 +137,7 @@ class TestCPPPlotFeature:
             df_seq = aa.load_dataset(name=name, n=10, min_len=50)
             labels = df_seq["label"].to_list()
             for feature in random_features:
-                ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels)
+                _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels)
                 assert isinstance(ax, plt.Axes)
                 plt.close()
 
@@ -148,7 +148,7 @@ class TestCPPPlotFeature:
         random_features = random.sample(features, 5)
         cpp_plot = aa.CPPPlot()
         for feature in random_features:
-            ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, label_test=10)
+            _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, label_test=10)
             assert isinstance(ax, plt.Axes)
             plt.close()
 
@@ -159,7 +159,7 @@ class TestCPPPlotFeature:
         random_features = random.sample(features, 5)
         cpp_plot = aa.CPPPlot()
         for feature in random_features:
-            ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, label_ref=10)
+            _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, label_ref=10)
             assert isinstance(ax, plt.Axes)
             plt.close()
 
@@ -167,11 +167,11 @@ class TestCPPPlotFeature:
         df_seq, labels, df_feat = get_input()
         feature = df_feat["feature"].to_list()[0]
         cpp_plot = aa.CPPPlot()
-        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, ax=None)
+        _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, ax=None)
         assert isinstance(ax, plt.Axes)
         plt.close(ax.figure)
         fig, ax_in = plt.subplots()
-        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, ax=ax_in)
+        _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, ax=ax_in)
         assert isinstance(ax, plt.Axes)
         plt.close(fig)
 
@@ -184,7 +184,7 @@ class TestCPPPlotFeature:
         cpp_plot = aa.CPPPlot()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
-            ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, figsize=figsize)
+            _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, figsize=figsize)
             assert isinstance(ax, plt.Axes)
             plt.close()
 
@@ -198,7 +198,7 @@ class TestCPPPlotFeature:
         # Randomly sample up to 6 names from list_names
         names_to_show = random.sample(list_names, min(len(list_names), 6))
         cpp_plot = aa.CPPPlot()
-        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, names_to_show=names_to_show)
+        _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, names_to_show=names_to_show)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -214,7 +214,7 @@ class TestCPPPlotFeature:
         features = df_feat["feature"].to_list()
         feature = random.choice(features)
         cpp_plot = aa.CPPPlot()
-        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, name_test=name_test, name_ref=name_ref)
+        _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, name_test=name_test, name_ref=name_ref)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -226,7 +226,7 @@ class TestCPPPlotFeature:
         features = df_feat["feature"].to_list()
         feature = random.choice(features)
         cpp_plot = aa.CPPPlot()
-        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, color_test=color_test, color_ref=color_ref)
+        _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, color_test=color_test, color_ref=color_ref)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -237,7 +237,7 @@ class TestCPPPlotFeature:
         features = df_feat["feature"].to_list()
         feature = random.sample(features, 10)[0]
         cpp_plot = aa.CPPPlot()
-        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, show_seq=show_seq)
+        _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, show_seq=show_seq)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -246,7 +246,7 @@ class TestCPPPlotFeature:
         df_seq, labels, df_feat = get_input()
         cpp_plot = aa.CPPPlot()
         plt.close("all")
-        ax = cpp_plot.feature(feature=VALID_FEATURE, df_seq=df_seq, labels=labels, show_title=show_title)
+        _, ax = cpp_plot.feature(feature=VALID_FEATURE, df_seq=df_seq, labels=labels, show_title=show_title)
         assert isinstance(ax, plt.Axes)
         # Title present iff show_title; when present it is the wrapped feature description
         if show_title:
@@ -264,7 +264,7 @@ class TestCPPPlotFeature:
         df_seq, labels, df_feat = get_input()
         cpp_plot = aa.CPPPlot()
         plt.close("all")
-        ax = cpp_plot.feature(feature=VALID_FEATURE, df_seq=df_seq, labels=labels,
+        _, ax = cpp_plot.feature(feature=VALID_FEATURE, df_seq=df_seq, labels=labels,
                               title_wrap_width=title_wrap_width)
         assert isinstance(ax, plt.Axes)
         # Every wrapped line stays within the requested width
@@ -278,7 +278,7 @@ class TestCPPPlotFeature:
         features = df_feat["feature"].to_list()
         feature = random.sample(features, 10)[0]
         cpp_plot = aa.CPPPlot()
-        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, histplot=histplot)
+        _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, histplot=histplot)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -289,7 +289,7 @@ class TestCPPPlotFeature:
         features = df_feat["feature"].to_list()
         feature = random.choice(features)
         cpp_plot = aa.CPPPlot()
-        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, alpha_hist=alpha_hist, alpha_dif=alpha_dif)
+        _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, alpha_hist=alpha_hist, alpha_dif=alpha_dif)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -300,7 +300,7 @@ class TestCPPPlotFeature:
         features = df_feat["feature"].to_list()
         feature = random.choice(features)
         cpp_plot = aa.CPPPlot()
-        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, fontsize_mean_dif=fontsize_mean_dif)
+        _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, fontsize_mean_dif=fontsize_mean_dif)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -311,7 +311,7 @@ class TestCPPPlotFeature:
         features = df_feat["feature"].to_list()
         feature = random.choice(features)
         cpp_plot = aa.CPPPlot()
-        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, fontsize_name_test=fontsize_name_test)
+        _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, fontsize_name_test=fontsize_name_test)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -322,7 +322,7 @@ class TestCPPPlotFeature:
         features = df_feat["feature"].to_list()
         feature = random.choice(features)
         cpp_plot = aa.CPPPlot()
-        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, fontsize_name_ref=fontsize_name_ref)
+        _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, fontsize_name_ref=fontsize_name_ref)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -333,7 +333,7 @@ class TestCPPPlotFeature:
         features = df_feat["feature"].to_list()
         feature = random.choice(features)
         cpp_plot = aa.CPPPlot()
-        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels,
+        _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels,
                               fontsize_names_to_show=fontsize_names_to_show)
         assert isinstance(ax, plt.Axes)
         plt.close()
@@ -456,7 +456,7 @@ class TestComplexCPPPlotFeature:
         names_to_show = random.sample([f"Protein {i}" for i in range(len(df_seq))], 3)
         df_seq["name"] = [f"Protein {i}" for i in range(len(df_seq))]
 
-        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, label_test=label_test, label_ref=label_ref,
+        _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels, label_test=label_test, label_ref=label_ref,
                               figsize=figsize, color_test=color_test, color_ref=color_ref, show_seq=show_seq,
                               names_to_show=names_to_show)
         assert isinstance(ax, plt.Axes)

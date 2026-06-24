@@ -8,8 +8,19 @@ paths:
 
 # Plotting
 
-- Library code **never** calls `plt.show()`. Return `fig` / `ax` or mutate the
-  passed `ax`.
+- **One return contract: every public `*Plot` method returns `(fig, ax)`.**
+  Return `ut.FigAxResult(fig, ax)` — a thin `tuple` subclass that unpacks as
+  `fig, ax = ...` and also forwards attribute access to `ax` (so legacy
+  `ax = ...; ax.set_title(...)` keeps working). For an Axes-only computation
+  derive the figure with `ax.get_figure()`. The second element is a single `Axes`
+  or an array of `Axes` (multi-panel `eval` / `multi_logo`). Methods that also
+  produce data (`AAclustPlot.centers` / `medoids`) store it on a trailing-
+  underscore attribute (`self.df_components_`), **not** a third tuple element.
+  numpydoc `Returns` names `fig` then `ax`. Enforced by
+  `tests/unit/api_tests/test_plot_return_contract.py`. The sole exception is
+  `CPPStructurePlot`, which returns a `StructureView` wrapper (see ADR-0028).
+- Library code **never** calls `plt.show()`. Return the `(fig, ax)` pair or
+  mutate the passed `ax`.
 - Colors come from `ut.COLOR_*` and `ut.DICT_COLOR*`. Do not hardcode hex
   values.
 - `plot_settings()` mutates rcParams globally — call only from user-facing

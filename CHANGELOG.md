@@ -41,6 +41,16 @@ and a suite of site-localization metrics and plotting helpers.
 - This `CHANGELOG.md`.
 
 ### Changed
+- **Uniform plot return contract: every `*Plot` method now returns a `(fig, ax)`
+  pair.** Previously the methods returned three inconsistent shapes (`(fig, ax)`,
+  a bare `Axes`, or `(ax, df)`). The returned object is a thin tuple subclass that
+  unpacks as `fig, ax = plot(...)` and also forwards attribute access to `ax`, so
+  legacy `ax = plot(...); ax.set_title(...)` keeps working — this part is
+  backward-compatible. **Breaking (scheduled for the next major):**
+  `AAclustPlot.centers` / `medoids` now return `(fig, ax)` and expose the
+  PCA-component DataFrame on the `df_components_` attribute instead of as the
+  second return value, so `ax, df = centers(...)` no longer unpacks correctly —
+  use `fig, ax = centers(...)` then read `aac_plot.df_components_`.
 - **CPP performance work lands in this release.** The Cython feature-matrix
   kernel, macOS-safe threaded `n_jobs`, scale / AA-index caching, and scale /
   sample batching together replace the hour-long, low-CPU runs seen on `1.0.3`

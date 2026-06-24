@@ -662,6 +662,25 @@ default (`find_features(dpulearn=True, subcategories=…)`); promoted to a stand
 need — never both a flag and a function for the same canonical path.
 _Avoid_: "helper" (overloaded); making every Means a standalone function.
 
+### Plotting return-contract vocabulary
+
+**FigAxResult / `(fig, ax)` contract**:
+The single return shape of every public `*Plot` method (`AAclustPlot`, `CPPPlot`,
+`dPULearnPlot`, `AAMutPlot`, `SeqMutPlot`, `AAlogoPlot`). `FigAxResult` is a thin
+`tuple` subclass (`ut.FigAxResult`) that unpacks as `fig, ax = ...` and indexes
+like a 2-tuple, and **also forwards attribute access to `ax`** so legacy
+`ax = ...; ax.set_title(...)` still works — the proxy that lets the unification
+land without breaking the previously Axes-only methods. The second element is a
+single `Axes` or an array of `Axes` (multi-panel `eval` / `multi_logo`). Methods
+that also yield a DataFrame (`AAclustPlot.centers` / `medoids`) put it on the
+trailing-underscore attribute **`df_components_`**, not a third tuple element.
+Replaces the historical three-shape mess (`(fig, ax)` / bare `Axes` /
+`(ax, df)`). The `centers` / `medoids` unpacking change is the one genuinely
+breaking part, scheduled for the next major. The lone exception to the contract
+is `CPPStructurePlot`, which returns a `StructureView` (ADR-0028). See ADR-0039.
+_Avoid_: "returns an Axes" / "returns a figure" (it returns the `(fig, ax)` pair);
+"third return value" for `centers`/`medoids` (the DataFrame is an attribute).
+
 ## Relationships
 
 - A **df_seq** row contains one **entry** and one sequence; optionally a **pos column** cell of 1-based positions.

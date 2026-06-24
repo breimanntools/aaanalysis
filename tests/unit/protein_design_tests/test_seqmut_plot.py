@@ -21,28 +21,28 @@ class TestSeqMutPlotInit:
 
 class TestMutationLandscape:
     def test_returns_axes(self, df_scan):
-        ax = aa.SeqMutPlot().mutation_landscape(df_scan=df_scan)
+        _, ax = aa.SeqMutPlot().mutation_landscape(df_scan=df_scan)
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
     def test_entry(self, df_scan):
-        ax = aa.SeqMutPlot().mutation_landscape(df_scan=df_scan, entry="P2")
+        _, ax = aa.SeqMutPlot().mutation_landscape(df_scan=df_scan, entry="P2")
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
     def test_on_passed_ax(self, df_scan):
         fig, ax = plt.subplots()
-        out = aa.SeqMutPlot().mutation_landscape(df_scan=df_scan, ax=ax)
+        _, out = aa.SeqMutPlot().mutation_landscape(df_scan=df_scan, ax=ax)
         assert out is ax
         plt.close("all")
 
     def test_figsize(self, df_scan):
-        ax = aa.SeqMutPlot().mutation_landscape(df_scan=df_scan, figsize=(6, 4))
+        _, ax = aa.SeqMutPlot().mutation_landscape(df_scan=df_scan, figsize=(6, 4))
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
     def test_cmap(self, df_scan):
-        ax = aa.SeqMutPlot().mutation_landscape(df_scan=df_scan, cmap="magma")
+        _, ax = aa.SeqMutPlot().mutation_landscape(df_scan=df_scan, cmap="magma")
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
@@ -57,22 +57,22 @@ class TestMutationLandscape:
 
 class TestResidueMutationImpact:
     def test_returns_axes(self, df_scan):
-        ax = aa.SeqMutPlot().residue_mutation_impact(df_scan=df_scan, pos=12)
+        _, ax = aa.SeqMutPlot().residue_mutation_impact(df_scan=df_scan, pos=12)
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
     def test_entry_and_pos(self, df_scan):
-        ax = aa.SeqMutPlot().residue_mutation_impact(df_scan=df_scan, entry="P2", pos=12)
+        _, ax = aa.SeqMutPlot().residue_mutation_impact(df_scan=df_scan, entry="P2", pos=12)
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
     def test_color(self, df_scan):
-        ax = aa.SeqMutPlot().residue_mutation_impact(df_scan=df_scan, pos=12, color="green")
+        _, ax = aa.SeqMutPlot().residue_mutation_impact(df_scan=df_scan, pos=12, color="green")
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
     def test_figsize(self, df_scan):
-        ax = aa.SeqMutPlot().residue_mutation_impact(df_scan=df_scan, pos=12, figsize=(5, 4))
+        _, ax = aa.SeqMutPlot().residue_mutation_impact(df_scan=df_scan, pos=12, figsize=(5, 4))
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 

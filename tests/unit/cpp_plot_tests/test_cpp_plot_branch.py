@@ -215,7 +215,7 @@ class TestCPPPlotBranch:
         feature = aa.load_features()["feature"].iloc[0]
         cpp_plot = aa.CPPPlot()
         plt.figure()  # ensure plt.get_fignums() is non-empty
-        ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels)
+        _, ax = cpp_plot.feature(feature=feature, df_seq=df_seq, labels=labels)
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 

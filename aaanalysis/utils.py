@@ -97,7 +97,8 @@ from ._utils.utils_plot_parts import (add_tmd_jmd_bar,
 # External (system-level) utility functions (only backend)
 from ._utils.plotting import (plot_gco,
                               plot_get_clist_,
-                              plot_legend_)
+                              plot_legend_,
+                              FigAxResult)
 from ._utils.metrics import (auc_adjusted_,
                              kullback_leibler_divergence_,
                              bic_score_,
