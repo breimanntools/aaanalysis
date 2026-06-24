@@ -648,7 +648,7 @@ calling a **Means** a golden pipeline (only an **End** is one).
 **End** (golden pipeline):
 A golden pipeline that returns a **deliverable** — the thing the user wanted:
 `obtain_samples` (→ training set + validation report), `find_features`
-(→ `df_feat` + map), `predict_labels` (→ model + `df_eval`), `explain_features`
+(→ `df_feat` + map), `predict_samples` (→ model + `df_eval`), `explain_features`
 (→ SHAP + map, *pro*), `design_mutations` (→ ΔCPP table), `evaluate_models`
 (→ repeated-CV + CIs). Returns the uniform triple `(results, figs, evals)` — each
 slot a bare object or `None` (a plotting End sets `figs=None` when `plot=False`;
