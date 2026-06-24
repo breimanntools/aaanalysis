@@ -15,13 +15,15 @@ sklearn-idiomatic convenience only.
 
 Public objects
 --------------
-* :func:`predict` — build the feature matrix from ``df_feat`` and fit + evaluate a :class:`TreeModel`.
+* :func:`predict_samples` — build the feature matrix from ``df_feat`` and fit + evaluate a
+  :class:`TreeModel`, returning the uniform ``(model, None, df_eval)`` pipeline triple.
 
 See Also
 --------
 * :mod:`aaanalysis.feature_engineering` — the primitives these pipelines wrap.
-* :mod:`aaanalysis.explainable_ai` — :class:`TreeModel`, the predictor used by :func:`predict`.
+* :mod:`aaanalysis.explainable_ai` — :class:`TreeModel`, the predictor used by
+  :func:`predict_samples`.
 """
-from ._pipelines import predict
+from ._pipelines import predict_samples
 
-__all__ = ["predict"]
+__all__ = ["predict_samples"]

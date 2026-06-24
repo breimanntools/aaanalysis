@@ -15,15 +15,15 @@ from aaanalysis.explainable_ai import TreeModel
 
 
 # II Main Functions
-def predict(df_feat: pd.DataFrame,
-            df_parts: pd.DataFrame,
-            labels: ut.ArrayLike1D,
-            list_model_classes: Optional[List[Type[Union[ClassifierMixin, BaseEstimator]]]] = None,
-            n_cv: int = 5,
-            random_state: Optional[int] = None,
-            n_jobs: Optional[int] = None,
-            verbose: bool = False,
-            ) -> Tuple[TreeModel, pd.DataFrame]:
+def predict_samples(df_feat: pd.DataFrame,
+                    df_parts: pd.DataFrame,
+                    labels: ut.ArrayLike1D,
+                    list_model_classes: Optional[List[Type[Union[ClassifierMixin, BaseEstimator]]]] = None,
+                    n_cv: int = 5,
+                    random_state: Optional[int] = None,
+                    n_jobs: Optional[int] = None,
+                    verbose: bool = False,
+                    ) -> Tuple[TreeModel, None, pd.DataFrame]:
     """
     Predict from a feature set in one call: build the feature matrix, fit tree models, and evaluate.
 
@@ -57,6 +57,9 @@ def predict(df_feat: pd.DataFrame,
     -------
     model : TreeModel
         The fitted :class:`TreeModel` instance.
+    figs : None
+        Always ``None`` — prediction draws no plot by default (the slot reserved for a future
+        evaluation plot keeps the uniform ``(results, figs, evals)`` pipeline return shape).
     df_eval : pd.DataFrame
         Cross-validated evaluation results for the fitted feature selection.
 
@@ -67,7 +70,7 @@ def predict(df_feat: pd.DataFrame,
 
     Examples
     --------
-    .. include:: examples/aap_predict.rst
+    .. include:: examples/aap_predict_samples.rst
     """
     # Validate (thin facade: the wrapped primitives validate the rest)
     df_feat = ut.check_df_feat(df_feat=df_feat)
@@ -82,4 +85,5 @@ def predict(df_feat: pd.DataFrame,
     tm = TreeModel(list_model_classes=list_model_classes, random_state=random_state, verbose=verbose)
     tm.fit(X, labels=labels, n_cv=n_cv)
     df_eval = tm.eval(X, labels=labels, list_is_selected=[tm.is_selected_], n_cv=n_cv)
-    return tm, df_eval
+    # Uniform (results, figs, evals) pipeline return triple; figs=None (no plot drawn)
+    return tm, None, df_eval
