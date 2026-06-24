@@ -1,25 +1,32 @@
 #!/usr/bin/env python3
 """Give every Claude Code session a descriptive terminal tab title, so parallel
-sessions running in different git worktrees are tellable apart at a glance.
+sessions (each driving its own git worktree) are tellable apart at a glance.
 
-Wired as a Stop hook (fires when Claude finishes a turn). Once the session has
-used ~1% of the context window it starts maintaining the tab title; it only
-re-writes the title when the computed label actually changes, so it is silent
-otherwise (effectively "set once, then refreshed only when something meaningful
-changes" — e.g. when a branch is created, a PR is opened, or an ADR is added).
+Wired as a Stop hook (fires when Claude finishes a turn). It maintains the title
+from the **very first turn** (no warm-up gate) and only re-writes it when the
+computed label actually changes, so it is silent otherwise — refreshed only when
+something meaningful changes (a PR is opened, an ADR is added, the active
+worktree switches).
 
 Title format — topic first, then the key IDs that exist:
 
     <topic> · PR#<n> · ADR<nnnn>     e.g.  adr-parallel-fix · PR#233 · ADR0038
 
   * topic : the branch slug ("doc/x-y" -> "x-y") — the human-authored "what this
-            is about"; falls back to the worktree/repo dir name on master/detached.
-  * PR#   : the open PR for the branch (one `gh` call, cached once found).
-  * ADR   : new docs/adr/NNNN-*.md files introduced on the branch.
+            is about".
+  * PR#   : the open PR for that branch.
+  * ADR   : new docs/adr/NNNN-*.md files introduced on that branch.
 
-Tunables (env vars):
-    CLAUDE_TITLE_THRESHOLD_CHARS   transcript bytes that count as ~1% usage (default 8000)
-    CLAUDE_TITLE_MIN_TURNS         fallback turn count if no transcript size is available (default 2)
+Resolving the topic works **from any checkout, including the main one on
+master**: if the session's own checkout is on a feature branch, that branch is
+the topic; otherwise (master / main / detached — the common case when a session
+is launched from the primary checkout and ``cd``s into per-task worktrees) it
+attributes the session to the feature worktree **whose path appears most
+recently in this session's own transcript** (the ``cd`` / edit targets a Stop
+hook cannot otherwise see from a master ``cwd``). That correctly distinguishes
+parallel sessions each driving a different worktree — a plain "most recent
+commit" guess would mislabel one session with another's branch. Only when the
+transcript names no feature worktree does it fall back to the repo dir name.
 
 Writes only to /dev/tty (never stdout, which would be injected into the
 conversation) and always exits 0 so it can never block a turn.
@@ -31,8 +38,61 @@ import subprocess
 import sys
 import tempfile
 
-THRESHOLD_CHARS = int(os.environ.get("CLAUDE_TITLE_THRESHOLD_CHARS", "8000"))
-MIN_TURNS = int(os.environ.get("CLAUDE_TITLE_MIN_TURNS", "2"))
+
+def _sh(args, timeout=8, cwd=None):
+    try:
+        return subprocess.check_output(
+            args, stderr=subprocess.DEVNULL, text=True, timeout=timeout, cwd=cwd).strip()
+    except Exception:
+        return ""
+
+
+def _feature_worktrees(cwd):
+    """Return ``[(branch, path), ...]`` for every worktree on a feature branch
+    (i.e. not master/main), parsed from ``git worktree list --porcelain``."""
+    out = _sh(["git", "-C", cwd, "worktree", "list", "--porcelain"])
+    res = []
+    path = branch = None
+
+    def _flush():
+        if path and branch and branch not in ("master", "main"):
+            res.append((branch, path))
+
+    for line in out.splitlines():
+        if line.startswith("worktree "):
+            _flush()
+            path, branch = line[len("worktree "):], None
+        elif line.startswith("branch "):
+            branch = line[len("branch "):].replace("refs/heads/", "")
+    _flush()
+    return res
+
+
+def _worktree_from_transcript(tpath, worktrees):
+    """Pick the feature worktree this session is actually driving: the one whose
+    path appears latest in the session transcript. ``("", "")`` if none appear.
+
+    The Stop hook only sees the session ``cwd`` (often the master checkout), but
+    the transcript records the ``cd`` / edit paths, so the most-recently-mentioned
+    worktree path is this session's own — not a sibling session's."""
+    if not tpath or not worktrees or not os.path.exists(tpath):
+        return ("", "")
+    try:
+        # The tail is enough and bounds the read on long sessions.
+        with open(tpath, "rb") as fh:
+            fh.seek(0, os.SEEK_END)
+            size = fh.tell()
+            fh.seek(max(0, size - 262144))
+            text = fh.read().decode("utf-8", "ignore")
+    except Exception:
+        return ("", "")
+    best = None  # (last_index, branch, path)
+    for branch, path in worktrees:
+        idx = text.rfind(path)
+        if idx >= 0 and (best is None or idx > best[0]):
+            best = (idx, branch, path)
+    return (best[1], best[2]) if best else ("", "")
+
 
 try:
     data = json.load(sys.stdin)
@@ -50,47 +110,33 @@ try:
 except Exception:
     state = {}
 
-# Gate: has the session used ~1% of context yet? Prefer transcript size; fall
-# back to a per-session turn counter when no transcript path is provided.
-used_chars = os.path.getsize(tpath) if tpath and os.path.exists(tpath) else 0
-ready = used_chars >= THRESHOLD_CHARS
-if not ready and used_chars == 0:
-    n = int(state.get("turns", 0)) + 1
-    state["turns"] = n
-    ready = n >= MIN_TURNS
-    try:
-        json.dump(state, open(state_path, "w"))
-    except Exception:
-        pass
-if not ready:
-    sys.exit(0)
-
-
-def _sh(args, timeout=8):
-    try:
-        return subprocess.check_output(
-            args, stderr=subprocess.DEVNULL, text=True, timeout=timeout).strip()
-    except Exception:
-        return ""
-
-
-# Topic = branch slug (the human-authored "what this is about"); fall back to the
-# worktree/repo dir name on master/detached.
+# Topic = branch slug. Prefer the session checkout's own branch; otherwise (the
+# master/main/detached case) the most-recently-active feature worktree; finally
+# the repo dir name. ``meta_tree`` / ``meta_branch`` are where PR + ADR metadata
+# for that topic is read from.
 repo = os.path.basename((_sh(["git", "-C", cwd, "rev-parse", "--show-toplevel"]) or cwd).rstrip("/")) or "session"
 branch = _sh(["git", "-C", cwd, "branch", "--show-current"])
-on_branch = bool(branch) and branch not in ("master", "main")
-topic = branch.split("/", 1)[-1] if on_branch else repo
+if branch and branch not in ("master", "main"):
+    topic, meta_branch, meta_tree = branch.split("/", 1)[-1], branch, cwd
+else:
+    wt_branch, wt_path = _worktree_from_transcript(tpath, _feature_worktrees(cwd))
+    if wt_branch:
+        topic, meta_branch, meta_tree = wt_branch.split("/", 1)[-1], wt_branch, wt_path
+    else:
+        topic, meta_branch, meta_tree = repo, "", cwd
 
-# PR number — network, so cache it once found and only probe while on a real branch.
+# PR number — network, so cache it once found; re-probe if the active branch
+# changed under the session (e.g. a different worktree became the most recent).
 pr = str(state.get("pr") or "")
-if not pr and on_branch:
-    got = _sh(["gh", "pr", "view", "--json", "number", "-q", ".number"])
+if meta_branch and (not pr or state.get("pr_branch") != meta_branch):
+    got = _sh(["gh", "pr", "view", meta_branch, "--json", "number", "-q", ".number"], cwd=meta_tree)
     pr = got if got.isdigit() else ""
 
-# ADR(s) introduced on this branch: added-vs-origin/master + still-untracked.
-adr_lines = _sh(["git", "-C", cwd, "diff", "--name-only", "--diff-filter=A",
-                 "origin/master...HEAD", "--", "docs/adr"]).splitlines()
-adr_lines += _sh(["git", "-C", cwd, "ls-files", "--others", "--exclude-standard",
+# ADR(s) introduced on that branch: added-vs-origin/master + still-untracked.
+ref = meta_branch or "HEAD"
+adr_lines = _sh(["git", "-C", meta_tree, "diff", "--name-only", "--diff-filter=A",
+                 "origin/master...%s" % ref, "--", "docs/adr"]).splitlines()
+adr_lines += _sh(["git", "-C", meta_tree, "ls-files", "--others", "--exclude-standard",
                   "docs/adr"]).splitlines()
 adrs = []
 for f in adr_lines:
@@ -119,6 +165,7 @@ if label != state.get("label"):
 
 state["label"] = label
 state["pr"] = pr
+state["pr_branch"] = meta_branch
 try:
     json.dump(state, open(state_path, "w"))
 except Exception:
