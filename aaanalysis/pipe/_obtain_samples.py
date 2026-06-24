@@ -193,10 +193,9 @@ def _plot_logo_comparison(df_samples) -> List[Axes]:
     """
     aal = AAlogo(logo_type="information")
     list_df_logo, list_names = [], []
+    # groupby yields only non-empty groups, so every role has at least one window.
     for role, df_group in df_samples.groupby(ut.COL_ROLE, sort=False):
         windows = list(df_group[ut.COL_WINDOW])
-        if not windows:
-            continue
         df_parts = pd.DataFrame({ut.COL_TMD: windows})
         list_df_logo.append(aal.get_df_logo(df_parts=df_parts))
         list_names.append(f"{role} (n={len(windows)})")
