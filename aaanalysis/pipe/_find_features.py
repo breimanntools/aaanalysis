@@ -1,47 +1,60 @@
 """
 This is a script for the frontend of the ``aaanalysis.pipe`` (aap) ``find_features`` golden
-pipeline: a staged, interpretable CPP AutoML search. It sweeps the CPP feature space
-(Split x Part x Scale -> Filter), selects the best configuration by cross-validated model
-performance, ranks the winning features by tree-based importance, and draws the feature map.
+pipeline: a staged, interpretable CPP AutoML search. Stage 1 cross-validates the full Cartesian
+Part x Split x Scale grid and ranks each axis by its marginal-mean impact; Stage 2 refines the
+single highest-impact axis against ``n_filter``; Stage 3 refines the winning feature set
+(``CPP.simplify`` + RFE). Selection is multi-objective: per stage, the Pareto-optimal-then-simplest
+configuration across all metrics wins, scored by the average cross-validated performance of one or
+more models.
 """
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Union, Dict
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
+from sklearn.base import BaseEstimator
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_validate
 
 import aaanalysis.utils as ut
 from aaanalysis.feature_engineering import SequenceFeature, CPP, CPPGrid, CPPPlot
 from aaanalysis.explainable_ai import TreeModel
 from aaanalysis.data_handling import load_scales
-from ._eval_plot import plot_eval
 
 
 # I Helper Functions
-# Optimization-mode sweep grids. Each mode names the CPP levers ``find_features`` sweeps:
-# "fast" runs a single default configuration (no sweep, no selection); "balanced" sweeps the
-# Split levers (which split types, granularity) and ``n_filter`` over default parts/scales;
-# "exhaustive" additionally sweeps the Part region set and the Scale breadth. Held as a
-# structured registry (not a flat constant bundle) so the whole grid stays in one place.
+# Optimization-mode sweep grids. The ``search`` grade names which CPP levers vary: "fast" runs a
+# single default configuration (no search, byte-identical to the explicit CPP chain); "balanced"
+# sweeps the Split levers + Scale + n_filter over default parts (~10 min); "exhaustive" also sweeps
+# the Part region set and adds the orthogonal performance-ranked top60 scale sets and a finer
+# n_split_max step. Held as a structured registry so the whole grid stays in one place and tunable.
+# Scale candidates are (kind, value): ("explain", n) = top_explain_n interpretability tier (None =
+# all); ("top60", k) = the k-th performance-ranked top60 set.
 _MODES = {
-    "fast":       {"sweep_parts": False, "sweep_scales": False, "sweep_split": False,
-                   "scale_breadths": [30], "n_split_max_vals": [15], "n_filter_vals": [100],
-                   "simplify_strategy": "greedy"},
-    "balanced":   {"sweep_parts": False, "sweep_scales": False, "sweep_split": True,
-                   "scale_breadths": [50], "n_split_max_vals": [10, 15],
-                   "n_filter_vals": [25, 50, 75, 100, 125, 150],
-                   "simplify_strategy": "greedy"},
-    "exhaustive": {"sweep_parts": True, "sweep_scales": True, "sweep_split": True,
-                   "scale_breadths": [50, None], "n_split_max_vals": [15],
-                   "n_filter_vals": [25, 50, 75, 100, 125, 150],
-                   "simplify_strategy": "consolidate"},
+    "fast": {
+        "sweep_parts": False, "sweep_scales": False, "sweep_split": False,
+        "scale_specs": [("explain", 30)], "n_split_max_vals": [15], "n_filter_vals": [100],
+        "simplify_strategy": "greedy",
+    },
+    "balanced": {
+        "sweep_parts": False, "sweep_scales": True, "sweep_split": True,
+        "scale_specs": [("explain", n) for n in (10, 20, 30, 40, 50, None)],
+        "n_split_max_vals": [1, 5, 10, 15],
+        "n_filter_vals": [25, 50, 75, 100, 125, 150],
+        "simplify_strategy": "greedy",
+    },
+    "exhaustive": {
+        "sweep_parts": True, "sweep_scales": True, "sweep_split": True,
+        "scale_specs": [("explain", n) for n in (5, 10, 20, 30, 40, 50, 60)]
+                       + [("top60", k) for k in range(1, 11)],
+        "n_split_max_vals": [1, 3, 5, 7, 9, 11, 13, 15],
+        "n_filter_vals": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150],
+        "simplify_strategy": "consolidate",
+    },
 }
-# Named-region part sets the exhaustive sweep varies over. Only composite regions (each >= ~20
-# residues: tmd, the half-overlapping flanks, the whole jmd-tmd-jmd span) are used, never a bare
-# 10-residue jmd_n / jmd_c: a short part empty-buckets under fine Segment/Pattern splits, which
+# Named-region part sets the exhaustive Part axis varies over. Composite regions only (each >= ~20
+# residues): a bare 10-residue jmd_n / jmd_c empty-buckets under fine Segment/Pattern splits and
 # would only add configurations that error and get dropped.
 _PART_SETS = [
     ["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"],
@@ -49,8 +62,7 @@ _PART_SETS = [
     ["tmd_jmd", "jmd_n_tmd_n", "tmd_c_jmd_c"],
     ["tmd", "tmd_jmd"],
 ]
-# Split-type sets (the "pattern_mode" facade): which of Pattern / PeriodicPattern join the
-# always-present Segment splits.
+# Split-type sets (the "pattern_mode" facade): which of Pattern / PeriodicPattern join Segment.
 _SPLIT_TYPE_SETS = [
     [ut.STR_SEGMENT],
     [ut.STR_SEGMENT, ut.STR_PATTERN],
@@ -61,16 +73,13 @@ _PATTERN_MODE = {(ut.STR_SEGMENT,): "none",
                  (ut.STR_SEGMENT, ut.STR_PATTERN): "p1",
                  (ut.STR_SEGMENT, ut.STR_PERIODIC_PATTERN): "p2",
                  (ut.STR_SEGMENT, ut.STR_PATTERN, ut.STR_PERIODIC_PATTERN): "p1+p2"}
-# Levers a power user may pin via the bounded ``kws`` dict (unknown keys raise). Each override
-# fixes that lever to a single value, collapsing its sweep.
+# Levers a power user may pin via the bounded ``kws`` dict (unknown keys raise).
 _KWS_KEYS = {"n_explain", "n_split_max", "n_filter", "simplify_strategy", "max_cor", "max_overlap"}
-# Robustness tolerance: among configurations within this margin of the best CV score, the
-# simplest one (fewest features, then smallest n_filter) is selected.
-_ROBUST_TOL = 0.01
+_LIST_MODELS = [ut.MODEL_SVM, ut.MODEL_RF, ut.MODEL_LOG_REG]
 
 
 def _resolve_model(model, random_state=None):
-    """Construct the cross-validation estimator (mirrors the CPP.simplify model presets)."""
+    """Construct one cross-validation estimator (mirrors the CPP.simplify model presets)."""
     if model == ut.MODEL_SVM:
         return SVC(class_weight="balanced", random_state=random_state)
     if model == ut.MODEL_RF:
@@ -78,40 +87,67 @@ def _resolve_model(model, random_state=None):
     return LogisticRegression(max_iter=1000, random_state=random_state)
 
 
-def _cv_score(X, labels, model="svm", cv=5, metric="balanced_accuracy", random_state=None):
-    """Cross-validated (mean, std) model score for a feature matrix (consistent with CPP.simplify)."""
-    estimator = _resolve_model(model=model, random_state=random_state)
-    scores = cross_val_score(estimator, X, y=labels, cv=cv, scoring=metric)
-    return float(scores.mean()), float(scores.std())
+def _resolve_models(model, random_state=None):
+    """Resolve ``model`` (a name, an estimator, or a list of either) into a list of estimators."""
+    items = model if isinstance(model, (list, tuple)) else [model]
+    out = []
+    for m in items:
+        out.append(_resolve_model(m, random_state=random_state) if isinstance(m, str) else m)
+    return out
 
 
-def _load_scales_breadth(top_explain_n=None, subcategories=None):
-    """Load a scale set (optionally restricted to AAontology subcategories / interpretable breadth)."""
-    if top_explain_n is None:
+def _cv_scores(X, labels, models=None, cv=5, metrics=None, random_state=None):
+    """Cross-validate ``X`` and return ``{metric: (mean, std)}`` averaged over the models.
+
+    All metrics are scored in one ``cross_validate`` pass per model (multi-scorer), so adding
+    metrics is nearly free. The mean/std are averaged across the provided models.
+    """
+    means = {m: [] for m in metrics}
+    stds = {m: [] for m in metrics}
+    for est in models:
+        res = cross_validate(est, X, y=labels, cv=cv, scoring=list(metrics))
+        for m in metrics:
+            arr = res["test_" + m]
+            means[m].append(float(np.mean(arr)))
+            stds[m].append(float(np.std(arr)))
+    return {m: (float(np.mean(means[m])), float(np.mean(stds[m]))) for m in metrics}
+
+
+def _load_scale_spec(spec, subcategories=None):
+    """Build the ``df_scales`` for one scale spec ``("explain", n)`` / ``("top60", k)``."""
+    kind, val = spec
+    if kind == "top60":
+        df_scales = load_scales(name="scales", top60_n=val)
+    elif val is None:
         df_scales = load_scales(name="scales")
     else:
-        df_scales = load_scales(name="scales", top_explain_n=top_explain_n)
+        df_scales = load_scales(name="scales", top_explain_n=val)
     if subcategories is not None:
         df_cat = load_scales(name="scales_cat")
         keep = set(df_cat[df_cat[ut.COL_SUBCAT].isin(subcategories)][ut.COL_SCALE_ID])
         cols = [c for c in df_scales.columns if c in keep]
         if len(cols) == 0:
-            raise ValueError(f"'subcategories' ({subcategories}) should be names that match "
-                             f"at least one scale.")
+            return None
         df_scales = df_scales[cols]
     return df_scales
 
 
-def _resolve_config(optimization="balanced", kws=None):
-    """Merge the optimization-mode grid with the bounded ``kws`` overrides (unknown keys raise)."""
-    mode = _MODES[optimization]
+def _scale_label(spec):
+    """Readable Scale-axis level label for ``df_eval`` (e.g. ``explain:30`` / ``top60:3``)."""
+    kind, val = spec
+    return f"{kind}:{'all' if val is None else val}"
+
+
+def _resolve_config(search="balanced", kws=None):
+    """Merge the ``search``-mode grid with the bounded ``kws`` overrides (unknown keys raise)."""
+    mode = _MODES[search]
     cfg = {
         "sweep_parts": mode["sweep_parts"], "sweep_split": mode["sweep_split"],
         "sweep_scales": mode["sweep_scales"],
         "part_sets": list(_PART_SETS) if mode["sweep_parts"] else [_PART_SETS[0]],
         "split_type_sets": list(_SPLIT_TYPE_SETS) if mode["sweep_split"] else [_SPLIT_TYPE_SETS[-1]],
         "n_split_max_vals": list(mode["n_split_max_vals"]),
-        "scale_breadths": list(mode["scale_breadths"]),
+        "scale_specs": list(mode["scale_specs"]),
         "n_filter_vals": list(mode["n_filter_vals"]),
         "simplify_strategy": mode["simplify_strategy"],
         "max_cor": 0.5, "max_overlap": 0.5,
@@ -122,7 +158,7 @@ def _resolve_config(optimization="balanced", kws=None):
         if unknown:
             raise ValueError(f"'kws' keys ({sorted(unknown)}) should be among {sorted(_KWS_KEYS)}.")
         if "n_explain" in kws:
-            cfg["scale_breadths"] = [kws["n_explain"]]
+            cfg["scale_specs"] = [("explain", kws["n_explain"])]
             cfg["sweep_scales"] = False
         if "n_split_max" in kws:
             cfg["n_split_max_vals"] = [kws["n_split_max"]]
@@ -137,42 +173,60 @@ def _resolve_config(optimization="balanced", kws=None):
     return cfg
 
 
-def _refine_rfe(df_feat=None, X=None, labels=None, base_mean=0.0, model="svm", cv=5,
-                metric="balanced_accuracy", random_state=None):
-    """Recursive-feature-elimination post-step: keep the reduced set only if CV does not drop.
+def _pareto_mask(means):
+    """Boolean mask of Pareto-optimal rows (non-dominated), maximizing every column of ``means``."""
+    means = np.asarray(means, dtype=float)
+    n = len(means)
+    mask = np.ones(n, dtype=bool)
+    for i in range(n):
+        for j in range(n):
+            if i != j and np.all(means[j] >= means[i]) and np.any(means[j] > means[i]):
+                mask[i] = False
+                break
+    return mask
 
-    Bounded and deterministic; a no-op when there are too few features to recurse. Worst case
-    leaves ``df_feat`` unchanged, so it never degrades the selected feature set.
-    """
-    n_feat = len(df_feat)
-    # Skip the (expensive) RFE fit when recursion is impossible (too few features) or pointless
-    # (the score is already at the metric ceiling, so a smaller set can at best tie).
-    if n_feat < 8 or base_mean >= 1.0 - 1e-9:
-        return df_feat, base_mean, False
-    n_feat_min = max(4, n_feat // 3)
-    tm = TreeModel(random_state=random_state, verbose=False)
-    tm.fit(X, labels=labels, use_rfe=True, n_cv=cv, n_feat_min=n_feat_min,
-           n_feat_max=n_feat, metric=metric)
-    # is_selected_ is (n_rounds, n_features); keep features chosen in the majority of rounds.
-    mask = np.asarray(tm.is_selected_).mean(axis=0) >= 0.5
-    if mask.sum() < n_feat_min or mask.all():
-        return df_feat, base_mean, False
-    df_feat_rfe = df_feat[mask].reset_index(drop=True)
-    mean_rfe, _ = _cv_score(X[:, mask], labels, model=model, cv=cv, metric=metric,
-                            random_state=random_state)
-    if mean_rfe >= base_mean:
-        return df_feat_rfe, mean_rfe, True
-    return df_feat, base_mean, False
+
+def _select_pareto_simplest(df_stage, metric_keys):
+    """Mark ``is_pareto`` within a stage and return the index of the simplest Pareto winner."""
+    means = df_stage[[m + "_mean" for m in metric_keys]].to_numpy()
+    df_stage["is_pareto"] = _pareto_mask(means)
+    cand = df_stage[df_stage["is_pareto"]]
+    return cand.sort_values(["n_features", "n_filter"], ascending=True).index[0]
+
+
+def _axis_impact(df_stage, axis_col, metric_keys):
+    """Normalized marginal-mean impact of one axis, averaged across metrics (0 = no effect)."""
+    impacts = []
+    for m in metric_keys:
+        col = m + "_mean"
+        marg = df_stage.groupby(axis_col)[col].mean()
+        rng = df_stage[col].max() - df_stage[col].min()
+        impacts.append((marg.max() - marg.min()) / rng if rng > 1e-12 else 0.0)
+    return float(np.mean(impacts))
+
+
+def _refine_keep(df_feat_new, X_new, df_feat_cur, base_scores, labels=None, models=None, cv=5,
+                 metrics=None, random_state=None):
+    """Keep the refined set iff its CV scores are not Pareto-dominated by the current winner."""
+    if df_feat_new is None or len(df_feat_new) == 0 or len(df_feat_new) == len(df_feat_cur):
+        return df_feat_cur, base_scores, False
+    new = _cv_scores(X_new, labels, models=models, cv=cv, metrics=metrics, random_state=random_state)
+    new_means = np.array([new[m][0] for m in metrics])
+    cur_means = np.array([base_scores[m][0] for m in metrics])
+    dominated = np.all(cur_means >= new_means) and np.any(cur_means > new_means)
+    if dominated:
+        return df_feat_cur, base_scores, False
+    return df_feat_new.reset_index(drop=True), new, True
 
 
 # II Main Functions
 def find_features(labels: ut.ArrayLike1D,
                   df_seq: pd.DataFrame,
-                  optimization: str = "balanced",
+                  search: str = "balanced",
                   simplify: bool = True,
-                  model: str = "svm",
+                  model: Union[str, BaseEstimator, List] = "svm",
                   cv: int = 5,
-                  metric: str = "balanced_accuracy",
+                  metric: Union[str, List[str]] = "balanced_accuracy",
                   kws: Optional[dict] = None,
                   subcategories: Optional[List[str]] = None,
                   top_n: Optional[int] = None,
@@ -188,18 +242,15 @@ def find_features(labels: ut.ArrayLike1D,
     """
     Identify discriminating features in one call via a staged, interpretable CPP AutoML search.
 
-    Sweeps the CPP feature space (which sequence Splits, which Part regions, which Scale breadth)
-    together with the ``n_filter`` selection, scores every configuration by cross-validated model
-    performance, and selects a **robust** winner (the simplest configuration within 1% of the best
-    score). The winning feature set is then refined (:meth:`CPP.simplify` and recursive feature
-    elimination, each kept only if it does not lower the cross-validated score), ranked by
-    tree-based importance, and visualized as the CPP feature map. At ``optimization="fast"`` no
-    search is run: the result is byte-identical to the explicit single-CPP path.
-
-    The search is staged so its cost stays interpretable: the ``optimization`` grade scopes which
-    levers vary, the bounded ``kws`` dict pins any single lever, and ``model`` / ``cv`` / ``metric``
-    define the selection criterion (CPP's own feature-quality ranking is monotone in ``n_filter`` and
-    cannot pick it, so a model-based cross-validation is used instead).
+    The search is **staged** so its cost stays interpretable. Stage 1 cross-validates the full
+    Cartesian Part × Split × Scale grid (at a reference ``n_filter``) and ranks each axis by its
+    **marginal-mean impact**; Stage 2 refines only the single highest-impact axis against
+    ``n_filter`` (the others pinned at the stage optimum); Stage 3 refines the winning feature set
+    with :meth:`CPP.simplify` and recursive feature elimination. Selection is **multi-objective**:
+    within each stage the Pareto-optimal-then-simplest configuration across all ``metric`` wins,
+    scored by the average cross-validated performance of one or more ``model`` s. The winner is then
+    ranked by tree-based importance and drawn as the CPP feature map. At ``search="fast"`` no search
+    is run — the result is byte-identical to the explicit single-CPP path.
 
     Parameters
     ----------
@@ -208,25 +259,26 @@ def find_features(labels: ut.ArrayLike1D,
     df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
         Sequence DataFrame, row-aligned to ``labels``. Required, because the Part regions are a
         swept lever and must be (re)built from the sequences via :meth:`SequenceFeature.get_df_parts`.
-    optimization : str, default="balanced"
-        Search breadth: ``"fast"`` (single default configuration, no search), ``"balanced"`` (sweep
-        the Split levers and ``n_filter`` over the default parts/scales), or ``"exhaustive"`` (also
-        sweep the Part region set and the Scale breadth).
+    search : str, default="balanced"
+        Search effort: ``"fast"`` (single default configuration, no search), ``"balanced"`` (sweep
+        the Split levers + Scale + ``n_filter``), or ``"exhaustive"`` (also sweep the Part region
+        set and the performance-ranked scale sets, with a finer grid).
     simplify : bool, default=True
-        If ``True``, refine the selected feature set with :meth:`CPP.simplify` (kept only if the
-        cross-validated score does not drop).
-    model : str, default="svm"
-        Model used to score configurations during selection: ``"svm"``, ``"rf"``, or ``"log_reg"``.
+        If ``True``, refine the winning feature set with :meth:`CPP.simplify` (kept only if it is
+        not Pareto-dominated).
+    model : str, estimator, or list, default="svm"
+        Selection model(s): ``"svm"``, ``"rf"``, ``"log_reg"``, a scikit-learn estimator, or a list
+        of these. A list averages the cross-validated scores across models.
     cv : int, default=5
         Number of cross-validation folds for the selection score, must be > 1.
-    metric : str, default="balanced_accuracy"
-        Cross-validation scoring metric (any scikit-learn classification scorer).
+    metric : str or list of str, default="balanced_accuracy"
+        Cross-validation scoring metric(s). A list triggers multi-objective Pareto selection.
     kws : dict, optional
         Bounded power-user overrides; each pins a swept lever to a single value (unknown keys raise).
         Recognized keys: ``n_explain``, ``n_split_max``, ``n_filter``, ``simplify_strategy``,
         ``max_cor``, ``max_overlap``.
     subcategories : list of str, optional
-        AAontology subcategories to restrict the scale set to. If ``None``, all scales of the grade.
+        AAontology subcategories to restrict the scale sets to. If ``None``, all scales of the grade.
     top_n : int, optional
         If given, keep only the top ``top_n`` features (after importance ranking).
     label_test : int, default=1
@@ -238,9 +290,7 @@ def find_features(labels: ut.ArrayLike1D,
     name_ref : str, default="REF"
         Display name of the reference/negative group in the feature map.
     plot : bool, default=True
-        If ``True``, draw the CPP feature map and return its ``Axes`` (and, for a search that swept
-        more than one configuration, draw the sweep evaluation grid as an auxiliary figure so a
-        single ``plt.show()`` renders both); if ``False``, draw nothing and return ``None``.
+        If ``True``, draw the CPP feature map and return its ``Axes``; if ``False``, return ``None``.
     random_state : int, optional
         The seed used by the random number generator. If a positive integer, results of stochastic
         processes are reproducible.
@@ -258,8 +308,9 @@ def find_features(labels: ut.ArrayLike1D,
     ax : matplotlib.axes.Axes or None
         The feature-map ``Axes`` if ``plot=True``, else ``None`` (Figure via ``ax.figure``).
     df_eval : pd.DataFrame
-        Per-configuration sweep table with the configuration descriptors and the cross-validated
-        ``cv_bacc_mean`` / ``cv_bacc_std``, ``rank``, and ``is_selected`` columns.
+        Per-configuration sweep table: the configuration descriptors, one ``<metric>_mean`` /
+        ``<metric>_std`` column per metric, plus ``stage``, ``is_pareto`` (Pareto-optimal within its
+        stage), ``rank``, and ``is_selected`` (the single winner).
 
     See Also
     --------
@@ -272,38 +323,37 @@ def find_features(labels: ut.ArrayLike1D,
     .. include:: examples/aap_find_features.rst
     """
     # Validate (thin facade: the wrapped primitives validate the rest)
-    ut.check_str_options(name="optimization", val=optimization, list_str_options=list(_MODES))
+    ut.check_str_options(name="search", val=search, list_str_options=list(_MODES))
     ut.check_df_seq(df_seq=df_seq)
     ut.check_bool(name="simplify", val=simplify)
-    ut.check_str_options(name="model", val=model,
-                         list_str_options=[ut.MODEL_SVM, ut.MODEL_RF, ut.MODEL_LOG_REG])
+    for m in (model if isinstance(model, (list, tuple)) else [model]):
+        if isinstance(m, str):
+            ut.check_str_options(name="model", val=m, list_str_options=_LIST_MODELS)
     ut.check_number_range(name="cv", val=cv, min_val=2, just_int=True)
-    ut.check_str(name="metric", val=metric)
+    metrics = list(metric) if isinstance(metric, (list, tuple)) else [metric]
+    for m in metrics:
+        ut.check_str(name="metric", val=m)
     ut.check_number_range(name="top_n", val=top_n, min_val=1, accept_none=True, just_int=True)
     ut.check_bool(name="plot", val=plot)
     ut.check_number_range(name="random_state", val=random_state, min_val=0,
                           accept_none=True, just_int=True)
     ut.check_bool(name="verbose", val=verbose)
-    cfg = _resolve_config(optimization=optimization, kws=kws)
+    cfg = _resolve_config(search=search, kws=kws)
+    models = _resolve_models(model, random_state=random_state)
 
     sf = SequenceFeature(verbose=verbose)
     df_scales_all = load_scales(name="scales")
-    if optimization == "fast":
-        df_feat, df_parts_win, df_eval, dict_refine = _run_fast(
-            sf=sf, labels=labels, df_seq=df_seq, cfg=cfg, simplify=simplify, model=model,
-            cv=cv, metric=metric, subcategories=subcategories, label_test=label_test,
-            label_ref=label_ref, df_scales_all=df_scales_all, random_state=random_state,
-            n_jobs=n_jobs, verbose=verbose)
+    common = dict(sf=sf, labels=labels, df_seq=df_seq, cfg=cfg, simplify=simplify, models=models,
+                  cv=cv, metrics=metrics, subcategories=subcategories, label_test=label_test,
+                  label_ref=label_ref, df_scales_all=df_scales_all, random_state=random_state,
+                  n_jobs=n_jobs, verbose=verbose)
+    if search == "fast":
+        df_feat, df_parts_win, df_eval = _run_fast(**common)
     else:
-        df_feat, df_parts_win, df_eval, dict_refine = _run_search(
-            sf=sf, labels=labels, df_seq=df_seq, cfg=cfg, simplify=simplify, model=model,
-            cv=cv, metric=metric, subcategories=subcategories, label_test=label_test,
-            label_ref=label_ref, df_scales_all=df_scales_all, random_state=random_state,
-            n_jobs=n_jobs, verbose=verbose)
+        df_feat, df_parts_win, df_eval = _run_search(**common)
 
-    # Rank the winning features by tree-based importance (also required by the feature map). The
-    # full scale set is used here: simplify can swap to correlated scales outside a subcategory
-    # filter, and feature_matrix/feature_map only read the scales the resulting features reference.
+    # Rank the winning features by tree-based importance (also required by the feature map); use the
+    # full scale set since simplify can swap to correlated scales the feature_matrix still reads.
     X = sf.feature_matrix(features=df_feat[ut.COL_FEATURE], df_parts=df_parts_win,
                           df_scales=df_scales_all, n_jobs=n_jobs)
     tm = TreeModel(random_state=random_state, verbose=verbose)
@@ -313,139 +363,219 @@ def find_features(labels: ut.ArrayLike1D,
         df_feat = df_feat.head(top_n)
     ax = None
     if plot:
-        # The feature map is the primary figure (returned as ``ax``); the sweep evaluation grid is
-        # drawn as an auxiliary figure so a single ``plt.show()`` renders both. It collapses to
-        # nothing when only one configuration was run (e.g. ``optimization="fast"``).
-        plot_eval(df_eval, dict_refine=dict_refine)
         _, ax = CPPPlot(df_scales=df_scales_all, verbose=verbose).feature_map(
             df_feat=df_feat, name_test=name_test, name_ref=name_ref)
     return df_feat, ax, df_eval
 
 
-def _run_fast(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, model="svm", cv=5,
-              metric="balanced_accuracy", subcategories=None, label_test=1, label_ref=0,
-              df_scales_all=None, random_state=None, n_jobs=None, verbose=False):
+def _eval_row(stage=None, list_parts=None, split_types=None, n_split_max=None, scale_spec=None,
+              n_filter=None, n_features=None, scores=None, metrics=None):
+    """Assemble one ``df_eval`` row (descriptors + per-metric mean/std columns)."""
+    row = {"stage": stage, "list_parts": ",".join(list_parts),
+           "split_types": ",".join(split_types), "pattern_mode": _PATTERN_MODE[tuple(split_types)],
+           "n_split_max": n_split_max, "scale": _scale_label(scale_spec), "n_filter": n_filter,
+           "n_features": n_features}
+    for m in metrics:
+        row[m + "_mean"], row[m + "_std"] = scores[m]
+    return row
+
+
+def _run_fast(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, models=None, cv=5,
+              metrics=None, subcategories=None, label_test=1, label_ref=0, df_scales_all=None,
+              random_state=None, n_jobs=None, verbose=False):
     """Single default configuration: the explicit CPP path, byte-identical to writing it by hand."""
-    df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=cfg["part_sets"][0])
-    df_scales = _load_scales_breadth(top_explain_n=cfg["scale_breadths"][0], subcategories=subcategories)
+    list_parts, split_types = cfg["part_sets"][0], _SPLIT_TYPE_SETS[-1]
+    spec = cfg["scale_specs"][0]
+    df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=list_parts)
+    df_scales = _load_scale_spec(spec, subcategories=subcategories)
+    if df_scales is None:
+        raise ValueError(f"'subcategories' ({subcategories}) should be names that match a scale.")
     cpp = CPP(df_parts=df_parts, df_scales=df_scales, random_state=random_state, verbose=verbose)
     df_feat = cpp.run(labels=labels, label_test=label_test, label_ref=label_ref,
                       n_filter=cfg["n_filter_vals"][0], max_cor=cfg["max_cor"],
                       max_overlap=cfg["max_overlap"], n_jobs=n_jobs)
     if simplify:
-        # Unconditional simplify (no cross-validated keep-guard) keeps fast byte-identical to the
-        # explicit single-CPP chain; the search modes instead keep the refine only if CV improves.
+        # Unconditional simplify (no Pareto keep-guard) keeps fast byte-identical to the explicit
+        # single-CPP chain; the search modes instead keep the refine only if not Pareto-dominated.
         df_feat = cpp.simplify(df_feat=df_feat, labels=labels, strategy=cfg["simplify_strategy"],
                                label_test=label_test, label_ref=label_ref)
     X = sf.feature_matrix(features=df_feat[ut.COL_FEATURE], df_parts=df_parts,
                           df_scales=df_scales_all, n_jobs=n_jobs)
-    cv_mean, cv_std = _cv_score(X, labels, model=model, cv=cv, metric=metric, random_state=random_state)
-    df_eval = pd.DataFrame([{
-        "list_parts": ",".join(cfg["part_sets"][0]),
-        "split_types": ",".join(_SPLIT_TYPE_SETS[-1]),
-        "pattern_mode": _PATTERN_MODE[tuple(_SPLIT_TYPE_SETS[-1])],
-        "n_split_max": cfg["n_split_max_vals"][0], "n_explain": cfg["scale_breadths"][0],
-        "n_filter": cfg["n_filter_vals"][0], "n_features": len(df_feat),
-        "cv_bacc_mean": cv_mean, "cv_bacc_std": cv_std, "rank": 1, "is_selected": True,
-    }])
-    # No sweep and no CV keep-guard at this grade, so there is no refinement delta to report.
-    return df_feat, df_parts, df_eval, None
+    scores = _cv_scores(X, labels, models=models, cv=cv, metrics=metrics, random_state=random_state)
+    df_eval = pd.DataFrame([_eval_row(stage="single", list_parts=list_parts, split_types=split_types,
+                                      n_split_max=cfg["n_split_max_vals"][0], scale_spec=spec,
+                                      n_filter=cfg["n_filter_vals"][0], n_features=len(df_feat),
+                                      scores=scores, metrics=metrics)])
+    df_eval["is_pareto"] = True
+    df_eval["rank"] = 1
+    df_eval["is_selected"] = True
+    return df_feat, df_parts, df_eval
 
 
-def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, model="svm", cv=5,
-                metric="balanced_accuracy", subcategories=None, label_test=1, label_ref=0,
-                df_scales_all=None, random_state=None, n_jobs=None, verbose=False):
-    """Sweep the configuration grid (CPPGrid), score each by model CV, and refine the robust winner."""
-    # Build the scale candidates (one df_scales per swept breadth) and the CPPGrid parameter dicts.
-    scale_sets = [_load_scales_breadth(top_explain_n=n, subcategories=subcategories)
-                  for n in cfg["scale_breadths"]]
-    params_parts = {"list_parts": cfg["part_sets"]} if cfg["sweep_parts"] else None
-    params_split = {"split_types": cfg["split_type_sets"], "n_split_max": cfg["n_split_max_vals"]}
-    # Sweeping n_filter is free: CPPGrid runs CPP once at the largest value and head(n)-slices the rest.
-    params_cpp = {"n_filter": cfg["n_filter_vals"], "label_test": label_test, "label_ref": label_ref,
+def _grid_stage(sf=None, df_seq=None, parts=None, split_sets=None, n_split_vals=None, specs=None,
+                n_filters=None, cfg=None, labels=None, label_test=1, label_ref=0, models=None,
+                cv=5, metrics=None, subcategories=None, df_scales_all=None, random_state=None,
+                n_jobs=None, verbose=False, stage=None, parts_cache=None):
+    """Run a CPPGrid sweep over the given axis levels, CV-score every config, return eval rows.
+
+    Returns ``(rows, payloads)`` aligned: ``payloads[i]`` carries the kept ``df_feat`` and the parts
+    plus the axis levels needed to rebuild / pin the winner.
+    """
+    scale_dfs, scale_specs = [], []
+    for spec in specs:
+        df_s = _load_scale_spec(spec, subcategories=subcategories)
+        if df_s is not None:
+            scale_dfs.append(df_s)
+            scale_specs.append(spec)
+    if not scale_dfs:
+        raise ValueError(f"'subcategories' ({subcategories}) should match at least one scale.")
+    params_parts = {"list_parts": [list(p) for p in parts]}
+    params_split = {"split_types": [list(s) for s in split_sets], "n_split_max": list(n_split_vals)}
+    params_cpp = {"n_filter": list(n_filters), "label_test": label_test, "label_ref": label_ref,
                   "max_cor": cfg["max_cor"], "max_overlap": cfg["max_overlap"]}
     cppg = CPPGrid(df_seq=df_seq, labels=labels, random_state=random_state, verbose=verbose,
                    n_jobs=n_jobs)
     list_df_feat, df_params = cppg.run(params_parts=params_parts, params_split=params_split,
-                                       params_scales=scale_sets, params_cpp=params_cpp)
-    # Cache df_parts per Part set (reused for the per-configuration feature matrices).
-    parts_cache = {}
+                                       params_scales=scale_dfs, params_cpp=params_cpp)
 
-    def _parts_for(list_parts):
-        key = tuple(list_parts)
+    def _parts_for(lp):
+        key = tuple(lp)
         if key not in parts_cache:
-            parts_cache[key] = sf.get_df_parts(df_seq=df_seq, list_parts=list(list_parts))
+            parts_cache[key] = sf.get_df_parts(df_seq=df_seq, list_parts=list(lp))
         return parts_cache[key]
 
-    # Score every (non-errored) configuration by cross-validated model performance.
-    rows, idx_keep = [], []
+    rows, payloads = [], []
     for i, df_feat_i in enumerate(list_df_feat):
         if df_feat_i is None or len(df_feat_i) == 0:
             continue
         rec = df_params.iloc[i]
-        list_parts = cfg["part_sets"][int(rec["list_parts"])] if cfg["sweep_parts"] else cfg["part_sets"][0]
-        split_types = cfg["split_type_sets"][int(rec["split_types"])]
-        breadth = cfg["scale_breadths"][int(rec["df_scales"])]
-        df_parts_i = _parts_for(list_parts)
+        lp = parts[int(rec["list_parts"])] if len(parts) > 1 else parts[0]
+        sts = split_sets[int(rec["split_types"])] if len(split_sets) > 1 else split_sets[0]
+        spec = scale_specs[int(rec["df_scales"])] if len(scale_specs) > 1 else scale_specs[0]
+        df_parts_i = _parts_for(lp)
         X_i = sf.feature_matrix(features=df_feat_i[ut.COL_FEATURE], df_parts=df_parts_i,
                                 df_scales=df_scales_all, n_jobs=n_jobs)
-        cv_mean, cv_std = _cv_score(X_i, labels, model=model, cv=cv, metric=metric,
-                                    random_state=random_state)
-        rows.append({
-            "list_parts": ",".join(list_parts), "split_types": ",".join(split_types),
-            "pattern_mode": _PATTERN_MODE[tuple(split_types)], "n_split_max": int(rec["n_split_max"]),
-            "n_explain": breadth, "n_filter": int(rec["n_filter"]), "n_features": len(df_feat_i),
-            "cv_bacc_mean": cv_mean, "cv_bacc_std": cv_std,
-        })
-        idx_keep.append(i)
-    if not rows:
-        raise RuntimeError("'find_features' produced no valid configurations; relax 'kws' / "
-                           "'subcategories' or use a less restrictive 'optimization'.")
-    df_eval = pd.DataFrame(rows)
-    # Robust selection: among configurations within the tolerance of the best score, the simplest
-    # (fewest features, then smallest n_filter) wins. Ranking is best-score-first.
-    order = df_eval.sort_values("cv_bacc_mean", ascending=False).index
-    df_eval = df_eval.loc[order].reset_index(drop=True)
-    idx_keep = [idx_keep[i] for i in order]
-    best = df_eval["cv_bacc_mean"].max()
-    cand = df_eval[df_eval["cv_bacc_mean"] >= best - _ROBUST_TOL]
-    sel_pos = cand.sort_values(["n_features", "n_filter"], ascending=True).index[0]
-    df_eval["rank"] = np.arange(1, len(df_eval) + 1)
-    df_eval["is_selected"] = False
-    df_eval.loc[sel_pos, "is_selected"] = True
+        scores = _cv_scores(X_i, labels, models=models, cv=cv, metrics=metrics,
+                            random_state=random_state)
+        rows.append(_eval_row(stage=stage, list_parts=lp, split_types=sts,
+                              n_split_max=int(rec["n_split_max"]), scale_spec=spec,
+                              n_filter=int(rec["n_filter"]), n_features=len(df_feat_i),
+                              scores=scores, metrics=metrics))
+        payloads.append({"df_feat": df_feat_i.reset_index(drop=True), "df_parts": df_parts_i,
+                         "list_parts": lp, "split_types": sts, "n_split_max": int(rec["n_split_max"]),
+                         "scale_spec": spec, "n_filter": int(rec["n_filter"])})
+    return rows, payloads
 
-    # Refine the winner (simplify + RFE), each kept only if the CV score does not drop.
-    winner_i = idx_keep[sel_pos]
-    df_feat_win = list_df_feat[winner_i].reset_index(drop=True)
-    rec = df_params.iloc[winner_i]
-    list_parts_win = cfg["part_sets"][int(rec["list_parts"])] if cfg["sweep_parts"] else cfg["part_sets"][0]
-    df_parts_win = _parts_for(list_parts_win)
-    df_scales_win = scale_sets[int(rec["df_scales"])]
-    base_mean = float(df_eval.loc[sel_pos, "cv_bacc_mean"])
-    # Record each refinement step's before -> after CV score for the eval-grid annotation: the two
-    # boolean refinements (simplify on/off, RFE on/off) are shown as Δ-scores, not heatmap axes.
-    dict_refine = {"base": base_mean, "simplify": None, "simplify_kept": False,
-                   "rfe": None, "rfe_kept": False}
+
+def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, models=None, cv=5,
+                metrics=None, subcategories=None, label_test=1, label_ref=0, df_scales_all=None,
+                random_state=None, n_jobs=None, verbose=False):
+    """Staged sensitivity search: Cartesian P×S×Scale → dominant axis × n_filter → simplify+RFE."""
+    parts_cache = {}
+    common = dict(sf=sf, df_seq=df_seq, cfg=cfg, labels=labels, label_test=label_test,
+                  label_ref=label_ref, models=models, cv=cv, metrics=metrics,
+                  subcategories=subcategories, df_scales_all=df_scales_all,
+                  random_state=random_state, n_jobs=n_jobs, verbose=verbose, parts_cache=parts_cache)
+    ref_nfilter = max(cfg["n_filter_vals"])
+
+    # Stage 1 — full Cartesian Part × Split × Scale at the reference n_filter.
+    rows1, pay1 = _grid_stage(parts=cfg["part_sets"], split_sets=cfg["split_type_sets"],
+                              n_split_vals=cfg["n_split_max_vals"], specs=cfg["scale_specs"],
+                              n_filters=[ref_nfilter], stage="sensitivity", **common)
+    if not rows1:
+        raise RuntimeError("'find_features' produced no valid configurations; relax 'kws' / "
+                           "'subcategories' or use a less restrictive 'search'.")
+    df1 = pd.DataFrame(rows1)
+    win1_pos = _select_pareto_simplest(df1, metrics)
+    win1 = pay1[df1.index.get_loc(win1_pos)]
+
+    # Rank the swept axes by normalized marginal-mean impact; the dominant axis gets the n_filter sweep.
+    df1["_split_lvl"] = df1["pattern_mode"] + "/" + df1["n_split_max"].astype(str)
+    axis_cols = {"part": "list_parts", "split": "_split_lvl", "scale": "scale"}
+    swept = [a for a, col in axis_cols.items() if df1[col].nunique() > 1]
+    impacts = {a: _axis_impact(df1, axis_cols[a], metrics) for a in swept}
+    dominant = max(impacts, key=impacts.get) if impacts else "scale"
+
+    # Stage 2 — sweep the dominant axis's levels × n_filter, the other two pinned at the Stage-1 winner.
+    parts2 = cfg["part_sets"] if dominant == "part" else [win1["list_parts"]]
+    if dominant == "split":
+        split2, nsplit2 = cfg["split_type_sets"], cfg["n_split_max_vals"]
+    else:
+        split2, nsplit2 = [win1["split_types"]], [win1["n_split_max"]]
+    specs2 = cfg["scale_specs"] if dominant == "scale" else [win1["scale_spec"]]
+    rows2, pay2 = _grid_stage(parts=parts2, split_sets=split2, n_split_vals=nsplit2, specs=specs2,
+                              n_filters=cfg["n_filter_vals"], stage="n_filter", **common)
+    df2 = pd.DataFrame(rows2)
+    win2_pos = _select_pareto_simplest(df2, metrics)
+    win2 = pay2[df2.index.get_loc(win2_pos)]
+
+    # Stage 3 — refine the winner (simplify + RFE), each kept only if not Pareto-dominated.
+    df_feat_win, df_parts_win = win2["df_feat"], win2["df_parts"]
+    df_scales_win = _load_scale_spec(win2["scale_spec"], subcategories=subcategories)
+    X_win = sf.feature_matrix(features=df_feat_win[ut.COL_FEATURE], df_parts=df_parts_win,
+                              df_scales=df_scales_all, n_jobs=n_jobs)
+    base = _cv_scores(X_win, labels, models=models, cv=cv, metrics=metrics, random_state=random_state)
+    rows3 = []
     if simplify:
         cpp_win = CPP(df_parts=df_parts_win, df_scales=df_scales_win,
                       random_state=random_state, verbose=verbose)
-        df_feat_simpl = cpp_win.simplify(df_feat=df_feat_win, labels=labels,
-                                         strategy=cfg["simplify_strategy"], ml_model=model,
-                                         ml_metric=metric, ml_cv=cv, label_test=label_test,
-                                         label_ref=label_ref)
-        X_simpl = sf.feature_matrix(features=df_feat_simpl[ut.COL_FEATURE], df_parts=df_parts_win,
+        df_simpl = cpp_win.simplify(df_feat=df_feat_win, labels=labels,
+                                    strategy=cfg["simplify_strategy"], ml_cv=cv,
+                                    label_test=label_test, label_ref=label_ref)
+        X_simpl = sf.feature_matrix(features=df_simpl[ut.COL_FEATURE], df_parts=df_parts_win,
                                     df_scales=df_scales_all, n_jobs=n_jobs)
-        mean_simpl, _ = _cv_score(X_simpl, labels, model=model, cv=cv, metric=metric,
-                                  random_state=random_state)
-        dict_refine["simplify"] = mean_simpl
-        if mean_simpl >= base_mean:
-            df_feat_win, base_mean = df_feat_simpl.reset_index(drop=True), mean_simpl
-            dict_refine["simplify_kept"] = True
-    X_win = sf.feature_matrix(features=df_feat_win[ut.COL_FEATURE], df_parts=df_parts_win,
-                              df_scales=df_scales_all, n_jobs=n_jobs)
-    df_feat_win, mean_rfe, rfe_kept = _refine_rfe(
-        df_feat=df_feat_win, X=X_win, labels=labels, base_mean=base_mean,
-        model=model, cv=cv, metric=metric, random_state=random_state)
-    dict_refine["rfe"] = mean_rfe
-    dict_refine["rfe_kept"] = rfe_kept
-    return df_feat_win, df_parts_win, df_eval, dict_refine
+        df_feat_win, base, kept = _refine_keep(df_simpl, X_simpl, df_feat_win, base, labels=labels,
+                                               models=models, cv=cv, metrics=metrics,
+                                               random_state=random_state)
+        if kept:
+            rows3.append(_eval_row(stage="refine", list_parts=win2["list_parts"],
+                                   split_types=win2["split_types"], n_split_max=win2["n_split_max"],
+                                   scale_spec=win2["scale_spec"], n_filter=win2["n_filter"],
+                                   n_features=len(df_feat_win), scores=base, metrics=metrics))
+    df_feat_win, df_parts_win = _refine_rfe_winner(
+        df_feat_win, df_parts_win, df_scales_all, base, sf=sf, labels=labels, models=models, cv=cv,
+        metrics=metrics, random_state=random_state, n_jobs=n_jobs, rows3=rows3, win=win2)
+
+    # Assemble df_eval: all stages stacked. is_selected marks the actually-returned df_feat (the
+    # final refined winner = the last kept refine row, else the Stage-2 winner) — which need NOT be
+    # rank 1 under multi-objective selection. rank orders by the first metric for readability.
+    df3 = pd.DataFrame(rows3)
+    if len(df3):
+        df3["is_pareto"] = True   # a kept refine config survived the Pareto non-domination check
+    df_eval = pd.concat([df1.drop(columns=["_split_lvl"]), df2, df3], ignore_index=True)
+    df_eval["is_pareto"] = df_eval["is_pareto"].fillna(False)
+    winner_pos = (len(df_eval) - 1) if len(df3) else (len(df1) + df2.index.get_loc(win2_pos))
+    df_eval["is_selected"] = False
+    df_eval.loc[winner_pos, "is_selected"] = True
+    primary = metrics[0] + "_mean"
+    df_eval["rank"] = df_eval[primary].rank(ascending=False, method="first").astype(int)
+    df_eval = df_eval.sort_values("rank").reset_index(drop=True)
+    return df_feat_win, df_parts_win, df_eval
+
+
+def _refine_rfe_winner(df_feat, df_parts, df_scales_all, base, sf=None, labels=None, models=None,
+                       cv=5, metrics=None, random_state=None, n_jobs=None, rows3=None, win=None):
+    """RFE post-step on the winner: keep the reduced set only if it is not Pareto-dominated."""
+    n_feat = len(df_feat)
+    base_means = np.array([base[m][0] for m in metrics])
+    if n_feat < 8 or np.all(base_means >= 1.0 - 1e-9):
+        return df_feat, df_parts
+    n_feat_min = max(4, n_feat // 3)
+    X = sf.feature_matrix(features=df_feat[ut.COL_FEATURE], df_parts=df_parts,
+                          df_scales=df_scales_all, n_jobs=n_jobs)
+    tm = TreeModel(random_state=random_state, verbose=False)
+    tm.fit(X, labels=labels, use_rfe=True, n_cv=cv, n_feat_min=n_feat_min, n_feat_max=n_feat,
+           metric=metrics[0])
+    mask = np.asarray(tm.is_selected_).mean(axis=0) >= 0.5
+    if mask.sum() < n_feat_min or mask.all():
+        return df_feat, df_parts
+    df_rfe = df_feat[mask].reset_index(drop=True)
+    df_feat_new, base_new, kept = _refine_keep(df_rfe, X[:, mask], df_feat, base, labels=labels,
+                                               models=models, cv=cv, metrics=metrics,
+                                               random_state=random_state)
+    if kept and rows3 is not None:
+        rows3.append(_eval_row(stage="refine", list_parts=win["list_parts"],
+                               split_types=win["split_types"], n_split_max=win["n_split_max"],
+                               scale_spec=win["scale_spec"], n_filter=win["n_filter"],
+                               n_features=len(df_feat_new), scores=base_new, metrics=metrics))
+    return df_feat_new, df_parts
