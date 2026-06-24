@@ -15,6 +15,21 @@ sampling, and a suite of site-localization metrics and plotting helpers.
 Added
 ~~~~~
 
+**Protein Design**
+
+- **SeqOpt — multi-objective directed evolution** (``aaanalysis[pro]``): a new
+  ``SeqOpt`` optimizer (paired with ``SeqOptPlot``) searches variants of one
+  wild-type for the trade-off (Pareto) front that best satisfies several
+  objectives at once, reusing a model-bound ``SeqMut`` as the fitness engine and
+  a re-implementation of NSGA-II for selection. Two residue-guidance modes:
+  ``mode="impact"`` refits ``ShapModel`` every generation under fuzzy labeling
+  (the new variant's prediction score as a soft label) to mutate the
+  strongest-``feat_impact`` residues, and ``mode="importance"`` walks positions
+  by static ``feat_importance``. ``run`` returns ``df_pareto`` (objective columns
+  + non-dominated ``rank`` + ``crowding``); ``eval`` reports hypervolume, front
+  size and spread; both plots return a ``(fig, ax)`` pair. Fully reproducible via
+  ``random_state`` / ``seed``.
+
 **Data Handling**
 
 - **EmbeddingPreprocessor**: Instance-based class for per-residue protein

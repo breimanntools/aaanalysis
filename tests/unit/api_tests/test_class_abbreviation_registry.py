@@ -45,6 +45,8 @@ REGISTRY = {
     "AAMutPlot": "aamut_plot",
     "SeqMut": "seqmut",
     "SeqMutPlot": "seqmut_plot",
+    "SeqOpt": "seqopt",
+    "SeqOptPlot": "seqopt_plot",
     "TreeModel": "tm",
     "ShapModel": "sm",
     "StructurePreprocessor": "stp",
