@@ -15,15 +15,18 @@ sklearn-idiomatic convenience only.
 
 Public objects
 --------------
+* :func:`obtain_samples` — turn a described sampling situation into a balanced training set.
 * :func:`predict_samples` — build the feature matrix from ``df_feat`` and fit + evaluate a
   :class:`TreeModel`, returning the uniform ``(model, None, df_eval)`` pipeline triple.
 
 See Also
 --------
+* :mod:`aaanalysis.seq_analysis` — :class:`AAWindowSampler`, the sampler :func:`obtain_samples` wraps.
 * :mod:`aaanalysis.feature_engineering` — the primitives these pipelines wrap.
 * :mod:`aaanalysis.explainable_ai` — :class:`TreeModel`, the predictor used by
   :func:`predict_samples`.
 """
+from ._obtain_samples import obtain_samples
 from ._pipelines import predict_samples
 
-__all__ = ["predict_samples"]
+__all__ = ["obtain_samples", "predict_samples"]

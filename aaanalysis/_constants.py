@@ -140,6 +140,7 @@ STRATEGY_SAME = "same_protein"
 STRATEGY_DIFF = "different_protein"
 STRATEGY_SYNTH_PREFIX = "synthetic"
 STRATEGY_MOTIF_MATCHED = "motif_matched"
+STRATEGY_TEST = "test"   # provenance of known positive (test) windows; not a sampled strategy
 # Strategy tags double as the ``method`` keys accepted by
 # AAWindowSampler.sample_benchmark_set arms.
 LIST_STRATEGIES = [STRATEGY_SAME, STRATEGY_DIFF, STRATEGY_SYNTH_PREFIX,
