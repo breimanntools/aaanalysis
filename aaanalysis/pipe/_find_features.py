@@ -95,7 +95,8 @@ def _load_scales_breadth(top_explain_n=None, subcategories=None):
         keep = set(df_cat[df_cat[ut.COL_SUBCAT].isin(subcategories)][ut.COL_SCALE_ID])
         cols = [c for c in df_scales.columns if c in keep]
         if len(cols) == 0:
-            raise ValueError(f"'subcategories' ({subcategories}) should match at least one scale.")
+            raise ValueError(f"'subcategories' ({subcategories}) should be names that match "
+                             f"at least one scale.")
         df_scales = df_scales[cols]
     return df_scales
 
@@ -118,7 +119,7 @@ def _resolve_config(optimization="balanced", kws=None):
         ut.check_dict(name="kws", val=kws)
         unknown = set(kws) - _KWS_KEYS
         if unknown:
-            raise ValueError(f"'kws' ({sorted(unknown)}) should only contain {sorted(_KWS_KEYS)}.")
+            raise ValueError(f"'kws' keys ({sorted(unknown)}) should be among {sorted(_KWS_KEYS)}.")
         if "n_explain" in kws:
             cfg["scale_breadths"] = [kws["n_explain"]]
             cfg["sweep_scales"] = False
@@ -143,7 +144,9 @@ def _refine_rfe(df_feat=None, X=None, labels=None, base_mean=0.0, model="svm", c
     leaves ``df_feat`` unchanged, so it never degrades the selected feature set.
     """
     n_feat = len(df_feat)
-    if n_feat < 8:
+    # Skip the (expensive) RFE fit when recursion is impossible (too few features) or pointless
+    # (the score is already at the metric ceiling, so a smaller set can at best tie).
+    if n_feat < 8 or base_mean >= 1.0 - 1e-9:
         return df_feat, base_mean, False
     n_feat_min = max(4, n_feat // 3)
     tm = TreeModel(random_state=random_state, verbose=False)
@@ -323,6 +326,8 @@ def _run_fast(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, model=
                       n_filter=cfg["n_filter_vals"][0], max_cor=cfg["max_cor"],
                       max_overlap=cfg["max_overlap"], n_jobs=n_jobs)
     if simplify:
+        # Unconditional simplify (no cross-validated keep-guard) keeps fast byte-identical to the
+        # explicit single-CPP chain; the search modes instead keep the refine only if CV improves.
         df_feat = cpp.simplify(df_feat=df_feat, labels=labels, strategy=cfg["simplify_strategy"],
                                label_test=label_test, label_ref=label_ref)
     X = sf.feature_matrix(features=df_feat[ut.COL_FEATURE], df_parts=df_parts,
