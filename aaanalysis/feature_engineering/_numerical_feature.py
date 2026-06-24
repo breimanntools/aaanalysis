@@ -83,7 +83,7 @@ class NumericalFeature:
     @staticmethod
     def filter_correlation(X: ut.ArrayLike2D,
                            max_cor: float = 0.7
-                           ) -> np.array:
+                           ) -> np.ndarray:
         """
         Filter features based on Pearson correlation.
 

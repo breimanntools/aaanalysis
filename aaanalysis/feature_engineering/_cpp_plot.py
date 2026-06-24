@@ -289,7 +289,7 @@ class CPPPlot:
 
     @staticmethod
     def eval(df_eval: pd.DataFrame,
-             figsize: Tuple[int or float, int or float] = (6, 4),
+             figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
              dict_xlims: Optional[dict] = None,
              legend: bool = True,
              legend_y: float = -0.3,
