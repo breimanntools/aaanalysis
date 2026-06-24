@@ -45,3 +45,7 @@ jobs:
       - name: Run pyright (advisory — never fails the build)
         continue-on-error: true
         run: pyright
+
+      - name: Pyright diagnostics ratchet (advisory — never fails the build)
+        continue-on-error: true
+        run: python .github/scripts/check_pyright_budget.py

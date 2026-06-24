@@ -19,6 +19,13 @@ limitations — do not "fix" them opportunistically.
 - **No pre-commit, no ruff** — out of scope until v2. **Type checking is NOT deferred:**
   the package ships `py.typed` and `pyright` runs **non-blocking (advisory)** in CI,
   public-API-first (`_backend` excluded for now); mypy is not used. See ADR-0036.
+  The advisory diagnostic count is being driven down in small, per-subpackage steps
+  against a committed high-water mark in `.github/pyright_baseline.txt`
+  (`.github/scripts/check_pyright_budget.py` reports count + delta in the advisory
+  workflow, never gating). When a burn-down PR clears diagnostics, **lower** that
+  number to the new count in the same PR; never raise it. Prefer honest signatures
+  over runtime `assert`s, and a narrow `# pyright: ignore[<rule>]` (with an inline
+  reason) only for a genuine stub false positive.
 - **`pyproject.toml` carries both `[project]` and `[tool.poetry]` blocks.**
   Edit `[project]` only.
 - **MEME format alphabet quirk** (relevant only for `aa.scan_motif`): the

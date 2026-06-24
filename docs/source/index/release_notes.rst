@@ -311,6 +311,14 @@ Changed
   tier requires. It unblocks previously-excluded algorithmic optimizations (e.g.
   AAclust binary-search ``k``), each landing as its own tier-declared PR. No user-
   facing behavior changes in this release.
+- **Type-contract burn-down** (developer tooling): The advisory pyright report
+  (public-API first; ``_backend`` excluded) is now driven down in small,
+  per-subpackage steps and tracked by a committed high-water mark
+  (``.github/pyright_baseline.txt``) plus a ratchet
+  (``.github/scripts/check_pyright_budget.py``) wired into the existing
+  ``Type Check (advisory)`` workflow under ``continue-on-error`` — it reports the
+  count and delta in the CI log but **never gates a merge**. The first step clears
+  the ``plotting`` subpackage to zero via honest signatures (no runtime change).
 
 
 Version 1.0 (Stable Version)
