@@ -9,23 +9,12 @@
 
 Tutorials
 =========
-
-Getting Started
----------------
-The **A minimal CPP analysis** notebook is the shortest complete loop — load a
-dataset, run CPP, read out the signature — and pairs with the
-:ref:`Prediction tasks <prediction_tasks>` concept page. For a fuller introduction,
-explore our **Quick start** and **Slow start** tutorials, both offering the same examples
-with the latter explaining the conceptual background. The **Plotting Prelude** tutorial can help you to create publication-ready plots.
-
-
-.. toctree::
-   :maxdepth: 1
-
-   generated/tutorial0_minimal
-   generated/tutorial1_quick_start
-   generated/tutorial1_slow_start
-   generated/plotting_prelude
+Tutorials teach the AAanalysis **tools** — what each one does, its parameters, and
+the outputs it returns. They cover the *mechanics*; for how to combine tools into a
+valid end-to-end analysis, see the :ref:`Protocols <protocols>`, which link back
+here for the mechanics instead of repeating them — so the two stay distinct with no
+overlap. New to AAanalysis? Begin with :ref:`Getting Started <getting_started>` for
+your first result, then return here to go deeper on each tool.
 
 Data Handling
 -------------
@@ -69,3 +58,15 @@ Explaining sample level predictions at single-residue resolution is introduced i
    :maxdepth: 1
 
    generated/tutorial5a_shap_model
+
+Evaluation & Comparison
+-----------------------
+Learn the evaluation tools — **CPPGrid** configuration sweeps, per-protein
+site-localization metrics, and fair ranking under cross-validation — in the
+**Comparison Harness** tutorial. These are the mechanics that the *P10: Validation*
+protocol puts to work end to end.
+
+.. toctree::
+   :maxdepth: 1
+
+   generated/tutorial6_comparison_harness
