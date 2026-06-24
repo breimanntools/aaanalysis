@@ -162,8 +162,25 @@ class TestObtainSamples:
     def test_no_positive_windows_raises(self):
         df = df_seq.copy()
         df["pos"] = np.nan
-        with pytest.raises(ValueError, match="no positive"):
+        with pytest.raises(ValueError, match="positive window"):
             aap.obtain_samples(df, strategy="same_protein")
+
+    def test_missing_sequence_column_raises(self):
+        df = df_seq.drop(columns=["sequence"])
+        with pytest.raises(ValueError, match="sequence"):
+            aap.obtain_samples(df, strategy="same_protein")
+
+    def test_pos_col_with_nan_in_list_cell(self):
+        # A list cell carrying a NaN must not crash positive extraction; the NaN is dropped
+        # (synthetic strategy does not route pos_col through the sampler's own parser).
+        df = pd.DataFrame({
+            "entry": ["P1", "P2"],
+            "sequence": ["ACDEFGHIKLMNPQ", "MNPQRSTVWYACDE"],
+            "pos": [[7, np.nan], np.nan],
+        })
+        df_samples, _, df_eval = aap.obtain_samples(df, strategy="synthetic",
+                                                    window_size=5, n=1, seed=0)
+        assert df_eval["n_positive"].iloc[0] == 1
 
 
 class TestObtainSamplesComplex:
@@ -193,6 +210,12 @@ class TestObtainSamplesComplex:
         df_samples, _, _ = aap.obtain_samples(df_seq, strategy="synthetic", n=6, seed=1)
         neg = df_samples[df_samples["label"] == 0]
         assert all(s.startswith("synthetic") for s in neg["strategy"].unique())
+
+    def test_synthetic_reports_no_source_proteins(self):
+        # Synthetic windows have no source protein -> coverage must not count empty entries.
+        _, _, df_eval = aap.obtain_samples(df_seq, strategy="synthetic", n=6, seed=1)
+        assert df_eval["n_source_proteins"].iloc[0] == 0
+        assert df_eval["protein_coverage"].iloc[0] == 0.0
 
     def test_pu_path_returns_reliable_negatives(self):
         df_samples, _, df_eval = aap.obtain_samples(

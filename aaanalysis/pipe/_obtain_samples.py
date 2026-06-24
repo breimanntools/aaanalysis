@@ -29,7 +29,7 @@ UNLABELED_POOL_FACTOR = 4
 def check_match_reliable_negatives_df_feat(reliable_negatives, df_feat, strategy):
     """The reliable-negatives (PU) path needs a ``df_feat`` and the cross-protein unlabeled pool."""
     if not reliable_negatives:
-        return None
+        return
     if df_feat is None:
         raise ValueError("'df_feat' (None) should be a feature DataFrame when "
                          "'reliable_negatives' is True: dPULearn builds the feature matrix 'X' "
@@ -45,7 +45,7 @@ def _coerce_positions(val) -> List[int]:
     if val is None:
         return []
     if isinstance(val, (list, tuple, np.ndarray, pd.Series)):
-        return [int(p) for p in val]
+        return [int(p) for p in val if not (isinstance(p, float) and np.isnan(p))]
     if isinstance(val, str):
         text = val.strip()
         if not text:
@@ -132,13 +132,15 @@ def _reliable_negatives(df_pos, df_unl, df_feat, window_size, n_neg,
     n_dropped = int((~pos_fits).sum() + (~unl_fits).sum())
     if n_dropped:
         warnings.warn(f"{n_dropped} window(s) lack the flanking residues needed to build the "
-                      f"feature matrix and are skipped on the reliable-negatives path.",
-                      RuntimeWarning)
+                      f"feature matrix and are skipped on the reliable-negatives path; widen the "
+                      f"sequences or lower 'window_size' to keep them.",
+                      UserWarning)
     df_pos_fit, df_unl_fit = df_pos[pos_fits], df_unl[unl_fits]
     if len(df_pos_fit) == 0 or len(df_unl_fit) == 0:
-        raise ValueError("reliable-negatives path has no featurizable positive or unlabeled "
-                         "windows (all anchors lack flanking residues); widen the sequences, "
-                         "lower 'window_size', or use 'reliable_negatives=False'.")
+        raise ValueError("'reliable_negatives' (True with 0 featurizable positive or unlabeled "
+                         "windows — all anchors lack flanking residues) should have enough "
+                         "flanking room; widen the sequences, lower 'window_size', or set "
+                         "'reliable_negatives=False'.")
     df_anchor = pd.DataFrame({
         ut.COL_ENTRY: list(df_pos_fit[ut.COL_ENTRY_WIN]) + list(df_unl_fit[ut.COL_ENTRY_WIN]),
         ut.COL_SEQ: list(df_pos_fit[ut.COL_SEQ]) + list(df_unl_fit[ut.COL_SEQ]),
@@ -167,7 +169,9 @@ def _build_eval(df_pos, df_neg, df_seq) -> pd.DataFrame:
     """One-row balance / leakage / coverage report on the obtained sample set."""
     n_pos, n_neg = len(df_pos), len(df_neg)
     n_proteins = int(df_seq[ut.COL_ENTRY].nunique())
-    n_source = int(df_neg[ut.COL_ENTRY].nunique()) if n_neg else 0
+    # Count only real source proteins; synthetic windows carry an empty entry, not a protein.
+    source_entries = df_neg[ut.COL_ENTRY][df_neg[ut.COL_ENTRY].astype(str) != ""] if n_neg else []
+    n_source = int(pd.Series(source_entries).nunique())
     max_sim = _max_identity_to_test(list(df_neg[ut.COL_WINDOW]), list(df_pos[ut.COL_WINDOW]))
     return pd.DataFrame([{
         "n_positive": n_pos,
@@ -287,9 +291,12 @@ def obtain_samples(df_seq: pd.DataFrame,
     # Validate (thin facade: the wrapped primitives validate the rest)
     ut.check_df_seq(df_seq=df_seq)
     ut.check_str(name="pos_col", val=pos_col, accept_none=False)
+    if ut.COL_SEQ not in df_seq.columns:
+        raise ValueError(f"'df_seq' (columns {list(df_seq.columns)}) should contain a "
+                         f"'{ut.COL_SEQ}' column of full sequences for window sampling.")
     if pos_col not in df_seq.columns:
-        raise ValueError(f"'pos_col' ('{pos_col}') should be a column of 'df_seq'. "
-                         f"Columns: {list(df_seq.columns)}")
+        raise ValueError(f"'pos_col' ('{pos_col}') should be a column of 'df_seq' "
+                         f"(columns {list(df_seq.columns)}).")
     ut.check_str_options(name="strategy", val=strategy, list_str_options=LIST_SITUATIONS)
     ut.check_number_range(name="n", val=n, min_val=1, just_int=True, accept_none=True)
     ut.check_number_range(name="window_size", val=window_size, min_val=1, just_int=True)
@@ -299,15 +306,17 @@ def obtain_samples(df_seq: pd.DataFrame,
     ut.check_bool(name="plot", val=plot)
     ut.check_number_range(name="seed", val=seed, min_val=0, just_int=True, accept_none=True)
     ut.check_bool(name="verbose", val=verbose)
-    check_match_reliable_negatives_df_feat(reliable_negatives, df_feat, strategy)
+    check_match_reliable_negatives_df_feat(reliable_negatives=reliable_negatives,
+                                           df_feat=df_feat, strategy=strategy)
     if reliable_negatives:
         df_feat = ut.check_df_feat(df_feat=df_feat)
 
     # Positives (known test windows) and the balance target
     df_pos = _positive_segments(df_seq, pos_col, window_size)
     if len(df_pos) == 0:
-        raise ValueError(f"'df_seq' has no positive windows of size {window_size} in column "
-                         f"'{pos_col}'; cannot build a training set.")
+        raise ValueError(f"'df_seq' (0 positive windows of size {window_size} at the anchors in "
+                         f"'{pos_col}') should yield at least one positive window to build a "
+                         f"training set.")
     n_neg = n if n is not None else len(df_pos)
 
     # Negatives / references from the situation's AAWindowSampler call
