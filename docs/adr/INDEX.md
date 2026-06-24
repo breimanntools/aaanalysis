@@ -48,4 +48,5 @@ Regenerate this table with:
 | [0038](0038-agentic-readiness-boundary.md) | Agentic-readiness boundary: usability/improvability is ours, agent integration is ProtXplain's | Accepted | 2026-06-23 |  |
 | [0039](0039-plot-return-contract.md) | One uniform `(fig, ax)` return contract for every `*Plot` method | Accepted | 2026-06-24 |  |
 | [0040](0040-golden-pipelines-convenience-api.md) | Golden pipelines: the `aaanalysis.pipe` (aap) convenience API | Accepted | 2026-06-24 |  |
+| [0041](0041-pipe-pipeline-conventions.md) | `aaanalysis.pipe` pipeline conventions and the core golden pipelines | Accepted | 2026-06-24 |  |
 <!-- ADR-INDEX:END -->
