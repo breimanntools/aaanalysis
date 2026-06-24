@@ -1,4 +1,4 @@
-# ADR-XXXX — SeqMut model-guided prediction shift (ML-guided directed evolution)
+# ADR-0042 — SeqMut model-guided prediction shift (ML-guided directed evolution)
 
 Status: Accepted — 2026-06-24
 

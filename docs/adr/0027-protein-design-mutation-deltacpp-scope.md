@@ -1,6 +1,6 @@
 # ADR-0027 — Protein design (AAMut/SeqMut): scope boundary and model-free ΔCPP
 
-Status: Accepted — 2026-06-11 (amended 2026-06-24 — see *Amendment* below and ADR-XXXX)
+Status: Accepted — 2026-06-11 (amended 2026-06-24 — see *Amendment* below and ADR-0042)
 
 ## Amendment (2026-06-24) — SeqMut becomes optionally model-aware (#57)
 
@@ -11,7 +11,7 @@ binds a fitted classifier so each mutation also carries a model **prediction shi
 = `(P_target(mut) − P_target(wt))·100`, plus a new `combine` verb scoring combined variants (the
 search/optimization layer — greedy + multi-objective directed evolution — is deferred to `SeqOpt`).
 The model-free ΔCPP path is unchanged and remains the default. `AAMut` stays deterministic. So D2's
-"model-free, out of scope" wording is **superseded for SeqMut** by ADR-XXXX; D1/D3/D4/D5 stand.
+"model-free, out of scope" wording is **superseded for SeqMut** by ADR-0042; D1/D3/D4/D5 stand.
 
 ## Context
 
