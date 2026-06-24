@@ -91,9 +91,12 @@ class TestObtainSamples:
         assert np.isnan(max_sim) or max_sim <= 0.5 + 1e-9
 
     def test_plot_parameter(self):
-        _, ax_on, _ = aap.obtain_samples(df_seq, strategy="same_protein", plot=True, seed=0)
+        df_samples, ax_on, _ = aap.obtain_samples(df_seq, strategy="same_protein",
+                                                  plot=True, seed=0)
         _, ax_off, _ = aap.obtain_samples(df_seq, strategy="same_protein", plot=False, seed=0)
-        assert ax_on is not None
+        # One sequence-logo panel per role group (Test + the references).
+        n_roles = df_samples["role"].nunique()
+        assert ax_on is not None and len(ax_on) == n_roles
         assert ax_off is None
 
     def test_verbose_parameter(self):
@@ -238,6 +241,14 @@ class TestObtainSamplesComplex:
             max_similarity_to_test=0.7, plot=True, seed=3, verbose=False)
         assert ax is not None
         assert (df_samples["window"].str.len() == 11).all()
+
+    def test_plot_returns_logo_axes_per_group(self):
+        from matplotlib.axes import Axes
+        df_samples, ax, _ = aap.obtain_samples(df_seq, strategy="different_protein",
+                                               n=10, plot=True, seed=1)
+        # multi_logo returns one Axes per sampled group; logo x-axis spans window_size.
+        assert all(isinstance(a, Axes) for a in ax)
+        assert len(ax) == df_samples["role"].nunique()
 
     def test_combined_invalid_parameters(self):
         with pytest.raises(ValueError):
