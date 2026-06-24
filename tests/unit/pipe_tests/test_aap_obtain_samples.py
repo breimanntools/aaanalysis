@@ -246,9 +246,10 @@ class TestObtainSamplesComplex:
         from matplotlib.axes import Axes
         df_samples, ax, _ = aap.obtain_samples(df_seq, strategy="different_protein",
                                                n=10, plot=True, seed=1)
-        # multi_logo returns one Axes per sampled group; logo x-axis spans window_size.
-        assert all(isinstance(a, Axes) for a in ax)
+        # multi_logo returns one (logo, info-bar) Axes pair per sampled group.
         assert len(ax) == df_samples["role"].nunique()
+        for logo_ax, info_ax in ax:
+            assert isinstance(logo_ax, Axes) and isinstance(info_ax, Axes)
 
     def test_combined_invalid_parameters(self):
         with pytest.raises(ValueError):

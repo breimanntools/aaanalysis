@@ -183,25 +183,31 @@ def _build_eval(df_pos, df_neg, df_seq) -> pd.DataFrame:
     }])
 
 
-def _plot_logo_comparison(df_samples) -> List[Axes]:
+def _plot_logo_comparison(df_samples, window_size) -> List[Tuple[Axes, Axes]]:
     """Stacked sequence-logo comparison of the sampled groups (one logo per role).
 
     Each role's windows (the positive ``Test`` windows and the sampled references) are turned
-    into a one-column ``tmd`` parts frame and rendered as an information-content sequence logo
-    via :meth:`AAlogoPlot.multi_logo`, so composition / conservation differences between the
-    groups are directly comparable on a shared scale.
+    into a one-column ``tmd`` parts frame and rendered via :meth:`AAlogoPlot.multi_logo` as a
+    probability sequence logo with a per-position information-content (bits) bar on top, labeled
+    with the group name and size (``"<role> (n=…)"``). The x-axis uses P-site notation around
+    the P1 anchor (the windows are P1-anchored), so the groups' composition and conservation are
+    directly comparable on a shared scale.
     """
-    aal = AAlogo(logo_type="information")
-    list_df_logo, list_names = [], []
+    aal = AAlogo(logo_type="probability")
+    list_df_logo, list_df_logo_info, list_names = [], [], []
     # groupby yields only non-empty groups, so every role has at least one window.
     for role, df_group in df_samples.groupby(ut.COL_ROLE, sort=False):
         windows = list(df_group[ut.COL_WINDOW])
         df_parts = pd.DataFrame({ut.COL_TMD: windows})
         list_df_logo.append(aal.get_df_logo(df_parts=df_parts))
+        list_df_logo_info.append(aal.get_df_logo_info(df_parts=df_parts))
         list_names.append(f"{role} (n={len(windows)})")
-    # The whole window is the TMD region (no JMD flanks), so jmd_n_len = jmd_c_len = 0.
-    aalp = AAlogoPlot(logo_type="information", jmd_n_len=0, jmd_c_len=0, verbose=False)
-    _, axes = aalp.multi_logo(list_df_logo=list_df_logo, list_name_data=list_names)
+    # The whole window is the TMD region (no JMD flanks), so jmd_n_len = jmd_c_len = 0; the P1
+    # anchor sits at the centered position (half_left + 1) under the sampler's anchoring.
+    aalp = AAlogoPlot(logo_type="probability", jmd_n_len=0, jmd_c_len=0, verbose=False)
+    _, axes = aalp.multi_logo(list_df_logo=list_df_logo, list_df_logo_info=list_df_logo_info,
+                              list_name_data=list_names,
+                              target_p1_site=(window_size - 1) // 2 + 1)
     return axes
 
 
@@ -218,7 +224,7 @@ def obtain_samples(df_seq: pd.DataFrame,
                    seed: Optional[int] = None,
                    n_jobs: Optional[int] = None,
                    verbose: bool = False,
-                   ) -> Tuple[pd.DataFrame, Optional[List[Axes]], pd.DataFrame]:
+                   ) -> Tuple[pd.DataFrame, Optional[List[Tuple[Axes, Axes]]], pd.DataFrame]:
     """
     Obtain a balanced training set from a described sampling situation in one call.
 
@@ -265,9 +271,10 @@ def obtain_samples(df_seq: pd.DataFrame,
         If set, drop sampled windows whose per-position identity to any test window exceeds this
         threshold (anti-leakage); passed through to :class:`AAWindowSampler`.
     plot : bool, default=False
-        If ``True``, draw a stacked sequence-logo comparison of the sampled groups (one
-        information-content logo per ``role``, e.g. ``Test`` vs the references) so their
-        composition / conservation can be compared, and return its list of ``Axes``.
+        If ``True``, draw a stacked sequence-logo comparison of the sampled groups — one
+        probability logo per ``role`` (e.g. ``Test`` vs the references) with a bits info-content
+        bar on top, labeled ``"<role> (n=…)"`` and using P-site x-axis notation — so their
+        composition / conservation can be compared, and return its list of ``Axes`` pairs.
     seed : int, optional
         The seed used by the random number generator. If a positive integer, results of
         stochastic processes are reproducible.
@@ -283,8 +290,9 @@ def obtain_samples(df_seq: pd.DataFrame,
         The balanced training set in ``'segments'`` mode: positive test windows (``label=1``,
         ``role='Test'``) plus the sampled references (``label=0``), with full row provenance in
         the ``role`` / ``strategy`` columns.
-    ax : list of matplotlib.axes.Axes or None
-        The per-group sequence-logo comparison axes, or ``None`` when ``plot=False``.
+    ax : list of (matplotlib.axes.Axes, matplotlib.axes.Axes) or None
+        Per-group ``(logo, info-bar)`` axes pairs of the sequence-logo comparison, one per
+        ``role`` group, or ``None`` when ``plot=False``.
     df_eval : pd.DataFrame
         One-row balance / leakage / coverage report (positive / negative counts, balance ratio,
         number of source proteins, protein coverage, and maximum identity of any sampled window
@@ -346,5 +354,5 @@ def obtain_samples(df_seq: pd.DataFrame,
     # Build the balanced set and the validation report
     df_samples = pd.concat([df_pos, df_neg], ignore_index=True)
     df_eval = _build_eval(df_pos, df_neg, df_seq)
-    ax = _plot_logo_comparison(df_samples) if plot else None
+    ax = _plot_logo_comparison(df_samples, window_size) if plot else None
     return df_samples, ax, df_eval
