@@ -633,14 +633,34 @@ human- and sklearn-idiomatic convenience is **AAanalysis**. A boundary, like the
 **relational / interaction (scope boundary)** — not a feature AAanalysis is
 missing. See ADR-0038.
 
-**convenience facade / golden pipeline**:
-A user-facing one-call wrapper over the existing primitives, planned as the
-stateless `aaanalysis.pipe` (`aap`) namespace. Thin (no own algorithm),
-opt-in, with defaults byte-identical to the explicit primitive path; emits plain
-numpy/pandas that feed sklearn and torch equally (torch stays the `[embed]`
-extra). It is **AAanalysis**, not ProtXplain — convenience is on our side of the
-boundary.
-_Avoid_: "verb" / "tool" (those name the ProtXplain agent-integration layer).
+**golden pipeline**:
+A user-facing one-call function in the stateless `aaanalysis.pipe` (`aap`)
+namespace that chains primitives into a common workflow. Thin (no own algorithm),
+opt-in, defaults **byte-identical** to the explicit primitive path; emits plain
+numpy/pandas (plus a Matplotlib `Axes` when it plots) that feed sklearn and torch
+equally (torch stays the `[embed]` extra). It is **AAanalysis** convenience, not
+ProtXplain. Named `verb_noun` (the only schema), the verb signalling **End** vs
+**Means**. The mpl analogy: `aap` is to the primitives as `pyplot` is to the
+`Axes`/`Figure` API. See ADR-0040.
+_Avoid_: "verb" / "tool" (those name the ProtXplain agent-integration layer);
+calling a **Means** a golden pipeline (only an **End** is one).
+
+**End** (golden pipeline):
+A golden pipeline that returns a **deliverable** — the thing the user wanted:
+`find_features` (→ `df_feat` + map), `predict_labels` (→ model + `df_eval`),
+`explain_features` (→ SHAP + map, *pro*), `design_mutations` (→ ΔCPP table),
+`evaluate_models` (→ repeated-CV + CIs). Returns `(primary, secondary)` — a
+plotting End returns `(data, ax)` (`ax=None` when `plot=False`). "Golden pipeline"
+means an End.
+_Avoid_: treating a producer step as an End.
+
+**Means** (producer):
+A step that prepares an **input** for an End (reliable negatives, a reduced scale
+set, sampled windows, embeddings). Exposed as a **flag** on the End it feeds by
+default (`find_features(dpulearn=True, subcategories=…)`); promoted to a standalone
+`aap` producer (`sample_windows`, `embed_sequences`) only on genuine standalone
+need — never both a flag and a function for the same canonical path.
+_Avoid_: "helper" (overloaded); making every Means a standalone function.
 
 ## Relationships
 
