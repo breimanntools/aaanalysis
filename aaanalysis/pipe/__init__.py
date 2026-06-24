@@ -20,6 +20,8 @@ Public objects
   best configuration by cross-validated model performance, and draws the feature map.
 * :func:`predict_samples` — build the feature matrix from ``df_feat`` and fit + evaluate a
   :class:`TreeModel`, returning the uniform ``(model, None, df_eval)`` pipeline triple.
+* :func:`plot_eval` — ``viridis`` evaluation-grid plot of a :func:`find_features` sweep that
+  adapts to the number of swept axes (line / heatmap / faceted small-multiples).
 * :func:`explain_features` (*pro*) — compute per-sample SHAP impact for a feature set and draw the
   SHAP-coloured feature map, returning the ``(df_feat_shap, ax, None)`` triple.
 
@@ -34,8 +36,9 @@ See Also
 from ._obtain_samples import obtain_samples
 from ._find_features import find_features
 from ._pipelines import predict_samples
+from ._eval_plot import plot_eval
 
-__all__ = ["obtain_samples", "find_features", "predict_samples"]
+__all__ = ["obtain_samples", "find_features", "predict_samples", "plot_eval"]
 
 # explain_features is pro-gated (needs SHAP via ShapModel): degrade to a friendly install-hint stub
 # when aaanalysis[pro] is absent, mirroring the top-level pro-import pattern (pro-core-boundary).
