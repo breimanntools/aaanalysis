@@ -132,6 +132,24 @@ Added
   p-value against a background model), complementing the pure-Python
   ``AAWindowSampler.sample_motif_matched`` PWM-sum sampler.
 
+**Protein Design**
+
+- **SeqMut model-guided mode (ML-guided directed evolution)**: ``SeqMut`` is now
+  optionally model-aware. Binding a fitted classifier
+  (``SeqMut(model=..., target_class=...)`` — any object with ``predict_proba``,
+  e.g. ``TreeModel``) makes ``scan`` / ``suggest`` / ``mutate`` report
+  ``delta_pred`` — the change of the model prediction score (percentage points) a
+  mutation induces — and ``suggest`` rank by it. Without a model, ``SeqMut`` stays
+  the deterministic, model-free ΔCPP tool.
+- **SeqMut.combine**: scores combined (multi-mutation) variants — several point
+  mutations applied to the same sequence and evaluated as one design.
+- **SeqMut.evolve**: greedy directed-evolution loop that stacks the best mutation
+  each round to a chosen ``depth`` and returns the trajectory.
+- **SeqMutPlot**: ``mutation_landscape`` now renders the model prediction-shift
+  mutation-scan heatmap (diverging ``delta_pred``, parts-colored sequence bar,
+  wild-type-prediction title); new ``variant_impact`` (ranked-variant bar) and
+  ``epistasis`` (pairwise non-additivity) plots.
+
 **Metrics**
 
 - **comp_per_protein_ap**: Per-protein average precision for site-localization

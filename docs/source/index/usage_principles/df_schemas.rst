@@ -619,6 +619,159 @@ SeqMut.scan per-mutation scan (one row per scanned single mutation).
      - no
      - Signed shift toward the test-class profile.
      - e.g. -0.8
+   * - ``delta_pred``
+     - float
+     - no
+     - no
+     - no
+     - Change of the model prediction score (percentage points) the mutation induces; present only when a fitted model is bound to SeqMut.
+     - e.g. 12.5
+   * - ``wt_pred``
+     - float
+     - no
+     - no
+     - no
+     - Wild-type prediction score (%) for the target class (per-entry constant); present only with a model.
+     - range: [0, 100]; e.g. 41.0
+   * - ``wt_pred_std``
+     - float
+     - no
+     - yes
+     - no
+     - Standard deviation of the wild-type prediction score (%); NaN when the model gives no std. Present only with a model.
+     - range: [0, 100]; e.g. 49.2
+
+``df_seqmut_variant``
+---------------------
+
+SeqMut.combine combined-variant table (one row per multi-mutation variant; all of a variant's point mutations are applied to the same sequence).
+
+.. list-table::
+   :header-rows: 1
+   :widths: 18 8 8 8 8 34 18
+
+   * - Column
+     - Type
+     - Required
+     - Nullable
+     - Unique
+     - Description
+     - Allowed / range / example
+   * - ``entry``
+     - str
+     - yes
+     - no
+     - no
+     - Protein/sequence identifier.
+     - e.g. P05067
+   * - ``variant``
+     - str
+     - yes
+     - no
+     - no
+     - Combined-variant label, '+'-joined single mutations.
+     - e.g. R20K+K27P
+   * - ``n_mut``
+     - int
+     - yes
+     - no
+     - no
+     - Number of point mutations in the variant.
+     - range: [1, inf]; e.g. 2
+   * - ``sequence_mut``
+     - str
+     - yes
+     - no
+     - no
+     - Full sequence with all the variant's mutations applied.
+     - e.g. ...K...P...
+   * - ``delta_cpp``
+     - float
+     - yes
+     - no
+     - no
+     - Sum|dX| feature-space magnitude of the combined variant.
+     - range: [0, inf]; e.g. 4.1
+   * - ``shift_score``
+     - float
+     - yes
+     - no
+     - no
+     - Signed shift toward the test-class profile for the combined variant.
+     - e.g. 1.3
+   * - ``delta_pred``
+     - float
+     - no
+     - no
+     - no
+     - Change of the model prediction score (percentage points) for the combined variant; present only with a model.
+     - e.g. 18.7
+
+``df_seqmut_evolve``
+--------------------
+
+SeqMut.evolve greedy directed-evolution trajectory (one row per round; each round fixes the best single mutation into the running background).
+
+.. list-table::
+   :header-rows: 1
+   :widths: 18 8 8 8 8 34 18
+
+   * - Column
+     - Type
+     - Required
+     - Nullable
+     - Unique
+     - Description
+     - Allowed / range / example
+   * - ``entry``
+     - str
+     - yes
+     - no
+     - no
+     - Protein/sequence identifier.
+     - e.g. P05067
+   * - ``round``
+     - int
+     - yes
+     - no
+     - no
+     - 1-based greedy round index.
+     - range: [1, inf]; e.g. 1
+   * - ``mutation``
+     - str
+     - yes
+     - no
+     - no
+     - Single mutation fixed this round '<from><pos><to>'.
+     - e.g. R20K
+   * - ``sequence_mut``
+     - str
+     - yes
+     - no
+     - no
+     - Running sequence after this round's mutation.
+     - e.g. ...K...
+   * - ``delta_cpp``
+     - float
+     - yes
+     - no
+     - no
+     - Cumulative Sum|dX| of the running variant vs wild-type.
+     - range: [0, inf]; e.g. 3.0
+   * - ``shift_score``
+     - float
+     - yes
+     - no
+     - no
+     - Cumulative signed shift toward the test-class profile vs wild-type.
+     - e.g. 1.1
+   * - ``delta_pred``
+     - float
+     - no
+     - no
+     - no
+     - Cumulative change of the model prediction score (percentage points) vs wild-type; present only with a model.
+     - e.g. 15.2
 
 ``df_seqmut_eval``
 ------------------

@@ -3,6 +3,7 @@
 Tiny, deterministic position-based ``df_seq`` + a real-scale ``df_feat`` so the ΔCPP engine
 runs through the genuine SequenceFeature builder (not a mock) while staying fast.
 """
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -79,3 +80,54 @@ def df_impact():
 def df_scan(df_seq_pos, df_feat):
     """A SeqMut.scan output over the TMD for the eval/plot tests."""
     return aa.SeqMut().scan(df_seq=df_seq_pos, df_feat=df_feat, region="tmd")
+
+
+class _StubModelTuple:
+    """TreeModel-style stub: predict_proba returns (pred, pred_std) for the positive class.
+
+    The positive-class probability is a deterministic logistic function of the first feature,
+    so ``delta_pred`` is exactly reproducible from the feature matrix.
+    """
+    classes_ = np.array([0, 1])
+    n_features_in_ = 4
+
+    def predict_proba(self, X):
+        x0 = np.asarray(X, dtype=float)[:, 0]
+        pred = 1.0 / (1.0 + np.exp(-x0))
+        return pred, np.full(len(pred), 0.05)
+
+
+class _StubModel2D:
+    """scikit-learn-style stub: predict_proba returns a 2-D (n_samples, n_classes) matrix."""
+    classes_ = np.array([0, 1])
+    n_features_in_ = 4
+
+    def predict_proba(self, X):
+        x0 = np.asarray(X, dtype=float)[:, 0]
+        p1 = 1.0 / (1.0 + np.exp(-x0))
+        return np.column_stack([1.0 - p1, p1])
+
+
+@pytest.fixture
+def model_tuple():
+    """A fitted-classifier stub returning (pred, pred_std) like :class:`TreeModel`."""
+    return _StubModelTuple()
+
+
+@pytest.fixture
+def model_2d():
+    """A fitted-classifier stub returning a 2-D probability matrix like scikit-learn."""
+    return _StubModel2D()
+
+
+@pytest.fixture
+def df_variant(df_seq_pos, df_feat):
+    """A SeqMut.combine output (singles + pairs) for the variant/epistasis plot tests."""
+    variants = pd.DataFrame({
+        ut.COL_ENTRY: ["P1", "P1", "P1", "P1", "P1", "P1"],
+        ut.COL_VARIANT: ["a", "b", "ab", "ab", "ac", "ac"],
+        ut.COL_POS: [11, 12, 11, 12, 11, 13],
+        ut.COL_TO_AA: ["A", "P", "A", "P", "A", "K"],
+    })
+    return aa.SeqMut(model=_StubModelTuple()).combine(
+        df_seq=df_seq_pos, variants=variants, df_feat=df_feat)

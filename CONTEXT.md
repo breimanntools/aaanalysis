@@ -84,7 +84,7 @@ A cross-cutting use-case class with **no prediction target**: CPP contrasts two 
 _Avoid_: feature discovery (collides with feature engineering), profiling (too generic).
 
 **design / engineering**:
-A cross-cutting use-case class that inverts prediction: instead of asking *what distinguishes two groups*, it asks *how a mutation moves a sequence's CPP feature profile*, and uses that to move a sequence toward a target profile ([[AAMut]] / [[SeqMut]]). Same prediction levels, opposite direction. The #37 scope is the **measurement + minimal single-objective** layer (apply mutations, measure [[ΔCPP]], rank by magnitude, suggest the top target-shift); goal-directed library generation, multi-objective/Pareto weighting, and uncertainty/active-learning selection are deferred to the design chain (#57/#59/#60). It is deliberately **model-free** — ΔCPP is a change in CPP feature values, never a black-box model score.
+A cross-cutting use-case class that inverts prediction: instead of asking *what distinguishes two groups*, it asks *how a mutation moves a sequence's CPP feature profile*, and uses that to move a sequence toward a target outcome ([[AAMut]] / [[SeqMut]]). Same prediction levels, opposite direction. The #37 scope was the **measurement + minimal single-objective** layer (apply mutations, measure [[ΔCPP]], rank by magnitude, suggest the top target-shift); #57 added the **ML-guided** layer on [[SeqMut]] — an optional fitted-model mode scoring each mutation by its [[prediction shift]] (`delta_pred`) and stacking mutations via [[directed evolution]] — while multi-objective/Pareto weighting and uncertainty/active-learning selection remain deferred (#59/#60). The model-free [[ΔCPP]] is always available; the model mode is opt-in (pass a `model`). [[AAMut]] stays deterministic and model-free.
 _Avoid_: optimization (overloaded — reserved for the deferred chain), generation.
 
 **relational / interaction (scope boundary)**:
@@ -98,12 +98,12 @@ The **residue-level, CPP-agnostic** mutator (`aaanalysis/protein_design/`). `AAM
 _Avoid_: substitution matrix (that is one *view* of AAMut's output, the `AAMutPlot.substitution_matrix` heatmap), BLOSUM (AAMut is property-scale-based, not log-odds).
 
 **SeqMut**:
-The **sequence-level, CPP-aware** mutator. Requires the **position-based** [[df_seq]] (`sequence` + `tmd_start`/`tmd_stop`) and a [[df_feat]]; applies point mutations and measures the [[ΔCPP]] they induce. Four verbs: `mutate` (apply a tidy `df_mut(entry, pos, to_aa)` table), `scan` (exhaustive per-position × substitution landscape, ranked by `delta_cpp`), `suggest` (top **target-shift** mutations), `eval` (**stable-vs-disruptive** per region). Deterministic and **model-free**; the returned table *is* the mutation history (no hidden state). It is the sole CPP-coupled class in the design module.
+The **sequence-level, CPP-aware** mutator. Requires the **position-based** [[df_seq]] (`sequence` + `tmd_start`/`tmd_stop`) and a [[df_feat]]; applies point mutations and measures the [[ΔCPP]] they induce. Six verbs: `mutate` (apply a tidy `df_mut(entry, pos, to_aa)` table), `scan` (exhaustive per-position × substitution landscape, ranked by `delta_cpp`), `suggest` (top **target-shift** mutations), `eval` (**stable-vs-disruptive** per region), `combine` (score a [[combined variant]] — several point mutations applied together), and `evolve` ([[directed evolution]] — greedily stack the best mutation each round). **Model-free by default; optionally model-aware**: constructing `SeqMut(model=...)` binds a fitted classifier so each mutation also carries its [[prediction shift]] (`delta_pred`) and `suggest`/`evolve` are guided by it. The returned table *is* the mutation history (no hidden state). It is the sole CPP-coupled class in the design module.
 _Avoid_: sequence mutator (use SeqMut), perturbation (the legacy module name; the package is `protein_design`).
 
 **ΔCPP** (`delta_cpp`):
-The **feature-space** change a mutation induces: `ΔX = X_mut − X_wt` over the [[df_feat]] features (each `X` from `SequenceFeature.feature_matrix`), aggregated to the scalar L1 magnitude `delta_cpp = Σ|ΔX|`. The measurement layer of [[design / engineering]] — never a model prediction delta (that model-based path is the deferred #57 territory, explicitly out of scope). Only positions inside the parts referenced by `df_feat` can change `X`, so SeqMut's default scan region is the JMD-N + TMD + JMD-C span.
-_Avoid_: mutation score, fitness (implies an optimization objective), prediction change (model-based — wrong layer).
+The **feature-space** change a mutation induces: `ΔX = X_mut − X_wt` over the [[df_feat]] features (each `X` from `SequenceFeature.feature_matrix`), aggregated to the scalar L1 magnitude `delta_cpp = Σ|ΔX|`. The **model-free** measurement layer of [[design / engineering]], always available. Distinct from the [[prediction shift]] (`delta_pred`), the model-based score added when a `model` is bound. Only positions inside the parts referenced by `df_feat` can change `X`, so SeqMut's default scan region is the JMD-N + TMD + JMD-C span.
+_Avoid_: mutation score, fitness (implies an optimization objective); do not conflate with the model-based `delta_pred` ([[prediction shift]]).
 
 **target-shift** (`shift_score`):
 The signed score by which [[SeqMut]]`.suggest` ranks a mutation toward the **test-class profile**: `shift_score = Σ sign(mean_dif) · ΔX`, optionally weighted per feature by `feat_importance`/`abs_auc`. The target direction is **implicit in `df_feat`'s `mean_dif`** (the way the test class differs from the reference), so no separate target vector is needed — though an explicit `target` feature-vector override is accepted. Positive = moves toward the test class.
@@ -112,6 +112,22 @@ _Avoid_: objective (reserved for the deferred multi-objective #59), gradient (no
 **stable vs disruptive**:
 The binary tag [[SeqMut]]`.eval` assigns each scanned mutation by thresholding `|ΔCPP|` (default: the upper-tertile quantile of the observed distribution; user-overridable), summarized as a per-`entry`×`region` disruptive **rate**. "Disruptive" = large feature-space displacement; "stable" = small.
 _Avoid_: deleterious / tolerated (phenotype claims AAanalysis does not make — the tag is feature-space displacement, not function).
+
+**prediction shift** (`delta_pred`):
+The **model-based** score a mutation induces, present only when a fitted classifier is bound to [[SeqMut]] (`SeqMut(model=...)`): `delta_pred = (P_target(mut) − P_target(wt)) · 100` — the change, in percentage points, of the model's predicted probability for the `target_class`. The ML-guided counterpart of the model-free [[ΔCPP]]; it is what `suggest`/`evolve` maximize when a model is given and what the mutation-scan heatmap colors. The model is duck-typed on `predict_proba` ([[TreeModel]] returns the positive-class score *and* its std → the heatmap's "score ± std" title; a scikit-learn classifier returns the 2-D probability matrix, no std). "the change of prediction score per mutation and position."
+_Avoid_: fitness, activity (phenotype claims — it is the model's score, not a measured function); ΔCPP (that is the model-free feature-space score).
+
+**directed evolution** ([[SeqMut]]`.evolve`):
+The greedy mutation-stacking loop: each round scans the *current* (already-mutated) sequence, fixes the substitution with the best objective ([[prediction shift]] with a model, else [[target-shift]]) into the running background, and repeats for `depth` rounds, never revisiting a mutated position. Builds an interpretable multi-mutation variant without a combinatorial search; the returned trajectory carries each round's cumulative score vs the wild-type.
+_Avoid_: optimization (reserved for the multi-objective #59), Pareto (no trade-off front is computed — it is single-objective greedy).
+
+**combined variant** ([[SeqMut]]`.combine`):
+A set of point mutations applied **together** to one sequence and scored once (one [[ΔCPP]] / [[prediction shift]] per variant), labelled by the `'+'`-joined single mutations (e.g. `R20K+K27P`). The explicit-design counterpart to the automated [[directed evolution]]; contrast [[SeqMut]]`.mutate`, which scores each point mutation independently against the wild-type.
+_Avoid_: library (a combined variant is one design, not an enumerated mutation library).
+
+**epistasis**:
+The pairwise **non-additivity** of two mutations, `ΔP(i+j) − (ΔP(i) + ΔP(j))`, visualized by `SeqMutPlot.epistasis` from a [[combined variant]] table of singles + pairs: positive = synergy (the pair beats the sum of singles), negative = antagonism.
+_Avoid_: interaction (overloaded with the relational/PPI [[relational / interaction (scope boundary)]] sense); coupling.
 
 ### Multi-class & regression labeling vocabulary
 
