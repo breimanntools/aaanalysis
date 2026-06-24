@@ -15,10 +15,12 @@ The documentation is organized into pillars, each answering one question:
 
 - **Getting Started** — *How do I install AAanalysis and get a first result?* Fast
   onboarding, no deep theory.
-- **Tutorials** — *How does this one tool work?* Function-level teaching: parameters
-  and outputs, one tool at a time.
+- **Tutorials** — *How does this tool work?* Tool-level teaching of the AAanalysis
+  building blocks — each tool, its parameters, and its outputs. The *mechanics*;
+  Protocols reuse these and link back rather than repeating them.
 - **Protocols** — *How do I design a valid, end-to-end analysis?* Concept-level
-  workflow teaching that builds the mental model for when and why to reach for each tool.
+  workflow teaching that builds the mental model for when and why to reach for each
+  tool — linking to the Tutorials for the mechanics, so the two never overlap.
 - **Use Cases** — *How do I adapt a full biological analysis?* End-to-end biological
   case studies *(coming soon)*.
 - **API** — *What is the exact signature or parameter?* Technical reference only, no

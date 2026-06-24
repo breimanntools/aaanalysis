@@ -9,10 +9,12 @@
 
 Tutorials
 =========
-Tutorials teach **one tool at a time** — what a function does, its parameters,
-and the outputs it returns. New to AAanalysis? Begin with
-:ref:`Getting Started <getting_started>` for your first result, then return here
-to go deeper on each tool.
+Tutorials teach the AAanalysis **tools** — what each one does, its parameters, and
+the outputs it returns. They cover the *mechanics*; for how to combine tools into a
+valid end-to-end analysis, see the :ref:`Protocols <protocols>`, which link back
+here for the mechanics instead of repeating them — so the two stay distinct with no
+overlap. New to AAanalysis? Begin with :ref:`Getting Started <getting_started>` for
+your first result, then return here to go deeper on each tool.
 
 Data Handling
 -------------
@@ -59,9 +61,10 @@ Explaining sample level predictions at single-residue resolution is introduced i
 
 Evaluation & Comparison
 -----------------------
-Assemble the building blocks into one honest small-N evaluation in the **Comparison Harness**
-tutorial: sweep CPP configurations with **CPPGrid**, score per-protein site-localization
-metrics, and rank configurations fairly under cross-validation.
+Learn the evaluation tools — **CPPGrid** configuration sweeps, per-protein
+site-localization metrics, and fair ranking under cross-validation — in the
+**Comparison Harness** tutorial. These are the mechanics that the *P10: Validation*
+protocol puts to work end to end.
 
 .. toctree::
    :maxdepth: 1
