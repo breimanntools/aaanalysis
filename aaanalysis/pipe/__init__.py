@@ -20,6 +20,8 @@ Public objects
   best configuration by cross-validated model performance, and draws the feature map.
 * :func:`predict_samples` — build the feature matrix from ``df_feat`` and fit + evaluate a
   :class:`TreeModel`, returning the uniform ``(model, None, df_eval)`` pipeline triple.
+* :func:`explain_features` (*pro*) — compute per-sample SHAP impact for a feature set and draw the
+  SHAP-coloured feature map, returning the ``(df_feat_shap, ax, None)`` triple.
 
 See Also
 --------
@@ -27,9 +29,19 @@ See Also
 * :mod:`aaanalysis.feature_engineering` — the primitives these pipelines wrap.
 * :mod:`aaanalysis.explainable_ai` — :class:`TreeModel`, the predictor used by
   :func:`predict_samples`.
+* :mod:`aaanalysis.explainable_ai_pro` — :class:`ShapModel`, the explainer :func:`explain_features` wraps.
 """
 from ._obtain_samples import obtain_samples
 from ._find_features import find_features
 from ._pipelines import predict_samples
 
 __all__ = ["obtain_samples", "find_features", "predict_samples"]
+
+# explain_features is pro-gated (needs SHAP via ShapModel): degrade to a friendly install-hint stub
+# when aaanalysis[pro] is absent, mirroring the top-level pro-import pattern (pro-core-boundary).
+try:
+    from ._explain_features import explain_features
+except ImportError as e:
+    from aaanalysis import missing_feature_stub
+    explain_features = missing_feature_stub("explain_features", e, mode="pro")
+__all__.append("explain_features")
