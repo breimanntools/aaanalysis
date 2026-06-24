@@ -1,6 +1,6 @@
-# ADR-XXXX — SeqOpt optimization layer (SHAP-guided, fuzzy-labeled multi-objective directed evolution)
+# ADR-0043 — SeqOpt optimization layer (SHAP-guided, fuzzy-labeled multi-objective directed evolution)
 
-Status: Proposed — 2026-06-24
+Status: Accepted — 2026-06-24
 
 ## Context
 
