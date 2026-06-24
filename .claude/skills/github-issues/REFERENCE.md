@@ -59,6 +59,24 @@ Typical clusters in this repo:
 For each cluster: pick a *primary* issue, list the rest as blocked-by, and state "serialize."
 Independent issues (different subpackages, no shared files) go in separate **parallel lanes**.
 
+## PR ↔ Issue mapping (secondary)
+
+Issues are primary; PRs are secondary context layered on top. Fetch:
+- Open PRs: `gh pr list --state open --json number,title,headRefName,files`
+- Merged PRs: `gh pr list --state merged --limit 30 --json number,title,mergedAt,closingIssuesReferences`
+
+Map each PR to its issue(s):
+- **Closing PR** — `closingIssuesReferences` non-empty (a `Closes/Fixes/Resolves #NN` keyword): the PR
+  closed that issue → mark the issue ☑️ **closed** and link the PR (`#NN ✅`).
+- **Advancing PR** — no closing keyword (e.g. an "Addresses #NN" body, or a program PR with no issue):
+  attribute it to the issue / program item it advances; write it `(#NN)` in parens (vs a closing `#NN ✅`).
+- **In-flight collision** — an open PR whose changed `files` overlap an open issue's file-path means that
+  issue is *being worked* and its lane is occupied → note it on the issue's audit row and in the overlap
+  clusters; do **not** hand it to a second parallel session.
+
+Keep PRs as context, not the spine: order/lanes/verdicts stay issue-driven, and a PR never changes an
+issue's verdict on its own — verify the merged code before marking an issue ☑️ done.
+
 ## Handoff file template (`docs/guides/handoff_github_issues.md`)
 
 ```markdown
@@ -70,8 +88,20 @@ _`python .claude/skills/github-issues/scripts/fetch_issues.py` then re-run the s
 ## Snapshot
 - Open issues: N (by verdict: ✅ a · 🔄 b · ⏸️ c · ❌ d · ☑️ e)
 - Recently resolved on master (verify before closing): #..., #...
+- In flight now (open PRs): #.. (<issue>) · ...
 
-## Implementation order (do top-down; respect blockers)
+## Issue ↔ PR activity (secondary)
+> **Issues on the left** (the spine); their PR(s) on the right — **—** when an issue has no PR yet.
+> `✅` = a PR closed the issue · `↗` = PR(s) advance it (no closing keyword, or still in progress).
+
+| issue | state | PR(s) | what landed / in flight |
+|---|---|---|---|
+| #.. | ✅ closed / 🔄 open / partial | #.. / #.. ↗ / — | <what> |
+
+- **Issues with no PR yet ( — ):** list them (or "all other open issues — see the per-issue audit").
+- **Program / tooling PRs with no backing issue:** #.. (<what>), … (program work that advances no GitHub issue).
+
+## Implementation order (do top-down; respect blockers + in-flight PRs)
 1. <issue> — <one-line why-first> — lane <L>
 2. ...
 
@@ -79,12 +109,13 @@ _`python .claude/skills/github-issues/scripts/fetch_issues.py` then re-run the s
 - **Lane A — <theme>:** #.., #..  (no shared files)
 - **Lane B — <theme>:** #..
 - **Serialize (shared code, NOT parallel):** cluster <name> = #.., #.. → primary #.., then the rest
+  (include any open-PR file collision here)
 
 ## Per-issue audit
 ### <topic group>
-| # | prio | verdict | scope / standards | already-addressed | implementation note (complements the issue) |
-|---|---|---|---|---|---|
-| .. | .. | ✅/🔄/⏸️/❌/☑️ | .. | .. | files to touch · reuse · the decision to make |
+| # | prio | verdict | PR | scope / standards | already-addressed | implementation note (complements the issue) |
+|---|---|---|---|---|---|---|
+| .. | .. | ✅/🔄/⏸️/❌/☑️ | #.. open/merged or — | .. | .. | files to touch · reuse · the decision to make |
 
 ## Reject / Defer appendix (with cited rule)
 - #.. ❌ — <rule citation>
