@@ -8,7 +8,8 @@ D2 below established a **model-free** ΔCPP for #37 and deferred the model-based
 delta to "#57 (ML-guided) territory ... out of scope." Issue #57 has now landed and **places
 that ML-guided layer on `SeqMut` itself** (not a new class): constructing `SeqMut(model=...)`
 binds a fitted classifier so each mutation also carries a model **prediction shift** `delta_pred`
-= `(P_target(mut) − P_target(wt))·100`, and two new verbs (`combine`, `evolve`) stack mutations.
+= `(P_target(mut) − P_target(wt))·100`, plus a new `combine` verb scoring combined variants (the
+search/optimization layer — greedy + multi-objective directed evolution — is deferred to `SeqOpt`).
 The model-free ΔCPP path is unchanged and remains the default. `AAMut` stays deterministic. So D2's
 "model-free, out of scope" wording is **superseded for SeqMut** by ADR-XXXX; D1/D3/D4/D5 stand.
 

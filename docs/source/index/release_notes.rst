@@ -143,8 +143,6 @@ Added
   the deterministic, model-free ΔCPP tool.
 - **SeqMut.combine**: scores combined (multi-mutation) variants — several point
   mutations applied to the same sequence and evaluated as one design.
-- **SeqMut.evolve**: greedy directed-evolution loop that stacks the best mutation
-  each round to a chosen ``depth`` and returns the trajectory.
 - **SeqMutPlot**: ``mutation_landscape`` now renders the model prediction-shift
   mutation-scan heatmap (diverging ``delta_pred``, parts-colored sequence bar,
   wild-type-prediction title); new ``variant_impact`` (ranked-variant bar) and

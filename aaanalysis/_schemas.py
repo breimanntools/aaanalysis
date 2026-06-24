@@ -35,7 +35,7 @@ from ._constants import (
     COL_FEAT_IMPORT, COL_FEAT_IMPORT_STD, COL_FEAT_IMPACT, COL_FEAT_IMPACT_STD,
     COL_FROM_AA, COL_TO_AA, COL_MUTATION, COL_DELTA, COL_ABS_DELTA,
     COL_POS, COL_REGION, COL_DELTA_CPP, COL_SHIFT_SCORE,
-    COL_DELTA_PRED, COL_WT_PRED, COL_WT_PRED_STD, COL_VARIANT, COL_ROUND, COL_SEQ_MUT,
+    COL_DELTA_PRED, COL_WT_PRED, COL_WT_PRED_STD, COL_VARIANT, COL_SEQ_MUT,
     COL_N_MUT, COL_N_DISRUPTIVE, COL_FRAC_DISRUPTIVE, COL_MEAN_DELTA_CPP,
     COL_PROTEIN_ID, COL_START, COL_STOP, COL_AA, COL_FEATURE_TYPE, COL_SOURCE,
     COL_EVIDENCE, COL_SCORE, COL_BOND_ID,
@@ -343,30 +343,6 @@ DICT_DF_SCHEMAS = {
                                    "(percentage points) for the combined variant; "
                                    "present only with a model.", required=False,
                                    example=18.7),
-        },
-    },
-    "df_seqmut_evolve": {
-        "description": (
-            "SeqMut.evolve greedy directed-evolution trajectory (one row per round; each "
-            "round fixes the best single mutation into the running background)."),
-        "columns": {
-            COL_ENTRY: _field("str", "Protein/sequence identifier.", required=True,
-                              example="P05067"),
-            COL_ROUND: _field("int", "1-based greedy round index.", required=True,
-                              range=[1, None], example=1),
-            COL_MUTATION: _field("str", "Single mutation fixed this round "
-                                 "'<from><pos><to>'.", required=True, example="R20K"),
-            COL_SEQ_MUT: _field("str", "Running sequence after this round's mutation.",
-                                required=True, example="...K..."),
-            COL_DELTA_CPP: _field("float", "Cumulative Sum|dX| of the running variant vs "
-                                  "wild-type.", required=True, range=[0, None],
-                                  example=3.0),
-            COL_SHIFT_SCORE: _field("float", "Cumulative signed shift toward the "
-                                    "test-class profile vs wild-type.", required=True,
-                                    example=1.1),
-            COL_DELTA_PRED: _field("float", "Cumulative change of the model prediction "
-                                   "score (percentage points) vs wild-type; present only "
-                                   "with a model.", required=False, example=15.2),
         },
     },
     "df_seqmut_eval": {

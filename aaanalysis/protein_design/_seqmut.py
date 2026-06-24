@@ -9,7 +9,7 @@ import aaanalysis.utils as ut
 from aaanalysis.feature_engineering._sequence_feature import SequenceFeature
 from ._backend.seqmut.seqmut import (build_scan_plan, comp_feature_matrices, comp_scan_scores,
                                      comp_pred_scores, comp_seq_scores, build_scan_output,
-                                     greedy_evolve, eval_disruptive, classify_region)
+                                     eval_disruptive, classify_region)
 
 
 # I Helper Functions
@@ -163,8 +163,8 @@ class SeqMut:
             scikit-learn classifier) trained on the CPP feature matrix of the ``df_feat`` used
             at call time. When given, the methods add a model prediction-shift column
             ``delta_pred`` (the change of the predicted score a mutation induces, in percentage
-            points) and :meth:`SeqMut.suggest` / :meth:`SeqMut.evolve` are guided by it. When
-            ``None`` (default) the class stays deterministic and model-free.
+            points) and :meth:`SeqMut.suggest` is guided by it. When ``None`` (default) the class
+            stays deterministic and model-free.
         target_class : int or str, optional
             Class whose predicted probability ``delta_pred`` tracks. ``None`` (default) selects
             the positive class. A class label is matched against ``model.classes_`` when
@@ -373,8 +373,8 @@ class SeqMut:
         in the direction by which the test class differs from the reference class. With a bound
         ``model`` the ranking switches to the model prediction-shift ``delta_pred`` (the ML-guided
         objective), so the suggested mutations are those predicted to raise the target-class score
-        most. This is the single-objective design primitive; combining several mutations is
-        :meth:`SeqMut.combine` / :meth:`SeqMut.evolve`.
+        most. This is the single-objective design primitive; combining several mutations into one
+        variant is :meth:`SeqMut.combine`.
 
         Parameters
         ----------
@@ -557,71 +557,3 @@ class SeqMut:
             rank_col = ut.COL_DELTA_PRED
         df_variant = df_variant.sort_values(rank_col, ascending=False).reset_index(drop=True)
         return df_variant
-
-    def evolve(self,
-               df_seq: pd.DataFrame,
-               df_feat: pd.DataFrame,
-               depth: int = 3,
-               region: Optional[Union[str, List[int]]] = None,
-               to_aa: Optional[List[str]] = None,
-               jmd_n_len: int = 10,
-               jmd_c_len: int = 10,
-               ) -> pd.DataFrame:
-        """
-        Greedily evolve each sequence by stacking the best single mutation each round.
-
-        This is the ML-guided directed-evolution loop: each round scans the *current*
-        (already-mutated) sequence, fixes the substitution with the best objective
-        (``delta_pred`` when a model is bound, else ``shift_score``) into the running background,
-        and repeats for ``depth`` rounds. Positions already mutated are not revisited, so the
-        trajectory builds an interpretable multi-mutation variant without a combinatorial search.
-
-        Parameters
-        ----------
-        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
-            DataFrame containing an ``entry`` column with unique protein identifiers, in the
-            **position-based** format (``sequence``, ``tmd_start``, ``tmd_stop``). See
-            :meth:`SequenceFeature.get_df_parts` for the full ``df_seq`` format specification.
-        df_feat : pd.DataFrame
-            CPP feature set (output of :meth:`CPP.run`) defining the features measured over.
-        depth : int, default=3
-            Number of mutations to stack per sequence (greedy rounds).
-        region : str or list of int, optional
-            Restrict the per-round scan (see :meth:`SeqMut.scan`).
-        to_aa : list of str, optional
-            Substitution alphabet (see :meth:`SeqMut.scan`).
-        jmd_n_len : int, default=10
-            Length of JMD-N in number of amino acids.
-        jmd_c_len : int, default=10
-            Length of JMD-C in number of amino acids.
-
-        Returns
-        -------
-        df_evolve : pd.DataFrame, shape (n_steps, 6)
-            One row per round with ``entry``, ``round``, ``mutation`` (the mutation fixed that
-            round), ``sequence_mut`` (the running sequence), and the running variant's cumulative
-            ``delta_cpp`` / ``shift_score`` vs the wild-type — plus cumulative ``delta_pred`` when
-            a model is bound.
-
-        Examples
-        --------
-        .. include:: examples/seqmut_evolve.rst
-        """
-        # Validate
-        check_match_df_seq_pos_based(df_seq=df_seq)
-        df_feat = ut.check_df_feat(df_feat=df_feat)
-        check_match_model_df_feat(model=self._model, df_feat=df_feat)
-        region = check_region(region=region)
-        to_aa = check_to_aa_set(to_aa=to_aa)
-        ut.check_number_range(name="depth", val=depth, min_val=1, just_int=True)
-        ut.check_number_range(name="jmd_n_len", val=jmd_n_len, min_val=0, just_int=True)
-        ut.check_number_range(name="jmd_c_len", val=jmd_c_len, min_val=0, just_int=True)
-        # Greedy directed evolution
-        df_evolve = greedy_evolve(df_seq=df_seq, df_feat=df_feat, df_scales=self.df_scales,
-                                  sf=self._sf, model=self._model, target_class=self._target_class,
-                                  depth=depth, region=region, to_aa=to_aa,
-                                  jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
-        if self._verbose:
-            ut.print_out(f"SeqMut.evolve stacked up to {depth} mutation(s) over "
-                         f"{len(df_seq)} sequence(s).")
-        return df_evolve

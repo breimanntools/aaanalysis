@@ -275,17 +275,14 @@ COL_DELTA_PRED = "delta_pred"       # SeqMut (model) — ΔP% = (P(mut) − P(wt
 COL_WT_PRED = "wt_pred"             # SeqMut (model) — wild-type prediction score (%) for the target class (per-entry)
 COL_WT_PRED_STD = "wt_pred_std"     # SeqMut (model) — std of the wild-type prediction score (%), NaN if unavailable
 COL_VARIANT = "variant"            # SeqMut.combine — combined-variant label, e.g. "R20K+K27P"
-COL_ROUND = "round"                # SeqMut.evolve — 1-based greedy directed-evolution round index
 COLS_AAMUT = [COL_FROM_AA, COL_TO_AA, COL_SCALE_ID, COL_CAT, COL_SUBCAT, COL_DELTA, COL_ABS_DELTA]
 COLS_SEQMUT_SCAN = [COL_ENTRY, COL_POS, COL_FROM_AA, COL_TO_AA, COL_MUTATION,
                     COL_REGION, COL_DELTA_CPP, COL_SHIFT_SCORE]
 COLS_SEQMUT_EVAL = [COL_ENTRY, COL_REGION, COL_N_MUT, COL_N_DISRUPTIVE,
                     COL_FRAC_DISRUPTIVE, COL_MEAN_DELTA_CPP]
-# SeqMut.combine / SeqMut.evolve — base columns (COL_DELTA_PRED appended when a model is bound)
+# SeqMut.combine — base columns (COL_DELTA_PRED appended when a model is bound)
 COLS_SEQMUT_VARIANT = [COL_ENTRY, COL_VARIANT, COL_N_MUT, COL_SEQ_MUT,
                        COL_DELTA_CPP, COL_SHIFT_SCORE]
-COLS_SEQMUT_EVOLVE = [COL_ENTRY, COL_ROUND, COL_MUTATION, COL_SEQ_MUT,
-                      COL_DELTA_CPP, COL_SHIFT_SCORE]
 # SeqMut.suggest — optional weighting of the shift score by a df_feat column
 LIST_SHIFT_WEIGHTS = [COL_FEAT_IMPORT, COL_ABS_AUC]
 

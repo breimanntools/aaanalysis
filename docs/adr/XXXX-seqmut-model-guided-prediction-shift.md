@@ -38,12 +38,13 @@ positive-class `(pred, pred_std)` tuple — the std drives the heatmap's "score 
 scikit-learn classifier returns the 2-D probability matrix and `target_class` selects the column
 (default: positive class). This keeps `protein_design` in **core** (no SHAP dependency forced).
 
-**D3 — Two new verbs for stacking mutations; allowed substitutions are top-N by score.** `combine`
-scores explicit **combined variants** (several point mutations applied to one sequence, one score
-each); `evolve` is the greedy **directed-evolution** loop (scan → fix the best mutation → re-scan to
-`depth` rounds). "Feature-consistent" substitutions are simply the top scorers per position; scale-
-direction filtering is left as a future option. The automated multi-objective / Pareto and
-uncertainty layers stay deferred to #59 / #60.
+**D3 — `SeqMut` *scores*; all *search/optimization* lives in a separate `SeqOpt` class.** `SeqMut`
+adds `combine` — scoring explicit **combined variants** (several point mutations applied to one
+sequence, one score each) — and "feature-consistent" substitutions are simply the top scorers per
+position (scale-direction filtering left as a future option). The *search* layer (greedy directed
+evolution, and multi-objective / Pareto and active-learning selection) is **not** on `SeqMut`; it is
+the forthcoming `SeqOpt` optimizer (its own issue/ADR), keeping the scoring-vs-optimization boundary
+clean. `SeqOpt` reuses model-bound `SeqMut` as its fitness engine.
 
 **D4 — The plots carry the design story.** `SeqMutPlot.mutation_landscape` renders the model-guided
 mutation-scan heatmap (diverging `delta_pred`, parts-colored sequence bar, wild-type-prediction
@@ -58,18 +59,21 @@ combined variants as a bar chart and `epistasis` maps pairwise non-additivity.
 - **A `model=` argument per call** rather than at construction. Rejected: the model interprets a
   fixed `df_feat`/`target_class`, so binding it once (with `target_class`) keeps every call clean
   and mirrors how the model is conceptually paired with the feature set.
-- **Folding greedy stacking into `suggest`.** Rejected: explicit combination (`combine`) and
-  automated stacking (`evolve`) are distinct user intents and were requested as separate methods.
+- **Putting search/optimization (greedy stacking, multi-objective) on `SeqMut`.** Rejected:
+  `SeqMut` is the *scoring* surface; mixing automated search into it blurs the boundary. Explicit
+  combination (`combine`) stays (it is scoring, not search), but greedy/multi-objective directed
+  evolution moves to a dedicated `SeqOpt` optimizer (its own issue) that reuses `SeqMut` as fitness.
 - **Scale-direction ("feature-consistent") filtering of allowed substitutions now.** Deferred:
   top-N-by-score ships the minimal useful behavior; the explicit `to_aa` alphabet already lets a
   user constrain substitutions.
 
 ## Consequences
 
-- #57 (and the absorbed #58) is delivered; #59 / #60 build on `delta_pred`, `combine`, `evolve`.
+- #57 (and the absorbed #58) is delivered; the forthcoming `SeqOpt` (#59 / #60) builds its search
+  on `delta_pred` + `combine`.
 - `delta_pred` / `wt_pred` / `wt_pred_std` join the `df_seqmut_scan` schema (optional columns);
-  `df_seqmut_variant` and `df_seqmut_evolve` are new documented schemas.
-- The public `SeqMut` / `SeqMutPlot` surface grows (new constructor args, `combine`, `evolve`,
+  `df_seqmut_variant` is a new documented schema.
+- The public `SeqMut` / `SeqMutPlot` surface grows (new constructor args, `combine`,
   `variant_impact`, `epistasis`); changing it later is a breaking change.
 - ADR-0027 is amended (not superseded wholesale): its #37↔#59/#60 boundary and `AAMut` decisions
   stand.
