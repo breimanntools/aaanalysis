@@ -17,6 +17,7 @@ import aaanalysis.utils as ut
 from aaanalysis.feature_engineering import SequenceFeature, CPP, CPPGrid, CPPPlot
 from aaanalysis.explainable_ai import TreeModel
 from aaanalysis.data_handling import load_scales
+from ._eval_plot import plot_eval
 
 
 # I Helper Functions
@@ -237,7 +238,9 @@ def find_features(labels: ut.ArrayLike1D,
     name_ref : str, default="REF"
         Display name of the reference/negative group in the feature map.
     plot : bool, default=True
-        If ``True``, draw the CPP feature map and return its ``Axes``; if ``False``, return ``None``.
+        If ``True``, draw the CPP feature map and return its ``Axes`` (and, for a search that swept
+        more than one configuration, draw the sweep evaluation grid as an auxiliary figure so a
+        single ``plt.show()`` renders both); if ``False``, draw nothing and return ``None``.
     random_state : int, optional
         The seed used by the random number generator. If a positive integer, results of stochastic
         processes are reproducible.
@@ -286,13 +289,13 @@ def find_features(labels: ut.ArrayLike1D,
     sf = SequenceFeature(verbose=verbose)
     df_scales_all = load_scales(name="scales")
     if optimization == "fast":
-        df_feat, df_parts_win, df_eval = _run_fast(
+        df_feat, df_parts_win, df_eval, dict_refine = _run_fast(
             sf=sf, labels=labels, df_seq=df_seq, cfg=cfg, simplify=simplify, model=model,
             cv=cv, metric=metric, subcategories=subcategories, label_test=label_test,
             label_ref=label_ref, df_scales_all=df_scales_all, random_state=random_state,
             n_jobs=n_jobs, verbose=verbose)
     else:
-        df_feat, df_parts_win, df_eval = _run_search(
+        df_feat, df_parts_win, df_eval, dict_refine = _run_search(
             sf=sf, labels=labels, df_seq=df_seq, cfg=cfg, simplify=simplify, model=model,
             cv=cv, metric=metric, subcategories=subcategories, label_test=label_test,
             label_ref=label_ref, df_scales_all=df_scales_all, random_state=random_state,
@@ -310,6 +313,10 @@ def find_features(labels: ut.ArrayLike1D,
         df_feat = df_feat.head(top_n)
     ax = None
     if plot:
+        # The feature map is the primary figure (returned as ``ax``); the sweep evaluation grid is
+        # drawn as an auxiliary figure so a single ``plt.show()`` renders both. It collapses to
+        # nothing when only one configuration was run (e.g. ``optimization="fast"``).
+        plot_eval(df_eval, dict_refine=dict_refine)
         _, ax = CPPPlot(df_scales=df_scales_all, verbose=verbose).feature_map(
             df_feat=df_feat, name_test=name_test, name_ref=name_ref)
     return df_feat, ax, df_eval
@@ -341,7 +348,8 @@ def _run_fast(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, model=
         "n_filter": cfg["n_filter_vals"][0], "n_features": len(df_feat),
         "cv_bacc_mean": cv_mean, "cv_bacc_std": cv_std, "rank": 1, "is_selected": True,
     }])
-    return df_feat, df_parts, df_eval
+    # No sweep and no CV keep-guard at this grade, so there is no refinement delta to report.
+    return df_feat, df_parts, df_eval, None
 
 
 def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, model="svm", cv=5,
@@ -414,6 +422,10 @@ def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, mode
     df_parts_win = _parts_for(list_parts_win)
     df_scales_win = scale_sets[int(rec["df_scales"])]
     base_mean = float(df_eval.loc[sel_pos, "cv_bacc_mean"])
+    # Record each refinement step's before -> after CV score for the eval-grid annotation: the two
+    # boolean refinements (simplify on/off, RFE on/off) are shown as Δ-scores, not heatmap axes.
+    dict_refine = {"base": base_mean, "simplify": None, "simplify_kept": False,
+                   "rfe": None, "rfe_kept": False}
     if simplify:
         cpp_win = CPP(df_parts=df_parts_win, df_scales=df_scales_win,
                       random_state=random_state, verbose=verbose)
@@ -425,10 +437,15 @@ def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, mode
                                     df_scales=df_scales_all, n_jobs=n_jobs)
         mean_simpl, _ = _cv_score(X_simpl, labels, model=model, cv=cv, metric=metric,
                                   random_state=random_state)
+        dict_refine["simplify"] = mean_simpl
         if mean_simpl >= base_mean:
             df_feat_win, base_mean = df_feat_simpl.reset_index(drop=True), mean_simpl
+            dict_refine["simplify_kept"] = True
     X_win = sf.feature_matrix(features=df_feat_win[ut.COL_FEATURE], df_parts=df_parts_win,
                               df_scales=df_scales_all, n_jobs=n_jobs)
-    df_feat_win, _, _ = _refine_rfe(df_feat=df_feat_win, X=X_win, labels=labels, base_mean=base_mean,
-                                    model=model, cv=cv, metric=metric, random_state=random_state)
-    return df_feat_win, df_parts_win, df_eval
+    df_feat_win, mean_rfe, rfe_kept = _refine_rfe(
+        df_feat=df_feat_win, X=X_win, labels=labels, base_mean=base_mean,
+        model=model, cv=cv, metric=metric, random_state=random_state)
+    dict_refine["rfe"] = mean_rfe
+    dict_refine["rfe_kept"] = rfe_kept
+    return df_feat_win, df_parts_win, df_eval, dict_refine

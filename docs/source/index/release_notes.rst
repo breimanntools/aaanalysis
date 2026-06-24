@@ -179,6 +179,12 @@ Added
   the features by tree-based importance, and draws the feature map. The
   ``optimization`` grade scopes the search (``"fast"`` is byte-identical to the
   explicit single-CPP path); it returns ``(df_feat, ax, df_eval)``.
+- **aap.plot_eval**: A ``viridis`` evaluation-grid plot of a ``find_features``
+  sweep that adapts to the number of swept levers — a single configuration draws
+  nothing, one lever draws a line/bar, two draw a heatmap, and three or more draw
+  faceted small-multiples — coloring by the cross-validated score and starring the
+  selected configuration. ``find_features`` draws it as an auxiliary figure when
+  ``plot=True``; it is also usable standalone on any ``CPPGrid``-style eval table.
 
 **Package**
 
