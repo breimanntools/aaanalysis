@@ -353,6 +353,7 @@ def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, mode
                   for n in cfg["scale_breadths"]]
     params_parts = {"list_parts": cfg["part_sets"]} if cfg["sweep_parts"] else None
     params_split = {"split_types": cfg["split_type_sets"], "n_split_max": cfg["n_split_max_vals"]}
+    # Sweeping n_filter is free: CPPGrid runs CPP once at the largest value and head(n)-slices the rest.
     params_cpp = {"n_filter": cfg["n_filter_vals"], "label_test": label_test, "label_ref": label_ref,
                   "max_cor": cfg["max_cor"], "max_overlap": cfg["max_overlap"]}
     cppg = CPPGrid(df_seq=df_seq, labels=labels, random_state=random_state, verbose=verbose,
