@@ -25,7 +25,7 @@ the primary result, the figure(s), then the evaluation(s) — superseding ADR-00
 unpacks plainly:
 
     df_feat, ax, df_eval = aap.find_features(df_seq, labels)
-    model,   _,  df_eval = aap.predict_labels(df_feat, df_parts, labels)
+    model,   _,  df_eval = aap.predict_samples(df_feat, df_parts, labels)
 
 A pipeline that produces several figures still returns the **primary** one in `figs`
 (e.g. the feature map) and creates the rest as ordinary pyplot figures, so a single
@@ -44,7 +44,7 @@ the order a user walks them — and each is the executable spine of exactly one 
   pipeline, not an afterthought.*
 - **`find_features`** — identify the determinant features (and draw the feature map). A
   CPP **AutoML** pipeline (D3). Wraps `CPPGrid` + `CPP` + `CPPPlot` + `TreeModel`.
-- **`predict_labels`** — train and cross-validate a predictor from the features. Wraps
+- **`predict_samples`** — train and cross-validate a predictor from the features. Wraps
   `SequenceFeature.feature_matrix` + `TreeModel`.
 - **`explain_features`** — per-residue SHAP explanation + SHAP-coloured map (*pro*).
   Wraps `ShapModel`.
@@ -81,7 +81,7 @@ workflows in lockstep.
 
 - The call site is uniform and trivial across the whole namespace; `plt.show()` "just
   works" for every pipeline, including auxiliary plots.
-- `predict_labels` (the renamed, experimental `predict`) returns `(model, None,
+- `predict_samples` (the renamed, experimental `predict`) returns `(model, None,
   df_eval)`; existing experimental callers update to the triple — acceptable while the
   namespace is experimental and out of `__all__` (ADR-0040 D5).
 - `find_features` carries real compute (N CV models per call on the higher grades); the
