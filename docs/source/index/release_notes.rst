@@ -175,6 +175,12 @@ Added
 - **A minimal CPP analysis** tutorial (``tutorial0_minimal``): the shortest
   end-to-end loop — load a dataset, run CPP, read out the signature — paired with
   the new concept page.
+- **Documentation navigation + routing landing page**: *Getting Started* is now a
+  top-level pillar (alongside *Examples* → Tutorials · Protocols and *API*), and
+  the landing page gains a section explainer, a "which section do I want?" box, and
+  a "You want to… / Go to" routing table. The previously unwired
+  **Comparison Harness** tutorial (``tutorial6_comparison_harness``) is now
+  reachable from the Tutorials toctree.
 
 Changed
 ~~~~~~~
