@@ -647,11 +647,12 @@ calling a **Means** a golden pipeline (only an **End** is one).
 
 **End** (golden pipeline):
 A golden pipeline that returns a **deliverable** — the thing the user wanted:
-`find_features` (→ `df_feat` + map), `predict_labels` (→ model + `df_eval`),
-`explain_features` (→ SHAP + map, *pro*), `design_mutations` (→ ΔCPP table),
-`evaluate_models` (→ repeated-CV + CIs). Returns `(primary, secondary)` — a
-plotting End returns `(data, ax)` (`ax=None` when `plot=False`). "Golden pipeline"
-means an End.
+`obtain_samples` (→ training set + validation report), `find_features`
+(→ `df_feat` + map), `predict_labels` (→ model + `df_eval`), `explain_features`
+(→ SHAP + map, *pro*), `design_mutations` (→ ΔCPP table), `evaluate_models`
+(→ repeated-CV + CIs). Returns the uniform triple `(results, figs, evals)` — each
+slot a bare object or `None` (a plotting End sets `figs=None` when `plot=False`;
+a non-evaluating one sets `evals=None`). "Golden pipeline" means an End.
 _Avoid_: treating a producer step as an End.
 
 **Means** (producer):
