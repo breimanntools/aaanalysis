@@ -87,7 +87,7 @@ class TestdPULearnPlotPCA:
             df_pu = _create_sample_df_pu(n_samples=n_samples, n_pcs=n_pc,
                                          include_abs_diff=True, n_neg=n_neg, random_order=True)
             labels = _create_labels(labels_selection_via=df_pu["selection_via"])
-            ax = aa.dPULearnPlot.pca(df_pu=df_pu, labels=labels)
+            _, ax = aa.dPULearnPlot.pca(df_pu=df_pu, labels=labels)
             assert isinstance(ax, plt.Axes)
             plt.close()
 
@@ -98,7 +98,7 @@ class TestdPULearnPlotPCA:
                                          random_order=True)
             labels = _create_labels(labels_selection_via=df_pu["selection_via"])
             figsize = (random.uniform(4, 20), random.uniform(4, 20))
-            ax = aa.dPULearnPlot.pca(df_pu=df_pu, labels=labels, figsize=figsize)
+            _, ax = aa.dPULearnPlot.pca(df_pu=df_pu, labels=labels, figsize=figsize)
             assert isinstance(ax, plt.Axes)
             plt.close()
 
@@ -108,7 +108,7 @@ class TestdPULearnPlotPCA:
             df_pu = _create_sample_df_pu(n_samples=n_samples, n_pcs=n_pc, include_abs_diff=True, n_neg=n_neg,
                                          random_order=True)
             labels = _create_labels(labels_selection_via=df_pu["selection_via"])
-            ax = aa.dPULearnPlot.pca(df_pu, labels=labels)
+            _, ax = aa.dPULearnPlot.pca(df_pu, labels=labels)
             assert isinstance(ax, plt.Axes)
             plt.close()
 
@@ -120,7 +120,7 @@ class TestdPULearnPlotPCA:
             pc_x = random.randint(1, 3)
             pc_y = random.randint(1, 3)
             labels = _create_labels(labels_selection_via=df_pu["selection_via"])
-            ax = aa.dPULearnPlot.pca(df_pu, pc_x=pc_x, pc_y=pc_y, labels=labels)
+            _, ax = aa.dPULearnPlot.pca(df_pu, pc_x=pc_x, pc_y=pc_y, labels=labels)
             assert isinstance(ax, plt.Axes)
             plt.close()
 
@@ -131,7 +131,7 @@ class TestdPULearnPlotPCA:
         df_pu = _create_sample_df_pu(n_samples=n_samples, n_pcs=n_pc, include_abs_diff=True, n_neg=n_neg,
                                      random_order=True)
         labels = _create_labels(labels_selection_via=df_pu["selection_via"])
-        ax = aa.dPULearnPlot.pca(df_pu, show_pos_mean_x=show_pos_mean_x, show_pos_mean_y=show_pos_mean_y, labels=labels)
+        _, ax = aa.dPULearnPlot.pca(df_pu, show_pos_mean_x=show_pos_mean_x, show_pos_mean_y=show_pos_mean_y, labels=labels)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -142,7 +142,7 @@ class TestdPULearnPlotPCA:
         df_pu = _create_sample_df_pu(n_samples=n_samples, n_pcs=n_pc, include_abs_diff=True, n_neg=n_neg,
                                      random_order=True)
         labels = _create_labels(labels_selection_via=df_pu["selection_via"])
-        ax = aa.dPULearnPlot.pca(df_pu, colors=colors, labels=labels)
+        _, ax = aa.dPULearnPlot.pca(df_pu, colors=colors, labels=labels)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -158,7 +158,7 @@ class TestdPULearnPlotPCA:
             labels = _create_labels(labels_selection_via=df_pu["selection_via"])
             # Replace '$' which could be interpreted as LaTex symbol
             names = [x.replace("$", "X") for x in names]
-            ax = aa.dPULearnPlot.pca(df_pu, names=names, labels=labels)
+            _, ax = aa.dPULearnPlot.pca(df_pu, names=names, labels=labels)
             assert isinstance(ax, plt.Axes)
             plt.close()
 
@@ -170,7 +170,7 @@ class TestdPULearnPlotPCA:
         df_pu = _create_sample_df_pu(n_samples=n_samples, n_pcs=n_pc, include_abs_diff=True, n_neg=n_neg,
                                      random_order=True)
         labels = _create_labels(labels_selection_via=df_pu["selection_via"])
-        ax = aa.dPULearnPlot.pca(df_pu, legend=legend, labels=labels)
+        _, ax = aa.dPULearnPlot.pca(df_pu, legend=legend, labels=labels)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -181,7 +181,7 @@ class TestdPULearnPlotPCA:
         df_pu = _create_sample_df_pu(n_samples=n_samples, n_pcs=n_pc, include_abs_diff=True, n_neg=n_neg,
                                      random_order=True)
         labels = _create_labels(labels_selection_via=df_pu["selection_via"])
-        ax = aa.dPULearnPlot.pca(df_pu, legend_y=legend_y, labels=labels)
+        _, ax = aa.dPULearnPlot.pca(df_pu, legend_y=legend_y, labels=labels)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -196,7 +196,7 @@ class TestdPULearnPlotPCA:
             df_pu = _create_sample_df_pu(n_samples=n_samples, n_pcs=n_pc, include_abs_diff=True, n_neg=n_neg,
                                          random_order=True)
             labels = _create_labels(labels_selection_via=df_pu["selection_via"])
-            ax = aa.dPULearnPlot.pca(df_pu, kwargs_scatterplot=args_scatter, labels=labels)
+            _, ax = aa.dPULearnPlot.pca(df_pu, kwargs_scatterplot=args_scatter, labels=labels)
             assert isinstance(ax, plt.Axes)
             plt.close()
 
@@ -297,7 +297,7 @@ class TestdPULearnPlotPCAComplex:
             # Suppress specific matplotlib UserWarnings about missing glyphs
             warnings.filterwarnings("ignore", category=UserWarning)
 
-            ax = aa.dPULearnPlot.pca(df_pu, labels=labels, figsize=figsize, pc_x=pc_x, pc_y=pc_y,
+            _, ax = aa.dPULearnPlot.pca(df_pu, labels=labels, figsize=figsize, pc_x=pc_x, pc_y=pc_y,
                                      show_pos_mean_x=show_pos_mean_x, show_pos_mean_y=show_pos_mean_y, names=names,
                                      colors=colors, legend=legend, legend_y=legend_y, kwargs_scatterplot=args_scatter)
             assert isinstance(ax, plt.Axes)

@@ -210,6 +210,10 @@ class AAlogoPlot:
     """
     Amino Acid logo Plot (**AAlogoPlot**) class for visualizing sequence logos.
 
+    Every plotting method returns a ``(fig, ax)`` pair (a thin tuple subclass): unpack as
+    ``fig, ax = ...``. For backward compatibility, the returned object also forwards attribute
+    access to ``ax``, so legacy ``ax = ...; ax.set_title(...)`` keeps working.
+
     Renders single and stacked multiple sequence logos (via the logomaker [Tareen20]_
     package) with automatic target middle domain (TMD) / juxta middle domain (JMD) part
     annotations. ``jmd_n_len`` and ``jmd_c_len`` are set at initialization and used by all
@@ -402,7 +406,7 @@ class AAlogoPlot:
         -------
         fig : Figure
             Figure object.
-        axes : Axes or tuple of (Axes, Axes)
+        ax : Axes or tuple of (Axes, Axes)
             When ``df_logo_info`` is ``None``: a single ``Axes`` for the logo panel.
             When ``df_logo_info`` is provided: a tuple ``(ax_logo, ax_info)`` where
             ``ax_info`` is the bit-score bar above the logo.
@@ -510,7 +514,7 @@ class AAlogoPlot:
                                  weight_tmd_jmd=weight_tmd_jmd,
                                  highlight_tmd_area=highlight_tmd_area,
                                  highlight_alpha=highlight_alpha)
-        return fig, axes
+        return ut.FigAxResult(fig, axes)
 
     def multi_logo(self,
                    list_df_logo: Optional[List[pd.DataFrame]] = None,
@@ -631,7 +635,7 @@ class AAlogoPlot:
         -------
         fig : Figure
             Figure object.
-        axes : list of Axes or list of tuple of (Axes, Axes)
+        ax : list of Axes or list of tuple of (Axes, Axes)
             When no bit-score bars are shown: one ``Axes`` per logo. When
             ``list_df_logo_info`` (or ``list_aal_kws``) is given: one
             ``(ax_logo, ax_info)`` tuple per group, where ``ax_info`` is the bar above.
@@ -728,4 +732,4 @@ class AAlogoPlot:
                                 xtick_size=xtick_size,
                                 xtick_width=xtick_width,
                                 xtick_length=xtick_length)
-        return fig, axes
+        return ut.FigAxResult(fig, axes)

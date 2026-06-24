@@ -59,7 +59,7 @@ class TestUpdateSeqSize:
             cpp_plot = aa.CPPPlot()
             args_seq = get_args_seq(n=n)
             fig, ax = plot_profile(cpp_plot=cpp_plot, args_seq=args_seq)
-            result = cpp_plot.update_seq_size(ax=ax, fig=fig)
+            _, result = cpp_plot.update_seq_size(ax=ax, fig=fig)
             assert isinstance(result, plt.Axes)
             plt.close()
 
@@ -69,7 +69,7 @@ class TestUpdateSeqSize:
         cpp_plot = aa.CPPPlot()
         args_seq = get_args_seq()
         _, ax = plot_profile(cpp_plot=cpp_plot, args_seq=args_seq)
-        result = cpp_plot.update_seq_size(ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd)
+        _, result = cpp_plot.update_seq_size(ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd)
         assert isinstance(result, plt.Axes)
         plt.close()
 
@@ -78,7 +78,7 @@ class TestUpdateSeqSize:
             cpp_plot = aa.CPPPlot()
             args_seq = get_args_seq()
             _, ax = plot_profile(cpp_plot=cpp_plot, args_seq=args_seq)
-            result = cpp_plot.update_seq_size(ax=ax, max_x_dist=max_x_dist)
+            _, result = cpp_plot.update_seq_size(ax=ax, max_x_dist=max_x_dist)
             assert isinstance(result, plt.Axes)
             plt.close()
 
@@ -87,7 +87,7 @@ class TestUpdateSeqSize:
             cpp_plot = aa.CPPPlot()
             args_seq = get_args_seq(n=0)
             _, ax = plot_profile(cpp_plot=cpp_plot, args_seq=args_seq)
-            result = cpp_plot.update_seq_size(ax=ax, weight_tmd_jmd=weight_tmd_jmd)
+            _, result = cpp_plot.update_seq_size(ax=ax, weight_tmd_jmd=weight_tmd_jmd)
             assert isinstance(result, plt.Axes)
             plt.close()
 
@@ -97,7 +97,7 @@ class TestUpdateSeqSize:
             cpp_plot = aa.CPPPlot()
             args_seq = get_args_seq()
             _, ax = plot_profile(cpp_plot=cpp_plot, args_seq=args_seq)
-            result = cpp_plot.update_seq_size(ax, tmd_color=tmd_color)
+            _, result = cpp_plot.update_seq_size(ax, tmd_color=tmd_color)
             assert isinstance(result, plt.Axes)
             plt.close()
 
@@ -107,7 +107,7 @@ class TestUpdateSeqSize:
             cpp_plot = aa.CPPPlot()
             args_seq = get_args_seq(n=1)
             _, ax = plot_profile(cpp_plot=cpp_plot, args_seq=args_seq)
-            result = cpp_plot.update_seq_size(ax, jmd_color=jmd_color)
+            _, result = cpp_plot.update_seq_size(ax, jmd_color=jmd_color)
             assert isinstance(result, plt.Axes)
             plt.close()
 
@@ -117,7 +117,7 @@ class TestUpdateSeqSize:
             cpp_plot = aa.CPPPlot()
             args_seq = get_args_seq()
             _, ax = plot_profile(cpp_plot=cpp_plot, args_seq=args_seq)
-            result = cpp_plot.update_seq_size(ax, tmd_seq_color=tmd_seq_color)
+            _, result = cpp_plot.update_seq_size(ax, tmd_seq_color=tmd_seq_color)
             assert isinstance(result, plt.Axes)
             plt.close()
 
@@ -127,7 +127,7 @@ class TestUpdateSeqSize:
             cpp_plot = aa.CPPPlot()
             args_seq = get_args_seq()
             _, ax = plot_profile(cpp_plot=cpp_plot, args_seq=args_seq)
-            result = cpp_plot.update_seq_size(ax, jmd_seq_color=jmd_seq_color)
+            _, result = cpp_plot.update_seq_size(ax, jmd_seq_color=jmd_seq_color)
             assert isinstance(result, plt.Axes)
             plt.close()
 
@@ -203,7 +203,7 @@ class TestUpdateSeqSizeComplex:
         jmd_color = random.choice(VALID_COLORS)
         tmd_seq_color = random.choice(VALID_COLORS)
         jmd_seq_color = random.choice(VALID_COLORS)
-        result = cpp_plot.update_seq_size(
+        _, result = cpp_plot.update_seq_size(
             ax=ax,
             fig=None,  # Assuming None is a valid value
             fontsize_tmd_jmd=12,

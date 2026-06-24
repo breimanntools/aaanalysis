@@ -266,3 +266,41 @@ def plot_legend_(ax=None, dict_color=None, list_cat=None, labels=None,
     if keep_legend and old_legend:
         ax.add_artist(old_legend)
     return ax
+
+
+# Uniform return contract for every public *Plot method
+class FigAxResult(tuple):
+    """The ``(fig, ax)`` pair returned by every AAanalysis ``*Plot`` method.
+
+    A thin ``tuple`` subclass so the canonical ``fig, ax = Plot().method(...)``
+    unpacking and indexing (``result[0]`` / ``result[1]``) work exactly like a
+    plain 2-tuple. For backward compatibility with the historical single-``Axes``
+    return, attribute access falls through to the ``ax`` element, so legacy code
+    written as ``ax = Plot().method(...); ax.set_title(...)`` keeps working.
+
+    The second element is a single ``Axes`` for single-panel plots and an array
+    of ``Axes`` for multi-panel plots (``eval``, ``multi_logo``); the attribute
+    fall-through is meaningful only in the single-``Axes`` case.
+    """
+    __slots__ = ()
+
+    def __new__(cls, fig, ax):
+        return super().__new__(cls, (fig, ax))
+
+    @property
+    def fig(self):
+        """The :class:`matplotlib.figure.Figure`."""
+        return self[0]
+
+    @property
+    def ax(self):
+        """The :class:`matplotlib.axes.Axes` (or array of Axes for multi-panel plots)."""
+        return self[1]
+
+    def __getattr__(self, name):
+        # Reached only when normal lookup fails: delegate to the Axes for
+        # backward compatibility with the historical Axes-only return shape.
+        return getattr(self[1], name)
+
+    def __getnewargs__(self):
+        return (self[0], self[1])

@@ -71,6 +71,10 @@ class dPULearnPlot:
     compressed Principal Component Analysis (PCA) feature space (:meth:`pca`), and an evaluation
     comparing multiple sets of identified negatives (:meth:`eval`).
 
+    Every plotting method returns a ``(fig, ax)`` pair (a thin tuple subclass): unpack as
+    ``fig, ax = ...``. For backward compatibility, the returned object also forwards attribute
+    access to ``ax``, so legacy ``ax = ...; ax.set_title(...)`` keeps working.
+
     .. versionadded:: 0.1.2
 
     """
@@ -134,7 +138,7 @@ class dPULearnPlot:
         -------
         fig : Figure
             Figure object for evaluation plot
-        axes : array of Axes
+        ax : array of Axes
             Array of Axes objects, each representing a subplot within the figure. .
 
         Notes
@@ -164,7 +168,7 @@ class dPULearnPlot:
         fig, axes = plot_eval(df_eval=df_eval, colors=colors,
                               figsize=figsize, dict_xlims=dict_xlims,
                               legend=legend, legend_y=legend_y)
-        return fig, axes
+        return ut.FigAxResult(fig, axes)
 
     @staticmethod
     def pca(df_pu: pd.DataFrame,
@@ -179,7 +183,7 @@ class dPULearnPlot:
             legend: bool = True,
             legend_y: float = -0.15,
             kwargs_scatterplot: Optional[dict] = None,
-            ) -> Axes:
+            ) -> Tuple[Figure, Axes]:
         """
         Principal component analysis (PCA) plot for set of identified negatives.
 
@@ -220,8 +224,14 @@ class dPULearnPlot:
 
         Returns
         -------
+        fig : Figure
+            Figure object containing the plot.
         ax : Axes
             PCA plot axes object.
+
+        Notes
+        -----
+        * Returned as a ``(fig, ax)`` pair (see :class:`dPULearnPlot` for the shared return contract).
 
         See Also
         --------
@@ -268,5 +278,5 @@ class dPULearnPlot:
         except Exception as e:
             str_error = f"Following error occurred due to plt.scatter() function: {e}"
             raise ValueError(str_error)
-        return ax
+        return ut.FigAxResult(ax.get_figure(), ax)
 

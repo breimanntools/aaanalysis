@@ -38,7 +38,9 @@ class TestAAclustPlotCentersRender:
 
     def test_centers_returns_ax_and_components(self):
         X, labels = _X_labels()
-        ax, dfc = aa.AAclustPlot().centers(X, labels=labels)
+        acp = aa.AAclustPlot()
+        fig, ax = acp.centers(X, labels=labels)
+        dfc = acp.df_components_
         assert isinstance(ax, plt.Axes)
         assert isinstance(dfc, pd.DataFrame)
         assert dfc.shape[0] == 20
@@ -48,14 +50,14 @@ class TestAAclustPlotCentersRender:
 
     def test_centers_no_legend(self):
         X, labels = _X_labels()
-        ax, _ = aa.AAclustPlot().centers(X, labels=labels, legend=False)
+        _, ax = aa.AAclustPlot().centers(X, labels=labels, legend=False)
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
     def test_centers_custom_palette_and_components(self):
         X, labels = _X_labels()
         palette = ["red", "green", "blue", "orange"]
-        ax, _ = aa.AAclustPlot().centers(X, labels=labels, component_x=1,
+        _, ax = aa.AAclustPlot().centers(X, labels=labels, component_x=1,
                                          component_y=2, palette=palette)
         assert isinstance(ax, plt.Axes)
         plt.close("all")
@@ -63,7 +65,7 @@ class TestAAclustPlotCentersRender:
     def test_centers_on_passed_ax(self):
         X, labels = _X_labels()
         fig, ax0 = plt.subplots()
-        ax, _ = aa.AAclustPlot().centers(X, labels=labels, ax=ax0)
+        _, ax = aa.AAclustPlot().centers(X, labels=labels, ax=ax0)
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
@@ -73,20 +75,22 @@ class TestAAclustPlotMedoidsRender:
 
     def test_medoids_euclidean(self):
         X, labels = _X_labels()
-        ax, dfc = aa.AAclustPlot().medoids(X, labels=labels, metric="euclidean")
+        acp = aa.AAclustPlot()
+        fig, ax = acp.medoids(X, labels=labels, metric="euclidean")
+        dfc = acp.df_components_
         assert isinstance(ax, plt.Axes)
         assert isinstance(dfc, pd.DataFrame)
         plt.close("all")
 
     def test_medoids_correlation_metric(self):
         X, labels = _X_labels()
-        ax, _ = aa.AAclustPlot().medoids(X, labels=labels, metric="correlation")
+        _, ax = aa.AAclustPlot().medoids(X, labels=labels, metric="correlation")
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
     def test_medoids_no_legend(self):
         X, labels = _X_labels()
-        ax, _ = aa.AAclustPlot().medoids(X, labels=labels, legend=False)
+        _, ax = aa.AAclustPlot().medoids(X, labels=labels, legend=False)
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
@@ -113,7 +117,7 @@ class TestAAclustPlotCorrelationBranches:
     def test_correlation_basic(self):
         df_corr = _df_corr()
         labels = [0, 1, 2, 0, 1, 2]
-        ax = aa.AAclustPlot(verbose=False).correlation(
+        _, ax = aa.AAclustPlot(verbose=False).correlation(
             df_corr=df_corr, labels=labels, labels_ref=[0, 1, 2])
         assert isinstance(ax, plt.Axes)
         plt.close("all")
@@ -123,7 +127,7 @@ class TestAAclustPlotCorrelationBranches:
         # branches + _add_bar_labels in utils_plot_elements.
         df_corr = _df_corr()
         labels = [0, 1, 2, 0, 1, 2]
-        ax = aa.AAclustPlot(verbose=False).correlation(
+        _, ax = aa.AAclustPlot(verbose=False).correlation(
             df_corr=df_corr, labels=labels, labels_ref=[0, 1, 2],
             bar_position=["left", "right", "top", "bottom"])
         assert isinstance(ax, plt.Axes)
@@ -132,7 +136,7 @@ class TestAAclustPlotCorrelationBranches:
     def test_correlation_cluster_x(self):
         df_corr = _df_corr()
         labels = [0, 1, 2, 0, 1, 2]
-        ax = aa.AAclustPlot(verbose=False).correlation(
+        _, ax = aa.AAclustPlot(verbose=False).correlation(
             df_corr=df_corr, labels=labels, labels_ref=[0, 1, 2], cluster_x=True)
         assert isinstance(ax, plt.Axes)
         plt.close("all")
@@ -140,7 +144,7 @@ class TestAAclustPlotCorrelationBranches:
     def test_correlation_bar_colors_list(self):
         df_corr = _df_corr()
         labels = [0, 1, 2, 0, 1, 2]
-        ax = aa.AAclustPlot(verbose=False).correlation(
+        _, ax = aa.AAclustPlot(verbose=False).correlation(
             df_corr=df_corr, labels=labels, labels_ref=[0, 1, 2],
             bar_colors=["red", "green", "blue"])
         assert isinstance(ax, plt.Axes)

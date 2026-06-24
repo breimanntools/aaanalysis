@@ -36,7 +36,8 @@ class TestCentersNonPCA:
                               verbose=False, random_state=42)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            ax, df_components = aacp.centers(X, labels=labels)
+            fig, ax = aacp.centers(X, labels=labels)
+            df_components = aacp.df_components_
         # Non-PCA branch: columns keep model name, no "PC (..%)" rewrite.
         assert all(col.startswith("FastICA") for col in df_components.columns)
         assert "%" not in "".join(df_components.columns)
@@ -52,7 +53,7 @@ class TestCorrelationCbarKwarg:
         aacp = aa.AAclustPlot(verbose=False, random_state=42)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            ax = aacp.correlation(df_corr=df_corr, labels=labels,
+            _, ax = aacp.correlation(df_corr=df_corr, labels=labels,
                                   kwargs_heatmap={"cbar": False})
         assert isinstance(ax, plt.Axes)
         plt.close()
@@ -63,7 +64,7 @@ class TestCorrelationCbarKwarg:
         aacp = aa.AAclustPlot(verbose=False, random_state=42)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            ax = aacp.correlation(df_corr=df_corr, labels=labels)
+            _, ax = aacp.correlation(df_corr=df_corr, labels=labels)
         assert isinstance(ax, plt.Axes)
         plt.close()
 
@@ -97,6 +98,6 @@ class TestCorrelationLabelsRef:
         aacp = aa.AAclustPlot(verbose=False, random_state=42)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            ax = aacp.correlation(df_corr=df_corr, labels=labels, labels_ref=[0, 1])
+            _, ax = aacp.correlation(df_corr=df_corr, labels=labels, labels_ref=[0, 1])
         assert isinstance(ax, plt.Axes)
         plt.close()

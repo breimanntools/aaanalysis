@@ -179,6 +179,18 @@ Added
 Changed
 ~~~~~~~
 
+- **Uniform plot return contract**: Every public ``*Plot`` method
+  (``AAclustPlot``, ``CPPPlot``, ``dPULearnPlot``, ``AAMutPlot``, ``SeqMutPlot``,
+  ``AAlogoPlot``) now returns a single ``(fig, ax)`` pair, replacing the previous
+  mix of ``(fig, ax)``, bare ``Axes``, and ``(ax, df)`` shapes. The returned
+  object unpacks as ``fig, ax = plot(...)`` and also forwards attribute access to
+  ``ax``, so existing ``ax = plot(...); ax.set_title(...)`` code keeps working.
+  **Breaking change, scheduled for the next major release**:
+  ``AAclustPlot.centers`` and ``AAclustPlot.medoids`` now return ``(fig, ax)`` and
+  expose the PCA-component DataFrame on the ``df_components_`` instance attribute
+  rather than as the second return value — replace
+  ``ax, df = aac_plot.centers(...)`` with ``fig, ax = aac_plot.centers(...)``
+  followed by ``df = aac_plot.df_components_``.
 - **CPP performance work**: The Cython feature-matrix kernel, macOS-safe threaded
   ``n_jobs``, scale / AA-index caching, and scale / sample batching land in this
   release, replacing the hour-long, low-CPU CPP runs seen on ``1.0.3`` and

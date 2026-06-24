@@ -30,23 +30,23 @@ class TestAAMutPlotInit:
 
 class TestSubstitutionMatrix:
     def test_returns_axes(self, df_impact):
-        ax = aa.AAMutPlot().substitution_matrix(df_impact=df_impact)
+        _, ax = aa.AAMutPlot().substitution_matrix(df_impact=df_impact)
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
     def test_on_passed_ax(self, df_impact):
         fig, ax = plt.subplots()
-        out = aa.AAMutPlot().substitution_matrix(df_impact=df_impact, ax=ax)
+        _, out = aa.AAMutPlot().substitution_matrix(df_impact=df_impact, ax=ax)
         assert out is ax
         plt.close("all")
 
     def test_figsize(self, df_impact):
-        ax = aa.AAMutPlot().substitution_matrix(df_impact=df_impact, figsize=(4, 4))
+        _, ax = aa.AAMutPlot().substitution_matrix(df_impact=df_impact, figsize=(4, 4))
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
     def test_cmap(self, df_impact):
-        ax = aa.AAMutPlot().substitution_matrix(df_impact=df_impact, cmap="magma")
+        _, ax = aa.AAMutPlot().substitution_matrix(df_impact=df_impact, cmap="magma")
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
@@ -61,23 +61,23 @@ class TestSubstitutionMatrix:
 
 class TestScaleRanking:
     def test_returns_axes(self, df_impact):
-        ax = aa.AAMutPlot().scale_ranking(df_impact=df_impact, top_n=3)
+        _, ax = aa.AAMutPlot().scale_ranking(df_impact=df_impact, top_n=3)
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
     def test_top_n(self, df_impact):
-        ax = aa.AAMutPlot().scale_ranking(df_impact=df_impact, top_n=2)
+        _, ax = aa.AAMutPlot().scale_ranking(df_impact=df_impact, top_n=2)
         assert len([p for p in ax.patches]) <= 4
         plt.close("all")
 
     def test_color(self, df_impact):
-        ax = aa.AAMutPlot().scale_ranking(df_impact=df_impact, color="blue")
+        _, ax = aa.AAMutPlot().scale_ranking(df_impact=df_impact, color="blue")
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
     def test_on_passed_ax(self, df_impact):
         fig, ax = plt.subplots()
-        out = aa.AAMutPlot().scale_ranking(df_impact=df_impact, ax=ax)
+        _, out = aa.AAMutPlot().scale_ranking(df_impact=df_impact, ax=ax)
         assert out is ax
         plt.close("all")
 
@@ -88,17 +88,17 @@ class TestScaleRanking:
 
 class TestAAComparison:
     def test_returns_axes(self, df_impact):
-        ax = aa.AAMutPlot().aa_comparison(df_impact=df_impact, from_aa="M", to_aa="V")
+        _, ax = aa.AAMutPlot().aa_comparison(df_impact=df_impact, from_aa="M", to_aa="V")
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
     def test_top_n(self, df_impact):
-        ax = aa.AAMutPlot().aa_comparison(df_impact=df_impact, from_aa="M", to_aa="V", top_n=2)
+        _, ax = aa.AAMutPlot().aa_comparison(df_impact=df_impact, from_aa="M", to_aa="V", top_n=2)
         assert isinstance(ax, plt.Axes)
         plt.close("all")
 
     def test_figsize(self, df_impact):
-        ax = aa.AAMutPlot().aa_comparison(df_impact=df_impact, from_aa="M", to_aa="A",
+        _, ax = aa.AAMutPlot().aa_comparison(df_impact=df_impact, from_aa="M", to_aa="A",
                                           figsize=(5, 5))
         assert isinstance(ax, plt.Axes)
         plt.close("all")

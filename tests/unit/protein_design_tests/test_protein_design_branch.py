@@ -36,14 +36,14 @@ class TestAAMutPlotBranch:
 
     def test_aa_comparison_signed_colors(self, df_impact):
         # _aamut_plot.py:195-196 — bars colored by sign (positive + negative deltas)
-        ax = aa.AAMutPlot().aa_comparison(df_impact=df_impact, from_aa="M", to_aa="V", top_n=5)
+        _, ax = aa.AAMutPlot().aa_comparison(df_impact=df_impact, from_aa="M", to_aa="V", top_n=5)
         assert ax is not None
         plt.close("all")
 
     def test_aa_comparison_provided_ax(self, df_impact):
         # _aamut_plot.py:196->198 — pre-supplied ax (skip the ax-is-None creation)
         _, ax_in = plt.subplots()
-        ax = aa.AAMutPlot().aa_comparison(df_impact=df_impact, from_aa="M", to_aa="V", ax=ax_in)
+        _, ax = aa.AAMutPlot().aa_comparison(df_impact=df_impact, from_aa="M", to_aa="V", ax=ax_in)
         assert ax is ax_in
         plt.close("all")
 
@@ -100,7 +100,7 @@ class TestSeqMutPlotBranch:
         # _seqmut_plot.py:153->155 — pre-supplied ax (skip the ax-is-None creation)
         pos = int(df_scan[ut.COL_POS].iloc[0])
         _, ax_in = plt.subplots()
-        ax = aa.SeqMutPlot().residue_mutation_impact(df_scan=df_scan, pos=pos, ax=ax_in)
+        _, ax = aa.SeqMutPlot().residue_mutation_impact(df_scan=df_scan, pos=pos, ax=ax_in)
         assert ax is ax_in
         plt.close("all")
 

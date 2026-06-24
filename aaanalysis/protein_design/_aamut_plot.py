@@ -6,6 +6,7 @@ from typing import Optional, Tuple, Union
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 import seaborn as sns
 
 import aaanalysis.utils as ut
@@ -27,6 +28,10 @@ class AAMutPlot:
     Visualizes the per-scale substitution-impact table produced by :meth:`AAMut.run`: a
     pairwise substitution matrix, a per-scale sensitivity ranking, and a per-pair scale
     comparison.
+
+    Every plotting method returns a ``(fig, ax)`` pair (a thin tuple subclass): unpack as
+    ``fig, ax = ...``. For backward compatibility, the returned object also forwards attribute
+    access to ``ax``, so legacy ``ax = ...; ax.set_title(...)`` keeps working.
 
     .. versionadded:: 1.0.0
 
@@ -56,7 +61,7 @@ class AAMutPlot:
                             ax: Optional[Axes] = None,
                             figsize: Tuple[Union[int, float], Union[int, float]] = (7, 6),
                             cmap: str = "viridis",
-                            ) -> Axes:
+                            ) -> Tuple[Figure, Axes]:
         """
         Plot the 20x20 amino acid substitution-impact matrix.
 
@@ -76,8 +81,14 @@ class AAMutPlot:
 
         Returns
         -------
+        fig : Figure
+            Figure object containing the plot.
         ax : Axes
             Axes object of the substitution matrix.
+
+        Notes
+        -----
+        * Returned as a ``(fig, ax)`` pair (see :class:`AAMutPlot` for the shared return contract).
 
         Examples
         --------
@@ -94,7 +105,7 @@ class AAMutPlot:
         sns.heatmap(mat, ax=ax, cmap=cmap, cbar_kws={"label": "mean |delta|"})
         ax.set_xlabel("to amino acid")
         ax.set_ylabel("from amino acid")
-        return ax
+        return ut.FigAxResult(ax.get_figure(), ax)
 
     def scale_ranking(self,
                       df_impact: pd.DataFrame,
@@ -102,7 +113,7 @@ class AAMutPlot:
                       ax: Optional[Axes] = None,
                       figsize: Tuple[Union[int, float], Union[int, float]] = (6, 5),
                       color: Optional[str] = None,
-                      ) -> Axes:
+                      ) -> Tuple[Figure, Axes]:
         """
         Plot the per-scale ranking of substitution sensitivity.
 
@@ -124,8 +135,14 @@ class AAMutPlot:
 
         Returns
         -------
+        fig : Figure
+            Figure object containing the plot.
         ax : Axes
             Axes object of the scale-ranking plot.
+
+        Notes
+        -----
+        * Returned as a ``(fig, ax)`` pair (see :class:`AAMutPlot` for the shared return contract).
 
         Examples
         --------
@@ -143,7 +160,7 @@ class AAMutPlot:
         ax.barh(ranked.index[::-1], ranked.values[::-1], color=color)
         ax.set_xlabel("mean |delta| (substitution sensitivity)")
         ax.set_ylabel("scale")
-        return ax
+        return ut.FigAxResult(ax.get_figure(), ax)
 
     def aa_comparison(self,
                       df_impact: pd.DataFrame,
@@ -152,7 +169,7 @@ class AAMutPlot:
                       top_n: int = 20,
                       ax: Optional[Axes] = None,
                       figsize: Tuple[Union[int, float], Union[int, float]] = (6, 5),
-                      ) -> Axes:
+                      ) -> Tuple[Figure, Axes]:
         """
         Plot the per-scale signed delta for one amino acid substitution pair.
 
@@ -176,8 +193,14 @@ class AAMutPlot:
 
         Returns
         -------
+        fig : Figure
+            Figure object containing the plot.
         ax : Axes
             Axes object of the amino acid comparison plot.
+
+        Notes
+        -----
+        * Returned as a ``(fig, ax)`` pair (see :class:`AAMutPlot` for the shared return contract).
 
         Examples
         --------
@@ -200,4 +223,4 @@ class AAMutPlot:
         ax.axvline(0, color="black", linewidth=0.8)
         ax.set_xlabel(f"delta ({from_aa} -> {to_aa})")
         ax.set_ylabel("scale")
-        return ax
+        return ut.FigAxResult(ax.get_figure(), ax)

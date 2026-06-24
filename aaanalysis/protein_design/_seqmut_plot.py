@@ -6,6 +6,7 @@ from typing import Optional, Tuple, Union
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 import seaborn as sns
 
 import aaanalysis.utils as ut
@@ -37,6 +38,10 @@ class SeqMutPlot:
     Visualizes the ΔCPP mutational landscape produced by :meth:`SeqMut.scan`: a per-position
     substitution heatmap and the substitution profile of a single residue.
 
+    Every plotting method returns a ``(fig, ax)`` pair (a thin tuple subclass): unpack as
+    ``fig, ax = ...``. For backward compatibility, the returned object also forwards attribute
+    access to ``ax``, so legacy ``ax = ...; ax.set_title(...)`` keeps working.
+
     .. versionadded:: 1.0.0
 
     """
@@ -62,7 +67,7 @@ class SeqMutPlot:
                            ax: Optional[Axes] = None,
                            figsize: Tuple[Union[int, float], Union[int, float]] = (10, 5),
                            cmap: str = "viridis",
-                           ) -> Axes:
+                           ) -> Tuple[Figure, Axes]:
         """
         Plot the per-position ΔCPP mutation landscape for one sequence.
 
@@ -84,8 +89,14 @@ class SeqMutPlot:
 
         Returns
         -------
+        fig : Figure
+            Figure object containing the plot.
         ax : Axes
             Axes object of the mutation landscape.
+
+        Notes
+        -----
+        * Returned as a ``(fig, ax)`` pair (see :class:`SeqMutPlot` for the shared return contract).
 
         Examples
         --------
@@ -103,7 +114,7 @@ class SeqMutPlot:
         ax.set_title(f"Mutation landscape: {entry}")
         ax.set_xlabel("position")
         ax.set_ylabel("to amino acid")
-        return ax
+        return ut.FigAxResult(ax.get_figure(), ax)
 
     def residue_mutation_impact(self,
                                 df_scan: pd.DataFrame,
@@ -113,7 +124,7 @@ class SeqMutPlot:
                                 ax: Optional[Axes] = None,
                                 figsize: Tuple[Union[int, float], Union[int, float]] = (6, 5),
                                 color: Optional[str] = None,
-                                ) -> Axes:
+                                ) -> Tuple[Figure, Axes]:
         """
         Plot the substitution impact for a single residue across all substitutions.
 
@@ -137,8 +148,14 @@ class SeqMutPlot:
 
         Returns
         -------
+        fig : Figure
+            Figure object containing the plot.
         ax : Axes
             Axes object of the residue mutation-impact plot.
+
+        Notes
+        -----
+        * Returned as a ``(fig, ax)`` pair (see :class:`SeqMutPlot` for the shared return contract).
 
         Examples
         --------
@@ -160,4 +177,4 @@ class SeqMutPlot:
         ax.set_title(f"{entry}: {from_aa}{pos} substitutions")
         ax.set_xlabel("to amino acid")
         ax.set_ylabel("delta_cpp")
-        return ax
+        return ut.FigAxResult(ax.get_figure(), ax)

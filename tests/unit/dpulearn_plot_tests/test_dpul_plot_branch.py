@@ -46,7 +46,7 @@ class TestPcaBranch:
         df_pu = _df_pu()
         labels = _labels()
         colors_list = ["#111111", "#222222", "#333333"]
-        ax = aa.dPULearnPlot.pca(df_pu=df_pu, labels=labels,
+        _, ax = aa.dPULearnPlot.pca(df_pu=df_pu, labels=labels,
                                  kwargs_scatterplot={"c": colors_list})
         assert ax is not None
         plt.close("all")

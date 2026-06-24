@@ -27,7 +27,8 @@ def call_aaclust_plot_center(X=None, labels=None, **kwargs):
     # Check if at least 3 unique values exist and non is nan
     all_vals = X.flatten()[1:].tolist()
     if not np.isnan(X).any() and len(set(all_vals)) > 2 and not np.asarray_chkfinite(X).any():
-        ax, df_components = aac_plot.centers(X, labels=labels, **kwargs)
+        fig, ax = aac_plot.centers(X, labels=labels, **kwargs)
+        df_components = aac_plot.df_components_
         assert isinstance(ax, plt.Axes) and isinstance(df_components, pd.DataFrame)
         plt.close()
 
@@ -200,7 +201,9 @@ class TestAAclustPlotCenterFromDfScales:
     def test_df_scales_path(self):
         """A scales DataFrame can be passed via df_scales (transposed internally)."""
         aac, df_scales = self._fitted()
-        ax, df_components = aa.AAclustPlot().centers(df_scales=df_scales, labels=aac.labels_)
+        acp = aa.AAclustPlot()
+        fig, ax = acp.centers(df_scales=df_scales, labels=aac.labels_)
+        df_components = acp.df_components_
         assert isinstance(ax, plt.Axes) and isinstance(df_components, pd.DataFrame)
         plt.close()
 
@@ -208,8 +211,10 @@ class TestAAclustPlotCenterFromDfScales:
         """centers(df_scales=df) plots identical data to the manual centers(X.T, labels)."""
         aac, df_scales = self._fitted()
         aac_plot = aa.AAclustPlot()
-        _, df_from_scales = aac_plot.centers(df_scales=df_scales, labels=aac.labels_)
-        _, df_from_explicit = aac_plot.centers(np.array(df_scales).T, labels=aac.labels_)
+        aac_plot.centers(df_scales=df_scales, labels=aac.labels_)
+        df_from_scales = aac_plot.df_components_
+        aac_plot.centers(np.array(df_scales).T, labels=aac.labels_)
+        df_from_explicit = aac_plot.df_components_
         pd.testing.assert_frame_equal(df_from_scales, df_from_explicit)
         plt.close("all")
 
@@ -217,7 +222,9 @@ class TestAAclustPlotCenterFromDfScales:
         """The explicit (X, labels) signature still works."""
         X = np.random.rand(10, 5)
         labels = [i % 3 for i in range(10)]
-        ax, df_components = aa.AAclustPlot().centers(X, labels=labels)
+        acp = aa.AAclustPlot()
+        fig, ax = acp.centers(X, labels=labels)
+        df_components = acp.df_components_
         assert isinstance(ax, plt.Axes) and isinstance(df_components, pd.DataFrame)
         plt.close()
 

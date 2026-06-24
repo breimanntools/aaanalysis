@@ -33,7 +33,7 @@ def call_aaclust_plot_correlation(df_corr=None, **kwargs):
     # Check if not all values are the same
     all_vals = df_corr.to_numpy().flatten()[1:].tolist()
     if not df_corr.isna().any().any() and len(set(all_vals)) != 1:
-        assert isinstance(aac_plot.correlation(df_corr=df_corr, labels=labels, **kwargs), plt.Axes)
+        assert isinstance(aac_plot.correlation(df_corr=df_corr, labels=labels, **kwargs)[1], plt.Axes)
         plt.close()
 
 
@@ -54,7 +54,7 @@ class TestAAclustPlotCorrelation:
         if len(set(labels)) > 1:
             df_corr = pd.DataFrame(np.random.rand(len(labels), len(labels)))
             aac_plot = aa.AAclustPlot(verbose=False)
-            ax = aac_plot.correlation(df_corr=df_corr, labels=labels)
+            _, ax = aac_plot.correlation(df_corr=df_corr, labels=labels)
             assert isinstance(ax, plt.Axes)
             plt.close()
 
@@ -67,11 +67,11 @@ class TestAAclustPlotCorrelation:
             labels_ref = list(sorted(set(labels)))
             df_corr = pd.DataFrame(np.random.rand(len(labels), len(labels_ref)))
             aac_plot = aa.AAclustPlot(verbose=False)
-            ax = aac_plot.correlation(df_corr=df_corr, labels=labels)
+            _, ax = aac_plot.correlation(df_corr=df_corr, labels=labels)
             assert isinstance(ax, plt.Axes)
             plt.close()
             aac_plot = aa.AAclustPlot(verbose=False)
-            ax = aac_plot.correlation(df_corr=df_corr, labels=labels, labels_ref=labels_ref)
+            _, ax = aac_plot.correlation(df_corr=df_corr, labels=labels, labels_ref=labels_ref)
             assert isinstance(ax, plt.Axes)
             plt.close()
 
@@ -125,7 +125,7 @@ class TestAAclustPlotCorrelation:
             bar_colors *= n_unique
         all_vals = df_corr.to_numpy().flatten()[1:].tolist()
         if not df_corr.isna().any().any() and len(set(all_vals)) != 1 and n_samples > n_clusters:
-            assert isinstance(aac_plot.correlation(df_corr=df_corr, labels=labels, bar_colors=bar_colors), plt.Axes)
+            assert isinstance(aac_plot.correlation(df_corr=df_corr, labels=labels, bar_colors=bar_colors)[1], plt.Axes)
 
     @settings(max_examples=10, deadline=None)
     @given(bar_width_x=some.floats(min_value=0.01, max_value=1.0),

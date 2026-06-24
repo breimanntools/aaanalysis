@@ -192,6 +192,10 @@ class CPPPlot:
     This class supports multiple plot types for group or sample-level analysis, including ranking plots,
     profiles, heatmaps, and feature maps.
 
+    Every plotting method returns a ``(fig, ax)`` pair (a thin tuple subclass): unpack as
+    ``fig, ax = ...``. For backward compatibility, the returned object also forwards attribute
+    access to ``ax``, so legacy ``ax = ...; ax.set_title(...)`` keeps working.
+
     .. versionadded:: 0.1.2
 
     Notes
@@ -338,7 +342,7 @@ class CPPPlot:
         -------
         fig : Figure
             Figure object for evaluation plot
-        axes : array of Axes
+        ax : array of Axes
             Array of Axes objects, each representing a subplot within the figure.
 
         Notes
@@ -379,7 +383,7 @@ class CPPPlot:
         fig, axes = plot_eval(df_eval=df_eval, figsize=figsize, dict_xlims=dict_xlims,
                               legend=legend, legend_y=legend_y,
                               dict_color=dict_color, list_cat=list_cat)
-        return fig, axes
+        return ut.FigAxResult(fig, axes)
 
     # Plotting method for single feature
     def feature(self,
@@ -407,7 +411,7 @@ class CPPPlot:
                 fontsize_names_to_show: Union[int, float, None] = 11,
                 alpha_hist: int or float = 0.1,
                 alpha_dif: int or float = 0.2,
-                ) -> Axes:
+                ) -> Tuple[Figure, Axes]:
         """
         Plot distributions of Comparative Physicochemical Profiling (CPP) feature values for test
         and reference datasets highlighting their mean difference.
@@ -483,8 +487,14 @@ class CPPPlot:
 
         Returns
         -------
+        fig : Figure
+            Figure object containing the plot.
         ax : Axes
             CPP feature plot axes object.
+
+        Notes
+        -----
+        * Returned as a ``(fig, ax)`` pair (see :class:`CPPPlot` for the shared return contract).
 
         See Also
         --------
@@ -539,7 +549,7 @@ class CPPPlot:
                           color_test=color_test, color_ref=color_ref,
                           **args_fs,
                           histplot=histplot, alpha_hist=alpha_hist, alpha_dif=alpha_dif)
-        return ax
+        return ut.FigAxResult(ax.get_figure(), ax)
 
     # Plotting methods for multiple features (group and sample level)
     def ranking(self,
@@ -639,7 +649,7 @@ class CPPPlot:
         -------
         fig : Figure
             The Figure object for the ranking plot.
-        axes : array of Axes
+        ax : array of Axes
             Array of Axes objects, each representing a subplot within the figure.
 
         Notes
@@ -712,7 +722,7 @@ class CPPPlot:
             warnings.simplefilter("ignore", category=UserWarning)
             fig.tight_layout()
             plt.subplots_adjust(left=0.25, wspace=0.15)
-        return fig, axes
+        return ut.FigAxResult(fig, axes)
 
     def profile(self,
                 # Data and Plot Type
@@ -939,7 +949,7 @@ class CPPPlot:
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
-        return fig, ax
+        return ut.FigAxResult(fig, ax)
 
     def heatmap(self,
                 # Data and Plot Type
@@ -1193,7 +1203,7 @@ class CPPPlot:
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
-        return fig, ax
+        return ut.FigAxResult(fig, ax)
 
     def feature_map(self,
                     # Data and Plot Type
@@ -1513,7 +1523,7 @@ class CPPPlot:
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
-        return fig, ax
+        return ut.FigAxResult(fig, ax)
 
     def update_seq_size(self,
                         ax: Axes,
@@ -1525,7 +1535,7 @@ class CPPPlot:
                         jmd_color: str = "blue",
                         tmd_seq_color: str = "black",
                         jmd_seq_color: str = "white",
-                        ) -> Axes:
+                        ) -> Tuple[Figure, Axes]:
         """
         Update the font size of the sequence characters to prevent overlap.
 
@@ -1558,11 +1568,14 @@ class CPPPlot:
 
         Returns
         -------
+        fig : Figure
+            Figure object containing the plot.
         ax : Axes
             CPP plot axes object.
 
         Notes
         -----
+        * Returned as a ``(fig, ax)`` pair (see :class:`CPPPlot` for the shared return contract).
         * Use :meth:`CPPPlot.update_seq_size` AFTER :func:`matplotlib.pyplot.tight_layout`.
 
         See Also
@@ -1597,4 +1610,4 @@ class CPPPlot:
                               weight_tmd_jmd=weight_tmd_jmd)
         if self._verbose:
             ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
-        return ax
+        return ut.FigAxResult(ax.get_figure(), ax)
