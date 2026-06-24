@@ -35,7 +35,7 @@ Regenerate this table with:
 | [0024](0024-feature-map-shap-via-shap-plot.md) | `feature_map` gains SHAP support via the `shap_plot` toggle, not issue #63's `stack_by` / `df_imp` | Accepted | 2026-06-06 |  |
 | [0025](0025-interpretability-tiered-explainable-scale-sets.md) | Interpretability-tiered "explainable" scale sets in `load_scales` | Accepted | 2026-06-06 |  |
 | [0026](0026-feature-pruning-empirical-not-scale-correlation.md) | Feature pruning is empirical (sample-level), df_feat-in/out methods on `SequenceFeature` | Accepted | 2026-06-11 |  |
-| [0027](0027-protein-design-mutation-deltacpp-scope.md) | Protein design (AAMut/SeqMut): scope boundary and model-free ΔCPP | Accepted | 2026-06-11 |  |
+| [0027](0027-protein-design-mutation-deltacpp-scope.md) | Protein design (AAMut/SeqMut): scope boundary and model-free ΔCPP | Accepted | 2026-06-11 | amended 2026-06-24 — see *Amendment* below and ADR-0042 |
 | [0028](0028-cppstructureplot-structureview-return-wrapper.md) | `CPPStructurePlot` returns a `StructureView` wrapper, not a matplotlib `Axes` | Accepted | 2026-06-11 |  |
 | [0029](0029-fetch-embeddings.md) | EmbeddingPreprocessor.fetch_embeddings + fetch_* covers model-weight acquisition | Accepted | 2026-06-12 |  |
 | [0030](0030-changelog-and-deprecation-policy.md) | Strict-semver deprecation policy, `deprecated` decorator, and a two-file changelog | Accepted | 2026-06-13 |  |
@@ -49,4 +49,5 @@ Regenerate this table with:
 | [0039](0039-plot-return-contract.md) | One uniform `(fig, ax)` return contract for every `*Plot` method | Accepted | 2026-06-24 |  |
 | [0040](0040-golden-pipelines-convenience-api.md) | Golden pipelines: the `aaanalysis.pipe` (aap) convenience API | Accepted | 2026-06-24 |  |
 | [0041](0041-pipe-pipeline-conventions.md) | `aaanalysis.pipe` pipeline conventions and the core golden pipelines | Accepted | 2026-06-24 |  |
+| [0042](0042-seqmut-model-guided-prediction-shift.md) | SeqMut model-guided prediction shift (ML-guided directed evolution) | Accepted | 2026-06-24 |  |
 <!-- ADR-INDEX:END -->
