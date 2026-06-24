@@ -1,6 +1,7 @@
 """
 Basic utility check functions for type checking
 """
+from typing import Literal, Optional, Union, overload
 import pandas as pd
 import numpy as np
 
@@ -27,7 +28,8 @@ def check_number_val(name=None, val=None, accept_none=False, just_int=False, str
         raise ValueError(str_error)
 
 
-def check_number_range(name=None, val=None, min_val=0, max_val=None, exclusive_limits=False,
+def check_number_range(name=None, val=None, min_val: Union[int, float] = 0,
+                       max_val: Optional[Union[int, float]] = None, exclusive_limits=False,
                        accept_none=False, just_int=None, str_add=None):
     """Check if value of given name is within defined range"""
     if val is None:
@@ -146,6 +148,14 @@ def check_tuple(name=None, val=None, n=None, check_number=True, accept_none=Fals
                              str_add=str_add)
 
 
+@overload
+def check_list_like(name=None, val=None, accept_none: Literal[False] = False, convert=True, accept_str=False,
+                    min_len=None, check_all_non_neg_int=False, check_all_non_none=True,
+                    check_all_str_or_convertible=False, str_add=None) -> list: ...
+@overload
+def check_list_like(name=None, val=None, accept_none: Literal[True] = ..., convert=True, accept_str=False,
+                    min_len=None, check_all_non_neg_int=False, check_all_non_none=True,
+                    check_all_str_or_convertible=False, str_add=None) -> Optional[list]: ...
 def check_list_like(name=None, val=None, accept_none=False, convert=True, accept_str=False, min_len=None,
                     check_all_non_neg_int=False, check_all_non_none=True, check_all_str_or_convertible=False,
                     str_add=None):

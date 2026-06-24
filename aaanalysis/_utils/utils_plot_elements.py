@@ -178,25 +178,6 @@ def adjust_spine_to_middle(ax=None):
     return ax
 
 
-def ticks_0(ax, show_zero=True, axis="x", precision=2):
-    """Apply custom formatting for x-axis ticks."""
-    if axis not in ["x", "y"]:
-        raise ValueError("'axis' should be 'x' or 'y'")
-    def custom_ticks(x, pos):
-        """Format x-axis ticks."""
-        if x == 0 and not show_zero:
-            return ''
-        elif x % 1 == 0:  # Check if number is an integer
-            return f'{int(x)}'  # Format as integer
-        else:
-            # Format as float with two decimal places
-            return f'{x:.{precision}f}'
-    if axis == "x":
-        ax.xaxis.set_major_formatter(mticker.FuncFormatter(custom_ticks))
-    else:
-        ax.yaxis.set_major_formatter(mticker.FuncFormatter(custom_ticks))
-
-
 def ticks_0(ax, show_zero=True, show_only_max=False, axis="x", precision=2):
     """Apply custom formatting for axis ticks and ensure max value is shown."""
     if axis not in ["x", "y"]:

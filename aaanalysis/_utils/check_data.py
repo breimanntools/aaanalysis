@@ -1,6 +1,7 @@
 """
 This is a script for data checking utility functions.
 """
+from typing import Literal, Optional, Union, overload
 import pandas as pd
 import numpy as np
 import os
@@ -50,6 +51,12 @@ def _convert_2d(val=None, name=None, str_add=None):
 
 
 # Check array like
+@overload
+def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan=False, convert_2d=False,
+                     accept_none: Literal[False] = False, expected_dim=None, str_add=None) -> np.ndarray: ...
+@overload
+def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan=False, convert_2d=False,
+                     accept_none: Literal[True] = ..., expected_dim=None, str_add=None) -> Optional[np.ndarray]: ...
 def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan=False, convert_2d=False,
                      accept_none=False, expected_dim=None, str_add=None):
     """Check if the provided value is array-like and matches the specified dtype."""
@@ -93,6 +100,12 @@ def check_array_like(name=None, val=None, dtype=None, ensure_2d=False, allow_nan
 
 
 # Check feature matrix and labels
+@overload
+def check_X(X, X_name="X", min_n_samples=3, min_n_features=2, min_n_unique_features=None,
+            ensure_2d=True, allow_nan=False, accept_none: Literal[False] = False, str_add=None) -> np.ndarray: ...
+@overload
+def check_X(X, X_name="X", min_n_samples=3, min_n_features=2, min_n_unique_features=None,
+            ensure_2d=True, allow_nan=False, accept_none: Literal[True] = ..., str_add=None) -> Optional[np.ndarray]: ...
 def check_X(X, X_name="X", min_n_samples=3, min_n_features=2, min_n_unique_features=None,
             ensure_2d=True, allow_nan=False, accept_none=False, str_add=None):
     """Check the feature matrix X is valid."""
@@ -135,7 +148,7 @@ def check_X_unique_samples(X, min_n_unique_samples=3, str_add=None):
 
 
 def check_labels(labels=None, name="labels", vals_required=None, len_required=None, allow_other_vals=True,
-                 n_per_group_required=None, accept_float=False, str_add=None):
+                 n_per_group_required=None, accept_float=False, str_add=None) -> np.ndarray:
     """Check the provided labels against various criteria like type, required values, and length."""
     if labels is None:
         raise ValueError(f"'{name}' should not be None.")
@@ -260,10 +273,12 @@ def check_df(name="df", df=None, accept_none=False, accept_nan=True, check_all_p
                                 str_add=str_add)
             raise ValueError(str_error)
     # Check columns
-    args = dict(accept_str=True, accept_none=True, str_add=str_add)
-    cols_required = check_type.check_list_like(name='cols_required', val=cols_required, **args)
-    cols_forbidden = check_type.check_list_like(name='cols_forbidden', val=cols_forbidden, **args)
-    cols_nan_check = check_type.check_list_like(name='cols_nan_check', val=cols_nan_check, **args)
+    cols_required = check_type.check_list_like(name='cols_required', val=cols_required,
+                                               accept_str=True, accept_none=True, str_add=str_add)
+    cols_forbidden = check_type.check_list_like(name='cols_forbidden', val=cols_forbidden,
+                                                accept_str=True, accept_none=True, str_add=str_add)
+    cols_nan_check = check_type.check_list_like(name='cols_nan_check', val=cols_nan_check,
+                                                accept_str=True, accept_none=True, str_add=str_add)
     if cols_required is not None:
         missing_cols = [col for col in cols_required if col not in df.columns]
         if len(missing_cols) > 0:

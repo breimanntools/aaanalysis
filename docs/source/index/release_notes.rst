@@ -319,6 +319,14 @@ Changed
   ``Type Check (advisory)`` workflow under ``continue-on-error`` — it reports the
   count and delta in the CI log but **never gates a merge**. The first step clears
   the ``plotting`` subpackage to zero via honest signatures (no runtime change).
+  A follow-up step types the core input validators (``check_X`` / ``check_array_like``
+  / ``check_list_like`` ``accept_none``-keyed overloads, ``check_labels`` /
+  ``check_number_range``) — whose honest return types cascade across every caller —
+  and corrects four public-API signature annotation bugs (``CPPPlot.eval`` ``figsize``,
+  ``NumericalFeature.filter_correlation`` return, ``ShapModel`` ``list_model_classes``,
+  and a duplicate internal helper). Every public-API signature/return is now
+  pyright-clean, the ``metrics`` subpackage is at zero, and the advisory total drops
+  to 887; remaining diagnostics are internal method bodies (no runtime change).
 
 
 Version 1.0 (Stable Version)

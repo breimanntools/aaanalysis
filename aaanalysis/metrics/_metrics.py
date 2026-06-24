@@ -14,7 +14,7 @@ import aaanalysis.utils as ut
 
 
 # Helper functions
-def _check_n_classes_n_samples(X=None, labels=None):
+def _check_n_classes_n_samples(X: np.ndarray, labels: np.ndarray):
     """Check matching X and labels"""
     n_classes = len(set(labels))
     n_samples, n_features = X.shape
@@ -204,7 +204,7 @@ def comp_kld(X: ut.ArrayLike2D,
 
 
 # Helper functions (site-localization metrics)
-def _check_list_scores_positions(list_scores=None, list_positions=None):
+def _check_list_scores_positions(list_scores=None, list_positions=None) -> "tuple[list, list]":
     """Validate the (scores, positions) per-protein lists used by the
     site-localization metrics."""
     list_scores = ut.check_list_like(name="list_scores", val=list_scores)

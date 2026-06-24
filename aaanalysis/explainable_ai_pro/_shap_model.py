@@ -355,7 +355,7 @@ class ShapModel(Wrapper):
     def __init__(self,
                  explainer_class: Callable = shap.TreeExplainer,
                  explainer_kwargs: Optional[dict] = None,
-                 list_model_classes: Optional[List[Type[Union[BaseEstimator]]]] = None,
+                 list_model_classes: Optional[List[Type[BaseEstimator]]] = None,
                  list_model_kwargs: Optional[List[dict]] = None,
                  verbose: bool = True,
                  random_state: Optional[int] = None,
