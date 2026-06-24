@@ -16,6 +16,8 @@ sklearn-idiomatic convenience only.
 Public objects
 --------------
 * :func:`obtain_samples` — turn a described sampling situation into a balanced training set.
+* :func:`find_features` — staged CPP AutoML search that sweeps the feature space, selects the
+  best configuration by cross-validated model performance, and draws the feature map.
 * :func:`predict_samples` — build the feature matrix from ``df_feat`` and fit + evaluate a
   :class:`TreeModel`, returning the uniform ``(model, None, df_eval)`` pipeline triple.
 
@@ -27,6 +29,7 @@ See Also
   :func:`predict_samples`.
 """
 from ._obtain_samples import obtain_samples
+from ._find_features import find_features
 from ._pipelines import predict_samples
 
-__all__ = ["obtain_samples", "predict_samples"]
+__all__ = ["obtain_samples", "find_features", "predict_samples"]

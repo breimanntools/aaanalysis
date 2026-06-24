@@ -166,6 +166,20 @@ Added
   coloring and optional threshold lines (pairs with the new ``aa.metrics``
   functions).
 
+**Golden Pipelines**
+
+- **aaanalysis.pipe** (``aap``): A second, opt-in convenience API of stateless,
+  one-call *golden pipelines* over the AAanalysis primitives, imported explicitly
+  as ``import aaanalysis.pipe as aap``.
+- **aap.find_features**: Staged, interpretable CPP AutoML search. It sweeps the
+  CPP feature space (Split × Part × Scale together with ``n_filter``), scores each
+  configuration by cross-validated model performance, selects the simplest
+  configuration within 1% of the best score, refines it (``CPP.simplify`` and
+  recursive feature elimination, each kept only if the score does not drop), ranks
+  the features by tree-based importance, and draws the feature map. The
+  ``optimization`` grade scopes the search (``"fast"`` is byte-identical to the
+  explicit single-CPP path); it returns ``(df_feat, ax, df_eval)``.
+
 **Package**
 
 - **aa.__version__**: The installed package version is now exposed as a
