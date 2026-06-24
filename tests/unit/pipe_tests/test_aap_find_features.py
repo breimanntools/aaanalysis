@@ -8,8 +8,19 @@ import pytest
 
 import aaanalysis as aa
 import aaanalysis.pipe as aap
-from aaanalysis.pipe._find_features import (_resolve_config, _load_scales_breadth, _MODES,
-                                            _PART_SETS, _SPLIT_TYPE_SETS)
+from aaanalysis.pipe._find_features import (_resolve_config, _load_scales_breadth, _refine_rfe,
+                                            _MODES, _PART_SETS, _SPLIT_TYPE_SETS)
+
+
+def _synthetic_xy(n_per_class=20, n_informative=6, n_noise=6, seed=0):
+    """A separable matrix: informative features track the label, the rest are noise."""
+    rng = np.random.default_rng(seed)
+    y = np.array([0] * n_per_class + [1] * n_per_class)
+    informative = np.column_stack([y + rng.normal(0, 0.01, len(y)) for _ in range(n_informative)])
+    noise = rng.normal(0, 1, (len(y), n_noise))
+    X = np.hstack([informative, noise])
+    df_feat = pd.DataFrame({"feature": [f"f{i}" for i in range(n_informative + n_noise)]})
+    return X, y, df_feat
 
 aa.options["verbose"] = False
 
@@ -284,3 +295,45 @@ class TestFindFeaturesHelpers:
     def test_split_type_sets_start_with_segment(self):
         for sts in _SPLIT_TYPE_SETS:
             assert sts[0] == "Segment"
+
+
+class TestRefineRFE:
+    """Unit tests for the bounded recursive-feature-elimination refine step."""
+
+    def test_rfe_runs_and_returns_triple(self):
+        X, y, df_feat = _synthetic_xy()
+        out_df, out_mean, changed = _refine_rfe(df_feat=df_feat, X=X, labels=y, base_mean=0.5,
+                                                model="svm", cv=3, metric="balanced_accuracy",
+                                                random_state=0)
+        assert isinstance(out_df, pd.DataFrame)
+        assert isinstance(out_mean, float)
+        assert isinstance(changed, bool)
+        assert len(out_df) <= len(df_feat)
+
+    def test_rfe_keeps_reduced_set_when_cv_holds(self):
+        # base_mean=0 → any cross-validated score qualifies, so the reduced set is kept.
+        X, y, df_feat = _synthetic_xy()
+        out_df, _, changed = _refine_rfe(df_feat=df_feat, X=X, labels=y, base_mean=0.0,
+                                         model="svm", cv=3, metric="balanced_accuracy",
+                                         random_state=0)
+        assert changed is True
+        assert len(out_df) < len(df_feat)
+
+    def test_rfe_rejects_when_cv_drops(self):
+        # base_mean just under the ceiling but above what the reduced set can reach → rejected.
+        X, y, df_feat = _synthetic_xy(n_informative=2, n_noise=10, seed=1)
+        out_df, _, changed = _refine_rfe(df_feat=df_feat, X=X, labels=y, base_mean=0.999,
+                                         model="svm", cv=3, metric="balanced_accuracy",
+                                         random_state=0)
+        assert changed is False
+        assert len(out_df) == len(df_feat)
+
+    def test_rfe_skips_when_too_few_features(self):
+        X, y, df_feat = _synthetic_xy(n_informative=3, n_noise=2)
+        out_df, out_mean, changed = _refine_rfe(df_feat=df_feat, X=X, labels=y, base_mean=0.7)
+        assert changed is False and len(out_df) == 5
+
+    def test_rfe_skips_at_metric_ceiling(self):
+        X, y, df_feat = _synthetic_xy()
+        out_df, out_mean, changed = _refine_rfe(df_feat=df_feat, X=X, labels=y, base_mean=1.0)
+        assert changed is False and out_mean == 1.0
