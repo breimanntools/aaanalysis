@@ -3,11 +3,12 @@ This is a script for the frontend of the SeqOptPlot class (**[pro]**) for visual
 multi-objective directed-evolution results: the Pareto-front objective scatter and the
 per-generation hypervolume convergence trace.
 """
-from typing import Optional, List
+from typing import Optional, Tuple
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
 import aaanalysis.utils as ut
 
@@ -24,7 +25,8 @@ def check_objective_col(df_pareto=None, name=None, arg=None):
 # II Main Functions
 class SeqOptPlot:
     """
-    Plotting class for :class:`SeqOpt` (Sequence Optimizer) results (**[pro]**) [Breimann24a]_.
+    Plotting class for :class:`SeqOpt` (Sequence Optimizer) results (**[pro]**, requires
+    ``aaanalysis[pro]``) [Breimann24a]_.
 
     Visualizes the Pareto front produced by :meth:`SeqOpt.run`: a 2-D objective scatter colored
     by non-dominated rank, and the per-generation hypervolume convergence trace.
@@ -59,7 +61,7 @@ class SeqOptPlot:
                      ax: Optional[Axes] = None,
                      figsize: tuple = (6, 5),
                      front_only: bool = False,
-                     ):
+                     ) -> Tuple[Figure, Axes]:
         """
         Scatter two objectives of a Pareto front, colored by non-dominated rank.
 
@@ -116,7 +118,7 @@ class SeqOptPlot:
                     trajectory: ut.ArrayLike1D,
                     ax: Optional[Axes] = None,
                     figsize: tuple = (6, 4),
-                    ):
+                    ) -> Tuple[Figure, Axes]:
         """
         Plot the per-generation hypervolume convergence trace.
 
