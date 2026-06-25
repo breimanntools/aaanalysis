@@ -72,6 +72,17 @@ Datasets are named beginning with a classification (e.g., 'AA_LDR', 'DOM_GSEC', 
 Some datasets have an additional version for positive-unlabeled (PU) learning containing only positive (1)
 and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset name (e.g., 'DOM_GSEC_PU').
 
+**Columns at a glance:**
+
+- **Level** — prediction level (Amino acid, Domain, or Sequence).
+- **Dataset** — dataset name passed to ``aa.load_dataset``.
+- **# Sequences**, **Avg length**, **# Amino acids** — dataset size.
+- **# Positives**, **# Negatives** — class balance (label ``1`` / ``0``).
+- **Predictor** — reference method the benchmark accompanies.
+- **Description** — the prediction task.
+- **Reference** — source publication.
+- **Label** — meaning of the ``1`` / ``0`` (and ``2`` for PU) labels.
+
 
 .. list-table::
    :header-rows: 1
@@ -251,6 +262,13 @@ Amino Acid Scale Datasets
 -------------------------
 Various amino acid scale datasets are provided.
 
+**Columns at a glance:**
+
+- **Dataset** — scale-set name passed to ``aa.load_scales``.
+- **Description** — what the scale set contains.
+- **# Scales** — number of amino acid scales.
+- **Reference** — source publication.
+
 
 .. list-table::
    :header-rows: 1
@@ -300,6 +318,13 @@ be allocated to a specific subcategory are labeled as 'unclassified'.
 
 Categories
 ''''''''''
+**Columns at a glance:**
+
+- **Category** — top-level AAontology category.
+- **Category Description** — what the category captures.
+- **Key References** — defining publications.
+- **# Scales**, **# Unclassified Scales** — scales in the category, and those not assignable to any subcategory.
+- **# Subcategories** — number of subcategories, also split into those with ≥ 4 and < 4 scales.
 
 
 .. list-table::
@@ -385,13 +410,18 @@ Categories
 
 Subcategories
 '''''''''''''
-Each subcategory carries two interpretability annotations. **Interpretability** is a
-1–10 expert grade of how directly the subcategory maps to a physicochemical property
-(1 = most interpretable). **Explainability level** is the smallest ``top_explain_n``
-tier at which the subcategory enters the explainable scale set
-(``aa.load_scales(name="scales", top_explain_n=N)``, with ``N`` in 5, 10, …, 60);
-a lower level means the subcategory is included earlier. Unclassified subcategories
-are excluded from the explainable set and show ``-``.
+**Columns at a glance:**
+
+- **Category**, **Subcategory** — the AAontology grouping.
+- **# Scales** — number of amino acid scales in the subcategory.
+- **Interpretability** — 1–10 expert grade of how directly the subcategory maps to a
+  physicochemical property (1 = most interpretable).
+- **Explainability level** — the smallest ``top_explain_n`` tier at which the subcategory
+  enters the explainable scale set (``aa.load_scales(name="scales", top_explain_n=N)``,
+  with ``N`` in 5, 10, …, 60); a lower level means it is included earlier, and
+  unclassified subcategories (excluded from the set) show ``-``.
+- **Subcategory Description** — what the subcategory captures.
+- **Key References** — defining publications.
 
 
 .. list-table::

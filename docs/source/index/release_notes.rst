@@ -168,8 +168,8 @@ Added
   Protocols catalog.
 - **A minimal CPP analysis** tutorial (``tutorial0_minimal``): the shortest end-to-end
   loop — load a dataset, run CPP, read out the signature.
-- **Documentation navigation**: the sidebar is grouped into three sections — *Overview*,
-  *Guides* (Tutorials · Protocols), and *Reference* — and the landing page gains a
+- **Documentation navigation**: the sidebar is grouped into four sections — *Overview*,
+  *Guides* (Tutorials · Protocols), *Reference*, and *Project* — and the landing page gains a
   "You want to… / Go to" routing table; the previously unwired **Comparison Harness**
   tutorial (``tutorial6_comparison_harness``) is now reachable.
 

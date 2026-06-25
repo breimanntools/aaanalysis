@@ -104,6 +104,12 @@ classes grouped by capability, the prediction levels (residue / domain / protein
    index/glossary.rst
    index/references.rst
    index/release_notes.rst
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: PROJECT
+
    index/CONTRIBUTING_COPY.rst
    index/docstring_guide.rst
 
