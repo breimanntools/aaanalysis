@@ -351,6 +351,16 @@ class TestSeqOptVisualization:
         df = self._run3(seqopt, wt, df_feat)
         assert (df[ut.COL_RANK] == 0).sum() >= 1
 
+    def test_genealogy_returns_fig_ax(self, seqopt, wt, df_feat):
+        df = self._run3(seqopt, wt, df_feat)
+        res = SeqOptPlot().genealogy(df_pareto=df, front_only=False, figsize=(7, 5))
+        assert res[1] is not None
+
+    def test_genealogy_front_only(self, seqopt, wt, df_feat):
+        df = self._run3(seqopt, wt, df_feat)
+        res = SeqOptPlot().genealogy(df_pareto=df, front_only=True)
+        assert res[1] is not None
+
     def test_convergence_returns_panels(self, seqopt, wt, df_feat):
         self._run3(seqopt, wt, df_feat)
         fig, axes = SeqOptPlot().convergence(history=seqopt.history_, figsize=(5, 6))

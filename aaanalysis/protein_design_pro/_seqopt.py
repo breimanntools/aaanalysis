@@ -119,6 +119,44 @@ class SeqOpt(Tool):
     refits :class:`ShapModel` under fuzzy labeling, ``mode="importance"`` uses the static
     ``feat_importance`` ranking.
 
+    The evolutionary machinery is a **pure-Python re-implementation of DEAP** (a dev/test-only
+    parity oracle; the shipped runtime never imports DEAP). Each ``run`` setting selects the
+    equivalent DEAP function:
+
+    .. list-table:: SeqOpt setting -> DEAP function
+       :header-rows: 1
+       :widths: 45 55
+
+       * - SeqOpt (method / parameter = value)
+         - DEAP
+       * - ``run(...)`` driver
+         - ``algorithms.eaMuPlusLambda`` / ``eaMuCommaLambda`` / ``eaSimple``
+       * - ``algorithm="nsga2"``
+         - ``tools.selNSGA2`` (``sortNondominated`` + ``assignCrowdingDist``)
+       * - mating selection
+         - ``tools.selTournamentDCD``
+       * - ``survival="mu_plus_lambda" / "mu_comma_lambda" / "ea_simple"``
+         - ``eaMuPlusLambda`` / ``eaMuCommaLambda`` / ``eaSimple``
+       * - ``variation="and" / "or"``
+         - ``algorithms.varAnd`` / ``algorithms.varOr``
+       * - ``crossover="uniform" / "one_point" / "two_point"``
+         - ``tools.cxUniform`` / ``cxOnePoint`` / ``cxTwoPoint``
+       * - ``mutation="substitution"``
+         - ``tools.mutUniformInt`` (categorical resampling analogue)
+       * - ``constraints=[...], penalty="delta" / "closest_valid"``
+         - ``tools.DeltaPenalty`` / ``tools.ClosestValidPenalty``
+       * - ``objectives=[(name, "max"/"min", src)]``
+         - ``base.Fitness`` ``weights`` (+1 / -1 per objective) + ``toolbox.register("evaluate")``
+       * - ``df_pareto`` output / ``hall_of_fame_`` / ``trajectory_``
+         - ``tools.ParetoFront`` / ``tools.HallOfFame`` / ``tools.Logbook``
+       * - ``eval`` hypervolume / convergence / spread
+         - ``deap.benchmarks.tools.hypervolume`` / ``convergence`` / ``diversity``
+
+    Rows with no DEAP analogue are the aaanalysis value-add: the SHAP / ``feat_importance``
+    residue guidance (``mode``), the sequence genome + domain constraints (``n_mut_max``,
+    ``region``, ``to_aa``), the ``algorithm="greedy"`` baseline, and any ``callable(sequence)``
+    objective. ``engine="exact"/"fast"`` is an implementation detail (identical fronts).
+
     .. versionadded:: 1.0.0
 
     """

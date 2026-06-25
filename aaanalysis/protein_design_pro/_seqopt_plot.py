@@ -23,6 +23,18 @@ def check_objective_col(df_pareto=None, name=None, arg=None):
                          f"{list(df_pareto.columns)}.")
 
 
+def mutations_from_label_(label) -> frozenset:
+    """Parse a '<from><pos><to>'-joined variant label into a frozenset of (pos, to_aa)."""
+    return frozenset((int(m.group(2)), m.group(3))
+                     for m in re.finditer(r"([A-Z])(\d+)([A-Z])", str(label)))
+
+
+def _objective_cols(df_pareto):
+    """Objective columns of a df_pareto (all but the fixed base/rank/crowding columns)."""
+    fixed = set(ut.COLS_PARETO_BASE) | {ut.COL_RANK, ut.COL_CROWDING}
+    return [c for c in df_pareto.columns if c not in fixed]
+
+
 # II Main Functions
 class SeqOptPlot:
     """
@@ -356,4 +368,88 @@ class SeqOptPlot:
         ax.set_ylabel("substituted amino acid")
         cbar = ax.get_figure().colorbar(im, ax=ax)
         cbar.set_label("count on front")
+        return ut.FigAxResult(ax.get_figure(), ax)
+
+    def genealogy(self,
+                  df_pareto: pd.DataFrame,
+                  ax: Optional[Axes] = None,
+                  figsize: tuple = (8, 5),
+                  front_only: bool = True,
+                  ) -> Tuple[Figure, Axes]:
+        """
+        Mutational-lineage tree of the variants, rooted at the wild-type.
+
+        The directed-evolution analogue of a genealogy tree: nodes are variants placed by their
+        number of mutations (depth), each linked to the largest lower-order variant whose
+        mutation set it extends (or to the wild-type), and colored by the first objective. It
+        shows how the designed variants are built up mutation by mutation from the wild-type.
+
+        Parameters
+        ----------
+        df_pareto : pd.DataFrame
+            Output of :meth:`SeqOpt.run`.
+        ax : matplotlib.axes.Axes, optional
+            Axes to draw on. A new figure is created when ``None``.
+        figsize : tuple, default=(8, 5)
+            Figure size when ``ax`` is None.
+        front_only : bool, default=True
+            If ``True``, build the lineage from the first (``rank=0``) front only.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The figure.
+        ax : matplotlib.axes.Axes
+            The axes the lineage was drawn on.
+
+        Examples
+        --------
+        .. include:: examples/seqopt_genealogy.rst
+        """
+        # Validate
+        ut.check_df(df=df_pareto, name="df_pareto",
+                    cols_required=[ut.COL_RANK, ut.COL_VARIANT])
+        ut.check_bool(name="front_only", val=front_only)
+        obj_cols = _objective_cols(df_pareto)
+        if not obj_cols:
+            raise ValueError("'df_pareto' should carry at least one objective column.")
+        primary = obj_cols[0]
+        df = df_pareto[df_pareto[ut.COL_RANK] == 0] if front_only else df_pareto
+        # Nodes: wild-type (empty mutation set) + each variant; value = first objective.
+        nodes = {frozenset(): float("nan")}
+        for label, val in zip(df[ut.COL_VARIANT], df[primary]):
+            nodes[mutations_from_label_(label)] = float(val)
+        keys = sorted(nodes, key=len)
+        # Edge: each variant -> the largest proper subset present (else wild-type).
+        edges = []
+        for k in keys:
+            if len(k) == 0:
+                continue
+            parent = max((j for j in keys if j < k), key=len, default=frozenset())
+            edges.append((parent, k))
+        # Layout: x = number of mutations, y = spread within a depth level.
+        levels: dict = {}
+        for k in keys:
+            levels.setdefault(len(k), []).append(k)
+        pos = {}
+        for depth, ks in levels.items():
+            for i, k in enumerate(ks):
+                pos[k] = (depth, i - (len(ks) - 1) / 2.0)
+        # Plot
+        if ax is None:
+            _, ax = plt.subplots(figsize=figsize)
+        for a, b in edges:
+            ax.plot([pos[a][0], pos[b][0]], [pos[a][1], pos[b][1]],
+                    color="grey", alpha=0.5, linewidth=0.8, zorder=0)
+        variant_keys = [k for k in keys if len(k) > 0]
+        xs = [pos[k][0] for k in variant_keys]
+        ys = [pos[k][1] for k in variant_keys]
+        vals = [nodes[k] for k in variant_keys]
+        sc = ax.scatter(xs, ys, c=vals, cmap="viridis", s=45, edgecolor="white", linewidth=0.5)
+        ax.scatter([0], [0], marker="s", s=70, color="black")
+        ax.annotate("WT", (0, 0), textcoords="offset points", xytext=(0, 8), ha="center")
+        ax.set_xlabel("number of mutations")
+        ax.set_yticks([])
+        cbar = ax.get_figure().colorbar(sc, ax=ax)
+        cbar.set_label(primary)
         return ut.FigAxResult(ax.get_figure(), ax)
