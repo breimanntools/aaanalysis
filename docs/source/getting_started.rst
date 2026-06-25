@@ -19,11 +19,6 @@ both offering the same examples, with the latter explaining the conceptual
 background. The **Plotting Prelude** tutorial can help you create
 publication-ready plots.
 
-Once you have a first result, learn individual tools in the
-:ref:`Tutorials <tutorials>`, design a valid analysis with the
-:ref:`Protocols <protocols>`, and look up exact parameters in the
-:doc:`API <api>`.
-
 .. toctree::
    :maxdepth: 1
 
