@@ -18,8 +18,9 @@ Public objects
 * :func:`obtain_samples` — turn a described sampling situation into a balanced training set.
 * :func:`find_features` — staged CPP AutoML search that sweeps the feature space, selects the
   best configuration by cross-validated model performance, and draws the feature map.
-* :func:`predict_samples` — build the feature matrix from ``df_feat`` and fit + evaluate a
-  :class:`TreeModel`, returning the uniform ``(model, None, df_eval)`` pipeline triple.
+* :func:`predict_samples` — train and compare predictors across one or more feature sets and
+  scikit-learn models, returning the fitted predictors keyed by ``(feature_set, model)`` plus a
+  cross-validated comparison table as the ``(predictors, None, df_eval)`` triple.
 * :func:`plot_eval` — ``viridis`` evaluation-grid plot of a :func:`find_features` sweep that
   adapts to the number of swept axes (line / heatmap / faceted small-multiples).
 * :func:`explain_features` (*pro*) — compute per-sample SHAP impact for a feature set and draw the
@@ -29,8 +30,8 @@ See Also
 --------
 * :mod:`aaanalysis.seq_analysis` — :class:`AAWindowSampler`, the sampler :func:`obtain_samples` wraps.
 * :mod:`aaanalysis.feature_engineering` — the primitives these pipelines wrap.
-* :mod:`aaanalysis.explainable_ai` — :class:`TreeModel`, the predictor used by
-  :func:`predict_samples`.
+* :mod:`aaanalysis.explainable_ai` — :class:`TreeModel`, used by :func:`find_features` to score
+  feature importances (and a SHAP-ready predictor option for :func:`predict_samples`).
 * :mod:`aaanalysis.explainable_ai_pro` — :class:`ShapModel`, the explainer :func:`explain_features` wraps.
 """
 from ._obtain_samples import obtain_samples

@@ -699,14 +699,18 @@ numpy/pandas (plus a Matplotlib `Axes` when it plots) that feed sklearn and torc
 equally (torch stays the `[embed]` extra). It is **AAanalysis** convenience, not
 ProtXplain. Named `verb_noun` (the only schema), the verb signalling **End** vs
 **Means**. The mpl analogy: `aap` is to the primitives as `pyplot` is to the
-`Axes`/`Figure` API. See ADR-0040.
+`Axes`/`Figure` API. In the user-facing docs the two tiers are named the
+**implicit interface** (`aap`, the golden pipelines) and the **explicit
+interface** (`aa`, the building blocks) — the same pyplot-vs-objects split, kept
+verbatim in `docs/source/api.rst` and `getting_started.rst`. See ADR-0040.
 _Avoid_: "verb" / "tool" (those name the ProtXplain agent-integration layer);
 calling a **Means** a golden pipeline (only an **End** is one).
 
 **End** (golden pipeline):
 A golden pipeline that returns a **deliverable** — the thing the user wanted:
 `obtain_samples` (→ training set + validation report), `find_features`
-(→ `df_feat` + map), `predict_samples` (→ model + `df_eval`), `explain_features`
+(→ `df_feat` + map), `predict_samples` (→ a `{(feature_set, model): predictor}` dict + a
+cross-validated comparison `df_eval` over the feature-set × model grid), `explain_features`
 (→ SHAP + map, *pro*), `design_mutations` (→ ΔCPP table), `evaluate_models`
 (→ repeated-CV + CIs). Returns the uniform triple `(results, figs, evals)` — each
 slot a bare object or `None` (a plotting End sets `figs=None` when `plot=False`;

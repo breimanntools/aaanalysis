@@ -16,6 +16,44 @@ Python toolkit, which can be imported by:
 
 You can then access all methods and objects via the `aa` alias, such as `aa.load_dataset`.
 
+AAanalysis exposes two interfaces. The **golden pipelines** (``aap``) are the
+high-level, one-call entry point; the **building blocks** below are the explicit
+objects and functions they compose, for full control.
+
+.. _pipe_api:
+
+Golden Pipelines (``aap``)
+==========================
+
+The golden pipelines chain the standard ``load → CPP → model → explain → plot``
+workflow into a single call — the implicit counterpart to the explicit building
+blocks below (much as ``pyplot`` sits over Matplotlib's ``Axes`` / ``Figure``).
+They are stateless wrappers whose defaults match the explicit path, imported
+under their own alias:
+
+.. code-block:: python
+
+    import aaanalysis.pipe as aap
+
+.. currentmodule:: aaanalysis.pipe
+
+.. autosummary::
+    :toctree: generated/
+
+    obtain_samples
+    find_features
+    predict_samples
+    plot_eval
+    explain_features
+
+.. currentmodule:: aaanalysis
+
+Building Blocks
+===============
+
+The explicit objects and functions the pipelines compose — use them directly
+when you need to customise a step.
+
 .. _data_api:
 
 Data Handling
