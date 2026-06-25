@@ -33,8 +33,11 @@ Key Algorithms
 
 Purpose and Audience
 --------------------
-Designed for (computational) biologists, AAanalysis facilitates the analysis and comparison of protein sequences.
-It enables the discovery of physicochemical signatures that underlie biological interactions and functions.
+For computational biologists, bioinformaticians, and protein engineers, AAanalysis facilitates the analysis and
+comparison of proteins to discover interpretable physicochemical signatures — the features that distinguish groups of
+proteins and underlie their biological interactions and functions. These signatures span the whole workflow, from
+simple sequence analysis to interpretable protein prediction and protein engineering, integrating state-of-the-art
+explainable AI (XAI) methods.
 
 Overview of Documentation
 -------------------------
