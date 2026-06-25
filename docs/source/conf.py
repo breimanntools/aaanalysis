@@ -13,10 +13,11 @@ sys.path.append(os.path.abspath('.'))
 # Create notebooks rst and table rst first
 from create_tables_doc import generate_table_rst
 from create_notebooks_docs import (export_example_notebooks_to_rst, export_tutorial_notebooks_to_rst,
-                                   export_protocol_notebooks_to_rst)
+                                   export_protocol_notebooks_to_rst, export_use_case_notebooks_to_rst)
 
 export_tutorial_notebooks_to_rst()
 export_protocol_notebooks_to_rst()
+export_use_case_notebooks_to_rst()
 export_example_notebooks_to_rst()
 generate_table_rst()
 
