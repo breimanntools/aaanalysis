@@ -116,15 +116,12 @@ wrappers or native implementations — for example SHAP via ``ShapModel``, or ma
 such as random forests via ``TreeModel`` — so the resulting features, explanations, and design
 objectives feed straight into the standard ML / XAI / optimization tools.
 
-Click to open the
-`standalone ecosystem map <https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/diagrams/aaanalysis_ecosystem.svg>`_,
-`download the map <https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/diagrams/aaanalysis_ecosystem.png>`_,
-or read the full
+Click the diagram to view and download the full map, or open the
 `ecosystem positioning page <https://aaanalysis.readthedocs.io/en/latest/_static/aaanalysis_ecosystem.html>`_
 — a self-contained walkthrough with the map, its introduction, and further background.
 
 .. figure:: _artwork/diagrams/aaanalysis_ecosystem.svg
-   :target: _static/aaanalysis_ecosystem.html
+   :target: https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/diagrams/aaanalysis_ecosystem.svg
    :alt: The AAanalysis ecosystem — where AAanalysis fits in the protein-ML stack
    :width: 100%
    :align: center
