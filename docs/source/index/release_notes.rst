@@ -85,6 +85,15 @@ Added
   ``add_feat_impact`` / ``add_sample_mean_dif`` accept ``df_seq`` and a ``samples``
   parameter taking row positions or entry names. The array-``labels`` path is unchanged;
   ``sample_positions`` is a deprecated alias for ``samples`` (removed in 1.2.0).
+- **ShapModel — unbiased fuzzy estimator, now the default** (``[pro]``): ``fit`` gains
+  ``fuzzy_aggregation``, defaulting to the new ``'interpolate'`` estimator. It weights a
+  soft label by *exactly* ``p`` — fitting at 0 (``S0``) and at 1 (``S1``) and blending
+  ``p * S1 + (1 - p) * S0`` — the unbiased alternative to the biased threshold sweep, which
+  stays available as a first-class option via ``fuzzy_aggregation='threshold'``. For
+  ``interpolate``, ``n_rounds`` (default ``5``) is a speed/stability dial: ``1`` is the fast
+  exact two-fit estimate (~2x faster than the threshold default on the same cell), ``5`` adds
+  light Monte-Carlo averaging, and the mean converges (run-to-run spread below ~5%) around
+  ``n_rounds ≈ 15–20``; a fixed ``random_state`` keeps every run reproducible.
 
 **Sequence Analysis**
 

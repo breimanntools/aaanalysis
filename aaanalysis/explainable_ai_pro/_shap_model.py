@@ -13,7 +13,8 @@ import aaanalysis.utils as ut
 from aaanalysis.template_classes import Wrapper
 from ._backend.check_models import (check_match_labels_X,
                                     check_match_X_is_selected)
-from ._backend.shap_model.shap_model_fit import monte_carlo_shap_estimation
+from ._backend.shap_model.shap_model_fit import (monte_carlo_shap_estimation,
+                                                 interpolate_fuzzy_shap_estimation)
 from ._backend.shap_model.sm_add_feat_impact import (comp_shap_feature_importance,
                                                      insert_shap_feature_importance,
                                                      comp_shap_feature_impact,
@@ -379,7 +380,9 @@ class ShapModel(Wrapper):
             If ``True``, verbose outputs are enabled.
         random_state : int, optional
             The seed used by the random number generator. If a positive integer, results of stochastic processes are
-            consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.
+            consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random. For
+            ``fuzzy_aggregation='interpolate'`` it is the initial seed and each round re-seeds with
+            ``random_state + round`` (see :meth:`ShapModel.fit` Notes).
 
         Notes
         -----
@@ -472,6 +475,7 @@ class ShapModel(Wrapper):
             n_rounds: int = 5,
             is_selected: Optional[ut.ArrayLike2D] = None,
             fuzzy_labeling: bool = False,
+            fuzzy_aggregation: str = "interpolate",
             n_background_data: Optional[int] = None,
             df_seq: Optional[pd.DataFrame] = None,
             fuzzy_labels: Optional[dict] = None,
@@ -499,11 +503,22 @@ class ShapModel(Wrapper):
             For binary classification, '0' represents the negative class and '1' the positive class.
         n_rounds : int, default=5
             The number of rounds (>=1) to fit the models and obtain the SHAP values by explainer.
+            For ``fuzzy_aggregation='interpolate'`` each round re-seeds the fit, so ``n_rounds`` is a
+            speed/stability dial (see Notes): ``1`` is the fast exact two-fit estimate, the default
+            ``5`` adds Monte-Carlo averaging, and a stable mean is reached around ``15-20``.
         is_selected : array-like, shape (n_selection_round, n_features)
             2D boolean arrays indicating different feature selections.
         fuzzy_labeling : bool, default=False
             If ``True``, fuzzy labeling is applied to approximate SHAP values for samples with uncertain/partial
             memberships (e.g., between >0 and <1 for binary classification scenarios).
+        fuzzy_aggregation : str, default='interpolate'
+            Strategy to turn a soft label ``p`` into a SHAP estimate when fuzzy labeling is active (see Notes):
+
+            - ``'interpolate'`` (default, new in 1.1): blend ``p * S1 + (1 - p) * S0`` from a fit at
+              0 and at 1 (unbiased, exact ``p``; with ``n_rounds=1`` only two fits per fuzzy sample).
+            - ``'threshold'``: hard-label the fuzzy sample over a threshold grid and average — the
+              biased sweep of [Breimann25]_; kept for backward-compatible results.
+
         n_background_data : None or int, optional
             The number samples (< 'n_samples') in the background dataset used for the `KernelExplainer`` to reduce
             computation time. The dataset is obtained by k-means clustering. If ``None``, the full dataset 'X' is used.
@@ -530,6 +545,39 @@ class ShapModel(Wrapper):
         * Idea: Adjusts label thresholds dynamically in Monte Carlo estimation to better represent label uncertainties.
         * Background: Inspired by fuzzy logic, replacing binary true/false with degrees of truth.
 
+        **Fuzzy aggregation strategies**
+
+        The ``fuzzy_aggregation`` parameter selects between two estimators:
+
+        * ``'interpolate'`` (default): The fuzzy sample is weighted by *exactly* ``p`` by fitting the model twice (fuzzy
+          sample at 0 -> ``S0``, at 1 -> ``S1``) and blending ``p * S1 + (1 - p) * S0`` (the ``exp_value`` is blended the
+          same way). This is *unbiased*. Each fuzzy protein is explained independently against the fixed balanced 0/1
+          core, with the other fuzzy proteins excluded from its training data.
+        * ``'threshold'``: Over an ``n_rounds`` x ``n_selection`` grid the fuzzy sample is hard-labeled ``1`` when a
+          per-cell threshold ``<= p`` and the per-cell SHAP matrices are averaged — the sweep of [Breimann25]_. Because
+          the grid is non-uniform on (0, 1], the effective positive-fraction is a *biased* approximation of ``p``.
+
+        **Per-round seeding (interpolate only)**
+
+        The constructor ``random_state`` is the initial seed, and ``'interpolate'`` re-seeds **each round** with
+        ``random_state + round`` (round 0 -> ``random_state``, round 1 -> ``random_state + 1``, ...). So every round
+        fits a *different* model and ``n_rounds`` averages a Monte-Carlo mean over model variance, yet a fixed
+        ``random_state`` gives the identical seed sequence and therefore an exactly reproducible result;
+        ``random_state=None`` draws fresh entropy each round (truly-random, non-reproducible). The ``'threshold'``
+        estimator and the non-fuzzy Monte-Carlo path do **not** re-seed per round — they bake ``random_state`` in once,
+        so their per-round variation comes from the threshold grid, not from the model seed.
+
+        **Choosing n_rounds for 'interpolate'**
+
+        Because each round re-seeds, ``n_rounds`` is a speed/stability dial:
+
+        * ``n_rounds=1`` -- the exact two-fit point estimate; fastest, but a single model draw (run-to-run spread ~20%
+          across seeds).
+        * ``n_rounds=5`` (default) -- adds light averaging (spread ~10%).
+        * ``n_rounds≈15-20`` -- the averaged estimate stabilizes (run-to-run spread and distance to the converged mean
+          fall below ~5% on the bundled ``DOM_GSEC`` gamma-secretase data, ~1/sqrt(n_rounds) decay). Use this for a
+          stable mean; with a fixed ``random_state`` any single run is exactly reproducible regardless.
+
         **Setting soft labels**
 
         There are two equivalent ways to provide soft labels, both enabling fuzzy labeling:
@@ -554,6 +602,8 @@ class ShapModel(Wrapper):
         n_samples, n_feat = X.shape
         ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
         ut.check_bool(name="fuzzy_labeling", val=fuzzy_labeling)
+        ut.check_str_options(name="fuzzy_aggregation", val=fuzzy_aggregation,
+                             list_str_options=["threshold", "interpolate"])
         if fuzzy_labels is not None:
             # Entry-keyed soft labels override 'labels' and enable fuzzy labeling
             check_match_df_seq_X(df_seq=df_seq, X=X)
@@ -571,17 +621,25 @@ class ShapModel(Wrapper):
         ut.check_number_range(name="n_background_data", val=n_background_data, min_val=1, just_int=True, accept_none=True)
         check_match_n_background_data_X(n_background_data=n_background_data, X=X)
         # Compute SHAP values
-        shap_values, exp_val = monte_carlo_shap_estimation(X, labels=labels,
-                                                           list_model_classes=self._list_model_classes,
-                                                           list_model_kwargs=self._list_model_kwargs,
-                                                           explainer_class=self._explainer_class,
-                                                           explainer_kwargs=self._explainer_kwargs,
-                                                           is_selected=is_selected,
-                                                           fuzzy_labeling=fuzzy_labeling,
-                                                           n_rounds=n_rounds,
-                                                           verbose=self._verbose,
-                                                           label_target_class=label_target_class,
-                                                           n_background_data=n_background_data)
+        backend_args = dict(list_model_classes=self._list_model_classes,
+                            list_model_kwargs=self._list_model_kwargs,
+                            explainer_class=self._explainer_class,
+                            explainer_kwargs=self._explainer_kwargs,
+                            is_selected=is_selected,
+                            n_rounds=n_rounds,
+                            verbose=self._verbose,
+                            label_target_class=label_target_class,
+                            n_background_data=n_background_data)
+        if fuzzy_labeling and fuzzy_aggregation == "interpolate":
+            # Only the interpolate path threads 'random_state' explicitly: it re-seeds per round
+            # (random_state + round). The threshold path keeps the seed baked into the model kwargs.
+            shap_values, exp_val = interpolate_fuzzy_shap_estimation(X, labels=labels,
+                                                                    random_state=self._random_state,
+                                                                    **backend_args)
+        else:
+            shap_values, exp_val = monte_carlo_shap_estimation(X, labels=labels,
+                                                              fuzzy_labeling=fuzzy_labeling,
+                                                              **backend_args)
         self.shap_values = shap_values
         self.exp_value = exp_val
         return self
