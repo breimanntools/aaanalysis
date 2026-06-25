@@ -1,6 +1,6 @@
-# ADR-XXXX — SeqOpt: full pure-Python EA operator set + DEAP parity (ship ours)
+# ADR-0045 — SeqOpt: full pure-Python EA operator set + DEAP parity (ship ours)
 
-Status: Proposed — 2026-06-25
+Status: Accepted — 2026-06-25
 
 ## Context
 
