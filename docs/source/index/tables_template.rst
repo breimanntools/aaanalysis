@@ -81,6 +81,13 @@ ADD-TABLE
 
 Subcategories
 '''''''''''''
+Each subcategory carries two interpretability annotations. **Interpretability** is a
+1–10 expert grade of how directly the subcategory maps to a physicochemical property
+(1 = most interpretable). **Explainability level** is the smallest ``top_explain_n``
+tier at which the subcategory enters the explainable scale set
+(``aa.load_scales(name="scales", top_explain_n=N)``, with ``N`` in 5, 10, …, 60);
+a lower level means the subcategory is included earlier. Unclassified subcategories
+are excluded from the explainable set and show ``-``.
 
 ADD-TABLE
 

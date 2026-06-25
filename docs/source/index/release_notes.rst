@@ -8,396 +8,225 @@ v1.1.0 (Unreleased)
 --------------------------------
 
 This release substantially expands the feature-engineering surface: a unified
-**feature-preprocessor family** (embedding / structure / annotation sources),
-a **numerical mode** for CPP, a configuration-sweep wrapper, sequence-window
-sampling, and a suite of site-localization metrics and plotting helpers.
+**feature-preprocessor family** (embedding / structure / annotation sources), a
+**numerical CPP mode**, a configuration-sweep wrapper, sequence-window sampling,
+site-localization metrics, and an opt-in golden-pipeline API.
 
 Added
 ~~~~~
 
-**Protein Design**
-
-- **SeqOpt — multi-objective directed evolution** (``aaanalysis[pro]``): a new
-  ``SeqOpt`` optimizer (paired with ``SeqOptPlot``) searches variants of one
-  wild-type for the trade-off (Pareto) front that best satisfies several
-  objectives at once, reusing a model-bound ``SeqMut`` as the fitness engine and
-  a re-implementation of NSGA-II for selection. Two residue-guidance modes:
-  ``mode="impact"`` refits ``ShapModel`` every generation under fuzzy labeling
-  (the new variant's prediction score as a soft label) to mutate the
-  strongest-``feat_impact`` residues, and ``mode="importance"`` walks positions
-  by static ``feat_importance``. ``run`` returns ``df_pareto`` (objective columns
-  + non-dominated ``rank`` + ``crowding``); ``eval`` reports hypervolume, front
-  size and spread; both plots return a ``(fig, ax)`` pair. Fully reproducible via
-  ``random_state`` / ``seed``.
-
 **Data Handling**
 
-- **EmbeddingPreprocessor**: Instance-based class for per-residue protein
-  language model (PLM) embeddings. The primary ``encode`` method normalizes raw
-  embeddings into a ``[0, 1]`` per-residue ``dict_num`` (``method='minmax' |
-  'quantile' | 'sigmoid'``) ready for ``CPP.run_num``; the secondary
-  ``build_scales`` / ``build_cat`` pair collapses them into pseudo-scales /
-  pseudo-categories for ``CPP.run``. The ``fetch_embeddings`` method
-  (``aaanalysis[embed]``) downloads a curated PLM (ESM-2, ESM-1b, ProtT5,
-  ProstT5) from the Hugging Face Hub and computes per-protein
-  (``mode='protein'``, mean/max/cls pooling) or per-residue
-  (``mode='residue'``) embeddings, with a hardware-aware size guard; the
-  ``pool_embeddings`` helper reduces per-residue arrays to per-protein vectors.
-  A new ``[embed]`` install extra isolates the heavy ``torch`` / ``transformers``
-  dependencies (see ADR-0029).
-- **StructurePreprocessor** (``aaanalysis[pro]``): Converts PDB / CIF / AlphaFold
-  files (and AlphaFold PAE sidecars) into ``[0, 1]``-normalized per-residue
-  numerical tensors. Methods: ``get_dssp``, ``encode_dssp``, ``encode_pdb``,
-  ``encode_pae``, ``get_domains``, ``encode_domains``, ``build_scales``,
-  ``build_cat``.
-- **AnnotationPreprocessor** (``aaanalysis[pro]``): Fetches from UniProt (or
-  ingests user / predictor labels) per-residue PTM and functional-site
-  annotations and encodes them into per-residue tensors. Methods:
-  ``fetch_uniprot``, ``ingest``, ``register_feature``, ``encode``,
-  ``build_scales``, ``build_cat``, ``to_df_seq``.
-- **combine_dict_nums**: Concatenates multiple per-residue tensors
-  (embeddings / structure / annotation) along the feature axis to build a
-  combined ``CPP.run_num`` input.
+- **EmbeddingPreprocessor**: Per-residue protein language model (PLM) embeddings.
+  ``encode`` normalizes raw embeddings into a ``[0, 1]`` per-residue ``dict_num``
+  (``minmax`` / ``quantile`` / ``sigmoid``) for ``CPP.run_num``; ``build_scales`` /
+  ``build_cat`` collapse them into pseudo-scales for ``CPP.run``. ``fetch_embeddings``
+  (``[embed]`` extra) downloads a curated PLM (ESM-2, ESM-1b, ProtT5, ProstT5) from the
+  Hugging Face Hub and computes per-protein (mean/max/cls pooling) or per-residue
+  embeddings; ``pool_embeddings`` reduces per-residue arrays to per-protein vectors. The
+  new ``[embed]`` extra isolates the heavy ``torch`` / ``transformers`` dependencies.
+- **StructurePreprocessor** (``[pro]``): Converts PDB / CIF / AlphaFold files (and PAE
+  sidecars) into ``[0, 1]``-normalized per-residue tensors (``get_dssp``, ``encode_dssp``,
+  ``encode_pdb``, ``encode_pae``, ``get_domains``, ``encode_domains``, ``build_scales``,
+  ``build_cat``).
+- **AnnotationPreprocessor** (``[pro]``): Fetches UniProt (or ingests user / predictor)
+  per-residue PTM and functional-site annotations and encodes them into tensors
+  (``fetch_uniprot``, ``ingest``, ``register_feature``, ``encode``, ``build_scales``,
+  ``build_cat``, ``to_df_seq``).
+- **combine_dict_nums**: Concatenates per-residue tensors (embedding / structure /
+  annotation) along the feature axis into one combined ``CPP.run_num`` input.
 
 **Feature Engineering**
 
-- **CPPGrid**: ``Tool``-style wrapper (``run`` + ``eval``) that runs a grid sweep
-  of ``CPP`` configurations in one call, parallelized across configurations.
-  Configurations that differ only in ``n_filter`` are collapsed into a single CPP
-  run, with the remaining configurations served as exact ``head(n)`` slices.
-  ``run`` also stores ``list_df_feat_`` / ``df_params_``; ``eval(sort_by=...)``
-  scores the configurations (by ``avg_ABS_AUC`` by default) and returns them
-  best-first.
-- **CPP.run_num**: New numerical-mode method whose per-residue value source is a
-  pre-sliced numerical tensor (``dict_num_parts``) rather than an amino-acid →
-  scale lookup, enabling embedding / structure / annotation features through the
-  same pipeline and output schema as ``CPP.run``.
-- **CPP.simplify ``candidate_search='fast'``**: New opt-in heuristic that caps the
-  candidate scales evaluated per feature, for a large speed-up on big scale pools
-  (mainly the ``greedy`` strategy). The default ``candidate_search='exact'`` is
-  unchanged and reproduces the previous result exactly; ``'fast'`` is
-  *statistically equivalent* — the kept-feature set may differ but stays within a
-  documented quality band (kept-feature Jaccard ≥ 0.95 and ΔavgABS_AUC ≤ 0.005 vs
-  exact on the canonical data).
-- **SequenceFeature.get_labels_ovr / get_labels_ovo**: Convert multi-class
-  ``labels`` into binary label sets for ``CPP`` — one-vs-rest (K full-length
-  arrays, all samples kept) or one-vs-one (per class-pair). The row-dropping
-  ``get_labels_ovo`` takes the value source (``df_parts`` and/or ``dict_num_parts``)
-  and returns each pair's row-matched copy ready for ``CPP.run`` / ``CPP.run_num``.
-- **SequenceFeature.get_labels_quantile / get_labels_tiered**: Discretize a
-  continuous target into binary ``labels`` for regression-style ``CPP`` — a single
-  quantile cut (all samples kept), or a fixed positive set swept against
-  stepwise-lowered negative cuts, ``get_labels_tiered`` returning each tier's
-  row-matched ``df_parts`` / ``dict_num_parts`` subset.
-- **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts``
-  from per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output), so
-  each sequence part can be generated with its own recipe.
-- **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq,
-  jmd_c_seq}`` as a ready-to-splat ``seq_kws`` dict (selected by entry or position),
-  with the parts taken from ``df_parts`` so the residues stay bound to the feature
-  geometry (no JMD-length argument; ``df_seq`` is cross-checked). Removes the manual
-  ``get_df_parts`` slicing glue when passing a per-protein sequence to
-  ``CPPPlot.profile`` / ``CPPPlot.feature_map`` (e.g. sample-level SHAP plots).
-- **SequenceFeature.get_feature_descriptions**: Build one standardized,
-  human-readable sentence per ``PART-SPLIT-SCALE`` feature id, combining the
-  sequence region, the split (e.g. ``"segment 2 of 4"``), and the AAontology scale
-  name, category, and subcategory. Complements the compact ``get_feature_names``
-  label; the description is additive (the ``'feature'`` id is unchanged) and can be
-  assigned to an optional ``'feature_description'`` ``df_feat`` column.
-- **AAclust.select_scales**: Convenience wrapper around ``AAclust.fit`` that takes
-  an amino acid scales DataFrame (rows = amino acids, columns = scale IDs) and
-  returns the redundancy-reduced subset of its columns (one medoid scale per
-  cluster) directly — collapsing the manual transpose, ``names`` bookkeeping, and
-  medoid-name indexing into a single call ready for ``CPP``.
-- **AAclust.select_proteins**: Protein-level redundancy reduction over a pre-pooled
-  per-protein feature matrix (``X``: CPP features, pooled embeddings, or structural /
-  DSSP-derived features). Clusters the proteins and selects one representative (medoid)
-  per cluster, annotating ``df_seq`` with ``cluster`` / ``is_representative`` /
-  ``dist_to_rep`` (``return_data='annotated' | 'filtered' | 'both'``) — the numerical
-  counterpart to sequence-identity reduction via ``filter_seq``.
-- **AAclustPlot.centers / AAclustPlot.medoids accept df_scales**: Both methods gain a
-  ``df_scales`` argument (the amino acid scales DataFrame, mutually exclusive with ``X``)
-  that is transposed to the feature matrix internally — so
-  ``aac_plot.centers(df_scales=df_scales, labels=aac.labels_)`` replaces the manual
-  ``centers(np.array(df_scales).T, labels=aac.labels_)``. This removes the transpose
-  ambiguity: pass **scales** via ``df_scales`` (transposed for you) and **proteins /
-  embeddings / CPP features** via ``X`` (a samples-by-features matrix, used as-is) — never
-  transpose manually. The explicit ``X`` signature is unchanged.
+- **CPPGrid**: ``Tool``-style wrapper (``run`` + ``eval``) that runs a parallel grid
+  sweep of ``CPP`` configurations in one call; configurations differing only in
+  ``n_filter`` collapse into a single run. ``eval(sort_by=...)`` scores the
+  configurations (``avg_ABS_AUC`` by default) best-first.
+- **CPP.run_num**: Numerical mode sourcing per-residue values from a pre-sliced tensor
+  (``dict_num_parts``) instead of an amino-acid → scale lookup — embedding / structure /
+  annotation features through the same pipeline and output schema as ``CPP.run``.
+- **CPP.simplify ``candidate_search='fast'``**: Opt-in heuristic capping the candidate
+  scales evaluated per feature, for a large speed-up on big scale pools (mainly
+  ``greedy``). The default ``'exact'`` reproduces the previous result; ``'fast'`` is
+  statistically equivalent (kept-feature Jaccard ≥ 0.95, ΔavgABS_AUC ≤ 0.005 on the
+  canonical data).
+- **SequenceFeature.get_labels_ovr / get_labels_ovo**: Convert multi-class ``labels``
+  into binary sets for ``CPP`` — one-vs-rest (all samples kept) or one-vs-one (per
+  class-pair, each pair's value source row-matched).
+- **SequenceFeature.get_labels_quantile / get_labels_tiered**: Discretize a continuous
+  target into binary ``labels`` — a single quantile cut, or a fixed positive set swept
+  against stepwise-lowered negative cuts (each tier row-matched).
+- **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts`` from
+  per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output).
+- **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``
+  as a ready-to-splat ``seq_kws`` dict (by entry or position), parts taken from
+  ``df_parts`` so the residues stay bound to the feature geometry — removing the manual
+  slicing glue when feeding ``CPPPlot.profile`` / ``feature_map`` (e.g. sample-level SHAP
+  plots).
+- **SequenceFeature.get_feature_descriptions**: One standardized, human-readable
+  sentence per ``PART-SPLIT-SCALE`` feature id (region + split + AAontology scale name /
+  category). Additive (the ``'feature'`` id is unchanged); fills an optional
+  ``'feature_description'`` column.
+- **AAclust.select_scales**: Wrapper around ``AAclust.fit`` that returns the
+  redundancy-reduced scale subset (one medoid per cluster) directly, ready for ``CPP``.
+- **AAclust.select_proteins**: Protein-level redundancy reduction over a per-protein
+  feature matrix ``X`` — clusters proteins, selects one medoid per cluster, annotates
+  ``df_seq`` with ``cluster`` / ``is_representative`` / ``dist_to_rep`` — the numerical
+  counterpart to ``filter_seq``.
+- **AAclustPlot.centers / medoids accept ``df_scales``**: Pass scales via ``df_scales``
+  (transposed internally) instead of ``centers(np.array(df_scales).T, ...)``; pass
+  proteins / embeddings / CPP features via ``X`` (used as-is). The explicit ``X``
+  signature is unchanged.
 
 **Explainable AI**
 
-- **ShapModel — accession-based interface** (``aaanalysis[pro]``): ``fit`` accepts
-  entry-keyed soft labels via ``fuzzy_labels={'P05067': 0.6}`` together with
-  ``df_seq``, overriding the matching entries in ``labels`` and enabling fuzzy
-  labeling without a manual row-index lookup or array mutation.
-  ``add_feat_impact`` and ``add_sample_mean_dif`` additionally accept ``df_seq``
-  and a new ``samples`` parameter that takes either row position(s) or entry
-  name(s), resolved to the matching row(s) (column names default to the
-  accession). The array ``labels`` + ``fuzzy_labeling=True`` path is unchanged;
-  the former ``sample_positions`` parameter remains as a deprecated alias for
-  ``samples`` (emits a ``DeprecationWarning``; removed in 1.2.0).
+- **ShapModel — accession-based interface** (``[pro]``): ``fit`` accepts entry-keyed
+  soft labels (``fuzzy_labels={'P05067': 0.6}``) together with ``df_seq``;
+  ``add_feat_impact`` / ``add_sample_mean_dif`` accept ``df_seq`` and a ``samples``
+  parameter taking row positions or entry names. The array-``labels`` path is unchanged;
+  ``sample_positions`` is a deprecated alias for ``samples`` (removed in 1.2.0).
 
 **Sequence Analysis**
 
 - **AAWindowSampler**: Samples fixed-length sequence windows for PU-learning and
-  hard-negative-mining workflows (``sample_same_protein``,
-  ``sample_different_protein``, ``sample_motif_matched``, ``sample_synthetic``).
-- **scan_motif** (``aaanalysis[pro]``): scans candidate proteins for
-  statistically significant PWM occurrences via MEME/FIMO (selection by match
-  p-value against a background model), complementing the pure-Python
-  ``AAWindowSampler.sample_motif_matched`` PWM-sum sampler.
+  hard-negative-mining workflows (``sample_same_protein``, ``sample_different_protein``,
+  ``sample_motif_matched``, ``sample_synthetic``).
+- **scan_motif** (``[pro]``): Scans candidate proteins for statistically significant PWM
+  occurrences via MEME/FIMO, complementing the pure-Python
+  ``AAWindowSampler.sample_motif_matched`` sampler.
 
 **Protein Design**
 
-- **SeqMut model-guided mode (ML-guided directed evolution)**: ``SeqMut`` is now
-  optionally model-aware. Binding a fitted classifier
-  (``SeqMut(model=..., target_class=...)`` — any object with ``predict_proba``,
-  e.g. ``TreeModel``) makes ``scan`` / ``suggest`` / ``mutate`` report
-  ``delta_pred`` — the change of the model prediction score (percentage points) a
-  mutation induces — and ``suggest`` rank by it. Without a model, ``SeqMut`` stays
-  the deterministic, model-free ΔCPP tool.
-- **SeqMut.combine**: scores combined (multi-mutation) variants — several point
-  mutations applied to the same sequence and evaluated as one design.
-- **SeqMutPlot**: ``mutation_landscape`` now renders the model prediction-shift
-  mutation-scan heatmap (diverging ``delta_pred``, parts-colored sequence bar,
-  wild-type-prediction title); new ``variant_impact`` (ranked-variant bar) and
-  ``epistasis`` (pairwise non-additivity) plots.
+- **SeqOpt — multi-objective directed evolution** (``[pro]``): A new ``SeqOpt`` optimizer
+  (with ``SeqOptPlot``) searches variants of one wild-type for the Pareto front across
+  several objectives at once, reusing a model-bound ``SeqMut`` as the fitness engine and
+  NSGA-II for selection. ``mode="impact"`` refits ``ShapModel`` each generation under
+  fuzzy labeling to target the strongest-``feat_impact`` residues; ``mode="importance"``
+  walks positions by static ``feat_importance``. ``run`` returns ``df_pareto`` (objective
+  columns + ``rank`` + ``crowding``); ``eval`` reports hypervolume / front size / spread;
+  both plots return ``(fig, ax)``. Reproducible via ``random_state`` / ``seed``.
+- **SeqMut model-guided mode (ML-guided directed evolution)**: ``SeqMut`` is optionally
+  model-aware — binding a fitted classifier (``SeqMut(model=..., target_class=...)``, any
+  object with ``predict_proba``) makes ``scan`` / ``suggest`` / ``mutate`` report
+  ``delta_pred`` (the prediction-score shift in percentage points) and ``suggest`` rank
+  by it. Without a model, ``SeqMut`` stays the deterministic, model-free ΔCPP tool.
+- **SeqMut.combine**: Scores combined multi-mutation variants — several point mutations
+  applied to one sequence and evaluated as a single design.
+- **SeqMutPlot**: ``mutation_landscape`` renders the ``delta_pred`` prediction-shift
+  mutation-scan heatmap; new ``variant_impact`` (ranked-variant bar) and ``epistasis``
+  (pairwise non-additivity) plots.
 
 **Metrics**
 
-- **comp_per_protein_ap**: Per-protein average precision for site-localization
-  ranking, with an optional ``tolerance=±k`` variant for positional jitter.
-- **comp_detection_metrics**: Recall / precision / F1 / MCC at a fixed score
-  threshold, pooled across per-residue predictions.
-- **comp_bootstrap_ci**: Seeded percentile confidence interval over a
-  per-protein metric vector for small-N uncertainty reporting. Returns a dict
-  ``{'mean', 'ci_low', 'ci_high'}``.
-- **comp_smooth_scores**: Peak-preserving (``max(smoothed, raw)``), NaN-aware
-  smoothing of per-residue score tracks.
+- **comp_per_protein_ap**: Per-protein average precision for site-localization ranking,
+  with an optional ``tolerance=±k`` variant for positional jitter.
+- **comp_detection_metrics**: Recall / precision / F1 / MCC at a fixed score threshold,
+  pooled across per-residue predictions.
+- **comp_bootstrap_ci**: Seeded percentile confidence interval over a per-protein metric
+  vector (returns ``{'mean', 'ci_low', 'ci_high'}``).
+- **comp_smooth_scores**: Peak-preserving (``max(smoothed, raw)``), NaN-aware smoothing
+  of per-residue score tracks.
 
 **Plotting**
 
-- **plot_rank**: Standalone per-protein max-score-vs-rank scatter with group
-  coloring and optional threshold lines (pairs with the new ``aa.metrics``
-  functions).
+- **plot_rank**: Standalone per-protein max-score-vs-rank scatter with group coloring and
+  optional threshold lines (pairs with the new ``aa.metrics`` functions).
 
 **Golden Pipelines**
 
-- **aaanalysis.pipe** (``aap``): A second, opt-in convenience API of stateless,
-  one-call *golden pipelines* over the AAanalysis primitives, imported explicitly
-  as ``import aaanalysis.pipe as aap``.
-- **aap.find_features**: Staged, interpretable CPP AutoML search. It sweeps the
-  CPP feature space (Split × Part × Scale together with ``n_filter``), scores each
-  configuration by cross-validated model performance, selects the simplest
-  configuration within 1% of the best score, refines it (``CPP.simplify`` and
-  recursive feature elimination, each kept only if the score does not drop), ranks
-  the features by tree-based importance, and draws the feature map. The
-  ``optimization`` grade scopes the search (``"fast"`` is byte-identical to the
-  explicit single-CPP path); it returns ``(df_feat, ax, df_eval)``.
-- **aap.plot_eval**: A ``viridis`` evaluation-grid plot of a ``find_features``
-  sweep that adapts to the number of swept levers — a single configuration draws
-  nothing, one lever draws a line/bar, two draw a heatmap, and three or more draw
-  faceted small-multiples — coloring by the cross-validated score and starring the
-  selected configuration. ``find_features`` draws it as an auxiliary figure when
-  ``plot=True``; it is also usable standalone on any ``CPPGrid``-style eval table.
+- **aaanalysis.pipe** (``aap``): A second, opt-in convenience API of stateless, one-call
+  *golden pipelines* over the AAanalysis primitives (``import aaanalysis.pipe as aap``).
+- **aap.find_features**: Staged, interpretable CPP AutoML — sweeps the feature space
+  (Split × Part × Scale together with ``n_filter``), scores each configuration by
+  cross-validated model performance, selects the simplest within 1% of the best, refines
+  it (``CPP.simplify`` and recursive feature elimination, each kept only if the score
+  holds), ranks features by tree-based importance, and draws the feature map. Returns
+  ``(df_feat, ax, df_eval)``.
+- **aap.plot_eval**: A ``viridis`` evaluation-grid plot of a ``find_features`` sweep that
+  adapts to the number of swept levers (none → nothing, one → line/bar, two → heatmap,
+  ≥ three → faceted small-multiples), coloring by cross-validated score and starring the
+  selected configuration. Drawn as an auxiliary figure when ``find_features(plot=True)``;
+  also usable standalone on any ``CPPGrid``-style eval table.
 
 **Package**
 
-- **aa.__version__**: The installed package version is now exposed as a
-  top-level attribute via ``importlib.metadata``.
+- **aa.__version__**: The installed package version is exposed at top level via
+  ``importlib.metadata``.
 - **CHANGELOG.md + deprecation policy**: A root ``CHANGELOG.md``
-  (`Keep a Changelog <https://keepachangelog.com/en/1.1.0/>`_ format) now gives a
-  terse, developer-facing index alongside these narrative notes. The project
-  adopts strict semantic versioning: from v1.x onward, any rename or removal of a
-  public symbol ships at least one minor release carrying a ``DeprecationWarning``
-  first. A ``deprecated(reason, version_removed)`` decorator helper (internal,
-  ``aaanalysis.utils``) marks such symbols and prepends a deprecation note
-  to their docstring. See the *Versioning and Deprecation Policy* in
+  (`Keep a Changelog <https://keepachangelog.com/en/1.1.0/>`_ format) gives a terse,
+  developer-facing index alongside these narrative notes. From v1.x onward, any rename or
+  removal of a public symbol ships at least one minor release carrying a
+  ``DeprecationWarning`` first; an internal ``deprecated(reason, version_removed)``
+  decorator marks such symbols. See *Versioning and Deprecation Policy* in
   ``CONTRIBUTING.rst``.
 
 **Documentation**
 
-- **Prediction tasks** concept-overview page (*Usage Principles*): maps a
-  biological question to the right AAanalysis workflow via a task table keyed on
-  *unit of comparison* and *reference construction* (not biological scale alone),
-  covering the residue / domain / protein levels plus the determinant-discovery,
-  design/engineering, and relational-boundary rows. The front door to the
-  Protocols catalog; taxonomy recorded in ADR-0022.
-- **A minimal CPP analysis** tutorial (``tutorial0_minimal``): the shortest
-  end-to-end loop — load a dataset, run CPP, read out the signature — paired with
-  the new concept page.
-- **Documentation navigation + routing landing page**: the sidebar is grouped into
-  three sections — *Overview* (Introduction · Getting Started · Usage Principles ·
-  Evaluation), *Guides* (Tutorials · Protocols), and *Reference* (API · Tables ·
-  Glossary · References · Release notes · Contributing · Docstring Style Guide) —
-  and the landing page gains a section explainer, a "which section do I want?" box,
-  and a "You want to… / Go to" routing table. The previously unwired
-  **Comparison Harness** tutorial (``tutorial6_comparison_harness``) is now
-  reachable from the Tutorials toctree.
+- **Prediction tasks** concept page (*Usage Principles*): maps a biological question to
+  the right workflow via a task table keyed on unit of comparison and reference
+  construction, across the residue / domain / protein levels — the front door to the
+  Protocols catalog.
+- **A minimal CPP analysis** tutorial (``tutorial0_minimal``): the shortest end-to-end
+  loop — load a dataset, run CPP, read out the signature.
+- **Documentation navigation**: the sidebar is grouped into three sections — *Overview*,
+  *Guides* (Tutorials · Protocols), and *Reference* — and the landing page gains a
+  "You want to… / Go to" routing table; the previously unwired **Comparison Harness**
+  tutorial (``tutorial6_comparison_harness``) is now reachable.
 
 Changed
 ~~~~~~~
 
-- **Uniform plot return contract**: Every public ``*Plot`` method
-  (``AAclustPlot``, ``CPPPlot``, ``dPULearnPlot``, ``AAMutPlot``, ``SeqMutPlot``,
-  ``AAlogoPlot``) now returns a single ``(fig, ax)`` pair, replacing the previous
-  mix of ``(fig, ax)``, bare ``Axes``, and ``(ax, df)`` shapes. The returned
-  object unpacks as ``fig, ax = plot(...)`` and also forwards attribute access to
-  ``ax``, so existing ``ax = plot(...); ax.set_title(...)`` code keeps working.
-  **Breaking change, scheduled for the next major release**:
-  ``AAclustPlot.centers`` and ``AAclustPlot.medoids`` now return ``(fig, ax)`` and
-  expose the PCA-component DataFrame on the ``df_components_`` instance attribute
-  rather than as the second return value — replace
-  ``ax, df = aac_plot.centers(...)`` with ``fig, ax = aac_plot.centers(...)``
-  followed by ``df = aac_plot.df_components_``.
-- **CPP performance work**: The Cython feature-matrix kernel, macOS-safe threaded
-  ``n_jobs``, scale / AA-index caching, and scale / sample batching land in this
-  release, replacing the hour-long, low-CPU CPP runs seen on ``1.0.3`` and
-  earlier. **Users on** ``≤1.0.3`` **should upgrade** rather than debug a
-  performance pathology that is already fixed.
-- **CPP Cython-fallback notice**: When the compiled extension is missing and CPP
-  falls back to the ~2× slower pure-Python kernel, the one-time notice is now a
-  ``UserWarning`` instead of an easily-missed INFO print, so it surfaces even with
-  ``aa.options['verbose'] = False``.
+- **Uniform plot return contract**: Every public ``*Plot`` method now returns a single
+  ``(fig, ax)`` pair (forwarding attribute access to ``ax``, so existing
+  ``ax = plot(...); ax.set_title(...)`` code keeps working), replacing the previous mix
+  of shapes. **Breaking change, scheduled for the next major release:**
+  ``AAclustPlot.centers`` / ``medoids`` return ``(fig, ax)`` and expose the PCA-component
+  DataFrame on the ``df_components_`` attribute instead of as the second return value.
+- **CPP performance**: The Cython feature-matrix kernel, macOS-safe threaded ``n_jobs``,
+  scale / AA-index caching, and scale / sample batching land in this release, replacing
+  the hour-long, low-CPU CPP runs of ``≤1.0.3`` — users on those versions should upgrade.
+  When the compiled extension is missing and CPP falls back to the pure-Python kernel,
+  the one-time notice is now a ``UserWarning`` (visible even with ``verbose=False``).
 - **SequenceFeature.feature_matrix**: New ``batch=`` parameter accepts a list of
-  ``df_parts`` and builds them in a single Cython pass, returning a list of
-  feature matrices — faster than per-call construction for many small part tables.
-- **SequenceFeature.get_df_parts / NumericalFeature.get_parts**: New ``pos``-anchor
-  input mode (``tmd_len=``) explodes each 1-based anchor in the ``pos`` column
-  into one three-part (``jmd_n`` / ``tmd`` / ``jmd_c``) row, identified by
-  ``entry_win``.
-- **SequenceFeature.get_df_parts**: Several-fold faster on large inputs — the
-  per-row ``DataFrame.apply`` driver was replaced with a vectorized iteration over
-  the raw column arrays. The output (parts, column order, index, values) is
-  unchanged.
-- **CPP / feature-engineering same-output speedups**: Three byte-identical
-  optimizations. ``SequenceFeature.prune_by_correlation`` /
-  ``NumericalFeature.filter_correlation`` vectorize the inner correlation-triangle
-  comparison while preserving the greedy, order-dependent skip (the selected mask
-  is unchanged). ``CPP.simplify``'s redundancy reduction replaces a per-pair double
-  pandas lookup into the scale-correlation table with a numpy view built once,
-  keeping the sequential greedy tie-break (kept set and order unchanged). The greedy
-  swap loop drops a per-candidate full-matrix copy in favor of a single mutated-column
-  save/restore (memory only; scored matrix and selected set unchanged). ``CPP.simplify``'s
-  per-feature candidate ranking (``_eligible_candidates_``) replaces the Python scan over
-  every pool scale with a numpy filter and a stable ``lexsort`` rank, and hoists the
-  per-scale interpretability array once across the whole call — the ranked candidate list
-  (values, tie order, and float dtype) is byte-identical.
-- **n_jobs**: Unified parallelism convention across ``CPP`` / ``CPPGrid``
-  (``1`` serial, ``-1`` all cores, ``N>1`` exactly N, ``None`` optimized), with an
-  ``options['n_jobs']`` global override.
-- **CPPPlot.feature**: Now titles the plot with the feature's human-readable
-  description (from ``SequenceFeature.get_feature_descriptions``), line-wrapped via
-  the new ``show_title`` (default ``True``) and ``title_wrap_width`` (default ``45``)
-  parameters. A subsequent ``plt.title(...)`` still overrides it; ``feature_map`` and
-  ``ranking`` are unchanged.
+  ``df_parts`` built in a single Cython pass (faster for many small part tables).
+- **get_df_parts / NumericalFeature.get_parts**: New ``pos``-anchor mode (``tmd_len=``)
+  explodes each 1-based anchor into one ``jmd_n`` / ``tmd`` / ``jmd_c`` row
+  (``entry_win``). ``get_df_parts`` is also several-fold faster (vectorized; output
+  unchanged).
+- **n_jobs**: Unified parallelism convention across ``CPP`` / ``CPPGrid`` (``1`` serial,
+  ``-1`` all cores, ``N>1`` exactly N, ``None`` optimized), with an ``options['n_jobs']``
+  global override.
+- **CPPPlot.feature**: Titles the plot with the feature's human-readable description,
+  line-wrapped via ``show_title`` (default ``True``) and ``title_wrap_width`` (default
+  ``45``).
 - **Docstring discoverability**: Surfaced previously implicit API contracts at the
-  docstrings users actually read (no behavior change). ``CPP.run_num`` /
-  ``NumericalFeature.get_parts`` now state the ``get_parts`` → ``run_num`` call order
-  and the ``[0, 1]`` normalization contract (and what breaks if unnormalized); the
-  ``[pro]`` classes / functions (``ShapModel``, ``StructurePreprocessor``,
-  ``AnnotationPreprocessor``, ``comp_seq_sim``, ``filter_seq``, ``scan_motif``) carry
-  a ``[pro]`` install marker in their summary; and ``SeqMut`` cross-links the canonical
-  ``df_seq`` format spec (``SequenceFeature.get_df_parts``).
-- **Performance (same output)**: Several internal hotspots were vectorized or
-  parallelized without changing results. ``AAWindowSampler`` redundancy /
-  similarity filtering now compares amino-acid windows with vectorized NumPy
-  operations (identical keep/drop decisions; ~30x faster at scale), ``AAclust``
-  sample-to-medoid correlation distances are computed in one pass, and the
-  per-feature Kullback-Leibler divergence (used by ``dPULearn.eval`` with
-  ``comp_kld=True``) is parallelized over features and honors
-  ``options['n_jobs']``. Public APIs and outputs are unchanged.
-  A further pass vectorizes ``AAWindowSampler`` window-sampling internals:
-  candidate-center band filtering (~40x faster at scale) and per-window PWM
-  scoring in ``sample_motif_matched`` (~12x), again with identical results.
-  ``SequencePreprocessor.encode_one_hot`` is also vectorized (~3x), with a
-  byte-identical feature matrix. And ``StructurePreprocessor.encode_pdb`` CA-CA
-  contact counts (``contact_count_8A`` / ``contact_count_12A``) use a vectorized
-  per-residue distance computation (~50x at scale) with byte-identical counts.
-  ``encode_pdb`` additionally caches the per-(target, atom) global sequence
-  alignment that its encoders otherwise re-run ~26 times per entry (chain pick
-  plus each per-feature value mapping); the first optimal alignment is
-  deterministic, so cached and recomputed encoder output are byte-identical
-  (~12x off the repeated-alignment overhead).
-  Three further ``StructurePreprocessor`` hotspots are sped up with identical
-  output: ``encode_pdb``'s disulfide encoder replaces its O(n^2) SG-SG
-  double loop with a vectorized pairwise-distance computation (same 2.5 Å
-  inclusive boundary, equidistant-tie handling and nearest-partner pick;
-  16-48x); the three pLDDT encoders (``plddt`` / ``plddt_disorder`` /
-  ``plddt_tier``) now share one per-residue pLDDT read + alignment per entry
-  instead of each re-walking the structure (~2.2x); and ``get_dssp`` reuses a
-  single session-scoped ``PairwiseAligner`` across all entries (and across the
-  chain-pick, mismatch-count and feature-align steps) rather than constructing
-  three fresh aligners per entry. Identity fractions and alignments are
-  byte-identical in every case. Completing this sharing, ``encode_pdb`` now
-  collects the structure's amino-acid chains and picks the best-matching chain
-  **once per entry** and threads that result through every requested encoder,
-  rather than re-walking the structure (and rebuilding each chain's atom
-  sequence) once per feature — up to ~13 redundant walks collapsed to one. The
-  pick is a deterministic function of the structure and target sequence, so the
-  shared and per-encoder results are byte-identical.
-  A further "Batch 6" pass replaces two more hotspots in place with
-  byte-identical implementations: ``AAMut.comp_substitution_impact`` now
-  accumulates the per-(from, to) delta columns and builds a single DataFrame
-  instead of concatenating hundreds of one-pair frames (byte-identical table,
-  ~19x); and ``SequencePreprocessor.get_sliding_aa_window`` inlines a strided
-  window slice rather than re-padding the sequence string on every position
-  (byte-identical window list, ~1.8x).
-- **Performance benchmark + regression guard** (developer tooling): A committed
-  ``pytest-benchmark`` suite (``tests/benchmarks/``) micro-benchmarks the hot
-  public entry points — ``CPP.run`` / ``CPP.run_num``, ``AAclust.fit``,
-  ``SequenceFeature.feature_matrix``, ``AAWindowSampler`` sampling, ``dPULearn.fit``,
-  ``TreeModel.fit``, and ``StructurePreprocessor.encode_pdb`` — on small bundled
-  fixtures. A baseline-comparison helper
-  (``.github/scripts/check_perf_regression.py``) flags any path slower than a
-  generous ``1.5x`` threshold, wired as a **non-gating nightly** job
-  (``perf_nightly.yml``). Opt-in via the new ``[bench]`` install extra; it never
-  touches the blocking matrix. No effect on the public API.
-- **Pooled, optionally concurrent web fetches**:
-  ``StructurePreprocessor.fetch_alphafold`` and
-  ``AnnotationPreprocessor.fetch_uniprot`` now route every request through a
-  pooled ``requests.Session`` (one per worker thread) rather than opening a
-  fresh connection per request, and accept a new ``max_workers`` parameter for
-  threaded bulk fetching. Concurrency is **off by default** (``max_workers=None``
-  or ``1`` keeps the unchanged sequential path) because parallel requests to
-  AlphaFold DB / UniProt risk HTTP-429 throttling; when enabled, results are
-  reassembled in input order, so the returned status table / ``df_annot`` and
-  the on-disk files are byte-identical regardless of worker count.
-- **dPULearn.fit**: Flexible, package-consistent label handling via ``label_pos`` /
-  ``label_unl`` / ``label_neg`` markers. Pass standard ``{0, 1}`` labels directly with
-  ``label_unl=0`` (``0`` = unlabeled, ``1`` = positive), or any positive / unlabeled /
-  negative encoding. **Only unlabeled samples are candidates** — pre-labeled negatives
-  (``label_neg``) are kept and never re-selected. The negative count is specified one of
-  two ways (exactly one): the new ``n_neg`` (the **total** number of negatives wanted, so
-  dPULearn identifies ``n_neg`` minus the pre-labeled negatives), or the existing
-  ``n_unl_to_neg`` (the number identified **directly from the unlabeled pool**, for direct
-  control). Output labels always use the package convention (``1`` = positive, ``0`` =
-  negative, ``2`` = unlabeled); the recommended input encoding is unchanged.
-- **Numerical-equivalence tolerance policy** (developer-facing): A new policy
-  (ADR-0032, summarized in ``CONTRIBUTING.rst``) defines three tiers of acceptable
-  output change for performance optimizations — **T1 byte-identical** (default),
-  **T2 numerically-equivalent** (``allclose(atol=1e-10, rtol=0)`` plus identical
-  discrete decisions), and **T3 statistically-equivalent** (documented quality
-  metric within an agreed band) — and the evidence + pinned regression anchor each
-  tier requires. It unblocks previously-excluded algorithmic optimizations (e.g.
-  AAclust binary-search ``k``), each landing as its own tier-declared PR. No user-
-  facing behavior changes in this release.
-- **Type-contract burn-down** (developer tooling): The advisory pyright report
-  (public-API first; ``_backend`` excluded) is now driven down in small,
-  per-subpackage steps and tracked by a committed high-water mark
-  (``.github/pyright_baseline.txt``) plus a ratchet
-  (``.github/scripts/check_pyright_budget.py``) wired into the existing
-  ``Type Check (advisory)`` workflow under ``continue-on-error`` — it reports the
-  count and delta in the CI log but **never gates a merge**. The first step clears
-  the ``plotting`` subpackage to zero via honest signatures (no runtime change).
-  A follow-up step types the core input validators (``check_X`` / ``check_array_like``
-  / ``check_list_like`` ``accept_none``-keyed overloads, ``check_labels`` /
-  ``check_number_range``) — whose honest return types cascade across every caller —
-  and corrects four public-API signature annotation bugs (``CPPPlot.eval`` ``figsize``,
-  ``NumericalFeature.filter_correlation`` return, ``ShapModel`` ``list_model_classes``,
-  and a duplicate internal helper). Every public-API signature/return is now
-  pyright-clean, the ``metrics`` subpackage is at zero, and the advisory total drops
-  to 887; remaining diagnostics are internal method bodies (no runtime change).
+  docstrings users read (no behavior change) — the ``get_parts`` → ``run_num`` call order
+  and ``[0, 1]`` normalization contract, and a ``[pro]`` install marker on the pro
+  classes / functions.
+- **dPULearn.fit**: Flexible label handling via ``label_pos`` / ``label_unl`` /
+  ``label_neg`` markers (only unlabeled samples are candidates; pre-labeled negatives are
+  kept and never re-selected). The negative count is set by exactly one of ``n_neg`` (the
+  total wanted) or ``n_unl_to_neg`` (drawn directly from the unlabeled pool); output uses
+  the package convention (``1`` positive, ``0`` negative, ``2`` unlabeled).
+- **Pooled, optionally concurrent web fetches**: ``fetch_alphafold`` / ``fetch_uniprot``
+  route every request through a pooled ``requests.Session`` and accept a ``max_workers``
+  parameter. Concurrency is off by default (parallel requests risk HTTP-429 throttling);
+  when enabled, results reassemble in input order, so output is byte-identical.
+- **Performance (same output)**: Many internal hotspots were vectorized or parallelized
+  with byte-identical results — ``AAWindowSampler`` filtering / sampling, ``AAclust``
+  medoid distances, the per-feature KLD path in ``dPULearn.eval``, ``encode_one_hot``,
+  ``AAMut.comp_substitution_impact``, ``get_sliding_aa_window``, and several
+  ``StructurePreprocessor`` encoders (``encode_pdb`` contact / disulfide / pLDDT, a shared
+  per-entry chain-pick and alignment cache, ``get_dssp``). Public APIs and outputs are
+  unchanged.
+- **Developer tooling**: A committed ``pytest-benchmark`` suite (``tests/benchmarks/``,
+  ``[bench]`` extra) micro-benchmarks the hot entry points as a non-gating nightly; a
+  numerical-equivalence tolerance policy defines three tiers (T1 byte-identical, T2
+  ``allclose`` plus identical discrete decisions, T3 statistically-equivalent within an
+  agreed band) for output-affecting optimizations; and an advisory pyright ratchet
+  (``.github/pyright_baseline.txt``) drives the type-contract count down per subpackage
+  (now 887, every public-API signature pyright-clean). None gate a merge or change the
+  public API.
 
 
 Version 1.0 (Stable Version)
