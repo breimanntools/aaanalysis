@@ -37,6 +37,26 @@ AAanalysis Algorithms
    *A fast and elitist multiobjective genetic algorithm: NSGA-II*,
    `IEEE Transactions on Evolutionary Computation <https://doi.org/10.1109/4235.996017>`__.
 
+.. [Yang19] Yang, Wu and Arnold (2019),
+   *Machine-learning-guided directed evolution for protein engineering*,
+   `Nature Methods <https://doi.org/10.1038/s41592-019-0496-6>`__.
+
+.. [DeNovoReview26] (2026),
+   *The past, present and future of de novo protein design*,
+   `Nature <https://doi.org/10.1038/s41586-026-10328-7>`__.
+
+.. [Watson23] Watson *et al.* (2023),
+   *De novo design of protein structure and function with RFdiffusion*,
+   `Nature <https://doi.org/10.1038/s41586-023-06415-8>`__.
+
+.. [Dauparas22] Dauparas *et al.* (2022),
+   *Robust deep learning-based protein sequence design using ProteinMPNN*,
+   `Science <https://doi.org/10.1126/science.add2187>`__.
+
+.. [Jumper21] Jumper *et al.* (2021),
+   *Highly accurate protein structure prediction with AlphaFold*,
+   `Nature <https://doi.org/10.1038/s41586-021-03819-2>`__.
+
 .. [Breimann25] Breimann and Kamp *et al.* (2025),
    *Charting γ-secretase substrates by explainable AI*,
    `Nature Communications <https://www.nature.com/articles/s41467-025-60638-z>`__.

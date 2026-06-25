@@ -71,11 +71,13 @@ protocol puts to work end to end.
 
    generated/tutorial6_comparison_harness
 
-Protein Design
---------------
-Design optimized sequence variants with **SeqOpt** — multi-objective, ML-guided
-directed evolution — and read the results with **SeqOptPlot**. The **Protein Design**
-tutorial walks a complete case study: training a substrate classifier, designing a
+Protein Engineering
+-------------------
+Optimize an existing sequence with **SeqOpt** — machine-learning-guided directed
+evolution — and read the results with **SeqOptPlot**. This is **protein engineering**
+(mutating a known protein), distinct from **de novo protein design** (generating new
+proteins, e.g. RFdiffusion → ProteinMPNN → AlphaFold). The **Protein Engineering**
+tutorial walks a complete case study: training a substrate classifier, engineering a
 "super substrate" for gamma-secretase, and visualizing the Pareto front, convergence,
 mutation map and lineage.
 
