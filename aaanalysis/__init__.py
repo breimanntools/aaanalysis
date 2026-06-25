@@ -119,6 +119,16 @@ except ImportError as e:
 
 
 try:
+    from .protein_design_pro import SeqOpt, SeqOptPlot
+    __all__.extend(["SeqOpt", "SeqOptPlot"])
+except ImportError as e:
+    SeqOpt = None
+    SeqOptPlot = None
+    globals()["SeqOpt"] = missing_feature_stub("SeqOpt", e, mode="pro")
+    globals()["SeqOptPlot"] = missing_feature_stub("SeqOptPlot", e, mode="pro")
+
+
+try:
     from .seq_analysis_pro import comp_seq_sim
     __all__.append("comp_seq_sim")
 except ImportError as e:

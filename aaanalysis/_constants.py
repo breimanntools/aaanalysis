@@ -287,6 +287,29 @@ COLS_SEQMUT_VARIANT = [COL_ENTRY, COL_VARIANT, COL_N_MUT, COL_SEQ_MUT,
 # SeqMut.suggest — optional weighting of the shift score by a df_feat column
 LIST_SHIFT_WEIGHTS = [COL_FEAT_IMPORT, COL_ABS_AUC]
 
+# Protein design pro (SeqOpt) — multi-objective directed-evolution optimizer.
+# NSGA-II output columns (COL_RANK is shared, defined in the eval block below; COL_VARIANT,
+# COL_N_MUT, COL_SEQ_MUT, COL_ENTRY are reused from the SeqMut block above).
+COL_GENERATION = "generation"       # SeqOpt — 0-based evolve-score-select round index
+COL_CROWDING = "crowding"           # SeqOpt — NSGA-II crowding distance within a front
+COL_HYPERVOLUME = "hypervolume"     # SeqOpt.eval — objective-space volume dominated by the front
+COL_N_FRONT = "n_front"             # SeqOpt.eval — number of variants on the first (rank=0) front
+COL_SPREAD = "spread"               # SeqOpt.eval — objective-space diversity of the front
+# Fixed lower-bound columns of df_pareto (one column per objective is inserted between
+# COL_SEQ_MUT and COL_RANK at run time; COL_RANK defined in the eval block below).
+COLS_PARETO_BASE = [COL_ENTRY, COL_VARIANT, COL_N_MUT, COL_SEQ_MUT]
+COLS_SEQOPT_EVAL = [COL_HYPERVOLUME, COL_N_FRONT, COL_SPREAD]
+# SeqOpt option vocabularies (Validate-block check_str_options targets).
+LIST_SEQOPT_MODES = ["impact", "importance"]            # SHAP-guided (adaptive) | feat_importance (greedy)
+LIST_SEQOPT_ALGORITHMS = ["nsga2", "greedy"]            # population NSGA-II | importance-ordered greedy walk
+LIST_SEQOPT_CROSSOVER = ["uniform", "one_point", "two_point"]
+LIST_SEQOPT_MUTATION = ["substitution", "shift"]
+LIST_SEQOPT_SURVIVAL = ["mu_plus_lambda", "mu_comma_lambda"]
+LIST_SEQOPT_INIT = ["random", "suggest"]                # random seeding | warm-start from SeqMut.suggest
+LIST_OBJECTIVE_GOALS = ["max", "min"]
+# Built-in objective sources (a callable(df_variant)->array is also accepted at run time).
+LIST_OBJECTIVE_SOURCES = [COL_DELTA_PRED, COL_DELTA_CPP, COL_SHIFT_SCORE, COL_N_MUT]
+
 # Canonical, deterministic df_feat column order (issue #18). This is a LOWER BOUND
 # on the known/fixed columns, not an exhaustive schema: the dynamic p-value column
 # (COL_PVAL_MW vs COL_PVAL_TTEST per 'parametric'), the post-hoc explainable-AI

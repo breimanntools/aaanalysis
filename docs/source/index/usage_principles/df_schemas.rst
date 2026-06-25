@@ -766,6 +766,124 @@ SeqMut.eval per-protein/region summary (one row per region).
      - Mean |delta_cpp| over scanned mutations.
      - range: [0, inf]; e.g. 1.1
 
+``df_pareto``
+-------------
+
+SeqOpt.run Pareto front (one row per non-dominated variant of the single wild-type). One column per objective is inserted between 'sequence_mut' and 'rank' at run time (e.g. delta_pred, n_mut), so the objective columns below are documented as optional/dynamic.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 18 8 8 8 8 34 18
+
+   * - Column
+     - Type
+     - Required
+     - Nullable
+     - Unique
+     - Description
+     - Allowed / range / example
+   * - ``entry``
+     - str
+     - yes
+     - no
+     - no
+     - Wild-type protein/sequence identifier (constant).
+     - e.g. P05067
+   * - ``variant``
+     - str
+     - yes
+     - no
+     - no
+     - Variant label, '+'-joined single mutations.
+     - e.g. R20K+K27P
+   * - ``n_mut``
+     - int
+     - yes
+     - no
+     - no
+     - Number of point mutations in the variant.
+     - range: [0, inf]; e.g. 2
+   * - ``sequence_mut``
+     - str
+     - yes
+     - no
+     - no
+     - Full sequence with all the variant's mutations applied.
+     - e.g. ...K...P...
+   * - ``rank``
+     - int
+     - yes
+     - no
+     - no
+     - Non-dominated front index from fast non-dominated sorting (0 = best/first front).
+     - range: [0, inf]; e.g. 0
+   * - ``crowding``
+     - float
+     - yes
+     - yes
+     - no
+     - NSGA-II crowding distance within the front (larger = more isolated = preferred); inf at the boundary points.
+     - range: [0, inf]; e.g. 1.7
+   * - ``delta_pred``
+     - float
+     - no
+     - no
+     - no
+     - Objective: change of the model prediction score (percentage points). Present when an objective uses it.
+     - e.g. 18.7
+   * - ``delta_cpp``
+     - float
+     - no
+     - no
+     - no
+     - Objective: Sum|dX| feature-space magnitude. Present when an objective uses it.
+     - range: [0, inf]; e.g. 4.1
+   * - ``shift_score``
+     - float
+     - no
+     - no
+     - no
+     - Objective: signed shift toward the test-class profile. Present when an objective uses it.
+     - e.g. 1.3
+
+``df_seqopt_eval``
+------------------
+
+SeqOpt.eval Pareto-quality summary (one row per run / front).
+
+.. list-table::
+   :header-rows: 1
+   :widths: 18 8 8 8 8 34 18
+
+   * - Column
+     - Type
+     - Required
+     - Nullable
+     - Unique
+     - Description
+     - Allowed / range / example
+   * - ``hypervolume``
+     - float
+     - yes
+     - no
+     - no
+     - Objective-space volume dominated by the first front relative to the reference point.
+     - range: [0, inf]; e.g. 0.62
+   * - ``n_front``
+     - int
+     - yes
+     - no
+     - no
+     - Number of variants on the first (rank=0) front.
+     - range: [1, inf]; e.g. 12
+   * - ``spread``
+     - float
+     - yes
+     - yes
+     - no
+     - Objective-space diversity / spread of the front (0 = degenerate).
+     - range: [0, inf]; e.g. 0.41
+
 ``df_annot``
 ------------
 

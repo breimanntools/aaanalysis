@@ -125,6 +125,36 @@ _Avoid_: library (a combined variant is one design, not an enumerated mutation l
 The pairwise **non-additivity** of two mutations, `ΔP(i+j) − (ΔP(i) + ΔP(j))`, visualized by `SeqMutPlot.epistasis` from a [[combined variant]] table of singles + pairs: positive = synergy (the pair beats the sum of singles), negative = antagonism.
 _Avoid_: interaction (overloaded with the relational/PPI [[relational / interaction (scope boundary)]] sense); coupling.
 
+### SeqOpt directed-evolution vocabulary
+
+**SeqOpt**:
+The **search/optimization** layer of [[design / engineering]] (**[pro]**, `aaanalysis/protein_design_pro/`), the counterpart to [[SeqMut]]'s scoring: it *searches* over sequence variants of **one wild-type** for those that best satisfy several objectives at once. A `Tool` (`run` → [[Pareto front]] `df_pareto`, `eval` → Pareto-quality metrics), paired with `SeqOptPlot`. Reuses model-bound [[SeqMut]] as the fitness engine and `ShapModel` for residue guidance, so it is `pro` (imports SHAP) even though [[SeqMut]] stays core. Two modes — `"impact"` (SHAP-guided, adaptive) and `"importance"` (feature-importance-guided, greedy) — see [[guidance mode (impact / importance)]]. It realizes the search that [[SeqMut]] and [[combined variant]] defer to.
+_Avoid_: optimizer (overloaded with numerical/perf optimization — this is evolutionary *search*); generator, sampler.
+
+**population** / **generation**:
+A **population** is the set of candidate **variants** (each a mutation-set on the one wild-type, carrying its [[prediction shift]] fitness and a per-residue importance map) that [[SeqOpt]] evolves; a **generation** (`generation`) is one evolve-score-select round. Standard NSGA-II vocabulary, claimed here from the reservation the [[design / engineering]] entry held for it.
+_Avoid_: library (an enumerated set, not an evolving population); cohort, batch.
+
+**Pareto front** (`df_pareto`):
+The **non-dominated** set [[SeqOpt]]`.run` returns: variants where no other returned variant is at least as good on every objective and strictly better on one. The trade-off surface (e.g. high [[prediction shift]] vs. few mutations), not a single greedy path. Rows carry one column per objective plus the [[non-dominated rank]] and [[crowding distance]].
+_Avoid_: best variants (the front is a *set* of trade-offs, not a ranked winner list); optimum.
+
+**non-dominated rank** (`rank`) / **crowding distance** (`crowding`):
+NSGA-II's two-level ordering. **Non-dominated rank** is the front index from fast non-dominated sorting (`rank=0` is the first/best front); **crowding distance** is the objective-space spread around a variant within its front (larger = more isolated = preferred), the diversity tie-breaker. Together they define survival and mating selection. Reimplemented pure-Python; DEAP is the dev-only parity oracle (identical front membership + ordering on a seed).
+_Avoid_: dominance score (rank is a front *index*, not a score); density.
+
+**hypervolume**:
+The objective-space volume dominated by the [[Pareto front]] relative to a reference point — the scalar [[SeqOpt]]`.eval` reports for front quality and the per-generation convergence trace (`SeqOptPlot.hypervolume`). Larger = a better-spread, further-advanced front; non-decreasing across generations on a fixed seed.
+_Avoid_: coverage, spread (a distinct diversity metric `eval` also reports).
+
+**guidance mode (impact / importance)**:
+How [[SeqOpt]] decides **which residues to mutate**, named after the `df_feat` attribution column it reads. `mode="impact"` refits `ShapModel` **every generation** under [[fuzzy labeling]] to get fresh per-residue `|feat_impact|` (adaptive, the headline). `mode="importance"` reads static `feat_importance` (TreeModel, no SHAP, no refit) and walks positions highest-first (deterministic, cheap). The guidance prunes the otherwise-combinatorial mutation-set space.
+_Avoid_: strategy, policy.
+
+**fuzzy labeling** (in [[SeqOpt]]):
+How generated variants — which have no ground-truth label — enter the per-generation `ShapModel` refit: each variant's own model **prediction score** in `[0, 1]` becomes its **soft label** (`ShapModel.fit(fuzzy_labeling=True)`), explained against the original balanced 0/1 reference set. This is what lets SHAP attribution track the moving [[population]] (the `mode="impact"` engine). The shipped `ShapModel` fuzzy-labeling path, applied to directed evolution.
+_Avoid_: pseudo-labeling (no hard threshold is assigned — the label *is* the continuous score), self-training.
+
 ### Multi-class & regression labeling vocabulary
 
 Helpers on `SequenceFeature` that turn a multi-class or continuous target into the

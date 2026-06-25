@@ -344,6 +344,9 @@ Rules:
    * - ``SeqMut`` / ``SeqMutPlot``
      - ``seqmut`` / ``seqmut_plot``
      -
+   * - ``SeqOpt`` / ``SeqOptPlot``
+     - ``seqopt`` / ``seqopt_plot``
+     - ``pro``
    * - ``TreeModel``
      - ``tm``
      -

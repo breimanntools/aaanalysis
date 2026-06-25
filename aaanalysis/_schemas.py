@@ -37,6 +37,8 @@ from ._constants import (
     COL_POS, COL_REGION, COL_DELTA_CPP, COL_SHIFT_SCORE,
     COL_DELTA_PRED, COL_WT_PRED, COL_WT_PRED_STD, COL_VARIANT, COL_SEQ_MUT,
     COL_N_MUT, COL_N_DISRUPTIVE, COL_FRAC_DISRUPTIVE, COL_MEAN_DELTA_CPP,
+    COL_RANK, COL_GENERATION, COL_CROWDING,
+    COL_HYPERVOLUME, COL_N_FRONT, COL_SPREAD,
     COL_PROTEIN_ID, COL_START, COL_STOP, COL_AA, COL_FEATURE_TYPE, COL_SOURCE,
     COL_EVIDENCE, COL_SCORE, COL_BOND_ID,
     LIST_CAT, LIST_ALL_PARTS, LIST_CANONICAL_AA, COLS_SEQ_POS, COLS_SEQ_PARTS,
@@ -361,6 +363,53 @@ DICT_DF_SCHEMAS = {
             COL_MEAN_DELTA_CPP: _field("float", "Mean |delta_cpp| over scanned "
                                        "mutations.", required=True, range=[0, None],
                                        example=1.1),
+        },
+    },
+    "df_pareto": {
+        "description": (
+            "SeqOpt.run Pareto front (one row per non-dominated variant of the single "
+            "wild-type). One column per objective is inserted between 'sequence_mut' and "
+            "'rank' at run time (e.g. delta_pred, n_mut), so the objective columns below "
+            "are documented as optional/dynamic."),
+        "columns": {
+            COL_ENTRY: _field("str", "Wild-type protein/sequence identifier (constant).",
+                              required=True, example="P05067"),
+            COL_VARIANT: _field("str", "Variant label, '+'-joined single mutations.",
+                                required=True, example="R20K+K27P"),
+            COL_N_MUT: _field("int", "Number of point mutations in the variant.",
+                              required=True, range=[0, None], example=2),
+            COL_SEQ_MUT: _field("str", "Full sequence with all the variant's mutations "
+                                "applied.", required=True, example="...K...P..."),
+            COL_RANK: _field("int", "Non-dominated front index from fast non-dominated "
+                             "sorting (0 = best/first front).", required=True,
+                             range=[0, None], example=0),
+            COL_CROWDING: _field("float", "NSGA-II crowding distance within the front "
+                                 "(larger = more isolated = preferred); inf at the "
+                                 "boundary points.", required=True, range=[0, None],
+                                 nullable=True, example=1.7),
+            COL_DELTA_PRED: _field("float", "Objective: change of the model prediction "
+                                   "score (percentage points). Present when an objective "
+                                   "uses it.", required=False, example=18.7),
+            COL_DELTA_CPP: _field("float", "Objective: Sum|dX| feature-space magnitude. "
+                                  "Present when an objective uses it.", required=False,
+                                  range=[0, None], example=4.1),
+            COL_SHIFT_SCORE: _field("float", "Objective: signed shift toward the "
+                                    "test-class profile. Present when an objective uses "
+                                    "it.", required=False, example=1.3),
+        },
+    },
+    "df_seqopt_eval": {
+        "description": (
+            "SeqOpt.eval Pareto-quality summary (one row per run / front)."),
+        "columns": {
+            COL_HYPERVOLUME: _field("float", "Objective-space volume dominated by the "
+                                    "first front relative to the reference point.",
+                                    required=True, range=[0, None], example=0.62),
+            COL_N_FRONT: _field("int", "Number of variants on the first (rank=0) front.",
+                                required=True, range=[1, None], example=12),
+            COL_SPREAD: _field("float", "Objective-space diversity / spread of the front "
+                               "(0 = degenerate).", required=True, range=[0, None],
+                               nullable=True, example=0.41),
         },
     },
     "df_annot": {
