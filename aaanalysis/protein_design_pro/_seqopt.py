@@ -118,8 +118,8 @@ class SeqOpt(Tool):
     design) -> **AlphaFold** [Jumper21]_ (in-silico validation), reviewed in [Yang26]_. *Protein
     engineering* instead **optimizes an existing sequence** through iterative mutation and
     selection (directed evolution). ``SeqOpt`` is the **machine-learning-guided** flavour
-    [Wittmann21]_: a model predicts variant fitness so the search prioritizes which mutations to
-    make -- here as a multi-objective evolutionary search.
+    [Yang19]_, [Wittmann21]_: a model predicts variant fitness so the search prioritizes which
+    mutations to make -- here as a multi-objective evolutionary search.
 
     ``SeqOpt`` is the **search/optimization** counterpart of :class:`SeqMut`: where ``SeqMut``
     *scores* mutations, ``SeqOpt`` *searches* the space of multi-mutation variants of a single
