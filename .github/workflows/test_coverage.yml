@@ -36,15 +36,18 @@ jobs:
       with:
         python-version: '3.12'
 
-    - name: Set up uv
-      uses: astral-sh/setup-uv@v8.2.0
+    - name: Cache Python dependencies
+      uses: actions/cache@v5
       with:
-        enable-cache: true
-        cache-dependency-glob: pyproject.toml
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-coverage-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-coverage-
 
     - name: Install package and test dependencies
       run: |
-        uv pip install --system -e .[dev]
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
 
     - name: Install cd-hit and mmseqs2
       run: |

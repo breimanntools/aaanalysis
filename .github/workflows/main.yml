@@ -62,19 +62,19 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    # uv resolves + installs an order of magnitude faster than pip and carries its
-    # own wheel cache (keyed on pyproject.toml), so dependency install stops being
-    # a per-job tax. `--system` targets the interpreter set up above (no venv).
-    - name: Set up uv
-      uses: astral-sh/setup-uv@v8.2.0
+    - name: Cache Python dependencies
+      uses: actions/cache@v5
       with:
-        enable-cache: true
-        cache-dependency-glob: pyproject.toml
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
 
     - name: Install package and test dependencies
       run: |
-        uv pip install --system -e .[pro]
-        uv pip install --system pytest hypothesis ipython pytest-xdist
+        python -m pip install --upgrade pip
+        pip install -e .[pro]
+        pip install pytest hypothesis ipython pytest-xdist
 
     - name: Install cd-hit (Ubuntu)
       if: runner.os == 'Linux'

@@ -36,16 +36,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v8.2.0
-        with:
-          enable-cache: true
-          cache-dependency-glob: pyproject.toml
-
       - name: Install package + pyright
         run: |
-          uv pip install --system -e .[pro]
-          uv pip install --system pyright
+          python -m pip install --upgrade pip
+          pip install -e .[pro]
+          pip install pyright
 
       - name: Run pyright (advisory — never fails the build)
         continue-on-error: true

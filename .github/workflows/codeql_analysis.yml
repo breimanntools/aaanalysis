@@ -53,16 +53,19 @@ jobs:
       with:
         python-version: '3.12'
 
-    - name: Set up uv
-      uses: astral-sh/setup-uv@v8.2.0
+    - name: Cache Python dependencies
+      uses: actions/cache@v5
       with:
-        enable-cache: true
-        cache-dependency-glob: pyproject.toml
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-3.12-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-3.12-
 
     - name: Install dependencies
       run: |
-        uv pip install --system -e .[pro]
-        uv pip install --system flake8 mypy pylint
+        python -m pip install --upgrade pip
+        pip install -e .[pro]
+        pip install flake8 mypy pylint
 
     - name: Install cd-hit and mmseqs2
       run: |

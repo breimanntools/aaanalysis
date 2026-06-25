@@ -30,16 +30,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v8.2.0
-        with:
-          enable-cache: true
-          cache-dependency-glob: pyproject.toml
-
       - name: Install package + dev/pro deps
         run: |
-          uv pip install --system -e .[dev,pro]
-          uv pip install --system pytest-xdist
+          python -m pip install --upgrade pip
+          pip install -e .[dev,pro]
+          pip install pytest-xdist
 
       - name: Run the slow tier (deselected from the fast PR gate)
         # The heavy `slow` tests (multi-minute pipe sweeps) are deselected from the
