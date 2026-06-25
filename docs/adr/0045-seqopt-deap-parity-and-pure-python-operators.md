@@ -30,10 +30,11 @@ Fame** (`hall_of_fame_`) beside the Pareto archive, and **hypervolume / spread /
 metrics. Exposed via `run` params `variation`, `survival`, `constraints`, `penalty`, `hof_size` and
 `eval`'s `ref_front`.
 
-**D2 — Two engines, identical results.** `engine="exact"` is the pure-Python kernel whose crowding
-formula matches DEAP's `assignCrowdingDist` (`nobj·span` normalization); `engine="fast"` vectorizes
-the O(n²) non-dominated sort with numpy and returns a **numerically identical** front (same survivor
-list, not just set). `fast` is purely a speed option.
+**D2 — A single vectorized kernel.** The non-dominated sort uses a **memory-bounded chunked
+numpy** dominance scan; its crowding formula matches DEAP's `assignCrowdingDist` (`nobj·span`
+normalization). *(Amended: an initial `engine="exact"/"fast"` parameter exposed a pure-Python loop
+vs. the vectorized path; once verified to give byte-identical fronts, the redundant knob was removed
+and the vectorized kernel kept as the single implementation.)*
 
 **D3 — DEAP is a dev/test-only parity oracle.** `deap` is added to the **`[dev]`** extra; the
 shipped runtime never imports it. Parity is asserted at the **selection-primitive** level on
@@ -44,10 +45,9 @@ synthetic fitness sets (the algorithm-agnostic, robust place to compare): our `f
 ties on the partial front). The bar is **equivalence, not byte-identity** (per ADR-0043).
 
 **D4 — Ship ours.** The Phase-C comparison (`.github/scripts/seqopt_deap_comparison.py`) benchmarks
-ours-`exact` / ours-`fast` / DEAP across `pop_size × n_objectives`: all three are correctness-
-identical, and `engine="fast"` is **faster than DEAP** (e.g. ~14 ms vs ~102 ms at 500×3) while
-keeping the runtime dependency-free. Decision: **ship the pure-Python implementation** (`fast` for
-speed, `exact` as the RNG-matched reference); DEAP stays dev-only.
+ours vs. DEAP across `pop_size × n_objectives`: correctness-identical, and ours is **faster than
+DEAP** (e.g. ~14 ms vs ~102 ms at 500×3) while keeping the runtime dependency-free. Decision: **ship
+the pure-Python implementation** (the single vectorized kernel); DEAP stays dev-only.
 
 ## Rejected alternatives
 

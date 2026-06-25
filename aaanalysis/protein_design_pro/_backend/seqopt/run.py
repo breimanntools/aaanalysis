@@ -9,8 +9,8 @@ from typing import Callable, Dict, List, Optional, Tuple
 import numpy as np
 
 import aaanalysis.utils as ut
-from .nsga2 import (normalize_objectives_, fast_non_dominated_sort, crowding_distance,
-                    dcd_tournament, select_nsga2, rank_and_crowding, select_nsga2_engine)
+from .nsga2 import (normalize_objectives_, fast_non_dominated_sort,
+                    dcd_tournament, select_nsga2, rank_and_crowding)
 from .genome import (crossover_uniform, crossover_npoint, mutate, init_population, canonical)
 from .metrics import hypervolume, spread
 
@@ -110,18 +110,9 @@ def _update_archive(archive, genomes, F, goals):
     return {keys[i]: archive[keys[i]] for i in range(len(keys)) if rank[i] == 0}
 
 
-def _front_rank_crowding(W, engine="exact") -> Tuple[np.ndarray, np.ndarray]:
-    """Assign every row its non-dominated rank and crowding distance (engine-aware)."""
-    if engine == ut.LIST_SEQOPT_ENGINE[1]:              # "fast"
-        return rank_and_crowding(W, engine="fast")
-    n = W.shape[0]
-    fronts, rank = fast_non_dominated_sort(W)
-    crowding = np.zeros(n, dtype=float)
-    for front in fronts:
-        d = crowding_distance(W, front)
-        for idx, member in enumerate(front):
-            crowding[member] = d[idx]
-    return rank, crowding
+def _front_rank_crowding(W) -> Tuple[np.ndarray, np.ndarray]:
+    """Assign every row its non-dominated rank and crowding distance."""
+    return rank_and_crowding(W)
 
 
 # II Main Functions
@@ -141,7 +132,6 @@ def evolve_nsga2(wt_seq: str,
                  mut_prob: float = 0.2,
                  survival: str = "mu_plus_lambda",
                  variation: str = "and",
-                 engine: str = "exact",
                  hof_size: int = 10,
                  suggest_seeds: Optional[List[Dict[int, str]]] = None,
                  ) -> dict:
@@ -150,14 +140,14 @@ def evolve_nsga2(wt_seq: str,
     Returns a dict with ``genomes`` (final population), ``F`` (raw objective matrix), ``rank``,
     ``crowding``, ``trajectory`` (per-generation hypervolume) and ``hall_of_fame`` (best-k
     single-objective genomes). ``variation`` selects varAnd/varOr; ``survival`` selects
-    (mu+lambda) / (mu,lambda) / eaSimple; ``engine`` selects the exact or vectorized sort.
+    (mu+lambda) / (mu,lambda) / eaSimple.
     """
     weights = guide_fn(None)
     pop = init_population(pop_size, wt_seq, positions, alphabet, n_mut_max, rng,
                           weights=weights, suggest_seeds=suggest_seeds)
     F = np.asarray(fitness_fn(pop), dtype=float)
     W = normalize_objectives_(F, goals)
-    rank, crowding = _front_rank_crowding(W, engine=engine)
+    rank, crowding = _front_rank_crowding(W)
     hof = _update_hof({}, pop, F, goals, hof_size)
     # Fixed reference (initial nadir) so the per-generation hypervolume is comparable across
     # generations -- under (mu+lambda) elitism the first front never worsens, so the trace is
@@ -186,11 +176,11 @@ def evolve_nsga2(wt_seq: str,
             else:                                       # "mu_plus_lambda" (default)
                 pool, F_pool = pop + offspring, np.vstack([F, F_off])
             W_pool = normalize_objectives_(F_pool, goals)
-            survivors, _, _ = select_nsga2_engine(W_pool, pop_size, engine=engine)
+            survivors, _, _ = select_nsga2(W_pool, pop_size)
             pop = [pool[i] for i in survivors]
             F = F_pool[survivors]
         W = normalize_objectives_(F, goals)
-        rank, crowding = _front_rank_crowding(W, engine=engine)
+        rank, crowding = _front_rank_crowding(W)
         trajectory.append(hypervolume(W, ref=hv_ref))
         spread_traj.append(spread(W))
         best_traj.append(_per_obj_best(F, goals, rank))

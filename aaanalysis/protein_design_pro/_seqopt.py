@@ -165,7 +165,7 @@ class SeqOpt(Tool):
     Rows with no DEAP analogue are the aaanalysis value-add: the SHAP / ``feat_importance``
     residue guidance (``mode``), the sequence genome + domain constraints (``n_mut_max``,
     ``region``, ``to_aa``), the ``algorithm="greedy"`` baseline, and any ``callable(sequence)``
-    objective. ``engine="exact"/"fast"`` is an implementation detail (identical fronts).
+    objective.
 
     .. versionadded:: 1.0.0
 
@@ -379,7 +379,6 @@ class SeqOpt(Tool):
             mut_prob: float = 0.2,
             survival: str = "mu_plus_lambda",
             variation: str = "and",
-            engine: str = "exact",
             constraints: Optional[List[Callable]] = None,
             penalty: str = "delta",
             hof_size: int = 10,
@@ -434,9 +433,6 @@ class SeqOpt(Tool):
         variation : str, default='and'
             Variation scheme: ``'and'`` (varAnd — crossover *and* mutation) or ``'or'`` (varOr —
             each offspring is crossover *or* mutation *or* reproduction; needs cx_prob+mut_prob<=1).
-        engine : str, default='exact'
-            ``'exact'`` (pure-Python, RNG-matched to the DEAP reference) or ``'fast'`` (numpy-
-            vectorized non-dominated sort; numerically identical fronts, faster).
         constraints : list of callable, optional
             Feasibility predicates ``genome -> bool`` (``True`` = feasible). Infeasible variants
             are penalized so the search avoids them.
@@ -490,7 +486,6 @@ class SeqOpt(Tool):
                              list_str_options=ut.LIST_SEQOPT_SURVIVAL)
         ut.check_str_options(name="variation", val=variation,
                              list_str_options=ut.LIST_SEQOPT_VARIATION)
-        ut.check_str_options(name="engine", val=engine, list_str_options=ut.LIST_SEQOPT_ENGINE)
         ut.check_str_options(name="penalty", val=penalty, list_str_options=ut.LIST_SEQOPT_PENALTY)
         ut.check_str_options(name="init", val=init, list_str_options=ut.LIST_SEQOPT_INIT)
         ut.check_number_range(name="pop_size", val=pop_size, min_val=2, just_int=True)
@@ -538,7 +533,7 @@ class SeqOpt(Tool):
                                pop_size=pop_size, n_gen=n_gen, n_mut_max=n_mut_max,
                                crossover=crossover, mutation=mutation, cx_prob=cx_prob,
                                mut_prob=mut_prob, survival=survival, variation=variation,
-                               engine=engine, hof_size=hof_size, suggest_seeds=suggest_seeds)
+                               hof_size=hof_size, suggest_seeds=suggest_seeds)
         self.trajectory_ = list(res["trajectory"])
         # Hall of Fame: best-k single-objective variants (labels) across all generations.
         self.hall_of_fame_ = [variant_label(wt_seq, g) for g in res.get("hall_of_fame", [])]

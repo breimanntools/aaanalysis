@@ -118,7 +118,7 @@ Added
   one- / two-point), ``mutation`` (substitution / shift), ``variation`` (varAnd / varOr),
   ``survival`` ((mu+lambda) / (mu,lambda) / eaSimple), ``constraints`` (delta / closest-valid
   penalty), a single-objective Hall of Fame (``hall_of_fame_``), and a memory-bounded
-  ``engine="exact"|"fast"`` switch (identical fronts). Objectives accept any
+  (chunked) vectorized non-dominated sort. Objectives accept any
   ``callable(sequence) -> float`` (an external scikit / torch model or sequence-level
   tool / web API), cached per variant. ``run`` returns ``df_pareto`` (objective columns +
   ``rank`` + ``crowding``) backed by a cumulative Pareto archive; ``eval`` reports

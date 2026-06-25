@@ -1,11 +1,10 @@
 """Phase-C comparison: SeqOpt's pure-Python NSGA-II selection core vs the DEAP reference.
 
-Benchmarks the NSGA-II survival selection (fast non-dominated sort + crowding + selNSGA2) of
-three implementations across a grid of population size x objective count:
+Benchmarks the NSGA-II survival selection (chunked-vectorized non-dominated sort + crowding +
+selNSGA2) across a grid of population size x objective count:
 
-  * ours (engine="exact")  — pure-Python, RNG-matched to DEAP
-  * ours (engine="fast")   — numpy-vectorized non-dominated sort (identical result)
-  * DEAP (tools.selNSGA2)  — the reference oracle (dev/test-only dependency)
+  * ours (tools.selNSGA2 re-implementation) — pure-Python, DEAP-free at runtime
+  * DEAP (tools.selNSGA2)                    — the reference oracle (dev/test-only dependency)
 
 Reports correctness (survivor rank/crowding profile identical to DEAP) plus wall-clock and
 peak memory, so the maintainer can make the ship-ours-vs-depend-on-DEAP call from data. The
@@ -18,7 +17,7 @@ import tracemalloc
 import numpy as np
 
 from aaanalysis.protein_design_pro._backend.seqopt.nsga2 import (
-    fast_non_dominated_sort, crowding_distance, select_nsga2, select_nsga2_engine)
+    fast_non_dominated_sort, crowding_distance, select_nsga2)
 
 try:
     from deap import base, creator, tools
@@ -76,13 +75,11 @@ def main():
         mu = n // 2
         ref = profile(W, deap_select(W, mu))
         runs = {
-            "ours-exact": lambda: select_nsga2(W, mu),
-            "ours-fast": lambda: select_nsga2_engine(W, mu, engine="fast"),
+            "ours": lambda: select_nsga2(W, mu),
             "deap": lambda: deap_select(W, mu),
         }
         sels = {
-            "ours-exact": set(select_nsga2(W, mu)[0]),
-            "ours-fast": set(select_nsga2_engine(W, mu, engine="fast")[0]),
+            "ours": set(select_nsga2(W, mu)[0]),
             "deap": deap_select(W, mu),
         }
         for name, fn in runs.items():

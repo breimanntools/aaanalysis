@@ -308,7 +308,6 @@ LIST_SEQOPT_MUTATION = ["substitution", "shift"]
 LIST_SEQOPT_VARIATION = ["and", "or"]                   # varAnd (crossover AND mutation) | varOr (one of)
 LIST_SEQOPT_SURVIVAL = ["mu_plus_lambda", "mu_comma_lambda", "ea_simple"]
 LIST_SEQOPT_PENALTY = ["delta", "closest_valid"]        # DeltaPenalty | ClosestValidPenalty semantics
-LIST_SEQOPT_ENGINE = ["exact", "fast"]                  # pure-Python RNG-matched | numpy-vectorized
 LIST_SEQOPT_INIT = ["random", "suggest"]                # random seeding | warm-start from SeqMut.suggest
 LIST_OBJECTIVE_GOALS = ["max", "min"]
 # Built-in objective sources (a callable(df_variant)->array is also accepted at run time).
