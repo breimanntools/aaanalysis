@@ -705,6 +705,27 @@ default (`find_features(dpulearn=True, subcategories=…)`); promoted to a stand
 need — never both a flag and a function for the same canonical path.
 _Avoid_: "helper" (overloaded); making every Means a standalone function.
 
+**search effort** (`search`, the `find_features` grade):
+How wide the `find_features` CPP AutoML feature search ranges — `"fast"` (a single
+default configuration, no search), `"balanced"`, `"exhaustive"` (progressively wider
+sweeps of the Split / Part / Scale / `n_filter` levers, the winner chosen by
+cross-validated model performance). The parameter is named **`search`**, deliberately
+**not `optimization`**: "optimization" is reserved for the [[SeqOpt]] sequence
+directed-evolution chain, and the search-effort grade is a different idea (how hard to
+look for discriminating features, not how to evolve a sequence toward a target).
+Distinct from the per-winner **refinement** (`simplify` + RFE) that prunes the selected
+feature set afterwards.
+_Avoid_: optimization (reserved — SeqOpt); mode/depth (overloaded).
+
+**axis impact** (`find_features` sensitivity staging):
+The main-effect sensitivity of one feature-space axis (Part, Split, or Scale) in the
+`find_features` search: the `max − min` spread of that axis's **marginal-mean**
+cross-validated score across its levels (averaging over the other axes), normalized per
+metric to `[0, 1]` and averaged across metrics. The axis with the largest impact is the
+**dominant axis**, refined against `n_filter` while the others stay fixed at the
+stage's Pareto-then-simplest optimum.
+_Avoid_: importance (reserved for per-feature `feat_importance`).
+
 ### Plotting return-contract vocabulary
 
 **FigAxResult / `(fig, ax)` contract**:

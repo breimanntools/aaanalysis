@@ -51,4 +51,5 @@ Regenerate this table with:
 | [0041](0041-pipe-pipeline-conventions.md) | `aaanalysis.pipe` pipeline conventions and the core golden pipelines | Accepted | 2026-06-24 |  |
 | [0042](0042-seqmut-model-guided-prediction-shift.md) | SeqMut model-guided prediction shift (ML-guided directed evolution) | Accepted | 2026-06-24 |  |
 | [0043](0043-seqopt-optimization-layer.md) | SeqOpt optimization layer (SHAP-guided, fuzzy-labeled multi-objective directed evolution) | Accepted | 2026-06-24 |  |
+| [0044](0044-find-features-search-protocol.md) | `find_features` staged sensitivity search and multi-objective selection | Accepted | 2026-06-24 |  |
 <!-- ADR-INDEX:END -->

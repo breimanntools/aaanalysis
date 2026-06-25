@@ -136,17 +136,25 @@ Added
 
 - **aaanalysis.pipe** (``aap``): A second, opt-in convenience API of stateless, one-call
   *golden pipelines* over the AAanalysis primitives (``import aaanalysis.pipe as aap``).
-- **aap.find_features**: Staged, interpretable CPP AutoML — sweeps the feature space
-  (Split × Part × Scale together with ``n_filter``), scores each configuration by
-  cross-validated model performance, selects the simplest within 1% of the best, refines
-  it (``CPP.simplify`` and recursive feature elimination, each kept only if the score
-  holds), ranks features by tree-based importance, and draws the feature map. Returns
-  ``(df_feat, ax, df_eval)``.
-- **aap.plot_eval**: A ``viridis`` evaluation-grid plot of a ``find_features`` sweep that
-  adapts to the number of swept levers (none → nothing, one → line/bar, two → heatmap,
-  ≥ three → faceted small-multiples), coloring by cross-validated score and starring the
-  selected configuration. Drawn as an auxiliary figure when ``find_features(plot=True)``;
-  also usable standalone on any ``CPPGrid``-style eval table.
+- **aap.find_features**: Staged, interpretable CPP AutoML search. Stage 1
+  cross-validates the full Cartesian Part × Split × Scale grid and ranks each axis by
+  its marginal-mean impact; Stage 2 refines the single highest-impact axis against
+  ``n_filter``; Stage 3 refines the winning feature set (``CPP.simplify`` + recursive
+  feature elimination, each kept only if it is not Pareto-dominated). Selection is
+  multi-objective: within each stage the Pareto-optimal-then-simplest configuration
+  across all ``metric`` wins, scored by the averaged cross-validated performance of one
+  or more ``model`` s. The winner is ranked by tree-based importance and drawn as the
+  feature map. The ``search`` grade scopes the effort (``"fast"`` is byte-identical to
+  the explicit single-CPP path); it returns ``(df_feat, ax, df_eval)`` where ``ax`` also
+  carries the publication eval figures (``ax.eval``) and ``df_eval`` has one
+  ``<metric>_mean``/``_std`` column per metric plus ``stage`` / ``is_pareto`` / ``rank``
+  / ``is_selected``.
+- **aap.plot_eval**: Publication-ready evaluation figures of a ``find_features`` sweep —
+  the high-dimensional Part × Split × Scale grid is **decomposed** into a series of clean
+  2D ``viridis`` heatmaps (the two most-informative axes on each panel, the least on the
+  slice), with a shared colorbar, the selected configuration starred, plus marginal-impact
+  and ``n_filter`` panels. Returns the list of figures so each drops straight into a paper;
+  also usable standalone on a ``find_features`` eval table.
 
 **Package**
 
