@@ -13,22 +13,14 @@ Find Your Way Around
 ====================
 Pick a section by what you want to do:
 
-.. list-table::
-   :header-rows: 1
-   :widths: 60 40
+.. admonition:: Which section do I want?
+   :class: tip
 
-   * - You want to…
-     - Go to
-   * - Install AAanalysis and run a first CPP analysis
-     - :ref:`Getting Started <getting_started>`
-   * - Learn what a specific function does and how to call it
-     - :ref:`Tutorials <tutorials>`
-   * - Design a valid, end-to-end analysis for a biological question
-     - :ref:`Protocols <protocols>`
-   * - Adapt a full biological case study to your own data
-     - Use Cases *(coming soon)*
-   * - Look up the exact signature, parameters, or return value
-     - :doc:`API <api>`
+   - **New here** and want a first result → :ref:`Getting Started <getting_started>`.
+   - Learn what **one specific tool** does, with its parameters and outputs → :ref:`Tutorials <tutorials>`.
+   - **Design a valid, end-to-end analysis** for a biological question → :ref:`Protocols <protocols>`.
+   - **Adapt a full biological case study** to your own data → Use Cases *(coming soon)*.
+   - Look up the **exact signature, parameters, or return value** → :doc:`API <api>`.
 
 Install
 =======
